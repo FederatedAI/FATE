@@ -43,12 +43,14 @@ def submit_job():
     detect_utils.check_config({'work_mode': work_mode}, required_arguments=[('work_mode', (WorkMode.CLUSTER, WorkMode.STANDALONE))])
     if work_mode == RuntimeConfig.WORK_MODE:
         job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = JobController.submit_job(request.json)
-        return get_json_result(job_id=job_id, data={'job_dsl_path': job_dsl_path,
-                                                    'job_runtime_conf_path': job_runtime_conf_path,
-                                                    'model_info': model_info,
-                                                    'board_url': board_url,
-                                                    'logs_directory': logs_directory
-                                                    })
+        return get_json_result(retcode=0, retmsg='success',
+                               job_id=job_id,
+                               data={'job_dsl_path': job_dsl_path,
+                                     'job_runtime_conf_path': job_runtime_conf_path,
+                                     'model_info': model_info,
+                                     'board_url': board_url,
+                                     'logs_directory': logs_directory
+                                     })
     else:
         if RuntimeConfig.WORK_MODE == WorkMode.CLUSTER and work_mode == WorkMode.STANDALONE:
             # use cluster standalone job server to execute standalone job
@@ -60,9 +62,9 @@ def submit_job():
 @manager.route('/stop', methods=['POST'])
 @job_utils.job_server_routing()
 def stop_job():
-    response = TaskScheduler.stop_job(job_id=request.json.get('job_id', ''), end_status=JobStatus.CANCELED)
+    response = TaskScheduler.stop(job_id=request.json.get('job_id', ''), end_status=JobStatus.CANCELED)
     if not response:
-        TaskScheduler.stop_job(job_id=request.json.get('job_id', ''), end_status=JobStatus.FAILED)
+        TaskScheduler.stop(job_id=request.json.get('job_id', ''), end_status=JobStatus.FAILED)
         return get_json_result(retcode=0, retmsg='kill job success')
     return get_json_result(retcode=0, retmsg='cancel job success')
 
@@ -73,6 +75,20 @@ def query_job():
     if not jobs:
         return get_json_result(retcode=101, retmsg='find job failed')
     return get_json_result(retcode=0, retmsg='success', data=[job.to_json() for job in jobs])
+
+
+@manager.route('/update', methods=['POST'])
+def job_update():
+    job_info = request.json
+    jobs = job_utils.query_job(job_id=job_info['job_id'], party_id=job_info['party_id'], role=job_info['role'])
+    if not jobs:
+        return get_json_result(retcode=101, retmsg='find job failed')
+    else:
+        job = jobs[0]
+        TaskScheduler.sync_job_status(job_id=job.f_job_id, roles={job.f_role: [job.f_party_id]},
+                                      work_mode=job.f_work_mode, initiator_party_id=job.f_party_id,
+                                      initiator_role=job.f_role, job_info={'f_description': job_info.get('notes', '')})
+        return get_json_result(retcode=0, retmsg='success')
 
 
 @manager.route('/config', methods=['POST'])
@@ -116,3 +132,11 @@ def query_task():
     if not tasks:
         return get_json_result(retcode=101, retmsg='find task failed')
     return get_json_result(retcode=0, retmsg='success', data=[task.to_json() for task in tasks])
+
+
+@manager.route('/data/view/query', methods=['POST'])
+def query_data_view():
+    data_views = job_utils.query_data_view(**request.json)
+    if not data_views:
+        return get_json_result(retcode=101, retmsg='find data view failed')
+    return get_json_result(retcode=0, retmsg='success', data=[data_view.to_json() for data_view in data_views])

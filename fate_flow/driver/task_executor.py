@@ -16,6 +16,8 @@
 import argparse
 import importlib
 import os
+import signal
+import time
 import traceback
 
 from arch.api import federation
@@ -35,6 +37,7 @@ from fate_flow.entity.constant_config import TaskStatus
 class TaskExecutor(object):
     @staticmethod
     def run_task():
+        # signal.signal(signal.SIGTERM, job_utils.onsignal_term)
         task = Task()
         task.f_create_time = current_timestamp()
         try:
@@ -58,6 +61,8 @@ class TaskExecutor(object):
             task_id = args.task_id
             role = args.role
             party_id = int(args.party_id)
+            executor_pid = os.getpid()
+            job_utils.task_killed_detector(job_id, role, party_id, component_name, executor_pid)
             task_config = file_utils.load_json_conf(args.config)
             job_parameters = task_config['job_parameters']
             job_initiator = task_config['job_initiator']
@@ -96,7 +101,7 @@ class TaskExecutor(object):
                                module_name=module_name)
             task.f_start_time = current_timestamp()
             task.f_run_ip = get_lan_ip()
-            task.f_run_pid = os.getpid()
+            task.f_run_pid = executor_pid
             run_class_paths = parameters.get('CodePath').split('/')
             run_class_package = '.'.join(run_class_paths[:-2]) + '.' + run_class_paths[-2].replace('.py','')
             run_class_name = run_class_paths[-1]
@@ -129,7 +134,6 @@ class TaskExecutor(object):
         finally:
             sync_success = False
             try:
-                session.stop()
                 task.f_end_time = current_timestamp()
                 task.f_elapsed = task.f_end_time - task.f_start_time
                 task.f_update_time = current_timestamp()
@@ -145,6 +149,15 @@ class TaskExecutor(object):
         schedule_logger().info(
             'finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status if sync_success else TaskStatus.FAILED))
         print('finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status if sync_success else TaskStatus.FAILED))
+        while True:
+            time.sleep(0.5)
+            kill_path = os.path.join(job_utils.get_job_directory(job_id), str(role), str(party_id), component_name, 'kill')
+            if os.path.exists(kill_path):
+                try:
+                    session.stop()
+                except Exception as e:
+                    pass
+                break
 
     @staticmethod
     def get_task_run_args(job_id, role, party_id, job_parameters, job_args, input_dsl):

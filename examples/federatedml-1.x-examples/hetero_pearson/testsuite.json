@@ -1,0 +1,76 @@
+{
+  "data": [
+    {
+      "file": "examples/data/breast_b.csv",
+      "head": 1,
+      "partition": 10,
+      "work_mode": 0,
+      "table_name": "hetero_breast_b",
+      "namespace": "hetero_breast_guest",
+      "role": "guest_0"
+    },
+    {
+      "file": "examples/data/breast_a.csv",
+      "head": 1,
+      "partition": 10,
+      "work_mode": 0,
+      "table_name": "hetero_breast_a",
+      "namespace": "hetero_breast_host",
+      "role": "host_0"
+    },
+    {
+      "file": "examples/data/vehicle_scale_b.csv",
+      "head": 1,
+      "partition": 10,
+      "work_mode": 0,
+      "table_name": "hetero_vehicle_b",
+      "namespace": "hetero_guest_vehicle",
+      "role": "guest_0"
+    },
+    {
+      "file": "examples/data/vehicle_scale_a.csv",
+      "head": 1,
+      "partition": 10,
+      "work_mode": 0,
+      "table_name": "hetero_vehicle_a",
+      "namespace": "hetero_host_vehicle",
+      "role": "host_0"
+    }
+  ],
+  "tasks": {
+    "pearson": {
+      "conf": "./test_conf.json",
+      "dsl": "./test_dsl.json",
+      "substitutes": {
+        "vehicle": {
+          "role_parameters": {
+            "guest": {
+              "args": {
+                "data": {
+                  "data": [
+                    {
+                      "name": "hetero_vehicle_b",
+                      "namespace": "hetero_guest_vehicle"
+                    }
+                  ]
+                }
+              }
+            },
+            "host": {
+              "args": {
+                "data": {
+                  "data": [
+                    {
+                      "name": "hetero_vehicle_a",
+                      "namespace": "hetero_host_vehicle"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
