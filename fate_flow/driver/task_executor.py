@@ -157,7 +157,7 @@ class TaskExecutor(object):
                     session.stop()
                 except Exception as e:
                     schedule_logger(job_id).exception(e)
-                break
+                os.kill(executor_pid, 9)
 
     @staticmethod
     def get_task_run_args(job_id, role, party_id, job_parameters, job_args, input_dsl):
