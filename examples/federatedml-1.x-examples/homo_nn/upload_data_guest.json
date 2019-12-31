@@ -1,8 +1,0 @@
-{
-  "file": "examples/data/vehicle_scale_homo_guest.csv",
-  "head": 1,
-  "partition": 10,
-  "work_mode": 0,
-  "table_name": "homo_guest",
-  "namespace": "vehicle_scale"
-}

@@ -14,7 +14,7 @@ FATE (Federated AI Technology Enabler) is an open-source project initiated by We
 
 *  Join our maillist [Fate-FedAI Group IO](https://groups.io/g/Fate-FedAI). You can ask questions and participate in the development discussion.
 
-*  For any frequently asked questions, you can check in [FAQ](https://github.com/FederatedAI/FATE/wiki/FATE-FAQ).  
+*  For any frequently asked questions, you can check in [FAQ](https://github.com/FederatedAI/FATE/wiki).
 
 *  Please report bugs by submitting [issues](https://github.com/FederatedAI/FATE/issues). 
 

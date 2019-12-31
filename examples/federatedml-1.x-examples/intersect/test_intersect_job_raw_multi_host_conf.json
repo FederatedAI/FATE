@@ -53,7 +53,7 @@
   },
   "algorithm_parameters": {
       "intersect_0": {
-          "intersect_method": "rsa",
+          "intersect_method": "raw",
           "sync_intersect_ids": true,
           "only_output_key": true,
           

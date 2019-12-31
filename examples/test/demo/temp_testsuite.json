@@ -18,13 +18,13 @@
         }
   ],
   "tasks": {
-    "union": {
-      "conf": "test_union_job_conf.json",
-      "dsl": "test_union_job_dsl.json"
+    "lr": {
+      "conf": "train_job_conf.json",
+      "dsl": "train_job_dsl.json"
     },
-    "union-basic": {
-      "conf": "test_union_basic_job_conf.json",
-      "dsl": "test_union_basic_job_dsl.json"
+    "lr-predict": {
+      "conf": "predict_conf.json",
+      "deps": "lr"
     }
   }
 }

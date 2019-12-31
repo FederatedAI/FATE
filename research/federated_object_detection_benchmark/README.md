@@ -5,13 +5,13 @@ We present a real-world image dataset, reflecting the characteristic real-world 
 
 ## Resources
 * Dataset: [dataset.fedai.org](https://dataset.fedai.org)
-* Paper: ["Real-World Image Datasets for Federated Learning"]()
+* Paper: ["Real-World Image Datasets for Federated Learning"](https://arxiv.org/abs/1910.11089)
 
 ### Street_Dataset
 * Overview: Image Dataset
 * Details: 7 different classes, 956 images with pixels of 704 by 576, 5 or 20 devices
 * Task: Object detection for federated learning
-* [Dataset_description.md](https://github.com/jiahuanluo/Federated-Benchmark/blob/master/Dataset_description.md)
+* [Dataset_description.md](https://github.com/FederatedAI/FATE/blob/master/research/federated_object_detection_benchmark/README.md)
 
 ## Getting Started
 We implemented two mainstream object detection algorithms (YOLOv3 and Faster R-CNN). Code for YOLOv3 is borrowed from  [PyTorch-YOLOv3](https://github.com/eriklindernoren/PyTorch-YOLOv3.git) and Faster R-CNN from [simple-faster-rcnn-pytorch](https://github.com/chenyuntc/simple-faster-rcnn-pytorch.git).
@@ -51,3 +51,13 @@ We implemented two mainstream object detection algorithms (YOLOv3 and Faster R-C
     ```bash
     sh ./stop.sh street_5 yolo
     ```
+### Citation
+* If you use this code or dataset for your research, please kindly cite our paper:
+```bash
+@article{luo2019real,
+  title={Real-World Image Datasets for Federated Learning},
+  author={Luo, Jiahuan and Wu, Xueyang and Luo, Yun and Huang, Anbu and Huang, Yunfeng and Liu, Yang and Yang, Qiang},
+  journal={arXiv preprint arXiv:1910.11089},
+  year={2019}
+}
+```

@@ -153,7 +153,11 @@ class TaskExecutor(object):
             time.sleep(0.5)
             kill_path = os.path.join(job_utils.get_job_directory(job_id), str(role), str(party_id), component_name, 'kill')
             if os.path.exists(kill_path):
-                break
+                try:
+                    session.stop()
+                except Exception as e:
+                    schedule_logger(job_id).exception(e)
+                os.kill(executor_pid, 9)
 
     @staticmethod
     def get_task_run_args(job_id, role, party_id, job_parameters, job_args, input_dsl):

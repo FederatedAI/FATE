@@ -19,19 +19,16 @@
   ],
   "tasks": {
     "poisson": {
-      "conf": "examples/federatedml-1.x-examples/hetero_poisson_regression/test_hetero_poisson_train_job_conf.json",
-      "dsl": "examples/federatedml-1.x-examples/hetero_poisson_regression/test_hetero_poisson_train_job_dsl.json",
-      "type": "train"
+      "conf": "test_hetero_poisson_train_job_conf.json",
+      "dsl": "test_hetero_poisson_train_job_dsl.json"
     },
     "poisson-predict": {
-      "conf": "examples/federatedml-1.x-examples/hetero_poisson_regression/test_predict_conf.json",
-      "task": "poisson",
-      "type": "predict"
+      "conf": "test_predict_conf.json",
+      "deps": "poisson"
     },
     "poisson-cv": {
-      "conf": "examples/federatedml-1.x-examples/hetero_poisson_regression/test_hetero_poisson_cv_job_conf.json",
-      "dsl": "examples/federatedml-1.x-examples/hetero_poisson_regression/test_hetero_poisson_cv_job_dsl.json",
-      "type": "train"
+      "conf": "test_hetero_poisson_cv_job_conf.json",
+      "dsl": "test_hetero_poisson_cv_job_dsl.json"
     }
   }
 }
