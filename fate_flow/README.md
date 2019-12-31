@@ -71,7 +71,10 @@ Key configuration item description:
 | HTTP_PORT | listen port for the http server of FATE-Flow | default 9380 |
 | WORK_MODE | the work mode of FATE-Flow | 0 for standalone, 1 for cluster |
 | USE_LOCAL_DATABASE | Whether to use a local database(sqlite) | False for no, True for yes |
+| USE_AUTHENTICATION | Whether to enable authentication | False for no, True for yes |
+| USE_CONFIGURATION_CENTER  | Whether to use zookeeper | False for no, True for yes |
 | MAX_CONCURRENT_JOB_RUN | Pipeline jobs that are executed in parallel at the same time | default 5 |
+| MAX_CONCURRENT_JOB_RUN_HOST | Maximum running jobs | default 10 |
 | DATABASE | configuration for mysql database | custom configuration |
 | REDIS | configuration for redis | custom configuration |
 | REDIS_QUEUE_DB_INDEX | the redis db index of redis queue | default 0 |
@@ -116,10 +119,6 @@ You need to deploy three service:
 
 FATE provides a standalone version of the docker for experience.please refer to docker version deploy guide at [docker-deploy](../standalone-deploy/docker).
 
-##### **Manual version**
-
-FATE provides a tar package with basic components to enable users to run FATE in a stand-alone environment, in which users are required to install dependent components on their own.please refer to manual deploy guide at [manual-deploy](../standalone-deploy/Manual). 
-
 ##### **Configuration**
 | Configuration item | Configuration item value |
 | - | - |
@@ -137,7 +136,7 @@ FATE provides a tar package with basic components to enable users to run FATE in
 
 ### Cluster
 FATE also provides a distributed runtime architecture for Big Data scenario. Migration from standalone to cluster requires configuration change only. No algorithm change is needed. 
-To deploy FATE on a cluster, please refer to cluster deploy guide at [cluster-deploy](../cluster-deploy). 
+To deploy FATE on a cluster, please refer to cluster deploy guide at [cluster-deploy](./../cluster-deploy). 
 
 ##### **Configuration**
 | Configuration item | Configuration item value |
@@ -196,7 +195,7 @@ python fate_flow_client.py -f query_job -r guest -p 10000 -j $job_id
 ```
 And then, you can found so many useful command from [**CLI**](./doc/fate_flow_cli.md).
 
-##### For more Federated Learning pipeline Job example, please refer at [**federatedml-1.0-examples**](../examples/federatedml-1.0-examples) and it's [**README**](../examples/federatedml-1.0-examples/README.md)
+##### For more Federated Learning pipeline Job example, please refer at [**federatedml-1.x-examples**](./../examples/federatedml-1.x-examples) and it's [**README**](./../examples/federatedml-1.x-examples/README.md)
 
 
 
@@ -212,7 +211,7 @@ After that, you can make online inference request to FATE-Serving by specifying 
 
 #### Publish Model Online Default
 ```bash
-python fate_flow_client.py -f online -c examples/publish_online_model.json
+python fate_flow_client.py -f bind -c examples/bind_model_service.json
 ```
 Please replace the corresponding configuration in ``publish_online_model.json`` with your job configuration.
 After that, the FATE-Serving uses the configuration you provided to set the party's default model id and the default model version that involves the model id.
