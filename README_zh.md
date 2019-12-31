@@ -28,21 +28,34 @@ FATE目前支持三种联邦学习算法：横向联邦学习、纵向联邦学�
 
 ## 安装教程
 
-FATE支持Linux或Mac操作系统，并根据不同的应用场景分为单机部署以及集群部署。
+FATE支持Linux或Mac操作系统，当前FATE支持：
 
+* Native部署: 单机部署和集群部署;
+
+* KubeFATE部署
+
+### Native部署
 运行环境: jdk1.8+、Python3.6、python virtualenv、mysql5.6+、redis-5.0.2
-
-#### 单机部署
+##### 单机部署
 
 FATE为开发人员提供了单机部署架构版本。单机部署版本可以帮助开发人员快速开发以及测试FATE。该版本支持两种类型：1）Docker；2）手动编译。
 
 具体细节请参阅单机部署指南：[standalone-deploy](./standalone-deploy/)。
 
-#### 集群部署
+##### 集群部署
 
 FATE同样为大数据场景提供了分布式运行部署架构版本。从单机部署迁移到集群部署仅需要更改配置文件，不需要更改算法。
 
 具体细节请参阅集群部署指南：[cluster-deploy](./cluster-deploy)。
+
+### KubeFATE部署:
+通过 KubeFATE, 我们可以使用 docker-compose或者 Kubernetes方式部署FATE:
+
+* 如果是开发或者测试场景, 推荐使用docker-compose部署方式. 这种模式仅仅需要 Docker 环境。 更多细节请参考 [FATE Docker Compose部署](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy).
+
+* 如果生产环境或者大规模部署, 推荐使用Kubernetes方式来管理FATE系统 。更多细节请参考[ FATE Kubernetes部署](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy).
+
+更多使用说明请见[KubeFATE](https://github.com/FederatedAI/KubeFATE)。
 
 ## 运行测试
 
