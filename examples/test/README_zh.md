@@ -22,14 +22,14 @@ default_env.json环境文件，根据用户实际情况指明所需要的环境�
 
 互斥可选参数
  
-  "-d", "--dir"  指定多个任务所在的根目录
+  "-d", "--dir"  更改任务文件的根目录，位于该目录下的任务文件会执行
 
   "-s", "--suite" 指定执行某个任务文件
 
 2.执行规则
 ---------
-在没有指定name参数的情况下，测试工具执行的任务为examples/federatedml-1.x-examples文件夹中以testsuite.json为后缀的任务文件。<br>
-指定后，测试工具执行的任务为examples/federatedml-1.x-examples文件夹中以name参数为后缀的任务文件。<br>
+在没有指定-d或者-s参数的情况下，测试工具执行的任务为examples/federatedml-1.x-examples文件夹中以testsuite.json为后缀的任务文件。<br>
+指定-d或者-s参数后，测试工具执行的任务-d指定的目录下以testsuite.json为后缀的任务文件或者-s指定的单一任务文件<br>
 一个testsuite.json任务文件样例已经给出。<br>
 examples/test/demo/temp_testsuite.json<br>
 在temp_testsuite.json中包括一个训练和一个预测任务。<br>
