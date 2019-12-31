@@ -12,9 +12,6 @@
     ],
     "host": [
       10000
-    ],
-    "arbiter": [
-      10000
     ]
   },
   "role_parameters": {
@@ -80,10 +77,10 @@
     "hetero_nn_0": {
       "config_type": "keras",
       "batch_size": -1,
-      "interactive_layer_lr": 0.05,
+      "interactive_layer_lr": 0.15,
       "optimizer": {
         "optimizer": "SGD",
-        "learning_rate": 0.05
+        "learning_rate": 0.15
       },
       "early_stop": "diff",
       "loss": "binary_crossentropy",
@@ -91,7 +88,7 @@
         "accuracy",
         "AUC"
       ],
-      "epochs": 1
+      "epochs": 500
     }
   }
 }
