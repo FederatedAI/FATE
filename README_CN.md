@@ -58,7 +58,7 @@ FATE同样为大数据场景提供了分布式运行部署架构版本。从单�
 
 ### 快速开始
 
-我们提供了一个用于快速搭建训练任务的python脚本作为示例。该脚本位于：["./examples/federatedml-1.0-examples"](./examples/federatedml-1.0-examples)
+我们提供了一个用于快速搭建训练任务的python脚本作为示例。该脚本位于：["./examples/federatedml-1.x-examples"](./examples/federatedml-1.x-examples)
 
 #### 单机部署版本
 1. 启动单机部署版本的 hetero-lr 任务 (默认)
