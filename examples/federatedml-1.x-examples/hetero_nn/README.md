@@ -1,4 +1,4 @@
-## Hetero SecureBoost Configuration Usage Guide.
+## Hetero NN Configuration Usage Guide.
 
 This section introduces the dsl and conf relationships for usage.
 
