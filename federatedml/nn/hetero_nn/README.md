@@ -91,4 +91,5 @@ Figure 3: Backward Propagation of Federated Heterogeneous Neural Network</div>
 
  
 ## Reference
-[1] Qiao Zhang, Cong Wang, Hongyi Wu, Chunsheng Xin and Tran V. Phuong. GELU-Net: A Globally Encrypted, Locally Unencrypted Deep Neural Network for Privacy-Preserved Learning
+[1] Qiao Zhang, Cong Wang, Hongyi Wu, Chunsheng Xin, Tran V. Phuong. GELU-Net: A Globally Encrypted, Locally Unencrypted Deep Neural Network for Privacy-Preserved Learning. IJCAI 2018: 3933-3939
+[2] Yifei Zhang, Hao Zhu. Deep Neural Network for Collaborative Machine Learning with Additively Homomorphic Encryption.IJCAI FL Workshop 2019
