@@ -22,8 +22,8 @@ Optional parameters<br>
 
 2.Tips
 ------
-If name is not given,the script will execute the tasks defined in task files from examples/federatedml-1.x-examples folder with a "testsuite.json" suffix.<br>
-If there is a name parameter,the script will execute the tasks defined in task files from examples/federatedml-1.x-examples folder with a suffix given by name.
+If '-d' or '-s' is not given,the script will execute the tasks defined in task files from examples/federatedml-1.x-examples folder with a "testsuite.json" suffix.<br>
+If there is a '-d' or '-s' parameter,the script will execute the tasks defined in task files from examples/federatedml-1.x-examples folder with a suffix given by '-d' or a single task file given by '-s'.
 An example task file is given in examples/test/demo/temp_testsuite.json including a training and a prediction task. <br>
 
 3.Config files
