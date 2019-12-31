@@ -9,7 +9,7 @@ python run_test.py default_env.json<br>
 run_test.py  search and execute tasks defined by users. <br>
 default_env.json environment configs based on users' running environment. <br>
 
-Optional parameters
+Optional parameters<br>
  "-o", "--output", "file to save result, defaults to `test_result`" <br>
  "-e", "--error", "file to save error" <br>
  "-i", "--interval", "check job status every i seconds, defaults to 3" <br>
