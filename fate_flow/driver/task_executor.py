@@ -153,6 +153,7 @@ class TaskExecutor(object):
             time.sleep(0.5)
             kill_path = os.path.join(job_utils.get_job_directory(job_id), str(role), str(party_id), component_name, 'kill')
             if os.path.exists(kill_path):
+                session.stop()
                 break
 
     @staticmethod
