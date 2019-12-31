@@ -5,7 +5,7 @@
 ------
 进入examples/test文件夹。<br>
 
-执行命令python run_test.py env.json <br>
+执行命令python run_test.py default_env.json <br>
 
 run_test.py执行测试文件，搜寻并执行测试任务。<br>
 env.json环境文件，根据用户实际情况指明所需要的环境配置。<br>  
@@ -37,7 +37,7 @@ examples/test/temp_testsuite.json<br>
 3.文件说明
 -----------
 env.json<br>
-"role"指明角色id，包括host，guest，以及arbite。r<br>
+"role"指明角色id，包括host，guest，以及arbiter.<br>
 "ip_map"构建角色与实际ip的映射，本地为-1，远程的主机为实际的ip地址。<br>
 
 testsuite.json<br>
@@ -64,7 +64,7 @@ Instructions of test tools
 ------
 Execute commands<br>
 cd examples/test<br>
-python run_test.py env.json<br>
+python run_test.py default_env.json<br>
 
 run_test.py  search and execute tasks defined by users. <br>
 env.json environment configs based on users' running environment. <br>
