@@ -384,7 +384,7 @@ def task_killed_detector(job_id, role, party_id, component_name, pid):
         try:
             session.stop()
         except Exception as e:
-            stat_logger.exception(e)
+            pass
         kill_process(int(pid), only_child=True)
         os.kill(int(pid), 9)
         kill_process(int(pid), only_child=False)
