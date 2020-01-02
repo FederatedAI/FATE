@@ -17,7 +17,6 @@
 #
 set -e
 set -x
-version=1.2.0
 
 basepath=$(cd `dirname $0`;pwd)
 fatepath=$(cd $basepath/..;pwd)
@@ -78,6 +77,8 @@ else
 fi
 
 cd ${fatepath}
+version=$(grep -E -m 1 -o "<version>(.*)</version>" ${fatepath}/fateboard/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "version" '{print $2}')
+echo ${version}
 
 init() {
     cp -r arch federatedml workflow examples fate_flow research eggroll ${basepath}
