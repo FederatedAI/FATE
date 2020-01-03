@@ -217,14 +217,19 @@ class HeteroStepwise(object):
         self.stop_stepwise = self.transfer_variable.stop_stepwise.get(suffix=(self.n_step,))
 
     def arbiter_sync_step_info(self, host_masks, guest_masks):
-        self.transfer_variable.host_step_info.remote((self.step_direction, self.n_step, host_masks))
-        self.transfer_variable.guest_step_info.remote((self.step_direction, self.n_step, guest_masks))
+        self.transfer_variable.host_step_info.remote((self.step_direction, self.n_step, host_masks),
+                                                     suffix=(self.step_direction, self.n_step))
+        self.transfer_variable.guest_step_info.remote((self.step_direction, self.n_step, guest_masks),
+                                                    suffix=(self.step_direction, self.n_step))
+        LOGGER.debug("Arbiter sent step info {} {} to host.".format(self.step_direction, self.n_step))
 
     def client_sync_step_info(self):
         if self.role == consts.HOST:
-            return self.transfer_variable.host_step_info.get()
+            LOGGER.info("Host receives step info {} {} from Arbiter.".format(self.step_direction, self.n_step))
+            return self.transfer_variable.host_step_info.get(suffix=(self.step_direction, self.n_step))
         elif self.role == consts.GUEST:
-            return self.transfer_variable.guest_step_info.get()
+            LOGGER.info("Guest receives step info {} {} from Arbiter.".format(self.step_direction, self.n_step))
+            return self.transfer_variable.guest_step_info.get(suffix=(self.step_direction, self.n_step))
         else:
             raise ValueError("unknown role {} encountered!".format(self.role))
 

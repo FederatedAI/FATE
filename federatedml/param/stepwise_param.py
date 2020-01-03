@@ -57,15 +57,13 @@ class StepwiseParam(BaseParam):
     """
 
     def __init__(self, score_name="AIC", mode=consts.HETERO, role=consts.GUEST, direction="both",
-                 max_step=10, p_enter=0.05, p_remove=0.10, need_stepwise=False):
+                 max_step=10, need_stepwise=False):
         super(StepwiseParam, self).__init__()
         self.score_name = score_name
         self.mode = mode
         self.role = role
         self.direction = direction
         self.max_step = max_step
-        self.p_enter = p_enter
-        self.p_remove = p_remove
         self.need_stepwise = need_stepwise
 
     def check(self):
@@ -75,6 +73,4 @@ class StepwiseParam(BaseParam):
         self.check_valid_value(self.role, model_param_descr, valid_values=[consts.HOST, consts.GUEST, consts.ARBITER])
         self.check_and_change_lower(self.direction, ["forward", "backward", "both"], model_param_descr)
         self.check_positive_integer(self.max_step, model_param_descr)
-        self.check_decimal_float(self.p_enter, model_param_descr)
-        self.check_decimal_float(self.p_remove, model_param_descr)
         self.check_boolean(self.need_stepwise, model_param_descr)
