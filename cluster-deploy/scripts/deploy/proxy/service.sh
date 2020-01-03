@@ -18,12 +18,12 @@
 
 export JAVA_HOME=
 export PATH=$JAVA_HOME/bin:$PATH
-
+basepath=`pwd`
 module=proxy
 main_class=com.webank.ai.fate.networking.Proxy
 
 getpid() {
-    pid=`ps aux | grep ${main_class} | grep -v grep | awk '{print $2}'`
+    pid=`ps aux | grep ${main_class} | grep ${basepath} | grep -v grep | awk '{print $2}'`
 
     if [[ -n ${pid} ]]; then
         return 1
@@ -54,7 +54,7 @@ start() {
     getpid
     if [[ $? -eq 0 ]]; then
         mklogsdir
-        java -cp "conf/:lib/*:fate-${module}.jar" ${main_class} -c conf/${module}.properties >> logs/console.log 2>>logs/error.log &
+        java -cp "conf/:lib/*:fate-${module}.jar" ${main_class} -c ${basepath}/conf/${module}.properties >> logs/console.log 2>>logs/error.log &
         if [[ $? -eq 0 ]]; then
             sleep 2
             getpid
