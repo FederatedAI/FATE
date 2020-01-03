@@ -23,13 +23,7 @@ module=proxy
 main_class=com.webank.ai.fate.networking.Proxy
 
 getpid() {
-    pid=`ps aux | grep ${main_class} | grep ${basepath} | grep -v grep | awk '{print $2}'`
-
-    if [[ -n ${pid} ]]; then
-        return 1
-    else
-        return 0
-    fi
+    echo $(ps aux | grep ${main_class} | grep ${basepath} | grep -v grep | awk '{print $2}') > ${module}_pid
 }
 
 mklogsdir() {
@@ -40,6 +34,7 @@ mklogsdir() {
 
 status() {
     getpid
+    pid=`cat ${module}_pid`
     if [[ -n ${pid} ]]; then
         echo "status:
         `ps aux | grep ${pid} | grep -v grep`"
@@ -52,12 +47,14 @@ status() {
 
 start() {
     getpid
-    if [[ $? -eq 0 ]]; then
+    pid=`cat ${module}_pid`
+    if [[ ${pid} == "" ]]; then
         mklogsdir
         java -cp "conf/:lib/*:fate-${module}.jar" ${main_class} -c ${basepath}/conf/${module}.properties >> logs/console.log 2>>logs/error.log &
         if [[ $? -eq 0 ]]; then
             sleep 2
             getpid
+            pid=`cat ${module}_pid`
             echo "service start sucessfully. pid: ${pid}"
         else
             echo "service start failed"
@@ -69,6 +66,7 @@ start() {
 
 stop() {
     getpid
+    pid=`cat ${module}_pid`
     if [[ -n ${pid} ]]; then
         echo "killing:
         `ps aux | grep ${pid} | grep -v grep`"

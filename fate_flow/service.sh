@@ -23,7 +23,7 @@ basepath=`pwd`
 module=fate_flow_server.py
 
 getpid() {
-    pid=`ps aux | grep ${module} | grep ${basepath} | grep -v grep | awk '{print $2}'`
+    echo $(ps aux | grep ${module} | grep ${basepath} | grep -v grep | awk '{print $2}') > fateflow_pid
 }
 
 mklogsdir() {
@@ -34,6 +34,7 @@ mklogsdir() {
 
 status() {
     getpid
+    pid=`cat fateflow_pid`
     if [[ -n ${pid} ]]; then
         echo "status:`ps aux | grep ${pid} | grep -v grep`"
     else
@@ -44,12 +45,14 @@ status() {
 start() {
     sleep 8
     getpid
+    pid=`cat fateflow_pid`
     if [[ ${pid} == "" ]]; then
         mklogsdir
         source ${venv}/bin/activate
         nohup python $(echo ${PYTHONPATH} | awk -F":" '{print $1}')/fate_flow/fate_flow_server.py >> "${log_dir}/console.log" 2>>"${log_dir}/error.log" &
         sleep 6
         getpid
+        pid=`cat fateflow_pid`
         if [[ -n ${pid} ]]; then 
            echo "service start sucessfully. pid: ${pid}"
         else
@@ -62,6 +65,7 @@ start() {
 
 stop() {
     getpid
+    pid=`cat fateflow_pid`
     if [[ -n ${pid} ]]; then
         echo "killing:
         `ps aux | grep ${pid} | grep -v grep`"
