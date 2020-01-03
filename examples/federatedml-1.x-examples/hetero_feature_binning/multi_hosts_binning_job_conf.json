@@ -11,7 +11,7 @@
       9999
     ],
     "host": [
-      10000, 10001, 10002
+      10000, 10001
     ]
   },
   "role_parameters": {
@@ -52,20 +52,16 @@
             {
               "name": "hetero_breast_a",
               "namespace": "hetero_breast_host"
-            },
-            {
-              "name": "hetero_breast_a",
-              "namespace": "hetero_breast_host"
             }
           ]
         }
       },
       "dataio_0": {
         "with_label": [
-          false, false, false
+          false, false
         ],
         "output_format": [
-          "dense", "dense", "dense"
+          "dense", "dense"
         ]
       }
     }
