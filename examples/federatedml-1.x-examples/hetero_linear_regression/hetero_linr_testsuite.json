@@ -15,6 +15,14 @@
           "table_name": "motor_mini_a",
           "namespace": "motor_mini",
           "role": "host_0"
+        },
+      {
+          "file": "examples/data/motor_mini_a.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "motor_mini_a",
+          "namespace": "motor_mini",
+          "role": "host_1"
         }
   ],
   "tasks": {
