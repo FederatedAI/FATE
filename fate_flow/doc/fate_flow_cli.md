@@ -103,7 +103,7 @@ python fate_flow_client.py -f query_task -j $job_id
     * -r --role: role, Required
     * -p --party_id: party id, Required
 ```bash
-python fate_flow_client.py -f component_parameters -j $job_id -r $role -g $guest -cpn $component_name
+python fate_flow_client.py -f component_parameters -j $job_id -r $role -p $party_id -cpn $component_name
 ```
 
 
@@ -115,7 +115,7 @@ python fate_flow_client.py -f component_parameters -j $job_id -r $role -g $guest
     * -r --role: role, Required
     * -p --party_id: party id, Required
 ```bash
-python fate_flow_client.py -f component_metric_all -j $job_id -r $role -g $guest -cpn $component_name
+python fate_flow_client.py -f component_metric_all -j $job_id -r $role -p $party_id -cpn $component_name
 ```
 
 
@@ -127,7 +127,7 @@ python fate_flow_client.py -f component_metric_all -j $job_id -r $role -g $guest
     * -r --role: role, Required
     * -p --party_id: party id, Required
 ```bash
-python fate_flow_client.py -f component_metrics -j $job_id -r $role -g $guest -cpn $component_name
+python fate_flow_client.py -f component_metrics -j $job_id -r $role -p $party_id -cpn $component_name
 ```
 
 
@@ -140,7 +140,7 @@ python fate_flow_client.py -f component_metrics -j $job_id -r $role -g $guest -c
     * -r --role: role, Required
     * -p --party_id: party id, Required
 ```bash
-python fate_flow_client.py -f component_output_model -j $job_id -r $role -g $guest -cpn $component_name
+python fate_flow_client.py -f component_output_model -j $job_id -r $role -p $party_id -cpn $component_name
 ```
 
 
@@ -155,7 +155,7 @@ python fate_flow_client.py -f component_output_model -j $job_id -r $role -g $gue
     * -o  --output_path: config output path, Required
     * -limit  --limit: Limit quantity, Optional
 ```bash
-python fate_flow_client.py -f component_output_model -j $job_id -r $role -g $guest -cpn $component_name -o $output_path
+python fate_flow_client.py -f component_output_model -j $job_id -r $role -p $party_id -cpn $component_name -o $output_path
 ```
 
 
