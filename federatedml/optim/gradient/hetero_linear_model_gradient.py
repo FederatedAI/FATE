@@ -53,14 +53,12 @@ def __compute_partition_gradient(data, fit_intercept=True, is_sparse=False):
         feature_num = features.get_shape()
         gradient = [0] * feature_num
         for idx, v in features.get_all_data():
-            tmp = d * v
-            gradient[idx] = gradient[idx] + tmp
+            gradient[idx] = gradient[idx] + d * v
 
         for key, value in data:
             fore_gradient.append(value[1])
             for idx, v in value[0].get_all_data():
-                tmp = value[1] * v
-                gradient[idx] = gradient[idx] + tmp
+                gradient[idx] = gradient[idx] + value[1] * v
 
         for i in range(feature_num):
             if gradient[i] == 0 :
