@@ -149,7 +149,7 @@ install(){
     ln -s eggroll-${module_name}-${egg_version}.jar eggroll-${module_name}.jar
     mv ./services.sh ${deploy_dir}/
     
-    cpu_processor_count=i$(cat /proc/cpuinfo |grep "processor"|wc -l)
+    cpu_processor_count=$(cat /proc/cpuinfo |grep "processor"|wc -l)
     if [[ ${cpu_processor_count} -lt 16 ]]
     then
         sed -i "s#eggroll.computing.processor.session.max.count=.*#eggroll.computing.processor.session.max.count=${cpu_processor_count}#g" ${deploy_dir}/${module_name}/conf/egg.properties
