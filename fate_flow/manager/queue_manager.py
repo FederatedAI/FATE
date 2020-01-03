@@ -174,7 +174,7 @@ class ListQueue(BaseQueue):
             ret = self.dell(event)
             stat_logger.info('delete event from redis queue {}: {}'.format('successfully' if ret else 'failed', event))
         except Exception as e:
-            stat_logger.info('delete event from  queue failed:{}'.format(e))
+            stat_logger.info('delete event from  queue failed:{}'.format(str(e)))
             raise Exception('{} not in ListQueue'.format(event))
 
     def dell(self, event):

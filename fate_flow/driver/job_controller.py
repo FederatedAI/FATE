@@ -253,9 +253,12 @@ class JobController(object):
             event = job_utils.job_event(job.f_job_id,
                                         job_runtime_conf['initiator']['role'],
                                         job_runtime_conf['initiator']['party_id'])
-            RuntimeConfig.JOB_QUEUE.del_event(event)
-
+            try:
+                RuntimeConfig.JOB_QUEUE.del_event(event)
+            except:
+                return False
             schedule_logger(job_id).info('cancel waiting job successfully, job id is {}'.format(job.f_job_id))
+            return True
         else:
             raise Exception('role {} party_id {} cancel waiting job failed, no find jod {}'.format(role, party_id, job_id))
 
