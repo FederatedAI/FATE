@@ -13,9 +13,9 @@ Before sending your pull requests, make sure you followed this list.
 - Read [Code of Conduct](CODE_OF_CONDUCT.md).
 - Follow the instruction of [develop guide](./doc/develop_guide.md)
 - Ensure you have signed the [Developer Certificate of Origin (DCO)](https://developercertificate.org/).
-- Check if my changes are consistent with the [guidelines](todo).
+- Check if my changes are consistent with the [guidelines](https://github.com/FederatedAI/FATE/blob/master/CONTRIBUTING.md#contributing-to-fate).
 - Changes are consistent with the [PEP.8 Python Coding Style](https://www.python.org/dev/peps/pep-0008/).
-- Run [Unit Tests](todo).
+- Run [unit tests and write examples](https://github.com/FederatedAI/FATE/blob/master/CONTRIBUTING.md#contribution-guidelines-and-standards).
 
 
 ## Contributing to FATE
