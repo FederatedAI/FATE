@@ -128,9 +128,12 @@ class TaskExecutor(object):
             tracker.save_output_model(output_model, task_output_dsl['model'][0] if task_output_dsl.get('model') else 'default')
             task.f_status = TaskStatus.SUCCESS
         except Exception as e:
-            traceback.print_exc()
-            schedule_logger().exception(e)
             task.f_status = TaskStatus.FAILED
+            kill_path = os.path.join(job_utils.get_job_directory(job_id), str(role), str(party_id), component_name,
+                                     'kill')
+            if not os.path.exists(kill_path):
+                traceback.print_exc()
+                schedule_logger().exception(e)
         finally:
             sync_success = False
             try:

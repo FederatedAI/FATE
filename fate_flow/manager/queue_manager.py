@@ -87,8 +87,7 @@ class RedisQueue(BaseQueue):
             if not ret:
                 raise Exception('job not in redis queue')
         except Exception as e:
-            stat_logger.error('delete event from redis queue failed')
-            stat_logger.exception(e)
+            stat_logger.info('delete event from redis queue failed:{}'.format(str(e)))
             raise Exception('delete event from redis queue failed')
 
     def parse_event(self, content):
@@ -175,8 +174,7 @@ class ListQueue(BaseQueue):
             ret = self.dell(event)
             stat_logger.info('delete event from redis queue {}: {}'.format('successfully' if ret else 'failed', event))
         except Exception as e:
-            stat_logger.error('delete event from  queue failed')
-            stat_logger.exception(e)
+            stat_logger.info('delete event from  queue failed:{}'.format(e))
             raise Exception('{} not in ListQueue'.format(event))
 
     def dell(self, event):
