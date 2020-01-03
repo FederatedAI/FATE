@@ -19,11 +19,11 @@
 export PYTHONPATH=
 log_dir="$(echo ${PYTHONPATH} | awk -F":" '{print $1}')/logs"
 venv=
-
+basepath=`pwd`
 module=fate_flow_server.py
 
 getpid() {
-    pid=`lsof -i:9380 | awk 'NR==2{print $2}'`
+    pid=`ps aux | grep ${module} | grep ${basepath} | grep -v grep | awk '{print $2}'`
 }
 
 mklogsdir() {
