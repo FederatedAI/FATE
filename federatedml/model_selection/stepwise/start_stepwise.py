@@ -29,7 +29,7 @@ def _get_stepwise_param(model):
     return model.model_param.cv_param
 
 
-def run(model, train_data, test_data):
+def run(model, train_data, test_data=None):
     if not model.need_run:
         return train_data
     if model.mode == consts.HETERO:

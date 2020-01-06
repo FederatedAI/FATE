@@ -20,6 +20,7 @@ from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.model_selection import start_cross_validation
+from federatedml.model_selection.stepwise import start_stepwise
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.optim.initialize import Initializer
 from federatedml.optim.optimizer import optimizer_factory
@@ -125,6 +126,9 @@ class BaseLinearModel(ModelBase):
 
     def cross_validation(self, data_instances):
         return start_cross_validation.run(self, data_instances)
+
+    def stepwise(self, data_instances):
+        return start_stepwise.run(self, data_instances)
 
     def _get_cv_param(self):
         self.model_param.cv_param.role = self.role
