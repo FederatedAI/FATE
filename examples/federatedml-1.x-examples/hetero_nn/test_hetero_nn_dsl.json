@@ -13,12 +13,25 @@
                 "data": ["data"]
             }
          },
+        "intersection_0": {
+            "module": "Intersection",
+            "input": {
+                "data": {
+                    "data": [
+                        "dataio_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["data"]
+            }
+        },
         "hetero_nn_0": {
             "module": "HeteroNN",
             "input": {
                 "data": {
                     "train_data": [
-                        "dataio_0.data"
+                        "intersection_0.data"
                     ]
                 }
             },
@@ -32,7 +45,7 @@
             "input": {
                 "data": {
                     "eval_data": [
-                        "dataio_0.data"
+                        "intersection_0.data"
                     ]
                 },
                 "model": [

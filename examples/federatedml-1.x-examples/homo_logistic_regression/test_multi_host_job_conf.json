@@ -8,7 +8,7 @@
     },
     "role": {
         "guest": [10000],
-        "host": [10000, 10001, 10002],
+        "host": [10000, 10001],
         "arbiter": [10000]
     },
     "role_parameters": {
@@ -24,13 +24,12 @@
                 "data": {
                     "train_data": [
                         {"name": "homo_breast_host", "namespace": "homo_breast_host"},
-                        {"name": "homo_breast_host", "namespace": "homo_breast_host"},
                         {"name": "homo_breast_host", "namespace": "homo_breast_host"}
                     ]
                 }
             },
             "evaluation_0": {
-                "need_run": [false, false, false]
+                "need_run": [false, false]
             }
         }
     },
