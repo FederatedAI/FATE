@@ -26,15 +26,7 @@ module=fateboard
 main_class=org.springframework.boot.loader.JarLauncher
 
 getpid() {
-#    pid=`ps aux | grep ${main_class} | grep -v grep | awk '{print $2}'`
-     pid=$(ps -ef|grep java|grep fateboard.jar|grep -v grep|awk '{print $2}')
-
-
-    if [[ -n ${pid} ]]; then
-        return 1
-    else
-        return 0
-    fi
+     echo $(ps -ef|grep ${basepath} |grep fateboard.jar|grep -v grep|awk '{print $2}') > fateboard_pid
 }
 
 mklogsdir() {
@@ -45,6 +37,7 @@ mklogsdir() {
 
 status() {
     getpid
+    pid=`cat fateboard_pid`
     if [[ -n ${pid} ]]; then
         echo "status:
         `ps aux | grep ${pid} | grep -v grep`"
@@ -57,13 +50,14 @@ status() {
 
 start() {
     getpid
-    if [[ $? -eq 0 ]]; then
+    pid=`cat fateboard_pid`
+    if [[ ${pid} == "" ]]; then
         mklogsdir
-        #nohup $JAVA_HOME/bin/java  -Dspring.config.location=$configpath/application.properties  -Dssh_config_file=$configpath  -Xmx2048m -Xms2048m -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:gc.log -XX:+HeapDumpOnOutOfMemoryError  -jar $basepath/${module}.jar  >/dev/null 2>&1 &
         nohup $JAVA_HOME/bin/java   -Dspring.config.location=$configpath/application.properties -DFATE_DEPLOY_PREFIX=$fatepath/python/logs/  -Dssh_config_file=$basepath/ssh/  -Xmx2048m -Xms2048m -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:gc.log -XX:+HeapDumpOnOutOfMemoryError  -jar $basepath/${module}.jar  >/dev/null 2>&1 &
         if [[ $? -eq 0 ]]; then
             sleep 2
             getpid
+            pid=`cat fateboard_pid`
             echo "service start sucessfully. pid: ${pid}"
         else
             echo "service start failed"
@@ -75,6 +69,7 @@ start() {
 
 stop() {
     getpid
+    pid=`cat fateboard_pid`
     if [[ -n ${pid} ]]; then
         echo "killing:
         `ps aux | grep ${pid} | grep -v grep`"
