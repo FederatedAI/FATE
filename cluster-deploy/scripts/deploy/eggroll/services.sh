@@ -41,6 +41,7 @@ main() {
 			main_class=com.webank.ai.eggroll.framework.MetaService
 			;;
 		storage-service-cxx)
+                        main_class=storage-service
 			target=storage-service
 			port=7778
 			dirdata=$installdir/data-dir
@@ -108,7 +109,7 @@ multiple() {
 }
 
 getpid() {
-     echo $(ps aux | grep ${module} | grep ${installdir} | grep -v grep | grep -v $0 | awk '{print $2}') > ${module}/${module}_pid
+     echo $(ps aux | grep ${module} | grep ${main_class} | grep ${installdir} | grep -v grep | grep -v $0 | awk '{print $2}') > ${module}/${module}_pid
 }
 
 status() {
@@ -116,7 +117,7 @@ status() {
     pid=`cat ${module}/${module}_pid`
     if [[ -n ${pid} ]]; then
         echo "status:
-        `ps aux | grep ${pid} | grep ${module} |grep ${installdir} | grep -v grep`"
+        `ps aux | grep ${pid} | grep ${module} | grep ${main_class} |grep ${installdir} | grep -v grep`"
         return 0
     else
         echo "service not running"
@@ -144,12 +145,7 @@ start() {
                    echo "service start failed"
                 fi
     else
-        ps aux | grep ${pid} | grep ${installdir} | grep ${module} | grep -v $0 | grep -v grep
-        if [[ $? -eq 1 ]]; then
-            echo "" > ${module}/${module}_pid
-        else
-           echo "service already started. pid: ${pid}"
-        fi
+         echo "service already started. pid: ${pid}"
     fi
 }
 
@@ -158,7 +154,7 @@ stop() {
     pid=`cat ${module}/${module}_pid`
     if [[ -n ${pid} ]]; then
         echo "killing:
-        `ps aux | grep ${pid} | grep ${installdir} | grep ${module} | grep -v grep`"
+        `ps aux | grep ${pid} | grep ${installdir} | grep ${main_class} |grep ${module} | grep -v grep`"
         kill -9 ${pid}
         if [[ $? -eq 0 ]]; then
             echo "" > ${module}/${module}_pid
