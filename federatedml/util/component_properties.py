@@ -72,7 +72,7 @@ class ComponentProperties(object):
         LOGGER.debug("need_run: {}, need_cv: {}".format(self.need_run, self.need_cv))
 
         try:
-            need_stepwise = param.need_stepwise
+            need_stepwise = param.stepwise_param.need_stepwise
         except AttributeError:
             need_stepwise = False
         self.need_stepwise = need_stepwise
@@ -149,7 +149,7 @@ class ComponentProperties(object):
             return running_funcs
 
         if self.need_stepwise:
-            running_funcs.add_func(model.stepwise, [train_data, eval_data])
+            running_funcs.add_func(model.stepwise, [train_data])
             return running_funcs
 
         if self.has_model or self.has_isometric_model:

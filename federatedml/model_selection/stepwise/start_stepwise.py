@@ -26,7 +26,7 @@ LOGGER = log_utils.getLogger()
 def _get_stepwise_param(model):
     model.model_param.stepwise_param.role = model.role
     model.model_param.stepwise_param.mode = model.mode
-    return model.model_param.cv_param
+    return model.model_param.stepwise_param
 
 
 def run(model, train_data, test_data=None):

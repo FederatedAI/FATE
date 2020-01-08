@@ -71,7 +71,7 @@
       "tol": 1e-3,
       "alpha": 0.01,
       "max_iter": 20,
-      "early_stop": "weight_diff",
+      "early_stop": "loss",
       "batch_size": -1,
       "learning_rate": 0.15,
       "decay": 0.0,

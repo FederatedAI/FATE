@@ -16,8 +16,10 @@
 
 from arch.api.utils import log_utils
 from federatedml.util import consts
+from federatedml.util.data_io import make_schema, set_schema
 
 import copy
+import numpy as np
 
 LOGGER = log_utils.getLogger()
 
@@ -33,22 +35,11 @@ class Step(object):
         step_direction, n_step, n_model = step_info
         self.n_step = n_step
         self.n_model = n_model
-        self.self_direction = step_direction
+        self.step_direction = step_direction
 
     def get_flowid(self):
         flowid = "train.{}.{}.{}".format(self.step_direction, self.n_step, self.n_model)
         return flowid
-
-    @staticmethod
-    def get_new_header(header, feature_list):
-        """
-        Make new header, called by Host or Guest
-        :param header: old header
-        :param feature_list: list of feature indices to be included in model
-        :return: a new header with de sired features
-        """
-        new_header = [header[i] for i in range(len(header)) if i in feature_list]
-        return new_header
 
     @staticmethod
     def slice_data_instance(data_instance, feature_mask):
@@ -61,16 +52,33 @@ class Step(object):
         """
         new_data_instance = copy.deepcopy(data_instance)
         new_data_instance.features = new_data_instance.features[feature_mask]
+        #LOGGER.debug("feature mask in slice_data_instance is {}".format(feature_mask))
         return new_data_instance
 
+    @staticmethod
+    def get_new_schema(original_data, feature_mask):
+        old_header = original_data.schema.get("header")
+        sid_name = original_data.schema.get("sid_name")
+        label_name = original_data.schema.get("label_name")
+        #LOGGER.debug("feature mask in get_new_schema is {}".format(feature_mask))
+        new_header = [old_header[i] for i in np.where(feature_mask > 0)[0]]
+        schema = make_schema(new_header, sid_name, label_name)
+        return schema
+
     def run(self, original_model, train_data, test_data, feature_mask):
-        if original_model.model_param.early_stop != 'loss':
-            raise ValueError("Stepwise only accepts 'loss' as early stop criteria.")
+        if original_model.model_param.early_stop != 'diff':
+            raise ValueError("Stepwise only accepts 'diff' as early stop criteria.")
         model = copy.deepcopy(original_model)
+        LOGGER.debug("original model expects header: {}".format(original_model.header))
         current_flowid = self.get_flowid()
         model.set_flowid(current_flowid)
         if original_model.role != consts.ARBITER:
-            curr_train_data = train_data.map(lambda k, v: (k, Step.slice_data_instance(v, feature_mask)))
+            curr_train_data = train_data.mapValues(lambda v: Step.slice_data_instance(v, feature_mask))
+            new_schema = self.get_new_schema(train_data, feature_mask)
+            LOGGER.debug("new schema is: {}".format(new_schema))
+            set_schema(curr_train_data, new_schema)
+            model.header = new_schema.get("header")
+            LOGGER.debug("model expects header: {}".format(model.header))
         else:
             curr_train_data = train_data
         model.fit(curr_train_data)

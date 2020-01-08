@@ -68,9 +68,9 @@ class StepwiseParam(BaseParam):
 
     def check(self):
         model_param_descr = "stepwise param's "
-        self.check_and_change_lower(self.score_name, ["aic", "bic"], model_param_descr)
+        self.score_name = self.check_and_change_lower(self.score_name, ["aic", "bic"], model_param_descr)
         self.check_valid_value(self.mode, model_param_descr, valid_values=[consts.HOMO, consts.HETERO])
         self.check_valid_value(self.role, model_param_descr, valid_values=[consts.HOST, consts.GUEST, consts.ARBITER])
-        self.check_and_change_lower(self.direction, ["forward", "backward", "both"], model_param_descr)
+        self.direction = self.check_and_change_lower(self.direction, ["forward", "backward", "both"], model_param_descr)
         self.check_positive_integer(self.max_step, model_param_descr)
         self.check_boolean(self.need_stepwise, model_param_descr)

@@ -64,10 +64,7 @@ class HeteroStepwise(object):
         self.role = param.role
         self.score_name = param.score_name
         self.direction = param.direction
-        self.p_enter = param.p_enter
-        self.p_remove = param.p_remove
         self.max_step = param.max_step
-        self.score = param.score
         self.transfer_variable = StepwiseTransferVariable()
         self._get_direction()
         self.make_table()
@@ -104,12 +101,12 @@ class HeteroStepwise(object):
         """
         Helper function only called by Arbiter, get the penalty coefficient for AIC/BIC calculation.
         """
-        if self.score == "aic":
+        if self.score_name == "aic":
             self.k = 2
-        elif self.score == "bic":
+        elif self.score_name == "bic":
             self.k = np.log(self.n_count)
         else:
-            raise ValueError("wrong score name given: {}. Only 'aic' or 'bic' acceptable.".format(self.score))
+            raise ValueError("wrong score name given: {}. Only 'aic' or 'bic' acceptable.".format(self.score_name))
 
     @staticmethod
     def get_dfe(model, mask1, mask2):
@@ -198,6 +195,7 @@ class HeteroStepwise(object):
         current_step.set_step_info(current_key)
         trained_model = current_step.run(model, None, None, None)
         # get final loss from loss history for criteria calculation
+        LOGGER.debug("arbiter's model loss history: {}".format(trained_model.loss_history))
         loss = trained_model.loss_history[-1]
         IC_computer = IC()
         ic_val = IC_computer.compute(self.k, self.n_count, dfe, loss)
@@ -218,18 +216,18 @@ class HeteroStepwise(object):
 
     def arbiter_sync_step_info(self, host_masks, guest_masks):
         self.transfer_variable.host_step_info.remote((self.step_direction, self.n_step, host_masks),
-                                                     suffix=(self.step_direction, self.n_step))
+                                                     suffix=(self.n_step,))
         self.transfer_variable.guest_step_info.remote((self.step_direction, self.n_step, guest_masks),
-                                                    suffix=(self.step_direction, self.n_step))
-        LOGGER.debug("Arbiter sent step info {} {} to host.".format(self.step_direction, self.n_step))
+                                                    suffix=(self.n_step,))
+        LOGGER.debug("Arbiter sent step info {} to host.".format(self.n_step,))
 
     def client_sync_step_info(self):
         if self.role == consts.HOST:
-            LOGGER.info("Host receives step info {} {} from Arbiter.".format(self.step_direction, self.n_step))
-            return self.transfer_variable.host_step_info.get(suffix=(self.step_direction, self.n_step))
+            LOGGER.info("Host receives step info {} from Arbiter.".format(self.n_step))
+            return self.transfer_variable.host_step_info.get(suffix=(self.n_step,))
         elif self.role == consts.GUEST:
-            LOGGER.info("Guest receives step info {} {} from Arbiter.".format(self.step_direction, self.n_step))
-            return self.transfer_variable.guest_step_info.get(suffix=(self.step_direction, self.n_step))
+            LOGGER.info("Guest receives step info {} from Arbiter.".format(self.n_step))
+            return self.transfer_variable.guest_step_info.get(suffix=(self.n_step,))
         else:
             raise ValueError("unknown role {} encountered!".format(self.role))
 
@@ -286,26 +284,27 @@ class HeteroStepwise(object):
 
         best_model = self.models_trained[(tuple(host_mask), tuple(guest_mask))]
         best_model_key = best_model.get_key()
-        self.transfer_variable.host_best_model.remote(best_model_key, idx=0)
-        self.transfer_variable.guest_best_model.remote(best_model_key, idx=0)
+        self.transfer_variable.host_best_model.remote(best_model_key, role=consts.HOST, idx=0)
+        self.transfer_variable.guest_best_model.remote(best_model_key, role=consts.GUEST, idx=0)
         best_model = copy.deepcopy(self._get_value(best_model_key))
         model.load_model(best_model)
         self.models.destroy()
 
     def run(self, component_parameters, train_data, test_data, model):
         self._init_model(component_parameters)
+        self.host_data_info_transfer = self.transfer_variable.host_data_info
+        self.guest_data_info_transfer = self.transfer_variable.guest_data_info
         if self.role == consts.ARBITER:
             self._arbiter_run(model)
             return
         n, j = train_data.count(), data_overview.get_features_shape(train_data)
         if self.role == consts.HOST:
-            self.host_data_info_transfer = self.transfer_variable.host_data_info
-            self.host_data_info_transfer.remote((n, j), idx=0)
+            self.host_data_info_transfer.remote((n, j), role=consts.ARBITER, idx=0)
         elif self.role == consts.GUEST:
-            self.guest_data_info_transfer = self.transfer_variable.guest_data_info
-            self.guest_data_info_transfer.remote((n, j), idx=0)
+            self.guest_data_info_transfer.remote((n, j), role=consts.ARBITER, idx=0)
         while not self.stop_stepwise:
-            step_direction, n_step, feature_masks = self.client_sync_step_info()
+            info = self.client_sync_step_info()
+            step_direction, n_step, feature_masks = info[0][0], info[0][1], info[0][2]
             self.step_direction, self.n_step = step_direction, n_step
             n_model = 0
             for feature_mask in feature_masks:

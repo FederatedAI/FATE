@@ -116,6 +116,7 @@ class HeteroBaseArbiter(BaseLinearModel):
                 iter_loss /= self.batch_generator.batch_num
                 if not self.in_one_vs_rest:
                     self.callback_loss(self.n_iter_, iter_loss)
+                self.loss_history.append(iter_loss)
 
             if self.model_param.early_stop == 'weight_diff':
                 LOGGER.debug("total_gradient: {}".format(total_gradient))
