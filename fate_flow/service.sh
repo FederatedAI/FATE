@@ -36,7 +36,7 @@ status() {
     getpid
     pid=`cat fateflow_pid`
     if [[ -n ${pid} ]]; then
-        echo "status:`ps aux | grep ${pid} | grep -v grep`"
+        echo "status:`ps aux | grep ${pid} | grep ${module} | grep ${basepath} | grep -v grep`"
     else
         echo "service not running"
     fi
@@ -68,7 +68,7 @@ stop() {
     pid=`cat fateflow_pid`
     if [[ -n ${pid} ]]; then
         echo "killing:
-        `ps aux | grep ${pid} | grep -v grep`"
+        `ps aux | grep ${pid} | grep ${module} | grep ${basepath} |grep -v grep`"
         kill -9 ${pid}
         if [[ $? -eq 0 ]]; then
             echo "killed"

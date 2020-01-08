@@ -26,7 +26,7 @@ module=fateboard
 main_class=org.springframework.boot.loader.JarLauncher
 
 getpid() {
-     echo $(ps -ef|grep ${basepath} |grep fateboard.jar|grep -v grep|awk '{print $2}') > fateboard_pid
+     echo $(ps -aux |grep ${basepath} |grep fateboard.jar|grep -v grep|awk '{print $2}') > fateboard_pid
 }
 
 mklogsdir() {
@@ -40,7 +40,7 @@ status() {
     pid=`cat fateboard_pid`
     if [[ -n ${pid} ]]; then
         echo "status:
-        `ps aux | grep ${pid} | grep -v grep`"
+        `ps aux | grep ${pid} | grep ${basepath} |grep fateboard.jar | grep -v grep`"
         return 1
     else
         echo "service not running"
@@ -72,7 +72,7 @@ stop() {
     pid=`cat fateboard_pid`
     if [[ -n ${pid} ]]; then
         echo "killing:
-        `ps aux | grep ${pid} | grep -v grep`"
+        `ps aux | grep ${pid} | grep ${basepath} |grep fateboard.jar | grep -v grep`"
         kill -9 ${pid}
         if [[ $? -eq 0 ]]; then
             echo "killed"

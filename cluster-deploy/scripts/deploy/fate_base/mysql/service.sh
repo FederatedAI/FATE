@@ -20,14 +20,14 @@ basepath=$(cd `dirname $0`;pwd)
 user=`whoami`
 
 getpid() {
-    echo $(ps -ef | grep mysqld_safe | grep ${basepath} | grep -v grep | awk '{print $2}') > mysql_pid
+    echo $(ps -aux | grep mysqld_safe | grep ${basepath} | grep -v grep | awk '{print $2}') > mysql_pid
 }
 
 status() {
     getpid
     pid=`cat mysql_pid`
     if [[ -n ${pid} ]]; then
-        echo "status:`ps aux | grep ${pid} | grep -v grep`"
+        echo "status:`ps aux | grep ${pid} | grep mysqld_safe | grep ${basepath} | grep -v grep`"
     else
         echo "service not running"
     fi
@@ -55,7 +55,7 @@ stop() {
     getpid
     pid=`cat mysql_pid`
     if [[ -n ${pid} ]]; then
-        echo "killing:`ps aux | grep ${pid} | grep -v grep`"
+        echo "killing:`ps aux | grep ${pid} | grep mysqld_safe | grep ${basepath} | grep -v grep`"
         kill -9 ${pid}
         kill -9 `lsof -i:3306 | grep -i "LISTEN" | awk '{print $2}'`
         if [[ $? -eq 0 ]]; then

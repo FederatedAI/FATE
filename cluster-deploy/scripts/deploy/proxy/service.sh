@@ -37,7 +37,7 @@ status() {
     pid=`cat ${module}_pid`
     if [[ -n ${pid} ]]; then
         echo "status:
-        `ps aux | grep ${pid} | grep -v grep`"
+        `ps aux | grep ${pid} | grep ${main_class} | grep ${basepath} | grep -v grep`"
         exit 1
     else
         echo "service not running"
@@ -69,7 +69,7 @@ stop() {
     pid=`cat ${module}_pid`
     if [[ -n ${pid} ]]; then
         echo "killing:
-        `ps aux | grep ${pid} | grep -v grep`"
+        `ps aux | grep ${pid} | grep ${main_class} | grep ${basepath} | grep -v grep`"
         kill -9 ${pid}
         if [[ $? -eq 0 ]]; then
             echo "killed"
