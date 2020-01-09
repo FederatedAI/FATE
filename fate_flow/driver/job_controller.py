@@ -108,23 +108,14 @@ class JobController(object):
     @staticmethod
     def kill_job(job_id, role, party_id, job_initiator, timeout=False, component_name=''):
         schedule_logger(job_id).info('{} {} get kill job {} {} command'.format(role, party_id, job_id, component_name))
-        if component_name:
-            tasks = job_utils.query_task(job_id=job_id, role=role, party_id=party_id, component_name=component_name)
-            if tasks:
-                job_utils.stop_executor(tasks[0])
-            return
-        tasks = job_utils.query_task(job_id=job_id, role=role, party_id=party_id)
+        task_info = job_utils.get_task_info(job_id, role, party_id, component_name)
+        tasks = job_utils.query_task(**task_info)
         for task in tasks:
             kill_status = False
             try:
-                kill_status = job_utils.stop_executor(task)
-                # kill_status = job_utils.kill_process(int(task.f_run_pid))
-                # job_conf_dict = job_utils.get_job_conf(job_id)
-                # runtime_conf = job_conf_dict['job_runtime_conf_path']
-                # session.init(job_id='{}_{}_{}'.format(task.f_task_id, role, party_id),
-                #              mode=runtime_conf.get('job_parameters').get('work_mode'),
-                #              backend=runtime_conf.get('job_parameters').get('backend', 0))
-                # session.stop()
+                kill_status = job_utils.kill_process(int(task.f_run_pid))
+                job_utils.start_stop_session(job_id=task.f_job_id, role=task.f_role,
+                                             party_id=task.f_party_id, component_name=task.f_component_name)
             except Exception as e:
                 schedule_logger(job_id).exception(e)
             finally:
