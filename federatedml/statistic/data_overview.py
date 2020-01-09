@@ -16,7 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import types
+import functools
 
 from arch.api.utils import log_utils
 from federatedml.util import consts
@@ -100,3 +100,46 @@ def rubbish_clear(rubbish_list):
             r.destroy()
         except Exception as e:
             LOGGER.warning("destroy Dtable error,:{}, but this can be ignored sometimes".format(e))
+
+
+class DataStatistics(object):
+    def __init__(self):
+        self.multivariate_statistic_obj = None
+
+    def static_all_values(self, data_instances, static_col_indexes, is_sparse: bool = False):
+        if not is_sparse:
+            f = functools.partial(self.__dense_values_set,
+                                  static_col_indexes=static_col_indexes)
+        else:
+            f = functools.partial(self.__sparse_values_set,
+                                  static_col_indexes=static_col_indexes)
+        result_sets = data_instances.mapPartitions(f).reduce(self.__reduce_set_results)
+        result = [sorted(list(x)) for x in result_sets]
+        return result
+
+    @staticmethod
+    def __dense_values_set(instances, static_col_indexes: list):
+        result = [set() for _ in static_col_indexes]
+        for _, instance in instances:
+            for idx, col_index in enumerate(static_col_indexes):
+                value_set = result[idx]
+                value_set.add(instance.features[col_index])
+        return result
+
+    @staticmethod
+    def __sparse_values_set(instances, static_col_indexes: list):
+        tmp_result = {idx: set() for idx in static_col_indexes}
+        for _, instance in instances:
+            for idx, value in instance.features.get_all_data:
+                if idx not in tmp_result:
+                    continue
+                tmp_result[idx].add(value)
+        result = [tmp_result[x] for x in static_col_indexes]
+        return result
+
+    @staticmethod
+    def __reduce_set_results(result_set_a, result_set_b):
+        final_result_sets = []
+        for set_a, set_b in zip(result_set_a, result_set_b):
+            final_result_sets.append(set_a.union(set_b))
+        return final_result_sets

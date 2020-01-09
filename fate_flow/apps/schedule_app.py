@@ -58,7 +58,10 @@ def save_pipeline(job_id, role, party_id, model_id, model_version):
 @manager.route('/<job_id>/<role>/<party_id>/kill', methods=['POST'])
 def kill_job(job_id, role, party_id):
     JobController.kill_job(job_id=job_id, role=role, party_id=int(party_id),
-                           job_initiator=request.json.get('job_initiator', {}), timeout=request.json.get('timeout', False))
+                           job_initiator=request.json.get('job_initiator', {}),
+                           timeout=request.json.get('timeout', False),
+                           component_name=request.json.get('component_name', '')
+                           )
     return get_json_result(retcode=0, retmsg='success')
 
 
@@ -69,10 +72,10 @@ def cancel_job(job_id, role, party_id):
     return get_json_result(retcode=0, retmsg='success')
 
 
-@manager.route('/<job_id>/<role>/<party_id>/clean', methods=['POST'])
+@manager.route('/<job_id>/<role>/<party_id>/<roles>/<party_ids>/clean', methods=['POST'])
 @request_authority_certification
-def clean(job_id, role, party_id):
-    JobController.clean_job(job_id=job_id, role=role, party_id=party_id)
+def clean(job_id, role, party_id, roles, party_ids):
+    JobController.clean_job(job_id=job_id, role=role, party_id=party_id, roles=roles, party_ids=party_ids)
     return get_json_result(retcode=0, retmsg='success')
 
 

@@ -23,7 +23,6 @@ source_code_dir=$(cd `dirname ${cwd}`; cd ../; pwd)
 echo "[INFO] Source code dir is ${source_code_dir}"
 packages_dir=${source_code_dir}/cluster-deploy/packages
 mkdir -p ${packages_dir}
-source ./default_configurations.sh
 
 cd ${source_code_dir}
 eggroll_git_url=`grep -A 3 '"eggroll"' .gitmodules | grep 'url' | awk -F '= ' '{print $2}'`
@@ -52,49 +51,6 @@ else
     git clone ${eggroll_git_url} -b ${eggroll_git_branch} eggroll
 fi
 
-eggroll_source_code_dir=${source_code_dir}/eggroll
-cd ${eggroll_source_code_dir}
-echo "[INFO] Compiling eggroll"
-mvn clean package -DskipTests
-echo "[INFO] Compile eggroll done"
-
-echo "[INFO] Packaging eggroll"
-cd ${eggroll_source_code_dir}
-cd api
-tar czf eggroll-api-1.1.tar.gz *
-mv eggroll-api-1.1.tar.gz ${packages_dir}/
-
-cd ${eggroll_source_code_dir}
-cd computing
-tar czf eggroll-computing-1.1.tar.gz *
-mv eggroll-computing-1.1.tar.gz ${packages_dir}/
-
-cd ${eggroll_source_code_dir}
-cd conf
-tar czf eggroll-conf-1.1.tar.gz *
-mv eggroll-conf-1.1.tar.gz ${packages_dir}/
-
-cd ${eggroll_source_code_dir}
-cd framework/egg/target
-tar czf eggroll-egg-1.1.tar.gz eggroll-egg-1.1.jar lib/
-mv eggroll-egg-1.1.tar.gz ${packages_dir}/
-
-cd ${eggroll_source_code_dir}
-cd framework/meta-service/target
-tar czf eggroll-meta-service-1.1.tar.gz eggroll-meta-service-1.1.jar lib/
-mv eggroll-meta-service-1.1.tar.gz ${packages_dir}/
-
-cd ${eggroll_source_code_dir}
-cd framework/roll/target
-tar czf eggroll-roll-1.1.tar.gz eggroll-roll-1.1.jar lib/
-mv eggroll-roll-1.1.tar.gz ${packages_dir}/
-
-cd ${eggroll_source_code_dir}
-cd storage/storage-service-cxx
-tar czf eggroll-storage-service-cxx-1.1.tar.gz *
-mv eggroll-storage-service-cxx-1.1.tar.gz ${packages_dir}/
-echo "[INFO] Package eggroll done"
-
 cd ${source_code_dir}
 fateboard_git_url=`grep -A 3 '"fateboard"' .gitmodules | grep 'url' | awk -F '= ' '{print $2}'`
 fateboard_git_branch=`grep -A 3 '"fateboard"' .gitmodules | grep 'branch' | awk -F '= ' '{print $2}'`
@@ -122,6 +78,66 @@ else
     git clone ${fateboard_git_url} -b ${fateboard_git_branch} fateboard
 fi
 
+egg_version=$(grep -E -m 1 -o "<eggroll.version>(.*)</eggroll.version>" ${source_code_dir}/eggroll/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "eggroll.version" '{print $2}')
+meta_service_version=$(grep -E -m 1 -o "<eggroll.version>(.*)</eggroll.version>" ${source_code_dir}/eggroll/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "eggroll.version" '{print $2}')
+roll_version=$(grep -E -m 1 -o "<eggroll.version>(.*)</eggroll.version>" ${source_code_dir}/eggroll/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "eggroll.version" '{print $2}')
+federation_version=$(grep -E -m 1 -o "<fate.version>(.*)</fate.version>" ${source_code_dir}/arch/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "fte.version" '{print $2}')
+proxy_version=$(grep -E -m 1 -o "<fate.version>(.*)</fate.version>" ${source_code_dir}/arch/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "fte.version" '{print $2}')
+fateboard_version=$(grep -E -m 1 -o "<version>(.*)</version>" ${source_code_dir}/fateboard/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "version" '{print $2}')
+ 
+sed -i "s/egg_version=.*/egg_version=${egg_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
+sed -i "s/meta_service_version=.*/meta_service_version=${meta_service_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
+sed -i "s/roll_version=.*/roll_version=${roll_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
+sed -i "s/federation_version=.*/federation_version=${federation_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
+sed -i "s/proxy_version=.*/proxy_version=${proxy_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
+sed -i "s/fateboard_version=.*/fateboard_version=${fateboard_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
+
+source ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
+
+eggroll_source_code_dir=${source_code_dir}/eggroll
+cd ${eggroll_source_code_dir}
+echo "[INFO] Compiling eggroll"
+mvn clean package -DskipTests
+echo "[INFO] Compile eggroll done"
+
+echo "[INFO] Packaging eggroll"
+
+cd ${eggroll_source_code_dir}
+cd api
+tar czf eggroll-api-${version}.tar.gz *
+mv eggroll-api-${version}.tar.gz ${packages_dir}/
+
+cd ${eggroll_source_code_dir}
+cd computing
+tar czf eggroll-computing-${version}.tar.gz *
+mv eggroll-computing-${version}.tar.gz ${packages_dir}/
+
+cd ${eggroll_source_code_dir}
+cd conf
+tar czf eggroll-conf-${version}.tar.gz *
+mv eggroll-conf-${version}.tar.gz ${packages_dir}/
+
+cd ${eggroll_source_code_dir}
+cd framework/egg/target
+tar czf eggroll-egg-${version}.tar.gz eggroll-egg-${egg_version}.jar lib/
+mv eggroll-egg-${version}.tar.gz ${packages_dir}/
+
+cd ${eggroll_source_code_dir}
+cd framework/meta-service/target
+tar czf eggroll-meta-service-${version}.tar.gz eggroll-meta-service-${meta_service_version}.jar lib/
+mv eggroll-meta-service-${version}.tar.gz ${packages_dir}/
+
+cd ${eggroll_source_code_dir}
+cd framework/roll/target
+tar czf eggroll-roll-${version}.tar.gz eggroll-roll-${roll_version}.jar lib/
+mv eggroll-roll-${version}.tar.gz ${packages_dir}/
+
+cd ${eggroll_source_code_dir}
+cd storage/storage-service-cxx
+tar czf eggroll-storage-service-cxx-${version}.tar.gz *
+mv eggroll-storage-service-cxx-${version}.tar.gz ${packages_dir}/
+echo "[INFO] Package eggroll done"
+
 echo "[INFO] Compiling fate"
 cd ${source_code_dir}/fateboard/
 mvn clean package -DskipTests
@@ -130,15 +146,15 @@ mvn clean package -DskipTests
 echo "[INFO] Compile fate done"
 
 echo "[INFO] Packaging fate"
-cp ${source_code_dir}/fateboard/target/fateboard-1.1.jar ${packages_dir}/
+cp ${source_code_dir}/fateboard/target/fateboard-${fateboard_version}.jar ${packages_dir}/
 
 cd ${source_code_dir}/arch/driver/federation/target
-tar czf fate-federation-1.1.tar.gz fate-federation-1.1.jar lib/
-mv fate-federation-1.1.tar.gz ${packages_dir}/
+tar czf fate-federation-${version}.tar.gz fate-federation-${federation_version}.jar lib/
+mv fate-federation-${version}.tar.gz ${packages_dir}/
 
 cd ${source_code_dir}/arch/networking/proxy/target
-tar czf fate-proxy-1.1.tar.gz fate-proxy-1.1.jar lib/
-mv fate-proxy-1.1.tar.gz ${packages_dir}/
+tar czf fate-proxy-${version}.tar.gz fate-proxy-${proxy_version}.jar lib/
+mv fate-proxy-${version}.tar.gz ${packages_dir}/
 
 echo "[INFO] Packaging base module"
 get_module_package ${source_code_dir} "python" pip-packages-fate-${python_version}.tar.gz
@@ -152,3 +168,4 @@ echo "[INFO] Package base module done"
 echo "[INFO] Package fate done"
 echo "[INFO] A total of `ls ${packages_dir} | wc -l | awk '{print $1}'` packages:"
 ls -lrt ${packages_dir}
+

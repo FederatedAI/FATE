@@ -17,21 +17,13 @@
 #
 
 export PYTHONPATH=
-log_dir="${PYTHONPATH}/logs"
+log_dir="$(echo ${PYTHONPATH} | awk -F":" '{print $1}')/logs"
 venv=
-# FATE deployment suggested path
-# venv=/data/projects/fate/venv/
 
 module=fate_flow_server.py
 
 getpid() {
-    pid=`ps aux | grep "python ${run}$" | grep -v grep | awk '{print $2}'`
-
-    if [[ -n ${pid} ]]; then
-        return 0
-    else
-        return 1
-    fi
+    pid=`lsof -i:9380 | awk 'NR==2{print $2}'`
 }
 
 mklogsdir() {
@@ -43,31 +35,25 @@ mklogsdir() {
 status() {
     getpid
     if [[ -n ${pid} ]]; then
-        echo "status:
-        `ps aux | grep ${pid} | grep -v grep`"
-        exit 1
+        echo "status:`ps aux | grep ${pid} | grep -v grep`"
     else
         echo "service not running"
-        exit 0
     fi
 }
 
 start() {
+    sleep 8
     getpid
-    if [[ $? -eq 1 ]]; then
+    if [[ ${pid} == "" ]]; then
         mklogsdir
         source ${venv}/bin/activate
-        nohup python ${run} >> "${log_dir}/console.log" 2>>"${log_dir}/error.log" &
-        if [[ $? -eq 0 ]]; then
-            sleep 2
-            getpid
-            if [[ $? -eq 0 ]]; then
-                echo "service start sucessfully. pid: ${pid}"
-            else
-                echo "service start failed, please check ../logs/error.log and ../logs/fate_flow/fate_flow_stat.log"
-            fi
+        nohup python $(echo ${PYTHONPATH} | awk -F":" '{print $1}')/fate_flow/fate_flow_server.py >> "${log_dir}/console.log" 2>>"${log_dir}/error.log" &
+        sleep 6
+        getpid
+        if [[ -n ${pid} ]]; then 
+           echo "service start sucessfully. pid: ${pid}"
         else
-            echo "service start failed, please check ../logs/error.log and ../logs/fate_flow/fate_flow_stat.log"
+           echo "service start failed, please check ../logs/console.log and ../logs/error.log"
         fi
     else
         echo "service already started. pid: ${pid}"
@@ -90,11 +76,6 @@ stop() {
     fi
 }
 
-if [[ -n "$2" ]] ;then
-    run="${module} ${2}"
-else
-    run=${module}
-fi
 
 case "$1" in
     start)

@@ -71,7 +71,10 @@ Key configuration item description:
 | HTTP_PORT | listen port for the http server of FATE-Flow | default 9380 |
 | WORK_MODE | the work mode of FATE-Flow | 0 for standalone, 1 for cluster |
 | USE_LOCAL_DATABASE | Whether to use a local database(sqlite) | False for no, True for yes |
+| USE_AUTHENTICATION | Whether to enable authentication | False for no, True for yes |
+| USE_CONFIGURATION_CENTER  | Whether to use zookeeper | False for no, True for yes |
 | MAX_CONCURRENT_JOB_RUN | Pipeline jobs that are executed in parallel at the same time | default 5 |
+| MAX_CONCURRENT_JOB_RUN_HOST | Maximum running jobs | default 10 |
 | DATABASE | configuration for mysql database | custom configuration |
 | REDIS | configuration for redis | custom configuration |
 | REDIS_QUEUE_DB_INDEX | the redis db index of redis queue | default 0 |
@@ -116,10 +119,6 @@ You need to deploy three service:
 
 FATE provides a standalone version of the docker for experience.please refer to docker version deploy guide at [docker-deploy](../standalone-deploy/docker).
 
-##### **Manual version**
-
-FATE provides a tar package with basic components to enable users to run FATE in a stand-alone environment, in which users are required to install dependent components on their own.please refer to manual deploy guide at [manual-deploy](../standalone-deploy/Manual). 
-
 ##### **Configuration**
 | Configuration item | Configuration item value |
 | - | - |
@@ -137,7 +136,7 @@ FATE provides a tar package with basic components to enable users to run FATE in
 
 ### Cluster
 FATE also provides a distributed runtime architecture for Big Data scenario. Migration from standalone to cluster requires configuration change only. No algorithm change is needed. 
-To deploy FATE on a cluster, please refer to cluster deploy guide at [cluster-deploy](../cluster-deploy). 
+To deploy FATE on a cluster, please refer to cluster deploy guide at [cluster-deploy](./../cluster-deploy). 
 
 ##### **Configuration**
 | Configuration item | Configuration item value |
@@ -173,19 +172,20 @@ Command response example:
 ```json
 {
     "data": {
-        "board_url": "http://localhost:8080/index.html#/dashboard?job_id=2019081718211974471912&role=guest&party_id=10000",
-        "job_dsl_path": "xxx/jobs/2019081718211974471912/job_dsl.json",
-        "job_runtime_conf_path": "xxx/jobs/2019081718211974471912/job_runtime_conf.json",
+        "board_url": "http://localhost:8080/index.html#/dashboard?job_id=2019121910313566330118&role=guest&party_id=9999",
+        "job_dsl_path": "xxx/jobs/2019121910313566330118/job_dsl.json",
+        "job_runtime_conf_path": "xxx/jobs/2019121910313566330118/job_runtime_conf.json",
+        "logs_directory": "xxx/logs/2019121910313566330118",
         "model_info": {
-            "model_id": "arbiter-10000#guest-10000#host-10000#model",
-            "model_version": "2019081718211974471912"
+            "model_id": "arbiter-10000#guest-9999#host-10000#model",
+            "model_version": "2019121910313566330118"
         }
     },
-    "jobId": "2019081718211974471912",
-    "meta": null,
+    "jobId": "2019121910313566330118",
     "retcode": 0,
     "retmsg": "success"
 }
+
 ```
 Some of the following operations will use these response information.
 
@@ -195,7 +195,7 @@ python fate_flow_client.py -f query_job -r guest -p 10000 -j $job_id
 ```
 And then, you can found so many useful command from [**CLI**](./doc/fate_flow_cli.md).
 
-##### For more Federated Learning pipeline Job example, please refer at [**federatedml-1.0-examples**](../examples/federatedml-1.0-examples) and it's [**README**](../examples/federatedml-1.0-examples/README.md)
+##### For more Federated Learning pipeline Job example, please refer at [**federatedml-1.x-examples**](./../examples/federatedml-1.x-examples) and it's [**README**](./../examples/federatedml-1.x-examples/README.md)
 
 
 
@@ -211,7 +211,7 @@ After that, you can make online inference request to FATE-Serving by specifying 
 
 #### Publish Model Online Default
 ```bash
-python fate_flow_client.py -f online -c examples/publish_online_model.json
+python fate_flow_client.py -f bind -c examples/bind_model_service.json
 ```
 Please replace the corresponding configuration in ``publish_online_model.json`` with your job configuration.
 After that, the FATE-Serving uses the configuration you provided to set the party's default model id and the default model version that involves the model id.
@@ -229,10 +229,47 @@ And then, will you can make online inference request to FATE-Serving by only spe
 
 
 ## FAQ
-#### Can not use query job command to query upload/download data job
-- In this version, the job that uploads/downloads data is not a job of pipeline type, so you cannot use the query job command to query the status. Please check the ``$PYTHONPATH/jobs/$job_id/std.log``, sorry for the inconvenience.
-- In the next version, the upload/download data will be upgraded, and you can use the query job command to query the status.
 
-#### Can not found job log directory in ``logs`` directory
-- Usually we recommend using the job_log command by fate_flow_client to download the job log to a custom directory.
-- If you cannot download the log under certain abnormal conditions, go to ``$PYTHONPATH/logs/fate_flow/fate_flow_stat.log`` to view it.
+#### What is the role of FATE FLOW in the FATE?
+- FATE Flow is a scheduling system that schedules the execution of algorithmic components based on the DSL of the job submitted by the user.
+
+
+#### ModuleNotFoundError: No module named "arch"
+- Set PYTHONPATH to the parent directory of fate_flow.
+
+
+#### Why does the task show success when submitting the task, but the task fails on the dashboard page?
+- Submit success just means that the job was submitted and not executed. If the job fails, you need to check the log. 
+- You can view the logs through the board.
+
+
+#### What meaning and role do the guest, host, arbiter, and local roles represent in fate?
+- Arbiter is used to assist multiple parties to complete joint modeling. Its main role is to aggregate gradients or models. For example, in vertical lr, each party sends half of its gradient to arbiter, and then arbiter jointly optimizes, etc.
+- Guest represents the data application party.
+- Host is the data provider.
+- Local refers to local, only valid for upload and download.
+
+
+#### Error about“cannot find xxxx” when killing a waiting job
+- Fate_flow currently only supports kill on the job initiator, kill will report "cannot find xxx".
+
+
+#### What is the upload data doing?
+
+- Upload data is uploaded to eggroll and becomes a DTable format executable by subsequent algorithms.
+
+
+#### How to download the generated data in the middle of the algorithm?
+- You can use ``python fate_flow_client.py -f component_output_model -j $job_id -r $role -g $guest -cpn $component_name -o $output_path``
+
+
+#### If the same file upload is executed twice, will fate delete the first data and upload it again?
+- It will be overwritten if the keys are the same in the same table.
+
+
+#### What is the reason for the failure of this job without error on the board?
+- The logs in these places will not be displayed on the board:```$job_id/fate_flow_schedule.log```, ``logs/error.log``, ``logs/fate_flow/ERROR.log`` .
+
+
+#### What is the difference between the load and bind commands? 
+- Load can be understood as a model release, and bind is the default model version.

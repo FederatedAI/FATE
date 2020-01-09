@@ -146,12 +146,29 @@ install(){
     cp -r ${deploy_packages_dir}/source/${module_name}/egg-manager/* ${deploy_dir}/${module_name}/
     cp -r ${deploy_packages_dir}/config/${module_name}/conf/* ${deploy_dir}/${module_name}/
     cd ${deploy_dir}/${module_name}
-    ln -s eggroll-${module_name}-${version}.jar eggroll-${module_name}.jar
+    ln -s eggroll-${module_name}-${egg_version}.jar eggroll-${module_name}.jar
     mv ./services.sh ${deploy_dir}/
 
     cd ${deploy_packages_dir}/source/${module_name}/egg-services
 
     mkdir -p ${deploy_dir}/storage-service-cxx
+
+    system=`sed -e '/"/s/"//g' /etc/os-release | awk -F= '/^NAME/{print $2}'`
+    echo ${system}
+    case "${system}" in
+        "CentOS Linux")
+                echo "CentOS System"
+                rm -rf ./storage-service-cxx/third_party_eggrollv1_ubuntu
+                ;;
+        "Ubuntu")
+                echo "Ubuntu System"
+                rm -rf ./storage-service-cxx/third_party
+                mv ./storage-service-cxx/third_party_eggrollv1_ubuntu  ./storage-service-cxx/third_party
+                ;;
+        *)
+                echo "Not support this system."
+    esac
+
     cp -r ./storage-service-cxx/* ${deploy_dir}/storage-service-cxx/
 
     mkdir -p ${deploy_dir}/python/eggroll/computing
@@ -162,6 +179,17 @@ install(){
 
     mkdir -p ${deploy_dir}/python/eggroll/conf
     cp -r ./eggroll-conf/* ${deploy_dir}/python/eggroll/conf/
+
+    system=`sed -e '/"/s/"//g' /etc/os-release | awk -F= '/^NAME/{print $2}'`
+    echo ${system}
+    pwd
+    if [[ "${system}" == "Ubuntu" ]];then
+        cd ${deploy_dir}/storage-service-cxx/third_party
+        cd rocksdb
+        sudo cp librocksdb.so /usr/local/lib
+        sudo mkdir -p /usr/local/include/rocksdb/
+        sudo cp -r ./include/* /usr/local/include/
+    fi
 
     cd ${deploy_dir}/storage-service-cxx
 	sed -i.bak "20s#-I. -I.*#-I. -I${deploy_dir}/storage-service-cxx/third_party/include#g" ./Makefile
@@ -176,6 +204,7 @@ install(){
 	sed -i.bak "s/rollport=.*/rollport=${roll_port}/g" ./modify_json.py
 	sed -i.bak "s/proxyip=.*/proxyip=\"${proxy_ip}\"/g" ./modify_json.py
 	sed -i.bak "s/proxyport=.*/proxyport=${proxy_port}/g" ./modify_json.py
+	sed -i.bak "s/clustercommip=.*/clustercommip=\"${clustercomm_ip}\"/g" ./modify_json.py
 	python ./modify_json.py python ./server_conf.json
 }
 

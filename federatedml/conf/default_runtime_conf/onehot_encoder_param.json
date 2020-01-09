@@ -1,4 +1,5 @@
 {
-  "cols": -1,
+  "transform_col_indexes": -1,
+  "transform_col_names": null,
   "need_run": true
 }

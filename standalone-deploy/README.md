@@ -2,11 +2,11 @@
 
 The stand-alone version provides three deployment methods, which can be selected according to your actual situation:
 
-- Install FATE using Docker [Chinese guide](./doc/Fate-V1.1单机版部署指南.md) *(Recommended)* 
+- Install FATE using Docker [Chinese guide](./doc/Fate-standalone_deployment_guide_zh.md) *(Recommended)* 
 
-- Install FATE  in Host [Chinese guide](./doc/Fate-V1.1单机版部署指南.md) 
+- Install FATE  in Host [Chinese guide](./doc/Fate-standalone_deployment_guide_zh.md) 
 
-- Build FATE from Source with Docker [Chinese guide](./doc/Fate-V1.1单机版部署指南.md)(It takes 40 minutes or more)
+- Build FATE from Source with Docker [Chinese guide](./doc/Fate-standalone_deployment_guide_zh.md)(It takes 40 minutes or more)
 
   
 
@@ -27,11 +27,11 @@ It is strongly recommended to use docker, which greatly reduces the possibility 
 
 ```
 #Get code
-FATE $ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.1.tar.gz
-FATE $tar -xvf docker_standalone-fate-1.1.tar.gz
+FATE $ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.2.0.tar.gz
+FATE $tar -xvf docker_standalone-fate-1.2.0.tar.gz
 
 #Execute the command
-FATE $ cd docker_standalone-fate-1.1
+FATE $ cd docker_standalone-fate-1.2.0
 FATE $ bash install_standalone_docker.sh
 
 #Validation results
@@ -61,21 +61,21 @@ Http://hostip:8080.
 2. Download the compressed package of stand-alone version and decompress it. 
 
    ```
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.1.tar.gz
-   tar -xvf  standalone-fate-master-1.1.tar.gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.2.0.tar.gz
+   tar -xvf  standalone-fate-master-1.2.0.tar.gz
    ```
 
 3. Enter FATE directory and execute the init.sh.
 
    ```
-   cd standalone-fate-master-1.1
+   cd standalone-fate-master-1.2.0
    source init.sh init
    ```
 
 4. Execution test.
 
    ```
-   cd standalone-fate-master-1.1
+   cd standalone-fate-master-1.2.0
    bash ./federatedml/test/run_test.sh
    ```
 

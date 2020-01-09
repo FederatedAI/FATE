@@ -124,6 +124,14 @@ class _Optimizer(object):
             loss_norm_value = None
         return loss_norm_value
 
+    def hess_vector_norm(self, delta_s: LinearModelWeights):
+        if self.penalty == consts.L1_PENALTY:
+            return LinearModelWeights(np.zeros_like(delta_s.unboxed), fit_intercept=delta_s.fit_intercept)
+        elif self.penalty == consts.L2_PENALTY:
+            return LinearModelWeights(self.alpha * np.array(delta_s.unboxed), fit_intercept=delta_s.fit_intercept)
+        else:
+            return LinearModelWeights(np.zeros_like(delta_s.unboxed), fit_intercept=delta_s.fit_intercept)
+
     def update_model(self, model_weights: LinearModelWeights, grad, has_applied=True):
 
         if not has_applied:
@@ -230,6 +238,25 @@ class _AdamOptimizer(_Optimizer):
         return delta_grad
 
 
+class _StochasticQuansiNewtonOptimizer(_Optimizer):
+    def __init__(self, learning_rate, alpha, penalty, decay, decay_sqrt):
+        super().__init__(learning_rate, alpha, penalty, decay, decay_sqrt)
+        self.__opt_hess = None
+
+    def apply_gradients(self, grad):
+        learning_rate = self.decay_learning_rate()
+        LOGGER.debug("__opt_hess is: {}".format(self.__opt_hess))
+        if self.__opt_hess is None:
+            delta_grad = learning_rate * grad
+        else:
+            delta_grad = learning_rate * self.__opt_hess.dot(grad)
+            LOGGER.debug("In sqn updater, grad: {}, delta_grad: {}".format(grad, delta_grad))
+        return delta_grad
+
+    def set_hess_matrix(self, hess_matrix):
+        self.__opt_hess = hess_matrix
+
+
 def optimizer_factory(param):
     try:
         optimizer_type = param.optimizer
@@ -255,5 +282,7 @@ def optimizer_factory(param):
         return _AdamOptimizer(*init_params)
     elif optimizer_type == 'adagrad':
         return _AdaGradOptimizer(*init_params)
+    elif optimizer_type == 'sqn':
+        return _StochasticQuansiNewtonOptimizer(*init_params)
     else:
         raise NotImplementedError("Optimize method cannot be recognized: {}".format(optimizer_type))

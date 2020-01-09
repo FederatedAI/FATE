@@ -36,10 +36,16 @@ def get_table_info(config, create=False):
             table_name = get_latest_commit(data_table_namespace=namespace, branch='master')
     return table_name, namespace
 
+def gen_party_version(namespace, branch='master', create=False):
+    if create:
+        table_name = get_commit_id()
+    else:
+        table_name = get_latest_commit(data_table_namespace=namespace, branch=branch)
+
+    return table_name
 
 def gen_party_namespace(all_party, data_type, role, party_id):
     return gen_namespace_separator.join([role, str(party_id), all_party_key(all_party), data_type])
-
 
 def gen_party_namespace_by_federated_namespace(federated_namespace, role, party_id):
     return gen_namespace_separator.join([role, str(party_id), federated_namespace])

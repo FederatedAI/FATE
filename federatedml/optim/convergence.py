@@ -100,4 +100,4 @@ def converge_func_factory(early_stop, tol):
     elif early_stop == 'abs':
         return _AbsConverge(tol)
     else:
-        raise NotImplementedError("Converge Function method cannot be recognized: {}".format(converge_func))
+        raise NotImplementedError("Converge Function method cannot be recognized: {}".format(early_stop))

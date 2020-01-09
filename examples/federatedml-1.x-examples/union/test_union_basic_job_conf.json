@@ -1,0 +1,66 @@
+{
+  "initiator": {
+    "role": "guest",
+    "party_id": 10000
+  },
+  "job_parameters": {
+    "work_mode": 0
+  },
+  "role": {
+    "guest": [
+      10000
+    ]
+  },
+  "role_parameters": {
+    "guest": {
+      "args": {
+        "data": {
+          "data0": [
+            {
+              "name": "hetero_breast_b",
+              "namespace": "hetero_breast_guest"
+            }
+          ],
+          "data1": [
+            {
+              "name": "hetero_breast_b",
+              "namespace": "hetero_breast_guest"
+            }
+          ],
+          "data2": [
+            {
+              "name": "hetero_breast_b",
+              "namespace": "hetero_breast_guest"
+            }
+          ]
+        }
+      },
+      "dataio_0": {
+        "with_label": [true],
+        "label_name": ["y"],
+        "output_format": ["dense"],
+        "missing_fill": [false],
+        "outlier_replace": [false]
+      },
+      "dataio_1": {
+        "with_label": [true],
+        "label_name": ["y"],
+        "output_format": ["dense"],
+        "missing_fill": [false],
+        "outlier_replace": [false]
+      },
+      "dataio_2": {
+        "with_label": [true],
+        "label_name": ["y"],
+        "output_format": ["dense"],
+        "missing_fill": [false],
+        "outlier_replace": [false]
+      },
+      "union_0": {
+        "need_run": [true],
+        "allow_missing": [false]
+      }
+    }
+  }
+}
+

@@ -40,7 +40,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
 
     def compute_and_aggregate_forwards(self, data_instances, model_weights,
                                        encrypted_calculator, batch_index, offset=None):
-        '''
+        """
         Compute gradients:
         gradient = (1/N)*\sum(wx -y)*x
 
@@ -55,12 +55,10 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
 
         encrypted_calculator: Use for different encrypted methods
 
-        optimizer: optimizer object
-
-        n_iter_: int, current number of iter.
+        offset: Used in Poisson only.
 
         batch_index: int, use to obtain current encrypted_calculator index:
-        '''
+        """
         wx = data_instances.mapValues(
             lambda v: np.dot(v.features, model_weights.coef_) + model_weights.intercept_)
         self.forwards = wx
@@ -103,6 +101,22 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         LOGGER.debug("In compute_loss, loss list are: {}".format(loss_list))
         self.sync_loss_info(loss_list, suffix=current_suffix)
 
+    def compute_forward_hess(self, data_instances, delta_s, host_forwards):
+        """
+        To compute Hessian matrix, y, s are needed.
+        g = (1/N)*∑(wx - y) * x
+        y = ∇2^F(w_t)s_t = g' * s = (1/N)*∑(x * s) * x
+        define forward_hess = (1/N)*∑(x * s)
+        """
+        forwards = data_instances.mapValues(
+            lambda v: (np.dot(v.features, delta_s.coef_) + delta_s.intercept_))
+        for host_forward in host_forwards:
+            forwards = forwards.join(host_forward, lambda g, h: g + h)
+        hess_vector = hetero_linear_model_gradient.compute_gradient(data_instances,
+                                                                    forwards,
+                                                                    delta_s.fit_intercept)
+        return forwards, np.array(hess_vector)
+
 
 class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
 
@@ -119,7 +133,7 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         wx = data_instances.mapValues(lambda v: np.dot(v.features, model_weights.coef_) + model_weights.intercept_)
         return wx
 
-    def compute_loss(self, model_weights, optimizer, n_iter_, batch_index):
+    def compute_loss(self, model_weights, optimizer, n_iter_, batch_index, cipher_operator):
         '''
         Compute htero linr loss for:
             loss = (1/2N)*\sum(wx-y)^2 where y is label, w is model weight and x is features
@@ -129,10 +143,15 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
 
         current_suffix = (n_iter_, batch_index)
         self_wx_square = self.forwards.mapValues(lambda x: np.square(x)).reduce(reduce_add)
-        self.remote_loss_intermediate(self_wx_square, suffix=current_suffix)
+        en_wx_square = cipher_operator.encrypt(self_wx_square)
+        self.remote_loss_intermediate(en_wx_square, suffix=current_suffix)
 
         loss_regular = optimizer.loss_norm(model_weights)
-        self.remote_loss_regular(loss_regular, suffix=current_suffix)
+        if loss_regular is None:
+            en_loss_regular = loss_regular
+        else:
+            en_loss_regular = cipher_operator.encrypt(loss_regular)
+        self.remote_loss_regular(en_loss_regular, suffix=current_suffix)
 
 
 class Arbiter(hetero_linear_model_gradient.Arbiter, loss_sync.Arbiter):
@@ -144,9 +163,9 @@ class Arbiter(hetero_linear_model_gradient.Arbiter, loss_sync.Arbiter):
         self._register_loss_sync(transfer_variables.loss)
 
     def compute_loss(self, cipher, n_iter_, batch_index):
-        '''
+        """
         Decrypt loss from guest
-        '''
+        """
         current_suffix = (n_iter_, batch_index)
         loss_list = self.sync_loss_info(suffix=current_suffix)
         de_loss_list = cipher.decrypt_list(loss_list)

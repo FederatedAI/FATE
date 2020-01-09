@@ -17,11 +17,12 @@ import os
 
 from flask import Flask, request
 
-from arch.api.utils import file_utils
+from arch.api import session
 from fate_flow.settings import stat_logger
 from fate_flow.utils.api_utils import get_json_result
-from fate_flow.utils import detect_utils
+from fate_flow.utils import detect_utils, job_utils
 from fate_flow.driver.job_controller import JobController
+from fate_flow.utils.job_utils import get_job_configuration
 
 manager = Flask(__name__)
 
@@ -54,6 +55,45 @@ def download_upload(access_module):
     return get_json_result(job_id=job_id, data=data)
 
 
+@manager.route('/upload/history', methods=['POST'])
+def upload_history():
+    data = get_upload_history()
+    return get_json_result(retcode=0, retmsg='success', data=data)
+
+
+def get_upload_history():
+    request_data = request.json
+    if request_data.get('job_id'):
+        tasks = job_utils.query_task(component_name='upload_0', status='success', job_id=request_data.get('job_id'))
+    else:
+        tasks = job_utils.query_task(component_name='upload_0', status='success')
+    limit= request_data.get('limit')
+    if not limit:
+        tasks = tasks[-1::-1]
+    else:
+        tasks = tasks[-1:-limit - 1:-1]
+    jobs_run_conf = get_job_configuration(None, None, None, tasks)
+    return get_upload_info(jobs_run_conf)
+
+
+def get_upload_info(jobs_run_conf):
+    data = []
+    for job_id, job_run_conf in jobs_run_conf.items():
+        info = {}
+        table_name = job_run_conf["table_name"][0]
+        namespace = job_run_conf["namespace"][0]
+        partition = job_run_conf["partition"][0]
+        info["upload_info"] = {
+            "table_name": table_name,
+            "namespace": namespace,
+            "partition": partition,
+        }
+        info["notes"] = job_run_conf["notes"]
+        info["meta"] = session.get_data_table_metas(table_name, namespace)
+        data.append({job_id: info})
+    return data
+
+
 def gen_data_access_job_config(config_data, access_module):
     job_runtime_conf = {
         "initiator": {},
@@ -75,9 +115,9 @@ def gen_data_access_job_config(config_data, access_module):
         job_runtime_conf["role_parameters"][initiator_role] = {
             "upload_0": {
                 "work_mode": [config_data["work_mode"]],
-                "head": [config_data.get("head")],
+                "head": [config_data["head"]],
                 "partition": [config_data["partition"]],
-                "file": [config_data.get("file")],
+                "file": [config_data["file"]],
                 "namespace": [config_data["namespace"]],
                 "table_name": [config_data["table_name"]],
                 "in_version": [config_data.get("in_version")],
@@ -92,10 +132,10 @@ def gen_data_access_job_config(config_data, access_module):
         job_runtime_conf["role_parameters"][initiator_role] = {
             "download_0": {
                 "work_mode": [config_data["work_mode"]],
-                "delimitor": [config_data.get("delimitor")],
-                "output_path": [config_data.get("output_path")],
-                "namespace": [config_data.get("namespace")],
-                "table_name": [config_data.get("table_name")]
+                "delimitor": [config_data.get("delimitor", ",")],
+                "output_path": [config_data["output_path"]],
+                "namespace": [config_data["namespace"]],
+                "table_name": [config_data["table_name"]]
             }
         }
 

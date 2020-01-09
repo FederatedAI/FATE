@@ -1,0 +1,82 @@
+{
+  "data": [
+      {
+          "file": "examples/data/breast_b.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "hetero_breast_b",
+          "namespace": "hetero_breast_guest",
+          "role": "guest_0"
+        },
+      {
+          "file": "examples/data/breast_a.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "hetero_breast_a",
+          "namespace": "hetero_breast_host",
+          "role": "host_0"
+      },
+      {
+          "file": "examples/data/breast_a.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "hetero_breast_a",
+          "namespace": "hetero_breast_host",
+          "role": "host_1"
+      },
+      {
+          "file": "examples/data/breast_a.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "hetero_breast_a",
+          "namespace": "hetero_breast_host",
+          "role": "host_2"
+      },
+      {
+        "file": "examples/data/vehicle_scale_b.csv",
+        "head": 1,
+        "partition": 10,
+        "table_name": "hetero_vehicle_b",
+        "namespace": "hetero_guest_vehicle",
+        "role": "guest_0"
+      },
+      {
+        "file": "examples/data/vehicle_scale_a.csv",
+        "head": 1,
+        "partition": 10,
+        "table_name": "hetero_vehicle_a",
+        "namespace": "hetero_host_vehicle",
+        "role": "host_0"
+      }
+  ],
+  "tasks": {
+    "lr_cv": {
+      "conf": "test_hetero_lr_cv_job_conf.json",
+      "dsl": "test_hetero_lr_cv_job_dsl.json"
+    },
+    "lr_one_vs_all": {
+      "conf": "test_hetero_lr_one_vs_rest_job_conf.json",
+      "dsl": "test_hetero_lr_train_job_dsl.json"
+    },
+    "lr_validate": {
+      "conf": "test_hetero_lr_validate_job_conf.json",
+      "dsl": "test_hetero_lr_validate_job_dsl.json"
+    },
+    "lr_feature_engineering": {
+      "conf": "test_lr_with_feature_engineering_job_conf.json",
+      "dsl": "test_lr_with_feature_engineering_dsl.json"
+    },
+    "lr_multi_host": {
+      "conf": "test_multi_host_job_conf.json",
+      "dsl": "test_hetero_lr_train_job_dsl.json"
+    },
+    "lr": {
+      "conf": "test_hetero_lr_train_job_conf.json",
+      "dsl": "test_hetero_lr_train_job_dsl.json"
+    },
+    "lr-predict": {
+      "conf": "test_predict_conf.json",
+      "deps": "lr"
+    }
+  }
+}

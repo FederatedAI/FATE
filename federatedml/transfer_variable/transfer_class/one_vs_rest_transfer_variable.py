@@ -23,12 +23,12 @@
 #
 ################################################################################
 
-from federatedml.transfer_variable.transfer_class.base_transfer_variable import BaseTransferVariable, Variable
+from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 
 
 # noinspection PyAttributeOutsideInit
-class OneVsRestTransferVariable(BaseTransferVariable):
-    def define_transfer_variable(self):
-        self.host_classes = Variable(name='OneVsRestTransferVariable.host_classes', auth=dict(src='host', dst=['guest']), transfer_variable=self)
-        self.aggregate_classes = Variable(name='OneVsRestTransferVariable.aggregate_classes', auth=dict(src='guest', dst=['host', 'arbiter']), transfer_variable=self)
-        pass
+class OneVsRestTransferVariable(BaseTransferVariables):
+    def __init__(self, flowid=0):
+        super().__init__(flowid)
+        self.aggregate_classes = self._create_variable(name='aggregate_classes')
+        self.host_classes = self._create_variable(name='host_classes')

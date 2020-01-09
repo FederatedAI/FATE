@@ -10,9 +10,9 @@ We use json file which is actually a dict as a dsl config file. The first level 
 
     {
     "components" : {
-        ...
+            ...
+        }
     }
-}
 
 Then each component should be defined in second level. Here is an example of setting a component:
 
@@ -32,7 +32,7 @@ Then each component should be defined in second level. Here is an example of set
         "need_deploy": true
     }
 
-As the example shows, user define the component names as key of this module. But this module should end up with a "_num" where the num should start with 0.
+As the example shows, user define the component name as key of this module. But this module should end up with a "_num" where the num should start with 0.
 
 #### Field Specification
 1. module: Specify which component use. This field should be strictly same with file name in federatedml/conf/setting_conf except the .json suffix.
