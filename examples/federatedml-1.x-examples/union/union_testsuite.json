@@ -1,0 +1,30 @@
+{
+  "data": [
+      {
+          "file": "examples/data/breast_b.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "hetero_breast_b",
+          "namespace": "hetero_breast_guest",
+          "role": "guest_0"
+        },
+      {
+          "file": "examples/data/breast_a.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "hetero_breast_a",
+          "namespace": "hetero_breast_host",
+          "role": "host_0"
+        }
+  ],
+  "tasks": {
+    "union": {
+      "conf": "test_union_job_conf.json",
+      "dsl": "test_union_job_dsl.json"
+    },
+    "union-basic": {
+      "conf": "test_union_basic_job_conf.json",
+      "dsl": "test_union_basic_job_dsl.json"
+    }
+  }
+}

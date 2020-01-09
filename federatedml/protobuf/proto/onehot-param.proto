@@ -22,10 +22,10 @@ option java_outer_classname = "OneHotParamProto";
 
 message ColsMap {
     repeated string values = 1;
-    repeated string encoded_variables = 2;
-    string data_type = 3;
+    repeated string transformed_headers = 2;
 }
 
 message OneHotParam {
     map<string, ColsMap> col_map = 1;
+    repeated string result_header = 2;
 }

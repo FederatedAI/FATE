@@ -1,0 +1,12 @@
+{
+    "module_path":  "federatedml/statistic/union",
+    "default_runtime_conf": "union_param.json",
+    "param_class" : "federatedml/param/union_param.py/UnionParam",
+    "role":
+    {
+        "guest|host":
+        {
+            "program": "union.py/Union"
+        }
+    }
+}

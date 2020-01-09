@@ -4,6 +4,7 @@
   <img src="./doc/images/FATE_logo.png">
 </div>
 
+[DOC](./doc) | [Quick Start](./examples/federatedml-1.x-examples) | [中文](./README_zh.md)
 
 FATE (Federated AI Technology Enabler) is an open-source project initiated by Webank's AI Department to provide a secure computing framework to support the federated AI ecosystem. It implements secure computation protocols based on homomorphic encryption and multi-party computation (MPC). It supports federated learning architectures and secure computation of various machine learning algorithms, including logistic regression, tree-based algorithms, deep learning and transfer learning.
 
@@ -13,7 +14,7 @@ FATE (Federated AI Technology Enabler) is an open-source project initiated by We
 
 *  Join our maillist [Fate-FedAI Group IO](https://groups.io/g/Fate-FedAI). You can ask questions and participate in the development discussion.
 
-*  For any frequently asked questions, you can check in [FAQ](https://github.com/FederatedAI/FATE/wiki/FATE-FAQ).  
+*  For any frequently asked questions, you can check in [FAQ](https://github.com/FederatedAI/FATE/wiki).
 
 *  Please report bugs by submitting [issues](https://github.com/FederatedAI/FATE/issues). 
 
@@ -25,22 +26,41 @@ FATE already supports a number of federated learning algorithms, including verti
 
 
 ## Install
-FATE can be installed on Linux or Mac. Now, FATE can support standalone and cluster deployments.
 
+FATE can be installed on Linux or Mac. Now, FATE can support：
+
+* Native installation: standalone and cluster deployments;
+
+* KubeFATE installation:
+
+	- Multipal parties deployment by docker-compose, which for devolopment and test purpose;
+
+	- Cluster (multi-node) deployment by Kubernetes
+
+### Native installation: 
 Software environment :jdk1.8+、Python3.6、python virtualenv、mysql5.6+、redis-5.0.2
 
-#### Standalone
+##### Standalone
 FATE provides Standalone runtime architecture for developers. It can help developers quickly test FATE. Standalone support two types of deployment: Docker version and Manual version. Please refer to Standalone deployment guide: [standalone-deploy](./standalone-deploy/)
 
-#### Cluster
+##### Cluster
 FATE also provides a distributed runtime architecture for Big Data scenario. Migration from standalone to cluster requires configuration change only. No algorithm change is needed. 
 
 To deploy FATE on a cluster, please refer to cluster deployment guide: [cluster-deploy](./cluster-deploy).
 
-#### Get source
+##### Get source
 ```shell
 git clone --recursive git@github.com:FederatedAI/FATE.git
 ```
+
+### KubeFATE installation:
+Using KubeFATE, FATE can be deployed by either docker-compose or Kubernetes:
+
+* For development or testing purposes, docker-compose is recommended. It only requires Docker enviroment. For more detail, please refer to [Deployment by Docker Compose](https://github.com/FederatedAI/KubeFATE/tree/master/docker-deploy).
+
+* For a production or a large scale deployment, Kubernetes is recommended as an underlying infrastructure to manage FATE system. For more detail, please refer to [Deployment on Kubernetes](https://github.com/FederatedAI/KubeFATE/blob/master/k8s-deploy).
+
+More instructions can be found in [KubeFATE](https://github.com/FederatedAI/KubeFATE).
 
 ## Running Tests
 

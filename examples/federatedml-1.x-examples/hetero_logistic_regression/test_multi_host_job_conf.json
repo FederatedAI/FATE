@@ -11,7 +11,7 @@
       10000
     ],
     "host": [
-      10000, 10001, 10002
+      10000, 10001
     ],
     "arbiter": [
       10000
@@ -59,17 +59,9 @@
             {
               "name": "hetero_breast_a",
               "namespace": "hetero_breast_host"
-            },
-            {
-              "name": "hetero_breast_a",
-              "namespace": "hetero_breast_host"
             }
           ],
           "eval_data": [
-            {
-              "name": "hetero_breast_a",
-              "namespace": "hetero_breast_host"
-            },
             {
               "name": "hetero_breast_a",
               "namespace": "hetero_breast_host"
@@ -82,9 +74,9 @@
         }
       },
       "dataio_0": {
-        "with_label": [false, false, false],
-        "output_format": ["dense", "dense", "dense"],
-        "outlier_replace": [true, true, true]
+        "with_label": [false, false],
+        "output_format": ["dense", "dense"],
+        "outlier_replace": [true, true]
       }
     }
   },
@@ -109,12 +101,12 @@
         "evaluate_param": {
           "eval_type": "binary"
         }
-      },
-      "intersect_0": {
-        "intersect_method": "rsa",
-        "is_send_intersect_ids": true,
-        "only_output_key": false
       }
+    },
+    "intersect_0": {
+      "intersect_method": "rsa",
+      "sync_intersect_ids": true,
+      "only_output_key": false
     }
   }
 }

@@ -1,0 +1,46 @@
+{
+  "data": [
+      {
+          "file": "examples/data/breast_b.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "breast_b",
+          "namespace": "hetero",
+          "role": "guest_0"
+      },
+      {
+          "file": "examples/data/breast_a.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "breast_a",
+          "namespace": "hetero",
+          "role": "host_0"
+      },
+      {
+          "file": "examples/data/vehicle_scale_b.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "vehicle_scale_b",
+          "namespace": "hetero",
+          "role": "guest_0"
+      },
+      {
+          "file": "examples/data/vehicle_scale_a.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "vehicle_scale_a",
+          "namespace": "hetero",
+          "role": "host_0"
+      }
+  ],
+  "tasks": {
+    "train_binary": {
+      "conf": "./test_hetero_nn_keras.json",
+      "dsl": "./test_hetero_nn_dsl.json"
+    },
+    "train_multi": {
+      "conf": "./test_hetero_nn_keras_multi_label.json",
+      "dsl": "./test_hetero_nn_dsl.json"
+    }
+  }
+}

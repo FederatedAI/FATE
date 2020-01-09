@@ -78,10 +78,15 @@
       }
     },
     "hetero_feature_selection_0": {
-      "select_cols": -1,
-      "filter_methods": ["unique_value", "iv_value_thres",
+      "select_col_indexes": -1,
+      "select_names": [],
+      "filter_methods": ["manually", "unique_value", "iv_value_thres",
         "coefficient_of_variation_value_thres", "iv_percentile", "outlier_cols"],
       "local_only": false,
+      "manually_param": {
+        "filter_out_indexes": [],
+        "filter_out_names": []
+      },
       "unique_param": {
         "eps": 1e-6
       },

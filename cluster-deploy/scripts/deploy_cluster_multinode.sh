@@ -331,6 +331,8 @@ config_federatedml() {
 
 packaging_fateboard() {
     cp configurations.sh configurations.sh.tmp
+    sed -i.bak "s#version=.*#version=${version}#g" ./configurations.sh.tmp
+    sed -i.bak "s#fateboard_version=.*#fateboard_version=${fateboard_version}#g" ./configurations.sh.tmp
     sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
@@ -357,6 +359,8 @@ config_fateboard() {
 
 packaging_federation() {
     cp configurations.sh configurations.sh.tmp
+    sed -i.bak "s#version=.*#version=${version}#g" ./configurations.sh.tmp
+    sed -i.bak "s#federation_version=.*#federation_version=${federation_version}#g" ./configurations.sh.tmp
     sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
@@ -383,6 +387,8 @@ config_federation() {
 
 packaging_proxy() {
     cp configurations.sh configurations.sh.tmp
+    sed -i.bak "s#version=.*#version=${version}#g" ./configurations.sh.tmp
+    sed -i.bak "s#proxy_version=.*#proxy_version=${proxy_version}#g" ./configurations.sh.tmp
     sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
@@ -413,6 +419,8 @@ config_proxy() {
 
 packaging_roll() {
     cp configurations.sh configurations.sh.tmp
+    sed -i.bak "s#version=.*#version=${version}#g" ./configurations.sh.tmp
+    sed -i.bak "s#roll_version=.*#roll_version=${roll_version}#g" ./configurations.sh.tmp
     sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
@@ -436,6 +444,8 @@ config_roll() {
 
 packaging_metaservice() {
     cp configurations.sh configurations.sh.tmp
+    sed -i.bak "s#version=.*#version=${version}#g" ./configurations.sh.tmp
+    sed -i.bak "s#meta_service_version=.*#meta_service_version=${meta_service_version}#g" ./configurations.sh.tmp
     sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
@@ -462,6 +472,8 @@ config_metaservice() {
 
 packaging_egg() {
     cp configurations.sh configurations.sh.tmp
+    sed -i.bak "s#version=.*#version=${version}#g" ./configurations.sh.tmp
+    sed -i.bak "s#egg_version=.*#egg_version=${egg_version}#g" ./configurations.sh.tmp
     sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
@@ -475,6 +487,7 @@ config_egg() {
     eval my_ips=\${${party_name}_egg[*]}
     eval roll_ip=\${${party_name}_roll}
     eval proxy_ip=\${${party_name}_proxy}
+    eval clustercomm_ip=\${${party_name}_federation}
     for my_ip in ${my_ips[*]};do
         sed -i.bak "s#java_dir=.*#java_dir=${deploy_dir}/common/jdk/jdk-${jdk_version}#g" ./configurations.sh.tmp
         sed -i.bak "s#deploy_dir=.*#deploy_dir=${deploy_dir}/eggroll#g" ./configurations.sh.tmp
@@ -484,6 +497,7 @@ config_egg() {
         sed -i.bak "s/party_id=.*/party_id=${party_id}/g" ./configurations.sh.tmp
         sed -i.bak "s/roll_ip=.*/roll_ip=${roll_ip}/g" ./configurations.sh.tmp
         sed -i.bak "s/proxy_ip=.*/proxy_ip=${proxy_ip}/g" ./configurations.sh.tmp
+        sed -i.bak "s/clustercomm_ip=.*/clustercomm_ip=${clustercomm_ip}/g" ./configurations.sh.tmp
         config_enter ${my_ip} egg
         sh ./deploy.sh ${deploy_mode} config ./configurations.sh.tmp ${my_ip}
     done

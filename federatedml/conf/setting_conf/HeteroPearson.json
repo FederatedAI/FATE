@@ -1,0 +1,12 @@
+{
+    "module_path":  "federatedml/statistic/correlation",
+    "default_runtime_conf": "pearson_param.json",
+    "param_class" : "federatedml/param/pearson_param.py/PearsonParam",
+    "role":
+    {
+        "guest|host":
+        {
+            "program": "hetero_pearson.py/HeteroPearson"
+        }
+    }
+}

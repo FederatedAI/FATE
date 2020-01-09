@@ -7,27 +7,26 @@ python fate_flow_client.py -f $command
 
 
 
-## Job
+## JOB_OPERATE
 
 #### submit_job
 - description: submit a pipeline job
 - parameter:
     * -c  --config: runtime conf path, Required
     * -d  --dsl: dsl path, Required
+```bash
+python fate_flow_client.py -f submit_job -c examples/test_hetero_lr_job_conf.json -d examples/test_hetero_lr_job_dsl.json 
+```
     
     
-
-#### cancel_job
-- description: cancel waiting job
-- parameter:
-    * -j --job_id: job id, Required
- 
-      
-    
+        
 #### stop_job
-- description: stop job 
+- description: cancel job or stop job 
 - parameter:
     * -j  --job_id: job id, Required
+```bash
+python fate_flow_client.py -f stop_job -j $job_id
+```
     
     
     
@@ -38,9 +37,25 @@ python fate_flow_client.py -f $command
     * -r  --role : filter by role, Optional
     * -p  --party_id: filter by party id, Optional
     * -s  --status: filter by status, Optional
+```bash
+python fate_flow_client.py -f query_job -j $job_id
+```
 
 
 
+#### data_view_query
+-description: query data view information by filters
+- parameter:
+    * -j  --job_id: filter by job id, Optional
+    * -r  --role : filter by role, Optional
+    * -p  --party_id: filter by party id, Optional
+    * -s  --status: filter by status, Optional
+```bash
+python fate_flow_client.py -f data_view_query -j $job_id
+```
+
+
+## JOB
 #### job_config
 - description: download the configuration of this job
 - parameter:
@@ -48,7 +63,9 @@ python fate_flow_client.py -f $command
     * -r  --role : role, Required
     * -p  --party_id: party id, Required
     * -o  --output_path: config output directory path, Required
-
+```bash
+python fate_flow_client.py -f job_config -j $job_id -r $role -p $party_id -o $output_path
+```
 
 
 #### job_log
@@ -56,9 +73,13 @@ python fate_flow_client.py -f $command
 - parameter: 
     * -j  --job_id: job id, Required
     * -o  --output_path: config output directory path, Required
+```bash
+python fate_flow_client.py -f job_log -j $job_id -o $output_path
+```
 
 
 
+## TASK_OPERATE
 #### query_task
 - description: query task information by filters
 - parameter:
@@ -67,11 +88,13 @@ python fate_flow_client.py -f $command
     * -r  --role : filter by role, Optional
     * -p --party_id: filter by party id, Optional
     * -s  --status: filter by status, Optional
+```bash
+python fate_flow_client.py -f query_task -j $job_id 
+```
 
 
 
-## Tracking
-
+## TRACKING
 #### component_parameters
 - description: query the parameters of this component
 - parameter:
@@ -79,7 +102,9 @@ python fate_flow_client.py -f $command
     * -cpn --component_name: component name, Required
     * -r --role: role, Required
     * -p --party_id: party id, Required
-
+```bash
+python fate_flow_client.py -f component_parameters -j $job_id -r $role -p $party_id -cpn $component_name
+```
 
 
 #### component_metric_all
@@ -89,7 +114,9 @@ python fate_flow_client.py -f $command
     * -cpn --component_name: component name, Required
     * -r --role: role, Required
     * -p --party_id: party id, Required
-
+```bash
+python fate_flow_client.py -f component_metric_all -j $job_id -r $role -p $party_id -cpn $component_name
+```
 
 
 #### component_metrics
@@ -99,6 +126,9 @@ python fate_flow_client.py -f $command
     * -cpn --component_name: component name, Required
     * -r --role: role, Required
     * -p --party_id: party id, Required
+```bash
+python fate_flow_client.py -f component_metrics -j $job_id -r $role -p $party_id -cpn $component_name
+```
 
 
 
@@ -109,6 +139,9 @@ python fate_flow_client.py -f $command
     * -cpn --component_name: component name, Required
     * -r --role: role, Required
     * -p --party_id: party id, Required
+```bash
+python fate_flow_client.py -f component_output_model -j $job_id -r $role -p $party_id -cpn $component_name
+```
 
 
 
@@ -120,18 +153,21 @@ python fate_flow_client.py -f $command
     * -r --role: role, Required
     * -p --party_id: party id, Required
     * -o  --output_path: config output path, Required
+    * -limit  --limit: Limit quantity, Optional
+```bash
+python fate_flow_client.py -f component_output_model -j $job_id -r $role -p $party_id -cpn $component_name -o $output_path
+```
 
 
-
-### DataAccess
+### DATA
 
 #### download
 - description: download table
 - parameter:
-    * -w --work mode: work mode, Required
-    * -n --namespace: namespace, Required
-    * -t --table_name: table name, Required
-    * -o --output_path: output path, Required
+    * -c --config: config path, Required
+```bash
+python fate_flow_client.py -f download -c examples/download_guest.json
+```
 
 
 
@@ -139,6 +175,21 @@ python fate_flow_client.py -f $command
 - description: upload table
 - parameter:
     * -c --config: config path, Required
+```bash
+python fate_flow_client.py -f upload -c examples/upload_guest.json
+```
+
+
+
+#### upload_history
+- description: upload table history
+- parameter:
+    * -j --job_id: job id, Optional
+    * -limit --limit: Limit quantity, Optional
+```bash
+python fate_flow_client.py -f upload_history -j $job_id
+python fate_flow_client.py -f upload_history -limit 5
+```
 
 
 
@@ -148,19 +199,49 @@ python fate_flow_client.py -f $command
 - description: query table information
 - parameter:
     * -n --namespace: namespace, Required
-    * -t  --table_name: table name, Required
+    * -t --table_name: table name, Required
+```bash
+python fate_flow_client.py -f table_info -n $namespace -t $table_name
+```
+
+
+
+#### table_delete
+- description: delete table 
+- parameter:
+    * -n --namespace: namespace, Optional
+    * -t  --table_name: table name, Optional
+    * -j --job_id: job id, Optional
+    * -cpn --component_name: component name, Optional
+    * -r --role: role, Optional
+    * -p --party_id: party id, Optional
+```bash
+python fate_flow_client.py -f table_delete -n $namespace -t $table_name
+python fate_flow_client.py -f table_delete -j $job_id
+```
+
 
 
 
 ### Model
 
 #### load
-- description: load model.Since the model is not well controlled here, the interface here is not implemented.
+- description: load model.
+- parameter:
+    * -c --config: config path, Required
+```bash
+python fate_flow_client.py -f load -c $conf_path
+```
 
 
 
-#### online
-- description: publish model online.Since the model is not well controlled here, the interface here is not implemented.
+#### bind
+- description: bind model.
+- parameter:
+    * -c --config: config path, Required
+```bash
+python fate_flow_client.py -f bind -c $conf_path
+```
 
 
 
@@ -168,3 +249,6 @@ python fate_flow_client.py -f $command
 - description: query model version history
 - parameter:
     * -n --namespace: namespace, Required
+```bash
+python fate_flow_client.py -f version -n $namespce
+```

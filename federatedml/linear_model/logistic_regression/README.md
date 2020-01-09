@@ -61,6 +61,7 @@ Both Homo-LR and Hetero-LR supports the following features:
     c) “adam”: Adam
     d) “adagrad”: AdaGrad
     e) “nesterov_momentum_sgd”: Nesterov Momentum
+    f) "sqn": stochastic quansi-newton. The algorithm details can refer to [this paper](https://arxiv.org/abs/1912.00513v2)
 5. Three converge criteria:
     a) "diff": Use difference of loss between two iterations, not available for multi-host training;
     b) "abs": use the absolute value of loss;

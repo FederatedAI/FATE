@@ -15,12 +15,12 @@
 #
 from typing import List
 
-from arch.api import session
-from arch.api.utils.core import current_timestamp, serialize_b64, deserialize_b64
-from fate_flow.db.db_models import DB, Job, Task, TrackingMetric
+from arch.api import session, WorkMode
+from arch.api.utils.core import current_timestamp, serialize_b64, deserialize_b64, get_lan_ip
+from fate_flow.db.db_models import DB, Job, Task, TrackingMetric, DataView
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.manager import model_manager
-from fate_flow.settings import stat_logger, API_VERSION
+from fate_flow.settings import stat_logger, API_VERSION, MAX_CONCURRENT_JOB_RUN_HOST
 from fate_flow.utils import job_utils, api_utils, model_utils
 from fate_flow.entity.constant_config import JobStatus, TaskStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -189,6 +189,12 @@ class Tracking(object):
             name=Tracking.output_table_name('data'),
             namespace=self.table_namespace,
             partition=48)
+        self.save_data_view(self.role, self.party_id,
+                            data_info={'f_table_name': persistent_table._name if data_table else '',
+                                       'f_table_namespace': persistent_table._namespace if data_table else '',
+                                       'f_partition': persistent_table._partitions if data_table else None,
+                                       'f_table_create_count': data_table.count() if data_table else 0},
+                            mark=True)
 
     def get_output_data_table(self, data_name: str = 'component'):
         output_data_info_table = session.table(name=Tracking.output_table_name('data'),
@@ -210,6 +216,9 @@ class Tracking(object):
                                                model_buffers=model_buffers,
                                                party_model_id=self.party_model_id,
                                                model_version=self.model_version)
+            self.save_data_view(self.role, self.party_id,
+                                data_info={'f_party_model_id': self.party_model_id,
+                                           'f_model_version': self.model_version})
             self.save_output_model_meta({'{}_module_name'.format(self.component_name): self.module_name})
 
     def get_output_model(self, model_name):
@@ -308,10 +317,14 @@ class Tracking(object):
             job.f_role = role
             job.f_party_id = party_id
             if 'f_status' in job_info:
-                if job.f_status in [JobStatus.SUCCESS, JobStatus.FAILED, JobStatus.PARTIAL, JobStatus.DELETED]:
+                if job.f_status in [JobStatus.SUCCESS, JobStatus.FAILED]:
                     # Termination status cannot be updated
                     # TODO:
                     pass
+                if job.f_status == JobStatus.FAILED and not job.f_end_time:
+                    job.f_end_time = current_timestamp()
+                    job.f_elapsed = job.f_end_time - job.f_start_time
+                    job.f_update_time = current_timestamp()
             for k, v in job_info.items():
                 try:
                     if k in ['f_job_id', 'f_role', 'f_party_id'] or v == getattr(Job, k).default:
@@ -363,15 +376,99 @@ class Tracking(object):
                 task.save()
             return task
 
-    def clean_task(self):
+    def save_data_view(self, role, party_id, data_info, mark=False):
+        with DB.connection_context():
+            data_views = DataView.select().where(DataView.f_job_id == self.job_id,
+                                                 DataView.f_component_name == self.component_name,
+                                                 DataView.f_task_id == self.task_id,
+                                                 DataView.f_role == role,
+                                                 DataView.f_party_id == party_id)
+            is_insert = True
+            if mark and self.component_name == "upload_0":
+                return
+            if data_views:
+                data_view = data_views[0]
+                is_insert = False
+            else:
+                data_view = DataView()
+                data_view.f_create_time = current_timestamp()
+            data_view.f_job_id = self.job_id
+            data_view.f_component_name = self.component_name
+            data_view.f_task_id = self.task_id
+            data_view.f_role = role
+            data_view.f_party_id = party_id
+            data_view.f_update_time = current_timestamp()
+            for k, v in data_info.items():
+                if k in ['f_job_id', 'f_component_name', 'f_task_id', 'f_role', 'f_party_id'] or v == getattr(
+                        DataView, k).default:
+                    continue
+                setattr(data_view, k, v)
+            if is_insert:
+                data_view.save(force_insert=True)
+            else:
+                data_view.save()
+            return data_view
+
+    def clean_task(self, roles, party_ids):
         stat_logger.info('clean table by namespace {}'.format(self.task_id))
         session.clean_tables(namespace=self.task_id, regex_string='*')
+        for role in roles.split(','):
+            for party_id in party_ids.split(','):
+                session.clean_tables(namespace=self.task_id + '_' + role + '_' + party_id, regex_string='*')
+
+
+    def job_quantity_constraint(self):
+        if RuntimeConfig.WORK_MODE == WorkMode.CLUSTER:
+            if self.role == 'host':
+                running_jobs = job_utils.query_job(status='running', role=self.role)
+                if len(running_jobs) >= MAX_CONCURRENT_JOB_RUN_HOST:
+                    raise Exception('The job running on the host side exceeds the maximum running amount')
 
     def get_table_namespace(self, job_level: bool = False):
         return self.table_namespace if not job_level else self.job_table_namespace
 
     def get_table_index(self):
         return self.job_id[:8]
+
+    @staticmethod
+    def delete_metric_data(metric_info):
+        if metric_info.get('model'):
+            sql = Tracking.drop_metric_data_mode(metric_info.get('model'))
+        else:
+            sql = Tracking.delete_metric_data_from_db(metric_info)
+        return sql
+
+    @staticmethod
+    def drop_metric_data_mode(model):
+        with DB.connection_context():
+            try:
+                drop_sql = 'drop table t_tracking_metric_{}'.format(model)
+                DB.execute_sql(drop_sql)
+                stat_logger.info(drop_sql)
+                return drop_sql
+            except Exception as e:
+                stat_logger.exception(e)
+                raise e
+
+    @staticmethod
+    def delete_metric_data_from_db(metric_info):
+        with DB.connection_context():
+            try:
+                job_id = metric_info['job_id']
+                metric_info.pop('job_id')
+                delete_sql = 'delete from t_tracking_metric_{}  where f_job_id="{}"'.format(job_id[:8], job_id)
+                for k, v in metric_info.items():
+
+                    if hasattr(TrackingMetric, "f_" + k):
+                        connect_str = " and f_"
+                        delete_sql = delete_sql + connect_str + k + '="{}"'.format(v)
+                DB.execute_sql(delete_sql)
+                stat_logger.info(delete_sql)
+                return delete_sql
+            except  Exception as e:
+                stat_logger.exception(e)
+                raise e
+
 
     @staticmethod
     def metric_table_name(metric_namespace: str, metric_name: str):

@@ -28,7 +28,7 @@ def _save_as_func(rdd: RDD, name, namespace, partition, persistent):
 
     def _func(_, it):
         eggroll_util.maybe_create_eggroll_client()
-        dup.put_all(it)
+        dup.put_all(list(it))
         return 1,
 
     rdd.mapPartitionsWithIndex(_func, preservesPartitioning=False).collect()

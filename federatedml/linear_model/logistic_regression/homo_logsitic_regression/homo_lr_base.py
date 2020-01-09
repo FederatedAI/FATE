@@ -21,6 +21,7 @@ import functools
 from arch.api.utils import log_utils
 from federatedml.linear_model.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.optim import activation
+from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.optim.optimizer import optimizer_factory
 from federatedml.param.logistic_regression_param import HomoLogisticParam
 from federatedml.protobuf.generated import lr_model_meta_pb2
@@ -82,8 +83,9 @@ class HomoLRBase(BaseLogisticRegression):
 
         LOGGER.info("Initialized model shape is {}".format(model_shape))
 
-        model_weights = self.initializer.init_model(model_shape, init_params=self.init_param_obj,
+        w = self.initializer.init_model(model_shape, init_params=self.init_param_obj,
                                                  data_instance=data_instances)
+        model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept)
         return model_weights
 
     def _compute_loss(self, data_instances):

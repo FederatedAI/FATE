@@ -1,14 +1,15 @@
 FROM mcr.microsoft.com/java/jre:8u192-zulu-alpine
 
-COPY eggroll-roll-1.1.tar.gz /data/projects/fate/roll/eggroll-roll-1.1.tar.gz
+WORKDIR /data/projects/fate/roll/
 
-RUN cd /data/projects/fate/roll/ && \
-    tar -xzf eggroll-roll-1.1.tar.gz && \
-    rm eggroll-roll-1.1.tar.gz && \
-    ln -s eggroll-roll-1.1.jar fate-roll.jar
+ARG version
 
-WORKDIR /data/projects/fate
+COPY eggroll-roll-${version}.tar.gz ./
+COPY conf ./conf
 
-CMD cd roll && \
-    java -cp "conf/:lib/*:fate-roll.jar" com.webank.ai.eggroll.framework.Roll -c conf/roll.properties
+RUN tar -xzf eggroll-roll-${version}.tar.gz && \
+    rm eggroll-roll-${version}.tar.gz && \
+    ln -s eggroll-roll-*.jar fate-roll.jar
+
+CMD java -cp "conf/:lib/*:fate-roll.jar" com.webank.ai.eggroll.framework.Roll -c conf/roll.properties
 

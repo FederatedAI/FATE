@@ -56,16 +56,17 @@ class TestBucketBinning(unittest.TestCase):
         self.cols = [1, 2]
 
     def test_bucket_binning(self):
-        bin_param = FeatureBinningParam(bin_num=self.bin_num, cols=self.cols)
+        bin_param = FeatureBinningParam(bin_num=self.bin_num, bin_indexes=self.cols)
         bucket_bin = BucketBinning(bin_param)
         split_points = bucket_bin.fit_split_points(self.table)
         split_point = list(split_points.values())[0]
         for kth, s_p in enumerate(split_point):
             expect_s_p = (self.data_num - 1) / self.bin_num * (kth + 1)
             self.assertEqual(s_p, expect_s_p)
-        iv_attrs = bucket_bin.cal_local_iv(self.table)
-        for col_name, iv_attr in iv_attrs.items():
-            print('col_name: {}, iv: {}, woe_array: {}'.format(col_name, iv_attr.iv, iv_attr.woe_array))
+        bucket_bin.cal_local_iv(self.table)
+        for col_name, iv_attr in bucket_bin.bin_results.all_cols_results.items():
+            # print('col_name: {}, iv: {}, woe_array: {}'.format(col_name, iv_attr.iv, iv_attr.woe_array))
+            assert abs(iv_attr.iv - 0.00364386529386804) < 1e-6
 
     def tearDown(self):
         self.table.destroy()
