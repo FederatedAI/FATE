@@ -25,6 +25,7 @@ from federatedml.protobuf.generated import lr_model_param_pb2
 from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
 from federatedml.param.logistic_regression_param import InitParam
 from federatedml.util import consts
+from federatedml.util.fate_operator import vec_dot
 
 LOGGER = log_utils.getLogger()
 
@@ -54,8 +55,9 @@ class BaseLogisticRegression(BaseLinearModel):
 
 
     def compute_wx(self, data_instances, coef_, intercept_=0):
-        return data_instances.mapValues(lambda v: np.dot(v.features, coef_) + intercept_)
-
+        #return data_instances.mapValues(lambda v: np.dot(v.features, coef_) + intercept_)
+        return data_instances.mapValues(lambda v: vec_dot(v.features,coef_) + intercept_)
+        
     def get_single_model_param(self):
         weight_dict = {}
         LOGGER.debug("in get_single_model_param, model_weights: {}, coef: {}, header: {}".format(
