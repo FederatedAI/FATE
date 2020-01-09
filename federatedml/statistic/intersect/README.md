@@ -19,6 +19,7 @@ Each Y<sub>A</sub> includes different random value which binds to each value in 
 
 Using this module, we can get the intersection ids between two parties in security and efficiently.  
 
+
 #### RAW Intersection
 This intersection module implements the simple intersection method that A or B as a sender will sends all his ids to another, and another one 
 will find the sample ids according to it's ids. Finally it will send the intersection ids to the sender.
