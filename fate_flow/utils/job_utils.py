@@ -40,6 +40,8 @@ from fate_flow.utils import detect_utils
 from fate_flow.utils import api_utils
 from flask import request, redirect, url_for
 
+from fate_flow.utils.session_utils import SessionStop
+
 
 class IdCounter:
     _lock = threading.RLock()
@@ -389,6 +391,26 @@ def task_killed_detector(job_id, role, party_id, component_name, pid):
         os.kill(int(pid), 9)
         kill_process(int(pid), only_child=False)
     threading.Timer(0.25, task_killed_detector, args=[job_id, role, party_id, component_name, pid]).start()
+
+
+def start_stop_session(**kwargs):
+    tasks = query_task(**kwargs)
+    if tasks:
+        for task in tasks:
+            job_conf_dict = get_job_conf(request.json.get('job_id'))
+            runtime_conf = job_conf_dict['job_runtime_conf_path']
+            process_cmd = [
+                'python3', sys.modules[SessionStop.__module__].__file__,
+                '-j', '{}_{}_{}'.format(task.f_task_id, task.f_role, task.f_party_id),
+                '-w', str(runtime_conf.get('job_parameters').get('work_mode')),
+                '-b', str(runtime_conf.get('job_parameters').get('backend', 0)),
+            ]
+            task_dir = os.path.join(get_job_directory(job_id=task.f_job_id), task.f_role,
+                                    task.f_party_id, task.f_component_name, 'session_stop')
+            os.makedirs(task_dir, exist_ok=True)
+            p = run_subprocess(config_dir=task_dir, process_cmd=process_cmd, log_dir=None)
+    else:
+        raise Exception('no found task')
 
 
 def gen_all_party_key(all_party):

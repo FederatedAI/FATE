@@ -15,6 +15,7 @@
 #
 import io
 import os
+import sys
 import tarfile
 
 from flask import Flask, request, send_file
@@ -27,6 +28,7 @@ from fate_flow.utils import job_utils, detect_utils
 from fate_flow.utils.api_utils import get_json_result, request_execute_server
 from fate_flow.entity.constant_config import WorkMode, JobStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.utils.session_utils import SessionStop
 
 manager = Flask(__name__)
 
@@ -140,3 +142,10 @@ def query_data_view():
     if not data_views:
         return get_json_result(retcode=101, retmsg='find data view failed')
     return get_json_result(retcode=0, retmsg='success', data=[data_view.to_json() for data_view in data_views])
+
+
+@manager.route('/session/stop', methods=['POST'])
+@job_utils.job_server_routing()
+def stop_session():
+    job_utils.start_stop_session(**request.json)
+    return get_json_result(retcode=0, retmsg='success')

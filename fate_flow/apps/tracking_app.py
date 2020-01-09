@@ -267,6 +267,16 @@ def component_output_data_download():
                                                                     request_data['role'], request_data['party_id'])
         return send_file(memory_file, attachment_filename=tar_file_name, as_attachment=True)
 
+
+@manager.route('/component/output/data/table', methods=['post'])
+@job_utils.job_server_routing()
+def component_output_data_table():
+    request_data = request.json
+    data_views = job_utils.query_data_view(**request_data)
+    return get_json_result(retcode=0, retmsg='success', data={'table_name': data_views[0].f_table_name,
+                                                              'table_namespace': data_views[0].f_table_namespace})
+
+
 # api using by task executor
 @manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/metric_data/save', methods=['POST'])
 def save_metric_data(job_id, component_name, task_id, role, party_id):

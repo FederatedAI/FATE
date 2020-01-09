@@ -48,7 +48,6 @@ def job_status(job_id, role, party_id):
 
 
 @manager.route('/<job_id>/<role>/<party_id>/<model_id>/<model_version>/save/pipeline', methods=['POST'])
-@request_authority_certification
 def save_pipeline(job_id, role, party_id, model_id, model_version):
     JobController.save_pipeline(job_id=job_id, role=role, party_id=party_id, model_id=base64_decode(model_id),
                                 model_version=base64_decode(model_version))
@@ -75,7 +74,6 @@ def cancel_job(job_id, role, party_id):
 
 
 @manager.route('/<job_id>/<role>/<party_id>/<roles>/<party_ids>/clean', methods=['POST'])
-@request_authority_certification
 def clean(job_id, role, party_id, roles, party_ids):
     JobController.clean_job(job_id=job_id, role=role, party_id=party_id, roles=roles, party_ids=party_ids)
     return get_json_result(retcode=0, retmsg='success')

@@ -32,9 +32,9 @@ from fate_flow.utils import detect_utils
 server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
 JOB_OPERATE_FUNC = ["submit_job", "stop_job", 'query_job', "data_view_query"]
 JOB_FUNC = ["job_config", "job_log"]
-TASK_OPERATE_FUNC = ['query_task']
+TASK_OPERATE_FUNC = ['query_task', "session_stop"]
 TRACKING_FUNC = ["component_parameters", "component_metric_all", "component_metric_delete", "component_metrics",
-                 "component_output_model", "component_output_data"]
+                 "component_output_model", "component_output_data", "component_output_data_table"]
 DATA_FUNC = ["download", "upload", "upload_history"]
 TABLE_FUNC = ["table_info", "table_delete"]
 MODEL_FUNC = ["load", "bind", "version"]
@@ -123,7 +123,10 @@ def call_fun(func, config_data, dsl_path, config_path):
                 else:
                     response = response.json()
     elif func in TASK_OPERATE_FUNC:
-        response = requests.post("/".join([server_url, "job", "task", func.rstrip('_task')]), json=config_data)
+        if func == 'session_stop':
+            response = requests.post("/".join([server_url, "job", func.replace('_', '/')]), json=config_data)
+        else:
+            response = requests.post("/".join([server_url, "job", "task", func.rstrip('_task')]), json=config_data)
     elif func in TRACKING_FUNC:
         if func != 'component_metric_delete':
             detect_utils.check_config(config=config_data,

@@ -17,7 +17,7 @@
 #
 
 export PYTHONPATH=
-log_dir="$(echo ${PYTHONPATH} | awk -F":" '{print $1}')/logs"
+log_dir="$(dirname "$PWD")/logs"
 venv=
 
 module=fate_flow_server.py
