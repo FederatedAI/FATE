@@ -13,7 +13,7 @@ Figure 1 RSA Intersection between party A and party B</div>
 In Figure 1,Party A has user id u1,u2,u3,u4, while Party B has u1,u2,u3,u5. After Intersection,
 party A and party B know their same user ids, which are u1,u2,u3, but party A know nothing about
 other user ids of party B, like u5, and party B know nothing about party A except u1,u2,u3 as well.
-While party A and party b transmit their processed id information to the other party, like Y<sub>A</sub> and Z<sub>B</sub>, 
+While party A and party B transmit their processed id information to the other party, like Y<sub>A</sub> and Z<sub>B</sub>, 
 it will not leak any raw ids. Z<sub>B</sub> can be safely because of the privacy key of party B. 
 Each Y<sub>A</sub> includes different random value which binds to each value in X<sub>A</sub> and will be safely as well.
 
