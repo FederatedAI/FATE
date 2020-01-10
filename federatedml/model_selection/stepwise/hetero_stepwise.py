@@ -261,13 +261,14 @@ class HeteroStepwise(object):
             n_model = 0
             if self.backward:
                 self.step_direction = "backward"
+                LOGGER.info("step {}, direction: {}".format(self.n_step, self.step_direction))
                 back_host_masks, back_guest_masks = self.drop_one(host_mask, guest_mask)
                 host_masks = host_masks + back_host_masks
                 guest_masks = guest_masks + back_guest_masks
 
             if (self.forward and self.n_step > 0) or (not self.backward):
-                n_model = 0
                 self.step_direction = "forward"
+                LOGGER.info("step {}, direction: {}".format(self.n_step, self.step_direction))
                 forward_host_masks, forward_guest_masks = self.add_one(host_mask, guest_mask)
                 host_masks = host_masks + forward_host_masks
                 guest_masks = guest_masks + forward_guest_masks
@@ -301,6 +302,7 @@ class HeteroStepwise(object):
         self.models.destroy()
 
     def run(self, component_parameters, train_data, test_data, model):
+        LOGGER.info("Enter stepwise")
         self._init_model(component_parameters)
         self.host_data_info_transfer = self.transfer_variable.host_data_info
         self.guest_data_info_transfer = self.transfer_variable.guest_data_info
@@ -313,6 +315,7 @@ class HeteroStepwise(object):
         elif self.role == consts.GUEST:
             self.guest_data_info_transfer.remote((n, j), role=consts.ARBITER, idx=0)
         while self.n_step < self.max_step:
+            LOGGER.info("step {}".format(self.n_step))
             feature_masks = self.client_sync_step_info()[0]
             n_model = 0
             for feature_mask in feature_masks:
