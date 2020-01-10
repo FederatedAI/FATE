@@ -479,6 +479,9 @@ class TaskScheduler(object):
             if is_cancel:
                 return cancel_success
         else:
+            jobs = job_utils.query_job(job_id=job_id)
+            if jobs:
+                raise Exception('Current role is not this job initiator')
             schedule_logger(job_id).info('send {} job {} {} command failed'.format("cancel" if is_cancel else "kill", job_id, component_name))
             raise Exception('can not found job: {}'.format(job_id))
 

@@ -250,7 +250,11 @@ class JobController(object):
             schedule_logger(job_id).info('cancel waiting job successfully, job id is {}'.format(job.f_job_id))
             return True
         else:
-            raise Exception('role {} party_id {} cancel waiting job failed, no find jod {}'.format(role, party_id, job_id))
+            jobs = job_utils.query_job(job_id=job_id)
+            if jobs:
+                raise Exception(
+                    'role {} party id {} cancel waiting job {} failed, not is initiator'.format(role, party_id, job_id))
+            raise Exception('role {} party id {} cancel waiting job failed, no find jod {}'.format(role, party_id, job_id))
 
 
 
