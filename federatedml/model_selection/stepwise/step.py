@@ -32,13 +32,14 @@ class Step(object):
         self.n_model = 0
 
     def set_step_info(self, step_info):
-        step_direction, n_step, n_model = step_info
+        n_step, n_model = step_info
         self.n_step = n_step
         self.n_model = n_model
-        self.step_direction = step_direction
+        #self.step_direction = step_direction
 
     def get_flowid(self):
-        flowid = "train.{}.{}.{}".format(self.step_direction, self.n_step, self.n_model)
+        #flowid = "train.{}.{}.{}".format(self.step_direction, self.n_step, self.n_model)
+        flowid = "train.step{}.model{}".format(self.n_step, self.n_model)
         return flowid
 
     @staticmethod
@@ -69,7 +70,6 @@ class Step(object):
         if original_model.model_param.early_stop != 'diff':
             raise ValueError("Stepwise only accepts 'diff' as early stop criteria.")
         model = copy.deepcopy(original_model)
-        LOGGER.debug("original model expects header: {}".format(original_model.header))
         current_flowid = self.get_flowid()
         model.set_flowid(current_flowid)
         if original_model.role != consts.ARBITER:

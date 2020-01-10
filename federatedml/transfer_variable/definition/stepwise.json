@@ -31,15 +31,10 @@
         "guest"
       ]
     },
-    "host_best_model": {
+    "best_model": {
       "src": "arbiter",
       "dst": [
-        "host"
-      ]
-    },
-    "guest_best_model": {
-      "src": "arbiter",
-      "dst": [
+        "host",
         "guest"
       ]
     }
