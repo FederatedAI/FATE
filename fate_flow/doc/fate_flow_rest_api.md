@@ -7,37 +7,38 @@
 
 #### /v1/data/upload
 - request structure
-    * local: Required,Object: local configuration 
-    * role: Optional,Object: role information    
-    * data_type: Optional,String: upload file data type  
-    * gen_table_info: Optional,Boolean: tag table information   
-    * file: Optional, String: upload file location       
-    * work_mode: Optional,Integer: eggroll's working mode         
-    * head: Optional,Integer: determine if there is a data header   
-    * partition: Optional,Integer: set the number of partitions to save data   
-    * namespace: Optional,String: upload data table namespace   
-    * table_name: Optional,String: upload data table name   
+    * namespace: Required,String: upload data table namespace   
+    * table_name: Required,String: upload data table name 
+    * work_mode: Required,Integer: eggroll's working mode       
+    * file: Required, String: upload file location       
+    * head: Required,Integer: determine if there is a data header   
+    * partition: Required,Integer: set the number of partitions to save data   
+  
 - response structure
-    * retcode: return code,Integer
-    * retmsg: return code description,String
-    * job_id: upload job id,String
+    * job_id: download job id,String
+    * data: return data for submitting job ,Object
 
 
 
 #### /v1/data/download
 - request structure
-    * local: Required,Object: local configuration
-    * role: Optional,Object: role information
+    * namespace: Required,String: download data table namespace
+    * table_name:  Required,String: download data table name
     * output_path:  Required, String: download file location
-    * work_mode: Optional,Integer:eggroll's working mode
-    * namespace: Optional,String: download data table namespace
-    * table_name:  Optional,String: download data table name
+    * work_mode: Required,Integer:working mode
     * delimitor: Optional,String: download data delimitor    
+- response structure
+    * job_id: download job id,String
+    * data: return data for submitting job ,Object
+
+#### /v1/data/upload/history
+- request structure
+    * job_id: Optional,String:download job id
+    * limit: Optional, Integer:Limit quantity
 - response structure
     * retcode: return code,Integer
     * retmsg: return code description,String
-    * job_id: download job id,String
-
+    * data: return data for submitting job ,Object
 
 
 ## Job
@@ -52,21 +53,13 @@
 
 
 
-#### /v1/job/cancel
-- request structure
-    * job_id: Required, String: job id
-- response structure
-    * retcode: return code,Integer
-    * retmsg: return code description,String
-
-
 
 #### /v1/job/stop
 - request structure
     * job_id: Required, String: job id
 - response structure
     * job_id: job id of the currently submitted job,String
-    * data: return data for submitting job ,Object
+    * retmsg: return code description,String
 
 
 
@@ -97,6 +90,19 @@
     * retcode: return code,Integer
     * retmsg: return code description,String
     * data: job data, Array
+
+
+
+
+#### /v1/job/update
+- request structure
+    * job_id: Required,String: job id
+    * role: Required,String: job role                    
+    * party_id: Required,String: job party id
+    * notes: Required, String: remark Information
+- response structure
+    * retcode: return code,Integer
+    * retmsg: return code description,String
 
 
 
@@ -282,9 +288,8 @@
 
 #### /v1/model/load
 - request structure
-    * initiator: Optional,Object: job initiator  information
+    * initiator: Required,Object: job initiator information
     * role: Required,Object: role information
-    * gen_table_info: Optional,Boolean: tag table information   
     * model: Requied,Object: model information
 - response structure
     * job_id:job id, String
@@ -294,12 +299,13 @@
 
 
 
-#### /v1/model/online
+#### /v1/model/bind
 - request structure
-    * servings: Optional,Array: my party servings
+    * service_id: Required,String: service id
+    * initiator: Required,Object: job initiator information
+    * job_parameters: Required ,Object: model id and model version
     * role: Required,Object: role information
-    * model: Requied,Object: model information
-    * local: Requied,Object: local information
+    * servings: Optional,Array: my party servings
 - response structure
     * retcode: return code, Integer
 
@@ -312,6 +318,17 @@
     * data: version history,Array
     
     
+    
+#### /v1/model/transfer
+- request structure
+    * name: Requied,String: data table name
+    * namespace: Requied,String: data table namespace
+- response structure
+    * retcode: return code, Integer
+    * retmsg: return code description, String
+    * data: model data, Object
+    
+ 
     
 ## Table
 

@@ -16,8 +16,9 @@
 #  limitations under the License.
 #
 
-modules=(meta-service egg storage-service-cxx roll federation proxy fate_flow fateboard)
+modules=(mysql redis meta-service egg storage-service-cxx roll federation proxy fate_flow fateboard)
 eggroll_modules=(meta-service egg storage-service-cxx roll)
+
 
 cwd=`pwd`
 
@@ -31,6 +32,12 @@ main() {
         bash services.sh ${module} ${action}
     elif [[ "${module}" == "fate_flow" ]];then
         cd ./python/fate_flow
+        bash service.sh ${action}
+    elif [[ "${module}" == "mysql" ]];then
+        cd ./common/mysql/mysql-8.0.13
+        bash service.sh ${action}
+    elif [[ "${module}" == "redis" ]];then
+        cd ./common/redis/redis-5.0.2
         bash service.sh ${action}
     else
         cd ${module}

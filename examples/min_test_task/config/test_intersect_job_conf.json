@@ -58,7 +58,7 @@
   "algorithm_parameters": {
       "intersect_0": {
           "intersect_method": "raw",
-          "is_send_intersect_ids": true,
+          "sync_intersect_ids": true,
           "join_role": "host",
           "with_encode": false,
           "only_output_key": false,

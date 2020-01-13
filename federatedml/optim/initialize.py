@@ -14,17 +14,17 @@
 #  limitations under the License.
 #
 
+from collections.abc import Iterable
+
 import numpy as np
 
 from arch.api.utils import log_utils
-from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.statistic import statics
 
 LOGGER = log_utils.getLogger()
 
 
 class Initializer(object):
-
     def zeros(self, data_shape, fit_intercept, data_instances):
         """
         If fit intercept, use the following formula to initialize b can get a faster converge rate
@@ -43,15 +43,20 @@ class Initializer(object):
         return inits
 
     def random_normal(self, data_shape):
-        inits = np.random.randn(data_shape)
+        if isinstance(data_shape, Iterable):
+            inits = np.random.randn(*data_shape)
+        else:
+            inits = np.random.randn(data_shape)
         return inits
 
     def random_uniform(self, data_shape):
-        inits = np.random.rand(data_shape)
+        if isinstance(data_shape, Iterable):
+            inits = np.random.rand(*data_shape)
+        else:
+            inits = np.random.rand(data_shape)
         return inits
 
     def constant(self, data_shape, const):
-
         inits = np.ones(data_shape) * const
         return inits
 
@@ -88,7 +93,5 @@ class Initializer(object):
             w = self.constant(model_shape, const=init_const)
         else:
             raise NotImplementedError("Initial method cannot be recognized: {}".format(init_method))
-
-        LOGGER.debug("Initialed model: {}".format(w))
-        lr_weights = LinearModelWeights(w, init_params.fit_intercept)
-        return lr_weights
+        LOGGER.debug("Inited model is :{}".format(w))
+        return w

@@ -23,15 +23,15 @@
 #
 ################################################################################
 
-from federatedml.transfer_variable.transfer_class.base_transfer_variable import BaseTransferVariable, Variable
+from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 
 
 # noinspection PyAttributeOutsideInit
-class RawIntersectTransferVariable(BaseTransferVariable):
-    def define_transfer_variable(self):
-        self.send_ids_host = Variable(name='RawIntersectTransferVariable.send_ids_host', auth=dict(src='host', dst=['guest']), transfer_variable=self)
-        self.send_ids_guest = Variable(name='RawIntersectTransferVariable.send_ids_guest', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        self.intersect_ids_host = Variable(name='RawIntersectTransferVariable.intersect_ids_host', auth=dict(src='host', dst=['guest']), transfer_variable=self)
-        self.intersect_ids_guest = Variable(name='RawIntersectTransferVariable.intersect_ids_guest', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        self.sync_intersect_ids_multi_hosts = Variable(name='RawIntersectTransferVariable.sync_intersect_ids_multi_hosts', auth=dict(src='guest', dst=['host']), transfer_variable=self)
-        pass
+class RawIntersectTransferVariable(BaseTransferVariables):
+    def __init__(self, flowid=0):
+        super().__init__(flowid)
+        self.intersect_ids_guest = self._create_variable(name='intersect_ids_guest')
+        self.intersect_ids_host = self._create_variable(name='intersect_ids_host')
+        self.send_ids_guest = self._create_variable(name='send_ids_guest')
+        self.send_ids_host = self._create_variable(name='send_ids_host')
+        self.sync_intersect_ids_multi_hosts = self._create_variable(name='sync_intersect_ids_multi_hosts')

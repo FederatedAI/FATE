@@ -25,41 +25,43 @@
 # HeteroSecureBoostingGuest 
 # =============================================================================
 
+import functools
+from operator import itemgetter
+
+import numpy as np
+from numpy import random
+
+from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.feature.fate_element_type import NoneType
-from federatedml.param.feature_binning_param import FeatureBinningParam
-from federatedml.param.evaluation_param import EvaluateParam
-from federatedml.util.classify_label_checker import ClassifyLabelChecker
-from federatedml.util.classify_label_checker import RegressionLabelChecker
-from federatedml.tree import HeteroDecisionTreeGuest
-from federatedml.optim.convergence import converge_func_factory
-from federatedml.tree import BoostingTree
-from federatedml.transfer_variable.transfer_class.hetero_secure_boost_transfer_variable import HeteroSecureBoostingTreeTransferVariable
-from federatedml.util import consts
-from federatedml.secureprotol import PaillierEncrypt
-from federatedml.secureprotol import IterativeAffineEncrypt
-from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
-from federatedml.loss import SigmoidBinaryCrossEntropyLoss
-from federatedml.loss import SoftmaxCrossEntropyLoss
-from federatedml.loss import LeastSquaredErrorLoss
+from federatedml.loss import FairLoss
 from federatedml.loss import HuberLoss
 from federatedml.loss import LeastAbsoluteErrorLoss
-from federatedml.loss import TweedieLoss
+from federatedml.loss import LeastSquaredErrorLoss
 from federatedml.loss import LogCoshLoss
-from federatedml.loss import FairLoss
-
+from federatedml.loss import SigmoidBinaryCrossEntropyLoss
+from federatedml.loss import SoftmaxCrossEntropyLoss
+from federatedml.loss import TweedieLoss
+from federatedml.optim.convergence import converge_func_factory
+from federatedml.param.evaluation_param import EvaluateParam
+from federatedml.param.feature_binning_param import FeatureBinningParam
+from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import ObjectiveMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
-from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
-from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
-from arch.api.utils import log_utils
-import numpy as np
-import functools
-from operator import itemgetter
-from numpy import random
+from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
+from federatedml.secureprotol import IterativeAffineEncrypt
+from federatedml.secureprotol import PaillierEncrypt
+from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
+from federatedml.transfer_variable.transfer_class.hetero_secure_boost_transfer_variable import \
+    HeteroSecureBoostingTreeTransferVariable
+from federatedml.tree import BoostingTree
+from federatedml.tree import HeteroDecisionTreeGuest
+from federatedml.util import consts
+from federatedml.util.classify_label_checker import ClassifyLabelChecker
+from federatedml.util.classify_label_checker import RegressionLabelChecker
 
 LOGGER = log_utils.getLogger()
 
@@ -89,12 +91,10 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.bin_split_points = None
         self.bin_sparse_points = None
         self.encrypted_mode_calculator = None
-        self.host_party_idlist = []
         self.feature_importances_ = {}
         self.role = consts.GUEST
-        self.runtime_idx = 0
 
-        self.transfer_inst = HeteroSecureBoostingTreeTransferVariable()
+        self.transfer_variable = HeteroSecureBoostingTreeTransferVariable()
 
     def set_loss(self, objective_param):
         loss_type = objective_param.objective
@@ -144,12 +144,6 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.y = self.data_bin.mapValues(lambda instance: instance.label)
         self.check_label()
 
-    def set_host_party_idlist(self, host_party_idlist):
-        self.host_party_idlist = host_party_idlist
-
-    def set_runtime_idx(self, runtime_idx):
-        self.runtime_idx = runtime_idx
-    
     def generate_flowid(self, round_num, tree_num):
         LOGGER.info("generate flowid, flowid {}".format(self.flowid))
         return ".".join(map(str, [self.flowid, round_num, tree_num]))
@@ -217,8 +211,8 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                 self.F, self.init_score = self.loss.initialize(self.y)
         else:
             accumulate_f = functools.partial(self.accumulate_f,
-                                              lr=self.learning_rate,
-                                              idx=tidx)
+                                             lr=self.learning_rate,
+                                             idx=tidx)
 
             if mode == "train":
                 self.F = self.F.join(new_f, accumulate_f)
@@ -283,32 +277,17 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
     def sync_tree_dim(self):
         LOGGER.info("sync tree dim to host")
 
-        self.transfer_inst.tree_dim.remote(self.tree_dim,
-                                           role=consts.HOST,
-                                           idx=-1)
-
-        """
-        federation.remote(obj=self.tree_dim,
-                          name=self.transfer_inst.tree_dim.name,
-                          tag=self.transfer_inst.generate_transferid(self.transfer_inst.tree_dim),
-                          role=consts.HOST,
-                          idx=-1)
-        """
+        self.transfer_variable.tree_dim.remote(self.tree_dim,
+                                               role=consts.HOST,
+                                               idx=-1)
 
     def sync_stop_flag(self, stop_flag, num_round):
         LOGGER.info("sync stop flag to host, boosting round is {}".format(num_round))
 
-        self.transfer_inst.stop_flag.remote(stop_flag,
-                                            role=consts.HOST,
-                                            idx=-1,
-                                            suffix=(num_round,))
-        """
-        federation.remote(obj=stop_flag,
-                          name=self.transfer_inst.stop_flag.name,
-                          tag=self.transfer_inst.generate_transferid(self.transfer_inst.stop_flag, num_round),
-                          role=consts.HOST,
-                          idx=-1)
-        """
+        self.transfer_variable.stop_flag.remote(stop_flag,
+                                                role=consts.HOST,
+                                                idx=-1,
+                                                suffix=(num_round,))
 
     def fit(self, data_inst, validate_data=None):
         LOGGER.info("begin to train secureboosting guest model")
@@ -342,8 +321,8 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                 tree_inst.set_encrypter(self.encrypter)
                 tree_inst.set_encrypted_mode_calculator(self.encrypted_calculator)
                 tree_inst.set_flowid(self.generate_flowid(i, tidx))
-                tree_inst.set_host_party_idlist(self.host_party_idlist)
-                tree_inst.set_runtime_idx(self.runtime_idx)
+                tree_inst.set_host_party_idlist(self.component_properties.host_party_idlist)
+                tree_inst.set_runtime_idx(self.component_properties.local_partyid)
 
                 tree_inst.fit()
 
@@ -372,7 +351,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                     break
                 else:
                     self.sync_stop_flag(False, i)
-        
+
         LOGGER.debug("history loss is {}".format(min(self.history_loss)))
         self.callback_meta("loss",
                            "train",
@@ -394,8 +373,8 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                 tree_inst.load_model(self.tree_meta, self.trees_[i * self.tree_dim + tidx])
                 # tree_inst.set_tree_model(self.trees_[i * self.tree_dim + tidx])
                 tree_inst.set_flowid(self.generate_flowid(i, tidx))
-                tree_inst.set_runtime_idx(self.runtime_idx)
-                tree_inst.set_host_party_idlist(self.host_party_idlist)
+                tree_inst.set_runtime_idx(self.component_properties.local_partyid)
+                tree_inst.set_host_party_idlist(self.component_properties.host_party_idlist)
 
                 predict_data = tree_inst.predict(data_inst)
                 self.update_f_value(new_f=predict_data, tidx=tidx, mode="predict")
@@ -421,13 +400,19 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
             classes_ = self.classes_
             if self.num_classes == 2:
                 threshold = self.predict_param.threshold
-                predict_result = data_inst.join(predicts, lambda inst, pred: [inst.label, classes_[1] if pred > threshold else classes_[0], pred, {"0": 1 - pred, "1": pred}])
+                predict_result = data_inst.join(predicts, lambda inst, pred: [inst.label,
+                                                                              classes_[1] if pred > threshold else
+                                                                              classes_[0], pred,
+                                                                              {"0": 1 - pred, "1": pred}])
             else:
                 predict_label = predicts.mapValues(lambda preds: classes_[np.argmax(preds)])
-                predict_result = data_inst.join(predicts, lambda inst, preds: [inst.label, classes_[np.argmax(preds)], np.max(preds), dict(zip(map(str, classes_), preds))])
-        
+                predict_result = data_inst.join(predicts, lambda inst, preds: [inst.label, classes_[np.argmax(preds)],
+                                                                               np.max(preds),
+                                                                               dict(zip(map(str, classes_), preds))])
+
         elif self.task_type == consts.REGRESSION:
-            predict_result = data_inst.join(predicts, lambda inst, pred: [inst.label, float(pred), float(pred), {"label": float(pred)}])
+            predict_result = data_inst.join(predicts, lambda inst, pred: [inst.label, float(pred), float(pred),
+                                                                          {"label": float(pred)}])
 
         else:
             raise NotImplementedError("task type {} not supported yet".format(self.task_type))
@@ -438,12 +423,12 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
 
     def get_feature_importance(self):
         return self.feature_importances_
-        
+
     def get_model_meta(self):
         model_meta = BoostingTreeModelMeta()
         model_meta.tree_meta.CopyFrom(self.tree_meta)
-        model_meta.learning_rate = self.learning_rate 
-        model_meta.num_trees = self.num_trees 
+        model_meta.learning_rate = self.learning_rate
+        model_meta.num_trees = self.num_trees
         model_meta.quantile_meta.CopyFrom(QuantileMeta(bin_num=self.bin_num))
         model_meta.objective_meta.CopyFrom(ObjectiveMeta(objective=self.objective_param.objective,
                                                          param=self.objective_param.params))
@@ -455,7 +440,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         # model_meta.classes_.extend(map(str, self.classes_))
         # model_meta.need_run = self.need_run
         meta_name = "HeteroSecureBoostingTreeGuestMeta"
-          
+
         return meta_name, model_meta
 
     def set_model_meta(self, model_meta):
@@ -492,6 +477,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                                                                   fid=fid,
                                                                   importance=_importance))
         model_param.feature_importances.extend(feature_importance_param)
+
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
 
         param_name = "HeteroSecureBoostingTreeGuestParam"
@@ -505,6 +491,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.classes_ = list(model_param.classes_)
         self.tree_dim = model_param.tree_dim
         self.num_classes = model_param.num_classes
+        self.feature_name_fid_mapping.update(model_param.feature_name_fid_mapping)
 
     def get_metrics_param(self):
         if self.task_type == consts.CLASSIFICATION:
@@ -516,11 +503,10 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         else:
             return EvaluateParam(eval_type="regression")
 
-    
     def export_model(self):
         if self.need_cv:
             return None
-        
+
         meta_name, meta_protobuf = self.get_model_meta()
         param_name, param_protobuf = self.get_model_param()
         self.model_output = {meta_name: meta_protobuf,
@@ -529,7 +515,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
 
         return self.model_output
 
-    def _load_model(self, model_dict):
+    def load_model(self, model_dict):
         model_param = None
         model_meta = None
         for _, value in model_dict["model"].items():
@@ -543,27 +529,3 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.set_model_meta(model_meta)
         self.set_model_param(model_param)
         self.set_loss(self.objective_param)
-    
-    def run(self, component_parameters=None, args=None):
-        host_party_idlist = component_parameters["role"]["host"] 
-        self.set_host_party_idlist(host_party_idlist)
-        local_partyid = component_parameters["local"]["party_id"]
-        self.set_runtime_idx(local_partyid)
-        
-        self._init_runtime_parameters(component_parameters)
-        LOGGER.debug("component_parameter: {}".format(component_parameters))
-
-        LOGGER.debug('need_cv : {}'.format(self.need_cv))
-        if self.need_cv:
-            stage = 'cross_validation'
-        elif "model" in args:
-            self._load_model(args)
-            stage = "transform"
-        else:
-            stage = "fit"
-
-        if args.get("data", None) is None:
-            return
-
-        self._run_data(args["data"], stage)
-

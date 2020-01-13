@@ -25,12 +25,14 @@ from federatedml.model_base import ModelBase
 from federatedml.param.secure_add_example_param import SecureAddExampleParam
 from federatedml.transfer_variable.transfer_class.secure_add_example_transfer_variable import \
     SecureAddExampleTransferVariable
+from federatedml.util.param_extract import ParamExtract
 
 LOGGER = log_utils.getLogger()
 
 
 class SecureAddHost(ModelBase):
     def __init__(self):
+        super(SecureAddHost, self).__init__()
         self.y = None
         self.y1 = None
         self.y2 = None
@@ -41,6 +43,12 @@ class SecureAddHost(ModelBase):
         self.data_output = None
         self.model_output = None
 
+    def _init_runtime_parameters(self, component_parameters):
+        param_extracter = ParamExtract()
+        param = param_extracter.parse_param_from_config(self.model_param, component_parameters)
+        self._init_model(param)
+        return param
+    
     def _init_model(self, model_param):
         self.data_num = model_param.data_num
         self.partition = model_param.partition
@@ -69,34 +77,13 @@ class SecureAddHost(ModelBase):
                                              role="guest",
                                              idx=0)
 
-        """
-        federation.remote(obj=self.y1,
-                          name=self.transfer_inst.host_share.name,
-                          tag=self.transfer_inst.generate_transferid(self.transfer_inst.host_share),
-                          role="guest",
-                          idx=0)
-        """
-
     def recv_share_from_guest(self):
         self.x2 = self.transfer_inst.guest_share.get(idx=0)
-        """
-        self.x2 = federation.get(name=self.transfer_inst.guest_share.name,
-                                 tag=self.transfer_inst.generate_transferid(self.transfer_inst.guest_share),
-                                 idx=0)
-        """
 
     def sync_host_sum_to_guest(self, host_sum):
         self.transfer_inst.host_sum.remote(host_sum,
                                            role="guest",
                                            idx=0)
-
-        """
-        federation.remote(obj=host_sum,
-                          name=self.transfer_inst.host_sum.name,
-                          tag=self.transfer_inst.generate_transferid(self.transfer_inst.host_sum),
-                          role="guest",
-                          idx=0)
-        """
 
     def run(self, component_parameters=None, args=None):
         LOGGER.info("begin to init parameters of secure add example host")

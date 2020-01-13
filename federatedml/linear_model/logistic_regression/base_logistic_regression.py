@@ -23,6 +23,7 @@ from federatedml.linear_model.linear_model_weight import LinearModelWeights as L
 from federatedml.optim.initialize import Initializer
 from federatedml.protobuf.generated import lr_model_param_pb2
 from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
+from federatedml.param.logistic_regression_param import InitParam
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
@@ -49,6 +50,8 @@ class BaseLogisticRegression(BaseLinearModel):
 
     #     if params.multi_class == 'ovr':
     #         self.need_one_vs_rest = True
+
+
 
     def compute_wx(self, data_instances, coef_, intercept_=0):
         return data_instances.mapValues(lambda v: np.dot(v.features, coef_) + intercept_)
@@ -93,11 +96,14 @@ class BaseLogisticRegression(BaseLinearModel):
         LOGGER.debug("json_result: {}".format(json_result))
         return param_protobuf_obj
 
-    def _load_model(self, model_dict):
+    def load_model(self, model_dict):
         LOGGER.debug("Start Loading model")
         result_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
         meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
-        self.fit_intercept = meta_obj.fit_intercept
+        # self.fit_intercept = meta_obj.fit_intercept
+        if self.init_param_obj is None:
+            self.init_param_obj = InitParam()
+        self.init_param_obj.fit_intercept = meta_obj.fit_intercept
         self.header = list(result_obj.header)
         # For hetero-lr arbiter predict function
         if self.header is None:
@@ -133,9 +139,9 @@ class BaseLogisticRegression(BaseLinearModel):
         LOGGER.debug("Class num larger than 2, need to do one_vs_rest")
         self.one_vs_rest_obj.fit(data_instances=train_data, validate_data=validate_data)
 
-    def one_vs_rest_predict(self, validate_data):
-        if not self.one_vs_rest_obj:
-            LOGGER.warning("Not one_vs_rest fit before, return now")
-            return
-        return self.one_vs_rest_obj.predict(data_instances=validate_data)
+    # def one_vs_rest_predict(self, validate_data):
+    #     if not self.one_vs_rest_obj:
+    #         LOGGER.warning("Not one_vs_rest fit before, return now")
+    #         return
+    #     return self.one_vs_rest_obj.predict(data_instances=validate_data)
 

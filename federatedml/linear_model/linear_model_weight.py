@@ -41,3 +41,14 @@ class LinearModelWeights(ListWeights):
         if self.fit_intercept:
             return self._weights[-1]
         return 0.0
+
+    def binary_op(self, other: 'LinearModelWeights', func, inplace):
+        if inplace:
+            for k, v in enumerate(self._weights):
+                self._weights[k] = func(self._weights[k], other._weights[k])
+            return self
+        else:
+            _w = []
+            for k, v in enumerate(self._weights):
+                _w.append(func(self._weights[k], other._weights[k]))
+            return LinearModelWeights(_w, self.fit_intercept)
