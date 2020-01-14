@@ -30,11 +30,11 @@ class SessionStop(object):
         job_id = args.job_id
         work_mode = int(args.work_mode)
         backend = int(args.backend)
-        session.init(job_id=job_id , mode=work_mode, backend=backend)
+        session.init(job_id=job_id, mode=work_mode, backend=backend, set_log_dir=False)
         try:
-            schedule_logger(job_id).info('start stop session {}'.format(session.get_session_id()))
+            schedule_logger(job_id.split('_')[0]).info('start stop session {}'.format(session.get_session_id()))
             session.stop()
-            schedule_logger(job_id).info('stop session {} success'.format(session.get_session_id()))
+            schedule_logger(job_id.split('_')[0]).info('stop session {} success'.format(session.get_session_id()))
         except Exception as e:
             pass
 
