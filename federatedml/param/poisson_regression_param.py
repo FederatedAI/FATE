@@ -25,6 +25,7 @@ from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalc
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.init_model_param import InitParam
 from federatedml.param.predict_param import PredictParam
+from federatedml.param.stepwise_param import StepwiseParam
 from federatedml.util import consts
 
 
@@ -76,6 +77,8 @@ class PoissonParam(BaseParam):
 
     cv_param: CrossValidationParam object, default: default CrossValidationParam object
 
+    stepwise_param: StepwiseParam object, default: default StepwiseParam object
+
     decay: int or float, default: 1
         Decay rate for learning rate. learning rate will follow the following decay schedule.
         lr = lr0/(1+decay*t) if decay_sqrt is False. If decay_sqrt is True, lr = lr0 / sqrt(1+decay*t)
@@ -96,7 +99,8 @@ class PoissonParam(BaseParam):
                  exposure_colname = None, predict_param=PredictParam(),
                  encrypt_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                 cv_param=CrossValidationParam(), decay=1, decay_sqrt=True,
+                 cv_param=CrossValidationParam(), stepwise_param=StepwiseParam(),
+                 decay=1, decay_sqrt=True,
                  validation_freqs=None):
         super(PoissonParam, self).__init__()
         self.penalty = penalty
@@ -117,6 +121,7 @@ class PoissonParam(BaseParam):
         self.decay_sqrt = decay_sqrt
         self.exposure_colname = exposure_colname
         self.validation_freqs = validation_freqs
+        self.stepwise_param = stepwise_param
 
     def check(self):
         descr = "poisson_regression_param's "
@@ -212,5 +217,5 @@ class PoissonParam(BaseParam):
                 )
             if type(self.validation_freqs).__name__ == "int" and self.validation_freqs <= 0:
                 raise ValueError("validation strategy param's validate_freqs should greater than 0")
-
+        self.stepwise_param.check()
         return True

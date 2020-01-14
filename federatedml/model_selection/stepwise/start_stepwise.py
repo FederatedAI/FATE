@@ -38,5 +38,6 @@ def run(model, train_data, test_data=None):
         raise ValueError("stepwise currently only support Hetero mode.")
     stepwise_param = _get_stepwise_param(model)
     step_obj.run(stepwise_param, train_data, test_data, model)
+    pred_result = HeteroStepwise.predict(train_data, model)
     LOGGER.info("Finish running Stepwise")
-    return train_data
+    return pred_result

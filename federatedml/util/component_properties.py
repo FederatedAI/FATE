@@ -149,7 +149,9 @@ class ComponentProperties(object):
             return running_funcs
 
         if self.need_stepwise:
-            running_funcs.add_func(model.stepwise, [train_data])
+            running_funcs.add_func(model.stepwise, [train_data], save_result=True)
+            running_funcs.add_func(model.set_predict_data_schema, [schema],
+                                   use_previews=True, save_result=True)
             return running_funcs
 
         if self.has_model or self.has_isometric_model:

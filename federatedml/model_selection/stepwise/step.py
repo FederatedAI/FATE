@@ -35,10 +35,8 @@ class Step(object):
         n_step, n_model = step_info
         self.n_step = n_step
         self.n_model = n_model
-        #self.step_direction = step_direction
 
     def get_flowid(self):
-        #flowid = "train.{}.{}.{}".format(self.step_direction, self.n_step, self.n_model)
         flowid = "train.step{}.model{}".format(self.n_step, self.n_model)
         return flowid
 
@@ -51,17 +49,14 @@ class Step(object):
         data_instance: data Instance object, input data
         feature_mask: mask to filter data_instance
         """
-        new_data_instance = copy.deepcopy(data_instance)
-        new_data_instance.features = new_data_instance.features[feature_mask]
-        #LOGGER.debug("feature mask in slice_data_instance is {}".format(feature_mask))
-        return new_data_instance
+        data_instance.features = data_instance.features[feature_mask]
+        return data_instance
 
     @staticmethod
     def get_new_schema(original_data, feature_mask):
         old_header = original_data.schema.get("header")
         sid_name = original_data.schema.get("sid_name")
         label_name = original_data.schema.get("label_name")
-        #LOGGER.debug("feature mask in get_new_schema is {}".format(feature_mask))
         new_header = [old_header[i] for i in np.where(feature_mask > 0)[0]]
         schema = make_schema(new_header, sid_name, label_name)
         return schema
@@ -74,11 +69,10 @@ class Step(object):
         model.set_flowid(current_flowid)
         if original_model.role != consts.ARBITER:
             curr_train_data = train_data.mapValues(lambda v: Step.slice_data_instance(v, feature_mask))
-            new_schema = self.get_new_schema(train_data, feature_mask)
+            new_schema = Step.get_new_schema(train_data, feature_mask)
             LOGGER.debug("new schema is: {}".format(new_schema))
             set_schema(curr_train_data, new_schema)
             model.header = new_schema.get("header")
-            LOGGER.debug("model expects header: {}".format(model.header))
         else:
             curr_train_data = train_data
         model.fit(curr_train_data)
