@@ -26,6 +26,7 @@ from arch.api.utils.core import deserialize_b64
 from arch.api.utils.core import get_fate_uuid
 from arch.api.utils.core import json_loads
 from fate_flow.db.db_models import Job, DB
+from fate_flow.manager.data_manager import query_data_view, delete_metric_data
 from fate_flow.manager.tracking import Tracking
 from fate_flow.settings import stat_logger
 from fate_flow.utils import job_utils, data_utils
@@ -128,7 +129,7 @@ def get_metric_all_data(tracker, metric_namespace, metric_name):
 
 @manager.route('/component/metric/delete', methods=['post'])
 def component_metric_delete():
-    sql = Tracking.delete_metric_data(request.json)
+    sql = delete_metric_data(request.json)
     return get_json_result(retcode=0, retmsg='success', data=sql)
 
 
@@ -272,7 +273,7 @@ def component_output_data_download():
 @job_utils.job_server_routing()
 def component_output_data_table():
     request_data = request.json
-    data_views = job_utils.query_data_view(**request_data)
+    data_views = query_data_view(**request_data)
     return get_json_result(retcode=0, retmsg='success', data={'table_name': data_views[0].f_table_name,
                                                               'table_namespace': data_views[0].f_table_namespace})
 

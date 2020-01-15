@@ -16,7 +16,7 @@
 from typing import List
 
 from arch.api import session, WorkMode
-from arch.api.utils.core import current_timestamp, serialize_b64, deserialize_b64, get_lan_ip
+from arch.api.utils.core import current_timestamp, serialize_b64, deserialize_b64
 from fate_flow.db.db_models import DB, Job, Task, TrackingMetric, DataView
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.manager import model_manager
@@ -429,46 +429,6 @@ class Tracking(object):
 
     def get_table_index(self):
         return self.job_id[:8]
-
-    @staticmethod
-    def delete_metric_data(metric_info):
-        if metric_info.get('model'):
-            sql = Tracking.drop_metric_data_mode(metric_info.get('model'))
-        else:
-            sql = Tracking.delete_metric_data_from_db(metric_info)
-        return sql
-
-    @staticmethod
-    def drop_metric_data_mode(model):
-        with DB.connection_context():
-            try:
-                drop_sql = 'drop table t_tracking_metric_{}'.format(model)
-                DB.execute_sql(drop_sql)
-                stat_logger.info(drop_sql)
-                return drop_sql
-            except Exception as e:
-                stat_logger.exception(e)
-                raise e
-
-    @staticmethod
-    def delete_metric_data_from_db(metric_info):
-        with DB.connection_context():
-            try:
-                job_id = metric_info['job_id']
-                metric_info.pop('job_id')
-                delete_sql = 'delete from t_tracking_metric_{}  where f_job_id="{}"'.format(job_id[:8], job_id)
-                for k, v in metric_info.items():
-
-                    if hasattr(TrackingMetric, "f_" + k):
-                        connect_str = " and f_"
-                        delete_sql = delete_sql + connect_str + k + '="{}"'.format(v)
-                DB.execute_sql(delete_sql)
-                stat_logger.info(delete_sql)
-                return delete_sql
-            except  Exception as e:
-                stat_logger.exception(e)
-                raise e
-
 
     @staticmethod
     def metric_table_name(metric_namespace: str, metric_name: str):

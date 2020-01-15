@@ -114,8 +114,7 @@ class JobController(object):
             kill_status = False
             try:
                 kill_status = job_utils.kill_process(int(task.f_run_pid))
-                job_utils.start_stop_session(job_id=task.f_job_id, role=task.f_role,
-                                             party_id=task.f_party_id, component_name=task.f_component_name)
+                job_utils.start_session_stop(task)
             except Exception as e:
                 schedule_logger(job_id).exception(e)
             finally:

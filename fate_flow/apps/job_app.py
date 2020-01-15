@@ -15,7 +15,6 @@
 #
 import io
 import os
-import sys
 import tarfile
 
 from flask import Flask, request, send_file
@@ -23,12 +22,12 @@ from flask import Flask, request, send_file
 from arch.api.utils.core import json_loads
 from fate_flow.driver.job_controller import JobController
 from fate_flow.driver.task_scheduler import TaskScheduler
+from fate_flow.manager.data_manager import query_data_view
 from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT
 from fate_flow.utils import job_utils, detect_utils
 from fate_flow.utils.api_utils import get_json_result, request_execute_server
 from fate_flow.entity.constant_config import WorkMode, JobStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.utils.session_utils import SessionStop
 
 manager = Flask(__name__)
 
@@ -137,15 +136,15 @@ def query_task():
 
 
 @manager.route('/data/view/query', methods=['POST'])
-def query_data_view():
-    data_views = job_utils.query_data_view(**request.json)
+def data_view_query():
+    data_views = query_data_view(**request.json)
     if not data_views:
         return get_json_result(retcode=101, retmsg='find data view failed')
     return get_json_result(retcode=0, retmsg='success', data=[data_view.to_json() for data_view in data_views])
 
 
-@manager.route('/session/stop', methods=['POST'])
+@manager.route('/clean', methods=['POST'])
 @job_utils.job_server_routing()
-def stop_session():
-    job_utils.start_stop_session(**request.json)
+def clean_job():
+    job_utils.start_clean_job(**request.json)
     return get_json_result(retcode=0, retmsg='success')
