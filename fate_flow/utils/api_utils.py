@@ -15,7 +15,6 @@
 #
 import json
 
-import grpc
 import requests
 from flask import jsonify
 from flask import Response
@@ -59,7 +58,7 @@ def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, 
                overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
     json_body['src_role'] = src_role
     if CHECK_NODES_IDENTITY:
-        get_node_identity(json_body)
+        get_node_identity(json_body, src_party_id)
     _packet = wrap_grpc_packet(json_body, method, endpoint, src_party_id, dest_party_id, job_id,
                                overall_timeout=overall_timeout)
     try:
@@ -103,12 +102,12 @@ def request_execute_server(request, execute_host):
         raise Exception('local request error: {}'.format(e))
 
 
-def get_node_identity(json_body):
+def get_node_identity(json_body, src_party_id):
     params = {
-        'partyId': json_body.get('src_party_id', None)
+        'partyId': src_party_id
     }
-    response = requests.get(url="http://{}:{}/node/info".format(MANAGER_HOST, MANAGER_PORT), params=params)
     try:
+        response = requests.get(url="http://{}:{}/node/info".format(MANAGER_HOST, MANAGER_PORT), params=params)
         json_body['appKey'] = response.json().get('data').get('appKey')
         json_body['appSecret'] = response.json().get('data').get('appSecret')
     except Exception as e:

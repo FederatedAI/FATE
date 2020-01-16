@@ -16,7 +16,6 @@
 import argparse
 import importlib
 import os
-import signal
 import time
 import traceback
 
@@ -37,7 +36,6 @@ from fate_flow.entity.constant_config import TaskStatus
 class TaskExecutor(object):
     @staticmethod
     def run_task():
-        # signal.signal(signal.SIGTERM, job_utils.onsignal_term)
         task = Task()
         task.f_create_time = current_timestamp()
         try:
@@ -233,7 +231,7 @@ class TaskExecutor(object):
                                          party_id),
                                      src_party_id=party_id,
                                      dest_party_id=dest_party_id,
-                                     src_role=initiator_role,
+                                     src_role=role,
                                      json_body=task_info,
                                      work_mode=RuntimeConfig.WORK_MODE)
             if response['retcode']:

@@ -1,3 +1,18 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
 import functools
 
 import requests
@@ -6,25 +21,21 @@ from flask import request
 from fate_flow.settings import CHECK_NODES_IDENTITY, MANAGER_HOST, MANAGER_PORT
 
 
-def get_dest_info(request_path, func_name):
-    dest_role = request_path.split('/')[2] if 'task' not in func_name else request_path.split('/')[4]
-    dest_party_id = request_path.split('/')[3] if 'task' not in func_name else request_path.split('/')[5]
-    return dest_role, dest_party_id
-
-
 def check_nodes(func):
     @functools.wraps(func)
     def _wrapper(*args, **kwargs):
         if CHECK_NODES_IDENTITY:
-            dest_role, dest_party_id = get_dest_info(request.path, func.__name__)
             body = {
-                'partyId': dest_party_id,
-                'role': dest_role,
+                'partyId': request.json.get('src_party_id'),
+                'role': request.json.get('src_role'),
                 'appKey': request.json.get('appKey'),
                 'appSecret': request.json.get('appSecret')
             }
-            response = requests.post(url="http://{}:{}/node/management/check".format(MANAGER_HOST, MANAGER_PORT), json=body).json()
-            if response['code'] != 0:
-                raise Exception('Authentication failure: {}'.format(str(response['msg'])))
+            try:
+                response = requests.post(url="http://{}:{}/node/management/check".format(MANAGER_HOST, MANAGER_PORT), json=body).json()
+                if response['code'] != 0:
+                    raise Exception('Authentication failure: {}'.format(str(response['message'])))
+            except Exception as e:
+                raise Exception('Authentication error: {}'.format(str(e)))
         return func(*args, **kwargs)
     return _wrapper
