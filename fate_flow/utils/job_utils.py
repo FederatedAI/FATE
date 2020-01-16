@@ -353,15 +353,29 @@ def start_clean_job(**kwargs):
     if tasks:
         for task in tasks:
             task_info = get_task_info(task.f_job_id, task.f_role, task.f_party_id, task.f_component_name)
-            # clean session
-            start_session_stop(task)
-            # clean data table
-            data_views = query_data_view(**task_info)
-            if data_views:
-                delete_table(data_views)
-            # clean metric data
-            delete_metric_data(task_info)
-
+            try:
+                # clean session
+                stat_logger.info('start {} {} {} {} session stop'.format(task.f_job_id, task.f_role,
+                                                                         task.f_party_id, task.f_component_name))
+                start_session_stop(task)
+            except:
+                pass
+            try:
+                # clean data table
+                stat_logger.info('start delete {} {} {} {} data table'.format(task.f_job_id, task.f_role,
+                                                                              task.f_party_id, task.f_component_name))
+                data_views = query_data_view(**task_info)
+                if data_views:
+                    delete_table(data_views)
+            except:
+                pass
+            try:
+                # clean metric data
+                stat_logger.info('start delete {} {} {} {} metric data'.format(task.f_job_id, task.f_role,
+                                                                               task.f_party_id, task.f_component_name))
+                delete_metric_data(task_info)
+            except:
+                pass
     else:
         raise Exception('no found task')
 

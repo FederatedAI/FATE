@@ -84,6 +84,6 @@ def delete_metric_data_from_db(metric_info):
             DB.execute_sql(delete_sql)
             stat_logger.info(delete_sql)
             return delete_sql
-        except  Exception as e:
+        except Exception as e:
             stat_logger.exception(e)
             raise e
