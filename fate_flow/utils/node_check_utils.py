@@ -18,7 +18,7 @@ import functools
 import requests
 from flask import request
 
-from fate_flow.settings import CHECK_NODES_IDENTITY, MANAGER_HOST, MANAGER_PORT
+from fate_flow.settings import CHECK_NODES_IDENTITY, MANAGER_HOST, MANAGER_PORT, FATE_MANAGER_NODE_CHECK
 
 
 def check_nodes(func):
@@ -32,7 +32,7 @@ def check_nodes(func):
                 'appSecret': request.json.get('appSecret')
             }
             try:
-                response = requests.post(url="http://{}:{}/node/management/check".format(MANAGER_HOST, MANAGER_PORT), json=body).json()
+                response = requests.post(url="http://{}:{}{}".format(MANAGER_HOST, MANAGER_PORT, FATE_MANAGER_NODE_CHECK), json=body).json()
                 if response['code'] != 0:
                     raise Exception('Authentication failure: {}'.format(str(response['message'])))
             except Exception as e:

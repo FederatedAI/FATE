@@ -20,7 +20,8 @@ from flask import jsonify
 from flask import Response
 
 from fate_flow.entity.constant_config import WorkMode
-from fate_flow.settings import DEFAULT_GRPC_OVERALL_TIMEOUT, CHECK_NODES_IDENTITY, MANAGER_HOST, MANAGER_PORT
+from fate_flow.settings import DEFAULT_GRPC_OVERALL_TIMEOUT, CHECK_NODES_IDENTITY, MANAGER_HOST, MANAGER_PORT, \
+    FATE_MANAGER_GET_NODE_INFO
 from fate_flow.settings import stat_logger, HEADERS
 from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_proxy_data_channel
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -107,7 +108,7 @@ def get_node_identity(json_body, src_party_id):
         'partyId': src_party_id
     }
     try:
-        response = requests.get(url="http://{}:{}/node/info".format(MANAGER_HOST, MANAGER_PORT), params=params)
+        response = requests.get(url="http://{}:{}{}".format(MANAGER_HOST, MANAGER_PORT, FATE_MANAGER_GET_NODE_INFO), params=params)
         json_body['appKey'] = response.json().get('data').get('appKey')
         json_body['appSecret'] = response.json().get('data').get('appSecret')
     except Exception as e:
