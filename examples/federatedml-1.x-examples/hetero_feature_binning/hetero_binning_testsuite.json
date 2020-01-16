@@ -12,9 +12,17 @@
           "file": "examples/data/breast_a.csv",
           "head": 1,
           "partition": 10,
-          "table_name": "hetero_breast_b",
+          "table_name": "hetero_breast_a",
           "namespace": "hetero_breast_host",
           "role": "host_0"
+      },
+      {
+          "file": "examples/data/breast_a.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "hetero_breast_a",
+          "namespace": "hetero_breast_host",
+          "role": "host_1"
       }
   ],
   "tasks": {

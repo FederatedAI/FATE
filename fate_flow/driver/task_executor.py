@@ -16,7 +16,6 @@
 import argparse
 import importlib
 import os
-import signal
 import time
 import traceback
 
@@ -225,7 +224,7 @@ class TaskExecutor(object):
                                          party_id),
                                      src_party_id=party_id,
                                      dest_party_id=dest_party_id,
-                                     src_role=initiator_role,
+                                     src_role=role,
                                      json_body=task_info,
                                      work_mode=RuntimeConfig.WORK_MODE)
             if response['retcode']:
