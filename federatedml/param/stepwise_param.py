@@ -43,13 +43,11 @@ class StepwiseParam(BaseParam):
     max_step: int, default: '10'
         Specify total number of steps to run before forced stop.
 
-    p_enter: float, default: 0.05
-        Specify p-value threshold for a variable to enter the model. If smaller or equal to p_enter, then variable is qualified to enter the model.
-        Only used when score is set to "pvalue"
+    nvmin: int, default: '2'
+        Specify the min subset size of final model, cannot be lower than 2. When nvmin > 2, the final model size may be smaller than nvmin due to max_step limit.
 
-    p_remove: float, default: 0.10
-        Specify p-value threshold for a variable to exit the model. If greater than p_remove, then variable is qualified to be removed.
-        Only used when score is set to "pvalue"
+    nvmax: int, default: None
+        Specify the max subset size of final model, 2 <= nvmin <= nvmax. The final model size may be larger than nvmax due to max_step limit.
 
     need_stepwise: bool, default False
         Indicate if this module needed to be run
@@ -57,20 +55,29 @@ class StepwiseParam(BaseParam):
     """
 
     def __init__(self, score_name="AIC", mode=consts.HETERO, role=consts.GUEST, direction="both",
-                 max_step=10, need_stepwise=False):
+                 max_step=10, nvmin=2, nvmax=None, need_stepwise=False):
         super(StepwiseParam, self).__init__()
         self.score_name = score_name
         self.mode = mode
         self.role = role
         self.direction = direction
         self.max_step = max_step
+        self.nvmin = nvmin
+        self.nvmax = nvmax
         self.need_stepwise = need_stepwise
 
     def check(self):
-        model_param_descr = "stepwise param's "
+        model_param_descr = "stepwise param's"
         self.score_name = self.check_and_change_lower(self.score_name, ["aic", "bic"], model_param_descr)
         self.check_valid_value(self.mode, model_param_descr, valid_values=[consts.HOMO, consts.HETERO])
         self.check_valid_value(self.role, model_param_descr, valid_values=[consts.HOST, consts.GUEST, consts.ARBITER])
         self.direction = self.check_and_change_lower(self.direction, ["forward", "backward", "both"], model_param_descr)
         self.check_positive_integer(self.max_step, model_param_descr)
+        self.check_positive_integer(self.nvmin, model_param_descr)
+        if self.nvmin < 2:
+            raise ValueError(model_param_descr + " nvmin must be no less than 2.")
+        if self.nvmax is not None:
+            self.check_positive_integer(self.nvmax, model_param_descr)
+            if self.nvmin > self.nvmax:
+                raise ValueError(model_param_descr + " nvmax must be greater than nvmin.")
         self.check_boolean(self.need_stepwise, model_param_descr)

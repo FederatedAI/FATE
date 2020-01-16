@@ -23,16 +23,16 @@
         "data": {
           "train_data": [
             {
-              "name": "motor_mini_b",
-              "namespace": "motor_mini"
+              "name": "hetero_breast_b",
+              "namespace": "hetero_breast_guest"
             }
           ]
         }
       },
       "dataio_0": {
         "with_label": [true],
-        "label_name": ["motor_speed"],
-        "label_type": ["float"],
+        "label_name": ["y"],
+        "label_type": ["int"],
         "output_format": ["dense"],
         "missing_fill": [true],
         "outlier_replace": [false]
@@ -47,8 +47,8 @@
         "data": {
           "train_data": [
             {
-              "name": "motor_mini_a",
-              "namespace": "motor_mini"
+              "name": "hetero_breast_a",
+              "namespace": "hetero_breast_host"
             }
           ]
         }
@@ -65,7 +65,7 @@
     }
   },
   "algorithm_parameters": {
-    "hetero_linr_0": {
+    "hetero_lr_0": {
       "penalty": "None",
       "optimizer": "sgd",
       "tol": 1e-3,
@@ -86,7 +86,8 @@
         "score_name": "AIC",
         "direction": "both",
         "need_stepwise": true,
-        "max_step": 5
+        "max_step": 3,
+        "nvmin": 2
       }
     }
   }

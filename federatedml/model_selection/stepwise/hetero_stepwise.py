@@ -48,7 +48,7 @@ class HeteroStepwise(object):
         self.forward = False
         self.backward = False
         self.best_list = []
-        self.n_step = 0
+        self.n_step = -1
         self.has_test = False
         self.n_count = 0
         self.stop_stepwise = False
@@ -61,6 +61,8 @@ class HeteroStepwise(object):
         self.score_name = param.score_name
         self.direction = param.direction
         self.max_step = param.max_step
+        self.nvmin = param.nvmin
+        self.nvmax = param.nvmax
         self.transfer_variable = StepwiseTransferVariable()
         self.host_data_info_transfer = self.transfer_variable.host_data_info
         self.guest_data_info_transfer = self.transfer_variable.guest_data_info
@@ -206,21 +208,34 @@ class HeteroStepwise(object):
             LOGGER.debug("masks not changed, check_stop returns True")
             return True
         # if full model is the best
-        elif sum(new_host_mask < 1) == 0 and sum(new_guest_mask < 1) == 0:
+        if sum(new_host_mask < 1) == 0 and sum(new_guest_mask < 1) == 0:
             LOGGER.debug("masks are full model, check_stop returns True")
             return True
+        # if new best reach variable count lower limit
+        new_total_nv = sum(new_host_mask) + sum(new_guest_mask)
+        total_nv = sum(host_mask) + sum(guest_mask)
+        if new_total_nv == self.nvmin and total_nv >= self.nvmin:
+            LOGGER.debug("variable count min reached, check_stop returns True")
+            return True
+        # if new best reach variable count upper limit
+        if self.nvmax is not None:
+            if new_total_nv == self.nvmax and total_nv <= self.nvmax:
+                LOGGER.debug("variable count max reached, check_stop returns True")
+                return True
         # if reach max step
-        elif self.n_step == self.max_step:
+        if self.n_step == self.max_step - 1:
+            LOGGER.debug("max step reached, check_stop returns True")
             return True
         return False
 
     def _arbiter_run_step(self, model, host_mask, guest_mask, n_model):
         dfe = HeteroStepwise.get_dfe(model, host_mask, guest_mask)
-        # current_key = (self.step_direction, self.n_step, n_model)
         current_key = (self.n_step, n_model)
         current_step = Step()
         current_step.set_step_info(current_key)
         trained_model = current_step.run(model, None, None, None)
+        if len(trained_model.loss_history) == 0:
+            raise ValueError("Arbiter has no loss history. Stepwise does not support model without total loss.")
         # get final loss from loss history for criteria calculation
         loss = trained_model.loss_history[-1]
         ic_val = self.IC_computer.compute(self.k, self.n_count, dfe, loss)
@@ -228,8 +243,7 @@ class HeteroStepwise(object):
         if np.isinf(ic_val):
             raise ValueError("Loss value of infinity obtained. Stepwise stopped.")
         host_tup, guest_tup = tuple(host_mask), tuple(guest_mask)
-        self.models_trained[(host_tup, guest_tup)] = ModelInfo(self.n_step, n_model,
-                                                               ic_val)
+        self.models_trained[(host_tup, guest_tup)] = ModelInfo(self.n_step, n_model, ic_val)
         current_key = HeteroStepwise.make_key(self.n_step, n_model)
         self._put_value(current_key, trained_model)
 
@@ -278,8 +292,7 @@ class HeteroStepwise(object):
         d_header = data_instances.schema.get("header")
         best_feature = [d_header.index(x) for x in model.header]
         best_mask = np.zeros(len(d_header), dtype=bool)
-        for i in best_feature:
-            best_mask[i] = 1
+        np.put(best_mask, best_feature, 1)
         new_data = data_instances.mapValues(lambda v: Step.slice_data_instance(v, best_mask))
         pred_result = model.predict(new_data)
         return pred_result
