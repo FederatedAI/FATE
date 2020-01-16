@@ -128,7 +128,7 @@ class Variable(object):
         Returns:
             object or list of object
         """
-        src_role = self.authorized_src_roles[:1]
+        src_role = self.authorized_src_roles
         src_parties = self.roles_to_parties(roles=src_role)
         if isinstance(idx, list):
             rtn = self.get_parties(parties=[src_parties[i] for i in idx], suffix=suffix)
