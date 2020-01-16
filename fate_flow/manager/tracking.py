@@ -317,7 +317,7 @@ class Tracking(object):
             job.f_role = role
             job.f_party_id = party_id
             if 'f_status' in job_info:
-                if job.f_status in [JobStatus.SUCCESS, JobStatus.FAILED]:
+                if job.f_status in [JobStatus.COMPLETE, JobStatus.FAILED]:
                     # Termination status cannot be updated
                     # TODO:
                     pass
@@ -358,7 +358,7 @@ class Tracking(object):
             task.f_role = role
             task.f_party_id = party_id
             if 'f_status' in task_info:
-                if task.f_status in [TaskStatus.SUCCESS, TaskStatus.FAILED]:
+                if task.f_status in [TaskStatus.COMPLETE, TaskStatus.FAILED]:
                     # Termination status cannot be updated
                     # TODO:
                     pass

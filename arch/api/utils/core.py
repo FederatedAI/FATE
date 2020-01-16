@@ -57,6 +57,13 @@ def current_timestamp():
     return int(time.time() * 1000)
 
 
+def timestamp_to_date(timestamp, format_string="%Y-%m-%d %H:%M:%S"):
+    timestamp = int(timestamp) / 1000
+    time_array = time.localtime(timestamp)
+    str_date = time.strftime(format_string, time_array)
+    return str_date
+
+
 def base64_encode(src):
     return bytes_to_string(base64.b64encode(src.encode("utf-8")))
 

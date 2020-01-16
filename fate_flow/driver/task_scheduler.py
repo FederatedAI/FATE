@@ -28,7 +28,7 @@ from fate_flow.settings import API_VERSION
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
 from fate_flow.utils.job_utils import query_task, get_job_dsl_parser, query_job
-from fate_flow.entity.constant_config import JobStatus, Backend
+from fate_flow.entity.constant_config import JobStatus, Backend, TaskStatus
 
 
 class TaskScheduler(object):
@@ -111,12 +111,12 @@ class TaskScheduler(object):
         if len(top_level_task_status) == 2:
             job.f_status = JobStatus.FAILED
         elif True in top_level_task_status:
-            job.f_status = JobStatus.SUCCESS
+            job.f_status = JobStatus.COMPLETE
         else:
             job.f_status = JobStatus.FAILED
         job.f_end_time = current_timestamp()
         job.f_elapsed = job.f_end_time - job.f_start_time
-        if job.f_status == JobStatus.SUCCESS:
+        if job.f_status == JobStatus.COMPLETE:
             job.f_progress = 100
         job.f_update_time = current_timestamp()
         TaskScheduler.sync_job_status(job_id=job_id, roles=job_runtime_conf['role'],
@@ -266,7 +266,7 @@ class TaskScheduler(object):
                     return False
                 if 'timeout' in status_collect:
                     return None
-                elif len(status_collect) == 1 and 'success' in status_collect:
+                elif len(status_collect) == 1 and TaskStatus.COMPLETE in status_collect:
                     return True
                 else:
                     time.sleep(interval)

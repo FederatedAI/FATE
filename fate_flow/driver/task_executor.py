@@ -16,13 +16,12 @@
 import argparse
 import importlib
 import os
-import time
 import traceback
 
 from arch.api import federation
 from arch.api import session
 from arch.api.utils import file_utils, log_utils
-from arch.api.utils.core import current_timestamp, get_lan_ip
+from arch.api.utils.core import current_timestamp, get_lan_ip, timestamp_to_date
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import Task
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -123,7 +122,7 @@ class TaskExecutor(object):
             output_model = run_object.export_model()
             # There is only one model output at the current dsl version.
             tracker.save_output_model(output_model, task_output_dsl['model'][0] if task_output_dsl.get('model') else 'default')
-            task.f_status = TaskStatus.SUCCESS
+            task.f_status = TaskStatus.COMPLETE
         except Exception as e:
             task.f_status = TaskStatus.FAILED
             kill_path = os.path.join(job_utils.get_job_directory(job_id), str(role), str(party_id), component_name,
@@ -146,6 +145,9 @@ class TaskExecutor(object):
             except Exception as e:
                 traceback.print_exc()
                 schedule_logger().exception(e)
+        schedule_logger().info('task {} {} {} start time: {}'.format(task_id, role, party_id, timestamp_to_date(task.f_start_time)))
+        schedule_logger().info('task {} {} {} end time: {}'.format(task_id, role, party_id, timestamp_to_date(task.f_end_time)))
+        schedule_logger().info('task {} {} {} takes {}s'.format(task_id, role, party_id, int(task.f_elapsed)/1000))
         schedule_logger().info(
             'finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status if sync_success else TaskStatus.FAILED))
 

@@ -124,7 +124,7 @@ class JobController(object):
                                                                              'success' if kill_status else 'failed'))
             status = TaskStatus.FAILED if not timeout else TaskStatus.TIMEOUT
 
-            if task.f_status != TaskStatus.SUCCESS:
+            if task.f_status != TaskStatus.COMPLETE:
                 task.f_status = status
             try:
                 TaskExecutor.sync_task_status(job_id=job_id, component_name=task.f_component_name, task_id=task.f_task_id,
