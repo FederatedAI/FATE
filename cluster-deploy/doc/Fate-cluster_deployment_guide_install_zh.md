@@ -438,14 +438,19 @@ Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以�
 # 8.常见问题
 
 Q1：Permission denied
+
 A1：当前用户app没有操作权限，建议chown  -R  app.  目录
 
 Q2:  No space left  on device**
+
 A2:  磁盘没有空间，建议df -TH查看哪个分区占用过多，清理或增加磁盘
 
 Q3: storage-service-cxx启动多次失败
+
 A3：如提示core dumped更换需要支持AVX2的指令集的CPU
+
 其他情况，重新编译c++第三库：
+
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/third_party_source.tar.gz
 
 mv third_party_source.tar.gz /data/projects/fate/eggroll/storage-service-cxx
@@ -463,12 +468,15 @@ cd ..
 make
 
 Q4: fate_flow起不来
+
 A4: cd /data/projects/fate/python/fate_flow && python fate_flow_server.py，如出现连接不了mysql，先到目标主机确认mysql服务是否已经启动：lsof -i:3306，ps -ef | grep mysql，如没有就启动：cd  /data/projects/fate/common/mysql/mysql-8.0.13执行sh service.sh start，检查下/data/projects/fate/python/fate_flow/settings.py中的DATABASE连接信息是否正确，fate_flow依赖于MySQL redis egg roll storage-service-cxx meta-service，只有这些模块启动成功，fate_flow才会正常运行。
 
 Q5: 为什么要配置无密登录和sudo
+
 A5:  因为配置无密和sudo便于执行部署脚本安装系统插件和ssh传包。
 
 Q6：toy测试
+
 A6:  先测对端：python /data/projects/fate/python/examples/toy_example/run_toy_example.py  9999 10000  1
 
 如果不通，再分别测试自己
@@ -478,6 +486,7 @@ a.guest端执行：python /data/projects/fate/python/examples/toy_example/run_to
 b.host端执行：python /data/projects/fate/python/examples/toy_example/run_toy_example.py  10000 10000  1
 
 哪端不通就哪端有问题，检查下federation（9394）/fateboard（8080）/proxy（9370）/egg（7888）/
+
 roll（7778）/meta-service（8590）/storage-service-cxx（7778）/fate_flow（9360/9380）是否正常
 
 如果两端都通，检查下proxy服务以及路由配置（/data/projects/fate/proxy/conf/route_table.json）是否正确
