@@ -26,6 +26,7 @@ import typing
 import uuid
 
 import psutil
+from fate_flow.entity.constant_config import TaskStatus
 
 from arch.api.utils import file_utils
 from arch.api.utils.core import current_timestamp
@@ -233,7 +234,7 @@ def success_task_count(job_id):
         job_component_status[task.f_component_name] = job_component_status.get(task.f_component_name, set())
         job_component_status[task.f_component_name].add(task.f_status)
     for component_name, role_status in job_component_status.items():
-        if len(role_status) == 1 and 'success' in role_status:
+        if len(role_status) == 1 and TaskStatus.COMPLETE in role_status:
             count += 1
     return count
 
