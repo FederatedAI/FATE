@@ -19,7 +19,7 @@ class GMFDataConverter(DataConverter):
 
 
 class GMFSequenceData(tf.keras.utils.Sequence):
-    def __init__(self, data_instances, batch_size, neg_count):
+    def __init__(self, data_instances, batch_size, neg_count, flow_id='training'):
         """
         Wraps dataset and produces batches for the model to consume
         :param data: data instances: Instance
@@ -34,6 +34,7 @@ class GMFSequenceData(tf.keras.utils.Sequence):
         self.neg_count = neg_count
         self.max_length = None
         self._keys = []
+        self.flow_id = flow_id
 
         print(f"initialize class, data type: {type(self.data_instances)}, count:{data_instances.first()}")
         self.size = self.data_instances.count()
@@ -65,6 +66,9 @@ class GMFSequenceData(tf.keras.utils.Sequence):
         self.users = None
         self.items = None
         self.neg_items = None
+        self.validate_users = None
+        self.validate_items = None
+        self.validate_y = None
         self.transfer_data()
 
     @property
@@ -136,13 +140,28 @@ class GMFSequenceData(tf.keras.utils.Sequence):
         users = np.zeros((size,), dtype=np.uint32)
         items = np.zeros((size,), dtype=np.uint32)
         neg_items = np.zeros((size,), dtype=np.uint32)
+        validate_size = self.size * (self.neg_count + 1) if self.neg_count > 0 else self.batch_size
+        validate_users = np.zeros((validate_size,), dtype=np.uint32)
+        validate_items = np.zeros((validate_size,), dtype=np.uint32)
+        validate_y = np.zeros((validate_size,), dtype=np.uint32)
+
+        if self.flow_id != 'validate':
+            self._keys = range(0, size)
+            self.size = size
+        else:
+            self._keys = range(0, validate_size)
+            self.size = validate_size
 
         idx = 0
+        valid_idx = 0
         for key, instance in self.data_instances.collect():
-            self._keys.append(key)
             feature = np.array(instance.features).squeeze().astype(int).tolist()
             user_idx = feature[0]
             item_idx = feature[1]
+            validate_items[valid_idx] = item_idx
+            validate_users[valid_idx] = user_idx
+            validate_y[valid_idx] = 1
+            valid_idx += 1
             # TODO: set positive values outside of for loop
             for _ in range(self.neg_count):
                 # if idx % 1000 == 0: print(idx)
@@ -151,6 +170,9 @@ class GMFSequenceData(tf.keras.utils.Sequence):
                 items[idx] = item_idx
                 neg_items[idx] = neg_item_idx
                 idx += 1
+                validate_items[valid_idx] = neg_item_idx
+                validate_users[valid_idx] = user_idx
+                valid_idx += 1
 
         self.size = idx
         shuffle_idx = [i for i in range(idx)]
@@ -162,6 +184,12 @@ class GMFSequenceData(tf.keras.utils.Sequence):
         self.y_1 = self.y_1[shuffle_idx]
         self.y_0 = self.y_0[shuffle_idx]
 
+        valid_shuffle_idx = [i for i in range(valid_idx)]
+        random.shuffle(valid_shuffle_idx)
+        self.validate_users = validate_users[valid_shuffle_idx]
+        self.validate_items = validate_items[valid_shuffle_idx]
+        self.validate_y = validate_y[valid_shuffle_idx]
+
     def __getitem__(self, index):
         """Gets batch at position `index`.
 
@@ -171,11 +199,16 @@ class GMFSequenceData(tf.keras.utils.Sequence):
         # Returns
             A batch
         """
+
         start = self.batch_size * index
         end = self.batch_size * (index + 1)
-        X = [self.users[start: end], self.items[start: end], self.neg_items[start: end]]
-        # y = self.y_0[start:end, :]
-        y = [self.y_1[start:end, :], self.y_0[start:end, :], self.y_0[start:end, :]]
+        if self.flow_id != 'validate':
+            X = [self.users[start: end], self.items[start: end], self.neg_items[start: end]]
+            # y = self.y_0[start:end, :]
+            y = [self.y_1[start:end, :], self.y_0[start:end, :], self.y_0[start:end, :]]
+        else:
+            X = [self.validate_users[start: end], self.validate_items[start: end]]
+            y = self.validate_y[start:end]
         return X, y
 
     def __len__(self):
@@ -188,6 +221,9 @@ class GMFSequenceData(tf.keras.utils.Sequence):
 
     def get_keys(self):
         return self._keys
+
+    def get_validate_labels(self):
+        return self.validate_y.astype(int).tolist()
 
 
 class GMFSequencePredictData(tf.keras.utils.Sequence):
@@ -203,12 +239,14 @@ class GMFSequencePredictData(tf.keras.utils.Sequence):
 
         self.users = None
         self.items = None
+        self.labels = None
         self.transfer_data()
 
     def transfer_data(self):
         size = self.size if self.size > 0 else self.batch_size
         users = np.zeros((size, 1), dtype=np.uint32)
         items = np.zeros((size, 1), dtype=np.uint32)
+        labels = np.zeros((size, 1), dtype=np.uint32)
 
         idx = 0
         for key, instance in self.data_instances.collect():
@@ -216,11 +254,14 @@ class GMFSequencePredictData(tf.keras.utils.Sequence):
             feature = np.array(instance.features).squeeze().astype(int).tolist()
             user_idx = feature[0]
             item_idx = feature[1]
+            label = feature[2]
             users[idx] = user_idx
             items[idx] = item_idx
+            labels[idx] = label
             idx += 1
         self.users = users
         self.items = items
+        self.labels = labels
 
     def __getitem__(self, index):
         """Gets batch at position `index`.
@@ -233,7 +274,7 @@ class GMFSequencePredictData(tf.keras.utils.Sequence):
         """
         start = self.batch_size * index
         end = self.batch_size * (index + 1)
-        return [self.users[start: end], self.items[start: end]]
+        return [self.users[start: end], self.items[start: end]], self.labels[start:end]
 
     def __len__(self):
         """Number of batch in the Sequence.
