@@ -441,7 +441,7 @@ Q1：Permission denied
 
 A1：当前用户app没有操作权限，建议chown  -R  app.  目录
 
-Q2:  No space left  on device**
+Q2:  No space left  on device
 
 A2:  磁盘没有空间，建议df -TH查看哪个分区占用过多，清理或增加磁盘
 
