@@ -1,4 +1,5 @@
 import io
+import os
 import copy
 import typing
 import zipfile
@@ -67,12 +68,14 @@ class KerasModel:
     @classmethod
     def restore_model(cls, model_bytes):  # todo: restore optimizer to support incremental learning
         model = cls()
+        LOGGER.info("begin restore_model")
         keras_model = None
         with tempfile.TemporaryDirectory() as tmp_path:
             with io.BytesIO(model_bytes) as bytes_io:
                 with zipfile.ZipFile(bytes_io, 'r', zipfile.ZIP_DEFLATED) as f:
                     f.extractall(tmp_path)
 
+            os.system(f"echo 'test tmp_path:' {tmp_path}; ls {tmp_path}; du -h {tmp_path}")
             try:
                 keras_model = tf.keras.models.load_model(filepath=tmp_path)
             except IOError:
@@ -85,14 +88,18 @@ class KerasModel:
 
     def export_model(self):
         with tempfile.TemporaryDirectory() as tmp_path:
+            LOGGER.info(f"tmp_path: {tmp_path}")
             try:
-                tf.keras.models.save_model(self._predict_model, filepath=tmp_path, save_format="tf")
-            except NotImplementedError:
+                LOGGER.info(f"predict model is None: {self._predict_model == None}")
+                tf.keras.models.save_model(self._predict_model, filepath=tmp_path, save_format="tf", include_optimizer=False)
+                # tf.keras.experimental.export_saved_model(self._predict_model, saved_model_path=tmp_path)
+            except Exception as e:
                 import warnings
                 warnings.warn('Saving the model as SavedModel is still in experimental stages. '
                               'trying tf.keras.experimental.export_saved_model...')
 
                 tf.keras.experimental.export_saved_model(self._predict_model, saved_model_path=tmp_path)
+            os.system(f"echo 'test tmp_path:' {tmp_path}; ls {tmp_path}; du -h {tmp_path}")
             LOGGER.info(f"export saved model at path: {tmp_path}")
             model_bytes = zip_dir_as_bytes(tmp_path)
 
@@ -179,7 +186,7 @@ class GMFModel(KerasModel):
                                     outputs=pos_output)
 
         self._model.compile(optimizer=optimizer_instance,
-                            loss=[MSE, MSE, gmf_loss], metrics=metrics, loss_weights=[0.3, 0.3, 0.4])
+                            loss=[MSE, MSE, gmf_loss], metrics=["MSE"], loss_weights=[0.3, 0.3, 0.4])
 
         # pick user_embedding for aggregating
         self._trainable_weights = {v.name.split("/")[0]: v for v in self._model.trainable_weights}

@@ -19,6 +19,7 @@
 import typing
 import functools
 
+from federatedml.feature.instance import Instance
 from federatedml.util import consts
 from arch.api.utils import log_utils
 from arch.api import session as fate_session
@@ -123,10 +124,13 @@ class HeteroGMFClient(HeteroGMFBase):
     def export_model(self):
         meta = self._get_meta()
         param = self._get_param()
-        return {self.model_meta_name: meta, self.model_param_name: param}
+        model_dict = {self.model_meta_name: meta, self.model_param_name: param}
+        LOGGER.info(f"model_dict keys: {model_dict.keys()}")
+        return model_dict
 
     def _get_meta(self):
         from federatedrec.protobuf.generated import gmf_model_meta_pb2
+        LOGGER.info(f"_get_meta")
         meta_pb = gmf_model_meta_pb2.GMFModelMeta()
         meta_pb.params.CopyFrom(self.model_param.generate_pb())
         meta_pb.aggregate_iter = self.aggregator_iter
@@ -134,6 +138,7 @@ class HeteroGMFClient(HeteroGMFBase):
 
     def _get_param(self):
         from federatedrec.protobuf.generated import gmf_model_param_pb2
+        LOGGER.info(f"_get_param")
         param_pb = gmf_model_param_pb2.GMFModelParam()
         param_pb.saved_model_bytes = self._model.export_model()
         param_pb.user_ids.extend(self._model.user_ids)
@@ -142,19 +147,33 @@ class HeteroGMFClient(HeteroGMFBase):
         return param_pb
 
     def predict(self, data_inst):
-        LOGGER.info(f"data_inst type: {type(data_inst)}")
-        data = self.data_converter.convert(data_inst, batch_size=self.batch_size, training=False)
-        LOGGER.info(f"data example: {data_inst.first()[1].label}")
+        LOGGER.info(f"data_inst type: {type(data_inst)}, size: {data_inst.count()}, table name: {data_inst.get_name()}")
+        LOGGER.info(f"current flowid: {self.flowid}")
+        if self.flowid == 'validate':
+            # use GMFSequenceData
+            data = self.data_converter.convert(data_inst, batch_size=self.batch_size, neg_count=self.model_param.neg_count
+                                               , training=True, flow_id=self.flowid)
+            keys = data.get_keys()
+            labels = data.get_validate_labels()
+            label_data = fate_session.parallelize(zip(keys, labels), include_key=True)
+        else:
+            # use GMFSequencePredictData
+            data = self.data_converter.convert(data_inst, batch_size=self.batch_size, training=False)
+            label_data = data_inst.map(lambda k, v: (k, v.features.astype(int).tolist()[2]))
+        LOGGER.info(f"label_data example: {label_data.take(10)}")
+        LOGGER.info(f"data example: {data_inst.first()[1].features.astype(int)}")
+        LOGGER.info(f"converted data, size :{data.size}")
         predict = self._model.predict(data)
         LOGGER.info(f"predict shape: {predict.shape}")
         threshold = self.params.predict_param.threshold
 
         kv = [(x[0], (0 if x[1] <= threshold else 1, x[1].item())) for x in zip(data.get_keys(), predict)]
         pred_tbl = fate_session.parallelize(kv, include_key=True)
-        # data_inst has no label data. Having clicked records, use '1' as true label for computing mse metric.
-        return data_inst.join(pred_tbl, lambda d, pred: [1, pred[0], pred[1], {"label": pred[0]}])
+        pred_data = label_data.join(pred_tbl, lambda d, pred: [d, pred[0], pred[1], {"label": pred[0]}])
+        LOGGER.info(f"pred_data sample: {pred_data.take(20)}")
+        return pred_data
 
-    def _load_model(self, model_dict):
+    def load_model(self, model_dict):
         model_dict = list(model_dict["model"].values())[0]
         model_obj = model_dict.get(self.model_param_name)
         meta_obj = model_dict.get(self.model_meta_name)

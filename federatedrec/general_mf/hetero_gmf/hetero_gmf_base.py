@@ -60,8 +60,11 @@ class HeteroGMFBase(ModelBase):
         train_data = None
         eval_data = None
         data = None
+        LOGGER.info(f"run _run_data in hetero_gmf_base")
 
         for data_key in data_sets:
+            if isinstance(data_sets, dict):
+                LOGGER.info(f"data set keys: {data_sets.keys()}")
             if data_sets[data_key].get("train_data", None):
                 train_data = data_sets[data_key]["train_data"]
             LOGGER.info(f"train_data type: {type(train_data)}")
@@ -83,6 +86,7 @@ class HeteroGMFBase(ModelBase):
         elif train_data is not None:
             self.set_flowid('fit')
             self.fit(train_data, eval_data)
+            LOGGER.info(f"train_data sample: {train_data.take(10)}")
             self.set_flowid('predict')
             self.data_output = self.predict(train_data)
 
