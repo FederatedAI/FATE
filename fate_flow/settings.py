@@ -24,49 +24,20 @@ import __main__
 
 from fate_flow.utils.setting_utils import CenterConfig
 
-log_utils.LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), 'logs', 'fate_flow'))
-stat_logger = log_utils.getLogger("fate_flow_stat")
-detect_logger = log_utils.getLogger("fate_flow_detect")
-access_logger = log_utils.getLogger("fate_flow_access")
 
-'''
-Constants
-'''
-
-API_VERSION = "v1"
-ROLE = 'fateflow'
-SERVERS = 'servers'
-SERVINGS_ZK_PATH = '/FATE-SERVICES/serving/online/publishLoad/providers'
-FATE_FLOW_ZK_PATH = '/FATE-SERVICES/flow/online/transfer/providers'
-FATE_MANAGER_GET_NODE_INFO = '/node/info'
-FATE_MANAGER_NODE_CHECK = '/node/management/check'
-MAIN_MODULE = os.path.relpath(__main__.__file__)
-SERVER_MODULE = 'fate_flow_server.py'
-TASK_EXECUTOR_MODULE = 'driver/task_executor.py'
+WORK_MODE = 0
+USE_LOCAL_DATABASE = True
+# Local authentication switch
+USE_AUTHENTICATION = False
+PRIVILEGE_COMMAND_WHITELIST = []
+# Node check switch
+CHECK_NODES_IDENTITY = False
 MAX_CONCURRENT_JOB_RUN = 5
 MAX_CONCURRENT_JOB_RUN_HOST = 10
-DEFAULT_WORKFLOW_DATA_TYPE = ['train_input', 'data_input', 'id_library_input', 'model', 'predict_input',
-                              'predict_output', 'evaluation_output', 'intersect_data_output']
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000  # ms
 JOB_DEFAULT_TIMEOUT = 7 * 24 * 60 * 60
-HEADERS = {
-    'Content-Type': 'application/json',
-}
-
-IP = '0.0.0.0'
-GRPC_PORT = 9360
-HTTP_PORT = 9380
-ZOOKEEPER_HOSTS = ['127.0.0.1:2181']
-# standalone job will be send to the standalone job server when FATE-Flow work on cluster deploy mode,
-# but not the port for FATE-Flow on standalone deploy mode.
-CLUSTER_STANDALONE_JOB_SERVER_PORT = 9381
-WORK_MODE = 0
-USE_LOCAL_DATABASE = True
-USE_AUTHENTICATION = False
-USE_CONFIGURATION_CENTER = False
-CHECK_NODES_IDENTITY = False
-PRIVILEGE_COMMAND_WHITELIST = []
+REDIS_QUEUE_DB_INDEX = 0
 
 DATABASE = {
     'name': 'fate_flow',
@@ -85,11 +56,50 @@ REDIS = {
     'max_connections': 500
 }
 
-REDIS_QUEUE_DB_INDEX = 0
+'''
+Constants
+'''
+API_VERSION = "v1"
+ROLE = 'fateflow'
+SERVERS = 'servers'
+MAIN_MODULE = os.path.relpath(__main__.__file__)
+SERVER_MODULE = 'fate_flow_server.py'
+TASK_EXECUTOR_MODULE = 'driver/task_executor.py'
+DEFAULT_WORKFLOW_DATA_TYPE = ['train_input', 'data_input', 'id_library_input', 'model', 'predict_input',
+                              'predict_output', 'evaluation_output', 'intersect_data_output']
+HEADERS = {
+    'Content-Type': 'application/json',
+}
+# fate-serving
+SERVINGS_ZK_PATH = '/FATE-SERVICES/serving/online/publishLoad/providers'
+FATE_FLOW_ZK_PATH = '/FATE-SERVICES/flow/online/transfer/providers'
+# fate-manager
+FATE_MANAGER_GET_NODE_INFO = '/node/info'
+FATE_MANAGER_NODE_CHECK = '/node/management/check'
+
+# logger
+log_utils.LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), 'logs', 'fate_flow'))
+stat_logger = log_utils.getLogger("fate_flow_stat")
+detect_logger = log_utils.getLogger("fate_flow_detect")
+access_logger = log_utils.getLogger("fate_flow_access")
+
 
 """
-Services
+Services 
 """
+IP = '0.0.0.0'
+GRPC_PORT = 9360
+HTTP_PORT = 9380
+
+# standalone job will be send to the standalone job server when FATE-Flow work on cluster deploy mode,
+# but not the port for FATE-Flow on standalone deploy mode.
+CLUSTER_STANDALONE_JOB_SERVER_PORT = 9381
+
+# zookeeper
+USE_CONFIGURATION_CENTER = False
+ZOOKEEPER_HOSTS = ['127.0.0.1:2181']
+
+# services ip and port
 server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
 PROXY_HOST = server_conf.get(SERVERS).get('proxy').get('host')
 PROXY_PORT = server_conf.get(SERVERS).get('proxy').get('port')
