@@ -62,8 +62,6 @@ class Step(object):
         return schema
 
     def run(self, original_model, train_data, test_data, feature_mask):
-        if original_model.model_param.early_stop != 'diff':
-            raise ValueError("Stepwise only accepts 'diff' as early stop criteria.")
         model = copy.deepcopy(original_model)
         current_flowid = self.get_flowid()
         model.set_flowid(current_flowid)
