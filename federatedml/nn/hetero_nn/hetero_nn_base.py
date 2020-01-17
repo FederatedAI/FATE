@@ -20,6 +20,8 @@ from federatedml.model_base import ModelBase
 from federatedml.transfer_variable.transfer_class.hetero_nn_transfer_variable import HeteroNNTransferVariable
 from federatedml.param.hetero_nn_param import HeteroNNParam
 from federatedml.model_selection import start_cross_validation
+from federatedml.util import consts
+from federatedml.util.validation_strategy import ValidationStrategy
 
 
 class HeteroNNBase(ModelBase):
@@ -41,12 +43,14 @@ class HeteroNNBase(ModelBase):
         self.model = None
 
         self.partition = None
+        self.validation_freqs = None
 
         self.data_x = []
         self.data_y = []
         self.transfer_variable = HeteroNNTransferVariable()
 
         self.model_param = HeteroNNParam()
+        self.mode = consts.HETERO
 
     def _init_model(self, hetero_nn_param):
         self.interactive_layer_lr = hetero_nn_param.interactive_layer_lr
@@ -54,6 +58,7 @@ class HeteroNNBase(ModelBase):
         self.batch_size = hetero_nn_param.batch_size
 
         self.early_stop = hetero_nn_param.early_stop
+        self.validation_freqs = hetero_nn_param.validation_freqs
         self.tol = hetero_nn_param.tol
 
         self.predict_param = hetero_nn_param.predict_param
@@ -68,6 +73,12 @@ class HeteroNNBase(ModelBase):
     def recovery_flowid(self):
         new_flowid = ".".join(self.flowid.split(".", -1)[: -1])
         self.set_flowid(new_flowid)
+
+    def init_validation_strategy(self, train_data=None, validate_data=None):
+        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs)
+        validation_strategy.set_train_data(train_data)
+        validation_strategy.set_validate_data(validate_data)
+        return validation_strategy
 
     def _build_bottom_model(self):
         pass

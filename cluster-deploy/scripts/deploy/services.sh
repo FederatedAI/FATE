@@ -16,7 +16,7 @@
 #  limitations under the License.
 #
 
-modules=(meta-service egg storage-service-cxx roll federation proxy fate_flow fateboard mysql redis)
+modules=(mysql redis meta-service egg storage-service-cxx roll federation proxy fate_flow fateboard)
 eggroll_modules=(meta-service egg storage-service-cxx roll)
 
 

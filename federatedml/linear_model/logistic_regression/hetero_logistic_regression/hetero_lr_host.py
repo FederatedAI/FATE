@@ -134,7 +134,8 @@ class HeteroLRHost(HeteroLRBase):
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.update_local_model(fore_gradient, data_instances, self.model_weights.coef_, **training_info)
 
-                self.gradient_loss_operator.compute_loss(self.model_weights, self.optimizer, self.n_iter_, batch_index)
+                self.gradient_loss_operator.compute_loss(self.model_weights, self.optimizer,
+                                                         self.n_iter_, batch_index, self.cipher_operator)
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optim_host_gradient)
                 batch_index += 1
@@ -153,7 +154,7 @@ class HeteroLRHost(HeteroLRBase):
         LOGGER.debug("Final lr weights: {}".format(self.model_weights.unboxed))
 
     def predict(self, data_instances):
-
+        self.transfer_variable.host_prob.disable_auto_clean()
         LOGGER.info("Start predict ...")
         if self.need_one_vs_rest:
             self.one_vs_rest_obj.predict(data_instances)

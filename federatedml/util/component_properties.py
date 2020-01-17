@@ -120,7 +120,7 @@ class ComponentProperties(object):
             if data_sets[data_key].get("data", None):
                 # data = data_sets[data_key]["data"]
                 data[data_key] = data_sets[data_key]["data"]
-
+        LOGGER.debug("args: {}, data_sets: {}, data: {}".format(args, data_sets, data))
         return train_data, eval_data, data
 
     def extract_running_rules(self, args, model):
@@ -229,8 +229,9 @@ class ComponentProperties(object):
             if result_data is None:
                 result_data = data
             else:
+                LOGGER.debug(f"Before union, t1 count: {result_data.count()}, t2 count: {data.count()}")
                 result_data = result_data.union(data)
+                LOGGER.debug(f"After union, result count: {result_data.count()}")
             LOGGER.debug("before out loop, one data: {}".format(result_data.first()))
 
-        LOGGER.debug("union result: {}".format(result_data.first()))
         return result_data

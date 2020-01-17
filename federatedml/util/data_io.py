@@ -87,7 +87,7 @@ class DenseFeatureReader(object):
         header = input_data.get_meta("header")
         sid_name = input_data.get_meta("sid")
         LOGGER.debug("header is {}".format(header))
-        LOGGER.debug("sid_name is {}".format(self.sid_name))
+        LOGGER.debug("sid_name is {}".format(sid_name))
 
         if not header and not sid_name:
             raise ValueError("dense input-format should have header schema")
@@ -375,6 +375,7 @@ class SparseFeatureReader(object):
         self.sid_name = "sid"
         self.label_name = self.label_name = data_io_param.label_name
 
+
     def get_max_feature_index(self, line, delimitor=' '):
         if line.strip() == '':
             raise ValueError("find an empty line, please check!!!")
@@ -534,6 +535,7 @@ class SparseTagReader(object):
         self.header = None
         self.sid_name = "sid"
         self.label_name = self.label_name = data_io_param.label_name
+
 
     @staticmethod
     def agg_tag(kvs, delimitor=' ', with_label=True, tag_with_value=False, tag_value_delimitor=":"):

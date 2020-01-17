@@ -5,15 +5,15 @@ This section introduces the dsl and conf for usage of different type of task.
 #### Training Task.
 
 1. single_layer:
-    dsl: test_homo_nn_train_then_predict.dsl
+    dsl: test_homo_nn_train_then_predict.json
     runtime_config : test_homo_dnn_single_layer.json
    
 2. multi_layer:
-    dsl: test_homo_nn_train_then_predict
+    dsl: test_homo_nn_train_then_predict.json
     runtime_config: test_homo_dnn_multi_layer.json
    
 3. multi_label and multi-host:
-    dsl: test_homo_nn_train_then_predict
+    dsl: test_homo_nn_train_then_predict.json
     runtime_config: test_homo_dnn_multi_label.json
 
     

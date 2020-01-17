@@ -73,14 +73,16 @@ def do_load_model():
     return get_json_result(retcode=(0 if load_status else 101))
 
 
-@manager.route('/online', methods=['POST'])
-def publish_model_online():
+@manager.route('/bind', methods=['POST'])
+def bind_model_service():
     request_config = request.json
     if not request_config.get('servings'):
         # get my party all servings
         request_config['servings'] = SERVINGS
-    online_status = publish_model.publish_online(config_data=request_config)
-    return get_json_result(retcode=(0 if online_status else 101))
+    if not request_config.get('service_id'):
+        return get_json_result(retcode=101, retmsg='no service id')
+    bind_status, service_id = publish_model.bind_model_service(config_data=request_config)
+    return get_json_result(retcode=(0 if bind_status else 101), retmsg='service id is {}'.format(service_id))
 
 
 @manager.route('/version', methods=['POST'])

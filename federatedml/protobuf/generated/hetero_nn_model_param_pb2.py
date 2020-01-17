@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
   serialized_options=_b('B\027HeteroNNModelParamProto'),
-  serialized_pb=_b('\n\x1bhetero-nn-model-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xb8\x01\n\x15InteractiveLayerParam\x12\x11\n\tacc_noise\x18\x01 \x01(\x0c\x12+\n#interactive_guest_saved_model_bytes\x18\x02 \x01(\x0c\x12*\n\"interactive_host_saved_model_bytes\x18\x03 \x01(\x0c\x12\x18\n\x10host_input_shape\x18\x04 \x01(\x05\x12\x19\n\x11guest_input_shape\x18\x05 \x01(\x05\"\x88\x02\n\x12HeteroNNModelParam\x12 \n\x18\x62ottom_saved_model_bytes\x18\x01 \x01(\x0c\x12^\n\x17interactive_layer_param\x18\x02 \x01(\x0b\x32=.com.webank.ai.fate.core.mlmodel.buffer.InteractiveLayerParam\x12\x1d\n\x15top_saved_model_bytes\x18\x03 \x01(\x0c\x12\x10\n\x08is_empty\x18\x04 \x01(\x08\x12 \n\x18\x62ottom_model_input_shape\x18\x05 \x01(\x05\x12\x1d\n\x15top_model_input_shape\x18\x06 \x01(\x05\"\xba\x01\n\rHeteroNNParam\x12Y\n\x15hetero_nn_model_param\x18\x01 \x01(\x0b\x32:.com.webank.ai.fate.core.mlmodel.buffer.HeteroNNModelParam\x12\x12\n\niter_epoch\x18\x02 \x01(\x05\x12\x14\n\x0chistory_loss\x18\x03 \x03(\x01\x12\x14\n\x0cis_converged\x18\x04 \x01(\x08\x12\x0e\n\x06header\x18\x05 \x03(\tB\x19\x42\x17HeteroNNModelParamProtob\x06proto3')
+  serialized_pb=_b('\n\x1bhetero-nn-model-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xb8\x01\n\x15InteractiveLayerParam\x12\x11\n\tacc_noise\x18\x01 \x01(\x0c\x12+\n#interactive_guest_saved_model_bytes\x18\x02 \x01(\x0c\x12*\n\"interactive_host_saved_model_bytes\x18\x03 \x01(\x0c\x12\x18\n\x10host_input_shape\x18\x04 \x01(\x05\x12\x19\n\x11guest_input_shape\x18\x05 \x01(\x05\"\x88\x02\n\x12HeteroNNModelParam\x12 \n\x18\x62ottom_saved_model_bytes\x18\x01 \x01(\x0c\x12^\n\x17interactive_layer_param\x18\x02 \x01(\x0b\x32=.com.webank.ai.fate.core.mlmodel.buffer.InteractiveLayerParam\x12\x1d\n\x15top_saved_model_bytes\x18\x03 \x01(\x0c\x12\x10\n\x08is_empty\x18\x04 \x01(\x08\x12 \n\x18\x62ottom_model_input_shape\x18\x05 \x01(\x05\x12\x1d\n\x15top_model_input_shape\x18\x06 \x01(\x05\"\xcd\x01\n\rHeteroNNParam\x12Y\n\x15hetero_nn_model_param\x18\x01 \x01(\x0b\x32:.com.webank.ai.fate.core.mlmodel.buffer.HeteroNNModelParam\x12\x12\n\niter_epoch\x18\x02 \x01(\x05\x12\x14\n\x0chistory_loss\x18\x03 \x03(\x01\x12\x14\n\x0cis_converged\x18\x04 \x01(\x08\x12\x0e\n\x06header\x18\x05 \x03(\t\x12\x11\n\tnum_label\x18\x06 \x01(\x05\x42\x19\x42\x17HeteroNNModelParamProtob\x06proto3')
 )
 
 
@@ -193,6 +193,13 @@ _HETERONNPARAM = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='num_label', full_name='com.webank.ai.fate.core.mlmodel.buffer.HeteroNNParam.num_label', index=5,
+      number=6, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -206,7 +213,7 @@ _HETERONNPARAM = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=526,
-  serialized_end=712,
+  serialized_end=731,
 )
 
 _HETERONNMODELPARAM.fields_by_name['interactive_layer_param'].message_type = _INTERACTIVELAYERPARAM

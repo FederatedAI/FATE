@@ -124,7 +124,7 @@
     },
     "intersect_0": {
       "intersect_method": "rsa",
-      "is_send_intersect_ids": true,
+      "sync_intersect_ids": true,
       "only_output_key": false
     }
   }

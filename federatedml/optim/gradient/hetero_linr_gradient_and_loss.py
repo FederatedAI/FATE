@@ -133,7 +133,7 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         wx = data_instances.mapValues(lambda v: np.dot(v.features, model_weights.coef_) + model_weights.intercept_)
         return wx
 
-    def compute_loss(self, model_weights, optimizer, n_iter_, batch_index):
+    def compute_loss(self, model_weights, optimizer, n_iter_, batch_index, cipher_operator):
         '''
         Compute htero linr loss for:
             loss = (1/2N)*\sum(wx-y)^2 where y is label, w is model weight and x is features
@@ -143,10 +143,15 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
 
         current_suffix = (n_iter_, batch_index)
         self_wx_square = self.forwards.mapValues(lambda x: np.square(x)).reduce(reduce_add)
-        self.remote_loss_intermediate(self_wx_square, suffix=current_suffix)
+        en_wx_square = cipher_operator.encrypt(self_wx_square)
+        self.remote_loss_intermediate(en_wx_square, suffix=current_suffix)
 
         loss_regular = optimizer.loss_norm(model_weights)
-        self.remote_loss_regular(loss_regular, suffix=current_suffix)
+        if loss_regular is None:
+            en_loss_regular = loss_regular
+        else:
+            en_loss_regular = cipher_operator.encrypt(loss_regular)
+        self.remote_loss_regular(en_loss_regular, suffix=current_suffix)
 
 
 class Arbiter(hetero_linear_model_gradient.Arbiter, loss_sync.Arbiter):

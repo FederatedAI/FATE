@@ -16,12 +16,13 @@
 
 import abc
 import operator
-from arch.api.utils import log_utils
 
 import numpy as np
 
+from arch.api.utils import log_utils
 from arch.api.utils.splitable import segment_transfer_enabled
 from federatedml.secureprotol.encrypt import Encrypt
+
 LOGGER = log_utils.getLogger()
 
 
@@ -220,7 +221,7 @@ class OrderDictWeights(Weights):
             _w = dict()
             for k in self.walking_order:
                 _w[k] = func(self._weights[k])
-            return DictWeights(_w)
+            return OrderDictWeights(_w)
 
     def binary_op(self, other: 'OrderDictWeights', func, inplace):
         if inplace:
@@ -231,7 +232,7 @@ class OrderDictWeights(Weights):
             _w = dict()
             for k in self.walking_order:
                 _w[k] = func(other._weights[k], self._weights[k])
-            return DictWeights(_w)
+            return OrderDictWeights(_w)
 
     def axpy(self, a, y: 'OrderDictWeights'):
         for k in self.walking_order:
@@ -253,20 +254,20 @@ class NumpyWeights(Weights):
         else:
             vec_func = np.vectorize(func)
             weights = vec_func(self._weights)
-            return DictWeights(weights)
+            return NumpyWeights(weights)
 
     def binary_op(self, other: 'NumpyWeights', func, inplace):
         if inplace:
             size = self._weights.size
             view = self._weights.view().reshape(size)
-            view_other = other._weights.view.reshpae(size)
+            view_other = other._weights.view().reshpae(size)
             for i in range(size):
                 view[i] = func(view[i], view_other[i])
             return self
         else:
             vec_func = np.vectorize(func)
             weights = vec_func(self._weights, other._weights)
-            return DictWeights(weights)
+            return NumpyWeights(weights)
 
     def axpy(self, a, y: 'NumpyWeights'):
         size = self._weights.size

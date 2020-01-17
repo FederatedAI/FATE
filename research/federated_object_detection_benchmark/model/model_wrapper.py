@@ -250,7 +250,7 @@ class FasterRCNN(object):
         result = eval_detection_voc(
             pred_bboxes, pred_labels, pred_scores,
             gt_bboxes, gt_labels, gt_difficults,
-            use_07_metric=True)
+            use_07_metric=False)
         total_loss = sum(total_losses) / len(total_losses)
         return total_loss, result
 

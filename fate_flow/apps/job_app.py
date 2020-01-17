@@ -43,12 +43,14 @@ def submit_job():
     detect_utils.check_config({'work_mode': work_mode}, required_arguments=[('work_mode', (WorkMode.CLUSTER, WorkMode.STANDALONE))])
     if work_mode == RuntimeConfig.WORK_MODE:
         job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = JobController.submit_job(request.json)
-        return get_json_result(job_id=job_id, data={'job_dsl_path': job_dsl_path,
-                                                    'job_runtime_conf_path': job_runtime_conf_path,
-                                                    'model_info': model_info,
-                                                    'board_url': board_url,
-                                                    'logs_directory': logs_directory
-                                                    })
+        return get_json_result(retcode=0, retmsg='success',
+                               job_id=job_id,
+                               data={'job_dsl_path': job_dsl_path,
+                                     'job_runtime_conf_path': job_runtime_conf_path,
+                                     'model_info': model_info,
+                                     'board_url': board_url,
+                                     'logs_directory': logs_directory
+                                     })
     else:
         if RuntimeConfig.WORK_MODE == WorkMode.CLUSTER and work_mode == WorkMode.STANDALONE:
             # use cluster standalone job server to execute standalone job
@@ -60,9 +62,9 @@ def submit_job():
 @manager.route('/stop', methods=['POST'])
 @job_utils.job_server_routing()
 def stop_job():
-    response = TaskScheduler.stop_job(job_id=request.json.get('job_id', ''), end_status=JobStatus.CANCELED)
+    response = TaskScheduler.stop(job_id=request.json.get('job_id', ''), end_status=JobStatus.CANCELED)
     if not response:
-        TaskScheduler.stop_job(job_id=request.json.get('job_id', ''), end_status=JobStatus.FAILED)
+        TaskScheduler.stop(job_id=request.json.get('job_id', ''), end_status=JobStatus.FAILED)
         return get_json_result(retcode=0, retmsg='kill job success')
     return get_json_result(retcode=0, retmsg='cancel job success')
 

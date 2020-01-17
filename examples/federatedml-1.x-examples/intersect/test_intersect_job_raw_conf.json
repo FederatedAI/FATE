@@ -20,8 +20,8 @@
         "data": {
           "data": [
             {
-              "name": "hetero_breast_b",
-              "namespace": "hetero_guest_breast"
+              "name": "breast_b_intersect",
+              "namespace": "hetero"
             }
         ]
         }
@@ -40,8 +40,8 @@
         "data": {
           "data": [
             {
-              "name": "hetero_breast_a",
-              "namespace": "hetero_host_breast"
+              "name": "breast_a_intersect",
+              "namespace": "hetero"
             }
         ]
         }
@@ -60,7 +60,7 @@
       "intersect_0": {
           "intersect_method": "raw",
           "sync_intersect_ids": true,
-          "join_role": "guest",
+          "join_role": "host",
           "with_encode": true,
           "only_output_key": true,
           

@@ -51,9 +51,13 @@ vim /etc/hosts
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
 
-sed -i '/\^SELINUX/s/=.\*/=disabled/' /etc/selinux/config
+确认是否已安装selinux
 
-setenforce 0
+centos系统执行：rpm -qa | grep selinux
+
+ubuntu系统执行：apt list --installed | grep selinux
+
+如果已安装了selinux就执行：setenforce 0
 
 3.3 修改Linux最大打开文件数
 ---------------------------
@@ -161,8 +165,8 @@ ssh app\@192.168.0.2
 
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_v1.2.tar.gz
-tar -xf FATE_install_v1.2.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_v1.2.0.tar.gz
+tar -xf FATE_install_v1.2.0.tar.gz
 ```
 
 4.2 配置文件修改和示例
@@ -277,7 +281,7 @@ cd FATE/cluster-deploy/scripts
 bash deploy_cluster_multinode.sh binary all 
 ```
 
-如果只部署部分组件：
+如果只部署部分组件(可选：jdk python mysql redis fate_flow federatedml fateboard proxy federation roll meta-service egg)：
 
 ```
 bash deploy_cluster_multinode.sh binary fate_flow
@@ -308,7 +312,7 @@ cd /data/projects/fate
 sh services.sh all start
 ```
 
-启动单个模块：
+启动单个模块(可选：mysql redis fate_flow fateboard proxy federation eggroll模块(roll meta-service egg storage-service-cxx))：
 
 ```
 sh services.sh proxy start
@@ -333,7 +337,7 @@ cd /data/projects/fate
 sh services.sh all status
 ```
 
-查看单个模块：
+查看单个模块(可选：mysql redis fate_flow fateboard proxy federation eggroll模块(roll meta-service egg storage-service-cxx))：
 
 ```
 sh services.sh proxy status
@@ -356,7 +360,7 @@ cd /data/projects/fate
 sh services.sh all stop
 ```
 
-关闭单个模块：
+关闭单个模块(可选：mysql redis fate_flow fateboard proxy federation eggroll模块(roll meta-service egg storage-service-cxx))：
 
 ```
 sh services.sh proxy stop
@@ -417,7 +421,7 @@ sh run.sh host fast
 ```
 source /data/projects/fate/init_env.sh
 cd /data/projects/fate/python/examples/min_test_task/
-sh run.sh guest fast $ {host_table} $ {host_namespace} 
+sh run.sh guest fast ${host_table} ${host_namespace} 
 ```
 
 等待几分钟，看到结果显示“成功”字段，表明操作成功。在其他情况下，如果失败或卡住，则表示失败。

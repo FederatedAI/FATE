@@ -20,12 +20,14 @@ import json
 import operator
 import os
 import subprocess
+import sys
 import threading
 import typing
 import uuid
 
 import psutil
 
+from arch.api import session
 from arch.api.utils import file_utils
 from arch.api.utils.core import current_timestamp
 from arch.api.utils.core import json_loads, json_dumps
@@ -339,22 +341,54 @@ def wait_child_process(signum, frame):
             raise
 
 
-def kill_process(pid):
+def kill_process(pid, only_child=False):
     try:
         if not pid:
             return False
-        stat_logger.info("terminating process pid:{}".format(pid))
+        stat_logger.info("try to stop process pid:{}".format(pid))
         if not check_job_process(pid):
             return True
         p = psutil.Process(int(pid))
         for child in p.children(recursive=True):
             if check_job_process(child.pid):
                 child.kill()
-        if check_job_process(p.pid):
-            p.kill()
+        if not only_child:
+            if check_job_process(p.pid):
+                p.kill()
         return True
     except Exception as e:
         raise e
+
+
+def stop_executor(task):
+    task_dir = os.path.join(get_job_directory(job_id=task.f_job_id), task.f_role, task.f_party_id,
+                            task.f_component_name)
+    os.makedirs(task_dir, exist_ok=True)
+    kill_path = os.path.join(task_dir, 'kill')
+    f = open(kill_path, 'w')
+    f.close()
+    return True
+
+
+def onsignal_term(signum, frame):
+    try:
+        session.stop()
+        sys.exit(1)
+    except Exception as e:
+        pass
+
+
+def task_killed_detector(job_id, role, party_id, component_name, pid):
+    kill_path = os.path.join(get_job_directory(job_id), str(role), str(party_id), component_name, 'kill')
+    if os.path.exists(kill_path):
+        try:
+            session.stop()
+        except Exception as e:
+            pass
+        kill_process(int(pid), only_child=True)
+        os.kill(int(pid), 9)
+        kill_process(int(pid), only_child=False)
+    threading.Timer(0.25, task_killed_detector, args=[job_id, role, party_id, component_name, pid]).start()
 
 
 def gen_all_party_key(all_party):

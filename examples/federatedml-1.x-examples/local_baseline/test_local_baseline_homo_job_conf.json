@@ -23,7 +23,7 @@
         "data": {
           "train_data": [
             {
-              "name": "homo_breast_guest",
+              "name": "homo_breast_b",
               "namespace": "homo_breast_guest"
             }
           ]
@@ -48,7 +48,7 @@
         "data": {
           "train_data": [
             {
-              "name": "homo_breast_host",
+              "name": "homo_breast_a",
               "namespace": "homo_breast_host"
             }
           ]

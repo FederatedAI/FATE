@@ -17,29 +17,37 @@
 #  limitations under the License.
 #
 
-from numpy import random
+import random
+
+import numpy as np
+
 from arch.api import session
-from federatedml.nn.hetero_nn.backend.ops import HeteroNNTensor
+from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
+
+BITS = 10
 
 
 class RandomNumberGenerator(object):
-    def __init__(self, method, seed=None, loc=0, scale=1):
-        random.seed(seed)
-        self.generator = getattr(random, method)
-        self.loc = loc
-        self.scale = scale
+    def __init__(self):
+        self.lower_bound = -2 ** BITS
+        self.upper_bound = 2 ** BITS
+
+    @staticmethod
+    def get_size_by_shape(shape):
+        size = 1
+        for dim in shape:
+            size *= dim
+
+        return size
 
     def generate_random_number(self, shape):
-        return self.generator(loc=self.loc, scale=self.scale, size=shape)
+        size = self.get_size_by_shape(shape)
+        return np.reshape([random.SystemRandom().uniform(self.lower_bound, self.upper_bound) for idx in range(size)],
+                          shape)
 
     def fast_generate_random_number(self, shape, partition=10):
-        generator = self.generator
-        loc = self.loc
-        scale = self.scale
-
         tb = session.parallelize([None for i in range(shape[0])], include_key=False, partition=partition)
 
-        tb = tb.mapValues(lambda val: generator(loc, scale, shape[1:]))
+        tb = tb.mapValues(lambda val: self.generate_random_number(shape[1:]))
 
-        return HeteroNNTensor(tb_obj=tb)
-
+        return PaillierTensor(tb_obj=tb)
