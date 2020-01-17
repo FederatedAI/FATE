@@ -23,4 +23,4 @@ To use stepwise, set 'need_stepwise' to `True` and specify stepwise parameters a
 }
 ``` 
 
-For more examples of using stepwise, please refer to [examples](../../../examples/federatedml-1.x-examples/hetero_stepwise). For explanation on each parameter, please refer to the comments in stepwise param [file](../../param/stepwise_param.py).
+For examples of using stepwise with linear models, please refer to [examples](../../../examples/federatedml-1.x-examples/hetero_stepwise). For explanation on each stepwise module parameter, please refer to the comments in stepwise param [file](../../param/stepwise_param.py).

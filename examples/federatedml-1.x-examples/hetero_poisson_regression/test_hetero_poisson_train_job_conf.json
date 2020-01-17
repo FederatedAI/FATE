@@ -23,15 +23,15 @@
         "data": {
           "train_data": [
             {
-              "name": "motor_mini_b",
-              "namespace": "motor_mini"
+              "name": "dvisits_b",
+              "namespace": "dvisits"
             }
           ]
         }
       },
       "dataio_0": {
         "with_label": [true],
-        "label_name": ["motor_speed"],
+        "label_name": ["doctorco"],
         "label_type": ["float"],
         "output_format": ["dense"],
         "missing_fill": [true],
@@ -92,8 +92,8 @@
         "data": {
           "train_data": [
             {
-              "name": "motor_mini_a",
-              "namespace": "motor_mini"
+              "name": "dvisits_a",
+              "namespace": "dvisits"
             }
           ]
         }
