@@ -17,8 +17,8 @@
 
 | party  | 主机名        | IP地址      | 操作系统               |
 | ------ | ------------- | ----------- | ---------------------- |
-| PartyA | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu16.04 |
-| PartyB | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu16.04 |
+| PartyA | PartyA | 192.168.0.1 | CentOS 7.2/Ubuntu16.04 |
+| PartyB | PartyB | 192.168.0.2 | CentOS 7.2/Ubuntu16.04 |
 
 3.基础环境配置
 ==============
@@ -30,11 +30,11 @@
 
 **在192.168.0.1 root用户下执行：**
 
-hostnamectl set-hostname VM_0_1_centos
+hostnamectl set-hostname PartyA
 
 **在192.168.0.2 root用户下执行：**
 
-hostnamectl set-hostname VM_0_2_centos
+hostnamectl set-hostname PartyB
 
 **2）加入主机映射**
 
@@ -42,9 +42,9 @@ hostnamectl set-hostname VM_0_2_centos
 
 vim /etc/hosts 加入
 
-192.168.0.1 VM_0_1_centos
+192.168.0.1 PartyA
 
-192.168.0.2 VM_0_2_centos
+192.168.0.2 PartyB
 
 3.2 关闭selinux(可选)
 ---------------
