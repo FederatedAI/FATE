@@ -78,16 +78,12 @@ else
     git clone ${fateboard_git_url} -b ${fateboard_git_branch} fateboard
 fi
 
-egg_version=$(grep -E -m 1 -o "<eggroll.version>(.*)</eggroll.version>" ${source_code_dir}/eggroll/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "eggroll.version" '{print $2}')
-meta_service_version=$(grep -E -m 1 -o "<eggroll.version>(.*)</eggroll.version>" ${source_code_dir}/eggroll/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "eggroll.version" '{print $2}')
-roll_version=$(grep -E -m 1 -o "<eggroll.version>(.*)</eggroll.version>" ${source_code_dir}/eggroll/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "eggroll.version" '{print $2}')
+eggroll_version=$(grep -E -m 1 -o "<eggroll.version>(.*)</eggroll.version>" ${source_code_dir}/eggroll/jvm/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "eggroll.version" '{print $2}')
 federation_version=$(grep -E -m 1 -o "<fate.version>(.*)</fate.version>" ${source_code_dir}/arch/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "fte.version" '{print $2}')
 proxy_version=$(grep -E -m 1 -o "<fate.version>(.*)</fate.version>" ${source_code_dir}/arch/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "fte.version" '{print $2}')
 fateboard_version=$(grep -E -m 1 -o "<version>(.*)</version>" ${source_code_dir}/fateboard/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "version" '{print $2}')
  
-sed -i "s/egg_version=.*/egg_version=${egg_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
-sed -i "s/meta_service_version=.*/meta_service_version=${meta_service_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
-sed -i "s/roll_version=.*/roll_version=${roll_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
+sed -i "s/eggroll_version=.*/eggroll_version=${eggroll_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
 sed -i "s/federation_version=.*/federation_version=${federation_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
 sed -i "s/proxy_version=.*/proxy_version=${proxy_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
 sed -i "s/fateboard_version=.*/fateboard_version=${fateboard_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
@@ -95,7 +91,7 @@ sed -i "s/fateboard_version=.*/fateboard_version=${fateboard_version}/g" ${sourc
 source ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
 
 eggroll_source_code_dir=${source_code_dir}/eggroll
-cd ${eggroll_source_code_dir}
+cd ${eggroll_source_code_dir}/jvm
 echo "[INFO] Compiling eggroll"
 mvn clean package -DskipTests
 echo "[INFO] Compile eggroll done"
@@ -103,58 +99,41 @@ echo "[INFO] Compile eggroll done"
 echo "[INFO] Packaging eggroll"
 
 cd ${eggroll_source_code_dir}
-cd api
-tar czf eggroll-api-${version}.tar.gz *
-mv eggroll-api-${version}.tar.gz ${packages_dir}/
 
-cd ${eggroll_source_code_dir}
-cd computing
-tar czf eggroll-computing-${version}.tar.gz *
-mv eggroll-computing-${version}.tar.gz ${packages_dir}/
+if [ ! -d "lib" ];then
+mkdir lib
+fi
 
-cd ${eggroll_source_code_dir}
-cd conf
-tar czf eggroll-conf-${version}.tar.gz *
-mv eggroll-conf-${version}.tar.gz ${packages_dir}/
+cp -r ./jvm/core/target/eggroll-core-${eggroll_version}.jar ./lib
+cp -r ./jvm/core/target/lib/* ./lib
+cp -r ./jvm/roll_pair/target/eggroll-roll-pair-${eggroll_version}.jar ./lib
+cp -r ./jvm/roll_pair/target/lib/* ./lib
+cp -r ./jvm/roll_site/target/eggroll-roll-site-${eggroll_version}.jar ./lib
+cp -r ./jvm/roll_site/target/lib/* ./lib
+cp ./jvm/core/main/resources/create-eggroll-meta-tables.sql ./conf
 
-cd ${eggroll_source_code_dir}
-cd framework/egg/target
-tar czf eggroll-egg-${version}.tar.gz eggroll-egg-${egg_version}.jar lib/
-mv eggroll-egg-${version}.tar.gz ${packages_dir}/
+tar -czf eggroll-${version}.tar.gz lib bin conf data python deploy
+mv eggroll-${version}.tar.gz ${packages_dir}/
 
-cd ${eggroll_source_code_dir}
-cd framework/meta-service/target
-tar czf eggroll-meta-service-${version}.tar.gz eggroll-meta-service-${meta_service_version}.jar lib/
-mv eggroll-meta-service-${version}.tar.gz ${packages_dir}/
-
-cd ${eggroll_source_code_dir}
-cd framework/roll/target
-tar czf eggroll-roll-${version}.tar.gz eggroll-roll-${roll_version}.jar lib/
-mv eggroll-roll-${version}.tar.gz ${packages_dir}/
-
-cd ${eggroll_source_code_dir}
-cd storage/storage-service-cxx
-tar czf eggroll-storage-service-cxx-${version}.tar.gz *
-mv eggroll-storage-service-cxx-${version}.tar.gz ${packages_dir}/
 echo "[INFO] Package eggroll done"
 
 echo "[INFO] Compiling fate"
 cd ${source_code_dir}/fateboard/
 mvn clean package -DskipTests
-cd ${source_code_dir}/arch/
-mvn clean package -DskipTests
+#cd ${source_code_dir}/arch/
+#mvn clean package -DskipTests
 echo "[INFO] Compile fate done"
 
 echo "[INFO] Packaging fate"
 cp ${source_code_dir}/fateboard/target/fateboard-${fateboard_version}.jar ${packages_dir}/
 
-cd ${source_code_dir}/arch/driver/federation/target
-tar czf fate-federation-${version}.tar.gz fate-federation-${federation_version}.jar lib/
-mv fate-federation-${version}.tar.gz ${packages_dir}/
+#cd ${source_code_dir}/arch/driver/federation/target
+#tar czf fate-federation-${version}.tar.gz fate-federation-${federation_version}.jar lib/
+#mv fate-federation-${version}.tar.gz ${packages_dir}/
 
-cd ${source_code_dir}/arch/networking/proxy/target
-tar czf fate-proxy-${version}.tar.gz fate-proxy-${proxy_version}.jar lib/
-mv fate-proxy-${version}.tar.gz ${packages_dir}/
+#cd ${source_code_dir}/arch/networking/proxy/target
+#tar czf fate-proxy-${version}.tar.gz fate-proxy-${proxy_version}.jar lib/
+#mv fate-proxy-${version}.tar.gz ${packages_dir}/
 
 echo "[INFO] Packaging base module"
 get_module_package ${source_code_dir} "python" pip-packages-fate-${python_version}.tar.gz
@@ -162,8 +141,6 @@ get_module_package ${source_code_dir} "python" Miniconda3-4.5.4-Linux-x86_64.sh
 get_module_package ${source_code_dir} "jdk" jdk-${jdk_version}-linux-x64.tar.gz
 get_module_package ${source_code_dir} "mysql" mysql-${mysql_version}-linux-glibc2.12-x86_64.tar.xz
 get_module_package ${source_code_dir} "redis" redis-${redis_version}.tar.gz
-get_module_package ${source_code_dir} "storage-service-cxx third-party" third_party_eggrollv1.tar.gz
-get_module_package ${source_code_dir} "storage-service-cxx third-party" third_party_eggrollv1_ubuntu.tar.gz
 echo "[INFO] Package base module done"
 echo "[INFO] Package fate done"
 echo "[INFO] A total of `ls ${packages_dir} | wc -l | awk '{print $1}'` packages:"
