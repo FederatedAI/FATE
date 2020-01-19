@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import typing
 from typing import Union
 
 from arch.api import RuntimeInstance
@@ -20,8 +21,13 @@ from arch.api.transfer import Party, Cleaner
 
 
 class Variable(object):
-    def __init__(self, name: str, transfer_variables: 'BaseTransferVariables'):
+    def __init__(self, name: str,
+                 src: typing.List[str],
+                 dst: typing.List[str],
+                 transfer_variables: 'BaseTransferVariables'):
         self.name = name
+        self._src = src
+        self._dst = dst
         self._transfer_variable = transfer_variables
         self._get_cleaner = Cleaner()
         self._remote_cleaner = Cleaner()
@@ -154,8 +160,11 @@ class BaseTransferVariables(object):
     def set_flowid(self, flowid):
         self.flowid = flowid
 
-    def _create_variable(self, name):
-        return getattr(self, name, Variable(name=f"{self.__class__.__name__}.{name}", transfer_variables=self))
+    def _create_variable(self, name, src, dst):
+        if not hasattr(self, name):
+            full_name = f"{self.__class__.__name__}.{name}"
+            return Variable(name=full_name, src=src, dst=dst, transfer_variables=self)
+        return getattr(self, name)
 
     @staticmethod
     def all_parties():
