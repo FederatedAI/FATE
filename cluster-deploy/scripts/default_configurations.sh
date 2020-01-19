@@ -1,9 +1,7 @@
 #!/bin/bash
 fate_cos_address=https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com
 version=1.3.0
-egg_version=
-meta_service_version=
-roll_version=
+eggroll_version=
 federation_version=
 proxy_version=
 fateboard_version=
