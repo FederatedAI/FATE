@@ -89,18 +89,6 @@
         "arbiter"
       ]
     },
-    "host_user_ids": {
-      "src": "host",
-      "dst": [
-        "guest"
-      ]
-    },
-    "guest_user_ids": {
-      "src": "guest",
-      "dst": [
-        "host"
-      ]
-    },
     "host_user_num": {
       "src": "host",
       "dst": [

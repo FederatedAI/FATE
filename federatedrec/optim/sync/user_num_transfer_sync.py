@@ -19,33 +19,23 @@ from federatedml.util import consts
 
 class Arbiter(object):
 
-    def register_user_ids_transfer(self, transfer_variable):
+    def register_user_num_transfer(self, transfer_variable):
         pass
 
 
 class Client(object):
 
     def __init__(self):
-        self.host_user_ids_sync = None
-        self.guest_user_ids_sync = None
         self.host_user_num_sync = None
         self.guest_user_num_sync = None
 
-    def register_user_ids_transfer(self, transfer_variable):
-        self.host_user_ids_sync = transfer_variable.host_user_ids
-        self.guest_user_ids_sync = transfer_variable.guest_user_ids
+    def register_user_num_transfer(self, transfer_variable):
         self.host_user_num_sync = transfer_variable.host_user_num
         self.guest_user_num_sync = transfer_variable.guest_user_num
         return self
 
 
 class Host(Client):
-
-    def send_host_user_ids(self, user_ids, suffix=tuple()):
-        self.host_user_ids_sync.remote(obj=user_ids, role=consts.GUEST, idx=0, suffix=suffix)
-
-    def get_guest_user_ids(self, suffix=tuple()):
-        return self.guest_user_ids_sync.get(idx=0, suffix=suffix)
 
     def send_host_user_num(self, user_num, suffix=tuple()):
         self.host_user_num_sync.remote(obj=user_num, role=consts.GUEST, idx=0, suffix=suffix)
@@ -55,13 +45,6 @@ class Host(Client):
 
 
 class Guest(Client):
-
-    def send_guest_user_ids(self, user_ids, suffix=tuple()):
-        self.guest_user_ids_sync.remote(obj=user_ids, role=consts.HOST, idx=0, suffix=suffix)
-
-    def get_host_user_ids(self, suffix=tuple()):
-        host_user_ids = self.host_user_ids_sync.get(idx=0, suffix=suffix)
-        return host_user_ids
 
     def send_guest_user_num(self, user_num, suffix=tuple()):
         self.guest_user_num_sync.remote(obj=user_num, role=consts.HOST, idx=0, suffix=suffix)

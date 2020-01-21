@@ -19,12 +19,11 @@
 import typing
 import functools
 
-from federatedml.feature.instance import Instance
 from federatedml.util import consts
 from arch.api.utils import log_utils
 from arch.api import session as fate_session
 from federatedml.statistic import data_overview
-from federatedrec.optim.sync import user_ids_transfer_sync
+from federatedrec.optim.sync import user_num_transfer_sync
 from federatedrec.general_mf.hetero_gmf.hetero_gmf_base import HeteroGMFBase
 from federatedrec.general_mf.hetero_gmf.backend import GMFModel
 from federatedrec.general_mf.hetero_gmf.gmf_data_convertor import GMFDataConverter
@@ -51,7 +50,7 @@ class HeteroGMFClient(HeteroGMFBase):
         self.loss = param.loss
         self.metrics = param.metrics
         self.data_converter = GMFDataConverter()
-        self.user_ids_sync.register_user_ids_transfer(self.transfer_variable)
+        self.user_num_sync.register_user_num_transfer(self.transfer_variable)
 
     def _check_monitored_status(self, data, epoch_degree):
         """
@@ -224,13 +223,13 @@ class HeteroGMFHost(HeteroGMFClient):
     def __init__(self):
         super().__init__()
         self.role = consts.HOST
-        self.user_ids_sync = user_ids_transfer_sync.Host()
+        self.user_num_sync = user_num_transfer_sync.Host()
 
     def send_user_num(self, data):
-        self.user_ids_sync.send_host_user_num(data)
+        self.user_num_sync.send_host_user_num(data)
 
     def get_user_num(self):
-        return self.user_ids_sync.get_guest_user_num()
+        return self.user_num_sync.get_guest_user_num()
 
 
 class HeteroGMFGuest(HeteroGMFClient):
@@ -241,10 +240,10 @@ class HeteroGMFGuest(HeteroGMFClient):
     def __init__(self):
         super().__init__()
         self.role = consts.GUEST
-        self.user_ids_sync = user_ids_transfer_sync.Guest()
+        self.user_num_sync = user_num_transfer_sync.Guest()
 
     def send_user_num(self, data):
-        self.user_ids_sync.send_guest_user_num(data)
+        self.user_num_sync.send_guest_user_num(data)
 
     def get_user_num(self):
-        return self.user_ids_sync.get_host_user_num()
+        return self.user_num_sync.get_host_user_num()

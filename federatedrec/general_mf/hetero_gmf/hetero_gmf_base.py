@@ -34,7 +34,7 @@ class HeteroGMFBase(ModelBase):
 
         self.model_param = HeteroGMFParam()
         self.aggregator = None
-        self.user_ids_sync = None
+        self.user_num_sync = None
 
     def _iter_suffix(self):
         return self.aggregator_iter,
