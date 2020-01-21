@@ -22,10 +22,8 @@ class GMFSequenceData(tf.keras.utils.Sequence):
     def __init__(self, data_instances, batch_size, neg_count, flow_id='training'):
         """
         Wraps dataset and produces batches for the model to consume
-        :param data: data instances: Instance
-        :param batch: batch size of data
-        :param neighborhood : use neighbor or not
-        :param max_length: max num of neighbors
+        :param data_instances: data instances: Instance
+        :param batch_size: batch size of data
         :param neg_count: num of negative items
         """
 
@@ -46,7 +44,6 @@ class GMFSequenceData(tf.keras.utils.Sequence):
         self.batch_size = batch_size if batch_size > 0 else self.size
 
         self._n_users, self._n_items = max(self.unique_user_ids), max(self.unique_items_ids)
-        # print(f"n_users: {self._n_users}, n_items: {self._n_items}")
         # Neighborhoods
         self.user_items = defaultdict(set)
         self.item_users = defaultdict(set)
@@ -206,6 +203,7 @@ class GMFSequenceData(tf.keras.utils.Sequence):
             X = [self.users[start: end], self.items[start: end], self.neg_items[start: end]]
             # y = self.y_0[start:end, :]
             y = [self.y_1[start:end, :], self.y_0[start:end, :], self.y_0[start:end, :]]
+            # y = [self.y_1[start:end, :], self.y_0[start:end, :]]
         else:
             X = [self.validate_users[start: end], self.validate_items[start: end]]
             y = self.validate_y[start:end]
@@ -227,7 +225,7 @@ class GMFSequenceData(tf.keras.utils.Sequence):
 
 
 class GMFSequencePredictData(tf.keras.utils.Sequence):
-    def __init__(self, data_instances, batch_size):
+    def __init__(self, data_instances, batch_size, *args, **kwargs):
         self.batch_size = batch_size
         self.data_instances = data_instances
         self.size = data_instances.count()
@@ -240,6 +238,8 @@ class GMFSequencePredictData(tf.keras.utils.Sequence):
         self.users = None
         self.items = None
         self.labels = None
+        self.item_sets = set()
+        self.user_sets = set()
         self.transfer_data()
 
     def transfer_data(self):
@@ -258,6 +258,8 @@ class GMFSequencePredictData(tf.keras.utils.Sequence):
             users[idx] = user_idx
             items[idx] = item_idx
             labels[idx] = label
+            self.item_sets.add(item_idx)
+            self.user_sets.add(user_idx)
             idx += 1
         self.users = users
         self.items = items
@@ -286,3 +288,17 @@ class GMFSequencePredictData(tf.keras.utils.Sequence):
 
     def get_keys(self):
         return self._keys
+
+    @property
+    def user_count(self):
+        """
+        Number of users in dataset
+        """
+        return self.user_sets.__len__()
+
+    @property
+    def item_count(self):
+        """
+        Number of items in dataset
+        """
+        return self.item_sets.__len__()

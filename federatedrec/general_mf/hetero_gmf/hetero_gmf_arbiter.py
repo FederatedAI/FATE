@@ -37,6 +37,12 @@ class HeteroGMFArbiter(HeteroGMFBase):
         self.loss_consumed = early_stop.converge_func != "weight_diff"
 
     def callback_loss(self, iter_num, loss):
+        """
+        call back function of loss and metrics.
+        :param iter_num: iter number.
+        :param loss: loss type.
+        :return:
+        """
         metric_meta = MetricMeta(name='train',
                                  metric_type=MetricType.LOSS,
                                  extra_metas={
@@ -59,6 +65,11 @@ class HeteroGMFArbiter(HeteroGMFBase):
                                                         suffix=self._iter_suffix())
 
     def fit(self, data_inst):
+        """
+        Aggregate model for host and guest, then broadcast back.
+        :param data_inst: input param is not used.
+        :return:
+        """
         while self.aggregator_iter < self.max_iter:
             self.aggregator.aggregate_and_broadcast(suffix=self._iter_suffix())
 
@@ -70,4 +81,7 @@ class HeteroGMFArbiter(HeteroGMFBase):
             LOGGER.warn(f"reach max iter: {self.aggregator_iter}, not converged")
 
     def save_model(self):
+        """
+        :return:aggregated model.
+        """
         return self.aggregator.model

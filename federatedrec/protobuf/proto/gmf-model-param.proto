@@ -25,6 +25,6 @@ message GMFModelParam {
     repeated double loss_history = 3;
     bool is_converged = 4;
     repeated string header = 5;
-    repeated int32 user_ids = 6;
-    repeated int32 item_ids = 7;
+    int32 user_num = 6;
+    int32 item_num = 7;
 }
