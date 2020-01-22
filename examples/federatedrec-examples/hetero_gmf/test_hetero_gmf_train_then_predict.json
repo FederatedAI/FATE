@@ -26,12 +26,6 @@
 							"namespace": "hetero_guest_citeulike",
 							"name": "hetero_citeulike_train_guest"
 						}
-					],
-					"eval_data": [
-						{
-							"namespace": "hetero_guest_citeulike",
-							"name": "hetero_citeulike_evaluation"
-						}
 					]
 				}
 			},
@@ -68,12 +62,6 @@
 						{
 							"namespace": "hetero_host_citeulike",
 							"name": "hetero_citeulike_train_host"
-						}
-					],
-					"eval_data": [
-						{
-							"namespace": "hetero_guest_citeulike",
-							"name": "hetero_citeulike_evaluation"
 						}
 					]
 				}

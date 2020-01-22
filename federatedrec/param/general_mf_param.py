@@ -184,16 +184,16 @@ class GMFParam(BaseParam):
                 raise ValueError(descr + " {} not supported, should be larger than 10 or "
                                          "-1 represent for all data".format(self.batch_size))
 
-        if type(self.learning_rate).__name__ != "float":
+        if type(self.learning_rate).__name__ != "float" or (isinstance(self.learning_rate, float) and self.learning_rate < 0):
             raise ValueError(
-                "general_mf's learning_rate {} not supported, should be float type".format(
+                "general_mf's learning_rate {} not supported, should be float type and larger than 0".format(
                     self.learning_rate))
 
         self.init_param.check()
 
-        if type(self.max_iter).__name__ != "int":
+        if type(self.max_iter).__name__ != "int"or (isinstance(self.max_iter, int) and self.max_iter < 1):
             raise ValueError(
-                "general_mf's max_iter {} not supported, should be int type".format(self.max_iter))
+                "general_mf's max_iter {} not supported, should be int type and larger then 0".format(self.max_iter))
         elif self.max_iter <= 0:
             raise ValueError(
                 "general_mf's max_iter must be greater or equal to 1")

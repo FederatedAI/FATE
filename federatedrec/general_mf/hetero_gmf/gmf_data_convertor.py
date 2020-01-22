@@ -51,6 +51,8 @@ class GMFSequenceData(tf.keras.utils.Sequence):
         self.max_length = None
         self._keys = []
         self.flow_id = flow_id
+        self._user_ids = set()
+        self._item_ids = set()
 
         print(f"initialize class, data type: {type(self.data_instances)}, count:{data_instances.first()}")
         self.size = self.data_instances.count()
@@ -61,22 +63,22 @@ class GMFSequenceData(tf.keras.utils.Sequence):
             raise ValueError("empty data")
         self.batch_size = batch_size if batch_size > 0 else self.size
 
-        self._n_users, self._n_items = max(self.unique_user_ids), max(self.unique_items_ids)
         # Neighborhoods
         self.user_items = defaultdict(set)
         self.item_users = defaultdict(set)
 
         for key, instance in self.data_instances.collect():
-            features = np.array(instance.features).squeeze().tolist()
+            features = np.array(instance.features).astype(int).squeeze().tolist()
             u = features[0]
             i = features[1]
             self.user_items[u].add(i)
             self.item_users[i].add(u)
+            self._user_ids.add(u)
+            self._item_ids.add(i)
         # Get a list version so we do not need to perform type casting
-        self.item_users_list = {k: list(v) for k, v in self.item_users.items()}
-        self.max_user_neighbors = max([len(x) for x in self.item_users.values()])
         self.user_items = dict(self.user_items)
         self.item_users = dict(self.item_users)
+        self._n_users, self._n_items = max(self._user_ids) + 1, self._item_ids.__len__()
 
         self.users = None
         self.items = None
@@ -91,24 +93,12 @@ class GMFSequenceData(tf.keras.utils.Sequence):
         return len(self.size)
 
     @property
-    def unique_user_ids(self):
-        return list(set(self.user_ids))
-
-    @property
     def user_ids(self):
-        user_ids_dt = self.data_instances.map(lambda k, v: (v.features.astype(int).tolist()[0], None))
-        user_ids = map(lambda x: x[0], user_ids_dt.collect())
-        return user_ids
-
-    @property
-    def unique_items_ids(self):
-        return list(set(self.item_ids))
+        return list(self._user_ids)
 
     @property
     def item_ids(self):
-        item_ids_dt = self.data_instances.map(lambda k, v: (v.features.astype(int).tolist()[1], None))
-        item_ids = map(lambda x: x[0], item_ids_dt.collect())
-        return item_ids
+        return list(self._item_ids)
 
     @property
     def user_count(self):
@@ -128,7 +118,7 @@ class GMFSequenceData(tf.keras.utils.Sequence):
         """
         Draw an item uniformly
         """
-        return np.random.randint(0, self.item_count)
+        return np.random.choice(self.item_ids)
 
     def _sample_negative_item(self, user_id):
         """
@@ -144,7 +134,7 @@ class GMFSequenceData(tf.keras.utils.Sequence):
         if len(positive_items) >= self.item_count:
             raise ValueError("The User has rated more items than possible %s / %s" % (
                 len(positive_items), self.item_count))
-        while n in positive_items or n not in self.item_users:
+        while n in positive_items:
             n = self._sample_item()
         return n
 
@@ -179,7 +169,6 @@ class GMFSequenceData(tf.keras.utils.Sequence):
             valid_idx += 1
             # TODO: set positive values outside of for loop
             for _ in range(self.neg_count):
-                # if idx % 1000 == 0: print(idx)
                 neg_item_idx = self._sample_negative_item(user_idx)
                 users[idx] = user_idx
                 items[idx] = item_idx
@@ -189,10 +178,10 @@ class GMFSequenceData(tf.keras.utils.Sequence):
                 validate_users[valid_idx] = user_idx
                 valid_idx += 1
 
+        # shuffle data
         self.size = idx
         shuffle_idx = [i for i in range(idx)]
         random.shuffle(shuffle_idx)
-        # TODO: need to transfer into class Instance
         self.users = users[shuffle_idx]
         self.items = items[shuffle_idx]
         self.neg_items = neg_items[shuffle_idx]
