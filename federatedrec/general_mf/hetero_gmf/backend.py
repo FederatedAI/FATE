@@ -28,7 +28,7 @@ from tensorflow.keras.losses import MSE as MSE
 from tensorflow.keras import Model
 from tensorflow.python.keras.backend import set_session
 from tensorflow.keras.initializers import RandomNormal
-from tensorflow.keras.layers import Input, Embedding, Lambda, Subtract, Dot
+from tensorflow.keras.layers import Input, Embedding, Lambda, Subtract, Dot, Flatten
 
 from arch.api.utils import log_utils
 from federatedrec.utils import zip_dir_as_bytes
@@ -144,14 +144,6 @@ class GMFModel:
                 with zipfile.ZipFile(bytes_io, 'r', zipfile.ZIP_DEFLATED) as file:
                     file.extractall(tmp_path)
 
-            os.system(f"echo 'test tmp_path:' {tmp_path}; tree {tmp_path} || true; du -h {tmp_path}")
-            # try:
-            #     keras_model = tf.keras.models.load_model(filepath=tmp_path)
-            # except IOError:
-            import warnings
-            warnings.warn(
-                'loading the model as SavedModel is still in experimental stages. '
-                'trying tf.keras.experimental.load_from_saved_model...')
             keras_model = tf.keras.experimental.load_from_saved_model(
                 saved_model_path=tmp_path)
         model = cls(user_num=user_num, item_num=item_num, embedding_dim=embedding_dim)
@@ -166,18 +158,9 @@ class GMFModel:
         model_bytes = None
         with tempfile.TemporaryDirectory() as tmp_path:
             LOGGER.info(f"tmp_path: {tmp_path}")
-            # try:
-            #     tf.keras.models.save_model(
-            #         self._predict_model, filepath=tmp_path, save_format="tf")
-            # except NotImplementedError:
-            import warnings
-            warnings.warn(
-                'Saving the model as SavedModel is still in experimental stages. '
-                'trying tf.keras.experimental.export_saved_model...')
             tf.keras.experimental.export_saved_model(
                 self._predict_model, saved_model_path=tmp_path)
 
-            os.system(f"echo 'test tmp_path:' {tmp_path}; tree {tmp_path} || true; du -h {tmp_path}")
             model_bytes = zip_dir_as_bytes(tmp_path)
 
         return model_bytes
@@ -198,12 +181,14 @@ class GMFModel:
         items_input = Input(shape=(1,), dtype='int32', name='item_input')
         neg_items_input = Input(shape=(1,), dtype='int32', name='neg_items_input')
 
-        users = Lambda(
-            lambda x: tf.strings.to_hash_bucket(tf.strings.as_string(tf.squeeze(x, 1)), user_num))(users_input)
+        LOGGER.info(f"user_input shape: {users_input.shape}")
+
+        # users = Lambda(
+        #     lambda x: tf.strings.to_hash_bucket(tf.strings.as_string(x), user_num))(users_input)
         items = Lambda(
-            lambda x: tf.strings.to_hash_bucket(tf.strings.as_string(tf.squeeze(x, 1)), item_num))(items_input)
+            lambda x: tf.strings.to_hash_bucket(tf.strings.as_string(x), item_num))(items_input)
         neg_items = Lambda(
-            lambda x: tf.strings.to_hash_bucket(tf.strings.as_string(tf.squeeze(x, 1)), item_num))(neg_items_input)
+            lambda x: tf.strings.to_hash_bucket(tf.strings.as_string(x), item_num))(neg_items_input)
         user_embed_layer = Embedding(user_num, embedding_dim,
                                      embeddings_initializer=RandomNormal(stddev=0.1),
                                      name='user_embedding')
@@ -211,9 +196,12 @@ class GMFModel:
         item_embed_layer = Embedding(item_num, embedding_dim,
                                      embeddings_initializer=RandomNormal(stddev=0.1),
                                      name='item_embedding')
-        cur_user_embed = user_embed_layer(users)
+        cur_user_embed = user_embed_layer(users_input)
+        cur_user_embed = Flatten()(cur_user_embed)
         cur_item_embed = item_embed_layer(items)
+        cur_item_embed = Flatten()(cur_item_embed)
         neg_item_embed = item_embed_layer(neg_items)
+        neg_item_embed = Flatten()(neg_item_embed)
         pos_output = Dot(axes=-1, name="pos_dot")([cur_user_embed, cur_item_embed])
         neg_output = Dot(axes=-1, name="neg_dot")([cur_user_embed, neg_item_embed])
         loss_inst = Subtract(name="loss_layer")(inputs=[pos_output, neg_output])
