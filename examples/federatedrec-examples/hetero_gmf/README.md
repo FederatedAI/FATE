@@ -19,6 +19,8 @@ runtime_config: test_gmf_predict.json
     # output prediction results
     python {fate_install_path}/fate_flow/fate_flow_client.py -f component_output_data -j {jobId}  -p
  10000 -r guest -cpn hetero_gmf_0 -o {fate_install_path}/logs/{jobId}/guest/10000/hetero_gmf_0
+   # get metric results
+    python {fate_install_path}/fate_flow/fate_flow_client.py -f component_metric_all -j $jobid -p 10000 -r guest -cpn evaluation_0
 ```
 
    
