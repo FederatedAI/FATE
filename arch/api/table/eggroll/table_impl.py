@@ -117,8 +117,18 @@ class DTable(Table):
         return DTable(self._dtable.mapPartitions(func), session_id=self._session_id)
 
     @log_elapsed
-    def reduce(self, func, **kwargs):
-        return self._dtable.reduce(func)
+    def reduce(self, func, key_func=None, **kwargs):
+        if key_func is None:
+            return self._dtable.reduce(func)
+
+        it = self._dtable.collect()
+        ret = {}
+        for k, v in it:
+            if k in ret:
+                ret[k] = func(ret[k], v)
+            else:
+                ret[k] = v
+        return ret
 
     @log_elapsed
     def join(self, other, func, **kwargs):
