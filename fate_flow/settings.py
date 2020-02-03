@@ -27,11 +27,18 @@ from fate_flow.utils.setting_utils import CenterConfig
 
 WORK_MODE = 0
 USE_LOCAL_DATABASE = True
+
 # Local authentication switch
 USE_AUTHENTICATION = False
 PRIVILEGE_COMMAND_WHITELIST = []
+
 # Node check switch
 CHECK_NODES_IDENTITY = False
+
+# zookeeper
+USE_CONFIGURATION_CENTER = False
+ZOOKEEPER_HOSTS = ['127.0.0.1:2181']
+
 MAX_CONCURRENT_JOB_RUN = 5
 MAX_CONCURRENT_JOB_RUN_HOST = 10
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
@@ -73,6 +80,7 @@ HEADERS = {
 # fate-serving
 SERVINGS_ZK_PATH = '/FATE-SERVICES/serving/online/publishLoad/providers'
 FATE_FLOW_ZK_PATH = '/FATE-SERVICES/flow/online/transfer/providers'
+FATE_FLOW_MODEL_TRANSFER_PATH = '/v1/model/transfer'
 # fate-manager
 FATE_MANAGER_GET_NODE_INFO = '/node/info'
 FATE_MANAGER_NODE_CHECK = '/node/management/check'
@@ -95,12 +103,11 @@ HTTP_PORT = 9380
 # but not the port for FATE-Flow on standalone deploy mode.
 CLUSTER_STANDALONE_JOB_SERVER_PORT = 9381
 
-# zookeeper
-USE_CONFIGURATION_CENTER = False
-ZOOKEEPER_HOSTS = ['127.0.0.1:2181']
 
 # services ip and port
-server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
+SERVER_CONF_PATH = 'arch/conf/server_conf.json'
+SERVING_PATH = '/servers/servings'
+server_conf = file_utils.load_json_conf(SERVER_CONF_PATH)
 PROXY_HOST = server_conf.get(SERVERS).get('proxy').get('host')
 PROXY_PORT = server_conf.get(SERVERS).get('proxy').get('port')
 BOARD_HOST = server_conf.get(SERVERS).get('fateboard').get('host')
@@ -109,8 +116,9 @@ if BOARD_HOST == 'localhost':
 BOARD_PORT = server_conf.get(SERVERS).get('fateboard').get('port')
 MANAGER_HOST = server_conf.get(SERVERS).get('fatemanager', {}).get('host')
 MANAGER_PORT = server_conf.get(SERVERS).get('fatemanager', {}).get('port')
-SERVINGS = CenterConfig.get_settings(path='/servers/servings', servings_zk_path=SERVINGS_ZK_PATH,
-                                     use_zk=USE_CONFIGURATION_CENTER, hosts=ZOOKEEPER_HOSTS)
+SERVINGS = CenterConfig.get_settings(path=SERVING_PATH, servings_zk_path=SERVINGS_ZK_PATH,
+                                     use_zk=USE_CONFIGURATION_CENTER, hosts=ZOOKEEPER_HOSTS,
+                                     server_conf_path=SERVER_CONF_PATH)
 BOARD_DASHBOARD_URL = 'http://%s:%d/index.html#/dashboard?job_id={}&role={}&party_id={}' % (BOARD_HOST, BOARD_PORT)
 RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
 RuntimeConfig.init_config(HTTP_PORT=HTTP_PORT)
