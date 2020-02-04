@@ -89,8 +89,9 @@ class HeteroFMHost(HeteroFMBase):
             self.init_param_obj.fit_intercept = False
 
         w_ = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
-        embed_ = self.initializer.init_model([model_shape, self.init_param_obj.embed_size],
-                                             init_params=self.init_param_obj)
+        embed_ = np.random.normal(scale=1 / np.sqrt(self.init_param_obj.embed_size),
+                                  size=(model_shape, self.init_param_obj.embed_size))
+
         self.model_weights = \
             FactorizationMachineWeights(w_, embed_, fit_intercept=fit_intercept)
 
@@ -104,7 +105,7 @@ class HeteroFMHost(HeteroFMBase):
                 batch_feat_inst = self.transform(batch_data)
                 LOGGER.debug(f"MODEL_STEP In Batch {batch_index}, batch data count: {batch_feat_inst.count()}")
 
-                optim_host_gradient, fore_gradient = self.gradient_loss_operator.compute_gradient_procedure(
+                optim_host_gradient = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_feat_inst, self.model_weights, self.encrypted_calculator, self.optimizer, self.n_iter_,
                     batch_index)
                 LOGGER.debug('optim_host_gradient: {}'.format(optim_host_gradient))

@@ -30,6 +30,5 @@ In the training process, party A and party B each compute their own linear and c
     a) "diff": Use difference of loss between two iterations, not available for multi-host training
     b) "abs": Use the absolute value of loss
     c) "weight_diff": Use difference of model weights
-5. Support multi-host modeling task. For details on how to configure for multi-host modeling task, please refer to this [guide](../../../doc/dsl_conf_setting_guide.md)
 6. Support validation for every arbitrary iterations
 7. Learning rate decay mechanism.

@@ -1012,9 +1012,9 @@
  },
  "HeteroFMTransferVariable": {
     "agg_vx_mul_fg": {
-      "src": "host",
+      "src": "guest",
       "dst": [
-        "guest"
+        "host"
       ]
     },
     "paillier_pubkey": {
@@ -1039,7 +1039,14 @@
     "fore_gradient": {
       "src": "guest",
       "dst": [
-        "host"
+        "arbiter"
+      ]
+    },
+    "capped_fore_gradient": {
+      "src": "arbiter",
+      "dst": [
+        "host",
+        "guest"
       ]
     },
     "guest_gradient": {

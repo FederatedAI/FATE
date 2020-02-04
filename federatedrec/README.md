@@ -13,7 +13,7 @@ FedRec addresses the data silo issue and builds centralized recommender without 
 #### 3. Algorithms list:
 
 ##### 1. [Hetero FM(factorization machine)](./factorization_machine/README.md)
-Build hetero logistic regression module through multiple parties.
+Build hetero factorization machine module through multiple parties.
 
 - Corresponding module name: HeteroFM
 - Data Input: Input DTable.

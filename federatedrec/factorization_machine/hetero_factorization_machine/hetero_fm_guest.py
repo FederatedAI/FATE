@@ -103,8 +103,8 @@ class HeteroFMGuest(HeteroFMBase):
             self.init_param_obj.fit_intercept = False
 
         w_ = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
-        embed_ = self.initializer.init_model([model_shape, self.init_param_obj.embed_size],
-                                             init_params=self.init_param_obj)
+        embed_ = np.random.normal(scale=1 / np.sqrt(self.init_param_obj.embed_size),
+                                  size=(model_shape, self.init_param_obj.embed_size))
         self.model_weights = \
             FactorizationMachineWeights(w_, embed_, fit_intercept=fit_intercept)
 

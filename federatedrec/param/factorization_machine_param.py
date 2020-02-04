@@ -159,9 +159,14 @@ class FactorizationParam(BaseParam):
                 raise ValueError(descr + " {} not supported, should be larger than 10 or "
                                          "-1 represent for all data".format(self.batch_size))
 
-        if type(self.learning_rate).__name__ != "float":
+        if not isinstance(self.learning_rate, (float, int)) :
             raise ValueError(
-                "factorization_param's learning_rate {} not supported, should be float type".format(
+                "factorization_param's learning_rate {} not supported, should be float or int type".format(
+                    self.learning_rate))
+
+        if self.learning_rate <= 0:
+            raise ValueError(
+                "factorization_param's learning_rate {} not supported, should be a positive value".format(
                     self.learning_rate))
 
         self.init_param.check()

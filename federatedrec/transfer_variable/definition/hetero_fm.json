@@ -22,7 +22,14 @@
     "fore_gradient": {
       "src": "guest",
       "dst": [
-        "host"
+        "arbiter"
+      ]
+    },
+    "capped_fore_gradient":{
+      "src": "arbiter",
+      "dst": [
+        "host",
+        "guest"
       ]
     },
     "guest_gradient": {

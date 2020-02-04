@@ -197,7 +197,7 @@ class BaseFactorizationMachine(ModelBase):
         LOGGER.debug("json_result: {}".format(json_result))
         return param_protobuf_obj
 
-    def _load_model(self, model_dict):
+    def load_model(self, model_dict):
         LOGGER.debug("Start Loading model")
         result_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
         meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
@@ -237,7 +237,7 @@ class BaseFactorizationMachine(ModelBase):
         if self.fit_intercept:
             intercept_ = single_model_obj.intercept
         self.model_weights = \
-            FactorizationMachineWeights(Weights(coef_), Weights(embed_), intercept_,
+            FactorizationMachineWeights(coef_, embed_, intercept_,
                                         fit_intercept=self.fit_intercept)
         return self
 

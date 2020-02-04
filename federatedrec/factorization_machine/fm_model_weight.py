@@ -25,12 +25,12 @@ from federatedml.framework.weights import NumpyWeights, TransferableWeights
 class FactorizationMachineWeights(NumpyWeights):
     def __init__(self, w, embed, intercept=0., fit_intercept=False):
         if fit_intercept:
-            weights = np.concatenate([w._weights, embed._weights.flatten(), [intercept]])
+            weights = np.concatenate([w.flatten(), embed.flatten(), [intercept]])
         else:
-            weights = np.concatenate([w._weights, embed._weights.flatten()])
+            weights = np.concatenate([w.flatten(), embed.flatten()])
         super().__init__(weights)
-        self.w_size = len(w._weights)
-        self.embed_shape = embed._weights.shape
+        self.w_size = len(w)
+        self.embed_shape = embed.shape
         self.fit_intercept = fit_intercept
 
     def for_remote(self):
