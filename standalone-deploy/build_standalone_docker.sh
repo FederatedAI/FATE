@@ -103,16 +103,16 @@ init() {
     cp ../requirements.txt ./docker/python
     tar -cf ./docker/python/fate.tar arch federatedml workflow examples fate_flow research eggroll
 
-    logPath="/var/lib/fate/log"
+    logPath="./fate/log"
     if [ ! -d "$logPath" ]; then
      mkdir -p "$logPath"
     fi
 
-    dataPath="/var/lib/fate/data"
+    dataPath="./fate/data" 
     if [ ! -d "$dataPath" ]; then
      mkdir -p "$dataPath"
     fi
-    cp -r ./fate_flow/* /var/lib/fate/data
+    cp -r ./fate_flow/* ./fate/data
 
     sed -i.bak "s#^fateflow.url=.*#fateflow.url=http://python:9380#g" ./fateboard/conf/application.properties
     sed -i.bak "s#^spring.datasource.url=.*#spring.datasource.url=jdbc:sqlite:/fate/fate_flow/fate_flow_sqlite.db#g" ./fateboard/conf/application.properties
