@@ -224,7 +224,6 @@ class Guest(BaseFM, loss_sync.Guest):
         x_square_mul_fg = x_square.join(capped_fore_gradient, lambda xs, fg: xs * fg)
 
         # compuate gradient
-        # en_capped_fore_gradient = capped_fore_gradient.mapValues(lambda v: encrypted_calculator.encrypt(v))
         en_capped_fore_gradient = encrypted_calculator[batch_index].encrypt(capped_fore_gradient)
         unilateral_gradient = compute_gradient(data_instances,
                                                en_capped_fore_gradient,
@@ -299,7 +298,6 @@ class Guest(BaseFM, loss_sync.Guest):
 
         # Here we compute cross feature between host and guest
         # Guest forward includes: 1. en_wx_plus_fm 2. vx 3. en_vx
-        # Aggregate_forward = en_wx_plus_fm(host) + en_wx_plus_fm(guest) + en_vx(host) * vx(guest)
         en_aggregate_forward = self.guest_forward.join(host_forward,
                                                        lambda g, h: g[0] + h[0] + np.dot(h[1], g[1]))
         self.aggregated_forwards = en_aggregate_forward
@@ -398,7 +396,6 @@ class Host(BaseFM, loss_sync.Host):
         x_square_mul_fg = x_square.join(capped_fore_gradient, lambda xs, fg: xs * fg)
 
         # compuate gradient
-        # en_capped_fore_gradient = capped_fore_gradient.mapValues(lambda v: encrypted_calculator.encrypt(v))
         en_capped_fore_gradient = encrypted_calculator[batch_index].encrypt(capped_fore_gradient)
         unilateral_gradient = compute_gradient(data_instances,
                                                en_capped_fore_gradient,
