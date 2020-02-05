@@ -14,14 +14,16 @@
 #  limitations under the License.
 #
 import json
+import operator
 import queue
 import threading
 from time import monotonic as time
 
 import redis
+from fate_flow.db.db_models import DB, Job, Queue
 
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.entity.constant_config import WorkMode
+from fate_flow.entity.constant_config import WorkMode, JobStatus
 from fate_flow.settings import REDIS, REDIS_QUEUE_DB_INDEX, stat_logger
 
 
@@ -106,6 +108,97 @@ class RedisQueue(BaseQueue):
     def qsize(self):
         conn = self.get_conn()
         return conn.llen(self.queue_name)
+
+
+class MysqlQueue(BaseQueue):
+    def __init__(self):
+        super(MysqlQueue, self).__init__()
+        self.ready = True
+        self.mutex = threading.Lock()
+        self.not_empty = threading.Condition(self.mutex)
+        self.not_full = threading.Condition(self.mutex)
+        self.maxsize = 0
+        stat_logger.info('init queue')
+
+    def put_event(self, event):
+        try:
+            self.put(event)
+            stat_logger.info('put event into mysql queue successfully: {}'.format(event))
+        except Exception as e:
+            stat_logger.error('put event into mysql queue failed')
+            stat_logger.exception(e)
+            raise e
+
+    def put(self, item, block=True, timeout=None):
+        with self.not_full:
+            self.update_event(item=item)
+            self.not_empty.notify()
+
+    def get_event(self):
+        try:
+            event = self.get(block=True)
+            stat_logger.info('get event from mysql queue successfully: {}'.format(event))
+            return event
+        except Exception as e:
+            stat_logger.error('get event from mysql queue failed')
+            stat_logger.exception(e)
+            return None
+
+    def get(self, block=True, timeout=None):
+        with self.not_empty:
+            if not block:
+                if not self.query_events():
+                    raise Exception
+            elif timeout is None:
+                while not self.query_events():
+                    self.not_empty.wait()
+            elif timeout < 0:
+                raise ValueError("'timeout' must be a non-negative number")
+            else:
+                endtime = time() + timeout
+                while not self.query_events():
+                    remaining = endtime - time()
+                    if remaining <= 0.0:
+                        raise Exception
+                    self.not_empty.wait(remaining)
+            item = self.query_events()[0]
+            self.update_event(item.f_job_id)
+            self.not_full.notify()
+            return item.f_event
+
+    def del_event(self, event):
+        try:
+            ret = self.dell(event)
+            stat_logger.info('delete event from mysql queue {}: {}'.format('successfully' if ret else 'failed', event))
+        except Exception as e:
+            stat_logger.info('delete event from  queue failed:{}'.format(str(e)))
+            raise Exception('{} not in ListQueue'.format(event))
+
+    def query_events(self):
+        with DB.connection_context():
+            events = Queue.select().where(Queue.f_is_waiting == 1)
+            return [event for event in events]
+
+    def update_event(self, job_id=None, item=None):
+        with DB.connection_context():
+            if job_id:
+                event = Queue.select().where(Queue.f_job_id == job_id)[0]
+                event.f_is_waiting = 0
+            else:
+                event = Queue()
+                event.f_job_id = item.get('job_id')
+                event.f_event = json.dumps(event)
+            event.save()
+
+    def dell(self, item):
+        with self.not_empty:
+            job_id = item.get('job_id')
+            event = Queue.select().where(Queue.f_job_id == job_id)[0]
+            if event.f_is_waiting == 0:
+                raise Exception('{} not in mysql queue'.format(event))
+            event.f_is_waiting = 0
+            event.save()
+            self.not_full.notify()
 
 
 class InProcessQueue(BaseQueue):
@@ -237,8 +330,9 @@ def init_job_queue():
         job_queue = ListQueue()
         RuntimeConfig.init_config(JOB_QUEUE=job_queue)
     elif RuntimeConfig.WORK_MODE == WorkMode.CLUSTER:
-        job_queue = RedisQueue(queue_name='fate_flow_job_queue', host=REDIS['host'], port=REDIS['port'],
-                               password=REDIS['password'], max_connections=REDIS['max_connections'])
+        # job_queue = RedisQueue(queue_name='fate_flow_job_queue', host=REDIS['host'], port=REDIS['port'],
+        #                        password=REDIS['password'], max_connections=REDIS['max_connections'])
+        job_queue = MysqlQueue()
         RuntimeConfig.init_config(JOB_QUEUE=job_queue)
     else:
         raise Exception('init queue failed.')

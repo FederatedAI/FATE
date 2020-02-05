@@ -106,6 +106,15 @@ def init_database_tables():
         DB.create_tables(table_objs)
 
 
+class Queue(DataBaseModel):
+    f_job_id = CharField(max_length=100)
+    f_event = CharField(max_length=500)
+    f_is_waiting = IntegerField(default=1)
+
+    class Meta:
+        db_table = "t_queue"
+
+
 class Job(DataBaseModel):
     f_job_id = CharField(max_length=100)
     f_name = CharField(max_length=500, null=True, default='')
