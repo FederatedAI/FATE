@@ -108,9 +108,13 @@ class HeteroNNHost(HeteroNNBase):
         self.set_partition(data_inst)
 
     def _load_data(self, data_inst):
-        batch_x = []
-        for key, inst in data_inst.collect():
-            batch_x.append(inst.features)
+        data = list(data_inst.collect())
+        data_keys = [key for (key, val) in data]
+        data_keys_map = dict(zip(sorted(data_keys), range(len(data_keys))))
+        batch_x = [None for i in range(len(data_keys))]
+
+        for key, inst in data:
+            batch_x[data_keys_map[key]] = inst.features
 
             if self.input_shape is None:
                 self.input_shape = inst.features.shape

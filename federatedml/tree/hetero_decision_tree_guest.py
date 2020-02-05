@@ -217,13 +217,17 @@ class HeteroDecisionTreeGuest(DecisionTree):
         LOGGER.info("get encrypted splitinfo of depth {}, batch {}".format(dep, batch))
         encrypted_splitinfo_host = self.transfer_inst.encrypted_splitinfo_host.get(idx=-1,
                                                                                    suffix=(dep, batch,))
+
+        ret = []
+        for object in encrypted_splitinfo_host:
+            ret.append(object.get_data())
         """
         encrypted_splitinfo_host = federation.get(name=self.transfer_inst.encrypted_splitinfo_host.name,
                                                   tag=self.transfer_inst.generate_transferid(
                                                       self.transfer_inst.encrypted_splitinfo_host, dep, batch),
                                                   idx=-1)
         """
-        return encrypted_splitinfo_host
+        return ret
 
     def sync_federated_best_splitinfo_host(self, federated_best_splitinfo_host, dep=-1, batch=-1, idx=-1):
         LOGGER.info("send federated best splitinfo of depth {}, batch {}".format(dep, batch))
@@ -274,7 +278,11 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 partition=self.data_bin._partitions)
 
             splitinfos = encrypted_splitinfo_host_table.mapValues(self.find_host_split).collect()
-            best_splitinfo_host = [splitinfo[1] for splitinfo in splitinfos]
+            best_splitinfo_host = [None for i in range(len(self.cur_split_nodes))]
+            for _, splitinfo in splitinfos:
+                best_splitinfo_host[_] = splitinfo
+
+            # best_splitinfo_host = [splitinfo[1] for splitinfo in splitinfos]
 
             self.sync_federated_best_splitinfo_host(best_splitinfo_host, dep, batch, i)
 
@@ -323,7 +331,11 @@ class HeteroDecisionTreeGuest(DecisionTree):
                                                          include_key=False,
                                                          partition=self.data_bin._partitions)
         best_splitinfo_table = splitinfo_guest_host_table.mapValues(self.find_best_split_guest_and_host)
-        best_splitinfos = [best_splitinfo[1] for best_splitinfo in best_splitinfo_table.collect()]
+
+        best_splitinfos = [None for i in range(len(merge_infos))]
+        for _, best_splitinfo in best_splitinfo_table.collect():
+            best_splitinfos[_] = best_splitinfo
+        # best_splitinfos = [best_splitinfo[1] for best_splitinfo in best_splitinfo_table.collect()]
 
         return best_splitinfos
 
