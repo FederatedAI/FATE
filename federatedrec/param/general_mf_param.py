@@ -107,7 +107,6 @@ class GMFParam(BaseParam):
                  max_iter=100,
                  predict_param=PredictParam(),
                  cv_param=CrossValidationParam(),
-                 decay=1, decay_sqrt=True,
                  validation_freqs=None,
                  metrics: typing.Union[str, list] = None,
                  loss: str = 'mse',
@@ -121,7 +120,6 @@ class GMFParam(BaseParam):
         self.metrics = metrics
         self.loss = loss
         self.neg_count = neg_count
-
         self.penalty = penalty
         self.tol = tol
         self.alpha = alpha
@@ -132,8 +130,6 @@ class GMFParam(BaseParam):
         self.max_iter = max_iter
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
-        self.decay = decay
-        self.decay_sqrt = decay_sqrt
         self.validation_freqs = validation_freqs
         # self.embed_dim = embed_dim
         # self.init_param.embed_dim = self.embed_dim
@@ -290,7 +286,6 @@ class HeteroGMFParam(GMFParam):
                  batch_size=-1, learning_rate=0.001, init_param=GMFInitParam(),
                  max_iter=100, early_stop='diff',
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 decay=1, decay_sqrt=True,
                  aggregate_iters=1, validation_freqs=None
                  ):
         super(HeteroGMFParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
@@ -300,9 +295,7 @@ class HeteroGMFParam(GMFParam):
                                              early_stop=early_stop,
                                              predict_param=predict_param,
                                              cv_param=cv_param,
-                                             validation_freqs=validation_freqs,
-                                             decay=decay,
-                                             decay_sqrt=decay_sqrt)
+                                             validation_freqs=validation_freqs)
         self.aggregate_iters = aggregate_iters
 
     def check(self):

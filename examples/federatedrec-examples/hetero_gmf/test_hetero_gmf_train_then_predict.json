@@ -100,24 +100,23 @@
 		},
 		"neg_count": 4,
 		"hetero_gmf_0": {
-			"batch_size": 512,
+			"batch_size": 1024,
 			"optimizer": {
 				"optimizer": "RMSprop",
-				"learning_rate": 0.1,
+				"learning_rate": 0.05,
 				"decay": 0.9,
 				"momentum": 0.9
 			},
 			"early_stop": {
 				"early_stop": "diff",
-				"eps": 1e-20
+				"eps": 1e-10
 			},
-			"tol": 1e-20,
+			"tol": 1e-10,
 			"loss": "MSE",
 			"metrics": [
-				"MSE",
 				"AUC"
 			],
-			"max_iter": 10
+			"max_iter": 20
 		}
 	}
 }
