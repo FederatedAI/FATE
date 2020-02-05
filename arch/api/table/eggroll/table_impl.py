@@ -117,6 +117,10 @@ class DTable(Table):
         return DTable(self._dtable.mapPartitions(func), session_id=self._session_id)
 
     @log_elapsed
+    def mapPartitions2(self, func, **kwargs):
+        return DTable(self._dtable.mapPartitions2(func), session_id=self._session_id)
+    
+    @log_elapsed
     def reduce(self, func, key_func=None, **kwargs):
         if key_func is None:
             return self._dtable.reduce(func)
