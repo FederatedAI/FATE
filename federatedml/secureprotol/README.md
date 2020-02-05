@@ -102,7 +102,7 @@ Encode module provide some method including "md5", "sha1", "sha224", "sha256", "
 ## MPC Protocol
 ### SPDZ
 
-SPDZ is a multiparty computation scheme based on somewhat homomorphic encryption (SHE). 
+SPDZ([Ivan Damg˚ard](https://eprint.iacr.org/2011/535.pdf), [Marcel Keller](https://eprint.iacr.org/2017/1230.pdf)) is a multiparty computation scheme based on somewhat homomorphic encryption (SHE). 
 
 #### init
 ```python
