@@ -128,10 +128,11 @@ class DTable(Table):
         it = self._dtable.collect()
         ret = {}
         for k, v in it:
-            if k in ret:
-                ret[k] = func(ret[k], v)
+            agg_key = key_func(k)
+            if agg_key in ret:
+                ret[agg_key] = func(ret[agg_key], v)
             else:
-                ret[k] = v
+                ret[agg_key] = v
         return ret
 
     @log_elapsed
