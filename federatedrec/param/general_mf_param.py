@@ -76,14 +76,6 @@ class GMFParam(BaseParam):
             b)  weight_diff: Use difference between weights of two consecutive iterations
             c)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
 
-    decay: int or float, default: 1
-        Decay rate for learning rate. learning rate will follow the following decay schedule.
-        lr = lr0/(1+decay*t) if decay_sqrt is False. If decay_sqrt is True, lr = lr0 / sqrt(1+decay*t)
-        where t is the iter number.
-
-    decay_sqrt: Bool, default: True
-        lr = lr0/(1+decay*t) if decay_sqrt is False, otherwise, lr = lr0 / sqrt(1+decay*t)
-
     encrypt_param: EncryptParam object, default: default EncryptParam object
 
     predict_param: PredictParam object, default: default PredictParam object
@@ -193,16 +185,6 @@ class GMFParam(BaseParam):
         elif self.max_iter <= 0:
             raise ValueError(
                 "general_mf's max_iter must be greater or equal to 1")
-
-        if type(self.decay).__name__ not in ["int", 'float']:
-            raise ValueError(
-                "general_mf's decay {} not supported, should be 'int' or 'float'".format(
-                    self.decay))
-
-        if type(self.decay_sqrt).__name__ not in ['bool']:
-            raise ValueError(
-                "general_mf's decay_sqrt {} not supported, should be 'bool'".format(
-                    self.decay_sqrt))
 
         return True
 
