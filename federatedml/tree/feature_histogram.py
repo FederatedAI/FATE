@@ -25,8 +25,7 @@
 # FeatureHistogram
 # =============================================================================
 import functools
-import copy
-import numpy as np
+import uuid
 from arch.api.utils import log_utils
 from federatedml.feature.fate_element_type import NoneType
 
@@ -62,19 +61,21 @@ class FeatureHistogram(object):
         agg_histogram = functools.partial(FeatureHistogram.aggregate_histogram, node_map=node_map)
 
         batch_histogram = data_bin.join(grad_and_hess, \
-                                        lambda data_inst, g_h: (data_inst, g_h)).mapPartitions(batch_histogram_cal)
+                                        lambda data_inst, g_h: (data_inst, g_h)).mapPartitions2(batch_histogram_cal)
 
-        return batch_histogram.reduce(agg_histogram)
+        histograms_dict = batch_histogram.reduce(agg_histogram, key_func=lambda key: (key[1], key[2]))
+
+        feature_num = bin_split_points.shape[0]
+
+        return FeatureHistogram.recombine_histograms(histograms_dict, node_map, feature_num )
 
     @staticmethod
-    def aggregate_histogram(batch_histogram1, batch_histogram2, node_map=None):
-        for i in range(len(batch_histogram1)):
-            for j in range(len(batch_histogram1[i])):
-                for k in range(len(batch_histogram1[i][j])):
-                    for r in range(len(batch_histogram1[i][j][k])):
-                        batch_histogram1[i][j][k][r] += batch_histogram2[i][j][k][r]
+    def aggregate_histogram(histogram1, histogram2, node_map=None):
+        for i in range(len(histogram1)):
+            for j in range(len(histogram1[i])):
+                histogram1[i][j] += histogram2[i][j]
 
-        return batch_histogram1
+        return histogram1
 
     @staticmethod
     def batch_calculate_histogram(kv_iterator, bin_split_points=None,
@@ -87,6 +88,7 @@ class FeatureHistogram(object):
 
         data_record = 0
 
+        _ = str(uuid.uuid1())
         for _, value in kv_iterator:
             data_bin, nodeid_state = value[0]
             unleaf_state, nodeid = nodeid_state
@@ -158,4 +160,21 @@ class FeatureHistogram(object):
                         node_histograms[nid][fid][-1][1] += zero_opt_node_sum[nid][1] - zero_optim[nid][fid][1]
                         node_histograms[nid][fid][-1][2] += zero_opt_node_sum[nid][2] - zero_optim[nid][fid][2]
 
-        return node_histograms
+        ret = []
+        for nid in range(node_num):
+            for fid in range(bin_split_points.shape[0]):
+                ret.append(((_, nid, fid), node_histograms[nid][fid]))
+
+        return ret
+
+    @staticmethod
+    def recombine_histograms(histograms_dict, node_map, feature_num):
+        histograms = [[[] for j in range(feature_num)] for k in range(len(node_map))]
+        for key in histograms_dict:
+            nid, fid = key
+            histograms[int(nid)][int(fid)] = histograms_dict[key]
+
+        return histograms
+
+
+

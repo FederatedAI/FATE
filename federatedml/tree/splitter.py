@@ -31,6 +31,7 @@ import warnings
 from federatedml.tree import XgboostCriterion
 from federatedml.tree import SplitInfo
 from federatedml.util import consts
+from arch.api.utils.splitable import segment_transfer_enabled
 
 LOGGER = log_utils.getLogger()
 
@@ -142,7 +143,12 @@ class Splitter(object):
                                                                                            sitename,
                                                                                            use_missing,
                                                                                            zero_as_missing))
-        tree_node_splitinfo = [splitinfo[1] for splitinfo in splitinfo_table.collect()]
+
+        tree_node_splitinfo = [None for i in range(len(histograms))]
+        for id, splitinfo in splitinfo_table.collect():
+            tree_node_splitinfo[id] = splitinfo
+
+        # tree_node_splitinfo = [splitinfo[1] for splitinfo in splitinfo_table.collect()]
 
         return tree_node_splitinfo
 
@@ -205,14 +211,16 @@ class Splitter(object):
                                                                                                use_missing,
                                                                                                zero_as_missing))
 
-        tree_node_splitinfo = []
-        encrypted_node_grad_hess = []
+        tree_node_splitinfo = [None for i in range(len(histograms))]
+        encrypted_node_grad_hess = [None for i in range(len(histograms))]
 
         for _, splitinfo in host_splitinfo_table.collect():
-            tree_node_splitinfo.append(splitinfo[0])
-            encrypted_node_grad_hess.append(splitinfo[1])
+            tree_node_splitinfo[_] = splitinfo[0]
+            encrypted_node_grad_hess[_] = splitinfo[1]
+            # tree_node_splitinfo.append(splitinfo[0])
+            # encrypted_node_grad_hess.append(splitinfo[1])
 
-        return tree_node_splitinfo, encrypted_node_grad_hess
+        return tree_node_splitinfo, BigObjectTransfer(encrypted_node_grad_hess)
 
     def node_gain(self, grad, hess):
         return self.criterion.node_gain(grad, hess)
@@ -224,3 +232,11 @@ class Splitter(object):
         gain = self.criterion.split_gain([sum_grad, sum_hess], \
                                          [sum_grad_l, sum_hess_l], [sum_grad_r, sum_hess_r])
         return gain
+
+
+class BigObjectTransfer(metaclass=segment_transfer_enabled()):
+    def __init__(self, data):
+        self._obj = data
+
+    def get_data(self):
+        return self._obj
