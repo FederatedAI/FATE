@@ -123,9 +123,9 @@ class MysqlQueue(BaseQueue):
     def put_event(self, event):
         try:
             self.put(event)
-            stat_logger.info('put event into mysql queue successfully: {}'.format(event))
+            stat_logger.info('put event into queue successfully: {}'.format(event))
         except Exception as e:
-            stat_logger.error('put event into mysql queue failed')
+            stat_logger.error('put event into queue failed')
             stat_logger.exception(e)
             raise e
 
@@ -137,10 +137,10 @@ class MysqlQueue(BaseQueue):
     def get_event(self):
         try:
             event = self.get(block=True)
-            stat_logger.info('get event from mysql queue successfully: {}'.format(event))
+            stat_logger.info('get event from queue successfully: {}'.format(event))
             return event
         except Exception as e:
-            stat_logger.error('get event from mysql queue failed')
+            stat_logger.error('get event from queue failed')
             stat_logger.exception(e)
             return None
 
@@ -164,15 +164,15 @@ class MysqlQueue(BaseQueue):
             item = self.query_events()[0]
             self.update_event(item.f_job_id)
             self.not_full.notify()
-            return item.f_event
+            return json.loads(item.f_event)
 
     def del_event(self, event):
         try:
             ret = self.dell(event)
-            stat_logger.info('delete event from mysql queue {}: {}'.format('successfully' if ret else 'failed', event))
+            stat_logger.info('delete event from  queue {}: {}'.format('successfully' if ret else 'failed', event))
         except Exception as e:
             stat_logger.info('delete event from  queue failed:{}'.format(str(e)))
-            raise Exception('{} not in ListQueue'.format(event))
+            raise Exception('{} not in MysqlQueue'.format(event))
 
     def query_events(self):
         with DB.connection_context():
