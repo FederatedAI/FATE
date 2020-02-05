@@ -21,6 +21,7 @@ from fate_flow.settings import stat_logger, API_VERSION, SERVING_PATH, SERVINGS_
 from fate_flow.utils import publish_model
 from fate_flow.utils.api_utils import get_json_result, federated_api
 from fate_flow.utils.job_utils import generate_job_id
+from fate_flow.utils.node_check_utils import check_nodes
 from fate_flow.utils.setting_utils import CenterConfig
 
 manager = Flask(__name__)
@@ -68,6 +69,7 @@ def load_model():
 
 
 @manager.route('/load/do', methods=['POST'])
+@check_nodes
 def do_load_model():
     request_data = request.json
     request_data["servings"] = CenterConfig.get_settings(path=SERVING_PATH, servings_zk_path=SERVINGS_ZK_PATH,
