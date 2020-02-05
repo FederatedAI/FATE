@@ -85,8 +85,8 @@ class HeteroGMFClient(HeteroGMFBase):
         :param validate_data:  validation data
         :return:
         """
-        data = self.data_converter.convert(data_instances, batch_size=self.batch_size
-                                           , neg_count=self.model_param.neg_count)
+        data = self.data_converter.convert(data_instances, batch_size=self.batch_size,
+                                           neg_count=self.model_param.neg_count)
 
         user_num = data.user_count
         item_num = data.item_count
@@ -174,8 +174,8 @@ class HeteroGMFClient(HeteroGMFBase):
         LOGGER.info(f"current flowid: {self.flowid}")
         if self.flowid == 'validate':
             # use GMFSequenceData in evaluation procedure (after training procedure)
-            data = self.data_converter.convert(data_inst, batch_size=self.batch_size, neg_count=self.model_param.neg_count
-                                               , training=True, flow_id=self.flowid)
+            data = self.data_converter.convert(data_inst, batch_size=self.batch_size, neg_count=self.model_param.neg_count,
+                                               training=True, flow_id=self.flowid)
             keys = data.get_keys()
             labels = data.get_validate_labels()
             label_data = fate_session.parallelize(zip(keys, labels), include_key=True)
