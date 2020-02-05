@@ -159,8 +159,11 @@ class RDDTable(Table):
         return self._tmp_table_from_rdd(rtn_rdd)
 
     @log_elapsed
-    def reduce(self, func, **kwargs):
-        return self.rdd().values().reduce(func)
+    def reduce(self, func, key_func=None, **kwargs):
+        if key_func is None:
+            return self.rdd().values().reduce(func)
+
+        return dict(self.rdd().map(lambda x: (key_func(x[0]), x[1])).reduceByKey(func).collect())
 
     def join(self, other, func=None, **kwargs):
         rdd1 = self.rdd()
