@@ -37,6 +37,7 @@ from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_
 from federatedml.util import consts
 from federatedml.tree import Node
 from federatedml.feature.fate_element_type import NoneType
+from arch.api.utils.splitable import segment_transfer_enabled
 import functools
 
 LOGGER = log_utils.getLogger()
@@ -169,18 +170,16 @@ class HeteroDecisionTreeHost(DecisionTree):
 
     def sync_encrypted_splitinfo_host(self, encrypted_splitinfo_host, dep=-1, batch=-1):
         LOGGER.info("send encrypted splitinfo of depth {}, batch {}".format(dep, batch))
+
         self.transfer_inst.encrypted_splitinfo_host.remote(encrypted_splitinfo_host,
                                                            role=consts.GUEST,
                                                            idx=-1,
                                                            suffix=(dep, batch,))
-
         """
-        federation.remote(obj=encrypted_splitinfo_host,
-                          name=self.transfer_inst.encrypted_splitinfo_host.name,
-                          tag=self.transfer_inst.generate_transferid(self.transfer_inst.encrypted_splitinfo_host, dep,
-                                                                     batch),
-                          role=consts.GUEST,
-                          idx=-1)
+        self.transfer_inst.encrypted_splitinfo_host.remote(encrypted_splitinfo_host,
+                                                           role=consts.GUEST,
+                                                           idx=-1,
+                                                           suffix=(dep, batch,))
         """
 
     def sync_federated_best_splitinfo_host(self, dep=-1, batch=-1):
