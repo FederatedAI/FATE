@@ -187,7 +187,7 @@ class MysqlQueue(BaseQueue):
             else:
                 event = Queue()
                 event.f_job_id = item.get('job_id')
-                event.f_event = json.dumps(event)
+                event.f_event = json.dumps(item)
             event.save()
 
     def dell(self, item):
