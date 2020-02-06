@@ -76,6 +76,7 @@ DEFAULT_WORKFLOW_DATA_TYPE = ['train_input', 'data_input', 'id_library_input', '
                               'predict_output', 'evaluation_output', 'intersect_data_output']
 HEADERS = {
     'Content-Type': 'application/json',
+    'Connection': 'close'
 }
 # fate-serving
 SERVINGS_ZK_PATH = '/FATE-SERVICES/serving/online/publishLoad/providers'
