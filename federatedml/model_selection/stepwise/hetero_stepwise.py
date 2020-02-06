@@ -22,6 +22,7 @@ from federatedml.statistic import data_overview
 from federatedml.transfer_variable.transfer_class.stepwise_transfer_variable import StepwiseTransferVariable
 from federatedml.util import consts
 
+import itertools
 import numpy as np
 
 LOGGER = log_utils.getLogger()
@@ -29,13 +30,11 @@ session.init("stepwise")
 
 
 class ModelInfo(object):
-    def __init__(self, n_step, n_model, score):
+    def __init__(self, n_step, n_model, score, direction):
         self.score = score
         self.n_step = n_step
         self.n_model = n_model
-
-    def get_key(self):
-        return (self.n_step, self.n_model)
+        self.direction = direction
 
     def get_score(self):
         return self.score
@@ -48,7 +47,7 @@ class HeteroStepwise(object):
         self.forward = False
         self.backward = False
         self.best_list = []
-        self.n_step = -1
+        self.n_step = 0
         self.has_test = False
         self.n_count = 0
         self.stop_stepwise = False
@@ -64,11 +63,10 @@ class HeteroStepwise(object):
         self.nvmin = param.nvmin
         self.nvmax = param.nvmax
         self.transfer_variable = StepwiseTransferVariable()
-        self.host_data_info_transfer = self.transfer_variable.host_data_info
-        self.guest_data_info_transfer = self.transfer_variable.guest_data_info
+        # self.host_data_info_transfer = self.transfer_variable.host_data_info
+        # self.guest_data_info_transfer = self.transfer_variable.guest_data_info
         self._get_direction()
         self.make_table()
-        # only used by Arbiter to fast filter model
         self.models_trained = {}
         # only used by Arbiter to calculate criteria value
         self.IC_computer = None
@@ -112,8 +110,8 @@ class HeteroStepwise(object):
             raise ValueError("Wrong score name given: {}. Only 'aic' or 'bic' acceptable.".format(self.score_name))
 
     @staticmethod
-    def get_dfe(model, mask1, mask2):
-        dfe = sum(mask1) + sum(mask2)
+    def get_dfe(model, str_mask):
+        dfe = sum(HeteroStepwise.string2mask(str_mask))
         if model.fit_intercept:
             dfe += 1
             LOGGER.debug("fit_intercept detected, 1 is added to dfe")
@@ -121,7 +119,7 @@ class HeteroStepwise(object):
 
     def get_step_best(self, step_models):
         best_score = -1
-        best_model = ()
+        best_model = ""
         for model in step_models:
             model_info = self.models_trained[model]
             score = model_info.get_score()
@@ -130,79 +128,23 @@ class HeteroStepwise(object):
                 best_model = model
         return best_model
 
-    def drop_one(self, host_mask, guest_mask):
-        host_masks, guest_masks = [], []
-        # initial step, add full model to comparison
-        if sum(host_mask) == host_mask.size and sum(guest_mask) == guest_mask.size:
-            host_masks.append(np.copy(host_mask))
-            guest_masks.append(np.copy(guest_mask))
-        for i in np.where(host_mask > 0)[0]:
-            new_host_mask = np.copy(host_mask)
-            new_host_mask[i] = 0
-            if sum(new_host_mask) == 0:
-                break
-            host_masks.append(new_host_mask)
-            guest_masks.append(np.copy(guest_mask))
-        for i in np.where(guest_mask > 0)[0]:
-            new_guest_mask = np.copy(guest_mask)
-            new_guest_mask[i] = 0
-            if sum(new_guest_mask) == 0:
-                break
-            guest_masks.append(new_guest_mask)
-            host_masks.append(np.copy(host_mask))
-        LOGGER.debug("step {}, in drop_one, host_masks len: {}, guests_masks len: {}".format(self.n_step,
-                                                                                             len(host_masks),
-                                                                                             len(guest_masks)))
-        LOGGER.debug("step {}, in drop_one, host_masks: {}, guest_masks: {} ".format(self.n_step,
-                                                                                     host_masks, guest_masks))
-        return host_masks, guest_masks
+    def drop_one(self, mask_to_drop):
+        for i in np.nonzero(mask_to_drop)[0]:
+            new_mask = np.copy(mask_to_drop)
+            new_mask[i] = 0
+            if sum(new_mask) > 0:
+                yield new_mask
 
-    def add_one(self, host_mask, guest_mask):
-        host_masks, guest_masks = [], []
-        # initial masks, one feature on each side
-        if sum(host_mask) == 0 and sum(guest_mask) == 0:
-            host_masks = np.eye(host_mask.size, host_mask.size, dtype=bool)
-            host_masks = np.repeat(host_masks, guest_mask.size, axis=0)
-            guest_masks = np.eye(guest_mask.size, guest_mask.size, dtype=bool)
-            guest_masks = np.tile(guest_masks, (host_mask.size, 1))
-            LOGGER.debug("step {}, in add_one, host_masks len: {}, guests_masks len: {}".format(self.n_step,
-                                                                                                len(host_masks),
-                                                                                                len(guest_masks)))
-            LOGGER.debug("step {}, in add_one, host_masks: {}, guests_masks: {}".format(self.n_step,
-                                                                                        host_masks, guest_masks))
-            return list(host_masks), list(guest_masks)
-
-        for i in np.where(host_mask < 1)[0]:
-            new_host_mask = np.copy(host_mask)
-            new_host_mask[i] = 1
-            host_masks.append(new_host_mask)
-            guest_masks.append(np.copy(guest_mask))
-        for i in np.where(guest_mask < 1)[0]:
-            new_guest_mask = np.copy(guest_mask)
-            new_guest_mask[i] = 1
-            guest_masks.append(new_guest_mask)
-            host_masks.append(np.copy(host_mask))
-        LOGGER.debug("step {}, in add_one, host_masks len: {}, guests_masks len: {}".format(self.n_step,
-                                                                                            len(host_masks),
-                                                                                            len(guest_masks)))
-        LOGGER.debug("step {}, in add_one, host_masks: {}, guests_masks: {}".format(self.n_step,
-                                                                                    host_masks, guest_masks))
-        return host_masks, guest_masks
-
-    def filter_feature_masks(self, host_masks, guest_masks):
-        filtered_host_masks, filtered_guest_masks = map(list, zip(*((h, g) for h, g in zip(host_masks, guest_masks)
-                                                                    if
-                                                                    (tuple(h), tuple(g)) not in self.models_trained)))
-        count_diff = len(host_masks) - len(filtered_host_masks)
-        LOGGER.debug("step {}, filtered {} masks".format(self.n_step, count_diff))
-        return filtered_host_masks, filtered_guest_masks
-
-    @staticmethod
-    def record_step_models(step_models, host_masks, guest_masks):
-        for model_mask in list((tuple(h), tuple(g)) for h, g in zip(host_masks, guest_masks)):
-            step_models.add(model_mask)
+    def add_one(self, mask_to_add):
+        for i in np.where(mask_to_add < 1)[0]:
+            new_mask = np.copy(mask_to_add)
+            new_mask[i] = 1
+            yield new_mask
 
     def check_stop(self, new_host_mask, new_guest_mask, host_mask, guest_mask):
+        # initial step
+        if self.n_step == 0:
+            return False
         # if model not updated
         if np.array_equal(new_host_mask, host_mask) and np.array_equal(new_guest_mask, guest_mask):
             LOGGER.debug("masks not changed, check_stop returns True")
@@ -223,57 +165,68 @@ class HeteroStepwise(object):
                 LOGGER.debug("variable count max reached, check_stop returns True")
                 return True
         # if reach max step
-        if self.n_step == self.max_step - 1:
+        if self.n_step  >= self.max_step:
             LOGGER.debug("max step reached, check_stop returns True")
             return True
         return False
 
-    def _arbiter_run_step(self, model, host_mask, guest_mask, n_model):
-        dfe = HeteroStepwise.get_dfe(model, host_mask, guest_mask)
-        current_key = (self.n_step, n_model)
-        current_step = Step()
-        current_step.set_step_info(current_key)
-        trained_model = current_step.run(model, None, None, None)
-        if len(trained_model.loss_history) == 0:
+    def get_ic_val(self, model, model_key):
+        if self.role != consts.ARBITER:
+            return
+        if len(model.loss_history) == 0:
             raise ValueError("Arbiter has no loss history. Stepwise does not support model without total loss.")
         # get final loss from loss history for criteria calculation
-        loss = trained_model.loss_history[-1]
+        loss = model.loss_history[-1]
+        dfe = HeteroStepwise.get_dfe(model, model_key)
         ic_val = self.IC_computer.compute(self.k, self.n_count, dfe, loss)
-        LOGGER.info("step {} n_model {}: ic_val {}".format(self.n_step, n_model, ic_val))
         if np.isinf(ic_val):
             raise ValueError("Loss value of infinity obtained. Stepwise stopped.")
-        host_tup, guest_tup = tuple(host_mask), tuple(guest_mask)
-        self.models_trained[(host_tup, guest_tup)] = ModelInfo(self.n_step, n_model, ic_val)
-        current_key = HeteroStepwise.make_key(self.n_step, n_model)
-        self._put_value(current_key, trained_model)
+        return ic_val
 
-    def arbiter_sync_stop_stepwise(self):
-        self.transfer_variable.stop_stepwise.remote(self.stop_stepwise, role=consts.HOST, suffix=(self.n_step,))
-        LOGGER.info("Arbiter remotes step {} stop_stepwise {} to Host.".format(self.n_step, self.stop_stepwise))
-        self.transfer_variable.stop_stepwise.remote(self.stop_stepwise, role=consts.GUEST, suffix=(self.n_step,))
-        LOGGER.info("Arbiter remotes step {} stop_stepwise {} to Guest.".format(self.n_step, self.stop_stepwise))
+    def _run_step(self, model, train_data, test_data, feature_mask, n_model, model_key):
+        curr_step = Step()
+        curr_step.set_step_info((self.n_step, n_model))
+        trained_model = curr_step.run(model, train_data, test_data, feature_mask)
+        ic_val = self.get_ic_val(trained_model, model_key)
+        LOGGER.info("step {} n_model {}: ic_val {}".format(self.n_step, n_model, ic_val))
+        self.models_trained[model_key] = ModelInfo(self.n_step, n_model, ic_val, self.step_direction)
+        self._put_value(model_key, trained_model)
 
-    def client_sync_stop_stepwise(self):
-        self.stop_stepwise = self.transfer_variable.stop_stepwise.get(suffix=(self.n_step,))[0]
-        LOGGER.info("{} receives stop_stepwise {} from Arbiter.".format(self.role, self.stop_stepwise))
-
-    def arbiter_sync_step_info(self, host_masks, guest_masks):
-        self.transfer_variable.host_step_info.remote(host_masks,
-                                                     suffix=(self.n_step,))
-        LOGGER.info("Arbiter remotes step info {} to Host.".format(self.n_step))
-        self.transfer_variable.guest_step_info.remote(guest_masks,
-                                                      suffix=(self.n_step,))
-        LOGGER.info("Arbiter remotes step info {} to Guest.".format(self.n_step))
-
-    def client_sync_step_info(self):
-        if self.role == consts.HOST:
-            LOGGER.info("Host receives step info {} from Arbiter.".format(self.n_step))
-            return self.transfer_variable.host_step_info.get(suffix=(self.n_step,))
-        elif self.role == consts.GUEST:
-            LOGGER.info("Guest receives step info {} from Arbiter.".format(self.n_step))
-            return self.transfer_variable.guest_step_info.get(suffix=(self.n_step,))
+    def sync_data_info(self, data):
+        if self.role == consts.ARBITER:
+            return self.arbiter_sync_data_info()
         else:
-            raise ValueError("unknown role {} encountered!".format(self.role))
+            return self.client_sync_data_info(data)
+
+    def arbiter_sync_data_info(self):
+        n_host, j_host = self.transfer_variable.host_data_info.get(idx=0)
+        n_guest, j_guest = self.transfer_variable.guest_data_info.get(idx=0)
+        self.n_count = n_host
+        return j_host, j_guest
+
+    def client_sync_data_info(self, data):
+        n, j = data.count(), data_overview.get_features_shape(data)
+        self.n_count = n
+        if self.role == consts.HOST:
+            self.transfer_variable.host_data_info.remote((n, j), role=consts.ARBITER, idx=0)
+            self.transfer_variable.host_data_info.remote((n, j), role=consts.GUEST, idx=0)
+            j_host = j
+            n_guest, j_guest = self.transfer_variable.guest_data_info.get(idx=0)
+        else:
+            self.transfer_variable.guest_data_info.remote((n, j), role=consts.ARBITER, idx=0)
+            self.transfer_variable.guest_data_info.remote((n, j), role=consts.HOST, idx=0)
+            j_guest = j
+            n_host, j_host = self.transfer_variable.host_data_info.get(idx=0)
+        return j_host, j_guest
+
+    def sync_step_best(self, step_models):
+        if self.role == consts.ARBITER:
+            step_best = self.get_step_best(step_models)
+            self.transfer_variable.step_best.remote(step_best, role=consts.HOST, suffix=(self.n_step))
+            self.transfer_variable.step_best.remote(step_best, role=consts.GUEST, suffix=(self.n_step))
+        else:
+            step_best = self.transfer_variable.step_best.get(suffix=(self.n_step))[0]
+        return step_best
 
     @staticmethod
     def load_best_model(model, best_model):
@@ -282,8 +235,15 @@ class HeteroStepwise(object):
         model.load_model(model_dict)
 
     @staticmethod
-    def make_key(n_step, n_model):
-        return n_step, n_model
+    def mask2string(host_mask, guest_mask):
+        mask = np.append(host_mask, guest_mask)
+        string_repr = ''.join('1' if i else '0' for i in mask)
+        return string_repr
+
+    @staticmethod
+    def string2mask(string_repr):
+        mask = np.fromiter(map(bool, string_repr), dtype=bool)
+        return mask
 
     @staticmethod
     def predict(data_instances, model):
@@ -297,88 +257,76 @@ class HeteroStepwise(object):
         pred_result = model.predict(new_data)
         return pred_result
 
-    def _arbiter_run(self, model):
-        self.IC_computer = IC()
-        n_host, j_host = self.host_data_info_transfer.get(idx=0)
-        n_guest, j_guest = self.guest_data_info_transfer.get(idx=0)
-        self.n_count = n_host
+    def run(self, component_parameters, train_data, test_data, model):
+        LOGGER.info("Enter stepwise")
+        self._init_model(component_parameters)
+        j_host, j_guest = self.sync_data_info(train_data)
         if self.backward:
             host_mask, guest_mask = np.ones(j_host, dtype=bool), np.ones(j_guest, dtype=bool)
         else:
             host_mask, guest_mask = np.zeros(j_host, dtype=bool), np.zeros(j_guest, dtype=bool)
+        self.IC_computer = IC()
         self._set_k()
-        while not self.stop_stepwise:
-            self.n_step += 1
+        while self.n_step <= self.max_step:
             LOGGER.info("Enter step {}".format(self.n_step))
             step_models = set()
-            host_masks, guest_masks = [], []
             n_model = 0
             if self.backward:
                 self.step_direction = "backward"
                 LOGGER.info("step {}, direction: {}".format(self.n_step, self.step_direction))
-                back_host_masks, back_guest_masks = self.drop_one(host_mask, guest_mask)
-                host_masks = host_masks + back_host_masks
-                guest_masks = guest_masks + back_guest_masks
+                if self.n_step == 0:
+                    backward_gen = [[host_mask, guest_mask]]
+                else:
+                    backward_host, backward_guest = self.drop_one(host_mask), self.drop_one(guest_mask)
+                    backward_gen = itertools.chain(zip(backward_host, itertools.cycle([guest_mask])),
+                                                   zip(itertools.cycle([host_mask]), backward_guest))
+                for curr_host_mask, curr_guest_mask in backward_gen:
+                    model_key = HeteroStepwise.mask2string(curr_host_mask, curr_guest_mask)
+                    step_models.add(model_key)
+                    if model_key not in self.models_trained:
+                        if self.role == consts.ARBITER:
+                            feature_mask = None
+                        elif self.role == consts.HOST:
+                            feature_mask = curr_host_mask
+                        else:
+                            feature_mask = curr_guest_mask
+                        self._run_step(model, train_data, test_data, feature_mask, n_model, model_key)
+                        n_model += 1
 
-            if (self.forward and self.n_step > 0) or (not self.backward):
+            if self.forward:
                 self.step_direction = "forward"
                 LOGGER.info("step {}, direction: {}".format(self.n_step, self.step_direction))
-                forward_host_masks, forward_guest_masks = self.add_one(host_mask, guest_mask)
-                host_masks = host_masks + forward_host_masks
-                guest_masks = guest_masks + forward_guest_masks
-
-            HeteroStepwise.record_step_models(step_models, host_masks, guest_masks)
-            host_masks, guest_masks = self.filter_feature_masks(host_masks, guest_masks)
-            self.arbiter_sync_step_info(host_masks, guest_masks)
-            for i in range(len(host_masks)):
-                curr_host_mask, curr_guest_mask = host_masks[i], guest_masks[i]
-                self._arbiter_run_step(model, curr_host_mask, curr_guest_mask, n_model)
-                n_model += 1
-            new_host_mask_tup, new_guest_mask_tup = self.get_step_best(step_models)
-            new_host_mask, new_guest_mask = np.array(new_host_mask_tup), np.array(new_guest_mask_tup)
-            LOGGER.debug(
-                "step {}'s best host_mask {}, best guest_mask {}".format(self.n_step, new_host_mask, new_guest_mask))
-            self.stop_stepwise = self.check_stop(new_host_mask, new_guest_mask, host_mask, guest_mask)
-            host_mask, guest_mask = new_host_mask, new_guest_mask
-            LOGGER.debug("step {} stop_stepwise is: {}".format(self.n_step, self.stop_stepwise))
-            self.arbiter_sync_stop_stepwise()
-
-        best_model = self.models_trained[(tuple(host_mask), tuple(guest_mask))]
-        best_model_key = best_model.get_key()
-        LOGGER.info("best_model_key is {}".format(best_model_key))
-        self.transfer_variable.best_model.remote(best_model_key, role=consts.HOST, idx=0)
-        self.transfer_variable.best_model.remote(best_model_key, role=consts.GUEST, idx=0)
-        best_model = self._get_value(best_model_key)
-        HeteroStepwise.load_best_model(model, best_model)
-        self.models.destroy()
-
-    def run(self, component_parameters, train_data, test_data, model):
-        LOGGER.info("Enter stepwise")
-        self._init_model(component_parameters)
-
-        if self.role == consts.ARBITER:
-            self._arbiter_run(model)
-            return
-        n, j = train_data.count(), data_overview.get_features_shape(train_data)
-        if self.role == consts.HOST:
-            self.host_data_info_transfer.remote((n, j), role=consts.ARBITER, idx=0)
-        elif self.role == consts.GUEST:
-            self.guest_data_info_transfer.remote((n, j), role=consts.ARBITER, idx=0)
-        while not self.stop_stepwise:
+                forward_host, forward_guest = self.add_one(host_mask), self.add_one(guest_mask)
+                if sum(guest_mask) + sum(host_mask) == 0:
+                    if self.n_step == 0:
+                        forward_gen = [[host_mask, guest_mask]]
+                    else:
+                        forward_gen = zip(forward_host, forward_guest)
+                else:
+                    forward_gen = itertools.chain(zip(forward_host, itertools.cycle([guest_mask])),
+                                                  zip(itertools.cycle([host_mask]), forward_guest))
+                for curr_host_mask, curr_guest_mask in forward_gen:
+                    model_key = HeteroStepwise.mask2string(curr_host_mask, curr_guest_mask)
+                    step_models.add(model_key)
+                    if model_key not in self.models_trained:
+                        if self.role == consts.ARBITER:
+                            feature_mask = None
+                        elif self.role == consts.HOST:
+                            feature_mask = curr_host_mask
+                        else:
+                            feature_mask = curr_guest_mask
+                        self._run_step(model, train_data, test_data, feature_mask, n_model, model_key)
+                        n_model += 1
+            old_host_mask, old_guest_mask = host_mask, guest_mask
+            step_best = self.sync_step_best(step_models)
+            step_best_mask = HeteroStepwise.string2mask(step_best)
+            host_mask, guest_mask = step_best_mask[:j_host], step_best_mask[j_host:]
+            self.stop_stepwise = self.check_stop(host_mask, guest_mask, old_host_mask, old_guest_mask)
+            if self.stop_stepwise:
+                break
             self.n_step += 1
-            LOGGER.info("Enter step {}".format(self.n_step))
-            feature_masks = self.client_sync_step_info()[0]
-            n_model = 0
-            for feature_mask in feature_masks:
-                current_key = HeteroStepwise.make_key(self.n_step, n_model)
-                current_step = Step()
-                current_step.set_step_info(current_key)
-                trained_model = current_step.run(model, train_data, test_data, feature_mask)
-                self._put_value(current_key, trained_model)
-                n_model += 1
-            self.client_sync_stop_stepwise()
 
-        best_model_key = self.transfer_variable.best_model.get()[0]
+        best_model_key = HeteroStepwise.mask2string(host_mask, guest_mask)
         best_model = self._get_value(best_model_key)
         HeteroStepwise.load_best_model(model, best_model)
         self.models.destroy()

@@ -3,35 +3,18 @@
     "host_data_info": {
       "src": "host",
       "dst": [
-        "arbiter"
+        "arbiter",
+        "guest"
       ]
     },
     "guest_data_info": {
       "src": "guest",
       "dst": [
-        "arbiter"
-      ]
-    },
-    "host_step_info": {
-      "src": "arbiter",
-      "dst": [
+        "arbiter",
         "host"
       ]
     },
-    "guest_step_info": {
-      "src": "arbiter",
-      "dst": [
-        "guest"
-      ]
-    },
-    "stop_stepwise": {
-      "src": "arbiter",
-      "dst": [
-        "host",
-        "guest"
-      ]
-    },
-    "best_model": {
+    "step_best": {
       "src": "arbiter",
       "dst": [
         "host",

@@ -161,7 +161,7 @@ class Evaluation(ModelBase):
                         LOGGER.info("res is inf, set to {}".format(res))
                 except:
                     pass
-                   
+
                 eval_result[eval_metric].append(mode)
                 eval_result[eval_metric].append(res)
 
@@ -261,7 +261,8 @@ class Evaluation(ModelBase):
                     metric_name = '_'.join([data_type, metric])
 
                     if metric in self.save_single_value_metric_list:
-                        self.__save_single_value(metric_res[1], metric_name=data_type, metric_namespace=metric_namespace,
+                        self.__save_single_value(metric_res[1], metric_name=data_type,
+                                                 metric_namespace=metric_namespace,
                                                  eval_name=metric)
                     elif metric == consts.KS:
                         best_ks, fpr, tpr, thresholds, cuts = metric_res[1]
@@ -318,7 +319,8 @@ class Evaluation(ModelBase):
 
                         if precision_res[0] != recall_res[0]:
                             LOGGER.warning(
-                                "precision mode:{} is not equal to recall mode:{}".format(precision_res[0], recall_res[0]))
+                                "precision mode:{} is not equal to recall mode:{}".format(precision_res[0],
+                                                                                          recall_res[0]))
                             continue
 
                         metric_namespace = precision_res[0]
@@ -972,10 +974,12 @@ class MultiClassAccuracy(object):
     def compute(self, labels, pred_scores, normalize=True):
         return accuracy_score(labels, pred_scores, normalize)
 
+
 class tScore(object):
     """
     Compute t score of each coef
     """
+
     def compute(self, labels, pred_scores, data_instances, coefs):
         tval = []
         pval = []
@@ -988,14 +992,16 @@ class tScore(object):
             se = mse / x_std
             tt = coef / se
             tval.append(tt)
-            p = stats.t.sf(np.abs(tt), n-1) * 2
+            p = stats.t.sf(np.abs(tt), n - 1) * 2
             pval.append(p)
         return tval, pval
+
 
 class FTest(object):
     """
     Compute F statistic and p value of two nested parametric models
     """
+
     def compute(self, RSS1, RSS2, k1, k2, n):
         df1 = k2 - k1
         df2 = n - k2
@@ -1003,13 +1009,15 @@ class FTest(object):
         pvalue = stats.f.sf(F, df1, df2)
         return F, pvalue
 
+
 class IC(object):
     """
     Compute Information Criterion with a given dTable and loss
         When k = 2, result is genuine AIC;
         when k = log(n), results is BIC, also called SBC, SIC, SBIC.
-        Note that for linear regression, the loss is computed by MSE/2, so the absolute value of IC will be relatively small.
+        Note that for linear regression, the loss is computed by MSE/2, so the absolute value of IC will be relatively large.
     """
+
     def compute(self, k, n, dfe, loss):
         aic_score = k * dfe + 2 * n * loss
         return aic_score
