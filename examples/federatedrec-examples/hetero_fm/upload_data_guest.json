@@ -1,5 +1,5 @@
 {
-  "file": "examples/data/hetero_breast_b.csv",
+  "file": "examples/data/breast_b.csv",
   "head": 1,
   "partition": 10,
   "work_mode": 0,
