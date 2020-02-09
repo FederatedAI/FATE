@@ -38,6 +38,8 @@ ROLE = 'fateflow'
 SERVERS = 'servers'
 SERVINGS_ZK_PATH = '/FATE-SERVICES/serving/online/publishLoad/providers'
 FATE_FLOW_ZK_PATH = '/FATE-SERVICES/flow/online/transfer/providers'
+FATE_MANAGER_GET_NODE_INFO = '/node/info'
+FATE_MANAGER_NODE_CHECK = '/node/management/check'
 MAIN_MODULE = os.path.relpath(__main__.__file__)
 SERVER_MODULE = 'fate_flow_server.py'
 TASK_EXECUTOR_MODULE = 'driver/task_executor.py'
@@ -47,6 +49,7 @@ DEFAULT_WORKFLOW_DATA_TYPE = ['train_input', 'data_input', 'id_library_input', '
                               'predict_output', 'evaluation_output', 'intersect_data_output']
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000  # ms
+JOB_DEFAULT_TIMEOUT = 7 * 24 * 60 * 60
 HEADERS = {
     'Content-Type': 'application/json',
 }
@@ -62,7 +65,8 @@ WORK_MODE = 0
 USE_LOCAL_DATABASE = True
 USE_AUTHENTICATION = False
 USE_CONFIGURATION_CENTER = False
-PRIVILEGE_COMMAND_WHITELIST = ['save_pipeline', 'clean']
+CHECK_NODES_IDENTITY = False
+PRIVILEGE_COMMAND_WHITELIST = []
 
 DATABASE = {
     'name': 'fate_flow',
@@ -93,6 +97,8 @@ BOARD_HOST = server_conf.get(SERVERS).get('fateboard').get('host')
 if BOARD_HOST == 'localhost':
     BOARD_HOST = get_lan_ip()
 BOARD_PORT = server_conf.get(SERVERS).get('fateboard').get('port')
+MANAGER_HOST = server_conf.get(SERVERS).get('fatemanager', {}).get('host')
+MANAGER_PORT = server_conf.get(SERVERS).get('fatemanager', {}).get('port')
 SERVINGS = CenterConfig.get_settings(path='/servers/servings', servings_zk_path=SERVINGS_ZK_PATH,
                                      use_zk=USE_CONFIGURATION_CENTER, hosts=ZOOKEEPER_HOSTS)
 BOARD_DASHBOARD_URL = 'http://%s:%d/index.html#/dashboard?job_id={}&role={}&party_id={}' % (BOARD_HOST, BOARD_PORT)

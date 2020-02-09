@@ -20,6 +20,7 @@ from fate_flow.settings import stat_logger, SERVINGS, API_VERSION
 from fate_flow.utils import publish_model
 from fate_flow.utils.api_utils import get_json_result, federated_api
 from fate_flow.utils.job_utils import generate_job_id
+from fate_flow.utils.node_check_utils import check_nodes
 
 manager = Flask(__name__)
 
@@ -66,6 +67,7 @@ def load_model():
 
 
 @manager.route('/load/do', methods=['POST'])
+@check_nodes
 def do_load_model():
     request_data = request.json
     request_data["servings"] = SERVINGS

@@ -35,7 +35,7 @@ from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import DB, Job, Task, DataView
 from fate_flow.driver.dsl_parser import DSLParser
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.settings import stat_logger
+from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT
 from fate_flow.utils import detect_utils
 from fate_flow.utils import api_utils
 from flask import request, redirect, url_for
@@ -457,7 +457,7 @@ def get_timeout(job_id, timeout, runtime_conf, dsl):
 
 def job_default_timeout(runtime_conf, dsl):
     # future versions will improve
-    timeout = 60*60*24*7
+    timeout = JOB_DEFAULT_TIMEOUT
     return timeout
 
 
