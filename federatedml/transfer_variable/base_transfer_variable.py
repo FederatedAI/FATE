@@ -149,8 +149,8 @@ class Variable(object):
 class BaseTransferVariables(object):
     __instance = {}
 
-    def __init__(self, flowid=0):
-        self.flowid = str(flowid)
+    def __init__(self, *args):
+        self.flowid = str(args[0]) if args else str(0)
 
     def __new__(cls, *args, **kwargs):
         if cls.__name__ not in cls.__instance:
