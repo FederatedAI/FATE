@@ -156,7 +156,6 @@ class Tracking(object):
                         'and f_task_id = "{}"'.format(
                 self.get_table_index(), self.job_id, self.component_name if not job_level else 'dag', self.role,
                 self.party_id, self.task_id)
-            # stat_logger.info(query_sql)
             cursor = DB.execute_sql(query_sql)
             for row in cursor.fetchall():
                 metrics[row[0]] = metrics.get(row[0], [])
@@ -291,7 +290,6 @@ class Tracking(object):
                     self.get_table_index(), self.job_id, self.component_name if not job_level else 'dag', self.role,
                     self.party_id, self.task_id, metric_namespace, metric_name, data_type)
                 cursor = DB.execute_sql(query_sql)
-                # stat_logger.info(query_sql)
                 for row in cursor.fetchall():
                     yield deserialize_b64(row[0]), deserialize_b64(row[1])
             except Exception as e:

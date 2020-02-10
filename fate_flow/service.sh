@@ -17,7 +17,7 @@
 #
 
 export PYTHONPATH=
-log_dir="$(dirname "$PWD")/logs"
+log_dir="$(dirname $(dirname $(readlink -f "$0")))/logs"
 venv=
 
 module=fate_flow_server.py

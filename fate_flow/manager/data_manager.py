@@ -37,6 +37,7 @@ def query_data_view(**kwargs):
 
 def delete_table(data_views):
     data = []
+    status = False
     for data_view in data_views:
         table_name = data_view.f_table_name
         namespace = data_view.f_table_namespace
@@ -46,9 +47,10 @@ def delete_table(data_views):
             try:
                 table.destroy()
                 data.append(table_info)
+                status = True
             except:
                 pass
-    return data
+    return status, data
 
 
 def delete_metric_data(metric_info):
