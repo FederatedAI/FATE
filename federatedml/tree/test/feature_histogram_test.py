@@ -92,23 +92,15 @@ class TestFeatureHistogram(unittest.TestCase):
                         self.assertTrue(np.fabs(his2[i][j][k][r] - histograms[i][j][k][r]) < consts.FLOAT_ZERO)
 
     def test_aggregate_histogram(self):
-        data1 = [[[[random.randint(0, 10) for i in range(2)]
-                   for j in range(3)]
-                  for k in range(4)]
-                 for r in range(5)]
+        data1 = [[random.randint(0, 10) for i in range(2)] for j in range(3)]
 
-        data2 = [[[[random.randint(0, 10) for i in range(2)]
-                   for j in range(3)]
-                  for k in range(4)]
-                 for r in range(5)]
+        data2 = [[random.randint(0, 10) for i in range(2)] for j in range(3)]
 
         agg_histograms = self.feature_histogram.aggregate_histogram(data1, data2)
         for i in range(len(data1)):
             for j in range(len(data1[i])):
-                for k in range(len(data1[i][j])):
-                    for r in range(len(data1[i][j][k])):
-                        data1[i][j][k][r] += data2[i][j][k][r]
-                        self.assertTrue(data1[i][j][k][r] == agg_histograms[i][j][k][r])
+                data1[i][j] += data2[i][j]
+                self.assertTrue(data1[i][j] == agg_histograms[i][j])
 
 
 if __name__ == '__main__':
