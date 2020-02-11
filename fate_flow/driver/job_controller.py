@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api import session
 from fate_flow.utils.authentication_utils import authentication_check
 from federatedml.protobuf.generated import pipeline_pb2
 from arch.api.utils import dtable_utils
@@ -109,23 +108,13 @@ class JobController(object):
     @staticmethod
     def kill_job(job_id, role, party_id, job_initiator, timeout=False, component_name=''):
         schedule_logger(job_id).info('{} {} get kill job {} {} command'.format(role, party_id, job_id, component_name))
-        if component_name:
-            tasks = job_utils.query_task(job_id=job_id, role=role, party_id=party_id, component_name=component_name)
-            if tasks:
-                job_utils.stop_executor(tasks[0])
-            return
-        tasks = job_utils.query_task(job_id=job_id, role=role, party_id=party_id)
+        task_info = job_utils.get_task_info(job_id, role, party_id, component_name)
+        tasks = job_utils.query_task(**task_info)
         for task in tasks:
             kill_status = False
             try:
-                kill_status = job_utils.stop_executor(task)
-                # kill_status = job_utils.kill_process(int(task.f_run_pid))
-                # job_conf_dict = job_utils.get_job_conf(job_id)
-                # runtime_conf = job_conf_dict['job_runtime_conf_path']
-                # session.init(job_id='{}_{}_{}'.format(task.f_task_id, role, party_id),
-                #              mode=runtime_conf.get('job_parameters').get('work_mode'),
-                #              backend=runtime_conf.get('job_parameters').get('backend', 0))
-                # session.stop()
+                kill_status = job_utils.kill_process(int(task.f_run_pid))
+                job_utils.start_session_stop(task)
             except Exception as e:
                 schedule_logger(job_id).exception(e)
             finally:
@@ -135,7 +124,7 @@ class JobController(object):
                                                                              'success' if kill_status else 'failed'))
             status = TaskStatus.FAILED if not timeout else TaskStatus.TIMEOUT
 
-            if task.f_status != TaskStatus.SUCCESS:
+            if task.f_status != TaskStatus.COMPLETE:
                 task.f_status = status
             try:
                 TaskExecutor.sync_task_status(job_id=job_id, component_name=task.f_component_name, task_id=task.f_task_id,
@@ -253,11 +242,18 @@ class JobController(object):
             event = job_utils.job_event(job.f_job_id,
                                         job_runtime_conf['initiator']['role'],
                                         job_runtime_conf['initiator']['party_id'])
-            RuntimeConfig.JOB_QUEUE.del_event(event)
-
+            try:
+                RuntimeConfig.JOB_QUEUE.del_event(event)
+            except:
+                return False
             schedule_logger(job_id).info('cancel waiting job successfully, job id is {}'.format(job.f_job_id))
+            return True
         else:
-            raise Exception('role {} party_id {} cancel waiting job failed, no find jod {}'.format(role, party_id, job_id))
+            jobs = job_utils.query_job(job_id=job_id)
+            if jobs:
+                raise Exception(
+                    'role {} party id {} cancel waiting job {} failed, not is initiator'.format(role, party_id, job_id))
+            raise Exception('role {} party id {} cancel waiting job failed, no find jod {}'.format(role, party_id, job_id))
 
 
 
