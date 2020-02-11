@@ -144,7 +144,7 @@ class HeteroGMFClient(HeteroGMFBase):
         get meta data for saving model
         :return:
         """
-        from federatedrec.protobuf.generated import gmf_model_meta_pb2
+        from federatedml.protobuf.generated import gmf_model_meta_pb2
         LOGGER.info(f"_get_meta")
         meta_pb = gmf_model_meta_pb2.GMFModelMeta()
         meta_pb.params.CopyFrom(self.model_param.generate_pb())
@@ -156,7 +156,7 @@ class HeteroGMFClient(HeteroGMFBase):
         get model param for saving model
         :return:
         """
-        from federatedrec.protobuf.generated import gmf_model_param_pb2
+        from federatedml.protobuf.generated import gmf_model_param_pb2
         LOGGER.info(f"_get_param")
         param_pb = gmf_model_param_pb2.GMFModelParam()
         param_pb.saved_model_bytes = self._model.export_model()

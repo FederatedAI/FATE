@@ -26,7 +26,7 @@ from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.init_model_param import InitParam
 from federatedml.param.predict_param import PredictParam
 from federatedml.util import consts
-from federatedrec.protobuf.generated import gmf_model_meta_pb2
+from federatedml.protobuf.generated import gmf_model_meta_pb2
 
 
 class GMFInitParam(InitParam):
@@ -45,10 +45,6 @@ class GMFParam(BaseParam):
 
     Parameters
     ----------
-    penalty : str, 'L1' or 'L2'. default: 'L2'
-        Penalty method used in LR. Please note that, when using encrypted version in HomoLR,
-        'L1' is not supported.
-
     tol : float, default: 1e-5
         The tolerance of convergence
 
@@ -89,7 +85,6 @@ class GMFParam(BaseParam):
                  secure_aggregate: bool = True,
                  aggregate_every_n_epoch: int = 1,
                  early_stop: typing.Union[str, dict, SimpleNamespace] = "diff",
-                 penalty='L2',
                  tol=1e-5,
                  alpha=1.0,
                  optimizer: typing.Union[str, dict, SimpleNamespace] = 'SGD',
@@ -102,8 +97,7 @@ class GMFParam(BaseParam):
                  validation_freqs=None,
                  metrics: typing.Union[str, list] = None,
                  loss: str = 'mse',
-                 neg_count: int = 4,
-                 embed_dim: int = 32
+                 neg_count: int = 4
                  ):
         super(GMFParam, self).__init__()
         self.secure_aggregate = secure_aggregate
@@ -112,7 +106,6 @@ class GMFParam(BaseParam):
         self.metrics = metrics
         self.loss = loss
         self.neg_count = neg_count
-        self.penalty = penalty
         self.tol = tol
         self.alpha = alpha
         self.optimizer = optimizer
@@ -123,8 +116,6 @@ class GMFParam(BaseParam):
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
         self.validation_freqs = validation_freqs
-        # self.embed_dim = embed_dim
-        # self.init_param.embed_dim = self.embed_dim
 
     def check(self):
         descr = "general_mf's"
@@ -132,17 +123,6 @@ class GMFParam(BaseParam):
         self.early_stop = self._parse_early_stop(self.early_stop)
         self.optimizer = self._parse_optimizer(self.optimizer)
         self.metrics = self._parse_metrics(self.metrics)
-
-        if self.penalty is None:
-            pass
-        elif type(self.penalty).__name__ != "str":
-            raise ValueError(
-                "general_mf's penalty {} not supported, should be str type".format(self.penalty))
-        else:
-            self.penalty = self.penalty.upper()
-            if self.penalty not in [consts.L1_PENALTY, consts.L2_PENALTY, 'NONE']:
-                raise ValueError(
-                    "general_mf's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
 
         if not isinstance(self.tol, (int, float)):
             raise ValueError(
@@ -155,16 +135,6 @@ class GMFParam(BaseParam):
         if type(self.alpha).__name__ not in ["float", 'int']:
             raise ValueError(
                 "general_mf's alpha {} not supported, should be float or int type".format(self.alpha))
-
-        # if type(self.optimizer).__name__ != "str":
-        #     raise ValueError(
-        #         "general_mf's optimizer {} not supported, should be str type".format(self.optimizer))
-        # else:
-        #     self.optimizer = self.optimizer.lower()
-        #     if self.optimizer not in ['sgd', 'rmsprop', 'adam', 'adagrad', 'nesterov_momentum_sgd']:
-        #         raise ValueError(
-        #             "general_mf's optimizer not supported, optimizer should be"
-        #             " 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd' or 'adagrad'")
 
         if self.batch_size != -1:
             if type(self.batch_size).__name__ not in ["int"] \
@@ -253,40 +223,37 @@ class HeteroGMFParam(GMFParam):
     """
     Parameters
     ----------
-    re_encrypt_batches : int, default: 2
-        Required when using encrypted version HomoLR. Since multiple batch updating coefficient may cause
-        overflow error. The model need to be re-encrypt for every several batches. Please be careful when setting
-        this parameter. Too large batches may cause training failure.
-
     aggregate_iters : int, default: 1
         Indicate how many iterations are aggregated once.
 
     """
 
-    def __init__(self, penalty='L2',
+    def __init__(self,
                  tol=1e-5, alpha=1.0, optimizer='sgd',
                  batch_size=-1, learning_rate=0.001, init_param=GMFInitParam(),
                  max_iter=100, early_stop='diff',
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 aggregate_iters=1, validation_freqs=None
+                 aggregate_iters=1, validation_freqs=None,
+                 neg_count: int = 4
                  ):
-        super(HeteroGMFParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
+        super(HeteroGMFParam, self).__init__(tol=tol, alpha=alpha, optimizer=optimizer,
                                              batch_size=batch_size,
                                              learning_rate=learning_rate,
                                              init_param=init_param, max_iter=max_iter,
                                              early_stop=early_stop,
                                              predict_param=predict_param,
                                              cv_param=cv_param,
-                                             validation_freqs=validation_freqs)
-        self.aggregate_iters = aggregate_iters
+                                             validation_freqs=validation_freqs,
+                                             neg_count=neg_count)
+        # self.aggregate_iters = aggregate_iters
 
     def check(self):
         super().check()
 
-        if not isinstance(self.aggregate_iters, int):
-            raise ValueError(
-                "general_mf's aggregate_iters {} not supported, should be int type".format(
-                    self.aggregate_iters))
+        # if not isinstance(self.aggregate_iters, int):
+        #     raise ValueError(
+        #         "general_mf's aggregate_iters {} not supported, should be int type".format(
+        #             self.aggregate_iters))
 
         return True
 
