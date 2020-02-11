@@ -170,13 +170,14 @@ def exec_toy_example(runtime_config):
         if status == "failed":
             show_log(jobid, "error")
             return
-        elif status == "success":
+        elif status == "complete":
             show_log(jobid, "info")
             return
         else:
             print ("job status is {}".format((status)))
 
     raise ValueError("job running time exceed, please check federation or eggroll log")
+
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser()
