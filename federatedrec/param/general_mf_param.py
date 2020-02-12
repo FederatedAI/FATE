@@ -78,6 +78,14 @@ class GMFParam(BaseParam):
 
     cv_param: CrossValidationParam object, default: default CrossValidationParam object
 
+    neg_count: int, default 4,
+             count of generating negative samples, used by DataConverter generating
+             negative samples for each positive sample
+
+    metrics:  string, default "AUC", metrics methods
+
+    loss: string, default "MSE", loss function
+
 
     """
 
@@ -94,7 +102,6 @@ class GMFParam(BaseParam):
                  max_iter=100,
                  predict_param=PredictParam(),
                  cv_param=CrossValidationParam(),
-                 validation_freqs=None,
                  metrics: typing.Union[str, list] = None,
                  loss: str = 'mse',
                  neg_count: int = 4
@@ -115,7 +122,6 @@ class GMFParam(BaseParam):
         self.max_iter = max_iter
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
-        self.validation_freqs = validation_freqs
 
     def check(self):
         descr = "general_mf's"
@@ -233,7 +239,6 @@ class HeteroGMFParam(GMFParam):
                  batch_size=-1, learning_rate=0.001, init_param=GMFInitParam(),
                  max_iter=100, early_stop='diff',
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 aggregate_iters=1, validation_freqs=None,
                  neg_count: int = 4
                  ):
         super(HeteroGMFParam, self).__init__(tol=tol, alpha=alpha, optimizer=optimizer,
@@ -243,9 +248,7 @@ class HeteroGMFParam(GMFParam):
                                              early_stop=early_stop,
                                              predict_param=predict_param,
                                              cv_param=cv_param,
-                                             validation_freqs=validation_freqs,
                                              neg_count=neg_count)
-        # self.aggregate_iters = aggregate_iters
 
     def check(self):
         super().check()
