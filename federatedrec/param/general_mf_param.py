@@ -48,9 +48,6 @@ class GMFParam(BaseParam):
     tol : float, default: 1e-5
         The tolerance of convergence
 
-    alpha : float, default: 1.0
-        Regularization strength coefficient.
-
     optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd' or 'adagrad', default: 'sgd'
         Optimize method
 
@@ -94,7 +91,6 @@ class GMFParam(BaseParam):
                  aggregate_every_n_epoch: int = 1,
                  early_stop: typing.Union[str, dict, SimpleNamespace] = "diff",
                  tol=1e-5,
-                 alpha=1.0,
                  optimizer: typing.Union[str, dict, SimpleNamespace] = 'SGD',
                  batch_size=-1,
                  learning_rate=0.01,
@@ -114,7 +110,6 @@ class GMFParam(BaseParam):
         self.loss = loss
         self.neg_count = neg_count
         self.tol = tol
-        self.alpha = alpha
         self.optimizer = optimizer
         self.batch_size = batch_size
         self.learning_rate = learning_rate
@@ -130,17 +125,13 @@ class GMFParam(BaseParam):
         self.optimizer = self._parse_optimizer(self.optimizer)
         self.metrics = self._parse_metrics(self.metrics)
 
-        if not isinstance(self.tol, (int, float)):
+        if not isinstance(self.tol, float):
             raise ValueError(
                 "general_mf's tol {} not supported, should be float type".format(self.tol))
 
         if not isinstance(self.neg_count, int):
             raise ValueError(
-                "general_mf's neg_count {} not supported, should be float type".format(self.neg_count))
-
-        if type(self.alpha).__name__ not in ["float", 'int']:
-            raise ValueError(
-                "general_mf's alpha {} not supported, should be float or int type".format(self.alpha))
+                "general_mf's neg_count {} not supported, should be int type".format(self.neg_count))
 
         if self.batch_size != -1:
             if type(self.batch_size).__name__ not in ["int"] \
