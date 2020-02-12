@@ -74,6 +74,10 @@
       "conf": "test_hetero_lr_train_job_conf.json",
       "dsl": "test_hetero_lr_train_job_dsl.json"
     },
+    "lr_sparse": {
+      "conf": "test_hetero_lr_sparse_train_job_conf.json",
+      "dsl": "test_hetero_lr_train_job_dsl.json"
+    },
     "lr-predict": {
       "conf": "test_predict_conf.json",
       "deps": "lr"
