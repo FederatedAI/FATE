@@ -226,13 +226,13 @@ class HeteroGMFParam(GMFParam):
     """
 
     def __init__(self,
-                 tol=1e-5, alpha=1.0, optimizer='sgd',
+                 tol=1e-5, optimizer='sgd',
                  batch_size=-1, learning_rate=0.001, init_param=GMFInitParam(),
                  max_iter=100, early_stop='diff',
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  neg_count: int = 4
                  ):
-        super(HeteroGMFParam, self).__init__(tol=tol, alpha=alpha, optimizer=optimizer,
+        super(HeteroGMFParam, self).__init__(tol=tol, optimizer=optimizer,
                                              batch_size=batch_size,
                                              learning_rate=learning_rate,
                                              init_param=init_param, max_iter=max_iter,
