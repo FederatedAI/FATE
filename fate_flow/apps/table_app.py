@@ -35,6 +35,7 @@ def table_delete():
     data_views = query_data_view(**request_data)
     table_name = request_data.get('table_name')
     namespace = request_data.get('namespace')
+    status = False
     data = []
     if table_name and namespace:
         table = session.get_data_table(name=table_name, namespace=namespace)
@@ -42,10 +43,10 @@ def table_delete():
         data.append({'table_name': table_name,
                      'namespace': namespace})
     elif data_views:
-        data = delete_table(data_views)
+        status, data = delete_table(data_views)
     else:
         return get_json_result(retcode=101, retmsg='no find table')
-    return get_json_result(retcode=0, retmsg='success', data=data)
+    return get_json_result(retcode=(0 if status else 101), retmsg=('success' if status else 'failed'), data=data)
 
 
 @manager.route('/<table_func>', methods=['post'])
