@@ -135,9 +135,11 @@ class FactorizationParam(BaseParam):
             raise ValueError(
                 "factorization_param's tol {} not supported, should be float type".format(self.tol))
 
-        if not isinstance(self.clip_gradient, (int, float, None)):
+        if self.clip_gradient is None:
+            pass
+        elif not isinstance(self.clip_gradient, (int, float)):
             raise ValueError(
-                "factorization_param's clip_gradient {} not supported, should be float type".format(self.clip_gradient))
+                "factorization_param's clip_gradient {} not supported, should be float or int type".format(self.clip_gradient))
 
         if type(self.alpha).__name__ not in ["float", 'int']:
             raise ValueError(
