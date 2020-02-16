@@ -144,10 +144,8 @@ class HeteroFMHost(HeteroFMBase):
             self.one_vs_rest_obj.predict(data_instances)
             return
 
-        data_features = self.transform(data_instances)
-
-        prob_host = self.compute_fm(data_features, self.model_weights)
-        vx_host = self.compute_vx(data_features, self.model_weights.embed_)
+        prob_host = self.compute_fm(data_instances, self.model_weights)
+        vx_host = self.compute_vx(data_instances, self.model_weights.embed_)
         prob_host = prob_host.join(vx_host, lambda a, b: (a, b))
 
         self.transfer_variable.host_prob.remote(prob_host, role=consts.GUEST, idx=0)

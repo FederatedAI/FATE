@@ -171,9 +171,8 @@ class HeteroFMGuest(HeteroFMBase):
             predict_result = self.one_vs_rest_obj.predict(data_instances)
             return predict_result
 
-        data_features = self.transform(data_instances)
-        prob_guest = self.compute_fm(data_features, self.model_weights)
-        vx_guest = self.compute_vx(data_features, self.model_weights.embed_)
+        prob_guest = self.compute_fm(data_instances, self.model_weights)
+        vx_guest = self.compute_vx(data_instances, self.model_weights.embed_)
         prob_guest = prob_guest.join(vx_guest, lambda a, b: (a, b))
 
         host_probs = self.transfer_variable.host_prob.get(idx=-1)
