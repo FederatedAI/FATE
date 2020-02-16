@@ -101,12 +101,10 @@ class HeteroFMHost(HeteroFMBase):
             batch_index = 0
             self.optimizer.set_iters(self.n_iter_)
             for batch_data in batch_data_generator:
-                # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
-                batch_feat_inst = self.transform(batch_data)
-                LOGGER.debug(f"MODEL_STEP In Batch {batch_index}, batch data count: {batch_feat_inst.count()}")
+                LOGGER.debug(f"MODEL_STEP In Batch {batch_index}, batch data count: {batch_data.count()}")
 
                 optim_host_gradient = self.gradient_loss_operator.compute_gradient_procedure(
-                    batch_feat_inst, self.model_weights, self.encrypted_calculator, self.optimizer, self.n_iter_,
+                    batch_data, self.model_weights, self.encrypted_calculator, self.optimizer, self.n_iter_,
                     batch_index)
                 LOGGER.debug('optim_host_gradient: {}'.format(optim_host_gradient))
 

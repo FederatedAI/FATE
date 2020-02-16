@@ -114,18 +114,14 @@ class HeteroFMGuest(HeteroFMBase):
             self.optimizer.set_iters(self.n_iter_)
             batch_index = 0
             for batch_data in batch_data_generator:
-
-                # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
-                batch_feat_inst = self.transform(batch_data)
-                LOGGER.debug(f"MODEL_STEP In Batch {batch_index}, batch data count: {batch_feat_inst.count()}")
-
+                LOGGER.debug(f"MODEL_STEP In Batch {batch_index}, batch data count: {batch_data.count()}")
                 # Start gradient procedure
                 LOGGER.debug("iter: {}, before compute gradient, data count: {}".format(self.n_iter_,
-                                                                                        batch_feat_inst.count()))
+                                                                                        batch_data.count()))
                 # optim_guest_gradient, fore_gradient, host_forwards = self.gradient_loss_operator. \
                 optim_guest_gradient, fore_gradient = self.gradient_loss_operator. \
                     compute_gradient_procedure(
-                        batch_feat_inst,
+                        batch_data,
                         self.encrypted_calculator,
                         self.model_weights,
                         self.optimizer,
