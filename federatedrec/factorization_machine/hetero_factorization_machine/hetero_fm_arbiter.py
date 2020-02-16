@@ -112,9 +112,6 @@ class HeteroFMArbiter(HeteroFMBase):
                 if weight_diff < self.model_param.tol:
                     self.is_converged = True
             else:
-                if iter_loss is None:
-                    raise ValueError("Multiple host situation, loss early stop function is not available."
-                                     "You should use 'weight_diff' instead")
                 self.is_converged = self.converge_func.is_converge(iter_loss)
                 LOGGER.info("iter: {},  loss:{}, is_converged: {}".format(self.n_iter_, iter_loss, self.is_converged))
 
