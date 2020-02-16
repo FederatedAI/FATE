@@ -50,27 +50,6 @@ class HeteroFMBase(BaseFactorizationMachine):
         self.batch_generator.register_batch_generator(self.transfer_variable)
         self.gradient_loss_operator.register_gradient_procedure(self.transfer_variable)
 
-    def transform(self, data_inst):
-        """
-        transform features of instances held by 'data_inst' table into more representative features
-
-        This 'transform' function serves as a handler on transforming/extracting features from raw input 'data_inst' of
-        guest. It returns a table that holds instances with transformed features. In theory, we can use any model to
-        transform features. Particularly, we would adopt neural network models such as auto-encoder or CNN to perform
-        the feature transformation task. For concrete implementation, please refer to 'hetero_dnn_logistic_regression'
-        folder.
-
-        For this particular class (i.e., 'HeteroFMBase') that serves as a base class for neural-networks-based
-        hetero-logistic-regression model, the 'transform' function will do nothing but return whatever that has been
-        passed to it. In other words, no feature transformation performed on the raw input of guest.
-
-        Parameters:
-        ___________
-        :param data_inst: a table holding instances of raw input of guest side
-        :return: a table holding instances with transformed features
-        """
-        return data_inst
-
     def _get_meta(self):
         meta_protobuf_obj = fm_model_meta_pb2.FMModelMeta(penalty=self.model_param.penalty,
                                                           tol=self.model_param.tol,
