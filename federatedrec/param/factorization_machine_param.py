@@ -41,7 +41,7 @@ class FactorizationParam(BaseParam):
     Parameters
     ----------
     penalty : str, 'L1' or 'L2'. default: 'L2'
-        Penalty method used in LR. Please note that, when using encrypted version in HomoLR,
+        Penalty method used in FM. Please note that, when using encrypted version in HomoFM,
         'L1' is not supported.
 
     tol : float, default: 1e-5
