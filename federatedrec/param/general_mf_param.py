@@ -21,12 +21,15 @@ import json
 import typing
 from types import SimpleNamespace
 
+from arch.api.utils import log_utils
 from federatedml.param.base_param import BaseParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.init_model_param import InitParam
 from federatedml.param.predict_param import PredictParam
 from federatedml.util import consts
 from federatedml.protobuf.generated import gmf_model_meta_pb2
+
+LOGGER = log_utils.getLogger()
 
 
 class GMFInitParam(InitParam):
@@ -45,17 +48,11 @@ class GMFParam(BaseParam):
 
     Parameters
     ----------
-    tol : float, default: 1e-5
-        The tolerance of convergence
-
-    optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd' or 'adagrad', default: 'sgd'
+    optimizer : str, 'SGD', 'RMSprop', 'Adam',  or 'Adagrad', default: 'SGD'
         Optimize method
 
     batch_size : int, default: -1
         Batch size when updating model. -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
-
-    learning_rate : float, default: 0.01
-        Learning rate
 
     init_param: InitParam object, default: default InitParam object
         Init param method object.
@@ -90,10 +87,8 @@ class GMFParam(BaseParam):
                  secure_aggregate: bool = True,
                  aggregate_every_n_epoch: int = 1,
                  early_stop: typing.Union[str, dict, SimpleNamespace] = "diff",
-                 tol=1e-5,
                  optimizer: typing.Union[str, dict, SimpleNamespace] = 'SGD',
                  batch_size=-1,
-                 learning_rate=0.01,
                  init_param=GMFInitParam(),
                  max_iter=100,
                  predict_param=PredictParam(),
@@ -109,10 +104,8 @@ class GMFParam(BaseParam):
         self.metrics = metrics
         self.loss = loss
         self.neg_count = neg_count
-        self.tol = tol
         self.optimizer = optimizer
         self.batch_size = batch_size
-        self.learning_rate = learning_rate
         self.init_param = copy.deepcopy(init_param)
         self.max_iter = max_iter
         self.predict_param = copy.deepcopy(predict_param)
@@ -125,9 +118,13 @@ class GMFParam(BaseParam):
         self.optimizer = self._parse_optimizer(self.optimizer)
         self.metrics = self._parse_metrics(self.metrics)
 
-        if not isinstance(self.tol, float):
+        LOGGER.info(f"optimizer: {self.optimizer}, \n dict: {self.optimizer.__dict__}")
+
+        if 'decay' in self.optimizer.__dict__["kwargs"] and not isinstance(self.optimizer.kwargs['decay'], float) \
+                and self.optimizer.kwargs["decay"] < 0:
             raise ValueError(
-                "general_mf's tol {} not supported, should be float type".format(self.tol))
+                "general_mf's optimizer['decay'] {} not supported, should be float type, and greater than 0".format(
+                    self.optimizer.kwargs['decay']))
 
         if not isinstance(self.neg_count, int):
             raise ValueError(
@@ -136,22 +133,25 @@ class GMFParam(BaseParam):
         if self.batch_size != -1:
             if type(self.batch_size).__name__ not in ["int"] \
                     or self.batch_size < consts.MIN_BATCH_SIZE:
-                raise ValueError(descr + " {} not supported, should be larger than 10 or "
+                raise ValueError(descr + " {} not supported, should be greater than 10 or "
                                          "-1 represent for all data".format(self.batch_size))
 
-        if type(self.learning_rate).__name__ != "float" or (isinstance(self.learning_rate, float) and self.learning_rate < 0):
+        if 'learning_rate' in self.optimizer.__dict__["kwargs"] and \
+                (type(self.optimizer.kwargs['learning_rate']).__name__ != "float" or (
+                isinstance(self.optimizer.kwargs['learning_rate'], float)) and
+                 self.optimizer.kwargs['learning_rate'] < 0):
             raise ValueError(
-                "general_mf's learning_rate {} not supported, should be float type and larger than 0".format(
-                    self.learning_rate))
+                "general_mf's optimizer['learning_rate'] {} not supported, should be float type and greater "
+                "than 0".format(self.optimizer.kwargs['learning_rate']))
 
         self.init_param.check()
 
-        if type(self.max_iter).__name__ != "int"or (isinstance(self.max_iter, int) and self.max_iter < 1):
+        if type(self.max_iter).__name__ != "int" or (isinstance(self.max_iter, int) and self.max_iter < 1):
             raise ValueError(
-                "general_mf's max_iter {} not supported, should be int type and larger then 0".format(self.max_iter))
+                "general_mf's max_iter {} not supported, should be int type and greater then 0".format(self.max_iter))
         elif self.max_iter <= 0:
             raise ValueError(
-                "general_mf's max_iter must be greater or equal to 1")
+                "general_mf's max_iter must be greater than or equal to 1")
 
         return True
 
@@ -226,15 +226,14 @@ class HeteroGMFParam(GMFParam):
     """
 
     def __init__(self,
-                 tol=1e-5, optimizer='sgd',
-                 batch_size=-1, learning_rate=0.001, init_param=GMFInitParam(),
+                 optimizer='sgd',
+                 batch_size=-1, init_param=GMFInitParam(),
                  max_iter=100, early_stop='diff',
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  neg_count: int = 4
                  ):
-        super(HeteroGMFParam, self).__init__(tol=tol, optimizer=optimizer,
+        super(HeteroGMFParam, self).__init__(optimizer=optimizer,
                                              batch_size=batch_size,
-                                             learning_rate=learning_rate,
                                              init_param=init_param, max_iter=max_iter,
                                              early_stop=early_stop,
                                              predict_param=predict_param,
