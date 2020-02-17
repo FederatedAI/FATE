@@ -67,22 +67,17 @@
     },
     "algorithm_parameters": {
       "hetero_svdpp_0": {
-        "penalty": "L2",
         "optimizer": {
             "optimizer": "Adam",
             "learning_rate": 0.05
           },
-        "eps": 1e-5,
-        "alpha": 0.05,
         "max_iter": 10,
         "converge_func": "diff",
         "batch_size": -1,
-        "learning_rate": 0.01,
         "init_param": {
           "init_method": "random_normal",
           "embed_dim": 10
-        },
-        "decay": 0.0
+        }
       }
     }
 }

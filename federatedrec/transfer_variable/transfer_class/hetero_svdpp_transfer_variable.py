@@ -46,5 +46,4 @@ class HeteroSVDppTransferVariable(BaseTransferVariables):
         self.host_user_ids = self._create_variable(name='host_user_ids')
         self.host_uuid = self._create_variable(name='host_uuid')
         self.is_converge = self._create_variable(name='is_converge')
-        self.paillier_pubkey = self._create_variable(name='paillier_pubkey')
         self.uuid_conflict_flag = self._create_variable(name='uuid_conflict_flag')

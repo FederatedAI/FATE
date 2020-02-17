@@ -42,24 +42,11 @@ class SVDppParam(BaseParam):
 
     Parameters
     ----------
-    penalty : str, 'L1' or 'L2'. default: 'L2'
-        Penalty method used in LR. Please note that, when using encrypted version in HomoLR,
-        'L1' is not supported.
-
-    tol : float, default: 1e-5
-        The tolerance of convergence
-
-    alpha : float, default: 1.0
-        Regularization strength coefficient.
-
-    optimizer : str, 'sgd', 'rmsprop', 'adam', 'nesterov_momentum_sgd' or 'adagrad', default: 'sgd'
+    optimizer : str, 'SGD', 'RMSprop', 'Adam' or 'Adagrad', default: 'sgd'
         Optimize method
 
     batch_size : int, default: -1
         Batch size when updating model. -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
-
-    learning_rate : float, default: 0.01
-        Learning rate
 
     init_param: InitParam object, default: default InitParam object
         Init param method object.
@@ -72,14 +59,6 @@ class SVDppParam(BaseParam):
             a)	diff： Use difference of loss between two iterations to judge whether converge.
             b)  weight_diff: Use difference between weights of two consecutive iterations
             c)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
-
-    decay: int or float, default: 1
-        Decay rate for learning rate. learning rate will follow the following decay schedule.
-        lr = lr0/(1+decay*t) if decay_sqrt is False. If decay_sqrt is True, lr = lr0 / sqrt(1+decay*t)
-        where t is the iter number.
-
-    decay_sqrt: Bool, default: True
-        lr = lr0/(1+decay*t) if decay_sqrt is False, otherwise, lr = lr0 / sqrt(1+decay*t)
 
     encrypt_param: EncryptParam object, default: default EncryptParam object
 
@@ -94,17 +73,12 @@ class SVDppParam(BaseParam):
                  secure_aggregate: bool = True,
                  aggregate_every_n_epoch: int = 1,
                  early_stop: typing.Union[str, dict, SimpleNamespace] = "diff",
-                 penalty='L2',
-                 tol=1e-5,
-                 alpha=1.0,
                  optimizer: typing.Union[str, dict, SimpleNamespace] = 'SGD',
                  batch_size=-1,
-                 learning_rate=0.01,
                  init_param=SVDppInitParam(),
                  max_iter=100,
                  predict_param=PredictParam(),
                  cv_param=CrossValidationParam(),
-                 decay=1, decay_sqrt=True,
                  validation_freqs=None,
                  metrics: typing.Union[str, list] = None,
                  loss: str = 'mse',
@@ -116,18 +90,12 @@ class SVDppParam(BaseParam):
         self.metrics = metrics
         self.loss = loss
 
-        self.penalty = penalty
-        self.tol = tol
-        self.alpha = alpha
         self.optimizer = optimizer
         self.batch_size = batch_size
-        self.learning_rate = learning_rate
         self.init_param = copy.deepcopy(init_param)
         self.max_iter = max_iter
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
-        self.decay = decay
-        self.decay_sqrt = decay_sqrt
         self.validation_freqs = validation_freqs
 
     def check(self):
@@ -137,40 +105,11 @@ class SVDppParam(BaseParam):
         self.optimizer = self._parse_optimizer(self.optimizer)
         self.metrics = self._parse_metrics(self.metrics)
 
-        if self.penalty is None:
-            pass
-        elif type(self.penalty).__name__ != "str":
-            raise ValueError(
-                "svdpp's penalty {} not supported, should be str type".format(self.penalty))
-        else:
-            self.penalty = self.penalty.upper()
-            if self.penalty not in [consts.L1_PENALTY, consts.L2_PENALTY, 'NONE']:
-                raise ValueError(
-                    "svdpp's penalty not supported, penalty should be 'L1', 'L2' or 'none'")
-
-        if not isinstance(self.tol, (int, float)):
-            raise ValueError(
-                "svdpp's tol {} not supported, should be float type".format(self.tol))
-
-        if type(self.alpha).__name__ not in ["float", 'int']:
-            raise ValueError(
-                "svdpp's alpha {} not supported, should be float or int type".format(self.alpha))
-
         if self.batch_size != -1:
             if type(self.batch_size).__name__ not in ["int"] \
                     or self.batch_size < consts.MIN_BATCH_SIZE:
                 raise ValueError(descr + " {} not supported, should be larger than 10 or "
                                          "-1 represent for all data".format(self.batch_size))
-                
-        if not isinstance(self.learning_rate, (float, int)) :
-            raise ValueError(
-                "factorization_param's learning_rate {} not supported, should be float or int type".format(
-                    self.learning_rate))
-
-        if self.learning_rate <= 0:
-            raise ValueError(
-                "factorization_param's learning_rate {} not supported, should be a positive value".format(
-                    self.learning_rate))
 
         self.init_param.check()
 
@@ -181,15 +120,23 @@ class SVDppParam(BaseParam):
             raise ValueError(
                 "svdpp's max_iter must be greater or equal to 1")
 
-        if type(self.decay).__name__ not in ["int", 'float']:
-            raise ValueError(
-                "svdpp's decay {} not supported, should be 'int' or 'float'".format(
-                    self.decay))
+        if 'decay' in self.optimizer.__dict__["kwargs"]:
+            if not isinstance(self.optimizer.kwargs['decay'], ("int", 'float')) \
+                    or (isinstance(self.optimizer.kwargs['decay'], ("int", 'float')) and \
+                        self.optimizer.kwargs['decay'] < 0):
+                raise ValueError(
+                    "svdpp's optimizer.decay {} not supported, should be 'int' or 'float' "
+                    "and greater than 0".format(
+                        self.optimizer.kwargs['decay']))
 
-        if type(self.decay_sqrt).__name__ not in ['bool']:
-            raise ValueError(
-                "svdpp's decay_sqrt {} not supported, should be 'bool'".format(
-                    self.decay_sqrt))
+        if 'learning_rate' in self.optimizer.__dict__["kwargs"]:
+            if not isinstance(self.optimizer.kwargs['learning_rate'], ('int', 'float')) \
+                    or (isinstance(self.optimizer.kwargs['learning_rate'], ('int', 'float') and \
+                                                                           self.optimizer.kwargs['learning_rate'] < 0)):
+                raise ValueError(
+                    "svdpp's optimizer.learning_rate {} not supported, should be 'int' or 'float', "
+                    "and greater than 0".format(
+                        self.optimizer.kwargs['learning_rate']))
 
         return True
 
@@ -268,24 +215,19 @@ class HeteroSVDppParam(SVDppParam):
 
     """
 
-    def __init__(self, penalty='L2',
-                 tol=1e-5, alpha=1.0, optimizer='sgd',
-                 batch_size=-1, learning_rate=0.01, init_param=SVDppInitParam(),
+    def __init__(self, optimizer='sgd',
+                 batch_size=-1, init_param=SVDppInitParam(),
                  max_iter=100, early_stop='diff',
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 decay=1, decay_sqrt=True,
                  aggregate_iters=1, validation_freqs=None
                  ):
-        super(HeteroSVDppParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
-                                              batch_size=batch_size,
-                                              learning_rate=learning_rate,
-                                              init_param=init_param, max_iter=max_iter,
-                                              early_stop=early_stop,
-                                              predict_param=predict_param,
-                                              cv_param=cv_param,
-                                              validation_freqs=validation_freqs,
-                                              decay=decay,
-                                              decay_sqrt=decay_sqrt)
+        super(HeteroSVDppParam, self).__init__(optimizer=optimizer,
+                                               batch_size=batch_size,
+                                               init_param=init_param, max_iter=max_iter,
+                                               early_stop=early_stop,
+                                               predict_param=predict_param,
+                                               cv_param=cv_param,
+                                               validation_freqs=validation_freqs)
         self.aggregate_iters = aggregate_iters
 
     def check(self):
@@ -325,5 +267,5 @@ class HeteroSVDppParam(SVDppParam):
         self.metrics = list(pb.metrics)
         self.optimizer = self._parse_optimizer(dict(optimizer=pb.optimizer.optimizer, **json.loads(pb.optimizer.args)))
         self.loss = pb.loss
-        self.init_param = SVDppInitParam(embed_dim = pb.embed_dim)
+        self.init_param = SVDppInitParam(embed_dim=pb.embed_dim)
         return pb

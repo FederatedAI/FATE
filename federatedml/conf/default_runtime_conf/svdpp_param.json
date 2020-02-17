@@ -1,14 +1,14 @@
 {
-  "penalty": "L2",
-  "optimizer": "sgd",
   "eps": 1e-05,
-  "alpha": 0.01,
   "max_iter": 100,
   "converge_func": "diff",
-  "re_encrypt_batches": 2,
-  "party_weight": 1,
+  "optimizer": {
+    "optimizer": "RMSprop",
+    "learning_rate": 0.05,
+    "decay": 0.9,
+    "momentum": 0.9
+  },
   "batch_size": 320,
-  "learning_rate": 0.01,
   "init_param": {
     "init_method": "random_normal",
     "embed_size": 20
