@@ -48,7 +48,7 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 RUN apt-get update && apt-get install libgmp3-dev -y && apt-get install -y libmpfr-dev libmpfr-doc libmpfr6 && apt-get install libmpc-dev -y
 
 #RUN pip install -r requirements.txt -f ./pip-dependedocker ncies --no-index
-RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
+RUN pip install -r requirements.txt
 
 ENV PYTHONPATH /fate
 
