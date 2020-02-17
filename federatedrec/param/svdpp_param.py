@@ -121,8 +121,8 @@ class SVDppParam(BaseParam):
                 "svdpp's max_iter must be greater or equal to 1")
 
         if 'decay' in self.optimizer.__dict__["kwargs"]:
-            if not isinstance(self.optimizer.kwargs['decay'], ("int", 'float')) \
-                    or (isinstance(self.optimizer.kwargs['decay'], ("int", 'float')) and \
+            if not isinstance(self.optimizer.kwargs['decay'], (int, float)) \
+                    or (isinstance(self.optimizer.kwargs['decay'], (int, float)) and \
                         self.optimizer.kwargs['decay'] < 0):
                 raise ValueError(
                     "svdpp's optimizer.decay {} not supported, should be 'int' or 'float' "
@@ -130,9 +130,9 @@ class SVDppParam(BaseParam):
                         self.optimizer.kwargs['decay']))
 
         if 'learning_rate' in self.optimizer.__dict__["kwargs"]:
-            if not isinstance(self.optimizer.kwargs['learning_rate'], ('int', 'float')) \
-                    or (isinstance(self.optimizer.kwargs['learning_rate'], ('int', 'float') and \
-                                                                           self.optimizer.kwargs['learning_rate'] < 0)):
+            if not isinstance(self.optimizer.kwargs['learning_rate'], (int, float)) \
+                    or (isinstance(self.optimizer.kwargs['learning_rate'], (int, float)) and \
+                        self.optimizer.kwargs['learning_rate'] < 0):
                 raise ValueError(
                     "svdpp's optimizer.learning_rate {} not supported, should be 'int' or 'float', "
                     "and greater than 0".format(
