@@ -179,7 +179,7 @@ public class GrpcStubFactory {
         NettyChannelBuilder builder = NettyChannelBuilder
                 .forAddress(target, endpoint.getPort())
                 .executor((Executor) applicationContext.getBean("grpcClientExecutor"))
-                .keepAliveTime(6, TimeUnit.MINUTES)
+                .keepAliveTime(3, TimeUnit.MINUTES)
                 .keepAliveTimeout(1, TimeUnit.HOURS)
                 .keepAliveWithoutCalls(true)
                 .idleTimeout(1, TimeUnit.HOURS)
