@@ -205,6 +205,10 @@ class FactorizationParam(BaseParam):
             raise ValueError(
                 "factorization_param's decay_sqrt {} not supported, should be 'bool'".format(
                     self.decay_sqrt))
+
+        if self.decay < 0:
+            raise ValueError(
+                "factorization_param's decay must be greater or equal to 0")
         return True
 
 
