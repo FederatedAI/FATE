@@ -83,3 +83,4 @@ Hetero-LR support the following extra features:
 1. Support different encrypt-mode to balance speed and security
 2. Support OneVeRest
 3. When modeling a multi-host task, "weight_diff" converge criteria is supported only.
+4. Support sparse format data
