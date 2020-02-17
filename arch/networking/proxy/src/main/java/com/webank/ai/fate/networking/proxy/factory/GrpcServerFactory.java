@@ -105,7 +105,7 @@ public class GrpcServerFactory {
                 .maxConcurrentCallsPerConnection(20000)
                 .maxInboundMessageSize(32 << 20)
                 .flowControlWindow(32 << 20)
-                .keepAliveTime(6, TimeUnit.MINUTES)
+                .keepAliveTime(3, TimeUnit.MINUTES)
                 .keepAliveTimeout(24, TimeUnit.HOURS)
                 .maxConnectionIdle(1, TimeUnit.HOURS)
                 .permitKeepAliveTime(1, TimeUnit.SECONDS)
