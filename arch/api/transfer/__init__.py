@@ -198,7 +198,7 @@ class FederationAuthorization(object):
         self._authorized_dst = {}
 
     def _update_auth(self, variable_name):
-        a_name, v_name = variable_name.split(".")
+        a_name, v_name = variable_name.split(".", 1)
         variable_auth = self.transfer_auth.get(a_name, {}).get(v_name, None)
         if variable_auth is None:
             raise ValueError(f"Unauthorized variable: {v_name}")
