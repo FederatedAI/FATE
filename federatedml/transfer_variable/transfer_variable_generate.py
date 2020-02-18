@@ -30,7 +30,7 @@ from arch.api.utils import file_utils
 BASE_DIR = os.path.join(file_utils.get_project_base_directory(), "federatedml", "transfer_variable")
 TEMPLATE = os.path.join(BASE_DIR, "transfer_variable.template")
 CONF_DIR = os.path.join(BASE_DIR, "definition")
-MERGE_CONF_FILE_NAME = "transfer_conf.json"
+MERGE_CONF_FILE_NAME = "hetero_mf.json"
 MERGE_CONF_PATH = os.path.join(CONF_DIR, MERGE_CONF_FILE_NAME)
 CLASS_DIR = os.path.join(BASE_DIR, "transfer_class")
 

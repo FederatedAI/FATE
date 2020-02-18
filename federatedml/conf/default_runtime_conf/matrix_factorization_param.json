@@ -1,14 +1,15 @@
 {
-    "penalty": "L2",
-    "optimizer": "rmsprop",
-    "eps": 1e-5,
-    "alpha": 0.01,
+    "optimizer": {
+        "optimizer": "RMSprop",
+        "learning_rate": 0.05,
+        "decay": 0.9,
+        "momentum": 0.9
+    },
     "max_iter": 100,
     "converge_func": "diff",
     "re_encrypt_batches": 2,
     "party_weight": 1,
     "batch_size": 320,
-    "learning_rate": 0.01,
     "init_param": {
         "init_method": "uniform",
         "embed_size": 20
@@ -20,10 +21,6 @@
     "encrypt_param": {
         "method": "Paillier",
         "key_length": 1024
-    },
-    "encrypted_mode_calculator_param": {
-        "mode": "strict",
-        "re_encrypted_rate": 1
     },
     "need_run": true,
     "cv_param": {

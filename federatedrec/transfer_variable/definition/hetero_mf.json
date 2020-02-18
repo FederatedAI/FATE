@@ -45,12 +45,6 @@
     "host"
    ]
   },
-  "paillier_pubkey": {
-   "src": "arbiter",
-   "dst": [
-    "host"
-   ]
-  },
   "guest_model": {
    "src": "guest",
    "dst": [
