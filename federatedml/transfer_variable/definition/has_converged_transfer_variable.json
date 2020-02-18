@@ -1,0 +1,13 @@
+{
+  "HasConvergedTransferVariable": {
+    "has_converged": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest",
+        "host"
+      ]
+    }
+  }
+}

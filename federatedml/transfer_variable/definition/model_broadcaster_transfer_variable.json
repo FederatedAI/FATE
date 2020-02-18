@@ -1,0 +1,13 @@
+{
+  "ModelBroadcasterTransferVariable": {
+    "server_model": {
+      "src": [
+        "guest",
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    }
+  }
+}
