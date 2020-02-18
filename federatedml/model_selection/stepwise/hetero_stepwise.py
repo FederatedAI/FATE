@@ -16,6 +16,7 @@
 
 from arch.api import session
 from arch.api.utils import log_utils
+from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.evaluation.evaluation import IC
 from federatedml.model_selection.stepwise.step import Step
 from federatedml.statistic import data_overview
@@ -24,20 +25,27 @@ from federatedml.util import consts
 
 import itertools
 import numpy as np
+from sklearn import metrics
+from sklearn.linear_model import LogisticRegression, LinearRegression
+
 
 LOGGER = log_utils.getLogger()
 session.init("stepwise")
 
 
 class ModelInfo(object):
-    def __init__(self, n_step, n_model, score, direction):
+    def __init__(self, n_step, n_model, score, loss, direction):
         self.score = score
         self.n_step = n_step
         self.n_model = n_model
         self.direction = direction
+        self.loss = loss
 
     def get_score(self):
         return self.score
+
+    def get_loss(self):
+        return self.loss
 
 
 class HeteroStepwise(object):
@@ -52,6 +60,8 @@ class HeteroStepwise(object):
         self.n_count = 0
         self.stop_stepwise = False
         self.models = None
+        self.metric_namespace = "train"
+        self.metric_type = "STEPWISE"
 
     def _init_model(self, param):
         self.model_param = param
@@ -68,7 +78,6 @@ class HeteroStepwise(object):
         self._get_direction()
         self.make_table()
         self.models_trained = {}
-        # only used by Arbiter to calculate criteria value
         self.IC_computer = None
 
     def _get_direction(self):
@@ -123,6 +132,8 @@ class HeteroStepwise(object):
         for model in step_models:
             model_info = self.models_trained[model]
             score = model_info.get_score()
+            if score is None:
+                continue
             if best_score < 0 or score < best_score:
                 best_score = score
                 best_model = model
@@ -170,6 +181,24 @@ class HeteroStepwise(object):
             return True
         return False
 
+    def get_intercept_loss(self, model, data):
+        y = np.array([x[1] for x in data.mapValues(lambda v: v.label).collect()])
+        LOGGER.debug("X shape is {}".format(y.shape))
+        X = np.ones((len(y), 1))
+        if model.model_name == 'HeteroLinearRegression' or model.model_name == 'HeteroPoissonRegression':
+            intercept_model = LinearRegression(fit_intercept=False)
+            trained_model = intercept_model.fit(X, y)
+            pred = trained_model.predict(X)
+            loss = metrics.mean_squared_error(y, pred)
+        elif model.model_name == 'HeteroLogisticRegression':
+            intercept_model = LogisticRegression(penalty='none', fit_intercept=False)
+            trained_model = intercept_model.fit(X, y)
+            pred = trained_model.predict(X)
+            loss = metrics.log_loss(y, pred)
+        else:
+            raise ValueError("Unknown model received. Stepwise stopped.")
+        return loss
+
     def get_ic_val(self, model, model_key):
         if self.role != consts.ARBITER:
             return
@@ -181,15 +210,32 @@ class HeteroStepwise(object):
         ic_val = self.IC_computer.compute(self.k, self.n_count, dfe, loss)
         if np.isinf(ic_val):
             raise ValueError("Loss value of infinity obtained. Stepwise stopped.")
-        return ic_val
+        return loss, ic_val
+
+    def get_ic_val_guest(self, model, train_data):
+        if not model.fit_intercept:
+            return
+        loss = self.get_intercept_loss(model, train_data)
+        # intercept only model has dfe = 1
+        dfe = 1
+        ic_val = self.IC_computer.compute(self.k, self.n_count, dfe, loss)
+        return loss, ic_val
 
     def _run_step(self, model, train_data, test_data, feature_mask, n_model, model_key):
+        if self.direction == 'forward' and self.n_step == 0:
+            if self.role == consts.GUEST:
+                loss, ic_val = self.get_ic_val_guest(model, train_data)
+                LOGGER.info("step {} n_model {}: ic_val {}".format(self.n_step, n_model, ic_val))
+                self.models_trained[model_key] = ModelInfo(self.n_step, n_model, ic_val, loss, self.step_direction)
+            else:
+                self.models_trained[model_key] = ModelInfo(self.n_step, n_model, None, loss, self.step_direction)
+            return
         curr_step = Step()
         curr_step.set_step_info((self.n_step, n_model))
         trained_model = curr_step.run(model, train_data, test_data, feature_mask)
-        ic_val = self.get_ic_val(trained_model, model_key)
+        loss, ic_val = self.get_ic_val(trained_model, model_key)
         LOGGER.info("step {} n_model {}: ic_val {}".format(self.n_step, n_model, ic_val))
-        self.models_trained[model_key] = ModelInfo(self.n_step, n_model, ic_val, self.step_direction)
+        self.models_trained[model_key] = ModelInfo(self.n_step, n_model, ic_val, loss, self.step_direction)
         self._put_value(model_key, trained_model)
 
     def sync_data_info(self, data):
@@ -219,6 +265,29 @@ class HeteroStepwise(object):
             n_host, j_host = self.transfer_variable.host_data_info.get(idx=0)
         return j_host, j_guest
 
+    def record_step_best(self, step_best, host_mask, guest_mask, data_instances):
+        metas = {"host_mask": host_mask, "guest_mask": guest_mask}
+        metas["features"] = data_instances.schema.get('header')
+
+        model_info = self.models_trained[step_best]
+        loss = model_info.get_loss()
+        ic_val = model_info.get_score()
+        metas["loss"] = loss
+        metas["ic_val"] = ic_val
+
+        model = self._get_value(step_best)
+        metas["dfe"] = HeteroStepwise.get_dfe(model, step_best)
+        metas["fit_intercept"] = model.fit_intercept
+        metas["model_weights"] = model.model_weights
+
+        metric_name = f"stepwise.{self.n_step}"
+        metric = Metric(metric_name, self.n_step)
+        model.callback_metric(metric_name=metric_name, metric_namespace=self.metric_namespace, metric_data=metric)
+        model.tracker.set_metric_meta(metric_name=metric_name, metric_namespace=self.metric_namespace,
+                                      metric_meta=MetricMeta(name=metric_name, metric_type=self.metric_type,
+                                                             extra_metas=metas))
+        return
+
     def sync_step_best(self, step_models):
         if self.role == consts.ARBITER:
             step_best = self.get_step_best(step_models)
@@ -242,7 +311,7 @@ class HeteroStepwise(object):
 
     @staticmethod
     def string2mask(string_repr):
-        mask = np.fromiter(map(bool, string_repr), dtype=bool)
+        mask = np.fromiter(map(int, string_repr), dtype=bool)
         return mask
 
     @staticmethod
@@ -317,10 +386,16 @@ class HeteroStepwise(object):
                             feature_mask = curr_guest_mask
                         self._run_step(model, train_data, test_data, feature_mask, n_model, model_key)
                         n_model += 1
+            # forward step 0
+            if sum(host_mask) + sum(guest_mask) == 0 and self.n_step == 0:
+                self.n_step += 1
+                continue
             old_host_mask, old_guest_mask = host_mask, guest_mask
             step_best = self.sync_step_best(step_models)
             step_best_mask = HeteroStepwise.string2mask(step_best)
             host_mask, guest_mask = step_best_mask[:j_host], step_best_mask[j_host:]
+            self.record_step_best(step_best, host_mask, guest_mask, train_data)
+            LOGGER.debug("step {}, best_host_mask {}, best_guest_mask {}".format(self.n_step, host_mask, guest_mask))
             self.stop_stepwise = self.check_stop(host_mask, guest_mask, old_host_mask, old_guest_mask)
             if self.stop_stepwise:
                 break
