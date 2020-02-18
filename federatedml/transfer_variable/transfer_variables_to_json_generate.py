@@ -47,12 +47,20 @@ def search_subclasses(module_name, class_type):
 
 
 def search_transfer_variable(transfer_variable):
-    fields = transfer_variable().__dict__.items()
-    return {k: v for k, v in fields if isinstance(v, Variable)}
+    fields = transfer_variable.__dict__.items()
+    d = {}
+    for k, v in fields:
+        if isinstance(v, Variable):
+            name = v.name.split(".", 1)[-1]
+            d[name] = v
+        elif isinstance(v, BaseTransferVariables):
+            d.update(search_transfer_variable(v))
+    return d
 
 
 # noinspection PyProtectedMember
 def main():
+    BaseTransferVariables._disable__singleton()
     base = pathlib.Path(__file__).parent.parent
     json_save_path = "./definition"
     if not os.path.exists(json_save_path):
@@ -65,8 +73,9 @@ def main():
                 for cls in search_subclasses(name, BaseTransferVariables):
                     class_name = cls.__name__
                     file_name = _Camel2Snake.to_snake(class_name)
-                    variable_dict = {k: {"src": v._src, "dst": v._dst} for k, v in
-                                     search_transfer_variable(cls).items()}
+                    variable_dict = {}
+                    for k, v in search_transfer_variable(cls()).items():
+                        variable_dict[k] = {"src": v._src, "dst": v._dst}
                     with open(f"{json_save_path}/{file_name}.json", "w") as g:
                         json.dump({class_name: variable_dict}, g, indent=2)
 

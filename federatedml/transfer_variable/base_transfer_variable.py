@@ -20,15 +20,27 @@ from arch.api import RuntimeInstance
 from arch.api.transfer import Party, Cleaner
 
 
+class FlowID(object):
+    def __init__(self, flowid=str(0)):
+        self._flowid = flowid
+
+    def generate_tag(self, *suffix):
+        tags = (self._flowid, *map(str, suffix))
+        return '.'.join(tags)
+
+    def set_flowid(self, flowid):
+        self._flowid = flowid
+
+
 class Variable(object):
     def __init__(self, name: str,
-                 src: typing.List[str],
-                 dst: typing.List[str],
-                 transfer_variables: 'BaseTransferVariables'):
+                 src: typing.Tuple[str],
+                 dst: typing.Tuple[str],
+                 flowid: 'FlowID'):
         self.name = name
         self._src = src
         self._dst = dst
-        self._transfer_variable = transfer_variables
+        self._flowid = flowid
         self._get_cleaner = Cleaner()
         self._remote_cleaner = Cleaner()
         self._auto_clean = True
@@ -42,10 +54,7 @@ class Variable(object):
         return self._preserve_num
 
     def generate_tag(self, *suffix):
-        tag = self._transfer_variable.flowid
-        if suffix:
-            tag = f"{tag}.{'.'.join(map(str, suffix))}"
-        return tag
+        return self._flowid.generate_tag(*suffix)
 
     def disable_auto_clean(self):
         self._auto_clean = False
@@ -147,24 +156,35 @@ class Variable(object):
 
 
 class BaseTransferVariables(object):
+    __singleton = True
     __instance = {}
 
     def __init__(self, *args):
-        self.flowid = str(args[0]) if args else str(0)
+        self._flowid = FlowID(str(args[0]) if args else str(0))
+
+    def _append_prefix(self, name_prefix):
+        return f"{name_prefix}.{self.__class__.__name__}" if name_prefix else self.__class__.__name__
+
+    @classmethod
+    def _disable__singleton(cls):
+        cls.__singleton = False
 
     def __new__(cls, *args, **kwargs):
-        if cls.__name__ not in cls.__instance:
-            cls.__instance[cls.__name__] = object.__new__(cls)
-        return cls.__instance[cls.__name__]
+        if cls.__singleton:
+            if cls.__name__ not in cls.__instance:
+                cls.__instance[cls.__name__] = object.__new__(cls)
+            return cls.__instance[cls.__name__]
+        else:
+            return object.__new__(cls)
 
     def set_flowid(self, flowid):
-        self.flowid = flowid
+        self._flowid.set_flowid(flowid)
+        return self
 
-    def _create_variable(self, name, src, dst):
-        if not hasattr(self, name):
-            full_name = f"{self.__class__.__name__}.{name}"
-            return Variable(name=full_name, src=src, dst=dst, transfer_variables=self)
-        return getattr(self, name)
+    def _create_variable(self, name: str, src: typing.Iterable[str], dst: typing.Iterable[str]):
+        class_name = self.__class__.__name__
+        full_name = f"{class_name}.{name}"
+        return Variable(name=full_name, src=tuple(src), dst=tuple(dst), flowid=self._flowid)
 
     @staticmethod
     def all_parties():
