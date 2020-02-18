@@ -25,7 +25,7 @@ def zip_dir_as_bytes(path):
     """
     Zip input directory, return as bytes.
     :param path: input directory.
-    :return:
+    :return: 
     """
     with io.BytesIO() as io_bytes:
         with zipfile.ZipFile(io_bytes, 'w', zipfile.ZIP_DEFLATED) as zipper:

@@ -16,7 +16,7 @@
 from typing import List
 
 from arch.api import session, WorkMode
-from arch.api.utils.core import current_timestamp, serialize_b64, deserialize_b64, get_lan_ip
+from arch.api.utils.core import current_timestamp, serialize_b64, deserialize_b64
 from fate_flow.db.db_models import DB, Job, Task, TrackingMetric, DataView
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.manager import model_manager
@@ -156,7 +156,6 @@ class Tracking(object):
                         'and f_task_id = "{}"'.format(
                 self.get_table_index(), self.job_id, self.component_name if not job_level else 'dag', self.role,
                 self.party_id, self.task_id)
-            stat_logger.info(query_sql)
             cursor = DB.execute_sql(query_sql)
             for row in cursor.fetchall():
                 metrics[row[0]] = metrics.get(row[0], [])
@@ -291,7 +290,6 @@ class Tracking(object):
                     self.get_table_index(), self.job_id, self.component_name if not job_level else 'dag', self.role,
                     self.party_id, self.task_id, metric_namespace, metric_name, data_type)
                 cursor = DB.execute_sql(query_sql)
-                stat_logger.info(query_sql)
                 for row in cursor.fetchall():
                     yield deserialize_b64(row[0]), deserialize_b64(row[1])
             except Exception as e:
@@ -317,7 +315,7 @@ class Tracking(object):
             job.f_role = role
             job.f_party_id = party_id
             if 'f_status' in job_info:
-                if job.f_status in [JobStatus.SUCCESS, JobStatus.FAILED]:
+                if job.f_status in [JobStatus.COMPLETE, JobStatus.FAILED]:
                     # Termination status cannot be updated
                     # TODO:
                     pass
@@ -358,7 +356,7 @@ class Tracking(object):
             task.f_role = role
             task.f_party_id = party_id
             if 'f_status' in task_info:
-                if task.f_status in [TaskStatus.SUCCESS, TaskStatus.FAILED]:
+                if task.f_status in [TaskStatus.COMPLETE, TaskStatus.FAILED]:
                     # Termination status cannot be updated
                     # TODO:
                     pass
@@ -429,46 +427,6 @@ class Tracking(object):
 
     def get_table_index(self):
         return self.job_id[:8]
-
-    @staticmethod
-    def delete_metric_data(metric_info):
-        if metric_info.get('model'):
-            sql = Tracking.drop_metric_data_mode(metric_info.get('model'))
-        else:
-            sql = Tracking.delete_metric_data_from_db(metric_info)
-        return sql
-
-    @staticmethod
-    def drop_metric_data_mode(model):
-        with DB.connection_context():
-            try:
-                drop_sql = 'drop table t_tracking_metric_{}'.format(model)
-                DB.execute_sql(drop_sql)
-                stat_logger.info(drop_sql)
-                return drop_sql
-            except Exception as e:
-                stat_logger.exception(e)
-                raise e
-
-    @staticmethod
-    def delete_metric_data_from_db(metric_info):
-        with DB.connection_context():
-            try:
-                job_id = metric_info['job_id']
-                metric_info.pop('job_id')
-                delete_sql = 'delete from t_tracking_metric_{}  where f_job_id="{}"'.format(job_id[:8], job_id)
-                for k, v in metric_info.items():
-
-                    if hasattr(TrackingMetric, "f_" + k):
-                        connect_str = " and f_"
-                        delete_sql = delete_sql + connect_str + k + '="{}"'.format(v)
-                DB.execute_sql(delete_sql)
-                stat_logger.info(delete_sql)
-                return delete_sql
-            except  Exception as e:
-                stat_logger.exception(e)
-                raise e
-
 
     @staticmethod
     def metric_table_name(metric_namespace: str, metric_name: str):

@@ -35,7 +35,7 @@ class Backend(IntEnum):
 class JobStatus(object):
     WAITING = 'waiting'
     RUNNING = 'running'
-    SUCCESS = 'success'
+    COMPLETE = 'success'
     FAILED = 'failed'
     TIMEOUT = 'timeout'
     CANCELED = 'canceled'
@@ -46,6 +46,6 @@ class JobStatus(object):
 class TaskStatus(object):
     START = 'start'
     RUNNING = 'running'
-    SUCCESS = 'success'
+    COMPLETE = 'success'
     FAILED = 'failed'
     TIMEOUT = 'timeout'
