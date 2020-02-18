@@ -64,6 +64,8 @@ def __compute_partition_gradient(data, fit_intercept=True, is_sparse=False):
                 row_indice.append(row)
                 data_value.append(v)
             row += 1
+        if feature_shape is None or feature_shape == 0:
+            return 0
         sparse_matrix = sp.csr_matrix((data_value, (row_indice, col_indice)), shape=(row, feature_shape))
         fore_gradient = np.array(fore_gradient)
 
