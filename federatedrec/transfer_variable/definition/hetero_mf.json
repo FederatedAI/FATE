@@ -1,5 +1,5 @@
 {
- "HeteroGMFTransferVariable": {
+ "HeteroMFTransferVariable": {
   "guest_uuid": {
    "src": "guest",
    "dst": [
@@ -83,13 +83,13 @@
     "arbiter"
    ]
   },
-  "host_user_num": {
+  "host_user_ids": {
    "src": "host",
    "dst": [
     "guest"
    ]
   },
-  "guest_user_num": {
+  "guest_user_ids": {
    "src": "guest",
    "dst": [
     "host"
