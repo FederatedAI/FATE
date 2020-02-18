@@ -56,7 +56,6 @@ class KerasSequenceData(tf.keras.utils.Sequence):
             rate = float(inst.features.get_data(2))
             self.x[index] = [user_ids_map[uid], item_ids_map[iid]]
             self.y[index] = rate
-            index += 1
 
         self.batch_size = batch_size if batch_size > 0 else self.size
 
@@ -228,13 +227,6 @@ class MFModel:
                 with zipfile.ZipFile(bytes_io, 'r', zipfile.ZIP_DEFLATED) as file:
                     file.extractall(tmp_path)
 
-            # try:
-            #     keras_model = tf.keras.models.load_model(filepath=tmp_path)
-            # except IOError:
-            #     import warnings
-            #     warnings.warn(
-            #         'loading the model as SavedModel is still in experimental stages. '
-            #         'trying tf.keras.experimental.load_from_saved_model...')
             keras_model = tf.keras.experimental.load_from_saved_model(
                     saved_model_path=tmp_path)
         model = cls()
@@ -247,14 +239,6 @@ class MFModel:
         :return: bytes of saved model.
         """
         with tempfile.TemporaryDirectory() as tmp_path:
-            # try:
-            #     tf.keras.models.save_model(
-            #         self._model, filepath=tmp_path, save_format="tf")
-            # except NotImplementedError:
-            #     import warnings
-            #     warnings.warn(
-            #         'Saving the model as SavedModel is still in experimental stages. '
-            #         'trying tf.keras.experimental.export_saved_model...')
             tf.keras.experimental.export_saved_model(
                     self._model, saved_model_path=tmp_path)
 
