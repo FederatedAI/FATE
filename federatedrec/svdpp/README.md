@@ -67,11 +67,10 @@ According to equation, we need to compute µ before the training of SVD++, where
 1. L1 & L2 regularization
 2. Mini-batch mechanism
 3. Five optimization methods:
-    a)	“sgd”: gradient descent with arbitrary batch size
-    b) “rmsprop”: RMSProp
-    c) “adam”: Adam
-    d) “adagrad”: AdaGrad
-    e) “nesterov_momentum_sgd”: Nesterov Momentum
+    a)	“SGD”: gradient descent with arbitrary batch size
+    b) “RMSprop”: RMSprop
+    c) “Adam”: Adam
+    d) “Adagrad”: AdaGrad
 4. Three converge criteria:
     a) "diff": Use difference of loss between two iterations, not available for multi-host training
     b) "abs": Use the absolute value of loss

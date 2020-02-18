@@ -42,7 +42,7 @@ class SVDppParam(BaseParam):
 
     Parameters
     ----------
-    optimizer : str, 'SGD', 'RMSprop', 'Adam' or 'Adagrad', default: 'sgd'
+    optimizer : str, 'SGD', 'RMSprop', 'Adam' or 'Adagrad', default: 'SGD'
         Optimize method
 
     batch_size : int, default: -1
@@ -215,7 +215,7 @@ class HeteroSVDppParam(SVDppParam):
 
     """
 
-    def __init__(self, optimizer='sgd',
+    def __init__(self, optimizer='SGD',
                  batch_size=-1, init_param=SVDppInitParam(),
                  max_iter=100, early_stop='diff',
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),

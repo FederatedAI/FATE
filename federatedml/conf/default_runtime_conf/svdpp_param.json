@@ -14,16 +14,11 @@
     "embed_size": 20
   },
   "predict_param": {
-    "with_proba": true,
     "threshold": 0.5
   },
   "encrypt_param": {
     "method": "Paillier",
     "key_length": 1024
-  },
-  "encrypted_mode_calculator_param": {
-    "mode": "strict",
-    "re_encrypted_rate": 1
   },
   "need_run": true,
   "cv_param": {
