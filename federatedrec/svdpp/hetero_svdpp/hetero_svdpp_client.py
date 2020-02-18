@@ -73,7 +73,7 @@ class HeteroSVDppClient(HeteroSVDppBase):
     def join_average_rate(self, rates_table):
         # TODO: use map partition for parallelization
         rates = [float(_r) for _,_r in rates_table.collect()]
-        LOGGER.info(f"rates len {len(rates)}, data {rates}")
+        # LOGGER.info(f"rates len {len(rates)}, data {rates}")
 
         average_rate = np.average(rates)
         sample_num = len(rates)
