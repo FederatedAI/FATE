@@ -16,7 +16,7 @@ Thus the loss function can be divided based on items:
 <img src="./images/LossFunction.png" alt="samples" width="700" height="70" /><br/>
 </div>
 
-We can use a mini-batch gradient dencent method to train *p* and *q* using the following equations.
+We can use a mini-batch gradient descent method to train *p* and *q* using the following equations.
 
 **Mini-Batch Updating *p*:**
 
