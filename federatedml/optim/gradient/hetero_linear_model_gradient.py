@@ -19,13 +19,13 @@
 import functools
 
 import numpy as np
+import scipy.sparse as sp
 
 from arch.api.utils import log_utils
-from federatedml.util import consts
 from federatedml.feature.sparse_vector import SparseVector
-from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
-from federatedml.util import fate_operator
 from federatedml.statistic import data_overview
+from federatedml.util import consts
+from federatedml.util import fate_operator
 
 LOGGER = log_utils.getLogger()
 
@@ -48,32 +48,33 @@ def __compute_partition_gradient(data, fit_intercept=True, is_sparse=False):
     fore_gradient = []
 
     if is_sparse:
-        try:
-            _, (features, d) = next(data)
-        except StopIteration:
-            return 0
-        fore_gradient.append(d)
-        feature_num = features.get_shape()
-        if feature_num <= 0:
-            return 0
-        gradient = [0] * feature_num
-        for idx, v in features.get_all_data():
-            gradient[idx] = gradient[idx] + d * v
+        row_indice = []
+        col_indice = []
+        data_value = []
 
-        for key, value in data:
-            fore_gradient.append(value[1])
-            for idx, v in value[0].get_all_data():
-                gradient[idx] = gradient[idx] + value[1] * v
+        row = 0
+        feature_shape = None
+        for key, (sparse_features, d) in data:
+            fore_gradient.append(d)
+            assert isinstance(sparse_features, SparseVector)
+            if feature_shape is None:
+                feature_shape = sparse_features.get_shape()
+            for idx, v in sparse_features.get_all_data():
+                col_indice.append(idx)
+                row_indice.append(row)
+                data_value.append(v)
+            row += 1
+        sparse_matrix = sp.csr_matrix((data_value, (row_indice, col_indice)), shape=(row, feature_shape))
+        fore_gradient = np.array(fore_gradient)
 
-        for i in range(feature_num):
-            if gradient[i] == 0 :
-                if isinstance(fore_gradient[0], PaillierEncryptedNumber):
-                    gradient[i] = 0 * fore_gradient[0]    
-
+        # gradient = sparse_matrix.transpose().dot(fore_gradient).tolist()
+        gradient = fate_operator.dot(sparse_matrix.transpose(), fore_gradient).tolist()
         if fit_intercept:
             bias_grad = np.sum(fore_gradient)
             gradient.append(bias_grad)
+            LOGGER.debug("In first method, gradient: {}, bias_grad: {}".format(gradient, bias_grad))
         return np.array(gradient)
+
     else:
         for key, value in data:
             feature.append(value[0])
@@ -83,7 +84,7 @@ def __compute_partition_gradient(data, fit_intercept=True, is_sparse=False):
         if feature.shape[0] <= 0:
             return 0
 
-        gradient = fate_operator.dot(feature.transpose(),fore_gradient)
+        gradient = fate_operator.dot(feature.transpose(), fore_gradient)
         gradient = gradient.tolist()
         if fit_intercept:
             bias_grad = np.sum(fore_gradient)
