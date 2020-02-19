@@ -20,11 +20,10 @@ from google.protobuf import json_format
 from arch.api.utils import log_utils
 from federatedml.linear_model.linear_model_base import BaseLinearModel
 from federatedml.linear_model.linear_model_weight import LinearModelWeights as LogisticRegressionWeights
-from federatedml.optim.initialize import Initializer
-from federatedml.protobuf.generated import lr_model_param_pb2
 from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
+from federatedml.optim.initialize import Initializer
 from federatedml.param.logistic_regression_param import InitParam
-from federatedml.util import consts
+from federatedml.protobuf.generated import lr_model_param_pb2
 from federatedml.util.fate_operator import vec_dot
 
 LOGGER = log_utils.getLogger()
@@ -49,15 +48,9 @@ class BaseLogisticRegression(BaseLinearModel):
         super()._init_model(params)
         self.one_vs_rest_obj = one_vs_rest_factory(self, role=self.role, mode=self.mode, has_arbiter=True)
 
-    #     if params.multi_class == 'ovr':
-    #         self.need_one_vs_rest = True
-
-
-
     def compute_wx(self, data_instances, coef_, intercept_=0):
-        #return data_instances.mapValues(lambda v: np.dot(v.features, coef_) + intercept_)
-        return data_instances.mapValues(lambda v: vec_dot(v.features,coef_) + intercept_)
-        
+        return data_instances.mapValues(lambda v: vec_dot(v.features, coef_) + intercept_)
+
     def get_single_model_param(self):
         weight_dict = {}
         LOGGER.debug("in get_single_model_param, model_weights: {}, coef: {}, header: {}".format(
@@ -140,10 +133,4 @@ class BaseLogisticRegression(BaseLinearModel):
     def one_vs_rest_fit(self, train_data=None, validate_data=None):
         LOGGER.debug("Class num larger than 2, need to do one_vs_rest")
         self.one_vs_rest_obj.fit(data_instances=train_data, validate_data=validate_data)
-
-    # def one_vs_rest_predict(self, validate_data):
-    #     if not self.one_vs_rest_obj:
-    #         LOGGER.warning("Not one_vs_rest fit before, return now")
-    #         return
-    #     return self.one_vs_rest_obj.predict(data_instances=validate_data)
 

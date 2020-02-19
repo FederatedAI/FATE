@@ -17,6 +17,7 @@
 from collections import Iterable
 
 import numpy as np
+from scipy.sparse import csr_matrix
 
 from arch.api.utils import log_utils
 from federatedml.feature.instance import Instance
@@ -29,10 +30,14 @@ LOGGER = log_utils.getLogger()
 def _one_dimension_dot(X, w):
     res = 0
     # LOGGER.debug("_one_dimension_dot, len of w: {}, len of X: {}".format(len(w), len(X)))
-    for i in range(len(X)):
-        if np.fabs(X[i]) < 1e-5:
-            continue
-        res += w[i] * X[i]
+    if isinstance(X, csr_matrix):
+        for idx, value in zip(X.indices, X.data):
+            res += value * w[idx]
+    else:
+        for i in range(len(X)):
+            if np.fabs(X[i]) < 1e-5:
+                continue
+            res += w[i] * X[i]
 
     if res == 0:
         if isinstance(w[0], PaillierEncryptedNumber):

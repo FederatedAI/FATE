@@ -45,5 +45,6 @@ class OneHotEncoderParam(BaseParam):
 
     def check(self):
         descr = "One-hot encoder param's"
-        self.check_defined_type(self.transform_col_indexes, descr, ['list', 'int'])
+        self.check_defined_type(self.transform_col_indexes, descr, ['list', 'int', 'NoneType'])
+        self.check_defined_type(self.transform_col_names, descr, ['list', 'NoneType'])
         return True
