@@ -18,6 +18,7 @@
 
 
 from federatedml.model_base import ModelBase
+from federatedml.util import abnormal_detection
 
 class BaseKmeansModel(ModelBase):
     def __init__(self):
@@ -35,3 +36,10 @@ class BaseKmeansModel(ModelBase):
         self.k= params.k
         self.max_iter = params.max_iter
         self.tol = params.tol
+
+    def _abnormal_detection(self, data_instances):
+        """
+        Make sure input data_instances is valid.
+        """
+        abnormal_detection.empty_table_detection(data_instances)
+        abnormal_detection.empty_feature_detection(data_instances)

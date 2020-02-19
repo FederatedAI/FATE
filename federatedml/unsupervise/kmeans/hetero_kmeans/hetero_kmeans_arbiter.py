@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
+from numpy import *
 from arch.api.utils import log_utils
 from federatedml.unsupervise.kmeans.kmeans_model_base import BaseKmeansModel
 from federatedml.param.hetero_kmeans_param import KmeansParam
@@ -27,3 +28,10 @@ class HeteroKmenasArbiter(BaseKmeansModel):
         super(HeteroKmenasArbiter, self).__init__()
         self.model_param = KmeansParam()
 
+    def fit(self, data_instances=None):
+        LOGGER.info("Enter hetero linear model arbiter fit")
+        n= inf
+        while self.n_iter_ < self.max_iter and n > self.tol:
+            for i in range(0, self.k):
+                k1 = self.transfer_variable.guest_dist.get(idx= -1, suffix=self.n_iter_)
+            self.n_iter_ += 1
