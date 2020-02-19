@@ -17,7 +17,7 @@
 #
 set -e
 set -x
-version=1.2.0
+version=1.2.1
 
 basepath=$(cd `dirname $0`;pwd)
 fatepath=$(cd $basepath/..;pwd)
