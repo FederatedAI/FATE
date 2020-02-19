@@ -280,7 +280,6 @@ class HeteroStepwise(object):
             to_enter = []
         return to_enter
 
-
     def record_step_best(self, step_best, host_mask, guest_mask, data_instances):
         metas = {"host_mask": host_mask.tolist(), "guest_mask": guest_mask.tolist()}
 
@@ -298,11 +297,11 @@ class HeteroStepwise(object):
             all_features = data_instances.schema.get('header')
             metas["all_features"] = all_features
             metas["to_enter"] = self.get_to_enter(host_mask, guest_mask, all_features)
-            if sum(host_mask) + sum(guest_mask) > 0:
-                model_param = model._get_param()
-                param_dict = MessageToDict(model_param)
-                metas["weight"] = param_dict["weight"]
-                metas["header"] = param_dict["header"]
+            model_param = model._get_param()
+            param_dict = MessageToDict(model_param)
+            metas["intercept"] = param_dict.get("intercept", None)
+            metas["weight"] = param_dict.get("weight", {})
+            metas["header"] = param_dict.get("header", [])
 
         metric_name = f"stepwise_{self.n_step}"
         metric = [Metric(metric_name, float(self.n_step))]
