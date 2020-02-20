@@ -60,8 +60,6 @@ class SVDppParam(BaseParam):
             b)  weight_diff: Use difference between weights of two consecutive iterations
             c)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
 
-    encrypt_param: EncryptParam object, default: default EncryptParam object
-
     predict_param: PredictParam object, default: default PredictParam object
 
     cv_param: CrossValidationParam object, default: default CrossValidationParam object
@@ -205,11 +203,6 @@ class HeteroSVDppParam(SVDppParam):
     """
     Parameters
     ----------
-    re_encrypt_batches : int, default: 2
-        Required when using encrypted version HomoLR. Since multiple batch updating coefficient may cause
-        overflow error. The model need to be re-encrypt for every several batches. Please be careful when setting
-        this parameter. Too large batches may cause training failure.
-
     aggregate_iters : int, default: 1
         Indicate how many iterations are aggregated once.
 

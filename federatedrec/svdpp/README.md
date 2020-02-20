@@ -6,7 +6,7 @@ SVD++ is a  supervised learning approach that decompose a matrix into a product 
 <img src="./images/fig1.png" alt="samples" width="341" height="55" /><br/>
 </div>
 
-Different to SVD, SVD++ incoporate imlicit feedback of users.
+Different to SVD, SVD++ incorporate implicit feedback of users.
 
 SVD++ is commonly used in recommendation senario to decompose a user-item rating matrix into user profile and item profile, and to predict unknown user-item pair's rating by compute the dot product of user profile and item profile.
 
