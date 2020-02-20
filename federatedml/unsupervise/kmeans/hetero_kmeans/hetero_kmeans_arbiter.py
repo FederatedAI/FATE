@@ -18,7 +18,7 @@ from numpy import *
 from arch.api.utils import log_utils
 from federatedml.unsupervise.kmeans.kmeans_model_base import BaseKmeansModel
 from federatedml.param.hetero_kmeans_param import KmeansParam
-
+from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
@@ -28,10 +28,26 @@ class HeteroKmenasArbiter(BaseKmeansModel):
         super(HeteroKmenasArbiter, self).__init__()
         self.model_param = KmeansParam()
 
+    def centroid_assign(self, dist_sum):
+        pass
+
     def fit(self, data_instances=None):
         LOGGER.info("Enter hetero linear model arbiter fit")
-        n= inf
+        n = inf
         while self.n_iter_ < self.max_iter and n > self.tol:
+            dist_sum = list()
             for i in range(0, self.k):
-                k1 = self.transfer_variable.guest_dist.get(idx= -1, suffix=self.n_iter_)
+                p1 = self.transfer_variable.guest_dist.get(idx=0, suffix=self.n_iter_)
+                p2 = self.transfer_variable.host_dist.get(idx=-1, suffix=self.n_iter_)
+                dist_sum[k] = p1.union(p2, lambda v1, v2: v1 + v2)
+
+            new_centroid = self.centroid_assign(dist_sum)
+            self.transfer_variable.cluster_result.remote(new_centroid, role=consts.GUEST, idx=-1, suffix=self.n_iter_)
+            self.transfer_variable.cluster_result.remote(new_centroid, role=consts.HOST, idx=-1, suffix=self.n_iter_)
+
+            tol1 = self.transfer_variable.guest_tol.get(idx=0, suffix=self.n_iter_)
+            tol2 = self.transfer_variable.host_tol.get(idx=0, suffix=self.n_iter_)
+            n = tol1 + tol2
+            if n < self.tol:
+                break
             self.n_iter_ += 1
