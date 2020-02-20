@@ -73,8 +73,6 @@ class HeteroStepwise(object):
         self.nvmin = param.nvmin
         self.nvmax = param.nvmax
         self.transfer_variable = StepwiseTransferVariable()
-        # self.host_data_info_transfer = self.transfer_variable.host_data_info
-        # self.guest_data_info_transfer = self.transfer_variable.guest_data_info
         self._get_direction()
         self.make_table()
         self.models_trained = {}
@@ -281,7 +279,9 @@ class HeteroStepwise(object):
         return to_enter
 
     def record_step_best(self, step_best, host_mask, guest_mask, data_instances):
-        metas = {"host_mask": host_mask.tolist(), "guest_mask": guest_mask.tolist()}
+        metas = {"host_mask": host_mask.tolist(), "guest_mask": guest_mask.tolist(),
+                 "score_name": self.score_name}
+        metas["number_in"] = int(sum(host_mask) + sum(guest_mask))
 
         model_info = self.models_trained[step_best]
         loss = model_info.get_loss()
@@ -290,7 +290,6 @@ class HeteroStepwise(object):
         metas["current_ic_val"] = ic_val
 
         model = self._get_value(step_best)
-        metas["dfe"] = int(HeteroStepwise.get_dfe(model, step_best))
         metas["fit_intercept"] = model.fit_intercept
 
         if self.role != consts.ARBITER:
@@ -317,8 +316,10 @@ class HeteroStepwise(object):
             step_best = self.get_step_best(step_models)
             self.transfer_variable.step_best.remote(step_best, role=consts.HOST, suffix=(self.n_step))
             self.transfer_variable.step_best.remote(step_best, role=consts.GUEST, suffix=(self.n_step))
+            LOGGER.info(f"step {self.n_step}, step_best sent is {step_best}")
         else:
             step_best = self.transfer_variable.step_best.get(suffix=(self.n_step))[0]
+            LOGGER.info(f"step {self.n_step}, step_best received is {step_best}")
         return step_best
 
     @staticmethod
