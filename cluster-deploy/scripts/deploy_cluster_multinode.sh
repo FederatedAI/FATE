@@ -68,16 +68,6 @@ get_all_node_ip() {
     all_node_ips=($(echo ${all_node_ips[*]} | sed 's/ /\n/g'|sort | uniq))
     a_ips=($(echo ${a_ips[*]} | sed 's/ /\n/g'|sort | uniq))
     b_ips=($(echo ${b_ips[*]} | sed 's/ /\n/g'|sort | uniq))
-	#len=${#all_node_ips[*]}
-	#for ((i=0;i<$len;i++))
-	#do
-	#    for ((j=$len-1;j>i;j--))
-	#    do
-	#        if [[ ${all_node_ips[i]} = ${all_node_ips[j]} ]];then
-	#            unset all_node_ips[i]
-	#        fi
-	#    done
-	#done
 	#TODO: not all node need to deploy all env
     a_jdk=("${a_ips[@]}")
     b_jdk=("${b_ips[@]}")
@@ -101,14 +91,17 @@ fi
 
 init_env() {
     for node_ip in ${all_node_ips[*]}; do
-        ssh -tt ${user}@${node_ip} << eeooff
+        ssh -p ${deploy_ssh_port} -tt ${user}@${node_ip} << eeooff
 mkdir -p ${deploy_packages_dir}
 exit
 eeooff
-        scp ${cwd}/deploy/fate_base/env.sh ${user}@${node_ip}:${deploy_packages_dir}
-        ssh -tt ${user}@${node_ip} << eeooff
+        scp -P ${deploy_ssh_port} ${cwd}/deploy/fate_base/env.sh ${user}@${node_ip}:${deploy_packages_dir}
+        ssh -p ${deploy_ssh_port} -tt ${user}@${node_ip} << eeooff
 cd ${deploy_packages_dir}
-sh env.sh
+if [ ${enable_init_env} -eq 1 ];
+then
+    sh env.sh
+fi
 exit
 eeooff
     done
@@ -512,15 +505,15 @@ distribute() {
     deploy_packages_dir=${deploy_dir}/packages
 	for node_ip in "${all_node_ips[@]}"; do
 	    echo "[INFO] distribute source to ${node_ip}"
-	    ssh -tt ${user}@${node_ip} << eeooff
+	    ssh -p ${deploy_ssh_port} -tt ${user}@${node_ip} << eeooff
 rm -rf ${deploy_packages_dir}
 mkdir -p ${deploy_packages_dir}/config
 exit
 eeooff
-	    scp ${output_packages_dir}/source.tar.gz ${user}@${node_ip}:${deploy_packages_dir}
+	    scp -P ${deploy_ssh_port} ${output_packages_dir}/source.tar.gz ${user}@${node_ip}:${deploy_packages_dir}
 	    cd ${output_packages_dir}/config/${node_ip}
 	    tar czf config.tar.gz ./*
-	    scp config.tar.gz  ${user}@${node_ip}:${deploy_packages_dir}
+	    scp -P ${deploy_ssh_port} config.tar.gz  ${user}@${node_ip}:${deploy_packages_dir}
 	    echo "[INFO] distribute source to ${node_ip} done"
 	done
 }
@@ -528,7 +521,7 @@ eeooff
 install() {
 	for node_ip in "${all_node_ips[@]}"; do
 	    echo "[INFO] Decompressed on ${node_ip}"
-	    ssh -tt ${user}@${node_ip} << eeooff
+	    ssh -p ${deploy_ssh_port} -tt ${user}@${node_ip} << eeooff
 cd ${deploy_packages_dir}
 tar xzf source.tar.gz
 tar xzf config.tar.gz -C config
@@ -594,7 +587,7 @@ eeooff
             do
 	            echo "[INFO] Install ${module} on ${node_ip}"
                 echo "[INFO] -----------------------------------------------"
-                ssh -tt ${user}@${node_ip} << eeooff
+                ssh -p ${deploy_ssh_port} -tt ${user}@${node_ip} << eeooff
                     rm -rf ${module_deploy_dir}
                     cd ${deploy_packages_dir}/config/${module}
                     sh ./deploy.sh ${deploy_mode} install ./configurations.sh

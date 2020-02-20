@@ -17,7 +17,7 @@
 #
 
 export PYTHONPATH=
-log_dir="$(echo ${PYTHONPATH} | awk -F":" '{print $1}')/logs"
+log_dir="$(echo ${PYTHONPATH} | awk -F":" '{print $1}')/logs/fate_flow"
 venv=
 
 module=fate_flow_server.py
@@ -48,12 +48,12 @@ start() {
         mklogsdir
         source ${venv}/bin/activate
         nohup python $(echo ${PYTHONPATH} | awk -F":" '{print $1}')/fate_flow/fate_flow_server.py >> "${log_dir}/console.log" 2>>"${log_dir}/error.log" &
-        sleep 6
+        sleep 3
         getpid
         if [[ -n ${pid} ]]; then 
            echo "service start sucessfully. pid: ${pid}"
         else
-           echo "service start failed, please check ../logs/console.log and ../logs/error.log"
+           echo "service start failed, please check ${log_dir}/error.log and ${log_dir}/console.log"
         fi
     else
         echo "service already started. pid: ${pid}"
