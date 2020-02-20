@@ -59,9 +59,10 @@ class TestFeatureHistogram(unittest.TestCase):
                   for j in range(3)]
                  for k in range(4)]
                 for r in range(5)]
-        histograms = self.feature_histogram.accumulate_histogram(copy.deepcopy(data))
+        histograms = copy.deepcopy(data)
         for i in range(len(data)):
             for j in range(len(data[i])):
+                histograms[i][j] = self.feature_histogram.accumulate_histogram(histograms[i][j])
                 for k in range(1, len(data[i][j])):
                     for r in range(len(data[i][j][k])):
                         data[i][j][k][r] += data[i][j][k - 1][r]
@@ -87,6 +88,7 @@ class TestFeatureHistogram(unittest.TestCase):
 
         for i in range(len(his2)):
             for j in range(len(his2[i])):
+                his2[i][j] = self.feature_histogram.accumulate_histogram(his2[i][j])
                 for k in range(len(his2[i][j])):
                     for r in range(len(his2[i][j][k])):
                         self.assertTrue(np.fabs(his2[i][j][k][r] - histograms[i][j][k][r]) < consts.FLOAT_ZERO)
