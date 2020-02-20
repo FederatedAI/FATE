@@ -39,6 +39,11 @@ class GMFInitParam(InitParam):
         self.init_method = init_method
 
     def check(self):
+        if type(self.embed_dim).__name__ not in ["int"] or self.embed_dim < 0:
+            raise ValueError(
+                "GMFInitParam's embed_dim {} not supported, should be 'int'"
+                "and greater than 0".format(
+                    self.embed_dim))
         return True
 
 
@@ -118,24 +123,6 @@ class GMFParam(BaseParam):
 
         LOGGER.info(f"optimizer: {self.optimizer}, \n dict: {self.optimizer.__dict__}")
 
-        if 'decay' in self.optimizer.__dict__["kwargs"]:
-            if not isinstance(self.optimizer.kwargs['decay'], (int, float)) \
-                    or (isinstance(self.optimizer.kwargs['decay'], (int, float)) and \
-                        self.optimizer.kwargs['decay'] < 0):
-                raise ValueError(
-                    "svdpp's optimizer.decay {} not supported, should be 'int' or 'float' "
-                    "and greater than 0".format(
-                        self.optimizer.kwargs['decay']))
-
-        if 'learning_rate' in self.optimizer.__dict__["kwargs"]:
-            if not isinstance(self.optimizer.kwargs['learning_rate'], (int, float)) \
-                    or (isinstance(self.optimizer.kwargs['learning_rate'], (int, float)) and \
-                        self.optimizer.kwargs['learning_rate'] < 0):
-                raise ValueError(
-                    "svdpp's optimizer.learning_rate {} not supported, should be 'int' or 'float', "
-                    "and greater than 0".format(
-                        self.optimizer.kwargs['learning_rate']))
-
         if not isinstance(self.neg_count, int):
             raise ValueError(
                 "general_mf's neg_count {} not supported, should be int type".format(self.neg_count))
@@ -145,6 +132,22 @@ class GMFParam(BaseParam):
                     or self.batch_size < consts.MIN_BATCH_SIZE:
                 raise ValueError(descr + " {} not supported, should be greater than 10 or "
                                          "-1 represent for all data".format(self.batch_size))
+
+        if 'learning_rate' in self.optimizer.__dict__["kwargs"] and \
+                (type(self.optimizer.kwargs['learning_rate']).__name__ != "float" or (
+                isinstance(self.optimizer.kwargs['learning_rate'], float)) and
+                 self.optimizer.kwargs['learning_rate'] < 0):
+            raise ValueError(
+                "general_mf's optimizer['learning_rate'] {} not supported, should be float type and greater "
+                "than 0".format(self.optimizer.kwargs['learning_rate']))
+
+        if 'decay' in self.optimizer.__dict__["kwargs"] and \
+                (type(self.optimizer.kwargs['decay']).__name__ != "float" or (
+                isinstance(self.optimizer.kwargs['decay'], float)) and
+                 self.optimizer.kwargs['decay'] < 0):
+            raise ValueError(
+                "general_mf's optimizer['decay'] {} not supported, should be float type and greater "
+                "than 0".format(self.optimizer.kwargs['decay']))
 
         self.init_param.check()
 
