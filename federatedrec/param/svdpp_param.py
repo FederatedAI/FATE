@@ -38,7 +38,7 @@ class SVDppInitParam(InitParam):
     def check(self):
         if type(self.embed_dim).__name__ not in ["int"] or self.embed_dim < 0:
             raise ValueError(
-                "GMFInitParam's embed_dim {} not supported, should be 'int'"
+                "SVDppInitParam's embed_dim {} not supported, should be 'int'"
                 "and greater than 0".format(
                     self.embed_dim))
         return True
