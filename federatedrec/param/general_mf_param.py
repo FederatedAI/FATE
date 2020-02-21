@@ -66,7 +66,8 @@ class GMFParam(BaseParam):
     max_iter : int, default: 100
         The maximum iteration for training.
 
-    early_stop : dict, 'diff', 'weight_diff' or 'abs', default: 'diff'
+    early_stop : dict. early_stop includes 'diff', 'weight_diff' and 'abs',
+        default: {'early_stop':'diff', 'eps': 1e-5}
         Method used to judge converge or not.
             a)	diff： Use difference of loss between two iterations to judge whether converge.
             b)  weight_diff: Use difference between weights of two consecutive iterations
@@ -219,9 +220,9 @@ class GMFParam(BaseParam):
 class HeteroGMFParam(GMFParam):
 
     def __init__(self,
-                 optimizer='sgd',
-                 batch_size=-1, init_param=GMFInitParam(),
-                 max_iter=100, early_stop='diff',
+                 optimizer={"optimizer": "SGD", "learning_rate": 0.01},
+                 batch_size=-1, init_param=GMFInitParam(), max_iter=100,
+                 early_stop={"early_stop": "diff"},
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  neg_count: int = 4
                  ):
