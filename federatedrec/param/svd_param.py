@@ -43,8 +43,7 @@ class SVDParam(BaseParam):
     Parameters
     ----------
     penalty : str, 'L1' or 'L2'. default: 'L2'
-        Penalty method used in LR. Please note that, when using encrypted version in HomoLR,
-        'L1' is not supported.
+        Penalty method used in SVD. 
 
     tol : float, default: 1e-5
         The tolerance of convergence
@@ -262,11 +261,6 @@ class HeteroSVDParam(SVDParam):
     """
     Parameters
     ----------
-    re_encrypt_batches : int, default: 2
-        Required when using encrypted version HomoLR. Since multiple batch updating coefficient may cause
-        overflow error. The model need to be re-encrypt for every several batches. Please be careful when setting
-        this parameter. Too large batches may cause training failure.
-
     aggregate_iters : int, default: 1
         Indicate how many iterations are aggregated once.
 
