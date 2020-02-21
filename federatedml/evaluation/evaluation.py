@@ -1019,5 +1019,5 @@ class IC(object):
     """
 
     def compute(self, k, n, dfe, loss):
-        aic_score = k * dfe + 2 * n * loss
+        aic_score = k * dfe - 2 * n * loss
         return aic_score
