@@ -59,18 +59,18 @@ Then the parameter updates of user-related parameters can be represented as:
 
 **Item-related parameters** 
 
-The item-related parameters can be updated locally by A,B using the same equation as regular SVD++.
+The item-related parameters can be updated locally by A,B using the same equation as regular SVD.
 
 **Compute** <img src="./images/fig11.png" alt="samples" width="22" height="24" />
 
-According to equation, we need to compute µ before the training of SVD++, where µ is the global average rating score. Intutively, µ can be computed using following equation.
+According to equation, we need to compute µ before the training of SVD, where µ is the global average rating score. Intutively, µ can be computed using following equation.
 
 <div style="text-align:center", align=center>
 <img src="./images/fig6.png" alt="samples" width="443" height="60" /><br/>
 </div>
 
 ## Features:
-1. L1 & L2 regularization
+1. L2 regularization
 2. Mini-batch mechanism
 3. Five optimization methods:
     a)	“sgd”: gradient descent with arbitrary batch size
@@ -80,7 +80,6 @@ According to equation, we need to compute µ before the training of SVD++, where
     e) “nesterov_momentum_sgd”: Nesterov Momentum
 4. Three converge criteria:
     a) "diff": Use difference of loss between two iterations, not available for multi-host training
-    b) "abs": Use the absolute value of loss
-    c) "weight_diff": Use difference of model weights
+    b) "weight_diff": Use difference of model weights
 6. Support validation for every arbitrary iterations
 7. Learning rate decay mechanism.
