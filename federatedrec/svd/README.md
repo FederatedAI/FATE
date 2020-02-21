@@ -2,43 +2,48 @@
 
 SVD is a  supervised learning approach that decompose a matrix into a product of matrices. It does matrix factorization via following formula:
 
-​								$r_{ui}=\mu+b_u+b_i+p_uq_i$
+<div style="text-align:center", align=center>
+<img src="./images/fig1.png" alt="samples" width="273" height="44" /><br/>
+</div>
 
-Different to MF, SVD incoporate bias of users as $b_u$ and bias of items as $b_i$.
+Different to MF, SVD incoporate bias of users as <img src="./images/fig12.png" alt="samples" width="25" height="25" /> and bias of items as <img src="./images/fig13.png" alt="samples" width="25" height="25" />.
 
 SVD is commonly used in recommendation senario to decompose a user-item rating matrix into user profile and item profile, and to predict unknown user-item pair's rating by compute the dot product of user profile and item profile.
 
 SVD's loss function:
 
-​								$\mathcal{L}=\sum\limits_{(u,i)\in{\mathbb{K}}}(r_{ui}-\hat{r}_{ui})^2+\lambda(b_u^2+b_i^2+\Vert{q_i}\Vert^2+\Vert{p_u}\Vert^2)$
+<div style="text-align:center", align=center>
+<img src="./images/fig2.png" alt="samples" width="583" height="76" /><br/>
+</div>
 
-where λ is a small positive values to rescale the penalizer. Denote $e_{ui}=r_{ui}-{\hat{r}}_{ui}$, and the gradients on different parameters are:
 
-​								$\frac{\partial\mathcal{L}}{\partial{b_u}}=-2\sum\limits_{i\in\mathbb{k}(u)}e_{ui}+2\lambda{b_u}$
+where λ is a small positive values to rescale the penalizer. Denote <img src="./images/fig8.png" alt="samples" width="170" height="30" />, and the gradients on different parameters are:
 
-​								$\frac{\partial\mathcal{L}}{\partial{b_i}}=-2\sum\limits_{u\in\mathbb{k}(i)}e_{ui}+2\lambda{b_i}$
+<div style="text-align:center", align=center>
+<img src="./images/fig3.png" alt="samples" width="308" height="299" /><br/>
+</div>
 
-​								$\frac{\partial\mathcal{L}}{\partial{p_u}}=-2\sum\limits_{i\in\mathbb{k}(u)}e_{ui}q_i+2\lambda{p_u}$
 
-​								$\frac{\partial\mathcal{L}}{\partial{q_i}}=-2\sum\limits_{u\in\mathbb{k}(i)}e_{ui}p_u+2\lambda{q_i}$
 
 ## Heterogeneous SVD
 
 Here we simplify participants of the federation process into three parties. Party A represents Guest, party B represents Host. Party C, which is also known as “Arbiter,” is a third party that works as coordinator. Party C is responsible coordinate training process and encrypted data exchange.
 
-Inspired by VFedMF, we can divide the parameters of SVD into item-related (e.g. $p$) and user-related (e.g. $q$) ones. Based on the setting of same-user and different-item, we let party A, B share the same user-profile and hold item-profile individually. The rating data is protected by keeping the item-profile unknown to each other.
+Inspired by VFedMF, we can divide the parameters of SVD into item-related (e.g. p) and user-related (e.g. q) ones. Based on the setting of same-user and different-item, we let party A, B share the same user-profile and hold item-profile individually. The rating data is protected by keeping the item-profile unknown to each other.
 
 |               | User-Related   | Item-Related |
 | ------------- | -------------- | ------------ |
-| Parameters    | $b_u,p_u$      | $b_i,p_i$    |
+| Parameters    | <img src="./images/fig9.png" alt="samples" width="72" height="32" />     | <img src="./images/fig10.png" alt="samples" width="72" height="32" />    |
 | Training mode | Jointly update | Local update |
 |               |                |              |
 
 **User-related parameters:**
 
-​												$\frac{\partial\mathcal{L}}{\partial{b_u}}=-2\sum\limits_{i\in\mathbb{k}_A(u)}e_{ui}-2\sum\limits_{i\in\mathbb{k}_B(u)}e_{ui}+2\lambda{b_u}$
 
-​												$\frac{\partial\mathcal{L}}{\partial{p_u}}=-2\sum\limits_{i\in\mathbb{k}_A(u)}e_{ui}q_i-2\sum\limits_{i\in\mathbb{k}_B(u)}e_{ui}q_i+2\lambda{p_u}$
+<div style="text-align:center", align=center>
+<img src="./images/fig7.png" alt="samples" width="489" height="144" /><br/>
+</div>
+
 
 **Let:**
 
@@ -56,7 +61,7 @@ Then the parameter updates of user-related parameters can be represented as:
 
 The item-related parameters can be updated locally by A,B using the same equation as regular SVD++.
 
-**Compute** $\mu$
+**Compute** <img src="./images/fig11.png" alt="samples" width="22" height="24" />
 
 According to equation, we need to compute µ before the training of SVD++, where µ is the global average rating score. Intutively, µ can be computed using following equation.
 
