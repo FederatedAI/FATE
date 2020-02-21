@@ -32,7 +32,8 @@ from eggroll.api import StoreType
 def init(job_id=None,
          mode: typing.Union[int, WorkMode] = WorkMode.STANDALONE,
          backend: typing.Union[int, Backend] = Backend.EGGROLL,
-         persistent_engine: StoreType = StoreType.LMDB):
+         persistent_engine: StoreType = StoreType.LMDB,
+         set_log_dir=True):
     if isinstance(mode, int):
         mode = WorkMode(mode)
     if isinstance(backend, int):
@@ -41,9 +42,11 @@ def init(job_id=None,
         return
     if job_id is None:
         job_id = str(uuid.uuid1())
-        LoggerFactory.set_directory()
+        if set_log_dir:
+            LoggerFactory.set_directory()
     else:
-        LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), 'logs', job_id))
+        if set_log_dir:
+            LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), 'logs', job_id))
 
     RuntimeInstance.MODE = mode
     RuntimeInstance.Backend = backend

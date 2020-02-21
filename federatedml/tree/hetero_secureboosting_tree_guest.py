@@ -159,7 +159,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
             range_from_zero = True
             for _class in self.classes_:
                 try:
-                    if _class >= 0 and _class < range_from_zero and isinstance(_class, int):
+                    if _class >= 0 and _class < self.num_classes and isinstance(_class, int):
                         continue
                     else:
                         range_from_zero = False

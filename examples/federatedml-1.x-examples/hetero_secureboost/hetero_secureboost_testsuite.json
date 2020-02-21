@@ -70,7 +70,7 @@
           "partition": 10,
           "table_name": "motor_mini_b",
           "namespace": "hetero",
-          "role": "host_0"
+          "role": "guest_0"
       },
       {
           "file": "examples/data/motor_mini_a_1.csv",

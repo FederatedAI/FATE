@@ -1,0 +1,34 @@
+{
+  "data": [
+    {
+      "role": "guest_0",
+      "file":"examples/data/citeulike_a_guest.csv",
+      "table_name":"hetero_citeulike_train_guest",
+      "namespace":"hetero_guest_citeulike",
+      "head": 1,
+      "partition": 10
+    },
+    {
+      "role": "host_0",
+      "file":"examples/data/citeulike_a_host.csv",
+      "table_name":"hetero_citeulike_train_host",
+      "namespace":"hetero_host_citeulike",
+      "head": 1,
+      "partition": 10
+    }
+  ],
+  "tasks": {
+    "gmf_train": {
+      "conf": "test_hetero_gmf.json",
+      "dsl": "test_hetero_gmf_train.dsl"
+    },
+    "gmf_train_eval": {
+      "conf": "test_hetero_gmf_train_then_predict.json",
+      "dsl": "test_hetero_gmf_train_then_predict.dsl"
+    },
+    "gmf-predict": {
+      "conf": "test_gmf_predict.json",
+      "deps": "gmf_train_eval"
+    }
+  }
+}

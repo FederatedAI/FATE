@@ -15,13 +15,13 @@
 #
 import json
 
-import grpc
 import requests
 from flask import jsonify
 from flask import Response
 
 from fate_flow.entity.constant_config import WorkMode
-from fate_flow.settings import DEFAULT_GRPC_OVERALL_TIMEOUT
+from fate_flow.settings import DEFAULT_GRPC_OVERALL_TIMEOUT, CHECK_NODES_IDENTITY, MANAGER_HOST, MANAGER_PORT, \
+    FATE_MANAGER_GET_NODE_INFO
 from fate_flow.settings import stat_logger, HEADERS
 from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_proxy_data_channel
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -58,6 +58,8 @@ def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, src_rol
 def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, json_body,
                overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
     json_body['src_role'] = src_role
+    if CHECK_NODES_IDENTITY:
+        get_node_identity(json_body, src_party_id)
     _packet = wrap_grpc_packet(json_body, method, endpoint, src_party_id, dest_party_id, job_id,
                                overall_timeout=overall_timeout)
     try:
@@ -101,12 +103,13 @@ def request_execute_server(request, execute_host):
         raise Exception('local request error: {}'.format(e))
 
 
-def rpc_error_type(e):
-    err = 'rpc request error {}:\n{}'
-    if "UNKNOWN" in str(e):
-        err = err.format("(server internal error)", e)
-    elif "UNAVAILABLE" in str(e):
-        err = err.format("(proxy service not started)", e)
-    elif "INTERNAL" in str(e):
-        err = err.format("(protocol buffer parsing failed, please check the configuration file)", e)
-    return err
+def get_node_identity(json_body, src_party_id):
+    params = {
+        'partyId': src_party_id
+    }
+    try:
+        response = requests.get(url="http://{}:{}{}".format(MANAGER_HOST, MANAGER_PORT, FATE_MANAGER_GET_NODE_INFO), params=params)
+        json_body['appKey'] = response.json().get('data').get('appKey')
+        json_body['appSecret'] = response.json().get('data').get('appSecret')
+    except Exception as e:
+        raise Exception('get appkey and secret failed: {}'.format(str(e)))

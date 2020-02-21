@@ -16,10 +16,13 @@
 from flask import Flask, request
 
 from arch.api.utils.version_control import version_history
-from fate_flow.settings import stat_logger, SERVINGS, API_VERSION
+from fate_flow.settings import stat_logger, API_VERSION, SERVING_PATH, SERVINGS_ZK_PATH, \
+    USE_CONFIGURATION_CENTER, ZOOKEEPER_HOSTS, SERVER_CONF_PATH
 from fate_flow.utils import publish_model
 from fate_flow.utils.api_utils import get_json_result, federated_api
 from fate_flow.utils.job_utils import generate_job_id
+from fate_flow.utils.node_check_utils import check_nodes
+from fate_flow.utils.setting_utils import CenterConfig
 
 manager = Flask(__name__)
 
@@ -66,9 +69,12 @@ def load_model():
 
 
 @manager.route('/load/do', methods=['POST'])
+@check_nodes
 def do_load_model():
     request_data = request.json
-    request_data["servings"] = SERVINGS
+    request_data["servings"] = CenterConfig.get_settings(path=SERVING_PATH, servings_zk_path=SERVINGS_ZK_PATH,
+                                                         use_zk=USE_CONFIGURATION_CENTER, hosts=ZOOKEEPER_HOSTS,
+                                                         server_conf_path=SERVER_CONF_PATH)
     load_status = publish_model.load_model(config_data=request_data)
     return get_json_result(retcode=(0 if load_status else 101))
 
@@ -78,7 +84,9 @@ def bind_model_service():
     request_config = request.json
     if not request_config.get('servings'):
         # get my party all servings
-        request_config['servings'] = SERVINGS
+        request_config['servings'] = CenterConfig.get_settings(path=SERVING_PATH, servings_zk_path=SERVINGS_ZK_PATH,
+                                                               use_zk=USE_CONFIGURATION_CENTER, hosts=ZOOKEEPER_HOSTS,
+                                                               server_conf_path=SERVER_CONF_PATH)
     if not request_config.get('service_id'):
         return get_json_result(retcode=101, retmsg='no service id')
     bind_status, service_id = publish_model.bind_model_service(config_data=request_config)
@@ -95,4 +103,3 @@ def query_model_version_history():
 def transfer_model():
     model_data = publish_model.download_model(request.json)
     return get_json_result(retcode=0, retmsg="success", data=model_data)
-

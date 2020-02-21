@@ -178,6 +178,7 @@ def exec_toy_example(runtime_config):
 
     raise ValueError("job running time exceed, please check federation or eggroll log")
 
+
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("guest_party_id", type=int, help="please input guest party id")
