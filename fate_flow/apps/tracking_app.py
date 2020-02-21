@@ -274,8 +274,11 @@ def component_output_data_download():
 def component_output_data_table():
     request_data = request.json
     data_views = query_data_view(**request_data)
-    return get_json_result(retcode=0, retmsg='success', data={'table_name': data_views[0].f_table_name,
-                                                              'table_namespace': data_views[0].f_table_namespace})
+    if data_views:
+        return get_json_result(retcode=0, retmsg='success', data={'table_name': data_views[0].f_table_name,
+                                                                  'table_namespace': data_views[0].f_table_namespace})
+    else:
+        return get_json_result(retcode=100, retmsg='No found table, please check if the parameters are correct')
 
 
 # api using by task executor
@@ -305,10 +308,10 @@ def get_component_output_data_table(task_data):
                        role=task_data['role'], party_id=task_data['party_id'])
     job_dsl_parser = job_utils.get_job_dsl_parser_by_job_id(job_id=task_data['job_id'])
     if not job_dsl_parser:
-        raise Exception('can get dag parser')
+        raise Exception('can not get dag parser, please check if the parameters are correct')
     component = job_dsl_parser.get_component_info(task_data['component_name'])
     if not component:
-        raise Exception('can found component')
+        raise Exception('can not found component, please check if the parameters are correct')
     output_dsl = component.get_output()
     output_data_dsl = output_dsl.get('data', [])
     # The current version will only have one data output.

@@ -18,9 +18,7 @@ It is strongly recommended to use docker, which greatly reduces the possibility 
 
 2. Dependent on [docker](https://download.docker.com/linux/) and [docker-compose](https://github.com/docker/compose/releases/tag/1.24.0), docker recommended version is 18.09, docker-compose recommended version is 1.24.0, you can use the following command to verify the docker environment: docker --version and docker-compose --version, docker start and stop and other Please refer to: docker --help.
 
-3. execute follow command by root user (because need to create directories like /var/lib/fate/data).
-
-4. Check whether the 8080, 9060, and 9080 ports are occupied before executing. If you want to execute again, please delete the previous container and image with the docker command.
+3. Check whether the 8080, 9060, and 9080 ports are occupied before executing. If you want to execute again, please delete the previous container and image with the docker command.
 
    please follow the below step:
 
@@ -92,11 +90,9 @@ Http://hostip:8080.
 
 2. Dependent on [docker](https://download.docker.com/linux/) and [docker-compose](https://github.com/docker/compose/releases/tag/1.24.0), docker recommended version is 18.09, docker-compose recommended version is 1.24.0, you can use the following command to verify the docker environment: docker --version and docker-compose --version, docker start and stop and other Please refer to: docker --help.
 
-3. execute follow command by root user (because need to create directories like /var/lib/fate/data).
+3. Check whether the 8080, 9060, and 9080 ports are occupied before executing. If you want to execute again, please delete the previous container and image with the docker command.
 
-4. Check whether the 8080, 9060, and 9080 ports are occupied before executing. If you want to execute again, please delete the previous container and image with the docker command.
-
-5. It takes about 40 minutes to complete the build, please wait for a moment.
+4. It takes about 40 minutes to complete the build, please wait for a moment.
 
    please follow the below step:
 
