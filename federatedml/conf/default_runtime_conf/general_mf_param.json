@@ -1,7 +1,5 @@
 {
-  "optimizer": "sgd",
   "max_iter": 100,
-  "converge_func": "diff",
   "batch_size": 320,
   "learning_rate": 0.01,
   "init_param": {
@@ -19,7 +17,6 @@
     "momentum": 0.9
   },
   "predict_param": {
-    "with_proba": true,
     "threshold": 0.5
   },
   "encrypt_param": {
