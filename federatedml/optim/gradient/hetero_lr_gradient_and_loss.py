@@ -49,7 +49,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         half_wx = data_instances.mapValues(
             lambda v: vec_dot(v.features, model_weights.coef_) + model_weights.intercept_)
         self.forwards = half_wx
-        LOGGER.debug("half_wx: {}".format(half_wx.take(20)))
+        # LOGGER.debug("half_wx: {}".format(half_wx.take(20)))
         self.aggregated_forwards = encrypted_calculator[batch_index].encrypt(half_wx)
 
         for host_forward in self.host_forwards:
