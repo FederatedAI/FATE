@@ -364,6 +364,7 @@ class HeteroStepwise(object):
         while self.n_step <= self.max_step:
             LOGGER.info("Enter step {}".format(self.n_step))
             step_models = set()
+            step_models.add(HeteroStepwise.mask2string(host_mask, guest_mask))
             n_model = 0
             if self.backward:
                 self.step_direction = "backward"
@@ -421,11 +422,11 @@ class HeteroStepwise(object):
             step_best = self.sync_step_best(step_models)
             step_best_mask = HeteroStepwise.string2mask(step_best)
             host_mask, guest_mask = step_best_mask[:j_host], step_best_mask[j_host:]
-            self.record_step_best(step_best, host_mask, guest_mask, train_data)
             LOGGER.debug("step {}, best_host_mask {}, best_guest_mask {}".format(self.n_step, host_mask, guest_mask))
             self.stop_stepwise = self.check_stop(host_mask, guest_mask, old_host_mask, old_guest_mask)
             if self.stop_stepwise:
                 break
+            self.record_step_best(step_best, host_mask, guest_mask, train_data)
             self.n_step += 1
 
         best_model_key = HeteroStepwise.mask2string(host_mask, guest_mask)
