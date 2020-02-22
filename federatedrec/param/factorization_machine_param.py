@@ -135,9 +135,12 @@ class FactorizationParam(BaseParam):
             raise ValueError(
                 "factorization_param's tol {} not supported, should be float type".format(self.tol))
 
-        if not isinstance(self.clip_gradient, (int, float, None)):
+        if self.clip_gradient is None:
+            pass
+        elif not isinstance(self.clip_gradient, (int, float)):
             raise ValueError(
-                "factorization_param's clip_gradient {} not supported, should be float type".format(self.clip_gradient))
+                "factorization_param's clip_gradient {} not supported, should be float or int type".format(
+                    self.clip_gradient))
 
         if type(self.alpha).__name__ not in ["float", 'int']:
             raise ValueError(
@@ -198,6 +201,10 @@ class FactorizationParam(BaseParam):
             raise ValueError(
                 "factorization_param's decay_sqrt {} not supported, should be 'bool'".format(
                     self.decay_sqrt))
+
+        if self.decay < 0:
+            raise ValueError(
+                "factorization_param's decay must be greater or equal to 0")
         return True
 
 
@@ -251,12 +258,8 @@ class HomoFactorizationParam(FactorizationParam):
                 "factorization_param's aggregate_iters {} not supported, should be int type".format(
                     self.aggregate_iters))
 
-        if self.encrypt_param.method == consts.PAILLIER:
-            if self.optimizer != 'sgd':
-                raise ValueError("Paillier encryption mode supports 'sgd' optimizer method only.")
-
-            if self.penalty == consts.L1_PENALTY:
-                raise ValueError("Paillier encryption mode supports 'L2' penalty or None only.")
+        if self.encrypt_param.method is not None:
+            raise ValueError("HomoFM do not support encrypt, encrypt_params's method should set as null only.")
         return True
 
 

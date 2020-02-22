@@ -18,6 +18,7 @@ import numpy as np
 
 from arch.api.utils import log_utils
 from federatedml.util import fate_operator
+from federatedml.optim import activation
 
 LOGGER = log_utils.getLogger()
 
@@ -42,7 +43,6 @@ def fm_func(features, embed):
     feature_list = list(features)
     for feature in feature_list:
         re = np.multiply(np.expand_dims(feature, 1), embed)
-        # LOGGER.info("feature in fm_func:{}embed in fm_func:{}RE:{}".format(feature, embed, re))
         re = np.sum(re, 0)
         part1 = np.sum(np.power(re, 2))
         features_square = np.power(feature, 2)
@@ -60,7 +60,10 @@ class FactorizationGradient(object):
         LOGGER.info("compute loss")
         X, Y = load_data(values)
         fm = fm_func(X, embed)
-        tot_loss = np.log(1 + np.exp(np.multiply(-Y.transpose(), X.dot(w) + fm + intercept))).sum()
+        func = np.vectorize(activation.log_logistic)
+        expo = np.multiply(-Y.transpose(), X.dot(w) + fm + intercept)
+        # tot_loss = np.log(1 + np.exp(np.multiply(-Y.transpose(), X.dot(w) + fm + intercept))).sum()
+        tot_loss = -func(-expo).sum()
         return tot_loss
 
     @staticmethod
@@ -89,39 +92,4 @@ class FactorizationGradient(object):
         if fit_intercept:
             grad = np.concatenate([grad, sum(d)])
 
-        return grad
-
-
-class TaylorFactorizationGradient(object):
-
-    @staticmethod
-    def compute_gradient(values, w, embed, intercept, fit_intercept):
-        LOGGER.debug("Get in compute_gradient")
-        X, Y = load_data(values)
-        batch_size = len(X)
-        if batch_size == 0:
-            return None
-
-        one_d_y = Y.reshape([-1, ])
-        fm = fm_func(X, embed)
-        d = (0.25 * np.array(fate_operator.dot(X, w) + fm + intercept).transpose() + 0.5 * one_d_y * -1)
-
-        grad_batch = X.transpose() * d
-        grad_batch = grad_batch.transpose()
-
-        # m*n*k
-        p1 = np.stack([X[i, :][:, np.newaxis] * np.dot(X[i, :], embed)[np.newaxis, :] for i in range(len(X))])
-        p2 = np.stack([np.power(X[i, :], 2)[:, np.newaxis] * embed for i in range(len(X))])
-        gradvshape = p1.shape
-        grad_v = (p1 - p2).reshape(gradvshape[0], -1)
-        grad_v = grad_v.transpose() * d
-        # n*k
-        grad_v = sum(grad_v.transpose())
-        LOGGER.info("grad_v.shape:{}".format(grad_v.shape))
-        grad_w = sum(grad_batch)
-        LOGGER.info("grad_w.shape:{}".format(grad_w.shape))
-        grad = np.concatenate([grad_w, grad_v.flatten()])
-        if fit_intercept:
-            grad = np.concatenate([grad, sum(d)])
-        LOGGER.debug("Finish compute_gradient")
         return grad

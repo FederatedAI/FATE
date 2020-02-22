@@ -45,12 +45,6 @@
         "host"
       ]
     },
-    "paillier_pubkey": {
-      "src": "arbiter",
-      "dst": [
-        "host"
-      ]
-    },
     "guest_model": {
       "src": "guest",
       "dst": [
@@ -70,24 +64,6 @@
         "host"
       ]
     },
-    "to_encrypt_model": {
-      "src": "host",
-      "dst": [
-        "arbiter"
-      ]
-    },
-    "re_encrypted_model": {
-      "src": "arbiter",
-      "dst": [
-        "host"
-      ]
-    },
-    "re_encrypt_times": {
-      "src": "host",
-      "dst": [
-        "arbiter"
-      ]
-    },
     "is_converge": {
       "src": "arbiter",
       "dst": [
@@ -102,12 +78,6 @@
       ]
     },
     "host_loss": {
-      "src": "host",
-      "dst": [
-        "arbiter"
-      ]
-    },
-    "use_encrypt": {
       "src": "host",
       "dst": [
         "arbiter"
