@@ -46,17 +46,15 @@ class HomoFMArbiter(HomoFMBase):
         super()._init_model(params)
 
     def fit(self, data_instances=None, validate_data=None):
-
-        max_iter = self.max_iter
         validation_strategy = self.init_validation_strategy()
 
         model_shape = -1
         embed_size = self.init_param_obj.embed_size
 
-        while self.n_iter_ < max_iter:
+        while self.n_iter_ < self.max_iter+1:
             suffix = (self.n_iter_,)
 
-            if self.n_iter_ > 0 and self.n_iter_ % self.aggregate_iters == 0:
+            if (self.n_iter_ > 0 and self.n_iter_ % self.aggregate_iters == 0) or self.n_iter_ == self.max_iter:
                 merged_model = self.aggregator.aggregate_and_broadcast(ciphers_dict=None,
                                                                        suffix=suffix)
 
@@ -108,34 +106,3 @@ class HomoFMArbiter(HomoFMBase):
 
     def predict(self, data_instantces=None):
         LOGGER.info(f'Start predict task')
-
-    def run(self, component_parameters=None, args=None):
-        self._init_runtime_parameters(component_parameters)
-        data_sets = args["data"]
-
-        data_statement_dict = list(data_sets.values())[0]
-        need_eval = False
-        for data_key in data_sets:
-            if 'eval_data' in data_sets[data_key]:
-                need_eval = True
-
-        LOGGER.debug("data_sets: {}, data_statement_dict: {}".format(data_sets, data_statement_dict))
-        if self.need_cv:
-            LOGGER.info("Task is cross validation.")
-            self.cross_validation(None)
-            return
-
-        elif not "model" in args:
-            LOGGER.info("Task is fit")
-            self.set_flowid('fit')
-            self.fit()
-            self.set_flowid('predict')
-            self.predict()
-            if need_eval:
-                self.set_flowid('validate')
-                self.predict()
-        else:
-            LOGGER.info("Task is predict")
-            self.load_model(args)
-            self.set_flowid('predict')
-            self.predict()

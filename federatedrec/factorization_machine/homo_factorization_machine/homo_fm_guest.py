@@ -54,12 +54,12 @@ class HomoFMGuest(HomoFMBase):
         model_weights = self.model_weights
 
         degree = 0
-        while self.n_iter_ < self.max_iter:
+        while self.n_iter_ < self.max_iter+1:
             LOGGER.info("iter:{}".format(self.n_iter_))
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
 
             self.optimizer.set_iters(self.n_iter_)
-            if self.n_iter_ > 0 and self.n_iter_ % self.aggregate_iters == 0:
+            if (self.n_iter_ > 0 and self.n_iter_ % self.aggregate_iters == 0) or self.n_iter_ == self.max_iter:
                 # This loop will run after weight has been created,weight will be in LRweights
                 weight = self.aggregator.aggregate_then_get(weight, degree=degree,
                                                             suffix=self.n_iter_)
