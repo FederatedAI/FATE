@@ -34,7 +34,7 @@ Build hetero SVD module through multiple parties.
 ##### 4. [Hetero SVD++](./svdpp/README.md)
 Build hetero SVD++ module through multiple parties.
 
-- Corresponding module name: HeteroSVD
+- Corresponding module name: HeteroSVDPP
 - Data Input: Input DTable of user-item rating matrix data.
 - Model Output: Hetero SVD++ model.
 
