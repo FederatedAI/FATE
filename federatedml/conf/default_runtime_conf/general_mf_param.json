@@ -1,7 +1,6 @@
 {
   "max_iter": 100,
   "batch_size": 320,
-  "learning_rate": 0.01,
   "init_param": {
     "init_method": "random_normal",
     "embed_dim": 20
