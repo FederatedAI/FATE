@@ -1,0 +1,20 @@
+{
+    "module_path":  "federatedrec/matrix_factorization/hetero_matrixfactor",
+    "default_runtime_conf": "matrix_factorization_param.json",
+    "param_class" : "federatedrec/param/matrix_factorization_param.py/HeteroMatrixParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "hetero_mf_client.py/HeteroMFGuest"
+        },
+        "host":
+        {
+            "program": "hetero_mf_client.py/HeteroMFHost"
+        },
+        "arbiter":
+        {
+            "program": "hetero_mf_arbiter.py/HeteroMFArbiter"
+        }
+    }
+}

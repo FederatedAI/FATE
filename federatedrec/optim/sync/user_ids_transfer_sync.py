@@ -17,42 +17,77 @@
 from federatedml.util import consts
 
 
-class Arbiter(object):
-
+class Arbiter:
+    """
+    Arbiter for user ids transfer sync.
+    """
     def register_user_ids_transfer(self, transfer_variable):
+        """
+        Not implemented here.
+        """
         pass
 
 
-class Client(object):
-
+class Client:
+    """
+    Client for user ids transfer sync.
+    """
     def __init__(self):
         self.host_user_ids_sync = None
         self.guest_user_ids_sync = None
 
     def register_user_ids_transfer(self, transfer_variable):
+
+        """
+        Register user id transfer variables.
+        :param transfer_variable:
+        :return:
+        """
         self.host_user_ids_sync = transfer_variable.host_user_ids
         self.guest_user_ids_sync = transfer_variable.guest_user_ids
         return self
 
 
 class Host(Client):
-
+    """
+    Host for user ids transfer sync.
+    """
     def send_host_user_ids(self, user_ids, suffix=tuple()):
+        """
+        Send user ids to guest.
+        :param user_ids:
+        :param suffix:
+        :return:
+        """
         self.host_user_ids_sync.remote(obj=user_ids, role=consts.GUEST, idx=0, suffix=suffix)
 
     def get_guest_user_ids(self, suffix=tuple()):
+        """
+        Receive user ids from guest.
+        :param suffix:
+        :return:
+        """
         return self.guest_user_ids_sync.get(idx=0, suffix=suffix)
 
 
 class Guest(Client):
-
+    """
+    Guest for user ids transfer sync.
+    """
     def send_guest_user_ids(self, user_ids, suffix=tuple()):
+        """
+        Send user ids to host.
+        :param user_ids:
+        :param suffix:
+        :return:
+        """
         self.guest_user_ids_sync.remote(obj=user_ids, role=consts.HOST, idx=0, suffix=suffix)
 
     def get_host_user_ids(self, suffix=tuple()):
+        """
+        Receive user ids from host.
+        :param suffix:
+        :return:
+        """
         host_user_ids = self.host_user_ids_sync.get(idx=0, suffix=suffix)
         return host_user_ids
-        # assert (len(host_user_ids) == 1, "Current MF only support single host party")
-        # return host_user_ids[0]
-
-
