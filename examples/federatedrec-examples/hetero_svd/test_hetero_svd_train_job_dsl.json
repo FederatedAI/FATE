@@ -1,0 +1,42 @@
+{
+    "components" : {
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.train_data"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["dataio"]
+            }
+         },
+        "hetero_svd_0": {
+            "module": "HeteroSVD",
+            "input": {
+                "data": {
+                    "train_data": ["dataio_0.train"]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["hetero_svd"]
+            }
+        },
+        "evaluation_0": {
+              "module": "Evaluation",
+              "input": {
+                "data": {
+                  "data": ["hetero_svd_0.train"]
+                }
+              },
+              "output": {
+                "data": ["evaluate"]
+              },
+              "need_deploy":true
+            }
+    }
+}

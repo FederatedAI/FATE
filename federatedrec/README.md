@@ -22,4 +22,13 @@ Build hetero matrix factorization module through multiple parties.
 - Data Input: Input DTable of user-item rating matrix data.
 - Model Output: Matrix Factorization model.
 
+
+##### 3. [Hetero SVD](./svd/README.md)
+Build hetero SVD module through multiple parties.
+
+- Corresponding module name: HeteroSVD
+- Data Input: Input DTable of user-item rating matrix data.
+- Model Output: Hetero SVD model.
+
+
 More available algorithms are coming soon.
