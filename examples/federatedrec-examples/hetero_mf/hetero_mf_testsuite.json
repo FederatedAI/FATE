@@ -1,0 +1,30 @@
+{
+  "data": [
+    {
+      "file": "examples/data/citeulike_svd_guest_1000.csv",
+      "head": 1,
+      "partition": 10,
+      "table_name": "hetero_svd_guest_1000",
+      "namespace": "hetero_svd_t",
+      "role": "guest_0"
+    },
+    {
+      "file": "examples/data/citeulike_svd_host_1000.csv",
+      "head": 1,
+      "partition": 10,
+      "table_name": "hetero_svd_host_1000",
+      "namespace": "hetero_svd_t",
+        "role": "host_0"
+    }
+  ],
+  "tasks": {
+    "mf": {
+      "conf": "test_hetero_mf_train_job_conf.json",
+      "dsl": "test_hetero_mf_train_job_dsl.json"
+    },
+    "mf-predict": {
+      "conf": "test_predict_conf.json",
+      "deps": "mf"
+    }
+  }
+}

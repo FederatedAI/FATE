@@ -46,7 +46,7 @@ def _attr_injected_meta_class(**attrs):
     return _AttrInjected
 
 
-def segment_transfer_enabled(max_part_size=0x1fffc00):
+def segment_transfer_enabled(max_part_size=0xeffe20):
     """
     a metaclass, indicate objects in this class should be transfer in segments
     Args:

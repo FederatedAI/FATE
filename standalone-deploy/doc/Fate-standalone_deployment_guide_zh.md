@@ -18,9 +18,7 @@
 
 2. 依赖[docker](https://download.docker.com/linux/)和[docker-compose](https://github.com/docker/compose/releases/tag/1.24.0)，docker建议版本为18.09，docker-compose建议版本为1.24.0，您可以使用以下命令验证docker环境：docker --version和docker-compose --version，docker的起停和其他操作请参考docker --help。
 
-3. 用root用户执行部署命令（因为需要在根目录下创建/ var / lib / fate / data等目录）。
-
-4. 执行之前，请检查8080、9060和9080端口是否已被占用。 如果要再次执行，请使用docker命令删除以前的容器和镜像。
+3. 执行之前，请检查8080、9060和9080端口是否已被占用。 如果要再次执行，请使用docker命令删除以前的容器和镜像。
 
    请按照以下步骤操作:
 
@@ -90,11 +88,9 @@ FATE $ bash ./federatedml/test/run_test.sh
 
 2. 依赖[docker](https://download.docker.com/linux/)和[docker-compose](https://github.com/docker/compose/releases/tag/1.24.0)，docker建议版本为18.09，docker-compose建议版本为1.24.0，您可以使用以下命令验证docker环境：docker --version和docker-compose --version，docker的起停和其他操作请参考docker --help。
 
-3. 用root用户执行部署命令（因为需要在根目录下创建/ var / lib / fate / data等目录）。
+3. 执行之前，请检查8080、9060和9080端口是否已被占用。 如果要再次执行，请使用docker命令删除以前的容器和镜像。
 
-4. 执行之前，请检查8080、9060和9080端口是否已被占用。 如果要再次执行，请使用docker命令删除以前的容器和镜像。
-
-5. 大约需要40分钟才能执行完成，请耐心等待。
+4. 大约需要40分钟才能执行完成，请耐心等待。
 
    请按照以下步骤操作:
 
