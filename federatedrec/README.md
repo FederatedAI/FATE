@@ -26,4 +26,34 @@ Build homo factorization machine module through multiple parties.
 - Data Input: Input DTable.
 - Model Output: Factorization Machine model.
 
+##### 3. [Hetero MF(matrix factorization)](./matrix_factorization/README.md)
+Build hetero matrix factorization module through multiple parties.
+
+- Corresponding module name: HeteroMF
+- Data Input: Input DTable of user-item rating matrix data.
+- Model Output: Matrix Factorization model.
+
+
+##### 4. [Hetero SVD](./svd/README.md)
+Build hetero SVD module through multiple parties.
+
+- Corresponding module name: HeteroSVD
+- Data Input: Input DTable of user-item rating matrix data.
+- Model Output: Hetero SVD model.
+
+
+##### 5. [Hetero SVD++](./svdpp/README.md)
+Build hetero SVD++ module through multiple parties.
+
+- Corresponding module name: HeteroSVDPP
+- Data Input: Input DTable of user-item rating matrix data.
+- Model Output: Hetero SVD++ model.
+
+##### 6. [Hetero GMF](./general_mf/README.md)
+Build hetero GMF module through multiple parties.
+
+- Corresponding module name: HeteroGMF
+- Data Input: Input DTable of user-item rating matrix data(using positive data only).
+- Model Output: Hetero GMF model.
+
 More available algorithms are coming soon.

@@ -41,7 +41,8 @@ class FactorizationParam(BaseParam):
     Parameters
     ----------
     penalty : str, 'L1' or 'L2'. default: 'L2'
-        Penalty method used in LR. Please note that, when using encrypted version in HomoLR,
+
+        Penalty method used in FM. Please note that, when using encrypted version in HomoFM,
         'L1' is not supported.
 
     tol : float, default: 1e-5
@@ -139,8 +140,9 @@ class FactorizationParam(BaseParam):
             pass
         elif not isinstance(self.clip_gradient, (int, float)):
             raise ValueError(
-                "factorization_param's clip_gradient {} not supported, should be float or int type".format(
-                    self.clip_gradient))
+
+                "factorization_param's clip_gradient {} not supported, should be float or int type".format(self.clip_gradient))
+
 
         if type(self.alpha).__name__ not in ["float", 'int']:
             raise ValueError(
@@ -162,9 +164,15 @@ class FactorizationParam(BaseParam):
                 raise ValueError(descr + " {} not supported, should be larger than 10 or "
                                          "-1 represent for all data".format(self.batch_size))
 
-        if not isinstance(self.learning_rate, (float, int)):
+
+        if not isinstance(self.learning_rate, (float, int)) :
             raise ValueError(
-                "factorization_param's learning_rate {} not supported, should be float or  int type".format(
+                "factorization_param's learning_rate {} not supported, should be float or int type".format(
+                    self.learning_rate))
+
+        if self.learning_rate <= 0:
+            raise ValueError(
+                "factorization_param's learning_rate {} not supported, should be a positive value".format(
                     self.learning_rate))
 
         self.init_param.check()

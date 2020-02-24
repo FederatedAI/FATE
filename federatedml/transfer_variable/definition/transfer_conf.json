@@ -1400,5 +1400,434 @@
     "guest"
    ]
   }
+ },
+ "HeteroMFTransferVariable": {
+  "guest_uuid": {
+   "src": "guest",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "host_uuid": {
+   "src": "host",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "uuid_conflict_flag": {
+   "src": "arbiter",
+   "dst": [
+    "guest",
+    "host"
+   ]
+  },
+  "dh_pubkey": {
+   "src": "arbiter",
+   "dst": [
+    "guest",
+    "host"
+   ]
+  },
+  "dh_ciphertext_host": {
+   "src": "host",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "dh_ciphertext_guest": {
+   "src": "guest",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "dh_ciphertext_bc": {
+   "src": "arbiter",
+   "dst": [
+    "guest",
+    "host"
+   ]
+  },
+  "guest_model": {
+   "src": "guest",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "host_model": {
+   "src": "host",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "aggregated_model": {
+   "src": "arbiter",
+   "dst": [
+    "guest",
+    "host"
+   ]
+  },
+  "is_converge": {
+   "src": "arbiter",
+   "dst": [
+    "guest",
+    "host"
+   ]
+  },
+  "guest_loss": {
+   "src": "guest",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "host_loss": {
+   "src": "host",
+   "dst": [
+    "arbiter"
+   ]
+  },
+  "host_user_ids": {
+   "src": "host",
+   "dst": [
+    "guest"
+   ]
+  },
+  "guest_user_ids": {
+   "src": "guest",
+   "dst": [
+    "host"
+   ]
+  }
+ },
+ "HeteroFMTransferVariable": {
+    "agg_vx_mul_fg": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "paillier_pubkey": {
+      "src": "arbiter",
+      "dst": [
+        "host",
+        "guest"
+      ]
+    },
+    "batch_data_index": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "host_forward_dict": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "fore_gradient": {
+      "src": "guest",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "capped_fore_gradient": {
+      "src": "arbiter",
+      "dst": [
+        "host",
+        "guest"
+      ]
+    },
+    "guest_gradient": {
+      "src": "guest",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "guest_optim_gradient": {
+      "src": "arbiter",
+      "dst": [
+        "guest"
+      ]
+    },
+    "host_loss_regular": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "loss": {
+      "src": "guest",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "loss_intermediate": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "converge_flag": {
+      "src": "arbiter",
+      "dst": [
+        "host",
+        "guest"
+      ]
+    },
+    "batch_info": {
+      "src": "guest",
+      "dst": [
+        "host",
+        "arbiter"
+      ]
+    },
+    "host_optim_gradient": {
+      "src": "arbiter",
+      "dst": [
+        "host"
+      ]
+    },
+    "host_gradient": {
+      "src": "host",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "host_prob": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "aggregated_forwards": {
+      "src": "guest",
+      "dst": [
+        "arbiter"
+      ]
+    }
+ },
+ "HeteroSVDTransferVariable": {
+    "guest_uuid": {
+      "src": "guest",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "host_uuid": {
+      "src": "host",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "uuid_conflict_flag": {
+      "src": "arbiter",
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "dh_pubkey": {
+      "src": "arbiter",
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "dh_ciphertext_host": {
+      "src": "host",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "dh_ciphertext_guest": {
+      "src": "guest",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "dh_ciphertext_bc": {
+      "src": "arbiter",
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "guest_model": {
+      "src": "guest",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "host_model": {
+      "src": "host",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "aggregated_model": {
+      "src": "arbiter",
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "is_converge": {
+      "src": "arbiter",
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "guest_loss": {
+      "src": "guest",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "host_loss": {
+      "src": "host",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "host_user_ids": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "guest_user_ids": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "host_average_rate": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "guest_average_rate": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    }
+ },
+ "HeteroSVDTransferVariable": {
+    "guest_uuid": {
+      "src": "guest",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "host_uuid": {
+      "src": "host",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "uuid_conflict_flag": {
+      "src": "arbiter",
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "dh_pubkey": {
+      "src": "arbiter",
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "dh_ciphertext_host": {
+      "src": "host",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "dh_ciphertext_guest": {
+      "src": "guest",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "dh_ciphertext_bc": {
+      "src": "arbiter",
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "paillier_pubkey": {
+      "src": "arbiter",
+      "dst": [
+        "host"
+      ]
+    },
+    "guest_model": {
+      "src": "guest",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "host_model": {
+      "src": "host",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "aggregated_model": {
+      "src": "arbiter",
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "is_converge": {
+      "src": "arbiter",
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "guest_loss": {
+      "src": "guest",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "host_loss": {
+      "src": "host",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "host_user_ids": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "guest_user_ids": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "host_average_rate": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "guest_average_rate": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    }
  }
 }
