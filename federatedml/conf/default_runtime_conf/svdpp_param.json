@@ -8,7 +8,7 @@
   },
   "batch_size": 320,
   "init_param": {
-    "init_method": "random_uniform",
+    "init_method": "random_normal",
     "embed_size": 20
   },
   "predict_param": {

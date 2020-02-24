@@ -37,6 +37,7 @@ class Client:
         self.guest_user_ids_sync = None
 
     def register_user_ids_transfer(self, transfer_variable):
+
         """
         Register user id transfer variables.
         :param transfer_variable:

@@ -31,4 +31,18 @@ Build hetero SVD module through multiple parties.
 - Model Output: Hetero SVD model.
 
 
+##### 4. [Hetero SVD++](./svdpp/README.md)
+Build hetero SVD++ module through multiple parties.
+
+- Corresponding module name: HeteroSVDPP
+- Data Input: Input DTable of user-item rating matrix data.
+- Model Output: Hetero SVD++ model.
+
+##### 5. [Hetero GMF](./general_mf/README.md)
+Build hetero GMF module through multiple parties.
+
+- Corresponding module name: HeteroGMF
+- Data Input: Input DTable of user-item rating matrix data(using positive data only).
+- Model Output: Hetero GMF model.
+
 More available algorithms are coming soon.

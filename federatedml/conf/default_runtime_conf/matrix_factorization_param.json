@@ -18,10 +18,6 @@
         "with_proba": true,
         "threshold": 0.5
     },
-    "encrypt_param": {
-        "method": "Paillier",
-        "key_length": 1024
-    },
     "need_run": true,
     "cv_param": {
         "n_splits": 5,
