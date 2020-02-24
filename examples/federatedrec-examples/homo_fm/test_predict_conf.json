@@ -1,0 +1,33 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "job_parameters": {
+        "work_mode": 0,
+        "job_type": "predict",
+        "model_id": "arbiter-10000#guest-10000#host-10000#model",
+        "model_version": ""
+    },
+    "role": {
+        "guest": [10000],
+        "host": [10000],
+        "arbiter": [10000]
+    },
+    "role_parameters": {
+        "guest": {
+            "args": {
+                "data": {
+                    "eval_data": [{"name": "homo_breast_guest", "namespace": "homo_breast_guest"}]
+                }
+            }
+        },
+        "host": {
+            "args": {
+                "data": {
+                    "eval_data": [{"name": "homo_breast_host", "namespace": "homo_breast_host"}]
+                }
+            }
+        }
+    }
+}

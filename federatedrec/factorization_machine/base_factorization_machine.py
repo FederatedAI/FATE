@@ -236,6 +236,7 @@ class BaseFactorizationMachine(ModelBase):
         intercept_ = 0.0
         if self.fit_intercept:
             intercept_ = single_model_obj.intercept
+
         self.model_weights = \
             FactorizationMachineWeights(coef_, embed_, intercept_,
                                         fit_intercept=self.fit_intercept)

@@ -13,6 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-# from federatedrec.factorization_machine import hetero_factorization_machine
-#
-# __all__ = ['hetero_factorization_machine']
+
+from federatedrec.factorization_machine.homo_factorization_machine.homo_fm_arbiter import HomoFMArbiter
+from federatedrec.factorization_machine.homo_factorization_machine.homo_fm_host import HomoFMHost
+from federatedrec.factorization_machine.homo_factorization_machine.homo_fm_guest import HomoFMGuest
+
+__all__ = ["HomoFMHost", "HomoFMGuest", "HomoFMArbiter"]

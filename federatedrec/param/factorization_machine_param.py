@@ -41,6 +41,7 @@ class FactorizationParam(BaseParam):
     Parameters
     ----------
     penalty : str, 'L1' or 'L2'. default: 'L2'
+
         Penalty method used in FM. Please note that, when using encrypted version in HomoFM,
         'L1' is not supported.
 
@@ -139,7 +140,9 @@ class FactorizationParam(BaseParam):
             pass
         elif not isinstance(self.clip_gradient, (int, float)):
             raise ValueError(
+
                 "factorization_param's clip_gradient {} not supported, should be float or int type".format(self.clip_gradient))
+
 
         if type(self.alpha).__name__ not in ["float", 'int']:
             raise ValueError(
@@ -160,6 +163,7 @@ class FactorizationParam(BaseParam):
                     or self.batch_size < consts.MIN_BATCH_SIZE:
                 raise ValueError(descr + " {} not supported, should be larger than 10 or "
                                          "-1 represent for all data".format(self.batch_size))
+
 
         if not isinstance(self.learning_rate, (float, int)) :
             raise ValueError(
@@ -216,10 +220,6 @@ class HomoFactorizationParam(FactorizationParam):
     """
     Parameters
     ----------
-    re_encrypt_batches : int, default: 2
-        Required when using encrypted version HomoFM. Since multiple batch updating coefficient may cause
-        overflow error. The model need to be re-encrypt for every several batches. Please be careful when setting
-        this parameter. Too large batches may cause training failure.
 
     aggregate_iters : int, default: 1
         Indicate how many iterations are aggregated once.
@@ -229,7 +229,6 @@ class HomoFactorizationParam(FactorizationParam):
                  tol=1e-5, alpha=1.0, optimizer='sgd',
                  batch_size=-1, learning_rate=0.01, init_param=FMInitParam(),
                  max_iter=100, early_stop='diff',
-                 encrypt_param=EncryptParam(), re_encrypt_batches=2,
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
                  aggregate_iters=1, multi_class='ovr', validation_freqs=None,
@@ -239,35 +238,21 @@ class HomoFactorizationParam(FactorizationParam):
                                                 batch_size=batch_size,
                                                 learning_rate=learning_rate,
                                                 init_param=init_param, max_iter=max_iter, early_stop=early_stop,
-                                                encrypt_param=encrypt_param, predict_param=predict_param,
+                                                predict_param=predict_param,
                                                 cv_param=cv_param, multi_class=multi_class,
                                                 validation_freqs=validation_freqs,
                                                 decay=decay, decay_sqrt=decay_sqrt,
                                                 clip_gradient=clip_gradient)
-        self.re_encrypt_batches = re_encrypt_batches
         self.aggregate_iters = aggregate_iters
 
     def check(self):
         super().check()
-        if type(self.re_encrypt_batches).__name__ != "int":
-            raise ValueError(
-                "factorization_param's re_encrypt_batches {} not supported, should be int type".format(
-                    self.re_encrypt_batches))
-        elif self.re_encrypt_batches < 0:
-            raise ValueError(
-                "factorization_param's re_encrypt_batches must be greater or equal to 0")
 
         if not isinstance(self.aggregate_iters, int):
             raise ValueError(
                 "factorization_param's aggregate_iters {} not supported, should be int type".format(
                     self.aggregate_iters))
 
-        if self.encrypt_param.method == consts.PAILLIER:
-            if self.optimizer != 'sgd':
-                raise ValueError("Paillier encryption mode supports 'sgd' optimizer method only.")
-
-            if self.penalty == consts.L1_PENALTY:
-                raise ValueError("Paillier encryption mode supports 'L2' penalty or None only.")
         return True
 
 
