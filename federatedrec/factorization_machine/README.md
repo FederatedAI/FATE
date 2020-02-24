@@ -5,6 +5,7 @@ Federated factorization machine computes these cross-party cross-features and th
 
 Here we simplify participants of the federation process into three parties. Party A represents Guest, party B represents Host. Party C, which is also known as “Arbiter,” is a third party that works as coordinator. Party C is responsible for generating private and public keys.
 
+
 ## Heterogeneous FM
 
 The inference process of HeteroFM is shown below:
@@ -19,13 +20,14 @@ In the training process, party A and party B each compute their own linear and c
 
 FM prediction over two parties as:
 <div style="text-align:center", align=center>
-<img src="./images/fig1.png" alt="samples" width="703" height="225" /><br/>
+<img src="./images/fig1.png" alt="samples" width="703" height="225" /><br/></div>
 
 FM loss function over two parties is defined as:
 <div style="text-align:center", align=center>
-<img src="./images/fig2.png" alt="samples" width="694" height="123" /><br/>
+<img src="./images/fig2.png" alt="samples" width="694" height="123" /><br/></div>
 
 where <img src="./images/fig3.png" width="65" height="27" /> is a hyper-parameter.
+
 
 ## Homogeneous FM
 
@@ -33,7 +35,7 @@ As the name suggested, in HomoFM, the feature spaces of guest and hosts are iden
 
 <div style="text-align:center", align=center>
 <img src="./images/HomoFM.png" alt="samples" width="500" height="250" /><br/>
-Figure 1： Federated HomoFM Principle</div> 
+Figure 1： Federated HomoFM Principle</div>
 
 The HomoFM process is shown in Figure 1. Models of Participant 1 and Participant 2 and the rest of them have the same structure.
 Calculate Wp1,Vp1,Wp2,Vp2 and the rest of W and V and update the model. For more detail please refer to https://www.csie.ntu.edu.tw/~b97053/paper/Rendle2010FM.pdf
