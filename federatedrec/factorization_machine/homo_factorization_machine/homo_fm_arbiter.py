@@ -20,7 +20,6 @@ import numpy as np
 
 from arch.api.utils import log_utils
 from federatedml.framework.homo.procedure import aggregator
-from federatedml.framework.homo.procedure import paillier_cipher
 from federatedrec.factorization_machine.fm_model_weight import FactorizationMachineWeights
 from federatedrec.factorization_machine.homo_factorization_machine.homo_fm_base import HomoFMBase
 from federatedml.optim import activation
@@ -39,7 +38,6 @@ class HomoFMArbiter(HomoFMBase):
         self.role = consts.ARBITER
         self.aggregator = aggregator.Arbiter()
         self.model_weights = None
-        self.cipher = paillier_cipher.Arbiter()
         self.host_predict_results = []
 
     def _init_model(self, params):

@@ -26,7 +26,7 @@ from federatedml.optim import activation
 from federatedml.optim.optimizer import optimizer_factory
 from federatedrec.param.factorization_machine_param import HomoFactorizationParam
 from federatedml.protobuf.generated import fm_model_meta_pb2
-from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
+from federatedml.secureprotol import FakeEncrypt
 from federatedml.statistic import data_overview
 from federatedrec.transfer_variable.transfer_class.homo_fm_transfer_variable import HomoFMTransferVariable
 from federatedml.util import consts
