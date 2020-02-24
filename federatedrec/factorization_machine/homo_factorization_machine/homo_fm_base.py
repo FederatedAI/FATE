@@ -47,7 +47,6 @@ class HomoFMBase(BaseFactorizationMachine):
 
     def _init_model(self, params):
         super(HomoFMBase, self)._init_model(params)
-        self.re_encrypt_batches = params.re_encrypt_batches
 
         # if params.encrypt_param.method == consts.PAILLIER:
         #     self.cipher_operator = PaillierEncrypt()
@@ -144,6 +143,5 @@ class HomoFMBase(BaseFactorizationMachine):
                                                           max_iter=self.max_iter,
                                                           early_stop=self.model_param.early_stop,
                                                           fit_intercept=self.fit_intercept,
-                                                          re_encrypt_batches=self.re_encrypt_batches,
                                                           need_one_vs_rest=self.need_one_vs_rest)
         return meta_protobuf_obj

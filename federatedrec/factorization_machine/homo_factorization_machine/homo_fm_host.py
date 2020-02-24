@@ -44,7 +44,6 @@ class HomoFMHost(HomoFMBase):
     def _init_model(self, params):
         super()._init_model(params)
         self.gradient_operator = FactorizationGradient()
-        self.use_encrypt = False
 
     def fit(self, data_instances, validate_data=None):
         LOGGER.debug("Start data count: {}".format(data_instances.count()))
