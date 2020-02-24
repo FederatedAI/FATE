@@ -21,6 +21,10 @@
     "fm": {
       "conf": "test_hetero_fm_train_job_conf.json",
       "dsl": "test_hetero_fm_train_job_dsl.json"
+    },
+    "fm-predict": {
+      "conf": "test_predict_conf.json",
+      "deps": "fm"
     }
   }
 }

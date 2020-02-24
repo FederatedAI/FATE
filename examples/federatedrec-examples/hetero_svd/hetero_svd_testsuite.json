@@ -18,9 +18,13 @@
       }
   ],
   "tasks": {
-    "fm": {
+    "svd": {
       "conf": "test_hetero_svd_train_job_conf.json",
       "dsl": "test_hetero_svd_train_job_dsl.json"
+    },
+    "svd-predict": {
+      "conf": "test_predict_conf.json",
+      "deps": "svd"
     }
   }
 }
