@@ -54,8 +54,6 @@ class HomoFMBase(BaseFactorizationMachine):
         # else:
         #     self.cipher_operator = FakeEncrypt()
 
-        self.cipher_operator = FakeEncrypt()
-
         self.transfer_variable = HomoFMTransferVariable()
         self.aggregator.register_aggregator(self.transfer_variable)
         self.optimizer = optimizer_factory(params)

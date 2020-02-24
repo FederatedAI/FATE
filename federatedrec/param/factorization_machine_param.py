@@ -225,7 +225,7 @@ class HomoFactorizationParam(FactorizationParam):
                  tol=1e-5, alpha=1.0, optimizer='sgd',
                  batch_size=-1, learning_rate=0.01, init_param=FMInitParam(),
                  max_iter=100, early_stop='diff',
-                 encrypt_param=EncryptParam(), re_encrypt_batches=2,
+                 re_encrypt_batches=2,
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
                  aggregate_iters=1, multi_class='ovr', validation_freqs=None,
@@ -235,7 +235,7 @@ class HomoFactorizationParam(FactorizationParam):
                                                 batch_size=batch_size,
                                                 learning_rate=learning_rate,
                                                 init_param=init_param, max_iter=max_iter, early_stop=early_stop,
-                                                encrypt_param=encrypt_param, predict_param=predict_param,
+                                                predict_param=predict_param,
                                                 cv_param=cv_param, multi_class=multi_class,
                                                 validation_freqs=validation_freqs,
                                                 decay=decay, decay_sqrt=decay_sqrt,
@@ -258,8 +258,6 @@ class HomoFactorizationParam(FactorizationParam):
                 "factorization_param's aggregate_iters {} not supported, should be int type".format(
                     self.aggregate_iters))
 
-        if self.encrypt_param.method is not None:
-            raise ValueError("HomoFM do not support encrypt, encrypt_params's method should set as null only.")
         return True
 
 

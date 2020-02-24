@@ -31,7 +31,7 @@ LOGGER = log_utils.getLogger()
 class HomoFMArbiter(HomoFMBase):
     def __init__(self):
         super(HomoFMArbiter, self).__init__()
-        self.re_encrypt_times = []  # Record the times needed for each host
+        # self.re_encrypt_times = []  # Record the times needed for each host
 
         self.loss_history = []
         self.is_converged = False
