@@ -79,7 +79,6 @@
     },
     "algorithm_parameters": {
       "hetero_svd_0": {
-        "penalty": "L2",
         "optimizer": {
             "optimizer": "RMSprop"
         },
@@ -93,7 +92,6 @@
           "init_method": "random_uniform",
           "embed_dim": 10
         },
-        "decay": 0.0,
         "metrics": [
           "AUC",
           "accuracy"
