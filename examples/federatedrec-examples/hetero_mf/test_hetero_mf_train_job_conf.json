@@ -79,24 +79,20 @@
     },
     "algorithm_parameters": {
       "hetero_mf_0": {
-        "penalty": "L2",
         "optimizer": {
-            "optimizer": "RMSprop"
-          },
+          "optimizer": "RMSprop",
+          "decay": 0.0
+        },
         "early_stop": {
           "early_stop": "diff",
           "eps": 1e-10
         },
-        "eps": 1e-5,
-        "alpha": 0.05,
         "max_iter": 60,
-        "converge_func": "diff",
         "batch_size": 1024,
         "init_param": {
           "init_method": "random_uniform",
           "embed_dim": 10
         },
-        "decay": 0.0,
         "metrics": [
           "AUC",
           "accuracy"
