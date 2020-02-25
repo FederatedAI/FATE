@@ -73,34 +73,6 @@ FATE同样为大数据场景提供了分布式运行部署架构版本。从单�
 
 我们提供了一个用于快速搭建训练任务的python脚本作为示例。该脚本位于：["./examples/federatedml-1.x-examples"](./examples/federatedml-1.x-examples)
 
-#### 单机部署版本
-1. 启动单机部署版本的 hetero-lr 任务 (默认)
-> python quick_run.py
-
-
-#### 集群版本
-
-1. Host party:
-> python quick_run.py -r host
-
-2. Guest party:
-> python quick_run.py -r guest
-
-生成的配置文件存储在名为 **user_config** 的新创建的文件夹中
-
-#### 启动预测任务
-
-一旦完成训练任务，就可以开始相应的预测任务。您需要将quick_run.py脚本中的“ TASK”变量修改为“ predict”：
-```
-# 定义任务类型
-# TASK = 'train'
-TASK = 'predict'
-```
-然后，您需要做的就是运行以下命令：
-> python quick_run.py
-
-请注意，仅当您完成训练任务后，执行此命令才有效。
-
 ###  获取模型并检查结果
 FATE提供了名为 fate-flow 的工具用来跟踪组件输出模型或日志。fate-flow的部署和使用可以在 [这里](./fate_flow/README.md) 找到。
 
