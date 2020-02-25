@@ -16,7 +16,8 @@
 from typing import Union
 
 from arch.api import RuntimeInstance
-from arch.api.transfer import Party, Cleaner
+from arch.api.base.utils.clean import Cleaner
+from arch.api.base.utils.party import Party
 
 
 class Variable(object):

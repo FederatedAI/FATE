@@ -14,26 +14,59 @@
 #  limitations under the License.
 #
 
+
+# noinspection PyProtectedMember
 from typing import Iterable
 
-from arch.api.table import eggroll_util
-from eggroll.api import StoreType
-# noinspection PyProtectedMember
-from arch.api.table.eggroll.table_impl import DTable
-from arch.api.table.session import FateSession as TableManger
+from arch.api import WorkMode
+from arch.api.base.session import FateSession
+from arch.api.impl.based_1x.table import DTable
 
 
 # noinspection PyProtectedMember
-class FateSessionImpl(TableManger):
+def build_eggroll_runtime(work_mode: WorkMode, eggroll_session):
+    if work_mode.is_standalone():
+        from eggroll.api.standalone.eggroll import Standalone
+        return Standalone(eggroll_session)
+
+    elif work_mode.is_cluster():
+        from eggroll.api.cluster.eggroll import eggroll_init, _EggRoll
+        if _EggRoll.instance is None:
+            return eggroll_init(eggroll_session)
+    else:
+        raise ValueError(f"work_mode: {work_mode} not supported!")
+
+
+def build_eggroll_session(work_mode: WorkMode, job_id=None, server_conf_path="eggroll/conf/server_conf.json"):
+    if work_mode.is_standalone():
+        from eggroll.api.core import EggrollSession
+        import uuid
+        session_id = job_id or str(uuid.uuid1())
+        session = EggrollSession(session_id=session_id)
+        return session
+    elif work_mode.is_cluster():
+        from eggroll.api.cluster.eggroll import session_init
+        return session_init(session_id=job_id, server_conf_path=server_conf_path)
+    raise ValueError(f"work_mode: {work_mode} not supported!")
+
+
+def build_session(job_id, work_mode: WorkMode, persistent_engine: str):
+    eggroll_session = build_eggroll_session(work_mode=work_mode, job_id=job_id)
+    session = FateSessionImpl(eggroll_session, work_mode, persistent_engine)
+    return session
+
+
+# noinspection PyProtectedMember
+class FateSessionImpl(FateSession):
     """
     manage DTable, use EggRoleStorage as storage
     """
 
-    def __init__(self, eggroll_session, work_mode, persistent_engine=StoreType.LMDB):
-        self._eggroll = eggroll_util.build_eggroll_runtime(work_mode=work_mode, eggroll_session=eggroll_session)
+    def __init__(self, eggroll_session, work_mode, persistent_engine: str):
+        self._eggroll = build_eggroll_runtime(work_mode=work_mode, eggroll_session=eggroll_session)
         self._session_id = eggroll_session.get_session_id()
         self._persistent_engine = persistent_engine
-        TableManger.set_instance(self)
+        FateSession.set_instance(self)
 
     def get_persistent_engine(self):
         return self._persistent_engine

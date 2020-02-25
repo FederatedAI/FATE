@@ -14,15 +14,9 @@
 #  limitations under the License.
 #
 
-from enum import IntEnum, Enum
-from arch.api import NamingPolicy
 
-class EggRollContext(object):
-    def __init__(self, naming_policy : NamingPolicy = NamingPolicy.DEFAULT):
-        self._naming_policy = naming_policy
-
-    def get_naming_policy(self):
-        return self._naming_policy
-
-
-
+ROLES = ["arbiter", "guest", "host"]
+TRANSFER_CONF_PATH = "federatedml/transfer_variable/definition/transfer_conf.json"
+CONF_KEY_LOCAL = "local"
+CONF_KEY_FEDERATION = "federation"
+CONF_KEY_SERVER = "servers"

@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
 import abc
 import datetime
 import threading
@@ -21,30 +20,7 @@ from typing import Iterable
 
 import six
 
-from arch.api import WorkMode, Backend
-from arch.api.table.table import Table
-from eggroll.api import StoreType
-
-
-def build_session(job_id=None,
-                  work_mode: WorkMode = WorkMode.STANDALONE,
-                  backend: Backend = Backend.EGGROLL,
-                  persistent_engine: StoreType = StoreType.LMDB):
-    from arch.api.table import eggroll_util
-    eggroll_session = eggroll_util.build_eggroll_session(work_mode=work_mode, job_id=job_id)
-
-    if backend.is_eggroll():
-        from arch.api.table.eggroll import session_impl
-        session = session_impl.FateSessionImpl(eggroll_session, work_mode, persistent_engine)
-
-    elif backend.is_spark():
-        from arch.api.table.pyspark import session_impl
-        session = session_impl.FateSessionImpl(eggroll_session, work_mode, persistent_engine)
-
-    else:
-        raise ValueError(f"work_mode: {work_mode} not supported")
-
-    return session
+from arch.api.base.table import Table
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -144,7 +120,7 @@ class FateSession(object):
                                                            persistent=True,
                                                            in_place_computing=False)
         for k, v in kv.items():
-            data_meta_table.put(k, json_dumps(v), use_serialize=False)
+            data_meta_table.put(k, json_dumps(v))
 
     @staticmethod
     def get_data_table_meta(key, data_table_name, data_table_namespace):

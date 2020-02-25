@@ -16,8 +16,8 @@
 import asyncio
 from typing import Union, Tuple
 
-from arch.api import StoreType
-from arch.api.transfer import Rubbish, Party, Federation
+from arch.api.base.federation import Rubbish, Party, Federation
+from arch.api.base.utils.store_type import StoreTypes
 from arch.api.utils.log_utils import getLogger
 from eggroll.api.standalone.eggroll import Standalone
 # noinspection PyProtectedMember
@@ -98,7 +98,7 @@ class FederationRuntime(Federation):
         for r in results:
             LOGGER.debug(f"[GET] {self._local_party} getting {r} from {parties}")
             if isinstance(r, tuple):
-                _persistent = r[0] == StoreType.LMDB
+                _persistent = r[0] == StoreTypes.ROLLPAIR_LMDB
                 table = Standalone.get_instance().table(name=r[1], namespace=r[2], persistent=_persistent,
                                                         partition=r[3])
                 rtn.append(table)
