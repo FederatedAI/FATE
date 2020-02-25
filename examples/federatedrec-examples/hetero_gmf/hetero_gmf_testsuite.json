@@ -33,7 +33,7 @@
     },
     "gmf_predict": {
       "conf": "test_gmf_predict.json",
-      "deps": "gmf_train_eval"
+      "deps": "gmf_train"
     }
   }
 }
