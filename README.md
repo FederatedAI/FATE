@@ -48,10 +48,6 @@ FATE also provides a distributed runtime architecture for Big Data scenario. Mig
 
 To deploy FATE on a cluster, please refer to cluster deployment guide: [cluster-deploy](./cluster-deploy).
 
-##### Get source
-```shell
-git clone --recursive git@github.com:FederatedAI/FATE.git
-```
 
 ### KubeFATE installation:
 Using KubeFATE, FATE can be deployed by either docker-compose or Kubernetes:
