@@ -63,6 +63,10 @@
       "conf": "./test_homofm_train_job_conf.json",
       "dsl": "./test_homofm_train_job_dsl.json"
     },
+    "train_predict": {
+      "conf": "./test_predict_conf.json",
+      "deps": "train"
+    },
     "multi_host": {
       "conf": "./test_multi_host_job_conf.json",
       "dsl": "./test_homofm_train_job_dsl.json"

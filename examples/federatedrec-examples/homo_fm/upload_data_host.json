@@ -3,6 +3,6 @@
   "head": 1,
   "partition": 10,
   "work_mode": 0,
-  "table_name": "breast_homo_host",
-  "namespace": "breast_homo_host"
+  "table_name": "homo_breast_host",
+  "namespace": "homo_breast_host"
 }
