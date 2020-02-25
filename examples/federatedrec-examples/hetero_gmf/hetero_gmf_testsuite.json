@@ -15,16 +15,21 @@
       "namespace":"hetero_host_citeulike",
       "head": 1,
       "partition": 10
+    },
+    {
+      "role": "guest_0",
+      "file":"examples/data/citeulike_svd_guest_eval.csv",
+      "table_name":"hetero_citeulike_evaluation",
+      "namespace":"hetero_guest_citeulike",
+      "namespace": "hetero_guest_citeulike",
+      "head": 1,
+      "partition": 10
     }
   ],
   "tasks": {
-    "gmf_train": {
-      "conf": "test_hetero_gmf.json",
-      "dsl": "test_hetero_gmf_train.dsl"
-    },
     "gmf_train_eval": {
-      "conf": "test_hetero_gmf_train_then_predict.json",
-      "dsl": "test_hetero_gmf_train_then_predict.dsl"
+      "conf": "test_hetero_gmf_train_then_predict_conf.json",
+      "dsl": "test_hetero_gmf_train_then_predict_dsl.json"
     },
     "gmf-predict": {
       "conf": "test_gmf_predict.json",
