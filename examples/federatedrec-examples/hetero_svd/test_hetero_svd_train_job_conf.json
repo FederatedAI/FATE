@@ -82,15 +82,12 @@
         "penalty": "L2",
         "optimizer": {
             "optimizer": "RMSprop"
-          },
+        },
         "early_stop": {
           "early_stop": "diff",
           "eps": 1e-10
         },
-        "eps": 1e-5,
-        "alpha": 0.05,
         "max_iter": 50,
-        "converge_func": "diff",
         "batch_size": 1024,
         "init_param": {
           "init_method": "random_uniform",
@@ -100,7 +97,10 @@
         "metrics": [
           "AUC",
           "accuracy"
-        ]
+        ],
+        "predict_param": {
+          "threshold": 0.5
+        }
       }
     }
 }

@@ -27,11 +27,11 @@
     }
   ],
   "tasks": {
-    "gmf_train_eval": {
+    "gmf_train": {
       "conf": "test_hetero_gmf_train_then_predict_conf.json",
       "dsl": "test_hetero_gmf_train_then_predict_dsl.json"
     },
-    "gmf-predict": {
+    "gmf_predict": {
       "conf": "test_gmf_predict.json",
       "deps": "gmf_train_eval"
     }
