@@ -30,6 +30,7 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 class HeteroKmeansTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
+        self.arbiter_tol = self._create_variable(name='arbiter_tol')
         self.cluster_evaluation = self._create_variable(name='cluster_evaluation')
         self.cluster_result = self._create_variable(name='cluster_result')
         self.guest_dist = self._create_variable(name='guest_dist')

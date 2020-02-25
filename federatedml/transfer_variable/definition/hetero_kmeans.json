@@ -24,6 +24,13 @@
         "arbiter"
       ]
     },
+    "arbiter_tol": {
+      "src": "arbiter",
+      "dst": [
+        "host",
+        "guest"
+      ]
+    },
     "cluster_result": {
       "src": "arbiter",
       "dst": [

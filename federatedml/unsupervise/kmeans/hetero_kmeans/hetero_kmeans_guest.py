@@ -29,31 +29,33 @@ class HeteroKmeansGuest(BaseKmeansModel):
     def __init__(self):
         super(HeteroKmeansGuest, self).__init__()
 
-    def educlDist(self, x, c):
-        return sqrt(sum(power(c - x, 2)))
+    @staticmethod
+    def educl_dist(x, centriod_list, rand):
+        result = []
+        for c in centriod_list:
+            result.append(sqrt(sum(power(c - x, 2))) + rand)
+        return result
 
-    def get_centriod(self):
+    def get_centroid(self):
         pass
 
     def tol_cal(self, clu1, clu2):
         return diff
 
-
     def fit(self, data_instances):
         LOGGER.info("Enter hetero_kmenas_guest fit")
         self._abnormal_detection(data_instances)
         # self.header = self.get_header(data_instances)
-        centriod = self.get_centriod()
+        centroids = self.get_centriod()
         while self.n_iter_ < self.max_iter:
-
-            for i in range(0, self.k):
-                d = functools.partial(self.educlDist, c=centriod[i])
-                dist = data_instances.mapValue(d)
-                dist_r = dist.mapValue(lambda x: x + random.random())
-                self.transfer_variable.guest_dist.remote(dist_r, role=consts.ARBITER, idx=-1, suffix=self.n_iter_)
-
+            d = functools.partial(self.educl_dist, centriod_list=centroids, rand=random.random())
+            dist_all = data_instances.mapValue(d)
+            self.transfer_variable.guest_dist.remote(dist_all, role=consts.ARBITER, idx=-1, suffix=self.n_iter_)
             centriod_new = self.transfer_variable.cluster_result.get(idx=-1, suffix=self.n_iter_)
-            guest_tol = self.tol_cal(centriod, centriod_new)
+            guest_tol = self.tol_cal(centroids, centriod_new)
+            centroids = centriod_new
             self.transfer_variable.guest_tol.remote(guest_tol, role=consts.ARBITER, idx=-1, suffix=self.n_iter_)
-
+            n = self.transfer_variable.arbiter_tol.get(idx=-1, suffix=self.n_iter_)
+            if n < self.tol:
+                break
             self.n_iter_ += 1
