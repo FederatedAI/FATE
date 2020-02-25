@@ -18,6 +18,7 @@ import os
 from flask import Flask, request
 
 from arch.api import session
+from fate_flow.manager.data_manager import query_data_view
 from fate_flow.settings import stat_logger
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils import detect_utils, job_utils
@@ -48,8 +49,20 @@ def download_upload(access_module):
     if access_module == "upload":
         data['table_name'] = request_config["table_name"]
         data['namespace'] = request_config["namespace"]
+        data_table = session.get_data_table(name=request_config["table_name"], namespace=request_config["namespace"])
+        count = data_table.count()
+        if count and request_config.get('drop', 2) == 2:
+            return get_json_result(retcode=100,
+                                   retmsg='The data table already exists, table data count:{}.'
+                                          'If you still want to continue uploading, please add the parameter -drop. '
+                                          '0 means not to delete and continue uploading, '
+                                          '1 means to upload again after deleting the table'.format(
+                                       count))
+        elif count and request_config.get('drop', 2) == 1:
+            data_table.destroy()
     job_dsl, job_runtime_conf = gen_data_access_job_config(request_config, access_module)
-    job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = JobController.submit_job({'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf})
+    job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = JobController.submit_job(
+        {'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf})
     data.update({'job_dsl_path': job_dsl_path, 'job_runtime_conf_path': job_runtime_conf_path,
                  'board_url': board_url, 'logs_directory': logs_directory})
     return get_json_result(job_id=job_id, data=data)
@@ -79,14 +92,18 @@ def get_upload_history():
 def get_upload_info(jobs_run_conf):
     data = []
     for job_id, job_run_conf in jobs_run_conf.items():
+        data_views = query_data_view(job_id=job_id, component_name='upload_0')[0]
         info = {}
         table_name = job_run_conf["table_name"][0]
         namespace = job_run_conf["namespace"][0]
+
         partition = job_run_conf["partition"][0]
         info["upload_info"] = {
             "table_name": table_name,
             "namespace": namespace,
             "partition": partition,
+            'upload_count': data_views.f_table_count_upload,
+            'actual_count': data_views.f_table_count_actual
         }
         info["notes"] = job_run_conf["notes"]
         info["meta"] = session.get_data_table_metas(table_name, namespace)
