@@ -1715,7 +1715,7 @@
       ]
     }
  },
- "HeteroSVDTransferVariable": {
+ "HeteroSVDppTransferVariable": {
     "guest_uuid": {
       "src": "guest",
       "dst": [
@@ -1758,12 +1758,6 @@
       "src": "arbiter",
       "dst": [
         "guest",
-        "host"
-      ]
-    },
-    "paillier_pubkey": {
-      "src": "arbiter",
-      "dst": [
         "host"
       ]
     },

@@ -6,16 +6,12 @@
         "momentum": 0.9
     },
     "max_iter": 100,
-    "converge_func": "diff",
-    "re_encrypt_batches": 2,
-    "party_weight": 1,
     "batch_size": 320,
     "init_param": {
         "init_method": "uniform",
         "embed_size": 20
     },
     "predict_param": {
-        "with_proba": true,
         "threshold": 0.5
     },
     "need_run": true,
