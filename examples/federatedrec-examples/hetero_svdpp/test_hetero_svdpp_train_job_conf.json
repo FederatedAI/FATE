@@ -71,7 +71,7 @@
             "optimizer": "Adam",
             "learning_rate": 0.05
           },
-        "max_iter": 2,
+        "max_iter": 10,
         "converge_func": "diff",
         "batch_size": -1,
         "init_param": {
