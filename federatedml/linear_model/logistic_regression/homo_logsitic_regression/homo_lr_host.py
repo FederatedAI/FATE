@@ -59,7 +59,7 @@ class HomoLRHost(HomoLRBase):
 
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)
-        validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        # validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 
         pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, suffix=('fit',))
         if self.use_encrypt:
@@ -129,7 +129,7 @@ class HomoLRHost(HomoLRBase):
                     model_weights = LogisticRegressionWeights(w, self.fit_intercept)
                 batch_num += 1
 
-            validation_strategy.validate(self, self.n_iter_)
+            # validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
 
         LOGGER.info("Finish Training task, total iters: {}".format(self.n_iter_))

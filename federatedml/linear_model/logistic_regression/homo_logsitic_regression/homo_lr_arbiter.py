@@ -52,7 +52,7 @@ class HomoLRArbiter(HomoLRBase):
         host_has_no_cipher_ids = [idx for idx, cipher in host_ciphers.items() if cipher is None]
         self.re_encrypt_times = self.cipher.set_re_cipher_time(host_ciphers)
         max_iter = self.max_iter
-        validation_strategy = self.init_validation_strategy()
+        # validation_strategy = self.init_validation_strategy()
 
         while self.n_iter_ < max_iter + 1:
             suffix = (self.n_iter_,)
@@ -86,7 +86,7 @@ class HomoLRArbiter(HomoLRBase):
                                   host_ciphers_dict=host_ciphers,
                                   re_encrypt_batches=self.re_encrypt_batches)
             
-            validation_strategy.validate(self, self.n_iter_)
+            # validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
 
         LOGGER.info("Finish Training task, total iters: {}".format(self.n_iter_))
