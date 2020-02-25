@@ -17,7 +17,7 @@
 from arch.api import session
 from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric, MetricMeta
-from federatedml.evaluation.evaluation import IC
+from federatedml.evaluation.evaluation import IC, IC_Approx
 from federatedml.model_selection.stepwise.step import Step
 from federatedml.statistic import data_overview
 from federatedml.transfer_variable.transfer_class.stepwise_transfer_variable import StepwiseTransferVariable
@@ -125,16 +125,17 @@ class HeteroStepwise(object):
         return dfe
 
     def get_step_best(self, step_models):
-        best_score = -1
+        best_score = None
         best_model = ""
         for model in step_models:
             model_info = self.models_trained[model]
             score = model_info.get_score()
             if score is None:
                 continue
-            if best_score < 0 or score < best_score:
+            if best_score is None or score < best_score:
                 best_score = score
                 best_model = model
+        LOGGER.info(f"step {self.n_step}, best model {best_model}, best_score {best_score}")
         return best_model
 
     def drop_one(self, mask_to_drop):
@@ -187,7 +188,7 @@ class HeteroStepwise(object):
             intercept_model = LinearRegression(fit_intercept=False)
             trained_model = intercept_model.fit(X, y)
             pred = trained_model.predict(X)
-            loss = metrics.mean_squared_error(y, pred)
+            loss = metrics.mean_squared_error(y, pred) / 2
         elif model.model_name == 'HeteroLogisticRegression':
             intercept_model = LogisticRegression(penalty='none', fit_intercept=False)
             trained_model = intercept_model.fit(X, y)
@@ -308,7 +309,7 @@ class HeteroStepwise(object):
         model.tracker.set_metric_meta(metric_name=metric_name, metric_namespace=self.metric_namespace,
                                       metric_meta=MetricMeta(name=metric_name, metric_type=self.metric_type,
                                                              extra_metas=metas))
-        LOGGER.debug(f"metric_name: {metric_name}, metas: {metas}")
+        LOGGER.info(f"metric_name: {metric_name}, metas: {metas}")
         return
 
     def sync_step_best(self, step_models):
@@ -351,6 +352,12 @@ class HeteroStepwise(object):
         pred_result = model.predict(new_data)
         return pred_result
 
+    def get_IC_computer(self, model):
+        if model.model_name == 'HeteroLinearRegression':
+            return IC_Approx()
+        else:
+            return IC()
+
     def run(self, component_parameters, train_data, test_data, model):
         LOGGER.info("Enter stepwise")
         self._init_model(component_parameters)
@@ -359,7 +366,7 @@ class HeteroStepwise(object):
             host_mask, guest_mask = np.ones(j_host, dtype=bool), np.ones(j_guest, dtype=bool)
         else:
             host_mask, guest_mask = np.zeros(j_host, dtype=bool), np.zeros(j_guest, dtype=bool)
-        self.IC_computer = IC()
+        self.IC_computer = self.get_IC_computer(model)
         self._set_k()
         while self.n_step <= self.max_step:
             LOGGER.info("Enter step {}".format(self.n_step))
@@ -396,13 +403,14 @@ class HeteroStepwise(object):
                     if self.n_step == 0:
                         forward_gen = [[host_mask, guest_mask]]
                     else:
-                        forward_gen = zip(forward_host, forward_guest)
+                        forward_gen = itertools.product(list(forward_host), list(forward_guest))
                 else:
                     forward_gen = itertools.chain(zip(forward_host, itertools.cycle([guest_mask])),
                                                   zip(itertools.cycle([host_mask]), forward_guest))
                 for curr_host_mask, curr_guest_mask in forward_gen:
                     model_key = HeteroStepwise.mask2string(curr_host_mask, curr_guest_mask)
                     step_models.add(model_key)
+                    LOGGER.info(f"step {self.n_step}, mask {model_key}")
                     if model_key not in self.models_trained:
                         if self.role == consts.ARBITER:
                             feature_mask = None
