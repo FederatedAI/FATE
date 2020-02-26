@@ -37,7 +37,10 @@ class HeteroKmenasArbiter(BaseKmeansModel):
         while self.n_iter_ < self.max_iter and n > self.tol:
             p1 = self.transfer_variable.guest_dist.get(idx=0, suffix=self.n_iter_)
             p2 = self.transfer_variable.host_dist.get(idx=-1, suffix=self.n_iter_)
-            dist_sum = p1.join(p2, lambda v1, v2: v1 + v2)
+            dist_sum = p1
+            for i in range(0,len(p2)):
+                dist_sum = dist_sum.join(p2[i], lambda v1, v2: np.array(v1) + np.array(v2))
+
             new_centroid = self.centroid_assign(dist_sum)
             self.transfer_variable.cluster_result.remote(new_centroid, role=consts.GUEST, idx=-1, suffix=self.n_iter_)
             self.transfer_variable.cluster_result.remote(new_centroid, role=consts.HOST, idx=-1, suffix=self.n_iter_)
