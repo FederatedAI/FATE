@@ -12,7 +12,7 @@ FATE官方网站：<https://fate.fedai.org/>
 
 ## FATE中的联邦学习算法
 
-FATE目前支持三种联邦学习算法：横向联邦学习、纵向联邦学习以及迁移学习。算法细节请参考文档 [federatedml](./federatedml) 。
+FATE目前支持三种类型联邦学习算法：横向联邦学习、纵向联邦学习以及迁移学习。算法细节请参考文档 [federatedml](./federatedml) 。
 
 
 ## 安装教程
