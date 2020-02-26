@@ -1,6 +1,6 @@
 ## Homo Factorization Machine Configuration Usage Guide.
 
-This section introduces the dsl and conf for usage of uploading dataset and training model of HeteroFM.
+This section introduces the dsl and conf for usage of uploading dataset and training model of HomoFM.
 
 #### Upload data
 
