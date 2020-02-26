@@ -24,7 +24,7 @@ from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import Job
 from fate_flow.driver.task_executor import TaskExecutor
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.settings import API_VERSION
+from fate_flow.settings import API_VERSION, HTTP_PORT
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
 from fate_flow.utils.job_utils import query_task, get_job_dsl_parser, query_job
@@ -311,7 +311,7 @@ class TaskScheduler(object):
                     '-r', role,
                     '-p', party_id,
                     '-c', task_config_path,
-                    '--job_server', '{}:{}'.format(task_config['job_server']['ip'], task_config['job_server']['http_port']),
+                    '--job_server', '{}:{}'.format(get_lan_ip(), HTTP_PORT),
                 ]
             elif backend.is_spark():
                 if "SPARK_HOME" not in os.environ:
@@ -345,7 +345,7 @@ class TaskScheduler(object):
                     '-p', party_id,
                     '-c', task_config_path,
                     '--job_server',
-                    '{}:{}'.format(task_config['job_server']['ip'], task_config['job_server']['http_port']),
+                    '{}:{}'.format(get_lan_ip(), HTTP_PORT),
                 ]
             else:
                 raise ValueError(f"${backend} supported")

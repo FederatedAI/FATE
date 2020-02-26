@@ -1,0 +1,83 @@
+{
+    "initiator": {
+      "role": "guest",
+      "party_id": 10000
+    },
+    "job_parameters": {
+      "work_mode": 0
+    },
+    "role": {
+      "guest": [
+        10000
+      ],
+      "host": [
+        10000
+      ],
+      "arbiter": [
+        10000
+      ]
+    },
+    "role_parameters": {
+      "guest": {
+        "args": {
+          "data": {
+            "train_data": [
+              {
+                "name": "hetero_svd_guest_1000",
+                "namespace": "hetero_svd_t"
+              }
+            ]
+          }
+        },
+        "dataio_0": {
+          "with_label": [false],
+          "label_idx": [0],
+          "label_type": ["int"],
+          "output_format": ["sparse"],
+          "missing_fill": [true],
+          "outlier_replace": [true],
+          "data_type": ["str"]
+        },
+        "evaluation_0": {
+            "eval_type": ["binary"],
+            "pos_label": [1]
+        }
+      },
+      "host": {
+        "args": {
+          "data": {
+            "train_data": [
+              {
+                "name": "hetero_svd_host_1000",
+                "namespace": "hetero_svd_t"
+              }
+            ]
+          }
+        },
+        "dataio_0": {
+          "with_label": [false],
+          "output_format": ["sparse"],
+          "outlier_replace": [true],
+          "data_type": ["str"]
+        },
+        "evaluation_0": {
+	          "need_run": [false]
+	      }
+    }
+    },
+    "algorithm_parameters": {
+      "hetero_svdpp_0": {
+        "optimizer": {
+            "optimizer": "Adam",
+            "learning_rate": 0.05
+          },
+        "max_iter": 10,
+        "converge_func": "diff",
+        "batch_size": -1,
+        "init_param": {
+          "init_method": "random_normal",
+          "embed_dim": 10
+        }
+      }
+    }
+}
