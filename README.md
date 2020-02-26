@@ -10,16 +10,6 @@ FATE (Federated AI Technology Enabler) is an open-source project initiated by We
 
 <https://fate.fedai.org>
 
-## Getting Involved
-
-*  Join our maillist [Fate-FedAI Group IO](https://groups.io/g/Fate-FedAI). You can ask questions and participate in the development discussion.
-
-*  For any frequently asked questions, you can check in [FAQ](https://github.com/FederatedAI/FATE/wiki).
-
-*  Please report bugs by submitting [issues](https://github.com/FederatedAI/FATE/issues). 
-
-*  Submit contributions using [pull requests](https://github.com/FederatedAI/FATE/pulls)
-
 
 ## Federated Learning Algorithms In FATE
 FATE already supports a number of federated learning algorithms, including vertical federated learning, horizontal federated learning, and federated transfer learning. More details are available in [federatedml](./federatedml).
@@ -85,6 +75,18 @@ FATE provides some API documents in [doc-api](./doc/api/), including federatedml
 How to develop your federated learning algorithm using FATE? you can see FATE develop guide document in [develop-guide](./doc/develop_guide.md)
 ### Other doc
 FATE also provides many other documents in [doc](./doc/). These documents can help you understand FATE better.
+
+## Getting Involved
+
+*  Join our maillist [Fate-FedAI Group IO](https://groups.io/g/Fate-FedAI). You can ask questions and participate in the development discussion.
+
+*  For any frequently asked questions, you can check in [FAQ](https://github.com/FederatedAI/FATE/wiki).
+
+*  Please report bugs by submitting [issues](https://github.com/FederatedAI/FATE/issues). 
+
+*  Submit contributions using [pull requests](https://github.com/FederatedAI/FATE/pulls)
+
+
 ### License
 [Apache License 2.0](LICENSE)
 
