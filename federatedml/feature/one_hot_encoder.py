@@ -54,6 +54,8 @@ class OneHotInnerParam(object):
         self.transform_names = self.header
 
     def add_transform_indexes(self, transform_indexes):
+        if transform_indexes is None:
+            return
         for idx in transform_indexes:
             if idx >= len(self.header):
                 LOGGER.warning("Adding a index that out of header's bound")
@@ -63,6 +65,8 @@ class OneHotInnerParam(object):
                 self.transform_names.append(self.header[idx])
 
     def add_transform_names(self, transform_names):
+        if transform_names is None:
+            return
         for col_name in transform_names:
             idx = self.col_name_maps.get(col_name)
             if idx is None:
@@ -213,7 +217,6 @@ class OneHotEncoder(ModelBase):
             feature = instance.features
             for col_idx, col_name in zip(inner_param.transform_indexes, inner_param.transform_names):
                 pair_obj = col_maps.get(col_name)
-                # feature_value = math.ceil(feature[col_idx])
                 int_feature = math.ceil(feature[col_idx])
                 if int_feature != feature[col_idx]:
                     raise ValueError("Onehot input data support integer only")

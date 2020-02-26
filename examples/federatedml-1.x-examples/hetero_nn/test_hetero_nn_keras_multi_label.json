@@ -87,7 +87,7 @@
       "metrics": [
         "accuracy"
       ],
-      "epochs": 500,
+      "epochs": 100,
       "tol": -1
     }
   }
