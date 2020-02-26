@@ -10,17 +10,6 @@ FATE (Federated AI Technology Enabler) 是微众银行AI部门发起的开源项
 
 FATE官方网站：<https://fate.fedai.org/>
 
-## 参与到FATE开源社区
-
-*  加入我们的邮件列表 [Fate-FedAI Group IO](https://groups.io/g/Fate-FedAI)，您可以提出问题或参与讨论。
-
-*  对于常见问题, 我们为您提供了 [FAQ文档](https://github.com/WeBankFinTech/FATE/wiki)。
-
-*  请使用 [issues](https://github.com/WeBankFinTech/FATE/issues) 提交BUG。
-
-*  请使用 [pull requests](https://github.com/WeBankFinTech/FATE/pulls) 提交、贡献代码。
-
-
 ## FATE中的联邦学习算法
 
 FATE目前支持三种联邦学习算法：横向联邦学习、纵向联邦学习以及迁移学习。算法细节请参考文档 [federatedml](./federatedml) 。
@@ -85,5 +74,18 @@ FATE在 [doc-api](./doc/api/) 文件夹中提供了API文档，包括 federatedm
 
 ### 其他文档
 FATE还在 [doc](./doc/) 中提供了许多其他文档。这些文档可以帮助您更好地了解FATE。
+
+
+## 参与到FATE开源社区
+
+*  加入我们的邮件列表 [Fate-FedAI Group IO](https://groups.io/g/Fate-FedAI)，您可以提出问题或参与讨论。
+
+*  对于常见问题, 我们为您提供了 [FAQ文档](https://github.com/WeBankFinTech/FATE/wiki)。
+
+*  请使用 [issues](https://github.com/WeBankFinTech/FATE/issues) 提交BUG。
+
+*  请使用 [pull requests](https://github.com/WeBankFinTech/FATE/pulls) 提交、贡献代码。
+
+
 ### License
 [Apache License 2.0](LICENSE)
