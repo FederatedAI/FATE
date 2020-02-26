@@ -190,7 +190,7 @@ class HeteroStepwise(object):
             pred = trained_model.predict(X)
             loss = metrics.mean_squared_error(y, pred) / 2
         elif model.model_name == 'HeteroLogisticRegression':
-            intercept_model = LogisticRegression(penalty='none', fit_intercept=False)
+            intercept_model = LogisticRegression(penalty='l1', C = 1e8, fit_intercept=False, solver='liblinear')
             trained_model = intercept_model.fit(X, y)
             pred = trained_model.predict(X)
             loss = metrics.log_loss(y, pred)
