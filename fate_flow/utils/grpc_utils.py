@@ -18,7 +18,9 @@ import json
 from arch.api.proto import proxy_pb2, proxy_pb2_grpc
 from arch.api.proto import fate_meta_pb2
 import grpc
-from fate_flow.settings import ROLE, IP, GRPC_PORT, PROXY_HOST, PROXY_PORT, HEADERS, DEFAULT_GRPC_OVERALL_TIMEOUT, stat_logger
+
+from fate_flow.settings import ROLE, IP, GRPC_PORT, PROXY_HOST, PROXY_PORT, HEADERS, DEFAULT_GRPC_OVERALL_TIMEOUT, \
+    audit_logger
 from fate_flow.entity.runtime_config import RuntimeConfig
 
 
@@ -60,9 +62,9 @@ class UnaryServicer(proxy_pb2_grpc.DataTransferServiceServicer):
         param = bytes.decode(bytes(json.dumps(param_dict), 'utf-8'))
 
         action = getattr(requests, method.lower(), None)
-        stat_logger.info('rpc receive: {}'.format(packet))
+        audit_logger.info('rpc receive: {}'.format(packet))
         if action:
-            stat_logger.info("rpc receive: {} {}".format(get_url(_suffix), param))
+            audit_logger.info("rpc receive: {} {}".format(get_url(_suffix), param))
             resp = action(url=get_url(_suffix), data=param, headers=HEADERS)
         else:
             pass
