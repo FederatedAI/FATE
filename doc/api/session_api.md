@@ -783,11 +783,11 @@ In-place computing does not apply.
 
 **Parameters:**
 
-+ **func** ((k1, v1), (k2, v2) -> (k, v)): The function applying to each partition.
++ **func** (iter -> v): The function applying to each partition.
 
 **Returns:**
 
-+ **table** (Table): A new table containing results.
++ **table** (Table): A new table with k-v: uuid key - v.
 
 **Example:**
 
@@ -801,6 +801,38 @@ In-place computing does not apply.
 >>> b = a.mapPartitions(f)
 >>> list(b.collect())
 [(3, 6), (4, 9)]
+```
+
+### mapPartitions2
+
+```python
+mapPartitions2(func)
+```
+
+Returns a new Table by applying a function to each partition of this Table.
+
+In-place computing does not apply.
+
+**Parameters:**
+
++ **func** (iter -> (k, v)): The function applying to each partition.
+
+**Returns:**
+
++ **table** (Table): A new table containing results.
+
+**Example:**
+
+``` python
+>>> a = session.parallelize([1, 2, 3, 4, 5], partition=2)
+>>> def f(iterator):
+>>> 	s = 0
+>>> 	for k, v in iterator:
+>>> 		s += v
+>>> 	return [(s, s)]
+>>> b = a.mapPartitions2(f)
+>>> list(b.collect())
+[(6, 6), (9, 9)]
 ```
 
 ### mapValue
@@ -840,7 +872,7 @@ In-place computing applies if enabled.
 ### reduce
 
 ```python
-reduce(func)
+reduce(func, key_func=None)
 ```
 
 Reduces the elements of this Table using the specified associative binary operator. Currently reduces partitions locally.
@@ -850,6 +882,7 @@ In-place computing does not apply.
 **Parameters:**
 
 + **func** (v1, v2 -> v): Binary operator applying to each 2-tuple.
++ **key_func** (k -> k'): Unary operator applying to each key to obtain the real key for reducing. Defaults to None, which means reducing on original key.
 
 **Returns:**
 
