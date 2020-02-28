@@ -29,7 +29,8 @@ class HeteroKmenasArbiter(BaseKmeansModel):
         self.model_param = KmeansParam()
 
     def centroid_assign(self, dist_sum):
-        pass
+        new_centroid = dist_sum.mapValues(lambda x: x.index(max(x)))
+        return new_centroid
 
     def fit(self, data_instances=None):
         LOGGER.info("Enter hetero linear model arbiter fit")
@@ -38,18 +39,22 @@ class HeteroKmenasArbiter(BaseKmeansModel):
             p1 = self.transfer_variable.guest_dist.get(idx=0, suffix=self.n_iter_)
             p2 = self.transfer_variable.host_dist.get(idx=-1, suffix=self.n_iter_)
             dist_sum = p1
-            for i in range(0,len(p2)):
-                dist_sum = dist_sum.join(p2[i], lambda v1, v2: np.array(v1) + np.array(v2))
+            for p in p2:
+                dist_sum = dist_sum.join(p, lambda v1, v2: np.array(v1) + np.array(v2))
 
             new_centroid = self.centroid_assign(dist_sum)
-            self.transfer_variable.cluster_result.remote(new_centroid, role=consts.GUEST, idx=-1, suffix=self.n_iter_)
-            self.transfer_variable.cluster_result.remote(new_centroid, role=consts.HOST, idx=-1, suffix=self.n_iter_)
+            self.transfer_variable.cluster_result.remote(new_centroid, role=consts.GUEST, idx=0, suffix=(self.n_iter_,))
+            self.transfer_variable.cluster_result.remote(new_centroid, role=consts.HOST, idx=-1, suffix=(self.n_iter_,))
 
-            tol1 = self.transfer_variable.guest_tol.get(idx=0, suffix=self.n_iter_)
-            tol2 = self.transfer_variable.host_tol.get(idx=0, suffix=self.n_iter_)
-            n = tol1 + tol2
-            self.transfer_variable.arbiter_tol.remote(n, role=consts.HOST, idx=-1)
-            self.transfer_variable.arbiter_tol.remote(n, role=consts.GUEST, idx=-1)
+            tol1 = self.transfer_variable.guest_tol.get(idx=0, suffix=(self.n_iter_,))
+            tol2 = self.transfer_variable.host_tol.get(idx=-1, suffix=(self.n_iter_,))
+            tol_sum = tol1
+            for t in tol2:
+                tol_sum += t
+
+            self.transfer_variable.arbiter_tol.remote(np.sqrt(tol_sum), role=consts.HOST, idx=-1)
+            self.transfer_variable.arbiter_tol.remote(np.sqrt(tol_sum), role=consts.GUEST, idx=0)
+
             if n < self.tol:
                 break
             self.n_iter_ += 1

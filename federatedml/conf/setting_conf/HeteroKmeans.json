@@ -6,11 +6,11 @@
     {
         "guest":
         {
-            "program": "hetero_kmeans_guest.py/HeteroKmeansGuest"
+            "program": "hetero_kmeans_client.py/HeteroKmeansGuest"
         },
         "host":
         {
-            "program": "hetero_kmeans_host.py/HeteroKmeansHost"
+            "program": "hetero_kmeans_client.py/HeteroKmeansHost"
         },
         "arbiter":
         {
