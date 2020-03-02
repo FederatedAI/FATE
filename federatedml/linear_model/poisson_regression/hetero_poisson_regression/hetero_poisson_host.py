@@ -114,6 +114,7 @@ class HeteroPoissonHost(HeteroPoissonBase):
         ----------
         data_instances:DTable of Instance, input data
         """
+        self.transfer_variable.host_partial_prediction.disable_auto_clean()
         LOGGER.info("Start predict ...")
         data_features = self.transform(data_instances)
         pred_host = self.compute_mu(data_features, self.model_weights.coef_, self.model_weights.intercept_)
