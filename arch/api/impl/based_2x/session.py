@@ -21,6 +21,7 @@ from typing import Iterable
 from arch.api import WorkMode
 from arch.api.base.session import FateSession
 from arch.api.impl.based_2x.table import DTable
+from eggroll.roll_pair.roll_pair import RollPairContext
 
 
 def build_eggroll_session(job_id, work_mode: WorkMode):
@@ -35,8 +36,8 @@ def build_eggroll_session(job_id, work_mode: WorkMode):
 
 
 def build_eggroll_runtime(eggroll_session):
-    from eggroll.roll_pair.roll_pair import runtime_init
-    return runtime_init(session=eggroll_session)
+    rpc = RollPairContext(session=eggroll_session)
+    return rpc
 
 
 def build_session(job_id, work_mode: WorkMode, persistent_engine: str):
