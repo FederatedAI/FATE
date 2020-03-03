@@ -122,7 +122,8 @@ class Submitter(object):
         if substitute is not None:
             d = recursive_update(d, substitute)
         d['job_parameters']['work_mode'] = self._work_mode
-        d['initiator']['party_id'] = roles["guest"][0]
+        initiator_role = d['initiator']['role']
+        d['initiator']['party_id'] = roles[initiator_role][0]
         for r in ["guest", "host", "arbiter"]:
             if r in d['role']:
                 for idx in range(len(d['role'][r])):

@@ -18,12 +18,15 @@ from arch.api import session
 from arch.api.utils.log_utils import LoggerFactory
 from fate_flow.entity.metric import MetricType, MetricMeta, Metric
 from federatedml.framework.homo.blocks import secure_aggregator, loss_scatter, has_converged
+from federatedml.framework.homo.blocks.base import HomoTransferBase
+from federatedml.framework.homo.blocks.has_converged import HasConvergedTransVar
+from federatedml.framework.homo.blocks.loss_scatter import LossScatterTransVar
+from federatedml.framework.homo.blocks.secure_aggregator import SecureAggregatorTransVar
 from federatedml.model_base import ModelBase
 from federatedml.nn.homo_nn import nn_model
 from federatedml.nn.homo_nn.nn_model import restore_nn_model
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.param.homo_nn_param import HomoNNParam
-from federatedml.transfer_variable.transfer_class.homo_transfer_variable import HomoTransferVariable
 from federatedml.util import consts
 
 Logger = LoggerFactory.get_logger()
@@ -44,11 +47,11 @@ def _extract_meta(model_dict: dict):
 
 
 class HomoNNBase(ModelBase):
-    def __init__(self):
+    def __init__(self, trans_var):
         super().__init__()
         self.model_param = HomoNNParam()
         self.aggregate_iteration_num = 0
-        self.transfer_variable = HomoTransferVariable()
+        self.transfer_variable = trans_var
 
     def _suffix(self):
         return self.aggregate_iteration_num,
@@ -61,13 +64,13 @@ class HomoNNBase(ModelBase):
 
 class HomoNNServer(HomoNNBase):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, trans_var):
+        super().__init__(trans_var=trans_var)
         self.model = None
 
-        self.aggregator = secure_aggregator.Server()
-        self.loss_scatter = loss_scatter.Server()
-        self.has_converged = has_converged.Server()
+        self.aggregator = secure_aggregator.Server(self.transfer_variable.secure_aggregator_trans_var)
+        self.loss_scatter = loss_scatter.Server(self.transfer_variable.loss_scatter_trans_var)
+        self.has_converged = has_converged.Server(self.transfer_variable.has_converged_trans_var)
 
     def _init_model(self, param: HomoNNParam):
         super()._init_model(param=param)
@@ -116,11 +119,11 @@ class HomoNNServer(HomoNNBase):
 
 class HomoNNClient(HomoNNBase):
 
-    def __init__(self):
-        super().__init__()
-        self.aggregator = secure_aggregator.Client()
-        self.loss_scatter = loss_scatter.Client()
-        self.has_converged = has_converged.Client()
+    def __init__(self, trans_var):
+        super().__init__(trans_var=trans_var)
+        self.aggregator = secure_aggregator.Client(self.transfer_variable.secure_aggregator_trans_var)
+        self.loss_scatter = loss_scatter.Client(self.transfer_variable.loss_scatter_trans_var)
+        self.has_converged = has_converged.Client(self.transfer_variable.has_converged_trans_var)
 
         self.nn_model = None
 
@@ -227,21 +230,55 @@ class HomoNNClient(HomoNNBase):
         self.nn_model = restore_nn_model(self.config_type, model_obj.saved_model_bytes)
 
 
-class HomoNNHost(HomoNNClient):
+# server: Arbiter, clients: Guest and Hosts
+class HomoNNDefaultTransVar(HomoTransferBase):
+    def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST), prefix=None):
+        super().__init__(server=server, clients=clients, prefix=prefix)
+        self.secure_aggregator_trans_var = SecureAggregatorTransVar(server=server, clients=clients, prefix=self.prefix)
+        self.loss_scatter_trans_var = LossScatterTransVar(server=server, clients=clients, prefix=self.prefix)
+        self.has_converged_trans_var = HasConvergedTransVar(server=server, clients=clients, prefix=self.prefix)
+
+
+class HomoNNDefaultClient(HomoNNClient):
 
     def __init__(self):
-        super().__init__()
-        self.role = consts.HOST
+        super().__init__(trans_var=HomoNNDefaultTransVar())
 
 
-class HomoNNGuest(HomoNNClient):
+class HomoNNDefaultServer(HomoNNServer):
+    def __init__(self):
+        super().__init__(trans_var=HomoNNDefaultTransVar())
+
+
+# server: Arbiter, clients: Guest and Hosts
+class HomoNNGuestServerTransVar(HomoNNDefaultTransVar):
+    def __init__(self, server=(consts.GUEST,), clients=(consts.HOST,), prefix=None):
+        super().__init__(server=server, clients=clients, prefix=prefix)
+
+
+class HomoNNGuestServerClient(HomoNNClient):
+    def __init__(self):
+        super().__init__(trans_var=HomoNNGuestServerTransVar())
+
+
+class HomoNNGuestServerServer(HomoNNServer):
 
     def __init__(self):
-        super().__init__()
-        self.role = consts.GUEST
+        super().__init__(trans_var=HomoNNGuestServerTransVar())
 
 
-class HomoNNArbiter(HomoNNServer):
+# server: Arbiter, clients: Hosts
+class HomoNNArbiterSubmitTransVar(HomoNNDefaultTransVar):
+    def __init__(self, server=(consts.ARBITER,), clients=(consts.HOST,), prefix=None):
+        super().__init__(server=server, clients=clients, prefix=prefix)
+
+
+class HomoNNArbiterSubmitClient(HomoNNClient):
     def __init__(self):
-        super().__init__()
-        self.role = consts.ARBITER
+        super().__init__(trans_var=HomoNNArbiterSubmitTransVar())
+
+
+class HomoNNArbiterSubmitServer(HomoNNServer):
+
+    def __init__(self):
+        super().__init__(trans_var=HomoNNArbiterSubmitTransVar())
