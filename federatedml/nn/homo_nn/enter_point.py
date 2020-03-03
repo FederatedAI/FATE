@@ -13,13 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import functools
-import typing
 
 from arch.api import session
 from arch.api.utils.log_utils import LoggerFactory
 from fate_flow.entity.metric import MetricType, MetricMeta, Metric
-from federatedml.framework.homo.procedure import aggregator
+from federatedml.framework.homo.blocks import secure_aggregator, loss_scatter, has_converged
 from federatedml.model_base import ModelBase
 from federatedml.nn.homo_nn import nn_model
 from federatedml.nn.homo_nn.nn_model import restore_nn_model
@@ -46,36 +44,33 @@ def _extract_meta(model_dict: dict):
 
 
 class HomoNNBase(ModelBase):
-
     def __init__(self):
         super().__init__()
         self.model_param = HomoNNParam()
-        self.role = None
-
-    def _init_model(self, param):
-        super()._init_model(param)
-        self.param = param
-
+        self.aggregate_iteration_num = 0
         self.transfer_variable = HomoTransferVariable()
-        secure_aggregate = param.secure_aggregate
-        self.aggregator = aggregator.with_role(role=self.role,
-                                               transfer_variable=self.transfer_variable,
-                                               enable_secure_aggregate=secure_aggregate)
-        self.max_iter = param.max_iter
-        self.aggregator_iter = 0
 
-    def _iter_suffix(self):
-        return self.aggregator_iter,
+    def _suffix(self):
+        return self.aggregate_iteration_num,
+
+    def _init_model(self, param: HomoNNParam):
+        self.param = param
+        self.enable_secure_aggregate = param.secure_aggregate
+        self.max_aggregate_iteration_num = param.max_iter
 
 
-class HomoNNArbiter(HomoNNBase):
+class HomoNNServer(HomoNNBase):
 
     def __init__(self):
         super().__init__()
-        self.role = consts.ARBITER
+        self.model = None
 
-    def _init_model(self, param):
-        super(HomoNNArbiter, self)._init_model(param)
+        self.aggregator = secure_aggregator.Server()
+        self.loss_scatter = loss_scatter.Server()
+        self.has_converged = has_converged.Server()
+
+    def _init_model(self, param: HomoNNParam):
+        super()._init_model(param=param)
         early_stop = self.model_param.early_stop
         self.converge_func = converge_func_factory(early_stop.converge_func, early_stop.eps).is_converge
         self.loss_consumed = early_stop.converge_func != "weight_diff"
@@ -92,56 +87,63 @@ class HomoNNArbiter(HomoNNBase):
                              metric_namespace='train',
                              metric_data=[Metric(iter_num, loss)])
 
-    def _check_monitored_status(self):
-        loss = self.aggregator.aggregate_loss(suffix=self._iter_suffix())
-        Logger.info(f"loss at iter {self.aggregator_iter}: {loss}")
-        self.callback_loss(self.aggregator_iter, loss)
+    def _is_converged(self):
+        loss = self.loss_scatter.weighted_loss_mean(suffix=self._suffix())
+        Logger.info(f"loss at iter {self.aggregate_iteration_num}: {loss}")
+        self.callback_loss(self.aggregate_iteration_num, loss)
         if self.loss_consumed:
-            converge_args = (loss,) if self.loss_consumed else (self.aggregator.model,)
-            return self.aggregator.send_converge_status(self.converge_func,
-                                                        converge_args=converge_args,
-                                                        suffix=self._iter_suffix())
+            is_converged = self.converge_func(loss)
+        else:
+            is_converged = self.converge_func(self.model)
+        self.has_converged.remote_converge_status(is_converge=is_converged, suffix=self._suffix())
+        return is_converged
 
     def fit(self, data_inst):
-        while self.aggregator_iter < self.max_iter:
-            self.aggregator.aggregate_and_broadcast(suffix=self._iter_suffix())
+        while self.aggregate_iteration_num < self.max_aggregate_iteration_num:
+            self.model = self.aggregator.aggregate_model(suffix=self._suffix())
+            self.aggregator.send_aggregated_model(model=self.model, suffix=self._suffix())
 
-            if self._check_monitored_status():
-                Logger.info(f"early stop at iter {self.aggregator_iter}")
+            if self._is_converged():
+                Logger.info(f"early stop at iter {self.aggregate_iteration_num}")
                 break
-            self.aggregator_iter += 1
+            self.aggregate_iteration_num += 1
         else:
-            Logger.warn(f"reach max iter: {self.aggregator_iter}, not converged")
+            Logger.warn(f"reach max iter: {self.aggregate_iteration_num}, not converged")
 
     def save_model(self):
-        return self.aggregator.model
+        return self.model
 
 
 class HomoNNClient(HomoNNBase):
 
     def __init__(self):
         super().__init__()
+        self.aggregator = secure_aggregator.Client()
+        self.loss_scatter = loss_scatter.Client()
+        self.has_converged = has_converged.Client()
 
-    def _init_model(self, param):
-        super(HomoNNClient, self)._init_model(param)
+        self.nn_model = None
+
+    def _init_model(self, param: HomoNNParam):
+        super()._init_model(param=param)
         self.batch_size = param.batch_size
-        self.aggregate_every_n_epoch = 1
+        self.aggregate_every_n_epoch = param.aggregate_every_n_epoch
         self.nn_define = param.nn_define
         self.config_type = param.config_type
         self.optimizer = param.optimizer
         self.loss = param.loss
         self.metrics = param.metrics
+
         self.data_converter = nn_model.get_data_converter(self.config_type)
         self.model_builder = nn_model.get_nn_builder(config_type=self.config_type)
 
-    def _check_monitored_status(self, data, epoch_degree):
+    def _is_converged(self, data, epoch_degree):
         metrics = self.nn_model.evaluate(data)
-        Logger.info(f"metrics at iter {self.aggregator_iter}: {metrics}")
+        Logger.info(f"metrics at iter {self.aggregate_iteration_num}: {metrics}")
         loss = metrics["loss"]
-        self.aggregator.send_loss(loss=loss,
-                                  degree=epoch_degree,
-                                  suffix=self._iter_suffix())
-        return self.aggregator.get_converge_status(suffix=self._iter_suffix())
+        self.loss_scatter.send_loss(loss=(loss, epoch_degree), suffix=self._suffix())
+        is_converged = self.has_converged.get_converge_status(suffix=self._suffix())
+        return is_converged
 
     def __build_nn_model(self, input_shape):
         self.nn_model = self.model_builder(input_shape=input_shape,
@@ -157,27 +159,28 @@ class HomoNNClient(HomoNNBase):
 
         epoch_degree = float(len(data))
 
-        while self.aggregator_iter < self.max_iter:
-            Logger.info(f"start {self.aggregator_iter}_th aggregation")
+        while self.aggregate_iteration_num < self.max_aggregate_iteration_num:
+            Logger.info(f"start {self.aggregate_iteration_num}_th aggregation")
 
             # train
             self.nn_model.train(data, aggregate_every_n_epoch=self.aggregate_every_n_epoch)
 
             # send model for aggregate, then set aggregated model to local
-            modify_func: typing.Callable = functools.partial(self.aggregator.aggregate_then_get,
-                                                             degree=epoch_degree * self.aggregate_every_n_epoch,
-                                                             suffix=self._iter_suffix())
-            self.nn_model.modify(modify_func)
+            self.aggregator.send_model(model=self.nn_model.get_model_weights(),
+                                       degree=epoch_degree * self.aggregate_every_n_epoch,
+                                       suffix=self._suffix())
+            weights = self.aggregator.get_aggregated_model(suffix=self._suffix())
+            self.nn_model.set_model_weights(weights=weights)
 
             # calc loss and check convergence
-            if self._check_monitored_status(data, epoch_degree):
-                Logger.info(f"early stop at iter {self.aggregator_iter}")
+            if self._is_converged(data, epoch_degree):
+                Logger.info(f"early stop at iter {self.aggregate_iteration_num}")
                 break
 
-            Logger.info(f"role {self.role} finish {self.aggregator_iter}_th aggregation")
-            self.aggregator_iter += 1
+            Logger.info(f"role {self.role} finish {self.aggregate_iteration_num}_th aggregation")
+            self.aggregate_iteration_num += 1
         else:
-            Logger.warn(f"reach max iter: {self.aggregator_iter}, not converged")
+            Logger.warn(f"reach max iter: {self.aggregate_iteration_num}, not converged")
 
     def export_model(self):
         return _build_model_dict(meta=self._get_meta(), param=self._get_param())
@@ -186,7 +189,7 @@ class HomoNNClient(HomoNNBase):
         from federatedml.protobuf.generated import nn_model_meta_pb2
         meta_pb = nn_model_meta_pb2.NNModelMeta()
         meta_pb.params.CopyFrom(self.model_param.generate_pb())
-        meta_pb.aggregate_iter = self.aggregator_iter
+        meta_pb.aggregate_iter = self.aggregate_iteration_num
         return meta_pb
 
     def _get_param(self):
@@ -220,7 +223,7 @@ class HomoNNClient(HomoNNBase):
         meta_obj = _extract_meta(model_dict)
         self.model_param.restore_from_pb(meta_obj.params)
         self._init_model(self.model_param)
-        self.aggregator_iter = meta_obj.aggregate_iter
+        self.aggregate_iteration_num = meta_obj.aggregate_iter
         self.nn_model = restore_nn_model(self.config_type, model_obj.saved_model_bytes)
 
 
@@ -236,3 +239,9 @@ class HomoNNGuest(HomoNNClient):
     def __init__(self):
         super().__init__()
         self.role = consts.GUEST
+
+
+class HomoNNArbiter(HomoNNServer):
+    def __init__(self):
+        super().__init__()
+        self.role = consts.ARBITER

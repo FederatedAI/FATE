@@ -33,6 +33,15 @@ class Server(object):
         parties = self._client_parties if parties is None else parties
         return self._scatter.get_parties(parties=parties, suffix=suffix)
 
+    def weighted_loss_mean(self, suffix):
+        losses = self.get_losses(suffix=suffix)
+        total_loss = 0.0
+        total_weight = 0.0
+        for loss, weight in losses:
+            total_loss += loss
+            total_weight += weight
+        return total_loss / total_weight
+
 
 class Client(object):
     def __init__(self, trans_var: LossScatterTransVar = LossScatterTransVar()):
