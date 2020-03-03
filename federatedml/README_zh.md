@@ -10,9 +10,12 @@ Federatedml模块包括许多常见机器学习算法的实现，以及必要的
 
 4. 安全协议：提供了多种安全协议，以进行更安全的多方交互计算。
 
-![federatedml_structure](/Users/jsy/Downloads/federatedml_structure.png)
 
-<center>Figure 1： Federated Machine Learning Framework</center>
+ <div style="text-align:center", align=center>
+  <img src="../doc/images/federatedml_structure.png" alt="federatedml structure"/><br/>
+  Figure 1： Federated Machine Learning Framework
+</div>
+
 ## 算法清单
 
 1. **DataIO**
