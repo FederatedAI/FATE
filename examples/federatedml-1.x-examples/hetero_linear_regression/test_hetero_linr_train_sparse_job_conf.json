@@ -55,7 +55,7 @@
       },
       "dataio_0": {
         "with_label": [false],
-        "output_format": ["dense"],
+        "output_format": ["sparse"],
         "outlier_replace": [false]
       },
       "evaluation_0": {
