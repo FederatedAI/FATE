@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from deprecated import deprecated
 
 from arch.api.utils import log_utils
 from federatedml.framework.homo.blocks import random_padding_cipher
@@ -23,16 +22,16 @@ LOGGER = log_utils.getLogger()
 
 class Arbiter(random_padding_cipher.Server):
 
-    @deprecated(reason="could be remove")
+    # noinspection PyProtectedMember
     def register_random_padding_cipher(self, transfer_variables):
-        return self
+        pass
 
 
 class Client(random_padding_cipher.Client):
 
-    @deprecated(reason="could be removed")
+    # noinspection PyProtectedMember
     def register_random_padding_cipher(self, transfer_variables):
-        return self
+        pass
 
 
 Guest = Client

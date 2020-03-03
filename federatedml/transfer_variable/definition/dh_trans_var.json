@@ -1,15 +1,6 @@
 {
-  "RandomPaddingCipherTransferVariable": {
-    "UUIDTransferVariable.uuid": {
-      "src": [
-        "arbiter"
-      ],
-      "dst": [
-        "guest",
-        "host"
-      ]
-    },
-    "DHTransferVariable.p_power_r": {
+  "DHTransVar": {
+    "p_power_r": {
       "src": [
         "guest",
         "host"
@@ -18,7 +9,7 @@
         "arbiter"
       ]
     },
-    "DHTransferVariable.p_power_r_bc": {
+    "p_power_r_bc": {
       "src": [
         "arbiter"
       ],
@@ -27,7 +18,7 @@
         "host"
       ]
     },
-    "DHTransferVariable.pubkey": {
+    "pubkey": {
       "src": [
         "arbiter"
       ],

@@ -1,6 +1,6 @@
 {
-  "HasConvergedTransferVariable": {
-    "has_converged": {
+  "UUIDTransVar": {
+    "uuid": {
       "src": [
         "arbiter"
       ],

@@ -1,6 +1,6 @@
 {
-  "DHTransferVariable": {
-    "p_power_r": {
+  "AggregatorTransVar": {
+    "ModelScatterTransVar.client_model": {
       "src": [
         "guest",
         "host"
@@ -9,16 +9,7 @@
         "arbiter"
       ]
     },
-    "p_power_r_bc": {
-      "src": [
-        "arbiter"
-      ],
-      "dst": [
-        "guest",
-        "host"
-      ]
-    },
-    "pubkey": {
+    "ModelBroadcasterTransVar.server_model": {
       "src": [
         "arbiter"
       ],

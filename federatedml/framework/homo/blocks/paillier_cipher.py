@@ -15,8 +15,9 @@
 #
 from typing import Union
 
+from arch.api import RuntimeInstance
 from arch.api.utils import log_utils
-from federatedml.framework.homo.blocks.base import _BlockBase, HomoTransferBase, TransferInfo
+from federatedml.framework.homo.blocks.base import HomoTransferBase
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.secureprotol.fate_paillier import PaillierPublicKey
 from federatedml.util import consts
@@ -24,9 +25,9 @@ from federatedml.util import consts
 LOGGER = log_utils.getLogger()
 
 
-class PaillierCipherTransferVariable(HomoTransferBase):
-    def __init__(self, info: TransferInfo = None):
-        super().__init__(info, server=(consts.ARBITER,), clients=(consts.HOST,))
+class PaillierCipherTransVar(HomoTransferBase):
+    def __init__(self, server=(consts.ARBITER,), clients=(consts.HOST,), prefix=None):
+        super().__init__(server=server, clients=clients, prefix=prefix)
         self.use_encrypt = self.create_client_to_server_variable(name="use_encrypt")
         self.pailler_pubkey = self.create_server_to_client_variable(name="pailler_pubkey")
         self.re_encrypt_times = self.create_client_to_server_variable(name="re_encrypt_times")
@@ -34,17 +35,20 @@ class PaillierCipherTransferVariable(HomoTransferBase):
         self.model_re_encrypted = self.create_server_to_client_variable(name="model_re_encrypted")
 
 
-class Server(_BlockBase):
+def _get_parties(roles):
+    return RuntimeInstance.FEDERATION.roles_to_parties(roles=roles)
 
-    def __init__(self, transfer_variable: PaillierCipherTransferVariable = PaillierCipherTransferVariable()):
-        super().__init__(transfer_variable)
-        self._use_encrypt = transfer_variable.use_encrypt
-        self._pailler_pubkey = transfer_variable.pailler_pubkey
-        self._client_parties = self._use_encrypt.roles_to_parties(self._use_encrypt.authorized_src_roles)
 
-        self._re_encrypt_times = transfer_variable.re_encrypt_times
-        self._model_to_re_encrypt = transfer_variable.model_to_re_encrypt
-        self._model_re_encrypted = transfer_variable.model_re_encrypted
+class Server(object):
+
+    def __init__(self, trans_var: PaillierCipherTransVar = PaillierCipherTransVar()):
+        self._use_encrypt = trans_var.use_encrypt
+        self._pailler_pubkey = trans_var.pailler_pubkey
+        self._re_encrypt_times = trans_var.re_encrypt_times
+        self._model_to_re_encrypt = trans_var.model_to_re_encrypt
+        self._model_re_encrypted = trans_var.model_re_encrypted
+
+        self._client_parties = trans_var.client_parties
 
     def keygen(self, key_length, suffix=tuple()) -> dict:
         use_cipher = self._use_encrypt.get_parties(parties=self._client_parties, suffix=suffix)
@@ -97,17 +101,16 @@ class Server(_BlockBase):
             batch_iter_num += re_encrypt_batches
 
 
-class Client(_BlockBase):
+class Client(object):
 
-    def __init__(self, transfer_variable: PaillierCipherTransferVariable = PaillierCipherTransferVariable()):
-        super().__init__(transfer_variable)
-        self._use_encrypt = transfer_variable.use_encrypt
-        self._pailler_pubkey = transfer_variable.pailler_pubkey
-        self._re_encrypt_times = transfer_variable.re_encrypt_times
-        self._model_to_re_encrypt = transfer_variable.model_to_re_encrypt
-        self._model_re_encrypted = transfer_variable.model_re_encrypted
+    def __init__(self, trans_var: PaillierCipherTransVar = PaillierCipherTransVar()):
+        self._use_encrypt = trans_var.use_encrypt
+        self._pailler_pubkey = trans_var.pailler_pubkey
+        self._re_encrypt_times = trans_var.re_encrypt_times
+        self._model_to_re_encrypt = trans_var.model_to_re_encrypt
+        self._model_re_encrypted = trans_var.model_re_encrypted
 
-        self._server_parties = self._use_encrypt.roles_to_parties(self._use_encrypt.authorized_dst_roles)
+        self._server_parties = trans_var.server_parties
 
     def gen_paillier_pubkey(self, enable, suffix=tuple()) -> Union[PaillierPublicKey, None]:
         self._use_encrypt.remote_parties(obj=enable, parties=self._server_parties, suffix=suffix)

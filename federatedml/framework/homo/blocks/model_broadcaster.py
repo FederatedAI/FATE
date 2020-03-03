@@ -13,32 +13,31 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-from federatedml.framework.homo.blocks.base import _BlockBase, HomoTransferBase, TransferInfo
-
-
-class ModelBroadcasterTransferVariable(HomoTransferBase):
-    def __init__(self, info: TransferInfo = None):
-        super().__init__(info)
-        self.server_model = self.create_client_to_server_variable(name="server_model")
+from federatedml.framework.homo.blocks.base import HomoTransferBase
+from federatedml.util import consts
 
 
-class Server(_BlockBase):
-    def __init__(self, transfer_variable: ModelBroadcasterTransferVariable = ModelBroadcasterTransferVariable()):
-        super().__init__(transfer_variable)
-        self._broadcaster = transfer_variable.server_model
+class ModelBroadcasterTransVar(HomoTransferBase):
+    def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST), prefix=None):
+        super().__init__(server=server, clients=clients, prefix=prefix)
+        self.server_model = self.create_server_to_client_variable(name="server_model")
+
+
+class Server(object):
+    def __init__(self, trans_var: ModelBroadcasterTransVar = ModelBroadcasterTransVar()):
+        self._broadcaster = trans_var.server_model
+        self._client_parties = trans_var.client_parties
 
     def send_model(self, model, parties=None, suffix=tuple()):
-        if parties is None:
-            parties = self._broadcaster.roles_to_parties(self._broadcaster.authorized_dst_roles)
+        parties = self._client_parties if parties is None else parties
         return self._broadcaster.remote_parties(obj=model, parties=parties, suffix=suffix)
 
 
-class Client(_BlockBase):
+class Client(object):
 
-    def __init__(self, transfer_variable: ModelBroadcasterTransferVariable = ModelBroadcasterTransferVariable()):
-        super().__init__(transfer_variable)
-        self._broadcaster = transfer_variable.server_model
+    def __init__(self, trans_var: ModelBroadcasterTransVar = ModelBroadcasterTransVar()):
+        self._broadcaster = trans_var.server_model
+        self._server_parties = trans_var.server_parties
 
     def get_model(self, suffix=tuple()):
-        return self._broadcaster.get(suffix=suffix)[0]
+        return self._broadcaster.get_parties(parties=self._server_parties, suffix=suffix)[0]

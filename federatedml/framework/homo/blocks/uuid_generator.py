@@ -15,23 +15,23 @@
 #
 import hashlib
 
-from federatedml.framework.homo.blocks.base import _BlockBase, TransferInfo, HomoTransferBase
+from federatedml.framework.homo.blocks.base import HomoTransferBase
+from federatedml.util import consts
 
 
-class UUIDTransferVariable(HomoTransferBase):
-    def __init__(self, info: TransferInfo = None):
-        super().__init__(info)
+class UUIDTransVar(HomoTransferBase):
+    def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST), prefix=None):
+        super().__init__(server=server, clients=clients, prefix=prefix)
         self.uuid = self.create_server_to_client_variable(name="uuid")
 
 
-class Server(_BlockBase):
+class Server(object):
 
-    def __init__(self, transfer_variable: UUIDTransferVariable = UUIDTransferVariable()):
-        super().__init__(transfer_variable)
-        self._uuid_transfer = transfer_variable.uuid
+    def __init__(self, trans_var: UUIDTransVar = UUIDTransVar()):
+        self._uuid_transfer = trans_var.uuid
         self._uuid_set = set()
         self._ind = -1
-        self._parties = self._uuid_transfer.roles_to_parties(self._uuid_transfer.authorized_dst_roles)
+        self.client_parties = trans_var.client_parties
 
     # noinspection PyUnusedLocal
     @staticmethod
@@ -48,17 +48,17 @@ class Server(_BlockBase):
             return uid
 
     def validate_uuid(self):
-        for party in self._parties:
+        for party in self.client_parties:
             uid = self._next_uuid()
             self._uuid_transfer.remote_parties(obj=uid, parties=[party])
 
 
-class Client(_BlockBase):
+class Client(object):
 
-    def __init__(self, transfer_variable: UUIDTransferVariable = UUIDTransferVariable()):
-        super().__init__(transfer_variable)
-        self._uuid_variable = transfer_variable.uuid
+    def __init__(self, trans_var: UUIDTransVar = UUIDTransVar()):
+        self._uuid_variable = trans_var.uuid
+        self._server_parties = trans_var.server_parties
 
     def generate_uuid(self):
-        uid = self._uuid_variable.get(0)
+        uid = self._uuid_variable.get_parties(parties=self._server_parties)[0]
         return uid

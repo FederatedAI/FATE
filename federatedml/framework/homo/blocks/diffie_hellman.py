@@ -13,47 +13,47 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-from federatedml.framework.homo.blocks.base import _BlockBase, TransferInfo, HomoTransferBase
+from federatedml.framework.homo.blocks.base import HomoTransferBase
 from federatedml.secureprotol.diffie_hellman import DiffieHellman
+from federatedml.util import consts
 
 
-class DHTransferVariable(HomoTransferBase):
-    def __init__(self, info: TransferInfo = None):
-        super().__init__(info)
+class DHTransVar(HomoTransferBase):
+    def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST), prefix=None):
+        super().__init__(server=server, clients=clients, prefix=prefix)
         self.p_power_r = self.create_client_to_server_variable(name="p_power_r")
         self.p_power_r_bc = self.create_server_to_client_variable(name="p_power_r_bc")
         self.pubkey = self.create_server_to_client_variable(name="pubkey")
 
 
-class Server(_BlockBase):
+class Server(object):
 
-    def __init__(self, transfer_variable: DHTransferVariable = DHTransferVariable()):
-        super().__init__(transfer_variable)
-        self._p_power_r = transfer_variable.p_power_r
-        self._p_power_r_bc = transfer_variable.p_power_r_bc
-        self._pubkey = transfer_variable.pubkey
+    def __init__(self, trans_var: DHTransVar = DHTransVar()):
+        self._p_power_r = trans_var.p_power_r
+        self._p_power_r_bc = trans_var.p_power_r_bc
+        self._pubkey = trans_var.pubkey
+        self._client_parties = trans_var.client_parties
 
     def key_exchange(self):
         p, g = DiffieHellman.key_pair()
-        self._pubkey.remote(obj=(int(p), int(g)))
-        pubkey = dict(self._p_power_r.get())
-        self._p_power_r_bc.remote(obj=pubkey)
+        self._pubkey.remote_parties(obj=(int(p), int(g)), parties=self._client_parties)
+        pubkey = dict(self._p_power_r.get_parties(parties=self._client_parties))
+        self._p_power_r_bc.remote_parties(obj=pubkey, parties=self._client_parties)
 
 
-class Client(_BlockBase):
+class Client(object):
 
-    def __init__(self, transfer_variable: DHTransferVariable = DHTransferVariable()):
-        super().__init__(transfer_variable)
-        self._p_power_r = transfer_variable.p_power_r
-        self._p_power_r_bc = transfer_variable.p_power_r_bc
-        self._pubkey = transfer_variable.pubkey
+    def __init__(self, trans_var: DHTransVar = DHTransVar()):
+        self._p_power_r = trans_var.p_power_r
+        self._p_power_r_bc = trans_var.p_power_r_bc
+        self._pubkey = trans_var.pubkey
+        self._server_parties = trans_var.server_parties
 
     def key_exchange(self, uuid: str):
-        p, g = self._pubkey.get()[0]
+        p, g = self._pubkey.get_parties(parties=self._server_parties)[0]
         r = DiffieHellman.generate_secret(p)
         gr = DiffieHellman.encrypt(g, r, p)
-        self._p_power_r.remote((uuid, gr))
-        cipher_texts = self._p_power_r_bc.get()[0]
+        self._p_power_r.remote_parties(obj=(uuid, gr), parties=self._server_parties)
+        cipher_texts = self._p_power_r_bc.get_parties(parties=self._server_parties)[0]
         share_secret = {uid: DiffieHellman.decrypt(gr, r, p) for uid, gr in cipher_texts.items() if uid != uuid}
         return share_secret

@@ -13,32 +13,31 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from federatedml.framework.homo.blocks.base import HomoTransferBase
+from federatedml.util import consts
 
-from federatedml.framework.homo.blocks.base import _BlockBase, HomoTransferBase, TransferInfo
 
-
-class HasConvergedTransferVariable(HomoTransferBase):
-    def __init__(self, info: TransferInfo = None):
-        super().__init__(info)
+class HasConvergedTransVar(HomoTransferBase):
+    def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST), prefix=None):
+        super().__init__(server=server, clients=clients, prefix=prefix)
         self.has_converged = self.create_server_to_client_variable(name="has_converged")
 
 
-class Server(_BlockBase):
+class Server(object):
 
-    def __init__(self, transfer_variable: HasConvergedTransferVariable = HasConvergedTransferVariable()):
-        super().__init__(transfer_variable)
-        self._broadcaster = transfer_variable.has_converged
+    def __init__(self, trans_var: HasConvergedTransVar = HasConvergedTransVar()):
+        self._broadcaster = trans_var.has_converged
+        self._client_parties = trans_var.client_parties
 
     def remote_converge_status(self, is_converge, suffix=tuple()):
-        parties = self._broadcaster.roles_to_parties(self._broadcaster.authorized_dst_roles)
-        self._broadcaster.remote_parties(obj=is_converge, parties=parties, suffix=suffix)
+        self._broadcaster.remote_parties(obj=is_converge, parties=self._client_parties, suffix=suffix)
         return is_converge
 
 
-class Client(_BlockBase):
-    def __init__(self, transfer_variable: HasConvergedTransferVariable = HasConvergedTransferVariable()):
-        super().__init__(transfer_variable)
-        self._broadcaster = transfer_variable.has_converged
+class Client(object):
+    def __init__(self, trans_var: HasConvergedTransVar = HasConvergedTransVar()):
+        self._broadcaster = trans_var.has_converged
+        self._server_parties = trans_var.server_parties
 
     def get_converge_status(self, suffix=tuple()):
-        return self._broadcaster.get(suffix=suffix)[0]
+        return self._broadcaster.get_parties(parties=self._server_parties, suffix=suffix)[0]

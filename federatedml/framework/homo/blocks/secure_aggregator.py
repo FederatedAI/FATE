@@ -18,29 +18,28 @@ import functools
 from arch.api.utils import log_utils
 from federatedml.framework.homo.blocks import aggregator
 from federatedml.framework.homo.blocks import random_padding_cipher
-from federatedml.framework.homo.blocks.aggregator import AggregatorTransferVariable
-from federatedml.framework.homo.blocks.base import _BlockBase, HomoTransferBase, TransferInfo
-from federatedml.framework.homo.blocks.random_padding_cipher import RandomPaddingCipherTransferVariable
+from federatedml.framework.homo.blocks.aggregator import AggregatorTransVar
+from federatedml.framework.homo.blocks.base import HomoTransferBase
+from federatedml.framework.homo.blocks.random_padding_cipher import RandomPaddingCipherTransVar
+from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
 
-class SecureAggregatorTransferVariable(HomoTransferBase):
-    def __init__(self, info: TransferInfo = None):
-        super().__init__(info)
-        self.aggregator_transfer_variable = AggregatorTransferVariable(self.info)
-        self.random_padding_cipher_transfer_variable = RandomPaddingCipherTransferVariable(self.info)
+class SecureAggregatorTransVar(HomoTransferBase):
+    def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST), prefix=None):
+        super().__init__(server=server, clients=clients, prefix=prefix)
+        self.aggregator_trans_var = AggregatorTransVar(server=server, clients=clients, prefix=self.prefix)
+        self.random_padding_cipher_trans_var = \
+            RandomPaddingCipherTransVar(server=server, clients=clients, prefix=self.prefix)
 
 
-class Server(_BlockBase):
-    def __init__(self,
-                 transfer_variable: SecureAggregatorTransferVariable = SecureAggregatorTransferVariable(),
-                 enable_secure_aggregate=True):
-        super().__init__(transfer_variable)
-        self._aggregator = aggregator.Server(transfer_variable=transfer_variable.aggregator_transfer_variable)
+class Server(object):
+    def __init__(self, trans_var: SecureAggregatorTransVar = SecureAggregatorTransVar(), enable_secure_aggregate=True):
+        self._aggregator = aggregator.Server(trans_var=trans_var.aggregator_trans_var)
         self.enable_secure_aggregate = enable_secure_aggregate
         if enable_secure_aggregate:
-            random_padding_cipher.Server(transfer_variable=transfer_variable.random_padding_cipher_transfer_variable) \
+            random_padding_cipher.Server(trans_var=trans_var.random_padding_cipher_trans_var) \
                 .exchange_secret_keys()
 
     def aggregate_model(self, suffix=tuple()):
@@ -56,17 +55,13 @@ class Server(_BlockBase):
         self._aggregator.send_aggregated_model(model=model, suffix=suffix)
 
 
-class Client(_BlockBase):
-    def __init__(self,
-                 transfer_variable: SecureAggregatorTransferVariable = SecureAggregatorTransferVariable(),
-                 enable_secure_aggregate=True):
-        super().__init__(transfer_variable)
+class Client(object):
+    def __init__(self, trans_var: SecureAggregatorTransVar = SecureAggregatorTransVar(), enable_secure_aggregate=True):
         self.enable_secure_aggregate = enable_secure_aggregate
-        self._aggregator = aggregator.Client(transfer_variable=transfer_variable.aggregator_transfer_variable)
+        self._aggregator = aggregator.Client(trans_var=trans_var.aggregator_trans_var)
         if enable_secure_aggregate:
-            self._random_padding_cipher = random_padding_cipher.Client(
-                transfer_variable=transfer_variable.random_padding_cipher_transfer_variable) \
-                .create_cipher()
+            self._random_padding_cipher = \
+                random_padding_cipher.Client(trans_var=trans_var.random_padding_cipher_trans_var).create_cipher()
 
     def send_model(self, model, degree: float = None, suffix=tuple()):
         # w -> w * degree

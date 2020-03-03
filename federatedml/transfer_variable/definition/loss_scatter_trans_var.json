@@ -1,6 +1,6 @@
 {
-  "ModelBroadcasterTransferVariable": {
-    "server_model": {
+  "LossScatterTransVar": {
+    "loss": {
       "src": [
         "guest",
         "host"

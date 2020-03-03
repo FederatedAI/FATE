@@ -1,6 +1,6 @@
 {
-  "SecureAggregatorTransferVariable": {
-    "AggregatorTransferVariable.ModelScatterTransferVariable.client_model": {
+  "SecureAggregatorTransVar": {
+    "AggregatorTransVar.ModelScatterTransVar.client_model": {
       "src": [
         "guest",
         "host"
@@ -9,16 +9,7 @@
         "arbiter"
       ]
     },
-    "AggregatorTransferVariable.ModelBroadcasterTransferVariable.server_model": {
-      "src": [
-        "guest",
-        "host"
-      ],
-      "dst": [
-        "arbiter"
-      ]
-    },
-    "RandomPaddingCipherTransferVariable.UUIDTransferVariable.uuid": {
+    "AggregatorTransVar.ModelBroadcasterTransVar.server_model": {
       "src": [
         "arbiter"
       ],
@@ -27,16 +18,7 @@
         "host"
       ]
     },
-    "RandomPaddingCipherTransferVariable.DHTransferVariable.p_power_r": {
-      "src": [
-        "guest",
-        "host"
-      ],
-      "dst": [
-        "arbiter"
-      ]
-    },
-    "RandomPaddingCipherTransferVariable.DHTransferVariable.p_power_r_bc": {
+    "RandomPaddingCipherTransVar.UUIDTransVar.uuid": {
       "src": [
         "arbiter"
       ],
@@ -45,7 +27,25 @@
         "host"
       ]
     },
-    "RandomPaddingCipherTransferVariable.DHTransferVariable.pubkey": {
+    "RandomPaddingCipherTransVar.DHTransVar.p_power_r": {
+      "src": [
+        "guest",
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "RandomPaddingCipherTransVar.DHTransVar.p_power_r_bc": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "RandomPaddingCipherTransVar.DHTransVar.pubkey": {
       "src": [
         "arbiter"
       ],

@@ -13,42 +13,55 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import typing
+
 import functools
 import types
-import typing
 from functools import reduce
 
-from arch.api import RuntimeInstance
 from arch.api.utils import log_utils
 from federatedml.framework.homo.blocks import has_converged, loss_scatter, model_scatter, model_broadcaster
 from federatedml.framework.homo.blocks import random_padding_cipher
+from federatedml.framework.homo.blocks.base import HomoTransferBase
+from federatedml.framework.homo.blocks.has_converged import HasConvergedTransVar
+from federatedml.framework.homo.blocks.loss_scatter import LossScatterTransVar
+from federatedml.framework.homo.blocks.model_broadcaster import ModelBroadcasterTransVar
+from federatedml.framework.homo.blocks.model_scatter import ModelScatterTransVar
+from federatedml.framework.homo.blocks.random_padding_cipher import RandomPaddingCipherTransVar
 from federatedml.framework.weights import Weights, NumericWeights, TransferableWeights
+from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
 
+class LegacyAggregatorTransVar(HomoTransferBase):
+    def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST,), prefix=None):
+        super().__init__(server=server, clients=clients, prefix=prefix)
+        self.loss_scatter = LossScatterTransVar(server=server, clients=clients, prefix=self.prefix)
+        self.has_converged = HasConvergedTransVar(server=server, clients=clients, prefix=self.prefix)
+        self.model_scatter = ModelScatterTransVar(server=server, clients=clients, prefix=self.prefix)
+        self.model_broadcaster = ModelBroadcasterTransVar(server=server, clients=clients, prefix=self.prefix)
+        self.random_padding_cipher = RandomPaddingCipherTransVar(server=server, clients=clients, prefix=self.prefix)
+
+
 class Arbiter(object):
 
-    @staticmethod
-    def _get_parties(roles):
-        return RuntimeInstance.FEDERATION.roles_to_parties(roles=roles)
+    def __init__(self, trans_var=LegacyAggregatorTransVar()):
+        self._guest_parties = trans_var.get_parties(roles=[consts.GUEST])
+        self._host_parties = trans_var.get_parties(roles=[consts.HOST])
+        self._client_parties = trans_var.client_parties
 
-    def __init__(self):
-        self._model_broadcaster = None
-        self._loss_sync = loss_scatter.Server()
-        self._converge_sync = has_converged.Server()
-        self._model_scatter = model_scatter.Server()
-        self._model_broadcaster = model_broadcaster.Server()
+        self._loss_sync = loss_scatter.Server(trans_var.loss_scatter)
+        self._converge_sync = has_converged.Server(trans_var.has_converged)
+        self._model_scatter = model_scatter.Server(trans_var.model_scatter)
+        self._model_broadcaster = model_broadcaster.Server(trans_var.model_broadcaster)
+        self._random_padding_cipher = random_padding_cipher.Server(trans_var.random_padding_cipher)
 
-        self._guest_parties = self._get_parties(roles=[consts.GUEST])
-        self._host_parties = self._get_parties(roles=[consts.HOST])
-        self._client_parties = self._get_parties(roles=[consts.GUEST, consts.HOST])
-
-    # noinspection PyUnusedLocal
-    def register_aggregator(self, transfer_variables, enable_secure_aggregate=True):
+    # noinspection PyUnusedLocal,PyAttributeOutsideInit,PyProtectedMember
+    def register_aggregator(self, transfer_variables: BaseTransferVariables, enable_secure_aggregate=True):
         if enable_secure_aggregate:
-            random_padding_cipher.Server().exchange_secret_keys()
+            self._random_padding_cipher.exchange_secret_keys()
         return self
 
     def aggregate_model(self, ciphers_dict=None, suffix=tuple()) -> Weights:
@@ -91,10 +104,12 @@ class Arbiter(object):
             ciphers_dict = {}
         party_to_cipher = {self._host_parties[idx]: cipher for idx, cipher in ciphers_dict.items()}
         for party in self._client_parties:
-            if party_to_cipher.get(party, None) is not None:
+            cipher = party_to_cipher.get(party)
+            if cipher is None:
                 self._model_broadcaster.send_model(model=model.for_remote(), parties=party, suffix=suffix)
             else:
-                self._model_broadcaster.send_model(model=model.for_remote(), suffix=suffix)
+                self._model_broadcaster.send_model(model=model.encrypted(cipher, False).for_remote(), parties=party,
+                                                   suffix=suffix)
 
     def aggregate_loss(self, idx=None, suffix=tuple()):
         if idx is None:
@@ -117,20 +132,20 @@ class Arbiter(object):
 
 
 class Client(object):
-    def __init__(self):
-        self._model_broadcaster = None
-        self._loss_sync = loss_scatter.Client()
-        self._converge_sync = has_converged.Client()
-        self._model_scatter = model_scatter.Client()
-        self._model_broadcaster = model_broadcaster.Client()
+    def __init__(self, trans_var=LegacyAggregatorTransVar()):
         self._enable_secure_aggregate = False
 
-    # noinspection PyAttributeOutsideInit,PyUnusedLocal
-    def register_aggregator(self, transfer_variables, enable_secure_aggregate=True):
+        self._loss_sync = loss_scatter.Client(trans_var.loss_scatter)
+        self._converge_sync = has_converged.Client(trans_var.has_converged)
+        self._model_scatter = model_scatter.Client(trans_var.model_scatter)
+        self._model_broadcaster = model_broadcaster.Client(trans_var.model_broadcaster)
+        self._random_padding_cipher = random_padding_cipher.Client(trans_var.random_padding_cipher)
+
+    # noinspection PyAttributeOutsideInit,PyUnusedLocal,PyProtectedMember
+    def register_aggregator(self, transfer_variables: BaseTransferVariables, enable_secure_aggregate=True):
         self._enable_secure_aggregate = enable_secure_aggregate
         if enable_secure_aggregate:
-            self._random_padding_cipher = random_padding_cipher.Client().create_cipher()
-
+            self._cipher = self._random_padding_cipher.create_cipher()
         return self
 
     def secure_aggregate(self, send_func, weights: Weights, degree: float = None, enable_secure_aggregate=True):
@@ -139,7 +154,7 @@ class Client(object):
             weights *= degree
         # w * degree -> w * degree + \sum(\delta(i, j) * r_{ij}), namely， adding random mask.
         if enable_secure_aggregate:
-            weights = weights.encrypted(cipher=self._random_padding_cipher, inplace=True)
+            weights = weights.encrypted(cipher=self._cipher, inplace=True)
         # maybe remote degree
         remote_weights = weights.for_remote().with_degree(degree) if degree else weights.for_remote()
 
@@ -170,6 +185,10 @@ class Client(object):
 
     def get_converge_status(self, suffix=tuple()):
         return self._converge_sync.get_converge_status(suffix=suffix)
+
+
+Guest = Client
+Host = Client
 
 
 def with_role(role, transfer_variable, enable_secure_aggregate=True):

@@ -13,32 +13,31 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from federatedml.framework.homo.blocks.base import HomoTransferBase
+from federatedml.util import consts
 
-from federatedml.framework.homo.blocks.base import _BlockBase, HomoTransferBase, TransferInfo
 
-
-class ModelScatterTransferVariable(HomoTransferBase):
-    def __init__(self, info: TransferInfo = None):
-        super().__init__(info)
+class ModelScatterTransVar(HomoTransferBase):
+    def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST), prefix=None):
+        super().__init__(server=server, clients=clients, prefix=prefix)
         self.client_model = self.create_client_to_server_variable(name="client_model")
 
 
-class Server(_BlockBase):
+class Server(object):
 
-    def __init__(self, transfer_variable: ModelScatterTransferVariable = ModelScatterTransferVariable()):
-        super().__init__(transfer_variable)
-        self._scatter = transfer_variable.client_model
+    def __init__(self, trans_var: ModelScatterTransVar = ModelScatterTransVar()):
+        self._scatter = trans_var.client_model
+        self._client_parties = trans_var.client_parties
 
     def get_models(self, suffix=tuple()):
-        parties = self._scatter.roles_to_parties(self._scatter.authorized_src_roles)
-        models = self._scatter.get_parties(parties, suffix)
+        models = self._scatter.get_parties(parties=self._client_parties, suffix=suffix)
         return models
 
 
-class Client(_BlockBase):
-    def __init__(self, transfer_variable: ModelScatterTransferVariable = ModelScatterTransferVariable()):
-        super().__init__(transfer_variable)
-        self._scatter = transfer_variable.client_model
+class Client(object):
+    def __init__(self, trans_var: ModelScatterTransVar = ModelScatterTransVar()):
+        self._scatter = trans_var.client_model
+        self._server_parties = trans_var.server_parties
 
     def send_model(self, model, suffix=tuple()):
-        return self._scatter.remote(obj=model, suffix=suffix)
+        return self._scatter.remote_parties(obj=model, parties=self._server_parties, suffix=suffix)

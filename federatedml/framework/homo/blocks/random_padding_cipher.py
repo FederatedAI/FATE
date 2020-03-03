@@ -13,30 +13,29 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
 from arch.api.utils import log_utils
 from federatedml.framework.homo.blocks import uuid_generator, diffie_hellman
-from federatedml.framework.homo.blocks.base import _BlockBase, HomoTransferBase, TransferInfo
-from federatedml.framework.homo.blocks.diffie_hellman import DHTransferVariable
-from federatedml.framework.homo.blocks.uuid_generator import UUIDTransferVariable
+from federatedml.framework.homo.blocks.base import HomoTransferBase
+from federatedml.framework.homo.blocks.diffie_hellman import DHTransVar
+from federatedml.framework.homo.blocks.uuid_generator import UUIDTransVar
 from federatedml.secureprotol.encrypt import PadsCipher
+from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
 
-class RandomPaddingCipherTransferVariable(HomoTransferBase):
-    def __init__(self, info: TransferInfo = None):
-        super().__init__(info)
-        self.uuid_transfer_variable = UUIDTransferVariable(self.info)
-        self.dh_transfer_variable = DHTransferVariable(self.info)
+class RandomPaddingCipherTransVar(HomoTransferBase):
+    def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST), prefix=None):
+        super().__init__(server=server, clients=clients, prefix=prefix)
+        self.uuid_transfer_variable = UUIDTransVar(server=server, clients=clients, prefix=self.prefix)
+        self.dh_transfer_variable = DHTransVar(server=server, clients=clients, prefix=self.prefix)
 
 
-class Server(_BlockBase):
+class Server(object):
 
-    def __init__(self, transfer_variable: RandomPaddingCipherTransferVariable = RandomPaddingCipherTransferVariable()):
-        super().__init__(transfer_variable)
-        self._uuid = uuid_generator.Server(transfer_variable.uuid_transfer_variable)
-        self._dh = diffie_hellman.Server(transfer_variable.dh_transfer_variable)
+    def __init__(self, trans_var: RandomPaddingCipherTransVar = RandomPaddingCipherTransVar()):
+        self._uuid = uuid_generator.Server(trans_var=trans_var.uuid_transfer_variable)
+        self._dh = diffie_hellman.Server(trans_var=trans_var.dh_transfer_variable)
 
     def exchange_secret_keys(self):
         LOGGER.info("synchronizing uuid")
@@ -46,12 +45,11 @@ class Server(_BlockBase):
         self._dh.key_exchange()
 
 
-class Client(_BlockBase):
+class Client(object):
 
-    def __init__(self, transfer_variable: RandomPaddingCipherTransferVariable = RandomPaddingCipherTransferVariable()):
-        super().__init__(transfer_variable)
-        self._uuid = uuid_generator.Client(transfer_variable.uuid_transfer_variable)
-        self._dh = diffie_hellman.Client(transfer_variable.dh_transfer_variable)
+    def __init__(self, trans_var: RandomPaddingCipherTransVar = RandomPaddingCipherTransVar()):
+        self._uuid = uuid_generator.Client(trans_var=trans_var.uuid_transfer_variable)
+        self._dh = diffie_hellman.Client(trans_var=trans_var.dh_transfer_variable)
         self._cipher = None
 
     def create_cipher(self) -> PadsCipher:

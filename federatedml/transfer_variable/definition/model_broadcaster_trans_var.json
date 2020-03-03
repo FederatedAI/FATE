@@ -1,6 +1,6 @@
 {
-  "UUIDTransferVariable": {
-    "uuid": {
+  "ModelBroadcasterTransVar": {
+    "server_model": {
       "src": [
         "arbiter"
       ],

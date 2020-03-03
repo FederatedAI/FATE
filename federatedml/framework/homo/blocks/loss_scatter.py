@@ -13,31 +13,31 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from federatedml.framework.homo.blocks.base import _BlockBase, HomoTransferBase, TransferInfo
+from federatedml.framework.homo.blocks.base import HomoTransferBase
+from federatedml.util import consts
 
 
-class LossScatterTransferVariable(HomoTransferBase):
-    def __init__(self, info: TransferInfo = None):
-        super().__init__(info)
+class LossScatterTransVar(HomoTransferBase):
+    def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST), prefix=None):
+        super().__init__(server=server, clients=clients, prefix=prefix)
         self.loss = self.create_client_to_server_variable(name="loss")
 
 
-class Server(_BlockBase):
+class Server(object):
 
-    def __init__(self, transfer_variable: LossScatterTransferVariable = LossScatterTransferVariable()):
-        super().__init__(transfer_variable)
-        self._scatter = transfer_variable.loss
+    def __init__(self, trans_var: LossScatterTransVar = LossScatterTransVar()):
+        self._scatter = trans_var.loss
+        self._client_parties = trans_var.client_parties
 
     def get_losses(self, parties=None, suffix=tuple()):
-        if parties is None:
-            parties = self._scatter.roles_to_parties(self._scatter.authorized_src_roles)
+        parties = self._client_parties if parties is None else parties
         return self._scatter.get_parties(parties=parties, suffix=suffix)
 
 
-class Client(_BlockBase):
-    def __init__(self, transfer_variable: LossScatterTransferVariable = LossScatterTransferVariable()):
-        super().__init__(transfer_variable)
-        self._scatter = transfer_variable.loss
+class Client(object):
+    def __init__(self, trans_var: LossScatterTransVar = LossScatterTransVar()):
+        self._scatter = trans_var.loss
+        self._server_parties = trans_var.server_parties
 
     def send_loss(self, loss, suffix=tuple()):
-        return self._scatter.remote(obj=loss, suffix=suffix)
+        return self._scatter.remote_parties(obj=loss, parties=self._server_parties, suffix=suffix)

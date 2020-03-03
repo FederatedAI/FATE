@@ -1,5 +1,5 @@
 {
-  "ModelScatterTransferVariable": {
+  "ModelScatterTransVar": {
     "client_model": {
       "src": [
         "guest",

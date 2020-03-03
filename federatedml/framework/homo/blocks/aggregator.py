@@ -13,28 +13,27 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
 from arch.api.utils import log_utils
 from federatedml.framework.homo.blocks import model_broadcaster, model_scatter
-from federatedml.framework.homo.blocks.base import _BlockBase, HomoTransferBase, TransferInfo
-from federatedml.framework.homo.blocks.model_broadcaster import ModelBroadcasterTransferVariable
-from federatedml.framework.homo.blocks.model_scatter import ModelScatterTransferVariable
+from federatedml.framework.homo.blocks.base import HomoTransferBase
+from federatedml.framework.homo.blocks.model_broadcaster import ModelBroadcasterTransVar
+from federatedml.framework.homo.blocks.model_scatter import ModelScatterTransVar
+from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
 
-class AggregatorTransferVariable(HomoTransferBase):
-    def __init__(self, info: TransferInfo = None):
-        super().__init__(info)
-        self.model_scatter = ModelScatterTransferVariable(self.info)
-        self.model_broadcaster = ModelBroadcasterTransferVariable(self.info)
+class AggregatorTransVar(HomoTransferBase):
+    def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST), prefix=None):
+        super().__init__(server=server, clients=clients, prefix=prefix)
+        self.model_scatter = ModelScatterTransVar(server=server, clients=clients, prefix=self.prefix)
+        self.model_broadcaster = ModelBroadcasterTransVar(server=server, clients=clients, prefix=self.prefix)
 
 
-class Server(_BlockBase):
-    def __init__(self, transfer_variable: AggregatorTransferVariable = AggregatorTransferVariable()):
-        super().__init__(transfer_variable)
-        self._model_broadcaster = model_broadcaster.Server(transfer_variable.model_broadcaster)
-        self._model_scatter = model_scatter.Server(transfer_variable.model_scatter)
+class Server(object):
+    def __init__(self, trans_var: AggregatorTransVar = AggregatorTransVar()):
+        self._model_broadcaster = model_broadcaster.Server(trans_var=trans_var.model_broadcaster)
+        self._model_scatter = model_scatter.Server(trans_var=trans_var.model_scatter)
 
     def get_models(self, suffix=tuple()):
         return self._model_scatter.get_models(suffix=suffix)
@@ -43,11 +42,10 @@ class Server(_BlockBase):
         self._model_broadcaster.send_model(model=model, suffix=suffix)
 
 
-class Client(_BlockBase):
-    def __init__(self, transfer_variable: AggregatorTransferVariable = AggregatorTransferVariable()):
-        super().__init__(transfer_variable)
-        self._model_broadcaster = model_broadcaster.Client(transfer_variable.model_broadcaster)
-        self._model_scatter = model_scatter.Client(transfer_variable.model_scatter)
+class Client(object):
+    def __init__(self, trans_var: AggregatorTransVar = AggregatorTransVar()):
+        self._model_broadcaster = model_broadcaster.Client(trans_var=trans_var.model_broadcaster)
+        self._model_scatter = model_scatter.Client(trans_var=trans_var.model_scatter)
 
     def send_model(self, model, suffix=tuple()):
         self._model_scatter.send_model(model=model, suffix=suffix)

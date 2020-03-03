@@ -20,27 +20,26 @@ from arch.api import RuntimeInstance
 from arch.api.transfer import Party, Cleaner
 
 
-class FlowID(object):
-    def __init__(self, flowid=str(0)):
-        self._flowid = flowid
+class TransferNameSpace(object):
+    __namespace = "default"
 
-    def generate_tag(self, *suffix):
-        tags = (self._flowid, *map(str, suffix))
+    @classmethod
+    def set_namespace(cls, namespace):
+        cls.__namespace = namespace
+
+    @classmethod
+    def generate_tag(cls, *suffix):
+        tags = (cls.__namespace, *map(str, suffix))
         return '.'.join(tags)
-
-    def set_flowid(self, flowid):
-        self._flowid = flowid
 
 
 class Variable(object):
     def __init__(self, name: str,
                  src: typing.Tuple[str],
-                 dst: typing.Tuple[str],
-                 flowid: 'FlowID'):
+                 dst: typing.Tuple[str]):
         self.name = name
         self._src = src
         self._dst = dst
-        self._flowid = flowid
         self._get_cleaner = Cleaner()
         self._remote_cleaner = Cleaner()
         self._auto_clean = True
@@ -52,9 +51,6 @@ class Variable(object):
 
     def get_preserve_num(self):
         return self._preserve_num
-
-    def generate_tag(self, *suffix):
-        return self._flowid.generate_tag(*suffix)
 
     def disable_auto_clean(self):
         self._auto_clean = False
@@ -80,7 +76,7 @@ class Variable(object):
         if not isinstance(suffix, tuple):
             suffix = (suffix,)
         obj = RuntimeInstance.TABLE_WRAPPER.unboxed(obj)
-        tag = self.generate_tag(*suffix)
+        tag = TransferNameSpace.generate_tag(*suffix)
         rubbish = RuntimeInstance.FEDERATION.remote(obj=obj,
                                                     name=self.name,
                                                     tag=tag,
@@ -92,7 +88,7 @@ class Variable(object):
     def get_parties(self, parties: Union[list, Party], suffix=tuple()):
         if not isinstance(suffix, tuple):
             suffix = (suffix,)
-        tag = self.generate_tag(*suffix)
+        tag = TransferNameSpace.generate_tag(*suffix)
 
         if self._auto_clean:
             if self._get_cleaner.is_latest_tag(tag):
@@ -101,7 +97,7 @@ class Variable(object):
                 self._get_cleaner.keep_latest_n(self._preserve_num - 1)
 
         rtn, rubbish = RuntimeInstance.FEDERATION.get(name=self.name,
-                                                      tag=self.generate_tag(*suffix),
+                                                      tag=TransferNameSpace.generate_tag(*suffix),
                                                       parties=parties)
         rtn = [RuntimeInstance.TABLE_WRAPPER.boxed(value) for idx, value in enumerate(rtn)]
 
@@ -160,10 +156,7 @@ class BaseTransferVariables(object):
     __instance = {}
 
     def __init__(self, *args):
-        self._flowid = FlowID(str(args[0]) if args else str(0))
-
-    def _append_prefix(self, name_prefix):
-        return f"{name_prefix}.{self.__class__.__name__}" if name_prefix else self.__class__.__name__
+        pass
 
     @classmethod
     def _disable__singleton(cls):
@@ -177,14 +170,12 @@ class BaseTransferVariables(object):
         else:
             return object.__new__(cls)
 
+    # noinspection PyMethodMayBeStatic
     def set_flowid(self, flowid):
-        self._flowid.set_flowid(flowid)
-        return self
+        TransferNameSpace.set_namespace(str(flowid))
 
     def _create_variable(self, name: str, src: typing.Iterable[str], dst: typing.Iterable[str]):
-        class_name = self.__class__.__name__
-        full_name = f"{class_name}.{name}"
-        return Variable(name=full_name, src=tuple(src), dst=tuple(dst), flowid=self._flowid)
+        return Variable(name=f"{self.__class__.__name__}.{name}", src=tuple(src), dst=tuple(dst))
 
     @staticmethod
     def all_parties():

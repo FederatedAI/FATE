@@ -13,52 +13,35 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import typing
-
-from federatedml.transfer_variable.base_transfer_variable import FlowID, Variable, BaseTransferVariables
+from arch.api import RuntimeInstance
+from federatedml.transfer_variable.base_transfer_variable import Variable, BaseTransferVariables
 from federatedml.util import consts
 
 
-class _BlockBase(object):
-    def __init__(self, transfer_variable):
-        self._transfer_variable = transfer_variable
-
-    def set_flowid(self, flowid):
-        self._transfer_variable.set_flowid(flowid)
-        return self
-
-
-class TransferInfo(object):
-    def __init__(self, server: typing.Tuple, clients: typing.Tuple, flowid: FlowID, name_prefix=None):
+class HomoTransferBase(BaseTransferVariables):
+    def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST), prefix=None):
+        super().__init__()
+        if prefix is None:
+            self.prefix = self.__class__.__name__
+        else:
+            self.prefix = f"{prefix}.{self.__class__.__name__}"
         self.server = server
         self.clients = clients
-        self.flowid = flowid
-        self.name_prefix = name_prefix
-
-
-class HomoTransferBase(BaseTransferVariables):
-    def __init__(self, patten=None, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST)):
-        super().__init__()
-        class_name = self.__class__.__name__
-        if patten is None:
-            self.info = TransferInfo(server=server,
-                                     clients=clients,
-                                     flowid=self._flowid,
-                                     name_prefix=class_name)
-        else:
-            self.info = TransferInfo(server=patten.server,
-                                     clients=patten.clients,
-                                     flowid=patten.flowid,
-                                     name_prefix=f"{patten.name_prefix}.{class_name}")
 
     def create_client_to_server_variable(self, name):
-        return Variable(name=f"{self.info.name_prefix}.{name}",
-                        src=self.info.clients,
-                        dst=self.info.server,
-                        flowid=self.info.flowid)
+        return Variable(name=f"{self.prefix}.{name}", src=self.clients, dst=self.server)
 
     def create_server_to_client_variable(self, name):
-        return Variable(name=f"{self.info.name_prefix}.{name}",
-                        src=self.info.server,
-                        dst=self.info.clients,
-                        flowid=self.info.flowid)
+        return Variable(name=f"{self.prefix}.{name}", src=self.server, dst=self.clients)
+
+    @staticmethod
+    def get_parties(roles):
+        return RuntimeInstance.FEDERATION.roles_to_parties(roles=roles)
+
+    @property
+    def client_parties(self):
+        return self.get_parties(roles=self.clients)
+
+    @property
+    def server_parties(self):
+        return self.get_parties(roles=self.server)
