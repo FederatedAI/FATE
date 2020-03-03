@@ -37,17 +37,6 @@ For multi-host scenario, the gradient computation still keep the same as single-
 Figure 3： Federated Multi-host HeteroLR Principle
 </div>
 
-## 3. Heterogeneous LR with Neural Network
-
-The heteroLR algorithm described in section 2 requires the input data to be given in tabular form. This requirement limits the application of the heteroLR algorithm. To address this issue to some extent, we extend the original heteroLR by adding neural networks in the loop. 
-
-<div style="text-align:center", align=center>
-<img src="./images/HeteroLR-NN.png" alt="architecture" width="550" height="350" />
-<br/>
-Figure 4: Federated HeteroLR with Neural Network Principle </div>
-
-As shown in Figure 4, neural networks are added between the raw input data and the LR model serving as feature extractors that extract representative features from raw input data of various types. Neural networks can be CNN for processing images, RNN for processing text, autoencoder for processing general numerical vectors and many others. Currently we only support autoencoder in this algorithm. We will add other models in the near future.
-
 ## Features
 
 Both Homo-LR and Hetero-LR supports the following features:

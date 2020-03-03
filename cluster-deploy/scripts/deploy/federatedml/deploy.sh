@@ -41,6 +41,7 @@ packaging() {
     package_init ${output_packages_dir} ${module_name}
 	cp -r ${source_code_dir}/federatedml ${output_packages_dir}/source/${module_name}/
 	cp -r ${source_code_dir}/examples ${output_packages_dir}/source/${module_name}
+	cp -r ${source_code_dir}/federatedrec ${output_packages_dir}/source/${module_name}
 	mkdir -p ${output_packages_dir}/source/${module_name}/arch
 	cp -r ${source_code_dir}/arch/api ${output_packages_dir}/source/${module_name}/arch/
 	return 0
