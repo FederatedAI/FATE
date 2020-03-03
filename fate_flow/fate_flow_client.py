@@ -30,11 +30,11 @@ from fate_flow.settings import SERVERS, ROLE, API_VERSION
 from fate_flow.utils import detect_utils
 
 server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
-JOB_OPERATE_FUNC = ["submit_job", "stop_job", 'query_job', "data_view_query"]
+JOB_OPERATE_FUNC = ["submit_job", "stop_job", "query_job", "data_view_query", "clean_job"]
 JOB_FUNC = ["job_config", "job_log"]
-TASK_OPERATE_FUNC = ['query_task']
+TASK_OPERATE_FUNC = ["query_task"]
 TRACKING_FUNC = ["component_parameters", "component_metric_all", "component_metric_delete", "component_metrics",
-                 "component_output_model", "component_output_data"]
+                 "component_output_model", "component_output_data", "component_output_data_table"]
 DATA_FUNC = ["download", "upload", "upload_history"]
 TABLE_FUNC = ["table_info", "table_delete"]
 MODEL_FUNC = ["load", "bind", "version"]
@@ -139,10 +139,14 @@ def call_fun(func, config_data, dsl_path, config_path):
                                       json=config_data,
                                       stream=True)) as response:
                 if response.status_code == 200:
-                    download_from_request(http_response=response, tar_file_name=tar_file_name, extract_dir=extract_dir)
-                    response = {'retcode': 0,
-                                'directory': extract_dir,
-                                'retmsg': 'download successfully, please check {} directory'.format(extract_dir)}
+                    try:
+                        download_from_request(http_response=response, tar_file_name=tar_file_name, extract_dir=extract_dir)
+                        response = {'retcode': 0,
+                                    'directory': extract_dir,
+                                    'retmsg': 'download successfully, please check {} directory'.format(extract_dir)}
+                    except:
+                        response = {'retcode': 100,
+                                    'retmsg': 'download failed, please check if the parameters are correct'}
                 else:
                     response = response.json()
 

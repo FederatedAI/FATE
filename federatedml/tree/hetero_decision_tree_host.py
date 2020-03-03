@@ -37,6 +37,7 @@ from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_
 from federatedml.util import consts
 from federatedml.tree import Node
 from federatedml.feature.fate_element_type import NoneType
+from arch.api.utils.splitable import segment_transfer_enabled
 import functools
 
 LOGGER = log_utils.getLogger()
@@ -157,30 +158,26 @@ class HeteroDecisionTreeHost(DecisionTree):
 
     def get_histograms(self, node_map={}):
         LOGGER.info("start to get node histograms")
-        histograms = FeatureHistogram.calculate_histogram(
+        acc_histograms = FeatureHistogram.calculate_histogram(
             self.data_bin_with_position, self.grad_and_hess,
             self.bin_split_points, self.bin_sparse_points,
             self.valid_features, node_map,
-            self.use_missing, self.zero_as_missing)
-        LOGGER.info("begin to accumulate histograms")
-        acc_histograms = FeatureHistogram.accumulate_histogram(histograms)
-        LOGGER.info("acc histogram shape is {}".format(len(acc_histograms)))
+            self.use_missing, self.zero_as_missing, ret="tb")
+
         return acc_histograms
 
     def sync_encrypted_splitinfo_host(self, encrypted_splitinfo_host, dep=-1, batch=-1):
         LOGGER.info("send encrypted splitinfo of depth {}, batch {}".format(dep, batch))
+
         self.transfer_inst.encrypted_splitinfo_host.remote(encrypted_splitinfo_host,
                                                            role=consts.GUEST,
                                                            idx=-1,
                                                            suffix=(dep, batch,))
-
         """
-        federation.remote(obj=encrypted_splitinfo_host,
-                          name=self.transfer_inst.encrypted_splitinfo_host.name,
-                          tag=self.transfer_inst.generate_transferid(self.transfer_inst.encrypted_splitinfo_host, dep,
-                                                                     batch),
-                          role=consts.GUEST,
-                          idx=-1)
+        self.transfer_inst.encrypted_splitinfo_host.remote(encrypted_splitinfo_host,
+                                                           role=consts.GUEST,
+                                                           idx=-1,
+                                                           suffix=(dep, batch,))
         """
 
     def sync_federated_best_splitinfo_host(self, dep=-1, batch=-1):
@@ -451,7 +448,7 @@ class HeteroDecisionTreeHost(DecisionTree):
 
                 splitinfo_host, encrypted_splitinfo_host = self.splitter.find_split_host(acc_histograms,
                                                                                          self.valid_features,
-                                                                                         self.data_bin._partitions,
+                                                                                         node_map,
                                                                                          self.sitename,
                                                                                          self.use_missing,
                                                                                          self.zero_as_missing)

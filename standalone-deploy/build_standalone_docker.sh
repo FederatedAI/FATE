@@ -17,7 +17,6 @@
 #
 set -e
 set -x
-version=1.1
 
 basepath=$(cd `dirname $0`;pwd)
 fatepath=$(cd $basepath/..;pwd)
@@ -80,11 +79,12 @@ fi
 cd ${fatepath}
 
 init() {
-    cp -r arch federatedml workflow examples fate_flow research eggroll ${basepath}
+    cp -r arch federatedml workflow examples fate_flow research eggroll federatedrec ${basepath}
     docker run -v ${fatepath}/fateboard:/data/projects/fate/fateboard  --entrypoint="" maven:3.6-jdk-8 /bin/bash -c "cd /data/projects/fate/fateboard && mvn clean package -DskipTests"
     if [ ! -d "${basepath}/fateboard" ];then
        mkdir -p ${basepath}/fateboard
     fi
+    version=$(grep -E -m 1 -o "<version>(.*)</version>" ${fatepath}/fateboard/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "version" '{print $2}')
     cp ${fatepath}/fateboard/target/fateboard-${version}.jar  ${basepath}/fateboard
     cd ${basepath}/fateboard
     if [ ! -f "fateboard.jar" ];then
@@ -101,18 +101,18 @@ init() {
 
     cd ${basepath}
     cp ../requirements.txt ./docker/python
-    tar -cf ./docker/python/fate.tar arch federatedml workflow examples fate_flow research eggroll
+    tar -cf ./docker/python/fate.tar arch federatedml workflow examples fate_flow research eggroll federatedrec
 
-    logPath="/var/lib/fate/log"
+    logPath="./fate/log"
     if [ ! -d "$logPath" ]; then
      mkdir -p "$logPath"
     fi
 
-    dataPath="/var/lib/fate/data"
+    dataPath="./fate/data" 
     if [ ! -d "$dataPath" ]; then
      mkdir -p "$dataPath"
     fi
-    cp -r ./fate_flow/* /var/lib/fate/data
+    cp -r ./fate_flow/* ./fate/data
 
     sed -i.bak "s#^fateflow.url=.*#fateflow.url=http://python:9380#g" ./fateboard/conf/application.properties
     sed -i.bak "s#^spring.datasource.url=.*#spring.datasource.url=jdbc:sqlite:/fate/fate_flow/fate_flow_sqlite.db#g" ./fateboard/conf/application.properties
@@ -123,7 +123,7 @@ init() {
     docker restart fate_python
     sleep 5
     docker restart fate_fateboard
-    rm -rf examples workflow arch federatedml fateboard fate_flow research  data eggroll
+    rm -rf examples workflow arch federatedml fateboard fate_flow research  data eggroll federatedrec
     rm docker/python/fate.tar
     rm docker/python/requirements.txt
     rm docker/fateboard/fateboard.tar
