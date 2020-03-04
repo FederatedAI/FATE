@@ -1,3 +1,7 @@
+branches:
+  only: 
+    - develop-1.4
+
 sudo: required
 language: generic
 
@@ -44,3 +48,5 @@ script:
 
 after_success:
   - cd ./federatedml/test && codecov
+
+
