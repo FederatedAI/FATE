@@ -325,7 +325,7 @@ class Evaluation(ModelBase):
                                metric_type="ROC", unit_name="fpr", ordinate_name="tpr",
                                curve_name=data_type, thresholds=thresholds)
 
-    def callback_metric_data(self,return_single_val_metrics = False):
+    def callback_metric_data(self, return_single_val_metrics=False):
 
         """
         Parameters
