@@ -47,14 +47,14 @@ FATE（Federated AI Technology Enable）是一个工业级的分布式联邦学�
 一个输出的例子如下：
 ```
   REPOSITORY                            TAG
-  federatedai/egg                       1.3.0-release
-  federatedai/fateboard                 1.3.0-release
-  federatedai/meta-service              1.3.0-release
-  federatedai/python                    1.3.0-release
-  federatedai/roll                      1.3.0-release
-  federatedai/proxy                     1.3.0-release
-  federatedai/federation                1.3.0-release
-  federatedai/base-image                1.3.0-release
+  federatedai/egg                       <TAG>
+  federatedai/fateboard                 <TAG>
+  federatedai/meta-service              <TAG>
+  federatedai/python                    <TAG>
+  federatedai/roll                      <TAG>
+  federatedai/proxy                     <TAG>
+  federatedai/federation                <TAG>
+  federatedai/base-image                <TAG>
 ```
 
 ## 把镜像推送到镜像仓库（可选）

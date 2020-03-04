@@ -56,14 +56,14 @@ $ bash build_cluster_docker.sh all
 The command creates the base images and then the component images. After the command finishes, all images of FATE should be created. Use `docker images` to check the newly generated images:
 ```
 REPOSITORY                            TAG  
-federatedai/egg                       1.3.0-release
-federatedai/fateboard                 1.3.0-release
-federatedai/meta-service              1.3.0-release
-federatedai/python                    1.3.0-release
-federatedai/roll                      1.3.0-release
-federatedai/proxy                     1.3.0-release
-federatedai/federation                1.3.0-release
-federatedai/base-image                1.3.0-release
+federatedai/egg                       <TAG>
+federatedai/fateboard                 <TAG>
+federatedai/meta-service              <TAG>
+federatedai/python                    <TAG>
+federatedai/roll                      <TAG>
+federatedai/proxy                     <TAG>
+federatedai/federation                <TAG>
+federatedai/base-image                <TAG>
 ```
 
 ##### Pushing images to a registry (optional)
