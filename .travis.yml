@@ -1,0 +1,48 @@
+sudo: required
+language: generic
+
+cache:
+  directories:
+    - $HOME/.ccache
+notifications:
+  slack:
+    on_success: never
+    on_failure : never
+
+matrix:
+  include:
+    - os: linux
+      dist: xenial
+      language: python
+      python: 3.6
+
+install:
+  - |
+    export PATH="/usr/lib/ccache:$PATH"
+    ccache -M 256M && ccache -s
+    sudo apt-get install libgmp-dev libmpfr-dev libmpfi-dev libmpc-dev texlive texlive-latex-extra latexmk
+    pip install Cython --verbose --disable-pip-version-check
+    python setup.py sdist
+    pip install dist/gmpy2-*.tar.gz
+    cat requirements.txt | xargs -n 1 pip install
+    pip install pytest pytest-cov coverage
+    pip install codecov
+    pip install nose
+    pip install sphinx
+before script:
+  - cur_dir=$(pwd)
+  - export PYTHONPATH=$PYTHONPATH:$cur_dir
+script:
+  - eggroll_git_url=`grep -A 3 '"eggroll"' .gitmodules | grep 'url' | awk -F '= ' '{print $2}'`
+  - eggroll_git_branch=`grep -A 3 '"eggroll"' .gitmodules | grep 'branch' | awk -F '= ' '{print $2}'`
+  - echo "[INFO] Git clone eggroll submodule source code from ${eggroll_git_url} branch ${eggroll_git_branch}"
+  - git clone ${eggroll_git_url} -b ${eggroll_git_branch} eggroll
+  - nohup python fate_flow/fate_flow_server.py > fate_flow_start.log &
+  - cat fate_flow_start.log
+  - fate_flow_proc=$(ps aux | grep fate_flow_server.py) 
+  - bash ./federatedml/test/run_test.sh
+
+after_success:
+  - cd ./federatedml/test && codecov
+
+
