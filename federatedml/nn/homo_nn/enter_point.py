@@ -82,7 +82,7 @@ class HomoNNArbiter(HomoNNBase):
 
     def callback_loss(self, iter_num, loss):
         metric_meta = MetricMeta(name='train',
-                                 metric_type=MetricType.LOSS,
+                                 metric_type="LOSS",
                                  extra_metas={
                                      "unit_name": "iters",
                                  })
