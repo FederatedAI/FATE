@@ -25,22 +25,22 @@
 # HeteroDecisionTreeGuest
 # =============================================================================
 
-from arch.api.utils import log_utils
-
-import functools
 import copy
+import functools
+
 from arch.api import session
+from arch.api.utils import log_utils
+from federatedml.feature.fate_element_type import NoneType
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import CriterionMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import DecisionTreeModelMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import DecisionTreeModelParam
 from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_variable import \
     HeteroDecisionTreeTransferVariable
-from federatedml.util import consts
-from federatedml.tree import FeatureHistogram
 from federatedml.tree import DecisionTree
-from federatedml.tree import Splitter
+from federatedml.tree import FeatureHistogram
 from federatedml.tree import Node
-from federatedml.feature.fate_element_type import NoneType
+from federatedml.tree import Splitter
+from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
@@ -173,12 +173,12 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
     def get_histograms(self, node_map={}):
         LOGGER.info("start to get node histograms")
-        histograms = FeatureHistogram.calculate_histogram(
+        acc_histograms = FeatureHistogram.calculate_histogram(
             self.data_bin_with_node_dispatch, self.grad_and_hess,
             self.bin_split_points, self.bin_sparse_points,
             self.valid_features, node_map,
             self.use_missing, self.zero_as_missing)
-        acc_histograms = FeatureHistogram.accumulate_histogram(histograms)
+
         return acc_histograms
 
     def sync_tree_node_queue(self, tree_node_queue, dep=-1):
@@ -217,13 +217,17 @@ class HeteroDecisionTreeGuest(DecisionTree):
         LOGGER.info("get encrypted splitinfo of depth {}, batch {}".format(dep, batch))
         encrypted_splitinfo_host = self.transfer_inst.encrypted_splitinfo_host.get(idx=-1,
                                                                                    suffix=(dep, batch,))
+
+        ret = []
+        for obj in encrypted_splitinfo_host:
+            ret.append(obj.get_data())
         """
         encrypted_splitinfo_host = federation.get(name=self.transfer_inst.encrypted_splitinfo_host.name,
                                                   tag=self.transfer_inst.generate_transferid(
                                                       self.transfer_inst.encrypted_splitinfo_host, dep, batch),
                                                   idx=-1)
         """
-        return encrypted_splitinfo_host
+        return ret
 
     def sync_federated_best_splitinfo_host(self, federated_best_splitinfo_host, dep=-1, batch=-1, idx=-1):
         LOGGER.info("send federated best splitinfo of depth {}, batch {}".format(dep, batch))
@@ -261,20 +265,32 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 best_gain = gain
                 best_idx = i
 
-        best_gain = self.encrypt(best_gain)
-        return best_idx, best_gain
+        encrypted_best_gain = self.encrypt(best_gain)
+        return best_idx, encrypted_best_gain, best_gain
 
     def federated_find_split(self, dep=-1, batch=-1):
         LOGGER.info("federated find split of depth {}, batch {}".format(dep, batch))
         encrypted_splitinfo_host = self.sync_encrypted_splitinfo_host(dep, batch)
 
         for i in range(len(encrypted_splitinfo_host)):
-            encrypted_splitinfo_host_table = session.parallelize(
-                zip(self.cur_split_nodes, encrypted_splitinfo_host[i]), include_key=False,
-                partition=self.data_bin._partitions)
-
-            splitinfos = encrypted_splitinfo_host_table.mapValues(self.find_host_split).collect()
-            best_splitinfo_host = [splitinfo[1] for splitinfo in splitinfos]
+            best_splitinfo_host = [None for j in range(len(self.cur_split_nodes))]
+            best_gains = [None for j in range(len(self.cur_split_nodes))]
+            max_nodes = max(len(encrypted_splitinfo_host[i][j]) for j in range(len(self.cur_split_nodes)))
+            for k in range(0, max_nodes, consts.MAX_FEDERATED_NODES):
+                batch_splitinfo_host = [encrypted_splitinfo[k: k + consts.MAX_FEDERATED_NODES] for encrypted_splitinfo
+                                        in encrypted_splitinfo_host[i]]
+                encrypted_splitinfo_host_table = session.parallelize(zip(self.cur_split_nodes, batch_splitinfo_host),
+                                                                     include_key=False,
+                                                                     partition=self.data_bin._partitions)
+                splitinfos = encrypted_splitinfo_host_table.mapValues(self.find_host_split).collect()
+                for _, splitinfo in splitinfos:
+                    if not best_splitinfo_host[_]:
+                        best_splitinfo_host[_] = list(splitinfo[:2])
+                        best_gains[_] = splitinfo[2]
+                    elif splitinfo[0] != -1 and splitinfo[2] > best_gains[_]:
+                        best_splitinfo_host[_][0] = k + splitinfo[0]
+                        best_splitinfo_host[_][1] = splitinfo[1]
+                        best_gains[_] = splitinfo[2]
 
             self.sync_federated_best_splitinfo_host(best_splitinfo_host, dep, batch, i)
 
@@ -323,7 +339,11 @@ class HeteroDecisionTreeGuest(DecisionTree):
                                                          include_key=False,
                                                          partition=self.data_bin._partitions)
         best_splitinfo_table = splitinfo_guest_host_table.mapValues(self.find_best_split_guest_and_host)
-        best_splitinfos = [best_splitinfo[1] for best_splitinfo in best_splitinfo_table.collect()]
+
+        best_splitinfos = [None for i in range(len(merge_infos))]
+        for _, best_splitinfo in best_splitinfo_table.collect():
+            best_splitinfos[_] = best_splitinfo
+        # best_splitinfos = [best_splitinfo[1] for best_splitinfo in best_splitinfo_table.collect()]
 
         return best_splitinfos
 

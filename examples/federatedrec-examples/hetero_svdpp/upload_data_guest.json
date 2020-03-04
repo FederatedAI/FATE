@@ -1,0 +1,8 @@
+{
+  "file": "examples/data/citeulike_svd_guest_1000.csv",
+  "head": 1,
+  "partition": 10,
+  "work_mode": 0,
+  "table_name": "hetero_svd_guest_1000",
+  "namespace": "hetero_svd_t"
+}

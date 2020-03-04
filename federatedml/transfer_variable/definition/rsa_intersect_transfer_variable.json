@@ -1,0 +1,60 @@
+{
+  "RsaIntersectTransferVariable": {
+    "cache_version_info": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "cache_version_match_info": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "intersect_guest_ids": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "intersect_guest_ids_process": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "intersect_host_ids_process": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "intersect_ids": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "rsa_pubkey": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    }
+  }
+}

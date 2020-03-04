@@ -48,7 +48,7 @@ class PaillierCipherTest(TestSyncBase):
                 init_w = [random.random()]
                 w = [host_cipher.encrypt(v) for v in init_w]
                 for i in range(re_cipher_time):
-                    w = agg.re_cipher(w, iter_num, (i + 1) * re_encrypt_batches)
+                    w = agg.re_cipher(w, iter_num, i * re_encrypt_batches)
                 return re_cipher_time, init_w, w
 
         else:

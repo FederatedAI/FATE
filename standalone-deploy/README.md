@@ -18,20 +18,18 @@ It is strongly recommended to use docker, which greatly reduces the possibility 
 
 2. Dependent on [docker](https://download.docker.com/linux/) and [docker-compose](https://github.com/docker/compose/releases/tag/1.24.0), docker recommended version is 18.09, docker-compose recommended version is 1.24.0, you can use the following command to verify the docker environment: docker --version and docker-compose --version, docker start and stop and other Please refer to: docker --help.
 
-3. execute follow command by root user (because need to create directories like /var/lib/fate/data).
-
-4. Check whether the 8080, 9060, and 9080 ports are occupied before executing. If you want to execute again, please delete the previous container and image with the docker command.
+3. Check whether the 8080, 9060, and 9080 ports are occupied before executing. If you want to execute again, please delete the previous container and image with the docker command.
 
    please follow the below step:
 
 
 ```
 #Get code
-FATE $ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.2.0.tar.gz
-FATE $tar -xvf docker_standalone-fate-1.2.0.tar.gz
+FATE $ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.3.0.tar.gz
+FATE $tar -xvf docker_standalone-fate-1.3.0.tar.gz
 
 #Execute the command
-FATE $ cd docker_standalone-fate-1.2.0
+FATE $ cd docker_standalone-fate-1.3.0
 FATE $ bash install_standalone_docker.sh
 
 #Validation results
@@ -61,21 +59,21 @@ Http://hostip:8080.
 2. Download the compressed package of stand-alone version and decompress it. 
 
    ```
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.2.0.tar.gz
-   tar -xvf  standalone-fate-master-1.2.0.tar.gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.3.0.tar.gz
+   tar -xvf  standalone-fate-master-1.3.0.tar.gz
    ```
 
 3. Enter FATE directory and execute the init.sh.
 
    ```
-   cd standalone-fate-master-1.2.0
+   cd standalone-fate-master-1.3.0
    source init.sh init
    ```
 
 4. Execution test.
 
    ```
-   cd standalone-fate-master-1.2.0
+   cd standalone-fate-master-1.3.0
    bash ./federatedml/test/run_test.sh
    ```
 
@@ -92,11 +90,9 @@ Http://hostip:8080.
 
 2. Dependent on [docker](https://download.docker.com/linux/) and [docker-compose](https://github.com/docker/compose/releases/tag/1.24.0), docker recommended version is 18.09, docker-compose recommended version is 1.24.0, you can use the following command to verify the docker environment: docker --version and docker-compose --version, docker start and stop and other Please refer to: docker --help.
 
-3. execute follow command by root user (because need to create directories like /var/lib/fate/data).
+3. Check whether the 8080, 9060, and 9080 ports are occupied before executing. If you want to execute again, please delete the previous container and image with the docker command.
 
-4. Check whether the 8080, 9060, and 9080 ports are occupied before executing. If you want to execute again, please delete the previous container and image with the docker command.
-
-5. It takes about 40 minutes to complete the build, please wait for a moment.
+4. It takes about 40 minutes to complete the build, please wait for a moment.
 
    please follow the below step:
 

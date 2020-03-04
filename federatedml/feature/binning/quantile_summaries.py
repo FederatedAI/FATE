@@ -128,12 +128,12 @@ class QuantileSummaries(object):
             self.compress()
 
         if other.count == 0:
-            return
+            return self
 
         if self.count == 0:
             self.count = other.count
             self.sampled = other.sampled
-            return
+            return self
 
         # merge two sorted array
         new_sample = []
@@ -154,6 +154,7 @@ class QuantileSummaries(object):
         merge_threshold = 2 * self.error * self.count
 
         self.sampled = self._compress_immut(merge_threshold)
+        return self
 
     def query(self, quantile):
         """
@@ -263,6 +264,7 @@ class SparseQuantileSummaries(QuantileSummaries):
         self.smaller_num += other.smaller_num
         self.bigger_num += other.bigger_num
         super(SparseQuantileSummaries, self).merge(other)
+        return self
 
     def _convert_query_percentile(self, quantile):
         zeros_count = self._total_count - self.count

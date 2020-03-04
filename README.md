@@ -10,16 +10,6 @@ FATE (Federated AI Technology Enabler) is an open-source project initiated by We
 
 <https://fate.fedai.org>
 
-## Getting Involved
-
-*  Join our maillist [Fate-FedAI Group IO](https://groups.io/g/Fate-FedAI). You can ask questions and participate in the development discussion.
-
-*  For any frequently asked questions, you can check in [FAQ](https://github.com/FederatedAI/FATE/wiki).
-
-*  Please report bugs by submitting [issues](https://github.com/FederatedAI/FATE/issues). 
-
-*  Submit contributions using [pull requests](https://github.com/FederatedAI/FATE/pulls)
-
 
 ## Federated Learning Algorithms In FATE
 FATE already supports a number of federated learning algorithms, including vertical federated learning, horizontal federated learning, and federated transfer learning. More details are available in [federatedml](./federatedml).
@@ -48,10 +38,6 @@ FATE also provides a distributed runtime architecture for Big Data scenario. Mig
 
 To deploy FATE on a cluster, please refer to cluster deployment guide: [cluster-deploy](./cluster-deploy).
 
-##### Get source
-```shell
-git clone --recursive git@github.com:FederatedAI/FATE.git
-```
 
 ### KubeFATE installation:
 Using KubeFATE, FATE can be deployed by either docker-compose or Kubernetes:
@@ -78,35 +64,6 @@ All the unittests shall pass if FATE is installed properly.
 
 We have provided a python script for quick starting modeling task. This scrip is located at ["examples/federatedml-1.x-examples"](./examples/federatedml-1.x-examples)
 
-#### Standalone Version
-1. Start standalone version hetero-lr task (default)
-> python quick_run.py
-
-
-#### Cluster Version
-
-1. Host party:
-> python quick_run.py -r host
-
-This is just uploading data
-
-2. Guest party:
-> python quick_run.py -r guest
-
-The config files that generated is stored in a new created folder named **user_config**
-
-#### Start a Predict Task
-Once you finish one training task, you can start a predict task. You need to modify "TASK" variable in quick_run.py script as "predict":
-```
-# Define what type of task it is
-# TASK = 'train'
-TASK = 'predict'
-```
-Then all you need to do is running the following command:
-> python quick_run.py
-
-Please note this works only if you have finished the trainning task.
-
 ###  Obtain Model and Check Out Results
 We provided functions such as tracking component output models or logs etc. through a tool called fate-flow. The deployment and usage of fate-flow can be found [here](./fate_flow/README.md)
 
@@ -118,6 +75,18 @@ FATE provides some API documents in [doc-api](./doc/api/), including federatedml
 How to develop your federated learning algorithm using FATE? you can see FATE develop guide document in [develop-guide](./doc/develop_guide.md)
 ### Other doc
 FATE also provides many other documents in [doc](./doc/). These documents can help you understand FATE better.
+
+## Getting Involved
+
+*  Join our maillist [Fate-FedAI Group IO](https://groups.io/g/Fate-FedAI). You can ask questions and participate in the development discussion.
+
+*  For any frequently asked questions, you can check in [FAQ](https://github.com/FederatedAI/FATE/wiki).
+
+*  Please report bugs by submitting [issues](https://github.com/FederatedAI/FATE/issues). 
+
+*  Submit contributions using [pull requests](https://github.com/FederatedAI/FATE/pulls)
+
+
 ### License
 [Apache License 2.0](LICENSE)
 

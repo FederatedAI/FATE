@@ -24,7 +24,7 @@ class JobDetector(cron.Cron):
         try:
             running_tasks = job_utils.query_task(status='running', run_ip=get_lan_ip())
             stop_job_ids = set()
-            detect_logger.info('start to detect running job..')
+            # detect_logger.info('start to detect running job..')
             for task in running_tasks:
                 try:
                     process_exist = job_utils.check_job_process(int(task.f_run_pid))
@@ -61,7 +61,7 @@ class JobDetector(cron.Cron):
                                             src_role=None,
                                             json_body={'job_id': job_id},
                                             work_mode=job_work_mode)
-                    schedule_logger(job_id).info('send stop job {} command'.format(job_id))
+                    # schedule_logger(job_id).info('send stop job {} command'.format(job_id))
         except Exception as e:
             detect_logger.exception(e)
         finally:

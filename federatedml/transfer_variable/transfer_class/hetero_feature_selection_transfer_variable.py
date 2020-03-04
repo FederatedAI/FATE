@@ -30,5 +30,5 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 class HeteroFeatureSelectionTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.host_select_cols = self._create_variable(name='host_select_cols')
-        self.result_left_cols = self._create_variable(name='result_left_cols')
+        self.host_select_cols = self._create_variable(name='host_select_cols', src=['host'], dst=['guest'])
+        self.result_left_cols = self._create_variable(name='result_left_cols', src=['guest'], dst=['host'])
