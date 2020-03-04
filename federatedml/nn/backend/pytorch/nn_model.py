@@ -82,9 +82,9 @@ def build_optimzer(optim, model):
     elif optim.optimizer == "SGD":
         return torch.optim.SGD(model.parameters(), lr=optim.kwargs.get("learning_rate"))
     elif optim.optimizer == "RMSprop":
-        return torch.optim.SGD(model.parameters(), lr=optim.kwargs.get("learning_rate"))
+        return torch.optim.RMSprop(model.parameters(), lr=optim.kwargs.get("learning_rate"))
     elif optim.optimizer == "Adagrad":
-        return torch.optim.SGD(model.parameters(), lr=optim.kwargs.get("learning_rate"))
+        return torch.optim.Adagrad(model.parameters(), lr=optim.kwargs.get("learning_rate"))
     else:
         print("not support")
 
