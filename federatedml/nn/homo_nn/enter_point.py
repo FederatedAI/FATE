@@ -148,6 +148,7 @@ class HomoNNClient(HomoNNBase):
         is_converged = self.has_converged.get_converge_status(suffix=self._suffix())
         return is_converged
 
+
     def __build_nn_model(self, input_shape):
         self.nn_model = self.model_builder(input_shape=input_shape,
                                            nn_define=self.nn_define,
