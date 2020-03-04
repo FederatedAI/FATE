@@ -62,6 +62,7 @@ class HeteroStepwise(object):
         self.models = None
         self.metric_namespace = "train"
         self.metric_type = "STEPWISE"
+        self.intercept = None
 
     def _init_model(self, param):
         self.model_param = param
@@ -196,6 +197,7 @@ class HeteroStepwise(object):
             loss = metrics.log_loss(y, pred)
         else:
             raise ValueError("Unknown model received. Stepwise stopped.")
+        self.intercept = intercept_model.intercept_
         return loss
 
     def get_ic_val(self, model, model_key):
@@ -303,6 +305,8 @@ class HeteroStepwise(object):
             metas["intercept"] = param_dict.get("intercept", None)
             metas["weight"] = param_dict.get("weight", {})
             metas["header"] = param_dict.get("header", [])
+            if self.n_step == 0 and self.direction == "forward":
+                metas["intercept"] = self.intercept
 
         metric_name = f"stepwise_{self.n_step}"
         metric = [Metric(metric_name, float(self.n_step))]
