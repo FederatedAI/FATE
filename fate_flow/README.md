@@ -1,3 +1,4 @@
+English | [中文](./README_zh.md)
 # FATE-Flow
 ## Introduction
 FATE-Flow is a end to end pipeline platform for Federated Learning. Pipeline is a sequence of components which is specifically designed for highly flexible, high performance federated learning tasks. That includes data processing, modeling, training, verification, publishing and serving inference.
