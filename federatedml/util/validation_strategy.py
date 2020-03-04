@@ -54,7 +54,7 @@ class ValidationStrategy(object):
                 if validate_data not equal to None, and judge need to validate data according to validation_freqs,
                 validate data will be used for evaluating
     """
-    def __init__(self, role=None, mode=None, validation_freqs=None):
+    def __init__(self, role=None, mode=None, validation_freqs=None, early_stopping=None):
 
         self.validation_freqs = validation_freqs
         self.role = role
@@ -63,19 +63,17 @@ class ValidationStrategy(object):
         self.train_data = None
         self.validate_data = None
         self.sync_status = False
-        self.early_stopping = None
+        self.early_stopping = early_stopping
+        if early_stopping is not None:
+            self.sync_status = True
+            LOGGER.debug("early stopping round is {}".format(self.early_stopping))
+
+        self.cur_best_model = None
 
         self.performance_recorder = PerformanceRecorder()
         self.transfer_inst = ValidationStrategyVariable()
 
         LOGGER.debug("end to init validation_strategy, freqs is {}".format(self.validation_freqs))
-
-    def set_early_stopping(self, early_stopping):
-
-        if early_stopping is not None:
-            self.sync_status = True
-            self.early_stopping = early_stopping
-            LOGGER.debug("early stopping round is {}".format(self.early_stopping))
 
     def set_train_data(self, train_data):
         self.train_data = train_data
@@ -148,7 +146,7 @@ class ValidationStrategy(object):
                 return True
         return False
 
-    def sycn_performance_recorder(self, epoch):
+    def sync_performance_recorder(self, epoch):
         """
         sycn synchronize self.performance_recorder
         """
@@ -158,6 +156,21 @@ class ValidationStrategy(object):
 
         elif self.mode == consts.HETERO and self.role == consts.HOST:
             self.performance_recorder = self.transfer_inst.validation_status.get(idx=-1, suffix=(epoch,))[0]
+
+    @staticmethod
+    def get_cur_model(model):
+        """
+        Extracting model params and meta
+        """
+        meta_name, meta_protobuf = model.get_model_meta()
+        param_name, param_protobuf = model.get_model_param()
+        return {meta_name: meta_protobuf, param_name: param_protobuf}
+
+    def has_saved_best_model(self):
+        return (self.early_stopping is not None) and (self.cur_best_model is not None)
+
+    def export_best_model(self):
+        return self.cur_best_model
 
     def evaluate(self, predicts, model, epoch):
 
@@ -196,6 +209,7 @@ class ValidationStrategy(object):
         return predicts
 
     def validate(self, model, epoch):
+
         LOGGER.debug("begin to check validate status, need_run_validation is {}".format(self.need_run_validation(epoch)))
         if not self.need_run_validation(epoch):
             return
@@ -205,13 +219,11 @@ class ValidationStrategy(object):
 
         train_predicts = self.evaluate_data(model, epoch, self.train_data, "train")
         validate_predicts = self.evaluate_data(model, epoch, self.validate_data, "validate")
-        if train_predicts is None and validate_predicts is None:
-            return
-        else:
-            # LOGGER.debug("train_predicts data is {}".format(list(train_predicts.collect())))
+
+        if train_predicts is not None or validate_predicts is not None:
+
             predicts = train_predicts
             if validate_predicts:
-                # LOGGER.debug("validate_predicts data is {}".format(list(validate_predicts.collect())))
                 predicts = predicts.union(validate_predicts)
 
             eval_result_dict = self.evaluate(predicts, model, epoch)
@@ -220,10 +232,17 @@ class ValidationStrategy(object):
 
             self.performance_recorder.update(eval_result_dict)
 
-            if self.sync_status:
-                self.sycn_performance_recorder(epoch)
-
-            LOGGER.debug('showing cur performances')
+        if self.sync_status:
+            self.sync_performance_recorder(epoch)
+            LOGGER.debug('{} shows cur performances'.format(self.role))
             LOGGER.debug(self.performance_recorder.cur_best_performance)
             LOGGER.debug(self.performance_recorder.no_improvement_round)
+
+        if self.early_stopping and self.is_best_performance_updated():
+            self.cur_best_model = self.get_cur_model(model)
+            LOGGER.debug('cur best model saved')
+
+
+
+
 

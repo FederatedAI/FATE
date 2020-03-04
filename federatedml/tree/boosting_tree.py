@@ -63,6 +63,7 @@ class BoostingTree(ModelBase):
         self.mode = consts.HETERO
         self.early_stopping = None
         self.cur_best_model = None
+        self.validation_strategy = None
 
         self.model_param = BoostingTreeParam()
 
@@ -142,8 +143,8 @@ class BoostingTree(ModelBase):
     def predict(self, data_inst):
         pass
 
-    def init_validation_strategy(self, train_data=None, validate_data=None):
-        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs)
+    def init_validation_strategy(self, train_data=None, validate_data=None, early_stopping=None):
+        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs, early_stopping)
         validation_strategy.set_train_data(train_data)
         validation_strategy.set_validate_data(validate_data)
         return validation_strategy

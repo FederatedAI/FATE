@@ -41,6 +41,7 @@ from federatedml.model_base import ModelBase
 
 LOGGER = log_utils.getLogger()
 
+
 class PerformanceRecorder():
 
     """
@@ -64,7 +65,6 @@ class PerformanceRecorder():
                               consts.KS
                             ]
 
-
         self.larger_is_better = [consts.AUC,
                                  consts.R2_SCORE,
                                  consts.PRECISION,
@@ -80,8 +80,7 @@ class PerformanceRecorder():
                                   consts.MEAN_SQUARED_LOG_ERROR]
 
         self.cur_best_performance = {}
-
-        self.no_improvement_round = {} # record no improvement round of all metrics
+        self.no_improvement_round = {}  # record no improvement round of all metrics
 
     def has_improved(self, val: float, metric: str, cur_best: dict):
 
@@ -325,7 +324,7 @@ class Evaluation(ModelBase):
                                metric_type="ROC", unit_name="fpr", ordinate_name="tpr",
                                curve_name=data_type, thresholds=thresholds)
 
-    def callback_metric_data(self,return_single_val_metrics = False):
+    def callback_metric_data(self, return_single_val_metrics=False):
 
         """
         Parameters

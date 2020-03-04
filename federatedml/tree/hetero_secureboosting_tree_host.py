@@ -106,8 +106,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         self.convert_feature_to_bin(data_inst)
         self.sync_tree_dim()
 
-        validation_strategy = self.init_validation_strategy(data_inst, validate_data)
-        validation_strategy.set_early_stopping(self.early_stopping)
+        self.validation_strategy = self.init_validation_strategy(data_inst, validate_data, self.early_stopping)
 
         for i in range(self.num_trees):
             # n_tree = []
@@ -131,17 +130,14 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
 
             # self.trees_.append(n_tree)
 
-            if validation_strategy:
+            if self.validation_strategy:
                 LOGGER.debug('host running validation')
-                validation_strategy.validate(self, i)
+                self.validation_strategy.validate(self, i)
+                if self.early_stopping and self.validation_strategy.check_early_stopping():
+                    LOGGER.debug('early stopping triggered')
+                    break
 
-            if self.n_iter_no_change is True or self.early_stopping:
-
-                if self.early_stopping > 0 and validation_strategy.is_best_performance_updated():
-                    LOGGER.debug('check early stopping')
-                    self.cur_best_model = self.get_cur_model()
-                    LOGGER.debug('cur best model saved')
-
+            if self.n_iter_no_change is True:
                 stop_flag = self.sync_stop_flag(i)
                 if stop_flag:
                     break
@@ -208,10 +204,10 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         if self.need_cv:
             return None
 
-        if self.cur_best_model is None:
-            return self.get_cur_model()
+        if self.validation_strategy.has_saved_best_model():
+            return self.validation_strategy.export_best_model()
 
-        return self.cur_best_model
+        return self.get_cur_model()
 
     def load_model(self, model_dict):
         LOGGER.info("load model")
