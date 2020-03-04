@@ -24,6 +24,9 @@
 from arch.api.utils import log_utils
 from federatedml.util import consts
 from federatedml.evaluation.evaluation import Evaluation
+from federatedml.evaluation.evaluation import PerformanceRecorder
+from federatedml.transfer_variable.transfer_class.validation_strategy_transfer_variable import  \
+    ValidationStrategyVariable
 
 LOGGER = log_utils.getLogger()
 
@@ -52,14 +55,27 @@ class ValidationStrategy(object):
                 validate data will be used for evaluating
     """
     def __init__(self, role=None, mode=None, validation_freqs=None):
+
         self.validation_freqs = validation_freqs
         self.role = role
         self.mode = mode
         self.flowid = ''
         self.train_data = None
         self.validate_data = None
+        self.sync_status = False
+        self.early_stopping = None
+
+        self.performance_recorder = PerformanceRecorder()
+        self.transfer_inst = ValidationStrategyVariable()
 
         LOGGER.debug("end to init validation_strategy, freqs is {}".format(self.validation_freqs))
+
+    def set_early_stopping(self, early_stopping):
+
+        if early_stopping is not None:
+            self.sync_status = True
+            self.early_stopping = early_stopping
+            LOGGER.debug("early stopping round is {}".format(self.early_stopping))
 
     def set_train_data(self, train_data):
         self.train_data = train_data
@@ -91,17 +107,72 @@ class ValidationStrategy(object):
         cv_fold = "_".join(["fold", model_flowid.split(".", -1)[-1]])
         return ".".join([cv_fold, data_iteration_name])
 
+    def get_best_performance(self):
+        """
+        Returns return dict
+        -------
+        """
+        return self.performance_recorder.cur_best_performance
+
+    def get_no_improvement_round(self):
+        """
+        Returns return dict which records no_improvement round of used metrics
+        -------
+        """
+        return self.performance_recorder.no_improvement_round
+
+    def is_best_performance_updated(self, use_first_metric_only=False):
+        """
+        check if the validation scores has improved
+        Returns bool
+        -------
+        """
+        if len(self.performance_recorder.no_improvement_round.items()) == 0:
+            return False
+        for metric, no_improve_val in self.performance_recorder.no_improvement_round.items():
+            if no_improve_val != 0:
+                return False
+            if use_first_metric_only:
+                break
+        return True
+
+    def check_early_stopping(self,):
+        """
+        check if satisfy early_stopping_round
+        Returns bool
+        """
+        LOGGER.info('check early stopping')
+        no_improvement_dict = self.performance_recorder.no_improvement_round
+        for metric in no_improvement_dict:
+            if no_improvement_dict[metric] >= self.early_stopping:
+                return True
+        return False
+
+    def sycn_performance_recorder(self, epoch):
+        """
+        sycn synchronize self.performance_recorder
+        """
+        if self.mode == consts.HETERO and self.role == consts.GUEST:
+            self.transfer_inst.validation_status.remote(self.performance_recorder, role=consts.HOST, idx=-1,
+                                                        suffix=(epoch,))
+
+        elif self.mode == consts.HETERO and self.role == consts.HOST:
+            self.performance_recorder = self.transfer_inst.validation_status.get(idx=-1, suffix=(epoch,))[0]
+
     def evaluate(self, predicts, model, epoch):
+
         evaluate_param = model.get_metrics_param()
         eval_obj = Evaluation()
         LOGGER.debug("evaluate type is {}".format(evaluate_param.eval_type))
         eval_obj._init_model(evaluate_param)
         eval_obj.set_tracker(model.tracker)
-        data_set_name = self.make_data_set_name(model.need_cv, model.flowid,  epoch);
+        data_set_name = self.make_data_set_name(model.need_cv, model.flowid,  epoch)
         eval_data = {data_set_name : predicts}
-        eval_obj.fit(eval_data)
+        eval_result_dict = eval_obj.fit(eval_data, return_result=True)
         eval_obj.save_data()
         LOGGER.debug("end to eval")
+
+        return eval_result_dict
 
     def evaluate_data(self, model, epoch, data, data_type):
         if not data:
@@ -143,6 +214,16 @@ class ValidationStrategy(object):
                 # LOGGER.debug("validate_predicts data is {}".format(list(validate_predicts.collect())))
                 predicts = predicts.union(validate_predicts)
 
-            # LOGGER.debug("predicts data is {}".format(list(predicts.collect())))
-            self.evaluate(predicts, model, epoch)
+            eval_result_dict = self.evaluate(predicts, model, epoch)
+            LOGGER.debug('showing eval_result_dict here')
+            LOGGER.debug(eval_result_dict)
+
+            self.performance_recorder.update(eval_result_dict)
+
+            if self.sync_status:
+                self.sycn_performance_recorder(epoch)
+
+            LOGGER.debug('showing cur performances')
+            LOGGER.debug(self.performance_recorder.cur_best_performance)
+            LOGGER.debug(self.performance_recorder.no_improvement_round)
 

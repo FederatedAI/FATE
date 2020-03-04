@@ -247,7 +247,7 @@ class BoostingTreeParam(BaseParam):
                  use_missing=False, zero_as_missing=False,
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 validation_freqs=None):
+                 validation_freqs=None, early_stopping=None):
         self.tree_param = copy.deepcopy(tree_param)
         self.task_type = task_type
         self.objective_param = copy.deepcopy(objective_param)
@@ -264,6 +264,7 @@ class BoostingTreeParam(BaseParam):
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
         self.validation_freqs = validation_freqs
+        self.early_stopping = early_stopping
 
     def check(self):
         self.tree_param.check()
@@ -311,6 +312,12 @@ class BoostingTreeParam(BaseParam):
                 raise ValueError("validation_freqs should be larger than 0 when it's integer")
         elif not isinstance(self.validation_freqs, collections.Container):
             raise ValueError("validation_freqs should be None or positive integer or container")
+
+        if self.early_stopping is None:
+            pass
+        elif isinstance(self.early_stopping, int):
+            if self.early_stopping < 1:
+                raise ValueError("early stopping should be larger than 0 when it's integer")
 
         return True
 

@@ -61,6 +61,8 @@ class BoostingTree(ModelBase):
         self.feature_name_fid_mapping = {}
         self.role = ''
         self.mode = consts.HETERO
+        self.early_stopping = None
+        self.cur_best_model = None
 
         self.model_param = BoostingTreeParam()
 
@@ -82,6 +84,7 @@ class BoostingTree(ModelBase):
         self.predict_param = boostingtree_param.predict_param
         self.cv_param = boostingtree_param.cv_param
         self.validation_freqs = boostingtree_param.validation_freqs
+        self.early_stopping = boostingtree_param.early_stopping
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing

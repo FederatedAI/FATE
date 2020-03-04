@@ -307,6 +307,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                                       extra_metas={"unit_name": "iters"}))
 
         validation_strategy = self.init_validation_strategy(data_inst, validate_data)
+        validation_strategy.set_early_stopping(self.early_stopping)
 
         for i in range(self.num_trees):
             self.compute_grad_and_hess()
@@ -342,15 +343,23 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                                  "train",
                                  [Metric(i, loss)])
 
+            flag_a, flag_b = False, False
             if validation_strategy:
                 validation_strategy.validate(self, i)
+                if self.early_stopping:
+                    LOGGER.debug('check early stopping')
+                    if validation_strategy.is_best_performance_updated():
+                        self.cur_best_model = self.get_cur_model()
+                        LOGGER.debug('cur best model saved')
+                    flag_a = validation_strategy.check_early_stopping()
 
             if self.n_iter_no_change is True:
-                if self.check_convergence(loss):
-                    self.sync_stop_flag(True, i)
-                    break
-                else:
-                    self.sync_stop_flag(False, i)
+                flag_b = self.check_convergence(loss)
+
+            self.sync_stop_flag(flag_a or flag_b, i)
+
+            if flag_b or flag_a:
+                break
 
         LOGGER.debug("history loss is {}".format(min(self.history_loss)))
         self.callback_meta("loss",
@@ -503,17 +512,20 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         else:
             return EvaluateParam(eval_type="regression")
 
+    def get_cur_model(self):
+        meta_name, meta_protobuf = self.get_model_meta()
+        param_name, param_protobuf = self.get_model_param()
+        return {meta_name: meta_protobuf, param_name: param_protobuf}
+
     def export_model(self):
+
         if self.need_cv:
             return None
 
-        meta_name, meta_protobuf = self.get_model_meta()
-        param_name, param_protobuf = self.get_model_param()
-        self.model_output = {meta_name: meta_protobuf,
-                             param_name: param_protobuf
-                             }
+        if self.cur_best_model is None:
+            return self.get_cur_model()
 
-        return self.model_output
+        return self.cur_best_model
 
     def load_model(self, model_dict):
         model_param = None

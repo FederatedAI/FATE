@@ -98,6 +98,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         return stop_flag
 
     def fit(self, data_inst, validate_data=None):
+
         LOGGER.info("begin to train secureboosting guest model")
         self.gen_feature_fid_mapping(data_inst.schema)
         LOGGER.debug("schema is {}".format(data_inst.schema))
@@ -106,6 +107,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         self.sync_tree_dim()
 
         validation_strategy = self.init_validation_strategy(data_inst, validate_data)
+        validation_strategy.set_early_stopping(self.early_stopping)
 
         for i in range(self.num_trees):
             # n_tree = []
@@ -130,9 +132,16 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
             # self.trees_.append(n_tree)
 
             if validation_strategy:
+                LOGGER.debug('host running validation')
                 validation_strategy.validate(self, i)
 
-            if self.n_iter_no_change is True:
+            if self.n_iter_no_change is True or self.early_stopping:
+
+                if self.early_stopping > 0 and validation_strategy.is_best_performance_updated():
+                    LOGGER.debug('check early stopping')
+                    self.cur_best_model = self.get_cur_model()
+                    LOGGER.debug('cur best model saved')
+
                 stop_flag = self.sync_stop_flag(i)
                 if stop_flag:
                     break
@@ -183,6 +192,13 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
 
         return param_name, model_param
 
+    def get_cur_model(self):
+        meta_name, meta_protobuf = self.get_model_meta()
+        param_name, param_protobuf = self.get_model_param()
+        return {meta_name: meta_protobuf,
+                param_name: param_protobuf
+                }
+
     def set_model_param(self, model_param):
         self.trees_ = list(model_param.trees_)
         self.tree_dim = model_param.tree_dim
@@ -192,13 +208,10 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         if self.need_cv:
             return None
 
-        meta_name, meta_protobuf = self.get_model_meta()
-        param_name, param_protobuf = self.get_model_param()
-        self.model_output = {meta_name: meta_protobuf,
-                             param_name: param_protobuf
-                             }
+        if self.cur_best_model is None:
+            return self.get_cur_model()
 
-        return self.model_output
+        return self.cur_best_model
 
     def load_model(self, model_dict):
         LOGGER.info("load model")
