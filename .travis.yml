@@ -1,7 +1,3 @@
-branches:
-  only: 
-    - develop-1.4
-
 sudo: required
 language: generic
 
