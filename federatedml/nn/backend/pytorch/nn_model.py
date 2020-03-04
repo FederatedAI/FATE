@@ -130,8 +130,8 @@ class PytorchNNModel(NNModel):
 
     def evaluate(self, data: data.dataset, **kwargs):
         metircs={}
-        metircs["loss"]=666
-        metircs["auccuray"]=777
+        metircs["loss"]=0
+        metircs["auccuray"]=0
         self._model.eval()
         evaluate_data = DataLoader(data, batch_size=1, shuffle=False)
         result = np.zeros((len(data), data.y_shape[0]))
