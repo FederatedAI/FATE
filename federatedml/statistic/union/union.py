@@ -97,9 +97,11 @@ class Union(ModelBase):
         self.is_data_instance = isinstance(entry[1], Instance)
 
     def fit(self, data):
-        if len(data) <= 0:
-            LOGGER.warning("Union receives no data input.")
+        if data is None:
+            # LOGGER.warning("Union receives no data input.")
             return
+        if not isinstance(data, dict):
+            data = {"data": data}
         empty_count = 0
         combined_table = None
         combined_schema = None
@@ -155,8 +157,6 @@ class Union(ModelBase):
         self.tracker.set_metric_meta(metric_namespace=self.metric_namespace,
                                      metric_name=self.metric_name,
                                      metric_meta=MetricMeta(name=self.metric_name, metric_type=self.metric_type))
-
-        LOGGER.debug("after union schema: {}".format(combined_table.schema))
 
         LOGGER.info("Union operation finished. Total {} empty tables encountered.".format(empty_count))
         return combined_table
