@@ -65,9 +65,9 @@ class TestEncryptModeCalculator(unittest.TestCase):
             self.assertTrue(value.shape[0] == self.numpy_data[key].shape[0])
 
     def test_data_type_with_diff_mode(self):
-        self.test_data_type(mode="strict")
-        self.test_data_type(mode="fast")
-        self.test_data_type(mode="balance")
+        mode_list = ["strict", "fast", "confusion_opt", "balance", "confusion_opt_balance"]
+        for mode in mode_list:
+            self.test_data_type(mode=mode)
 
     def test_diff_mode(self, round=10, mode="strict", re_encrypted_rate=0.2):
         encrypter = PaillierEncrypt()
@@ -81,11 +81,6 @@ class TestEncryptModeCalculator(unittest.TestCase):
             for j in range(30):
                 self.assertTrue(np.fabs(self.numpy_data[j] - decrypt_data_i[j] + i).all() < 1e-5)
            
-    def test_balance_mode(self):
-        self.test_diff_mode(mode="strict")
-        self.test_diff_mode(mode="fast")
-        self.test_diff_mode(mode="balance")
-
 
 if __name__ == '__main__':
     unittest.main()

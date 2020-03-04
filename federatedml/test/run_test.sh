@@ -18,11 +18,23 @@
 
 cd $(dirname "$0")
 cur_dir=$(pwd)
+first_test=1
+failed_count=0
 
 run_test() {
     file=$1
     echo "start to run test "$file
-    python $file
+    if [ $first_test == 1 ]; then
+		coverage run $file 2>test.log
+	else
+		coverage run -a $file 2>test.log
+	fi
+
+	failed_single_test=$(cat test.log | grep FAILED | wc -l)
+	failed_count=$(($failed_count+$failed_single_test))
+	echo $failed_count
+	cat test.log
+	first_test=0
 }
 
 traverse_folder() {
@@ -38,3 +50,10 @@ traverse_folder() {
 }
 
 traverse_folder $cur_dir/..
+
+echo "there are "$failed_count" failed test"
+
+if [ $failed_count -gt 0 ]; then
+	exit 1
+fi
+

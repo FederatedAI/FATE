@@ -25,9 +25,9 @@
 # FeatureHistogram
 # =============================================================================
 import functools
-import copy
-import numpy as np
+import uuid
 from arch.api.utils import log_utils
+from arch.api import session
 from federatedml.feature.fate_element_type import NoneType
 
 LOGGER = log_utils.getLogger()
@@ -39,11 +39,9 @@ class FeatureHistogram(object):
 
     @staticmethod
     def accumulate_histogram(histograms):
-        for i in range(len(histograms)):
+        for i in range(1, len(histograms)):
             for j in range(len(histograms[i])):
-                for k in range(1, len(histograms[i][j])):
-                    for r in range(len(histograms[i][j][k])):
-                        histograms[i][j][k][r] += histograms[i][j][k - 1][r]
+                histograms[i][j] += histograms[i - 1][j]
 
         return histograms
 
@@ -51,7 +49,7 @@ class FeatureHistogram(object):
     def calculate_histogram(data_bin, grad_and_hess,
                             bin_split_points, bin_sparse_points,
                             valid_features=None, node_map=None,
-                            use_missing=False, zero_as_missing=False):
+                            use_missing=False, zero_as_missing=False, ret="tensor"):
         LOGGER.info("bin_shape is {}, node num is {}".format(bin_split_points.shape, len(node_map)))
         batch_histogram_cal = functools.partial(
             FeatureHistogram.batch_calculate_histogram,
@@ -62,19 +60,23 @@ class FeatureHistogram(object):
         agg_histogram = functools.partial(FeatureHistogram.aggregate_histogram, node_map=node_map)
 
         batch_histogram = data_bin.join(grad_and_hess, \
-                                        lambda data_inst, g_h: (data_inst, g_h)).mapPartitions(batch_histogram_cal)
+                                        lambda data_inst, g_h: (data_inst, g_h)).mapPartitions2(batch_histogram_cal)
 
-        return batch_histogram.reduce(agg_histogram)
+        histograms_dict = batch_histogram.reduce(agg_histogram, key_func=lambda key: (key[1], key[2]))
+
+        if ret == "tensor":
+            feature_num = bin_split_points.shape[0]
+            return FeatureHistogram.recombine_histograms(histograms_dict, node_map, feature_num )
+        else:
+            return FeatureHistogram.construct_table(histograms_dict, data_bin._partitions)
 
     @staticmethod
-    def aggregate_histogram(batch_histogram1, batch_histogram2, node_map=None):
-        for i in range(len(batch_histogram1)):
-            for j in range(len(batch_histogram1[i])):
-                for k in range(len(batch_histogram1[i][j])):
-                    for r in range(len(batch_histogram1[i][j][k])):
-                        batch_histogram1[i][j][k][r] += batch_histogram2[i][j][k][r]
+    def aggregate_histogram(histogram1, histogram2, node_map=None):
+        for i in range(len(histogram1)):
+            for j in range(len(histogram1[i])):
+                histogram1[i][j] += histogram2[i][j]
 
-        return batch_histogram1
+        return histogram1
 
     @staticmethod
     def batch_calculate_histogram(kv_iterator, bin_split_points=None,
@@ -87,6 +89,7 @@ class FeatureHistogram(object):
 
         data_record = 0
 
+        _ = str(uuid.uuid1())
         for _, value in kv_iterator:
             data_bin, nodeid_state = value[0]
             unleaf_state, nodeid = nodeid_state
@@ -158,4 +161,31 @@ class FeatureHistogram(object):
                         node_histograms[nid][fid][-1][1] += zero_opt_node_sum[nid][1] - zero_optim[nid][fid][1]
                         node_histograms[nid][fid][-1][2] += zero_opt_node_sum[nid][2] - zero_optim[nid][fid][2]
 
-        return node_histograms
+        ret = []
+        for nid in range(node_num):
+            for fid in range(bin_split_points.shape[0]):
+                ret.append(((_, nid, fid), node_histograms[nid][fid]))
+
+        return ret
+
+    @staticmethod
+    def recombine_histograms(histograms_dict, node_map, feature_num):
+        histograms = [[[] for j in range(feature_num)] for k in range(len(node_map))]
+        for key in histograms_dict:
+            nid, fid = key
+            histograms[int(nid)][int(fid)] = FeatureHistogram.accumulate_histogram(histograms_dict[key])
+
+        return histograms
+
+    @staticmethod
+    def construct_table(histograms_dict, partition):
+        buf = []
+        for key in histograms_dict:
+            nid, fid = key
+            buf.append((key, (fid, FeatureHistogram.accumulate_histogram(histograms_dict[key]))))
+
+        return session.parallelize(buf, include_key=True, partition=partition)
+
+
+
+

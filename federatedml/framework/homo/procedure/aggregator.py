@@ -13,48 +13,55 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import typing
+
 import functools
 import types
-import typing
 from functools import reduce
 
 from arch.api.utils import log_utils
-from federatedml.framework.homo.procedure import random_padding_cipher
-from federatedml.framework.homo.sync import model_scatter_sync, \
-    loss_transfer_sync, model_broadcast_sync, is_converge_sync
-from federatedml.framework.weights import Weights, NumericWeights
+from federatedml.framework.homo.blocks import has_converged, loss_scatter, model_scatter, model_broadcaster
+from federatedml.framework.homo.blocks import random_padding_cipher
+from federatedml.framework.homo.blocks.base import HomoTransferBase
+from federatedml.framework.homo.blocks.has_converged import HasConvergedTransVar
+from federatedml.framework.homo.blocks.loss_scatter import LossScatterTransVar
+from federatedml.framework.homo.blocks.model_broadcaster import ModelBroadcasterTransVar
+from federatedml.framework.homo.blocks.model_scatter import ModelScatterTransVar
+from federatedml.framework.homo.blocks.random_padding_cipher import RandomPaddingCipherTransVar
+from federatedml.framework.weights import Weights, NumericWeights, TransferableWeights
+from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
 
+class LegacyAggregatorTransVar(HomoTransferBase):
+    def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST,), prefix=None):
+        super().__init__(server=server, clients=clients, prefix=prefix)
+        self.loss_scatter = LossScatterTransVar(server=server, clients=clients, prefix=self.prefix)
+        self.has_converged = HasConvergedTransVar(server=server, clients=clients, prefix=self.prefix)
+        self.model_scatter = ModelScatterTransVar(server=server, clients=clients, prefix=self.prefix)
+        self.model_broadcaster = ModelBroadcasterTransVar(server=server, clients=clients, prefix=self.prefix)
+        self.random_padding_cipher = RandomPaddingCipherTransVar(server=server, clients=clients, prefix=self.prefix)
+
+
 class Arbiter(object):
-    def __init__(self):
-        self._model_scatter = None
-        self._model_broadcaster = None
-        self._loss_sync = None
-        self._converge_sync = None
-        self.model = None
 
-    def register_aggregator(self, transfer_variables, enable_secure_aggregate=True):
+    def __init__(self, trans_var=LegacyAggregatorTransVar()):
+        self._guest_parties = trans_var.get_parties(roles=[consts.GUEST])
+        self._host_parties = trans_var.get_parties(roles=[consts.HOST])
+        self._client_parties = trans_var.client_parties
 
+        self._loss_sync = loss_scatter.Server(trans_var.loss_scatter)
+        self._converge_sync = has_converged.Server(trans_var.has_converged)
+        self._model_scatter = model_scatter.Server(trans_var.model_scatter)
+        self._model_broadcaster = model_broadcaster.Server(trans_var.model_broadcaster)
+        self._random_padding_cipher = random_padding_cipher.Server(trans_var.random_padding_cipher)
+
+    # noinspection PyUnusedLocal,PyAttributeOutsideInit,PyProtectedMember
+    def register_aggregator(self, transfer_variables: BaseTransferVariables, enable_secure_aggregate=True):
         if enable_secure_aggregate:
-            random_padding_cipher.Arbiter().register_random_padding_cipher(transfer_variables).exchange_secret_keys()
-
-        self._model_scatter = model_scatter_sync.Arbiter().register_model_scatter(
-            host_model_transfer=transfer_variables.host_model,
-            guest_model_transfer=transfer_variables.guest_model)
-
-        self._model_broadcaster = model_broadcast_sync.Arbiter(). \
-            register_model_broadcaster(model_transfer=transfer_variables.aggregated_model)
-
-        self._loss_sync = loss_transfer_sync.Arbiter().register_loss_transfer(
-            host_loss_transfer=transfer_variables.host_loss,
-            guest_loss_transfer=transfer_variables.guest_loss)
-
-        self._converge_sync = is_converge_sync.Arbiter().register_is_converge(
-            is_converge_variable=transfer_variables.is_converge)
-
+            self._random_padding_cipher.exchange_secret_keys()
         return self
 
     def aggregate_model(self, ciphers_dict=None, suffix=tuple()) -> Weights:
@@ -72,18 +79,46 @@ class Arbiter(object):
             ciphers_dict: a dict of host id to host cipher
             suffix: tag suffix
         """
-        self.model = self.aggregate_model(ciphers_dict=ciphers_dict, suffix=suffix)
-        self.send_aggregated_model(self.model, ciphers_dict=ciphers_dict, suffix=suffix)
-        return self.model
+        model = self.aggregate_model(ciphers_dict=ciphers_dict, suffix=suffix)
+        self.send_aggregated_model(model, ciphers_dict=ciphers_dict, suffix=suffix)
+        return model
 
     def get_models_for_aggregate(self, ciphers_dict=None, suffix=tuple()):
-        return self._model_scatter.get_models(ciphers_dict=ciphers_dict, suffix=suffix)
+        models = self._model_scatter.get_models(suffix=suffix)
+        guest_model = models[0]
+        yield (guest_model.weights, guest_model.get_degree() or 1.0)
 
-    def send_aggregated_model(self, model: Weights, ciphers_dict=None, suffix=tuple()):
-        self._model_broadcaster.send_model(model=model, ciphers_dict=ciphers_dict, suffix=suffix)
+        # host model
+        index = 0
+        for model in models[1:]:
+            weights = model.weights
+            if ciphers_dict and ciphers_dict.get(index, None):
+                weights = weights.decrypted(ciphers_dict[index])
+            yield (weights, model.get_degree() or 1.0)
+            index += 1
+
+    def send_aggregated_model(self, model: Weights,
+                              ciphers_dict: typing.Union[None, typing.Mapping[int, typing.Any]] = None,
+                              suffix=tuple()):
+        if ciphers_dict is None:
+            ciphers_dict = {}
+        party_to_cipher = {self._host_parties[idx]: cipher for idx, cipher in ciphers_dict.items()}
+        for party in self._client_parties:
+            cipher = party_to_cipher.get(party)
+            if cipher is None:
+                self._model_broadcaster.send_model(model=model.for_remote(), parties=party, suffix=suffix)
+            else:
+                self._model_broadcaster.send_model(model=model.encrypted(cipher, False).for_remote(), parties=party,
+                                                   suffix=suffix)
 
     def aggregate_loss(self, idx=None, suffix=tuple()):
-        losses = self._loss_sync.get_losses(idx=idx, suffix=suffix)
+        if idx is None:
+            parties = None
+        else:
+            parties = []
+            parties.extend(self._guest_parties)
+            parties.extend([self._host_parties[i] for i in idx])
+        losses = self._loss_sync.get_losses(parties=parties, suffix=suffix)
         total_loss = 0.0
         total_degree = 0.0
         for loss in losses:
@@ -92,18 +127,26 @@ class Arbiter(object):
         return total_loss / total_degree
 
     def send_converge_status(self, converge_func: types.FunctionType, converge_args, suffix=tuple()):
-        return self._converge_sync.check_converge_status(converge_func=converge_func, converge_args=converge_args,
-                                                         suffix=suffix)
+        is_converge = converge_func(*converge_args)
+        return self._converge_sync.remote_converge_status(is_converge, suffix=suffix)
 
 
 class Client(object):
-    def __init__(self):
-        self._secure_aggregate_cipher = None
-        self._model_scatter = None
-        self._model_broadcaster = None
-        self._loss_sync = None
-        self._converge_sync = None
+    def __init__(self, trans_var=LegacyAggregatorTransVar()):
         self._enable_secure_aggregate = False
+
+        self._loss_sync = loss_scatter.Client(trans_var.loss_scatter)
+        self._converge_sync = has_converged.Client(trans_var.has_converged)
+        self._model_scatter = model_scatter.Client(trans_var.model_scatter)
+        self._model_broadcaster = model_broadcaster.Client(trans_var.model_broadcaster)
+        self._random_padding_cipher = random_padding_cipher.Client(trans_var.random_padding_cipher)
+
+    # noinspection PyAttributeOutsideInit,PyUnusedLocal,PyProtectedMember
+    def register_aggregator(self, transfer_variables: BaseTransferVariables, enable_secure_aggregate=True):
+        self._enable_secure_aggregate = enable_secure_aggregate
+        if enable_secure_aggregate:
+            self._cipher = self._random_padding_cipher.create_cipher()
+        return self
 
     def secure_aggregate(self, send_func, weights: Weights, degree: float = None, enable_secure_aggregate=True):
         # w -> w * degree
@@ -111,15 +154,19 @@ class Client(object):
             weights *= degree
         # w * degree -> w * degree + \sum(\delta(i, j) * r_{ij}), namely， adding random mask.
         if enable_secure_aggregate:
-            weights = weights.encrypted(cipher=self._secure_aggregate_cipher, inplace=True)
+            weights = weights.encrypted(cipher=self._cipher, inplace=True)
         # maybe remote degree
         remote_weights = weights.for_remote().with_degree(degree) if degree else weights.for_remote()
 
         send_func(remote_weights)
 
     def send_model(self, weights: Weights, degree: float = None, suffix=tuple()):
-        return self.secure_aggregate(send_func=functools.partial(self._model_scatter.send_model, suffix=suffix),
-                                     weights=weights, degree=degree,
+        def _func(_weights: TransferableWeights):
+            self._model_scatter.send_model(model=_weights, suffix=suffix)
+
+        return self.secure_aggregate(send_func=_func,
+                                     weights=weights,
+                                     degree=degree,
                                      enable_secure_aggregate=self._enable_secure_aggregate)
 
     def get_aggregated_model(self, suffix=tuple()):
@@ -140,55 +187,15 @@ class Client(object):
         return self._converge_sync.get_converge_status(suffix=suffix)
 
 
-class Guest(Client):
-    def register_aggregator(self, transfer_variables, enable_secure_aggregate=True):
-        self._enable_secure_aggregate = enable_secure_aggregate
-        if enable_secure_aggregate:
-            self._secure_aggregate_cipher = random_padding_cipher.Guest().register_random_padding_cipher(
-                transfer_variables).create_cipher()
-
-        self._model_scatter = model_scatter_sync.Guest().register_model_scatter(
-            model_transfer=transfer_variables.guest_model)
-
-        self._model_broadcaster = model_broadcast_sync.Guest(). \
-            register_model_broadcaster(model_transfer=transfer_variables.aggregated_model)
-
-        self._loss_sync = loss_transfer_sync.Guest().register_loss_transfer(
-            loss_transfer=transfer_variables.guest_loss)
-
-        self._converge_sync = is_converge_sync.Guest().register_is_converge(
-            is_converge_variable=transfer_variables.is_converge)
-
-        return self
-
-
-class Host(Client):
-    def register_aggregator(self, transfer_variables, enable_secure_aggregate=True):
-        self._enable_secure_aggregate = enable_secure_aggregate
-        if enable_secure_aggregate:
-            self._secure_aggregate_cipher = random_padding_cipher.Host().register_random_padding_cipher(
-                transfer_variables).create_cipher()
-
-        self._model_scatter = model_scatter_sync.Host().register_model_scatter(
-            model_transfer=transfer_variables.host_model)
-
-        self._model_broadcaster = model_broadcast_sync.Host(). \
-            register_model_broadcaster(model_transfer=transfer_variables.aggregated_model)
-
-        self._loss_sync = loss_transfer_sync.Host().register_loss_transfer(
-            loss_transfer=transfer_variables.host_loss)
-
-        self._converge_sync = is_converge_sync.Host().register_is_converge(
-            is_converge_variable=transfer_variables.is_converge)
-
-        return self
+Guest = Client
+Host = Client
 
 
 def with_role(role, transfer_variable, enable_secure_aggregate=True):
     if role == consts.GUEST:
-        return Guest().register_aggregator(transfer_variable, enable_secure_aggregate)
+        return Client().register_aggregator(transfer_variable, enable_secure_aggregate)
     elif role == consts.HOST:
-        return Host().register_aggregator(transfer_variable, enable_secure_aggregate)
+        return Client().register_aggregator(transfer_variable, enable_secure_aggregate)
     elif role == consts.ARBITER:
         return Arbiter().register_aggregator(transfer_variable, enable_secure_aggregate)
     else:

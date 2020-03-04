@@ -59,7 +59,7 @@ class HomoLRHost(HomoLRBase):
 
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)
-        validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        # validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 
         pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, suffix=('fit',))
         if self.use_encrypt:
@@ -86,10 +86,10 @@ class HomoLRHost(HomoLRBase):
 
         model_weights = self.model_weights
         degree = 0
-        while self.n_iter_ < self.max_iter:
+        while self.n_iter_ < self.max_iter + 1:
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
 
-            if self.n_iter_ > 0 and self.n_iter_ % self.aggregate_iters == 0:
+            if (self.n_iter_ > 0 and self.n_iter_ % self.aggregate_iters == 0) or self.n_iter_ == self.max_iter:
                 weight = self.aggregator.aggregate_then_get(model_weights, degree=degree,
                                                             suffix=self.n_iter_)
                 # LOGGER.debug("Before aggregate: {}, degree: {} after aggregated: {}".format(
@@ -104,7 +104,7 @@ class HomoLRHost(HomoLRBase):
                 degree = 0
                 self.is_converged = self.aggregator.get_converge_status(suffix=(self.n_iter_,))
                 LOGGER.info("n_iters: {}, is_converge: {}".format(self.n_iter_, self.is_converged))
-                if self.is_converged:
+                if self.is_converged or self.n_iter_ == self.max_iter:
                     break
                 model_weights = self.model_weights
 
@@ -129,7 +129,7 @@ class HomoLRHost(HomoLRBase):
                     model_weights = LogisticRegressionWeights(w, self.fit_intercept)
                 batch_num += 1
 
-            validation_strategy.validate(self, self.n_iter_)
+            # validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
 
         LOGGER.info("Finish Training task, total iters: {}".format(self.n_iter_))

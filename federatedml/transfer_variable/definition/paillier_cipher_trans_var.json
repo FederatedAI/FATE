@@ -1,0 +1,44 @@
+{
+  "PaillierCipherTransVar": {
+    "use_encrypt": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "pailler_pubkey": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "re_encrypt_times": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "model_to_re_encrypt": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "model_re_encrypted": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "host"
+      ]
+    }
+  }
+}

@@ -16,14 +16,12 @@
 import argparse
 import importlib
 import os
-import signal
-import time
 import traceback
 
 from arch.api import federation
 from arch.api import session
 from arch.api.utils import file_utils, log_utils
-from arch.api.utils.core import current_timestamp, get_lan_ip
+from arch.api.utils.core import current_timestamp, get_lan_ip, timestamp_to_date
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import Task
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -37,7 +35,6 @@ from fate_flow.entity.constant_config import TaskStatus
 class TaskExecutor(object):
     @staticmethod
     def run_task():
-        # signal.signal(signal.SIGTERM, job_utils.onsignal_term)
         task = Task()
         task.f_create_time = current_timestamp()
         try:
@@ -62,7 +59,6 @@ class TaskExecutor(object):
             role = args.role
             party_id = int(args.party_id)
             executor_pid = os.getpid()
-            job_utils.task_killed_detector(job_id, role, party_id, component_name, executor_pid)
             task_config = file_utils.load_json_conf(args.config)
             job_parameters = task_config['job_parameters']
             job_initiator = task_config['job_initiator']
@@ -126,11 +122,14 @@ class TaskExecutor(object):
             output_model = run_object.export_model()
             # There is only one model output at the current dsl version.
             tracker.save_output_model(output_model, task_output_dsl['model'][0] if task_output_dsl.get('model') else 'default')
-            task.f_status = TaskStatus.SUCCESS
+            task.f_status = TaskStatus.COMPLETE
         except Exception as e:
-            traceback.print_exc()
-            schedule_logger().exception(e)
             task.f_status = TaskStatus.FAILED
+            kill_path = os.path.join(job_utils.get_job_directory(job_id), str(role), str(party_id), component_name,
+                                     'kill')
+            if not os.path.exists(kill_path):
+                traceback.print_exc()
+                schedule_logger().exception(e)
         finally:
             sync_success = False
             try:
@@ -146,18 +145,12 @@ class TaskExecutor(object):
             except Exception as e:
                 traceback.print_exc()
                 schedule_logger().exception(e)
+        schedule_logger().info('task {} {} {} start time: {}'.format(task_id, role, party_id, timestamp_to_date(task.f_start_time)))
+        schedule_logger().info('task {} {} {} end time: {}'.format(task_id, role, party_id, timestamp_to_date(task.f_end_time)))
+        schedule_logger().info('task {} {} {} takes {}s'.format(task_id, role, party_id, int(task.f_elapsed)/1000))
         schedule_logger().info(
             'finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status if sync_success else TaskStatus.FAILED))
-        print('finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status if sync_success else TaskStatus.FAILED))
-        while True:
-            time.sleep(0.5)
-            kill_path = os.path.join(job_utils.get_job_directory(job_id), str(role), str(party_id), component_name, 'kill')
-            if os.path.exists(kill_path):
-                try:
-                    session.stop()
-                except Exception as e:
-                    pass
-                break
+
 
     @staticmethod
     def get_task_run_args(job_id, role, party_id, job_parameters, job_args, input_dsl):
@@ -233,7 +226,7 @@ class TaskExecutor(object):
                                          party_id),
                                      src_party_id=party_id,
                                      dest_party_id=dest_party_id,
-                                     src_role=initiator_role,
+                                     src_role=role,
                                      json_body=task_info,
                                      work_mode=RuntimeConfig.WORK_MODE)
             if response['retcode']:
