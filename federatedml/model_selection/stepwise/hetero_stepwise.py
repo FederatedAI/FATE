@@ -54,7 +54,6 @@ class HeteroStepwise(object):
         self.role = None
         self.forward = False
         self.backward = False
-        self.best_list = []
         self.n_step = 0
         self.has_test = False
         self.n_count = 0
