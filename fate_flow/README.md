@@ -201,9 +201,18 @@ And then, you can found so many useful command from [**CLI**](./doc/fate_flow_cl
 ### Online Inference
 Publish model to **FATE-Serving**, and then using Serving's GRPC API to inference. 
 
-
 #### Modify service configuration
 Modify the IP and end of **FATE-Serving** in **arch/conf/server_conf.json** (please note that many parties need to modify the actual deployment address of their respective **FATE-Serving**), the content is "servings ":["ip: port"], restart **FATE-Flow** after modification.
+server_conf.json format is as follows:
+```json
+{
+	"servers": {
+		"servings": [
+			"127.0.0.1:8000"
+		]
+	}
+}
+```
 
 #### Publish Model
 ```bash

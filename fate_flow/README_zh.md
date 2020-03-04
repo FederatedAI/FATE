@@ -202,7 +202,16 @@ python fate_flow_client.py -f query_job -r guest -p 10000 -j $job_id
 
 #### 修改服务配置
 修改**arch/conf/server_conf.json**里**FATE-Serving**的ip和端口(需要注意多方都需要修改成各自**FATE-Serving**的实际部署地址)，内容为"servings":["ip:port"]，修改完后重启**FATE-Flow**.
-
+server_conf.json格式如下:
+```json
+{
+	"servers": {
+		"servings": [
+			"127.0.0.1:8000"
+		]
+	}
+}
+```
 #### 发布模型
 ```bash
 python fate_flow_client.py -f load -c examples/publish_load_model.json
