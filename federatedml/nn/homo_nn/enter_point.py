@@ -136,12 +136,10 @@ class HomoNNClient(HomoNNBase):
         # self.pytorch_builder= nn_model.get_nn_builder(config_type= "pytorch")
 
     def _check_monitored_status(self, data, epoch_degree):
-        if self.config_type=="pytorch":
-            loss=self.nn_model.train(data)
-        else:
-            metrics = self.nn_model.evaluate(data)
-            Logger.info(f"metrics at iter {self.aggregator_iter}: {metrics}")
-            loss = metrics["loss"]
+
+        metrics = self.nn_model.evaluate(data)
+        Logger.info(f"metrics at iter {self.aggregator_iter}: {metrics}")
+        loss = metrics["loss"]
         self.aggregator.send_loss(loss=loss,
                                   degree=epoch_degree,
                                   suffix=self._iter_suffix())

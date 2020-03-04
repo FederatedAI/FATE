@@ -82,9 +82,9 @@ def build_optimzer(optim, model):
     elif optim.optimizer == "SGD":
         return torch.optim.SGD(model.parameters(), lr=optim.kwargs.get("learning_rate"))
     elif optim.optimizer == "RMSprop":
-        return torch.optim.SGD(model.parameters(), lr=optim.kwargs.get("learning_rate"))
+        return torch.optim.RMSprop(model.parameters(), lr=optim.kwargs.get("learning_rate"))
     elif optim.optimizer == "Adagrad":
-        return torch.optim.SGD(model.parameters(), lr=optim.kwargs.get("learning_rate"))
+        return torch.optim.Adagrad(model.parameters(), lr=optim.kwargs.get("learning_rate"))
     else:
         print("not support")
 
@@ -125,26 +125,30 @@ class PytorchNNModel(NNModel):
                 loss = loss_fn(y_pre, label)
                 loss.backward()
                 optimizer.step()
-        loss = loss.item()
-        return loss
+
 
     def evaluate(self, data: data.dataset, **kwargs):
         metircs={}
-        metircs["loss"]=666
-        metircs["auccuray"]=777
+        metircs["loss"]=0
+        metircs["auccuray"]=0
+        loss_fn = build_loss_fn(self._loss)
         self._model.eval()
         evaluate_data = DataLoader(data, batch_size=1, shuffle=False)
         result = np.zeros((len(data), data.y_shape[0]))
         eval_label = np.zeros((len(data), data.y_shape[0]))
         num_output_units = data.get_shape()[1]
         index = 0
+        eval_loss = 0
         for batch_id, (feature, label) in enumerate(evaluate_data):
             feature = torch.tensor(feature, dtype=torch.float32)
             label = torch.tensor(label, dtype=torch.float32)
             y = self._model(feature)
+            loss = loss_fn(y, label)
+            eval_loss += loss
             result[index] = y.detach().numpy()
             eval_label[index] = label.detach().numpy()
             index += 1
+        metircs["loss"] = eval_loss.item()
         acc=0
         if num_output_units[0] == 1:
             for i in range(len(data)):
