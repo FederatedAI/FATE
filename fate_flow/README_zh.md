@@ -10,47 +10,47 @@ FATE-Flow是用于联邦学习的端到端Pipeline系统.它由一系列高度�
 
 ### FATE-Flow现在支持:
 
--使用DAG定义Pipeline
--使用 **JSON** 格式的 **FATE-DSL** 描述DAG
--FATE具有大量默认的联邦学习组件, 例如Hetero LR/Homo LR/Secure Boosting Tree等.
--开发人员可以使用最基本的API轻松实现自定义组件, 并通过DSL构建自己的Pipeline.
--联邦建模任务生命周期管理器, 启动/停止, 状态同步等.
--强大的联邦调度管理, 支持DAG作业(job) 和组件任务的多种调度策略.
--运行期间实时跟踪数据, 参数, 模型和指标.
--联邦模型管理器, 模型绑定, 版本控制和部署工具.
--提供HTTP API和命令行界面.
--提供可视化支持, 可在 **FATE-Board** 上进行可视化建模.
+- 使用DAG定义Pipeline
+- 使用 **JSON** 格式的 **FATE-DSL** 描述DAG
+- FATE具有大量默认的联邦学习组件, 例如Hetero LR/Homo LR/Secure Boosting Tree等.
+- 开发人员可以使用最基本的API轻松实现自定义组件, 并通过DSL构建自己的Pipeline.
+- 联邦建模任务生命周期管理器, 启动/停止, 状态同步等.
+- 强大的联邦调度管理, 支持DAG作业(job) 和组件任务的多种调度策略.
+- 运行期间实时跟踪数据, 参数, 模型和指标.
+- 联邦模型管理器, 模型绑定, 版本控制和部署工具.
+- 提供HTTP API和命令行界面.
+- 提供可视化支持, 可在 **FATE-Board** 上进行可视化建模.
 
 
 
-##建立Pipeline
+## 建立Pipeline
 ### DSL示例
 ![fate_flow_dsl](./images/fate_flow_dsl.png)
 
 
 
-###编写DSL
+### 编写DSL
 仅需一步就可以为Pipeline配置组件.
 
--定义此组件的模块
--定义输入, 包括数据, 模型或isometric_model(仅用于FeatureSelection)
--定义输出, 包括数据和模型
+- 定义此组件的模块
+- 定义输入, 包括数据, 模型或isometric_model(仅用于FeatureSelection)
+- 定义输出, 包括数据和模型
 ![fate_flow_component_dsl](./images/fate_flow_component_dsl.png)
 
 
 
-###Pipeline运行示例
+### Pipeline运行示例
 ![fate_flow_dag](./images/fate_flow_dag.png)
 
 
 
-##架构
+## 架构
 
 ![fate_flow_arch](./images/fate_flow_arch.png)
 
 
 
-##部署
+## 部署
 Fate-Flow 部署在 ``$PYTHONPATH/fate_flow/``中. 它依赖两个配置文件：``$PYTHONPATH/arch/conf/server.conf``, ``$PYTHONPATH/fate_flow/settings.py``
 
 
@@ -100,10 +100,9 @@ Fate-Flow 部署在 ``$PYTHONPATH/fate_flow/``中. 它依赖两个配置文件�
 | USE_LOCAL_DATABASE | True |
 
 ##### **Features**
--使用 **Sqlite** 作为数据库, db文件是 FATE-Flow 根目录上的fate_flow_sqlite.db.
--使用进程内队列作为作业(job) 队列.
--多方通讯回环.
--但无法使用FATE-Board, 因为它不支持sqlite! FATE-board的下一个版本将支持sqlite.
+- 使用 **Sqlite** 作为数据库, db文件是 FATE-Flow 根目录上的fate_flow_sqlite.db.
+- 使用进程内队列作为作业(job) 队列.
+- 多方通讯回环.
 
 
 
@@ -126,14 +125,14 @@ Fate-Flow 部署在 ``$PYTHONPATH/fate_flow/``中. 它依赖两个配置文件�
 |数据库| mysql数据库的配置  |
 
 ##### **Features**
--使用 **MySQL** 作为数据库.
--使用进程内队列作为作业(job) 队列.
--多方通讯回环.
--可通过FATE-Board实现可视化!
+- 使用 **MySQL** 作为数据库.
+- 使用进程内队列作为作业(job) 队列.
+- 多方通讯回环.
+- 可通过FATE-Board实现可视化!
 
 
 
-###群集
+### 群集
 FATE还为大数据场景提供了分布式框架. 从单机迁移到群集仅需要更改配置, 无需更改算法.
 要在群集上部署FATE, 请参阅群集部署指南, 位于[cluster-deploy](./../cluster-deploy).
 
@@ -145,25 +144,25 @@ FATE还为大数据场景提供了分布式框架. 从单机迁移到群集仅�
 | REDIS | Redis的配置 |
 
 ##### **Features**
--使用**MySQL**作为数据库.
--使用**redis队列**作为作业(job) 队列.
--多方通信使用**代理**.
--可通过FATE-Board实现可视化!
+- 使用**MySQL**作为数据库.
+- 使用**redis队列**作为作业(job) 队列.
+- 多方通信使用**代理**.
+- 可通过FATE-Board实现可视化!
 
 
 
-##用法
+## 用法
 FATE-Flow提供 [**REST API**](./doc/fate_flow_rest_api.md)和[**命令行界面**](./doc/fate_flow_cli.md).
 让我们开始使用 client端 来运行一个联邦学习Pipeline作业(job) (**单机版本**).
 
-###离线建模
-####上传数据
+### 离线建模
+#### 上传数据
 ```bash
 python fate_flow_client.py -f upload -c examples/upload_guest.json
 python fate_flow_client.py -f upload -c examples/upload_host.json
 ```
 
-####提交作业(job) 
+#### 提交作业(job) 
 ```bash
 python fate_flow_client.py -f submit_job -d examples/test_hetero_lr_job_dsl.json -c examples/test_hetero_lr_job_conf.json
 ```
@@ -188,20 +187,23 @@ python fate_flow_client.py -f submit_job -d examples/test_hetero_lr_job_dsl.json
 ```
 以下某些操作将用到上面这些响应信息。
 
-####查询作业(job) 
+#### 查询作业(job) 
 ```bash
 python fate_flow_client.py -f query_job -r guest -p 10000 -j $job_id
 ```
 然后, 您可以在[**CLI**](./doc/fate_flow_cli.md) 中找到更多有用的命令。
 
-#####有关更多联邦学习Pipeline作业(job) 示例, 请参考[**federatedml-1.x-examples**](./../examples/federatedml-1.x-examples) 和 [**README**](./../examples/federatedml-1.x-examples/README.md) 
+##### 有关更多联邦学习Pipeline作业(job) 示例, 请参考[**federatedml-1.x-examples**](./../examples/federatedml-1.x-examples) 和 [**README**](./../examples/federatedml-1.x-examples/README.md) 
 
 
 
-###在线推理
-将模型发布到**FATE-Serving**, 然后使用Serving的GRPC API进行在线推理。 请确认您已部署**FATE-Serving**并在**server.conf**中配置了服务地址。 您可以参考集群部署。
+### 在线推理
+将模型发布到**FATE-Serving**, 然后使用Serving的GRPC API进行在线推理。
 
-####发布模型
+#### 修改服务配置
+修改**arch/conf/server_conf.json**里**FATE-Serving**的ip和端口(需要注意多方都需要修改成各自**FATE-Serving**的实际部署地址)，内容为"servings":["ip:port"]，修改完后重启**FATE-Flow**.
+
+#### 发布模型
 ```bash
 python fate_flow_client.py -f load -c examples/publish_load_model.json
 ```
@@ -209,7 +211,7 @@ python fate_flow_client.py -f load -c examples/publish_load_model.json
 请使用您(自己)的作业配置(job configuration)替换 ``publish_online_model.json`` 中的相应配置。
 之后, 您可以通过指定所使用的模型ID和模型版本来向FATE-Serving提出在线推理请求。
 
-####在线发布默认模型 (Publish Model Online Default)
+#### 在线发布默认模型 (Publish Model Online Default)
 ```bash
 python fate_flow_client.py -f bind -c examples/bind_model_service.json
 ```
@@ -219,11 +221,11 @@ python fate_flow_client.py -f bind -c examples/bind_model_service.json
 
 
 
-##日志
+## 日志
 #### FATE-Flow服务日志
 ``$PYTHONPATH/logs/fate_flow/``
 
-####作业(job) 日志
+#### 作业(job) 日志
 ``$PYTHONPATH/logs/$job_id/``
 
 
@@ -238,39 +240,39 @@ python fate_flow_client.py -f bind -c examples/bind_model_service.json
 - 将PYTHONPATH设置为fate_flow的父目录。
 
 
-####提交任务时, 为什么任务显示成功, 但是在dashboard页面上任务失败？
+#### 提交任务时, 为什么任务显示成功, 但是在dashboard页面上任务失败？
 - 提交成功仅表示作业(job) 已提交但未执行。如果作业(job) 失败, 则需要检查日志。
 - 您可以通过面板查看日志。
 
 
-####guest, host, arbiter和local在FATE中的作用以及代表的意义是什么？
--arbiter 用于协助多方完成联合建模。它的主要作用是汇总并处理模型中间结果。 例如, 在纵向lr中, 各方将其梯度的一半发送给arbiter, 然后由arbiter汇总并处理。
--guest代表数据应用方。
--host是数据提供者。
--local是指本地任务, 该角色仅用于upload和download阶段中。
+#### guest, host, arbiter和local在FATE中的作用以及代表的意义是什么？
+- arbiter 用于协助多方完成联合建模。它的主要作用是汇总并处理模型中间结果。 例如, 在纵向lr中, 各方将其梯度的一半发送给arbiter, 然后由arbiter汇总并处理。
+- guest代表数据应用方。
+- host是数据提供者。
+- local是指本地任务, 该角色仅用于upload和download阶段中。
 
 
-####杀死(kill)等待的作业(job) 时出现有关“cannot find xxxx”的错误
--Fate_flow当前仅在作业(job) 启动器上支持kill, 执行kill将报告“cannot find xxxx”。
+#### 杀死(kill)等待的作业(job) 时出现有关“cannot find xxxx”的错误
+- Fate_flow当前仅在作业(job) 启动器上支持kill, 执行kill将报告“cannot find xxxx”。
 
 
-####upload命令在做什么？
+#### upload命令在做什么？
 
--上载数据被上载到eggroll, 并加载为可由后续算法处理的DTable格式。
-
-
-####如何下载执行过程中生成的数据？
--您可以使用``python fate_flow_client.py -f component_output_model -j $job_id -r $role -g $guest -cpn $component_name -o $output_path``
+- 上载数据被上载到eggroll, 并加载为可由后续算法处理的DTable格式。
 
 
-####如果同一文件上传执行了两次, FATE将删除第一个数据并再次上传吗？
--如果同一表的键值相同, 它将被覆盖。
+#### 如何下载执行过程中生成的数据？
+- 您可以使用``python fate_flow_client.py -f component_output_model -j $job_id -r $role -g $guest -cpn $component_name -o $output_path``
 
 
-####作业(job) 失败而在board上没有错误显示的原因是什么？
--这些日志不会显示在board上：```$job_id/fate_flow_schedule.log```, ``logs/error.log``, ``logs/fate_flow/ERROR.log`` .
+#### 如果同一文件上传执行了两次, FATE将删除第一个数据并再次上传吗？
+- 如果同一表的键值相同, 它将被覆盖。
+
+
+#### 作业(job) 失败而在board上没有错误显示的原因是什么？
+- 这些日志不会显示在board上：```$job_id/fate_flow_schedule.log```, ``logs/error.log``, ``logs/fate_flow/ERROR.log`` .
 
 
 
 #### load和bind命令有什么区别？
--load可以理解为模型的release版本, 而bind是默认模型版本。
+- load可以理解为模型的release版本, 而bind是默认模型版本。

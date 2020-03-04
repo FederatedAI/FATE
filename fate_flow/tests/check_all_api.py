@@ -28,9 +28,13 @@ print('job id is {}'.format(job_id))
 print('job data view')
 response = requests.post('{}/tracking/job/data_view'.format(fate_flow_server_host), json=base_request_data)
 print(response.json())
+response = requests.post('{}/job/data/view/query'.format(fate_flow_server_host), json=base_request_data)
+print(response.json())
+
 # dependency
 print('dependency')
-response = requests.post('{}/pipeline/dag/dependency'.format(fate_flow_server_host), json={'job_id': job_id})
+response = requests.post('{}/pipeline/dag/dependency'.format(fate_flow_server_host),
+                         json={'job_id': job_id, 'role': role, 'party_id': party_id})
 dependency_response = response.json()
 print(json.dumps(dependency_response))
 print()
@@ -41,16 +45,17 @@ for component_name in dependency_response['data']['component_list']:
     print('metrics')
     response = requests.post('{}/tracking/component/metrics'.format(fate_flow_server_host), json=base_request_data)
     print(response.json())
-    print('metrics retcode {}'.format(response.json()['retcode']))
-    if response.json()['retcode'] == 0:
+    print('metrics return {}'.format(response.json()))
+    print()
+    if response.json()['retcode'] == 0 and response.json()['retmsg'] != "no data":
         for metric_namespace, metric_names in response.json()['data'].items():
             base_request_data['metric_namespace'] = metric_namespace
             for metric_name in metric_names:
                 base_request_data['metric_name'] = metric_name
                 response = requests.post('{}/tracking/component/metric_data'.format(fate_flow_server_host), json=base_request_data)
-                if response.json()['retcode'] == 0:
+                if response.json()['retcode'] == 0 :
                     print('{} {} metric data:'.format(metric_namespace, metric_name))
-                    print(response.json()['data'])
+                    print(response.json())
                 else:
                     print('{} {} no metric data!'.format(metric_namespace, metric_name))
                 print()
@@ -71,3 +76,5 @@ for component_name in dependency_response['data']['component_list']:
     print(response.json())
     print('output data retcode {}'.format(response.json()['retcode']))
     print()
+    response = requests.post('{}/tracking/component/output/data/table'.format(fate_flow_server_host), json=base_request_data)
+    print(response.json())
