@@ -2,7 +2,7 @@ absl-py==0.8.0
 astor==0.7.1
 audioread==2.1.6
 backcall==0.1.0
-bleach==1.5.0
+bleach==3.1.1
 cachetools==3.0.0
 certifi==2018.10.15
 cffi==1.11.5
