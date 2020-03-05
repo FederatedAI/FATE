@@ -1,17 +1,21 @@
-### Federated Machine Learning
 
-Federatedml includes implementation of many common machine learning algorithms as well as necessary utility tools. All modules are developed in a decoupling modular approach to enhance scalability. Specifically, we provide:
+English | [中文](./README_zh.md)
+# Federated Machine Learning
 
-1. FML Algorithms: Federated machine learning algorithms serving for DataIO, Data-preprocessing, feature engineering and modeling. More details are listed below.
+FederatedML includes implementation of many common machine learning algorithms on federated learning. All modules are developed in a decoupling modular approach to enhance scalability. Specifically, we provide:
 
-2. Utilities: Tools that enable federated learning such as encryption tools, statistic modules, parameter definitions, and transfer variable autogenerator etc.
+1. Federated Statistic: PSI, Union, Pearson Correlation, etc.
 
-3. Framework: Kits and base models for developing new algorithm modules. Framework provides reusable functions to standardize modules and make them compact.
+2. Federated Feature Engineering: Feature Sampling, Feature Binning, Feature Selection, etc.
 
-4. Secure Protocol: Provides multiple security protocols for more secure multi-party interaction calculations.
+3. Federated Machine Learning Algorithms: LR, GBDT, DNN, TransferLearning, which support Heterogeneous and Homogeneous styles.
+
+4. Model Evaluation: Binary|Multiclass|Regression Evaluation, Local vs Federated Comparison.
+
+5. Secure Protocol: Provides multiple security protocols for secure multi-party computing and interaction between participants.
 
  <div style="text-align:center", align=center>
-<img src="../doc/images/federatedml_structure.png" alt="federatedml structure" height="300" /><br/>
+<img src="../doc/images/federatedml_structure.png" alt="federatedml structure"/><br/>
 Figure 1： Federated Machine Learning Framework
 </div>
 
@@ -166,3 +170,19 @@ Build hetero neural network module.
 - Corresponding module name: HeteroNN
 - Data Input: Input DTable.
 - Model Output: hetero neural network model.
+
+### Secure Protocol
+#### 1. [Homomorphic Encryption](./secureprotol/README.md)
+
+- Paillier
+- Affine Homomorphic Encryption
+- IterativeAffine Homomorphic Encryption
+
+#### 2. [SecretShare](./secureprotol/README.md)
+
+- SPDZ
+
+#### 3. [Diffne Hellman Key Exchange](./secureprotol/README.md)
+
+
+#### 4. [RSA](./secureprotol/README.md)

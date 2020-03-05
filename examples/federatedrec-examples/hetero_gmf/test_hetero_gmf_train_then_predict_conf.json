@@ -1,0 +1,128 @@
+{
+	"initiator": {
+		"role": "guest",
+		"party_id": 10000
+	},
+	"job_parameters": {
+		"work_mode": 0
+	},
+	"role": {
+		"guest": [
+			10000
+		],
+		"host": [
+			10000
+		],
+		"arbiter": [
+			10000
+		]
+	},
+	"role_parameters": {
+		"guest": {
+			"args": {
+				"data": {
+					"train_data": [
+						{
+							"namespace": "hetero_guest_citeulike",
+							"name": "hetero_citeulike_train_guest"
+						}
+					]
+				}
+			},
+			"dataio_0": {
+				"with_label": [
+					false
+				],
+				"label_idx": [
+					0
+				],
+				"label_type": [
+					"int"
+				],
+				"output_format": [
+					"dense"
+				],
+				"missing_fill": [
+					true
+				],
+				"outlier_replace": [
+					true
+				]
+			},
+			"evaluation_0": {
+				"eval_type": [
+					"binary"
+				]
+			}
+		},
+		"host": {
+			"args": {
+				"data": {
+					"train_data": [
+						{
+							"namespace": "hetero_host_citeulike",
+							"name": "hetero_citeulike_train_host"
+						}
+					]
+				}
+			},
+			"dataio_0": {
+				"with_label": [
+					false
+				],
+				"label_idx": [
+					0
+				],
+				"label_type": [
+					"int"
+				],
+				"output_format": [
+					"dense"
+				],
+				"missing_fill": [
+					true
+				],
+				"outlier_replace": [
+					true
+				]
+			},
+			"evaluation_0": {
+				"need_run": [
+					false
+				]
+			}
+		}
+	},
+	"algorithm_parameters": {
+		"init_param": {
+			"init_method": "random_uniform",
+			"embed_dim": 30
+		},
+		"neg_count": 4,
+		"hetero_gmf_0": {
+			"batch_size": 1024,
+			"optimizer": {
+				"optimizer": "RMSprop",
+				"learning_rate": 0.05,
+				"decay": 0.9,
+				"momentum": 0.9
+			},
+			"early_stop": {
+				"early_stop": "diff",
+				"eps": 1e-10
+			},
+			"loss": "MSE",
+			"metrics": [
+				"AUC"
+			],
+			"max_iter": 20,
+      "init_param": {
+        "init_method": "random_normal",
+        "embed_dim": 20
+      },
+      "predict_param": {
+        "threshold": 0.5
+      }
+		}
+	}
+}

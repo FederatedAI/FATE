@@ -1,3 +1,4 @@
+English | [中文](./README_zh.md)
 # FATE-Flow
 ## Introduction
 FATE-Flow is a end to end pipeline platform for Federated Learning. Pipeline is a sequence of components which is specifically designed for highly flexible, high performance federated learning tasks. That includes data processing, modeling, training, verification, publishing and serving inference.
@@ -104,7 +105,6 @@ You only need to start the FATE-Flow service to run the federated learning model
 - Use **Sqlite** as database, db file is fate_flow_sqlite.db on the FATE-Flow root directory.
 - Use in-process queue as job queue.
 - Multi-Party communication loop back.
-- But can not use FATE-Board because it doesn't support sqlite! In the next version board will support sqlite.
 
 
 
@@ -200,7 +200,20 @@ And then, you can found so many useful command from [**CLI**](./doc/fate_flow_cl
 
 
 ### Online Inference
-Publish model to **FATE-Serving**, and then using Serving's GRPC API to inference. Please confirm that you have deployed **FATE-Serving** and configured the service address in **server.conf**. You can refer to the cluster deployment.
+Publish model to **FATE-Serving**, and then using Serving's GRPC API to inference. 
+
+#### Modify service configuration
+Modify the IP and end of **FATE-Serving** in **arch/conf/server_conf.json** (please note that many parties need to modify the actual deployment address of their respective **FATE-Serving**), the content is "servings ":["ip: port"], restart **FATE-Flow** after modification.
+server_conf.json format is as follows:
+```json
+{
+	"servers": {
+		"servings": [
+			"127.0.0.1:8000"
+		]
+	}
+}
+```
 
 #### Publish Model
 ```bash

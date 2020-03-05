@@ -75,6 +75,11 @@
     }
   },
   "algorithm_parameters": {
+    "federated_sample_0": {
+      "mode": "stratified",
+      "method": "upsample",
+      "fractions": [[0, 1.5], [1, 2.0]]
+    },
     "hetero_lr_0": {
       "penalty": "L2",
       "optimizer": "rmsprop",

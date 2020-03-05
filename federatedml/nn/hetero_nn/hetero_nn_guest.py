@@ -210,13 +210,19 @@ class HeteroNNGuest(HeteroNNBase):
         self.set_partition(data_inst)
 
     def _load_data(self, data_inst):
-        keys = []
-        batch_x = []
-        batch_y = []
-        for key, inst in data_inst.collect():
-            keys.append(key)
-            batch_x.append(inst.features)
-            batch_y.append(inst.label)
+        data = list(data_inst.collect())
+        data_keys = [key for (key, val) in data]
+        data_keys_map = dict(zip(sorted(data_keys), range(len(data_keys))))
+
+        keys = [None for idx in range(len(data_keys))]
+        batch_x = [None for idx in range(len(data_keys))]
+        batch_y = [None for idx in range(len(data_keys))]
+
+        for (key, inst) in data:
+            idx = data_keys_map[key]
+            keys[idx] = key
+            batch_x[idx] = inst.features
+            batch_y[idx] = inst.label
 
             if self.input_shape is None:
                 try:
