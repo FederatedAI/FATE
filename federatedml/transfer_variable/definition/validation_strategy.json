@@ -3,7 +3,7 @@
     "validation_status": {
       "src": "guest",
       "dst": [
-        "host"
+        "host", "arbiter"
       ]
     }
   }

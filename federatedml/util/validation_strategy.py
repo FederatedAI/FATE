@@ -54,7 +54,7 @@ class ValidationStrategy(object):
                 if validate_data not equal to None, and judge need to validate data according to validation_freqs,
                 validate data will be used for evaluating
     """
-    def __init__(self, role=None, mode=None, validation_freqs=None, early_stopping=None):
+    def __init__(self, role=None, mode=None, validation_freqs=None, early_stopping_rounds=None):
 
         self.validation_freqs = validation_freqs
         self.role = role
@@ -63,13 +63,15 @@ class ValidationStrategy(object):
         self.train_data = None
         self.validate_data = None
         self.sync_status = False
-        self.early_stopping = early_stopping
-        if early_stopping is not None:
+        self.early_stopping_rounds = early_stopping_rounds
+
+        if early_stopping_rounds is not None:
             self.sync_status = True
-            LOGGER.debug("early stopping round is {}".format(self.early_stopping))
+            # self.validation_freqs = 1
+            LOGGER.debug("early stopping round is {}".format(self.early_stopping_rounds))
 
         self.cur_best_model = None
-
+        self.training_export_mode = False
         self.performance_recorder = PerformanceRecorder()
         self.transfer_inst = ValidationStrategyVariable()
 
@@ -80,6 +82,8 @@ class ValidationStrategy(object):
 
     def set_validate_data(self, validate_data):
         self.validate_data = validate_data
+        if self.early_stopping_rounds and self.validate_data is None:
+            raise ValueError('validate data is needed when early stopping is enabled')
 
     def set_flowid(self, flowid):
         self.flowid = flowid
@@ -94,10 +98,12 @@ class ValidationStrategy(object):
 
         return epoch in self.validation_freqs
 
-    def generate_flowid(self, prefix, epoch, keywords="iteration", data_type="train"):
+    @staticmethod
+    def generate_flowid(prefix, epoch, keywords="iteration", data_type="train"):
         return "_".join([prefix, keywords, str(epoch), data_type])
 
-    def make_data_set_name(self, need_cv, model_flowid, epoch):
+    @staticmethod
+    def make_data_set_name(need_cv, model_flowid, epoch):
         data_iteration_name = "_".join(["iteration", str(epoch)])
         if not need_cv:
             return data_iteration_name
@@ -105,26 +111,7 @@ class ValidationStrategy(object):
         cv_fold = "_".join(["fold", model_flowid.split(".", -1)[-1]])
         return ".".join([cv_fold, data_iteration_name])
 
-    def get_best_performance(self):
-        """
-        Returns return dict
-        -------
-        """
-        return self.performance_recorder.cur_best_performance
-
-    def get_no_improvement_round(self):
-        """
-        Returns return dict which records no_improvement round of used metrics
-        -------
-        """
-        return self.performance_recorder.no_improvement_round
-
     def is_best_performance_updated(self, use_first_metric_only=False):
-        """
-        check if the validation scores has improved
-        Returns bool
-        -------
-        """
         if len(self.performance_recorder.no_improvement_round.items()) == 0:
             return False
         for metric, no_improve_val in self.performance_recorder.no_improvement_round.items():
@@ -139,38 +126,35 @@ class ValidationStrategy(object):
         check if satisfy early_stopping_round
         Returns bool
         """
-        LOGGER.info('check early stopping')
+        LOGGER.info('checking early stopping')
         no_improvement_dict = self.performance_recorder.no_improvement_round
         for metric in no_improvement_dict:
-            if no_improvement_dict[metric] >= self.early_stopping:
+            if no_improvement_dict[metric] >= self.early_stopping_rounds:
                 return True
         return False
 
     def sync_performance_recorder(self, epoch):
         """
-        sycn synchronize self.performance_recorder
+        sync synchronize self.performance_recorder
         """
         if self.mode == consts.HETERO and self.role == consts.GUEST:
-            self.transfer_inst.validation_status.remote(self.performance_recorder, role=consts.HOST, idx=-1,
-                                                        suffix=(epoch,))
+            self.transfer_inst.validation_status.remote(self.performance_recorder, idx=-1, suffix=(epoch,))
 
-        elif self.mode == consts.HETERO and self.role == consts.HOST:
+        elif self.mode == consts.HETERO:
             self.performance_recorder = self.transfer_inst.validation_status.get(idx=-1, suffix=(epoch,))[0]
 
-    @staticmethod
-    def get_cur_model(model):
-        """
-        Extracting model params and meta
-        """
-        meta_name, meta_protobuf = model.get_model_meta()
-        param_name, param_protobuf = model.get_model_param()
-        return {meta_name: meta_protobuf, param_name: param_protobuf}
+    def need_stop(self):
+        return False if not self.early_stopping_rounds else self.check_early_stopping()
 
     def has_saved_best_model(self):
-        return (self.early_stopping is not None) and (self.cur_best_model is not None)
+        return (self.early_stopping_rounds is not None) and (self.cur_best_model is not None) and \
+               (not self.training_export_mode)
 
     def export_best_model(self):
-        return self.cur_best_model
+        if self.has_saved_best_model():
+            return self.cur_best_model
+        else:
+            return None
 
     def evaluate(self, predicts, model, epoch):
 
@@ -180,7 +164,7 @@ class ValidationStrategy(object):
         eval_obj._init_model(evaluate_param)
         eval_obj.set_tracker(model.tracker)
         data_set_name = self.make_data_set_name(model.need_cv, model.flowid,  epoch)
-        eval_data = {data_set_name : predicts}
+        eval_data = {data_set_name: predicts}
         eval_result_dict = eval_obj.fit(eval_data, return_result=True)
         eval_obj.save_data()
         LOGGER.debug("end to eval")
@@ -238,8 +222,10 @@ class ValidationStrategy(object):
             LOGGER.debug(self.performance_recorder.cur_best_performance)
             LOGGER.debug(self.performance_recorder.no_improvement_round)
 
-        if self.early_stopping and self.is_best_performance_updated():
-            self.cur_best_model = self.get_cur_model(model)
+        if self.early_stopping_rounds and self.is_best_performance_updated():
+            self.training_export_mode = True
+            self.cur_best_model = model.export_model()
+            self.training_export_mode = False
             LOGGER.debug('cur best model saved')
 
 

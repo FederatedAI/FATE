@@ -106,7 +106,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         self.convert_feature_to_bin(data_inst)
         self.sync_tree_dim()
 
-        self.validation_strategy = self.init_validation_strategy(data_inst, validate_data, self.early_stopping)
+        self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
 
         for i in range(self.num_trees):
             # n_tree = []
@@ -133,7 +133,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
             if self.validation_strategy:
                 LOGGER.debug('host running validation')
                 self.validation_strategy.validate(self, i)
-                if self.early_stopping and self.validation_strategy.check_early_stopping():
+                if self.validation_strategy.need_stop():
                     LOGGER.debug('early stopping triggered')
                     break
 
@@ -188,13 +188,6 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
 
         return param_name, model_param
 
-    def get_cur_model(self):
-        meta_name, meta_protobuf = self.get_model_meta()
-        param_name, param_protobuf = self.get_model_param()
-        return {meta_name: meta_protobuf,
-                param_name: param_protobuf
-                }
-
     def set_model_param(self, model_param):
         self.trees_ = list(model_param.trees_)
         self.tree_dim = model_param.tree_dim
@@ -207,7 +200,10 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         if self.validation_strategy.has_saved_best_model():
             return self.validation_strategy.export_best_model()
 
-        return self.get_cur_model()
+        meta_name, meta_protobuf = self.get_model_meta()
+        param_name, param_protobuf = self.get_model_param()
+
+        return {meta_name: meta_protobuf, param_name: param_protobuf}
 
     def load_model(self, model_dict):
         LOGGER.info("load model")
