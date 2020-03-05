@@ -30,5 +30,5 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 class HeteroSecureBoostingTreeTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.stop_flag = self._create_variable(name='stop_flag')
-        self.tree_dim = self._create_variable(name='tree_dim')
+        self.stop_flag = self._create_variable(name='stop_flag', src=['guest'], dst=['host'])
+        self.tree_dim = self._create_variable(name='tree_dim', src=['guest'], dst=['host'])

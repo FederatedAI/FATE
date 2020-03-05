@@ -1,0 +1,46 @@
+{
+    "components" : {
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.train_data"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["dataio"]
+            }
+         },
+        "hetero_feature_binning_0": {
+            "module": "HeteroFeatureBinning",
+            "input": {
+                "data": {
+                    "data": [
+                        "dataio_0.train"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["transform_data"],
+                "model": ["binning_model"]
+            }
+        },
+        "one_hot_encoder_0": {
+            "module": "OneHotEncoder",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_feature_binning_0.transform_data"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["model"]
+            }
+        }
+    }
+}

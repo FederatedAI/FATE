@@ -37,14 +37,21 @@ CLASS_DIR = os.path.join(BASE_DIR, "transfer_class")
 SPACES = "    "
 
 
-def write_out_class(writer, class_name, variable_names):
-    def create_variable(name):
-        return f"self.{name} = self._create_variable(name='{name}')"
+def write_out_class(writer, class_name, variables_items):
+    def create_variable(pair):
+        name, role = pair
+        src = role['src']
+        dst = role['dst']
+        if isinstance(src, str):
+            src = [src]
+        if isinstance(dst, str):
+            dst = [dst]
+        return f"self.{name} = self._create_variable(name='{name}', src={src}, dst={dst})"
 
     with open(TEMPLATE, "r") as fin:
         temp = fin.read()
         temp = temp.format(class_name=class_name,
-                           create_variable=f"\n{SPACES}{SPACES}".join(map(create_variable, variable_names)))
+                           create_variable=f"\n{SPACES}{SPACES}".join(map(create_variable, variables_items)))
         writer.write(temp)
     writer.flush()
 
@@ -63,11 +70,9 @@ def generate():
         name = f_name.split(".")[0]
         class_save_path = os.path.join(CLASS_DIR, f"{name}_transfer_variable.py")
         with open(class_save_path, "w") as f:
-            keys = list(var_dict.keys())
-            assert len(keys) == 1, "multi class defined in a single json"
-            class_name = keys[0]
-            variable_names = sorted(var_dict.get(class_name).keys())
-            write_out_class(f, class_name, variable_names)
+            assert len(var_dict) == 1, "multi class defined in a single json"
+            for class_name, variables in var_dict.items():
+                write_out_class(f, class_name, sorted(list(variables.items())))
 
     # save a merged transfer variable conf, for federation auth checking.
     with open(MERGE_CONF_PATH, "w") as f:

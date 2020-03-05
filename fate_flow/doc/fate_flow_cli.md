@@ -41,7 +41,16 @@ python fate_flow_client.py -f stop_job -j $job_id
 python fate_flow_client.py -f query_job -j $job_id
 ```
 
-
+#### clean_job
+- description: clean processor,data table and metric data
+- parameter:
+    * -j  --job_id: filter by job id, Optional
+    * -r  --role : filter by role, Optional
+    * -p  --party_id: filter by party id, Optional
+    * -cpn --component_name: component name, Optional
+```bash
+python fate_flow_client.py -f clean_job -j $job_id
+```
 
 #### data_view_query
 -description: query data view information by filters
@@ -156,6 +165,18 @@ python fate_flow_client.py -f component_output_model -j $job_id -r $role -p $par
     * -limit  --limit: Limit quantity, Optional
 ```bash
 python fate_flow_client.py -f component_output_model -j $job_id -r $role -p $party_id -cpn $component_name -o $output_path
+```
+
+
+#### component_output_data_table
+- description: view table name and namespace
+- parameter:
+    * -j --job_id: job id, Required
+    * -cpn --component_name: component name, Required
+    * -r --role: role, Required
+    * -p --party_id: party id, Required
+```bash
+python fate_flow_client.py -f component_output_data_table -j $job_id -r $role -p $party_id -cpn $component_name 
 ```
 
 

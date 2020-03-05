@@ -1,0 +1,13 @@
+{
+  "ModelScatterTransVar": {
+    "client_model": {
+      "src": [
+        "guest",
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    }
+  }
+}

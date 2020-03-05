@@ -1,0 +1,159 @@
+{
+  "HeteroLRTransferVariable": {
+    "batch_data_index": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "batch_info": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host",
+        "arbiter"
+      ]
+    },
+    "converge_flag": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "host",
+        "guest"
+      ]
+    },
+    "fore_gradient": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "forward_hess": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "guest_gradient": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "guest_hess_vector": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "guest_optim_gradient": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "host_forward_dict": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "host_gradient": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "host_hess_vector": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "host_loss_regular": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "host_optim_gradient": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "host_prob": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "host_sqn_forwards": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "loss": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "loss_intermediate": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "paillier_pubkey": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "host",
+        "guest"
+      ]
+    },
+    "sqn_sample_index": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    }
+  }
+}

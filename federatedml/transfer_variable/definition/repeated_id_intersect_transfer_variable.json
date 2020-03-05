@@ -1,0 +1,20 @@
+{
+  "RepeatedIDIntersectTransferVariable": {
+    "id_map_from_guest": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "id_map_from_host": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+    "module_path":  "federatedrec/factorization_machine/hetero_factorization_machine",
+    "default_runtime_conf": "factorization_machine_param.json",
+    "param_class" : "federatedrec/param/factorization_machine_param.py/HeteroFactorizationParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "hetero_fm_guest.py/HeteroFMGuest"
+        },
+        "host":
+        {
+            "program": "hetero_fm_host.py/HeteroFMHost"
+        },
+        "arbiter":
+        {
+            "program": "hetero_fm_arbiter.py/HeteroFMArbiter"
+        }
+    }
+}

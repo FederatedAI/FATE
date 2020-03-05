@@ -19,15 +19,18 @@
 import functools
 
 import numpy as np
+import scipy.sparse as sp
 
 from arch.api.utils import log_utils
+from federatedml.feature.sparse_vector import SparseVector
+from federatedml.statistic import data_overview
 from federatedml.util import consts
 from federatedml.util import fate_operator
 
 LOGGER = log_utils.getLogger()
 
 
-def __compute_partition_gradient(data, fit_intercept=True):
+def __compute_partition_gradient(data, fit_intercept=True, is_sparse=False):
     """
     Compute hetero regression gradient for:
     gradient = ∑d*x, where d is fore_gradient which differ from different algorithm
@@ -44,24 +47,51 @@ def __compute_partition_gradient(data, fit_intercept=True):
     feature = []
     fore_gradient = []
 
-    for key, value in data:
-        feature.append(value[0])
-        fore_gradient.append(value[1])
-    feature = np.array(feature)
-    fore_gradient = np.array(fore_gradient)
+    if is_sparse:
+        row_indice = []
+        col_indice = []
+        data_value = []
 
-    gradient = []
-    if feature.shape[0] <= 0:
-        return 0
-    for j in range(feature.shape[1]):
-        feature_col = feature[:, j]
-        gradient_j = fate_operator.dot(feature_col, fore_gradient)
-        gradient.append(gradient_j)
+        row = 0
+        feature_shape = None
+        for key, (sparse_features, d) in data:
+            fore_gradient.append(d)
+            assert isinstance(sparse_features, SparseVector)
+            if feature_shape is None:
+                feature_shape = sparse_features.get_shape()
+            for idx, v in sparse_features.get_all_data():
+                col_indice.append(idx)
+                row_indice.append(row)
+                data_value.append(v)
+            row += 1
+        if feature_shape is None or feature_shape == 0:
+            return 0
+        sparse_matrix = sp.csr_matrix((data_value, (row_indice, col_indice)), shape=(row, feature_shape))
+        fore_gradient = np.array(fore_gradient)
 
-    if fit_intercept:
-        bias_grad = np.sum(fore_gradient)
-        gradient.append(bias_grad)
-    return np.array(gradient)
+        # gradient = sparse_matrix.transpose().dot(fore_gradient).tolist()
+        gradient = fate_operator.dot(sparse_matrix.transpose(), fore_gradient).tolist()
+        if fit_intercept:
+            bias_grad = np.sum(fore_gradient)
+            gradient.append(bias_grad)
+            LOGGER.debug("In first method, gradient: {}, bias_grad: {}".format(gradient, bias_grad))
+        return np.array(gradient)
+
+    else:
+        for key, value in data:
+            feature.append(value[0])
+            fore_gradient.append(value[1])
+        feature = np.array(feature)
+        fore_gradient = np.array(fore_gradient)
+        if feature.shape[0] <= 0:
+            return 0
+
+        gradient = fate_operator.dot(feature.transpose(), fore_gradient)
+        gradient = gradient.tolist()
+        if fit_intercept:
+            bias_grad = np.sum(fore_gradient)
+            gradient.append(bias_grad)
+        return np.array(gradient)
 
 
 def compute_gradient(data_instances, fore_gradient, fit_intercept):
@@ -80,10 +110,13 @@ def compute_gradient(data_instances, fore_gradient, fit_intercept):
     """
     feat_join_grad = data_instances.join(fore_gradient,
                                          lambda d, g: (d.features, g))
+    is_sparse = data_overview.is_sparse_data(data_instances)
     f = functools.partial(__compute_partition_gradient,
-                          fit_intercept=fit_intercept)
+                          fit_intercept=fit_intercept,
+                          is_sparse=is_sparse)
+    gradient_partition = feat_join_grad.mapPartitions(f)
+    gradient_partition = gradient_partition.reduce(lambda x, y: x + y)
 
-    gradient_partition = feat_join_grad.mapPartitions(f).reduce(lambda x, y: x + y)
     gradient = gradient_partition / data_instances.count()
 
     return gradient
@@ -94,15 +127,14 @@ class HeteroGradientBase(object):
         raise NotImplementedError("Should not call here")
 
     def set_total_batch_nums(self, total_batch_nums):
-        """
-        Use for sqn gradient.
+        """	
+        Use for sqn gradient.	
         """
         pass
 
 
 class Guest(HeteroGradientBase):
     def __init__(self):
-        super().__init__()
         self.host_forwards = None
         self.forwards = None
         self.aggregated_forwards = None
@@ -180,8 +212,9 @@ class Host(HeteroGradientBase):
     def compute_unilateral_gradient(self, data_instances, fore_gradient, model_weights, optimizer):
         raise NotImplementedError("Function should not be called here")
 
-    def compute_gradient_procedure(self, data_instances, encrypted_calculator, model_weights,
-                                   optimizer, n_iter_, batch_index):
+    def compute_gradient_procedure(self, data_instances, model_weights,
+                                   encrypted_calculator, optimizer,
+                                   n_iter_, batch_index):
         """
         Linear model gradient procedure
         Step 1: get host forwards which differ from different algorithm
@@ -217,30 +250,6 @@ class Host(HeteroGradientBase):
         self.unilateral_gradient_transfer.remote(unilateral_gradient, role=consts.ARBITER, idx=0, suffix=suffix)
         optimized_gradient = self.unilateral_optim_gradient_transfer.get(idx=0, suffix=suffix)
         return optimized_gradient
-
-    def compute_sqn_forwards(self, data_instances, delta_s, cipher_operator):
-        """
-        To compute Hessian matrix, y, s are needed.
-        g = (1/N)*∑(0.25 * wx - 0.5 * y) * x
-        y = ∇2^F(w_t)s_t = g' * s = (1/N)*∑(0.25 * x * s) * x
-        define forward_hess = ∑(0.25 * x * s)
-        """
-        sqn_forwards = data_instances.mapValues(
-            lambda v: cipher_operator.encrypt(np.dot(v.features, delta_s.coef_) + delta_s.intercept_))
-        # forward_sum = sqn_forwards.reduce(reduce_add)
-        return sqn_forwards
-
-    def compute_forward_hess(self, data_instances, delta_s, forward_hess):
-        """
-        To compute Hessian matrix, y, s are needed.
-        g = (1/N)*∑(0.25 * wx - 0.5 * y) * x
-        y = ∇2^F(w_t)s_t = g' * s = (1/N)*∑(0.25 * x * s) * x
-        define forward_hess = (0.25 * x * s)
-        """
-        hess_vector = compute_gradient(data_instances,
-                                       forward_hess,
-                                       delta_s.fit_intercept)
-        return np.array(hess_vector)
 
 
 class Arbiter(HeteroGradientBase):
@@ -293,8 +302,8 @@ class Arbiter(HeteroGradientBase):
 
         delta_grad = optimizer.apply_gradients(grad)
 
-        LOGGER.debug("In arbiter compute_gradient_procedure, delta_grad: {}, sum is: {}".format(
-            delta_grad, np.sum(np.abs(delta_grad))
+        LOGGER.debug("In arbiter compute_gradient_procedure, delta_grad: {}".format(
+            delta_grad
         ))
         separate_optim_gradient = self.separate(delta_grad, size_list)
         LOGGER.debug("In arbiter compute_gradient_procedure, separated gradient: {}".format(

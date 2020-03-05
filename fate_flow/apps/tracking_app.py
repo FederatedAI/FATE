@@ -26,6 +26,7 @@ from arch.api.utils.core import deserialize_b64
 from arch.api.utils.core import get_fate_uuid
 from arch.api.utils.core import json_loads
 from fate_flow.db.db_models import Job, DB
+from fate_flow.manager.data_manager import query_data_view, delete_metric_data
 from fate_flow.manager.tracking import Tracking
 from fate_flow.settings import stat_logger
 from fate_flow.utils import job_utils, data_utils
@@ -128,7 +129,7 @@ def get_metric_all_data(tracker, metric_namespace, metric_name):
 
 @manager.route('/component/metric/delete', methods=['post'])
 def component_metric_delete():
-    sql = Tracking.delete_metric_data(request.json)
+    sql = delete_metric_data(request.json)
     return get_json_result(retcode=0, retmsg='success', data=sql)
 
 
@@ -267,6 +268,19 @@ def component_output_data_download():
                                                                     request_data['role'], request_data['party_id'])
         return send_file(memory_file, attachment_filename=tar_file_name, as_attachment=True)
 
+
+@manager.route('/component/output/data/table', methods=['post'])
+@job_utils.job_server_routing()
+def component_output_data_table():
+    request_data = request.json
+    data_views = query_data_view(**request_data)
+    if data_views:
+        return get_json_result(retcode=0, retmsg='success', data={'table_name': data_views[0].f_table_name,
+                                                                  'table_namespace': data_views[0].f_table_namespace})
+    else:
+        return get_json_result(retcode=100, retmsg='No found table, please check if the parameters are correct')
+
+
 # api using by task executor
 @manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/metric_data/save', methods=['POST'])
 def save_metric_data(job_id, component_name, task_id, role, party_id):
@@ -294,10 +308,10 @@ def get_component_output_data_table(task_data):
                        role=task_data['role'], party_id=task_data['party_id'])
     job_dsl_parser = job_utils.get_job_dsl_parser_by_job_id(job_id=task_data['job_id'])
     if not job_dsl_parser:
-        raise Exception('can get dag parser')
+        raise Exception('can not get dag parser, please check if the parameters are correct')
     component = job_dsl_parser.get_component_info(task_data['component_name'])
     if not component:
-        raise Exception('can found component')
+        raise Exception('can not found component, please check if the parameters are correct')
     output_dsl = component.get_output()
     output_data_dsl = output_dsl.get('data', [])
     # The current version will only have one data output.

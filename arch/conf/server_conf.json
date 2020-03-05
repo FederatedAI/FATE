@@ -21,6 +21,10 @@
 			"host": "localhost",
 			"port": 9370
 		},
+		"fatemanager": {
+			"host": "localhost",
+			"port": 8001
+		},
 		"servings": [
 			"127.0.0.1:8000"
 		]

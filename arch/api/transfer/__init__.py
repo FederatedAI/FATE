@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 import abc
+import os
 from collections import deque
 from typing import Tuple, Union
 
@@ -23,7 +24,7 @@ from arch.api.utils.log_utils import getLogger
 __all__ = ["Rubbish", "Cleaner", "Party", "init", "FederationWrapped", "Federation", "FederationAuthorization", "ROLES"]
 
 ROLES = ["arbiter", "guest", "host"]
-TRANSFER_CONF_PATH = "federatedml/transfer_variable/definition/transfer_conf.json"
+TRANSFER_CONF_PATH = "federatedml/transfer_variable/definition"
 CONF_KEY_LOCAL = "local"
 CONF_KEY_FEDERATION = "federation"
 CONF_KEY_SERVER = "servers"
@@ -186,14 +187,18 @@ class FederationWrapped(object):
 class FederationAuthorization(object):
 
     def __init__(self, transfer_conf_path):
-        self.transfer_auth = file_utils.load_json_conf(transfer_conf_path)
+        self.transfer_auth = {}
+        for name in os.listdir(os.path.join(file_utils.get_project_base_directory(), transfer_conf_path)):
+            path = os.path.join(transfer_conf_path, name)
+            if path.endswith(".json"):
+                self.transfer_auth.update(file_utils.load_json_conf(path))
 
         # cache
         self._authorized_src = {}
         self._authorized_dst = {}
 
     def _update_auth(self, variable_name):
-        a_name, v_name = variable_name.split(".")
+        a_name, v_name = variable_name.split(".", 1)
         variable_auth = self.transfer_auth.get(a_name, {}).get(v_name, None)
         if variable_auth is None:
             raise ValueError(f"Unauthorized variable: {v_name}")

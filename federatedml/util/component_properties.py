@@ -163,7 +163,7 @@ class ComponentProperties(object):
             # todo_func_list.extend([model.set_flowid, model.fit, model.set_flowid, model.predict])
             # todo_func_params.extend([['fit'], [train_data], ['validate'], [train_data, 'validate']])
             running_funcs.add_func(model.set_flowid, ['fit'])
-            running_funcs.add_func(model.fit, [train_data])
+            running_funcs.add_func(model.fit, [train_data, eval_data])
             running_funcs.add_func(model.set_flowid, ['validate'])
             running_funcs.add_func(model.predict, [train_data], save_result=True)
             running_funcs.add_func(model.set_flowid, ['predict'])
