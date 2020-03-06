@@ -20,6 +20,7 @@ COPY eggroll-egg-${version}.tar.gz ./
 COPY eggroll-storage-service-cxx-${version}.tar.gz  ./
 COPY third_party_eggrollv1.tar.gz ./
 COPY federatedml ./python/federatedml
+COPY federatedrec ./python/federatedrec
 COPY arch/api ./python/arch/api
 COPY arch/conf ./python/arch/conf
 COPY arch/core ./python/arch/core
