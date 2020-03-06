@@ -30,6 +30,6 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 class StepwiseTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.guest_data_info = self._create_variable(name='guest_data_info')
-        self.host_data_info = self._create_variable(name='host_data_info')
-        self.step_best = self._create_variable(name='step_best')
+        self.guest_data_info = self._create_variable(name='guest_data_info', src=['guest'], dst=['arbiter', 'host'])
+        self.host_data_info = self._create_variable(name='host_data_info', src=['host'], dst=['arbiter', 'guest'])
+        self.step_best = self._create_variable(name='step_best', src=['arbiter'], dst=['host', 'guest'])
