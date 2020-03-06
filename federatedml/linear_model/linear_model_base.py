@@ -128,6 +128,7 @@ class BaseLinearModel(ModelBase):
         return start_cross_validation.run(self, data_instances)
 
     def stepwise(self, data_instances):
+        self.disable_callback_loss()
         return start_stepwise.run(self, data_instances)
 
     def _get_cv_param(self):

@@ -1189,49 +1189,27 @@
    ]
   }
  },
- "StepwiseTransferVariable": {
-  "host_data_info": {
-   "src": "host",
-   "dst": [
-    "arbiter"
-   ]
-  },
-  "guest_data_info": {
-   "src": "guest",
-   "dst": [
-    "arbiter"
-   ]
-  },
-  "host_step_info": {
-   "src": "arbiter",
-   "dst": [
-    "host"
-   ]
-  },
-  "guest_step_info": {
-   "src": "arbiter",
-   "dst": [
-    "guest"
-   ]
-  },
-  "stop_stepwise": {
-   "src": "arbiter",
-   "dst": [
-    "host",
-    "guest"
-   ]
-  },
-  "host_best_model": {
-   "src": "arbiter",
-   "dst": [
-    "host"
-   ]
-  },
-  "guest_best_model": {
-   "src": "arbiter",
-   "dst": [
-    "guest"
-   ]
+  "StepwiseTransferVariable": {
+    "host_data_info": {
+      "src": "host",
+      "dst": [
+        "arbiter",
+        "guest"
+      ]
+    },
+    "guest_data_info": {
+      "src": "guest",
+      "dst": [
+        "arbiter",
+        "host"
+      ]
+    },
+    "step_best": {
+      "src": "arbiter",
+      "dst": [
+        "host",
+        "guest"
+      ]
+    }
   }
- }
 }
