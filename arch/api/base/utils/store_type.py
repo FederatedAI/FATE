@@ -14,4 +14,14 @@
 #  limitations under the License.
 #
 
-from eggroll.api.eggroll import *
+
+class StoreTypes(object):
+    ROLLPAIR_IN_MEMORY = 'IN_MEMORY'
+    ROLLPAIR_LMDB = 'LMDB'
+    ROLLPAIR_LEVELDB = 'LEVEL_DB'
+    ROLLFRAME_FILE = 'ROLL_FRAME_FILE'
+    ROLLPAIR_ROLLSITE = 'ROLL_SITE'
+    ROLLPAIR_FILE = 'ROLL_PAIR_FILE'
+    ROLLPAIR_MMAP = 'ROLL_PAIR_MMAP'
+    ROLLPAIR_CACHE = 'ROLL_PAIR_CACHE'
+    ROLLPAIR_QUEUE = 'ROLL_PAIR_QUEUE'

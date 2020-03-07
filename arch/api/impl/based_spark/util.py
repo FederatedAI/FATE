@@ -13,43 +13,27 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api import WorkMode
-from eggroll.api.core import EggrollSession
+
+# noinspection PyPackageRequirements
+from pyspark import RDD, SparkContext
+from pyspark.taskcontext import TaskContext
 
 _EGGROLL_CLIENT = "_eggroll_client"
+RDD_ATTR_NAME = "_rdd"
+# noinspection PyUnresolvedReferences
+STORAGE_LEVEL = StorageLevel.MEMORY_AND_DISK
 
 
-def build_eggroll_session(work_mode: WorkMode, job_id=None, server_conf_path="eggroll/conf/server_conf.json"):
-    if work_mode.is_standalone():
-        from eggroll.api.core import EggrollSession
-        import uuid
-        session_id = job_id or str(uuid.uuid1())
-        session = EggrollSession(session_id=session_id)
-        return session
-    elif work_mode.is_cluster():
-        from eggroll.api.cluster.eggroll import session_init
-        return session_init(session_id=job_id, server_conf_path=server_conf_path)
-    raise ValueError(f"work_mode: {work_mode} not supported!")
+def materialize(rdd: RDD):
+    rdd.persist(STORAGE_LEVEL)
+    rdd.mapPartitionsWithIndex(lambda ind, it: (1,)).collect()
+    return rdd
 
 
-# noinspection PyProtectedMember
-def build_eggroll_runtime(work_mode: WorkMode, eggroll_session: EggrollSession):
-    if work_mode.is_standalone():
-        from eggroll.api.standalone.eggroll import Standalone
-        return Standalone(eggroll_session)
-
-    elif work_mode.is_cluster():
-        from eggroll.api.cluster.eggroll import eggroll_init, _EggRoll
-        if _EggRoll.instance is None:
-            return eggroll_init(eggroll_session)
-    else:
-        raise ValueError(f"work_mode: {work_mode} not supported!")
-
-
-def broadcast_eggroll_session(sc, work_mode, eggroll_session):
+def broadcast_eggroll_session(work_mode, eggroll_session):
     import pickle
     pickled_client = pickle.dumps((work_mode.value, eggroll_session)).hex()
-    sc.setLocalProperty(_EGGROLL_CLIENT, pickled_client)
+    SparkContext.getOrCreate().setLocalProperty(_EGGROLL_CLIENT, pickled_client)
 
 
 # noinspection PyProtectedMember
@@ -59,7 +43,7 @@ def maybe_create_eggroll_client():
     WARM: This may be removed or adjusted in future!
     """
     import pickle
-    from pyspark.taskcontext import TaskContext
+
     mode, eggroll_session = pickle.loads(bytes.fromhex(TaskContext.get().getLocalProperty(_EGGROLL_CLIENT)))
     if mode == 1:
         from eggroll.api.cluster.eggroll import _EggRoll

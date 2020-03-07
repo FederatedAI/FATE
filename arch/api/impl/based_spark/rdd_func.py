@@ -17,9 +17,10 @@
 
 import uuid
 
-from pyspark import RDD
-from pyspark.util import fail_on_stopiteration
-from arch.api.table import eggroll_util
+# noinspection PyPackageRequirements
+from pyspark import RDD, rddsampler, util
+
+from arch.api.impl.based_spark.util import maybe_create_eggroll_client
 
 
 def _save_as_func(rdd: RDD, name, namespace, partition, persistent):
@@ -27,7 +28,7 @@ def _save_as_func(rdd: RDD, name, namespace, partition, persistent):
     dup = session.table(name=name, namespace=namespace, partition=partition, persistent=persistent)
 
     def _func(_, it):
-        eggroll_util.maybe_create_eggroll_client()
+        maybe_create_eggroll_client()
         dup.put_all(list(it))
         return 1,
 
@@ -40,7 +41,7 @@ def _map(rdd: RDD, func):
         return func(x[0], x[1])
 
     def _func(_, iterator):
-        return map(fail_on_stopiteration(_fn), iterator)
+        return map(util.fail_on_stopiteration(_fn), iterator)
 
     return rdd.mapPartitionsWithIndex(_func, preservesPartitioning=False)
 
@@ -50,7 +51,7 @@ def _map_value(rdd: RDD, func):
         return x[0], func(x[1])
 
     def _func(_, iterator):
-        return map(fail_on_stopiteration(_fn), iterator)
+        return map(util.fail_on_stopiteration(_fn), iterator)
 
     return rdd.mapPartitionsWithIndex(_func, preservesPartitioning=True)
 
@@ -78,10 +79,9 @@ def _glom(rdd: RDD):
 
 
 def _sample(rdd: RDD, fraction: float, seed: int):
-    from pyspark.rddsampler import RDDSampler
     assert fraction >= 0.0, "Negative fraction value: %s" % fraction
 
-    _sample_func = RDDSampler(False, fraction, seed).func
+    _sample_func = rddsampler.RDDSampler(False, fraction, seed).func
 
     def _func(split, iterator):
         return _sample_func(split, iterator)
@@ -94,7 +94,7 @@ def _filter(rdd: RDD, func):
         return func(x[0], x[1])
 
     def _func(_, iterator):
-        return filter(fail_on_stopiteration(_fn), iterator)
+        return filter(util.fail_on_stopiteration(_fn), iterator)
 
     return rdd.mapPartitionsWithIndex(_func, preservesPartitioning=True)
 
@@ -126,6 +126,6 @@ def _flat_map(rdd: RDD, func):
         return func(x[0], x[1])
 
     def _func(_, iterator):
-        return chain.from_iterable(map(fail_on_stopiteration(_fn), iterator))
+        return chain.from_iterable(map(util.fail_on_stopiteration(_fn), iterator))
 
     rdd.mapPartitionsWithIndex(_func, preservesPartitioning=False)

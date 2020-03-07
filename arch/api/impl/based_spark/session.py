@@ -16,37 +16,34 @@
 
 from typing import Iterable
 
-from arch.api import WorkMode
-from arch.api.table import eggroll_util
-from eggroll.api import StoreType
-from arch.api.table.pyspark import materialize
-from arch.api.table.pyspark.table_impl import RDDTable
-from arch.api.table.session import FateSession
+from pyspark import SparkContext
+
+from arch.api.base.session import FateSession
+from arch.api.impl.based_spark import util
+from arch.api.impl.based_spark.table import RDDTable
+from arch.api.impl.based_spark.util import broadcast_eggroll_session
+
+__all__ = ["build_session", "broadcast_eggroll_session"]
 
 
-# noinspection PyProtectedMember
+def build_session(session_id, eggroll_runtime, persistent_engine: str):
+    session = FateSessionImpl(session_id, eggroll_runtime, persistent_engine)
+    return session
+
+
 class FateSessionImpl(FateSession):
     """
     manage RDDTable, use EggRoleStorage as storage
     """
 
-    def __init__(self, eggroll_session, work_mode: WorkMode, persistent_engine=StoreType.LMDB):
-        self._session_id = eggroll_session.get_session_id()
-        self._eggroll_session = eggroll_session
+    def __init__(self, session_id, eggroll_runtime, persistent_engine):
+        self._session_id = session_id
         self._persistent_engine = persistent_engine
-        self._sc = self._build_spark_context()
-        eggroll_util.broadcast_eggroll_session(self._sc, work_mode, eggroll_session)
-        self._eggroll = eggroll_util.build_eggroll_runtime(work_mode, eggroll_session)
+        self._eggroll = eggroll_runtime
         FateSession.set_instance(self)
 
     def get_persistent_engine(self):
         return self._persistent_engine
-
-    @staticmethod
-    def _build_spark_context():
-        from pyspark import SparkContext
-        sc = SparkContext.getOrCreate()
-        return sc
 
     def table(self,
               name,
@@ -74,8 +71,8 @@ class FateSessionImpl(FateSession):
                     create_if_missing,
                     error_if_exist):
         _iter = data if include_key else enumerate(data)
-        rdd = self._sc.parallelize(_iter, partition)
-        rdd = materialize(rdd)
+        rdd = SparkContext().getOrCreate().parallelize(_iter, partition)
+        rdd = util.materialize(rdd)
         if namespace is None:
             namespace = self._session_id
         return RDDTable.from_rdd(rdd=rdd, job_id=self._session_id, namespace=namespace, name=name)
