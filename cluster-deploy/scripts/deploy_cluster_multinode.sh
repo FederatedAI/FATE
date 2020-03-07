@@ -28,12 +28,17 @@ env_modules=(jdk python)
 deploy_modules=()
 deploy_mode=$1
 all_node_ips=()
+deploy_ips=()
 a_ips=()
 b_ips=()
+jdk_modules=(fateboard proxy federation roll meta-service egg)
+python_modules=(fate_flow federatedml egg)
 a_jdk=()
 b_jdk=()
+jdk_ips=()
 a_python=()
 b_python=()
+python_ips=()
 source_code_dir=$(cd `dirname ${cwd}`; cd ../; pwd)
 module_deploy_script_dir=${cwd}/deploy
 output_packages_dir=$(cd `dirname ${cwd}`;pwd)/output_packages
@@ -46,51 +51,91 @@ get_all_node_ip() {
     for ((i=0;i<${#party_list[*]};i++))
     do
         party_name=${party_names[i]}
-        for ((j=0;j<${#support_modules[*]};j++))
+        for module in ${support_modules[@]};
         do
-            module=${support_modules[j]}
             if [[ "${module}" == "meta-service" ]]; then
                 eval tmp_ips=\${${party_name}_metaservice}
+            elif [[ "${module}" == "mysql" && ${use_external_db} -eq 1 ]];then
+                tmp_ips=()
+            else
+                eval tmp_ips=\${${party_name}_${module}[*]}
+            fi
+            for tmp_ip in ${tmp_ips[*]}
+            do
+                all_node_ips[${#all_node_ips[*]}]=${tmp_ip}
+                if [[ "${party_name}" == "a" ]];then
+                    a_ips[${#a_ips[*]}]=${tmp_ip}
+                    if [[ "${module}" == "meta-service" || ${jdk_modules[@]/${module}/} != ${jdk_modules[@]} ]];then
+                        a_jdk[${#a_jdk[*]}]=${tmp_ip}
+                    fi
+                    if [[ ${python_modules[@]/${module}/} != ${python_modules[@]} ]];then
+                        a_python[${#a_python[*]}]=${tmp_ip}
+                    fi
+                elif [[ "${party_name}" == "b" ]];then
+                    b_ips[${#b_ips[*]}]=${tmp_ip}
+                    if [[ "${module}" == "meta-service" || ${jdk_modules[@]/${module}/} != ${jdk_modules[@]} ]];then
+                        b_jdk[${#b_jdk[*]}]=${tmp_ip}
+                    fi
+                    if [[ ${python_modules[@]/${module}/} != ${python_modules[@]} ]];then
+                        b_python[${#b_python[*]}]=${tmp_ip}
+                    fi
+                fi
+            done
+        done
+	done
+
+    for ((i=0;i<${#party_list[*]};i++))
+    do
+        party_name=${party_names[i]}
+        for module in ${support_modules[@]};
+        do
+            if [[ "${module}" == "meta-service" ]]; then
+                eval tmp_ips=\${${party_name}_metaservice}
+            elif [[ "${module}" == "mysql" && ${use_external_db} -eq 1 ]];then
+                tmp_ips=()
             else
                 eval tmp_ips=\${${party_name}_${module}[*]}
             fi
             for tmp_ip in ${tmp_ips[@]}
             do
-                all_node_ips[${#all_node_ips[*]}]=${tmp_ip}
-                if [[ "${party_name}" == "a" ]];then
-                    a_ips[${#a_ips[*]}]=${tmp_ip}
-                elif [[ "${party_name}" == "b" ]];then
-                    b_ips[${#b_ips[*]}]=${tmp_ip}
-                fi
+                deploy_ips[${#deploy_ips[*]}]=${tmp_ip}
             done
         done
 	done
-    all_node_ips=($(echo ${all_node_ips[*]} | sed 's/ /\n/g'|sort | uniq))
-    a_ips=($(echo ${a_ips[*]} | sed 's/ /\n/g'|sort | uniq))
-    b_ips=($(echo ${b_ips[*]} | sed 's/ /\n/g'|sort | uniq))
-	#TODO: not all node need to deploy all env
-    a_jdk=("${a_ips[@]}")
-    b_jdk=("${b_ips[@]}")
-    a_python=("${a_ips[@]}")
-    b_python=("${b_ips[@]}")
+
+    all_node_ips=($(echo ${all_node_ips[*]} | tr ' ' '\n' | awk '!a[$0]++'))
+    deploy_ips=($(echo ${deploy_ips[*]} | tr ' ' '\n' | awk '!a[$0]++'))
+    a_ips=($(echo ${a_ips[*]} | tr ' ' '\n' | awk '!a[$0]++'))
+    b_ips=($(echo ${b_ips[*]} | tr ' ' '\n'| awk '!a[$0]++'))
+    a_jdk=($(echo ${a_jdk[*]} | tr ' ' '\n'| awk '!a[$0]++'))
+    a_python=($(echo ${a_python[*]} | tr ' ' '\n'| awk '!a[$0]++'))
+    b_jdk=($(echo ${b_jdk[*]} | tr ' ' '\n'| awk '!a[$0]++'))
+    b_python=($(echo ${b_python[*]} | tr ' ' '\n'| awk '!a[$0]++'))
+
+    jdk_ips=(${a_jdk[*]} ${b_jdk[*]})
+    python_ips=(${a_python[*]} ${b_python[*]})
+    jdk_ips=($(echo ${jdk_ips[*]} | tr ' ' '\n'| awk '!a[$0]++'))
+    python_ips=($(echo ${python_ips[*]} | tr ' ' '\n'| awk '!a[$0]++'))
+    echo ${jdk_ips[*]}
+    echo ${python_ips[*]}
 }
 
 if [[ ${deploy_modes[@]/${deploy_mode}/} != ${deploy_modes[@]} ]];then
     rm -rf ${output_packages_dir}/*
     mkdir -p ${output_packages_dir}/source
     mkdir -p ${output_packages_dir}/config
-    get_all_node_ip
-    echo "[INFO] Deploy on ${#all_node_ips[*]} node"
-    for node_ip in ${all_node_ips[*]}; do
-        mkdir -p ${output_packages_dir}/config/${node_ip}
-    done
 else
     echo "[INFO] can not support this deploy mode ${deploy_mode}"
     exit 1
 fi
 
 init_env() {
-    for node_ip in ${all_node_ips[*]}; do
+    get_all_node_ip
+    echo "[INFO] Deploy on ${#deploy_ips[*]} node"
+    for node_ip in ${deploy_ips[*]}; do
+        mkdir -p ${output_packages_dir}/config/${node_ip}
+    done
+    for node_ip in ${deploy_ips[*]}; do
         ssh -p ${deploy_ssh_port} -tt ${user}@${node_ip} << eeooff
 mkdir -p ${deploy_packages_dir}
 exit
@@ -157,7 +202,7 @@ packaging_jdk() {
 
 config_jdk() {
     party_index=$1
-    for node_ip in ${all_node_ips[*]}
+    for node_ip in ${jdk_ips[*]}
     do
         sed -i.bak "s#deploy_dir=.*#deploy_dir=${deploy_dir}/common#g" ./configurations.sh.tmp
         config_enter ${node_ip} jdk
@@ -176,7 +221,7 @@ packaging_python() {
 
 config_python() {
     party_index=$1
-    for node_ip in ${all_node_ips[*]}
+    for node_ip in ${python_ips[*]}
     do
         sed -i.bak "s#deploy_dir=.*#deploy_dir=${deploy_dir}/common#g" ./configurations.sh.tmp
         config_enter ${node_ip} python
@@ -503,7 +548,7 @@ distribute() {
     tar czf source.tar.gz ./source
     echo "[INFO] Compressed source done"
     deploy_packages_dir=${deploy_dir}/packages
-	for node_ip in "${all_node_ips[@]}"; do
+	for node_ip in "${deploy_ips[@]}"; do
 	    echo "[INFO] distribute source to ${node_ip}"
 	    ssh -p ${deploy_ssh_port} -tt ${user}@${node_ip} << eeooff
 rm -rf ${deploy_packages_dir}
@@ -519,7 +564,7 @@ eeooff
 }
 
 install() {
-	for node_ip in "${all_node_ips[@]}"; do
+	for node_ip in "${deploy_ips[@]}"; do
 	    echo "[INFO] Decompressed on ${node_ip}"
 	    ssh -p ${deploy_ssh_port} -tt ${user}@${node_ip} << eeooff
 cd ${deploy_packages_dir}
@@ -664,21 +709,21 @@ deploy() {
 }
 
 all() {
-    init_env
     for ((i=0;i<${#support_modules[*]};i++))
     do
         deploy_modules[i]=${support_modules[i]}
 	done
+    init_env
     deploy
 }
 
 
 multiple() {
     total=$#
-    init_env
     for ((i=2;i<total+1;i++)); do
         deploy_modules[i]=${!i//\//}
     done
+    init_env
     deploy
 }
 

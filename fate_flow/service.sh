@@ -17,7 +17,8 @@
 #
 
 export PYTHONPATH=
-log_dir="$(echo ${PYTHONPATH} | awk -F":" '{print $1}')/logs/fate_flow"
+FATE_PYTHON_ROOT=$(dirname $(dirname $(readlink -f "$0")))
+log_dir=${FATE_PYTHON_ROOT}/logs
 venv=
 
 module=fate_flow_server.py
@@ -47,7 +48,7 @@ start() {
     if [[ ${pid} == "" ]]; then
         mklogsdir
         source ${venv}/bin/activate
-        nohup python $(echo ${PYTHONPATH} | awk -F":" '{print $1}')/fate_flow/fate_flow_server.py >> "${log_dir}/console.log" 2>>"${log_dir}/error.log" &
+        nohup python ${FATE_PYTHON_ROOT}/fate_flow/fate_flow_server.py >> "${log_dir}/console.log" 2>>"${log_dir}/error.log" &
         sleep 3
         getpid
         if [[ -n ${pid} ]]; then 
