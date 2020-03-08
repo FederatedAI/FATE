@@ -46,10 +46,12 @@ buildModule() {
   [ -d ${source_code_dir}/docker-build/docker/modules/egg/fate_flow ] && rm -r ${source_code_dir}/docker-build/docker/modules/egg/fate_flow
   [ -d ${source_code_dir}/docker-build/docker/modules/egg/arch ] && rm -r ${source_code_dir}/docker-build/docker/modules/egg/arch
   [ -d ${source_code_dir}/docker-build/docker/modules/egg/federatedml ] && rm -r ${source_code_dir}/docker-build/docker/modules/egg/federatedml
+  [ -d ${source_code_dir}/docker-build/docker/modules/egg/federatedrec ] && rm -r ${source_code_dir}/docker-build/docker/modules/egg/federatedrec
   [ -d ${source_code_dir}/docker-build/docker/modules/python/fate_flow ] && rm -r ${source_code_dir}/docker-build/docker/modules/python/fate_flow
   [ -d ${source_code_dir}/docker-build/docker/modules/python/examples ] && rm -r ${source_code_dir}/docker-build/docker/modules/python/examples
   [ -d ${source_code_dir}/docker-build/docker/modules/python/arch ] && rm -r ${source_code_dir}/docker-build/docker/modules/python/arch
   [ -d ${source_code_dir}/docker-build/docker/modules/python/federatedml ] && rm -r ${source_code_dir}/docker-build/docker/modules/python/federatedml
+  [ -d ${source_code_dir}/docker-build/docker/modules/python/federatedrec ] && rm -r ${source_code_dir}/docker-build/docker/modules/python/federatedrec
   [ -d ${source_code_dir}/docker-build/docker/modules/python/examples ] && rm -r ${source_code_dir}/docker-build/docker/modules/python/examples
    [ -f ${source_code_dir}/docker-build/docker/modules/python/eggroll-api-*.tar.gz ] && rm ${source_code_dir}/docker-build/docker/modules/python/eggroll-api-*.tar.gz
 
@@ -61,11 +63,13 @@ buildModule() {
   cp -r ${source_code_dir}/fate_flow ${source_code_dir}/docker-build/docker/modules/python/fate_flow
   cp -r ${source_code_dir}/arch ${source_code_dir}/docker-build/docker/modules/python/arch
   cp -r ${source_code_dir}/federatedml ${source_code_dir}/docker-build/docker/modules/python/federatedml
+  cp -r ${source_code_dir}/federatedrec ${source_code_dir}/docker-build/docker/modules/python/federatedrec
   cp -r ${source_code_dir}/examples ${source_code_dir}/docker-build/docker/modules/python/examples
   ln ${source_code_dir}/cluster-deploy/packages/eggroll-api-${version}.tar.gz ${source_code_dir}/docker-build/docker/modules/python/eggroll-api-${version}.tar.gz
   cp -r ${source_code_dir}/fate_flow ${source_code_dir}/docker-build/docker/modules/egg/fate_flow
   cp -r ${source_code_dir}/arch ${source_code_dir}/docker-build/docker/modules/egg/arch
   cp -r ${source_code_dir}/federatedml ${source_code_dir}/docker-build/docker/modules/egg/federatedml
+  cp -r ${source_code_dir}/federatedrec ${source_code_dir}/docker-build/docker/modules/egg/federatedrec
   ln ${source_code_dir}/cluster-deploy/packages/eggroll-api-${version}.tar.gz ${source_code_dir}/docker-build/docker/modules/egg/eggroll-api-${version}.tar.gz
   ln ${source_code_dir}/cluster-deploy/packages/eggroll-conf-${version}.tar.gz ${source_code_dir}/docker-build/docker/modules/egg/eggroll-conf-${version}.tar.gz
   ln ${source_code_dir}/cluster-deploy/packages/eggroll-computing-${version}.tar.gz ${source_code_dir}/docker-build/docker/modules/egg/eggroll-computing-${version}.tar.gz
@@ -120,6 +124,7 @@ buildModule() {
   
   # fate_flow
   # federatedml
+  # federatedrec
   cd ${source_code_dir}
 
   for module in "federation" "proxy" "roll" "meta-service" "fateboard" "egg" "python"
@@ -150,9 +155,11 @@ buildModule() {
   rm -r ${source_code_dir}/docker-build/docker/modules/egg/fate_flow
   rm -r ${source_code_dir}/docker-build/docker/modules/egg/arch
   rm -r ${source_code_dir}/docker-build/docker/modules/egg/federatedml
+  rm -r ${source_code_dir}/docker-build/docker/modules/egg/federatedrec
   rm -r ${source_code_dir}/docker-build/docker/modules/python/fate_flow
   rm -r ${source_code_dir}/docker-build/docker/modules/python/arch
   rm -r ${source_code_dir}/docker-build/docker/modules/python/federatedml
+  rm -r ${source_code_dir}/docker-build/docker/modules/python/federatedrec
   rm -r ${source_code_dir}/docker-build/docker/modules/python/examples
   rm ${source_code_dir}/docker-build/docker/modules/python/eggroll-api-${version}.tar.gz
   echo ""

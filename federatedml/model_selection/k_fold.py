@@ -151,6 +151,7 @@ class KFold(BaseCrossValidator):
             model = copy.deepcopy(original_model)
             this_flowid = 'train.' + str(fold_num)
             model.set_flowid(this_flowid)
+            model.set_cv_fold(fold_num)
             model.fit(None)
 
             this_flowid = 'predict_train.' + str(fold_num)

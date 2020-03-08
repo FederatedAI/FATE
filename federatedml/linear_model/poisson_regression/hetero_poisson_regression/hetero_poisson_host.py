@@ -73,15 +73,15 @@ class HeteroPoissonHost(HeteroPoissonBase):
             LOGGER.info("iter:" + str(self.n_iter_))
 
             batch_data_generator = self.batch_generator.generate_batch_data()
-            self.optimizer.set_iters(self.n_iter_ + 1)
+            self.optimizer.set_iters(self.n_iter_)
 
             batch_index = 0
             for batch_data in batch_data_generator:
                 batch_feat_inst = self.transform(batch_data)
                 optim_host_gradient, _ = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_feat_inst,
-                    self.model_weights,
                     self.encrypted_calculator,
+                    self.model_weights,
                     self.optimizer,
                     self.n_iter_,
                     batch_index)
@@ -114,6 +114,7 @@ class HeteroPoissonHost(HeteroPoissonBase):
         ----------
         data_instances:DTable of Instance, input data
         """
+        self.transfer_variable.host_partial_prediction.disable_auto_clean()
         LOGGER.info("Start predict ...")
         data_features = self.transform(data_instances)
         pred_host = self.compute_mu(data_features, self.model_weights.coef_, self.model_weights.intercept_)
