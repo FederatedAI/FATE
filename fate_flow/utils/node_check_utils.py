@@ -52,6 +52,6 @@ def nodes_check(src_party_id, src_role, appKey, appSecret):
         try:
             response = requests.post(url="http://{}:{}{}".format(MANAGER_HOST, MANAGER_PORT, FATE_MANAGER_NODE_CHECK), json=body).json()
             if response['code'] != 0:
-                raise Exception('role {} party id {} Authentication failure: {}'.format(src_role, src_party_id, str(response['message'])))
+                raise Exception(str(response['message']))
         except Exception as e:
             raise Exception('role {} party id {} Authentication error: {}'.format(src_role, src_party_id, str(e)))
