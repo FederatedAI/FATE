@@ -31,6 +31,7 @@ import warnings
 from federatedml.tree import XgboostCriterion
 from federatedml.tree import SplitInfo
 from federatedml.util import consts
+from arch.api.utils.splitable import segment_transfer_enabled
 
 LOGGER = log_utils.getLogger()
 
@@ -142,11 +143,16 @@ class Splitter(object):
                                                                                            sitename,
                                                                                            use_missing,
                                                                                            zero_as_missing))
-        tree_node_splitinfo = [splitinfo[1] for splitinfo in splitinfo_table.collect()]
+
+        tree_node_splitinfo = [None for i in range(len(histograms))]
+        for id, splitinfo in splitinfo_table.collect():
+            tree_node_splitinfo[id] = splitinfo
+
+        # tree_node_splitinfo = [splitinfo[1] for splitinfo in splitinfo_table.collect()]
 
         return tree_node_splitinfo
 
-    def find_split_single_histogram_host(self, histogram, valid_features, sitename, use_missing=False,
+    def find_split_single_histogram_host(self, fid_with_histogram, valid_features, sitename, use_missing=False,
                                          zero_as_missing=False):
         node_splitinfo = []
         node_grad_hess = []
@@ -155,64 +161,63 @@ class Splitter(object):
         if use_missing:
             missing_bin = 1
 
-        for fid in range(len(histogram)):
-            if valid_features[fid] is False:
-                continue
-            bin_num = len(histogram[fid])
-            if bin_num == 0:
-                continue
-            node_cnt = histogram[fid][bin_num - 1][2]
+        fid, histogram = fid_with_histogram
+        if valid_features[fid] is False:
+            return [], []
+        bin_num = len(histogram)
+        if bin_num == 0:
+            return [], []
 
-            if node_cnt < self.min_sample_split:
-                break
+        node_cnt = histogram[bin_num - 1][2]
 
-            for bid in range(bin_num - missing_bin - 1):
-                sum_grad_l = histogram[fid][bid][0]
-                sum_hess_l = histogram[fid][bid][1]
-                node_cnt_l = histogram[fid][bid][2]
+        if node_cnt < self.min_sample_split:
+            return [], []
 
-                node_cnt_r = node_cnt - node_cnt_l
+        for bid in range(bin_num - missing_bin - 1):
+            sum_grad_l = histogram[bid][0]
+            sum_hess_l = histogram[bid][1]
+            node_cnt_l = histogram[bid][2]
 
-                if node_cnt_l >= self.min_leaf_node and node_cnt_r >= self.min_leaf_node:
-                    splitinfo = SplitInfo(sitename=sitename, best_fid=fid,
-                                          best_bid=bid, sum_grad=sum_grad_l, sum_hess=sum_hess_l,
-                                          missing_dir=1)
+            node_cnt_r = node_cnt - node_cnt_l
 
-                    node_splitinfo.append(splitinfo)
-                    node_grad_hess.append((sum_grad_l, sum_hess_l))
+            if node_cnt_l >= self.min_leaf_node and node_cnt_r >= self.min_leaf_node:
+                splitinfo = SplitInfo(sitename=sitename, best_fid=fid,
+                                      best_bid=bid, sum_grad=sum_grad_l, sum_hess=sum_hess_l,
+                                      missing_dir=1)
 
-                if use_missing:
-                    sum_grad_l += histogram[fid][-1][0] - histogram[fid][-2][0]
-                    sum_hess_l += histogram[fid][-1][1] - histogram[fid][-2][1]
-                    node_cnt_l += histogram[fid][-1][2] - histogram[fid][-2][2]
+                node_splitinfo.append(splitinfo)
+                node_grad_hess.append((sum_grad_l, sum_hess_l))
 
-                    splitinfo = SplitInfo(sitename=sitename, best_fid=fid,
-                                          best_bid=bid, sum_grad=sum_grad_l, sum_hess=sum_hess_l,
-                                          missing_dir=-1)
+            if use_missing:
+                sum_grad_l += histogram[-1][0] - histogram[-2][0]
+                sum_hess_l += histogram[-1][1] - histogram[-2][1]
+                node_cnt_l += histogram[-1][2] - histogram[-2][2]
 
-                    node_splitinfo.append(splitinfo)
-                    node_grad_hess.append((sum_grad_l, sum_hess_l))
+                splitinfo = SplitInfo(sitename=sitename, best_fid=fid,
+                                      best_bid=bid, sum_grad=sum_grad_l, sum_hess=sum_hess_l,
+                                      missing_dir=-1)
+
+                node_splitinfo.append(splitinfo)
+                node_grad_hess.append((sum_grad_l, sum_hess_l))
 
         return node_splitinfo, node_grad_hess
 
-    def find_split_host(self, histograms, valid_features, partitions=1, sitename=consts.HOST,
+    def find_split_host(self, histograms, valid_features, node_map, sitename=consts.HOST,
                         use_missing=False, zero_as_missing=False):
         LOGGER.info("splitter find split of host")
-        histogram_table = session.parallelize(histograms, include_key=False, partition=partitions)
-        host_splitinfo_table = histogram_table.mapValues(lambda hist:
-                                                         self.find_split_single_histogram_host(hist, valid_features,
-                                                                                               sitename,
-                                                                                               use_missing,
-                                                                                               zero_as_missing))
+        tree_node_splitinfo = [[] for i in range(len(node_map))]
+        encrypted_node_grad_hess = [[] for i in range(len(node_map))]
+        host_splitinfo_table = histograms.mapValues(lambda fid_with_hist:
+                                                    self.find_split_single_histogram_host(fid_with_hist, valid_features,
+                                                                                          sitename,
+                                                                                          use_missing,
+                                                                                          zero_as_missing))
 
-        tree_node_splitinfo = []
-        encrypted_node_grad_hess = []
+        for (nid, fid), splitinfo in host_splitinfo_table.collect():
+            tree_node_splitinfo[nid].extend(splitinfo[0])
+            encrypted_node_grad_hess[nid].extend(splitinfo[1])
 
-        for _, splitinfo in host_splitinfo_table.collect():
-            tree_node_splitinfo.append(splitinfo[0])
-            encrypted_node_grad_hess.append(splitinfo[1])
-
-        return tree_node_splitinfo, encrypted_node_grad_hess
+        return tree_node_splitinfo, BigObjectTransfer(encrypted_node_grad_hess)
 
     def node_gain(self, grad, hess):
         return self.criterion.node_gain(grad, hess)
@@ -224,3 +229,11 @@ class Splitter(object):
         gain = self.criterion.split_gain([sum_grad, sum_hess], \
                                          [sum_grad_l, sum_hess_l], [sum_grad_r, sum_hess_r])
         return gain
+
+
+class BigObjectTransfer(metaclass=segment_transfer_enabled()):
+    def __init__(self, data):
+        self._obj = data
+
+    def get_data(self):
+        return self._obj

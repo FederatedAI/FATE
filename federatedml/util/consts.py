@@ -77,6 +77,7 @@ CONST = 'const'
 
 # decision tree
 MAX_SPLIT_NODES = 2 ** 16
+MAX_FEDERATED_NODES = 2 ** 10
 
 TRAIN_EVALUATE = 'train_evaluate'
 VALIDATE_EVALUATE = 'validate_evaluate'

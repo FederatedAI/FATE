@@ -87,6 +87,3 @@ def nodes_unquote(nodes):
         except:
             pass
     return servings
-
-
-

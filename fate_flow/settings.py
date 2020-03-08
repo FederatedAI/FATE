@@ -42,7 +42,7 @@ ZOOKEEPER_HOSTS = ['127.0.0.1:2181']
 MAX_CONCURRENT_JOB_RUN = 5
 MAX_CONCURRENT_JOB_RUN_HOST = 10
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
-DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000  # ms
+DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000 * 20  # ms
 JOB_DEFAULT_TIMEOUT = 7 * 24 * 60 * 60
 REDIS_QUEUE_DB_INDEX = 0
 
@@ -76,6 +76,7 @@ DEFAULT_WORKFLOW_DATA_TYPE = ['train_input', 'data_input', 'id_library_input', '
                               'predict_output', 'evaluation_output', 'intersect_data_output']
 HEADERS = {
     'Content-Type': 'application/json',
+    'Connection': 'close'
 }
 # fate-serving
 SERVINGS_ZK_PATH = '/FATE-SERVICES/serving/online/publishLoad/providers'

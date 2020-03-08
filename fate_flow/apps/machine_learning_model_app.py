@@ -103,4 +103,3 @@ def query_model_version_history():
 def transfer_model():
     model_data = publish_model.download_model(request.json)
     return get_json_result(retcode=0, retmsg="success", data=model_data)
-

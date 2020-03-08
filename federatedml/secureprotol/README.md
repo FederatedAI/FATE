@@ -99,10 +99,10 @@ This encryption method generates three very large positive integers e, d and n. 
 ## Encode
 Encode module provide some method including "md5", "sha1", "sha224", "sha256", "sha384", "sha512" for data encoding. This module can help you to encode your data more convenient. It also supports for adding salt in front of data or behind data. For the encoding result, you can choose transform it to base64 or not.
 
-## MPC Protocol
+## SecretShare MPC Protocol
 ### SPDZ
 
-SPDZ is a multiparty computation scheme based on somewhat homomorphic encryption (SHE). 
+SPDZ([Ivan Damg˚ard](https://eprint.iacr.org/2011/535.pdf), [Marcel Keller](https://eprint.iacr.org/2017/1230.pdf)) is a multiparty computation scheme based on somewhat homomorphic encryption (SHE). 
 
 #### init
 ```python

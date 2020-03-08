@@ -46,10 +46,12 @@ buildModule() {
   [ -d ${source_code_dir}/docker-build/docker/modules/egg/fate_flow ] && rm -r ${source_code_dir}/docker-build/docker/modules/egg/fate_flow
   [ -d ${source_code_dir}/docker-build/docker/modules/egg/arch ] && rm -r ${source_code_dir}/docker-build/docker/modules/egg/arch
   [ -d ${source_code_dir}/docker-build/docker/modules/egg/federatedml ] && rm -r ${source_code_dir}/docker-build/docker/modules/egg/federatedml
+  [ -d ${source_code_dir}/docker-build/docker/modules/egg/federatedrec ] && rm -r ${source_code_dir}/docker-build/docker/modules/egg/federatedrec
   [ -d ${source_code_dir}/docker-build/docker/modules/python/fate_flow ] && rm -r ${source_code_dir}/docker-build/docker/modules/python/fate_flow
   [ -d ${source_code_dir}/docker-build/docker/modules/python/examples ] && rm -r ${source_code_dir}/docker-build/docker/modules/python/examples
   [ -d ${source_code_dir}/docker-build/docker/modules/python/arch ] && rm -r ${source_code_dir}/docker-build/docker/modules/python/arch
   [ -d ${source_code_dir}/docker-build/docker/modules/python/federatedml ] && rm -r ${source_code_dir}/docker-build/docker/modules/python/federatedml
+  [ -d ${source_code_dir}/docker-build/docker/modules/python/federatedrec ] && rm -r ${source_code_dir}/docker-build/docker/modules/python/federatedrec
   [ -d ${source_code_dir}/docker-build/docker/modules/python/examples ] && rm -r ${source_code_dir}/docker-build/docker/modules/python/examples
    [ -f ${source_code_dir}/docker-build/docker/modules/python/eggroll-api-*.tar.gz ] && rm ${source_code_dir}/docker-build/docker/modules/python/eggroll-api-*.tar.gz
 
@@ -61,11 +63,13 @@ buildModule() {
   cp -r ${source_code_dir}/fate_flow ${source_code_dir}/docker-build/docker/modules/python/fate_flow
   cp -r ${source_code_dir}/arch ${source_code_dir}/docker-build/docker/modules/python/arch
   cp -r ${source_code_dir}/federatedml ${source_code_dir}/docker-build/docker/modules/python/federatedml
+  cp -r ${source_code_dir}/federatedrec ${source_code_dir}/docker-build/docker/modules/python/federatedrec
   cp -r ${source_code_dir}/examples ${source_code_dir}/docker-build/docker/modules/python/examples
   ln ${source_code_dir}/cluster-deploy/packages/eggroll-api-${version}.tar.gz ${source_code_dir}/docker-build/docker/modules/python/eggroll-api-${version}.tar.gz
   cp -r ${source_code_dir}/fate_flow ${source_code_dir}/docker-build/docker/modules/egg/fate_flow
   cp -r ${source_code_dir}/arch ${source_code_dir}/docker-build/docker/modules/egg/arch
   cp -r ${source_code_dir}/federatedml ${source_code_dir}/docker-build/docker/modules/egg/federatedml
+  cp -r ${source_code_dir}/federatedrec ${source_code_dir}/docker-build/docker/modules/egg/federatedrec
   ln ${source_code_dir}/cluster-deploy/packages/eggroll-api-${version}.tar.gz ${source_code_dir}/docker-build/docker/modules/egg/eggroll-api-${version}.tar.gz
   ln ${source_code_dir}/cluster-deploy/packages/eggroll-conf-${version}.tar.gz ${source_code_dir}/docker-build/docker/modules/egg/eggroll-conf-${version}.tar.gz
   ln ${source_code_dir}/cluster-deploy/packages/eggroll-computing-${version}.tar.gz ${source_code_dir}/docker-build/docker/modules/egg/eggroll-computing-${version}.tar.gz
@@ -120,13 +124,14 @@ buildModule() {
   
   # fate_flow
   # federatedml
+  # federatedrec
   cd ${source_code_dir}
 
   for module in "federation" "proxy" "roll" "meta-service" "fateboard" "egg" "python"
   do
-      echo "### START BUILDING ${module^^} ###"
+      echo "### START BUILDING ${module} ###"
       docker build --build-arg version=${version} --build-arg fateboard_version=${fateboard_version} --build-arg PREFIX=${PREFIX} --build-arg BASE_TAG=${BASE_TAG} -t ${PREFIX}/${module}:${TAG} -f ${source_code_dir}/docker-build/docker/modules/${module}/Dockerfile ${source_code_dir}/docker-build/docker/modules/${module}
-      echo "### FINISH BUILDING ${module^^} ###"
+      echo "### FINISH BUILDING ${module} ###"
       echo ""
   done;
 
@@ -150,9 +155,11 @@ buildModule() {
   rm -r ${source_code_dir}/docker-build/docker/modules/egg/fate_flow
   rm -r ${source_code_dir}/docker-build/docker/modules/egg/arch
   rm -r ${source_code_dir}/docker-build/docker/modules/egg/federatedml
+  rm -r ${source_code_dir}/docker-build/docker/modules/egg/federatedrec
   rm -r ${source_code_dir}/docker-build/docker/modules/python/fate_flow
   rm -r ${source_code_dir}/docker-build/docker/modules/python/arch
   rm -r ${source_code_dir}/docker-build/docker/modules/python/federatedml
+  rm -r ${source_code_dir}/docker-build/docker/modules/python/federatedrec
   rm -r ${source_code_dir}/docker-build/docker/modules/python/examples
   rm ${source_code_dir}/docker-build/docker/modules/python/eggroll-api-${version}.tar.gz
   echo ""
@@ -227,12 +234,13 @@ package() {
   proxy_version=$(grep -E -m 1 -o "<fate.version>(.*)</fate.version>" ${source_code_dir}/arch/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "fte.version" '{print $2}')
   fateboard_version=$(grep -E -m 1 -o "<version>(.*)</version>" ${source_code_dir}/fateboard/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "version" '{print $2}')
  
-  sed -i "s/egg_version=.*/egg_version=${egg_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
-  sed -i "s/meta_service_version=.*/meta_service_version=${meta_service_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
-  sed -i "s/roll_version=.*/roll_version=${roll_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
-  sed -i "s/federation_version=.*/federation_version=${federation_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
-  sed -i "s/proxy_version=.*/proxy_version=${proxy_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
-  sed -i "s/fateboard_version=.*/fateboard_version=${fateboard_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
+  sed -i.bak "s/egg_version=.*/egg_version=${egg_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
+  sed -i.bak "s/meta_service_version=.*/meta_service_version=${meta_service_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
+  sed -i.bak "s/roll_version=.*/roll_version=${roll_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
+  sed -i.bak "s/federation_version=.*/federation_version=${federation_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
+  sed -i.bak "s/proxy_version=.*/proxy_version=${proxy_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
+  sed -i.bak "s/fateboard_version=.*/fateboard_version=${fateboard_version}/g" ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
+
 
   source ${source_code_dir}/cluster-deploy/scripts/default_configurations.sh
 
@@ -309,9 +317,9 @@ pushImage() {
   ## push image
   for module in "federation" "proxy" "roll" "python" "meta-service" "fateboard" "egg"
   do
-      echo "### START PUSH ${module^^} ###"
+      echo "### START PUSH ${module} ###"
       docker push ${PREFIX}/${module}:${TAG}
-      echo "### FINISH PUSH ${module^^} ###"
+      echo "### FINISH PUSH ${module} ###"
       echo ""
   done;
 }

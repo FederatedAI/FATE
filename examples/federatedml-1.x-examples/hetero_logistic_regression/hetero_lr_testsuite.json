@@ -66,12 +66,20 @@
       "conf": "test_lr_with_feature_engineering_job_conf.json",
       "dsl": "test_lr_with_feature_engineering_dsl.json"
     },
+      "lr_sqn": {
+      "conf": "test_hetero_lr_sqn_job_conf.json",
+      "dsl": "test_hetero_lr_train_job_dsl.json"
+    },
     "lr_multi_host": {
       "conf": "test_multi_host_job_conf.json",
       "dsl": "test_hetero_lr_train_job_dsl.json"
     },
     "lr": {
       "conf": "test_hetero_lr_train_job_conf.json",
+      "dsl": "test_hetero_lr_train_job_dsl.json"
+    },
+    "lr_sparse": {
+      "conf": "test_hetero_lr_sparse_train_job_conf.json",
       "dsl": "test_hetero_lr_train_job_dsl.json"
     },
     "lr-predict": {

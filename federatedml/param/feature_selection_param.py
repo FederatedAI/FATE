@@ -50,7 +50,7 @@ class IVValueSelectionParam(BaseParam):
     value_threshold: float, default: 1.0
         Used if iv_value_thres method is used in feature selection.
 
-    host_threshold: List of float or None, default: None
+    host_thresholds: List of float or None, default: None
         Set threshold for different host. If None, use same threshold as guest. If provided, the order should map with
         the host id setting.
 

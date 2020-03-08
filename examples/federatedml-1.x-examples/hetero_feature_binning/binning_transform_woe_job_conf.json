@@ -80,11 +80,6 @@
         "transform_names": null,
         "transform_type": "woe"
       }
-    },
-    "one_hot_encoder_0": {
-      "transform_col_indexes": -1,
-      "transform_col_names": null,
-      "need_run": true
     }
   }
 }

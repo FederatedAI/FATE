@@ -139,10 +139,14 @@ def call_fun(func, config_data, dsl_path, config_path):
                                       json=config_data,
                                       stream=True)) as response:
                 if response.status_code == 200:
-                    download_from_request(http_response=response, tar_file_name=tar_file_name, extract_dir=extract_dir)
-                    response = {'retcode': 0,
-                                'directory': extract_dir,
-                                'retmsg': 'download successfully, please check {} directory'.format(extract_dir)}
+                    try:
+                        download_from_request(http_response=response, tar_file_name=tar_file_name, extract_dir=extract_dir)
+                        response = {'retcode': 0,
+                                    'directory': extract_dir,
+                                    'retmsg': 'download successfully, please check {} directory'.format(extract_dir)}
+                    except:
+                        response = {'retcode': 100,
+                                    'retmsg': 'download failed, please check if the parameters are correct'}
                 else:
                     response = response.json()
 
