@@ -50,7 +50,11 @@ class RedisQueue(BaseQueue):
         self.queue_name = queue_name
         self.pool = redis.ConnectionPool(host=host, port=port, password=password, max_connections=max_connections,
                                          db=REDIS_QUEUE_DB_INDEX)
-        stat_logger.info('init redis queue')
+        if self.is_ready():
+            stat_logger.info('init redis queue')
+        else:
+            stat_logger.error('init redis queue error!')
+            raise Exception('init redis queue error!')
 
     def get_conn(self):
         return redis.Redis(connection_pool=self.pool, decode_responses=True)

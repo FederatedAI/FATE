@@ -58,7 +58,8 @@ config() {
 	sed -i.bak "s/'host':.*/'host': '${db_ip}',/g" ./settings.py
 	sed -i.bak "s/'name':.*/'name': '${db_name}',/g" ./settings.py
 	sed -i.bak "s/'password':.*/'password': '${redis_password}',/g" ./settings.py
-	sed -i.bak "/'host':.*/{x;s/^/./;/^\.\{2\}$/{x;s/.*/    'host': '${redis_ip}',/;x};x;}" ./settings.py
+	#sed -i.bak "/'host':.*/{x;s/^/./;/^\.\{2\}$/{x;s/.*/    'host': '${redis_ip}',/;x};x;}" ./settings.py
+    sed -i.bak '$!N;s/REDIS = {\n.*'host'.*,/REDIS = \{\'$'\n    \'host\': "'${redis_ip}'",/' ./settings.py
 	rm -rf ./service.sh.bak ./settings.py.bak
 	return 0
 }

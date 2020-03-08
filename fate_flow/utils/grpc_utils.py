@@ -22,6 +22,7 @@ import grpc
 from fate_flow.settings import ROLE, IP, GRPC_PORT, PROXY_HOST, PROXY_PORT, HEADERS, DEFAULT_GRPC_OVERALL_TIMEOUT, \
     audit_logger
 from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.utils.node_check_utils import nodes_check
 
 
 def get_proxy_data_channel():
@@ -59,6 +60,15 @@ class UnaryServicer(proxy_pb2_grpc.DataTransferServiceServicer):
         method = header.operator
         param_dict = json.loads(param)
         param_dict['src_party_id'] = str(src.partyId)
+        try:
+            nodes_check(param_dict.get('src_party_id'), param_dict.get('src_role'), param_dict.get('appKey'),
+                        param_dict.get('appSecret'))
+        except Exception as e:
+            resp_json = {
+                "retcode": 100,
+                "retmsg": str(e)
+            }
+            return wrap_grpc_packet(resp_json, method, _suffix, dst.partyId, src.partyId, job_id)
         param = bytes.decode(bytes(json.dumps(param_dict), 'utf-8'))
 
         action = getattr(requests, method.lower(), None)
