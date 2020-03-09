@@ -223,9 +223,6 @@ class HeteroStepwise(object):
 
     def _run_step(self, model, train_data, test_data, feature_mask, n_model, model_key):
         if self.direction == 'forward' and self.n_step == 0:
-            # skip intercept-only model
-            if not model.fit_intercept:
-                return
             if self.role == consts.GUEST:
                 loss, ic_val = self.get_ic_val_guest(model, train_data)
                 LOGGER.info("step {} n_model {}: ic_val {}".format(self.n_step, n_model, ic_val))
