@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from typing import Union
 
 from arch.api.base.federation import Rubbish, Party, Federation
@@ -67,7 +68,7 @@ class FederationRuntime(Federation):
             if isinstance(obj, RollPair):
                 rtn.append(DTable.from_dtable(obj.ctx.get_session().get_session_id(), obj))
                 rubbish.add_table(obj)
-                if LOGGER.isEnabledFor("DEBUG"):
+                if LOGGER.isEnabledFor(logging.DEBUG):
                     LOGGER.debug(f'federation got roll pair count: {obj.count()} for name: {name}, tag: {tag}')
 
             elif is_split_head(obj):
@@ -104,7 +105,7 @@ class FederationRuntime(Federation):
                 futures.extend(_split_rs.push(v, parties))
 
         def done_callback(fut):
-            if LOGGER.isEnabledFor("DEBUG"):
+            if LOGGER.isEnabledFor(logging.DEBUG):
                 LOGGER.debug("federation remote done called:{}".format(fut.result()))
 
         for future in futures:
