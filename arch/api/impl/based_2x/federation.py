@@ -6,6 +6,7 @@ from arch.api.impl.based_2x.session import FateSession
 from arch.api.impl.based_2x.table import DTable
 from arch.api.utils import file_utils
 from arch.api.utils import log_utils
+from arch.api.utils.splitable import maybe_split_object, is_split_head, split_get
 from eggroll.core.meta_model import ErEndpoint
 from eggroll.roll_pair.roll_pair import RollPair
 
@@ -15,6 +16,7 @@ STATUS_TABLE_NAME = "__status__"
 LOGGER = log_utils.getLogger()
 
 
+# noinspection PyProtectedMember
 def init_roll_site_context(runtime_conf, session_id):
     from eggroll.roll_site.roll_site import RollSiteContext
     from eggroll.roll_pair.roll_pair import RollPairContext
@@ -40,10 +42,6 @@ def init_roll_site_context(runtime_conf, session_id):
     return rp_context, rs_context
 
 
-# def _remote__object_key(*args):
-#     return DELIM.join(["{}".format(arg) for arg in args])
-
-
 class FederationRuntime(Federation):
 
     def __init__(self, session_id, runtime_conf):
@@ -53,43 +51,61 @@ class FederationRuntime(Federation):
         self.role = runtime_conf.get("local").get("role")
 
     def get(self, name, tag, parties: Union[Party, list]):
+        rs = self.rsc.load(name=name, tag=tag)
+        rubbish = Rubbish(name, tag)
+
         if isinstance(parties, Party):
             parties = [parties]
-
-        rubbish = Rubbish(name, tag)
-        rtn = []
-        rs = self.rsc.load(name=name, tag=tag)
-        rs_parties = []
-        for party in parties:
-            rs_parties.append((party.role, party.party_id))
+        rs_parties = [(party.role, party.party_id) for party in parties]
 
         # TODO:0: check if exceptions are swallowed
         futures = rs.pull(parties=rs_parties)
-        for future in futures:
+        rtn = []
+        for party, future in zip(rs_parties, futures):
             obj = future.result()
-            LOGGER.info(f'federation got data. tag: {tag}')
+            LOGGER.info(f'federation got data. name: {name}, tag: {tag}')
             if isinstance(obj, RollPair):
                 rtn.append(DTable.from_dtable(obj.ctx.get_session().get_session_id(), obj))
                 rubbish.add_table(obj)
-                LOGGER.debug(f'federation got roll pair count: {obj.count()} for {tag}')
+                if LOGGER.isEnabledFor("DEBUG"):
+                    LOGGER.debug(f'federation got roll pair count: {obj.count()} for name: {name}, tag: {tag}')
+
+            elif is_split_head(obj):
+                num_split = obj.num_split()
+                LOGGER.info(f'federation getting split data. name: {name}, tag: {tag}, num split: {num_split}')
+                split_objs = []
+                for k in range(num_split):
+                    _split_rs = self.rsc.load(name, tag=f"{tag}.__part_{k}")
+                    split_objs.append(_split_rs.pull([party])[0].result())
+                obj = split_get(split_objs)
+                rtn.append(obj)
+
             else:
                 rtn.append(obj)
         return rtn, rubbish
 
     def remote(self, obj, name, tag, parties):
+        rs = self.rsc.load(name=name, tag=tag)
+        rubbish = Rubbish(name=name, tag=tag)
+
         if isinstance(parties, Party):
             parties = [parties]
+        rs_parties = [(party.role, party.party_id) for party in parties]
 
-        rs_parties = []
-        for party in parties:
-            rs_parties.append((party.role, party.party_id))
-
-        rubbish = Rubbish(name=name, tag=tag)
-        rs = self.rsc.load(name=name, tag=tag)
-        futures = rs.push(obj=obj, parties=rs_parties)
+        if isinstance(obj, RollPair):
+            futures = rs.push(obj=obj, parties=rs_parties)
+            rubbish.add_table(obj)
+        else:
+            futures = []
+            obj, splits = maybe_split_object(obj)
+            futures.extend(rs.push(obj=obj, parties=rs_parties))
+            for k, v in splits:
+                _split_rs = self.rsc.load(name, tag=f"{tag}.__part_{k}")
+                futures.extend(_split_rs.push(v, parties))
 
         def done_callback(fut):
-            LOGGER.info("federation remote done called:{}".format(future.result()))
+            if LOGGER.isEnabledFor("DEBUG"):
+                LOGGER.debug("federation remote done called:{}".format(fut.result()))
 
         for future in futures:
             future.add_done_callback(done_callback)
