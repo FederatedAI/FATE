@@ -18,10 +18,9 @@
     },
     {
       "role": "guest_0",
-      "file":"examples/data/citeulike_svd_guest_eval.csv",
+      "file":"examples/data/citeulike_guest_eval.csv",
       "table_name":"hetero_citeulike_evaluation",
       "namespace":"hetero_guest_citeulike",
-      "namespace": "hetero_guest_citeulike",
       "head": 1,
       "partition": 10
     }
