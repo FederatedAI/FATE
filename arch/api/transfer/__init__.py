@@ -188,10 +188,10 @@ class FederationAuthorization(object):
 
     def __init__(self, transfer_conf_path):
         self.transfer_auth = {}
-        for name in os.listdir(os.path.join(file_utils.get_project_base_directory(), transfer_conf_path)):
-            path = os.path.join(transfer_conf_path, name)
+        for path, _, name in os.walk(os.path.join(file_utils.get_project_base_directory(), transfer_conf_path)):
+            transfer_conf = os.path.join(path, name)
             if path.endswith(".json"):
-                self.transfer_auth.update(file_utils.load_json_conf(path))
+                self.transfer_auth.update(file_utils.load_json_conf(transfer_conf))
 
         # cache
         self._authorized_src = {}
