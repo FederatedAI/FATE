@@ -34,10 +34,10 @@ class HeteroKmenasArbiter(BaseKmeansModel):
 
     def fit(self, data_instances=None):
         LOGGER.info("Enter hetero linear model arbiter fit")
-        n = inf
-        while self.n_iter_ < self.max_iter and n > self.tol:
-            p1 = self.transfer_variable.guest_dist.get(idx=0, suffix=self.n_iter_)
-            p2 = self.transfer_variable.host_dist.get(idx=-1, suffix=self.n_iter_)
+        tol_sum = inf
+        while self.n_iter_ < self.max_iter :
+            p1 = self.transfer_variable.guest_dist.get(idx=0, suffix=(self.n_iter_,))
+            p2 = self.transfer_variable.host_dist.get(idx=-1, suffix=(self.n_iter_,))
             dist_sum = p1
             for p in p2:
                 dist_sum = dist_sum.join(p, lambda v1, v2: np.array(v1) + np.array(v2))
@@ -49,12 +49,14 @@ class HeteroKmenasArbiter(BaseKmeansModel):
             tol1 = self.transfer_variable.guest_tol.get(idx=0, suffix=(self.n_iter_,))
             tol2 = self.transfer_variable.host_tol.get(idx=-1, suffix=(self.n_iter_,))
             tol_sum = tol1
-            for t in tol2:
-                tol_sum += t
+            for tol in tol2:
+                tol_sum += tol2[tol]
+            tol_final = np.sum(tol_sum**2)**0.5
 
-            self.transfer_variable.arbiter_tol.remote(np.sqrt(tol_sum), role=consts.HOST, idx=-1)
-            self.transfer_variable.arbiter_tol.remote(np.sqrt(tol_sum), role=consts.GUEST, idx=0)
-
-            if n < self.tol:
+            if tol_final < self.tol:
+                tol_tag = 1
+                self.transfer_variable.arbiter_tol.remote(tol_tag, role=consts.HOST, idx=-1)
+                self.transfer_variable.arbiter_tol.remote(tol_tag, role=consts.GUEST, idx=0)
                 break
+
             self.n_iter_ += 1
