@@ -20,7 +20,7 @@ from arch.api.utils import log_utils
 from federatedml.model_base import ModelBase
 from federatedml.framework.homo.procedure import aggregator
 from federatedrec.param.general_mf_param import HeteroGMFParam
-from federatedrec.transfer_variable.transfer_class.hetero_gmf_transfer_variable import HeteroGMFTransferVariable
+from federatedml.transfer_variable.transfer_class.hetero_gmf_transfer_variable import HeteroGMFTransferVariable
 
 LOGGER = log_utils.getLogger()
 

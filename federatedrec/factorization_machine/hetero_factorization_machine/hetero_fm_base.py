@@ -23,7 +23,7 @@ from federatedml.secureprotol import PaillierEncrypt
 from federatedml.protobuf.generated import fm_model_meta_pb2
 from federatedrec.param.factorization_machine_param import HeteroFactorizationParam
 from federatedrec.factorization_machine.base_factorization_machine import BaseFactorizationMachine
-from federatedrec.transfer_variable.transfer_class.hetero_fm_transfer_variable import HeteroFMTransferVariable
+from federatedml.transfer_variable.transfer_class.hetero_fm_transfer_variable import HeteroFMTransferVariable
 
 
 class HeteroFMBase(BaseFactorizationMachine):

@@ -20,8 +20,7 @@ from arch.api.utils import log_utils
 from federatedml.framework.homo.procedure import aggregator
 from federatedml.model_base import ModelBase
 from federatedrec.param.matrix_factorization_param import HeteroMatrixParam
-from federatedrec.transfer_variable.transfer_class.hetero_mf_transfer_variable import \
-    HeteroMFTransferVariable
+from federatedml.transfer_variable.transfer_class.hetero_mf_transfer_variable import HeteroMFTransferVariable
 
 LOGGER = log_utils.getLogger()
 

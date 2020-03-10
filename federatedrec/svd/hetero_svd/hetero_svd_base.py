@@ -20,7 +20,7 @@ from arch.api.utils import log_utils
 from federatedml.model_base import ModelBase
 from federatedml.framework.homo.procedure import aggregator
 from federatedrec.param.svd_param import HeteroSVDParam
-from federatedrec.transfer_variable.transfer_class.hetero_svd_transfer_variable import HeteroSVDTransferVariable
+from federatedml.transfer_variable.transfer_class.hetero_svd_transfer_variable import HeteroSVDTransferVariable
 
 LOGGER = log_utils.getLogger()
 
