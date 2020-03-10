@@ -1,0 +1,16 @@
+{
+  "module_path": "federatedrec/neural_cf/hetero_ncf",
+  "default_runtime_conf": "neural_cf_param.json",
+  "param_class": "federatedrec/param/neural_cf_param.py/HeteroNCFParam",
+  "role": {
+    "guest": {
+      "program": "hetero_ncf_client.py/HeteroNCFGuest"
+    },
+    "host": {
+      "program": "hetero_ncf_client.py/HeteroNCFHost"
+    },
+    "arbiter": {
+      "program": "hetero_ncf_arbiter.py/HeteroNCFArbiter"
+    }
+  }
+}

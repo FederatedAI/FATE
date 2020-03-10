@@ -56,4 +56,11 @@ Build hetero GMF module through multiple parties.
 - Data Input: Input DTable of user-item rating matrix data(using positive data only).
 - Model Output: Hetero GMF model.
 
+##### 7. [Hetero NCF](./neural_cf/README.md)
+Build hetero NCF module through multiple parties.
+
+- Corresponding module name: HeteroNCF
+- Data Input: Input DTable of user-item rating matrix data(using positive data only).
+- Model Output: Hetero NCF model.
+
 More available algorithms are coming soon.
