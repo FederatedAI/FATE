@@ -24,7 +24,7 @@ from arch.api.utils.log_utils import getLogger
 __all__ = ["Rubbish", "Cleaner", "Party", "init", "FederationWrapped", "Federation", "FederationAuthorization", "ROLES"]
 
 ROLES = ["arbiter", "guest", "host"]
-TRANSFER_CONF_PATH = "federatedml/transfer_variable/definition"
+TRANSFER_CONF_PATH = "arch/transfer_variables/auth_conf"
 CONF_KEY_LOCAL = "local"
 CONF_KEY_FEDERATION = "federation"
 CONF_KEY_SERVER = "servers"
@@ -188,10 +188,11 @@ class FederationAuthorization(object):
 
     def __init__(self, transfer_conf_path):
         self.transfer_auth = {}
-        for path, _, name in os.walk(os.path.join(file_utils.get_project_base_directory(), transfer_conf_path)):
-            transfer_conf = os.path.join(path, name)
-            if path.endswith(".json"):
-                self.transfer_auth.update(file_utils.load_json_conf(transfer_conf))
+        for path, _, file_names in os.walk(os.path.join(file_utils.get_project_base_directory(), transfer_conf_path)):
+            for name in file_names:
+                transfer_conf = os.path.join(path, name)
+                if transfer_conf.endswith(".json"):
+                    self.transfer_auth.update(file_utils.load_json_conf(transfer_conf))
 
         # cache
         self._authorized_src = {}
