@@ -120,6 +120,30 @@ class MysqlQueue(BaseQueue):
         self.maxsize = 0
         stat_logger.info('init queue')
 
+    @staticmethod
+    def lock(db, lock_name, timeout):
+        sql = "SELECT GET_LOCK('%s', %s)" % (lock_name, timeout)
+        cursor = db.execute_sql(sql)
+        ret = cursor.fetchone()
+        if ret[0] == 0:
+            raise Exception('mysql lock {} is already used'.format(lock_name))
+        elif ret[0] == 1:
+            return True
+        else:
+            raise Exception('mysql lock {} error occurred!')
+
+    @staticmethod
+    def unlock(db, lock_name):
+        sql = "SELECT RELEASE_LOCK('%s')" % (lock_name)
+        cursor = db.execute_sql(sql)
+        ret = cursor.fetchone()
+        if ret[0] == 0:
+            raise Exception('mysql lock {} is not released'.format(lock_name))
+        elif ret[0] == 1:
+            return True
+        else:
+            raise Exception('mysql lock {} did not exist.'.format(lock_name))
+
     def put_event(self, event):
         try:
             self.put(event)
@@ -131,7 +155,10 @@ class MysqlQueue(BaseQueue):
 
     def put(self, item, block=True, timeout=None):
         with self.not_full:
-            self.update_event(item=item)
+            with DB.connection_context():
+                MysqlQueue.lock(DB, 'queue', 10)
+                self.update_event(item=item)
+                MysqlQueue.unlock(DB, 'queue')
             self.not_empty.notify()
 
     def get_event(self):
@@ -161,10 +188,16 @@ class MysqlQueue(BaseQueue):
                     if remaining <= 0.0:
                         raise Exception
                     self.not_empty.wait(remaining)
-            item = self.query_events()[0]
-            self.update_event(item.f_job_id)
-            self.not_full.notify()
-            return json.loads(item.f_event)
+            with DB.connection_context():
+                MysqlQueue.lock(DB, 'queue', 10)
+                item = self.query_events()[0]
+                if item:
+                    self.update_event(item.f_job_id)
+                MysqlQueue.unlock(DB, 'queue')
+                self.not_full.notify()
+                if not item:
+                    raise Exception('There are no jobs in the current queue')
+                return json.loads(item.f_event)
 
     def del_event(self, event):
         try:
@@ -192,12 +225,15 @@ class MysqlQueue(BaseQueue):
 
     def dell(self, item):
         with self.not_empty:
-            job_id = item.get('job_id')
-            event = Queue.select().where(Queue.f_job_id == job_id)[0]
-            if event.f_is_waiting == 0:
-                raise Exception('{} not in mysql queue'.format(event))
-            event.f_is_waiting = 0
-            event.save()
+            with DB.connection_context():
+                MysqlQueue.lock(DB, 'queue', 10)
+                job_id = item.get('job_id')
+                event = Queue.select().where(Queue.f_job_id == job_id)[0]
+                if event.f_is_waiting == 0:
+                    raise Exception('{} not in mysql queue'.format(event))
+                event.f_is_waiting = 0
+                event.save()
+                MysqlQueue.unlock(DB, 'queue')
             self.not_full.notify()
 
 
