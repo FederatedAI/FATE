@@ -86,7 +86,7 @@ class HomoNNParam(BaseParam):
         self.cv_param = copy.deepcopy(cv_param)
 
     def check(self):
-        supported_config_type = ["nn", "keras"]
+        supported_config_type = ["nn", "keras","pytorch"]
         if self.config_type not in supported_config_type:
             raise ValueError(f"config_type should be one of {supported_config_type}")
         self.early_stop = _parse_early_stop(self.early_stop)
@@ -104,6 +104,9 @@ class HomoNNParam(BaseParam):
                 pb.nn_define.append(json.dumps(layer))
         elif self.config_type == "keras":
             pb.nn_define.append(json.dumps(self.nn_define))
+        elif self.config_type == "pytorch":
+            for layer in self.nn_define:
+                pb.nn_define.append(json.dumps(layer))
 
         pb.batch_size = self.batch_size
         pb.max_iter = self.max_iter
@@ -129,6 +132,9 @@ class HomoNNParam(BaseParam):
                 self.nn_define.append(json.loads(layer))
         elif self.config_type == "keras":
             self.nn_define = pb.nn_define[0]
+        elif self.config_type== "pytorch":
+            for layer in pb.nn_define:
+                self.nn_define.append(json.loads(layer))
         else:
             raise ValueError(f"{self.config_type} is not supported")
 
