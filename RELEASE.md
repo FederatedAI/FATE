@@ -1,3 +1,28 @@
+# Release 1.3.0
+## Major Features and Improvements
+>FederatedREC
+* Add federated recommendation submodule
+* Add heterogeneous Factoraization Machine
+* Add hemogeneous Factoraization Machine
+* Add heterogeneous Matrix Factorization
+* Add heterogeneous Singular Value Decomposition
+* Add heterogeneous SVD++ (Factorization Meets the Neighborhood)
+* Add heterogeneous Generalized Matrix Factorization
+
+>FederatedML
+* Support Sparse data training in heterogeneous General Linear Model(Hetero-LR、Hetero-LinR、Hetero-PoissonR)
+* Fix 32M limitation of quantile binning to support higher feature dimension
+* Fix 32M limitation of histogram statistics for  SecureBoost to support higher feature dimension training.
+* Add abnormal parameters and input data detection in OneHot Encoder
+* fix not passing validate data to fit process to support evaluate validation data during training process
+
+>Fate-Flow
+* Add clean job CLI for cleaning output and intermediate results, including data, metrics and sessions
+* Support for obtaining table namespace and name of output data via CLI
+* Fix KillJob unsuccessful execution in some special cases
+* Improve log system, add more exception and run time status prompts
+
+
 # Release 1.2.0
 ## Major Features and Improvements
 FederatedML

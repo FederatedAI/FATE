@@ -13,6 +13,7 @@ COPY  arch/conf ./arch/conf
 COPY  arch/core ./arch/core
 COPY  arch/proto ./arch/proto
 COPY  federatedml ./federatedml
+COPY  federatedrec ./federatedrec
 COPY  examples/ ./examples
 COPY  eggroll-api-${version}.tar.gz ./
 
