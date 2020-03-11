@@ -528,6 +528,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                     model_meta = value[model]
                 if model.endswith("Param"):
                     model_param = value[model]
+
         LOGGER.info("load model")
 
         self.set_model_meta(model_meta)

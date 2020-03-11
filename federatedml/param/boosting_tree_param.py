@@ -318,6 +318,8 @@ class BoostingTreeParam(BaseParam):
         elif isinstance(self.early_stopping_rounds, int):
             if self.early_stopping_rounds < 1:
                 raise ValueError("early stopping rounds should be larger than 0 when it's integer")
+            if self.validation_freqs is None:
+                raise ValueError("validation freqs must be set when early stopping is enabled")
 
         return True
 
