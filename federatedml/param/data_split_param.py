@@ -69,7 +69,7 @@ class DataSplitParam(BaseParam):
     def check(self):
         model_param_descr = "cross validation param's "
         if self.random_state is not None:
-            if type(self.random_state).__name__ != "int":
+            if isinstance(self.random_state, int):
                 raise ValueError(f"{model_param_descr} random state should be int type")
 
         if self.test_size is not None:
@@ -83,7 +83,7 @@ class DataSplitParam(BaseParam):
         self.check_boolean(self.shuffle, model_param_descr)
 
         if self.bin_interval is not None:
-            if type(self.bin_interval).__name__ != "list":
+            if isinstance(self.bin_interval, list):
                 raise ValueError(f"{model_param_descr} bin_interval should be list type")
 
         LOGGER.debug("Finish data_split parameter check!")

@@ -16,10 +16,7 @@
 from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.model_base import ModelBase
-from federatedml.param.intersect_param import DataSplitParam
-from federatedml.statistic.intersect import RawIntersectionHost, RawIntersectionGuest, RsaIntersectionHost, \
-    RsaIntersectionGuest
-from federatedml.statistic.intersect.repeat_id_process import RepeatedIDIntersect
+from federatedml.param.data_split_param import DataSplitParam
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
@@ -52,10 +49,10 @@ class DataSplitBase(ModelBase):
         return
 
 
-class DataSplitHost(DataSplitBase):
+class HeteroDataSplit(DataSplitBase):
     def __init__(self):
         super().__init__()
 
-class IntersectGuest(DataSplitBase):
+class HomoSplitGuest(DataSplitBase):
     def __init__(self):
         super().__init__()
