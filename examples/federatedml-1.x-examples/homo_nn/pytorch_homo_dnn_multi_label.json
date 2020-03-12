@@ -1,0 +1,117 @@
+{
+  "initiator": {
+    "role": "guest",
+    "party_id": 10000
+  },
+  "job_parameters": {
+    "work_mode": 0
+  },
+  "role": {
+    "guest": [
+      10000
+    ],
+    "host": [
+      10000, 9999
+    ],
+    "arbiter": [
+      10000
+    ]
+  },
+  "role_parameters": {
+    "guest": {
+      "args": {
+        "data": {
+          "train_data": [
+            {
+              "name": "homo_guest",
+              "namespace": "vehicle_scale"
+            }
+          ]
+        }
+      },
+      "dataio_0": {
+        "with_label": [
+          true
+        ],
+        "label_name": [
+          "y"
+        ],
+        "label_type": [
+          "int"
+        ],
+        "output_format": [
+          "dense"
+        ]
+      }
+    },
+    "host": {
+      "args": {
+        "data": {
+          "train_data": [
+            {
+              "name": "homo_host",
+              "namespace": "vehicle_scale"
+            },
+            {
+              "name": "homo_host",
+              "namespace": "vehicle_scale"
+            }
+          ]
+        }
+      },
+      "dataio_0": {
+        "with_label": [
+          true, true
+        ],
+        "label_name": [
+          "y", "y"
+        ],
+        "label_type": [
+          "int", "int"
+        ],
+        "output_format": [
+          "dense", "dense"
+        ]
+      }
+    }
+  },
+  "algorithm_parameters": {
+    "homo_nn_0": {
+      "config_type": "pytorch",
+      "nn_define": [
+        {
+          "layer": "Linear",
+          "name": "line1",
+          "type": "normal",
+          "config": [18,6]
+        },
+        {
+          "layer": "Relu",
+          "type": "activate",
+          "name": "relu1"
+        },
+        {
+          "layer": "Linear",
+          "name": "line2",
+          "type": "normal",
+          "config": [6,4]
+        }
+
+      ],
+      "batch_size": -1,
+      "optimizer": {
+        "optimizer": "Adam",
+        "learning_rate": 0.05
+      },
+      "early_stop": {
+        "early_stop": "diff",
+        "eps": 1e-4
+      },
+      "loss": "MSELoss",
+      "metrics": [
+        "accuracy"
+      ],
+      "max_iter": 2
+    }
+  }
+}
