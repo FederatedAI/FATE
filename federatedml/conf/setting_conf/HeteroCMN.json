@@ -1,0 +1,16 @@
+{
+  "module_path": "federatedrec/collaborative_memory/hetero_cmn",
+  "default_runtime_conf": "collaborative_memory_param.json",
+  "param_class": "federatedrec/param/collaborative_memory_param.py/HeteroCMNParam",
+  "role": {
+    "guest": {
+      "program": "hetero_cmn_client.py/HeteroCMNGuest"
+    },
+    "host": {
+      "program": "hetero_cmn_client.py/HeteroCMNHost"
+    },
+    "arbiter": {
+      "program": "hetero_cmn_arbiter.py/HeteroCMNArbiter"
+    }
+  }
+}
