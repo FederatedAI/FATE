@@ -380,6 +380,38 @@ def start_clean_job(**kwargs):
         raise Exception('no found task')
 
 
+def start_clean_queue(**kwargs):
+    tasks = query_task(**kwargs)
+    if tasks:
+        for task in tasks:
+            task_info = get_task_info(task.f_job_id, task.f_role, task.f_party_id, task.f_component_name)
+            try:
+                # clean session
+                stat_logger.info('start {} {} {} {} session stop'.format(task.f_job_id, task.f_role,
+                                                                         task.f_party_id, task.f_component_name))
+                start_session_stop(task)
+            except:
+                pass
+            try:
+                # clean data table
+                stat_logger.info('start delete {} {} {} {} data table'.format(task.f_job_id, task.f_role,
+                                                                              task.f_party_id, task.f_component_name))
+                data_views = query_data_view(**task_info)
+                if data_views:
+                    delete_table(data_views)
+            except:
+                pass
+            try:
+                # clean metric data
+                stat_logger.info('start delete {} {} {} {} metric data'.format(task.f_job_id, task.f_role,
+                                                                               task.f_party_id, task.f_component_name))
+                delete_metric_data(task_info)
+            except:
+                pass
+    else:
+        raise Exception('no found task')
+
+
 def start_session_stop(task):
     job_conf_dict = get_job_conf(task.f_job_id)
     runtime_conf = job_conf_dict['job_runtime_conf_path']

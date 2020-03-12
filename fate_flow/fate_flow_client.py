@@ -30,7 +30,7 @@ from fate_flow.settings import SERVERS, ROLE, API_VERSION
 from fate_flow.utils import detect_utils
 
 server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
-JOB_OPERATE_FUNC = ["submit_job", "stop_job", "query_job", "data_view_query", "clean_job"]
+JOB_OPERATE_FUNC = ["submit_job", "stop_job", "query_job", "data_view_query", "clean_job", "clean_queue"]
 JOB_FUNC = ["job_config", "job_log"]
 TASK_OPERATE_FUNC = ["query_task"]
 TRACKING_FUNC = ["component_parameters", "component_metric_all", "component_metric_delete", "component_metrics",
@@ -76,7 +76,7 @@ def call_fun(func, config_data, dsl_path, config_path):
                     response = requests.post("/".join([server_url, "job", func.rstrip('_job')]), json=post_data)
             except:
                 pass
-        elif func == 'data_view_query':
+        elif func == 'data_view_query' or func == 'clean_queue':
             response = requests.post("/".join([server_url, "job", func.replace('_', '/')]), json=config_data)
         else:
             if func != 'query_job':

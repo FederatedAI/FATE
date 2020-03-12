@@ -148,3 +148,10 @@ def data_view_query():
 def clean_job():
     job_utils.start_clean_job(**request.json)
     return get_json_result(retcode=0, retmsg='success')
+
+
+@manager.route('/clean/queue', methods=['POST'])
+@job_utils.job_server_routing()
+def queue_clean():
+    TaskScheduler.clean_queue()
+    return get_json_result(retcode=0, retmsg='success')

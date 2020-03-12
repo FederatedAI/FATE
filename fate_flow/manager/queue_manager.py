@@ -43,6 +43,9 @@ class BaseQueue:
     def qsize(self):
         pass
 
+    def clean(self):
+        pass
+
 
 class RedisQueue(BaseQueue):
     def __init__(self, queue_name, host, port, password, max_connections):
@@ -156,9 +159,15 @@ class MysqlQueue(BaseQueue):
     def put(self, item, block=True, timeout=None):
         with self.not_full:
             with DB.connection_context():
+                error = None
                 MysqlQueue.lock(DB, 'queue', 10)
-                self.update_event(item=item)
+                try:
+                    self.update_event(item=item)
+                except Exception as e:
+                    error =e
                 MysqlQueue.unlock(DB, 'queue')
+                if error:
+                    raise Exception(e)
             self.not_empty.notify()
 
     def get_event(self):
@@ -189,23 +198,26 @@ class MysqlQueue(BaseQueue):
                         raise Exception
                     self.not_empty.wait(remaining)
             with DB.connection_context():
+                error = None
                 MysqlQueue.lock(DB, 'queue', 10)
-                item = self.query_events()[0]
-                if item:
-                    self.update_event(item.f_job_id)
+                try:
+                    item = self.query_events()[0]
+                    if item:
+                        self.update_event(item.f_job_id)
+                except Exception as e:
+                    error = e
                 MysqlQueue.unlock(DB, 'queue')
+                if error:
+                    raise Exception(e)
                 self.not_full.notify()
-                if not item:
-                    raise Exception('There are no jobs in the current queue')
                 return json.loads(item.f_event)
 
     def del_event(self, event):
-        try:
-            ret = self.dell(event)
-            stat_logger.info('delete event from  queue {}: {}'.format('successfully' if ret else 'failed', event))
-        except Exception as e:
-            stat_logger.info('delete event from  queue failed:{}'.format(str(e)))
-            raise Exception('{} not in MysqlQueue'.format(event))
+        ret = self.dell(event)
+        if not ret:
+            raise Exception('delete event failed, {} not in MysqlQueue'.format(event))
+        else:
+            stat_logger.info('delete event from  queue success: {}'.format(event))
 
     def query_events(self):
         with DB.connection_context():
@@ -227,14 +239,38 @@ class MysqlQueue(BaseQueue):
         with self.not_empty:
             with DB.connection_context():
                 MysqlQueue.lock(DB, 'queue', 10)
-                job_id = item.get('job_id')
-                event = Queue.select().where(Queue.f_job_id == job_id)[0]
-                if event.f_is_waiting == 0:
-                    raise Exception('{} not in mysql queue'.format(event))
-                event.f_is_waiting = 0
-                event.save()
+                del_status = True
+                try:
+                    job_id = item.get('job_id')
+                    event = Queue.select().where(Queue.f_job_id == job_id)[0]
+                    if event.f_is_waiting == 0:
+                        del_status = False
+                    event.f_is_waiting = 2
+                    event.save()
+                except Exception as e:
+                    stat_logger.exception(e)
+                    del_status = False
                 MysqlQueue.unlock(DB, 'queue')
             self.not_full.notify()
+        return del_status
+
+    # def clean(self):
+    #     with self.not_empty:
+    #         with DB.connection_context():
+    #             events = self.query_events()
+    #             if events:
+    #                 MysqlQueue.lock(DB, 'queue', 10)
+    #                 try:
+    #                     for event in events:
+    #                         event.f_is_waiting = 2
+    #                         event.save()
+    #                 except Exception as e:
+    #                     error = e
+    #                 MysqlQueue.unlock(DB, 'queue')
+    #                 if error:
+    #                     raise error
+    #             else:
+    #                 return False
 
 
 class InProcessQueue(BaseQueue):
