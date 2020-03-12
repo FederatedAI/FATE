@@ -282,6 +282,7 @@ class HeteroStepwise(object):
                  "score_name": self.score_name}
         metas["number_in"] = int(sum(host_mask) + sum(guest_mask))
         metas["direction"] = self.direction
+        metas["n_count"] = int(self.n_count)
 
         model_info = self.models_trained[step_best]
         loss = model_info.get_loss()
