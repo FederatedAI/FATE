@@ -41,6 +41,10 @@ class DataSplitBase(ModelBase):
         self.bin_interval = params.bin_interval
         return
 
+    def split(self, data, labels):
+        return
+
+
     def fit(self, data):
         return
 
