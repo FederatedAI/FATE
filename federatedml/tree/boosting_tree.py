@@ -61,10 +61,13 @@ class BoostingTree(ModelBase):
         self.feature_name_fid_mapping = {}
         self.role = ''
         self.mode = consts.HETERO
+        self.early_stopping_rounds = None
+        self.cur_best_model = None
+        self.validation_strategy = None
 
         self.model_param = BoostingTreeParam()
 
-    def _init_model(self, boostingtree_param):
+    def _init_model(self, boostingtree_param: BoostingTreeParam):
         self.tree_param = boostingtree_param.tree_param
         self.task_type = boostingtree_param.task_type
         self.objective_param = boostingtree_param.objective_param
@@ -82,6 +85,7 @@ class BoostingTree(ModelBase):
         self.predict_param = boostingtree_param.predict_param
         self.cv_param = boostingtree_param.cv_param
         self.validation_freqs = boostingtree_param.validation_freqs
+        self.early_stopping_rounds = boostingtree_param.early_stopping_rounds
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
@@ -140,7 +144,7 @@ class BoostingTree(ModelBase):
         pass
 
     def init_validation_strategy(self, train_data=None, validate_data=None):
-        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs)
+        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs, self.early_stopping_rounds)
         validation_strategy.set_train_data(train_data)
         validation_strategy.set_validate_data(validate_data)
         return validation_strategy

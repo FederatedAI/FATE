@@ -13,14 +13,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
+import argparse
 import importlib
 import inspect
 import json
 import os
-import pathlib
 import re
 
+from arch.api.utils import file_utils
 from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables, Variable
 
 
@@ -58,15 +58,33 @@ def search_transfer_variable(transfer_variable):
     return d
 
 
+DEFAULT_SRC = os.path.join(file_utils.get_project_base_directory(), "federatedml")
+DEFAULT_DST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "auth_conf", "federatedml")
+
+
 # noinspection PyProtectedMember
 def main():
+    parser = argparse.ArgumentParser(description="generate conf from transfer variable class")
+    parser.add_argument("-s", "--src", type=str, default=DEFAULT_SRC,
+                        help=f"dir to search transfer classes, defaults to {DEFAULT_SRC}")
+    parser.add_argument("-d", "--dst", type=str, default=DEFAULT_DST,
+                        help=f"dir to save generated json files, defaults to {DEFAULT_DST}")
+
+    arg = parser.parse_args()
+    dst = arg.dst
+    if not os.path.exists(dst):
+        os.mkdir(dst)
+    if not os.path.isdir(dst):
+        raise ValueError(f"{dst} should be a directory")
+    src = arg.src
+    if not os.path.exists(src):
+        raise ValueError(f"{src} not exists")
+
     BaseTransferVariables._disable__singleton()
-    base = pathlib.Path(__file__).parent.parent
-    json_save_path = "./definition"
-    if not os.path.exists(json_save_path):
-        os.mkdir(json_save_path)
-    for path, _, files in os.walk(pathlib.Path(__file__).parent.parent):
-        path = os.path.relpath(path, base.parent)
+    base = file_utils.get_project_base_directory()
+
+    for path, _, files in os.walk(src):
+        path = os.path.relpath(path, base)
         for file_name in files:
             if file_name.endswith(".py"):
                 name = f"{path.replace('/', '.')}.{file_name[:-3]}"
@@ -76,7 +94,10 @@ def main():
                     variable_dict = {}
                     for k, v in search_transfer_variable(cls()).items():
                         variable_dict[k] = {"src": v._src, "dst": v._dst}
-                    with open(f"{json_save_path}/{file_name}.json", "w") as g:
+                    saving_path = os.path.join(dst, f"{file_name}.json")
+
+                    print(f"found transfer_class: {class_name} in {name}, saving to {saving_path}")
+                    with open(saving_path, "w") as g:
                         json.dump({class_name: variable_dict}, g, indent=2)
 
 

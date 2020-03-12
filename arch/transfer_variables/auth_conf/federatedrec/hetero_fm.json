@@ -95,9 +95,9 @@
       ]
     },
     "agg_vx_mul_fg": {
-      "src": "host",
+      "src": "guest",
       "dst": [
-        "guest"
+        "host"
       ]
     },
     "aggregated_forwards": {

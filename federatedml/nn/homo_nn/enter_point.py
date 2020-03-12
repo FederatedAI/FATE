@@ -155,12 +155,20 @@ class HomoNNClient(HomoNNBase):
                                            loss=self.loss,
                                            metrics=self.metrics)
 
+    def __build_pytorch_model(self, nn_define):
+        self.nn_model = self.model_builder(nn_define=nn_define,
+                                           optimizer=self.optimizer,
+                                           loss=self.loss)
+
     def fit(self, data_inst, *args):
 
         data = self.data_converter.convert(data_inst, batch_size=self.batch_size)
-        self.__build_nn_model(data.get_shape()[0])
+        if self.config_type == "pytorch":
+            self.__build_pytorch_model(self.nn_define)
+        else:
+            self.__build_nn_model(data.get_shape()[0])
 
-        epoch_degree = float(len(data))
+        epoch_degree = float(len(data)) * self.aggregate_every_n_epoch
 
         while self.aggregate_iteration_num < self.max_aggregate_iteration_num:
             Logger.info(f"start {self.aggregate_iteration_num}_th aggregation")
@@ -202,13 +210,13 @@ class HomoNNClient(HomoNNBase):
         return param_pb
 
     def predict(self, data_inst):
+
         data = self.data_converter.convert(data_inst, batch_size=self.batch_size)
         predict = self.nn_model.predict(data)
-        num_output_units = predict.shape[1]
-
+        num_output_units = data.get_shape()[1]
         threshold = self.param.predict_param.threshold
 
-        if num_output_units == 1:
+        if num_output_units[0] == 1:
             kv = [(x[0], (0 if x[1][0] <= threshold else 1, x[1][0].item())) for x in zip(data.get_keys(), predict)]
             pred_tbl = session.parallelize(kv, include_key=True)
             return data_inst.join(pred_tbl, lambda d, pred: [d.label, pred[0], pred[1], {"label": pred[0]}])
@@ -217,7 +225,7 @@ class HomoNNClient(HomoNNBase):
             pred_tbl = session.parallelize(kv, include_key=True)
             return data_inst.join(pred_tbl,
                                   lambda d, pred: [d.label, pred[0].item(),
-                                                   pred[1][pred[0]] / sum(pred[1]),
+                                                   pred[1][pred[0]] / (sum(pred[1])),
                                                    {"raw_predict": pred[1]}])
 
     def load_model(self, model_dict):
