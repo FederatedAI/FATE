@@ -38,7 +38,7 @@ class Server(object):
         total_loss = 0.0
         total_weight = 0.0
         for loss, weight in losses:
-            total_loss += loss
+            total_loss += loss * weight
             total_weight += weight
         return total_loss / total_weight
 
