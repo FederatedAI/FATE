@@ -100,8 +100,8 @@
       "learning_rate": 0.15,
       "decay": 0.0,
       "decay_sqrt": false,
-      "early_stopping_rounds": 5,
-      "validation_freqs": 5,
+      "early_stopping_rounds": 3,
+      "validation_freqs": 2,
       "init_param": {
         "init_method": "zeros"
       },
