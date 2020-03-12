@@ -41,7 +41,7 @@ class BoostingTree(ModelBase):
     def __init__(self):
         super(BoostingTree, self).__init__()
         self.tree_param = None
-        self.task_type=None
+        self.task_type = None
         self.objective_param = None
         self.learning_rate = None
         self.learning_rate = None
@@ -129,7 +129,7 @@ class BoostingTree(ModelBase):
     def gen_feature_fid_mapping(self, schema):
         header = schema.get("header")
         self.feature_name_fid_mapping = dict(zip(range(len(header)), header))
-        print ("self.feature_name_fid_mapping is {}".format(self.feature_name_fid_mapping))
+        print("self.feature_name_fid_mapping is {}".format(self.feature_name_fid_mapping))
         # for i in range(len(header)):
         #     self.feature_name_fid_mapping[header[i]] = i
     
