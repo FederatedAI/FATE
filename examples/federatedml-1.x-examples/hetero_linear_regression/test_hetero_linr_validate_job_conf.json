@@ -101,7 +101,7 @@
       "decay": 0.0,
       "decay_sqrt": false,
       "early_stopping_rounds": 3,
-      "validation_freqs": 2,
+      "validation_freqs": 3,
       "init_param": {
         "init_method": "zeros"
       },
