@@ -37,7 +37,7 @@ TEST_LARGE_DATA = False
 class TestQuantileBinning(unittest.TestCase):
     def setUp(self):
         self.job_id = str(uuid.uuid1())
-        session.init(self.job_id, 1)
+        session.init(self.job_id)
 
     def test_binning_correctness(self):
         bin_obj = self._bin_obj_generator()

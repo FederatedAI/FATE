@@ -16,25 +16,15 @@
 
 import functools
 
-from arch.api import federation
 from arch.api.utils import log_utils
 # from federatedml.feature.binning.base_binning import IVAttributes
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
-from federatedml.framework.hetero.procedure import two_parties_paillier_cipher
-
-from federatedml.secureprotol import PaillierEncrypt
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
 
 class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
-    # def __init__(self):
-    #     super(HeteroFeatureBinningHost, self).__init__()
-    #
-    #     # self.party_name = consts.HOST
-    #     # self._init_binning_obj()
-
     def fit(self, data_instances):
         """
         Apply binning method for both data instances in local party as well as the other one. Afterwards, calculate
@@ -45,6 +35,19 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         # self._parse_cols(data_instances)
         self._setup_bin_inner_param(data_instances, self.model_param)
 
+        self._sync_init_bucket(data_instances)
+
+        if self.model_param.method == consts.OPTIMAL:
+            self.optimal_binning_sync()
+
+        LOGGER.info("Sent encrypted_bin_sum to guest")
+        if self.transform_type != 'woe':
+            data_instances = self.transform(data_instances)
+        self.set_schema(data_instances)
+        self.data_output = data_instances
+        return data_instances
+
+    def _sync_init_bucket(self, data_instances, need_shuffle=False):
         # Calculates split points of datas in self party
         split_points = self.binning_obj.fit_split_points(data_instances)
 
@@ -59,18 +62,13 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
 
         encrypted_bin_sum = self.__static_encrypted_bin_label(data_bin_table, encrypted_label_table,
                                                               self.bin_inner_param.bin_cols_map, split_points)
-        encrypted_bin_sum = self.bin_inner_param.encode_col_name_dict(encrypted_bin_sum)
+        if need_shuffle:
+            encrypted_bin_sum = self.binning_obj.shuffle_static_counts(encrypted_bin_sum)
 
+        encrypted_bin_sum = self.bin_inner_param.encode_col_name_dict(encrypted_bin_sum)
         self.transfer_variable.encrypted_bin_sum.remote(encrypted_bin_sum,
                                                         role=consts.GUEST,
                                                         idx=0)
-
-        LOGGER.info("Sent encrypted_bin_sum to guest")
-        if self.transform_type != 'woe':
-            data_instances = self.transform(data_instances)
-        self.set_schema(data_instances)
-        self.data_output = data_instances
-        return data_instances
 
     def __static_encrypted_bin_label(self, data_bin_table, encrypted_label, cols_dict, split_points):
         data_bin_with_label = data_bin_table.join(encrypted_label, lambda x, y: (x, y))
@@ -80,3 +78,12 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         result_sum = data_bin_with_label.mapPartitions(f)
         encrypted_bin_sum = result_sum.reduce(self.binning_obj.aggregate_partition_label)
         return encrypted_bin_sum
+
+    def optimal_binning_sync(self):
+        bucket_idx = self.transfer_variable.bucket_idx.get(idx=0)
+        original_split_points = self.binning_obj.bin_results.all_split_points
+        for encoded_col_name, b_idx in bucket_idx.items():
+            col_name = self.bin_inner_param.decode_col_name(encoded_col_name)
+            ori_sp_list = original_split_points.get(col_name)
+            optimal_result = [ori_sp_list[i] for i in b_idx]
+            self.binning_obj.bin_results.put_col_split_points(col_name, optimal_result)

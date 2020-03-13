@@ -16,12 +16,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from federatedml.feature.binning.base_binning import Binning
+from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.statistic.statics import MultivariateStatisticalSummary
 from federatedml.statistic import data_overview
 
 
-class BucketBinning(Binning):
+class BucketBinning(BaseBinning):
     """
     For bucket binning, the length of each bin is the same which is:
     L = [max(x) - min(x)] / n
