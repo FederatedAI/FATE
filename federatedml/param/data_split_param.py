@@ -73,11 +73,17 @@ class DataSplitParam(BaseParam):
                 raise ValueError(f"{model_param_descr} random state should be int type")
 
         if self.test_size is not None:
-            self.check_positive_number(self.test_size, model_param_descr)
+            self.check_nonnegative_number(self.test_size, model_param_descr)
+            if isinstance(self.test_size, float):
+                self.check_decimal_float(self.test_size, model_param_descr)
         if self.train_size is not None:
-            self.check_positive_number(self.train_size, model_param_descr)
-        if self.train_size is not None:
-            self.check_positive_number(self.validate_size, model_param_descr)
+            self.check_nonnegative_number(self.train_size, model_param_descr)
+            if isinstance(self.train_size, float):
+                self.check_decimal_float(self.train_size, model_param_descr)
+        if self.validate_size is not None:
+            self.check_nonnegative_number(self.validate_size, model_param_descr)
+            if isinstance(self.validate_size, float):
+                self.check_decimal_float(self.validate_size, model_param_descr)
 
         self.check_boolean(self.stratified, model_param_descr)
         self.check_boolean(self.shuffle, model_param_descr)
