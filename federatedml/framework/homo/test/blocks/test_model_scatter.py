@@ -24,14 +24,14 @@ from federatedml.util import consts
 def model_scatter_call(job_id, role, ind, *args):
     models = args[0]
     if role == consts.ARBITER:
-        models = model_scatter.Server().set_flowid(job_id).get_models()
+        models = model_scatter.Server().get_models()
         return list(models)
     elif role == consts.HOST:
         model = models[ind + 1]
-        return model_scatter.Client().set_flowid(job_id).send_model(model)
+        return model_scatter.Client().send_model(model)
     else:
         model = models[0]
-        return model_scatter.Client().set_flowid(job_id).send_model(model)
+        return model_scatter.Client().send_model(model)
 
 
 class ModelScatterTest(TestBlocks):
