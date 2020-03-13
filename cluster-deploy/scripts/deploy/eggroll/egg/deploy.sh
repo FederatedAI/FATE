@@ -146,6 +146,10 @@ install(){
     cp -r ${deploy_packages_dir}/source/${module_name}/egg-manager/* ${deploy_dir}/${module_name}/
     cp -r ${deploy_packages_dir}/config/${module_name}/conf/* ${deploy_dir}/${module_name}/
     cd ${deploy_dir}/${module_name}
+    
+    cpu_processor_count=$(cat /proc/cpuinfo |grep "processor"|wc -l)
+    sed -i.bak "s#count=.*#count=${processor_count}#g" ./conf/egg.properties
+
     ln -s eggroll-${module_name}-${egg_version}.jar eggroll-${module_name}.jar
     mv ./services.sh ${deploy_dir}/
 
