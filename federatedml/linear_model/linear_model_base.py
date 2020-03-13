@@ -99,6 +99,12 @@ class BaseLinearModel(ModelBase):
         }
         return result
 
+    def disable_callback_loss(self):
+        self.need_call_back_loss = False
+
+    def enable_callback_loss(self):
+        self.need_call_back_loss = True
+
     def callback_loss(self, iter_num, loss):
         metric_meta = MetricMeta(name='train',
                                  metric_type="LOSS",
