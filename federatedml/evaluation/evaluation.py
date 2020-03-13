@@ -19,8 +19,6 @@ import math
 import numpy as np
 import logging
 
-from scipy import stats
-
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import explained_variance_score
@@ -261,8 +259,7 @@ class Evaluation(ModelBase):
                     metric_name = '_'.join([data_type, metric])
 
                     if metric in self.save_single_value_metric_list:
-                        self.__save_single_value(metric_res[1], metric_name=data_type,
-                                                 metric_namespace=metric_namespace,
+                        self.__save_single_value(metric_res[1], metric_name=data_type, metric_namespace=metric_namespace,
                                                  eval_name=metric)
                     elif metric == consts.KS:
                         best_ks, fpr, tpr, thresholds, cuts = metric_res[1]
@@ -319,8 +316,7 @@ class Evaluation(ModelBase):
 
                         if precision_res[0] != recall_res[0]:
                             LOGGER.warning(
-                                "precision mode:{} is not equal to recall mode:{}".format(precision_res[0],
-                                                                                          recall_res[0]))
+                                "precision mode:{} is not equal to recall mode:{}".format(precision_res[0], recall_res[0]))
                             continue
 
                         metric_namespace = precision_res[0]
