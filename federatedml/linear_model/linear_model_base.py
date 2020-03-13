@@ -54,6 +54,7 @@ class BaseLinearModel(ModelBase):
         self.need_one_vs_rest = False
         self.in_one_vs_rest = False
         self.init_param_obj = None
+        self.need_call_back_loss = True
 
     def _init_model(self, params):
         self.model_param = params
