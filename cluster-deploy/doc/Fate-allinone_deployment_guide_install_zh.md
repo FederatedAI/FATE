@@ -224,6 +224,11 @@ cxx_compile_flag=false
 ```
 cd FATE/cluster-deploy/scripts
 ```
+修改sshd端口为实际机器的端口
+
+ssh_port=$(sudo lsof -i | grep sshd | grep -i "listen" | awk '{print $9}' | awk -F ":" '{print $2}')
+
+sed -i.bak "s/deploy_ssh_port=.*/deploy_ssh_port=${ssh_port}/g" ./default_configurations.sh
 
 如果需要部署所有组件，执行：
 
