@@ -33,9 +33,17 @@ get_module_package() {
     module_name=$2
     module_binary_package=$3
     echo "[INFO] Get ${module_name} package"
+    copy_path=${source_code_dir}/cluster-deploy/packages/${module_binary_package}
     download_uri=${fate_cos_address}/${module_binary_package}
-    echo "[INFO] Downloading ${download_uri}"
-    wget -P ${source_code_dir}/cluster-deploy/packages/ ${download_uri}
-    echo "[INFO] Finish downloading ${download_uri}"
+    if [[ -f ${copy_path} ]];then
+        echo "[INFO] Copying ${copy_path}"
+        cp ${copy_path} ./
+    else
+        echo "[INFO] Downloading ${download_uri}"
+        wget -P ${source_code_dir}/cluster-deploy/packages/ ${download_uri}
+        echo "[INFO] Finish downloading ${download_uri}"
+        echo "[INFO] Copying ${copy_path}"
+        cp ${copy_path} ./
+    fi
     echo "[INFO] Finish get ${module_name} package"
 }
