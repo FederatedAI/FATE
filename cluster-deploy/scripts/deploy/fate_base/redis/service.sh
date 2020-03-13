@@ -20,14 +20,13 @@ basepath=$(cd `dirname $0`;pwd)
 user=`whoami`
 
 getpid() {
-    echo $(ps -aux | grep redis-server | grep ${basepath} | grep -v grep | awk '{print $2}') > redis_pid
+    pid=`ps -ef | grep redis-server | grep -v grep | awk '{print $2}'`
 }
 
 status() {
     getpid
-    pid=`cat redis_pid`
     if [[ -n ${pid} ]]; then
-        echo "status:`ps aux | grep ${pid} | grep redis-server | grep ${basepath} | grep -v grep`"
+        echo "status:`ps aux | grep ${pid} | grep -v grep`"
     else
         echo "service not running"
     fi
@@ -35,13 +34,11 @@ status() {
 
 start() {
     getpid
-    pid=`cat redis_pid`
     if [[ ${pid} == "" ]]; then
         nohup $basepath/bin/redis-server redis.conf &
         if [[ $? -eq 0 ]]; then
             sleep 2
             getpid
-            pid=`cat redis_pid`
             echo "service start sucessfully. pid: ${pid}"
         else
             echo "service start failed"
@@ -53,9 +50,8 @@ start() {
 
 stop() {
     getpid
-    pid=`cat redis_pid`
     if [[ -n ${pid} ]]; then
-        echo "killing:`ps aux | grep ${pid} | grep redis-server | grep ${basepath} | grep -v grep`"
+        echo "killing:`ps aux | grep ${pid} | grep -v grep`"
         kill -9 ${pid}
         if [[ $? -eq 0 ]]; then
             echo "killed"

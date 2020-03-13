@@ -41,7 +41,6 @@ main() {
 			main_class=com.webank.ai.eggroll.framework.MetaService
 			;;
 		storage-service-cxx)
-                        main_class=storage-service
 			target=storage-service
 			port=7778
 			dirdata=$installdir/data-dir
@@ -109,15 +108,26 @@ multiple() {
 }
 
 getpid() {
-     echo $(ps aux | grep ${module} | grep ${main_class} | grep ${installdir} | grep -v grep | grep -v $0 | awk '{print $2}') > ${module}/${module}_pid
+   	if [ ! -f "${module}/${module}_pid" ];then
+		echo "" > ${module}/${module}_pid
+	fi
+	module_pid=`cat ${module}/${module}_pid`
+        pid=""
+        if [[ -n ${module_pid} ]]; then
+           pid=`ps aux | grep ${module_pid} | grep -v grep | grep -v $0 | awk '{print $2}'`
+	fi
+    if [[ -n ${pid} ]]; then
+        return 0
+    else
+        return 1
+    fi
 }
 
 status() {
     getpid
-    pid=`cat ${module}/${module}_pid`
     if [[ -n ${pid} ]]; then
         echo "status:
-        `ps aux | grep ${pid} | grep ${module} | grep ${main_class} |grep ${installdir} | grep -v grep`"
+        `ps aux | grep ${pid} | grep -v grep`"
         return 0
     else
         echo "service not running"
@@ -127,37 +137,40 @@ status() {
 
 start() {
     getpid
-    pid=`cat ${module}/${module}_pid`
-    if [[ ${pid} == "" ]]; then
+    if [[ $? -eq 1 ]]; then
 		if [[ "$module" == "storage-service-cxx" ]]; then
-			${installdir}/$module/${target} -p $port -d ${dirdata} >/dev/null 2>/dev/null &
+			$module/${target} -p $port -d ${dirdata} >/dev/null 2>/dev/null &
 			echo $!>${module}/${module}_pid
-                else
+        else
 			java -cp "$installdir/${module}/conf/:$installdir/${module}/lib/*:$installdir/${module}/eggroll-${module}.jar" ${main_class} -c $installdir/${module}/conf/${module}.properties >/dev/null 2>/dev/null &
 			echo $!>${module}/${module}_pid
 		fi
 		sleep 2
 		getpid
-                pid=`cat ${module}/${module}_pid`
-		if [[ -n ${pid}  ]]; then
-                   echo "service start sucessfully. pid: ${pid}"
-                else
-                   echo "service start failed"
-                fi
+		if [[ $? -eq 0 ]]; then
+            echo "service start sucessfully. pid: ${pid}"
+        else
+            echo "service start failed"
+        fi
     else
-         echo "service already started. pid: ${pid}"
+        ps aux | grep ${pid} | grep ${module} | grep -v $0 | grep -v grep
+        if [[ $? -eq 1 ]]; then
+            echo "" > ${module}/${module}_pid
+        else
+           echo "service already started. pid: ${pid}"
+        fi
     fi
 }
 
 stop() {
     getpid
-    pid=`cat ${module}/${module}_pid`
     if [[ -n ${pid} ]]; then
         echo "killing:
-        `ps aux | grep ${pid} | grep ${installdir} | grep ${main_class} |grep ${module} | grep -v grep`"
+        `ps aux | grep ${pid} | grep -v grep`"
         kill -9 ${pid}
-        if [[ $? -eq 0 ]]; then
-            echo "" > ${module}/${module}_pid
+		getpid
+        echo "" > ${module}/${module}_pid
+        if [[ $? -eq 1 ]]; then
             echo "killed"
         else
             echo "kill error"
@@ -178,3 +191,5 @@ case "$1" in
         multiple $@
         ;;
 esac
+
+
