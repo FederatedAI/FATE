@@ -131,10 +131,7 @@ class PytorchNNModel(NNModel):
         metircs={}
         metircs["loss"]=0
         metircs["auccuray"]=0
-<<<<<<< HEAD
         loss_fn = build_loss_fn(self._loss)
-=======
->>>>>>> e85522637330fc9cd8a252192c14e817e5f48849
         self._model.eval()
         evaluate_data = DataLoader(data, batch_size=1, shuffle=False)
         result = np.zeros((len(data), data.y_shape[0]))
