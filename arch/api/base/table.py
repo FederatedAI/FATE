@@ -126,7 +126,6 @@ class Table(object):
     def mapPartitions(self, func):
         pass
 
-    @abc.abstractmethod
     def mapPartitions2(self, func):
         pass
 

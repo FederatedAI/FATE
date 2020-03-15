@@ -17,6 +17,7 @@ import datetime
 import importlib
 import inspect
 import os
+import pickle
 
 from arch.api import RuntimeInstance
 from arch.api import WorkMode
@@ -27,9 +28,12 @@ from fate_flow.settings import stat_logger
 
 
 def save_component_model(component_model_key, model_buffers, party_model_id, model_version, version_log=None):
+    """
     pipeline_model_table = session.table(name=model_version, namespace=party_model_id,
                                          partition=get_model_table_partition_count(),
                                          create_if_missing=True, error_if_exist=False)
+    """
+    pipeline_model_table = ModelTable(name=model_version, namespace=party_model_id)
     model_class_map = {}
     for buffer_name, buffer_object in model_buffers.items():
         storage_key = '{}:{}'.format(component_model_key, buffer_name)
@@ -40,15 +44,19 @@ def save_component_model(component_model_key, model_buffers, party_model_id, mod
             buffer_object_serialize_string = fill_message.SerializeToString()
         pipeline_model_table.put(storage_key, buffer_object_serialize_string, use_serialize=False)
         model_class_map[storage_key] = type(buffer_object).__name__
-    session.save_data_table_meta(model_class_map, data_table_namespace=party_model_id, data_table_name=model_version)
-    version_log = "[AUTO] save model at %s." % datetime.datetime.now() if not version_log else version_log
-    version_control.save_version(name=model_version, namespace=party_model_id, version_log=version_log)
+    # session.save_data_table_meta(model_class_map, data_table_namespace=party_model_id, data_table_name=model_version)
+    pipeline_model_table.save_meta(model_class_map)
+    # version_log = "[AUTO] save model at %s." % datetime.datetime.now() if not version_log else version_log
+    # version_control.save_version(name=model_version, namespace=party_model_id, version_log=version_log)
 
 
 def read_component_model(component_model_key, party_model_id, model_version):
+    """
     pipeline_model_table = session.table(name=model_version, namespace=party_model_id,
                                          partition=get_model_table_partition_count(),
                                          create_if_missing=False, error_if_exist=False)
+    """
+    pipeline_model_table = ModelTable(name=model_version, namespace=party_model_id)
     model_buffers = {}
     if pipeline_model_table:
         model_class_map = pipeline_model_table.get_metas()
@@ -66,6 +74,55 @@ def read_component_model(component_model_key, party_model_id, model_version):
                 parse_proto_object(proto_object=buffer_object, proto_object_serialized_bytes=buffer_object_bytes)
                 model_buffers[buffer_name] = buffer_object
     return model_buffers
+
+
+class ModelTable(object):
+    def __init__(self, name, namespace):
+        self.table_dir = os.path.join('./mlmodel/', namespace, name)
+        self.table_meta_dir = os.path.join('./mlmodel/', namespace, '{}.meta'.format(name))
+        if not os.path.exists(self.table_dir):
+            os.makedirs(self.table_dir)
+        if not os.path.exists(self.table_meta_dir):
+            os.makedirs(self.table_meta_dir)
+
+    def put(self, k, v, use_serialize=False):
+        with open(os.path.join(self.table_dir, k), 'wb') as fw:
+            pickle.dump(v, fw)
+
+    def get(self, k):
+        try:
+            with open(os.path.join(self.table_dir, k), 'rb') as fr:
+                return pickle.load(fr)
+        except Exception as e:
+            print(e)
+            return None
+
+    def collect(self, use_serialize=False):
+        try:
+            data = dict()
+            for k in os.listdir(self.table_dir):
+                with open(os.path.join(self.table_dir, k), 'rb') as fr:
+                    data[k] = pickle.load(fr)
+            return data
+        except Exception as e:
+            print(e)
+            return {}
+
+    def save_meta(self, meta: dict):
+        for k, v in meta.items():
+            with open(os.path.join(self.table_meta_dir, k), 'wb') as fw:
+                pickle.dump(v, fw)
+
+    def get_metas(self):
+        try:
+            meta = dict()
+            for k in os.listdir(self.table_meta_dir):
+                with open(os.path.join(self.table_meta_dir, k), 'rb') as fr:
+                    meta[k] = pickle.load(fr)
+            return meta
+        except Exception as e:
+            print(e)
+            return None
 
 
 def parse_proto_object(proto_object, proto_object_serialized_bytes):

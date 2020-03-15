@@ -43,7 +43,7 @@ def init(job_id=None,
         backend = Backend(backend)
     if job_id is None:
         job_id = str(uuid.uuid1())
-        if set_log_dir:
+        if True:
             LoggerFactory.set_directory()
     else:
         LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), 'logs', job_id))

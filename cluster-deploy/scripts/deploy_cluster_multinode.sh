@@ -21,7 +21,8 @@ source ./default_configurations.sh
 source ./multinode_cluster_configurations.sh
 
 deploy_modes=(binary build)
-support_modules=(jdk python mysql redis fate_flow federatedml fateboard proxy federation roll meta-service egg)
+#support_modules=(jdk python mysql redis fate_flow federatedml fateboard proxy federation roll meta-service egg)
+support_modules=(jdk python mysql redis fate_flow federatedml proxy)
 base_modules=(jdk python mysql redis)
 eggroll_modules=(roll meta-service egg)
 env_modules=(jdk python)
