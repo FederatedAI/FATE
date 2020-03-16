@@ -16,19 +16,18 @@
 from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.model_base import ModelBase
-from federatedml.param.data_inst_split_param import DataSplitParam
-from federatedml.util import consts
+from federatedml.param.data_split_param import DataSplitParam
 
 import numpy as np
-from sklearn.model_selection import ShuffleSplit
+from sklearn.model_selection import train_test_split
 
 LOGGER = log_utils.getLogger()
 
 
-class DataSplitBase(ModelBase):
+class DataSplitter(ModelBase):
     def __init__(self):
         super().__init__()
-        self.metric_name = "data_inst_split"
+        self.metric_name = "data_split"
         self.metric_namespace = "train"
         self.metric_type = "DATASPLIT"
         self.model_param = DataSplitParam()
@@ -44,21 +43,26 @@ class DataSplitBase(ModelBase):
         self.bin_interval = params.bin_interval
         return
 
-    def __split(self, ids):
-        """
-        Output generators for splitting data
-        """
-        spliter = ShuffleSplit(n_splits=1., test_size=self.test_size + self.validate_size,
-                               train_size=self.train_size, random_state=self.random_state)
-        return
+    def _split(self, ids, y):
+        id_train, id_test, y_train, y_test = train_test_split(ids, y, test_size=self.test_size + self.validate_size,
+                                                              train_size=self.train_size, random_state=self.random_state,
+                                                              shuffle=self.shuffle, stratify=self.stratified)
+        id_test, id_validate, y_test, y_validate = train_test_split(id_test, y_test, test_size=self.test_size + self.validate_size,
+                                                              train_size=self.train_size, random_state=self.random_state,
+                                                              shuffle=self.shuffle, stratify=self.stratified)
+        return id_train, id_test, id_validate
 
     def _get_ids(self, data_inst):
-        ids = np.array([i for i,v in data_inst.mapValues(lambda v: None).collect()])
+        ids = np.array([i for i, v in data_inst.mapValues(lambda v: None).collect()])
         return ids
+
+    def _get_y(self, data_inst):
+        y = np.array([v for i, v in data_inst.mapValues(lambda v: v.label).collect()])
+        return y
 
     def param_validater(self, data_inst):
         """
-        Validate data set size inputs & transform data set sizes
+        Validate & transform data set size inputs
 
         """
         n_count = data_inst.count()
@@ -92,20 +96,19 @@ class DataSplitBase(ModelBase):
         if self.train_size + self.test_size + self.validate_size != total_size:
             raise ValueError(f"train_size, test_size, validate_size should sum up to 1.0 or data count")
 
+    @staticmethod
+    def __match_id(data_iterator, ids):
+        # @TODO: implement method
+        for v in data_iterator:
+           pass
+
+        return
+
+    def split_data(self, data_inst, id_train, id_test, id_validate):
+        # @TODO: implement method
+        return
+
+
     def fit(self, data_inst):
-        self.param_validater(data_inst)
-        ids = self._get_ids(data_inst)
+        LOGGER.debug("fit method in data_split not yet implemented.")
         return
-
-
-    def save_data(self):
-        return
-
-
-class HeteroDataSplit(DataSplitBase):
-    def __init__(self):
-        super().__init__()
-
-class HomoSplitGuest(DataSplitBase):
-    def __init__(self):
-        super().__init__()

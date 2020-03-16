@@ -14,19 +14,32 @@
 #  limitations under the License.
 #
 from arch.api.utils import log_utils
-from fate_flow.entity.metric import Metric, MetricMeta
-from federatedml.model_base import ModelBase
-from federatedml.model_selection.data_split.data_split import HomoDataSplit
-from federatedml.param.data_split_param import DataSplitParam
-
-from federatedml.util import consts
+from federatedml.model_selection.data_split.data_split import DataSplitter
 
 LOGGER = log_utils.getLogger()
 
-class HomoDataSplitHost(HomoDataSplit):
+class HomoDataSplitHost(DataSplitter):
     def __init__(self):
-        super().__init__()
+        super(HomoDataSplitHost).__init__()
 
-class HomoDataSplitGuest(HomoDataSplit):
+    def fit(self, data_inst):
+        LOGGER.debug(f"Enter Hetero {self.role} Data Split fit")
+        self.param_validater(data_inst)
+        ids = self._get_ids(data_inst)
+        y = self._get_y(data_inst)
+        id_train, id_test, id_validate = self._split(ids, y)
+        train_data, test_data, validate_data = self.split_data(data_inst, id_train, id_test, id_validate)
+        return train_data, test_data, validate_data
+
+class HomoDataSplitGuest(DataSplitter):
     def __init__(self):
-        super().__init__()
+        super(HomoDataSplitGuest).__init__()
+
+    def fit(self, data_inst):
+        LOGGER.debug(f"Enter Hetero {self.role} Data Split fit")
+        self.param_validater(data_inst)
+        ids = self._get_ids(data_inst)
+        y = self._get_y(data_inst)
+        id_train, id_test, id_validate = self._split(ids, y)
+        train_data, test_data, validate_data = self.split_data(data_inst, id_train, id_test, id_validate)
+        return train_data, test_data, validate_data

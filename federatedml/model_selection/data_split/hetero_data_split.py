@@ -15,19 +15,22 @@
 #
 from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric, MetricMeta
-from federatedml.model_base import ModelBase
-from federatedml.model_selection.data_split.data_split import HeteroDataSplit
-from federatedml.param.data_split_param import DataSplitParam
-
+from federatedml.model_selection.data_split.data_split import DataSplitter
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
 
-class HeteroDataSplitHost(HeteroDataSplit):
+class HeteroDataSplitHost(DataSplitter):
     def __init__(self):
-        super().__init__()
+        super(HeteroDataSplitHost).__init__()
+        # @TODO: initialize transfer variable
 
-class HeteroDataSplitGuest(HeteroDataSplit):
+    def fit(self, data_inst):
+
+        # @TODO: implement fit
+        return
+
+class HeteroDataSplitGuest(DataSplitter):
     def __init__(self):
-        super().__init__()
+        super(HeteroDataSplitGuest).__init__()
