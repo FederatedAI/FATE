@@ -51,7 +51,8 @@ class FateSession(object):
               persistent,
               in_place_computing,
               create_if_missing,
-              error_if_exist) -> Table:
+              error_if_exist,
+              **kwargs) -> Table:
         pass
 
     @abc.abstractmethod
