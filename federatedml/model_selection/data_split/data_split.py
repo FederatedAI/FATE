@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 from arch.api.utils import log_utils
+from arch.api import session
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.data_split_param import DataSplitParam
@@ -23,6 +24,7 @@ from sklearn.model_selection import train_test_split
 
 LOGGER = log_utils.getLogger()
 
+session.init("data split")
 
 class DataSplitter(ModelBase):
     def __init__(self):
@@ -111,5 +113,5 @@ class DataSplitter(ModelBase):
 
 
     def fit(self, data_inst):
-        LOGGER.debug("fit method in data_split not yet implemented.")
+        LOGGER.debug("fit method in data_split should not be called here.")
         return
