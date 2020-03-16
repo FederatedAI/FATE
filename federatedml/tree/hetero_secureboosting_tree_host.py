@@ -98,6 +98,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         return stop_flag
 
     def fit(self, data_inst, validate_data=None):
+
         LOGGER.info("begin to train secureboosting guest model")
         self.gen_feature_fid_mapping(data_inst.schema)
         LOGGER.debug("schema is {}".format(data_inst.schema))
@@ -105,7 +106,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         self.convert_feature_to_bin(data_inst)
         self.sync_tree_dim()
 
-        validation_strategy = self.init_validation_strategy(data_inst, validate_data)
+        self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
 
         for i in range(self.num_trees):
             # n_tree = []
@@ -129,8 +130,12 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
 
             # self.trees_.append(n_tree)
 
-            if validation_strategy:
-                validation_strategy.validate(self, i)
+            if self.validation_strategy:
+                LOGGER.debug('host running validation')
+                self.validation_strategy.validate(self, i)
+                if self.validation_strategy.need_stop():
+                    LOGGER.debug('early stopping triggered')
+                    break
 
             if self.n_iter_no_change is True:
                 stop_flag = self.sync_stop_flag(i)
@@ -192,13 +197,13 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         if self.need_cv:
             return None
 
+        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
+            return self.validation_strategy.export_best_model()
+
         meta_name, meta_protobuf = self.get_model_meta()
         param_name, param_protobuf = self.get_model_param()
-        self.model_output = {meta_name: meta_protobuf,
-                             param_name: param_protobuf
-                             }
 
-        return self.model_output
+        return {meta_name: meta_protobuf, param_name: param_protobuf}
 
     def load_model(self, model_dict):
         LOGGER.info("load model")

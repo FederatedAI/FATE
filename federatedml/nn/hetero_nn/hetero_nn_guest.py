@@ -53,6 +53,7 @@ class HeteroNNGuest(HeteroNNBase):
         self.num_label = 2
 
         self.input_shape = None
+        self.validation_strategy = None
 
     def _init_model(self, hetero_nn_param):
         super(HeteroNNGuest, self)._init_model(hetero_nn_param)
@@ -72,7 +73,7 @@ class HeteroNNGuest(HeteroNNBase):
                                       extra_metas={"unit_name": "iters"}))
 
     def fit(self, data_inst, validate_data=None):
-        validation_strategy = self.init_validation_strategy(data_inst, validate_data)
+        self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
         self._build_model()
         self.prepare_batch_data(self.batch_generator, data_inst)
         if not self.input_shape:
@@ -106,8 +107,11 @@ class HeteroNNGuest(HeteroNNBase):
 
             self.history_loss.append(epoch_loss)
 
-            if validation_strategy:
-                validation_strategy.validate(self, cur_epoch)
+            if self.validation_strategy:
+                self.validation_strategy.validate(self, cur_epoch)
+                if self.validation_strategy.need_stop():
+                    LOGGER.debug('early stopping triggered')
+                    break
 
             is_converge = self.converge_func.is_converge(epoch_loss)
             self.transfer_variable.is_converge.remote(is_converge,
@@ -158,6 +162,9 @@ class HeteroNNGuest(HeteroNNBase):
     def export_model(self):
         if self.model is None:
             return
+
+        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
+            return self.validation_strategy.export_best_model()
 
         return {MODELMETA: self._get_model_meta(),
                 MODELPARAM: self._get_model_param()}

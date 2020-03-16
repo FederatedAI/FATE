@@ -306,7 +306,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                                       metric_type="LOSS",
                                       extra_metas={"unit_name": "iters"}))
 
-        validation_strategy = self.init_validation_strategy(data_inst, validate_data)
+        self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
 
         for i in range(self.num_trees):
             self.compute_grad_and_hess()
@@ -342,8 +342,11 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                                  "train",
                                  [Metric(i, loss)])
 
-            if validation_strategy:
-                validation_strategy.validate(self, i)
+            if self.validation_strategy:
+                self.validation_strategy.validate(self, i)
+                if self.validation_strategy.need_stop():
+                    LOGGER.debug('early stopping triggered')
+                    break
 
             if self.n_iter_no_change is True:
                 if self.check_convergence(loss):
@@ -504,16 +507,17 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
             return EvaluateParam(eval_type="regression")
 
     def export_model(self):
+
         if self.need_cv:
             return None
 
+        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
+            return self.validation_strategy.export_best_model()
+
         meta_name, meta_protobuf = self.get_model_meta()
         param_name, param_protobuf = self.get_model_param()
-        self.model_output = {meta_name: meta_protobuf,
-                             param_name: param_protobuf
-                             }
 
-        return self.model_output
+        return {meta_name: meta_protobuf, param_name: param_protobuf}
 
     def load_model(self, model_dict):
         model_param = None
@@ -524,6 +528,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                     model_meta = value[model]
                 if model.endswith("Param"):
                     model_param = value[model]
+
         LOGGER.info("load model")
 
         self.set_model_meta(model_meta)

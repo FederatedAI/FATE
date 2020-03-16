@@ -73,7 +73,7 @@ class HomoFMArbiter(HomoFMBase):
                     self.model_weights = \
                         FactorizationMachineWeights(w_, embed_, fit_intercept=fit_intercept)
 
-                total_loss = self.aggregator.aggregate_loss(-1, suffix)
+                total_loss = self.aggregator.aggregate_loss(suffix=suffix)
                 self.callback_loss(self.n_iter_, total_loss)
                 self.loss_history.append(total_loss)
                 if self.use_loss:

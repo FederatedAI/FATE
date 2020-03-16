@@ -13,30 +13,56 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-from federatedml.framework.homo.sync import paillier_keygen_sync
+import typing
 
 from arch.api.utils import log_utils
-from federatedml.framework.homo.sync import paillier_re_cipher_sync
+from federatedml.framework.homo.blocks import paillier_cipher
+from federatedml.framework.homo.blocks.paillier_cipher import PaillierCipherTransVar
+from federatedml.secureprotol import PaillierEncrypt
+from federatedml.secureprotol.fate_paillier import PaillierPublicKey
 
 LOGGER = log_utils.getLogger()
 
 
-class Host(paillier_keygen_sync.Host, paillier_re_cipher_sync.Host):
+class Host(object):
+
+    def __init__(self, trans_var=PaillierCipherTransVar()):
+        self._paillier = paillier_cipher.Client(trans_var=trans_var)
 
     def register_paillier_cipher(self, transfer_variables):
-        self._register_paillier_keygen(use_encrypt_transfer=transfer_variables.use_encrypt,
-                                       pubkey_transfer=transfer_variables.paillier_pubkey)
-        self._register_paillier_re_cipher(re_encrypt_times_transfer=transfer_variables.re_encrypt_times,
-                                          model_to_re_encrypt_transfer=transfer_variables.to_encrypt_model,
-                                          model_re_encrypted_transfer=transfer_variables.re_encrypted_model)
+        pass
+
+    def gen_paillier_pubkey(self, enable, suffix=tuple()) -> typing.Union[PaillierPublicKey, None]:
+        return self._paillier.gen_paillier_pubkey(enable=enable, suffix=suffix)
+
+    def set_re_cipher_time(self, re_encrypt_times, suffix=tuple()):
+        return self._paillier.set_re_cipher_time(re_encrypt_times=re_encrypt_times, suffix=suffix)
+
+    def re_cipher(self, w, iter_num, batch_iter_num, suffix=tuple()):
+        return self._paillier.re_cipher(w=w, iter_num=iter_num, batch_iter_num=batch_iter_num, suffix=suffix)
 
 
-class Arbiter(paillier_keygen_sync.Arbiter, paillier_re_cipher_sync.Arbiter):
+class Arbiter(object):
 
     def register_paillier_cipher(self, transfer_variables):
-        self._register_paillier_keygen(use_encrypt_transfer=transfer_variables.use_encrypt,
-                                       pubkey_transfer=transfer_variables.paillier_pubkey)
-        self._register_paillier_re_cipher(re_encrypt_times_transfer=transfer_variables.re_encrypt_times,
-                                          model_to_re_encrypt_transfer=transfer_variables.to_encrypt_model,
-                                          model_re_encrypted_transfer=transfer_variables.re_encrypted_model)
+        pass
+
+    def __init__(self, trans_var=PaillierCipherTransVar()):
+        self._paillier = paillier_cipher.Server(trans_var=trans_var)
+        self._client_parties = trans_var.client_parties
+        self._party_idx_map = {party: idx for idx, party in enumerate(self._client_parties)}
+
+    def paillier_keygen(self, key_length, suffix=tuple()) -> typing.Mapping[int, typing.Union[PaillierEncrypt, None]]:
+        ciphers = self._paillier.keygen(key_length, suffix)
+        return {self._party_idx_map[party]: cipher for party, cipher in ciphers.items()}
+
+    def set_re_cipher_time(self, ciphers: typing.Mapping[int, typing.Union[PaillierEncrypt, None]],
+                           suffix=tuple()):
+        _ciphers = {self._client_parties[idx]: cipher for idx, cipher in ciphers.items()}
+        recipher_times = self._paillier.set_re_cipher_time(_ciphers, suffix)
+        return {self._party_idx_map[party]: time for party, time in recipher_times.items()}
+
+    def re_cipher(self, iter_num, re_encrypt_times, host_ciphers_dict, re_encrypt_batches, suffix=tuple()):
+        _ciphers = {self._client_parties[idx]: cipher for idx, cipher in host_ciphers_dict.items()}
+        _re_encrypt_times = {self._client_parties[idx]: time for idx, time in re_encrypt_times.items()}
+        return self._paillier.re_cipher(iter_num, _re_encrypt_times, _ciphers, re_encrypt_batches, suffix)
