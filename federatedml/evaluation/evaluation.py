@@ -17,7 +17,6 @@ import sys
 from collections import defaultdict
 import math
 import numpy as np
-import scipy
 import logging
 
 from sklearn.metrics import accuracy_score
@@ -1089,40 +1088,6 @@ class MultiClassAccuracy(object):
 
     def compute(self, labels, pred_scores, normalize=True):
         return accuracy_score(labels, pred_scores, normalize)
-
-class tScore(object):
-    """
-    Compute t score of each coef
-    """
-
-    def compute(self, labels, pred_scores, data_instances, coefs):
-        tval = []
-        pval = []
-        mse = mean_squared_error(labels, pred_scores)
-        n = data_instances.count()
-        for j, coef in enumerate(coefs):
-            feature = data_instances.mapValues(lambda v: v.features[j])
-            feature = np.array(x[1] for x in list(feature.collect()))
-            x_std = np.std(feature)
-            se = mse / x_std
-            tt = coef / se
-            tval.append(tt)
-            p = stats.t.sf(np.abs(tt), n - 1) * 2
-            pval.append(p)
-        return tval, pval
-
-
-class FTest(object):
-    """
-    Compute F statistic and p value of two nested parametric models
-    """
-
-    def compute(self, RSS1, RSS2, k1, k2, n):
-        df1 = k2 - k1
-        df2 = n - k2
-        F = ((RSS1 - RSS2) / df1) / (RSS2 / df2)
-        pvalue = scipy.stats.f.sf(F, df1, df2)
-        return F, pvalue
 
 
 class IC(object):
