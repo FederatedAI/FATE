@@ -28,6 +28,7 @@ import numpy as np
 from sklearn import metrics
 from sklearn.linear_model import LogisticRegression, LinearRegression
 from google.protobuf.json_format import MessageToDict
+import uuid
 
 LOGGER = log_utils.getLogger()
 session.init("stepwise")
@@ -90,7 +91,9 @@ class HeteroStepwise(object):
             raise ValueError("Wrong stepwise direction given.")
 
     def make_table(self):
-        self.models = session.table("stepwise", self.role)
+        id = str(uuid.uuid1())
+        self.models = session.table(f"stepwise{id}", self.role)
+        LOGGER.debug(f"table name stepwise{id}")
 
     def _put_value(self, key, value):
         """
