@@ -142,6 +142,9 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
                 if stop_flag:
                     break
 
+        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
+            self.load_model(self.validation_strategy.cur_best_model)
+
         LOGGER.info("end to train secureboosting guest model")
 
     def predict(self, data_inst, predict_param=None):
@@ -196,9 +199,6 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
     def export_model(self):
         if self.need_cv:
             return None
-
-        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-            return self.validation_strategy.export_best_model()
 
         meta_name, meta_protobuf = self.get_model_meta()
         param_name, param_protobuf = self.get_model_param()
