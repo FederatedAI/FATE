@@ -226,7 +226,7 @@ class CMNModel:
                                                embed_size=embedding_dim)
         output_module = tf.keras.Sequential([
             Dense(units=embedding_dim
-                  , use_bias=True
+                  , use_bias=False
                   , activation=tf.nn.relu
                   , kernel_initializer=RandomNormal(stddev=0.1)
                   , kernel_regularizer=l2(l2_coef)
@@ -293,7 +293,8 @@ class CMNModel:
         LOGGER.info(f"_trainable_weights: {self._trainable_weights}")
         # LOGGER.info(f"MemoryEmbed: {self.session.run(self._trainable_weights['MemoryEmbed'])}")
 
-        self._aggregate_weights = {"MemoryOutput": self._trainable_weights["MemoryOutput"]}
+        self._aggregate_weights = {"MemoryOutput": self._trainable_weights["MemoryOutput"],
+                                   "MemoryEmbed": self._trainable_weights["MemoryEmbed"]}
 
     @classmethod
     def build_model(cls, user_num, item_num, embedding_dim, hops, max_len
