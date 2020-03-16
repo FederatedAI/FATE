@@ -87,8 +87,7 @@
         "direction": "both",
         "need_stepwise": true,
         "max_step": 3,
-        "nvmin": 2,
-        "nvmax": 2
+        "nvmin": 2
       }
     }
   }
