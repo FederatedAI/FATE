@@ -87,7 +87,7 @@ class LogisticParam(BaseParam):
                  max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
-                 multi_class='ovr', validation_freqs=None
+                 multi_class='ovr', validation_freqs=None, early_stopping_rounds=None
                  ):
         super(LogisticParam, self).__init__()
         self.penalty = penalty
@@ -106,6 +106,7 @@ class LogisticParam(BaseParam):
         self.decay_sqrt = decay_sqrt
         self.multi_class = multi_class
         self.validation_freqs = validation_freqs
+        self.early_stopping_rounds = early_stopping_rounds
 
     def check(self):
         descr = "logistic_param's"
@@ -185,6 +186,15 @@ class LogisticParam(BaseParam):
             raise ValueError(
                 "logistic_param's decay_sqrt {} not supported, should be 'bool'".format(
                     self.decay_sqrt))
+
+        if self.early_stopping_rounds is None:
+            pass
+        elif isinstance(self.early_stopping_rounds, int):
+            if self.early_stopping_rounds < 1:
+                raise ValueError("early stopping rounds should be larger than 0 when it's integer")
+            if self.validation_freqs is None:
+                raise ValueError("validation freqs must be set when early stopping is enabled")
+
         return True
 
 
@@ -257,7 +267,7 @@ class HeteroLogisticParam(LogisticParam):
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True, sqn_param=StochasticQuasiNewtonParam(),
-                 multi_class='ovr', validation_freqs=None
+                 multi_class='ovr', validation_freqs=None, early_stopping_rounds=None
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                   batch_size=batch_size,
@@ -266,7 +276,7 @@ class HeteroLogisticParam(LogisticParam):
                                                   predict_param=predict_param, cv_param=cv_param,
                                                   decay=decay,
                                                   decay_sqrt=decay_sqrt, multi_class=multi_class,
-                                                  validation_freqs=validation_freqs)
+                                                  validation_freqs=validation_freqs, early_stopping_rounds=early_stopping_rounds)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.sqn_param = copy.deepcopy(sqn_param)
 

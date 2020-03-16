@@ -51,19 +51,12 @@ class PerformanceRecorder():
 
         # all of them are single value metrics
         self.allowed_metric = [consts.AUC,
-                              consts.EXPLAINED_VARIANCE,
-                              consts.MEAN_ABSOLUTE_ERROR,
-                              consts.MEAN_SQUARED_ERROR,
-                              consts.MEAN_SQUARED_LOG_ERROR,
-                              consts.MEDIAN_ABSOLUTE_ERROR,
-                              consts.R2_SCORE,
-                              consts.ROOT_MEAN_SQUARED_ERROR,
-                              consts.PRECISION,
-                              consts.RECALL,
-                              consts.ACCURACY,
-                              consts.KS
-                            ]
-
+                               consts.ROOT_MEAN_SQUARED_ERROR,
+                               consts.PRECISION,
+                               consts.RECALL,
+                               consts.ACCURACY,
+                               consts.KS
+                              ]
 
         self.larger_is_better = [consts.AUC,
                                  consts.R2_SCORE,
@@ -351,10 +344,12 @@ class Evaluation(ModelBase):
         -------
         """
 
-        collect_dict = None
+        collect_dict = {}
         LOGGER.debug('callback metric called')
 
         for (data_type, eval_res_list) in self.eval_results.items():
+
+            LOGGER.debug('data type is {}'.format(data_type))
 
             if data_type in self.validate_key:
                 collect_dict = self.validate_metric
