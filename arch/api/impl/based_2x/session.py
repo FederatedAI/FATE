@@ -21,6 +21,7 @@ from typing import Iterable
 from arch.api import WorkMode
 from arch.api.base.session import FateSession
 from arch.api.impl.based_2x.table import DTable
+from eggroll.core.constants import SerdesTypes
 from eggroll.roll_pair.roll_pair import RollPairContext
 
 
@@ -71,6 +72,8 @@ class FateSessionImpl(FateSession):
               error_if_exist,
               **kwargs):
         options = kwargs.get("option", {})
+        if "use_serialize" in kwargs and not kwargs["use_serialize"]:
+            options["serdes"] = SerdesTypes.EMPTY
         options.update(dict(create_if_missing=create_if_missing, total_partitions=partition))
         dtable = self._eggroll.load(namespace=namespace, name=name, options=options)
         return DTable(dtable=dtable, session_id=self._session_id)
