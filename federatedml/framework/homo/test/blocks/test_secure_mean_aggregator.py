@@ -18,7 +18,7 @@ import copy
 import numpy as np
 import random
 
-from federatedml.framework.homo.blocks import secure_aggregator
+from federatedml.framework.homo.blocks import secure_mean_aggregator
 from federatedml.framework.homo.test.blocks.test_utils import TestBlocks
 from federatedml.framework.weights import OrderDictWeights
 from federatedml.util import consts
@@ -27,11 +27,11 @@ from federatedml.util import consts
 # noinspection PyUnusedLocal
 def secure_aggregator_call(job_id, role, ind, *args):
     if role == consts.ARBITER:
-        agg = secure_aggregator.Server().set_flowid(job_id)
-        model = agg.aggregate_model()
+        agg = secure_mean_aggregator.Server()
+        model = agg.weighted_mean_model()
         agg.send_aggregated_model(model)
     else:
-        agg = secure_aggregator.Client().set_flowid(job_id)
+        agg = secure_mean_aggregator.Client()
         # disorder dit
         order = list(range(5))
         np.random.seed(random.SystemRandom().randint(1, 100))
@@ -40,7 +40,7 @@ def secure_aggregator_call(job_id, role, ind, *args):
 
         w = OrderDictWeights(copy.deepcopy(raw))
         d = random.random()
-        agg.send_model(w, degree=d)
+        agg.send_weighted_model(w, weight=d)
         aggregated = agg.get_aggregated_model()
         return aggregated, raw, d
 

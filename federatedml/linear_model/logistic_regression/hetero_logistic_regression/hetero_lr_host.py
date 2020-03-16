@@ -94,7 +94,7 @@ class HeteroLRHost(HeteroLRBase):
     def fit_binary(self, data_instances, validate_data):
         self._abnormal_detection(data_instances)
 
-        validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
         LOGGER.debug(f"MODEL_STEP Start fin_binary, data count: {data_instances.count()}")
 
         self.header = self.get_header(data_instances)
@@ -144,8 +144,12 @@ class HeteroLRHost(HeteroLRBase):
 
             LOGGER.info("Get is_converged flag from arbiter:{}".format(self.is_converged))
 
-            validation_strategy.validate(self, self.n_iter_)
-
+            if self.validation_strategy:
+                LOGGER.debug('LR host running validation')
+                self.validation_strategy.validate(self, self.n_iter_)
+                if self.validation_strategy.need_stop():
+                    LOGGER.debug('early stopping triggered')
+                    break
             self.n_iter_ += 1
             LOGGER.info("iter: {}, is_converged: {}".format(self.n_iter_, self.is_converged))
             if self.is_converged:

@@ -22,16 +22,16 @@ from federatedml.util import consts
 # noinspection PyUnusedLocal
 def sync_random_padding(job_id, role, ind, *args):
     if role == consts.ARBITER:
-        rp_cipher = random_padding_cipher.Server().set_flowid(job_id)
+        rp_cipher = random_padding_cipher.Server()
         rp_cipher.exchange_secret_keys()
         return
 
     elif role == consts.HOST:
-        rp_cipher = random_padding_cipher.Client().set_flowid(job_id)
+        rp_cipher = random_padding_cipher.Client()
         rp_cipher.create_cipher()
         return rp_cipher
     else:
-        rp_cipher = random_padding_cipher.Client().set_flowid(job_id)
+        rp_cipher = random_padding_cipher.Client()
         rp_cipher.create_cipher()
         return rp_cipher
 

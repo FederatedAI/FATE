@@ -65,6 +65,8 @@ class BaseLinearModel(ModelBase):
         self.converge_func = converge_func_factory(params.early_stop, params.tol)
         self.encrypted_calculator = None
         self.validation_freqs = params.validation_freqs
+        self.validation_strategy = None
+        self.early_stopping_rounds = params.early_stopping_rounds
 
     def get_features_shape(self, data_instances):
         if self.feature_shape is not None:
@@ -90,6 +92,8 @@ class BaseLinearModel(ModelBase):
         raise NotImplementedError("This method should be be called here")
 
     def export_model(self):
+        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
+            return self.validation_strategy.export_best_model()
         meta_obj = self._get_meta()
         param_obj = self._get_param()
         result = {
@@ -118,7 +122,7 @@ class BaseLinearModel(ModelBase):
         abnormal_detection.empty_feature_detection(data_instances)
 
     def init_validation_strategy(self, train_data=None, validate_data=None):
-        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs)
+        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs, self.early_stopping_rounds)
         validation_strategy.set_train_data(train_data)
         validation_strategy.set_validate_data(validate_data)
         return validation_strategy

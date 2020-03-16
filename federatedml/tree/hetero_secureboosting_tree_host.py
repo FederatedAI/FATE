@@ -197,7 +197,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         if self.need_cv:
             return None
 
-        if self.validation_strategy.has_saved_best_model():
+        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
             return self.validation_strategy.export_best_model()
 
         meta_name, meta_protobuf = self.get_model_meta()

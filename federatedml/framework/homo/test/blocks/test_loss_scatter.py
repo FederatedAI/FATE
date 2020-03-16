@@ -14,32 +14,34 @@
 #  limitations under the License.
 #
 
-from federatedml.framework.homo.blocks import model_broadcaster
+import random
+
+from federatedml.framework.homo.blocks import loss_scatter
 from federatedml.framework.homo.test.blocks.test_utils import TestBlocks
 from federatedml.util import consts
 
 
-# noinspection PyUnusedLocal
-def model_broadcaster_call(job_id, role, ind, *args):
-    model_to_broadcast = args[0]
+def loss_scatter_call(job_id, role, ind, *args):
+    losses = args[0]
     if role == consts.ARBITER:
-        return model_broadcaster.Server().set_flowid(job_id).send_model(model_to_broadcast)
+        losses = loss_scatter.Server().get_losses()
+        return list(losses)
     elif role == consts.HOST:
-        return model_broadcaster.Client().set_flowid(job_id).get_model()
+        loss = losses[ind + 1]
+        return loss_scatter.Client().send_loss(loss)
     else:
-        return model_broadcaster.Client().set_flowid(job_id).get_model()
+        loss = losses[0]
+        return loss_scatter.Client().send_loss(loss)
 
 
-class ModelBroadcasterTest(TestBlocks):
+class LossScatterTest(TestBlocks):
 
     def run_with_num_hosts(self, num_hosts):
-        import random
-        model = [random.random() for _ in range(10)]
+        losses = [random.random() for _ in range(num_hosts + 1)]
+        arbiter, _, _ = self.run_test(loss_scatter_call, self.job_id, num_hosts, losses)
 
-        arbiter, guest, hosts = self.run_test(model_broadcaster_call, self.job_id, num_hosts, model)
-        self.assertListEqual(guest, model)
-        for i in range(num_hosts):
-            self.assertListEqual(hosts[i], model)
+        for loss, arbiter_got_loss in zip(losses, arbiter):
+            self.assertEqual(loss, arbiter_got_loss)
 
     def test_host_1(self):
         self.run_with_num_hosts(1)

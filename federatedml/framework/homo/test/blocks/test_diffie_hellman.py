@@ -22,11 +22,11 @@ from federatedml.util import consts
 # noinspection PyUnusedLocal
 def dh_call(job_id, role, ind, *args):
     if role == consts.ARBITER:
-        uuid_generator.Server().set_flowid(job_id).validate_uuid()
-        return diffie_hellman.Server().set_flowid(job_id).key_exchange()
+        uuid_generator.Server().validate_uuid()
+        return diffie_hellman.Server().key_exchange()
     else:
-        uid = uuid_generator.Client().set_flowid(job_id).generate_uuid()
-        return uid, diffie_hellman.Client().set_flowid(job_id).key_exchange(uid)
+        uid = uuid_generator.Client().generate_uuid()
+        return uid, diffie_hellman.Client().key_exchange(uid)
 
 
 class DHKeyExchangeTest(TestBlocks):
