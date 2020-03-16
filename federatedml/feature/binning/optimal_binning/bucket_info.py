@@ -20,10 +20,10 @@ import math
 
 
 class Bucket(object):
-    def __init__(self, idx=-1, adjustment_factor=0.5):
+    def __init__(self, idx=-1, adjustment_factor=0.5, right_bound=-math.inf):
         self.idx = idx
         self.left_bound = math.inf
-        self.right_bound = -math.inf
+        self.right_bound = right_bound
         self.left_neighbor_idx = idx - 1
         self.right_neighbor_idx = idx + 1
         self.event_count = 0

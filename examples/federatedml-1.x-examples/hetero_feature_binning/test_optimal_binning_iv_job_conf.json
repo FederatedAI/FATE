@@ -20,8 +20,8 @@
         "data": {
           "train_data": [
             {
-              "name": "hetero_breast_b",
-              "namespace": "hetero_breast_guest"
+              "name": "hetero_default_credit_guest",
+              "namespace": "hetero"
             }
           ]
         }
@@ -39,6 +39,12 @@
         "output_format": [
           "dense"
         ]
+      },
+      "hetero_feature_selection_0": {
+        "filter_methods": [["manually"]],
+        "manually_param": {
+          "filter_out_indexes": [[1,2,3,4,5,6,7,8,9,10,11,12]]
+        }
       }
     },
     "host": {
@@ -46,8 +52,8 @@
         "data": {
           "train_data": [
             {
-              "name": "hetero_breast_a",
-              "namespace": "hetero_breast_host"
+              "name": "hetero_default_credit_host",
+              "namespace": "hetero"
             }
           ]
         }
@@ -59,10 +65,17 @@
         "output_format": [
           "dense"
         ]
+      },
+      "hetero_feature_selection_0": {
+        "filter_methods": [["manually"]],
+        "manually_param": {
+          "filter_out_indexes": [[1,2,3,4,5,6,7,8,9]]
+        }
       }
     }
   },
   "algorithm_parameters": {
+
     "hetero_feature_binning_0": {
       "method": "optimal",
       "optimal_binning_param": {

@@ -73,8 +73,6 @@ class OptimalBinningParam(BaseParam):
     metric_method: str, default: "iv"
         The algorithm metric method. Support iv, gini, ks, chi-square
 
-    max_bin: int, default: 10
-        The maximum bucket number at last
 
     min_bin_pct: float, default: 0.05
         The minimum percentage of each bucket
@@ -89,11 +87,11 @@ class OptimalBinningParam(BaseParam):
         Whether each bucket need event and non-event records
 
     """
-    def __init__(self, metric_method='iv', max_bin=10, min_bin_pct=0.05, max_bin_pct=1.0,
+    def __init__(self, metric_method='iv', min_bin_pct=0.05, max_bin_pct=1.0,
                  init_bin_nums=100, mixture=True):
         super().__init__()
         self.metric_method = metric_method
-        self.max_bin = max_bin
+        self.max_bin = None
         self.mixture = mixture
         self.max_bin_pct = max_bin_pct
         self.min_bin_pct = min_bin_pct

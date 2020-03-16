@@ -18,6 +18,8 @@
 
 import math
 
+import numpy as np
+
 from arch.api.utils import log_utils
 from federatedml.feature.binning.optimal_binning.bucket_info import Bucket
 from federatedml.param.feature_binning_param import OptimalBinningParam
@@ -56,8 +58,13 @@ class IvHeapNode(HeapNode):
         where py_i is event_rate, pn_i is non_event_rate
         WOE = log(non_event_rate / event_rate)
         """
+
         self.event_count = self.left_bucket.event_count + self.right_bucket.event_count
         self.non_event_count = self.left_bucket.non_event_count + self.right_bucket.non_event_count
+        if self.total_count == 0:
+            self.score = -math.inf
+            return
+
         self.event_total = self.left_bucket.event_total
         self.non_event_total = self.left_bucket.non_event_total
 
@@ -77,9 +84,12 @@ class GiniHeapNode(HeapNode):
         """
         gini = 1 - ∑(p_i^2 ) = 1 -（event / total）^2 - (nonevent / total)^2
         """
+
         self.event_count = self.left_bucket.event_count + self.right_bucket.event_count
         self.non_event_count = self.left_bucket.non_event_count + self.right_bucket.non_event_count
-
+        if self.total_count == 0:
+            self.score = -math.inf
+            return
         merged_gini = 1 - (1.0 * self.event_count / self.total_count) ** 2 - \
                       (1.0 * self.non_event_count / self.total_count) ** 2
         self.score = merged_gini - self.left_bucket.gini - self.right_bucket.gini
@@ -91,18 +101,45 @@ class ChiSquareHeapNode(HeapNode):
         X^2 = ∑∑(A_ij - E_ij )^2 / E_ij
         where E_ij = (N_i / N) * C_j. N is total count of merged bucket, N_i is the total count of ith bucket
         and C_j is the count of jth label in merged bucket.
+        A_ij is number of jth label in ith bucket.
         """
+
         self.event_count = self.left_bucket.event_count + self.right_bucket.event_count
         self.non_event_count = self.left_bucket.non_event_count + self.right_bucket.non_event_count
-        e_left_1 = (self.left_bucket.total_count / self.total_count)
+        if self.left_bucket.total_count == 0 or self.right_bucket.total_count == 0:
+            self.score = -math.inf
+            return
+        c1 = self.left_bucket.event_count + self.right_bucket.event_count
+        c0 = self.left_bucket.non_event_count + self.right_bucket.non_event_count
+
+        if c1 == 0 or c0 == 0:
+            self.score = - math.inf
+            return
+
+        e_left_1 = (self.left_bucket.total_count / self.total_count) * c1
+        e_left_0 = (self.left_bucket.total_count / self.total_count) * c0
+        e_right_1 = (self.right_bucket.total_count / self.total_count) * c1
+        e_right_0 = (self.right_bucket.total_count / self.total_count) * c0
+
+        chi_square = np.square(self.left_bucket.event_count - e_left_1) / e_left_1 + \
+                     np.square(self.left_bucket.non_event_count - e_left_0) / e_left_0 + \
+                     np.square(self.right_bucket.event_count - e_right_1) / e_right_1 + \
+                     np.square(self.right_bucket.non_event_count - e_right_0) / e_right_0
+        LOGGER.debug("chi_sqaure: {}".format(chi_square))
+
+        self.score = chi_square
 
 
 def heap_node_factory(optimal_param: OptimalBinningParam, left_bucket=None, right_bucket=None):
     metric_method = optimal_param.metric_method
     if metric_method == 'iv':
         node = IvHeapNode(adjustment_factor=optimal_param.adjustment_factor)
-    else:
+    elif metric_method == 'gini':
         node = GiniHeapNode()
+    elif metric_method == 'chi_square':
+        node = ChiSquareHeapNode()
+    else:
+        raise ValueError("metric_method: {} cannot recognized".format(metric_method))
 
     if left_bucket is not None:
         node.left_bucket = left_bucket
@@ -110,7 +147,7 @@ def heap_node_factory(optimal_param: OptimalBinningParam, left_bucket=None, righ
     if right_bucket is not None:
         node.right_bucket = right_bucket
 
-    if left_bucket and right_bucket is not None:
+    if (left_bucket and right_bucket) is not None:
         node.cal_score()
     else:
         LOGGER.warning("In heap factory, left_bucket is {}, right bucket is {}, not all of them has been assign".format(

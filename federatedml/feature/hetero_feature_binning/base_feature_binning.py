@@ -66,6 +66,7 @@ class BaseHeteroFeatureBinning(ModelBase):
             self.binning_obj = BucketBinning(self.model_param)
         elif self.model_param.method == consts.OPTIMAL:
             if self.role == consts.HOST:
+                self.model_param.bin_num = self.model_param.optimal_binning_param.init_bin_nums
                 self.binning_obj = QuantileBinning(self.model_param)
             else:
                 self.binning_obj = OptimalBinning(self.model_param)
