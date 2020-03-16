@@ -68,8 +68,10 @@ class FateSessionImpl(FateSession):
               persistent,
               in_place_computing,
               create_if_missing,
-              error_if_exist):
-        options = dict(create_if_missing=create_if_missing, total_partitions=partition)
+              error_if_exist,
+              **kwargs):
+        options = kwargs.get("option", {})
+        options.update(dict(create_if_missing=create_if_missing, total_partitions=partition))
         dtable = self._eggroll.load(namespace=namespace, name=name, options=options)
         return DTable(dtable=dtable, session_id=self._session_id)
 

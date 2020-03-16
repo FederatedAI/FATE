@@ -52,7 +52,9 @@ class FateSessionImpl(FateSession):
               persistent,
               in_place_computing,
               create_if_missing,
-              error_if_exist):
+              error_if_exist,
+              **kwargs):
+        # todo: fix
         dtable = self._eggroll.table(name=name, namespace=namespace, partition=partition,
                                      persistent=persistent, in_place_computing=in_place_computing,
                                      create_if_missing=create_if_missing, error_if_exist=error_if_exist,
