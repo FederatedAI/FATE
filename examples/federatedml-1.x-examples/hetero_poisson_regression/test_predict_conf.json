@@ -7,7 +7,7 @@
         "work_mode": 0,
         "job_type": "predict",
         "model_id": "arbiter-10000#guest-10000#host-10000#model",
-        "model_version": "20191216190046894819219"
+        "model_version": ""
     },
     "role": {
         "guest": [10000],
@@ -18,14 +18,14 @@
         "guest": {
             "args": {
                 "data": {
-                    "eval_data": [{"name": "motor_mini_b", "namespace": "motor_mini"}]
+                    "eval_data": [{"name": "dvisits_b", "namespace": "dvisits"}]
                 }
             }
         },
         "host": {
             "args": {
                 "data": {
-                    "eval_data": [{"name": "motor_mini_a", "namespace": "motor_mini"}]
+                    "eval_data": [{"name": "dvisits_a", "namespace": "dvisits"}]
                 }
             }
         }
