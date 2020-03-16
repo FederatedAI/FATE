@@ -57,6 +57,7 @@ class DataSplitter(ModelBase):
         return ids
 
     def _get_y(self, data_inst):
+        # @TODO: check whether y is categorical or continuous, produce tags based on binning if continuous
         y = np.array([v for i, v in data_inst.mapValues(lambda v: v.label).collect()])
         return y
 
