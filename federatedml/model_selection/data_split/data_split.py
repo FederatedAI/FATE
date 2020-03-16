@@ -100,16 +100,18 @@ class DataSplitter(ModelBase):
             raise ValueError(f"train_size, test_size, validate_size should sum up to 1.0 or data count")
 
     @staticmethod
-    def __match_id(data_iterator, ids):
-        # @TODO: implement method
-        for v in data_iterator:
-           pass
-
-        return
+    def match_id(data_inst, ids):
+        return data_inst.filter(lambda k, v: k in ids)
 
     def split_data(self, data_inst, id_train, id_test, id_validate):
-        # @TODO: implement method
-        return
+        # @TODO: consider clean up code & reduce
+        id_train_table = session.parallelize(id_train)
+        id_test_table = session.parallelize(id_test)
+        id_validate_table = session.parallelize(id_validate)
+        train_data = DataSplitter.match_id(data_inst, id_train_table)
+        test_data = DataSplitter.match_id(data_inst, id_test_table)
+        validate_data = DataSplitter.match_id(data_inst, id_validate_table)
+        return train_data, test_data, validate_data
 
 
     def fit(self, data_inst):
