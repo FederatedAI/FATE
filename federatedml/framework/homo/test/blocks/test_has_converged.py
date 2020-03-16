@@ -24,9 +24,9 @@ from federatedml.util import consts
 def model_broadcaster_call(job_id, role, ind, *args):
     status = args[0]
     if role == consts.ARBITER:
-        return has_converged.Server().set_flowid(job_id).remote_converge_status(status)
+        return has_converged.Server().remote_converge_status(status)
     else:
-        return has_converged.Client().set_flowid(job_id).get_converge_status()
+        return has_converged.Client().get_converge_status()
 
 
 class ModelBroadcasterTest(TestBlocks):
