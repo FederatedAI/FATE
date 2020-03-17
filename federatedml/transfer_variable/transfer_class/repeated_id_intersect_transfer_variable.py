@@ -30,5 +30,5 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 class RepeatedIDIntersectTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.id_map_from_guest = self._create_variable(name='id_map_from_guest')
-        self.id_map_from_host = self._create_variable(name='id_map_from_host')
+        self.id_map_from_guest = self._create_variable(name='id_map_from_guest', src=['guest'], dst=['host'])
+        self.id_map_from_host = self._create_variable(name='id_map_from_host', src=['host'], dst=['guest'])

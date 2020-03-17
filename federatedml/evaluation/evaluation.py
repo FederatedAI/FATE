@@ -41,6 +41,82 @@ from federatedml.model_base import ModelBase
 
 LOGGER = log_utils.getLogger()
 
+class PerformanceRecorder():
+
+    """
+    This class record performance(single value metrics during the training process)
+    """
+
+    def __init__(self):
+
+        # all of them are single value metrics
+        self.allowed_metric = [consts.AUC,
+                              consts.EXPLAINED_VARIANCE,
+                              consts.MEAN_ABSOLUTE_ERROR,
+                              consts.MEAN_SQUARED_ERROR,
+                              consts.MEAN_SQUARED_LOG_ERROR,
+                              consts.MEDIAN_ABSOLUTE_ERROR,
+                              consts.R2_SCORE,
+                              consts.ROOT_MEAN_SQUARED_ERROR,
+                              consts.PRECISION,
+                              consts.RECALL,
+                              consts.ACCURACY,
+                              consts.KS
+                            ]
+
+        self.larger_is_better = [consts.AUC,
+                                 consts.R2_SCORE,
+                                 consts.PRECISION,
+                                 consts.RECALL,
+                                 consts.EXPLAINED_VARIANCE,
+                                 consts.ACCURACY,
+                                 consts.KS
+                                 ]
+
+        self.smaller_is_better = [consts.ROOT_MEAN_SQUARED_ERROR,
+                                  consts.MEAN_ABSOLUTE_ERROR,
+                                  consts.MEAN_SQUARED_ERROR,
+                                  consts.MEAN_SQUARED_LOG_ERROR]
+
+        self.cur_best_performance = {}
+
+        self.no_improvement_round = {} # record no improvement round of all metrics
+
+    def has_improved(self, val: float, metric: str, cur_best: dict):
+
+        if metric not in cur_best:
+            return True
+
+        if metric in self.larger_is_better and val > cur_best[metric]:
+            return True
+
+        elif metric in self.smaller_is_better and val < cur_best[metric]:
+            return True
+
+        return False
+
+    def update(self, eval_dict: dict):
+        """
+
+        Parameters
+        ----------
+        eval_dict dict, {metric_name:metric_val}, e.g. {'auc':0.99}
+
+        Returns stop flag, if should stop return True, else False
+        -------
+        """
+        if len(eval_dict) == 0:
+            return
+
+        for metric in eval_dict:
+            if metric not in self.allowed_metric:
+                continue
+            if self.has_improved(eval_dict[metric], metric, self.cur_best_performance):
+                self.cur_best_performance[metric] = eval_dict[metric]
+                self.no_improvement_round[metric] = 0
+            else:
+                self.no_improvement_round[metric] += 1
+
 
 class Evaluation(ModelBase):
     def __init__(self):
@@ -90,6 +166,13 @@ class Evaluation(ModelBase):
                         consts.REGRESSION: self.regression_support_func}
 
         self.round_num = 6
+	
+	# record name of train and validate dataset
+        self.validate_key = set()
+        self.train_key = set()
+
+        self.validate_metric = {}
+        self.train_metric = {}
 
     def _init_model(self, model):
         self.model_param = model
@@ -111,6 +194,7 @@ class Evaluation(ModelBase):
             LOGGER.warning("Evaluation has not transform, return")
 
     def split_data_with_type(self, data: list) -> dict:
+
         split_result = defaultdict(list)
         for value in data:
             mode = value[1][4]
@@ -165,7 +249,7 @@ class Evaluation(ModelBase):
 
         return eval_result
 
-    def fit(self, data):
+    def fit(self, data, return_result=False):
         if len(data) <= 0:
             return
 
@@ -176,8 +260,13 @@ class Evaluation(ModelBase):
             for mode, data in split_data_with_label.items():
                 eval_result = self.evaluate_metircs(mode, data)
                 self.eval_results[key].append(eval_result)
+                LOGGER.debug('mode is {}'.format(mode))
+                if mode == 'validate':
+                    self.validate_key.add(key)
+                elif mode == 'train':
+                    self.train_key.add(key)
 
-        self.callback_metric_data()
+        return self.callback_metric_data(return_single_val_metrics=return_result)
 
     def __save_single_value(self, result, metric_name, metric_namespace, eval_name):
         self.tracker.log_metric_data(metric_namespace, metric_name,
@@ -250,8 +339,29 @@ class Evaluation(ModelBase):
                                metric_type="ROC", unit_name="fpr", ordinate_name="tpr",
                                curve_name=data_type, thresholds=thresholds)
 
-    def callback_metric_data(self):
+    def callback_metric_data(self, return_single_val_metrics=False):
+
+        """
+        Parameters
+        ----------
+        return_single_val_metrics if True return single_val_metrics
+
+        Returns None or return_result dict
+        -------
+        """
+
+        collect_dict = {}
+        LOGGER.debug('callback metric called')
+
         for (data_type, eval_res_list) in self.eval_results.items():
+
+            LOGGER.debug('data type is {}'.format(data_type))
+
+            if data_type in self.validate_key:
+                collect_dict = self.validate_metric
+            elif data_type in self.train_key:
+                collect_dict = self.train_metric
+
             precision_recall = {}
             for eval_res in eval_res_list:
                 for (metric, metric_res) in eval_res.items():
@@ -259,13 +369,16 @@ class Evaluation(ModelBase):
                     metric_name = '_'.join([data_type, metric])
 
                     if metric in self.save_single_value_metric_list:
-                        self.__save_single_value(metric_res[1], metric_name=data_type, metric_namespace=metric_namespace,
-                                                 eval_name=metric)
+                        self.__save_single_value(metric_res[1], metric_name=data_type, metric_namespace=metric_namespace
+                                                 ,eval_name=metric)
+                        collect_dict[metric] = metric_res[1]
+
                     elif metric == consts.KS:
                         best_ks, fpr, tpr, thresholds, cuts = metric_res[1]
                         self.__save_single_value(best_ks, metric_name=data_type,
                                                  metric_namespace=metric_namespace,
                                                  eval_name=metric)
+                        collect_dict[metric] = best_ks
 
                         metric_name_fpr = '_'.join([metric_name, "fpr"])
                         curve_name_fpr = "_".join([data_type, "fpr"])
@@ -288,6 +401,7 @@ class Evaluation(ModelBase):
                             self.__save_single_value(metric_res[1], metric_name=data_type,
                                                      metric_namespace=metric_namespace,
                                                      eval_name=metric)
+                            collect_dict[metric] = metric_res[1]
                             continue
 
                         score, cuts, thresholds = metric_res[1]
@@ -306,6 +420,7 @@ class Evaluation(ModelBase):
                         self.__save_curve_meta(metric_name=metric_name, metric_namespace=metric_namespace,
                                                metric_type=metric.upper(), unit_name="",
                                                curve_name=data_type, thresholds=thresholds)
+
                     elif metric in [consts.PRECISION, consts.RECALL]:
                         precision_recall[metric] = metric_res
                         if len(precision_recall) < 2:
@@ -365,6 +480,9 @@ class Evaluation(ModelBase):
                             self.__save_single_value(average_recall, metric_name=data_type,
                                                      metric_namespace=metric_namespace,
                                                      eval_name="recall")
+                            collect_dict[consts.PRECISION] = average_precision
+                            collect_dict[consts.RECALL] = average_recall
+
                             precision_curve_name = metric_name_precision
                             recall_curve_name = metric_name_recall
 
@@ -383,6 +501,14 @@ class Evaluation(ModelBase):
                                                pair_type=data_type, thresholds=recall_thresholds)
                     else:
                         LOGGER.warning("Unknown metric:{}".format(metric))
+
+        if return_single_val_metrics:
+            if len(self.validate_metric) !=0:
+                LOGGER.debug("return validate metric")
+                return self.validate_metric
+            else:
+                LOGGER.debug("validate metric is empty, return train metric")
+                return self.train_metric
 
     def __filt_threshold(self, thresholds, step):
         cuts = list(map(float, np.arange(0, 1, step)))

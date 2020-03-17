@@ -30,6 +30,6 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 class SecureAddExampleTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.guest_share = self._create_variable(name='guest_share')
-        self.host_share = self._create_variable(name='host_share')
-        self.host_sum = self._create_variable(name='host_sum')
+        self.guest_share = self._create_variable(name='guest_share', src=['guest'], dst=['host'])
+        self.host_share = self._create_variable(name='host_share', src=['host'], dst=['guest'])
+        self.host_sum = self._create_variable(name='host_sum', src=['host'], dst=['guest'])

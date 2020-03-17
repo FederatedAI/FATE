@@ -30,8 +30,8 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 class RawIntersectTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.intersect_ids_guest = self._create_variable(name='intersect_ids_guest')
-        self.intersect_ids_host = self._create_variable(name='intersect_ids_host')
-        self.send_ids_guest = self._create_variable(name='send_ids_guest')
-        self.send_ids_host = self._create_variable(name='send_ids_host')
-        self.sync_intersect_ids_multi_hosts = self._create_variable(name='sync_intersect_ids_multi_hosts')
+        self.intersect_ids_guest = self._create_variable(name='intersect_ids_guest', src=['guest'], dst=['host'])
+        self.intersect_ids_host = self._create_variable(name='intersect_ids_host', src=['host'], dst=['guest'])
+        self.send_ids_guest = self._create_variable(name='send_ids_guest', src=['guest'], dst=['host'])
+        self.send_ids_host = self._create_variable(name='send_ids_host', src=['host'], dst=['guest'])
+        self.sync_intersect_ids_multi_hosts = self._create_variable(name='sync_intersect_ids_multi_hosts', src=['guest'], dst=['host'])
