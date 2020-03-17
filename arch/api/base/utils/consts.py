@@ -16,7 +16,7 @@
 
 
 ROLES = ["arbiter", "guest", "host"]
-TRANSFER_CONF_PATH = "federatedml/transfer_variable/definition/transfer_conf.json"
+TRANSFER_CONF_PATH = "arch/transfer_variables/auth_conf"
 CONF_KEY_LOCAL = "local"
 CONF_KEY_FEDERATION = "federation"
 CONF_KEY_SERVER = "servers"

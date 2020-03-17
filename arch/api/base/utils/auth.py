@@ -13,20 +13,27 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import os
+
 from arch.api.utils import file_utils
 
 
 class FederationAuthorization(object):
 
     def __init__(self, transfer_conf_path):
-        self.transfer_auth = file_utils.load_json_conf(transfer_conf_path)
+        self.transfer_auth = {}
+        for path, _, file_names in os.walk(os.path.join(file_utils.get_project_base_directory(), transfer_conf_path)):
+            for name in file_names:
+                transfer_conf = os.path.join(path, name)
+                if transfer_conf.endswith(".json"):
+                    self.transfer_auth.update(file_utils.load_json_conf(transfer_conf))
 
         # cache
         self._authorized_src = {}
         self._authorized_dst = {}
 
     def _update_auth(self, variable_name):
-        a_name, v_name = variable_name.split(".")
+        a_name, v_name = variable_name.split(".", 1)
         variable_auth = self.transfer_auth.get(a_name, {}).get(v_name, None)
         if variable_auth is None:
             raise ValueError(f"Unauthorized variable: {v_name}")
