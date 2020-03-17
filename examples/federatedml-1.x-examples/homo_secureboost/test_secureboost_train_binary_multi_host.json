@@ -8,15 +8,15 @@
     },
     "role": {
         "guest": [10000],
-        "host": [10000,114514],
+        "host": [10000,10001],
         "arbiter": [10000]
     },
     "role_parameters": {
         "guest": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "homo_credit_guest", "namespace": "homo"}],
-                    "eval_data": [{"name": "homo_credit_guest", "namespace": "homo"}]
+                    "train_data": [{"name": "default_credit_guest", "namespace": "homo"}],
+                    "eval_data": [{"name": "default_credit_test", "namespace": "homo"}]
                 }
             },
             "dataio_0":{
@@ -29,8 +29,8 @@
         "host": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "homo_breast_host", "namespace": "homo"}, {"name": "homo_breast_test", "namespace": "homo"}],
-                    "eval_data": [{"name": "homo_breast_host", "namespace": "homo"}, {"name": "homo_breast_test", "namespace": "homo"}]
+                    "train_data": [{"name": "default_credit_host1", "namespace": "homo"}, {"name": "default_credit_host2", "namespace": "homo"}],
+                    "eval_data": [{"name": "default_credit_test", "namespace": "homo"}, {"name": "default_credit_test", "namespace": "homo"}]
                 }
             },
             "dataio_0":{
@@ -52,13 +52,10 @@
             "bin_num": 32,
             "validation_freqs": 1,
             "tree_param": {
-                "max_depth": 5
+                "max_depth": 3
             },
             "objective_param": {
                 "objective": "cross_entropy"
-            },
-            "encrypt_param": {
-                "method": "paillier"
             },
             "predict_param": {
                 "with_proba": true,
@@ -68,10 +65,7 @@
                 "n_splits": 5,
                 "shuffle": false,
                 "random_seed": 103,
-                "need_cv": false,
-                "evaluate_param": {
-                    "eval_type": "binary"
-                }
+                "need_cv": false
              }
         }
     },

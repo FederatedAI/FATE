@@ -87,6 +87,39 @@
           "table_name": "motor_mini_a_2",
           "namespace": "hetero",
           "role": "host_1"
+      },
+
+      {
+          "file": "examples/data/stu_a_train.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "motor_mini_a_2",
+          "namespace": "hetero",
+          "role": "host_0"
+      },
+      {
+          "file": "examples/data/stu_b_train.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "motor_mini_a_2",
+          "namespace": "hetero",
+          "role": "guest_0"
+      },
+      {
+          "file": "examples/data/stu_a_test.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "stu_a_test",
+          "namespace": "hetero",
+          "role": "guest_0"
+      },
+      {
+          "file": "examples/data/stu_b_test.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "stu_b_test",
+          "namespace": "hetero",
+          "role": "host_0"
       }
   ],
   "tasks": {
@@ -116,7 +149,7 @@
     },
     "cv_regression": {
       "conf": "./test_secureboost_cross_validation_regression_conf.json",
-      "dsl": "./test_secureboost_cross_validation_dsl.json"
+      "dsl":  "./test_secureboost_cross_validation_dsl.json"
     },
     "train_binary_with_missing_value": {
       "conf": "./test_secureboost_train_binary_with_missing_value_conf.json",
@@ -124,6 +157,10 @@
     },
     "train_multi_host": {
       "conf": "./test_secureboost_train_regression_multi_host_conf.json",
+      "dsl": "./test_secureboost_train_dsl.json"
+    },
+    "early_stop": {
+      "conf": "./test_secureboost_train_early_stop_binary_conf.json",
       "dsl": "./test_secureboost_train_dsl.json"
     }
   }
