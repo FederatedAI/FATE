@@ -1,0 +1,130 @@
+{
+  "data": [
+      {
+          "file": "examples/data/breast_b.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "breast_b",
+          "namespace": "hetero",
+          "role": "guest_0"
+      },
+      {
+          "file": "examples/data/breast_a.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "breast_a",
+          "namespace": "hetero",
+          "role": "host_0"
+      },
+      {
+          "file": "examples/data/vehicle_scale_b.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "vehicle_scale_b",
+          "namespace": "hetero",
+          "role": "guest_0"
+      },
+      {
+          "file": "examples/data/vehicle_scale_a.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "vehicle_scale_a",
+          "namespace": "hetero",
+          "role": "host_0"
+      },
+      {
+          "file": "examples/data/student-mat_b.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "student-mat_b",
+          "namespace": "hetero",
+          "role": "guest_0"
+      },
+      {
+          "file": "examples/data/student-mat_a.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "student-mat_a",
+          "namespace": "hetero",
+          "role": "host_0"
+      },
+      {
+          "file": "examples/data/ionosphere_scale_b.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "ionosphere_scale_b",
+          "namespace": "hetero",
+          "role": "guest_0"
+      },
+      {
+          "file": "examples/data/ionosphere_scale_a.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "ionosphere_scale_a",
+          "namespace": "hetero",
+          "role": "host_0"
+      },
+      {
+          "file": "examples/data/motor_mini_b.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "motor_mini_b",
+          "namespace": "hetero",
+          "role": "guest_0"
+      },
+      {
+          "file": "examples/data/motor_mini_a_1.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "motor_mini_a_1",
+          "namespace": "hetero",
+          "role": "host_0"
+      },
+      {
+          "file": "examples/data/motor_mini_a_2.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "motor_mini_a_2",
+          "namespace": "hetero",
+          "role": "host_1"
+      }
+  ],
+  "tasks": {
+    "train_binary": {
+      "conf": "./test_secureboost_train_binary_conf.json",
+      "dsl": "./test_secureboost_train_dsl.json"
+    },
+    "train_binary_predict": {
+      "conf": "./test_predict_conf.json",
+      "deps": "train_binary"
+    },
+    "train_multi": {
+      "conf": "./test_secureboost_train_multi_conf.json",
+      "dsl": "./test_secureboost_train_dsl.json"
+    },
+    "train_regression": {
+      "conf": "./test_secureboost_train_regression_conf.json",
+      "dsl": "./test_secureboost_train_dsl.json"
+    },
+    "cv_binary": {
+      "conf": "./test_secureboost_cross_validation_binary_conf.json",
+      "dsl": "./test_secureboost_cross_validation_dsl.json"
+    },
+    "cv_multi": {
+      "conf": "./test_secureboost_cross_validation_multi_conf.json",
+      "dsl": "./test_secureboost_cross_validation_dsl.json"
+    },
+    "cv_regression": {
+      "conf": "./test_secureboost_cross_validation_regression_conf.json",
+      "dsl": "./test_secureboost_cross_validation_dsl.json"
+    },
+    "train_binary_with_missing_value": {
+      "conf": "./test_secureboost_train_binary_with_missing_value_conf.json",
+      "dsl": "./test_secureboost_train_dsl.json"
+    },
+    "train_multi_host": {
+      "conf": "./test_secureboost_train_regression_multi_host_conf.json",
+      "dsl": "./test_secureboost_train_dsl.json"
+    }
+  }
+}

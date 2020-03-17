@@ -39,7 +39,7 @@ class HomoFeatureBinningServer(object):
     def set_suffix(self, suffix):
         self.suffix = suffix
 
-    def average_run(self, data_instances=None, bin_param: FeatureBinningParam = None, bin_num=10, abnormal_list=None):
+    def average_run(self,):
         agg_split_points = self.split_points_aggregator.mean_model(suffix=self.suffix)
         self.split_points_aggregator.send_aggregated_model(agg_split_points)
 

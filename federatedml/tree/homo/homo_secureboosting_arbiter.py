@@ -88,7 +88,7 @@ class HomoSecureBoostingTreeArbiter(BoostingTree):
         return label_mapping
 
     def federated_binning(self):
-        self.binning_obj.average_run(None, bin_num=self.bin_num)
+        self.binning_obj.average_run()
 
     def fit(self, data_inst, valid_inst=None):
 
