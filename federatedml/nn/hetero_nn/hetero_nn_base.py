@@ -44,6 +44,7 @@ class HeteroNNBase(ModelBase):
 
         self.partition = None
         self.validation_freqs = None
+        self.early_stopping_rounds = None
 
         self.data_x = []
         self.data_y = []
@@ -59,6 +60,7 @@ class HeteroNNBase(ModelBase):
 
         self.early_stop = hetero_nn_param.early_stop
         self.validation_freqs = hetero_nn_param.validation_freqs
+        self.early_stopping_rounds = hetero_nn_param.early_stopping_rounds
         self.tol = hetero_nn_param.tol
 
         self.predict_param = hetero_nn_param.predict_param
@@ -75,7 +77,7 @@ class HeteroNNBase(ModelBase):
         self.set_flowid(new_flowid)
 
     def init_validation_strategy(self, train_data=None, validate_data=None):
-        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs)
+        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs, self.early_stopping_rounds)
         validation_strategy.set_train_data(train_data)
         validation_strategy.set_validate_data(validate_data)
         return validation_strategy

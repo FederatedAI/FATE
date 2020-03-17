@@ -21,12 +21,12 @@ from federatedml.framework.homo.test.blocks.test_utils import TestBlocks
 # noinspection PyProtectedMember,PyUnusedLocal
 def uuid_call(job_id, role, ind, *args):
     if role == consts.ARBITER:
-        sync = uuid_generator.Server().set_flowid(job_id)
-        sync.validate_uuid()
-        return sync._uuid_set
+        uuid_server = uuid_generator.Server()
+        uuid_server.validate_uuid()
+        return uuid_server._uuid_set
     else:
-        sync = uuid_generator.Client().set_flowid(job_id)
-        uid = sync.generate_uuid()
+        uuid_client = uuid_generator.Client()
+        uid = uuid_client.generate_uuid()
         return uid
 
 

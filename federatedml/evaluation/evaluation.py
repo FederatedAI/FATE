@@ -64,7 +64,6 @@ class PerformanceRecorder():
                               consts.KS
                             ]
 
-
         self.larger_is_better = [consts.AUC,
                                  consts.R2_SCORE,
                                  consts.PRECISION,
@@ -351,10 +350,12 @@ class Evaluation(ModelBase):
         -------
         """
 
-        collect_dict = None
+        collect_dict = {}
         LOGGER.debug('callback metric called')
 
         for (data_type, eval_res_list) in self.eval_results.items():
+
+            LOGGER.debug('data type is {}'.format(data_type))
 
             if data_type in self.validate_key:
                 collect_dict = self.validate_metric
