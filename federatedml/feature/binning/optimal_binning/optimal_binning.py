@@ -53,7 +53,8 @@ class OptimalBinning(BaseBinning):
         LOGGER.debug("In fit split points, event_total: {}, non_event_total: {}".format(self.event_total,
                                                                                         self.non_event_total))
 
-        bucket_table = self.init_bucket(data_instances)
+        # bucket_table = self.init_bucket(data_instances)
+        bucket_table = self._force_init_table(data_instances)
         sample_count = data_instances.count()
         self.fit_buckets(bucket_table, sample_count)
         self.fit_category_features(data_instances)
@@ -90,7 +91,7 @@ class OptimalBinning(BaseBinning):
 
         quantile_param = copy.deepcopy(self.params)
         quantile_param.bin_num = self.optimal_param.init_bin_nums
-        quantile_binning_tool = QuantileBinningTool(param_obj=quantile_param, allow_duplicate=True)
+        quantile_binning_tool = QuantileBinningTool(param_obj=quantile_param, allow_duplicate=False)
 
         every_init_bucket_nums = math.ceil(data_instances.count() / self.optimal_param.init_bin_nums)
 
@@ -121,6 +122,50 @@ class OptimalBinning(BaseBinning):
         bucket_table = [(k, v) for k, v in bucket_table.items()]
         LOGGER.debug("bucket_table: {}, length: {}".format(type(bucket_table), len(bucket_table)))
         bucket_table = session.parallelize(bucket_table, include_key=True, partition=data_instances._partitions)
+        return bucket_table
+
+    def _force_init_table(self, data_instances):
+        data_list = []
+        for k, instance in data_instances.collect():
+            data_list.append((instance.features[0], instance.label))
+        data_list = sorted(data_list, key=lambda x: x[0])
+
+        bucket_list = []
+        last_y = data_list[0][1]
+        last_boundary = -math.inf
+        count = 0
+        bucket_id = 0
+        for x, y in data_list:
+            if y == last_y:
+                count += 1
+                continue
+            bucket = bucket_info.Bucket(idx=bucket_id, adjustment_factor=self.adjustment_factor, right_bound=x)
+            if last_y == 1:
+                bucket.event_count = count
+            else:
+                bucket.non_event_count = count
+            bucket.left_bound = last_boundary
+            bucket.event_total = self.event_total
+            bucket.non_event_total = self.non_event_total
+            if bucket_id == 0:
+                bucket.set_left_neighbor(None)
+            bucket_list.append(bucket)
+            last_boundary = x
+            count = 0
+            bucket_id += 1
+            last_y = y
+
+        bucket = bucket_info.Bucket(idx=bucket_id, adjustment_factor=self.adjustment_factor, right_bound=math.inf)
+        if last_y == 1:
+            bucket.event_count = count
+        else:
+            bucket.non_event_count = count
+        bucket.left_bound = last_boundary
+        bucket.event_total = self.event_total
+        bucket.non_event_total = self.non_event_total
+        bucket.set_right_neighbor(None)
+        bucket_list.append(bucket)
+        bucket_table = session.parallelize([('x1', bucket_list)], include_key=True, partition=data_instances._partitions)
         return bucket_table
 
     @staticmethod
@@ -170,14 +215,13 @@ class OptimalBinning(BaseBinning):
                 col_split_points = split_points[col_name]
                 bin_num = get_bin_num_func(col_value, col_split_points)
                 bucket = bucket_dict[col_name][bin_num]
-                while bucket.total_count >= init_bucket_nums:
-                    bin_num += 1
-                    bucket = bucket_dict[col_name][bin_num]
+                # while bucket.total_count >= init_bucket_nums:
+                #     bin_num += 1
+                #     bucket = bucket_dict[col_name][bin_num]
                 bucket.add(label, col_value)
         result = []
         for col_name, bucket_list in bucket_dict.items():
             result.append(((data_key, col_name), bucket_list))
-            # LOGGER.debug("col_name: {}, final bucket nums: {}".format(col_name, [x.total_count for x in bucket_list]))
         return result
 
     @staticmethod
@@ -260,12 +304,12 @@ class OptimalBinning(BaseBinning):
                         min_heap.insert(heap_node)
             elif constraint == 'small_size':
                 if left_bucket is not None and left_bucket.total_count + new_bucket.total_count <= max_item_num:
-                    if not (left_bucket.total_count >= min_item_num and new_bucket.total_count >= min_item_num):
+                    if left_bucket.total_count < min_item_num or new_bucket.total_count < min_item_num:
                         heap_node = heap.heap_node_factory(optimal_param, left_bucket=left_bucket,
                                                            right_bucket=new_bucket)
                         min_heap.insert(heap_node)
                 if right_bucket is not None and right_bucket.total_count + new_bucket.total_count <= max_item_num:
-                    if not (right_bucket.total_count >= min_item_num and new_bucket.total_count >= min_item_num):
+                    if right_bucket.total_count < min_item_num or new_bucket.total_count < min_item_num:
                         heap_node = heap.heap_node_factory(optimal_param, left_bucket=new_bucket,
                                                            right_bucket=right_bucket)
                         min_heap.insert(heap_node)
@@ -300,43 +344,49 @@ class OptimalBinning(BaseBinning):
 
         def _aim_vars_decrease(constraint, new_bucket: bucket_info.Bucket, left_bucket, right_bucket, aim_var):
             if constraint == 'mixture':
-                if new_bucket.is_mixed:
-                    if not left_bucket.is_mixed and not right_bucket.is_mixed:
-                        aim_var -= 2
-                    else:
-                        aim_var -= 1
-                else:
-                    if not left_bucket.is_mixed and not right_bucket.is_mixed:
-                        aim_var -= 1
+                if not left_bucket.is_mixed:
+                    aim_var -= 1
+                if not right_bucket.is_mixed:
+                    aim_var -= 1
+                if not new_bucket.is_mixed:
+                    aim_var += 1
             elif constraint == 'small_size':
-                if new_bucket.total_count >= min_item_num:
-                    if left_bucket.total_count < min_item_num and right_bucket.total_count < min_item_num:
-                        aim_var -= 2
-                    else:
-                        aim_var -= 1
-                else:
-                    if not left_bucket.is_mixed and not right_bucket.is_mixed:
-                        aim_var -= 1
+                if left_bucket.total_count < min_item_num:
+                    aim_var -= 1
+                if right_bucket.total_count < min_item_num:
+                    aim_var -= 1
+                if new_bucket.total_count < min_item_num:
+                    aim_var += 1
             else:
                 aim_var = len(bucket_dict) - final_max_bin
             return aim_var
 
         if optimal_param.mixture:
-            LOGGER.debug("Before add, dick length: {}".format(len(bucket_dict)))
+            LOGGER.debug("Before mixture add, dick length: {}".format(len(bucket_dict)))
             min_heap, non_mixture_num, small_size_num = _add_heap_nodes(constraint='mixture')
             LOGGER.debug("After mixture add, non_mixture_num: {}, min_heap size: {}".format(non_mixture_num, min_heap.size))
             min_heap = _merge_heap(constraint='mixture', aim_var=non_mixture_num)
             LOGGER.debug("After mixture merge, min_heap size: {}".format(min_heap.size))
 
+        LOGGER.debug("Before small_size add, dick length: {}".format(len(bucket_dict)))
         min_heap, non_mixture_num, small_size_num = _add_heap_nodes(constraint='small_size')
         LOGGER.debug("After small_size add, small_size: {}, min_heap size: {}".format(small_size_num, min_heap.size))
         min_heap = _merge_heap(constraint='small_size', aim_var=small_size_num)
         LOGGER.debug("After small_size merge, min_heap size: {}".format(min_heap.size))
+        for node_id, this_node in enumerate(min_heap.node_list):
+            LOGGER.debug("node_id: {}, node_total_count: {}, left_bound: {}, right bound: {}".format(
+                node_id, this_node.total_count, this_node.left_bucket.left_bound, this_node.right_bucket.right_bound
+            ))
 
+        LOGGER.debug("Before add, dick length: {}".format(len(bucket_dict)))
         min_heap, non_mixture_num, small_size_num = _add_heap_nodes()
-        LOGGER.debug("After small_size add, small_size: {}, min_heap size: {}".format(small_size_num, min_heap.size))
+        LOGGER.debug("After normal add, small_size: {}, min_heap size: {}".format(small_size_num, min_heap.size))
         min_heap = _merge_heap(aim_var=len(bucket_dict) - final_max_bin)
-        LOGGER.debug("After small_size merge, min_heap size: {}".format(min_heap.size))
+        LOGGER.debug("After normal merge, min_heap size: {}".format(min_heap.size))
+        for node_id, this_node in enumerate(min_heap.node_list):
+            LOGGER.debug("node_id: {}, node_total_count: {}, left_bound: {}, right bound: {}".format(
+                node_id, this_node.total_count, this_node.left_bucket.left_bound, this_node.right_bucket.right_bound
+            ))
 
         non_mixture_num = 0
         small_size_num = 0
@@ -347,6 +397,11 @@ class OptimalBinning(BaseBinning):
                 small_size_num += 1
         bucket_res = list(bucket_dict.values())
         bucket_res = sorted(bucket_res, key=lambda bucket: bucket.left_bound)
+        LOGGER.debug("Before return merge_optimal_binning, non_mixture_num: {}, small_size_num: {},"
+                     "min_heap size: {}".format(non_mixture_num, small_size_num, min_heap.size))
+
+        LOGGER.debug("Before return, dick length: {}".format(len(bucket_dict)))
+
         return bucket_res, non_mixture_num, small_size_num
 
     @staticmethod

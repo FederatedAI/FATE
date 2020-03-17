@@ -61,7 +61,7 @@ class IvHeapNode(HeapNode):
 
         self.event_count = self.left_bucket.event_count + self.right_bucket.event_count
         self.non_event_count = self.left_bucket.non_event_count + self.right_bucket.non_event_count
-        if self.total_count == 0:
+        if self.total_count == 0 or self.left_bucket.left_bound == self.right_bucket.right_bound:
             self.score = -math.inf
             return
 
@@ -74,8 +74,9 @@ class IvHeapNode(HeapNode):
         else:
             event_rate = 1.0 * self.event_count / self.event_total
             non_event_rate = 1.0 * self.non_event_count / self.non_event_total
-        merge_woe = math.log(non_event_rate / event_rate)
-        merge_iv = (non_event_rate - event_rate) * merge_woe
+        merge_woe = math.log(event_rate / non_event_rate)
+
+        merge_iv = (event_rate - non_event_rate) * merge_woe
         self.score = self.left_bucket.iv + self.right_bucket.iv - merge_iv
 
 
@@ -87,7 +88,7 @@ class GiniHeapNode(HeapNode):
 
         self.event_count = self.left_bucket.event_count + self.right_bucket.event_count
         self.non_event_count = self.left_bucket.non_event_count + self.right_bucket.non_event_count
-        if self.total_count == 0:
+        if self.total_count == 0 or self.left_bucket.left_bound == self.right_bucket.right_bound:
             self.score = -math.inf
             return
         merged_gini = 1 - (1.0 * self.event_count / self.total_count) ** 2 - \
@@ -106,7 +107,8 @@ class ChiSquareHeapNode(HeapNode):
 
         self.event_count = self.left_bucket.event_count + self.right_bucket.event_count
         self.non_event_count = self.left_bucket.non_event_count + self.right_bucket.non_event_count
-        if self.left_bucket.total_count == 0 or self.right_bucket.total_count == 0:
+        if self.left_bucket.total_count == 0 or self.right_bucket.total_count == 0 or \
+                self.left_bucket.left_bound == self.right_bucket.right_bound:
             self.score = -math.inf
             return
         c1 = self.left_bucket.event_count + self.right_bucket.event_count

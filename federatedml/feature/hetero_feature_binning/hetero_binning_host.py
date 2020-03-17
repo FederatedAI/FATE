@@ -35,21 +35,21 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         # self._parse_cols(data_instances)
         self._setup_bin_inner_param(data_instances, self.model_param)
 
-        self._sync_init_bucket(data_instances)
+        # Calculates split points of datas in self party
+        split_points = self.binning_obj.fit_split_points(data_instances)
 
-        if self.model_param.method == consts.OPTIMAL:
-            self.optimal_binning_sync()
+        if not self.model_param.local_only:
+            self._sync_init_bucket(data_instances, split_points)
+            if self.model_param.method == consts.OPTIMAL:
+                self.optimal_binning_sync()
 
-        LOGGER.info("Sent encrypted_bin_sum to guest")
         if self.transform_type != 'woe':
             data_instances = self.transform(data_instances)
         self.set_schema(data_instances)
         self.data_output = data_instances
         return data_instances
 
-    def _sync_init_bucket(self, data_instances, need_shuffle=False):
-        # Calculates split points of datas in self party
-        split_points = self.binning_obj.fit_split_points(data_instances)
+    def _sync_init_bucket(self, data_instances, split_points, need_shuffle=False):
 
         # self._make_iv_obj(split_points)  # Save split points
 

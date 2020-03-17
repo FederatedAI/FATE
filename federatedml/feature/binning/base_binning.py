@@ -450,14 +450,14 @@ class BaseBinning(object):
             else:
                 event_rate = 1.0 * event_count / event_total
                 non_event_rate = 1.0 * non_event_count / non_event_total
-            woe_i = math.log(non_event_rate / event_rate)
+            woe_i = math.log(event_rate / non_event_rate)
 
             event_count_array.append(event_count)
             non_event_count_array.append(non_event_count)
             event_rate_array.append(event_rate)
             non_event_rate_array.append(non_event_rate)
             woe_array.append(woe_i)
-            iv_i = (non_event_rate - event_rate) * woe_i
+            iv_i = (event_rate - non_event_rate) * woe_i
             iv_array.append(iv_i)
             iv += iv_i
         return BinColResults(woe_array=woe_array, iv_array=iv_array, event_count_array=event_count_array,
