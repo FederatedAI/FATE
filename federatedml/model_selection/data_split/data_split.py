@@ -13,18 +13,19 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
+import numpy as np
+from sklearn.model_selection import train_test_split
+
 from arch.api.utils import log_utils
 from arch.api import session
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.data_split_param import DataSplitParam
 
-import numpy as np
-from sklearn.model_selection import train_test_split
-
 LOGGER = log_utils.getLogger()
 
-session.init("data split")
+session.init("data_split")
 
 class DataSplitter(ModelBase):
     def __init__(self):
@@ -34,6 +35,7 @@ class DataSplitter(ModelBase):
         self.metric_type = "DATASPLIT"
         self.model_param = DataSplitParam()
         self.role = None
+        self.classify_label = True
 
     def _init_model(self, params):
         self.random_state = params.random_state
@@ -60,14 +62,26 @@ class DataSplitter(ModelBase):
 
     def _get_y(self, data_inst):
         # @TODO: check whether y is categorical or continuous, produce tags based on binning if continuous
+
         y = np.array([v for i, v in data_inst.mapValues(lambda v: v.label).collect()])
         return y
 
+    def check_classify_label(self):
+        if self.bin_interval is not None:
+            if len(self.bin_interval) == 0:
+                self.classify_label = True
+            else:
+                self.classify_label = False
+
     def param_validater(self, data_inst):
         """
-        Validate & transform data set size inputs
+        Validate & transform param inputs
 
         """
+        # set label type
+        self.check_classify_label()
+
+        # check & transform data set sizes
         n_count = data_inst.count()
         # only output train data
         if self.train_size is None and self.test_size is None and self.validate_size is None:
@@ -99,12 +113,19 @@ class DataSplitter(ModelBase):
         if self.train_size + self.test_size + self.validate_size != total_size:
             raise ValueError(f"train_size, test_size, validate_size should sum up to 1.0 or data count")
 
+    def transform_regression_label(self, data_inst):
+        # @TODO: to be implemented, transform regression labels into binned labels
+        if self.classify_label:
+            return data_inst
+        return data_inst
+
     @staticmethod
     def match_id(data_inst, ids):
         return data_inst.filter(lambda k, v: k in ids)
 
     def split_data(self, data_inst, id_train, id_test, id_validate):
         # @TODO: consider clean up code & reduce
+        data_inst = self.transform_regression_label(data_inst)
         id_train_table = session.parallelize(id_train)
         id_test_table = session.parallelize(id_test)
         id_validate_table = session.parallelize(id_validate)
