@@ -49,14 +49,14 @@ class DataSplitParam(BaseParam):
     shuffle : boolean, default : True
         Define whether do shuffle before splitting or not.
 
-    bin_interval : None, list, default : None
-        Specify the point(s) by which continuous label values are bucketed into bins for stratified sampling.
+    split_points : None, list, default : None
+        Specify the point(s) by which continuous label values are bucketed into bins for stratified split.
         eg.[0.2] for two bins or [0.1, 1, 3] for 4 bins
 
     """
 
     def __init__(self, random_state=None, test_size=None, train_size=None, validate_size=None, stratified=False,
-                 shuffle=True, bin_interval=True):
+                 shuffle=True, split_points=True):
         super(DataSplitParam, self).__init__()
         self.random_state = random_state
         self.test_size = test_size
@@ -64,7 +64,7 @@ class DataSplitParam(BaseParam):
         self.validate_size = validate_size
         self.stratified = stratified
         self.shuffle = shuffle
-        self.bin_interval = bin_interval
+        self.split_points = split_points
 
     def check(self):
         model_param_descr = "cross validation param's "
@@ -88,9 +88,9 @@ class DataSplitParam(BaseParam):
         self.check_boolean(self.stratified, model_param_descr)
         self.check_boolean(self.shuffle, model_param_descr)
 
-        if self.bin_interval is not None:
-            if isinstance(self.bin_interval, list):
-                raise ValueError(f"{model_param_descr} bin_interval should be list type")
+        if self.split_points is not None:
+            if isinstance(self.split_points, list):
+                raise ValueError(f"{model_param_descr} split_points should be list type")
 
         LOGGER.debug("Finish data_split parameter check!")
         return True

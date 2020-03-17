@@ -20,6 +20,7 @@ from sklearn.model_selection import train_test_split
 from arch.api.utils import log_utils
 from arch.api import session
 from fate_flow.entity.metric import Metric, MetricMeta
+from federatedml.feature.binning.base_binning import Binning
 from federatedml.model_base import ModelBase
 from federatedml.param.data_split_param import DataSplitParam
 
@@ -44,7 +45,7 @@ class DataSplitter(ModelBase):
         self.validate_size = params.validate_size
         self.stratified = params.stratified
         self.shuffle = params.shuffle
-        self.bin_interval = params.bin_interval
+        self.split_points = params.split_points
         return
 
     def _split(self, ids, y):
@@ -61,17 +62,21 @@ class DataSplitter(ModelBase):
         return ids
 
     def _get_y(self, data_inst):
-        # @TODO: check whether y is categorical or continuous, produce tags based on binning if continuous
-
-        y = np.array([v for i, v in data_inst.mapValues(lambda v: v.label).collect()])
+        if self.classify_label:
+            y = np.array([v for i, v in data_inst.mapValues(lambda v: v.label).collect()])
+        else:
+            y = self.transform_regression_label(data_inst)
         return y
 
     def check_classify_label(self):
-        if self.bin_interval is not None:
-            if len(self.bin_interval) == 0:
+        if self.split_points is not None:
+            if len(self.split_points) == 0:
                 self.classify_label = True
             else:
-                self.classify_label = False
+                # only need to produce binned labels if stratified split needed
+                if self.stratified:
+                    self.classify_label = False
+        return
 
     def param_validater(self, data_inst):
         """
@@ -112,26 +117,21 @@ class DataSplitter(ModelBase):
                 self.validate_size = 0
         if self.train_size + self.test_size + self.validate_size != total_size:
             raise ValueError(f"train_size, test_size, validate_size should sum up to 1.0 or data count")
+        return
 
     def transform_regression_label(self, data_inst):
-        # @TODO: to be implemented, transform regression labels into binned labels
-        if self.classify_label:
-            return data_inst
-        return data_inst
+        bin_labels = data_inst.mapValues(lambda v: Binning.get_bin_num(v.label, self.split_points))
+        binned_y = np.array([v for k, v in bin_labels.collect()])
+        return binned_y
 
     @staticmethod
-    def match_id(data_inst, ids):
+    def _match_id(data_inst, ids):
         return data_inst.filter(lambda k, v: k in ids)
 
     def split_data(self, data_inst, id_train, id_test, id_validate):
-        # @TODO: consider clean up code & reduce
-        data_inst = self.transform_regression_label(data_inst)
-        id_train_table = session.parallelize(id_train)
-        id_test_table = session.parallelize(id_test)
-        id_validate_table = session.parallelize(id_validate)
-        train_data = DataSplitter.match_id(data_inst, id_train_table)
-        test_data = DataSplitter.match_id(data_inst, id_test_table)
-        validate_data = DataSplitter.match_id(data_inst, id_validate_table)
+        train_data = DataSplitter._match_id(data_inst, id_train)
+        test_data = DataSplitter._match_id(data_inst, id_test)
+        validate_data = DataSplitter._match_id(data_inst, id_validate)
         return train_data, test_data, validate_data
 
 
