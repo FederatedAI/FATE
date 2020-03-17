@@ -20,6 +20,7 @@ from typing import Iterable
 
 from arch.api import WorkMode
 from arch.api.base.session import FateSession
+from arch.api.base.utils.store_type import StoreTypes
 from arch.api.impl.based_1x.table import DTable
 
 
@@ -65,7 +66,17 @@ class FateSessionImpl(FateSession):
     def __init__(self, eggroll_session, work_mode, persistent_engine: str):
         self._eggroll = build_eggroll_runtime(work_mode=work_mode, eggroll_session=eggroll_session)
         self._session_id = eggroll_session.get_session_id()
-        self._persistent_engine = persistent_engine
+
+        # convert to StoreType class in eggroll v1.x
+        from eggroll.api import StoreType as StoreTypeV1
+        if persistent_engine == StoreTypes.ROLLPAIR_LMDB:
+            self._persistent_engine = StoreTypeV1.LMDB
+        elif persistent_engine == StoreTypes.ROLLPAIR_LEVELDB:
+            self._persistent_engine = StoreTypeV1.LEVEL_DB
+        elif persistent_engine == StoreTypes.ROLLPAIR_IN_MEMORY:
+            self._persistent_engine = StoreTypeV1.IN_MEMORY
+        else:
+            raise ValueError(f"{persistent_engine} not supported, use one of {[e.value for e in StoreTypeV1]}")
         FateSession.set_instance(self)
 
     def get_persistent_engine(self):
