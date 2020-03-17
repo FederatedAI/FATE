@@ -77,7 +77,7 @@ def init(job_id=None,
 
 @log_elapsed
 def table(name, namespace=None, partition=1, persistent=True, create_if_missing=True, error_if_exist=False,
-          in_place_computing=False) -> Table:
+          in_place_computing=False, **kwargs) -> Table:
     namespace = namespace or get_session_id()
     return RuntimeInstance.SESSION.table(name=name,
                                          namespace=namespace,
@@ -85,7 +85,8 @@ def table(name, namespace=None, partition=1, persistent=True, create_if_missing=
                                          persistent=persistent,
                                          in_place_computing=in_place_computing,
                                          create_if_missing=create_if_missing,
-                                         error_if_exist=error_if_exist)
+                                         error_if_exist=error_if_exist,
+                                         **kwargs)
 
 
 @log_elapsed

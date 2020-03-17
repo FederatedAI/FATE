@@ -31,7 +31,7 @@ def save_component_model(component_model_key, model_buffers, party_model_id, mod
     """
     pipeline_model_table = session.table(name=model_version, namespace=party_model_id,
                                          partition=get_model_table_partition_count(),
-                                         create_if_missing=True, error_if_exist=False)
+                                         create_if_missing=True, error_if_exist=False, use_serialize=False)
     """
     pipeline_model_table = ModelTable(name=model_version, namespace=party_model_id)
     model_class_map = {}
@@ -54,7 +54,7 @@ def read_component_model(component_model_key, party_model_id, model_version):
     """
     pipeline_model_table = session.table(name=model_version, namespace=party_model_id,
                                          partition=get_model_table_partition_count(),
-                                         create_if_missing=False, error_if_exist=False)
+                                         create_if_missing=False, error_if_exist=False, use_serialize=False)
     """
     pipeline_model_table = ModelTable(name=model_version, namespace=party_model_id)
     model_buffers = {}

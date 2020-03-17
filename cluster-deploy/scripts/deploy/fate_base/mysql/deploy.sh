@@ -52,9 +52,9 @@ config(){
 	cp -r ${cwd}/conf/* ./${module_name}/conf/conf/
 
     cd ./${module_name}/conf/
-	cp ${source_code_dir}/eggroll/framework/meta-service/src/main/resources/create-meta-service.sql ./
-	sed -i.bak "s/eggroll_meta/${eggroll_meta_service_db_name}/g" ./create-meta-service.sql
-	rm -rf ./create-meta-service.sql.bak
+	#cp ${source_code_dir}/eggroll/framework/meta-service/src/main/resources/create-meta-service.sql ./
+	#sed -i.bak "s/eggroll_meta/${eggroll_meta_service_db_name}/g" ./create-meta-service.sql
+	#rm -rf ./create-meta-service.sql.bak
 
 	echo > ./insert-node.sql
     echo "INSERT INTO node (ip, port, type, status) values ('${roll_ip}', '${roll_port}', 'ROLL', 'HEALTHY');" >> ./insert-node.sql
@@ -113,7 +113,6 @@ init(){
     ./bin/mysql -uroot -p"${password_str}" -S ./mysql.sock --connect-expired-password << EOF
     source ${mysql_dir}/init.sql;
     source ${mysql_dir}/grant.sql;
-    source ${mysql_dir}/create-meta-service.sql;
     source ${mysql_dir}/insert-node.sql;
 EOF
     echo "the password of root: ${mysql_password}"
