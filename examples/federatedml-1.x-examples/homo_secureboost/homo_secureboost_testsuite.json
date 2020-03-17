@@ -170,6 +170,10 @@
       "conf": "./test_secureboost_train_binary_conf.json",
       "dsl": "./test_secureboost_train_dsl.json"
     },
+    "train_binary_predict": {
+      "conf": "./test_predict_conf.json",
+      "deps": "train_binary"
+    },
     "train_multi": {
       "conf": "./test_secureboost_train_multi_conf.json",
       "dsl": "./test_secureboost_train_dsl.json"
@@ -197,6 +201,7 @@
     "cv_regression": {
       "conf": "./test_secureboost_cross_validation_regression_conf.json",
       "dsl": "./test_secureboost_cross_validation_dsl.json"
-    }
+    },
+
   }
 }

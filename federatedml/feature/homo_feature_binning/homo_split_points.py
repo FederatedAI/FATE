@@ -19,12 +19,10 @@
 import numpy as np
 
 from arch.api.utils import log_utils
-from federatedml.framework.homo.blocks import secure_mean_aggregator
-from federatedml.param.feature_binning_param import FeatureBinningParam
-from federatedml.feature.binning.base_binning import Binning
 from federatedml.feature.binning.quantile_binning import QuantileBinning
-from federatedml.param.feature_binning_param import FeatureBinningParam
+from federatedml.framework.homo.blocks import secure_mean_aggregator
 from federatedml.framework.weights import DictWeights
+from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
 
@@ -39,7 +37,7 @@ class HomoFeatureBinningServer(object):
     def set_suffix(self, suffix):
         self.suffix = suffix
 
-    def average_run(self,):
+    def average_run(self, data_instances=None, bin_param: FeatureBinningParam = None, bin_num=10, abnormal_list=None):
         agg_split_points = self.split_points_aggregator.mean_model(suffix=self.suffix)
         self.split_points_aggregator.send_aggregated_model(agg_split_points)
 
@@ -54,7 +52,7 @@ class HomoFeatureBinningClient(object):
     def set_suffix(self, suffix):
         self.suffix = suffix
 
-    def average_run(self, data_instances, bin_param: FeatureBinningParam=None, bin_num=10, abnormal_list=None):
+    def average_run(self, data_instances, bin_param: FeatureBinningParam = None, bin_num=10, abnormal_list=None):
         if bin_param is None:
             bin_param = FeatureBinningParam(bin_num=bin_num)
 
