@@ -15,8 +15,8 @@
         "guest": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "homo_credit_guest", "namespace": "cwj"}],
-                    "eval_data": [{"name": "homo_credit_test", "namespace": "cwj"}]
+                    "train_data": [{"name": "homo_credit_guest", "namespace": "homo"}],
+                    "eval_data": [{"name": "homo_credit_test", "namespace": "homo"}]
                 }
             },
             "dataio_0":{
@@ -29,8 +29,8 @@
         "host": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "homo_credit_host", "namespace": "cwj"}],
-                    "eval_data": [{"name": "homo_credit_test", "namespace": "cwj"}]
+                    "train_data": [{"name": "homo_credit_host", "namespace": "homo"}],
+                    "eval_data": [{"name": "homo_credit_test", "namespace": "homo"}]
                 }
             },
             "dataio_0":{
