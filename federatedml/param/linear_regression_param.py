@@ -97,8 +97,7 @@ class LinearParam(BaseParam):
                  encrypt_param=EncryptParam(), sqn_param=StochasticQuasiNewtonParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  cv_param=CrossValidationParam(), decay=1, decay_sqrt=True, validation_freqs=None,
-                 early_stopping_rounds=None):
-                 cv_param=CrossValidationParam(), stepwise_param=StepwiseParam(), decay=1, decay_sqrt=True, validation_freqs=None):
+                 early_stopping_rounds=None, stepwise_param=StepwiseParam()):
         super(LinearParam, self).__init__()
         self.penalty = penalty
         self.tol = tol
