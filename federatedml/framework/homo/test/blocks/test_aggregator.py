@@ -25,12 +25,12 @@ def aggregator_call(job_id, role, ind, *args):
     server_model = args[0][0]
     client_models = args[0][1:]
     if role == consts.ARBITER:
-        agg = aggregator.Server().set_flowid(job_id)
+        agg = aggregator.Server()
         models = agg.get_models()
         agg.send_aggregated_model(server_model)
         return models
     else:
-        agg = aggregator.Client().set_flowid(job_id)
+        agg = aggregator.Client()
         if role == consts.GUEST:
             agg.send_model(client_models[0])
         else:

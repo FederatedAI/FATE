@@ -101,7 +101,7 @@ class PoissonParam(BaseParam):
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  cv_param=CrossValidationParam(), stepwise_param=StepwiseParam(),
                  decay=1, decay_sqrt=True,
-                 validation_freqs=None):
+                 validation_freqs=None, early_stopping_rounds=None):
         super(PoissonParam, self).__init__()
         self.penalty = penalty
         self.tol = tol
@@ -122,6 +122,7 @@ class PoissonParam(BaseParam):
         self.exposure_colname = exposure_colname
         self.validation_freqs = validation_freqs
         self.stepwise_param = stepwise_param
+        self.early_stopping_rounds = early_stopping_rounds
 
     def check(self):
         descr = "poisson_regression_param's "
@@ -218,4 +219,14 @@ class PoissonParam(BaseParam):
             if type(self.validation_freqs).__name__ == "int" and self.validation_freqs <= 0:
                 raise ValueError("validation strategy param's validate_freqs should greater than 0")
         self.stepwise_param.check()
+
+        if self.early_stopping_rounds is None:
+            pass
+        elif isinstance(self.early_stopping_rounds, int):
+            if self.early_stopping_rounds < 1:
+                raise ValueError("early stopping rounds should be larger than 0 when it's integer")
+            if self.validation_freqs is None:
+                raise ValueError("validation freqs must be set when early stopping is enabled")
+
+
         return True

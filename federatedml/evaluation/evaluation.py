@@ -41,8 +41,8 @@ from federatedml.model_base import ModelBase
 
 LOGGER = log_utils.getLogger()
 
-
 class PerformanceRecorder():
+
     """
     This class record performance(single value metrics during the training process)
     """
@@ -51,18 +51,19 @@ class PerformanceRecorder():
 
         # all of them are single value metrics
         self.allowed_metric = [consts.AUC,
-                               consts.EXPLAINED_VARIANCE,
-                               consts.MEAN_ABSOLUTE_ERROR,
-                               consts.MEAN_SQUARED_ERROR,
-                               consts.MEAN_SQUARED_LOG_ERROR,
-                               consts.MEDIAN_ABSOLUTE_ERROR,
-                               consts.R2_SCORE,
-                               consts.ROOT_MEAN_SQUARED_ERROR,
-                               consts.PRECISION,
-                               consts.RECALL,
-                               consts.ACCURACY,
-                               consts.KS
-                               ]
+                              consts.EXPLAINED_VARIANCE,
+                              consts.MEAN_ABSOLUTE_ERROR,
+                              consts.MEAN_SQUARED_ERROR,
+                              consts.MEAN_SQUARED_LOG_ERROR,
+                              consts.MEDIAN_ABSOLUTE_ERROR,
+                              consts.R2_SCORE,
+                              consts.ROOT_MEAN_SQUARED_ERROR,
+                              consts.PRECISION,
+                              consts.RECALL,
+                              consts.ACCURACY,
+                              consts.KS
+                            ]
+
 
         self.larger_is_better = [consts.AUC,
                                  consts.R2_SCORE,
@@ -80,7 +81,7 @@ class PerformanceRecorder():
 
         self.cur_best_performance = {}
 
-        self.no_improvement_round = {}  # record no improvement round of all metrics
+        self.no_improvement_round = {} # record no improvement round of all metrics
 
     def has_improved(self, val: float, metric: str, cur_best: dict):
 
@@ -97,9 +98,11 @@ class PerformanceRecorder():
 
     def update(self, eval_dict: dict):
         """
+
         Parameters
         ----------
         eval_dict dict, {metric_name:metric_val}, e.g. {'auc':0.99}
+
         Returns stop flag, if should stop return True, else False
         -------
         """
@@ -164,8 +167,8 @@ class Evaluation(ModelBase):
                         consts.REGRESSION: self.regression_support_func}
 
         self.round_num = 6
-
-        # record name of train and validate dataset
+	
+	# record name of train and validate dataset
         self.validate_key = set()
         self.train_key = set()
 
@@ -241,7 +244,7 @@ class Evaluation(ModelBase):
                         LOGGER.info("res is inf, set to {}".format(res))
                 except:
                     pass
-
+                   
                 eval_result[eval_metric].append(mode)
                 eval_result[eval_metric].append(res)
 
@@ -343,6 +346,7 @@ class Evaluation(ModelBase):
         Parameters
         ----------
         return_single_val_metrics if True return single_val_metrics
+
         Returns None or return_result dict
         -------
         """
@@ -365,7 +369,7 @@ class Evaluation(ModelBase):
 
                     if metric in self.save_single_value_metric_list:
                         self.__save_single_value(metric_res[1], metric_name=data_type, metric_namespace=metric_namespace
-                                                 , eval_name=metric)
+                                                 ,eval_name=metric)
                         collect_dict[metric] = metric_res[1]
 
                     elif metric == consts.KS:
@@ -426,8 +430,7 @@ class Evaluation(ModelBase):
 
                         if precision_res[0] != recall_res[0]:
                             LOGGER.warning(
-                                "precision mode:{} is not equal to recall mode:{}".format(precision_res[0],
-                                                                                          recall_res[0]))
+                                "precision mode:{} is not equal to recall mode:{}".format(precision_res[0], recall_res[0]))
                             continue
 
                         metric_namespace = precision_res[0]
@@ -499,7 +502,7 @@ class Evaluation(ModelBase):
                         LOGGER.warning("Unknown metric:{}".format(metric))
 
         if return_single_val_metrics:
-            if len(self.validate_metric) != 0:
+            if len(self.validate_metric) !=0:
                 LOGGER.debug("return validate metric")
                 return self.validate_metric
             else:
@@ -518,10 +521,12 @@ class Evaluation(ModelBase):
     def auc(self, labels, pred_scores):
         """
         Compute AUC for binary classification.
+
         Parameters
         ----------
         labels: value list. The labels of data set.
         pred_scores: value list. The predict results of model. It should be corresponding to labels each data.
+
         Returns
         ----------
         float
@@ -540,6 +545,7 @@ class Evaluation(ModelBase):
         ----------
         labels: value list. The labels of data set.
         pred_scores: value list. The predict results of model. It should be corresponding to labels each data.
+
         Returns
         ----------
         float

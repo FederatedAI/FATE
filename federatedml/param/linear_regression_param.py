@@ -86,6 +86,8 @@ class LinearParam(BaseParam):
     validation_freqs: int, list, tuple, set, or None
         validation frequency during training.
 
+
+
     """
 
     def __init__(self, penalty='L2',
@@ -94,6 +96,8 @@ class LinearParam(BaseParam):
                  max_iter=100, early_stop='diff', predict_param=PredictParam(),
                  encrypt_param=EncryptParam(), sqn_param=StochasticQuasiNewtonParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
+                 cv_param=CrossValidationParam(), decay=1, decay_sqrt=True, validation_freqs=None,
+                 early_stopping_rounds=None):
                  cv_param=CrossValidationParam(), stepwise_param=StepwiseParam(), decay=1, decay_sqrt=True, validation_freqs=None):
         super(LinearParam, self).__init__()
         self.penalty = penalty
@@ -113,6 +117,7 @@ class LinearParam(BaseParam):
         self.decay_sqrt = decay_sqrt
         self.validation_freqs = validation_freqs
         self.sqn_param = copy.deepcopy(sqn_param)
+        self.early_stopping_rounds = early_stopping_rounds
         self.stepwise_param = copy.deepcopy(stepwise_param)
 
     def check(self):
@@ -202,5 +207,14 @@ class LinearParam(BaseParam):
                 raise ValueError("validation strategy param's validate_freqs should greater than 0")
         self.sqn_param.check()
         self.stepwise_param.check()
+
+        if self.early_stopping_rounds is None:
+            pass
+        elif isinstance(self.early_stopping_rounds, int):
+            if self.early_stopping_rounds < 1:
+                raise ValueError("early stopping rounds should be larger than 0 when it's integer")
+            if self.validation_freqs is None:
+                raise ValueError("validation freqs must be set when early stopping is enabled")
+
 
         return True

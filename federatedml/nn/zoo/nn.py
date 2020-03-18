@@ -15,12 +15,11 @@
 #
 
 from tensorflow.keras import Sequential
-
 from federatedml.nn.backend.tf_keras.layers import get_builder, has_builder
 from federatedml.nn.backend.tf_keras.nn_model import from_keras_sequential_model, KerasNNModel, \
     restore_keras_nn_model
 
-from federatedml.nn.backend.pytorch.nn_model import PytorchNNModel,restore_pytorch_nn_model
+
 
 def build_nn_model(input_shape, nn_define, loss, optimizer, metrics,
                    is_supported_layer=has_builder,
@@ -48,7 +47,10 @@ def build_nn_model(input_shape, nn_define, loss, optimizer, metrics,
 
 def restore_nn_model(config_type, model_bytes):
     if config_type =="pytorch":
+        from federatedml.nn.backend.pytorch.nn_model import restore_pytorch_nn_model
         return restore_pytorch_nn_model(model_bytes)
     else:
         return restore_keras_nn_model(model_bytes)
+
+
 

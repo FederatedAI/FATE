@@ -73,7 +73,8 @@ class HeteroNNParam(BaseParam):
                  encrypted_mode_calculator_param = EncryptedModeCalculatorParam(mode="confusion_opt"),
                  predict_param=PredictParam(),
                  cv_param=CrossValidationParam(),
-                 validation_freqs=None):
+                 validation_freqs=None,
+                 early_stopping_rounds=None):
         super(HeteroNNParam, self).__init__()
 
         self.task_type = task_type
@@ -90,6 +91,7 @@ class HeteroNNParam(BaseParam):
         self.optimizer = optimizer
         self.loss = loss
         self.validation_freqs = validation_freqs
+        self.early_stopping_rounds = early_stopping_rounds
 
         self.encrypt_param = copy.deepcopy(encrypt_param)
         self.encrypted_model_calculator_param = encrypted_mode_calculator_param
@@ -138,6 +140,12 @@ class HeteroNNParam(BaseParam):
                 raise ValueError("validation_freqs should be larger than 0 when it's integer")
         elif not isinstance(self.validation_freqs, collections.Container):
             raise ValueError("validation_freqs should be None or positive integer or container")
+
+        if self.early_stopping_rounds and not isinstance(self.early_stopping_rounds, int):
+            raise ValueError("early stopping rounds should be None or int larger than 0")
+        if self.early_stopping_rounds and isinstance(self.early_stopping_rounds, int):
+            if self.early_stopping_rounds < 1:
+                raise ValueError("early stopping should be larger than 0 when it's integer")
 
         self.encrypt_param.check()
         self.encrypted_model_calculator_param.check()

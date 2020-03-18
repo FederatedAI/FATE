@@ -109,6 +109,8 @@
       "early_stop": "weight_diff",
       "batch_size": -1,
       "learning_rate": 0.15,
+      "validation_freqs": 3,
+      "early_stopping_rounds": 3,
       "init_param": {
         "init_method": "random_uniform"
       },

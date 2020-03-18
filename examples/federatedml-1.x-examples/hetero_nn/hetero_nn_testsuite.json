@@ -41,6 +41,10 @@
     "train_multi": {
       "conf": "./test_hetero_nn_keras_multi_label.json",
       "dsl": "./test_hetero_nn_dsl.json"
+    },
+    "train_with_early_stop": {
+      "conf": "./test_hetero_nn_keras_with_early_stop.json",
+      "dsl": "./test_hetero_nn_dsl_with_early_stop.json"
     }
   }
 }

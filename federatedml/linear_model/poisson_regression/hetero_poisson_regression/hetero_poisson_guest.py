@@ -51,7 +51,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         self._abnormal_detection(data_instances)
         self.header = copy.deepcopy(self.get_header(data_instances))
 
-        validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 
         self.exposure_index = self.get_exposure_index(self.header, self.exposure_colname)
         if self.exposure_index > -1:
@@ -109,7 +109,12 @@ class HeteroPoissonGuest(HeteroPoissonBase):
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
 
-            validation_strategy.validate(self, self.n_iter_)
+            if self.validation_strategy:
+                LOGGER.debug('Poisson guest running validation')
+                self.validation_strategy.validate(self, self.n_iter_)
+                if self.validation_strategy.need_stop():
+                    LOGGER.debug('early stopping triggered')
+                    break
             self.n_iter_ += 1
             if self.is_converged:
                 break
