@@ -26,10 +26,11 @@ from datetime import timedelta
 
 class Submitter(object):
 
-    def __init__(self, fate_home="", work_mode=0, backend=0):
+    def __init__(self, fate_home="", work_mode=0, backend=0, existing_strategy=0):
         self._fate_home = fate_home
         self._work_mode = work_mode
         self._backend = backend
+        self._existing_strategy = existing_strategy
 
     @property
     def _flow_client_path(self):
@@ -66,8 +67,10 @@ class Submitter(object):
         except json.decoder.JSONDecodeError:
             raise ValueError(f"[submit_job]fail, stdout:{stdout}")
         if status != 0:
+            if status == 100 and "table already exists" in stdout:
+                return None
             raise ValueError(f"[submit_job]fail, status:{status}, stdout:{stdout}")
-        return stdout
+        return stdout["jobId"]
 
     def upload(self, data_path, namespace, name, partition=10, head=1, remote_host=None):
         conf = dict(
@@ -84,9 +87,11 @@ class Submitter(object):
             if remote_host:
                 self.run_cmd(["scp", f.name, f"{remote_host}:{f.name}"])
                 env_path = os.path.join(self._fate_home, "../../init_env.sh")
-                upload_cmd = " && ".join([f"source {env_path}",
-                                          f"python {self._flow_client_path} -f upload -c {f.name}",
-                                          f"rm {f.name}"])
+                upload_cmd = f"source {env_path}"
+                upload_cmd = f"{upload_cmd} && python {self._flow_client_path} -f upload -c {f.name}"
+                if self._existing_strategy == 0 or self._existing_strategy == 1:
+                    upload_cmd = f"{upload_cmd} -drop {self._existing_strategy}"
+                upload_cmd = f"{upload_cmd} && rm {f.name}"
                 stdout = self.run_cmd(["ssh", remote_host, upload_cmd])
                 try:
                     stdout = json.loads(stdout)
@@ -94,10 +99,15 @@ class Submitter(object):
                 except json.decoder.JSONDecodeError:
                     raise ValueError(f"[submit_job]fail, stdout:{stdout}")
                 if status != 0:
+                    if status == 100 and "table already exists" in stdout:
+                        return None
                     raise ValueError(f"[submit_job]fail, status:{status}, stdout:{stdout}")
-                return stdout
+                return stdout["jobId"]
             else:
-                return self.submit(["-f", "upload", "-c", f.name])
+                cmd = ["-f", "upload", "-c", f.name]
+                if self._existing_strategy == 0 or self._existing_strategy == 1:
+                    cmd.extend(["-drop", "1"])
+                return self.submit(cmd)
 
     def delete_table(self, namespace, name):
         pass

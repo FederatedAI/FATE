@@ -35,21 +35,20 @@ def get_ip(env, party_id):
     return None if ip == -1 else ip
 
 
-def data_upload(submitter, env, task_data, check_interval=3):
+def data_upload(submitter, env, task_data, check_interval):
     for data in task_data:
         role, idx = data["role"].split("_", 1)
         party_id = get_party_id(env, role, int(idx))
         host_ip = get_ip(env, str(party_id))
         format_msg = f"@{data['role']}:{data['file']} >> {data['namespace']}.{data['table_name']}"
         print(f"[{time.strftime('%Y-%m-%d %X')}]uploading {format_msg}")
-        stdout = submitter.upload(data_path=data["file"],
+        job_id = submitter.upload(data_path=data["file"],
                                   namespace=data["namespace"],
                                   name=data["table_name"],
                                   partition=data["partition"],
                                   head=data["head"],
                                   remote_host=host_ip)
-        job_id = stdout["jobId"]
-        if not host_ip:
+        if job_id is not None and not host_ip:
             submitter.await_finish(job_id, check_interval=check_interval)
         else:
             print("warning: not check remote uploading status!!!")
@@ -88,7 +87,9 @@ def run_testsuite(submitter, env, file_name, err_name, check_interval=3, skip_da
         configs = json.loads(f.read())
 
     if not skip_data:
-        data_upload(submitter=submitter, env=env, task_data=configs["data"], check_interval=check_interval)
+        data_upload(submitter=submitter,
+                    env=env, task_data=configs["data"],
+                    check_interval=check_interval)
 
     for task_name, task_config in configs["tasks"].items():
         try:
@@ -163,6 +164,14 @@ def main():
     arg_parser.add_argument("-i", "--interval", type=int, help="check job status every i seconds, defaults to 1",
                             default=1)
     arg_parser.add_argument("--skip_data", help="skip data upload", action="store_true")
+    arg_parser.add_argument("-f", "--force",
+                            help="table existing strategy, "
+                                 "-1 means skip upload, "
+                                 "0 means force upload, "
+                                 "1 means upload after deleting old table",
+                            type=int,
+                            default=-1,
+                            choices=[-1, 0, 1])
     args = arg_parser.parse_args()
 
     env_conf = args.env_conf
@@ -173,8 +182,9 @@ def main():
     interval = args.interval
     skip_data = args.skip_data
     work_mode = args.mode
+    existing_strategy = args.force
 
-    submitter = submit.Submitter(fate_home=fate_home, work_mode=work_mode)
+    submitter = submit.Submitter(fate_home=fate_home, work_mode=work_mode, existing_strategy=existing_strategy)
 
     @register
     def _on_exit():
