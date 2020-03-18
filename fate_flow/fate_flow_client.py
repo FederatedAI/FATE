@@ -26,7 +26,7 @@ import requests
 
 from arch.api.utils import file_utils
 from arch.api.utils.core import get_lan_ip
-from fate_flow.settings import SERVERS, ROLE, API_VERSION
+from fate_flow.settings import SERVERS, ROLE, API_VERSION, USE_LOCAL_DATA
 from fate_flow.utils import detect_utils
 
 server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
@@ -149,7 +149,14 @@ def call_fun(func, config_data, dsl_path, config_path):
         else:
             response = requests.post("/".join([server_url, "tracking", func.replace('_', '/')]), json=config_data)
     elif func in DATA_FUNC:
-        response = requests.post("/".join([server_url, "data", func.replace('_', '/')]), json=config_data)
+        if USE_LOCAL_DATA and func == 'upload':
+            file_name = config_data.get('file')
+            if not os.path.isabs(file_name):
+                file_name = os.path.join(file_utils.get_project_base_directory(), file_name)
+            files = {'file': open(file_name, 'rb')}
+            response = requests.post("/".join([server_url, "data", func.replace('_', '/')]), data=config_data, files=files)
+        else:
+            response = requests.post("/".join([server_url, "data", func.replace('_', '/')]), json=config_data)
         try:
             if response.json()['retcode'] == 999:
                 start_cluster_standalone_job_server()
