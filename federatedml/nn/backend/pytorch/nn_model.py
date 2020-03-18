@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 from arch.api.utils import log_utils
 from federatedml.framework.weights import OrderDictWeights, Weights
 from federatedml.nn.homo_nn.nn_model import NNModel, DataConverter
-from sklearn.metrics import accuracy_score, precision_score, auc, recall_score
+from sklearn.metrics import accuracy_score, precision_score, roc_auc_score, recall_score, f1_score, fbeta_score
 
 Logger = log_utils.getLogger()
 
@@ -52,12 +52,12 @@ def layers(layer, config, type):
             return torch.nn.Dropout()
 
 
-def build_pytorch(nn_define, optimizer, loss):
+def build_pytorch(nn_define, optimizer, loss, metrics):
     model = torch.nn.Sequential()
     for config in nn_define:
         layer = layers(config.get("layer"), config.get("config"), config.get("type"))
         model.add_module(config.get("name"), layer)
-    return PytorchNNModel(model, optimizer, loss)
+    return PytorchNNModel(model, optimizer, loss, metrics)
 
 
 def build_loss_fn(loss):
@@ -75,6 +75,8 @@ def build_loss_fn(loss):
         return torch.nn.L1Loss()
     elif loss == "SmoothL1Loss":
         return torch.nn.SmoothL1Loss()
+    elif loss == "HingeEmbeddingLoss":
+        return torch.nn.HingeEmbeddingLoss()
     else:
         print("loss function not support!")
 
@@ -98,10 +100,11 @@ def restore_pytorch_nn_model(model_bytes):
 
 class PytorchNNModel(NNModel):
 
-    def __init__(self, model, optimizer=None, loss=None):
+    def __init__(self, model, optimizer=None, loss=None, metrics=None):
         self._model: torch.nn.Sequential = model
         self._optimizer = optimizer
         self._loss = loss
+        self._metrics = metrics
 
     def get_model_weights(self) -> OrderDictWeights:
         return OrderDictWeights(self._model.state_dict())
@@ -130,58 +133,80 @@ class PytorchNNModel(NNModel):
                 optimizer.step()
 
     def evaluate(self, data: data.dataset, **kwargs):
+
         metircs = {}
-        metircs["loss"] = 0
-        metircs["auccuray"] = 0
-        loss_l1 = torch.nn.L1Loss()
-        loss_mse = torch.nn.MSELoss()
-        loss_fn = build_loss_fn(self._loss)
-        loss_hingle = torch.nn.HingeEmbeddingLoss()
+        loss_metircs = []
+        loss_fuc = []
+        other_metrics = []
+        if self._metrics:
+            for func in self._metrics:
+                if func.endswith("Loss"):
+                    loss_metircs.append(func)
+                    loss_fuc.append(build_loss_fn(func))
+                else:
+                    other_metrics.append(func)
         self._model.eval()
+        loss_fn = build_loss_fn(self._loss)
         evaluate_data = DataLoader(data, batch_size=data.batch_size, shuffle=False)
         result = np.zeros((len(data), data.y_shape[0]))
         eval_label = np.zeros((len(data), data.y_shape[0]))
+        if loss_metircs:
+           loss_metircs_result = [0 for i in range(len(loss_metircs))]
         num_output_units = data.get_shape()[1]
         index = 0
         batch_num = 0
-        eval_loss = 0
-        mse_loss = 0
-        ab_loss = 0
-        hingle_loss = 0
+        loss = 0
         for batch_id, (feature, label) in enumerate(evaluate_data):
             feature = torch.tensor(feature, dtype=torch.float32)
             label = torch.tensor(label, dtype=torch.float32)
             y = self._model(feature)
-            loss = loss_fn(y, label)
-            l1_loss = loss_l1(y, label)
-            l2_loss = loss_mse(y, label)
-            hin_loss = loss_hingle(y, label)
-            eval_loss += loss
-            mse_loss += l2_loss
-            ab_loss += l1_loss
-            hingle_loss += hin_loss
             result[index:index + feature.shape[0]] = y.detach().numpy()
             eval_label[index:index + feature.shape[0]] = label.detach().numpy()
+            eval_loss = loss_fn(y, label)
+            if loss_metircs:
+                for i in range(len(loss_fuc)):
+                    f=loss_fuc[i]
+                    res = f(y, label)
+                    loss_metircs_result[i] += res.item()
+            loss += eval_loss
             index += feature.shape[0]
             batch_num += 1
-        metircs["loss"] = eval_loss.item()
-        metircs["mse"] = mse_loss.item()
-        metircs["l1"] = l1_loss.item()
 
-        acc = 0
-        if num_output_units[0] == 1:
-            for i in range(len(data)):
-                if (result[i] > 0.5):
-                    result[i] = 1
-                else:
-                    result[i] = 0
-            metircs["auccuray"] = accuracy_score(eval_label, result)
-            metircs["precision"] = precision_score(eval_label, result)
-        else:
-            for i in range(len(data)):
-                if (result[i].argmax() == eval_label[i].argmax()):
-                    acc += 1;
-            metircs["auccuray"] = acc / len(data)
+        metircs["loss"] = loss.item() * data.batch_size / len(data)
+        if loss_metircs:
+            i=0
+            for func in loss_metircs:
+                metircs[func] = loss_metircs_result[i] * data.batch_size / len(data)
+                i+=1
+        if len(other_metrics) > 0:
+            if num_output_units[0] == 1:
+                for i in range(len(data)):
+                    if (result[i] > 0.5):
+                        result[i] = 1
+                    else:
+                        result[i] = 0
+                for fuc_name in other_metrics:
+                    if fuc_name == "auccuray":
+                        metircs[str(fuc_name)] = accuracy_score(result, eval_label)
+                    elif fuc_name == "precision":
+                        metircs[str(fuc_name)] = precision_score(result, eval_label)
+                    elif fuc_name == "recall":
+                        metircs[str(fuc_name)] = recall_score(result, eval_label)
+                    elif fuc_name == "auc":
+                        metircs[str(fuc_name)] = roc_auc_score(result, eval_label)
+                    elif fuc_name == "f1":
+                        metircs[str(fuc_name)] = f1_score(result, eval_label)
+                    elif fuc_name == "fbeta":
+                        metircs[str(fuc_name)] = fbeta_score(result, eval_label, beta=2)
+                    else:
+                        print("metrics not support ")
+            else:
+                acc = 0
+                for i in range(len(data)):
+                    if (result[i].argmax() == eval_label[i].argmax()):
+                        acc += 1;
+                    metircs["auccuray"] = acc / len(data)
+
         return metircs
 
     def predict(self, data: data.dataset, **kwargs):
@@ -197,6 +222,7 @@ class PytorchNNModel(NNModel):
             index += feature.shape[0]
         return result
 
+
     def export_model(self):
         f = tempfile.TemporaryFile()
         try:
@@ -207,6 +233,7 @@ class PytorchNNModel(NNModel):
         finally:
             f.close()
 
+
     def restore_model(model_bytes):
         f = tempfile.TemporaryFile()
         f.write(model_bytes)
@@ -214,6 +241,9 @@ class PytorchNNModel(NNModel):
         model = torch.load(f)
         f.close()
         return PytorchNNModel(model)
+
+
+
 
 
 # class PredictNN(NNModel):
@@ -311,3 +341,4 @@ class PytorchData(data.Dataset):
 class PytorchDataConverter(DataConverter):
     def convert(self, data, *args, **kwargs):
         return PytorchData(data, *args, **kwargs)
+
