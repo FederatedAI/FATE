@@ -126,6 +126,7 @@ class MysqlQueue(BaseQueue):
     @staticmethod
     def lock(db, lock_name, timeout):
         sql = "SELECT GET_LOCK('%s', %s)" % (lock_name, timeout)
+        stat_logger.info('lock mysql, lockname {}'.format(lock_name))
         cursor = db.execute_sql(sql)
         ret = cursor.fetchone()
         if ret[0] == 0:
@@ -138,6 +139,7 @@ class MysqlQueue(BaseQueue):
     @staticmethod
     def unlock(db, lock_name):
         sql = "SELECT RELEASE_LOCK('%s')" % (lock_name)
+        stat_logger.info('unlock mysql, lockname {}'.format(lock_name))
         cursor = db.execute_sql(sql)
         ret = cursor.fetchone()
         if ret[0] == 0:
@@ -160,12 +162,12 @@ class MysqlQueue(BaseQueue):
         with self.not_full:
             with DB.connection_context():
                 error = None
-                MysqlQueue.lock(DB, 'queue', 10)
+                MysqlQueue.lock(DB, 'fate_flow_job_queue', 10)
                 try:
                     self.update_event(item=item)
                 except Exception as e:
                     error =e
-                MysqlQueue.unlock(DB, 'queue')
+                MysqlQueue.unlock(DB, 'fate_flow_job_queue')
                 if error:
                     raise Exception(e)
             self.not_empty.notify()
@@ -199,14 +201,14 @@ class MysqlQueue(BaseQueue):
                     self.not_empty.wait(remaining)
             with DB.connection_context():
                 error = None
-                MysqlQueue.lock(DB, 'queue', 10)
+                MysqlQueue.lock(DB, 'fate_flow_job_queue', 10)
                 try:
-                    item = self.query_events()[0]
+                    item = Queue.select().where(Queue.f_is_waiting == 1)[0]
                     if item:
                         self.update_event(item.f_job_id)
                 except Exception as e:
                     error = e
-                MysqlQueue.unlock(DB, 'queue')
+                MysqlQueue.unlock(DB, 'fate_flow_job_queue')
                 if error:
                     raise Exception(e)
                 self.not_full.notify()
@@ -225,20 +227,19 @@ class MysqlQueue(BaseQueue):
             return [event for event in events]
 
     def update_event(self, job_id=None, item=None):
-        with DB.connection_context():
-            if job_id:
-                event = Queue.select().where(Queue.f_job_id == job_id)[0]
-                event.f_is_waiting = 0
-            else:
-                event = Queue()
-                event.f_job_id = item.get('job_id')
-                event.f_event = json.dumps(item)
-            event.save()
+        if job_id:
+            event = Queue.select().where(Queue.f_job_id == job_id)[0]
+            event.f_is_waiting = 0
+        else:
+            event = Queue()
+            event.f_job_id = item.get('job_id')
+            event.f_event = json.dumps(item)
+        event.save()
 
     def dell(self, item):
         with self.not_empty:
             with DB.connection_context():
-                MysqlQueue.lock(DB, 'queue', 10)
+                MysqlQueue.lock(DB, 'fate_flow_job_queue', 10)
                 del_status = True
                 try:
                     job_id = item.get('job_id')
@@ -250,27 +251,9 @@ class MysqlQueue(BaseQueue):
                 except Exception as e:
                     stat_logger.exception(e)
                     del_status = False
-                MysqlQueue.unlock(DB, 'queue')
+                MysqlQueue.unlock(DB, 'fate_flow_job_queue')
             self.not_full.notify()
         return del_status
-
-    # def clean(self):
-    #     with self.not_empty:
-    #         with DB.connection_context():
-    #             events = self.query_events()
-    #             if events:
-    #                 MysqlQueue.lock(DB, 'queue', 10)
-    #                 try:
-    #                     for event in events:
-    #                         event.f_is_waiting = 2
-    #                         event.save()
-    #                 except Exception as e:
-    #                     error = e
-    #                 MysqlQueue.unlock(DB, 'queue')
-    #                 if error:
-    #                     raise error
-    #             else:
-    #                 return False
 
 
 class InProcessQueue(BaseQueue):
