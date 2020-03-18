@@ -141,6 +141,11 @@ class DTable(Table):
         # return DTable(self._dtable.map_partitions(func), session_id=self._session_id)
         return DTable(self._dtable.collapse_partitions(func), session_id=self._session_id)
 
+    @log_elapsed
+    def mapPartitions2(self, func, **kwargs):
+        # return DTable(self._dtable.map_partitions(func), session_id=self._session_id)
+        return DTable(self._dtable.map_partitions(func), session_id=self._session_id)
+
     # noinspection PyUnusedLocal
     @log_elapsed
     def collapsePartitions(self, func, **kwargs):
