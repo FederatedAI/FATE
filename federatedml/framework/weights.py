@@ -56,7 +56,7 @@ class TransferableWeights(metaclass=segment_transfer_enabled()):
             return self._cls(self._weights, *args, **kwargs)
 
 
-class Weights(object):
+class Weights(metaclass=segment_transfer_enabled()):
 
     def __init__(self, l):
         self._weights = l

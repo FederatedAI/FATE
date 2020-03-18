@@ -21,6 +21,7 @@ from federatedml.framework.homo.blocks import random_padding_cipher
 from federatedml.framework.homo.blocks.aggregator import AggregatorTransVar
 from federatedml.framework.homo.blocks.base import HomoTransferBase
 from federatedml.framework.homo.blocks.random_padding_cipher import RandomPaddingCipherTransVar
+from federatedml.secureprotol.encrypt import PadsCipher
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
@@ -42,14 +43,12 @@ class Server(object):
             random_padding_cipher.Server(trans_var=trans_var.random_padding_cipher_trans_var) \
                 .exchange_secret_keys()
 
-    def aggregate_model(self, suffix=tuple()):
-        models = self._aggregator.get_models(suffix=suffix)
-        total_model, total_degree = models[0]
-        for model, degree in models[1:]:
-            total_model = model_add(total_model, model)
-            total_degree += degree
-        mean_model = model_div_scalar(total_model, total_degree)
-        return mean_model
+    def get_models(self, suffix=tuple()):
+        return self._aggregator.get_models(suffix=suffix)
+
+    def aggregate(self, func, suffix=tuple()):
+        models = self.get_models(suffix=suffix)
+        return func(models)
 
     def send_aggregated_model(self, model, suffix=tuple()):
         self._aggregator.send_aggregated_model(model=model, suffix=suffix)
@@ -60,42 +59,21 @@ class Client(object):
         self.enable_secure_aggregate = enable_secure_aggregate
         self._aggregator = aggregator.Client(trans_var=trans_var.aggregator_trans_var)
         if enable_secure_aggregate:
-            self._random_padding_cipher = \
+            self._random_padding_cipher: PadsCipher = \
                 random_padding_cipher.Client(trans_var=trans_var.random_padding_cipher_trans_var).create_cipher()
 
-    def send_model(self, model, degree: float = None, suffix=tuple()):
-        # w -> w * degree
-        if degree is not None:
-            model = model_mul_scalar(model, degree)
-        else:
-            degree = 1.0
-        # w * degree -> w * degree + \sum(\delta(i, j) * r_{ij}), namely， adding random mask.
-        if self.enable_secure_aggregate:
-            model = model_encrypted(model, cipher=self._random_padding_cipher)
+    def send_model(self, model, suffix=tuple()):
 
-        self._aggregator.send_model((model, degree), suffix=suffix)
+        # w  -> w  + \sum(\delta(i, j) * r_{ij}), namely， adding random mask.
+        if self.enable_secure_aggregate:
+            model = model_cipher_func(model)(self._random_padding_cipher)
+
+        self._aggregator.send_model(model=model, suffix=suffix)
 
     def get_aggregated_model(self, suffix=tuple()):
         return self._aggregator.get_aggregated_model(suffix=suffix)
 
 
 @functools.singledispatch
-def model_encrypted(model, cipher):
-    return model.encrypted(cipher, inplace=True)
-
-
-@functools.singledispatch
-def model_add(model, other):
-    return model + other
-
-
-@functools.singledispatch
-def model_mul_scalar(model, scalar):
-    model *= scalar
-    return model
-
-
-@functools.singledispatch
-def model_div_scalar(model, scalar):
-    model /= scalar
-    return model
+def model_cipher_func(model):
+    return lambda cipher: model.encrypted(cipher, inplace=True)

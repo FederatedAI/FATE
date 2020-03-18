@@ -17,7 +17,7 @@
 from arch.api import session
 from arch.api.utils.log_utils import LoggerFactory
 from fate_flow.entity.metric import MetricType, MetricMeta, Metric
-from federatedml.framework.homo.blocks import secure_aggregator, loss_scatter, has_converged
+from federatedml.framework.homo.blocks import secure_mean_aggregator, loss_scatter, has_converged
 from federatedml.framework.homo.blocks.base import HomoTransferBase
 from federatedml.framework.homo.blocks.has_converged import HasConvergedTransVar
 from federatedml.framework.homo.blocks.loss_scatter import LossScatterTransVar
@@ -68,7 +68,7 @@ class HomoNNServer(HomoNNBase):
         super().__init__(trans_var=trans_var)
         self.model = None
 
-        self.aggregator = secure_aggregator.Server(self.transfer_variable.secure_aggregator_trans_var)
+        self.aggregator = secure_mean_aggregator.Server(self.transfer_variable.secure_aggregator_trans_var)
         self.loss_scatter = loss_scatter.Server(self.transfer_variable.loss_scatter_trans_var)
         self.has_converged = has_converged.Server(self.transfer_variable.has_converged_trans_var)
 
@@ -80,7 +80,7 @@ class HomoNNServer(HomoNNBase):
 
     def callback_loss(self, iter_num, loss):
         metric_meta = MetricMeta(name='train',
-                                 metric_type="LOSS",
+                                 metric_type=MetricType.LOSS,
                                  extra_metas={
                                      "unit_name": "iters",
                                  })
@@ -103,7 +103,7 @@ class HomoNNServer(HomoNNBase):
 
     def fit(self, data_inst):
         while self.aggregate_iteration_num < self.max_aggregate_iteration_num:
-            self.model = self.aggregator.aggregate_model(suffix=self._suffix())
+            self.model = self.aggregator.weighted_mean_model(suffix=self._suffix())
             self.aggregator.send_aggregated_model(model=self.model, suffix=self._suffix())
 
             if self._is_converged():
@@ -121,7 +121,7 @@ class HomoNNClient(HomoNNBase):
 
     def __init__(self, trans_var):
         super().__init__(trans_var=trans_var)
-        self.aggregator = secure_aggregator.Client(self.transfer_variable.secure_aggregator_trans_var)
+        self.aggregator = secure_mean_aggregator.Client(self.transfer_variable.secure_aggregator_trans_var)
         self.loss_scatter = loss_scatter.Client(self.transfer_variable.loss_scatter_trans_var)
         self.has_converged = has_converged.Client(self.transfer_variable.has_converged_trans_var)
 
@@ -177,9 +177,9 @@ class HomoNNClient(HomoNNBase):
             self.nn_model.train(data, aggregate_every_n_epoch=self.aggregate_every_n_epoch)
 
             # send model for aggregate, then set aggregated model to local
-            self.aggregator.send_model(model=self.nn_model.get_model_weights(),
-                                       degree=epoch_degree * self.aggregate_every_n_epoch,
-                                       suffix=self._suffix())
+            self.aggregator.send_weighted_model(weighted_model=self.nn_model.get_model_weights(),
+                                                weight=epoch_degree * self.aggregate_every_n_epoch,
+                                                suffix=self._suffix())
             weights = self.aggregator.get_aggregated_model(suffix=self._suffix())
             self.nn_model.set_model_weights(weights=weights)
 

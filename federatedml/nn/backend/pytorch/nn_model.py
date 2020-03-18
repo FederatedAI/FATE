@@ -134,6 +134,7 @@ class PytorchNNModel(NNModel):
 
     def evaluate(self, data: data.dataset, **kwargs):
 
+
         metircs = {}
         loss_metircs = []
         loss_fuc = []
@@ -145,6 +146,7 @@ class PytorchNNModel(NNModel):
                     loss_fuc.append(build_loss_fn(func))
                 else:
                     other_metrics.append(func)
+
         self._model.eval()
         loss_fn = build_loss_fn(self._loss)
         evaluate_data = DataLoader(data, batch_size=data.batch_size, shuffle=False)
