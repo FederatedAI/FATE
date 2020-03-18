@@ -62,5 +62,4 @@ class HeteroDataSplitGuest(DataSplitter):
         self.transfer_variable.id_validate.remote(obj=id_validate, role=consts.HOST, idx=-1)
 
         train_data, test_data, validate_data = self.split_data(data_inst, id_train, id_test, id_validate)
-        # return train_data, test_data, validate_data
-        return train_data
+        return train_data, test_data, validate_data

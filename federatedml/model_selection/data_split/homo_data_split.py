@@ -18,28 +18,46 @@ from federatedml.model_selection.data_split.data_split import DataSplitter
 
 LOGGER = log_utils.getLogger()
 
+
 class HomoDataSplitHost(DataSplitter):
     def __init__(self):
-        super().__init__()
+        super(HomoDataSplitHost).__init__()
 
     def fit(self, data_inst):
         LOGGER.debug(f"Enter Hetero {self.role} Data Split fit")
         self.param_validater(data_inst)
+
         ids = self._get_ids(data_inst)
         y = self._get_y(data_inst)
-        id_train, id_test, id_validate = self._split(ids, y)
+
+        id_train, id_test_validate, y_train, y_test_validate = self._split(ids, y, self.test_size, self.train_size)
+
+        test_validate_size = self.test_size + self.validate_size
+        test_size = self._safe_divide(self.test_size, test_validate_size)
+        validate_size = self._safe_divide(self.validate_size, test_validate_size)
+        id_test, id_validate, _, _ = self._split(id_test_validate, y_test_validate, validate_size, test_size)
+
         train_data, test_data, validate_data = self.split_data(data_inst, id_train, id_test, id_validate)
         return train_data, test_data, validate_data
 
+
 class HomoDataSplitGuest(DataSplitter):
     def __init__(self):
-        super().__init__()
+        super(HomoDataSplitGuest).__init__()
 
     def fit(self, data_inst):
         LOGGER.debug(f"Enter Hetero {self.role} Data Split fit")
         self.param_validater(data_inst)
+
         ids = self._get_ids(data_inst)
         y = self._get_y(data_inst)
-        id_train, id_test, id_validate = self._split(ids, y)
+
+        id_train, id_test_validate, y_train, y_test_validate = self._split(ids, y, self.test_size, self.train_size)
+
+        test_validate_size = self.test_size + self.validate_size
+        test_size = self._safe_divide(self.test_size, test_validate_size)
+        validate_size = self._safe_divide(self.validate_size, test_validate_size)
+        id_test, id_validate, _, _ = self._split(id_test_validate, y_test_validate, validate_size, test_size)
+
         train_data, test_data, validate_data = self.split_data(data_inst, id_train, id_test, id_validate)
         return train_data, test_data, validate_data
