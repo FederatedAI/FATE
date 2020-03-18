@@ -48,24 +48,30 @@ class DataSplitter(ModelBase):
         self.split_points = params.split_points
         return
 
-    def _split(self, ids, y):
-        id_train, id_test, y_train, y_test = train_test_split(ids, y, test_size=self.test_size + self.validate_size,
-                                                              train_size=self.train_size, random_state=self.random_state,
-                                                              shuffle=self.shuffle, stratify=self.stratified)
-        id_test, id_validate, y_test, y_validate = train_test_split(id_test, y_test, test_size=self.test_size + self.validate_size,
-                                                              train_size=self.train_size, random_state=self.random_state,
-                                                              shuffle=self.shuffle, stratify=self.stratified)
-        return id_train, id_test, id_validate
+    @staticmethod
+    def _safe_divide(n, d):
+        return n / d if d != 0 else 0
+
+    def _split(self, ids, y, test_size, train_size):
+        if test_size == 0:
+            return ids, [], y, []
+        stratify = y if self.stratified else None
+        id_train, id_test, y_train, y_test = train_test_split(ids, y,
+                                                              test_size=test_size, train_size=train_size,
+                                                              random_state=self.random_state,
+                                                              shuffle=self.shuffle, stratify=stratify)
+        return id_test, id_test, y_train, y_test
 
     def _get_ids(self, data_inst):
-        ids = np.array([i for i, v in data_inst.mapValues(lambda v: None).collect()])
+        ids = [i for i, v in data_inst.mapValues(lambda v: None).collect()]
         return ids
 
     def _get_y(self, data_inst):
+        y_raw = [v for i, v in data_inst.mapValues(lambda v: v.label).collect()]
         if self.classify_label:
-            y = np.array([v for i, v in data_inst.mapValues(lambda v: v.label).collect()])
+            return y_raw
         else:
-            y = self.transform_regression_label(data_inst)
+            y = self.transform_regression_label(data_inst, y_raw)
         return y
 
     def check_classify_label(self):
@@ -99,29 +105,30 @@ class DataSplitter(ModelBase):
         if self.train_size is None:
             if self.validate_size is None:
                 self.train_size = total_size - self.test_size
-                self.validate_size = 0
+                self.validate_size = total_size - (self.test_size + self.train_size)
             else:
-                self.train_size = total_size - (self.validate_size + self.test_size)
+                self.train_size = total_size - self.validate_size
         elif self.test_size is None:
             if self.validate_size is None:
                 self.test_size = total_size - self.train_size
-                self.validate_size = 0
+                self.validate_size = total_size - (self.test_size + self.train_size)
             else:
                 self.test_size = total_size - (self.validate_size + self.train_size)
         elif self.validate_size is None:
             if self.train_size is None:
                 self.train_size = total_size - self.test_size
-                self.validate_size = 0
+                self.validate_size = total_size - (self.test_size + self.train_size)
             else:
                 self.test_size = total_size -  self.train_size
-                self.validate_size = 0
+                self.validate_size = total_size - (self.test_size + self.train_size)
         if self.train_size + self.test_size + self.validate_size != total_size:
             raise ValueError(f"train_size, test_size, validate_size should sum up to 1.0 or data count")
         return
 
-    def transform_regression_label(self, data_inst):
-        bin_labels = data_inst.mapValues(lambda v: Binning.get_bin_num(v.label, self.split_points))
-        binned_y = np.array([v for k, v in bin_labels.collect()])
+    def transform_regression_label(self, data_inst, y):
+        split_points_bin = self.split_points + [max(y)]
+        bin_labels = data_inst.mapValues(lambda v: Binning.get_bin_num(v.label, split_points_bin))
+        binned_y = [v for k, v in bin_labels.collect()]
         return binned_y
 
     @staticmethod
