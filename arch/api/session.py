@@ -202,3 +202,7 @@ def save_data(kv_data: Iterable,
 
 def stop():
     RuntimeInstance.SESSION.stop()
+
+
+def kill():
+    RuntimeInstance.SESSION.kill()
