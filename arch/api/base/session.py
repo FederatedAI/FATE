@@ -86,6 +86,10 @@ class FateSession(object):
     def stop(self):
         pass
 
+    @abc.abstractmethod
+    def kill(self):
+        pass
+
     @staticmethod
     def get_data_table(name, namespace):
         """

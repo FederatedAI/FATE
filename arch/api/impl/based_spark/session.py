@@ -90,3 +90,6 @@ class FateSessionImpl(FateSession):
 
     def stop(self):
         self._eggroll.stop()
+
+    def kill(self):
+        self._eggroll.kill()

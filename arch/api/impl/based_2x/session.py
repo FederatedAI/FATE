@@ -122,4 +122,6 @@ class FateSessionImpl(FateSession):
 
     def stop(self):
         return self._session.stop()
-        # self._eggroll.stop()
+
+    def kill(self):
+        return self._session.kill()
