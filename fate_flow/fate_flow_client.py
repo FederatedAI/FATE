@@ -153,7 +153,11 @@ def call_fun(func, config_data, dsl_path, config_path):
             file_name = config_data.get('file')
             if not os.path.isabs(file_name):
                 file_name = os.path.join(file_utils.get_project_base_directory(), file_name)
-            files = {'file': open(file_name, 'rb')}
+            if os.path.exists(file_name):
+                files = {'file': open(file_name, 'rb')}
+            else:
+                raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
+                                'please check the path: {}'.format(file_name))
             response = requests.post("/".join([server_url, "data", func.replace('_', '/')]), data=config_data, files=files)
         else:
             response = requests.post("/".join([server_url, "data", func.replace('_', '/')]), json=config_data)
