@@ -158,7 +158,5 @@ class Union(ModelBase):
                                      metric_name=self.metric_name,
                                      metric_meta=MetricMeta(name=self.metric_name, metric_type=self.metric_type))
 
-        LOGGER.debug("after union schema: {}".format(combined_table.schema))
-
         LOGGER.info("Union operation finished. Total {} empty tables encountered.".format(empty_count))
         return combined_table
