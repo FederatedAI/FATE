@@ -29,11 +29,25 @@ from arch.api import session
 from arch.api.utils import log_utils
 import warnings
 from federatedml.tree import XgboostCriterion
-from federatedml.tree import SplitInfo
 from federatedml.util import consts
 from arch.api.utils.splitable import segment_transfer_enabled
 
 LOGGER = log_utils.getLogger()
+
+class SplitInfo(object):
+    def __init__(self, sitename=consts.GUEST, best_fid=None, best_bid=None,
+                 sum_grad=0, sum_hess=0, gain=None, missing_dir=1, left_sample_count=0):
+        self.sitename = sitename
+        self.best_fid = best_fid
+        self.best_bid = best_bid
+        self.sum_grad = sum_grad
+        self.sum_hess = sum_hess
+        self.gain = gain
+        self.missing_dir = missing_dir
+
+    def __str__(self):
+        return 'best_fid:{},best_bid{},sum_grad{},sum_hess{},gain{}'.format(self.best_fid, self.best_bid,
+                                                                            self.sum_grad, self.sum_hess, self.gain)
 
 
 class Splitter(object):
@@ -98,6 +112,7 @@ class Splitter(object):
                                                      [sum_grad_l, sum_hess_l], [sum_grad_r, sum_hess_r])
 
                     if gain > self.min_impurity_split and gain > best_gain:
+
                         best_gain = gain
                         best_fid = fid
                         best_bid = bid
@@ -118,6 +133,7 @@ class Splitter(object):
                     if node_cnt_l >= self.min_leaf_node and node_cnt_r >= self.min_leaf_node:
                         gain = self.criterion.split_gain([sum_grad, sum_hess],
                                                          [sum_grad_l, sum_hess_l], [sum_grad_r, sum_hess_r])
+
 
                         if gain > self.min_impurity_split and gain > best_gain:
                             best_gain = gain

@@ -35,6 +35,7 @@ class HeteroLRArbiter(HeteroBaseArbiter, HeteroLRBase):
         self.is_converged = False
         self.model_param_name = 'HeteroLogisticRegressionParam'
         self.model_meta_name = 'HeteroLogisticRegressionMeta'
+        self.model_name = 'HeteroLogisticRegression'
         self.need_one_vs_rest = None
         self.in_one_vs_rest = False
         self.mode = consts.HETERO
