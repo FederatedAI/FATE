@@ -35,8 +35,7 @@ class HeteroDataSplitHost(DataSplitter):
         id_validate = self.transfer_variable.id_validate.get(idx=0)
 
         train_data, test_data, validate_data = self.split_data(data_inst, id_train, id_test, id_validate)
-        # return train_data, test_data, validate_data
-        return train_data
+        return train_data, test_data, validate_data
 
 class HeteroDataSplitGuest(DataSplitter):
     def __init__(self):

@@ -21,7 +21,7 @@ LOGGER = log_utils.getLogger()
 
 class HomoDataSplitHost(DataSplitter):
     def __init__(self):
-        super(HomoDataSplitHost).__init__()
+        super().__init__()
 
     def fit(self, data_inst):
         LOGGER.debug(f"Enter Hetero {self.role} Data Split fit")
@@ -43,7 +43,7 @@ class HomoDataSplitHost(DataSplitter):
 
 class HomoDataSplitGuest(DataSplitter):
     def __init__(self):
-        super(HomoDataSplitGuest).__init__()
+        super().__init__()
 
     def fit(self, data_inst):
         LOGGER.debug(f"Enter Hetero {self.role} Data Split fit")

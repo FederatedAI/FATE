@@ -25,7 +25,6 @@ from federatedml.param.data_split_param import DataSplitParam
 
 LOGGER = log_utils.getLogger()
 
-session.init("data_split")
 
 class DataSplitter(ModelBase):
     def __init__(self):
