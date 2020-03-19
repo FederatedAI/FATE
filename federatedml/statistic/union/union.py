@@ -41,19 +41,6 @@ class Union(ModelBase):
         self.is_data_instance = False
         self.is_empty_feature = False
 
-    def _run_data(self, data_sets=None, stage=None):
-        if not self.need_run:
-            return
-        data = {}
-        for data_key in data_sets:
-            for key in data_sets[data_key].keys():
-                if data_sets[data_key].get(key, None):
-                    data[data_key] = data_sets[data_key][key]
-        if stage == "fit":
-            self.data_output = self.fit(data)
-        else:
-            LOGGER.warning("Union has not transform, return")
-
     @staticmethod
     def _keep_first(v1, v2):
         return v1
