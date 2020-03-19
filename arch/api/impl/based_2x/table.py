@@ -152,8 +152,19 @@ class DTable(Table):
         return DTable(self._dtable.collapse_partitions(func), session_id=self._session_id)
 
     @log_elapsed
-    def reduce(self, func, **kwargs):
-        return self._dtable.reduce(func)
+    def reduce(self, func, key_func=None, **kwargs):
+        if key_func is None:
+            return self._dtable.reduce(func)
+
+        it = self._dtable.get_all()
+        ret = {}
+        for k, v in it:
+            agg_key = key_func(k)
+            if agg_key in ret:
+                ret[agg_key] = func(ret[agg_key], v)
+            else:
+                ret[agg_key] = v
+        return ret
 
     @log_elapsed
     def join(self, other, func, **kwargs):
