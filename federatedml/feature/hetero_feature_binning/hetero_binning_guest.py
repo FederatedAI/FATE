@@ -75,6 +75,7 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         for host_idx, encrypted_bin_sum in enumerate(encrypted_bin_sums):
             host_party_id = self.component_properties.host_party_idlist[host_idx]
             result_counts = self.__decrypt_bin_sum(encrypted_bin_sum, cipher)
+            LOGGER.debug("Received host {} result, length of buckets: {}".format(host_idx, len(result_counts)))
 
             if self.model_param.method == consts.OPTIMAL:
                 host_binning_obj = self.optimal_binning_sync(result_counts, data_instances.count(),
@@ -82,9 +83,8 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
                                                              host_idx)
             else:
                 host_binning_obj = BaseBinning()
-
+                host_binning_obj.cal_iv_woe(result_counts, self.model_param.adjustment_factor)
             host_binning_obj.set_role_party(role=consts.HOST, party_id=host_party_id)
-            host_binning_obj.cal_iv_woe(result_counts, self.model_param.adjustment_factor)
             self.host_results.append(host_binning_obj)
 
         self.set_schema(data_instances)

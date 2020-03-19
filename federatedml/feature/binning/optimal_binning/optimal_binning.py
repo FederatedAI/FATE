@@ -20,6 +20,7 @@ import copy
 import functools
 import math
 import uuid
+import operator
 
 from arch.api import session
 from arch.api.utils import log_utils
@@ -28,6 +29,7 @@ from federatedml.feature.binning.optimal_binning import bucket_info
 from federatedml.feature.binning.optimal_binning import heap
 from federatedml.feature.binning.quantile_binning import QuantileBinningTool
 from federatedml.param.feature_binning_param import FeatureBinningParam, OptimalBinningParam
+from federatedml.feature.binning.bin_result import BinColResults
 from federatedml.statistic import data_overview
 from federatedml.statistic import statics
 
@@ -72,6 +74,7 @@ class OptimalBinning(BaseBinning):
         for col_name, (bucket_list, non_mixture_num, small_size_num) in result_bucket.collect():
             split_points = [bucket.right_bound for bucket in bucket_list]
             self.bin_results.put_col_split_points(col_name, split_points)
+            self.__cal_single_col_result(col_name, bucket_list)
             if self.optimal_param.mixture and non_mixture_num > 0:
                 LOGGER.warning("col: {}, non_mixture_num is: {}, cannot meet mixture condition".format(
                     col_name, non_mixture_num
@@ -84,6 +87,14 @@ class OptimalBinning(BaseBinning):
                 LOGGER.warning("col: {}, bin_num is: {}, cannot meet max-bin condition".format(
                     col_name, small_size_num
                 ))
+        return result_bucket
+
+    def __cal_single_col_result(self, col_name, bucket_list):
+        result_counts = [[b.event_count, b.non_event_count] for b in bucket_list]
+        col_result_obj = self.woe_1d(result_counts, self.adjustment_factor)
+        assert isinstance(col_result_obj, BinColResults)
+        self.bin_results.put_col_results(col_name, col_result_obj)
+
 
     def init_bucket(self, data_instances):
         header = data_overview.get_header(data_instances)
@@ -125,21 +136,51 @@ class OptimalBinning(BaseBinning):
         return bucket_table
 
     def _force_init_table(self, data_instances):
-        data_list = []
+        header = data_instances.schema.get('header')
+        data_dict = {}
+        for h in header:
+            data_dict[h] = []
         for k, instance in data_instances.collect():
-            data_list.append((instance.features[0], instance.label))
-        data_list = sorted(data_list, key=lambda x: x[0])
+            for idx, value in enumerate(instance.features):
+                data_list = data_dict.get(header[idx])
+                data_list.append((instance.features[idx], instance.label))
+        for k, v in data_dict.items():
+            v = sorted(v, key=lambda x: x[0])
+            data_dict[k] = v
 
-        bucket_list = []
-        last_y = data_list[0][1]
-        last_boundary = -math.inf
-        count = 0
-        bucket_id = 0
-        for x, y in data_list:
-            if y == last_y:
-                count += 1
-                continue
-            bucket = bucket_info.Bucket(idx=bucket_id, adjustment_factor=self.adjustment_factor, right_bound=x)
+        LOGGER.debug("x1 values: {}".format(data_dict['x1']))
+
+        res_bucket_list = []
+        for col_name, data_list in data_dict.items():
+            bucket_list = []
+            last_y = data_list[0][1]
+            last_boundary = -math.inf
+            count = 0
+            bucket_id = 0
+            right_bound = data_list[0][0]
+            for x, y in data_list:
+                if y == last_y:
+                    count += 1
+                    right_bound = x
+                    continue
+                bucket = bucket_info.Bucket(idx=bucket_id, adjustment_factor=self.adjustment_factor, right_bound=right_bound)
+                if last_y == 1:
+                    bucket.event_count = count
+                else:
+                    bucket.non_event_count = count
+                bucket.left_bound = last_boundary
+                bucket.event_total = self.event_total
+                bucket.non_event_total = self.non_event_total
+                if bucket_id == 0:
+                    bucket.set_left_neighbor(None)
+                bucket_list.append(bucket)
+                last_boundary = x
+                right_bound = x
+                count = 1
+                bucket_id += 1
+                last_y = y
+
+            bucket = bucket_info.Bucket(idx=bucket_id, adjustment_factor=self.adjustment_factor, right_bound=math.inf)
             if last_y == 1:
                 bucket.event_count = count
             else:
@@ -147,25 +188,11 @@ class OptimalBinning(BaseBinning):
             bucket.left_bound = last_boundary
             bucket.event_total = self.event_total
             bucket.non_event_total = self.non_event_total
-            if bucket_id == 0:
-                bucket.set_left_neighbor(None)
+            bucket.set_right_neighbor(None)
             bucket_list.append(bucket)
-            last_boundary = x
-            count = 0
-            bucket_id += 1
-            last_y = y
+            res_bucket_list.append((col_name, bucket_list))
 
-        bucket = bucket_info.Bucket(idx=bucket_id, adjustment_factor=self.adjustment_factor, right_bound=math.inf)
-        if last_y == 1:
-            bucket.event_count = count
-        else:
-            bucket.non_event_count = count
-        bucket.left_bound = last_boundary
-        bucket.event_total = self.event_total
-        bucket.non_event_total = self.non_event_total
-        bucket.set_right_neighbor(None)
-        bucket_list.append(bucket)
-        bucket_table = session.parallelize([('x1', bucket_list)], include_key=True, partition=data_instances._partitions)
+        bucket_table = session.parallelize(res_bucket_list, include_key=True, partition=data_instances._partitions)
         return bucket_table
 
     @staticmethod
@@ -241,7 +268,9 @@ class OptimalBinning(BaseBinning):
             this_non_mixture_num = 0
             this_small_size_num = 0
             # Make bucket satisfy mixture condition
-            for i in bucket_dict.keys():
+
+            # for i in bucket_dict.keys():
+            for i in range(len(bucket_dict)):
                 left_bucket = bucket_dict[i]
                 right_bucket = bucket_dict.get(left_bucket.right_neighbor_idx)
                 if not left_bucket.is_mixed:
@@ -265,6 +294,40 @@ class OptimalBinning(BaseBinning):
                 heap_node = heap.heap_node_factory(optimal_param, left_bucket=left_bucket, right_bucket=right_bucket)
                 min_heap.insert(heap_node)
             return min_heap, this_non_mixture_num, this_small_size_num
+
+        def _update_bucket_info(b_dict):
+            """
+            update bucket information
+            """
+            order_dict = dict()
+            for bucket_idx, item in b_dict.items():
+                order_dict[bucket_idx] = item.left_bound
+
+            sorted_order_dict = sorted(order_dict.items(), key=operator.itemgetter(1))
+
+            start_idx = 0
+            for item in sorted_order_dict:
+                bucket_idx = item[0]
+                if start_idx == bucket_idx:
+                    start_idx += 1
+                    continue
+
+                b_dict[start_idx] = b_dict[bucket_idx]
+                b_dict[start_idx].idx = start_idx
+                start_idx += 1
+                del b_dict[bucket_idx]
+
+            bucket_num = len(b_dict)
+            for i in range(bucket_num):
+                if i == 0:
+                    b_dict[i].set_left_neighbor(None)
+                    b_dict[i].set_right_neighbor(i + 1)
+                else:
+                    b_dict[i].set_left_neighbor(i - 1)
+                    b_dict[i].set_right_neighbor(i + 1)
+            b_dict[bucket_num - 1].set_right_neighbor(None)
+
+            return b_dict
 
         def _merge_heap(constraint=None, aim_var=0):
             next_id = max(bucket_dict.keys()) + 1
@@ -367,11 +430,14 @@ class OptimalBinning(BaseBinning):
             LOGGER.debug("After mixture add, non_mixture_num: {}, min_heap size: {}".format(non_mixture_num, min_heap.size))
             min_heap = _merge_heap(constraint='mixture', aim_var=non_mixture_num)
             LOGGER.debug("After mixture merge, min_heap size: {}".format(min_heap.size))
+            bucket_dict = _update_bucket_info(bucket_dict)
 
         LOGGER.debug("Before small_size add, dick length: {}".format(len(bucket_dict)))
         min_heap, non_mixture_num, small_size_num = _add_heap_nodes(constraint='small_size')
         LOGGER.debug("After small_size add, small_size: {}, min_heap size: {}".format(small_size_num, min_heap.size))
         min_heap = _merge_heap(constraint='small_size', aim_var=small_size_num)
+        bucket_dict = _update_bucket_info(bucket_dict)
+
         LOGGER.debug("After small_size merge, min_heap size: {}".format(min_heap.size))
         for node_id, this_node in enumerate(min_heap.node_list):
             LOGGER.debug("node_id: {}, node_total_count: {}, left_bound: {}, right bound: {}".format(

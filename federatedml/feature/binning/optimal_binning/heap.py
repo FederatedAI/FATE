@@ -61,9 +61,14 @@ class IvHeapNode(HeapNode):
 
         self.event_count = self.left_bucket.event_count + self.right_bucket.event_count
         self.non_event_count = self.left_bucket.non_event_count + self.right_bucket.non_event_count
-        if self.total_count == 0 or self.left_bucket.left_bound == self.right_bucket.right_bound:
+        if self.total_count == 0:
             self.score = -math.inf
             return
+
+        if self.left_bucket.left_bound != math.inf and self.right_bucket.right_bound != -math.inf:
+            if self.left_bucket.left_bound == self.right_bucket.right_bound:
+                self.score = -math.inf
+                return
 
         self.event_total = self.left_bucket.event_total
         self.non_event_total = self.left_bucket.non_event_total
