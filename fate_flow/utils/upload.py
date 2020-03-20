@@ -15,6 +15,7 @@
 #
 
 import os
+import shutil
 import time
 
 from arch.api import session
@@ -62,6 +63,8 @@ class Upload(object):
 
         session.init(mode=self.parameters['work_mode'])
         data_table_count = self.save_data_table(table_name, namespace, head, job_id)
+        if 'tmp' in self.parameters["file"]:
+            shutil.rmtree(os.path.join(self.parameters["file"].split('tmp')[0], 'tmp'))
         LOGGER.info("------------load data finish!-----------------")
         LOGGER.info("file: {}".format(self.parameters["file"]))
         LOGGER.info("total data_count: {}".format(data_table_count))

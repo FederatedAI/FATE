@@ -43,16 +43,16 @@ class TaskScheduler(object):
                 else:
                     job.f_is_initiator = 0
                 response_json = federated_api(job_id=job.f_job_id,
-                              method='POST',
-                              endpoint='/{}/schedule/{}/{}/{}/create'.format(
-                                  API_VERSION,
-                                  job.f_job_id,
-                                  role,
-                                  party_id),
-                              src_party_id=job_initiator['party_id'],
-                              dest_party_id=party_id, src_role=job_initiator['role'],
-                              json_body=job.to_json(),
-                              work_mode=job.f_work_mode)
+                                              method='POST',
+                                              endpoint='/{}/schedule/{}/{}/{}/create'.format(
+                                                  API_VERSION,
+                                                  job.f_job_id,
+                                                  role,
+                                                  party_id),
+                                              src_party_id=job_initiator['party_id'],
+                                              dest_party_id=party_id, src_role=job_initiator['role'],
+                                              json_body=job.to_json(),
+                                              work_mode=job.f_work_mode)
                 if response_json["retcode"]:
                     job.f_status = JobStatus.FAILED
                     TaskScheduler.sync_job_status(job_id=job.f_job_id, roles=roles,
@@ -60,8 +60,9 @@ class TaskScheduler(object):
                                                   initiator_party_id=job_initiator['party_id'],
                                                   initiator_role=job_initiator['role'],
                                                   job_info=job.to_json())
-                    raise Exception("an error occurred while creating the job: role {} party_id {}".format(role, party_id)
-                                    + "\n" + str(response_json["retmsg"]))
+                    raise Exception(
+                        "an error occurred while creating the job: role {} party_id {}".format(role, party_id)
+                        + "\n" + str(response_json["retmsg"]))
 
     @staticmethod
     def run_job(job_id, initiator_role, initiator_party_id):
@@ -491,14 +492,14 @@ class TaskScheduler(object):
         jobs = job_utils.query_job(is_initiator=1, status=JobStatus.WAITING)
         if jobs:
             for job in jobs:
-                schedule_logger(job.job_id).info(
-                    'start send {} job {} command success'.format(JobStatus.CANCELED, job.job_id))
+                schedule_logger(job.f_job_id).info(
+                    'start send {} job {} command success'.format(JobStatus.CANCELED, job.f_job_id))
                 job_info = {'f_job_id': job.f_job_id, 'f_status': JobStatus.CANCELED}
                 roles = json_loads(job.f_roles)
                 job_work_mode = job.f_work_mode
                 initiator_party_id = job.f_party_id
 
-                TaskScheduler.sync_job_status(job_id=job.job_id, roles=roles, initiator_party_id=initiator_party_id,
+                TaskScheduler.sync_job_status(job_id=job.f_job_id, roles=roles, initiator_party_id=initiator_party_id,
                                               initiator_role=job.f_role,
                                               work_mode=job_work_mode,
                                               job_info=job_info)
@@ -508,10 +509,10 @@ class TaskScheduler(object):
                                             job_runtime_conf['initiator']['party_id'])
                 try:
                     RuntimeConfig.JOB_QUEUE.del_event(event)
-                    schedule_logger(job.job_id).info(
-                        'send {} job {} command success'.format(JobStatus.CANCELED, job.job_id))
+                    schedule_logger(job.f_job_id).info(
+                        'send {} job {} command success'.format(JobStatus.CANCELED, job.f_job_id))
                 except Exception as e:
-                    schedule_logger(job.job_id).error(e)
+                    schedule_logger(job.f_job_id).error(e)
         else:
             raise Exception('There are no jobs in the queue')
 

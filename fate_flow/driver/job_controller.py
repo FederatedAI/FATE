@@ -38,8 +38,9 @@ class JobController(object):
         pass
 
     @staticmethod
-    def submit_job(job_data):
-        job_id = generate_job_id()
+    def submit_job(job_data, job_id=None):
+        if not job_id:
+            job_id = generate_job_id()
         schedule_logger(job_id).info('submit job, job_id {}, body {}'.format(job_id, job_data))
         job_dsl = job_data.get('job_dsl', {})
         job_runtime_conf = job_data.get('job_runtime_conf', {})
