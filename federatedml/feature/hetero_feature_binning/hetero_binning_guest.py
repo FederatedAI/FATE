@@ -21,6 +21,7 @@ from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.optimal_binning.optimal_binning import OptimalBinning
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
 from federatedml.secureprotol import PaillierEncrypt
+from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 from federatedml.statistic import data_overview
 from federatedml.util import consts
 
@@ -70,6 +71,7 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         self.binning_obj.cal_local_iv(data_instances, label_table=label_table)
 
         encrypted_bin_sums = self.transfer_variable.encrypted_bin_sum.get(idx=-1)
+        # LOGGER.debug("encrypted_bin_sums: {}".format(encrypted_bin_sums))
 
         LOGGER.info("Get encrypted_bin_sum from host")
         for host_idx, encrypted_bin_sum in enumerate(encrypted_bin_sums):
@@ -102,9 +104,11 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         decrypted_list = {}
         for col_name, count_list in encrypted_bin_sum.items():
             new_list = []
-            for encrypted_event, encrypted_non_event in count_list:
-                event_count = cipher.decrypt(encrypted_event)
-                non_event_count = cipher.decrypt(encrypted_non_event)
+            for event_count, non_event_count in count_list:
+                if isinstance(event_count, PaillierEncryptedNumber):
+                    event_count = cipher.decrypt(event_count)
+                if isinstance(non_event_count, PaillierEncryptedNumber):
+                    non_event_count = cipher.decrypt(non_event_count)
                 new_list.append((event_count, non_event_count))
             decrypted_list[col_name] = new_list
         return decrypted_list

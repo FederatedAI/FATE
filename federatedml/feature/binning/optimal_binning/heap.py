@@ -65,10 +65,10 @@ class IvHeapNode(HeapNode):
             self.score = -math.inf
             return
 
-        if self.left_bucket.left_bound != math.inf and self.right_bucket.right_bound != -math.inf:
-            if self.left_bucket.left_bound == self.right_bucket.right_bound:
-                self.score = -math.inf
-                return
+        # if self.left_bucket.left_bound != math.inf and self.right_bucket.right_bound != -math.inf:
+        #     if (self.left_bucket.left_bound <= self.right_bucket.right_bound):
+        #         self.score = -math.inf
+        #         return
 
         self.event_total = self.left_bucket.event_total
         self.non_event_total = self.left_bucket.non_event_total
@@ -93,9 +93,13 @@ class GiniHeapNode(HeapNode):
 
         self.event_count = self.left_bucket.event_count + self.right_bucket.event_count
         self.non_event_count = self.left_bucket.non_event_count + self.right_bucket.non_event_count
-        if self.total_count == 0 or self.left_bucket.left_bound == self.right_bucket.right_bound:
+        if self.total_count == 0:
             self.score = -math.inf
             return
+
+        # if self.total_count == 0 or self.left_bucket.left_bound == self.right_bucket.right_bound:
+        #     self.score = -math.inf
+        #     return
         merged_gini = 1 - (1.0 * self.event_count / self.total_count) ** 2 - \
                       (1.0 * self.non_event_count / self.total_count) ** 2
         self.score = merged_gini - self.left_bucket.gini - self.right_bucket.gini
@@ -112,10 +116,10 @@ class ChiSquareHeapNode(HeapNode):
 
         self.event_count = self.left_bucket.event_count + self.right_bucket.event_count
         self.non_event_count = self.left_bucket.non_event_count + self.right_bucket.non_event_count
-        if self.left_bucket.total_count == 0 or self.right_bucket.total_count == 0 or \
-                self.left_bucket.left_bound == self.right_bucket.right_bound:
+        if self.total_count == 0:
             self.score = -math.inf
             return
+
         c1 = self.left_bucket.event_count + self.right_bucket.event_count
         c0 = self.left_bucket.non_event_count + self.right_bucket.non_event_count
 

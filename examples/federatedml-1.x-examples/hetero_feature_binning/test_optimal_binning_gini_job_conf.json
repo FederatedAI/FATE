@@ -20,8 +20,8 @@
         "data": {
           "train_data": [
             {
-              "name": "hetero_default_credit_guest",
-              "namespace": "hetero"
+              "name": "hetero_breast_b",
+              "namespace": "hetero_breast_guest"
             }
           ]
         }
@@ -52,8 +52,8 @@
         "data": {
           "train_data": [
             {
-              "name": "hetero_default_credit_host",
-              "namespace": "hetero"
+              "name": "hetero_breast_a",
+              "namespace": "hetero_breast_host"
             }
           ]
         }
@@ -83,7 +83,6 @@
         "max_bin": 10,
         "min_bin_pct": 0.05,
         "max_bin_pct": 1.0,
-        "init_bucket_method": "quantile",
         "init_bin_nums": 1000,
         "mixture": true
       },

@@ -84,6 +84,9 @@ class Bucket(object):
 
     @property
     def gini(self):
+        if self.total_count == 0:
+            return 0
+
         return 1 - (1.0 * self.event_count / self.total_count) ** 2 - \
               (1.0 * self.non_event_count / self.total_count) ** 2
 

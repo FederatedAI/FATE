@@ -54,6 +54,7 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         # self._make_iv_obj(split_points)  # Save split points
 
         data_bin_table = self.binning_obj.get_data_bin(data_instances, split_points)
+        LOGGER.debug("data_bin_table: {}".format(data_bin_table))
 
         # encrypted_label_table_id = self.transfer_variable.generate_transferid(self.transfer_variable.encrypted_label)
         encrypted_label_table = self.transfer_variable.encrypted_label.get(idx=0)
@@ -62,6 +63,8 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
 
         encrypted_bin_sum = self.__static_encrypted_bin_label(data_bin_table, encrypted_label_table,
                                                               self.bin_inner_param.bin_cols_map, split_points)
+        # LOGGER.debug("encrypted_bin_sum: {}".format(encrypted_bin_sum))
+
         if need_shuffle:
             encrypted_bin_sum = self.binning_obj.shuffle_static_counts(encrypted_bin_sum)
 
@@ -81,6 +84,7 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
 
     def optimal_binning_sync(self):
         bucket_idx = self.transfer_variable.bucket_idx.get(idx=0)
+        LOGGER.debug("In optimal_binning_sync, received bucket_idx: {}".format(bucket_idx))
         original_split_points = self.binning_obj.bin_results.all_split_points
         for encoded_col_name, b_idx in bucket_idx.items():
             col_name = self.bin_inner_param.decode_col_name(encoded_col_name)

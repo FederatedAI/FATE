@@ -86,10 +86,14 @@ class OptimalBinningParam(BaseParam):
     mixture: bool, default: True
         Whether each bucket need event and non-event records
 
+    init_bucket_method: str default: quantile
+        Init bucket methods. Accept quantile and bucket.
+
     """
     def __init__(self, metric_method='iv', min_bin_pct=0.05, max_bin_pct=1.0,
-                 init_bin_nums=100, mixture=True):
+                 init_bin_nums=1000, mixture=True, init_bucket_method='quantile'):
         super().__init__()
+        self.init_bucket_method = init_bucket_method
         self.metric_method = metric_method
         self.max_bin = None
         self.mixture = mixture
