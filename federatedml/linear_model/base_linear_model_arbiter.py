@@ -143,3 +143,6 @@ class HeteroBaseArbiter(BaseLinearModel):
             self.n_iter_ += 1
             if self.is_converged:
                 break
+        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
+            self.load_model(self.validation_strategy.cur_best_model)
+        LOGGER.debug("finish running linear model arbiter")
