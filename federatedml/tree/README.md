@@ -1,5 +1,6 @@
-### Hetero SecureBoost
+## Tree Models
 
+### Hetero SecureBoost
 Gradient Boosting Decision Tree(GBDT) is a widely used statistic model for classification and regression problems. 
 FATE has provided a novel lossless privacy-preserving tree-boosting system known as [SecureBoost: A Lossless Federated Learning Framework](https://arxiv.org/abs/1901.08755).
 
@@ -72,7 +73,7 @@ The procedure of the data parallel algorithm in each party is:
 * Find the best splits from merged global histograms by federated learning, then perform splits.
 
 #### Applications
-SecureBoost supports the following applications.  
+Hetero secureboost supports the following applications.  
 * binary classification, the objective function is sigmoid cross-entropy  
 * multi classification, the objective function is softmax cross-entropy
 * regression, objective function now support is least-squared-error-loss、least-absolutely-error-loss、huber-loss、
@@ -88,6 +89,98 @@ max_split_nodes nodes instead of using all nodes of each level of the tree.
 * Support missing value in train and predict process
 * Support evaluate training and validate data during training process
 * Support another homomorphic encryption method called "Iterative Affine" since FATE-1.1 
- 
+
+### Homo Secureboost
+
+Unlike Hetero Secureboost, Homo secureboost is conducted under a different setting. 
+In homo secureboost, every participant(clients) holds data that shares the same feature space, and jointly train a 
+GBDT model without leaking any data sample.
+
+The figure below shows the overall framework of the homo secureboost algorithm.
+
+<div style="text-align:center" align=center>
+<img src="./images/homo_framework.png" alt="framework" width="500" height="500" />
+<br/>
+Figure 1: Framework of Homo SecureBoost</div>
+
+
+Client:
+Clients are the participants who hold their labeled samples. Samples from all client parties have the same feature space. 
+Participants have the demand for building a more powerful model together without leaking local samples, 
+and they share the same trained model after learning.  
+
+Server:
+There are potentials of data leakage if all participants send its local histogram(which contains sum 
+of gradient and hessian) to each other because sometimes features and labels can be inferred from gradient sums and hessian sums.
+Thus, to ensure security in the learning process, the Server uses secure aggregation to aggregate all participants' local histograms 
+in a safe manner. 
+The server can get a global histogram while not getting any local histogram and then find and broadcast the best splits to clients. 
+Server collaboratives with all clients in the learning process. 
+
+The key steps of learning a homo secureboost model are described below:
+
+* Clients and the server initialize local settings. Clients and the server apply homo feature binning to get binning 
+  points for all features and then to pre-process local samples. 
+  
+* Clients and Server build a decision tree collaboratively:
+
+    (1) Clients compute local histograms for cur leaf nodes (left nodes or root node)
+    
+    (2) The server applies secure aggregations: every local histogram plus a random number, and these numbers can cancel 
+    each other out. By this way server can get the global histogram without knowing any local histograms and data 
+    leakage is prevented. Figure below shows how histogram secure aggregations are conducted.
+    
+    <div style="text-align:center" align=center>
+    <img src="./images/secure_agg.png" alt="framework" width="500" height="480" />
+    <br/>
+    Figure 2: Secure aggregation</div>
+    
+    (3) The server commit histogram subtractions: getting the right node histograms by subtracting left node local 
+    histogram from parent node histogram. Then, the server will find the best splits points and broadcast them to
+    clients.
+    
+    (4) After getting the best split points, clients build the next layer for the current decision tree and 
+    re-assign samples. 
+    If current decision 
+    tree reaches the max depth or stop conditions are fulfilled, stop build the current tree, else go back to step (1).
+    
+    Figure below shows the procedure of fitting a decision tree.
+    
+    <div style="text-align:center" align=center>
+    <img src="./images/homo_fit.png" alt="framework" width="500" height="500" />
+    <br/>
+    Figure 3: Example of bulding a two-layer homo-decision tree.</div>
+    
+* If tree number reach the max number, or loss is converged, stop fitting homo secureboost.
+
+By follwing the steps above clients are able to jointly build a GBDT model together. After getting the model, every 
+client can conduct inference to predict a new instance locally. 
+
+#### Optimization in learning
+Homo secureboost utilizes data parallelization and histogram subtraction to accelerate the learning process.
+* Every party use mapPartitions and reduce API interface to generate local feature-histograms, 
+only samples in left nodes are used in computing feature histograms.
+* The server aggregates all local histograms to get global histograms then get sibling histograms by subtracting left 
+node histograms from parent histograms.
+* The server 
+finds the best splits from merged global histograms, then broadcast best splits.
+* The computational cost and transmission cost are halved by using node subtraction.
+
+#### Applications
+homo secureboost supports the following applications.  
+* binary classification, the objective function is sigmoid cross-entropy  
+* multi classification, the objective function is softmax cross-entropy
+* regression, objective function now support is least-squared-error-loss、least-absolutely-error-loss、huber-loss、
+tweedie-loss、fair-loss、 log-cosh-loss
+
+#### Other features
+* The server uses safety aggregations to aggregate clients' histograms and losses, ensuring the data security
+* Column sub-sample
+* Allow use max_split_nodes setting to avoid memory limit exceed, by finding splits of at most number of 
+max_split_nodes nodes instead of using all nodes of each level of the tree.
+* Support feature importance calculation
+* Support Multi-host and single guest to build model
+* Support missing value in train and predict process
+* Support evaluate training and validate data during training process
 
 

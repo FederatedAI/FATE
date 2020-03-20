@@ -40,6 +40,7 @@ class HeteroNNHost(HeteroNNBase):
         self.model = None
 
         self.input_shape = None
+        self.validation_strategy = None
 
     def _init_model(self, hetero_nn_param):
         super(HeteroNNHost, self)._init_model(hetero_nn_param)
@@ -47,6 +48,9 @@ class HeteroNNHost(HeteroNNBase):
     def export_model(self):
         if self.model is None:
             return
+
+        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
+            return self.validation_strategy.export_best_model()
 
         return {MODELMETA: self._get_model_meta(),
                 MODELPARAM: self._get_model_param()}
@@ -71,7 +75,7 @@ class HeteroNNHost(HeteroNNBase):
         self.model.predict(test_x)
 
     def fit(self, data_inst, validate_data=None):
-        validation_strategy = self.init_validation_strategy(data_inst, validate_data)
+        self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
         self._build_model()
         self.prepare_batch_data(self.batch_generator, data_inst)
 
@@ -85,8 +89,11 @@ class HeteroNNHost(HeteroNNBase):
                 self.model.evaluate(self.data_x[batch_idx], cur_epoch, batch_idx)
                 self.recovery_flowid()
 
-            if validation_strategy:
-                validation_strategy.validate(self, cur_epoch)
+            if self.validation_strategy:
+                self.validation_strategy.validate(self, cur_epoch)
+                if self.validation_strategy.need_stop():
+                    LOGGER.debug('early stopping triggered')
+                    break
 
             is_converge = self.transfer_variable.is_converge.get(idx=0,
                                                                  suffix=(cur_epoch,))

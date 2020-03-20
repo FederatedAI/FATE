@@ -71,7 +71,6 @@ class ValidationStrategy(object):
             LOGGER.debug("early stopping round is {}".format(self.early_stopping_rounds))
 
         self.cur_best_model = None
-        self.training_export_mode = False
         self.performance_recorder = PerformanceRecorder()
         self.transfer_inst = ValidationStrategyVariable()
 
@@ -147,8 +146,7 @@ class ValidationStrategy(object):
         return False if not self.early_stopping_rounds else self.check_early_stopping()
 
     def has_saved_best_model(self):
-        return (self.early_stopping_rounds is not None) and (self.cur_best_model is not None) and \
-               (not self.training_export_mode)
+        return (self.early_stopping_rounds is not None) and (self.cur_best_model is not None)
 
     def export_best_model(self):
         if self.has_saved_best_model():
@@ -223,9 +221,7 @@ class ValidationStrategy(object):
             LOGGER.debug(self.performance_recorder.no_improvement_round)
 
         if self.early_stopping_rounds and self.is_best_performance_updated():
-            self.training_export_mode = True
-            self.cur_best_model = model.export_model()
-            self.training_export_mode = False
+            self.cur_best_model = {'model': {'best_model': model.export_model()}}
             LOGGER.debug('cur best model saved')
 
 
