@@ -33,7 +33,8 @@ def init(job_id=None,
          mode: typing.Union[int, WorkMode] = WorkMode.STANDALONE,
          backend: typing.Union[int, Backend] = Backend.EGGROLL,
          persistent_engine: str = StoreTypes.ROLLPAIR_LMDB,
-         eggroll_version=None):
+         eggroll_version=None,
+         set_log_dir=True):
     if RuntimeInstance.SESSION:
         return
 
@@ -46,7 +47,8 @@ def init(job_id=None,
         if True:
             LoggerFactory.set_directory()
     else:
-        LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), 'logs', job_id))
+        if set_log_dir:
+            LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), 'logs', job_id))
     if eggroll_version is None:
         eggroll_version = _EGGROLL_VERSION
 
