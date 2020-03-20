@@ -44,6 +44,7 @@ class ComponentProperties(object):
     def __init__(self):
         self.need_cv = False
         self.need_run = False
+        self.need_stepwise = False
         self.has_model = False
         self.has_isometric_model = False
         self.has_train_data = False
@@ -69,6 +70,13 @@ class ComponentProperties(object):
             need_run = True
         self.need_run = need_run
         LOGGER.debug("need_run: {}, need_cv: {}".format(self.need_run, self.need_cv))
+
+        try:
+            need_stepwise = param.stepwise_param.need_stepwise
+        except AttributeError:
+            need_stepwise = False
+        self.need_stepwise = need_stepwise
+
         self.role = component_parameters["local"]["role"]
         self.host_party_idlist = component_parameters["role"].get("host")
         self.local_partyid = component_parameters["local"].get("party_id")
@@ -138,6 +146,12 @@ class ComponentProperties(object):
             # todo_func_list.append(model.cross_validation)
             # todo_func_params.append([train_data])
             # return todo_func_list, todo_func_params
+            return running_funcs
+
+        if self.need_stepwise:
+            running_funcs.add_func(model.stepwise, [train_data], save_result=True)
+            running_funcs.add_func(model.set_predict_data_schema, [schema],
+                                   use_previews=True, save_result=True)
             return running_funcs
 
         if self.has_model or self.has_isometric_model:

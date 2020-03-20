@@ -116,6 +116,7 @@ class BaseLinearRegression(BaseLinearModel):
         if fit_intercept:
             tmp_vars = np.append(tmp_vars, result_obj.intercept)
         self.model_weights = LinearRegressionWeights(l=tmp_vars, fit_intercept=fit_intercept)
+        self.n_iter_ = result_obj.iters
     
     def get_metrics_param(self):
         return EvaluateParam(eval_type="regression")

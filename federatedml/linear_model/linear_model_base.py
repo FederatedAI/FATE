@@ -20,6 +20,7 @@ from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.model_selection import start_cross_validation
+from federatedml.model_selection.stepwise import start_stepwise
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.optim.initialize import Initializer
 from federatedml.optim.optimizer import optimizer_factory
@@ -53,6 +54,7 @@ class BaseLinearModel(ModelBase):
         self.need_one_vs_rest = False
         self.in_one_vs_rest = False
         self.init_param_obj = None
+        self.need_call_back_loss = True
 
     def _init_model(self, params):
         self.model_param = params
@@ -100,6 +102,12 @@ class BaseLinearModel(ModelBase):
         }
         return result
 
+    def disable_callback_loss(self):
+        self.need_call_back_loss = False
+
+    def enable_callback_loss(self):
+        self.need_call_back_loss = True
+
     def callback_loss(self, iter_num, loss):
         metric_meta = MetricMeta(name='train',
                                  metric_type="LOSS",
@@ -128,10 +136,19 @@ class BaseLinearModel(ModelBase):
     def cross_validation(self, data_instances):
         return start_cross_validation.run(self, data_instances)
 
+    def stepwise(self, data_instances):
+        self.disable_callback_loss()
+        return start_stepwise.run(self, data_instances)
+
     def _get_cv_param(self):
         self.model_param.cv_param.role = self.role
         self.model_param.cv_param.mode = self.mode
         return self.model_param.cv_param
+
+    def _get_stepwise_param(self):
+        self.model_param.stepwise_param.role = self.role
+        self.model_param.stepwise_param.mode = self.mode
+        return self.model_param.stepwise_param
 
     def set_schema(self, data_instance, header=None):
         if header is None:
