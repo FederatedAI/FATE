@@ -181,7 +181,8 @@ class HeteroLRGuest(HeteroLRBase):
         for host_prob in host_probs:
             pred_prob = pred_prob.join(host_prob, lambda g, h: g + h)
         pred_prob = pred_prob.mapValues(lambda p: activation.sigmoid(p))
-        pred_label = pred_prob.mapValues(lambda x: 1 if x > self.model_param.predict_param.threshold else 0)
+        threshold = self.model_param.predict_param.threshold
+        pred_label = pred_prob.mapValues(lambda x: 1 if x > threshold else 0)
 
         predict_result = data_instances.mapValues(lambda x: x.label)
         predict_result = predict_result.join(pred_prob, lambda x, y: (x, y))
