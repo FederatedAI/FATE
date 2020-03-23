@@ -17,11 +17,11 @@
 from sklearn.model_selection import train_test_split
 
 from arch.api.utils import log_utils
-from arch.api import session
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.feature.binning.base_binning import Binning
 from federatedml.model_base import ModelBase
 from federatedml.param.data_split_param import DataSplitParam
+from federatedml.util import data_io
 
 LOGGER = log_utils.getLogger()
 
@@ -137,6 +137,11 @@ class DataSplitter(ModelBase):
         train_data = DataSplitter._match_id(data_inst, id_train)
         test_data = DataSplitter._match_id(data_inst, id_test)
         validate_data = DataSplitter._match_id(data_inst, id_validate)
+
+        schema = data_inst.schema
+        data_io.set_schema(train_data, schema)
+        data_io.set_schema(test_data, schema)
+        data_io.set_schema(validate_data, schema)
         return train_data, test_data, validate_data
 
 
