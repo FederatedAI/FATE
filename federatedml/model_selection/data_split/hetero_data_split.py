@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 from arch.api.utils import log_utils
-from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.model_selection.data_split.data_split import DataSplitter
 from federatedml.transfer_variable.transfer_class.data_split_transfer_variable_transfer_variable import DataSplitTransferVariable
 from federatedml.util import consts
