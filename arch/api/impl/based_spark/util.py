@@ -17,6 +17,7 @@
 # noinspection PyPackageRequirements
 from pyspark import RDD, SparkContext
 from pyspark.taskcontext import TaskContext
+from pyspark import StorageLevel
 
 _EGGROLL_CLIENT = "_eggroll_client"
 RDD_ATTR_NAME = "_rdd"
