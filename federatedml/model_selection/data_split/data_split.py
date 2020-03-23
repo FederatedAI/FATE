@@ -90,7 +90,7 @@ class DataSplitter(ModelBase):
         new_test_size = DataSplitter._safe_divide(validate_size, test_validate_size)
         return new_test_size, new_train_size
 
-    def param_validater(self, data_inst):
+    def param_validator(self, data_inst):
         """
         Validate & transform param inputs
 

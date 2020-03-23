@@ -26,7 +26,7 @@ class HomoDataSplitHost(DataSplitter):
 
     def fit(self, data_inst):
         LOGGER.debug(f"Enter Hetero {self.role} Data Split fit")
-        self.param_validater(data_inst)
+        self.param_validator(data_inst)
 
         ids = self._get_ids(data_inst)
         y = self._get_y(data_inst)
@@ -49,7 +49,7 @@ class HomoDataSplitGuest(DataSplitter):
 
     def fit(self, data_inst):
         LOGGER.debug(f"Enter Hetero {self.role} Data Split fit")
-        self.param_validater(data_inst)
+        self.param_validator(data_inst)
 
         ids = self._get_ids(data_inst)
         y = self._get_y(data_inst)
