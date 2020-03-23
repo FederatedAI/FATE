@@ -59,7 +59,7 @@ class DataSplitter(ModelBase):
                                                               test_size=test_size, train_size=train_size,
                                                               random_state=self.random_state,
                                                               shuffle=self.shuffle, stratify=stratify)
-        return id_test, id_test, y_train, y_test
+        return id_train, id_test, y_train, y_test
 
     def _get_ids(self, data_inst):
         ids = [i for i, v in data_inst.mapValues(lambda v: None).collect()]
