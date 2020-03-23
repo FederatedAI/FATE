@@ -70,7 +70,7 @@ class Submitter(object):
             if status == 100 and "table already exists" in stdout:
                 return None
             raise ValueError(f"[submit_job]fail, status:{status}, stdout:{stdout}")
-        return stdout["jobId"]
+        return stdout
 
     def upload(self, data_path, namespace, name, partition=10, head=1, remote_host=None):
         conf = dict(
@@ -107,7 +107,7 @@ class Submitter(object):
                 cmd = ["-f", "upload", "-c", f.name]
                 if self._existing_strategy == 0 or self._existing_strategy == 1:
                     cmd.extend(["-drop", "1"])
-                return self.submit(cmd)
+                return self.submit(cmd)["jobId"]
 
     def delete_table(self, namespace, name):
         pass
