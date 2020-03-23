@@ -81,6 +81,15 @@ class DataSplitter(ModelBase):
                     self.need_transform = True
         return
 
+    @staticmethod
+    def get_train_test_size(test_size, validate_size):
+        if isinstance(test_size, int):
+            return validate_size, test_size
+        test_validate_size = test_size + validate_size
+        new_train_size = DataSplitter._safe_divide(test_size, test_validate_size)
+        new_test_size = DataSplitter._safe_divide(validate_size, test_validate_size)
+        return new_test_size, new_train_size
+
     def param_validater(self, data_inst):
         """
         Validate & transform param inputs
@@ -104,7 +113,7 @@ class DataSplitter(ModelBase):
                 self.train_size = total_size - self.test_size
                 self.validate_size = total_size - (self.test_size + self.train_size)
             else:
-                self.train_size = total_size - self.validate_size
+                self.train_size = total_size - (self.test_size + self.validate_size)
         elif self.test_size is None:
             if self.validate_size is None:
                 self.test_size = total_size - self.train_size
@@ -114,10 +123,9 @@ class DataSplitter(ModelBase):
         elif self.validate_size is None:
             if self.train_size is None:
                 self.train_size = total_size - self.test_size
-                self.validate_size = total_size - (self.test_size + self.train_size)
             else:
                 self.test_size = total_size -  self.train_size
-                self.validate_size = total_size - (self.test_size + self.train_size)
+            self.validate_size = total_size - (self.test_size + self.train_size)
         if self.train_size + self.test_size + self.validate_size != total_size:
             raise ValueError(f"train_size, test_size, validate_size should sum up to 1.0 or data count")
         return

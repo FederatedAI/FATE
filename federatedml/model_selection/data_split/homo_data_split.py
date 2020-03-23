@@ -16,48 +16,51 @@
 from arch.api.utils import log_utils
 from federatedml.model_selection.data_split.data_split import DataSplitter
 
-LOGGER = log_utils.getLogger()
+from sklearn.model_selection import train_test_split
 
+LOGGER = log_utils.getLogger()
 
 class HomoDataSplitHost(DataSplitter):
     def __init__(self):
         super().__init__()
 
     def fit(self, data_inst):
-        LOGGER.debug(f"Enter Homo {self.role} Data Split fit")
+        LOGGER.debug(f"Enter Hetero {self.role} Data Split fit")
         self.param_validater(data_inst)
 
         ids = self._get_ids(data_inst)
         y = self._get_y(data_inst)
 
-        id_train, id_test_validate, y_train, y_test_validate = self._split(ids, y, self.test_size, self.train_size)
+        id_train, id_test_validate, y_train, y_test_validate = self._split(ids, y,
+                                                                           test_size=self.test_size + self.validate_size,
+                                                                           train_size = self.train_size)
 
-        test_validate_size = self.test_size + self.validate_size
-        test_size = self._safe_divide(self.test_size, test_validate_size)
-        validate_size = self._safe_divide(self.validate_size, test_validate_size)
+        validate_size, test_size = DataSplitter.get_train_test_size(self.test_size, self.validate_size)
         id_test, id_validate, _, _ = self._split(id_test_validate, y_test_validate, validate_size, test_size)
 
         train_data, test_data, validate_data = self.split_data(data_inst, id_train, id_test, id_validate)
-        return train_data, test_data, validate_data
+        return train_data
 
+        # return train_data, test_data, validate_data
 
 class HomoDataSplitGuest(DataSplitter):
     def __init__(self):
         super().__init__()
 
     def fit(self, data_inst):
-        LOGGER.debug(f"Enter Homo {self.role} Data Split fit")
+        LOGGER.debug(f"Enter Hetero {self.role} Data Split fit")
         self.param_validater(data_inst)
 
         ids = self._get_ids(data_inst)
         y = self._get_y(data_inst)
 
-        id_train, id_test_validate, y_train, y_test_validate = self._split(ids, y, self.test_size, self.train_size)
+        id_train, id_test_validate, y_train, y_test_validate = self._split(ids, y,
+                                                                           test_size=self.test_size + self.validate_size,
+                                                                           train_size = self.train_size)
 
-        test_validate_size = self.test_size + self.validate_size
-        test_size = self._safe_divide(self.test_size, test_validate_size)
-        validate_size = self._safe_divide(self.validate_size, test_validate_size)
+        validate_size, test_size = DataSplitter.get_train_test_size(self.test_size, self.validate_size)
         id_test, id_validate, _, _ = self._split(id_test_validate, y_test_validate, validate_size, test_size)
 
         train_data, test_data, validate_data = self.split_data(data_inst, id_train, id_test, id_validate)
-        return train_data, test_data, validate_data
+        return test_data
+        # return train_data, test_data, validate_data
