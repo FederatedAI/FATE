@@ -16,22 +16,17 @@
 
 from typing import Iterable
 
+from arch.api.base.utils.store_type import StoreTypes
 from pyspark import SparkContext
 
 from arch.api.base.session import FateSession
 from arch.api.impl.based_spark import util
 from arch.api.impl.based_spark.table import RDDTable
-from arch.api.impl.based_spark.util import broadcast_eggroll_session
 
-__all__ = ["build_session", "broadcast_eggroll_session"]
-
-
-def build_session(session_id, eggroll_runtime, persistent_engine: str):
-    session = FateSessionImpl(session_id, eggroll_runtime, persistent_engine)
-    return session
+__all__ = ["FateSessionImpl1x"]
 
 
-class FateSessionImpl(FateSession):
+class FateSessionImpl1x(FateSession):
     """
     manage RDDTable, use EggRoleStorage as storage
     """
@@ -40,6 +35,18 @@ class FateSessionImpl(FateSession):
         self._session_id = session_id
         self._persistent_engine = persistent_engine
         self._eggroll = eggroll_runtime
+
+        # convert to StoreType class in eggroll v1.x
+        from eggroll.api import StoreType as StoreTypeV1
+        if persistent_engine == StoreTypes.ROLLPAIR_LMDB:
+            self._persistent_engine = StoreTypeV1.LMDB
+        elif persistent_engine == StoreTypes.ROLLPAIR_LEVELDB:
+            self._persistent_engine = StoreTypeV1.LEVEL_DB
+        elif persistent_engine == StoreTypes.ROLLPAIR_IN_MEMORY:
+            self._persistent_engine = StoreTypeV1.IN_MEMORY
+        else:
+            raise ValueError(f"{persistent_engine} not supported, use one of {[e.value for e in StoreTypeV1]}")
+
         FateSession.set_instance(self)
 
     def get_persistent_engine(self):
@@ -54,7 +61,6 @@ class FateSessionImpl(FateSession):
               create_if_missing,
               error_if_exist,
               **kwargs):
-        # todo: fix
         dtable = self._eggroll.table(name=name, namespace=namespace, partition=partition,
                                      persistent=persistent, in_place_computing=in_place_computing,
                                      create_if_missing=create_if_missing, error_if_exist=error_if_exist,
@@ -73,7 +79,7 @@ class FateSessionImpl(FateSession):
                     create_if_missing,
                     error_if_exist):
         _iter = data if include_key else enumerate(data)
-        rdd = SparkContext().getOrCreate().parallelize(_iter, partition)
+        rdd = SparkContext.getOrCreate().parallelize(_iter, partition)
         rdd = util.materialize(rdd)
         if namespace is None:
             namespace = self._session_id
@@ -92,4 +98,4 @@ class FateSessionImpl(FateSession):
         self._eggroll.stop()
 
     def kill(self):
-        self._eggroll.kill()
+        self._eggroll.stop()
