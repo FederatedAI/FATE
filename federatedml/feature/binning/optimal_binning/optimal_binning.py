@@ -484,7 +484,15 @@ class OptimalBinning(BaseBinning):
             acc_non_event_rate = [x / curt_non_event_total for x in acc_non_event]
             ks_list = [math.fabs(eve - non_eve) for eve, non_eve in zip(acc_event_rate, acc_non_event_rate)]
             best_index = ks_list.index(max(ks_list))
+            LOGGER.debug("acc_event_rate: {}, acc_non_event_rate: {}, ks_list: {}, "
+                         "best_index: {}, curt_event_total: {}, curt_non_event_total: {}, start_idx: {}, end_idx: {}".format(
+                acc_event_rate, acc_non_event_rate, ks_list, best_index, curt_event_total, curt_non_event_total, start_idx,
+                end_idx
+            ))
+
             best_ks = ks_list[best_index]
+            if best_ks == 0:
+                return None, None, None
             left_event = acc_event[best_index]
             right_event = curt_event_total - left_event
             left_non_event = acc_non_event[best_index]
@@ -499,7 +507,7 @@ class OptimalBinning(BaseBinning):
                 'left_is_mixed': left_event > 0 and left_non_event > 0,
                 'right_is_mixed': right_event > 0 and right_non_event > 0
             }
-            return best_ks, best_index, res_dict
+            return best_ks, start + best_index, res_dict
 
         def _merge_buckets(start_idx, end_idx, bucket_idx):
             # new_bucket = bucket_info.Bucket(idx=bucket_idx, adjustment_factor=optimal_param.adjustment_factor)
@@ -530,12 +538,15 @@ class OptimalBinning(BaseBinning):
             if res_dict.get('left_total') < min_item_num or res_dict.get('right_total') < min_item_num:
                 continue
             res_split_index.append(best_index)
+            LOGGER.debug("start: {}, end: {}, res_dict: {}, res_split_index: {}".format(start, end, res_dict, res_split_index))
+
             if res_dict.get('right_total') > res_dict.get('left_total'):
                 to_split_pair.append((best_index + 1, end))
-                to_split_pair.append((start, best_index))
+                to_split_pair.append((start, best_index + 1))
             else:
-                to_split_pair.append((start, best_index))
+                to_split_pair.append((start, best_index + 1))
                 to_split_pair.append((best_index + 1, end))
+            LOGGER.debug("to_split_pair: {}".format(to_split_pair))
 
         if len(res_split_index) == 0:
             LOGGER.warning("Best ks optimal binning fail to split. Take middle split point instead")
