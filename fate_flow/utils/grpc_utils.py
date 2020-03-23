@@ -15,8 +15,8 @@
 #
 import requests
 import json
-from eggroll.core.proto import basic_meta_pb2
-from eggroll.core.proto import proxy_pb2, proxy_pb2_grpc
+from fate_flow.utils.proto_compatibility import basic_meta_pb2
+from fate_flow.utils.proto_compatibility import proxy_pb2, proxy_pb2_grpc
 import grpc
 
 from fate_flow.settings import ROLE, IP, GRPC_PORT, PROXY_HOST, PROXY_PORT, HEADERS, DEFAULT_GRPC_OVERALL_TIMEOUT, \

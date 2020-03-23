@@ -125,7 +125,7 @@ class FateSession(object):
                                                            persistent=True,
                                                            in_place_computing=False)
         for k, v in kv.items():
-            data_meta_table.put(k, json_dumps(v))
+            data_meta_table.put(k, json_dumps(v), use_serialize=False)
 
     @staticmethod
     def get_data_table_meta(key, data_table_name, data_table_namespace):
