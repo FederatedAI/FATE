@@ -34,7 +34,7 @@ class DataSplitter(ModelBase):
         self.metric_type = "DATASPLIT"
         self.model_param = DataSplitParam()
         self.role = None
-        self.classify_label = True
+        self.need_transform = None
 
     def _init_model(self, params):
         self.random_state = params.random_state
@@ -48,7 +48,8 @@ class DataSplitter(ModelBase):
 
     @staticmethod
     def _safe_divide(n, d):
-        return n / d if d != 0 else 0
+        result = n / d if d != 0 else 0
+        return result
 
     def _split(self, ids, y, test_size, train_size):
         if test_size == 0:
@@ -65,21 +66,19 @@ class DataSplitter(ModelBase):
         return ids
 
     def _get_y(self, data_inst):
-        y_raw = [v for i, v in data_inst.mapValues(lambda v: v.label).collect()]
-        if self.classify_label:
-            return y_raw
-        else:
-            y = self.transform_regression_label(data_inst, y_raw)
+        y = [v for i, v in data_inst.mapValues(lambda v: v.label).collect()]
+        if self.need_transform:
+            y = self.transform_regression_label(data_inst, y)
         return y
 
     def check_classify_label(self):
         if self.split_points is not None:
             if len(self.split_points) == 0:
-                self.classify_label = True
+                self.need_transform = False
             else:
                 # only need to produce binned labels if stratified split needed
                 if self.stratified:
-                    self.classify_label = False
+                    self.need_transform = True
         return
 
     def param_validater(self, data_inst):
