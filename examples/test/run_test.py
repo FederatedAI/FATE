@@ -156,7 +156,7 @@ def main():
     arg_parser.add_argument("-o", "--output", type=str, help="file to save result, defaults to `test_result`",
                             default="test_result")
     arg_parser.add_argument("-e", "--error", type=str, help="file to save error")
-    arg_parser.add_argument("-m", "--mode", type=int, help="work mode", default=0, choices=[0, 1])
+    arg_parser.add_argument("-m", "--mode", type=int, help="work mode", choices=[0, 1])
     group = arg_parser.add_mutually_exclusive_group()
     group.add_argument("-d", "--dir", type=str, help="dir to find testsuites",
                        default=os.path.join(fate_home, example_path))
@@ -170,8 +170,8 @@ def main():
                                  "0 means force upload, "
                                  "1 means upload after deleting old table",
                             type=int,
-                            default=-1,
                             choices=[-1, 0, 1])
+    arg_parser.add_argument("-b", "--backend", type=int, help="backend", choices=[0, 1])
     args = arg_parser.parse_args()
 
     env_conf = args.env_conf
@@ -183,8 +183,8 @@ def main():
     skip_data = args.skip_data
     work_mode = args.mode
     existing_strategy = args.force
+    backend = args.backend
 
-    submitter = submit.Submitter(fate_home=fate_home, work_mode=work_mode, existing_strategy=existing_strategy)
 
     @register
     def _on_exit():
@@ -201,6 +201,17 @@ Have Fun!
             env = json.loads(e.read())
     except:
         raise ValueError(f"invalid env conf: {env_conf}")
+
+    spark_submit_config = env.get("spark_submit_config", {})
+    backend = backend if backend is not None else env.get("backend", 0)
+    work_mode = work_mode if work_mode is not None else env.get("work_mode", 0)
+    existing_strategy = existing_strategy if existing_strategy is not None else env.get("force_upload", -1)
+    submitter = submit.Submitter(fate_home=fate_home,
+                                 work_mode=work_mode,
+                                 backend=backend,
+                                 existing_strategy=existing_strategy,
+                                 spark_submit_config=spark_submit_config)
+
     testsuites = [suite] if suite else search_testsuite(testsuites_dir)
     print("====================================================================")
     print("testsuites:")

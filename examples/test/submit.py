@@ -26,11 +26,12 @@ from datetime import timedelta
 
 class Submitter(object):
 
-    def __init__(self, fate_home="", work_mode=0, backend=0, existing_strategy=0):
+    def __init__(self, fate_home, work_mode, backend, existing_strategy, spark_submit_config):
         self._fate_home = fate_home
         self._work_mode = work_mode
         self._backend = backend
         self._existing_strategy = existing_strategy
+        self._spark_submit_config = spark_submit_config
 
     @property
     def _flow_client_path(self):
@@ -67,7 +68,7 @@ class Submitter(object):
         except json.decoder.JSONDecodeError:
             raise ValueError(f"[submit_job]fail, stdout:{stdout}")
         if status != 0:
-            if status == 100 and "table already exists" in stdout:
+            if status == 100 and "table already exists" in stdout["retmsg"]:
                 return None
             raise ValueError(f"[submit_job]fail, status:{status}, stdout:{stdout}")
         return stdout
@@ -99,7 +100,7 @@ class Submitter(object):
                 except json.decoder.JSONDecodeError:
                     raise ValueError(f"[submit_job]fail, stdout:{stdout}")
                 if status != 0:
-                    if status == 100 and "table already exists" in stdout:
+                    if status == 100 and "table already exists" in stdout["retmsg"]:
                         return None
                     raise ValueError(f"[submit_job]fail, status:{status}, stdout:{stdout}")
                 return stdout["jobId"]
@@ -107,7 +108,11 @@ class Submitter(object):
                 cmd = ["-f", "upload", "-c", f.name]
                 if self._existing_strategy == 0 or self._existing_strategy == 1:
                     cmd.extend(["-drop", "1"])
-                return self.submit(cmd)["jobId"]
+                stdout = self.submit(cmd)
+                if stdout is None:
+                    return None
+                else:
+                    return stdout["jobId"]
 
     def delete_table(self, namespace, name):
         pass
@@ -132,6 +137,8 @@ class Submitter(object):
         if substitute is not None:
             d = recursive_update(d, substitute)
         d['job_parameters']['work_mode'] = self._work_mode
+        d['job_parameters']['backend'] = self._backend
+        d['job_parameters']['spark_submit_config'] = self._spark_submit_config
         initiator_role = d['initiator']['role']
         d['initiator']['party_id'] = roles[initiator_role][0]
         for r in ["guest", "host", "arbiter"]:

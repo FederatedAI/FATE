@@ -334,7 +334,7 @@ class TaskScheduler(object):
                 if "conf" in spark_submit_config:
                     for ck, cv in spark_submit_config["conf"].items():
                         process_cmd.append(f'--conf')
-                        process_cmd.append("{ck}={cv}")
+                        process_cmd.append(f'{ck}={cv}')
                 process_cmd.extend([
                     sys.modules[TaskExecutor.__module__].__file__,
                     '-j', job_id,
