@@ -69,8 +69,9 @@ class DataSplitParam(BaseParam):
     def check(self):
         model_param_descr = "data split param's "
         if self.random_state is not None:
-            if isinstance(self.random_state, int):
+            if not isinstance(self.random_state, int):
                 raise ValueError(f"{model_param_descr} random state should be int type")
+            self.check_nonnegative_number(self.random_state, model_param_descr)
 
         if self.test_size is not None:
             self.check_nonnegative_number(self.test_size, model_param_descr)
