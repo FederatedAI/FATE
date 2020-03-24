@@ -17,7 +17,6 @@
 from sklearn.model_selection import train_test_split
 
 from arch.api.utils import log_utils
-from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.feature.binning.base_binning import Binning
 from federatedml.model_base import ModelBase
 from federatedml.param.data_split_param import DataSplitParam
@@ -83,6 +82,7 @@ class DataSplitter(ModelBase):
 
     @staticmethod
     def get_train_test_size(test_size, validate_size):
+        # return original set size if int
         if isinstance(test_size, int):
             return validate_size, test_size
         test_validate_size = test_size + validate_size

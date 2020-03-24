@@ -13,12 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
 from arch.api.utils import log_utils
 from federatedml.model_selection.data_split.data_split import DataSplitter
 
-from sklearn.model_selection import train_test_split
-
 LOGGER = log_utils.getLogger()
+
 
 class HomoDataSplitHost(DataSplitter):
     def __init__(self):
