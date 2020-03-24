@@ -39,9 +39,7 @@ class HomoDataSplitHost(DataSplitter):
         id_test, id_validate, _, _ = self._split(id_test_validate, y_test_validate, validate_size, test_size)
 
         train_data, test_data, validate_data = self.split_data(data_inst, id_train, id_test, id_validate)
-        return train_data
-
-        # return train_data, test_data, validate_data
+        return train_data, test_data, validate_data
 
 class HomoDataSplitGuest(DataSplitter):
     def __init__(self):
@@ -62,5 +60,4 @@ class HomoDataSplitGuest(DataSplitter):
         id_test, id_validate, _, _ = self._split(id_test_validate, y_test_validate, validate_size, test_size)
 
         train_data, test_data, validate_data = self.split_data(data_inst, id_train, id_test, id_validate)
-        return test_data
-        # return train_data, test_data, validate_data
+        return train_data, test_data, validate_data

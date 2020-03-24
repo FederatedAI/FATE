@@ -71,7 +71,7 @@ class DataSplitter(ModelBase):
             y = self.transform_regression_label(data_inst, y)
         return y
 
-    def check_classify_label(self):
+    def check_need_transform(self):
         if self.split_points is not None:
             if len(self.split_points) == 0:
                 self.need_transform = False
@@ -95,8 +95,8 @@ class DataSplitter(ModelBase):
         Validate & transform param inputs
 
         """
-        # set label type
-        self.check_classify_label()
+        # check if need label transform
+        self.check_need_transform()
 
         # check & transform data set sizes
         n_count = data_inst.count()

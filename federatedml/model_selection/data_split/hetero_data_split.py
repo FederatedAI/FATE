@@ -36,11 +36,7 @@ class HeteroDataSplitHost(DataSplitter):
 
         train_data, test_data, validate_data = self.split_data(data_inst, id_train, id_test, id_validate)
 
-        # return train_data, test_data, validate_data
-        LOGGER.debug(f"train_data: {list(train_data.collect())}")
-        LOGGER.debug(f"train_data schema: {train_data.schema}")
-        LOGGER.debug(f"test_data schema: {test_data.schema}")
-        return validate_data
+        return train_data, test_data, validate_data
 
 class HeteroDataSplitGuest(DataSplitter):
     def __init__(self):
@@ -67,8 +63,4 @@ class HeteroDataSplitGuest(DataSplitter):
 
         train_data, test_data, validate_data = self.split_data(data_inst, id_train, id_test, id_validate)
 
-        # return train_data, test_data, validate_data
-        LOGGER.debug(f"train_data: {list(train_data.collect())}")
-        LOGGER.debug(f"train_data schema: {train_data.schema}")
-        LOGGER.debug(f"test_data schema: {test_data.schema}")
-        return validate_data
+        return train_data, test_data, validate_data
