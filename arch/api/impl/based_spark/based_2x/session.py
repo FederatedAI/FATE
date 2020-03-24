@@ -20,15 +20,9 @@ from pyspark import SparkContext
 
 from arch.api.base.session import FateSession
 from arch.api.impl.based_spark import util
-from arch.api.impl.based_spark.table import RDDTable
-from arch.api.impl.based_spark.util import broadcast_eggroll_session
+from arch.api.impl.based_spark.based_2x.table import RDDTable
 
-__all__ = ["build_session", "broadcast_eggroll_session"]
-
-
-def build_session(session_id, eggroll_runtime, persistent_engine: str):
-    session = FateSessionImpl(session_id, eggroll_runtime, persistent_engine)
-    return session
+__all__ = ["FateSessionImpl"]
 
 
 class FateSessionImpl(FateSession):
@@ -54,11 +48,13 @@ class FateSessionImpl(FateSession):
               create_if_missing,
               error_if_exist,
               **kwargs):
-        # todo: fix
-        dtable = self._eggroll.table(name=name, namespace=namespace, partition=partition,
-                                     persistent=persistent, in_place_computing=in_place_computing,
-                                     create_if_missing=create_if_missing, error_if_exist=error_if_exist,
-                                     persistent_engine=self._persistent_engine)
+        options = kwargs.get("option", {})
+        if "use_serialize" in kwargs and not kwargs["use_serialize"]:
+            options["serdes"] = SerdesTypes.EMPTY
+        if partition is None:
+            partition = 1
+        options.update(dict(create_if_missing=create_if_missing, total_partitions=partition))
+        dtable = self._eggroll.load(namespace=namespace, name=name, options=options)
         return RDDTable.from_dtable(session_id=self._session_id, dtable=dtable)
 
     def parallelize(self,
@@ -73,7 +69,7 @@ class FateSessionImpl(FateSession):
                     create_if_missing,
                     error_if_exist):
         _iter = data if include_key else enumerate(data)
-        rdd = SparkContext().getOrCreate().parallelize(_iter, partition)
+        rdd = SparkContext.getOrCreate().parallelize(_iter, partition)
         rdd = util.materialize(rdd)
         if namespace is None:
             namespace = self._session_id

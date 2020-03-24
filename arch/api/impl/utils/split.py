@@ -19,7 +19,7 @@ SIZE_LIMIT = 1 << 28  # 32MB
 
 
 def split_put(k, v, use_serialize, put_call_back_func):
-    if not use_serialize:
+    if use_serialize is False:
         raise NotImplementedError("not support put large value without serialization yet!")
     v_bytes = pickle.dumps(v)
     num_bytes = len(v_bytes)
@@ -27,20 +27,27 @@ def split_put(k, v, use_serialize, put_call_back_func):
     view = memoryview(v_bytes)
     put_call_back_func.put(k, num_splits, use_serialize=True)
     for i in range(num_splits):
-        put_call_back_func.put(k=pickle.dumps(f"{k}__frag_{i}"),
-                               v=view[SIZE_LIMIT * i: SIZE_LIMIT * (i+1)],
-                               use_serialize=False)
+        if use_serialize is None:
+            put_call_back_func.put(k=pickle.dumps(f"{k}__frag_{i}"),
+                                   v=view[SIZE_LIMIT * i: SIZE_LIMIT * (i+1)])
+        else:
+            put_call_back_func.put(k=pickle.dumps(f"{k}__frag_{i}"),
+                                   v=view[SIZE_LIMIT * i: SIZE_LIMIT * (i + 1)],
+                                   use_serialize=False)
     return True
 
 
 def split_get(k, use_serialize, get_call_back_func):
-    if not use_serialize:
+    if use_serialize is False:
         raise NotImplementedError("not support get large value without serialization yet!")
     k_bytes = pickle.dumps(k)
     num_split = pickle.loads(k_bytes)
     splits = []
     for i in range(num_split):
-        splits.append(get_call_back_func(k=pickle.dumps(f"{k}__frag_{i}"), use_serialize=False))
+        if use_serialize is None:
+            splits.append(get_call_back_func(k=pickle.dumps(f"{k}__frag_{i}")))
+        else:
+            splits.append(get_call_back_func(k=pickle.dumps(f"{k}__frag_{i}"), use_serialize=False))
     v_bytes = bytes.join(*splits)
     v = pickle.loads(v_bytes)
     return v

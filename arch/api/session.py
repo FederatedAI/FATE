@@ -62,11 +62,12 @@ def init(job_id=None,
             builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)
 
     elif backend.is_spark():
-        from arch.api.impl.based_spark import build
         if eggroll_version < 2:
-            builder = build.Builder1x(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)
+            from arch.api.impl.based_spark.based_1x import build
+            builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)
         else:
-            builder = build.Builder2x(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)
+            from arch.api.impl.based_spark.based_2x import build
+            builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)
 
     else:
         raise ValueError(f"backend: ${backend} unknown")

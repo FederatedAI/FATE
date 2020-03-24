@@ -74,18 +74,17 @@ class DTable(Table):
         if not maybe_large_value:
             return self._dtable.put(k=k, v=v)
         else:
-            return split_put(k, v, use_serialize=True, put_call_back_func=self._dtable.put)
+            return split_put(k, v, use_serialize=None, put_call_back_func=self._dtable.put)
 
     def put_all(self, kv_list: Iterable, use_serialize=True, chunk_size=100000):
-        # return self._dtable.put_all(kv_list=kv_list, use_serialize=use_serialize, chunk_size=chunk_size)
         options = {}
         return self._dtable.put_all(kv_list, options=options)
 
     def get(self, k, use_serialize=True, maybe_large_value=False):
         if not maybe_large_value:
-            return self._dtable.get(k, use_serialize)
+            return self._dtable.get(k)
         else:
-            return split_get(k=k, use_serialize=use_serialize, get_call_back_func=self._dtable.get)
+            return split_get(k=k, use_serialize=None, get_call_back_func=self._dtable.get)
 
     @log_elapsed
     def collect(self, min_chunk_size=0, use_serialize=True, **kwargs) -> list:

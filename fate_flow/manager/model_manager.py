@@ -60,7 +60,7 @@ def read_component_model(component_model_key, party_model_id, model_version):
     model_buffers = {}
     if pipeline_model_table:
         model_class_map = pipeline_model_table.get_metas()
-        for storage_key, buffer_object_bytes in pipeline_model_table.collect(use_serialize=False):
+        for storage_key, buffer_object_bytes in pipeline_model_table.collect(use_serialize=False).items():
             storage_key_items = storage_key.split(':')
             buffer_name = ':'.join(storage_key_items[1:])
             current_model_key = storage_key_items[0]
