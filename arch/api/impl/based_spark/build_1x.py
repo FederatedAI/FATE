@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 from arch.api.impl.based_1x import build as build1x
-from arch.api.impl.based_spark.table import RDDTable
+from arch.api.impl.based_spark.table_1x import RDDTable
 from arch.api.impl.based_spark.util import broadcast_eggroll_session
 
 

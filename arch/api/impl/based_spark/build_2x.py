@@ -15,7 +15,7 @@
 #
 
 from arch.api.impl.based_2x import build as build2x
-from arch.api.impl.based_spark.table import RDDTable
+from arch.api.impl.based_spark.table_2x import RDDTable
 from arch.api.impl.based_spark.util import broadcast_eggroll_session
 
 

@@ -21,7 +21,7 @@ from pyspark import SparkContext
 
 from arch.api.base.session import FateSession
 from arch.api.impl.based_spark import util
-from arch.api.impl.based_spark.table import RDDTable
+from arch.api.impl.based_spark.table_1x import RDDTable
 
 __all__ = ["FateSessionImpl1x"]
 

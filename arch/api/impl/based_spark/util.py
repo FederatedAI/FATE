@@ -46,13 +46,19 @@ def maybe_create_eggroll_client():
     import pickle
 
     mode, eggroll_session = pickle.loads(bytes.fromhex(TaskContext.get().getLocalProperty(_EGGROLL_CLIENT)))
-    if mode == 1:
-        from eggroll.api.cluster.eggroll import _EggRoll
-        if _EggRoll.instance is None:
-            from eggroll.api import ComputingEngine
+
+    from arch.api import _EGGROLL_VERSION
+    if _EGGROLL_VERSION < 2:
+        if mode == 1:
             from eggroll.api.cluster.eggroll import _EggRoll
-            eggroll_runtime = _EggRoll(eggroll_session=eggroll_session)
-            eggroll_session.set_runtime(ComputingEngine.EGGROLL_DTABLE, eggroll_runtime)
-    else:
-        from eggroll.api.standalone.eggroll import Standalone
-        Standalone(eggroll_session)
+            if _EggRoll.instance is None:
+                from eggroll.api import ComputingEngine
+                from eggroll.api.cluster.eggroll import _EggRoll
+                eggroll_runtime = _EggRoll(eggroll_session=eggroll_session)
+                eggroll_session.set_runtime(ComputingEngine.EGGROLL_DTABLE, eggroll_runtime)
+        else:
+            from eggroll.api.standalone.eggroll import Standalone
+            Standalone(eggroll_session)
+
+
+
