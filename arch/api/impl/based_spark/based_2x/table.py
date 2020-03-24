@@ -284,6 +284,8 @@ class RDDTable(Table):
 
     @log_elapsed
     def save_as(self, name, namespace, partition=None, use_serialize=True, persistent=True, **kwargs):
+        if partition is None:
+            partition = self._partitions
         if self._dtable:
             from arch.api import RuntimeInstance
             persistent_engine = RuntimeInstance.SESSION.get_persistent_engine()
