@@ -16,8 +16,6 @@
 
 from typing import Iterable
 
-from pyspark import SparkContext
-
 from arch.api.base.session import FateSession
 from arch.api.impl.based_spark import util
 from arch.api.impl.based_spark.based_2x.table import RDDTable
@@ -25,6 +23,7 @@ from arch.api.impl.based_spark.based_2x.table import RDDTable
 __all__ = ["FateSessionImpl"]
 
 
+# noinspection PyUnresolvedReferences
 class FateSessionImpl(FateSession):
     """
     manage RDDTable, use EggRoleStorage as storage
@@ -50,6 +49,7 @@ class FateSessionImpl(FateSession):
               **kwargs):
         options = kwargs.get("option", {})
         if "use_serialize" in kwargs and not kwargs["use_serialize"]:
+            from eggroll.core.constants import SerdesTypes
             options["serdes"] = SerdesTypes.EMPTY
         if partition is None:
             partition = 1
@@ -69,6 +69,7 @@ class FateSessionImpl(FateSession):
                     create_if_missing,
                     error_if_exist):
         _iter = data if include_key else enumerate(data)
+        from pyspark import SparkContext
         rdd = SparkContext.getOrCreate().parallelize(_iter, partition)
         rdd = util.materialize(rdd)
         if namespace is None:

@@ -4,7 +4,6 @@ from typing import Union
 
 from arch.api.base.federation import Rubbish, Party, Federation
 from arch.api.impl.based_2x.session import FateSession
-from arch.api.impl.based_2x.table import DTable
 from arch.api.utils import file_utils
 from arch.api.utils import log_utils
 from arch.api.utils.splitable import maybe_split_object, is_split_head, split_get
@@ -66,7 +65,7 @@ class FederationRuntime(Federation):
             obj = future.result()
             LOGGER.info(f'federation got data. name: {name}, tag: {tag}')
             if isinstance(obj, RollPair):
-                rtn.append(DTable.from_dtable(obj.ctx.get_session().get_session_id(), obj))
+                rtn.append(obj)
                 rubbish.add_table(obj)
                 if LOGGER.isEnabledFor(logging.DEBUG):
                     LOGGER.debug(f'federation got roll pair count: {obj.count()} for name: {name}, tag: {tag}')
@@ -97,6 +96,7 @@ class FederationRuntime(Federation):
             futures = rs.push(obj=obj, parties=rs_parties)
             rubbish.add_table(obj)
         else:
+
             futures = []
             obj, splits = maybe_split_object(obj)
             futures.extend(rs.push(obj=obj, parties=rs_parties))

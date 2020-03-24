@@ -17,7 +17,6 @@
 from typing import Iterable
 
 from arch.api.base.utils.store_type import StoreTypes
-from pyspark import SparkContext
 
 from arch.api.base.session import FateSession
 from arch.api.impl.based_spark import util
@@ -67,6 +66,7 @@ class FateSessionImpl(FateSession):
                                      persistent_engine=self._persistent_engine)
         return RDDTable.from_dtable(session_id=self._session_id, dtable=dtable)
 
+    # noinspection PyUnresolvedReferences
     def parallelize(self,
                     data: Iterable,
                     name,
@@ -79,6 +79,7 @@ class FateSessionImpl(FateSession):
                     create_if_missing,
                     error_if_exist):
         _iter = data if include_key else enumerate(data)
+        from pyspark import SparkContext
         rdd = SparkContext.getOrCreate().parallelize(_iter, partition)
         rdd = util.materialize(rdd)
         if namespace is None:

@@ -14,37 +14,38 @@
 #  limitations under the License.
 #
 
-# noinspection PyPackageRequirements
-from pyspark import RDD, SparkContext
-from pyspark.taskcontext import TaskContext
-from pyspark import StorageLevel
-
 _EGGROLL_CLIENT = "_eggroll_client"
 RDD_ATTR_NAME = "_rdd"
+
+
 # noinspection PyUnresolvedReferences
-STORAGE_LEVEL = StorageLevel.MEMORY_AND_DISK
+def get_storage_level():
+    from pyspark import StorageLevel
+    return StorageLevel.MEMORY_AND_DISK
 
 
-def materialize(rdd: RDD):
-    rdd.persist(STORAGE_LEVEL)
+def materialize(rdd):
+    rdd.persist(get_storage_level())
     rdd.mapPartitionsWithIndex(lambda ind, it: (1,)).collect()
     return rdd
 
 
+# noinspection PyUnresolvedReferences
 def broadcast_eggroll_session(work_mode, eggroll_session):
     import pickle
     pickled_client = pickle.dumps((work_mode.value, eggroll_session)).hex()
+    from pyspark import SparkContext
     SparkContext.getOrCreate().setLocalProperty(_EGGROLL_CLIENT, pickled_client)
 
 
-# noinspection PyProtectedMember
+# noinspection PyProtectedMember,PyUnresolvedReferences
 def maybe_create_eggroll_client():
     """
     a tricky way to set eggroll client which may be used by spark tasks.
     WARM: This may be removed or adjusted in future!
     """
     import pickle
-
+    from pyspark.taskcontext import TaskContext
     mode, eggroll_session = pickle.loads(bytes.fromhex(TaskContext.get().getLocalProperty(_EGGROLL_CLIENT)))
 
     from arch.api import _EGGROLL_VERSION
@@ -59,6 +60,3 @@ def maybe_create_eggroll_client():
         else:
             from eggroll.api.standalone.eggroll import Standalone
             Standalone(eggroll_session)
-
-
-

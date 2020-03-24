@@ -17,9 +17,6 @@
 import uuid
 from typing import Iterable
 
-# noinspection PyPackageRequirements
-from pyspark import SparkContext, RDD
-
 from arch.api.base.table import Table
 from arch.api.impl.based_spark import util
 from arch.api.impl.utils.split import split_put, split_get
@@ -37,7 +34,7 @@ class RDDTable(Table):
         return RDDTable(session_id=session_id, namespace=namespace, name=name, partitions=partitions, dtable=dtable)
 
     @classmethod
-    def from_rdd(cls, rdd: RDD, job_id: str, namespace: str, name: str):
+    def from_rdd(cls, rdd, job_id: str, namespace: str, name: str):
         partitions = rdd.getNumPartitions()
         return RDDTable(session_id=job_id, namespace=namespace, name=name, partitions=partitions, rdd=rdd)
 
@@ -45,7 +42,7 @@ class RDDTable(Table):
                  namespace: str,
                  name: str = None,
                  partitions: int = 1,
-                 rdd: RDD = None,
+                 rdd=None,
                  dtable=None):
 
         self._valid_param_check(rdd, dtable, namespace, partitions)
@@ -70,7 +67,7 @@ class RDDTable(Table):
     def __repr__(self):
         return f"{self._namespace}, {self._name}, {self._dtable}"
 
-    def _tmp_table_from_rdd(self, rdd: RDD, name=None):
+    def _tmp_table_from_rdd(self, rdd, name=None):
         """
         tmp table, with namespace == job_id
         """
@@ -105,7 +102,7 @@ class RDDTable(Table):
 
         return self._rdd_from_dtable()
 
-    # noinspection PyProtectedMember
+    # noinspection PyProtectedMember,PyUnresolvedReferences
     @log_elapsed
     def _rdd_from_dtable(self):
         storage_iterator = self._dtable.collect(use_serialize=True)
@@ -113,9 +110,10 @@ class RDDTable(Table):
             storage_iterator = []
 
         num_partition = self._dtable._partitions
+        from pyspark import SparkContext
         self._rdd = SparkContext.getOrCreate() \
             .parallelize(storage_iterator, num_partition) \
-            .persist(util.STORAGE_LEVEL)
+            .persist(util.get_storage_level())
         return self._rdd
 
     def dtable(self):
