@@ -21,12 +21,12 @@ from pyspark import SparkContext
 
 from arch.api.base.session import FateSession
 from arch.api.impl.based_spark import util
-from arch.api.impl.based_spark.table_1x import RDDTable
+from arch.api.impl.based_spark.based_1x.table import RDDTable
 
-__all__ = ["FateSessionImpl1x"]
+__all__ = ["FateSessionImpl"]
 
 
-class FateSessionImpl1x(FateSession):
+class FateSessionImpl(FateSession):
     """
     manage RDDTable, use EggRoleStorage as storage
     """

@@ -31,17 +31,9 @@ class RDDTable(Table):
     # noinspection PyProtectedMember
     @classmethod
     def from_dtable(cls, session_id: str, dtable):
-        from arch.api import _EGGROLL_VERSION
-        if _EGGROLL_VERSION < 2:
-            namespace = dtable._namespace
-            name = dtable._name
-            partitions = dtable._partitions
-        else:
-            namespace = dtable.get_namespace()
-            name = dtable.get_name()
-            partitions = dtable.get_partitions()
-        if partitions <= 0:
-            raise ValueError(dtable)
+        namespace = dtable.get_namespace()
+        name = dtable.get_name()
+        partitions = dtable.get_partitions()
         return RDDTable(session_id=session_id, namespace=namespace, name=name, partitions=partitions, dtable=dtable)
 
     @classmethod
@@ -297,7 +289,7 @@ class RDDTable(Table):
             options = dict(store_type=persistent_engine)
             saved_table = self._dtable.save_as(name=name, namespace=namespace, partition=partition, options=options)
         else:
-            it = self._rdd.collect()
+            it = self._rdd.toLocalIterator()
             from arch.api import session
             saved_table = session.table(name=name, namespace=namespace, partition=partition, persistent=persistent)
             saved_table.put_all(kv_list=it)

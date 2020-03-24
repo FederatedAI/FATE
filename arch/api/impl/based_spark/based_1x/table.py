@@ -31,15 +31,9 @@ class RDDTable(Table):
     # noinspection PyProtectedMember
     @classmethod
     def from_dtable(cls, session_id: str, dtable):
-        from arch.api import _EGGROLL_VERSION
-        if _EGGROLL_VERSION < 2:
-            namespace = dtable._namespace
-            name = dtable._name
-            partitions = dtable._partitions
-        else:
-            namespace = dtable.get_namespace()
-            name = dtable.get_name()
-            partitions = dtable.get_partitions()
+        namespace = dtable._namespace
+        name = dtable._name
+        partitions = dtable._partitions
         return RDDTable(session_id=session_id, namespace=namespace, name=name, partitions=partitions, dtable=dtable)
 
     @classmethod
