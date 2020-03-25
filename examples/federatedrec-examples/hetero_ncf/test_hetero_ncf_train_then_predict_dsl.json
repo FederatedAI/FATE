@@ -4,17 +4,17 @@
       "module": "DataIO",
       "input": {
         "data": {
-        "data": [
-          "args.train_data"
-        ]
+          "data": [
+            "args.train_data"
+          ]
         }
       },
       "output": {
         "data": [
-        "train"
+          "train"
         ],
         "model": [
-        "dataio"
+          "dataio"
         ]
       }
     },
@@ -22,17 +22,17 @@
       "module": "HeteroNCF",
       "input": {
         "data": {
-        "train_data": [
-          "dataio_0.train"
-        ]
+          "train_data": [
+            "dataio_0.train"
+          ]
         }
       },
       "output": {
         "data": [
-        "train"
+          "train"
         ],
         "model": [
-        "hetero_ncf"
+          "hetero_ncf"
         ]
       }
     },

@@ -28,7 +28,7 @@ from federatedrec.param.factorization_machine_param import HomoFactorizationPara
 from federatedml.protobuf.generated import fm_model_meta_pb2
 from federatedml.secureprotol import FakeEncrypt
 from federatedml.statistic import data_overview
-from federatedml.transfer_variable.transfer_class.homo_fm_transfer_variable import HomoFMTransferVariable
+from federatedrec.transfer_variable.transfer_class.homo_fm_transfer_variable import HomoFMTransferVariable
 from federatedml.util import consts
 from federatedml.util import fate_operator
 
