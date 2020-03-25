@@ -18,7 +18,6 @@ import uuid
 from typing import Iterable
 
 # noinspection PyPackageRequirements
-from pyspark import SparkContext, RDD
 
 from arch.api.base.table import Table
 from arch.api.impl.based_spark import util
@@ -37,7 +36,7 @@ class RDDTable(Table):
         return RDDTable(session_id=session_id, namespace=namespace, name=name, partitions=partitions, dtable=dtable)
 
     @classmethod
-    def from_rdd(cls, rdd: RDD, job_id: str, namespace: str, name: str):
+    def from_rdd(cls, rdd, job_id: str, namespace: str, name: str):
         partitions = rdd.getNumPartitions()
         return RDDTable(session_id=job_id, namespace=namespace, name=name, partitions=partitions, rdd=rdd)
 
@@ -45,7 +44,7 @@ class RDDTable(Table):
                  namespace: str,
                  name: str = None,
                  partitions: int = 1,
-                 rdd: RDD = None,
+                 rdd=None,
                  dtable=None):
 
         self._valid_param_check(rdd, dtable, namespace, partitions)
@@ -70,7 +69,7 @@ class RDDTable(Table):
     def __repr__(self):
         return f"{self._namespace}, {self._name}, {self._dtable}"
 
-    def _tmp_table_from_rdd(self, rdd: RDD, name=None):
+    def _tmp_table_from_rdd(self, rdd, name=None):
         """
         tmp table, with namespace == job_id
         """
@@ -105,7 +104,7 @@ class RDDTable(Table):
 
         return self._rdd_from_dtable()
 
-    # noinspection PyProtectedMember
+    # noinspection PyProtectedMember,PyUnresolvedReferences
     @log_elapsed
     def _rdd_from_dtable(self):
         storage_iterator = self._dtable.get_all()
@@ -113,9 +112,11 @@ class RDDTable(Table):
             storage_iterator = []
 
         num_partition = self._dtable.get_partitions()
+
+        from pyspark import SparkContext
         self._rdd = SparkContext.getOrCreate() \
             .parallelize(storage_iterator, num_partition) \
-            .persist(util.STORAGE_LEVEL)
+            .persist(util.get_storage_level())
         return self._rdd
 
     def dtable(self):
@@ -282,15 +283,18 @@ class RDDTable(Table):
             return self._rdd.count()
 
     @log_elapsed
-    def save_as(self, name, namespace, partition=None, use_serialize=True, persistent=True, **kwargs) -> 'RDDTable':
+    def save_as(self, name, namespace, partition=None, use_serialize=True, persistent=True, **kwargs):
+        if partition is None:
+            partition = self._partitions
         if self._dtable:
             from arch.api import RuntimeInstance
             persistent_engine = RuntimeInstance.SESSION.get_persistent_engine()
             options = dict(store_type=persistent_engine)
             saved_table = self._dtable.save_as(name=name, namespace=namespace, partition=partition, options=options)
+            return RDDTable.from_dtable(session_id=self._session_id, dtable=saved_table)
         else:
             it = self._rdd.toLocalIterator()
             from arch.api import session
-            saved_table = session.table(name=name, namespace=namespace, partition=partition, persistent=persistent)
-            saved_table.put_all(kv_list=it)
-        return RDDTable.from_dtable(session_id=self._session_id, dtable=saved_table)
+            rdd_table = session.table(name=name, namespace=namespace, partition=partition, persistent=persistent)
+            rdd_table.put_all(kv_list=it)
+            return rdd_table

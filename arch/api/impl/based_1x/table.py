@@ -47,6 +47,8 @@ class DTable(Table):
 
     @log_elapsed
     def save_as(self, name, namespace, partition=None, use_serialize=True, **kwargs):
+        if partition is None:
+            partition = self._partitions
         from arch.api import RuntimeInstance
         persistent_engine = RuntimeInstance.SESSION.get_persistent_engine()
         saved_table = self._dtable.save_as(name=name,
