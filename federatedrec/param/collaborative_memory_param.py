@@ -71,8 +71,6 @@ class CMNParam(BaseParam):
 
     predict_param: PredictParam object, default: default PredictParam object
 
-    cv_param: CrossValidationParam object, default: default CrossValidationParam object
-
     hops: hops count of CMN model
 
     max_len: max length of neighbors
@@ -89,7 +87,6 @@ class CMNParam(BaseParam):
                  init_param=CMNInitParam(),
                  max_iter=100,
                  predict_param=PredictParam(),
-                 cv_param=CrossValidationParam(),
                  validation_freqs=None,
                  metrics: typing.Union[str, list] = None,
                  loss: str = 'mse',
@@ -102,7 +99,6 @@ class CMNParam(BaseParam):
         self.max_iter = max_iter
         self.early_stop = early_stop
         self.predict_param = copy.deepcopy(predict_param)
-        self.cv_param = copy.deepcopy(cv_param)
         self.validation_freqs = validation_freqs
         self.hops = hops
         self.max_len = max_len
@@ -246,7 +242,7 @@ class HeteroCMNParam(CMNParam):
                  early_stop={"early_stop": "diff"},
                  batch_size=-1, init_param=CMNInitParam(),
                  max_iter=100,
-                 predict_param=PredictParam(), cv_param=CrossValidationParam(),
+                 predict_param=PredictParam(),
                  aggregate_iters=1, validation_freqs=None,
                  hops=2, max_len=4, l2_coef=0.1, neg_count=10,
                  secure_aggregate: bool = True,
@@ -258,7 +254,6 @@ class HeteroCMNParam(CMNParam):
                                              init_param=init_param, max_iter=max_iter,
                                              early_stop=early_stop,
                                              predict_param=predict_param,
-                                             cv_param=cv_param,
                                              validation_freqs=validation_freqs,
                                              hops=hops,
                                              max_len=max_len,
