@@ -65,9 +65,13 @@ class DataSplitter(ModelBase):
         return ids
 
     def _get_y(self, data_inst):
-        y = [v for i, v in data_inst.mapValues(lambda v: v.label).collect()]
-        if self.need_transform:
-            y = self.transform_regression_label(data_inst, y)
+        if self.stratified:
+            y = [v for i, v in data_inst.mapValues(lambda v: v.label).collect()]
+            if self.need_transform:
+                y = self.transform_regression_label(data_inst, y)
+        else:
+            # make dummy y
+            y = [0] * (data_inst.count())
         return y
 
     def check_need_transform(self):
