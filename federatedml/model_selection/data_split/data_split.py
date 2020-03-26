@@ -149,9 +149,8 @@ class DataSplitter(ModelBase):
         test_data = DataSplitter._match_id(data_inst, id_test)
         validate_data = DataSplitter._match_id(data_inst, id_validate)
 
-        has_schema = getattr(data_inst, "schema", None)
-        if has_schema:
-            schema = data_inst.schema
+        schema = getattr(data_inst, "schema", None)
+        if schema:
             data_io.set_schema(train_data, schema)
             data_io.set_schema(test_data, schema)
             data_io.set_schema(validate_data, schema)
