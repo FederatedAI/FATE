@@ -20,7 +20,7 @@ import uuid
 from typing import Iterable
 
 from arch.api import RuntimeInstance, _EGGROLL_VERSION
-from arch.api import WorkMode, Backend
+from arch.api import WorkMode, Backend, StoreEngine
 from arch.api.base.table import Table
 from arch.api.base.utils.store_type import StoreTypes
 from arch.api.utils import file_utils
@@ -32,6 +32,7 @@ from arch.api.utils.profile_util import log_elapsed
 def init(job_id=None,
          mode: typing.Union[int, WorkMode] = WorkMode.STANDALONE,
          backend: typing.Union[int, Backend] = Backend.EGGROLL,
+         store_engine: typing.Union[int, StoreEngine] = StoreEngine.EGGROLL,
          persistent_engine: str = StoreTypes.ROLLPAIR_LMDB,
          eggroll_version=None,
          set_log_dir=True):
@@ -42,6 +43,8 @@ def init(job_id=None,
         mode = WorkMode(mode)
     if isinstance(backend, int):
         backend = Backend(backend)
+    if isinstance(store_engine, int):
+        store_engine = StoreEngine(store_engine)
     if job_id is None:
         job_id = str(uuid.uuid1())
         if True:
@@ -62,12 +65,17 @@ def init(job_id=None,
             builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)
 
     elif backend.is_spark():
-        if eggroll_version < 2:
-            from arch.api.impl.based_spark.based_1x import build
-            builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)
+        if store_engine.is_eggroll:
+            if eggroll_version < 2:
+                from arch.api.impl.based_spark.based_1x import build
+                builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)
+            else:
+                from arch.api.impl.based_spark.based_2x import build
+                builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)
+        elif store_engine.is_hdfs:
+            pass
         else:
-            from arch.api.impl.based_spark.based_2x import build
-            builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)
+            raise ValueError(f"store engine: ${store_engine} unknown")
 
     else:
         raise ValueError(f"backend: ${backend} unknown")
@@ -76,6 +84,7 @@ def init(job_id=None,
     RuntimeInstance.BACKEND = backend
     RuntimeInstance.BUILDER = builder
     RuntimeInstance.SESSION = builder.build_session()
+    RuntimeInstance.STORE_ENGINE = store_engine
 
 
 @log_elapsed

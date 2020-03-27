@@ -46,6 +46,17 @@ class Backend(IntEnum):
         return self.value == self.EGGROLL
 
 
+class StoreEngine(IntEnum):
+    EGGROLL = 0
+    HDFS = 1
+
+    def is_hdfs(self):
+        return self.value == self.HDFS
+
+    def is_eggroll(self):
+        return self.value == self.EGGROLL
+
+
 class RuntimeInstance(object):
     SESSION = None
     MODE: WorkMode = None
@@ -53,3 +64,4 @@ class RuntimeInstance(object):
     TABLE_WRAPPER: FederationWrapped = None
     BACKEND: Backend = None
     BUILDER: Builder = None
+    STORE_ENGINE: StoreEngine = None
