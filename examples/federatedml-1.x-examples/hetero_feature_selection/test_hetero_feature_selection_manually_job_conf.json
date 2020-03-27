@@ -11,7 +11,7 @@
       10000
     ],
     "host": [
-      10000, 10001
+      10000
     ]
   },
   "role_parameters": {
@@ -48,20 +48,16 @@
             {
               "name": "hetero_breast_a",
               "namespace": "hetero_breast_host"
-            },
-            {
-              "name": "hetero_breast_a",
-              "namespace": "hetero_breast_host"
             }
           ]
         }
       },
       "dataio_0": {
         "with_label": [
-          false, false
+          false
         ],
         "output_format": [
-          "dense", "dense"
+          "dense"
         ]
       }
     }
@@ -82,10 +78,15 @@
       }
     },
     "hetero_feature_selection_0": {
-      "select_cols": -1,
-      "filter_methods": ["unique_value", "iv_value_thres",
+      "select_col_indexes": [],
+      "select_names": [],
+      "filter_methods": ["manually", "unique_value", "iv_value_thres",
         "coefficient_of_variation_value_thres", "iv_percentile", "outlier_cols"],
       "local_only": false,
+      "manually_param": {
+        "filter_out_indexes": [0, 1, 2],
+        "filter_out_names": ["x3"]
+      },
       "unique_param": {
         "eps": 1e-6
       },

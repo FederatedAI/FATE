@@ -43,8 +43,8 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         self.binning_obj.fit_split_points(data_instances)
         LOGGER.debug("After fit, binning_obj split_points: {}".format(self.binning_obj.split_points))
 
-        is_binary_data = data_overview.is_binary_labels(data_instances)
-        if not is_binary_data:
+        label_counts = data_overview.count_labels(data_instances)
+        if label_counts > 2:
             raise ValueError("Iv calculation support binary-data only in this version.")
 
         data_instances = data_instances.mapValues(self.load_data)

@@ -103,9 +103,19 @@ class OptimalBinningParam(BaseParam):
         self.adjustment_factor = None
 
     def check(self):
-        # Todo: finish check
+        descr = "hetero binning's optimal binning param's"
+        self.check_string(self.metric_method, descr)
+        if self.metric_method in ['chi_square', 'chi-square']:
+            self.metric_method = 'chi_square'
+        self.check_valid_value(self.metric_method, descr, ['iv', 'gini', 'chi_square', 'ks'])
+        if self.max_bin_pct not in [1, 0]:
+            self.check_decimal_float(self.max_bin_pct, descr)
+        if self.min_bin_pct not in [1, 0]:
+            self.check_decimal_float(self.min_bin_pct, descr)
         if math.ceil(1.0 / self.max_bin_pct) > self.max_bin:
             raise ValueError("Arguments logical error, ceil(1.0/max_bin_pct) should be smaller or equal than bin_num")
+        self.check_boolean(self.mixture, descr)
+        self.check_positive_integer(self.init_bin_nums, descr)
 
 
 class FeatureBinningParam(BaseParam):

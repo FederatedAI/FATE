@@ -50,7 +50,7 @@
       }
   ],
   "tasks": {
-    "binning": {
+    "quantile_binning": {
       "conf": "./test_hetero_binning_job_conf.json",
       "dsl": "./test_hetero_binning_add_onehot_job_dsl.json"
     },
@@ -60,6 +60,58 @@
     },
     "woe_binning": {
       "conf": "./binning_transform_woe_job_conf.json",
+      "dsl": "./test_hetero_binning_job_dsl.json"
+    },
+    "bucket_binning": {
+      "conf": "./test_bucket_binning_job_conf.json",
+      "dsl": "./test_hetero_binning_job_dsl.json"
+    },
+    "sparse_bucket_binning": {
+      "conf": "./test_sparse_bucket_binning_job_conf.json",
+      "dsl": "./test_hetero_binning_job_dsl.json"
+    },
+    "category_binning": {
+      "conf": "./test_category_binning_job_conf.json",
+      "dsl": "./test_hetero_binning_job_dsl.json"
+    },
+    "optimal_iv": {
+      "conf": "./test_optimal_binning_iv_job_conf.json",
+      "dsl": "./test_hetero_binning_job_dsl.json"
+    },
+    "optimal_gini": {
+      "conf": "./test_optimal_binning_gini_job_conf.json",
+      "dsl": "./test_hetero_binning_job_dsl.json"
+    },
+    "optimal_chi_square": {
+      "conf": "./test_optimal_binning_chi_square_job_conf.json",
+      "dsl": "./test_hetero_binning_job_dsl.json"
+    },
+    "optimal_ks": {
+      "conf": "./test_optimal_binning_ks_job_conf.json",
+      "dsl": "./test_hetero_binning_job_dsl.json"
+    },
+    "sparse_optimal_iv": {
+      "conf": "./test_sparse_optimal_binning_iv_job_conf.json",
+      "dsl": "./test_hetero_binning_job_dsl.json"
+    },
+    "sparse_optimal_gini": {
+      "conf": "./test_sparse_optimal_binning_gini_job_conf.json",
+      "dsl": "./test_hetero_binning_job_dsl.json"
+    },
+    "sparse_optimal_chi_square": {
+      "conf": "./test_sparse_optimal_binning_chi_square_job_conf.json",
+      "dsl": "./test_hetero_binning_job_dsl.json"
+    },
+    "sparse_optimal_ks": {
+      "conf": "./test_sparse_optimal_binning_ks_job_conf.json",
+      "dsl": "./test_hetero_binning_job_dsl.json"
+    },
+    "multi_host_optimal": {
+      "conf": "./multi_hosts_optimal_binning_job_conf.json",
+      "dsl": "./test_hetero_binning_job_dsl.json"
+    },
+    "multi_host_sparse_optimal": {
+      "conf": "./multi_hosts_sparse_optimal_binning_job_conf.json",
       "dsl": "./test_hetero_binning_job_dsl.json"
     }
   }

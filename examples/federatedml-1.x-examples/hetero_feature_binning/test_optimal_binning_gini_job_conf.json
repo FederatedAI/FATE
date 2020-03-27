@@ -39,12 +39,6 @@
         "output_format": [
           "dense"
         ]
-      },
-      "hetero_feature_selection_0": {
-        "filter_methods": [["manually"]],
-        "manually_param": {
-          "filter_out_indexes": [[1,2,3,4,5,6,7,8,9,10,11,12]]
-        }
       }
     },
     "host": {
@@ -65,25 +59,18 @@
         "output_format": [
           "dense"
         ]
-      },
-      "hetero_feature_selection_0": {
-        "filter_methods": [["manually"]],
-        "manually_param": {
-          "filter_out_indexes": [[1,2,3,4,5,6,7,8,9]]
-        }
       }
     }
   },
   "algorithm_parameters": {
-
     "hetero_feature_binning_0": {
       "method": "optimal",
       "optimal_binning_param": {
-        "metric_method": "iv",
-        "max_bin": 10,
+        "metric_method": "gini",
         "min_bin_pct": 0.05,
-        "max_bin_pct": 1.0,
-        "init_bin_nums": 1000,
+        "max_bin_pct": 0.8,
+        "init_bucket_method": "quantile",
+        "init_bin_nums": 100,
         "mixture": true
       },
       "compress_thres": 10000,
