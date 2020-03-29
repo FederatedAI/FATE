@@ -201,7 +201,7 @@
     "cv_regression": {
       "conf": "./test_secureboost_cross_validation_regression_conf.json",
       "dsl": "./test_secureboost_cross_validation_dsl.json"
-    },
+    }
 
   }
 }
