@@ -60,7 +60,6 @@ class TaskExecutor(object):
             role = args.role
             party_id = int(args.party_id)
             executor_pid = os.getpid()
-            job_utils.task_killed_detector(job_id, role, party_id, component_name, executor_pid)
             task_config = file_utils.load_json_conf(args.config)
             job_parameters = task_config['job_parameters']
             job_initiator = task_config['job_initiator']
@@ -147,15 +146,6 @@ class TaskExecutor(object):
         schedule_logger().info(
             'finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status if sync_success else TaskStatus.FAILED))
         print('finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status if sync_success else TaskStatus.FAILED))
-        while True:
-            time.sleep(0.5)
-            kill_path = os.path.join(job_utils.get_job_directory(job_id), str(role), str(party_id), component_name, 'kill')
-            if os.path.exists(kill_path):
-                try:
-                    session.stop()
-                except Exception as e:
-                    pass
-                break
 
     @staticmethod
     def get_task_run_args(job_id, role, party_id, job_parameters, job_args, input_dsl):
