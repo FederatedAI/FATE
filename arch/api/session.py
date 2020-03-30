@@ -73,7 +73,8 @@ def init(job_id=None,
                 from arch.api.impl.based_spark.based_2x import build
                 builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)
         elif store_engine.is_hdfs:
-            pass
+            from arch.api.impl.based_spark.based_hdfs import build
+            builder = build.Builder(session_id=job_id)
         else:
             raise ValueError(f"store engine: ${store_engine} unknown")
 

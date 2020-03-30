@@ -29,11 +29,22 @@ class RDDTable(Table):
 
     # noinspection PyProtectedMember
     @classmethod
-    def from_dtable(cls, session_id: str, dtable):
-        namespace = dtable.get_namespace()
-        name = dtable.get_name()
-        partitions = dtable.get_partitions()
-        return RDDTable(session_id=session_id, namespace=namespace, name=name, partitions=partitions, dtable=dtable)
+    def from_hdfs(cls, session_id: str,
+                  namespace: str,
+                  name: str = None,
+                  partitions: int = 1,
+                  create_if_missing: bool = True):
+        from pyspark import SparkContext
+        sc = SparkContext.getOrCreate()
+        hdfs_path = _generate_hdfs_path(namespace=namespace, name=name)
+        fs = sc._jvm.org.apache.hadoop.fs.FileSystem.get(sc._jsc.hadoopConfiguration())
+        if(fs.exists(sc._jvm.org.apache.hadoop.fs.Path(hdfs_path))):
+            rdd = sc.textFile()
+        elif create_if_missing:
+            rdd = sc.emptyRDD()
+        else:
+            raise AssertionError("hdfs path {} not exists.".format(hdfs_path))
+        return RDDTable(session_id=session_id, namespace=namespace, name=name, partitions=partitions, rdd=rdd)
 
     @classmethod
     def from_rdd(cls, rdd, job_id: str, namespace: str, name: str):
@@ -44,14 +55,12 @@ class RDDTable(Table):
                  namespace: str,
                  name: str = None,
                  partitions: int = 1,
-                 rdd=None,
-                 dtable=None):
+                 rdd=None):
 
-        self._valid_param_check(rdd, dtable, namespace, partitions)
+        self._valid_param_check(rdd, namespace, partitions)
         setattr(self, util.RDD_ATTR_NAME, rdd)
         self._rdd = rdd
         self._partitions = partitions
-        self._dtable = dtable
         self.schema = {}
         self._name = name or str(uuid.uuid1())
         self._namespace = namespace
@@ -79,8 +88,7 @@ class RDDTable(Table):
                         namespace=self._namespace,
                         name=name,
                         partitions=rdd.getNumPartitions(),
-                        rdd=rdd,
-                        dtable=None)
+                        rdd=rdd)
 
     # self._rdd should not be pickled(spark requires all transformer/action to be invoked in driver).
     def __getstate__(self):
@@ -91,53 +99,23 @@ class RDDTable(Table):
 
     @staticmethod
     def _valid_param_check(rdd, dtable, namespace, partitions):
-        assert (rdd is not None) or (dtable is not None), "params rdd and storage are both None"
+        assert (rdd is not None), "params rdd is None"
         assert namespace is not None, "namespace is None"
         assert partitions > 0, "invalid partitions={0}".format(partitions)
 
     def rdd(self):
         if hasattr(self, "_rdd") and self._rdd is not None:
             return self._rdd
+        else:
+            raise AssertionError("rdd is None!")
 
-        if self._dtable is None:
-            raise AssertionError("try create rdd from None storage")
-
-        return self._rdd_from_dtable()
 
     # noinspection PyProtectedMember,PyUnresolvedReferences
     @log_elapsed
-    def _rdd_from_dtable(self):
-        storage_iterator = self._dtable.get_all()
-        if self._dtable.count() <= 0:
-            storage_iterator = []
+    def _generate_hdfs_path(self, namspace, name):
+        return "/fate/{}/{}".format(namspace, name)
 
-        num_partition = self._dtable.get_partitions()
 
-        from pyspark import SparkContext
-        self._rdd = SparkContext.getOrCreate() \
-            .parallelize(storage_iterator, num_partition) \
-            .persist(util.get_storage_level())
-        return self._rdd
-
-    def dtable(self):
-        """
-        rdd -> storage
-        """
-        if self._dtable:
-            return self._dtable
-        else:
-            if not hasattr(self, "_rdd") or self._rdd is None:
-                raise AssertionError("try create dtable from None")
-            return self._rdd_to_dtable()
-
-    # noinspection PyUnusedLocal
-    @log_elapsed
-    def _rdd_to_dtable(self, **kwargs):
-        self._dtable = self.save_as(name=self._name,
-                                    namespace=self._namespace,
-                                    partition=self._partitions,
-                                    persistent=False)._dtable
-        return self._dtable
 
     def get_partitions(self):
         return self._partitions

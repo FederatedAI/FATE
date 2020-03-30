@@ -18,7 +18,7 @@ from typing import Iterable
 
 from arch.api.base.session import FateSession
 from arch.api.impl.based_spark import util
-from arch.api.impl.based_spark.based_2x.table import RDDTable
+from arch.api.impl.based_spark.based_hdfs.table import RDDTable
 
 __all__ = ["FateSessionImpl"]
 
@@ -29,14 +29,9 @@ class FateSessionImpl(FateSession):
     manage RDDTable, use EggRoleStorage as storage
     """
 
-    def __init__(self, session_id, eggroll_runtime, persistent_engine):
+    def __init__(self, session_id):
         self._session_id = session_id
-        self._persistent_engine = persistent_engine
-        self._eggroll = eggroll_runtime
         FateSession.set_instance(self)
-
-    def get_persistent_engine(self):
-        return self._persistent_engine
 
     def table(self,
               name,
@@ -47,15 +42,11 @@ class FateSessionImpl(FateSession):
               create_if_missing,
               error_if_exist,
               **kwargs):
-        options = kwargs.get("option", {})
-        if "use_serialize" in kwargs and not kwargs["use_serialize"]:
-            from eggroll.core.constants import SerdesTypes
-            options["serdes"] = SerdesTypes.EMPTY
         if partition is None:
             partition = 1
-        options.update(dict(create_if_missing=create_if_missing, total_partitions=partition))
-        dtable = self._eggroll.load(namespace=namespace, name=name, options=options)
-        return RDDTable.from_dtable(session_id=self._session_id, dtable=dtable)
+        return RDDTable.from_hdfs(session_id=self._session_id, 
+                                namespace=namespace, name=name, 
+                                partitions=partition, create_if_missing=create_if_missing)
 
     def parallelize(self,
                     data: Iterable,
@@ -77,16 +68,17 @@ class FateSessionImpl(FateSession):
         return RDDTable.from_rdd(rdd=rdd, job_id=self._session_id, namespace=namespace, name=name)
 
     def cleanup(self, name, namespace, persistent):
-        return self._eggroll.cleanup(name=name, namespace=namespace, persistent=persistent)
+        pass
 
     def generateUniqueId(self):
-        return self._eggroll.generateUniqueId()
+        pass
 
     def get_session_id(self):
         return self._session_id
 
     def stop(self):
-        self._eggroll.stop()
+        pass
 
     def kill(self):
-        self._eggroll.kill()
+        pass
+
