@@ -36,4 +36,4 @@ class HeteroPoissonArbiter(HeteroBaseArbiter, HeteroPoissonBase):
         self.model_name = 'HeteroPoissonRegression'
         self.is_converged = False
         self.mode = consts.HETERO
-        self.in_one_vs_rest = False
+        self.need_call_back_loss = True
