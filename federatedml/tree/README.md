@@ -81,8 +81,7 @@ tweedie-loss、fair-loss、 log-cosh-loss
 
 #### Other features
 * Column sub-sample
-* Allow use max_split_nodes setting to avoid memory limit exceed, by finding splits of at most number of 
-max_split_nodes nodes instead of using all nodes of each level of the tree.
+*  Controlling the number of nodes to split parallelly at each layer by setting max_split_nodes parameter，in order to avoid memory limit exceeding
 * Support feature importance calculation
 * Support Multi-host and single guest to build model
 * Support different encrypt-mode to balance speed and security
@@ -176,8 +175,7 @@ tweedie-loss、fair-loss、 log-cosh-loss
 #### Other features
 * The server uses safety aggregations to aggregate clients' histograms and losses, ensuring the data security
 * Column sub-sample
-* Allow use max_split_nodes setting to avoid memory limit exceed, by finding splits of at most number of 
-max_split_nodes nodes instead of using all nodes of each level of the tree.
+* Controlling the number of nodes to split parallelly at each layer by setting max_split_nodes parameter，in order to avoid memory limit exceeding
 * Support feature importance calculation
 * Support Multi-host and single guest to build model
 * Support missing value in train and predict process
