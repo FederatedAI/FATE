@@ -17,17 +17,17 @@
 
 import uuid
 
-from pyspark import RDD
-from pyspark.util import fail_on_stopiteration
-from arch.api.table import eggroll_util
+# noinspection PyPackageRequirements
+
+from arch.api.impl.based_spark.util import maybe_create_eggroll_client
 
 
-def _save_as_func(rdd: RDD, name, namespace, partition, persistent):
+def _save_as_func(rdd, name, namespace, partition, persistent):
     from arch.api import session
     dup = session.table(name=name, namespace=namespace, partition=partition, persistent=persistent)
 
     def _func(_, it):
-        eggroll_util.maybe_create_eggroll_client()
+        maybe_create_eggroll_client()
         dup.put_all(list(it))
         return 1,
 
@@ -35,34 +35,40 @@ def _save_as_func(rdd: RDD, name, namespace, partition, persistent):
     return dup
 
 
-def _map(rdd: RDD, func):
+# noinspection PyUnresolvedReferences
+def _map(rdd, func):
+    from pyspark import util
+
     def _fn(x):
         return func(x[0], x[1])
 
     def _func(_, iterator):
-        return map(fail_on_stopiteration(_fn), iterator)
+        return map(util.fail_on_stopiteration(_fn), iterator)
 
     return rdd.mapPartitionsWithIndex(_func, preservesPartitioning=False)
 
 
-def _map_value(rdd: RDD, func):
+# noinspection PyUnresolvedReferences
+def _map_value(rdd, func):
+    from pyspark import util
+
     def _fn(x):
         return x[0], func(x[1])
 
     def _func(_, iterator):
-        return map(fail_on_stopiteration(_fn), iterator)
+        return map(util.fail_on_stopiteration(_fn), iterator)
 
     return rdd.mapPartitionsWithIndex(_func, preservesPartitioning=True)
 
 
-def _map_partitions(rdd: RDD, func):
+def _map_partitions(rdd, func):
     def _func(_, iterator):
         return [(str(uuid.uuid1()), func(iterator))]
 
     return rdd.mapPartitionsWithIndex(_func, preservesPartitioning=False)
 
 
-def _join(rdd: RDD, other: RDD, func=None):
+def _join(rdd, other, func=None):
     num_partitions = max(rdd.getNumPartitions(), other.getNumPartitions())
     rtn_rdd = rdd.join(other, numPartitions=num_partitions)
     if func is not None:
@@ -70,18 +76,18 @@ def _join(rdd: RDD, other: RDD, func=None):
     return rtn_rdd
 
 
-def _glom(rdd: RDD):
+def _glom(rdd):
     def _func(_, iterator):
         yield list(iterator)
 
     return rdd.mapPartitionsWithIndex(_func)
 
 
-def _sample(rdd: RDD, fraction: float, seed: int):
-    from pyspark.rddsampler import RDDSampler
+# noinspection PyUnresolvedReferences
+def _sample(rdd, fraction: float, seed: int):
     assert fraction >= 0.0, "Negative fraction value: %s" % fraction
-
-    _sample_func = RDDSampler(False, fraction, seed).func
+    from pyspark import rddsampler
+    _sample_func = rddsampler.RDDSampler(False, fraction, seed).func
 
     def _func(split, iterator):
         return _sample_func(split, iterator)
@@ -89,21 +95,24 @@ def _sample(rdd: RDD, fraction: float, seed: int):
     return rdd.mapPartitionsWithIndex(_func, preservesPartitioning=True)
 
 
-def _filter(rdd: RDD, func):
+# noinspection PyUnresolvedReferences
+def _filter(rdd, func):
+    from pyspark import util
+
     def _fn(x):
         return func(x[0], x[1])
 
     def _func(_, iterator):
-        return filter(fail_on_stopiteration(_fn), iterator)
+        return filter(util.fail_on_stopiteration(_fn), iterator)
 
     return rdd.mapPartitionsWithIndex(_func, preservesPartitioning=True)
 
 
-def _subtract_by_key(rdd: RDD, other: RDD):
+def _subtract_by_key(rdd, other):
     return rdd.subtractByKey(other, rdd.getNumPartitions())
 
 
-def _union(rdd: RDD, other: RDD, func):
+def _union(rdd, other, func):
     num_partition = max(rdd.getNumPartitions(), other.getNumPartitions())
 
     def _func(pair):
@@ -119,13 +128,16 @@ def _union(rdd: RDD, other: RDD, func):
     return _map_value(rdd.cogroup(other, num_partition), _func)
 
 
-def _flat_map(rdd: RDD, func):
+# noinspection PyUnresolvedReferences
+def _flat_map(rdd, func):
+    from pyspark import util
+
     from itertools import chain
 
     def _fn(x):
         return func(x[0], x[1])
 
     def _func(_, iterator):
-        return chain.from_iterable(map(fail_on_stopiteration(_fn), iterator))
+        return chain.from_iterable(map(util.fail_on_stopiteration(_fn), iterator))
 
     rdd.mapPartitionsWithIndex(_func, preservesPartitioning=False)

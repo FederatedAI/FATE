@@ -16,37 +16,40 @@
 
 from typing import Iterable
 
-from arch.api import WorkMode
-from arch.api.table import eggroll_util
-from eggroll.api import StoreType
-from arch.api.table.pyspark import materialize
-from arch.api.table.pyspark.table_impl import RDDTable
-from arch.api.table.session import FateSession
+from arch.api.base.utils.store_type import StoreTypes
+
+from arch.api.base.session import FateSession
+from arch.api.impl.based_spark import util
+from arch.api.impl.based_spark.based_1x.table import RDDTable
+
+__all__ = ["FateSessionImpl"]
 
 
-# noinspection PyProtectedMember
 class FateSessionImpl(FateSession):
     """
     manage RDDTable, use EggRoleStorage as storage
     """
 
-    def __init__(self, eggroll_session, work_mode: WorkMode, persistent_engine=StoreType.LMDB):
-        self._session_id = eggroll_session.get_session_id()
-        self._eggroll_session = eggroll_session
+    def __init__(self, session_id, eggroll_runtime, persistent_engine):
+        self._session_id = session_id
         self._persistent_engine = persistent_engine
-        self._sc = self._build_spark_context()
-        eggroll_util.broadcast_eggroll_session(self._sc, work_mode, eggroll_session)
-        self._eggroll = eggroll_util.build_eggroll_runtime(work_mode, eggroll_session)
+        self._eggroll = eggroll_runtime
+
+        # convert to StoreType class in eggroll v1.x
+        from eggroll.api import StoreType as StoreTypeV1
+        if persistent_engine == StoreTypes.ROLLPAIR_LMDB:
+            self._persistent_engine = StoreTypeV1.LMDB
+        elif persistent_engine == StoreTypes.ROLLPAIR_LEVELDB:
+            self._persistent_engine = StoreTypeV1.LEVEL_DB
+        elif persistent_engine == StoreTypes.ROLLPAIR_IN_MEMORY:
+            self._persistent_engine = StoreTypeV1.IN_MEMORY
+        else:
+            raise ValueError(f"{persistent_engine} not supported, use one of {[e.value for e in StoreTypeV1]}")
+
         FateSession.set_instance(self)
 
     def get_persistent_engine(self):
         return self._persistent_engine
-
-    @staticmethod
-    def _build_spark_context():
-        from pyspark import SparkContext
-        sc = SparkContext.getOrCreate()
-        return sc
 
     def table(self,
               name,
@@ -55,13 +58,15 @@ class FateSessionImpl(FateSession):
               persistent,
               in_place_computing,
               create_if_missing,
-              error_if_exist):
+              error_if_exist,
+              **kwargs):
         dtable = self._eggroll.table(name=name, namespace=namespace, partition=partition,
                                      persistent=persistent, in_place_computing=in_place_computing,
                                      create_if_missing=create_if_missing, error_if_exist=error_if_exist,
                                      persistent_engine=self._persistent_engine)
         return RDDTable.from_dtable(session_id=self._session_id, dtable=dtable)
 
+    # noinspection PyUnresolvedReferences
     def parallelize(self,
                     data: Iterable,
                     name,
@@ -74,8 +79,9 @@ class FateSessionImpl(FateSession):
                     create_if_missing,
                     error_if_exist):
         _iter = data if include_key else enumerate(data)
-        rdd = self._sc.parallelize(_iter, partition)
-        rdd = materialize(rdd)
+        from pyspark import SparkContext
+        rdd = SparkContext.getOrCreate().parallelize(_iter, partition)
+        rdd = util.materialize(rdd)
         if namespace is None:
             namespace = self._session_id
         return RDDTable.from_rdd(rdd=rdd, job_id=self._session_id, namespace=namespace, name=name)
@@ -90,4 +96,7 @@ class FateSessionImpl(FateSession):
         return self._session_id
 
     def stop(self):
+        self._eggroll.stop()
+
+    def kill(self):
         self._eggroll.stop()

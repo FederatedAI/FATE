@@ -26,11 +26,11 @@ import requests
 
 from arch.api.utils import file_utils
 from arch.api.utils.core import get_lan_ip
-from fate_flow.settings import SERVERS, ROLE, API_VERSION
+from fate_flow.settings import SERVERS, ROLE, API_VERSION, USE_LOCAL_DATA
 from fate_flow.utils import detect_utils
 
 server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
-JOB_OPERATE_FUNC = ["submit_job", "stop_job", "query_job", "data_view_query", "clean_job"]
+JOB_OPERATE_FUNC = ["submit_job", "stop_job", "query_job", "data_view_query", "clean_job", "clean_queue"]
 JOB_FUNC = ["job_config", "job_log"]
 TASK_OPERATE_FUNC = ["query_task"]
 TRACKING_FUNC = ["component_parameters", "component_metric_all", "component_metric_delete", "component_metrics",
@@ -76,7 +76,7 @@ def call_fun(func, config_data, dsl_path, config_path):
                     response = requests.post("/".join([server_url, "job", func.rstrip('_job')]), json=post_data)
             except:
                 pass
-        elif func == 'data_view_query':
+        elif func == 'data_view_query' or func == 'clean_queue':
             response = requests.post("/".join([server_url, "job", func.replace('_', '/')]), json=config_data)
         else:
             if func != 'query_job':
@@ -153,7 +153,18 @@ def call_fun(func, config_data, dsl_path, config_path):
         else:
             response = requests.post("/".join([server_url, "tracking", func.replace('_', '/')]), json=config_data)
     elif func in DATA_FUNC:
-        response = requests.post("/".join([server_url, "data", func.replace('_', '/')]), json=config_data)
+        if USE_LOCAL_DATA and func == 'upload':
+            file_name = config_data.get('file')
+            if not os.path.isabs(file_name):
+                file_name = os.path.join(file_utils.get_project_base_directory(), file_name)
+            if os.path.exists(file_name):
+                files = {'file': open(file_name, 'rb')}
+            else:
+                raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
+                                'please check the path: {}'.format(file_name))
+            response = requests.post("/".join([server_url, "data", func.replace('_', '/')]), data=config_data, files=files)
+        else:
+            response = requests.post("/".join([server_url, "data", func.replace('_', '/')]), json=config_data)
         try:
             if response.json()['retcode'] == 999:
                 start_cluster_standalone_job_server()
@@ -216,12 +227,13 @@ if __name__ == "__main__":
     parser.add_argument('-i', '--file', required=False, type=str, help="file")
     parser.add_argument('-o', '--output_path', required=False, type=str, help="output_path")
     parser.add_argument('-m', '--model', required=False, type=str, help="TrackingMetric model id")
-    parser.add_argument('-limit', '--limit', required=False, type=int, help="limit_number")
-    parser.add_argument('-src_party_id', '--src_party_id', required=False, type=str, help="src_party_id")
-    parser.add_argument('-src_role', '--src_role', required=False, type=str, help="src_role")
-    parser.add_argument('-privilege_role', '--privilege_role', required=False, type=str, help="privilege_role")
-    parser.add_argument('-privilege_command', '--privilege_command', required=False, type=str, help="privilege_command")
-    parser.add_argument('-privilege_component', '--privilege_component', required=False, type=str, help="privilege_component")
+    parser.add_argument('-drop', '--drop', required=False, type=str, help="drop data table")
+    parser.add_argument('-limit', '--limit', required=False, type=int, help="limit number")
+    parser.add_argument('-src_party_id', '--src_party_id', required=False, type=str, help="src party id")
+    parser.add_argument('-src_role', '--src_role', required=False, type=str, help="src role")
+    parser.add_argument('-privilege_role', '--privilege_role', required=False, type=str, help="privilege role")
+    parser.add_argument('-privilege_command', '--privilege_command', required=False, type=str, help="privilege command")
+    parser.add_argument('-privilege_component', '--privilege_component', required=False, type=str, help="privilege component")
     try:
         args = parser.parse_args()
         config_data = {}

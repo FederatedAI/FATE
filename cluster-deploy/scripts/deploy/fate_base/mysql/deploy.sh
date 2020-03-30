@@ -52,9 +52,9 @@ config(){
 	cp -r ${cwd}/conf/* ./${module_name}/conf/conf/
 
     cd ./${module_name}/conf/
-	cp ${source_code_dir}/eggroll/framework/meta-service/src/main/resources/create-meta-service.sql ./
-	sed -i.bak "s/eggroll_meta/${eggroll_meta_service_db_name}/g" ./create-meta-service.sql
-	rm -rf ./create-meta-service.sql.bak
+	#cp ${source_code_dir}/eggroll/framework/meta-service/src/main/resources/create-meta-service.sql ./
+	#sed -i.bak "s/eggroll_meta/${eggroll_meta_service_db_name}/g" ./create-meta-service.sql
+	#rm -rf ./create-meta-service.sql.bak
 
 	echo > ./insert-node.sql
     echo "INSERT INTO node (ip, port, type, status) values ('${roll_ip}', '${roll_port}', 'ROLL', 'HEALTHY');" >> ./insert-node.sql
@@ -69,6 +69,19 @@ config(){
     done
     echo "show tables;" >> ./insert-node.sql
     echo "select * from node;" >> ./insert-node.sql
+
+	echo > ./init.sql
+    echo "ALTER USER 'root'@'localhost' IDENTIFIED by '${mysql_password}';" >> ./init.sql
+    echo "CREATE DATABASE ${fate_flow_db_name};" >> ./init.sql
+
+	echo > ./grant.sql
+    party_ips=($(echo ${party_ips[*]} | tr ' ' '\n' | awk '!a[$0]++'))
+    for ip in ${party_ips[*]};
+    do
+        echo "[INFO] Grant to ${mysql_user} on ${ip}"
+        echo "CREATE USER '${mysql_user}'@'${ip}' IDENTIFIED BY '${mysql_password}';" >> ./grant.sql
+        echo "GRANT ALL ON *.* TO '${mysql_user}'@'${ip}';" >> ./grant.sql
+    done
 
 	cd ./conf
 	sed -i.bak "s#basedir=.*#basedir=${deploy_dir}/${module_name}/mysql-${mysql_version}#g" ./my.cnf
@@ -98,21 +111,11 @@ init(){
     nohup ./bin/mysqld_safe --defaults-file=${mysql_dir}/conf/my.cnf --user=${user} &
     sleep 10
     ./bin/mysql -uroot -p"${password_str}" -S ./mysql.sock --connect-expired-password << EOF
-    ALTER USER 'root'@'localhost' IDENTIFIED by "${mysql_password}";
-    CREATE DATABASE ${fate_flow_db_name};
-    source ${mysql_dir}/create-meta-service.sql;
+    source ${mysql_dir}/init.sql;
+    source ${mysql_dir}/grant.sql;
     source ${mysql_dir}/insert-node.sql;
 EOF
     echo "the password of root: ${mysql_password}"
-    party_ips=($(echo ${party_ips[*]} | sed 's/ /\n/g'|sort | uniq))
-    for ip in ${party_ips[*]};
-    do
-        echo "[INFO] Grant to ${mysql_user} on ${ip}"
-        ./bin/mysql -uroot -p"${mysql_password}" -S ./mysql.sock --connect-expired-password << EOF
-        CREATE USER '${mysql_user}'@"${ip}" IDENTIFIED BY "${mysql_password}";
-        GRANT ALL ON *.* TO '${mysql_user}'@"${ip}";
-EOF
-    done
 }
 
 case "$2" in

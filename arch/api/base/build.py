@@ -13,16 +13,22 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import abc
 
-from enum import IntEnum, Enum
-from arch.api import NamingPolicy
-
-class EggRollContext(object):
-    def __init__(self, naming_policy : NamingPolicy = NamingPolicy.DEFAULT):
-        self._naming_policy = naming_policy
-
-    def get_naming_policy(self):
-        return self._naming_policy
+import six
 
 
+@six.add_metaclass(abc.ABCMeta)
+class Builder(object):
 
+    @abc.abstractmethod
+    def build_session(self):
+        pass
+
+    @abc.abstractmethod
+    def build_federation(self, **kwargs):
+        pass
+
+    @abc.abstractmethod
+    def build_wrapper(self):
+        pass
