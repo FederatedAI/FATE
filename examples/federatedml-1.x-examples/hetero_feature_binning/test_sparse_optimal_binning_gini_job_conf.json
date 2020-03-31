@@ -37,7 +37,7 @@
           "int"
         ],
         "output_format": [
-          "dense"
+          "sparse"
         ]
       }
     },
@@ -57,51 +57,36 @@
           false
         ],
         "output_format": [
-          "dense"
+          "sparse"
         ]
       }
     }
   },
   "algorithm_parameters": {
     "hetero_feature_binning_0": {
-      "method": "quantile",
+      "method": "optimal",
+      "optimal_binning_param": {
+        "metric_method": "gini",
+        "min_bin_pct": 0.05,
+        "max_bin_pct": 0.8,
+        "init_bucket_method": "quantile",
+        "init_bin_nums": 100,
+        "mixture": true
+      },
       "compress_thres": 10000,
       "head_size": 10000,
       "error": 0.001,
       "bin_num": 10,
-      "cols": -1,
+      "bin_indexes": -1,
+      "bin_names": null,
+      "category_indexes": null,
+      "category_names": null,
       "adjustment_factor": 0.5,
       "local_only": false,
       "transform_param": {
         "transform_cols": -1,
+        "transform_names": null,
         "transform_type": "bin_num"
-      }
-    },
-    "hetero_feature_selection_0": {
-      "select_col_indexes": -1,
-      "select_names": [],
-      "filter_methods": ["manually", "unique_value", "iv_value_thres",
-        "coefficient_of_variation_value_thres", "iv_percentile", "outlier_cols"],
-      "local_only": false,
-      "manually_param": {
-        "filter_out_indexes": [],
-        "filter_out_names": []
-      },
-      "unique_param": {
-        "eps": 1e-6
-      },
-      "iv_value_param": {
-        "value_threshold": 0.1
-      },
-      "iv_percentile_param": {
-        "percentile_threshold": 0.9
-      },
-      "variance_coe_param": {
-        "value_threshold": 0.3
-      },
-      "outlier_param": {
-        "percentile": 0.95,
-        "upper_threshold": 2.0
       }
     }
   }

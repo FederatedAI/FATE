@@ -376,13 +376,13 @@ class OptimalBinning(BaseBinning):
             new_bucket.event_total = min_node.left_bucket.event_total
             new_bucket.non_event_total = min_node.left_bucket.non_event_total
 
-            if new_bucket.left_neighbor_idx is not None:
-                left_neighbor_node = bucket_dict.get(new_bucket.left_neighbor_idx)
-                left_neighbor_node.right_neighbor_idx = new_bucket.idx
+            left_neighbor_bucket = bucket_dict.get(new_bucket.left_neighbor_idx)
+            if left_neighbor_bucket is not None:
+                left_neighbor_bucket.right_neighbor_idx = new_bucket.idx
 
-            if new_bucket.right_neighbor_idx is not None:
-                right_neighbor_node = bucket_dict.get(new_bucket.right_neighbor_idx)
-                right_neighbor_node.left_neighbor_idx = new_bucket.idx
+            right_neighbor_bucket = bucket_dict.get(new_bucket.right_neighbor_idx)
+            if right_neighbor_bucket is not None:
+                right_neighbor_bucket.left_neighbor_idx = new_bucket.idx
             return new_bucket
 
         def _aim_vars_decrease(constraint, new_bucket: bucket_info.Bucket, left_bucket, right_bucket, aim_var):
@@ -462,8 +462,6 @@ class OptimalBinning(BaseBinning):
     @staticmethod
     def split_optimal_binning(bucket_list, optimal_param: OptimalBinningParam, sample_count):
         min_item_num = math.ceil(optimal_param.min_bin_pct * sample_count)
-        event_total = bucket_list[0].event_total
-        non_event_total = bucket_list[0].non_event_total
         final_max_bin = optimal_param.max_bin
 
         def _compute_ks(start_idx, end_idx):
@@ -483,7 +481,27 @@ class OptimalBinning(BaseBinning):
             acc_event_rate = [x / curt_event_total for x in acc_event]
             acc_non_event_rate = [x / curt_non_event_total for x in acc_non_event]
             ks_list = [math.fabs(eve - non_eve) for eve, non_eve in zip(acc_event_rate, acc_non_event_rate)]
-            best_index = ks_list.index(max(ks_list))
+            if max(ks_list) == 0:
+                best_index = len(ks_list) // 2
+            else:
+                best_index = ks_list.index(max(ks_list))
+
+            left_event = acc_event[best_index]
+            right_event = curt_event_total - left_event
+            left_non_event = acc_non_event[best_index]
+            right_non_event = curt_non_event_total - left_non_event
+            left_total = left_event + left_non_event
+            right_total = right_event + right_non_event
+
+            if left_total < min_item_num or right_total < min_item_num:
+                best_index = len(ks_list) // 2
+                left_event = acc_event[best_index]
+                right_event = curt_event_total - left_event
+                left_non_event = acc_non_event[best_index]
+                right_non_event = curt_non_event_total - left_non_event
+                left_total = left_event + left_non_event
+                right_total = right_event + right_non_event
+
             LOGGER.debug("acc_event_rate: {}, acc_non_event_rate: {}, ks_list: {}, "
                          "best_index: {}, curt_event_total: {}, curt_non_event_total: {}, start_idx: {}, end_idx: {}".format(
                 acc_event_rate, acc_non_event_rate, ks_list, best_index, curt_event_total, curt_non_event_total, start_idx,
@@ -491,19 +509,16 @@ class OptimalBinning(BaseBinning):
             ))
 
             best_ks = ks_list[best_index]
-            if best_ks == 0:
-                return None, None, None
-            left_event = acc_event[best_index]
-            right_event = curt_event_total - left_event
-            left_non_event = acc_non_event[best_index]
-            right_non_event = curt_non_event_total - left_non_event
+            # if best_ks == 0:
+            #     return None, None, None
+
             res_dict = {
                 'left_event': left_event,
                 'right_event': right_event,
                 'left_non_event': left_non_event,
                 'right_non_event': right_non_event,
-                'left_total': left_event + left_non_event,
-                'right_total': right_event + right_non_event,
+                'left_total': left_total,
+                'right_total': right_total,
                 'left_is_mixed': left_event > 0 and left_non_event > 0,
                 'right_is_mixed': right_event > 0 and right_non_event > 0
             }
@@ -537,7 +552,7 @@ class OptimalBinning(BaseBinning):
                     continue
             if res_dict.get('left_total') < min_item_num or res_dict.get('right_total') < min_item_num:
                 continue
-            res_split_index.append(best_index)
+            res_split_index.append(best_index + 1)
             LOGGER.debug("start: {}, end: {}, res_dict: {}, res_split_index: {}".format(start, end, res_dict, res_split_index))
 
             if res_dict.get('right_total') > res_dict.get('left_total'):
@@ -559,6 +574,9 @@ class OptimalBinning(BaseBinning):
         small_size_num = 0
         for bucket_idx, end in enumerate(res_split_index):
             new_bucket = _merge_buckets(start, end, bucket_idx)
+            LOGGER.debug("After merge bucket, start: {}, end: {}, new bucket res: {}".format(
+                start, end, new_bucket.__dict__
+            ))
             bucket_res.append(new_bucket)
             if not new_bucket.is_mixed:
                 non_mixture_num += 1
@@ -594,8 +612,10 @@ class OptimalBinning(BaseBinning):
             bucket_list = []
             for b_idx in range(len(bin_res_list)):
                 bucket = bucket_info.Bucket(b_idx, self.adjustment_factor)
-                bucket.set_left_neighbor(None)
-                bucket.set_right_neighbor(None)
+                if b_idx == 0:
+                    bucket.set_left_neighbor(None)
+                if b_idx == len(bin_res_list) - 1:
+                    bucket.set_right_neighbor(None)
                 bucket.event_count = bin_res_list[b_idx][0]
                 bucket.non_event_count = bin_res_list[b_idx][1]
                 bucket.left_bound = b_idx - 1

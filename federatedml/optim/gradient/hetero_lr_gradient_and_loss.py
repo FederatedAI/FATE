@@ -104,7 +104,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         define forward_hess = (1/N)*∑(0.25 * x * s)
         """
         forwards = data_instances.mapValues(
-            lambda v: (np.dot(v.features, delta_s.coef_) + delta_s.intercept_) * 0.25)
+            lambda v: (vec_dot(v.features, delta_s.coef_) + delta_s.intercept_) * 0.25)
         for host_forward in host_forwards:
             forwards = forwards.join(host_forward, lambda g, h: g + (h * 0.25))
         # forward_hess = forwards.mapValues(lambda x: 0.25 * x / sample_size)

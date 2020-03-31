@@ -84,8 +84,8 @@
         "coefficient_of_variation_value_thres", "iv_percentile", "outlier_cols"],
       "local_only": false,
       "manually_param": {
-        "filter_out_indexes": [],
-        "filter_out_names": []
+        "filter_out_indexes": [0, 1, 2],
+        "filter_out_names": ["x3"]
       },
       "unique_param": {
         "eps": 1e-6

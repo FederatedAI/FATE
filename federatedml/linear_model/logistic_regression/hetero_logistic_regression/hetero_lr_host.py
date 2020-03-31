@@ -85,7 +85,7 @@ class HeteroLRHost(HeteroLRBase):
 
         if len(classes) > 2:
             self.need_one_vs_rest = True
-            self.in_one_vs_rest = True
+            self.need_call_back_loss = False
             self.one_vs_rest_fit(train_data=data_instances, validate_data=validate_data)
         else:
             self.need_one_vs_rest = False

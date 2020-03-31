@@ -119,7 +119,7 @@ class HeteroBaseArbiter(BaseLinearModel):
             # if converge
             if iter_loss is not None:
                 iter_loss /= self.batch_generator.batch_num
-                if not self.in_one_vs_rest:
+                if self.need_call_back_loss:
                     self.callback_loss(self.n_iter_, iter_loss)
                 self.loss_history.append(iter_loss)
 
