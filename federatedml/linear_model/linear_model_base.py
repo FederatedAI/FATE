@@ -94,8 +94,6 @@ class BaseLinearModel(ModelBase):
         raise NotImplementedError("This method should be be called here")
 
     def export_model(self):
-        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-            return self.validation_strategy.export_best_model()
         meta_obj = self._get_meta()
         param_obj = self._get_param()
         result = {
