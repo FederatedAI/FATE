@@ -34,22 +34,64 @@ class RDDTable(Table):
                   name: str = None,
                   partitions: int = 1,
                   create_if_missing: bool = True):
-        from pyspark import SparkContext
-        sc = SparkContext.getOrCreate()
-        hdfs_path = _generate_hdfs_path(namespace=namespace, name=name)
-        fs = sc._jvm.org.apache.hadoop.fs.FileSystem.get(sc._jsc.hadoopConfiguration())
-        if(fs.exists(sc._jvm.org.apache.hadoop.fs.Path(hdfs_path))):
-            rdd = sc.textFile()
-        elif create_if_missing:
-            rdd = sc.emptyRDD()
-        else:
-            raise AssertionError("hdfs path {} not exists.".format(hdfs_path))
+        rdd = rdd_from_hdfs(namespace=namespace, name=name, create_if_missing=create_if_missing)
         return RDDTable(session_id=session_id, namespace=namespace, name=name, partitions=partitions, rdd=rdd)
+
 
     @classmethod
     def from_rdd(cls, rdd, job_id: str, namespace: str, name: str):
         partitions = rdd.getNumPartitions()
         return RDDTable(session_id=job_id, namespace=namespace, name=name, partitions=partitions, rdd=rdd)
+
+
+    @classmethod
+    def generate_hdfs_path(cls, namspace, name):
+        return "/fate/{}/{}".format(namspace, name)
+    
+    
+    @classmethod
+    def get_path(cls, sc, hdfs_path):
+        path_class = sc._gateway.jvm.org.apache.hadoop.fs.path
+        return path_class(hdfs_path)
+    
+
+    @classmethod
+    def get_file_system(cls, sc):
+        filesystem_class = sc._gateway.jvm.org.apache.hadoop.fs.FilFileSystem
+        hadoop_configuration = sc._jsc.hadoopConfiguration()
+        return filesystem_class.get(hadoop_configuration)
+
+
+    @classmethod
+    def write2hdfs(cls, sc, hdfs_path, content, create_if_missing: bool = True):
+        fs = get_file_system(sc)
+        path = get_path(sc, hdfs_path)
+        if(fs.exists(path)):
+            out = fs.append(path)
+        elif create_if_missing:
+            out = fs.create(path)
+        else:
+            raise AssertionError("hdfs path {} not exists.".format(hdfs_path))
+        out.write(bytearray(content, "utf-8"))
+        out.flush()
+        out.close()
+
+    
+    @classmethod
+    def rdd_from_hdfs(cls, namespace, name, create_if_missing: bool = True):
+        from pyspark import SparkContext
+        sc = SparkContext.getOrCreate()
+        hdfs_path = generate_hdfs_path(namespace=namespace, name=name)
+        fs = get_file_system(sc)
+        path = get_path(sc, hdfs_path)
+        if(fs.exists(path)):
+            rdd = sc.textFile(path)
+        elif create_if_missing:
+            rdd = sc.emptyRDD()
+        else:
+            raise AssertionError("hdfs path {} not exists.".format(hdfs_path))
+        return rdd
+
 
     def __init__(self, session_id: str,
                  namespace: str,
@@ -73,10 +115,10 @@ class RDDTable(Table):
         return self._namespace
 
     def __str__(self):
-        return f"{self._namespace}, {self._name}, {self._dtable}"
+        return f"{self._namespace}, {self._name}"
 
     def __repr__(self):
-        return f"{self._namespace}, {self._name}, {self._dtable}"
+        return f"{self._namespace}, {self._name}"
 
     def _tmp_table_from_rdd(self, rdd, name=None):
         """
@@ -98,7 +140,7 @@ class RDDTable(Table):
         return state
 
     @staticmethod
-    def _valid_param_check(rdd, dtable, namespace, partitions):
+    def _valid_param_check(rdd, namespace, partitions):
         assert (rdd is not None), "params rdd is None"
         assert namespace is not None, "namespace is None"
         assert partitions > 0, "invalid partitions={0}".format(partitions)
@@ -107,14 +149,14 @@ class RDDTable(Table):
         if hasattr(self, "_rdd") and self._rdd is not None:
             return self._rdd
         else:
-            raise AssertionError("rdd is None!")
+            return _rdd_from_hdfs()
 
 
     # noinspection PyProtectedMember,PyUnresolvedReferences
     @log_elapsed
-    def _generate_hdfs_path(self, namspace, name):
-        return "/fate/{}/{}".format(namspace, name)
-
+    def _rdd_from_hdfs(self):
+        self._rdd = rdd_from_hdfs(namespace=self._namespace, name=self._name, create_if_missing=False)
+        return self._rdd
 
 
     def get_partitions(self):
@@ -193,72 +235,43 @@ class RDDTable(Table):
 
     @log_elapsed
     def collect(self, min_chunk_size=0, use_serialize=True, **kwargs):
-        if self._dtable:
-            return self._dtable.get_all()
-        else:
-            return iter(self.rdd().collect())
+        return iter(self.rdd().collect())
 
     """
     storage api
     """
 
     def put(self, k, v, use_serialize=True, maybe_large_value=False):
-        if not maybe_large_value:
-            rtn = self.dtable().put(k, v)
-        else:
-            rtn = split_put(k, v, use_serialize=None, put_call_back_func=self.dtable().put)
         self._rdd = None
-        return rtn
 
     def put_all(self, kv_list: Iterable, use_serialize=True, chunk_size=100000):
-        options = {}
-        rtn = self._dtable.put_all(kv_list, options=options)
         self._rdd = None
-        return rtn
 
     def get(self, k, use_serialize=True, maybe_large_value=False):
-        if not maybe_large_value:
-            return self.dtable().get(k)
-        else:
-            return split_get(k=k, use_serialize=None, get_call_back_func=self.dtable().get)
+        return self.rdd().lookup(k)
 
     def delete(self, k, use_serialize=True):
-        rtn = self.dtable().delete(k)
         self._rdd = None
-        return rtn
 
     def destroy(self):
-        if self._dtable:
-            self._dtable.destroy()
-        else:
-            self._rdd = None
-        return True
+        self._rdd = None
 
     def put_if_absent(self, k, v, use_serialize=True):
-        rtn = self.dtable().put_if_absent(k, v, use_serialize)
-        self._rdd = None
-        return rtn
+        self.put(k=k, v=v, use_serialize=use_serialize)
 
     # noinspection PyPep8Naming
     def take(self, n=1, keysOnly=False, use_serialize=True):
-        if self._dtable:
-            options = dict(keys_only=keysOnly)
-            return self._dtable.take(n=n, options=options)
-        else:
-            rtn = self._rdd.take(n)
-            if keysOnly:
-                rtn = [pair[0] for pair in rtn]
-            return rtn
+        rtn = self._rdd.take(n)
+        if keysOnly:
+            rtn = [pair[0] for pair in rtn]
+        return rtn
 
     # noinspection PyPep8Naming
     def first(self, keysOnly=False, use_serialize=True):
         return self.take(1, keysOnly, use_serialize)[0]
 
     def count(self, **kwargs):
-        if self._dtable:
-            return self._dtable.count()
-        else:
-            return self._rdd.count()
+        return self._rdd.count()
 
     @log_elapsed
     def save_as(self, name, namespace, partition=None, use_serialize=True, persistent=True, **kwargs):
