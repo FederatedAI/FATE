@@ -105,6 +105,8 @@ class OptimalBinningParam(BaseParam):
     def check(self):
         descr = "hetero binning's optimal binning param's"
         self.check_string(self.metric_method, descr)
+
+        self.metric_method = self.metric_method.lower()
         if self.metric_method in ['chi_square', 'chi-square']:
             self.metric_method = 'chi_square'
         self.check_valid_value(self.metric_method, descr, ['iv', 'gini', 'chi_square', 'ks'])

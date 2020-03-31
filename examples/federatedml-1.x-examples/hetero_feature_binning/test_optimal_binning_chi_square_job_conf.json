@@ -66,7 +66,7 @@
     "hetero_feature_binning_0": {
       "method": "optimal",
       "optimal_binning_param": {
-        "metric_method": "iv",
+        "metric_method": "chi_square",
         "min_bin_pct": 0.05,
         "max_bin_pct": 0.8,
         "init_bucket_method": "quantile",

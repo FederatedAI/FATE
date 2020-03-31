@@ -77,6 +77,7 @@ class BaseHeteroFeatureSelection(ModelBase):
         self.curt_select_properties.add_select_col_names(self.model_param.select_names)
         self.completed_selection_result.set_header(header)
         self.completed_selection_result.set_select_col_names(self.curt_select_properties.select_col_names)
+        self.completed_selection_result.set_all_left_col_indexes(self.curt_select_properties.all_left_col_indexes)
 
     def _get_meta(self):
         self.meta_dicts['filter_methods'] = self.filter_methods
@@ -252,8 +253,11 @@ class BaseHeteroFeatureSelection(ModelBase):
         self._abnormal_detection(data_instances)
         self._init_select_params(data_instances)
 
-        for filter_idx, method in enumerate(self.filter_methods):
-            self._filter(data_instances, method, suffix=str(filter_idx))
+        if len(self.curt_select_properties.select_col_indexes) == 0:
+            LOGGER.warning("None of columns has been set to select")
+        else:
+            for filter_idx, method in enumerate(self.filter_methods):
+                self._filter(data_instances, method, suffix=str(filter_idx))
 
         new_data = self._transfer_data(data_instances)
         LOGGER.info("Finish Hetero Selection Fit and transform.")
