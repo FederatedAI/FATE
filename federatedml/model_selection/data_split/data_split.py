@@ -108,7 +108,8 @@ class DataSplitter(ModelBase):
         if self.train_size is None and self.test_size is None and self.validate_size is None:
             self.train_size = 1.0
             self.test_size, self.validate_size = 0.0, 0.0
-        if isinstance(self.test_size, float) or isinstance(self.train_size, float) or isinstance(self.validate_size, float):
+        if isinstance(self.test_size, float) or isinstance(self.train_size, float) or isinstance(self.validate_size,
+                                                                                                 float):
             total_size = 1.0
         else:
             total_size = n_count
@@ -128,7 +129,7 @@ class DataSplitter(ModelBase):
             if self.train_size is None:
                 self.train_size = total_size - self.test_size
             else:
-                self.test_size = total_size -  self.train_size
+                self.test_size = total_size - self.train_size
             self.validate_size = total_size - (self.test_size + self.train_size)
         if self.train_size + self.test_size + self.validate_size != total_size:
             raise ValueError(f"train_size, test_size, validate_size should sum up to 1.0 or data count")
@@ -155,7 +156,6 @@ class DataSplitter(ModelBase):
             data_io.set_schema(test_data, schema)
             data_io.set_schema(validate_data, schema)
         return train_data, test_data, validate_data
-
 
     def fit(self, data_inst):
         LOGGER.debug("fit method in data_split should not be called here.")
