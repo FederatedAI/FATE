@@ -95,9 +95,9 @@ class HeteroStepwise(object):
             raise ValueError("Wrong stepwise direction given.")
 
     def make_table(self):
-        id = str(uuid.uuid1())
-        self.models = session.table(f"stepwise{id}", self.role)
-        LOGGER.debug(f"table name stepwise{id}")
+        table_uid = str(uuid.uuid1())
+        self.models = session.table(f"stepwise{table_uid}", self.role)
+        LOGGER.debug(f"table name stepwise{table_uid}")
 
     def _put_value(self, key, value):
         """
