@@ -61,7 +61,7 @@ class Step(object):
         schema = make_schema(new_header, sid_name, label_name)
         return schema
 
-    def run(self, original_model, train_data, test_data, feature_mask):
+    def run(self, original_model, train_data, validate_data, feature_mask):
         model = copy.deepcopy(original_model)
         current_flowid = self.get_flowid()
         model.set_flowid(current_flowid)

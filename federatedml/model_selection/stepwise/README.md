@@ -8,6 +8,8 @@ Stepwise is a simple, effective model selection technique. FATE provides stepwis
 
 Please note that due to lack of loss history, Stepwise does not support multi-host modeling. 
 
+Another point to notice is that Stepwise Module currently does not support validation strategy or early stopping. While validate data may be set in job configuration file, the validate data will not be used.
+
 To use stepwise, set 'need_stepwise' to `True` and specify stepwise parameters as desired. Below is an example of stepwise parameter setting in job configuration file.
 
 ```json

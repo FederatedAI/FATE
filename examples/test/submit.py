@@ -26,10 +26,12 @@ from datetime import timedelta
 
 class Submitter(object):
 
-    def __init__(self, fate_home="", work_mode=0, backend=0):
+    def __init__(self, fate_home, work_mode, backend, existing_strategy, spark_submit_config):
         self._fate_home = fate_home
         self._work_mode = work_mode
         self._backend = backend
+        self._existing_strategy = existing_strategy
+        self._spark_submit_config = spark_submit_config
 
     @property
     def _flow_client_path(self):
@@ -66,6 +68,8 @@ class Submitter(object):
         except json.decoder.JSONDecodeError:
             raise ValueError(f"[submit_job]fail, stdout:{stdout}")
         if status != 0:
+            if status == 100 and "table already exists" in stdout["retmsg"]:
+                return None
             raise ValueError(f"[submit_job]fail, status:{status}, stdout:{stdout}")
         return stdout
 
@@ -84,9 +88,11 @@ class Submitter(object):
             if remote_host:
                 self.run_cmd(["scp", f.name, f"{remote_host}:{f.name}"])
                 env_path = os.path.join(self._fate_home, "../../init_env.sh")
-                upload_cmd = " && ".join([f"source {env_path}",
-                                          f"python {self._flow_client_path} -f upload -c {f.name}",
-                                          f"rm {f.name}"])
+                upload_cmd = f"source {env_path}"
+                upload_cmd = f"{upload_cmd} && python {self._flow_client_path} -f upload -c {f.name}"
+                if self._existing_strategy == 0 or self._existing_strategy == 1:
+                    upload_cmd = f"{upload_cmd} -drop {self._existing_strategy}"
+                upload_cmd = f"{upload_cmd} && rm {f.name}"
                 stdout = self.run_cmd(["ssh", remote_host, upload_cmd])
                 try:
                     stdout = json.loads(stdout)
@@ -94,10 +100,19 @@ class Submitter(object):
                 except json.decoder.JSONDecodeError:
                     raise ValueError(f"[submit_job]fail, stdout:{stdout}")
                 if status != 0:
+                    if status == 100 and "table already exists" in stdout["retmsg"]:
+                        return None
                     raise ValueError(f"[submit_job]fail, status:{status}, stdout:{stdout}")
-                return stdout
+                return stdout["jobId"]
             else:
-                return self.submit(["-f", "upload", "-c", f.name])
+                cmd = ["-f", "upload", "-c", f.name]
+                if self._existing_strategy == 0 or self._existing_strategy == 1:
+                    cmd.extend(["-drop", "1"])
+                stdout = self.submit(cmd)
+                if stdout is None:
+                    return None
+                else:
+                    return stdout["jobId"]
 
     def delete_table(self, namespace, name):
         pass
@@ -122,6 +137,8 @@ class Submitter(object):
         if substitute is not None:
             d = recursive_update(d, substitute)
         d['job_parameters']['work_mode'] = self._work_mode
+        d['job_parameters']['backend'] = self._backend
+        d['job_parameters']['spark_submit_config'] = self._spark_submit_config
         initiator_role = d['initiator']['role']
         d['initiator']['party_id'] = roles[initiator_role][0]
         for r in ["guest", "host", "arbiter"]:

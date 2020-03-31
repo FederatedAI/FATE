@@ -150,8 +150,11 @@ class ComponentProperties(object):
 
         if self.need_stepwise:
             running_funcs.add_func(model.stepwise, [train_data], save_result=True)
+            running_funcs.add_func(self.union_data, ["train"], use_previews=True, save_result=True)
             running_funcs.add_func(model.set_predict_data_schema, [schema],
                                    use_previews=True, save_result=True)
+            if eval_data:
+                LOGGER.warn("Validate data provided for Stepwise Module. It will not be used in model training.")
             return running_funcs
 
         if self.has_model or self.has_isometric_model:

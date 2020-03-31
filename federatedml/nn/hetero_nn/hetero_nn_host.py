@@ -49,9 +49,6 @@ class HeteroNNHost(HeteroNNBase):
         if self.model is None:
             return
 
-        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-            return self.validation_strategy.export_best_model()
-
         return {MODELMETA: self._get_model_meta(),
                 MODELPARAM: self._get_model_param()}
 
@@ -103,6 +100,9 @@ class HeteroNNHost(HeteroNNBase):
                 break
 
             cur_epoch += 1
+
+        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
+            self.load_model(self.validation_strategy.cur_best_model)
 
     def prepare_batch_data(self, batch_generator, data_inst):
         batch_generator.initialize_batch_generator(data_inst)

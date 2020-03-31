@@ -142,6 +142,7 @@ class HeteroLRHost(HeteroLRBase):
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
 
+
             LOGGER.info("Get is_converged flag from arbiter:{}".format(self.is_converged))
 
             if self.validation_strategy:
@@ -154,6 +155,8 @@ class HeteroLRHost(HeteroLRBase):
             LOGGER.info("iter: {}, is_converged: {}".format(self.n_iter_, self.is_converged))
             if self.is_converged:
                 break
+        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
+            self.load_model(self.validation_strategy.cur_best_model)
 
         LOGGER.debug("Final lr weights: {}".format(self.model_weights.unboxed))
 

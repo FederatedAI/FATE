@@ -21,10 +21,9 @@ from typing import Union, Tuple
 # noinspection PyPackageRequirements
 import grpc
 
+from arch.api.base.federation import Party, Federation, Rubbish
 from arch.api.proto import federation_pb2, federation_pb2_grpc
 from arch.api.proto.federation_pb2 import TransferMeta, TransferDataDesc
-from arch.api.transfer import Party, Federation
-from arch.api.transfer import Rubbish
 from arch.api.utils import eggroll_serdes
 from arch.api.utils.log_utils import getLogger
 from arch.api.utils.splitable import maybe_split_object, is_split_head, split_get

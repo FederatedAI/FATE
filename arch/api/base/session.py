@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
 import abc
 import datetime
 import threading
@@ -21,30 +20,7 @@ from typing import Iterable
 
 import six
 
-from arch.api import WorkMode, Backend
-from arch.api.table.table import Table
-from eggroll.api import StoreType
-
-
-def build_session(job_id=None,
-                  work_mode: WorkMode = WorkMode.STANDALONE,
-                  backend: Backend = Backend.EGGROLL,
-                  persistent_engine: StoreType = StoreType.LMDB):
-    from arch.api.table import eggroll_util
-    eggroll_session = eggroll_util.build_eggroll_session(work_mode=work_mode, job_id=job_id)
-
-    if backend.is_eggroll():
-        from arch.api.table.eggroll import session_impl
-        session = session_impl.FateSessionImpl(eggroll_session, work_mode, persistent_engine)
-
-    elif backend.is_spark():
-        from arch.api.table.pyspark import session_impl
-        session = session_impl.FateSessionImpl(eggroll_session, work_mode, persistent_engine)
-
-    else:
-        raise ValueError(f"work_mode: {work_mode} not supported")
-
-    return session
+from arch.api.base.table import Table
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -75,7 +51,8 @@ class FateSession(object):
               persistent,
               in_place_computing,
               create_if_missing,
-              error_if_exist) -> Table:
+              error_if_exist,
+              **kwargs) -> Table:
         pass
 
     @abc.abstractmethod
@@ -107,6 +84,10 @@ class FateSession(object):
 
     @abc.abstractmethod
     def stop(self):
+        pass
+
+    @abc.abstractmethod
+    def kill(self):
         pass
 
     @staticmethod

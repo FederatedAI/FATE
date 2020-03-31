@@ -17,7 +17,7 @@ import random
 
 import numpy as np
 
-from arch.api.table.table import Table
+from arch.api.base.table import Table
 
 
 def rand_tensor(q_field, tensor):

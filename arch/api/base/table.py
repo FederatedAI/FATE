@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
+
 import abc
 from typing import Iterable
 
@@ -125,7 +126,6 @@ class Table(object):
     def mapPartitions(self, func):
         pass
 
-    @abc.abstractmethod
     def mapPartitions2(self, func):
         pass
 
@@ -166,18 +166,18 @@ class Table(object):
     """
 
     def get_meta(self, key):
-        from arch.api.table.session import FateSession
+        from .session import FateSession
         return FateSession.get_data_table_meta(key,
                                                data_table_name=self.get_name(),
                                                data_table_namespace=self.get_namespace())
 
     def get_metas(self):
-        from arch.api.table.session import FateSession
+        from .session import FateSession
         return FateSession.get_data_table_metas(data_table_name=self.get_name(),
                                                 data_table_namespace=self.get_namespace())
 
     def save_metas(self, kv):
-        from arch.api.table.session import FateSession
+        from .session import FateSession
         return FateSession.save_data_table_meta(kv=kv,
                                                 data_table_name="%s.meta" % self.get_name(),
                                                 data_table_namespace=self.get_namespace())
