@@ -200,10 +200,10 @@ class ComponentProperties(object):
             running_funcs.add_func(model.set_flowid, ['transform'])
             running_funcs.add_func(model.transform, [], use_previews=True, save_result=True)
 
-        LOGGER.debug("func list: {}, param list: {}, save_results: {}, use_previews: {}".format(
-            running_funcs.todo_func_list, running_funcs.todo_func_params,
-            running_funcs.save_result, running_funcs.use_previews_result
-        ))
+        # LOGGER.debug("func list: {}, param list: {}, save_results: {}, use_previews: {}".format(
+        #     running_funcs.todo_func_list, running_funcs.todo_func_params,
+        #     running_funcs.save_result, running_funcs.use_previews_result
+        # ))
         return running_funcs
 
     @staticmethod
