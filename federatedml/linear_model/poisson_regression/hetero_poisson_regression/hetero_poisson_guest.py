@@ -54,11 +54,12 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 
         self.exposure_index = self.get_exposure_index(self.header, self.exposure_colname)
-        if self.exposure_index > -1:
-            self.header.pop(self.exposure_index)
+        exposure_index = self.exposure_index
+        if exposure_index > -1:
+            self.header.pop(exposure_index)
             LOGGER.info("expsoure provided at Guest, colname is {}".format(self.exposure_colname))
-        exposure = data_instances.mapValues(lambda v: self.load_exposure(v))
-        data_instances = data_instances.mapValues(lambda v: self.load_instance(v))
+        exposure = data_instances.mapValues(lambda v: HeteroPoissonBase.load_exposure(v, exposure_index))
+        data_instances = data_instances.mapValues(lambda v: HeteroPoissonBase.load_instance(v, exposure_index))
 
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
@@ -85,7 +86,8 @@ class HeteroPoissonGuest(HeteroPoissonBase):
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data)
                 # compute offset of this batch
-                batch_offset = exposure.join(batch_feat_inst, lambda ei, d: self.safe_log(ei))
+                # batch_offset = exposure.join(batch_feat_inst, lambda ei, d: self.safe_log(ei))
+                batch_offset = exposure.join(batch_feat_inst, lambda ei, d: HeteroPoissonBase.safe_log(ei))
 
                 # Start gradient procedure
                 optimized_gradient, _, _ = self.gradient_loss_operator.compute_gradient_procedure(
@@ -135,10 +137,18 @@ class HeteroPoissonGuest(HeteroPoissonBase):
 
         header = data_instances.schema.get("header")
         self.exposure_index = self.get_exposure_index(header, self.exposure_colname)
+        exposure_index = self.exposure_index
 
-        exposure = data_instances.mapValues(lambda v: self.load_exposure(v))
+        # OK
+        exposure = data_instances.mapValues(lambda v: HeteroPoissonBase.load_exposure(v, exposure_index))
 
-        data_instances = data_instances.mapValues(lambda v: self.load_instance(v))
+        # ERROR
+        exposure = data_instances.mapValues(lambda v: self.load_exposure(v, exposure_index))
+        exposure = data_instances.mapValues(lambda v: HeteroPoissonBase.load_exposure(v, self.exposure_index))
+
+
+
+        data_instances = data_instances.mapValues(lambda v: HeteroPoissonBase.load_instance(v, exposure_index))
 
         data_features = self.transform(data_instances)
 
