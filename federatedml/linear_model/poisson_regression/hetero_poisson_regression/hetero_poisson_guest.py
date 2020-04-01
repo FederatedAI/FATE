@@ -86,7 +86,6 @@ class HeteroPoissonGuest(HeteroPoissonBase):
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data)
                 # compute offset of this batch
-                # batch_offset = exposure.join(batch_feat_inst, lambda ei, d: self.safe_log(ei))
                 batch_offset = exposure.join(batch_feat_inst, lambda ei, d: HeteroPoissonBase.safe_log(ei))
 
                 # Start gradient procedure
@@ -141,12 +140,6 @@ class HeteroPoissonGuest(HeteroPoissonBase):
 
         # OK
         exposure = data_instances.mapValues(lambda v: HeteroPoissonBase.load_exposure(v, exposure_index))
-
-        # ERROR
-        exposure = data_instances.mapValues(lambda v: self.load_exposure(v, exposure_index))
-        exposure = data_instances.mapValues(lambda v: HeteroPoissonBase.load_exposure(v, self.exposure_index))
-
-
 
         data_instances = data_instances.mapValues(lambda v: HeteroPoissonBase.load_instance(v, exposure_index))
 
