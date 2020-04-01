@@ -42,29 +42,27 @@ class HeteroKmeansClient(BaseKmeansModel):
             result.append(sqrt(sum(power(c - u.features, 2))) + rand)
         return result
 
-    def get_centroid(self):
-        pass
-
-    @staticmethod
-    def tol_cal(clu1, clu2):
-        diffs = 0
-        for i in range(0, len(clu1)):
-            for j in range(0, len(clu1[1])):
-                diffs += power(clu1[i][j] - clu2[i][j], 2)
-        return diffs
+    def get_centroid(self,data_instances):
+        random.seed(self.k)
+        random_list = list()
+        feature_list = list()
+        for n in range(0,self.k):
+            random_list.append(ceil(random.random()*data_instances.count))
+            feature_list.append(data_instances.filter(lambda k1 , v1: k1 == random_list[n]))
+        return feature_list
 
     @staticmethod
     def get_sum(x1, x2):
         for items in x1:
-            x1[items] += x2[items]
-        return x1
+            x1.features[items] += x2.features[items]
+        return x1.features
 
     def centroid_cal(self, cluster_result, data_instances, centroids):
         sum_all = functools.partial(self.get_sum)
         centroid_list = list()
         for kk in range(0, self.k):
             a = cluster_result.filter(lambda k1, v1: v1 == kk)
-            centroid_k = a.join(data_instances, lambda v1, v2: v2).reduce(lambda x1, x2: sum_all(x1, x2)) / a.count
+            centroid_k = a.join(data_instances, lambda v1, v2: v2).reduce(sum_all) / a.count
             centroid_list = centroid_list.append(centroid_k)
         return centroid_list
 
@@ -72,15 +70,15 @@ class HeteroKmeansClient(BaseKmeansModel):
         LOGGER.info("Enter hetero_kmenas_client fit")
         self._abnormal_detection(data_instances)
         # self.header = self.get_header(data_instances)
-        centroids = self.get_centroid()
+        self.centroid_list = self.get_centroid(data_instances)
         tol_sum = inf
         while self.n_iter_ < self.max_iter:
-            d = functools.partial(self.educl_dist, centroid_list=centroids, rand=random.random())
+            d = functools.partial(self.educl_dist, centroid_list=self.centroid_list, rand=random.random())
             dist_all = data_instances.mapValues(d)
             self.client_dist.remote(dist_all, role=consts.ARBITER, idx=0, suffix=(self.n_iter_,))
             cluster_result = self.transfer_variable.cluster_result.get(idx=0, suffix=(self.n_iter_,))
-            centroid_new = self.centroid_cal(cluster_result, data_instances, centroids)
-            client_tol = np.sum((centroids - centroid_new)**2,axis=1)
+            centroid_new = self.centroid_cal(cluster_result, data_instances, self.centroid_list)
+            client_tol = np.sum((self.centroid_list - centroid_new)**2,axis=1)
             self.centroid_list = centroid_new
             self.cluster_result = cluster_result
             self.client_tol.remote(client_tol, role=consts.ARBITER, idx=0, suffix=(self.n_iter_,))
@@ -88,8 +86,6 @@ class HeteroKmeansClient(BaseKmeansModel):
             self.n_iter_ += 1
             if tol_tag == 1:
                 break
-
-
 
 
 class HeteroKmeansGuest(HeteroKmeansClient):

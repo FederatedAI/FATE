@@ -18,6 +18,7 @@
 
 
 from federatedml.model_base import ModelBase
+from federatedml.transfer_variable.transfer_class.hetero_kmeans_transfer_variable import HeteroKmeansTransferVariable
 from federatedml.util import abnormal_detection
 
 class BaseKmeansModel(ModelBase):
@@ -37,6 +38,8 @@ class BaseKmeansModel(ModelBase):
         self.k = params.k
         self.max_iter = params.max_iter
         self.tol = params.tol
+        self.transfer_variable = HeteroKmeansTransferVariable()
+
 
     def _abnormal_detection(self, data_instances):
         """
