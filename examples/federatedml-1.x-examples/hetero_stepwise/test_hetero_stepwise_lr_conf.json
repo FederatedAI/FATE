@@ -84,9 +84,9 @@
       },
       "stepwise_param": {
         "score_name": "AIC",
-        "direction": "both",
+        "direction": "backward",
         "need_stepwise": true,
-        "max_step": 3,
+        "max_step": 2,
         "nvmin": 2
       }
     }
