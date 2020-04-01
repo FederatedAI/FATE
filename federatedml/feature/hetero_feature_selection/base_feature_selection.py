@@ -99,9 +99,12 @@ class BaseHeteroFeatureSelection(ModelBase):
         )
 
         host_col_names = []
-        for this_host_name in self.completed_selection_result.get_host_sorted_col_names():
-            LOGGER.debug("In _get_param, this_host_name: {}".format(this_host_name))
-            host_col_names.append(feature_selection_param_pb2.HostColNames(col_names=this_host_name))
+        for host_id, this_host_name in enumerate(self.completed_selection_result.get_host_sorted_col_names()):
+            party_id = self.component_properties.host_party_idlist[host_id]
+            LOGGER.debug("In _get_param, this_host_name: {}, party_id: {}".format(this_host_name, party_id))
+
+            host_col_names.append(feature_selection_param_pb2.HostColNames(col_names=this_host_name,
+                                                                           party_id=str(party_id)))
 
         result_obj = feature_selection_param_pb2.FeatureSelectionParam(
             results=self.completed_selection_result.filter_results,
