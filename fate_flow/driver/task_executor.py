@@ -96,9 +96,6 @@ class TaskExecutor(object):
             run_class_paths = parameters.get('CodePath').split('/')
             run_class_package = '.'.join(run_class_paths[:-2]) + '.' + run_class_paths[-2].replace('.py','')
             run_class_name = run_class_paths[-1]
-            task_run_args = TaskExecutor.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
-                                                           job_parameters=job_parameters, job_args=job_args,
-                                                           input_dsl=task_input_dsl)
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
             run_object.set_tracker(tracker=tracker)
             run_object.set_taskid(taskid=task_id)
@@ -117,6 +114,9 @@ class TaskExecutor(object):
             schedule_logger().info('run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
             schedule_logger().info(parameters)
             schedule_logger().info(task_input_dsl)
+            task_run_args = TaskExecutor.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
+                                                           job_parameters=job_parameters, job_args=job_args,
+                                                           input_dsl=task_input_dsl)
             run_object.run(parameters, task_run_args)
             output_data = run_object.save_data()
             tracker.save_output_data_table(output_data, task_output_dsl.get('data')[0] if task_output_dsl.get('data') else 'component')
