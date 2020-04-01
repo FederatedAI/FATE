@@ -114,6 +114,8 @@ class OptimalBinningParam(BaseParam):
             self.check_decimal_float(self.max_bin_pct, descr)
         if self.min_bin_pct not in [1, 0]:
             self.check_decimal_float(self.min_bin_pct, descr)
+        if self.min_bin_pct > self.max_bin_pct:
+            raise ValueError("Optimal binning's min_bin_pct should less or equal than max_bin_pct")
         if math.ceil(1.0 / self.max_bin_pct) > self.max_bin:
             raise ValueError("Arguments logical error, ceil(1.0/max_bin_pct) should be smaller or equal than bin_num")
         self.check_boolean(self.mixture, descr)
