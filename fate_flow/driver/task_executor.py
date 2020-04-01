@@ -96,9 +96,6 @@ class TaskExecutor(object):
             run_class_paths = parameters.get('CodePath').split('/')
             run_class_package = '.'.join(run_class_paths[:-2]) + '.' + run_class_paths[-2].replace('.py','')
             run_class_name = run_class_paths[-1]
-            run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
-            run_object.set_tracker(tracker=tracker)
-            run_object.set_taskid(taskid=task_id)
             task.f_status = TaskStatus.RUNNING
             TaskExecutor.sync_task_status(job_id=job_id, component_name=component_name, task_id=task_id, role=role,
                                           party_id=party_id, initiator_party_id=job_initiator.get('party_id', None),
@@ -117,6 +114,9 @@ class TaskExecutor(object):
             task_run_args = TaskExecutor.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
                                                            job_parameters=job_parameters, job_args=job_args,
                                                            input_dsl=task_input_dsl)
+            run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
+            run_object.set_tracker(tracker=tracker)
+            run_object.set_taskid(taskid=task_id)
             run_object.run(parameters, task_run_args)
             output_data = run_object.save_data()
             tracker.save_output_data_table(output_data, task_output_dsl.get('data')[0] if task_output_dsl.get('data') else 'component')
@@ -126,11 +126,7 @@ class TaskExecutor(object):
             task.f_status = TaskStatus.COMPLETE
         except Exception as e:
             task.f_status = TaskStatus.FAILED
-            kill_path = os.path.join(job_utils.get_job_directory(job_id), str(role), str(party_id), component_name,
-                                     'kill')
-            if not os.path.exists(kill_path):
-                traceback.print_exc()
-                schedule_logger().exception(e)
+            schedule_logger().exception(e)
         finally:
             sync_success = False
             try:
