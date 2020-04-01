@@ -82,7 +82,8 @@
       }
     },
     "hetero_feature_selection_0": {
-      "select_cols": -1,
+      "select_col_indexes": -1,
+      "select_names": [],
       "filter_methods": ["unique_value", "iv_value_thres",
         "coefficient_of_variation_value_thres", "iv_percentile", "outlier_cols"],
       "local_only": false,
@@ -90,7 +91,7 @@
         "eps": 1e-6
       },
       "iv_value_param": {
-        "value_threshold": 1.0
+        "value_threshold": 0.1
       },
       "iv_percentile_param": {
         "percentile_threshold": 0.9

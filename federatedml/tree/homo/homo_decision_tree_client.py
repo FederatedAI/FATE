@@ -18,7 +18,6 @@ from federatedml.tree import DecisionTreeClientAggregator
 
 from federatedml.feature.fate_element_type import NoneType
 
-from arch.api.table.eggroll.table_impl import DTable
 from federatedml.feature.instance import Instance
 from federatedml.param import DecisionTreeParam
 
@@ -29,8 +28,8 @@ LOGGER = log_utils.getLogger()
 
 class HomoDecisionTreeClient(DecisionTree):
 
-    def __init__(self, tree_param: DecisionTreeParam, data_bin: DTable = None, bin_split_points: np.array = None,
-                 bin_sparse_point=None, g_h: DTable = None, valid_feature: dict = None, epoch_idx: int = None,
+    def __init__(self, tree_param: DecisionTreeParam, data_bin = None, bin_split_points: np.array = None,
+                 bin_sparse_point=None, g_h = None, valid_feature: dict = None, epoch_idx: int = None,
                  role: str = None, tree_idx: int = None, flow_id: int = None, mode='train'):
 
         """
@@ -91,7 +90,7 @@ class HomoDecisionTreeClient(DecisionTree):
         LOGGER.info("set flowid, flowid is {}".format(flowid))
         self.transfer_inst.set_flowid(flowid)
 
-    def get_grad_hess_sum(self, grad_and_hess_table) -> Tuple[DTable, DTable]:
+    def get_grad_hess_sum(self, grad_and_hess_table):
         LOGGER.info("calculate the sum of grad and hess")
         grad, hess = grad_and_hess_table.reduce(
             lambda value1, value2: (value1[0] + value2[0], value1[1] + value2[1]))
@@ -238,7 +237,7 @@ class HomoDecisionTreeClient(DecisionTree):
             if not node.is_leaf:
                 node.bid = self.bin_split_points[node.fid][node.bid]
 
-    def assign_instance_to_root_node(self, data_bin: DTable, root_node_id):
+    def assign_instance_to_root_node(self, data_bin, root_node_id):
         return data_bin.mapValues(lambda inst: (1, root_node_id))
 
     @staticmethod
@@ -273,7 +272,7 @@ class HomoDecisionTreeClient(DecisionTree):
             else:
                 return 1, tree[nodeid].right_nodeid
 
-    def assign_instance_to_new_node(self, table_with_assignment: DTable, tree_node: List[Node]):
+    def assign_instance_to_new_node(self, table_with_assignment, tree_node: List[Node]):
 
         LOGGER.debug('re-assign instance to new nodes')
         assign_method = functools.partial(self.assign_a_instance, tree=tree_node, bin_sparse_point=
@@ -288,7 +287,7 @@ class HomoDecisionTreeClient(DecisionTree):
         return assign_result, leaf_val
 
     @staticmethod
-    def get_node_sample_weights(inst2node: DTable, tree_node: List[Node]):
+    def get_node_sample_weights(inst2node, tree_node: List[Node]):
         """
         get samples' weights which correspond to its node assignment
         """
@@ -429,7 +428,7 @@ class HomoDecisionTreeClient(DecisionTree):
             else:
                 nid = tree[nid].right_nodeid
 
-    def predict(self, data_inst: DTable):
+    def predict(self, data_inst):
 
         LOGGER.debug('tree start to predict')
 

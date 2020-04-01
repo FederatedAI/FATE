@@ -33,6 +33,18 @@
     "multi_host": {
       "conf": "./test_hetero_feature_selection_multi_host_job_conf.json",
       "dsl": "./test_hetero_feature_selection_job_dsl.json"
+    },
+    "selection_manually": {
+      "conf": "./test_hetero_feature_selection_manually_job_conf.json",
+      "dsl": "./test_hetero_feature_selection_job_dsl.json"
+    },
+    "select_cols": {
+      "conf": "./test_hetero_feature_selection_select_cols_job_conf.json",
+      "dsl": "./test_hetero_feature_selection_job_dsl.json"
+    },
+    "select_col_names": {
+      "conf": "./test_hetero_feature_selection_select_cols_names_job_conf.json",
+      "dsl": "./test_hetero_feature_selection_job_dsl.json"
     }
   }
 }

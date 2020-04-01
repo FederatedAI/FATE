@@ -52,9 +52,8 @@ class BaseLinearModel(ModelBase):
         self.model_weights = None
         self.validation_freqs = None
         self.need_one_vs_rest = False
-        self.in_one_vs_rest = False
-        self.init_param_obj = None
         self.need_call_back_loss = True
+        self.init_param_obj = None
 
     def _init_model(self, params):
         self.model_param = params
@@ -94,8 +93,6 @@ class BaseLinearModel(ModelBase):
         raise NotImplementedError("This method should be be called here")
 
     def export_model(self):
-        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-            return self.validation_strategy.export_best_model()
         meta_obj = self._get_meta()
         param_obj = self._get_param()
         result = {

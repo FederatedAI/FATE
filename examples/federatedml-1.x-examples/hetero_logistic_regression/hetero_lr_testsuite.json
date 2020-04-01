@@ -58,6 +58,22 @@
       "conf": "test_hetero_lr_one_vs_rest_job_conf.json",
       "dsl": "test_hetero_lr_train_job_dsl.json"
     },
+    "lr_ovr_cv":{
+      "conf": "test_hetero_lr_cv_ovr_job_conf.json",
+      "dsl": "test_hetero_lr_cv_job_dsl.json"
+    },
+    "lr_sparse_cv": {
+      "conf": "test_hetero_lr_cv_sparse_job_conf.json",
+      "dsl": "test_hetero_lr_cv_job_dsl.json"
+    },
+    "lr_ovr_sqn": {
+      "conf": "test_hetero_lr_ovr_sqn_job_conf.json",
+      "dsl": "test_hetero_lr_train_job_dsl.json"
+    },
+    "lr_sparse_sqn": {
+      "conf": "test_hetero_lr_sparse_sqn_train_job_conf.json",
+      "dsl": "test_hetero_lr_train_job_dsl.json"
+    },
     "lr_validate": {
       "conf": "test_hetero_lr_validate_job_conf.json",
       "dsl": "test_hetero_lr_validate_job_dsl.json"
