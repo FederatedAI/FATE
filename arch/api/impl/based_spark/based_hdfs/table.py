@@ -26,7 +26,7 @@ from arch.api.utils.profile_util import log_elapsed
 
 
 class RDDTable(Table):
-
+    delimiter = '\t'
     # noinspection PyProtectedMember
     @classmethod
     def from_hdfs(cls, session_id: str,
@@ -61,22 +61,33 @@ class RDDTable(Table):
         hadoop_configuration = sc._jsc.hadoopConfiguration()
         return filesystem_class.get(hadoop_configuration)
 
-
     @classmethod
-    def write2hdfs(cls, sc, hdfs_path, content, create_if_missing: bool = True):
-        fs = get_file_system(sc)
+    def write2hdfs(cls, namespace, name, kv_list: Iterable, create_if_missing: bool = True):
+        from pyspark import SparkContext
+        sc = SparkContext.getOrCreate()
+        hdfs_path = generate_hdfs_path(namespace=namespace, name=name)
         path = get_path(sc, hdfs_path)
+        fs = get_file_system(sc)
         if(fs.exists(path)):
             out = fs.append(path)
         elif create_if_missing:
             out = fs.create(path)
         else:
             raise AssertionError("hdfs path {} not exists.".format(hdfs_path))
-        out.write(bytearray(content, "utf-8"))
+
+        for k, v in kv_list:
+            content = u"{}{}{}\n".format(k, delimiter, v)
+            out.write(bytearray(content, "utf-8"))
         out.flush()
         out.close()
 
-    
+
+    @classmethod
+    def map2dic(cls, m):
+        filds = m.strip().partition(delimiter)
+        return filds[0], filds[2]
+
+
     @classmethod
     def rdd_from_hdfs(cls, namespace, name, create_if_missing: bool = True):
         from pyspark import SparkContext
@@ -85,9 +96,9 @@ class RDDTable(Table):
         fs = get_file_system(sc)
         path = get_path(sc, hdfs_path)
         if(fs.exists(path)):
-            rdd = sc.textFile(path)
+            rdd = sc.textFile(path).map(map2dic).persist(util.get_storage_level())
         elif create_if_missing:
-            rdd = sc.emptyRDD()
+            rdd = sc.emptyRDD().persist(util.get_storage_level())
         else:
             raise AssertionError("hdfs path {} not exists.".format(hdfs_path))
         return rdd
@@ -242,9 +253,10 @@ class RDDTable(Table):
     """
 
     def put(self, k, v, use_serialize=True, maybe_large_value=False):
-        self._rdd = None
+        put_all(kv_list= [(k, v)], use_serialize=use_serialize)
 
     def put_all(self, kv_list: Iterable, use_serialize=True, chunk_size=100000):
+        write2hdfs(namespace=self._namespace, name=self._name, kv_list=kv_list, create_if_missing=True)
         self._rdd = None
 
     def get(self, k, use_serialize=True, maybe_large_value=False):
@@ -277,15 +289,9 @@ class RDDTable(Table):
     def save_as(self, name, namespace, partition=None, use_serialize=True, persistent=True, **kwargs):
         if partition is None:
             partition = self._partitions
-        if self._dtable:
-            from arch.api import RuntimeInstance
-            persistent_engine = RuntimeInstance.SESSION.get_persistent_engine()
-            options = dict(store_type=persistent_engine)
-            saved_table = self._dtable.save_as(name=name, namespace=namespace, partition=partition, options=options)
-            return RDDTable.from_dtable(session_id=self._session_id, dtable=saved_table)
-        else:
-            it = self._rdd.toLocalIterator()
-            from arch.api import session
-            rdd_table = session.table(name=name, namespace=namespace, partition=partition, persistent=persistent)
-            rdd_table.put_all(kv_list=it)
-            return rdd_table
+
+        it = self._rdd.toLocalIterator()
+        from arch.api import session
+        rdd_table = session.table(name=name, namespace=namespace, partition=partition, persistent=persistent)
+        rdd_table.put_all(kv_list=it)
+        return rdd_table
