@@ -54,35 +54,40 @@ class BasePoissonRegression(BaseLinearModel):
             exposure_index = -1
         return exposure_index
 
-    def load_instance(self, data_instance):
+    @staticmethod
+    def load_instance(data_instance, exposure_index):
         """
         return data_instance without exposure
         Parameters
         ----------
         data_instance: DTable of Instances, input data
+        exposure_index: column index of exposure variable
         """
-        if self.exposure_index == -1:
+        if exposure_index == -1:
             return data_instance
-        if self.exposure_index >= len(data_instance.features):
+        if exposure_index >= len(data_instance.features):
             raise ValueError(
-                "exposure_index {} out of features' range".format(self.exposure_index))
-        data_instance.features = np.delete(data_instance.features, self.exposure_index)
+                "exposure_index {} out of features' range".format(exposure_index))
+        data_instance.features = np.delete(data_instance.features, exposure_index)
         return data_instance
 
-    def load_exposure(self, data_instance):
+    @staticmethod
+    def load_exposure( data_instance, exposure_index):
         """
         return exposure of a given data_instance
         Parameters
         ----------
         data_instance: DTable of Instances, input data
+        exposure_index: column index of exposure variable
         """
-        if self.exposure_index == -1:
+        if exposure_index == -1:
             exposure = 1
         else:
-            exposure = data_instance.features[self.exposure_index]
+            exposure = data_instance.features[exposure_index]
         return exposure
 
-    def safe_log(self, v):
+    @staticmethod
+    def safe_log(v):
         if v == 0:
             return np.log(1e-7)
         return np.log(v)
@@ -92,7 +97,7 @@ class BasePoissonRegression(BaseLinearModel):
             mu = data_instances.mapValues(
                 lambda v: np.exp(vec_dot(v.features, coef_) + intercept_ ))
         else:
-            offset = exposure.mapValues(lambda v: self.safe_log(v))
+            offset = exposure.mapValues(lambda v: BasePoissonRegression.safe_log(v))
             mu = data_instances.join(offset,
                 lambda v, m: np.exp(vec_dot(v.features, coef_) + intercept_ + m))
 
