@@ -83,6 +83,17 @@ class RDDTable(Table):
 
 
     @classmethod
+    def delete_file_from_hdfs(cls, namespace, name):
+        from pyspark import SparkContext
+        sc = SparkContext.getOrCreate()
+        hdfs_path = generate_hdfs_path(namespace=namespace, name=name)
+        path = get_path(sc, hdfs_path)
+        fs = get_file_system(sc)
+        if(fs.exists(path)):
+            fs.delete(path)
+
+
+    @classmethod
     def map2dic(cls, m):
         filds = m.strip().partition(delimiter)
         return filds[0], filds[2]
@@ -263,9 +274,10 @@ class RDDTable(Table):
         return self.rdd().lookup(k)
 
     def delete(self, k, use_serialize=True):
-        self._rdd = None
+        pass
 
     def destroy(self):
+        delete_file_from_hdfs(namespace=self._namespace, name=self._name)
         self._rdd = None
 
     def put_if_absent(self, k, v, use_serialize=True):
