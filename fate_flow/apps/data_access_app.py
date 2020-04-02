@@ -63,16 +63,17 @@ def download_upload(access_module):
     if access_module == "upload":
         data['table_name'] = request_config["table_name"]
         data['namespace'] = request_config["namespace"]
+        session.init()
         data_table = session.get_data_table(name=request_config["table_name"], namespace=request_config["namespace"])
         count = data_table.count()
-        if count and request_config.get('drop', 2) == 2:
+        if count and int(request_config.get('drop', 2)) == 2:
             return get_json_result(retcode=100,
                                    retmsg='The data table already exists, table data count:{}.'
                                           'If you still want to continue uploading, please add the parameter -drop. '
                                           '0 means not to delete and continue uploading, '
                                           '1 means to upload again after deleting the table'.format(
                                        count))
-        elif count and request_config.get('drop', 2) == 1:
+        elif count and int(request_config.get('drop', 2)) == 1:
             data_table.destroy()
     job_dsl, job_runtime_conf = gen_data_access_job_config(request_config, access_module)
     job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = JobController.submit_job(
