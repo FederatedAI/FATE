@@ -351,7 +351,7 @@ class Evaluation(ModelBase):
         -------
         """
 
-        collect_dict = None
+        collect_dict = {}
         LOGGER.debug('callback metric called')
 
         for (data_type, eval_res_list) in self.eval_results.items():
