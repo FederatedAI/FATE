@@ -69,7 +69,7 @@ class LocalBaseline(ModelBase):
         n_iter = model.n_iter_[0]
         is_converged = n_iter < model.max_iter
 
-        coef = model.coef_
+        coef = model.coef_[0]
         LOGGER.debug(f"model coef len {coef.shape[0]}, value: {coef}")
         weight_dict = dict(zip(self.header, list(coef)))
         LOGGER.debug(f"model weight dict {weight_dict}")
@@ -155,7 +155,6 @@ class LocalBaseline(ModelBase):
             self.model_param_name: param_obj
         }
         return result
-
 
     def predict(self, data_instances):
         if not self.need_run:
