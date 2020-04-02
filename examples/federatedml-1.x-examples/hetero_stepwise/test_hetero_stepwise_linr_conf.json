@@ -70,7 +70,7 @@
       "optimizer": "sgd",
       "tol": 1e-3,
       "alpha": 0.01,
-      "max_iter": 20,
+      "max_iter": 10,
       "early_stop": "diff",
       "batch_size": -1,
       "learning_rate": 0.15,
