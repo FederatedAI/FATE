@@ -1,0 +1,65 @@
+{
+  "initiator": {
+    "role": "guest",
+    "party_id": 10000
+  },
+  "job_parameters": {
+    "work_mode": 0
+  },
+  "role": {
+    "guest": [
+      10000
+    ],
+    "host": [
+      10000
+    ]
+  },
+  "role_parameters": {
+    "guest": {
+      "args": {
+        "data": {
+          "data": [
+            {
+              "name": "hetero_breast_b",
+              "namespace": "hetero_breast_guest"
+            }
+          ]
+        }
+      },
+      "dataio_0": {
+        "with_label": [
+          true
+        ],
+        "output_format": [
+          "dense"
+        ]
+      },
+      "pearson_0": {
+        "column_indexes": [-1]
+      }
+    },
+    "host": {
+      "args": {
+        "data": {
+          "data": [
+            {
+              "name": "hetero_breast_a",
+              "namespace": "hetero_breast_host"
+            }
+          ]
+        }
+      },
+      "dataio_0": {
+        "with_label": [
+          false
+        ],
+        "output_format": [
+          "dense"
+        ]
+      },
+      "pearson_0": {
+        "column_indexes": [-1]
+      }
+    }
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "initiator": {
+    "role": "guest",
+    "party_id": 10000
+  },
+  "job_parameters": {
+    "work_mode": 0
+  },
+  "role": {
+    "guest": [
+      10000
+    ],
+    "host": [
+      10000, 9999
+    ],
+    "arbiter": [
+      10000
+    ]
+  },
+  "role_parameters": {
+    "guest": {
+      "args": {
+        "data": {
+          "train_data": [
+            {
+              "name": "homo_guest",
+              "namespace": "vehicle_scale"
+            }
+          ]
+        }
+      },
+      "dataio_0": {
+        "with_label": [
+          true
+        ],
+        "label_name": [
+          "y"
+        ],
+        "label_type": [
+          "int"
+        ],
+        "output_format": [
+          "dense"
+        ]
+      }
+    },
+    "host": {
+      "args": {
+        "data": {
+          "train_data": [
+            {
+              "name": "homo_host",
+              "namespace": "vehicle_scale"
+            },
+            {
+              "name": "homo_host",
+              "namespace": "vehicle_scale"
+            }
+          ]
+        }
+      },
+      "dataio_0": {
+        "with_label": [
+          true, true
+        ],
+        "label_name": [
+          "y", "y"
+        ],
+        "label_type": [
+          "int", "int"
+        ],
+        "output_format": [
+          "dense", "dense"
+        ]
+      }
+    }
+  },
+  "algorithm_parameters": {
+    "homo_nn_0": {
+      "config_type": "nn",
+      "nn_define": [
+        {
+          "layer": "Dense",
+          "units": 5,
+          "use_bias": false,
+          "activation": "relu"
+        },
+        {
+          "layer": "Dense",
+          "units": 4,
+          "activation": "softmax"
+        }
+      ],
+      "batch_size": -1,
+      "optimizer": {
+        "optimizer": "Adam",
+        "learning_rate": 0.05
+      },
+      "early_stop": {
+        "early_stop": "diff",
+        "eps": 1e-4
+      },
+      "loss": "categorical_crossentropy",
+      "metrics": [
+        "accuracy"
+      ],
+      "max_iter": 10
+    }
+  }
+}
