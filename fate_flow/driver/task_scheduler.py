@@ -19,7 +19,7 @@ import sys
 import time
 from threading import Timer
 
-from arch.api.utils.core import current_timestamp, base64_encode, json_loads, get_lan_ip
+from arch.api.utils.core_utils import current_timestamp, base64_encode, json_loads, get_lan_ip
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import Job
 from fate_flow.driver.task_executor import TaskExecutor

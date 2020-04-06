@@ -19,7 +19,7 @@ import os
 from arch.api.utils import file_utils
 from arch.api.utils import log_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
-from arch.api.utils.core import get_lan_ip
+from arch.api.utils.core_utils import get_lan_ip
 import __main__
 
 from fate_flow.utils.setting_utils import CenterConfig
@@ -51,7 +51,7 @@ REDIS_QUEUE_DB_INDEX = 0
 
 DATABASE = {
     'name': 'fate_flow',
-    'user': 'root',
+    'user': 'fate_dev',
     'passwd': 'fate_dev',
     'host': '127.0.0.1',
     'port': 3306,

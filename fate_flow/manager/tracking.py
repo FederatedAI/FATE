@@ -16,10 +16,10 @@
 from typing import List
 
 from arch.api import session, WorkMode
-from arch.api.utils.core import current_timestamp, serialize_b64, deserialize_b64
+from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from fate_flow.db.db_models import DB, Job, Task, TrackingMetric, DataView
 from fate_flow.entity.metric import Metric, MetricMeta
-from fate_flow.manager import model_manager
+from fate_flow.manager.model_manager import pipelined_model
 from fate_flow.settings import stat_logger, API_VERSION, MAX_CONCURRENT_JOB_RUN_HOST
 from fate_flow.utils import job_utils, api_utils, model_utils
 from fate_flow.entity.constant_config import JobStatus, TaskStatus
@@ -35,13 +35,13 @@ class Tracking(object):
                  model_id: str = None,
                  model_version: str = None,
                  component_name: str = None,
-                 module_name: str = None,
+                 component_module_name: str = None,
                  task_id: str = None):
         self.job_id = job_id
         self.role = role
         self.party_id = party_id
         self.component_name = component_name if component_name else 'pipeline'
-        self.module_name = module_name if module_name else 'Pipeline'
+        self.module_name = component_module_name if component_module_name else 'Pipeline'
         self.task_id = task_id if task_id else job_utils.generate_task_id(job_id=self.job_id,
                                                                           component_name=self.component_name)
         self.table_namespace = '_'.join(
@@ -51,6 +51,10 @@ class Tracking(object):
         self.model_id = model_id
         self.party_model_id = model_utils.gen_party_model_id(model_id=model_id, role=role, party_id=party_id)
         self.model_version = model_version
+        self.pipelined_model = None
+        if self.party_model_id and self.model_version:
+            self.pipelined_model = pipelined_model.PipelinedModel(model_id=self.party_model_id,
+                                                                  model_version=self.model_version)
 
     def log_job_metric_data(self, metric_namespace: str, metric_name: str, metrics: List[Metric]):
         self.save_metric_data_remote(metric_namespace=metric_namespace, metric_name=metric_name, metrics=metrics,
@@ -209,38 +213,34 @@ class Tracking(object):
         else:
             return None
 
-    def save_output_model(self, model_buffers: dict, model_name: str):
+    def init_pipelined_model(self):
+        self.pipelined_model.create_pipelined_model()
+
+    def save_output_model(self, model_buffers: dict, model_alias: str):
         if model_buffers:
-            model_manager.save_component_model(component_model_key='{}.{}'.format(self.component_name, model_name),
-                                               model_buffers=model_buffers,
-                                               party_model_id=self.party_model_id,
-                                               model_version=self.model_version)
+            self.pipelined_model.save_component_model(component_name=self.component_name,
+                                                      component_module_name=self.module_name,
+                                                      model_alias=model_alias,
+                                                      model_buffers=model_buffers)
             self.save_data_view(self.role, self.party_id,
                                 data_info={'f_party_model_id': self.party_model_id,
                                            'f_model_version': self.model_version})
-            self.save_output_model_meta({'{}_module_name'.format(self.component_name): self.module_name})
 
-    def get_output_model(self, model_name):
-        model_buffers = model_manager.read_component_model(
-            component_model_key='{}.{}'.format(self.component_name, model_name),
-            party_model_id=self.party_model_id,
-            model_version=self.model_version)
-
+    def get_output_model(self, model_alias):
+        model_buffers = self.pipelined_model.read_component_model(component_name=self.component_name,
+                                                                  model_alias=model_alias)
         return model_buffers
 
     def collect_model(self):
-        model_buffers = model_manager.collect_pipeline_model(party_model_id=self.party_model_id,
-                                                             model_version=self.model_version)
+        model_buffers = self.pipelined_model.collect_models()
         return model_buffers
 
-    def save_output_model_meta(self, kv: dict):
-        model_manager.save_pipeline_model_meta(kv=kv,
-                                               party_model_id=self.party_model_id,
-                                               model_version=self.model_version)
+    def save_pipeline(self, pipelined_buffer_object):
+        self.save_output_model({'Pipeline': pipelined_buffer_object}, 'pipeline')
+        self.pipelined_model.save_pipeline(pipelined_buffer_object=pipelined_buffer_object)
 
-    def get_output_model_meta(self):
-        return model_manager.get_pipeline_model_meta(party_model_id=self.party_model_id,
-                                                     model_version=self.model_version)
+    def get_component_define(self):
+        return self.pipelined_model.get_component_define(component_name=self.component_name)
 
     def insert_data_to_db(self, metric_namespace: str, metric_name: str, data_type: int, kv, job_level=False):
         with DB.connection_context():
@@ -413,7 +413,6 @@ class Tracking(object):
         for role in roles.split(','):
             for party_id in party_ids.split(','):
                 session.clean_tables(namespace=self.task_id + '_' + role + '_' + party_id, regex_string='*')
-
 
     def job_quantity_constraint(self):
         if RuntimeConfig.WORK_MODE == WorkMode.CLUSTER:

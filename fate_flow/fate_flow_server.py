@@ -89,7 +89,7 @@ if __name__ == '__main__':
     if args.standalone_node:
         RuntimeConfig.init_config(WORK_MODE=WorkMode.STANDALONE)
         RuntimeConfig.init_config(HTTP_PORT=CLUSTER_STANDALONE_JOB_SERVER_PORT)
-
+    RuntimeConfig.init_env()
     session.init(mode=RuntimeConfig.WORK_MODE, backend=Backend.EGGROLL)
     queue_manager.init_job_queue()
     job_controller.JobController.init()

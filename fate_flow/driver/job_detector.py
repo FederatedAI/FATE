@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils.core import get_lan_ip
+from arch.api.utils.core_utils import get_lan_ip
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.settings import detect_logger, API_VERSION
 from fate_flow.utils import cron, job_utils, api_utils

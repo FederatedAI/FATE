@@ -25,7 +25,7 @@ import time
 import requests
 
 from arch.api.utils import file_utils
-from arch.api.utils.core import get_lan_ip
+from arch.api.utils.core_utils import get_lan_ip
 from fate_flow.settings import SERVERS, ROLE, API_VERSION, USE_LOCAL_DATA
 from fate_flow.utils import detect_utils
 

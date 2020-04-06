@@ -21,7 +21,7 @@ import traceback
 from arch.api import federation
 from arch.api import session
 from arch.api.utils import file_utils, log_utils
-from arch.api.utils.core import current_timestamp, get_lan_ip, timestamp_to_date
+from arch.api.utils.core_utils import current_timestamp, get_lan_ip, timestamp_to_date
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import Task
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -89,7 +89,7 @@ class TaskExecutor(object):
                                task_id=task_id,
                                model_id=job_parameters['model_id'],
                                model_version=job_parameters['model_version'],
-                               module_name=module_name)
+                               component_module_name=module_name)
             task.f_start_time = current_timestamp()
             task.f_run_ip = get_lan_ip()
             task.f_run_pid = executor_pid
@@ -180,15 +180,15 @@ class TaskExecutor(object):
                 for dsl_model_key in input_detail:
                     dsl_model_key_items = dsl_model_key.split('.')
                     if len(dsl_model_key_items) == 2:
-                        search_component_name, search_model_name = dsl_model_key_items[0], dsl_model_key_items[1]
+                        search_component_name, search_model_alias = dsl_model_key_items[0], dsl_model_key_items[1]
                     elif len(dsl_model_key_items) == 3 and dsl_model_key_items[0] == 'pipeline':
-                        search_component_name, search_model_name = dsl_model_key_items[1], dsl_model_key_items[2]
+                        search_component_name, search_model_alias = dsl_model_key_items[1], dsl_model_key_items[2]
                     else:
                         raise Exception('get input {} failed'.format(input_type))
                     models = Tracking(job_id=job_id, role=role, party_id=party_id, component_name=search_component_name,
                                       model_id=job_parameters['model_id'],
                                       model_version=job_parameters['model_version']).get_output_model(
-                        model_name=search_model_name)
+                        model_alias=search_model_alias)
                     this_type_args[search_component_name] = models
         return task_run_args
 

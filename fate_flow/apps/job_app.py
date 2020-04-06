@@ -19,7 +19,7 @@ import tarfile
 
 from flask import Flask, request, send_file
 
-from arch.api.utils.core import json_loads
+from arch.api.utils.core_utils import json_loads
 from fate_flow.driver.job_controller import JobController
 from fate_flow.driver.task_scheduler import TaskScheduler
 from fate_flow.manager.data_manager import query_data_view

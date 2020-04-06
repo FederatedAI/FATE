@@ -142,3 +142,5 @@ apsw==3.9.2.post1
 deprecated==1.2.7
 torch==1.4.0
 torchvision==0.5.0
+ruamel.yaml==0.16.10
+python-dotenv=0.12.0
