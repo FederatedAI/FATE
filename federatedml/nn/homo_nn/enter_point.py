@@ -158,7 +158,8 @@ class HomoNNClient(HomoNNBase):
     def __build_pytorch_model(self, nn_define):
         self.nn_model = self.model_builder(nn_define=nn_define,
                                            optimizer=self.optimizer,
-                                           loss=self.loss)
+                                           loss=self.loss,
+                                           metrics=self.metrics)
 
     def fit(self, data_inst, *args):
 
