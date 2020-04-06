@@ -36,6 +36,7 @@ message IVParam {
     double iv = 8;
     bool is_woe_monotonic = 9;
     int64 bin_nums = 10;
+    repeated string bin_anonymous = 11;
 }
 
 message FeatureBinningResult {

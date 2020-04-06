@@ -15,7 +15,7 @@
 #
 import numpy as np
 
-from arch.api.table.table import Table
+from arch.api.base.table import Table
 from federatedml.secureprotol.spdz.communicator import Communicator
 from federatedml.secureprotol.spdz.utils.random_utils import rand_tensor, urand_tensor
 

@@ -15,9 +15,13 @@
 #
 
 
-from enum import IntEnum, Enum
+from enum import IntEnum
 
-from arch.api.transfer import FederationWrapped, Federation
+from arch.api.base.build import Builder
+from arch.api.base.federation import Federation
+from arch.api.base.utils.wrap import FederationWrapped
+
+_EGGROLL_VERSION = 2
 
 
 class WorkMode(IntEnum):
@@ -47,14 +51,5 @@ class RuntimeInstance(object):
     MODE: WorkMode = None
     FEDERATION: Federation = None
     TABLE_WRAPPER: FederationWrapped = None
-    Backend: Backend = None
-
-
-class StoreType(Enum):
-    IN_MEMORY = "IN_MEMORY"
-    LMDB = "LMDB"
-
-
-class NamingPolicy(Enum):
-    DEFAULT = 'DEFAULT'
-    ITER_AWARE = 'ITER_AWARE'
+    BACKEND: Backend = None
+    BUILDER: Builder = None

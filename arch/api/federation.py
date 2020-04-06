@@ -19,6 +19,7 @@ import deprecated
 from arch.api import RuntimeInstance
 
 
+# noinspection PyUnresolvedReferences,PyProtectedMember
 def init(job_id, runtime_conf, server_conf_path="arch/conf/server_conf.json"):
     """
     This method is required before get/remote called.
@@ -40,16 +41,14 @@ def init(job_id, runtime_conf, server_conf_path="arch/conf/server_conf.json"):
      }
 
     """
-    from arch.api.transfer import init
-    if RuntimeInstance.MODE is None:
-        raise EnvironmentError(
-            "table manager should be initialized before federation")
+    builder = RuntimeInstance.BUILDER
+    if builder is None:
+        raise EnvironmentError("session should be initialized before federation")
 
-    RuntimeInstance.FEDERATION, RuntimeInstance.TABLE_WRAPPER = init(session_id=job_id,
-                                                                     backend=RuntimeInstance.Backend,
-                                                                     work_mode=RuntimeInstance.MODE,
-                                                                     runtime_conf=runtime_conf,
-                                                                     server_conf_path=server_conf_path)
+    RuntimeInstance.FEDERATION = builder.build_federation(federation_id=job_id,
+                                                          runtime_conf=runtime_conf,
+                                                          server_conf_path="arch/conf/server_conf.json")
+    RuntimeInstance.TABLE_WRAPPER = builder.build_wrapper()
 
 
 def all_parties():

@@ -40,7 +40,7 @@
                 }
             },
             "output": {
-                "data": ["hetero_linr_data"],
+                "data": ["train"],
                 "model": ["hetero_linr_model"]
             }
         },
@@ -48,11 +48,8 @@
             "module": "Evaluation",
             "input": {
                 "data": {
-                    "data": ["hetero_linr_0.hetero_linr_data"]
+                    "data": ["hetero_linr_0.train"]
                 }
-            },
-            "output": {
-                "data": ["evaluate"]
             }
         }
     }

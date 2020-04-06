@@ -14,7 +14,7 @@ GMF associates each user and item with a real-valued vector of latent features. 
 
 where k denotes the dimension of the latent space. 
 
-Since GMF maps users and items to the same latent space, the similarity between two users can also be measured with an inner product, or equivalently, the cosine of the angle between their latent vectors, which can be used to approximate the click-through rate.  A lot of items was impression to each user, with only a few of them been clicked. GMF assume the clicked items as postive items, unclicked items as implicit negative items. It make sure that similary between embedding of user and postive items greater then that between embeddings of user and negative items. GMF applied pairwise-loss to learn model parameters, 
+Since GMF maps users and items to the same latent space, the similarity between two users can also be measured with an inner product, or equivalently, the cosine of the angle between their latent vectors, which can be used to approximate the click-through rate.  A lot of items was impression to each user, with only a few of them been clicked. GMF assume the clicked items as postive items, unclicked items as implicit negative items. It make sure that similary between embedding of user and postive items greater than that between embeddings of user and negative items. GMF applied pairwise-loss to learn model parameters, 
 
 ![image-20200221122655077](../images/GMF_pairwise_loss.png)
 

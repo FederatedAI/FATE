@@ -114,6 +114,9 @@ class ModelBase(object):
     def cross_validation(self, data_inst):
         pass
 
+    def stepwise(self, data_inst):
+        pass
+
     def one_vs_rest_fit(self, train_data=None):
         pass
 
