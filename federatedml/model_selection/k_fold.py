@@ -88,7 +88,7 @@ class KFold(BaseCrossValidator):
             test_data.schema['header'] = header
             yield train_data, test_data
 
-    def run(self, component_parameters, data_inst, original_model):
+    def run(self, component_parameters, data_inst, original_model, host_do_evaluate):
         self._init_model(component_parameters)
 
         if data_inst is None:
@@ -123,7 +123,7 @@ class KFold(BaseCrossValidator):
             train_pred_res = model.predict(train_data)
 
             # if train_pred_res is not None:
-            if self.role == consts.GUEST:
+            if self.role == consts.GUEST or host_do_evaluate:
                 fold_name = "_".join(['train', 'fold', str(fold_num)])
                 pred_res = train_pred_res.mapValues(lambda value: value + ['train'])
                 self.evaluate(pred_res, fold_name, model)
@@ -135,7 +135,7 @@ class KFold(BaseCrossValidator):
             model.set_predict_data_schema(pred_res, test_data.schema)
 
             # if pred_res is not None:
-            if self.role == consts.GUEST:
+            if self.role == consts.GUEST or host_do_evaluate:
                 fold_name = "_".join(['validate', 'fold', str(fold_num)])
                 pred_res = pred_res.mapValues(lambda value: value + ['validate'])
                 self.evaluate(pred_res, fold_name, model)
