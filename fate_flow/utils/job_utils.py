@@ -28,7 +28,6 @@ import uuid
 import psutil
 from fate_flow.entity.constant_config import TaskStatus
 
-from arch.api import session
 from arch.api.utils import file_utils
 from arch.api.utils.core import current_timestamp
 from arch.api.utils.core import json_loads, json_dumps
