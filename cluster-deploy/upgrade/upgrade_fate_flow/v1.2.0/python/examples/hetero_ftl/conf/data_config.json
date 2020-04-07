@@ -1,0 +1,8 @@
+{
+  "file_path": "../data/UCI_Credit_Card.csv",
+  "overlap_ratio": 0.1,
+  "guest_split_ratio": 0.9,
+  "n_feature_guest": 10,
+  "num_samples":null,
+  "balanced": true
+}

@@ -1,0 +1,73 @@
+{
+  "initiator": {
+    "role": "guest",
+    "party_id": 10000
+  },
+  "job_parameters": {
+    "work_mode": 0
+  },
+  "role": {
+    "guest": [
+      10000
+    ],
+    "host": [
+      10000
+    ]  
+  },
+  "role_parameters": {
+    "guest": {
+      "args": {
+        "data": {
+          "data": [
+            {"name": "7089c1b8a6b311e982e35254005e961b",
+                "namespace": "arbiter-10000#guest-10000#host-10000#train_input#guest#10000"}
+          ]
+        }
+      },
+      "dataio_0": {
+        "with_label": [
+          true
+        ],
+       "label_name": [
+          "y"
+        ],
+        "output_format": [
+          "dense"
+        ]
+      }
+    },
+    "host": {
+      "args": {
+        "data": {
+          "data": [
+          {"name": "a22b03bca6b311e991e65254005e961b",
+              "namespace": "arbiter-10000#guest-10000#host-10000#train_input#host#10000"}
+                  ]
+        }
+      },
+      "dataio_0": {
+        "with_label": [
+          false
+        ],
+        "output_format": [
+          "dense"
+        ]
+      }
+    }
+  },
+  "algorithm_parameters": {
+      "intersect_0": {
+          "intersect_method": "raw",
+          "sync_intersect_ids": true,
+          "join_role": "host",
+          "with_encode": false,
+          "only_output_key": false,
+          
+          "encode_params": {
+              "encode_method": "sha256",
+              "salt": "12345",
+              "base64": false
+          }
+      }
+  }
+}

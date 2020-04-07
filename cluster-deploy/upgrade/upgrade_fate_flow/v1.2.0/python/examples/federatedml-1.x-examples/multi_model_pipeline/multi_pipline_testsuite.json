@@ -1,0 +1,26 @@
+{
+  "data": [
+      {
+          "file": "examples/data/breast_b.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "breast_b",
+          "namespace": "hetero",
+          "role": "guest_0"
+      },
+      {
+          "file": "examples/data/breast_a.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "breast_a",
+          "namespace": "hetero",
+          "role": "host_0"
+      }
+  ],
+  "tasks": {
+    "train": {
+      "conf": "./test_multi_pipeline_conf.json",
+      "dsl": "./test_multi_pipeline_dsl.json"
+    }
+  }
+}
