@@ -28,6 +28,7 @@ from fate_flow.settings import BOARD_DASHBOARD_URL, USE_AUTHENTICATION
 from fate_flow.utils import detect_utils
 from fate_flow.utils import job_utils
 from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_dsl_parser, get_job_log_directory
+from fate_flow.utils.string_utils import RandomString
 
 
 class JobController(object):
@@ -48,6 +49,12 @@ class JobController(object):
         job_parameters = job_runtime_conf['job_parameters']
         job_initiator = job_runtime_conf['initiator']
         job_type = job_parameters.get('job_type', '')
+        # add mq info
+        mq_info = {}
+        mq_info['user'] = RandomString(4) 
+        mq_info['pswd'] = RandomString(10)
+        job_parameters['mq_info'] = mq_info
+        
         if job_type != 'predict':
             # generate job model info
             job_parameters['model_id'] = '#'.join([dtable_utils.all_party_key(job_runtime_conf['role']), 'model'])

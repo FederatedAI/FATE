@@ -66,6 +66,7 @@ class TaskExecutor(object):
             task_input_dsl = task_config['input']
             task_output_dsl = task_config['output']
             parameters = TaskExecutor.get_parameters(job_id, component_name, role, party_id)
+            parameters.get('job_parameters', {}).update(job_parameters.get('mq_info', {}))
             # parameters = task_config['parameters']
             module_name = task_config['module_name']
         except Exception as e:
@@ -76,8 +77,9 @@ class TaskExecutor(object):
         try:
             # init environment, process is shared globally
             RuntimeConfig.init_config(WORK_MODE=job_parameters['work_mode'],
-                                      BACKEND=job_parameters.get('backend', 0))
-            session.init(job_id='{}_{}_{}'.format(task_id, role, party_id), mode=RuntimeConfig.WORK_MODE, backend=RuntimeConfig.BACKEND)
+                                      BACKEND=job_parameters.get('backend', 0),
+                                      STORE_ENGINE=job_parameters.get('store_engine', 0))
+            session.init(job_id='{}_{}_{}'.format(task_id, role, party_id), mode=RuntimeConfig.WORK_MODE, backend=RuntimeConfig.BACKEND, store_engine=RuntimeConfig.STORE_ENGINE)
             federation.init(job_id=task_id, runtime_conf=parameters)
             job_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, str(party_id))
             task_log_dir = os.path.join(job_log_dir, component_name)
