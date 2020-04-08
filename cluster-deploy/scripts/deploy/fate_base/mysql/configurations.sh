@@ -9,6 +9,7 @@ deploy_dir=
 deploy_packages_dir=
 
 mysql_ip=
+mysql_port=
 mysql_user=
 mysql_password=
 fate_flow_db_name=

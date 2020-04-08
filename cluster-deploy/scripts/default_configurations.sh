@@ -16,6 +16,7 @@ eggroll_meta_service_db_name=eggroll_meta
 deploy_ssh_port=22
 enable_init_env=1  # 1 for turn on, 0 for turn off
 use_external_db=0  # 1 for turn on, 0 for turn off
+mysql_port=3306
 
 package_init() {
     output_packages_dir=$1

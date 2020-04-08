@@ -84,13 +84,14 @@ config(){
     done
 
 	cd ./conf
+	sed -i.bak "s/port=.*/port=${mysql_port}/g" ./my.cnf
 	sed -i.bak "s#basedir=.*#basedir=${deploy_dir}/${module_name}/mysql-${mysql_version}#g" ./my.cnf
 	sed -i.bak "s#datadir=.*#datadir=${deploy_dir}/${module_name}/mysql-${mysql_version}/data#g" ./my.cnf
 	sed -i.bak "s#socket=.*#socket=${deploy_dir}/${module_name}/mysql-${mysql_version}/mysql.sock#g" ./my.cnf
 	sed -i.bak "s#log-error=.*#log-error=${deploy_dir}/${module_name}/mysql-${mysql_version}/log/mysqld.log#g" ./my.cnf
 	sed -i.bak "s#pid-file=.*#pid-file=${deploy_dir}/${module_name}/mysql-${mysql_version}/data/mysqld.pid#g" ./my.cnf
 	rm -rf ./my.cnf.bak
-    return 0
+  return 0
 }
 
 install() {
