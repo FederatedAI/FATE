@@ -27,8 +27,6 @@ from federatedml.util import fate_operator
 LOGGER = log_utils.getLogger()
 
 
-
-
 class HeteroKmeansClient(BaseKmeansModel):
     def __init__(self):
         super(HeteroKmeansClient, self).__init__()

@@ -78,7 +78,11 @@ class TestHeteroKmeans():
                 ],
                 "host": [
                     self.host_id
+                ],
+                "arbiter": [
+                    self.arbiter_id
                 ]
+
             },
             "process_method": process_type,
         }
@@ -89,8 +93,10 @@ class TestHeteroKmeans():
             return self.kmeans_obj
         if self.role == GUEST:
             kmeans_obj = HeteroKmeansGuest()
-        else:
+        elif self.role == HOST:
             kmeans_obj = HeteroKmeansHost()
+        else:
+            kmeans_obj = HeteroKmenasArbiter()
         guest_param = self._make_param_dict(run_type)
 
         kmeans_obj.run(guest_param, table_args)

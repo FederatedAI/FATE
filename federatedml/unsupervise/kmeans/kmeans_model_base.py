@@ -20,11 +20,13 @@
 from federatedml.model_base import ModelBase
 from federatedml.transfer_variable.transfer_class.hetero_kmeans_transfer_variable import HeteroKmeansTransferVariable
 from federatedml.util import abnormal_detection
+from federatedml.param.hetero_kmeans_param import KmeansParam
 
 class BaseKmeansModel(ModelBase):
     def __init__(self):
         super(BaseKmeansModel, self).__init__()
-        self.model_param=None
+        self.model_param=KmeansParam()
+
         self.n_iter_ = 0
         self.k = 0
         self.max_iter = 0
@@ -32,13 +34,14 @@ class BaseKmeansModel(ModelBase):
         self.iter = iter
         self.centroid_list = None
         self.cluster_result = None
+        self.transfer_variable = HeteroKmeansTransferVariable()
 
     def _init_model(self, params):
         self.model_param = params
         self.k = params.k
         self.max_iter = params.max_iter
         self.tol = params.tol
-        self.transfer_variable = HeteroKmeansTransferVariable()
+
 
 
     def _abnormal_detection(self, data_instances):
