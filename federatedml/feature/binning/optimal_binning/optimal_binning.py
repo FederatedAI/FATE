@@ -299,6 +299,10 @@ class OptimalBinning(BaseBinning):
                 new_bucket = bucket_info.Bucket(idx=next_id, adjustment_factor=optimal_param.adjustment_factor)
                 new_bucket = _init_new_bucket(new_bucket, min_node)
                 bucket_dict[next_id] = new_bucket
+                if left_bucket.idx == right_bucket.idx:
+                    LOGGER.warning('left_bucket_idx equal to right bucket, '
+                                   'left_bucket: {}, right_bucket: {}'.format(left_bucket.__dict__,
+                                                                              right_bucket.__dict__))
                 del bucket_dict[left_bucket.idx]
                 del bucket_dict[right_bucket.idx]
                 aim_var = _aim_vars_decrease(constraint, new_bucket, left_bucket, right_bucket, aim_var)
