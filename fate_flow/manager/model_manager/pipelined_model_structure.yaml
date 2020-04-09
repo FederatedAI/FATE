@@ -7,7 +7,6 @@
   - dsl:
   - conf:
   - fate version:
-  - git commit id:
   - model id: role_index_id with role_name
   - model version: job_id
 - variables
