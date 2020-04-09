@@ -1,0 +1,20 @@
+{
+    "module_path":  "federatedml/linear_model/logistic_regression/fedprox",
+    "default_runtime_conf": "fedprox_param.json",
+    "param_class" : "federatedml/param/fedprox_param.py/FedProxParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "fedprox_guest.py/fedproxGuest"
+        },
+        "host":
+        {
+            "program": "fedprox_host.py/fedproxHost"
+        },
+        "arbiter":
+        {
+            "program": "fedprox_arbiter.py/fedproxArbiter"
+        }
+    }
+}
