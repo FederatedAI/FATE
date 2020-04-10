@@ -11,7 +11,8 @@
             },
             "output": {
                 "data": ["data"]
-            }
+            },
+            "need_deploy": false
          },
         "intersect_0": {
             "module": "Intersection",
@@ -23,8 +24,7 @@
                 }
             },
             "output": {
-                "data": ["intersect_data"],
-                "model": ["intersect_results"]
+                "data": ["intersect_data"]
             }
         }
     }
