@@ -1,0 +1,61 @@
+{
+
+    "local": {
+        "role": "arbiter",
+        "party_id": 99999
+    },
+
+    "role": {
+        "host": [
+            10000
+        ],
+        "arbiter": [
+            99999
+        ],
+        "guest": [
+            9999
+        ]
+    },
+
+    "DataIOParam": {
+        "with_label": true,
+        "label_idx": 0,
+        "label_type": "int",
+        "output_format": "dense"
+    },
+    "WorkFlowParam": {
+        "method": "train",
+        "train_input_table": "20190112181013",
+        "train_input_namespace": "breast_b",
+        "predict_input_table": "20190112181013",
+        "predict_input_namespace": "breast_b",
+        "predict_result_partition": 2,
+        "predict_output_table": "some_predict_output_table_name",
+        "predict_output_namespace": "some_predict_output_path",
+        "evaluation_output_table": "some_evaluate_output_table_name",
+        "evaluation_output_namespace": "some_evaluate_output_path",
+        "data_input_table": "some_train_data_input_table_name",
+        "data_input_namespace": "some_train_data_input_path",
+        "intersect_data_output_table": null,
+        "intersect_data_output_namespace": null,
+        "do_cross_validation": false,
+        "work_mode": 0,
+        "n_split": 5
+    },
+    "EncryptParam": {
+        "method": "none"
+    },
+    "InitParam": {
+        "init_method": "random_normal"
+    },
+    "EvaluateParam":{
+         "metrics": ["auc", "precision", "recall"],
+        "classi_type": "binary",
+        "pos_label": 1,
+        "predict_threshold": [0.5]
+    },
+    "FTLModelParam": {
+        "eps": 1e-3,
+        "max_iter": 10
+    }
+}

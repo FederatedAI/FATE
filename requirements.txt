@@ -2,7 +2,7 @@ absl-py==0.8.0
 astor==0.7.1
 audioread==2.1.6
 backcall==0.1.0
-bleach==3.1.1
+bleach==3.1.2
 cachetools==3.0.0
 certifi==2018.10.15
 cffi==1.11.5
@@ -88,7 +88,7 @@ ppft==1.6.4.8
 prometheus-client==0.3.1
 prompt-toolkit==1.0.15
 protobuf==3.6.1
-psutil==5.4.7
+psutil==5.6.6
 ptyprocess==0.6.0
 pyarrow==0.11.1
 pycparser==2.19
