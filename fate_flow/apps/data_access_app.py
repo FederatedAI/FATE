@@ -63,6 +63,7 @@ def download_upload(access_module):
     if access_module == "upload":
         data['table_name'] = request_config["table_name"]
         data['namespace'] = request_config["namespace"]
+        session.init(mode=request_config['work_mode'])
         data_table = session.get_data_table(name=request_config["table_name"], namespace=request_config["namespace"])
         count = data_table.count()
         if count and int(request_config.get('drop', 2)) == 2:
