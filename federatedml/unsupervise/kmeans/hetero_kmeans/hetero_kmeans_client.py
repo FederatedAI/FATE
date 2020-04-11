@@ -43,10 +43,9 @@ class HeteroKmeansClient(BaseKmeansModel):
     def get_centroid(self,data_instances):
         random.seed(self.k)
         random_list = list()
-        feature_list = list()
-        for n in range(0,self.k):
-            random_list.append(ceil(random.random()*data_instances.count))
-            feature_list.append(data_instances.filter(lambda k1 , v1: k1 == random_list[n]))
+        for r in range(0,self.k):
+            random_list.append(random.random()*data_instances.count())
+        feature_list=list(data_instances.filter(lambda k1 , v1: k1 in random_list).collect())
         return feature_list
 
     @staticmethod
@@ -64,7 +63,7 @@ class HeteroKmeansClient(BaseKmeansModel):
             centroid_list = centroid_list.append(centroid_k)
         return centroid_list
 
-    def fit(self, data_instances, client):
+    def fit(self, data_instances):
         LOGGER.info("Enter hetero_kmenas_client fit")
         self._abnormal_detection(data_instances)
         # self.header = self.get_header(data_instances)
