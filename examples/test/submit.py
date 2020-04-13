@@ -22,6 +22,13 @@ import sys
 import tempfile
 import time
 from datetime import timedelta
+import logging
+
+
+def set_logger(name):
+    log_format = "%(asctime)s - %(levelname)s - %(message)s"
+    date_format = "%m/%d/%Y %H:%M:%S %p"
+    logging.basicConfig(filename=f"{name}.cmd.log", level=logging.DEBUG, format=log_format, datefmt=date_format)
 
 
 class Submitter(object):
@@ -51,11 +58,15 @@ class Submitter(object):
 
     @staticmethod
     def run_cmd(cmd):
+        logging.info(f"cmd: {' '.join(cmd)}")
         subp = subprocess.Popen(cmd,
                                 shell=False,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT)
         stdout, stderr = subp.communicate()
+        logging.info(f"cmd: {' '.join(cmd)}\n"
+                     f"out:{json.dumps(json.loads(stdout))}\n"
+                     f"err:{stderr}")
         return stdout.decode("utf-8")
 
     def submit(self, cmd):
@@ -107,7 +118,7 @@ class Submitter(object):
             else:
                 cmd = ["-f", "upload", "-c", f.name]
                 if self._existing_strategy == 0 or self._existing_strategy == 1:
-                    cmd.extend(["-drop", "1"])
+                    cmd.extend(["-drop", f"{self._existing_strategy}"])
                 stdout = self.submit(cmd)
                 if stdout is None:
                     return None
