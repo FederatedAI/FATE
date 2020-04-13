@@ -86,6 +86,7 @@ class BoostingTree(ModelBase):
         self.cv_param = boostingtree_param.cv_param
         self.validation_freqs = boostingtree_param.validation_freqs
         self.early_stopping_rounds = boostingtree_param.early_stopping_rounds
+        self.metric = boostingtree_param.metric
 
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing

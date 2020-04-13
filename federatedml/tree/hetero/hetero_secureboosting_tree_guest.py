@@ -503,11 +503,11 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         if self.task_type == consts.CLASSIFICATION:
             if self.num_classes == 2:
                 return EvaluateParam(eval_type="binary",
-                                     pos_label=self.classes_[1])
+                                     pos_label=self.classes_[1], metric=self.metric)
             else:
-                return EvaluateParam(eval_type="multi")
+                return EvaluateParam(eval_type="multi", metric=self.metric)
         else:
-            return EvaluateParam(eval_type="regression")
+            return EvaluateParam(eval_type="regression", metric=self.metric)
 
     def export_model(self):
 

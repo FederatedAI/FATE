@@ -41,6 +41,7 @@ from federatedml.model_base import ModelBase
 
 LOGGER = log_utils.getLogger()
 
+
 class PerformanceRecorder():
 
     """
@@ -120,6 +121,7 @@ class PerformanceRecorder():
 
 
 class Evaluation(ModelBase):
+
     def __init__(self):
         super().__init__()
         self.model_param = EvaluateParam()
@@ -136,31 +138,11 @@ class Evaluation(ModelBase):
         self.save_curve_metric_list = [consts.KS, consts.ROC, consts.LIFT, consts.GAIN, consts.PRECISION, consts.RECALL,
                                        consts.ACCURACY]
 
-        self.regression_support_func = [
-            consts.EXPLAINED_VARIANCE,
-            consts.MEAN_ABSOLUTE_ERROR,
-            consts.MEAN_SQUARED_ERROR,
-            consts.MEDIAN_ABSOLUTE_ERROR,
-            consts.R2_SCORE,
-            consts.ROOT_MEAN_SQUARED_ERROR
-        ]
+        self.regression_support_func = consts.REGRESSION_METRICS
 
-        self.binary_classification_support_func = [
-            consts.AUC,
-            consts.KS,
-            consts.LIFT,
-            consts.GAIN,
-            consts.ACCURACY,
-            consts.PRECISION,
-            consts.RECALL,
-            consts.ROC
-        ]
+        self.binary_classification_support_func = consts.BINARY_METRICS
 
-        self.multi_classification_support_func = [
-            consts.ACCURACY,
-            consts.PRECISION,
-            consts.RECALL
-        ]
+        self.multi_classification_support_func = consts.MULTI_METRICS
 
         self.metrics = {consts.BINARY: self.binary_classification_support_func,
                         consts.MULTY: self.multi_classification_support_func,
@@ -168,7 +150,8 @@ class Evaluation(ModelBase):
 
         self.round_num = 6
 	
-	# record name of train and validate dataset
+	    # record name of train and validate dataset
+
         self.validate_key = set()
         self.train_key = set()
 

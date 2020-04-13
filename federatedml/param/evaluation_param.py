@@ -37,13 +37,69 @@ class EvaluateParam(BaseParam):
         Indicate if this module needed to be run
     """
 
-    def __init__(self, eval_type="binary", pos_label=1, need_run=True):
+    def __init__(self, eval_type="binary", pos_label=1, need_run=True, metric=None):
         super().__init__()
         self.eval_type = eval_type
         self.pos_label = pos_label
         self.need_run = need_run
+        self.metric = metric
+
+        self.default_metrics = {
+            consts.BINARY: consts.DEFAULT_BINARY_METRIC,
+            consts.MULTY: consts.DEFAULT_MULTI_METRIC,
+            consts.REGRESSION: consts.REGRESSION_METRICS
+        }
+
+        self.allowed_metrics = {
+            consts.BINARY: consts.BINARY_METRICS,
+            consts.MULTY: consts.MULTI_METRICS,
+            consts.REGRESSION: consts.REGRESSION_METRICS
+        }
+
+        if self.metric is None:
+            self.metric = self.default_metrics[self.eval_type]
+
+    def _check_valid_metric(self, metrics_list):
+
+        metric_list = consts.ALL_METRIC_NAME
+        alias_name: dict = consts.ALIAS
+
+        full_name_list = []
+
+        for metric in metrics_list:
+
+            metric = str.lower(metric)
+            if metric in metric_list:
+                full_name_list.append(metric)
+                continue
+
+            valid_flag = False
+            for alias, full_name in alias_name.items():
+                if metric in alias:
+                    full_name_list.append(full_name)
+                    valid_flag = True
+                    break
+
+            if not valid_flag:
+                raise ValueError('metric {} is not supported'.format(metric))
+
+        final_list = []
+        allowed_metrics = self.allowed_metrics[self.eval_type]
+
+        for m in full_name_list:
+            if m in allowed_metrics:
+                final_list.append(m)
+            else:
+                raise ValueError('metric {} is not used for {} task'.format(m, self.eval_type))
+
+        if consts.RECALL in final_list or consts.PRECISION in final_list:
+            final_list.append(consts.RECALL)
+            final_list.append(consts.PRECISION)
+
+        return list(set(final_list))
 
     def check(self):
+
         descr = "evaluate param's "
         self.eval_type = self.check_and_change_lower(self.eval_type,
                                                        [consts.BINARY, consts.MULTY, consts.REGRESSION],
@@ -59,5 +115,13 @@ class EvaluateParam(BaseParam):
                 "evaluate param's need_run {} not supported, should be bool".format(
                     self.need_run))
 
+        self.metric = self._check_valid_metric(self.metric)
+
         LOGGER.info("Finish evaluation parameter check!")
+
         return True
+
+
+if __name__ == '__main__':
+    param = EvaluateParam(eval_type='binary')
+    param.check()
