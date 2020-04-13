@@ -4,7 +4,7 @@
 ########################################################
 
 import requests, json, time, string, random
-from fate_flow.utils.string_utils import RandomString
+from arch.api.impl.based_spark.based_hdfs.string_utils import RandomString
 
 cHttpTemplate = "http://{}/api/{}"
 cCommonHttpHeader = {'Content-Type': 'application/json'}
