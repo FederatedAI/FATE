@@ -1,8 +1,0 @@
-{
-  "file": "examples/data/motor_mini_b.csv",
-  "head": 1,
-  "partition": 10,
-  "work_mode": 0,
-  "table_name": "motor_mini_b",
-  "namespace": "motor_mini"
-}
