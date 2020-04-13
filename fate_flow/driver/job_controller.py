@@ -110,11 +110,17 @@ class JobController(object):
         schedule_logger(job_id).info('{} {} get kill job {} {} command'.format(role, party_id, job_id, component_name))
         task_info = job_utils.get_task_info(job_id, role, party_id, component_name)
         tasks = job_utils.query_task(**task_info)
+        job = job_utils.query_job(job_id=job_id)
         for task in tasks:
             kill_status = False
             try:
                 kill_status = job_utils.kill_process(int(task.f_run_pid))
                 job_utils.start_session_stop(task)
+                # task clean up
+                runtime_conf = json_loads(job[0].f_runtime_conf)
+                roles = ','.join(runtime_conf['role'].keys())
+                party_ids = ','.join([','.join([str(j) for j in i]) for i in runtime_conf['role'].values()])
+                Tracking(job_id=job_id, role=role, party_id=party_id, task_id=task.f_task_id).clean_task(roles, party_ids)
             except Exception as e:
                 schedule_logger(job_id).exception(e)
             finally:
