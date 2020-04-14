@@ -23,6 +23,7 @@ from arch.api.base.table import Table
 from arch.api.impl.based_spark import util
 from arch.api.impl.utils.split import split_put, split_get
 from arch.api.utils.profile_util import log_elapsed
+from pickle import dumps as p_dumps, loads as p_loads
 
 
 class RDDTable(Table):
@@ -76,7 +77,7 @@ class RDDTable(Table):
             raise AssertionError("hdfs path {} not exists.".format(hdfs_path))
 
         for k, v in kv_list:
-            content = u"{}{}{}\n".format(k, delimiter, v)
+            content = u"{}{}{}\n".format(p_dumps(k), delimiter, p_dumps(v))
             out.write(bytearray(content, "utf-8"))
         out.flush()
         out.close()
@@ -96,7 +97,7 @@ class RDDTable(Table):
     @classmethod
     def map2dic(cls, m):
         filds = m.strip().partition(delimiter)
-        return filds[0], filds[2]
+        return p_loads(filds[0]), p_loads(filds[2])
 
 
     @classmethod
