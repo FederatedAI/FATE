@@ -626,6 +626,8 @@ eeooff
                 module_ips=("${all_node_ips[*]}")
             elif [[ "${module}" == "fate_flow" ]];then
                 module_ips=("${all_node_ips[*]}")
+            elif [[ "${module}" == "egg" ]];then
+                module_ips=("${all_node_ips[*]}")
             elif [[ "${module}" == "meta-service" ]];then
                 eval module_ips=\${${party_name}_metaservice[*]}
             else
