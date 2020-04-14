@@ -5,7 +5,7 @@
           "head": 1,
           "partition": 48,
           "table_name": "hetero_vehicle_b",
-          "namespace": "hetero_host_vehicle",
+          "namespace": "hetero_guest_vehicle",
           "role": "guest_0"
         },
       {
