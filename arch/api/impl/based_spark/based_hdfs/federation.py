@@ -1,15 +1,19 @@
+import logging
 
 from typing import Union
 
-from arch.api.base.federation import Federation, Party
+from arch.api.base.federation import Federation, Party, Rubbish
 from arch.api.utils import file_utils
 from arch.api.utils import log_utils
 from arch.api.impl.based_spark.based_hdfs.rabbit_manager import RabbitManager
 from arch.api.impl.based_spark.based_hdfs.table import RDDTable
+from arch.api.impl.based_spark import util
 from functools import partial
 import pika
 from pickle import dumps as p_dumps, loads as p_loads
 import json
+from pyspark.rdd import RDD
+from pyspark import SparkContext
 
 LOGGER = log_utils.getLogger()
 
@@ -45,6 +49,7 @@ class FederationRuntime(Federation):
         self._rabbit_manager.CreateUser(self._user, self._password)
 
         self._queque_map = {}
+        self._channels_map = {}
 
 
     def get_mq_names(self, parties: Union[Party, list]):
@@ -85,82 +90,151 @@ class FederationRuntime(Federation):
 
         return mq_names
 
+
+    def get_channels(self, mq_names, host, port, user, password):
+        channel_infos = []
+        for party_id, names in mq_names.items():
+            info = self._channels_map.get(party_id)
+            if info is None:
+                info = get_channel(host, port, user, password, names, party_id)
+                self._channels_map[party_id] = info
+            channel_infos.append(info)
+        return channel_infos
     
+
+    @staticmethod
+    def get_channel(host, port, user, password, names, party_id):
+        credentials = pika.PlainCredentials(user, password)
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host, port, names["vhost"], credentials))
+        info= {}
+        info["channel"] = connection.channel()
+        info["send"] = names["send"]
+        info["receive"] = names["receive"]
+        info["party_id"] = party_id
+        return info
+
+
     @staticmethod
     def _get_channels(mq_names, host, port, user, password):
         channel_infos = []
-        for mq in mq_names:
-            credentials = pika.PlainCredentials(user, password)
-            connection = pika.BlockingConnection(pika.ConnectionParameters(host, port, mq["vhost"], credentials))
-            info= {}
-            info["channel"] = connection.channel()
-            info["send"] = mq["send"]
-            channel_infos.append(info)
+        for party_id, names in mq_names.items():
+            channel_infos.append(get_channel(host, port, user, password, names, party_id))
         return channel_infos
 
 
     @staticmethod
-    def _send_kv(name, tag, data, channel_infos):
-        properties=pika.BasicProperties(
-            content_type='application/json',
-            name=name,
-            tag=tag,
-            dtype='kv'
-        )
+    def _send_kv(name, tag, data, channel_infos, total_size, partitions):
+        headers={"total_size":total_size, "partitions":partitions}
         for info in channel_infos:
+            properties=pika.BasicProperties(
+                content_type='application/json',
+                app_id=info["party_id"],
+                message_id=name,
+                correlation_id=tag,
+                headers=headers
+            )
             info["channel"].basic_publish(exchange='', routing_key=info["send"], body=json.dumps(data), properties=properties)
 
     
     @staticmethod
     def _send_obj(name, tag, data, channel_infos):
-        properties=pika.BasicProperties(
-            content_type='text/plain',
-            name=name,
-            tag=tag,
-            dtype='obj'
-        )
         for info in channel_infos:
+            properties=pika.BasicProperties(
+                content_type='text/plain',
+                app_id=info["party_id"],
+                message_id=name,
+                correlation_id=tag
+            )
             info["channel"].basic_publish(exchange='', routing_key=info["send"], body=data, properties=properties)
 
 
 
     @staticmethod
-    def _partition_send(kvs, mq_names, host, port, user, password, name, tag):
+    def _partition_send(kvs, mq_names, host, port, user, password, name, tag, total_size, partitions):
         channel_infos = _get_channels(mq_names=mq_names, host=host, port=port, user=user, password=password)
         data = []
-        count = 0
+        lines = 0
         MESSAGE_MAX_SIZE = 200000
         for k, v in kvs:
             el = {}
             el['k'] = p_dumps(k)
             el['v'] = p_dumps(v)
             data.append(el)
-            count = count + 1
-            if count > MESSAGE_MAX_SIZE:
-                _send_kv(name=name, tag=tag, data=data, channel_infos=channel_infos)
-                count = 0
+            lines = lines + 1
+            if lines > MESSAGE_MAX_SIZE:
+                _send_kv(name=name, tag=tag, data=data, channel_infos=channel_infos, total_size=total_size, partitions=partitions)
+                lines = 0
                 data.clear()
-        _send_kv(name=name, tag=tag, data=data, channel_infos=channel_infos)
+        _send_kv(name=name, tag=tag, data=data, channel_infos=channel_infos, total_size=total_size, partitions=partitions)
         return data
 
 
+    @staticmethod
+    def _receive(channel_info, name, tag):
+        count = 0
+        for method, properties, body in channel_info["channel"].consume(queue=channel_info["receive"]):
+            if properties.message_id == name and properties.correlation_id == tag:
+                if properties.content_type == 'text/plain':
+                    obj = p_loads(body)
+                    break
+                elif properties.content_type == 'application/json':
+                    data = json.loads(body)
+                    count += len(data)
+                    data_iter = ( (p_loads(el['k']), p_loads(el['v'])) for el in data)
+                    
+                    sc = SparkContext.getOrCreate()
+                    if obj:
+                        rdd = sc.parallelize(data_iter, properties.headers["partitions"])
+                        obj = obj.union(rdd)
+                    else:
+                        obj = sc.parallelize(data_iter, properties.headers["partitions"]).persist(util.get_storage_level())
+                    if count == properties.headers["total_size"]:
+                        break
+
+                channel_info["channel"].basic_ack(delivery_tag=method.delivery_tag)
+        # return any pending messages
+        channel_info["channel"].cancel()
+
+
     def get(self, name, tag, parties: Union[Party, list]):
-        pass
+        rubbish = Rubbish(name=name, tag=tag)
+        mq_names = self.get_mq_names(parties)
+        channel_infos = self.get_channels(mq_names=mq_names, host=self._host, port=self._port, 
+                                            user=self._user, password=self._password)
+        
+        rtn = []
+        for info in channel_infos:
+            obj = _receive(info, name, tag)
+            LOGGER.info(f'federation got data. name: {name}, tag: {tag}')
+            if isinstance(obj, RDD):
+                rtn.append(obj)
+                rubbish.add_table(obj)
+                if LOGGER.isEnabledFor(logging.DEBUG):
+                    LOGGER.debug(f'federation got roll pair count: {obj.count()} for name: {name}, tag: {tag}')
+            else:
+                rtn.append(obj)
+        return rtn, rubbish
+        
 
 
     def remote(self, obj, name, tag, parties: Union[Party, list]):
+        rubbish = Rubbish(name=name, tag=tag)
         mq_names = self.get_mq_names(parties)
 
         if isinstance(obj, RDDTable):
             send_func = partial(self._partition_send, mq_names=mq_names, 
                         host=self._host, port=self._port, 
                         user=self._user, password=self._password,
-                        name=name, tag=tag)
+                        name=name, tag=tag, total_size=obj.count(), partitions=obj.get_partitions())
             obj.mapPartitions(send_func)
+            rubbish.add_table(obj)
         else:
-            channel_infos = _get_channels(mq_names=mq_names, host=self._host, port=self._port, 
+            channel_infos = self.get_channels(mq_names=mq_names, host=self._host, port=self._port, 
                                             user=self._user, password=self._password)
             _send_obj(name=name, tag=tag, data=p_dumps(obj), channel_infos=channel_infos)
+        
+        return rubbish
+
             
 
 

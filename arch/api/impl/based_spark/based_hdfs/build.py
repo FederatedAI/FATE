@@ -17,6 +17,8 @@
 from arch.api.base import build
 from arch.api.impl.based_spark.based_hdfs.table import RDDTable
 from arch.api.impl.based_spark.based_hdfs.session import FateSessionImpl
+from arch.api.impl.based_spark.based_hdfs.federation import FederationRuntime
+from arch.api.base.utils.wrap import FederationWrapped
 
 
 class Builder(build.Builder):
@@ -29,7 +31,9 @@ class Builder(build.Builder):
         return FateSessionImpl(self._session_id)
 
     def build_federation(self, federation_id, runtime_conf, server_conf_path):
-        pass
+        return FederationRuntime(session_id=federation_id, runtime_conf=runtime_conf)
 
     def build_wrapper(self):
-        pass
+        from pyspark.rdd import RDD
+        return FederationWrapped(session_id=self._session_id, dtable_cls=RDD, table_cls=self._table_cls)
+

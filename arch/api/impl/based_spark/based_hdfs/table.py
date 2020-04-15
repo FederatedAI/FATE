@@ -37,6 +37,17 @@ class RDDTable(Table):
                   create_if_missing: bool = True):
         rdd = rdd_from_hdfs(namespace=namespace, name=name, create_if_missing=create_if_missing)
         return RDDTable(session_id=session_id, namespace=namespace, name=name, partitions=partitions, rdd=rdd)
+    
+
+    # noinspection PyProtectedMember
+    @classmethod
+    def from_dtable(cls, session_id: str, dtable):
+        """
+        to make it compatible with FederationWrapped
+        """
+        namespace = str(uuid.uuid1())
+        name = str(uuid.uuid1())
+        return from_rdd(rdd=dtable, job_id=session_id, namespace=namespace, name=name)
 
 
     @classmethod
@@ -173,6 +184,12 @@ class RDDTable(Table):
             return self._rdd
         else:
             return _rdd_from_hdfs()
+
+    def dtable(self):
+        """
+        to make it compatible with FederationWrapped
+        """
+        return self.rdd()
 
 
     # noinspection PyProtectedMember,PyUnresolvedReferences
