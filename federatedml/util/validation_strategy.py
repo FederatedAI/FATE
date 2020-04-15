@@ -54,7 +54,8 @@ class ValidationStrategy(object):
                 if validate_data not equal to None, and judge need to validate data according to validation_freqs,
                 validate data will be used for evaluating
     """
-    def __init__(self, role=None, mode=None, validation_freqs=None, early_stopping_rounds=None):
+    def __init__(self, role=None, mode=None, validation_freqs=None, early_stopping_rounds=None,
+                       use_first_metric_only=False):
 
         self.validation_freqs = validation_freqs
         self.role = role
@@ -64,6 +65,8 @@ class ValidationStrategy(object):
         self.validate_data = None
         self.sync_status = False
         self.early_stopping_rounds = early_stopping_rounds
+        self.use_first_metric_only = use_first_metric_only
+        self.first_metric = None
 
         if early_stopping_rounds is not None:
             self.sync_status = True
@@ -158,6 +161,14 @@ class ValidationStrategy(object):
 
         evaluate_param = model.get_metrics_param()
         evaluate_param.check()
+
+        metric_list = evaluate_param.metric
+        if self.early_stopping_rounds and self.use_first_metric_only and len(metric_list) != 0:
+            for metric in metric_list:
+                if metric in consts.SINGLE_VALUE_METRICS:
+                    self.first_metric = metric
+                    break
+
         eval_obj = Evaluation()
         LOGGER.debug("evaluate type is {}".format(evaluate_param.eval_type))
         eval_obj._init_model(evaluate_param)
@@ -213,7 +224,10 @@ class ValidationStrategy(object):
             LOGGER.debug('showing eval_result_dict here')
             LOGGER.debug(eval_result_dict)
 
-            self.performance_recorder.update(eval_result_dict)
+            if self.early_stopping_rounds:
+                if self.first_metric:
+                    eval_result_dict = {self.first_metric: eval_result_dict[self.first_metric]}
+                self.performance_recorder.update(eval_result_dict)
 
         if self.sync_status:
             self.sync_performance_recorder(epoch)

@@ -247,7 +247,7 @@ class BoostingTreeParam(BaseParam):
                  use_missing=False, zero_as_missing=False,
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 validation_freqs=None, early_stopping_rounds=None, metric=[]):
+                 validation_freqs=None, early_stopping_rounds=None, metric=[], use_first_metric=False):
         self.tree_param = copy.deepcopy(tree_param)
         self.task_type = task_type
         self.objective_param = copy.deepcopy(objective_param)
@@ -266,6 +266,7 @@ class BoostingTreeParam(BaseParam):
         self.validation_freqs = validation_freqs
         self.early_stopping_rounds = early_stopping_rounds
         self.metric = metric
+        self.use_first_metric = use_first_metric
 
     def check(self):
         self.tree_param.check()
