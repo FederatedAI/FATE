@@ -138,16 +138,7 @@ class Evaluation(ModelBase):
         self.save_curve_metric_list = [consts.KS, consts.ROC, consts.LIFT, consts.GAIN, consts.PRECISION, consts.RECALL,
                                        consts.ACCURACY]
 
-        self.regression_support_func = consts.REGRESSION_METRICS
-
-        self.binary_classification_support_func = consts.BINARY_METRICS
-
-        self.multi_classification_support_func = consts.MULTI_METRICS
-
-        self.metrics = {consts.BINARY: self.binary_classification_support_func,
-                        consts.MULTY: self.multi_classification_support_func,
-                        consts.REGRESSION: self.regression_support_func}
-
+        self.metric = None
         self.round_num = 6
 	
 	    # record name of train and validate dataset
@@ -162,6 +153,7 @@ class Evaluation(ModelBase):
         self.model_param = model
         self.eval_type = self.model_param.eval_type
         self.pos_label = self.model_param.pos_label
+        self.metric = model.metric
 
     def _run_data(self, data_sets=None, stage=None):
         if not self.need_run:
@@ -212,11 +204,7 @@ class Evaluation(ModelBase):
 
         eval_result = defaultdict(list)
 
-        if self.eval_type in self.metrics:
-            metrics = self.metrics[self.eval_type]
-        else:
-            LOGGER.warning("Unknown eval_type of {}".format(self.eval_type))
-            metrics = []
+        metrics = self.metric 
 
         for eval_metric in metrics:
             res = getattr(self, eval_metric)(labels, pred_results)

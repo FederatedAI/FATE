@@ -157,6 +157,7 @@ class ValidationStrategy(object):
     def evaluate(self, predicts, model, epoch):
 
         evaluate_param = model.get_metrics_param()
+        evaluate_param.check()
         eval_obj = Evaluation()
         LOGGER.debug("evaluate type is {}".format(evaluate_param.eval_type))
         eval_obj._init_model(evaluate_param)

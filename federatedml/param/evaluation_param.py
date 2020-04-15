@@ -40,6 +40,7 @@ class EvaluateParam(BaseParam):
     def __init__(self, eval_type="binary", pos_label=1, need_run=True, metric=None):
         super().__init__()
         self.eval_type = eval_type
+        LOGGER.debug('eval type is {}'.format(self.eval_type))
         self.pos_label = pos_label
         self.need_run = need_run
         self.metric = metric
@@ -56,15 +57,14 @@ class EvaluateParam(BaseParam):
             consts.REGRESSION: consts.REGRESSION_METRICS
         }
 
-        if self.metric is None:
-            self.metric = self.default_metrics[self.eval_type]
-
     def _check_valid_metric(self, metrics_list):
 
         metric_list = consts.ALL_METRIC_NAME
         alias_name: dict = consts.ALIAS
 
         full_name_list = []
+        
+        LOGGER.debug('metric list is {}'.format(metrics_list))
 
         for metric in metrics_list:
 
@@ -96,7 +96,9 @@ class EvaluateParam(BaseParam):
             final_list.append(consts.RECALL)
             final_list.append(consts.PRECISION)
 
-        return list(set(final_list))
+        ret = list(set(final_list))
+        LOGGER.debug('ret is {}'.format(ret))
+        return ret
 
     def check(self):
 
@@ -114,6 +116,10 @@ class EvaluateParam(BaseParam):
             raise ValueError(
                 "evaluate param's need_run {} not supported, should be bool".format(
                     self.need_run))
+
+        if self.metric is None:
+            self.metric = self.default_metrics[self.eval_type]
+            LOGGER.debug('use default metric {} for eval type {}'.format(self.metric, self.eval_type)) 
 
         self.metric = self._check_valid_metric(self.metric)
 
