@@ -27,7 +27,6 @@ import numpy as np
 from arch.api import session
 from arch.api.utils import log_utils
 from federatedml.feature.binning.base_binning import BaseBinning
-from federatedml.feature.binning.bin_result import BinColResults
 from federatedml.feature.binning.bucket_binning import BucketBinning
 from federatedml.feature.binning.optimal_binning import bucket_info
 from federatedml.feature.binning.optimal_binning import heap
@@ -101,7 +100,6 @@ class OptimalBinning(BaseBinning):
     def __cal_single_col_result(self, col_name, bucket_list):
         result_counts = [[b.event_count, b.non_event_count] for b in bucket_list]
         col_result_obj = self.woe_1d(result_counts, self.adjustment_factor)
-        assert isinstance(col_result_obj, BinColResults)
         self.bin_results.put_col_results(col_name, col_result_obj)
 
     def init_bucket(self, data_instances):
@@ -170,7 +168,8 @@ class OptimalBinning(BaseBinning):
 
     @staticmethod
     def merge_bucket_list(list1, list2):
-        assert len(list1) == len(list2)
+        if len(list1) != len(list2):
+            raise AssertionError("In merge bucket list, len of two list are not equal")
         result = []
         for idx, b1 in enumerate(list1):
             b2 = list2[idx]
@@ -260,10 +259,6 @@ class OptimalBinning(BaseBinning):
             """
             update bucket information
             """
-
-            for node in min_heap.node_list:
-                assert node.left_bucket.idx != node.right_bucket.idx
-
             order_dict = dict()
             for bucket_idx, item in b_dict.items():
                 order_dict[bucket_idx] = item.left_bound
@@ -293,20 +288,14 @@ class OptimalBinning(BaseBinning):
             b_dict[bucket_num - 1].set_right_neighbor(None)
             # for b_dict_idx, bucket in b_dict.items():
             #     LOGGER.debug("After _update_bucket_info, b_dict_idx: {}, b_idx: {}".format(b_dict_idx, bucket.idx))
-
-            for node in min_heap.node_list:
-                assert node.left_bucket.idx != node.right_bucket.idx
-
             return b_dict
 
         def _merge_heap(constraint=None, aim_var=0):
             next_id = max(bucket_dict.keys()) + 1
             while aim_var > 0 and not min_heap.is_empty:
                 min_node = min_heap.pop()
-                assert isinstance(min_node, heap.HeapNode)
                 left_bucket = min_node.left_bucket
                 right_bucket = min_node.right_bucket
-                assert left_bucket.idx != right_bucket.idx
 
                 # Some buckets may be already merged
                 if left_bucket.idx not in bucket_dict or right_bucket.idx not in bucket_dict:
@@ -558,7 +547,7 @@ class OptimalBinning(BaseBinning):
             else:
                 to_split_pair.append((start, best_index + 1))
                 to_split_pair.append((best_index + 1, end))
-            # LOGGER.debug("to_split_pair: {}".format(to_split_pair))
+                # LOGGER.debug("to_split_pair: {}".format(to_split_pair))
 
         if len(res_split_index) == 0:
             LOGGER.warning("Best ks optimal binning fail to split. Take middle split point instead")

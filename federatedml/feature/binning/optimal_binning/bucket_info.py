@@ -72,23 +72,14 @@ class Bucket(object):
     def iv(self):
         if self.event_total is None or self.non_event_total is None:
             raise AssertionError("Bucket's event_total or non_event_total has not been assigned")
-        if self.event_total > 0:
-            event_total = self.event_total
-        else:
-            event_total = 1
-
-        if self.non_event_total > 0:
-            non_event_total = self.non_event_total
-        else:
-            non_event_total = 1
 
         # only have EVENT records or Non-Event records
         if self.event_count == 0 or self.non_event_count == 0:
-            event_rate = 1.0 * (self.event_count + self.adjustment_factor) / event_total
-            non_event_rate = 1.0 * (self.non_event_count + self.adjustment_factor) / non_event_total
+            event_rate = 1.0 * (self.event_count + self.adjustment_factor) / max(self.event_total, 1)
+            non_event_rate = 1.0 * (self.non_event_count + self.adjustment_factor) / max(self.non_event_total, 1)
         else:
-            event_rate = 1.0 * self.event_count / event_total
-            non_event_rate = 1.0 * self.non_event_count / non_event_total
+            event_rate = 1.0 * self.event_count / max(self.event_total, 1)
+            non_event_rate = 1.0 * self.non_event_count / max(self.non_event_total, 1)
         woe = math.log(non_event_rate / event_rate)
         return (non_event_rate - event_rate) * woe
 
@@ -98,12 +89,4 @@ class Bucket(object):
             return 0
 
         return 1 - (1.0 * self.event_count / self.total_count) ** 2 - \
-              (1.0 * self.non_event_count / self.total_count) ** 2
-
-
-
-
-
-
-
-
+               (1.0 * self.non_event_count / self.total_count) ** 2
