@@ -103,7 +103,7 @@ class PipelinedModel(object):
                             else:
                                 if b64encode:
                                     buffer_object_serialized_string = base64.b64encode(buffer_object_serialized_string).decode()
-                                model_buffers["{}:{}:{}".format(component_name, model_alias, model_name)] = buffer_object_serialized_string
+                                model_buffers["{}.{}:{}".format(component_name, model_alias, model_name)] = buffer_object_serialized_string
         return model_buffers
 
     def save_pipeline(self, pipelined_buffer_object):
