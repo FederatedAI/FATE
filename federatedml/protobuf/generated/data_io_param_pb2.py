@@ -7,7 +7,6 @@ from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
-from google.protobuf import descriptor_pb2
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -19,6 +18,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='data-io-param.proto',
   package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
+  serialized_options=_b('B\020DataIOParamProto'),
   serialized_pb=_b('\n\x13\x64\x61ta-io-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xdc\x02\n\x0cImputerParam\x12l\n\x15missing_replace_value\x18\x01 \x03(\x0b\x32M.com.webank.ai.fate.core.mlmodel.buffer.ImputerParam.MissingReplaceValueEntry\x12h\n\x13missing_value_ratio\x18\x02 \x03(\x0b\x32K.com.webank.ai.fate.core.mlmodel.buffer.ImputerParam.MissingValueRatioEntry\x1a:\n\x18MissingReplaceValueEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x38\n\x16MissingValueRatioEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x01:\x02\x38\x01\"\xdc\x02\n\x0cOutlierParam\x12l\n\x15outlier_replace_value\x18\x01 \x03(\x0b\x32M.com.webank.ai.fate.core.mlmodel.buffer.OutlierParam.OutlierReplaceValueEntry\x12h\n\x13outlier_value_ratio\x18\x02 \x03(\x0b\x32K.com.webank.ai.fate.core.mlmodel.buffer.OutlierParam.OutlierValueRatioEntry\x1a:\n\x18OutlierReplaceValueEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x38\n\x16OutlierValueRatioEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x01:\x02\x38\x01\"\xdd\x01\n\x0b\x44\x61taIOParam\x12\x0e\n\x06header\x18\x01 \x03(\t\x12\x10\n\x08sid_name\x18\x02 \x01(\t\x12\x12\n\nlabel_name\x18\x03 \x01(\t\x12K\n\rimputer_param\x18\x04 \x01(\x0b\x32\x34.com.webank.ai.fate.core.mlmodel.buffer.ImputerParam\x12K\n\routlier_param\x18\x05 \x01(\x0b\x32\x34.com.webank.ai.fate.core.mlmodel.buffer.OutlierParamB\x12\x42\x10\x44\x61taIOParamProtob\x06proto3')
 )
 
@@ -38,21 +38,21 @@ _IMPUTERPARAM_MISSINGREPLACEVALUEENTRY = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='value', full_name='com.webank.ai.fate.core.mlmodel.buffer.ImputerParam.MissingReplaceValueEntry.value', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
+  serialized_options=_b('8\001'),
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -75,21 +75,21 @@ _IMPUTERPARAM_MISSINGVALUERATIOENTRY = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='value', full_name='com.webank.ai.fate.core.mlmodel.buffer.ImputerParam.MissingValueRatioEntry.value', index=1,
       number=2, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
+  serialized_options=_b('8\001'),
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -112,21 +112,21 @@ _IMPUTERPARAM = _descriptor.Descriptor(
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='missing_value_ratio', full_name='com.webank.ai.fate.core.mlmodel.buffer.ImputerParam.missing_value_ratio', index=1,
       number=2, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[_IMPUTERPARAM_MISSINGREPLACEVALUEENTRY, _IMPUTERPARAM_MISSINGVALUERATIOENTRY, ],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -150,21 +150,21 @@ _OUTLIERPARAM_OUTLIERREPLACEVALUEENTRY = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='value', full_name='com.webank.ai.fate.core.mlmodel.buffer.OutlierParam.OutlierReplaceValueEntry.value', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
+  serialized_options=_b('8\001'),
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -187,21 +187,21 @@ _OUTLIERPARAM_OUTLIERVALUERATIOENTRY = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='value', full_name='com.webank.ai.fate.core.mlmodel.buffer.OutlierParam.OutlierValueRatioEntry.value', index=1,
       number=2, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=_descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001')),
+  serialized_options=_b('8\001'),
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -224,21 +224,21 @@ _OUTLIERPARAM = _descriptor.Descriptor(
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='outlier_value_ratio', full_name='com.webank.ai.fate.core.mlmodel.buffer.OutlierParam.outlier_value_ratio', index=1,
       number=2, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[_OUTLIERPARAM_OUTLIERREPLACEVALUEENTRY, _OUTLIERPARAM_OUTLIERVALUERATIOENTRY, ],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -262,42 +262,42 @@ _DATAIOPARAM = _descriptor.Descriptor(
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='sid_name', full_name='com.webank.ai.fate.core.mlmodel.buffer.DataIOParam.sid_name', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='label_name', full_name='com.webank.ai.fate.core.mlmodel.buffer.DataIOParam.label_name', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='imputer_param', full_name='com.webank.ai.fate.core.mlmodel.buffer.DataIOParam.imputer_param', index=3,
       number=4, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='outlier_param', full_name='com.webank.ai.fate.core.mlmodel.buffer.DataIOParam.outlier_param', index=4,
       number=5, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -376,14 +376,9 @@ DataIOParam = _reflection.GeneratedProtocolMessageType('DataIOParam', (_message.
 _sym_db.RegisterMessage(DataIOParam)
 
 
-DESCRIPTOR.has_options = True
-DESCRIPTOR._options = _descriptor._ParseOptions(descriptor_pb2.FileOptions(), _b('B\020DataIOParamProto'))
-_IMPUTERPARAM_MISSINGREPLACEVALUEENTRY.has_options = True
-_IMPUTERPARAM_MISSINGREPLACEVALUEENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
-_IMPUTERPARAM_MISSINGVALUERATIOENTRY.has_options = True
-_IMPUTERPARAM_MISSINGVALUERATIOENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
-_OUTLIERPARAM_OUTLIERREPLACEVALUEENTRY.has_options = True
-_OUTLIERPARAM_OUTLIERREPLACEVALUEENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
-_OUTLIERPARAM_OUTLIERVALUERATIOENTRY.has_options = True
-_OUTLIERPARAM_OUTLIERVALUERATIOENTRY._options = _descriptor._ParseOptions(descriptor_pb2.MessageOptions(), _b('8\001'))
+DESCRIPTOR._options = None
+_IMPUTERPARAM_MISSINGREPLACEVALUEENTRY._options = None
+_IMPUTERPARAM_MISSINGVALUERATIOENTRY._options = None
+_OUTLIERPARAM_OUTLIERREPLACEVALUEENTRY._options = None
+_OUTLIERPARAM_OUTLIERVALUERATIOENTRY._options = None
 # @@protoc_insertion_point(module_scope)

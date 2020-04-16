@@ -129,12 +129,14 @@ class BasePoissonRegression(BaseLinearModel):
             coef_i = self.model_weights.coef_[idx]
             weight_dict[header_name] = coef_i
         intercept_ = self.model_weights.intercept_
+        best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
         param_protobuf_obj = poisson_model_param_pb2.PoissonModelParam(iters=self.n_iter_,
                                                                        loss_history=self.loss_history,
                                                                        is_converged=self.is_converged,
                                                                        weight=weight_dict,
                                                                        intercept=intercept_,
-                                                                       header=header)
+                                                                       header=header,
+                                                                       best_iteration=best_iteration)
         return param_protobuf_obj
 
     def load_model(self, model_dict):
