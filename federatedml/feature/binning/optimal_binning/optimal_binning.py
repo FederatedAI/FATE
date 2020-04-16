@@ -314,13 +314,6 @@ class OptimalBinning(BaseBinning):
                 new_bucket = bucket_info.Bucket(idx=next_id, adjustment_factor=optimal_param.adjustment_factor)
                 new_bucket = _init_new_bucket(new_bucket, min_node)
                 bucket_dict[next_id] = new_bucket
-                if left_bucket.idx == right_bucket.idx:
-                    LOGGER.warning('left_bucket_idx equal to right bucket, '
-                                   'left_bucket: {}, right_bucket: {},'
-                                   'new_bucket: {}, constraint: {}'.format(left_bucket.__dict__,
-                                                                           right_bucket.__dict__,
-                                                                           new_bucket.__dict__,
-                                                                           constraint))
                 del bucket_dict[left_bucket.idx]
                 del bucket_dict[right_bucket.idx]
                 min_heap.remove_empty_node(left_bucket.idx)
@@ -443,30 +436,19 @@ class OptimalBinning(BaseBinning):
 
         LOGGER.debug("Before small_size add, dick length: {}".format(len(bucket_dict)))
         min_heap, non_mixture_num, small_size_num = _add_heap_nodes(constraint='small_size')
-        # LOGGER.debug("After small_size add, small_size: {}, min_heap size: {}".format(small_size_num, min_heap.size))
         min_heap, small_size_num = _merge_heap(constraint='small_size', aim_var=small_size_num)
         bucket_dict = _update_bucket_info(bucket_dict)
 
         min_heap, non_mixture_num, small_size_num = _add_heap_nodes(constraint='single_small_size')
         min_heap, small_size_num = _merge_heap(constraint='single_small_size', aim_var=small_size_num)
-        # LOGGER.debug(
-        #     "After small_size merge, min_heap size: {}, small_size_num: {}".format(min_heap.size, small_size_num))
 
         bucket_dict = _update_bucket_info(bucket_dict)
-        # for bid, bucket in bucket_dict.items():
-        #     LOGGER.debug("bucket id: {}, bucket: {}, small_size_num: {}".format(
-        #         bid, bucket.__dict__, small_size_num
-        #     ))
 
         LOGGER.debug("Before add, dick length: {}".format(len(bucket_dict)))
         min_heap, non_mixture_num, small_size_num = _add_heap_nodes()
         LOGGER.debug("After normal add, small_size: {}, min_heap size: {}".format(small_size_num, min_heap.size))
         min_heap, total_bucket_num = _merge_heap(aim_var=len(bucket_dict) - final_max_bin)
         LOGGER.debug("After normal merge, min_heap size: {}".format(min_heap.size))
-        # for node_id, this_node in enumerate(min_heap.node_list):
-        #     LOGGER.debug("node_id: {}, node_total_count: {}, left_bound: {}, right bound: {}".format(
-        #         node_id, this_node.total_count, this_node.left_bucket.left_bound, this_node.right_bucket.right_bound
-        #     ))
 
         non_mixture_num = 0
         small_size_num = 0
@@ -527,16 +509,7 @@ class OptimalBinning(BaseBinning):
                 left_total = left_event + left_non_event
                 right_total = right_event + right_non_event
 
-            LOGGER.debug("acc_event_rate: {}, acc_non_event_rate: {}, ks_list: {}, "
-                         "best_index: {}, curt_event_total: {}, curt_non_event_total: {}, start_idx: {}, end_idx: {}".format(
-                acc_event_rate, acc_non_event_rate, ks_list, best_index, curt_event_total, curt_non_event_total, start_idx,
-                end_idx
-            ))
-
             best_ks = ks_list[best_index]
-            # if best_ks == 0:
-            #     return None, None, None
-
             res_dict = {
                 'left_event': left_event,
                 'right_event': right_event,
@@ -578,7 +551,6 @@ class OptimalBinning(BaseBinning):
             if res_dict.get('left_total') < min_item_num or res_dict.get('right_total') < min_item_num:
                 continue
             res_split_index.append(best_index + 1)
-            LOGGER.debug("start: {}, end: {}, res_dict: {}, res_split_index: {}".format(start, end, res_dict, res_split_index))
 
             if res_dict.get('right_total') > res_dict.get('left_total'):
                 to_split_pair.append((best_index + 1, end))
@@ -586,7 +558,7 @@ class OptimalBinning(BaseBinning):
             else:
                 to_split_pair.append((start, best_index + 1))
                 to_split_pair.append((best_index + 1, end))
-            LOGGER.debug("to_split_pair: {}".format(to_split_pair))
+            # LOGGER.debug("to_split_pair: {}".format(to_split_pair))
 
         if len(res_split_index) == 0:
             LOGGER.warning("Best ks optimal binning fail to split. Take middle split point instead")
@@ -599,9 +571,6 @@ class OptimalBinning(BaseBinning):
         small_size_num = 0
         for bucket_idx, end in enumerate(res_split_index):
             new_bucket = _merge_buckets(start, end, bucket_idx)
-            LOGGER.debug("After merge bucket, start: {}, end: {}, new bucket res: {}".format(
-                start, end, new_bucket.__dict__
-            ))
             bucket_res.append(new_bucket)
             if not new_bucket.is_mixed:
                 non_mixture_num += 1
