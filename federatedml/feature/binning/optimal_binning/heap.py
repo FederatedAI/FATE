@@ -73,12 +73,22 @@ class IvHeapNode(HeapNode):
         self.event_total = self.left_bucket.event_total
         self.non_event_total = self.left_bucket.non_event_total
 
-        if self.event_count == 0 or self.non_event_count == 0:
-            event_rate = 1.0 * (self.event_count + self.adjustment_factor) / self.event_total
-            non_event_rate = 1.0 * (self.non_event_count + self.adjustment_factor) / self.non_event_total
+        if self.event_total > 0:
+            event_total = self.event_total
         else:
-            event_rate = 1.0 * self.event_count / self.event_total
-            non_event_rate = 1.0 * self.non_event_count / self.non_event_total
+            event_total = 1
+
+        if self.non_event_total > 0:
+            non_event_total = self.non_event_total
+        else:
+            non_event_total = 1
+
+        if self.event_count == 0 or self.non_event_count == 0:
+            event_rate = 1.0 * (self.event_count + self.adjustment_factor) / event_total
+            non_event_rate = 1.0 * (self.non_event_count + self.adjustment_factor) / non_event_total
+        else:
+            event_rate = 1.0 * self.event_count / event_total
+            non_event_rate = 1.0 * self.non_event_count / non_event_total
         merge_woe = math.log(event_rate / non_event_rate)
 
         merge_iv = (event_rate - non_event_rate) * merge_woe
@@ -152,6 +162,8 @@ def heap_node_factory(optimal_param: OptimalBinningParam, left_bucket=None, righ
     else:
         raise ValueError("metric_method: {} cannot recognized".format(metric_method))
 
+    assert left_bucket.idx != right_bucket.idx
+
     if left_bucket is not None:
         node.left_bucket = left_bucket
 
@@ -178,13 +190,43 @@ class MinHeap(object):
         return self.size <= 0
 
     def insert(self, heap_node: HeapNode):
+        assert heap_node.left_bucket.idx != heap_node.right_bucket.idx
         self.size += 1
         self.node_list.append(heap_node)
+
+        for idx, n in enumerate(self.node_list):
+            if n.left_bucket.idx == n.right_bucket.idx:
+                LOGGER.debug("Before move up, In insert, idx: {}, n: {}".format(idx, n.__dict__))
+                assert n.left_bucket.idx != n.right_bucket.idx
+
         self._move_up(self.size - 1)
+
+    def remove_empty_node(self, removed_bucket_id):
+        for n_id, node in enumerate(self.node_list):
+            if node.left_bucket.idx == removed_bucket_id or node.right_bucket.idx == removed_bucket_id:
+                self.delete_index_k(n_id)
+
+    def delete_index_k(self, k):
+        if k >= self.size:
+            return
+        if k == self.size - 1:
+            self.node_list.pop()
+            self.size -= 1
+        else:
+            self.node_list[k] = self.node_list[self.size - 1]
+            self.node_list.pop()
+            self.size -= 1
+            if k == 0:
+                self._move_down(k)
+            else:
+                parent_idx = self._get_parent_index(k)
+                if self.node_list[parent_idx].score < self.node_list[k].score:
+                    self._move_down(k)
+                else:
+                    self._move_up(k)
 
     def pop(self):
         min_node = self.node_list[0] if not self.is_empty else None
-
         if min_node is not None:
             self.node_list[0] = self.node_list[self.size - 1]
             self.node_list.pop()
@@ -238,11 +280,16 @@ class MinHeap(object):
             return
         while True:
             parent_idx = self._get_parent_index(curt_idx)
+
             if parent_idx is None:
                 break
-
             if self.node_list[curt_idx].score < self.node_list[parent_idx].score:
                 self._switch_node(curt_idx, parent_idx)
+                node1 = self.node_list[curt_idx]
+                node2 = self.node_list[parent_idx]
+                # LOGGER.debug("curt_idx: {}, parent_idx: {}".format(curt_idx, parent_idx))
+                assert node1.left_bucket.idx != node1.right_bucket.idx
+                assert node2.left_bucket.idx != node2.right_bucket.idx
                 curt_idx = parent_idx
             else:
                 break

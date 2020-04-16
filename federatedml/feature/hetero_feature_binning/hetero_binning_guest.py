@@ -124,6 +124,7 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         host_binning_obj = OptimalBinning(params=self.model_param, abnormal_list=self.binning_obj.abnormal_list)
         host_binning_obj.event_total = self.binning_obj.event_total
         host_binning_obj.non_event_total = self.binning_obj.non_event_total
+        LOGGER.debug("Start host party optimal binning train")
         bucket_table = host_binning_obj.bin_sum_to_bucket_list(result_counts, partitions)
         host_binning_obj.fit_buckets(bucket_table, sample_count)
         encoded_split_points = host_binning_obj.bin_results.all_split_points

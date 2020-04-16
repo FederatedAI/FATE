@@ -46,6 +46,9 @@ class OptimalBinning(BaseBinning):
         self.optimal_param = params.optimal_binning_param
         self.optimal_param.adjustment_factor = params.adjustment_factor
         self.optimal_param.max_bin = params.bin_num
+        if math.ceil(1.0 / self.optimal_param.max_bin_pct) > self.optimal_param.max_bin:
+            raise ValueError("Arguments logical error, ceil(1.0/max_bin_pct) should be smaller or equal than bin_num")
+
         self.adjustment_factor = params.adjustment_factor
         self.event_total = None
         self.non_event_total = None
@@ -222,6 +225,8 @@ class OptimalBinning(BaseBinning):
             for i in range(len(bucket_dict)):
                 left_bucket = bucket_dict[i]
                 right_bucket = bucket_dict.get(left_bucket.right_neighbor_idx)
+                if left_bucket.right_neighbor_idx == i:
+                    raise RuntimeError("left_bucket's right neighbor == itself")
                 if not left_bucket.is_mixed:
                     this_non_mixture_num += 1
 
@@ -255,6 +260,10 @@ class OptimalBinning(BaseBinning):
             """
             update bucket information
             """
+
+            for node in min_heap.node_list:
+                assert node.left_bucket.idx != node.right_bucket.idx
+
             order_dict = dict()
             for bucket_idx, item in b_dict.items():
                 order_dict[bucket_idx] = item.left_bound
@@ -282,6 +291,11 @@ class OptimalBinning(BaseBinning):
                     b_dict[i].set_left_neighbor(i - 1)
                     b_dict[i].set_right_neighbor(i + 1)
             b_dict[bucket_num - 1].set_right_neighbor(None)
+            # for b_dict_idx, bucket in b_dict.items():
+            #     LOGGER.debug("After _update_bucket_info, b_dict_idx: {}, b_idx: {}".format(b_dict_idx, bucket.idx))
+
+            for node in min_heap.node_list:
+                assert node.left_bucket.idx != node.right_bucket.idx
 
             return b_dict
 
@@ -292,6 +306,7 @@ class OptimalBinning(BaseBinning):
                 assert isinstance(min_node, heap.HeapNode)
                 left_bucket = min_node.left_bucket
                 right_bucket = min_node.right_bucket
+                assert left_bucket.idx != right_bucket.idx
 
                 # Some buckets may be already merged
                 if left_bucket.idx not in bucket_dict or right_bucket.idx not in bucket_dict:
@@ -301,10 +316,16 @@ class OptimalBinning(BaseBinning):
                 bucket_dict[next_id] = new_bucket
                 if left_bucket.idx == right_bucket.idx:
                     LOGGER.warning('left_bucket_idx equal to right bucket, '
-                                   'left_bucket: {}, right_bucket: {}'.format(left_bucket.__dict__,
-                                                                              right_bucket.__dict__))
+                                   'left_bucket: {}, right_bucket: {},'
+                                   'new_bucket: {}, constraint: {}'.format(left_bucket.__dict__,
+                                                                           right_bucket.__dict__,
+                                                                           new_bucket.__dict__,
+                                                                           constraint))
                 del bucket_dict[left_bucket.idx]
                 del bucket_dict[right_bucket.idx]
+                min_heap.remove_empty_node(left_bucket.idx)
+                min_heap.remove_empty_node(right_bucket.idx)
+
                 aim_var = _aim_vars_decrease(constraint, new_bucket, left_bucket, right_bucket, aim_var)
                 _add_node_from_new_bucket(new_bucket, constraint)
                 next_id += 1
@@ -428,14 +449,14 @@ class OptimalBinning(BaseBinning):
 
         min_heap, non_mixture_num, small_size_num = _add_heap_nodes(constraint='single_small_size')
         min_heap, small_size_num = _merge_heap(constraint='single_small_size', aim_var=small_size_num)
-        LOGGER.debug(
-            "After small_size merge, min_heap size: {}, small_size_num: {}".format(min_heap.size, small_size_num))
+        # LOGGER.debug(
+        #     "After small_size merge, min_heap size: {}, small_size_num: {}".format(min_heap.size, small_size_num))
 
         bucket_dict = _update_bucket_info(bucket_dict)
-        for bid, bucket in bucket_dict.items():
-            LOGGER.debug("bucket id: {}, bucket: {}, small_size_num: {}".format(
-                bid, bucket.__dict__, small_size_num
-            ))
+        # for bid, bucket in bucket_dict.items():
+        #     LOGGER.debug("bucket id: {}, bucket: {}, small_size_num: {}".format(
+        #         bid, bucket.__dict__, small_size_num
+        #     ))
 
         LOGGER.debug("Before add, dick length: {}".format(len(bucket_dict)))
         min_heap, non_mixture_num, small_size_num = _add_heap_nodes()
