@@ -65,7 +65,9 @@ class BaseLogisticRegression(BaseLinearModel):
                   'is_converged': self.is_converged,
                   'weight': weight_dict,
                   'intercept': self.model_weights.intercept_,
-                  'header': self.header
+                  'header': self.header,
+                  'best_iteration': -1 if self.validation_strategy is None else
+                  self.validation_strategy.best_iteration
                   }
         return result
 
