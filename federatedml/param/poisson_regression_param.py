@@ -101,7 +101,7 @@ class PoissonParam(BaseParam):
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  cv_param=CrossValidationParam(), stepwise_param=StepwiseParam(),
                  decay=1, decay_sqrt=True,
-                 validation_freqs=None, early_stopping_rounds=None):
+                 validation_freqs=None, early_stopping_rounds=None, metric=[], use_first_metric_only=False):
         super(PoissonParam, self).__init__()
         self.penalty = penalty
         self.tol = tol
@@ -123,18 +123,22 @@ class PoissonParam(BaseParam):
         self.validation_freqs = validation_freqs
         self.stepwise_param = stepwise_param
         self.early_stopping_rounds = early_stopping_rounds
+        self.metric = metric
+        self.use_first_metric_only = use_first_metric_only
 
     def check(self):
         descr = "poisson_regression_param's "
 
-        if type(self.penalty).__name__ != "str":
+        if self.penalty is None:
+            self.penalty = 'NONE'
+        elif type(self.penalty).__name__ != "str":
             raise ValueError(
                 descr + "penalty {} not supported, should be str type".format(self.penalty))
-        else:
-            self.penalty = self.penalty.upper()
-            if self.penalty not in ['L1', 'L2', 'NONE']:
-                raise ValueError(
-                    "penalty {} not supported, penalty should be 'L1', 'L2' or 'none'".format(self.penalty))
+
+        self.penalty = self.penalty.upper()
+        if self.penalty not in ['L1', 'L2', 'NONE']:
+            raise ValueError(
+                "penalty {} not supported, penalty should be 'L1', 'L2' or 'none'".format(self.penalty))
 
         if type(self.tol).__name__ not in ["int", "float"]:
             raise ValueError(
@@ -228,5 +232,10 @@ class PoissonParam(BaseParam):
             if self.validation_freqs is None:
                 raise ValueError("validation freqs must be set when early stopping is enabled")
 
+        if not isinstance(self.metric, list):
+            raise ValueError("metric should be a list")
+
+        if not isinstance(self.use_first_metric_only, bool):
+            raise ValueError("use_first_metric_only should be a boolean")
 
         return True
