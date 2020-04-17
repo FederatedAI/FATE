@@ -38,8 +38,9 @@ class JobController(object):
         pass
 
     @staticmethod
-    def submit_job(job_data):
-        job_id = generate_job_id()
+    def submit_job(job_data, job_id=None):
+        if not job_id:
+            job_id = generate_job_id()
         schedule_logger(job_id).info('submit job, job_id {}, body {}'.format(job_id, job_data))
         job_dsl = job_data.get('job_dsl', {})
         job_runtime_conf = job_data.get('job_runtime_conf', {})
@@ -114,13 +115,13 @@ class JobController(object):
         for task in tasks:
             kill_status = False
             try:
-                kill_status = job_utils.kill_process(int(task.f_run_pid))
-                job_utils.start_session_stop(task)
                 # task clean up
                 runtime_conf = json_loads(job[0].f_runtime_conf)
                 roles = ','.join(runtime_conf['role'].keys())
                 party_ids = ','.join([','.join([str(j) for j in i]) for i in runtime_conf['role'].values()])
                 Tracking(job_id=job_id, role=role, party_id=party_id, task_id=task.f_task_id).clean_task(roles, party_ids)
+                kill_status = job_utils.kill_process(int(task.f_run_pid))
+                job_utils.start_session_stop(task)
             except Exception as e:
                 schedule_logger(job_id).exception(e)
             finally:

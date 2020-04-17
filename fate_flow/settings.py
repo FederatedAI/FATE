@@ -28,6 +28,9 @@ from fate_flow.utils.setting_utils import CenterConfig
 WORK_MODE = 0
 USE_LOCAL_DATABASE = True
 
+# upload data
+USE_LOCAL_DATA = True
+
 # Local authentication switch
 USE_AUTHENTICATION = False
 PRIVILEGE_COMMAND_WHITELIST = []

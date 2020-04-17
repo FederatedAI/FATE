@@ -26,7 +26,7 @@ import requests
 
 from arch.api.utils import file_utils
 from arch.api.utils.core import get_lan_ip
-from fate_flow.settings import SERVERS, ROLE, API_VERSION
+from fate_flow.settings import SERVERS, ROLE, API_VERSION, USE_LOCAL_DATA
 from fate_flow.utils import detect_utils
 
 server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
@@ -71,6 +71,13 @@ def call_fun(func, config_data, dsl_path, config_path):
                          'job_runtime_conf': config_data}
             response = requests.post("/".join([server_url, "job", func.rstrip('_job')]), json=post_data)
             try:
+                if config_data.get('try_resubmit'):
+                    if response.json()['retcode']:
+                        while response.json()['retcode']:
+                            print('try re-submit job ,waiting time:{}s'.format(config_data.get('try_resubmit')*60))
+                            time.sleep(config_data.get('try_resubmit')*60)
+                            response = requests.post("/".join([server_url, "job", func.rstrip('_job')]), json=post_data)
+                        print('re-submit job success')
                 if response.json()['retcode'] == 999:
                     start_cluster_standalone_job_server()
                     response = requests.post("/".join([server_url, "job", func.rstrip('_job')]), json=post_data)
@@ -153,7 +160,19 @@ def call_fun(func, config_data, dsl_path, config_path):
         else:
             response = requests.post("/".join([server_url, "tracking", func.replace('_', '/')]), json=config_data)
     elif func in DATA_FUNC:
-        response = requests.post("/".join([server_url, "data", func.replace('_', '/')]), json=config_data)
+        if USE_LOCAL_DATA and func == 'upload':
+            file_name = config_data.get('file')
+            if not os.path.isabs(file_name):
+                file_name = os.path.join(file_utils.get_project_base_directory(), file_name)
+            if os.path.exists(file_name):
+                files = {'file': open(file_name, 'rb')}
+            else:
+                raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
+                                'please check the path: {}'.format(file_name))
+            response = requests.post("/".join([server_url, "data", func.replace('_', '/')]), data=config_data,
+                                     files=files)
+        else:
+            response = requests.post("/".join([server_url, "data", func.replace('_', '/')]), json=config_data)
         try:
             if response.json()['retcode'] == 999:
                 start_cluster_standalone_job_server()
@@ -216,6 +235,7 @@ if __name__ == "__main__":
     parser.add_argument('-i', '--file', required=False, type=str, help="file")
     parser.add_argument('-o', '--output_path', required=False, type=str, help="output_path")
     parser.add_argument('-m', '--model', required=False, type=str, help="TrackingMetric model id")
+    parser.add_argument('-try', '--try_resubmit', required=False, type=int, help="try re_submit time")
     parser.add_argument('-limit', '--limit', required=False, type=int, help="limit_number")
     parser.add_argument('-src_party_id', '--src_party_id', required=False, type=str, help="src_party_id")
     parser.add_argument('-src_role', '--src_role', required=False, type=str, help="src_role")
