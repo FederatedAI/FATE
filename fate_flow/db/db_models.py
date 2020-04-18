@@ -107,12 +107,12 @@ def init_database_tables():
 
 
 class Job(DataBaseModel):
-    f_job_id = CharField(max_length=100)
+    f_job_id = CharField(max_length=25)
     f_name = CharField(max_length=500, null=True, default='')
     f_description = TextField(null=True, default='')
     f_tag = CharField(max_length=50, null=True, index=True, default='')
-    f_role = CharField(max_length=50, index=True)
-    f_party_id = CharField(max_length=50, index=True)
+    f_role = CharField(max_length=10, index=True)
+    f_party_id = CharField(max_length=10, index=True)
     f_roles = TextField()
     f_work_mode = IntegerField()
     f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
@@ -137,11 +137,11 @@ class Job(DataBaseModel):
 
 
 class Task(DataBaseModel):
-    f_job_id = CharField(max_length=100)
+    f_job_id = CharField(max_length=25)
     f_component_name = TextField()
     f_task_id = CharField(max_length=100)
-    f_role = CharField(max_length=50, index=True)
-    f_party_id = CharField(max_length=50, index=True)
+    f_role = CharField(max_length=10, index=True)
+    f_party_id = CharField(max_length=10, index=True)
     f_operator = CharField(max_length=100, null=True)
     f_run_ip = CharField(max_length=100, null=True)
     f_run_pid = IntegerField(null=True)
@@ -158,9 +158,9 @@ class Task(DataBaseModel):
 
 
 class DataView(DataBaseModel):
-    f_job_id = CharField(max_length=100)
-    f_role = CharField(max_length=50, index=True)
-    f_party_id = CharField(max_length=50, index=True)
+    f_job_id = CharField(max_length=25)
+    f_role = CharField(max_length=10, index=True)
+    f_party_id = CharField(max_length=10, index=True)
     f_table_name = CharField(max_length=500, null=True)
     f_table_namespace = CharField(max_length=500, null=True)
     f_component_name = TextField()
@@ -185,12 +185,12 @@ class DataView(DataBaseModel):
 
 class MachineLearningModelMeta(DataBaseModel):
     f_id = BigIntegerField(primary_key=True)
-    f_role = CharField(max_length=50, index=True)
-    f_party_id = CharField(max_length=50, index=True)
+    f_role = CharField(max_length=10, index=True)
+    f_party_id = CharField(max_length=10, index=True)
     f_roles = TextField()
-    f_job_id = CharField(max_length=100)
-    f_model_id = CharField(max_length=500, index=True)
-    f_model_version = CharField(max_length=500, index=True)
+    f_job_id = CharField(max_length=25)
+    f_model_id = CharField(max_length=100, index=True)
+    f_model_version = CharField(max_length=100, index=True)
     f_size = BigIntegerField(default=0)
     f_create_time = BigIntegerField(default=0)
     f_update_time = BigIntegerField(default=0)
@@ -224,13 +224,13 @@ class TrackingMetric(DataBaseModel):
         return ModelClass()
 
     f_id = BigAutoField(primary_key=True)
-    f_job_id = CharField(max_length=100)
+    f_job_id = CharField(max_length=25)
     f_component_name = TextField()
     f_task_id = CharField(max_length=100)
-    f_role = CharField(max_length=50, index=True)
-    f_party_id = CharField(max_length=50, index=True)
-    f_metric_namespace = CharField(max_length=200, index=True)
-    f_metric_name = CharField(max_length=500, index=True)
+    f_role = CharField(max_length=10, index=True)
+    f_party_id = CharField(max_length=10, index=True)
+    f_metric_namespace = CharField(max_length=180, index=True)
+    f_metric_name = CharField(max_length=180, index=True)
     f_key = CharField(max_length=200)
     f_value = TextField()
     f_type = IntegerField(index=True)  # 0 is data, 1 is meta

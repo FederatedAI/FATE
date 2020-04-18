@@ -32,7 +32,7 @@ from arch.api.utils import file_utils
 from arch.api.utils.core import current_timestamp
 from arch.api.utils.core import json_loads, json_dumps
 from arch.api.utils.log_utils import schedule_logger
-from fate_flow.db.db_models import DB, Job, Task
+from fate_flow.db.db_models import DB, Job, Task, DataView
 from fate_flow.driver.dsl_parser import DSLParser
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.data_manager import query_data_view, delete_table, delete_metric_data
@@ -226,6 +226,20 @@ def query_task(**kwargs):
         return [task for task in tasks]
 
 
+def query_data_view(**kwargs):
+    with DB.connection_context():
+        filters = []
+        for f_n, f_v in kwargs.items():
+            attr_name = 'f_%s' % f_n
+            if hasattr(DataView, attr_name):
+                filters.append(operator.attrgetter('f_%s' % f_n)(DataView) == f_v)
+        if filters:
+            data_views = DataView.select().where(*filters)
+        else:
+            data_views = []
+        return [data_view for data_view in data_views]
+
+
 def success_task_count(job_id):
     count = 0
     tasks = query_task(job_id=job_id)
@@ -391,6 +405,23 @@ def start_clean_job(**kwargs):
                 stat_logger.exception(e)
     else:
         raise Exception('no found task')
+
+
+def start_session_stop(task):
+    job_conf_dict = get_job_conf(task.f_job_id)
+    runtime_conf = job_conf_dict['job_runtime_conf_path']
+    process_cmd = [
+        'python3', sys.modules[SessionStop.__module__].__file__,
+        '-j', '{}_{}_{}'.format(task.f_task_id, task.f_role, task.f_party_id),
+        '-w', str(runtime_conf.get('job_parameters').get('work_mode')),
+        '-b', str(runtime_conf.get('job_parameters').get('backend', 0)),
+    ]
+    schedule_logger(task.f_job_id).info('start run subprocess to stop component {} session'
+                                        .format(task.f_component_name))
+    task_dir = os.path.join(get_job_directory(job_id=task.f_job_id), task.f_role,
+                            task.f_party_id, task.f_component_name, 'session_stop')
+    os.makedirs(task_dir, exist_ok=True)
+    p = run_subprocess(config_dir=task_dir, process_cmd=process_cmd, log_dir=None)
 
 
 def start_session_stop(task):

@@ -70,14 +70,28 @@ config(){
     echo "show tables;" >> ./insert-node.sql
     echo "select * from node;" >> ./insert-node.sql
 
+	echo > ./init.sql
+    echo "ALTER USER 'root'@'localhost' IDENTIFIED by '${mysql_password}';" >> ./init.sql
+    echo "CREATE DATABASE ${fate_flow_db_name};" >> ./init.sql
+
+	echo > ./grant.sql
+    party_ips=($(echo ${party_ips[*]} | tr ' ' '\n' | awk '!a[$0]++'))
+    for ip in ${party_ips[*]};
+    do
+        echo "[INFO] Grant to ${mysql_user} on ${ip}"
+        echo "CREATE USER '${mysql_user}'@'${ip}' IDENTIFIED BY '${mysql_password}';" >> ./grant.sql
+        echo "GRANT ALL ON *.* TO '${mysql_user}'@'${ip}';" >> ./grant.sql
+    done
+
 	cd ./conf
+	sed -i.bak "s/port=.*/port=${mysql_port}/g" ./my.cnf
 	sed -i.bak "s#basedir=.*#basedir=${deploy_dir}/${module_name}/mysql-${mysql_version}#g" ./my.cnf
 	sed -i.bak "s#datadir=.*#datadir=${deploy_dir}/${module_name}/mysql-${mysql_version}/data#g" ./my.cnf
 	sed -i.bak "s#socket=.*#socket=${deploy_dir}/${module_name}/mysql-${mysql_version}/mysql.sock#g" ./my.cnf
 	sed -i.bak "s#log-error=.*#log-error=${deploy_dir}/${module_name}/mysql-${mysql_version}/log/mysqld.log#g" ./my.cnf
 	sed -i.bak "s#pid-file=.*#pid-file=${deploy_dir}/${module_name}/mysql-${mysql_version}/data/mysqld.pid#g" ./my.cnf
 	rm -rf ./my.cnf.bak
-    return 0
+  return 0
 }
 
 install() {
@@ -98,21 +112,12 @@ init(){
     nohup ./bin/mysqld_safe --defaults-file=${mysql_dir}/conf/my.cnf --user=${user} &
     sleep 10
     ./bin/mysql -uroot -p"${password_str}" -S ./mysql.sock --connect-expired-password << EOF
-    ALTER USER 'root'@'localhost' IDENTIFIED by "${mysql_password}";
-    CREATE DATABASE ${fate_flow_db_name};
+    source ${mysql_dir}/init.sql;
+    source ${mysql_dir}/grant.sql;
     source ${mysql_dir}/create-meta-service.sql;
     source ${mysql_dir}/insert-node.sql;
 EOF
     echo "the password of root: ${mysql_password}"
-    party_ips=($(echo ${party_ips[*]} | sed 's/ /\n/g'|sort | uniq))
-    for ip in ${party_ips[*]};
-    do
-        echo "[INFO] Grant to ${mysql_user} on ${ip}"
-        ./bin/mysql -uroot -p"${mysql_password}" -S ./mysql.sock --connect-expired-password << EOF
-        CREATE USER '${mysql_user}'@"${ip}" IDENTIFIED BY "${mysql_password}";
-        GRANT ALL ON *.* TO '${mysql_user}'@"${ip}";
-EOF
-    done
 }
 
 case "$2" in

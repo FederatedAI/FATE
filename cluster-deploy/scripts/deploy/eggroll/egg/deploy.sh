@@ -18,20 +18,22 @@
 
 set -e
 module_name="egg"
-cwd=$(cd `dirname $0`; pwd)
+cwd=$(
+    cd $(dirname $0)
+    pwd
+)
 cd ${cwd}
 source ./configurations.sh
 
 usage() {
-	echo "usage: $0 {binary/build} {packaging|config|install|init} {configurations path}."
+      echo "usage: $0 {binary/build} {packaging|config|install|init} {configurations path}."
 }
 
 deploy_mode=$1
 config_path=$3
-if [[ ${config_path} == "" ]] || [[ ! -f ${config_path} ]]
-then
-	usage
-	exit
+if [[ ${config_path} == "" ]] || [[ ! -f ${config_path} ]]; then
+    usage
+    exit
 fi
 source ${config_path}
 
@@ -99,39 +101,37 @@ packaging() {
     cd ../
 }
 
-
-
 config() {
     config_label=$4
-	cd ${output_packages_dir}/config/${config_label}
+    cd ${output_packages_dir}/config/${config_label}
     cd ./${module_name}/conf
-	cp ${cwd}/modify_json.py ./
-	cp ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/processor-starter.sh ./
+    cp ${cwd}/modify_json.py ./
+    cp ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/processor-starter.sh ./
 
-	cp ${source_code_dir}/cluster-deploy/scripts/deploy/eggroll/services.sh ./
+    cp ${source_code_dir}/cluster-deploy/scripts/deploy/eggroll/services.sh ./
     sed -i.bak "s#JAVA_HOME=.*#JAVA_HOME=${java_dir}#g" ./services.sh
     sed -i.bak "s#installdir=.*#installdir=${deploy_dir}#g" ./services.sh
-	sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=${python_path}#g" ./services.sh
+    sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=${python_path}#g" ./services.sh
     rm -rf ./services.sh.bak
 
     mkdir conf
-    cp  ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/${module_name}.properties ./conf
-    cp  ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/log4j2.properties ./conf
-    cp  ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/applicationContext-${module_name}.xml ./conf
+    cp ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/${module_name}.properties ./conf
+    cp ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/log4j2.properties ./conf
+    cp ${source_code_dir}/eggroll/framework/${module_name}/src/main/resources/applicationContext-${module_name}.xml ./conf
 
-	sed -i.bak "s/party.id=.*/party.id=${party_id}/g" ./conf/egg.properties
-	sed -i.bak "s/service.port=.*/service.port=${port}/g" ./conf/egg.properties
-	sed -i.bak "s/engine.names=.*/engine.names=processor/g" ./conf/egg.properties
-	sed -i.bak "s#bootstrap.script=.*#bootstrap.script=${deploy_dir}/${module_name}/processor-starter.sh#g" ./conf/egg.properties
-	sed -i.bak "s#start.port=.*#start.port=${processor_port}#g" ./conf/egg.properties
-	sed -i.bak "s#processor.venv=.*#processor.venv=${venv_dir}#g" ./conf/egg.properties
-	sed -i.bak "s#processor.python-path=.*#processor.python-path=${python_path}#g" ./conf/egg.properties
-	sed -i.bak "s#processor.engine-path=.*#processor.engine-path=${deploy_dir}/python/eggroll/computing/processor.py#g" ./conf/egg.properties
-	sed -i.bak "s#data-dir=.*#data-dir=${data_dir}#g" ./conf/egg.properties
-	sed -i.bak "s#processor.logs-dir=.*#processor.logs-dir=${deploy_dir}/logs/processor#g" ./conf/egg.properties
-	sed -i.bak "s#count=.*#count=${processor_count}#g" ./conf/egg.properties
-	echo >> ./conf/egg.properties
-	echo "eggroll.computing.processor.python-path=${python_path}" >> ./conf/egg.properties
+    sed -i.bak "s/party.id=.*/party.id=${party_id}/g" ./conf/egg.properties
+    sed -i.bak "s/service.port=.*/service.port=${port}/g" ./conf/egg.properties
+    sed -i.bak "s/engine.names=.*/engine.names=processor/g" ./conf/egg.properties
+    sed -i.bak "s#bootstrap.script=.*#bootstrap.script=${deploy_dir}/${module_name}/processor-starter.sh#g" ./conf/egg.properties
+    sed -i.bak "s#start.port=.*#start.port=${processor_port}#g" ./conf/egg.properties
+    sed -i.bak "s#processor.venv=.*#processor.venv=${venv_dir}#g" ./conf/egg.properties
+    sed -i.bak "s#processor.python-path=.*#processor.python-path=${python_path}#g" ./conf/egg.properties
+    sed -i.bak "s#processor.engine-path=.*#processor.engine-path=${deploy_dir}/python/eggroll/computing/processor.py#g" ./conf/egg.properties
+    sed -i.bak "s#data-dir=.*#data-dir=${data_dir}#g" ./conf/egg.properties
+    sed -i.bak "s#processor.logs-dir=.*#processor.logs-dir=${deploy_dir}/logs/processor#g" ./conf/egg.properties
+    sed -i.bak "s#count=.*#count=${processor_count}#g" ./conf/egg.properties
+    echo >>./conf/egg.properties
+    echo "eggroll.computing.processor.python-path=${python_path}" >>./conf/egg.properties
 
     sed -i.bak "s#property.logDir=.*#property.logDir=logs/${module_name}#g" ./conf/log4j2.properties
     rm -rf ./conf/log4j2.properties.bak ./conf/egg.properties.bak
@@ -141,7 +141,7 @@ init() {
     return 0
 }
 
-install(){
+install() {
     mkdir -p ${deploy_dir}/${module_name}
     cp -r ${deploy_packages_dir}/source/${module_name}/egg-manager/* ${deploy_dir}/${module_name}/
     cp -r ${deploy_packages_dir}/config/${module_name}/conf/* ${deploy_dir}/${module_name}/
@@ -149,28 +149,40 @@ install(){
     ln -s eggroll-${module_name}-${egg_version}.jar eggroll-${module_name}.jar
     mv ./services.sh ${deploy_dir}/
 
-    cd ${deploy_packages_dir}/source/${module_name}/egg-services
+    egg_package_dir=${deploy_packages_dir}/source/${module_name}/egg-services
+    cd ${egg_package_dir}
 
-    mkdir -p ${deploy_dir}/storage-service-cxx
-
-    system=`sed -e '/"/s/"//g' /etc/os-release | awk -F= '/^NAME/{print $2}'`
+    system=$(sed -e '/"/s/"//g' /etc/os-release | awk -F= '/^NAME/{print $2}')
     echo ${system}
     case "${system}" in
-        "CentOS Linux")
-                echo "CentOS System"
-                rm -rf ./storage-service-cxx/third_party_eggrollv1_ubuntu
-                ;;
-        "Ubuntu")
-                echo "Ubuntu System"
-                rm -rf ./storage-service-cxx/third_party
-                mv ./storage-service-cxx/third_party_eggrollv1_ubuntu  ./storage-service-cxx/third_party
-                ;;
-        *)
-                echo "Not support this system."
+    "CentOS Linux")
+        echo "CentOS System"
+        rm -rf ./storage-service-cxx/third_party_eggrollv1_ubuntu
+        ;;
+    "Ubuntu")
+        echo "Ubuntu System"
+        rm -rf ./storage-service-cxx/third_party
+        mv ./storage-service-cxx/third_party_eggrollv1_ubuntu ./storage-service-cxx/third_party
+        sudo cp ./storage-service-cxx/third_party/rocksdb/librocksdb.so /usr/local/lib
+        sudo mkdir -p /usr/local/include/rocksdb/
+        sudo cp -r ./storage-service-cxx/third_party/rocksdb/include/* /usr/local/include/
+        ;;
+    *)
+        echo "Not support this system."
+        ;;
     esac
 
-    cp -r ./storage-service-cxx/* ${deploy_dir}/storage-service-cxx/
+    cd ./storage-service-cxx
+    sed -i.bak "20s#-I. -I.*#-I. -I${egg_package_dir}/storage-service-cxx/third_party/include#g" ./Makefile
+    sed -i.bak "34s#LDFLAGS += -L.*#LDFLAGS += -L${egg_package_dir}/storage-service-cxx/third_party/lib -llmdb -lboost_system -lboost_filesystem -lglog -lgpr#g" ./Makefile
+    sed -i.bak "36s#PROTOC =.*#PROTOC = ${egg_package_dir}/storage-service-cxx/third_party/bin/protoc#g" ./Makefile
+    sed -i.bak "37s#GRPC_CPP_PLUGIN =.*#GRPC_CPP_PLUGIN = ${egg_package_dir}/storage-service-cxx/third_party/bin/grpc_cpp_plugin#g" ./Makefile
+    make
+    mkdir -p ${deploy_dir}/storage-service-cxx
+    rm -rf ${deploy_dir}/storage-service-cxx/third_party # Error avoiding file permission conflict
+    cp -r ./* ${deploy_dir}/storage-service-cxx/
 
+    cd ${egg_package_dir}
     mkdir -p ${deploy_dir}/python/eggroll/computing
     cp -r ./computing/* ${deploy_dir}/python/eggroll/computing/
 
@@ -180,48 +192,31 @@ install(){
     mkdir -p ${deploy_dir}/python/eggroll/conf
     cp -r ./eggroll-conf/* ${deploy_dir}/python/eggroll/conf/
 
-    system=`sed -e '/"/s/"//g' /etc/os-release | awk -F= '/^NAME/{print $2}'`
-    echo ${system}
-    pwd
-    if [[ "${system}" == "Ubuntu" ]];then
-        cd ${deploy_dir}/storage-service-cxx/third_party
-        cd rocksdb
-        sudo cp librocksdb.so /usr/local/lib
-        sudo mkdir -p /usr/local/include/rocksdb/
-        sudo cp -r ./include/* /usr/local/include/
-    fi
-
-    cd ${deploy_dir}/storage-service-cxx
-	sed -i.bak "20s#-I. -I.*#-I. -I${deploy_dir}/storage-service-cxx/third_party/include#g" ./Makefile
-	sed -i.bak "34s#LDFLAGS += -L.*#LDFLAGS += -L${deploy_dir}/storage-service-cxx/third_party/lib -llmdb -lboost_system -lboost_filesystem -lglog -lgpr#g" ./Makefile
-	sed -i.bak "36s#PROTOC =.*#PROTOC = ${deploy_dir}/storage-service-cxx/third_party/bin/protoc#g" ./Makefile
-	sed -i.bak "37s#GRPC_CPP_PLUGIN =.*#GRPC_CPP_PLUGIN = ${deploy_dir}/storage-service-cxx/third_party/bin/grpc_cpp_plugin#g" ./Makefile
-	make
-
     cd ${deploy_dir}/python/eggroll/conf
     cp ${deploy_dir}/${module_name}/modify_json.py ./
-	sed -i.bak "s/rollip=.*/rollip=\"${roll_ip}\"/g" ./modify_json.py
-	sed -i.bak "s/rollport=.*/rollport=${roll_port}/g" ./modify_json.py
-	sed -i.bak "s/proxyip=.*/proxyip=\"${proxy_ip}\"/g" ./modify_json.py
-	sed -i.bak "s/proxyport=.*/proxyport=${proxy_port}/g" ./modify_json.py
-	sed -i.bak "s/clustercommip=.*/clustercommip=\"${clustercomm_ip}\"/g" ./modify_json.py
-	python ./modify_json.py python ./server_conf.json
+    sed -i.bak "s/rollip=.*/rollip=\"${roll_ip}\"/g" ./modify_json.py
+    sed -i.bak "s/rollport=.*/rollport=${roll_port}/g" ./modify_json.py
+    sed -i.bak "s/proxyip=.*/proxyip=\"${proxy_ip}\"/g" ./modify_json.py
+    sed -i.bak "s/proxyport=.*/proxyport=${proxy_port}/g" ./modify_json.py
+    sed -i.bak "s/clustercommip=.*/clustercommip=\"${clustercomm_ip}\"/g" ./modify_json.py
+    python ./modify_json.py python ./server_conf.json
 }
 
 case "$2" in
-    packaging)
-        packaging $*
-        ;;
-    config)
-        config $*
-        ;;
-    install)
-        install $*
-        ;;
-    init)
-        init $*
-        ;;
- *)
-     usage
-        exit -1
+packaging)
+    packaging $*
+    ;;
+config)
+    config $*
+    ;;
+install)
+    install $*
+    ;;
+init)
+    init $*
+    ;;
+*)
+    usage
+    exit -1
+    ;;
 esac
