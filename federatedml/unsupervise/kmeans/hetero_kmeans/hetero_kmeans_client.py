@@ -43,9 +43,15 @@ class HeteroKmeansClient(BaseKmeansModel):
     def get_centroid(self,data_instances):
         random.seed(self.k)
         random_list = list()
+        v_list = list()
         for r in range(0,self.k):
             random_list.append(random.random()*data_instances.count())
-        feature_list=list(data_instances.filter(lambda k1 , v1: k1 in random_list).collect())
+        n = 0
+        for k,v in data_instances.collect():
+            if n in random_list:
+                v_list.append(v)
+            n += 1
+        feature_list=list(data_instances.filter(lambda k1 , v1: k1 in v_list).collect())
         return feature_list
 
     @staticmethod

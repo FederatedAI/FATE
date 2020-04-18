@@ -115,7 +115,7 @@ class TestHeteroKmeans():
         # result_data = binning_obj.save_data()
         # fit_data = result_data.collect()
         #
-        return 0
+        return kmeans_obj
 
     def tearDown(self):
         for table in self.table_list:
@@ -163,3 +163,4 @@ if __name__ == '__main__':
     # homo_obj.test_homo_lr()
     test_obj.test_kmeans()
     test_obj.tearDown()
+    print('success')

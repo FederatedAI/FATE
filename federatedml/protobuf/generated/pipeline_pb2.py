@@ -7,7 +7,6 @@ from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
-from google.protobuf import descriptor_pb2
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -19,6 +18,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='pipeline.proto',
   package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
+  serialized_options=_b('B\rPipelineProto'),
   serialized_pb=_b('\n\x0epipeline.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"P\n\x08Pipeline\x12\x15\n\rinference_dsl\x18\x01 \x01(\x0c\x12\x11\n\ttrain_dsl\x18\x02 \x01(\x0c\x12\x1a\n\x12train_runtime_conf\x18\x03 \x01(\x0c\x42\x0f\x42\rPipelineProtob\x06proto3')
 )
 
@@ -38,28 +38,28 @@ _PIPELINE = _descriptor.Descriptor(
       has_default_value=False, default_value=_b(""),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='train_dsl', full_name='com.webank.ai.fate.core.mlmodel.buffer.Pipeline.train_dsl', index=1,
       number=2, type=12, cpp_type=9, label=1,
       has_default_value=False, default_value=_b(""),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='train_runtime_conf', full_name='com.webank.ai.fate.core.mlmodel.buffer.Pipeline.train_runtime_conf', index=2,
       number=3, type=12, cpp_type=9, label=1,
       has_default_value=False, default_value=_b(""),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -80,6 +80,5 @@ Pipeline = _reflection.GeneratedProtocolMessageType('Pipeline', (_message.Messag
 _sym_db.RegisterMessage(Pipeline)
 
 
-DESCRIPTOR.has_options = True
-DESCRIPTOR._options = _descriptor._ParseOptions(descriptor_pb2.FileOptions(), _b('B\rPipelineProto'))
+DESCRIPTOR._options = None
 # @@protoc_insertion_point(module_scope)

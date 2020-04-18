@@ -16,17 +16,19 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-
+from arch.api.utils import log_utils
 from federatedml.model_base import ModelBase
 from federatedml.transfer_variable.transfer_class.hetero_kmeans_transfer_variable import HeteroKmeansTransferVariable
 from federatedml.util import abnormal_detection
 from federatedml.param.hetero_kmeans_param import KmeansParam
+from federatedml.protobuf.generated import hetero_kmeans_meta_pb2, hetero_kmeans_param_pb2
+
+LOGGER = log_utils.getLogger()
 
 class BaseKmeansModel(ModelBase):
     def __init__(self):
         super(BaseKmeansModel, self).__init__()
         self.model_param=KmeansParam()
-
         self.n_iter_ = 0
         self.k = 0
         self.max_iter = 0
@@ -35,6 +37,9 @@ class BaseKmeansModel(ModelBase):
         self.centroid_list = None
         self.cluster_result = None
         self.transfer_variable = HeteroKmeansTransferVariable()
+        self.model_name = 'toSet'
+        self.model_param_name = 'toSet'
+        self.model_meta_name = 'toSet'
 
     def _init_model(self, params):
         self.model_param = params
@@ -42,7 +47,31 @@ class BaseKmeansModel(ModelBase):
         self.max_iter = params.max_iter
         self.tol = params.tol
 
+    def _get_meta(self):
+        meta_protobuf_obj = hetero_kmeans_meta_pb2.KmeansModelMeta(k=self.model_param.k,
+                                                          tol=self.model_param.tol,
+                                                          max_iter=self.max_iter)
+        return meta_protobuf_obj
 
+    def _get_param(self):
+        header = self.header
+        LOGGER.debug("In get_param, header: {}".format(header))
+        if header is None:
+            param_protobuf_obj = hetero_kmeans_param_pb2.KmeansModelParam()
+            return param_protobuf_obj
+
+        weight_dict = {}
+        param_protobuf_obj = hetero_kmeans_param_pb2.KmeansModelParam(iters=self.n_iter_)
+        return param_protobuf_obj
+
+    def export_model(self):
+        meta_obj = self._get_meta()
+        param_obj = self._get_param()
+        result = {
+            self.model_meta_name: meta_obj,
+            self.model_param_name: param_obj
+        }
+        return result
 
     def _abnormal_detection(self, data_instances):
         """
