@@ -7,9 +7,6 @@
 * Improve MySQL and FATE Flow service.sh
 * Support more custom deployment configurations in the default_configurations.sh, such as ssh_port, mysql_port and so one.
 
->FATE-Board
-* Support plugins
-
 # Release 1.3.0
 ## Major Features and Improvements
 >FederatedREC
