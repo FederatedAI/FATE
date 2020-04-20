@@ -31,13 +31,14 @@
 		"rabbitmq": {
 			"self": {
 				"host": "localhost",
-				"port": 9760,
+				"mng_port": 12345,
+				"port": 5672,
 				"user": "fate",
 				"password": "fate"
 			},
 			"10000": {
 				"host": "localhost",
-				"port": 9760
+				"port": 5672
 			}
 		}
 	}

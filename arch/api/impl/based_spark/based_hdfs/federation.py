@@ -36,10 +36,11 @@ class FederationRuntime(Federation):
         self._mq_conf = server_conf.get('servers').get('rabbitmq')
         self._host = self._mq_conf.get("self").get("host")
         self._port = self._mq_conf.get("self").get("port")
+        self._mng_port = self._mng_port.get("self").get("mng_port")
         base_user = self._mq_conf.get("self").get("user")
         base_password = self._mq_conf.get("self").get("password")
 
-        self._rabbit_manager = RabbitManager(base_user, base_password, "{}:{}".format(self._host, self._port))
+        self._rabbit_manager = RabbitManager(base_user, base_password, "{}:{}".format(self._host, self._mng_port))
 
         mq_info = runtime_conf.get("mq_info", {})
         self._user = mq_info.get("user")
