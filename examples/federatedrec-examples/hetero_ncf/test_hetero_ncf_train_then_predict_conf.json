@@ -51,7 +51,7 @@
       },
       "evaluation_0": {
         "eval_type": [
-          "binary"
+          "regression"
         ],
         "pos_label": [
           1
@@ -130,7 +130,7 @@
       },
       "loss": "binary_crossentropy",
       "metrics": [
-        "AUC"
+        "MSE"
       ],
       "max_iter": 30
     }
