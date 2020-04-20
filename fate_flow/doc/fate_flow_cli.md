@@ -164,7 +164,7 @@ python fate_flow_client.py -f component_output_model -j $job_id -r $role -p $par
     * -o  --output_path: config output path, Required
     * -limit  --limit: Limit quantity, Optional
 ```bash
-python fate_flow_client.py -f component_output_model -j $job_id -r $role -p $party_id -cpn $component_name -o $output_path
+python fate_flow_client.py -f component_output_data -j $job_id -r $role -p $party_id -cpn $component_name -o $output_path
 ```
 
 

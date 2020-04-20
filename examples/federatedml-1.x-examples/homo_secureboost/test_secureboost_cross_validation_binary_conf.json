@@ -1,6 +1,6 @@
 {
     "initiator": {
-        "role": "arbiter",
+        "role": "guest",
         "party_id": 10000
     },
     "job_parameters": {
@@ -29,7 +29,7 @@
         "host": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "homo_breast_guest", "namespace": "homo"}],
+                    "train_data": [{"name": "homo_breast_host", "namespace": "homo"}],
                     "eval_data": [{"name": "homo_breast_test", "namespace": "homo"}]
                 }
             },

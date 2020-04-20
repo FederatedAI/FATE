@@ -40,7 +40,7 @@
                 }
             },
             "output": {
-                "data": ["hetero_lr_data"],
+                "data": ["train"],
                 "model": ["hetero_lr_model"]
             }
         },
@@ -48,11 +48,8 @@
             "module": "Evaluation",
             "input": {
                 "data": {
-                    "data": ["hetero_lr_0.hetero_lr_data"]
+                    "data": ["hetero_lr_0.train"]
                 }
-            },
-            "output": {
-                "data": ["evaluate"]
             }
         },
         "local_baseline_0": {
@@ -64,7 +61,7 @@
                 }
             },
             "output": {
-                "data": ["local_baseline_data"],
+                "data": ["train"],
                 "model": ["local_baseline"]
             }
         },
@@ -72,11 +69,8 @@
             "module": "Evaluation",
             "input": {
                 "data": {
-                    "data": ["local_baseline_0.local_baseline_data"]
+                    "data": ["local_baseline_0.train"]
                 }
-            },
-            "output": {
-                "data": ["evaluate"]
             }
         }
     }

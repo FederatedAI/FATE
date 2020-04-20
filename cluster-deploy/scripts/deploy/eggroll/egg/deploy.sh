@@ -149,9 +149,8 @@ install(){
     ln -s eggroll-${module_name}-${egg_version}.jar eggroll-${module_name}.jar
     mv ./services.sh ${deploy_dir}/
 
-    cd ${deploy_packages_dir}/source/${module_name}/egg-services
-
-    mkdir -p ${deploy_dir}/storage-service-cxx
+    egg_package_dir=${deploy_packages_dir}/source/${module_name}/egg-services
+    cd ${egg_package_dir}
 
     system=`sed -e '/"/s/"//g' /etc/os-release | awk -F= '/^NAME/{print $2}'`
     echo ${system}
@@ -164,13 +163,25 @@ install(){
                 echo "Ubuntu System"
                 rm -rf ./storage-service-cxx/third_party
                 mv ./storage-service-cxx/third_party_eggrollv1_ubuntu  ./storage-service-cxx/third_party
+                sudo cp ./storage-service-cxx/third_party/rocksdb/librocksdb.so /usr/local/lib
+                sudo mkdir -p /usr/local/include/rocksdb/
+                sudo cp -r ./storage-service-cxx/third_party/rocksdb/include/* /usr/local/include/
                 ;;
         *)
                 echo "Not support this system."
     esac
 
-    cp -r ./storage-service-cxx/* ${deploy_dir}/storage-service-cxx/
+    cd ./storage-service-cxx
+	sed -i.bak "20s#-I. -I.*#-I. -I${egg_package_dir}/storage-service-cxx/third_party/include#g" ./Makefile
+	sed -i.bak "34s#LDFLAGS += -L.*#LDFLAGS += -L${egg_package_dir}/storage-service-cxx/third_party/lib -llmdb -lboost_system -lboost_filesystem -lglog -lgpr#g" ./Makefile
+	sed -i.bak "36s#PROTOC =.*#PROTOC = ${egg_package_dir}/storage-service-cxx/third_party/bin/protoc#g" ./Makefile
+	sed -i.bak "37s#GRPC_CPP_PLUGIN =.*#GRPC_CPP_PLUGIN = ${egg_package_dir}/storage-service-cxx/third_party/bin/grpc_cpp_plugin#g" ./Makefile
+	make
+    mkdir -p ${deploy_dir}/storage-service-cxx
+    rm -rf ${deploy_dir}/storage-service-cxx/third_party  # Error avoiding file permission conflict
+    cp -r ./* ${deploy_dir}/storage-service-cxx/
 
+    cd ${egg_package_dir}
     mkdir -p ${deploy_dir}/python/eggroll/computing
     cp -r ./computing/* ${deploy_dir}/python/eggroll/computing/
 
@@ -180,23 +191,6 @@ install(){
     mkdir -p ${deploy_dir}/python/eggroll/conf
     cp -r ./eggroll-conf/* ${deploy_dir}/python/eggroll/conf/
 
-    system=`sed -e '/"/s/"//g' /etc/os-release | awk -F= '/^NAME/{print $2}'`
-    echo ${system}
-    pwd
-    if [[ "${system}" == "Ubuntu" ]];then
-        cd ${deploy_dir}/storage-service-cxx/third_party
-        cd rocksdb
-        sudo cp librocksdb.so /usr/local/lib
-        sudo mkdir -p /usr/local/include/rocksdb/
-        sudo cp -r ./include/* /usr/local/include/
-    fi
-
-    cd ${deploy_dir}/storage-service-cxx
-	sed -i.bak "20s#-I. -I.*#-I. -I${deploy_dir}/storage-service-cxx/third_party/include#g" ./Makefile
-	sed -i.bak "34s#LDFLAGS += -L.*#LDFLAGS += -L${deploy_dir}/storage-service-cxx/third_party/lib -llmdb -lboost_system -lboost_filesystem -lglog -lgpr#g" ./Makefile
-	sed -i.bak "36s#PROTOC =.*#PROTOC = ${deploy_dir}/storage-service-cxx/third_party/bin/protoc#g" ./Makefile
-	sed -i.bak "37s#GRPC_CPP_PLUGIN =.*#GRPC_CPP_PLUGIN = ${deploy_dir}/storage-service-cxx/third_party/bin/grpc_cpp_plugin#g" ./Makefile
-	make
 
     cd ${deploy_dir}/python/eggroll/conf
     cp ${deploy_dir}/${module_name}/modify_json.py ./

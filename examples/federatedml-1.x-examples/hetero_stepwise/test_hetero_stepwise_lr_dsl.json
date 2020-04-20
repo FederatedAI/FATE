@@ -27,8 +27,8 @@
                  "data": ["train"]
              }
          },
-        "hetero_linr_0": {
-            "module": "HeteroLinR",
+        "hetero_lr_0": {
+            "module": "HeteroLR",
             "input": {
                 "data": {
                     "train_data": ["intersection_0.train"]

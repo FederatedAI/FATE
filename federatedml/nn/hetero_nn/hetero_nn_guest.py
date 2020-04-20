@@ -128,6 +128,9 @@ class HeteroNNGuest(HeteroNNBase):
         if cur_epoch == self.epochs:
             LOGGER.debug("Training process reach max training epochs {} and not converged".format(self.epochs))
 
+        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
+            self.load_model(self.validation_strategy.cur_best_model)
+
     def predict(self, data_inst):
         keys, test_x, test_y = self._load_data(data_inst)
         self.set_partition(data_inst)
@@ -162,9 +165,6 @@ class HeteroNNGuest(HeteroNNBase):
     def export_model(self):
         if self.model is None:
             return
-
-        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-            return self.validation_strategy.export_best_model()
 
         return {MODELMETA: self._get_model_meta(),
                 MODELPARAM: self._get_model_param()}

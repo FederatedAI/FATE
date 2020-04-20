@@ -27,7 +27,7 @@ from werkzeug.serving import run_simple
 from werkzeug.wsgi import DispatcherMiddleware
 
 from arch.api import session, Backend
-from arch.api.proto import proxy_pb2_grpc
+from fate_flow.utils.proto_compatibility import proxy_pb2_grpc
 from fate_flow.apps.data_access_app import manager as data_access_app_manager
 from fate_flow.apps.job_app import manager as job_app_manager
 from fate_flow.apps.machine_learning_model_app import manager as model_app_manager

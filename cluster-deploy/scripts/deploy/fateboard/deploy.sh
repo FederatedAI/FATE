@@ -55,9 +55,9 @@ config() {
     sed -i.bak "s#^server.port=.*#server.port=${fateboard_port}#g" ./conf/application.properties
     sed -i.bak "s#^fateflow.url=.*#fateflow.url=http://${fate_flow_ip}:${fate_flow_port}#g" ./conf/application.properties
     sed -i.bak "s#^spring.datasource.driver-Class-Name=.*#spring.datasource.driver-Class-Name=com.mysql.cj.jdbc.Driver#g" ./conf/application.properties
-    sed -i.bak "s#^spring.datasource.url=.*#spring.datasource.url=jdbc:mysql://${db_ip}:3306/${db_name}?characterEncoding=utf8\&characterSetResults=utf8\&autoReconnect=true\&failOverReadOnly=false\&serverTimezone=GMT%2B8#g" ./conf/application.properties
-    sed -i.bak "s/^spring.datasource.username=.*/spring.datasource.username=${db_user}/g" ./conf/application.properties
-    sed -i.bak "s/^spring.datasource.password=.*/spring.datasource.password=${db_password}/g" ./conf/application.properties
+    sed -i.bak "s#^fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:mysql://${db_ip}:3306/${db_name}?characterEncoding=utf8\&characterSetResults=utf8\&autoReconnect=true\&failOverReadOnly=false\&serverTimezone=GMT%2B8#g" ./conf/application.properties
+    sed -i.bak "s/^fateboard.datasource.username=.*/fateboard.datasource.username=${db_user}/g" ./conf/application.properties
+    sed -i.bak "s/^fateboard.datasource.password=.*/fateboard.datasource.password=${db_password}/g" ./conf/application.properties
     rm -rf ./conf/application.properties.bak
     for node in "${node_list[@]}"
     do

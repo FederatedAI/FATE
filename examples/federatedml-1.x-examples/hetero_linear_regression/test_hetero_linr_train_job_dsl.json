@@ -45,9 +45,6 @@
                 "data": {
                     "data": ["hetero_linr_0.train"]
                 }
-            },
-            "output": {
-                "data": ["evaluate"]
             }
         }
     }
