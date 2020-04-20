@@ -22,7 +22,7 @@ from ruamel import yaml
 
 from arch.api.utils import file_utils
 from arch.api.proto import default_empty_fill_pb2
-from fate_flow.settings import stat_logger
+from fate_flow.settings import stat_logger, TEMP_DIRECTORY
 
 
 class PipelinedModel(object):
@@ -35,11 +35,12 @@ class PipelinedModel(object):
         """
         self.model_id = model_id
         self.model_version = model_version
-        self.model_path = os.path.join(file_utils.get_project_base_directory(), "models", model_id, model_version)
+        self.model_path = os.path.join(file_utils.get_project_base_directory(), "model_local_cache", model_id, model_version)
         self.define_proto_path = os.path.join(self.model_path, "define", "proto")
         self.define_meta_path = os.path.join(self.model_path, "define", "define_meta.yaml")
         self.variables_index_path = os.path.join(self.model_path, "variables", "index")
         self.variables_data_path = os.path.join(self.model_path, "variables", "data")
+        self.default_archive_format = "zip"
 
     def create_pipelined_model(self):
         if os.path.exists(self.model_path):
@@ -115,6 +116,21 @@ class PipelinedModel(object):
         with open(os.path.join(self.model_path, "pipeline.pb"), "wb") as fw:
             fw.write(buffer_object_serialized_string)
 
+    def packaging_model(self):
+        if not os.path.exists(self.model_path):
+            raise Exception("Can not found {} {} model local cache".format(self.model_id, self.model_version))
+        archive_file_path = shutil.make_archive(base_name=self.archive_model_base_path(), format=self.default_archive_format, root_dir=self.model_path)
+        stat_logger.info("Make model {} {} archive on {} successfully".format(self.model_id,
+                                                                              self.model_version,
+                                                                              archive_file_path))
+        return archive_file_path
+
+    def unpack_model(self, archive_file_path: str):
+        if os.path.exists(self.model_path):
+            raise Exception("Model {} {} local cache already existed".format(self.model_id, self.model_version))
+        shutil.unpack_archive(archive_file_path, self.model_path)
+        stat_logger.info("Unpack model archive to {}".format(self.model_path))
+
     def update_component_meta(self, component_name, component_module_name, model_alias, model_proto_index):
         """
         update meta info yaml
@@ -187,3 +203,9 @@ class PipelinedModel(object):
                 stat_logger.warning(e)
         else:
             return None
+
+    def archive_model_base_path(self):
+        return os.path.join(TEMP_DIRECTORY, "{}_{}".format(self.model_id, self.model_version))
+
+    def archive_model_file_path(self):
+        return "{}.{}".format(self.archive_model_base_path(), self.default_archive_format)

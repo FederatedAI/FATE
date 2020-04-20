@@ -21,6 +21,7 @@ import tarfile
 import traceback
 from contextlib import closing
 import time
+import re
 
 import requests
 
@@ -37,7 +38,7 @@ TRACKING_FUNC = ["component_parameters", "component_metric_all", "component_metr
                  "component_output_model", "component_output_data", "component_output_data_table"]
 DATA_FUNC = ["download", "upload", "upload_history"]
 TABLE_FUNC = ["table_info", "table_delete"]
-MODEL_FUNC = ["load", "bind", "version"]
+MODEL_FUNC = ["load", "bind", "store", "restore", "export", "import"]
 PERMISSION_FUNC = ["grant_privilege", "delete_privilege", "query_privilege"]
 
 
@@ -178,9 +179,33 @@ def call_fun(func, config_data, dsl_path, config_path):
         else:
             response = requests.post("/".join([server_url, "table", func.lstrip('table_')]), json=config_data)
     elif func in MODEL_FUNC:
-        if func == "version":
-            detect_utils.check_config(config=config_data, required_arguments=['namespace'])
-        response = requests.post("/".join([server_url, "model", func]), json=config_data)
+        if func == "import":
+            file_path = config_data["file"]
+            if not os.path.isabs(file_path):
+                file_path = os.path.join(file_utils.get_project_base_directory(), file_path)
+            if os.path.exists(file_path):
+                files = {'file': open(file_path, 'rb')}
+            else:
+                raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
+                                'please check the path: {}'.format(file_path))
+            response = requests.post("/".join([server_url, "model", func]), data=config_data, files=files)
+        elif func == "export":
+            with closing(requests.get("/".join([server_url, "model", func]), json=config_data, stream=True)) as response:
+                if response.status_code == 200:
+                    archive_file_name = re.findall("filename=(.+)", response.headers["Content-Disposition"])[0]
+                    os.makedirs(config_data["output_path"], exist_ok=True)
+                    archive_file_path = os.path.join(config_data["output_path"], archive_file_name)
+                    with open(archive_file_path, 'wb') as fw:
+                        for chunk in response.iter_content(1024):
+                            if chunk:
+                                fw.write(chunk)
+                    response = {'retcode': 0,
+                                'file': archive_file_path,
+                                'retmsg': 'download successfully, please check {}'.format(archive_file_path)}
+                else:
+                    response = response.json()
+        else:
+            response = requests.post("/".join([server_url, "model", func]), json=config_data)
     elif func in PERMISSION_FUNC:
         detect_utils.check_config(config=config_data, required_arguments=['src_party_id', 'src_role'])
         response = requests.post("/".join([server_url, "permission", func.replace('_', '/')]), json=config_data)

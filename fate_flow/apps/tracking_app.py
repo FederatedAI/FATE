@@ -23,11 +23,11 @@ from flask import Flask, request, send_file
 from google.protobuf import json_format
 
 from arch.api.utils.core_utils import deserialize_b64
-from arch.api.utils.core_utils import get_fate_uuid
+from arch.api.utils.core_utils import fate_uuid
 from arch.api.utils.core_utils import json_loads
 from fate_flow.db.db_models import Job, DB
 from fate_flow.manager.data_manager import query_data_view, delete_metric_data
-from fate_flow.manager.tracking import Tracking
+from fate_flow.manager.tracking_manager import Tracking
 from fate_flow.settings import stat_logger
 from fate_flow.utils import job_utils, data_utils
 from fate_flow.utils.api_utils import get_json_result, error_response
@@ -229,7 +229,7 @@ def component_output_data_download():
         return error_response(response_code=500, retmsg='limit is 0')
     output_data_count = 0
     have_data_label = False
-    output_tmp_dir = os.path.join(os.getcwd(), 'tmp/{}'.format(get_fate_uuid()))
+    output_tmp_dir = os.path.join(os.getcwd(), 'tmp/{}'.format(fate_uuid()))
     output_file_path = '{}/output_%s'.format(output_tmp_dir)
     output_data_file_path = output_file_path % 'data.csv'
     os.makedirs(os.path.dirname(output_data_file_path), exist_ok=True)

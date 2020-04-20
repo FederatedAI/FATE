@@ -15,12 +15,13 @@
 #
 from typing import List
 
-from arch.api import session, WorkMode
-from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
+from arch.api import session, WorkMode, Backend
+from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64, fate_uuid
+from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import DB, Job, Task, TrackingMetric, DataView
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.manager.model_manager import pipelined_model
-from fate_flow.settings import stat_logger, API_VERSION, MAX_CONCURRENT_JOB_RUN_HOST
+from fate_flow.settings import API_VERSION, MAX_CONCURRENT_JOB_RUN_HOST
 from fate_flow.utils import job_utils, api_utils, model_utils
 from fate_flow.entity.constant_config import JobStatus, TaskStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -66,7 +67,7 @@ class Tracking(object):
 
     def save_metric_data_remote(self, metric_namespace: str, metric_name: str, metrics: List[Metric], job_level=False):
         # TODO: In the next version will be moved to tracking api module on arch/api package
-        stat_logger.info(
+        schedule_logger(self.job_id).info(
             'request save job {} component {} on {} {} {} {} metric data'.format(self.job_id, self.component_name,
                                                                                  self.role,
                                                                                  self.party_id, metric_namespace,
@@ -88,7 +89,7 @@ class Tracking(object):
         return response['retcode'] == 0
 
     def save_metric_data(self, metric_namespace: str, metric_name: str, metrics: List[Metric], job_level=False):
-        stat_logger.info(
+        schedule_logger(self.job_id).info(
             'save job {} component {} on {} {} {} {} metric data'.format(self.job_id, self.component_name, self.role,
                                                                          self.party_id, metric_namespace, metric_name))
         kv = []
@@ -117,7 +118,7 @@ class Tracking(object):
     def save_metric_meta_remote(self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta,
                                 job_level: bool = False):
         # TODO: In the next version will be moved to tracking api module on arch/api package
-        stat_logger.info(
+        schedule_logger(self.job_id).info(
             'request save job {} component {} on {} {} {} {} metric meta'.format(self.job_id, self.component_name,
                                                                                  self.role,
                                                                                  self.party_id, metric_namespace,
@@ -140,7 +141,7 @@ class Tracking(object):
 
     def save_metric_meta(self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta,
                          job_level: bool = False):
-        stat_logger.info(
+        schedule_logger(self.job_id).info(
             'save job {} component {} on {} {} {} {} metric meta'.format(self.job_id, self.component_name, self.role,
                                                                          self.party_id, metric_namespace, metric_name))
         self.insert_data_to_db(metric_namespace, metric_name, 0, metric_meta.to_dict().items(), job_level)
@@ -177,6 +178,12 @@ class Tracking(object):
             return view_data
 
     def save_output_data_table(self, data_table, data_name: str = 'component'):
+        """
+        Save component output data, will run in the task executor process
+        :param data_table:
+        :param data_name:
+        :return:
+        """
         if data_table:
             persistent_table = data_table.save_as(namespace=data_table._namespace,
                                                   name='{}_persistent'.format(data_table._name))
@@ -200,6 +207,11 @@ class Tracking(object):
                             mark=True)
 
     def get_output_data_table(self, data_name: str = 'component'):
+        """
+        Get component output data table, will run in the task executor process
+        :param data_name:
+        :return:
+        """
         output_data_info_table = session.table(name=Tracking.output_table_name('data'),
                                                namespace=self.table_namespace)
         data_table_info = output_data_info_table.get(data_name)
@@ -265,7 +277,7 @@ class Tracking(object):
                 self.bulk_insert_model_data(TrackingMetric.model(table_index=self.get_table_index()),
                                             tracking_metric_data_source)
             except Exception as e:
-                stat_logger.exception(e)
+                schedule_logger(self.job_id).exception(e)
 
     def bulk_insert_model_data(self, model, data_source):
         with DB.connection_context():
@@ -277,7 +289,7 @@ class Tracking(object):
                         model.insert_many(data_source[i:i+batch_size]).execute()
                 return len(data_source)
             except Exception as e:
-                stat_logger.exception(e)
+                schedule_logger(self.job_id).exception(e)
                 return 0
 
     def read_data_from_db(self, metric_namespace: str, metric_name: str, data_type, job_level=False):
@@ -293,12 +305,12 @@ class Tracking(object):
                 for row in cursor.fetchall():
                     yield deserialize_b64(row[0]), deserialize_b64(row[1])
             except Exception as e:
-                stat_logger.exception(e)
+                schedule_logger(self.job_id).exception(e)
             return metrics
 
     def save_job_info(self, role, party_id, job_info, create=False):
         with DB.connection_context():
-            stat_logger.info('save {} {} job: {}'.format(role, party_id, job_info))
+            schedule_logger(self.job_id).info('save {} {} job: {}'.format(role, party_id, job_info))
             jobs = Job.select().where(Job.f_job_id == self.job_id, Job.f_role == role, Job.f_party_id == party_id)
             is_insert = True
             if jobs:
@@ -408,11 +420,22 @@ class Tracking(object):
             return data_view
 
     def clean_task(self, roles, party_ids):
-        stat_logger.info('clean table by namespace {}'.format(self.task_id))
-        session.clean_tables(namespace=self.task_id, regex_string='*')
-        for role in roles.split(','):
-            for party_id in party_ids.split(','):
-                session.clean_tables(namespace=self.task_id + '_' + role + '_' + party_id, regex_string='*')
+        schedule_logger(self.job_id).info('clean table by namespace {}'.format(self.task_id))
+        try:
+            session.init(job_id="{}:{}".format(self.task_id, fate_uuid()), mode=RuntimeConfig.WORK_MODE, backend=Backend.EGGROLL)
+            schedule_logger(job_id=self.job_id).info(session.get_session_id())
+            session.clean_tables(namespace=self.task_id, regex_string='*')
+            for role in roles.split(','):
+                for party_id in party_ids.split(','):
+                    session.clean_tables(namespace=self.task_id + '_' + role + '_' + party_id, regex_string='*')
+        except Exception as e:
+            schedule_logger(self.job_id).exception(e)
+        finally:
+            try:
+                session.stop()
+                session.exit()
+            except Exception as e:
+                schedule_logger(self.job_id).exception(e)
 
     def job_quantity_constraint(self):
         if RuntimeConfig.WORK_MODE == WorkMode.CLUSTER:

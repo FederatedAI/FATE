@@ -23,7 +23,7 @@ from fate_flow.driver.task_executor import TaskExecutor
 from fate_flow.driver.task_scheduler import TaskScheduler
 from fate_flow.entity.constant_config import JobStatus, TaskStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.manager.tracking import Tracking
+from fate_flow.manager.tracking_manager import Tracking
 from fate_flow.settings import BOARD_DASHBOARD_URL, USE_AUTHENTICATION
 from fate_flow.utils import detect_utils, job_utils
 from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_dsl_parser, get_job_log_directory

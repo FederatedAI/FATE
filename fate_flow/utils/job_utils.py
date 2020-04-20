@@ -36,14 +36,14 @@ from fate_flow.db.db_models import DB, Job, Task, DataView
 from fate_flow.driver.dsl_parser import DSLParser
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.data_manager import query_data_view, delete_table, delete_metric_data
-from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT
+from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE
 from fate_flow.utils import detect_utils
 from fate_flow.utils import api_utils
 from flask import request, redirect, url_for
-
 from fate_flow.utils.session_utils import SessionStop
 
-class IdCounter:
+
+class IdCounter(object):
     _lock = threading.RLock()
 
     def __init__(self, initial_value=0):
@@ -94,6 +94,20 @@ def check_pipeline_job_runtime_conf(runtime_conf: typing.Dict):
     for r in runtime_conf['role'].keys():
         for i in range(len(runtime_conf['role'][r])):
             runtime_conf['role'][r][i] = int(runtime_conf['role'][r][i])
+
+
+def runtime_conf_basic(if_local=False):
+    job_runtime_conf = {
+        "initiator": {},
+        "job_parameters": {"work_mode": WORK_MODE},
+        "role": {},
+        "role_parameters": {}
+    }
+    if if_local:
+        job_runtime_conf["initiator"]["role"] = "local"
+        job_runtime_conf["initiator"]["party_id"] = 0
+        job_runtime_conf["role"]["local"] = [0]
+    return job_runtime_conf
 
 
 def new_runtime_conf(job_dir, method, module, role, party_id):

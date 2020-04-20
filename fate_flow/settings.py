@@ -19,6 +19,7 @@ import os
 from arch.api.utils import file_utils
 from arch.api.utils import log_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.entity.constant_config import ModelStorage
 from arch.api.utils.core_utils import get_lan_ip
 import __main__
 
@@ -66,6 +67,14 @@ REDIS = {
     'max_connections': 500
 }
 
+DEFAULT_MODEL_STORE_ADDRESS = {
+    "storage": ModelStorage.REDIS,
+    "host": "127.0.0.1",
+    "port": 6379,
+    "password": "fate_dev",
+    "db": 0
+}
+
 '''
 Constants
 '''
@@ -75,8 +84,7 @@ SERVERS = 'servers'
 MAIN_MODULE = os.path.relpath(__main__.__file__)
 SERVER_MODULE = 'fate_flow_server.py'
 TASK_EXECUTOR_MODULE = 'driver/task_executor.py'
-DEFAULT_WORKFLOW_DATA_TYPE = ['train_input', 'data_input', 'id_library_input', 'model', 'predict_input',
-                              'predict_output', 'evaluation_output', 'intersect_data_output']
+TEMP_DIRECTORY = os.path.join(file_utils.get_project_base_directory(), "fate_flow", "temp")
 HEADERS = {
     'Content-Type': 'application/json',
     'Connection': 'close'

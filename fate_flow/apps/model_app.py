@@ -13,16 +13,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from flask import Flask, request
+import os
+import shutil
+from flask import Flask, request, send_file
 
-from arch.api.utils.version_control import version_history
 from fate_flow.settings import stat_logger, API_VERSION, SERVING_PATH, SERVINGS_ZK_PATH, \
-    USE_CONFIGURATION_CENTER, ZOOKEEPER_HOSTS, SERVER_CONF_PATH
-from fate_flow.utils import publish_model
+    USE_CONFIGURATION_CENTER, ZOOKEEPER_HOSTS, SERVER_CONF_PATH, DEFAULT_MODEL_STORE_ADDRESS, TEMP_DIRECTORY
+from fate_flow.driver.job_controller import JobController
+from fate_flow.manager.model_manager import publish_model
+from fate_flow.manager.model_manager import pipelined_model
 from fate_flow.utils.api_utils import get_json_result, federated_api
-from fate_flow.utils.job_utils import generate_job_id
+from fate_flow.utils.job_utils import generate_job_id, runtime_conf_basic
 from fate_flow.utils.node_check_utils import check_nodes
 from fate_flow.utils.setting_utils import CenterConfig
+from fate_flow.utils.detect_utils import check_config
+from fate_flow.entity.constant_config import ModelOperation
 
 manager = Flask(__name__)
 
@@ -32,6 +37,41 @@ def internal_server_error(e):
     stat_logger.exception(e)
     return get_json_result(retcode=100, retmsg=str(e))
 
+
+@manager.route('/<model_operation>', methods=['post', 'get'])
+def operate_model(model_operation):
+    request_config = request.json or request.form.to_dict()
+    job_id = generate_job_id()
+    required_arguments = ["model_id", "model_version"]
+    if model_operation not in [ModelOperation.STORE, ModelOperation.RESTORE, ModelOperation.EXPORT, ModelOperation.IMPORT]:
+        raise Exception('Can not support this operating now: {}'.format(model_operation))
+    check_config(request_config, required_arguments=required_arguments)
+    if model_operation in [ModelOperation.EXPORT, ModelOperation.IMPORT]:
+        if model_operation == ModelOperation.IMPORT:
+            file = request.files.get('file')
+            file_path = os.path.join(TEMP_DIRECTORY, file.filename)
+            try:
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                file.save(file_path)
+            except Exception as e:
+                shutil.rmtree(file_path)
+                raise e
+            request_config['file'] = file_path
+            model = pipelined_model.PipelinedModel(model_id=request_config["model_id"], model_version=request_config["model_version"])
+            model.unpack_model(file_path)
+            return get_json_result()
+        else:
+            model = pipelined_model.PipelinedModel(model_id=request_config["model_id"], model_version=request_config["model_version"])
+            archive_file_path = model.packaging_model()
+            return send_file(archive_file_path, attachment_filename=os.path.basename(archive_file_path), as_attachment=True)
+    else:
+        data = {}
+        job_dsl, job_runtime_conf = gen_model_operation_job_config(request_config, model_operation)
+        job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = JobController.submit_job(
+            {'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)
+        data.update({'job_dsl_path': job_dsl_path, 'job_runtime_conf_path': job_runtime_conf_path,
+                     'board_url': board_url, 'logs_directory': logs_directory})
+        return get_json_result(job_id=job_id, data=data)
 
 @manager.route('/load', methods=['POST'])
 def load_model():
@@ -93,13 +133,31 @@ def bind_model_service():
     return get_json_result(retcode=(0 if bind_status else 101), retmsg='service id is {}'.format(service_id))
 
 
-@manager.route('/version', methods=['POST'])
-def query_model_version_history():
-    history = version_history(data_table_namespace=request.json.get("namespace"))
-    return get_json_result(data=history)
-
-
 @manager.route('/transfer', methods=['post'])
 def transfer_model():
     model_data = publish_model.download_model(request.json)
     return get_json_result(retcode=0, retmsg="success", data=model_data)
+
+
+def gen_model_operation_job_config(config_data: dict, model_operation: ModelOperation):
+    job_runtime_conf = runtime_conf_basic(if_local=True)
+    initiator_role = "local"
+    job_dsl = {
+        "components": {}
+    }
+
+    if model_operation in [ModelOperation.STORE, ModelOperation.RESTORE]:
+        component_name = "{}_0".format(model_operation)
+        component_parameters = dict()
+        component_parameters.update(config_data)
+        for k, v in config_data.items():
+            component_parameters[k] = [v]
+        if "store_address" not in config_data:
+            component_parameters["store_address"] = [DEFAULT_MODEL_STORE_ADDRESS]
+        job_runtime_conf["role_parameters"][initiator_role] = {component_name: component_parameters}
+        job_dsl["components"][component_name] = {
+            "module": "Model{}".format(model_operation.capitalize())
+        }
+    else:
+        raise Exception("Can not support this model operation: {}".format(model_operation))
+    return job_dsl, job_runtime_conf

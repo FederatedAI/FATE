@@ -25,7 +25,7 @@ from arch.api.utils.core_utils import current_timestamp, get_lan_ip, timestamp_t
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import Task
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.manager.tracking import Tracking
+from fate_flow.manager.tracking_manager import Tracking
 from fate_flow.settings import API_VERSION
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
@@ -94,7 +94,7 @@ class TaskExecutor(object):
             task.f_run_ip = get_lan_ip()
             task.f_run_pid = executor_pid
             run_class_paths = parameters.get('CodePath').split('/')
-            run_class_package = '.'.join(run_class_paths[:-2]) + '.' + run_class_paths[-2].replace('.py','')
+            run_class_package = '.'.join(run_class_paths[:-2]) + '.' + run_class_paths[-2].replace('.py', '')
             run_class_name = run_class_paths[-1]
             task.f_status = TaskStatus.RUNNING
             TaskExecutor.sync_task_status(job_id=job_id, component_name=component_name, task_id=task_id, role=role,
@@ -116,7 +116,6 @@ class TaskExecutor(object):
                                                            input_dsl=task_input_dsl)
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
             run_object.set_tracker(tracker=tracker)
-            run_object.set_taskid(taskid=task_id)
             run_object.run(parameters, task_run_args)
             output_data = run_object.save_data()
             tracker.save_output_data_table(output_data, task_output_dsl.get('data')[0] if task_output_dsl.get('data') else 'component')
