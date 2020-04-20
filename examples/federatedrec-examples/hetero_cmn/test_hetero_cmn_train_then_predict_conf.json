@@ -51,7 +51,7 @@
       },
       "evaluation_0": {
         "eval_type": [
-          "binary"
+          "regression"
         ]
       }
     },
@@ -112,9 +112,9 @@
       },
       "loss": "MSE",
       "metrics": [
-        "AUC"
+        "MSE"
       ],
-      "max_iter": 20,
+      "max_iter": 10,
       "init_param": {
         "init_method": "random_normal",
         "embed_dim": 20
