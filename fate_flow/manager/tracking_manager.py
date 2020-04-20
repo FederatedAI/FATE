@@ -19,12 +19,12 @@ from arch.api import session, WorkMode, Backend
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64, fate_uuid
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import DB, Job, Task, TrackingMetric, DataView
+from fate_flow.entity.constant_config import JobStatus, TaskStatus
 from fate_flow.entity.metric import Metric, MetricMeta
+from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.model_manager import pipelined_model
 from fate_flow.settings import API_VERSION, MAX_CONCURRENT_JOB_RUN_HOST
 from fate_flow.utils import job_utils, api_utils, model_utils
-from fate_flow.entity.constant_config import JobStatus, TaskStatus
-from fate_flow.entity.runtime_config import RuntimeConfig
 
 
 class Tracking(object):
@@ -423,7 +423,6 @@ class Tracking(object):
         schedule_logger(self.job_id).info('clean table by namespace {}'.format(self.task_id))
         try:
             session.init(job_id="{}:{}".format(self.task_id, fate_uuid()), mode=RuntimeConfig.WORK_MODE, backend=Backend.EGGROLL)
-            schedule_logger(job_id=self.job_id).info(session.get_session_id())
             session.clean_tables(namespace=self.task_id, regex_string='*')
             for role in roles.split(','):
                 for party_id in party_ids.split(','):
