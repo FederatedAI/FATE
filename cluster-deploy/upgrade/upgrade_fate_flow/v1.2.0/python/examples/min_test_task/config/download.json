@@ -1,6 +1,0 @@
-{
-  "output_path": "./download.txt",
-  "work_mode": 0,
-  "table_name": "breast_b",
-  "namespace": "hetero_breast"
-}
