@@ -42,6 +42,7 @@ def table_delete():
         table.destroy()
         data.append({'table_name': table_name,
                      'namespace': namespace})
+        status = True
     elif data_views:
         status, data = delete_table(data_views)
     else:
