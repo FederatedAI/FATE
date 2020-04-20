@@ -44,7 +44,7 @@ def layers(layer, config, type):
             return torch.nn.Tanh()
         if layer == "Softmax"
             return torch.nn.Softmax(0)
-    elsif:
+    elif:
         if layer == "Linear":
             return torch.nn.Linear(config[0], config[1])
         if layer == "BatchNorm2d":
