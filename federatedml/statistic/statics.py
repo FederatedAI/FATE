@@ -23,6 +23,7 @@ from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.feature.binning.quantile_summaries import QuantileSummaries
 from federatedml.feature.instance import Instance
 from federatedml.param.feature_binning_param import FeatureBinningParam
+from federatedml.feature.sparse_vector import SparseVector
 from federatedml.statistic import data_overview
 from federatedml.util import consts
 
@@ -198,8 +199,17 @@ class MultivariateStatisticalSummary(object):
             else:
                 features = instances
 
+            if isinstance(features, SparseVector):
+                is_sparse = True
+            else:
+                is_sparse = False
+
             for col_name, col_index in cols_dict.items():
-                value = features[col_index]
+                if is_sparse:
+                    sparse_data = features.get_sparse_vector()
+                    value = sparse_data.get(col_index, 0)
+                else:
+                    value = features[col_index]
                 stat_obj = summary_statistic_dict[col_name]
                 stat_obj.add_value(value)
 

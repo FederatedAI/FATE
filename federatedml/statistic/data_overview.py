@@ -71,19 +71,20 @@ def is_sparse_data(data_instance):
         return True
 
 
-def is_binary_labels(data_instance):
-    def count_labels(instances):
+def count_labels(data_instance):
+    def _count_labels(instances):
         labels = set()
         for idx, instance in instances:
             label = instance.label
             labels.add(label)
         return labels
 
-    label_set = data_instance.mapPartitions(count_labels)
+    label_set = data_instance.mapPartitions(_count_labels)
     label_set = label_set.reduce(lambda x1, x2: x1.union(x2))
-    if len(label_set) != 2:
-        return False
-    return True
+    return len(label_set)
+    # if len(label_set) != 2:
+    #     return False
+    # return True
 
 
 def rubbish_clear(rubbish_list):

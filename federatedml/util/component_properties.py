@@ -120,7 +120,6 @@ class ComponentProperties(object):
             if data_sets[data_key].get("data", None):
                 # data = data_sets[data_key]["data"]
                 data[data_key] = data_sets[data_key]["data"]
-        LOGGER.debug("args: {}, data_sets: {}, data: {}".format(args, data_sets, data))
         return train_data, eval_data, data
 
     def extract_running_rules(self, args, model):
@@ -150,8 +149,11 @@ class ComponentProperties(object):
 
         if self.need_stepwise:
             running_funcs.add_func(model.stepwise, [train_data], save_result=True)
+            running_funcs.add_func(self.union_data, ["train"], use_previews=True, save_result=True)
             running_funcs.add_func(model.set_predict_data_schema, [schema],
                                    use_previews=True, save_result=True)
+            if eval_data:
+                LOGGER.warn("Validate data provided for Stepwise Module. It will not be used in model training.")
             return running_funcs
 
         if self.has_model or self.has_isometric_model:
@@ -198,10 +200,10 @@ class ComponentProperties(object):
             running_funcs.add_func(model.set_flowid, ['transform'])
             running_funcs.add_func(model.transform, [], use_previews=True, save_result=True)
 
-        LOGGER.debug("func list: {}, param list: {}, save_results: {}, use_previews: {}".format(
-            running_funcs.todo_func_list, running_funcs.todo_func_params,
-            running_funcs.save_result, running_funcs.use_previews_result
-        ))
+        # LOGGER.debug("func list: {}, param list: {}, save_results: {}, use_previews: {}".format(
+        #     running_funcs.todo_func_list, running_funcs.todo_func_params,
+        #     running_funcs.save_result, running_funcs.use_previews_result
+        # ))
         return running_funcs
 
     @staticmethod

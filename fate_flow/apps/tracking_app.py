@@ -183,6 +183,10 @@ def component_output_model():
     if output_model_json:
         pipeline_output_model = tracker.get_output_model_meta()
         this_component_model_meta = {}
+        for buffer_name, buffer_object in output_model.items():
+            if buffer_name.endswith('Meta'):
+                this_component_model_meta['meta_data'] = json_format.MessageToDict(buffer_object,
+                                                                                   including_default_value_fields=True)
         for k, v in pipeline_output_model.items():
             if k.endswith('_module_name'):
                 if k == '{}_module_name'.format(request_data['component_name']):
@@ -251,6 +255,10 @@ def component_output_data_download():
         with open(output_data_meta_file_path, 'w') as fw:
             json.dump({'header': header}, fw, indent=4)
 
+        with open(output_data_file_path, 'r+') as f:
+            content = f.read()
+            f.seek(0, 0)
+            f.write('{}\n'.format(','.join(header)) + content)
         # tar
         memory_file = io.BytesIO()
         tar = tarfile.open(fileobj=memory_file, mode='w:gz')

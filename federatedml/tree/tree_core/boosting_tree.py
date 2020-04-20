@@ -154,7 +154,7 @@ class BoostingTree(ModelBase):
             return data_instances
         kflod_obj = KFold()
         cv_param = self._get_cv_param()
-        kflod_obj.run(cv_param, data_instances, self)
+        kflod_obj.run(cv_param, data_instances, self, False)
         return data_instances
 
     def _get_cv_param(self):

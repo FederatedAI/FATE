@@ -1,6 +1,6 @@
 {
     "initiator": {
-        "role": "arbiter",
+        "role": "guest",
         "party_id": 10000
     },
     "job_parameters": {
@@ -15,7 +15,7 @@
         "guest": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "ionosphere_scale", "namespace": "homo"}],
+                    "train_data": [{"name": "ionosphere_scale_guest", "namespace": "homo"}],
                     "eval_data": [{"name": "ionosphere_scale_guest", "namespace": "homo"}]
                 }
             },
@@ -29,8 +29,8 @@
         "host": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "ionosphere_scale", "namespace": "homo"}],
-                    "eval_data": [{"name": "ionosphere_scale", "namespace": "homo"}]
+                    "train_data": [{"name": "ionosphere_scale_host", "namespace": "homo"}],
+                    "eval_data": [{"name": "ionosphere_scale_host", "namespace": "homo"}]
                 }
             },
             "dataio_0":{

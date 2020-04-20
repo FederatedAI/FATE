@@ -103,7 +103,7 @@
           "file": "examples/data/ionosphere_scale_b.csv",
           "head": 1,
           "partition": 10,
-          "table_name": "ionosphere_scale",
+          "table_name": "ionosphere_scale_guest",
           "namespace": "homo",
           "role": "guest_0"
       },
@@ -111,7 +111,7 @@
           "file": "examples/data/ionosphere_scale_b.csv",
           "head": 1,
           "partition": 10,
-          "table_name": "ionosphere_scale",
+          "table_name": "ionosphere_scale_host",
           "namespace": "homo",
           "role": "host_0"
       },
@@ -201,7 +201,7 @@
     "cv_regression": {
       "conf": "./test_secureboost_cross_validation_regression_conf.json",
       "dsl": "./test_secureboost_cross_validation_dsl.json"
-    },
+    }
 
   }
 }

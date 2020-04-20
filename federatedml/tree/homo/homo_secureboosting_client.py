@@ -30,9 +30,10 @@ import functools
 from numpy import random
 
 from typing import List, Tuple
-from arch.api.table.eggroll.table_impl import DTable
 import numpy as np
 from arch.api.utils import log_utils
+
+from federatedml.model_selection.k_fold import KFold
 
 from federatedml.util.classify_label_checker import ClassifyLabelChecker, RegressionLabelChecker
 
@@ -105,7 +106,7 @@ class HomoSecureBoostingTreeClient(BoostingTree):
         else:
             raise NotImplementedError("objective %s not supported yet" % loss_type)
 
-    def federated_binning(self,  data_instance) -> Tuple[DTable, np.array, dict]:
+    def federated_binning(self,  data_instance):
 
         if self.use_missing:
             binning_result = self.binning_obj.average_run(data_instances=data_instance,
@@ -130,7 +131,7 @@ class HomoSecureBoostingTreeClient(BoostingTree):
 
         return grad_and_hess
 
-    def compute_local_loss(self, y: DTable, y_hat: DTable):
+    def compute_local_loss(self, y, y_hat):
 
         LOGGER.info('computing local loss')
 
@@ -147,10 +148,10 @@ class HomoSecureBoostingTreeClient(BoostingTree):
         return float(loss)
 
     @staticmethod
-    def get_subtree_grad_and_hess(g_h: DTable, t_idx: int):
+    def get_subtree_grad_and_hess(g_h, t_idx: int):
         """
         Args:
-            g_h: DTable of g_h val
+            g_h of g_h val
             t_idx: tree index
         Returns: grad and hess of sub tree
         """
@@ -208,7 +209,7 @@ class HomoSecureBoostingTreeClient(BoostingTree):
         flag = self.transfer_inst.stop_flag.get(idx=0,suffix=suffix)
         return flag
 
-    def check_labels(self, data_inst: DTable, ) -> List[int]:
+    def check_labels(self, data_inst, ) -> List[int]:
 
         LOGGER.debug('checking labels')
 
@@ -227,7 +228,7 @@ class HomoSecureBoostingTreeClient(BoostingTree):
     def label_alignment(self, labels: List[int]):
         self.transfer_inst.local_labels.remote(labels, suffix=('label_align', ))
 
-    def fit(self, data_inst: DTable, validate_data: DTable = None,):
+    def fit(self, data_inst, validate_data = None,):
 
         # binning
         data_inst = self.data_alignment(data_inst)
@@ -313,7 +314,7 @@ class HomoSecureBoostingTreeClient(BoostingTree):
 
         LOGGER.debug('fitting homo decision tree done')
 
-    def predict(self, data_inst: DTable):
+    def predict(self, data_inst):
 
         to_predict_data = self.data_alignment(data_inst)
 
@@ -457,3 +458,10 @@ class HomoSecureBoostingTreeClient(BoostingTree):
         self.set_model_param(model_param)
         self.set_loss_function(self.objective_param)
 
+    def cross_validation(self, data_instances):
+        if not self.need_run:
+            return data_instances
+        kflod_obj = KFold()
+        cv_param = self._get_cv_param()
+        kflod_obj.run(cv_param, data_instances, self, True)
+        return data_instances
