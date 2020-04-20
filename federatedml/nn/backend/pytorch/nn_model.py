@@ -42,7 +42,7 @@ def layers(layer, config, type):
             return torch.nn.LeakyReLU()
         if layer == "Tanh":
             return torch.nn.Tanh()
-        if layer == "Softmax"
+        if layer == "Softmax":
             return torch.nn.Softmax(0)
     elif:
         if layer == "Linear":
