@@ -101,7 +101,7 @@ class PoissonParam(BaseParam):
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  cv_param=CrossValidationParam(), stepwise_param=StepwiseParam(),
                  decay=1, decay_sqrt=True,
-                 validation_freqs=None, early_stopping_rounds=None, metric=[], use_first_metric_only=False):
+                 validation_freqs=None, early_stopping_rounds=None, metrics=[], use_first_metric_only=False):
         super(PoissonParam, self).__init__()
         self.penalty = penalty
         self.tol = tol
@@ -123,7 +123,7 @@ class PoissonParam(BaseParam):
         self.validation_freqs = validation_freqs
         self.stepwise_param = stepwise_param
         self.early_stopping_rounds = early_stopping_rounds
-        self.metric = metric
+        self.metrics = metrics
         self.use_first_metric_only = use_first_metric_only
 
     def check(self):
@@ -232,8 +232,8 @@ class PoissonParam(BaseParam):
             if self.validation_freqs is None:
                 raise ValueError("validation freqs must be set when early stopping is enabled")
 
-        if not isinstance(self.metric, list):
-            raise ValueError("metric should be a list")
+        if not isinstance(self.metrics, list):
+            raise ValueError("metrics should be a list")
 
         if not isinstance(self.use_first_metric_only, bool):
             raise ValueError("use_first_metric_only should be a boolean")

@@ -97,7 +97,7 @@ class LinearParam(BaseParam):
                  encrypt_param=EncryptParam(), sqn_param=StochasticQuasiNewtonParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  cv_param=CrossValidationParam(), decay=1, decay_sqrt=True, validation_freqs=None,
-                 early_stopping_rounds=None, stepwise_param=StepwiseParam(), metric=[], use_first_metric_only=False):
+                 early_stopping_rounds=None, stepwise_param=StepwiseParam(), metrics=[], use_first_metric_only=False):
         super(LinearParam, self).__init__()
         self.penalty = penalty
         self.tol = tol
@@ -118,7 +118,7 @@ class LinearParam(BaseParam):
         self.sqn_param = copy.deepcopy(sqn_param)
         self.early_stopping_rounds = early_stopping_rounds
         self.stepwise_param = copy.deepcopy(stepwise_param)
-        self.metric = metric
+        self.metrics = metrics
         self.use_first_metric_only = use_first_metric_only
 
     def check(self):
@@ -219,8 +219,8 @@ class LinearParam(BaseParam):
             if self.validation_freqs is None:
                 raise ValueError("validation freqs must be set when early stopping is enabled")
 
-        if not isinstance(self.metric, list):
-            raise ValueError("metric should be a list")
+        if not isinstance(self.metrics, list):
+            raise ValueError("metrics should be a list")
 
         if not isinstance(self.use_first_metric_only, bool):
             raise ValueError("use_first_metric_only should be a boolean")

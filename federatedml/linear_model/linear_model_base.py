@@ -68,7 +68,7 @@ class BaseLinearModel(ModelBase):
         self.validation_freqs = params.validation_freqs
         self.validation_strategy = None
         self.early_stopping_rounds = params.early_stopping_rounds
-        self.metric = params.metric
+        self.metrics = params.metrics
         self.use_first_metric_only = params.use_first_metric_only
 
     def get_features_shape(self, data_instances):
