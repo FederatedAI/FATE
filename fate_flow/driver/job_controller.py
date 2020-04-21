@@ -206,6 +206,7 @@ class JobController(object):
 
     @staticmethod
     def save_pipeline(job_id, role, party_id, model_id, model_version):
+        schedule_logger(job_id).info('job {} on {} {} start to save pipeline'.format(job_id, role, party_id))
         job_dsl, job_runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id, role=role,
                                                                                         party_id=party_id)
         job_parameters = job_runtime_conf.get('job_parameters', {})
@@ -226,6 +227,7 @@ class JobController(object):
         job_tracker = Tracking(job_id=job_id, role=role, party_id=party_id, model_id=model_id,
                                model_version=model_version)
         job_tracker.save_pipeline(pipelined_buffer_object=pipeline)
+        schedule_logger(job_id).info('job {} on {} {} save pipeline successfully'.format(job_id, role, party_id))
 
     @staticmethod
     def clean_job(job_id, role, party_id, roles, party_ids):

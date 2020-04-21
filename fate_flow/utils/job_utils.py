@@ -461,23 +461,7 @@ def start_session_stop(task):
         '-j', '{}_{}_{}'.format(task.f_task_id, task.f_role, task.f_party_id),
         '-w', str(runtime_conf.get('job_parameters').get('work_mode')),
         '-b', str(runtime_conf.get('job_parameters').get('backend', 0)),
-    ]
-    schedule_logger(task.f_job_id).info('start run subprocess to stop component {} session'
-                                        .format(task.f_component_name))
-    task_dir = os.path.join(get_job_directory(job_id=task.f_job_id), task.f_role,
-                            task.f_party_id, task.f_component_name, 'session_stop')
-    os.makedirs(task_dir, exist_ok=True)
-    p = run_subprocess(config_dir=task_dir, process_cmd=process_cmd, log_dir=None)
-
-
-def start_session_stop(task):
-    job_conf_dict = get_job_conf(task.f_job_id)
-    runtime_conf = job_conf_dict['job_runtime_conf_path']
-    process_cmd = [
-        'python3', sys.modules[SessionStop.__module__].__file__,
-        '-j', '{}_{}_{}'.format(task.f_task_id, task.f_role, task.f_party_id),
-        '-w', str(runtime_conf.get('job_parameters').get('work_mode')),
-        '-b', str(runtime_conf.get('job_parameters').get('backend', 0)),
+        '-c', 'stop' if task.f_status == TaskStatus.COMPLETE else 'kill'
     ]
     schedule_logger(task.f_job_id).info('start run subprocess to stop component {} session'
                                         .format(task.f_component_name))

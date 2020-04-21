@@ -435,6 +435,7 @@ class Tracking(object):
                 session.exit()
             except Exception as e:
                 schedule_logger(self.job_id).exception(e)
+        schedule_logger(self.job_id).info('clean table by namespace {} done'.format(self.task_id))
 
     def job_quantity_constraint(self):
         if RuntimeConfig.WORK_MODE == WorkMode.CLUSTER:
