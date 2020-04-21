@@ -89,7 +89,9 @@ class LogisticParam(BaseParam):
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
-                 stepwise_param=StepwiseParam()
+                 stepwise_param=StepwiseParam(),
+                 metric=['auc', 'ks'],
+                 use_first_metric_only=False
                  ):
         super(LogisticParam, self).__init__()
         self.penalty = penalty
@@ -110,6 +112,8 @@ class LogisticParam(BaseParam):
         self.validation_freqs = validation_freqs
         self.stepwise_param = copy.deepcopy(stepwise_param)
         self.early_stopping_rounds = early_stopping_rounds
+        self.metric = metric
+        self.use_first_metric_only = use_first_metric_only
 
     def check(self):
         descr = "logistic_param's"
@@ -200,6 +204,7 @@ class LogisticParam(BaseParam):
                 raise ValueError("validation freqs must be set when early stopping is enabled")
 
         return True
+
 
 class HomoLogisticParam(LogisticParam):
     """

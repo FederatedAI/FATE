@@ -54,6 +54,7 @@ class BaseLinearModel(ModelBase):
         self.need_one_vs_rest = False
         self.need_call_back_loss = True
         self.init_param_obj = None
+        self.validation_strategy = None
 
     def _init_model(self, params):
         self.model_param = params
@@ -68,6 +69,8 @@ class BaseLinearModel(ModelBase):
         self.validation_freqs = params.validation_freqs
         self.validation_strategy = None
         self.early_stopping_rounds = params.early_stopping_rounds
+        self.metric = params.metric
+        self.use_first_metric_only = params.use_first_metric_only
 
     def get_features_shape(self, data_instances):
         if self.feature_shape is not None:
@@ -127,7 +130,8 @@ class BaseLinearModel(ModelBase):
         abnormal_detection.empty_feature_detection(data_instances)
 
     def init_validation_strategy(self, train_data=None, validate_data=None):
-        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs, self.early_stopping_rounds)
+        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs, self.early_stopping_rounds,
+                                                 self.use_first_metric_only)
         validation_strategy.set_train_data(train_data)
         validation_strategy.set_validate_data(validate_data)
         return validation_strategy
