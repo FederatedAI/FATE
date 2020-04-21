@@ -122,4 +122,4 @@ class BaseLinearRegression(BaseLinearModel):
         self.n_iter_ = result_obj.iters
     
     def get_metrics_param(self):
-        return EvaluateParam(eval_type="regression")
+        return EvaluateParam(eval_type="regression", metrics=self.metrics)
