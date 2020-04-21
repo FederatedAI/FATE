@@ -98,6 +98,8 @@ FATE_MANAGER_GET_NODE_INFO = '/node/info'
 FATE_MANAGER_NODE_CHECK = '/node/management/check'
 
 # logger
+log_utils.LoggerFactory.LEVEL = 10
+# {CRITICAL: 50, FATAL:50, ERROR:40, WARNING:30, WARN:30, INFO:20, DEBUG:10, NOTSET:0}
 log_utils.LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), 'logs', 'fate_flow'))
 stat_logger = log_utils.getLogger("fate_flow_stat")
 detect_logger = log_utils.getLogger("fate_flow_detect")

@@ -125,6 +125,8 @@ class TaskScheduler(object):
                                       initiator_party_id=job_initiator['party_id'],
                                       initiator_role=job_initiator['role'],
                                       job_info=job.to_json())
+        if job.f_status == JobStatus.FAILED:
+            TaskScheduler.stop(job_id=job_id, end_status=JobStatus.FAILED)
         TaskScheduler.finish_job(job_id=job_id, job_runtime_conf=job_runtime_conf)
         schedule_logger(job_id).info('job {} finished, status is {}'.format(job.f_job_id, job.f_status))
         t.cancel()
@@ -245,7 +247,7 @@ class TaskScheduler(object):
             return True
 
     @staticmethod
-    def check_task_status(job_id, component, interval=0.25):
+    def check_task_status(job_id, component, interval=0.5):
         task_id = job_utils.generate_task_id(job_id=job_id, component_name=component.get_name())
         while True:
             try:

@@ -185,6 +185,8 @@ def main():
     existing_strategy = args.force
     backend = args.backend
 
+    submit.set_logger(output_file)
+
 
     @register
     def _on_exit():
