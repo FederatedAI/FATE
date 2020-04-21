@@ -10,22 +10,35 @@
                 }
             },
             "output": {
-                "data": ["train"],
+                "data": ["train_data"],
                 "model": ["dataio"]
             }
          },
+        "intersection_0": {
+             "module": "Intersection",
+             "input": {
+                 "data": {
+                     "data": [
+                         "dataio_0.train_data"
+                     ]
+                 }
+             },
+             "output": {
+                 "data": ["train_data"]
+             }
+        },
         "hetero_feature_binning_0": {
             "module": "HeteroFeatureBinning",
             "input": {
                 "data": {
                     "data": [
-                        "dataio_0.train"
+                        "intersection_0.train_data"
                     ]
                 }
             },
             "output": {
-                "data": ["transform_data"],
-                "model": ["binning_model"]
+                "data": ["train_data"],
+                "model": ["model"]
             }
         }
     }

@@ -248,7 +248,7 @@ class MysqlQueue(BaseQueue):
                 try:
                     job_id = item.get('job_id')
                     event = Queue.select().where(Queue.f_job_id == job_id)[0]
-                    if event.f_is_waiting == 0:
+                    if event.f_is_waiting != 1:
                         del_status = False
                     event.f_is_waiting = 2
                     event.save()

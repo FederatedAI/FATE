@@ -1,0 +1,94 @@
+{
+  "initiator": {
+    "role": "guest",
+    "party_id": 10000
+  },
+  "job_parameters": {
+    "work_mode": 0
+  },
+  "role": {
+    "guest": [
+      10000
+    ],
+    "host": [
+      10000
+    ],
+    "arbiter": [
+      10000
+    ]
+  },
+  "role_parameters": {
+    "guest": {
+      "args": {
+        "data": {
+          "train_data": [
+            {
+              "name": "motor_mini_b",
+              "namespace": "motor_mini"
+            }
+          ]
+        }
+      },
+      "dataio_0": {
+        "with_label": [true],
+        "label_name": ["motor_speed"],
+        "label_type": ["float"],
+        "output_format": ["dense"],
+        "missing_fill": [true],
+        "outlier_replace": [false]
+      },
+      "evaluation_0": {
+        "eval_type": ["regression"],
+        "pos_label": [1]
+      }
+    },
+    "host": {
+      "args": {
+        "data": {
+          "train_data": [
+            {
+              "name": "motor_mini_a",
+              "namespace": "motor_mini"
+            }
+          ]
+        }
+      },
+      "dataio_0": {
+        "with_label": [false],
+        "output_format": ["dense"],
+        "missing_fill": [true],
+        "outlier_replace": [false]
+      },
+      "evaluation_0": {
+        "need_run": [false]
+      }
+    }
+  },
+  "algorithm_parameters": {
+    "hetero_linr_0": {
+      "penalty": "None",
+      "optimizer": "sgd",
+      "tol": 1e-3,
+      "alpha": 0.01,
+      "max_iter": 10,
+      "early_stop": "diff",
+      "batch_size": -1,
+      "learning_rate": 0.15,
+      "decay": 0.0,
+      "decay_sqrt": false,
+      "init_param": {
+        "init_method": "zeros"
+      },
+      "encrypted_mode_calculator_param": {
+        "mode": "fast"
+      },
+      "stepwise_param": {
+        "score_name": "AIC",
+        "direction": "backward",
+        "need_stepwise": true,
+        "max_step": 3,
+        "nvmin": 2
+      }
+    }
+  }
+}

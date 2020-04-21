@@ -102,7 +102,7 @@ class FederationRuntime(Federation):
             futures.extend(rs.push(obj=obj, parties=rs_parties))
             for k, v in splits:
                 _split_rs = self.rsc.load(name, tag=f"{tag}.__part_{k}")
-                futures.extend(_split_rs.push(v, parties))
+                futures.extend(_split_rs.push(obj=v, parties=rs_parties))
 
         def done_callback(fut):
             if LOGGER.isEnabledFor(logging.DEBUG):

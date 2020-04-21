@@ -91,7 +91,7 @@
         "eps": 1e-6
       },
       "iv_value_param": {
-        "value_threshold": 1.0
+        "value_threshold": 0.1
       },
       "iv_percentile_param": {
         "percentile_threshold": 0.9

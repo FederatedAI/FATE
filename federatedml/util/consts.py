@@ -91,6 +91,7 @@ ONE_HOT_LIMIT = 1024   # No more than 10 possible values
 
 QUANTILE = 'quantile'
 BUCKET = 'bucket'
+OPTIMAL = 'optimal'
 
 # Feature selection methods
 UNIQUE_VALUE = 'unique_value'

@@ -1,0 +1,207 @@
+{
+  "data": [
+      {
+          "file": "examples/data/breast_homo_guest.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "homo_breast_guest",
+          "namespace": "homo",
+          "role": "guest_0"
+      },
+      {
+          "file": "examples/data/breast_homo_host.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "homo_breast_host",
+          "namespace": "homo",
+          "role": "host_0"
+      },
+      {
+          "file": "examples/data/breast_homo_test.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "homo_breast_test",
+          "namespace": "homo",
+          "role": "guest_0"
+      },
+      {
+          "file": "examples/data/breast_homo_test.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "homo_breast_test",
+          "namespace": "homo",
+          "role": "host_0"
+      },
+
+      {
+          "file": "examples/data/vehicle_scale_homo_guest.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "homo_vehicle_scale_guest",
+          "namespace": "homo",
+          "role": "guest_0"
+      },
+      {
+          "file": "examples/data/vehicle_scale_homo_host.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "homo_vehicle_scale_host",
+          "namespace": "homo",
+          "role": "host_0"
+      },
+      {
+          "file": "examples/data/vehicle_scale_homo_test.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "homo_vehicle_scale_test",
+          "namespace": "homo",
+          "role": "guest_0"
+      },
+      {
+          "file": "examples/data/vehicle_scale_homo_test.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "homo_vehicle_scale_test",
+          "namespace": "homo",
+          "role": "host_0"
+      },
+
+      {
+          "file": "examples/data/homo_student_guest.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "homo_student_guest",
+          "namespace": "homo",
+          "role": "guest_0"
+      },
+      {
+          "file": "examples/data/homo_student_host.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "homo_student_host",
+          "namespace": "homo",
+          "role": "host_0"
+      },
+      {
+          "file": "examples/data/homo_student_test.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "homo_student_test",
+          "namespace": "homo",
+          "role": "guest_0"
+      },
+      {
+          "file": "examples/data/homo_student_test.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "homo_student_test",
+          "namespace": "homo",
+          "role": "host_0"
+      },
+    
+      {
+          "file": "examples/data/ionosphere_scale_b.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "ionosphere_scale_guest",
+          "namespace": "homo",
+          "role": "guest_0"
+      },
+      {
+          "file": "examples/data/ionosphere_scale_b.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "ionosphere_scale_host",
+          "namespace": "homo",
+          "role": "host_0"
+      },
+    
+      {
+          "file": "examples/data/default_credit_guest_multi.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "default_credit_guest",
+          "namespace": "homo",
+          "role": "guest_0"
+      },
+      {
+          "file": "examples/data/default_credit_host1_multi.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "default_credit_host1",
+          "namespace": "homo",
+          "role": "host_0"
+      },
+      {
+          "file": "examples/data/default_credit_host2_multi.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "default_credit_host2",
+          "namespace": "homo",
+          "role": "host_1"
+      },
+      {
+          "file": "examples/data/default_credit_test_multi.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "default_credit_test",
+          "namespace": "homo",
+          "role": "guest_0"
+      },
+      {
+          "file": "examples/data/default_credit_test_multi.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "default_credit_test",
+          "namespace": "homo",
+          "role": "host_0"
+      },
+      {
+          "file": "examples/data/default_credit_test_multi.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "default_credit_test",
+          "namespace": "homo",
+          "role": "host_1"
+      }
+  ],
+  "tasks": {
+    "train_binary": {
+      "conf": "./test_secureboost_train_binary_conf.json",
+      "dsl": "./test_secureboost_train_dsl.json"
+    },
+    "train_binary_predict": {
+      "conf": "./test_predict_conf.json",
+      "deps": "train_binary"
+    },
+    "train_multi": {
+      "conf": "./test_secureboost_train_multi_conf.json",
+      "dsl": "./test_secureboost_train_dsl.json"
+    },
+    "train_regression": {
+      "conf": "./test_secureboost_train_regression_conf.json",
+      "dsl": "./test_secureboost_train_dsl.json"
+    },
+    "train_binary_with_missing_value": {
+      "conf": "./test_secureboost_train_binary_with_missing_value_conf.json",
+      "dsl": "./test_secureboost_train_dsl.json"
+    },
+    "train_multi_host": {
+      "conf": "./test_secureboost_train_binary_multi_host_conf.json",
+      "dsl": "./test_secureboost_train_dsl.json"
+    },
+    "cv_binary": {
+      "conf": "./test_secureboost_cross_validation_binary_conf.json",
+      "dsl": "./test_secureboost_cross_validation_dsl.json"
+    },
+    "cv_multi": {
+      "conf": "./test_secureboost_cross_validation_multi_conf.json",
+      "dsl": "./test_secureboost_cross_validation_dsl.json"
+    },
+    "cv_regression": {
+      "conf": "./test_secureboost_cross_validation_regression_conf.json",
+      "dsl": "./test_secureboost_cross_validation_dsl.json"
+    }
+
+  }
+}

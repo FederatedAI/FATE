@@ -109,6 +109,8 @@ class HeteroLinRHost(HeteroLinRBase):
                 break
         if not self.is_converged:
             LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))
+        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
+            self.load_model(self.validation_strategy.cur_best_model)
 
     def predict(self, data_instances):
         """

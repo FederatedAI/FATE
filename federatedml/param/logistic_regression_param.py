@@ -24,6 +24,7 @@ from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from federatedml.param.init_model_param import InitParam
 from federatedml.param.predict_param import PredictParam
+from federatedml.param.stepwise_param import StepwiseParam
 from federatedml.param.sqn_param import StochasticQuasiNewtonParam
 from federatedml.util import consts
 
@@ -87,7 +88,8 @@ class LogisticParam(BaseParam):
                  max_iter=100, early_stop='diff', encrypt_param=EncryptParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
-                 multi_class='ovr', validation_freqs=None, early_stopping_rounds=None
+                 multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
+                 stepwise_param=StepwiseParam()
                  ):
         super(LogisticParam, self).__init__()
         self.penalty = penalty
@@ -106,6 +108,7 @@ class LogisticParam(BaseParam):
         self.decay_sqrt = decay_sqrt
         self.multi_class = multi_class
         self.validation_freqs = validation_freqs
+        self.stepwise_param = copy.deepcopy(stepwise_param)
         self.early_stopping_rounds = early_stopping_rounds
 
     def check(self):
@@ -186,6 +189,7 @@ class LogisticParam(BaseParam):
             raise ValueError(
                 "logistic_param's decay_sqrt {} not supported, should be 'bool'".format(
                     self.decay_sqrt))
+        self.stepwise_param.check()
 
         if self.early_stopping_rounds is None:
             pass
@@ -196,7 +200,6 @@ class LogisticParam(BaseParam):
                 raise ValueError("validation freqs must be set when early stopping is enabled")
 
         return True
-
 
 class HomoLogisticParam(LogisticParam):
     """
