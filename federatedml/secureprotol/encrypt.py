@@ -15,18 +15,17 @@
 #
 
 import numpy as np
+import torch
 from collections import Iterable
 from Cryptodome import Random
 from Cryptodome.PublicKey import RSA
 
-# from arch.api.utils import log_utils
 from federatedml.secureprotol import gmpy_math
 from federatedml.secureprotol.affine import AffineCipher
 from federatedml.secureprotol.fate_paillier import PaillierKeypair
 from federatedml.secureprotol.random import RandomPads
 
 
-# LOGGER = log_utils.getLogger()
 from federatedml.secureprotol.iterative_affine import IterativeAffineCipher
 
 
@@ -230,6 +229,17 @@ class PadsCipher(Encrypt):
                 else:
                     ret = rand.add_rand_pads(ret, -1.0)
             return ret
+        elif isinstance(value, torch.Tensor):
+            shape = value.shape
+            value = value.view(-1)
+            ret = value.numpy()
+            for uid, rand in self._rands.items():
+                if uid > self._uuid:
+                    ret = rand.add_rand_pads(ret, 1.0)
+                else:
+                    ret = rand.add_rand_pads(ret, -1.0)
+            ret = torch.Tensor(ret)
+            return ret.reshape(shape)
         else:
             ret = value
             for uid, rand in self._rands.items():

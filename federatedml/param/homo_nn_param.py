@@ -26,6 +26,7 @@ from federatedml.param.predict_param import PredictParam
 from federatedml.protobuf.generated import nn_model_meta_pb2
 import json
 
+from arch.api.utils.log_utils import LoggerFactory
 
 class HomoNNParam(BaseParam):
     """
@@ -86,7 +87,7 @@ class HomoNNParam(BaseParam):
         self.cv_param = copy.deepcopy(cv_param)
 
     def check(self):
-        supported_config_type = ["nn", "keras","pytorch"]
+        supported_config_type = ["nn", "keras", "pytorch", "cv"]
         if self.config_type not in supported_config_type:
             raise ValueError(f"config_type should be one of {supported_config_type}")
         self.early_stop = _parse_early_stop(self.early_stop)
@@ -107,6 +108,10 @@ class HomoNNParam(BaseParam):
         elif self.config_type == "pytorch":
             for layer in self.nn_define:
                 pb.nn_define.append(json.dumps(layer))
+        elif self.config_type == "cv":
+            for layer in self.nn_define:
+                pb.nn_define.append(json.dumps(layer))
+
 
         pb.batch_size = self.batch_size
         pb.max_iter = self.max_iter
@@ -135,6 +140,10 @@ class HomoNNParam(BaseParam):
         elif self.config_type== "pytorch":
             for layer in pb.nn_define:
                 self.nn_define.append(json.loads(layer))
+        elif self.config_type== "cv":
+            self.nn_define.clear()
+            for config in pb.nn_define:
+                self.nn_define.append(json.loads(config))
         else:
             raise ValueError(f"{self.config_type} is not supported")
 
