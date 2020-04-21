@@ -64,9 +64,6 @@ class Submitter(object):
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT)
         stdout, stderr = subp.communicate()
-        logging.info(f"cmd: {' '.join(cmd)}\n"
-                     f"out:{json.dumps(json.loads(stdout))}\n"
-                     f"err:{stderr}")
         return stdout.decode("utf-8")
 
     def submit(self, cmd):

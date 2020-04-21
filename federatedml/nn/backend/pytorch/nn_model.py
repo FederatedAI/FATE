@@ -42,14 +42,17 @@ def layers(layer, config, type):
             return torch.nn.LeakyReLU()
         if layer == "Tanh":
             return torch.nn.Tanh()
-
-    else:
+        if layer == "Softmax":
+            return torch.nn.Softmax(0)
+    elif:
         if layer == "Linear":
             return torch.nn.Linear(config[0], config[1])
         if layer == "BatchNorm2d":
             return torch.nn.BatchNorm2d()
         if layer == "dropout":
             return torch.nn.Dropout()
+    else：
+        print("layer config not support!")
 
 
 def build_pytorch(nn_define, optimizer, loss, metrics):
