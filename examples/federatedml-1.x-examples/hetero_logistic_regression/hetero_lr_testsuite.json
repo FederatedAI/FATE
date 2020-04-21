@@ -42,6 +42,14 @@
       }
   ],
   "tasks": {
+    "lr": {
+      "conf": "test_hetero_lr_train_job_conf.json",
+      "dsl": "test_hetero_lr_train_job_dsl.json"
+    },
+    "early_stop_lr": {
+      "conf": "test_hetero_lr_early_stop_train_job_conf.json",
+      "dsl": "test_hetero_lr_validate_job_dsl.json"
+    },
     "lr_cv": {
       "conf": "test_hetero_lr_cv_job_conf.json",
       "dsl": "test_hetero_lr_cv_job_dsl.json"
@@ -80,10 +88,6 @@
     },
     "lr_multi_host": {
       "conf": "test_multi_host_job_conf.json",
-      "dsl": "test_hetero_lr_train_job_dsl.json"
-    },
-    "lr": {
-      "conf": "test_hetero_lr_train_job_conf.json",
       "dsl": "test_hetero_lr_train_job_dsl.json"
     },
     "lr_sparse": {

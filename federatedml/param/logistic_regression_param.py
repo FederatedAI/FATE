@@ -80,6 +80,14 @@ class LogisticParam(BaseParam):
     multi_class: str, 'ovr', default: 'ovr'
         If it is a multi_class task, indicate what strategy to use. Currently, support 'ovr' short for one_vs_rest only.
 
+    metrics: list, default: []
+        Indicate when executing evaluation during train process, which metrics will be used. If set as empty,
+        default metrics for specific task type will be used. As for binary classification, default metrics are
+        ['auc', 'ks']
+
+    use_first_metric_only: bool, default: False
+        Indicate whether use the first metric only for early stopping judgement.
+
     """
 
     def __init__(self, penalty='L2',
@@ -90,7 +98,7 @@ class LogisticParam(BaseParam):
                  decay=1, decay_sqrt=True,
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  stepwise_param=StepwiseParam(),
-                 metrics=['auc', 'ks'],
+                 metrics=[],
                  use_first_metric_only=False
                  ):
         super(LogisticParam, self).__init__()

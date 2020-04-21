@@ -69,12 +69,15 @@
         "with_label": [false],
         "output_format": ["dense"],
         "outlier_replace": [true]
+      },
+      "evaluation_0": {
+        "need_run": [false]
       }
     }
   },
   "algorithm_parameters": {
     "hetero_lr_0": {
-      "penalty": "L2",
+      "penalty": null,
       "optimizer": "nesterov_momentum_sgd",
       "tol": 1e-4,
       "alpha": 0.01,
@@ -82,10 +85,6 @@
       "early_stop": "weight_diff",
       "batch_size": -1,
       "learning_rate": 0.15,
-      "validation_freqs": 1,
-      "early_stopping_rounds": 3,
-      "metrics": [],
-      "use_first_metric_only": false,
       "init_param": {
         "init_method": "random_uniform"
       },
