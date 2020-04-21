@@ -90,7 +90,7 @@ class LogisticParam(BaseParam):
                  decay=1, decay_sqrt=True,
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  stepwise_param=StepwiseParam(),
-                 metric=['auc', 'ks'],
+                 metrics=['auc', 'ks'],
                  use_first_metric_only=False
                  ):
         super(LogisticParam, self).__init__()
@@ -112,7 +112,7 @@ class LogisticParam(BaseParam):
         self.validation_freqs = validation_freqs
         self.stepwise_param = copy.deepcopy(stepwise_param)
         self.early_stopping_rounds = early_stopping_rounds
-        self.metric = metric
+        self.metrics = metrics
         self.use_first_metric_only = use_first_metric_only
 
     def check(self):
@@ -226,7 +226,10 @@ class HomoLogisticParam(LogisticParam):
                  encrypt_param=EncryptParam(), re_encrypt_batches=2,
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
-                 aggregate_iters=1, multi_class='ovr', validation_freqs=None
+                 aggregate_iters=1, multi_class='ovr', validation_freqs=None,
+                 early_stopping_rounds=None,
+                 metrics=['auc', 'ks'],
+                 use_first_metric_only=False
                  ):
         super(HomoLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                 batch_size=batch_size,
@@ -235,7 +238,9 @@ class HomoLogisticParam(LogisticParam):
                                                 encrypt_param=encrypt_param, predict_param=predict_param,
                                                 cv_param=cv_param, multi_class=multi_class,
                                                 validation_freqs=validation_freqs,
-                                                decay=decay, decay_sqrt=decay_sqrt)
+                                                decay=decay, decay_sqrt=decay_sqrt,
+                                                early_stopping_rounds=early_stopping_rounds,
+                                                metrics=metrics, use_first_metric_only=use_first_metric_only)
         self.re_encrypt_batches = re_encrypt_batches
         self.aggregate_iters = aggregate_iters
 
