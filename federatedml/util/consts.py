@@ -77,6 +77,7 @@ CONST = 'const'
 
 # decision tree
 MAX_SPLIT_NODES = 2 ** 16
+MAX_FEDERATED_NODES = 2 ** 10
 
 TRAIN_EVALUATE = 'train_evaluate'
 VALIDATE_EVALUATE = 'validate_evaluate'
@@ -90,6 +91,7 @@ ONE_HOT_LIMIT = 1024   # No more than 10 possible values
 
 QUANTILE = 'quantile'
 BUCKET = 'bucket'
+OPTIMAL = 'optimal'
 
 # Feature selection methods
 UNIQUE_VALUE = 'unique_value'
