@@ -71,13 +71,6 @@ def call_fun(func, config_data, dsl_path, config_path):
                          'job_runtime_conf': config_data}
             response = requests.post("/".join([server_url, "job", func.rstrip('_job')]), json=post_data)
             try:
-                if config_data.get('try_resubmit'):
-                    if response.json()['retcode']:
-                        while response.json()['retcode']:
-                            print('try re-submit job ,waiting time:{}s'.format(config_data.get('try_resubmit')*60))
-                            time.sleep(config_data.get('try_resubmit')*60)
-                            response = requests.post("/".join([server_url, "job", func.rstrip('_job')]), json=post_data)
-                        print('re-submit job success')
                 if response.json()['retcode'] == 999:
                     start_cluster_standalone_job_server()
                     response = requests.post("/".join([server_url, "job", func.rstrip('_job')]), json=post_data)

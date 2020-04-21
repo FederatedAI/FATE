@@ -85,12 +85,13 @@ class TaskScheduler(object):
         job.f_start_time = current_timestamp()
         job.f_status = JobStatus.RUNNING
         job.f_update_time = current_timestamp()
+        re_run_time = job_parameters.get("re_run_time", None)
         TaskScheduler.sync_job_status(job_id=job_id, roles=job_runtime_conf['role'],
                                       work_mode=job_parameters['work_mode'],
                                       initiator_party_id=job_initiator['party_id'],
                                       initiator_role=job_initiator['role'],
-                                      job_info=job.to_json())
-
+                                      job_info=job.to_json(),
+                                      re_run_time=re_run_time)
         top_level_task_status = set()
         components = dag.get_next_components(None)
         schedule_logger(job_id).info(
@@ -364,23 +365,35 @@ class TaskScheduler(object):
                                                                                'success' if task_process_start_status else 'failed'))
 
     @staticmethod
-    def sync_job_status(job_id, roles, work_mode, initiator_party_id, initiator_role, job_info):
+    def sync_job_status(job_id, roles, work_mode, initiator_party_id, initiator_role, job_info, re_run_time=None):
+        sync_status = True
         for role, partys in roles.items():
             job_info['f_role'] = role
             for party_id in partys:
                 job_info['f_party_id'] = party_id
-                federated_api(job_id=job_id,
-                              method='POST',
-                              endpoint='/{}/schedule/{}/{}/{}/status'.format(
-                                  API_VERSION,
-                                  job_id,
-                                  role,
-                                  party_id),
-                              src_party_id=initiator_party_id,
-                              dest_party_id=party_id,
-                              src_role=initiator_role,
-                              json_body=job_info,
-                              work_mode=work_mode)
+                response_json = federated_api(job_id=job_id,
+                                              method='POST',
+                                              endpoint='/{}/schedule/{}/{}/{}/status'.format(
+                                                  API_VERSION,
+                                                  job_id,
+                                                  role,
+                                                  party_id),
+                                              src_party_id=initiator_party_id,
+                                              dest_party_id=party_id,
+                                              src_role=initiator_role,
+                                              json_body=job_info,
+                                              work_mode=work_mode)
+                if response_json["retcode"]:
+                    sync_status = False
+        if re_run_time and not sync_status:
+            schedule_logger(job_id).info('job {} run failed, Try to run again after {} seconds'.format(job_id, re_run_time))
+            time.sleep(re_run_time)
+            job = job_utils.query_job(job_id=job_id)[0]
+            if job.f_status in [JobStatus.FAILED, JobStatus.CANCELED, JobStatus.TIMEOUT]:
+                raise Exception('job {} has stopped'.format(job_id))
+            TaskScheduler.sync_job_status(job_id, roles, work_mode, initiator_party_id, initiator_role, job_info,
+                                          re_run_time=re_run_time)
+
 
     @staticmethod
     def finish_job(job_id, job_runtime_conf):
