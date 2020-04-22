@@ -110,6 +110,11 @@ class OptimalBinningParam(BaseParam):
         if self.metric_method in ['chi_square', 'chi-square']:
             self.metric_method = 'chi_square'
         self.check_valid_value(self.metric_method, descr, ['iv', 'gini', 'chi_square', 'ks'])
+        self.check_positive_integer(self.init_bin_nums, descr)
+
+        self.init_bucket_method = self.init_bucket_method.lower()
+        self.check_valid_value(self.init_bucket_method, descr, ['quantile', 'bucket'])
+
         if self.max_bin_pct not in [1, 0]:
             self.check_decimal_float(self.max_bin_pct, descr)
         if self.min_bin_pct not in [1, 0]:

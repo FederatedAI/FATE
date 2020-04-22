@@ -37,18 +37,18 @@ class EvaluateParam(BaseParam):
         Indicate if this module needed to be run
     """
 
-    def __init__(self, eval_type="binary", pos_label=1, need_run=True, metric=None):
+    def __init__(self, eval_type="binary", pos_label=1, need_run=True, metrics=None):
         super().__init__()
         self.eval_type = eval_type
         LOGGER.debug('eval type is {}'.format(self.eval_type))
         self.pos_label = pos_label
         self.need_run = need_run
-        self.metric = metric
+        self.metrics = metrics
 
         self.default_metrics = {
             consts.BINARY: consts.DEFAULT_BINARY_METRIC,
             consts.MULTY: consts.DEFAULT_MULTI_METRIC,
-            consts.REGRESSION: consts.REGRESSION_METRICS
+            consts.REGRESSION: consts.DEFAULT_REGRESSION_METRIC
         }
 
         self.allowed_metrics = {
@@ -117,17 +117,14 @@ class EvaluateParam(BaseParam):
                 "evaluate param's need_run {} not supported, should be bool".format(
                     self.need_run))
 
-        if self.metric is None:
-            self.metric = self.default_metrics[self.eval_type]
-            LOGGER.debug('use default metric {} for eval type {}'.format(self.metric, self.eval_type)) 
+        if self.metrics is None or len(self.metrics) == 0:
+            self.metrics = self.default_metrics[self.eval_type]
+            LOGGER.warning('use default metric {} for eval type {}'.format(self.metrics, self.eval_type)) 
 
-        self.metric = self._check_valid_metric(self.metric)
+        self.metrics = self._check_valid_metric(self.metrics)
 
         LOGGER.info("Finish evaluation parameter check!")
 
         return True
 
 
-if __name__ == '__main__':
-    param = EvaluateParam(eval_type='binary')
-    param.check()

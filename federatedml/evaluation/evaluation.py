@@ -138,7 +138,7 @@ class Evaluation(ModelBase):
         self.save_curve_metric_list = [consts.KS, consts.ROC, consts.LIFT, consts.GAIN, consts.PRECISION, consts.RECALL,
                                        consts.ACCURACY]
 
-        self.metric = None
+        self.metrics = None
         self.round_num = 6
 	
 	    # record name of train and validate dataset
@@ -153,7 +153,7 @@ class Evaluation(ModelBase):
         self.model_param = model
         self.eval_type = self.model_param.eval_type
         self.pos_label = self.model_param.pos_label
-        self.metric = model.metric
+        self.metrics = model.metrics
 
     def _run_data(self, data_sets=None, stage=None):
         if not self.need_run:
@@ -204,7 +204,9 @@ class Evaluation(ModelBase):
 
         eval_result = defaultdict(list)
 
-        metrics = self.metric 
+        metrics = self.metrics 
+
+        LOGGER.debug('metrics are {}'.format(metrics))
 
         for eval_metric in metrics:
             res = getattr(self, eval_metric)(labels, pred_results)

@@ -67,6 +67,7 @@ class ValidationStrategy(object):
         self.early_stopping_rounds = early_stopping_rounds
         self.use_first_metric_only = use_first_metric_only
         self.first_metric = None
+        self.best_iteration = -1
 
         if early_stopping_rounds is not None:
             self.sync_status = True
@@ -129,11 +130,15 @@ class ValidationStrategy(object):
         Returns bool
         """
         LOGGER.info('checking early stopping')
-        no_improvement_dict = self.performance_recorder.no_improvement_round
-        for metric in no_improvement_dict:
-            if no_improvement_dict[metric] >= self.early_stopping_rounds:
-                return True
-        return False
+        if self.mode == consts.HETERO:
+            LOGGER.warning('early stopping is not supported for homo algorithms, skip checking')
+            return False
+        else:
+            no_improvement_dict = self.performance_recorder.no_improvement_round
+            for metric in no_improvement_dict:
+                if no_improvement_dict[metric] >= self.early_stopping_rounds:
+                    return True
+            return False
 
     def sync_performance_recorder(self, epoch):
         """
@@ -162,7 +167,7 @@ class ValidationStrategy(object):
         evaluate_param = model.get_metrics_param()
         evaluate_param.check()
 
-        metric_list = evaluate_param.metric
+        metric_list = evaluate_param.metrics
         if self.early_stopping_rounds and self.use_first_metric_only and len(metric_list) != 0:
             for metric in metric_list:
                 if metric in consts.SINGLE_VALUE_METRICS:
@@ -225,6 +230,10 @@ class ValidationStrategy(object):
             LOGGER.debug(eval_result_dict)
 
             if self.early_stopping_rounds:
+
+                if len(eval_result_dict) == 0:
+                    raise ValueError("eval_result len is 0, no single value metric detected for early stopping checking")
+
                 if self.first_metric:
                     eval_result_dict = {self.first_metric: eval_result_dict[self.first_metric]}
                 self.performance_recorder.update(eval_result_dict)
@@ -237,6 +246,7 @@ class ValidationStrategy(object):
 
         if self.early_stopping_rounds and self.is_best_performance_updated():
             self.cur_best_model = {'model': {'best_model': model.export_model()}}
+            self.best_iteration = epoch
             LOGGER.debug('cur best model saved')
 
 

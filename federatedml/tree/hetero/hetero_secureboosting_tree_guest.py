@@ -474,6 +474,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         model_param.losses.extend(self.history_loss)
         model_param.classes_.extend(map(str, self.classes_))
         model_param.num_classes = self.num_classes
+        model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
 
         feature_importances = list(self.get_feature_importance().items())
         feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
@@ -503,11 +504,11 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         if self.task_type == consts.CLASSIFICATION:
             if self.num_classes == 2:
                 return EvaluateParam(eval_type="binary",
-                                     pos_label=self.classes_[1], metric=self.metric)
+                                     pos_label=self.classes_[1], metrics=self.metrics)
             else:
-                return EvaluateParam(eval_type="multi", metric=self.metric)
+                return EvaluateParam(eval_type="multi", metrics=self.metrics)
         else:
-            return EvaluateParam(eval_type="regression", metric=self.metric)
+            return EvaluateParam(eval_type="regression", metrics=self.metrics)
 
     def export_model(self):
 
