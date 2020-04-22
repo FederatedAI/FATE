@@ -1,0 +1,99 @@
+{
+  "initiator": {
+    "role": "guest",
+    "party_id": 10000
+  },
+  "job_parameters": {
+    "work_mode": 0
+  },
+  "role": {
+    "guest": [
+      10000
+    ],
+    "host": [
+      10000
+    ],
+    "arbiter": [
+      10000
+    ]
+  },
+  "role_parameters": {
+    "guest": {
+      "args": {
+        "data": {
+          "train_data": [
+            {
+              "name": "homo_breast_guest",
+              "namespace": "homo_breast_guest"
+            }
+          ]
+        }
+      },
+      "dataio_0": {
+        "with_label": [
+          true
+        ],
+        "label_name": [
+          "y"
+        ],
+        "label_type": [
+          "int"
+        ],
+        "output_format": [
+          "dense"
+        ]
+      }
+    },
+    "host": {
+      "args": {
+        "data": {
+          "train_data": [
+            {
+              "name": "homo_breast_host",
+              "namespace": "homo_breast_host"
+            }
+          ]
+        }
+      },
+      "dataio_0": {
+        "with_label": [
+          true
+        ],
+        "label_name": [
+          "y"
+        ],
+        "label_type": [
+          "int"
+        ],
+        "output_format": [
+          "dense"
+        ]
+      }
+    }
+  },
+  "algorithm_parameters": {
+    "homo_nn_0": {
+      "config_type": "cv",
+      "nn_define": [
+       {
+        "workers": 1,
+        "epochs":1,
+        "batch_size":1,
+        "lr": 0.01,
+        "momentum": 0.9,
+        "weight_decay":1e-4,
+        "split": 1,
+        "gpu":"none",
+        "validation_subset": 0,
+        "training_subset": 0
+      }
+      ],
+      "early_stop": {
+        "early_stop": "diff",
+        "eps": 1e-4
+      },
+      "loss": "user_define",
+      "max_iter": 1
+    }
+  }
+}

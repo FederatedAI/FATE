@@ -126,18 +126,6 @@ class HomoNNServer(HomoNNBase):
     def fit(self, data_inst):
         while self.aggregate_iteration_num < self.max_aggregate_iteration_num:
             self.model = self.aggregator.weighted_mean_model(suffix=self._suffix())
-            # a1 = self.model.unboxed["preBlock.0.weight"].view(-1)
-            # ashape1 = self.model.unboxed["preBlock.0.weight"].shape
-            # b1 = self.model.unboxed["preBlock.0.bias"].view(-1)
-            # bshape1 = self.model.unboxed["preBlock.0.bias"].shape
-            # c1 = self.model.unboxed["forw1.0.conv1.weight"].view(-1)
-            # cshape1 = self.model.unboxed["forw1.0.conv1.weight"].shape
-            # Logger.info("+++++++++++++++++++++++++++++++++++++++")
-            # Logger.info("ju he hou")
-            # #Logger.info(f"preBlock.0.weight : {a1},shape:{ashape1}")
-            # Logger.info(f"preBlock.0.bias : {b1},shape{bshape1}")
-            # Logger.info(f"forw1.0.conv1.weight : {c1},shape{cshape1}")
-            # Logger.info("+++++++++++++++++++++++++++++++++++++++")
             self.aggregator.send_aggregated_model(model=self.model, suffix=self._suffix())
             if self._is_converged():
                 Logger.info(f"early stop at iter {self.aggregate_iteration_num}")
@@ -256,6 +244,7 @@ class HomoNNClient(HomoNNBase):
                 tn = np.sum(metrics[:, 8])
                 n = np.sum(metrics[:, 9])
                 total_loss = np.mean(metrics[:, 0])
+                #设定需要用于聚合的loss用于后面判断
                 data = total_loss
                 classification_loss = np.mean(metrics[:, 1])
                 bbox_regressiong_loss_1 = np.mean(metrics[:, 2])
@@ -304,18 +293,17 @@ class HomoNNClient(HomoNNBase):
 
     def predict(self, data_inst):
         if self.config_type == "cv":
-
             config_default = ObjDict(self.nn_define[0])
             Logger.info(f"{self.nn_define}")
+            #这里只有的model不会用于预测，使用的模型为self.nn_model
             config, model, loss, get_pbb = net.get_model()
-            #加载预测模型
             dataset_validation = dataloader_detector.get_trainloader("validation", config, config_default)
             validateloader = DataLoader(dataset_validation,
                                         batch_size=config_default.batch_size,
                                         shuffle=False,
                                         pin_memory=False)
             Logger.info("validate begin.")
-            # 这个是为了模型中的batchnorm/dropout在training跟testing时区分
+            #模型在这里
             self.nn_model._model.eval()
             metrics = []
             start_time = time.time()
@@ -331,9 +319,7 @@ class HomoNNClient(HomoNNBase):
                     output = self.nn_model._model(data, coord)
                 loss_output = loss(output, target, train=False)
                 metrics.append(loss_output)
-
             end_time = time.time()
-
             metrics = np.asarray(metrics, np.float32)
             epoch = 1
             msg = 'EPOCH {} '.format(
@@ -351,7 +337,6 @@ class HomoNNClient(HomoNNBase):
                       np.mean(metrics[:, 5]))
             print(msg)
             Logger.info(msg)
-            Logger.info("cv_task")
         else:
             data = self.data_converter.convert(data_inst, batch_size=self.batch_size)
             predict = self.nn_model.predict(data)
