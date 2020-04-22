@@ -12,7 +12,7 @@ do
     cp ../../$file ${version}/python/$file
 done
 
-sed -i "s/current_version=.*/current_version=${version}/g" upgrade.sh
+sed -i.bak "s/current_version=.*/current_version=${version}/g" upgrade.sh
 cp upgrade.sh ./$version
 cp modify_settings.py ./$version
 
