@@ -4,8 +4,8 @@ user=app
 deploy_dir=/data/projects/fate
 party_list=(10000 9999)
 party_names=(a b)
-db_auth=(root fate_dev)
-redis_password=fate_dev
+db_auth=(fate_dev WEBANK_2014_fate_dev)
+redis_password=WEBANK_2014_fate_dev
 cxx_compile_flag=false
 
 # services for a
