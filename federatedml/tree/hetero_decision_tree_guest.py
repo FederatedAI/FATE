@@ -273,8 +273,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
         encrypted_splitinfo_host = self.sync_encrypted_splitinfo_host(dep, batch)
 
         for i in range(len(encrypted_splitinfo_host)):
-            best_splitinfo_host = [None for j in range(len(self.cur_split_nodes))]
-            best_gains = [None for j in range(len(self.cur_split_nodes))]
+            init_gain = self.min_impurity_split - consts.FLOAT_ZERO
+            encrypted_init_gain = self.encrypter.encrypt(init_gain)
+            best_splitinfo_host = [[-1, encrypted_init_gain] for j in range(len(self.cur_split_nodes))]
+            best_gains = [init_gain for j in range(len(self.cur_split_nodes))]
             max_nodes = max(len(encrypted_splitinfo_host[i][j]) for j in range(len(self.cur_split_nodes)))
             for k in range(0, max_nodes, consts.MAX_FEDERATED_NODES):
                 batch_splitinfo_host = [encrypted_splitinfo[k: k + consts.MAX_FEDERATED_NODES] for encrypted_splitinfo
@@ -284,7 +286,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
                                                                      partition=self.data_bin._partitions)
                 splitinfos = encrypted_splitinfo_host_table.mapValues(self.find_host_split).collect()
                 for _, splitinfo in splitinfos:
-                    if not best_splitinfo_host[_]:
+                    if best_splitinfo_host[_][0] == -1:
                         best_splitinfo_host[_] = list(splitinfo[:2])
                         best_gains[_] = splitinfo[2]
                     elif splitinfo[0] != -1 and splitinfo[2] > best_gains[_]:
