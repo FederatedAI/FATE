@@ -27,7 +27,7 @@ class FederationRuntime(Federation):
         self._party_id = str(runtime_conf.get("local").get("party_id"))
         self._session_id = session_id
         #init mq here
-        init_mq_context(runtime_conf)
+        self.init_mq_context(runtime_conf)
 
 
     def init_mq_context(self, runtime_conf):
@@ -36,13 +36,13 @@ class FederationRuntime(Federation):
         self._mq_conf = server_conf.get('servers').get('rabbitmq')
         self._host = self._mq_conf.get("self").get("host")
         self._port = self._mq_conf.get("self").get("port")
-        self._mng_port = self._mng_port.get("self").get("mng_port")
+        self._mng_port = self._mq_conf.get("self").get("mng_port")
         base_user = self._mq_conf.get("self").get("user")
         base_password = self._mq_conf.get("self").get("password")
 
         self._rabbit_manager = RabbitManager(base_user, base_password, "{}:{}".format(self._host, self._mng_port))
 
-        mq_info = runtime_conf.get("mq_info", {})
+        mq_info = runtime_conf.get("job_parameters", {}).get("mq_info", {})
         self._user = mq_info.get("user")
         self._password = mq_info.get("pswd")
 
@@ -97,7 +97,7 @@ class FederationRuntime(Federation):
         for party_id, names in mq_names.items():
             info = self._channels_map.get(party_id)
             if info is None:
-                info = get_channel(host, port, user, password, names, party_id)
+                info = FederationRuntime.get_channel(host, port, user, password, names, party_id)
                 self._channels_map[party_id] = info
             channel_infos.append(info)
         return channel_infos
@@ -119,7 +119,7 @@ class FederationRuntime(Federation):
     def _get_channels(mq_names, host, port, user, password):
         channel_infos = []
         for party_id, names in mq_names.items():
-            channel_infos.append(get_channel(host, port, user, password, names, party_id))
+            channel_infos.append(FederationRuntime.get_channel(host, port, user, password, names, party_id))
         return channel_infos
 
 
@@ -152,7 +152,7 @@ class FederationRuntime(Federation):
 
     @staticmethod
     def _partition_send(kvs, mq_names, host, port, user, password, name, tag, total_size, partitions):
-        channel_infos = _get_channels(mq_names=mq_names, host=host, port=port, user=user, password=password)
+        channel_infos = FederationRuntime._get_channels(mq_names=mq_names, host=host, port=port, user=user, password=password)
         data = []
         lines = 0
         MESSAGE_MAX_SIZE = 200000
@@ -163,10 +163,10 @@ class FederationRuntime(Federation):
             data.append(el)
             lines = lines + 1
             if lines > MESSAGE_MAX_SIZE:
-                _send_kv(name=name, tag=tag, data=data, channel_infos=channel_infos, total_size=total_size, partitions=partitions)
+                FederationRuntime._send_kv(name=name, tag=tag, data=data, channel_infos=channel_infos, total_size=total_size, partitions=partitions)
                 lines = 0
                 data.clear()
-        _send_kv(name=name, tag=tag, data=data, channel_infos=channel_infos, total_size=total_size, partitions=partitions)
+        FederationRuntime._send_kv(name=name, tag=tag, data=data, channel_infos=channel_infos, total_size=total_size, partitions=partitions)
         return data
 
 
@@ -205,7 +205,7 @@ class FederationRuntime(Federation):
         
         rtn = []
         for info in channel_infos:
-            obj = _receive(info, name, tag)
+            obj = FederationRuntime._receive(info, name, tag)
             LOGGER.info(f'federation got data. name: {name}, tag: {tag}')
             if isinstance(obj, RDD):
                 rtn.append(obj)
@@ -232,7 +232,7 @@ class FederationRuntime(Federation):
         else:
             channel_infos = self.get_channels(mq_names=mq_names, host=self._host, port=self._port, 
                                             user=self._user, password=self._password)
-            _send_obj(name=name, tag=tag, data=p_dumps(obj), channel_infos=channel_infos)
+            FederationRuntime._send_obj(name=name, tag=tag, data=p_dumps(obj), channel_infos=channel_infos)
         
         return rubbish
 

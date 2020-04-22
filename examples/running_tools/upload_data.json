@@ -4,5 +4,6 @@
   "partition": 10,
   "work_mode": 0,
   "table_name": "hetero_breast_b",
-  "namespace": "hetero_guest_breast"
+  "namespace": "hetero_guest_breast",
+  "store_engine": 0
 }

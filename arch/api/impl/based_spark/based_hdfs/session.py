@@ -81,4 +81,7 @@ class FateSessionImpl(FateSession):
 
     def kill(self):
         pass
+    
+    def get_persistent_engine(self):
+        pass
 

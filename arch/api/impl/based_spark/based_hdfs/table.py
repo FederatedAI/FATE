@@ -35,7 +35,7 @@ class RDDTable(Table):
                   name: str = None,
                   partitions: int = 1,
                   create_if_missing: bool = True):
-        rdd = rdd_from_hdfs(namespace=namespace, name=name, create_if_missing=create_if_missing)
+        rdd = RDDTable.rdd_from_hdfs(namespace=namespace, name=name, create_if_missing=create_if_missing)
         return RDDTable(session_id=session_id, namespace=namespace, name=name, partitions=partitions, rdd=rdd)
     
 
@@ -47,7 +47,7 @@ class RDDTable(Table):
         """
         namespace = str(uuid.uuid1())
         name = str(uuid.uuid1())
-        return from_rdd(rdd=dtable, job_id=session_id, namespace=namespace, name=name)
+        return RDDTable.from_rdd(rdd=dtable, job_id=session_id, namespace=namespace, name=name)
 
 
     @classmethod
@@ -57,8 +57,8 @@ class RDDTable(Table):
 
 
     @classmethod
-    def generate_hdfs_path(cls, namspace, name):
-        return "/fate/{}/{}".format(namspace, name)
+    def generate_hdfs_path(cls, namespace, name):
+        return "/fate/{}/{}".format(namespace, name)
     
     
     @classmethod
@@ -77,9 +77,9 @@ class RDDTable(Table):
     def write2hdfs(cls, namespace, name, kv_list: Iterable, create_if_missing: bool = True):
         from pyspark import SparkContext
         sc = SparkContext.getOrCreate()
-        hdfs_path = generate_hdfs_path(namespace=namespace, name=name)
-        path = get_path(sc, hdfs_path)
-        fs = get_file_system(sc)
+        hdfs_path = RDDTable.generate_hdfs_path(namespace=namespace, name=name)
+        path = RDDTable.get_path(sc, hdfs_path)
+        fs = RDDTable.get_file_system(sc)
         if(fs.exists(path)):
             out = fs.append(path)
         elif create_if_missing:
@@ -88,7 +88,7 @@ class RDDTable(Table):
             raise AssertionError("hdfs path {} not exists.".format(hdfs_path))
 
         for k, v in kv_list:
-            content = u"{}{}{}\n".format(p_dumps(k), delimiter, p_dumps(v))
+            content = u"{}{}{}\n".format(p_dumps(k), DDTable.delimiter, p_dumps(v))
             out.write(bytearray(content, "utf-8"))
         out.flush()
         out.close()
@@ -98,16 +98,16 @@ class RDDTable(Table):
     def delete_file_from_hdfs(cls, namespace, name):
         from pyspark import SparkContext
         sc = SparkContext.getOrCreate()
-        hdfs_path = generate_hdfs_path(namespace=namespace, name=name)
-        path = get_path(sc, hdfs_path)
-        fs = get_file_system(sc)
+        hdfs_path = RDDTable.generate_hdfs_path(namespace=namespace, name=name)
+        path = RDDTable.get_path(sc, hdfs_path)
+        fs = RDDTable.get_file_system(sc)
         if(fs.exists(path)):
             fs.delete(path)
 
 
     @classmethod
     def map2dic(cls, m):
-        filds = m.strip().partition(delimiter)
+        filds = m.strip().partition(RDDTable.delimiter)
         return p_loads(filds[0]), p_loads(filds[2])
 
 
@@ -115,11 +115,11 @@ class RDDTable(Table):
     def rdd_from_hdfs(cls, namespace, name, create_if_missing: bool = True):
         from pyspark import SparkContext
         sc = SparkContext.getOrCreate()
-        hdfs_path = generate_hdfs_path(namespace=namespace, name=name)
-        fs = get_file_system(sc)
-        path = get_path(sc, hdfs_path)
+        hdfs_path = RDDTable.generate_hdfs_path(namespace=namespace, name=name)
+        fs = RDDTable.get_file_system(sc)
+        path = RDDTable.get_path(sc, hdfs_path)
         if(fs.exists(path)):
-            rdd = sc.textFile(path).map(map2dic).persist(util.get_storage_level())
+            rdd = sc.textFile(path).map(RDDTable.map2dic).persist(util.get_storage_level())
         elif create_if_missing:
             rdd = sc.emptyRDD().persist(util.get_storage_level())
         else:
@@ -183,7 +183,7 @@ class RDDTable(Table):
         if hasattr(self, "_rdd") and self._rdd is not None:
             return self._rdd
         else:
-            return _rdd_from_hdfs()
+            return self._rdd_from_hdfs()
 
     def dtable(self):
         """
@@ -195,7 +195,7 @@ class RDDTable(Table):
     # noinspection PyProtectedMember,PyUnresolvedReferences
     @log_elapsed
     def _rdd_from_hdfs(self):
-        self._rdd = rdd_from_hdfs(namespace=self._namespace, name=self._name, create_if_missing=False)
+        self._rdd = RDDTable.rdd_from_hdfs(namespace=self._namespace, name=self._name, create_if_missing=False)
         return self._rdd
 
 
@@ -282,10 +282,10 @@ class RDDTable(Table):
     """
 
     def put(self, k, v, use_serialize=True, maybe_large_value=False):
-        put_all(kv_list= [(k, v)], use_serialize=use_serialize)
+        self.put_all(kv_list= [(k, v)], use_serialize=use_serialize)
 
     def put_all(self, kv_list: Iterable, use_serialize=True, chunk_size=100000):
-        write2hdfs(namespace=self._namespace, name=self._name, kv_list=kv_list, create_if_missing=True)
+        RDDTable.write2hdfs(namespace=self._namespace, name=self._name, kv_list=kv_list, create_if_missing=True)
         self._rdd = None
 
     def get(self, k, use_serialize=True, maybe_large_value=False):
@@ -295,7 +295,7 @@ class RDDTable(Table):
         pass
 
     def destroy(self):
-        delete_file_from_hdfs(namespace=self._namespace, name=self._name)
+        self.delete_file_from_hdfs(namespace=self._namespace, name=self._name)
         self._rdd = None
 
     def put_if_absent(self, k, v, use_serialize=True):

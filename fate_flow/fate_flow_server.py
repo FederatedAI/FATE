@@ -90,7 +90,7 @@ if __name__ == '__main__':
         RuntimeConfig.init_config(WORK_MODE=WorkMode.STANDALONE)
         RuntimeConfig.init_config(HTTP_PORT=CLUSTER_STANDALONE_JOB_SERVER_PORT)
 
-    session.init(mode=RuntimeConfig.WORK_MODE, backend=Backend.EGGROLL)
+    session.init(mode=RuntimeConfig.WORK_MODE, backend=RuntimeConfig.BACKEND, store_engine=RuntimeConfig.STORE_ENGINE)
     queue_manager.init_job_queue()
     job_controller.JobController.init()
     PrivilegeAuth.init()

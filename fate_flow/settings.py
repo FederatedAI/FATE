@@ -23,9 +23,12 @@ from arch.api.utils.core import get_lan_ip
 import __main__
 
 from fate_flow.utils.setting_utils import CenterConfig
+from fate_flow.entity.constant_config import Backend, StoreEngine, WorkMode
 
 
-WORK_MODE = 0
+WORK_MODE = WorkMode.STANDALONE
+BACKEND=Backend.EGGROLL
+STORE_ENGINE=StoreEngine.EGGROLL
 USE_LOCAL_DATABASE = True
 
 # upload data
@@ -126,5 +129,5 @@ SERVINGS = CenterConfig.get_settings(path=SERVING_PATH, servings_zk_path=SERVING
                                      use_zk=USE_CONFIGURATION_CENTER, hosts=ZOOKEEPER_HOSTS,
                                      server_conf_path=SERVER_CONF_PATH)
 BOARD_DASHBOARD_URL = 'http://%s:%d/index.html#/dashboard?job_id={}&role={}&party_id={}' % (BOARD_HOST, BOARD_PORT)
-RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
+RuntimeConfig.init_config(WORK_MODE=WORK_MODE, BACKEND=BACKEND, STORE_ENGINE=STORE_ENGINE)
 RuntimeConfig.init_config(HTTP_PORT=HTTP_PORT)
