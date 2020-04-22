@@ -68,6 +68,8 @@ class ValidationStrategy(object):
         if early_stopping_rounds is not None:
             self.sync_status = True
             # self.validation_freqs = 1
+            if early_stopping_rounds <= 0:
+                raise ValueError('early stopping error should be larger than 0')
             LOGGER.debug("early stopping round is {}".format(self.early_stopping_rounds))
 
         self.cur_best_model = None

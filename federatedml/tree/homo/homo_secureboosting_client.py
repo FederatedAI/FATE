@@ -228,6 +228,10 @@ class HomoSecureBoostingTreeClient(BoostingTree):
     def label_alignment(self, labels: List[int]):
         self.transfer_inst.local_labels.remote(labels, suffix=('label_align', ))
 
+    def get_valid_features(self, epoch_idx, t_idx):
+        valid_feature = self.transfer_inst.valid_features.get(idx=0, suffix=('valid_features', epoch_idx, t_idx))
+        return valid_feature
+
     def fit(self, data_inst, validate_data = None,):
 
         # binning
@@ -273,8 +277,10 @@ class HomoSecureBoostingTreeClient(BoostingTree):
         for epoch_idx in range(self.num_trees):
 
             g_h = self.compute_local_grad_and_hess(self.y_hat)
-            valid_features = self.sample_valid_feature()
+            
             for t_idx in range(self.tree_dim):
+                valid_features = self.get_valid_features(epoch_idx, t_idx)
+                LOGGER.debug('valid features are {}'.format(valid_features))
                 subtree_g_h = self.get_subtree_grad_and_hess(g_h, t_idx)
                 flow_id = self.generate_flowid(epoch_idx, t_idx)
                 new_tree = HomoDecisionTreeClient(self.tree_param, self.data_bin, self.bin_split_points,
