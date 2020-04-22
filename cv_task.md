@@ -21,9 +21,11 @@ cv_task使用说明
         "gpu":"none",
         "validation_subset": 0,
         "training_subset": 0
-      }```
+      }
+```
   其余位置无需修改。<br>
 
 执行任务
 ----------
- ``` python fate_flow_client.py -f submit_job -d../examples/federatedml-1.x-examples/homo_nn/test_homo_nn_train_then_predict.json  -c ../examples/federatedml-1.x-examples/homo_nn/cv.json ```
+``` python fate_flow_client.py -f submit_job -d../examples/federatedml-1.x-examples/homo_nn/test_homo_nn_train_then_predict.json  -c ../examples/federatedml-1.x-examples/homo_nn/cv.json 
+```
