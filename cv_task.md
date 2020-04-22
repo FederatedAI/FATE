@@ -9,7 +9,8 @@ cv_task使用说明
 可选择配置的文件
 -----------------
   examples/federatedml-1.x-examples/homo_nn/cv.json中，之前通过argparse生成config_default，在本文件完成。<br>
- ``` "nn_define": [
+ ``` 
+ "nn_define": [
        {
         "workers": 1,
         "epochs":1,
@@ -22,6 +23,7 @@ cv_task使用说明
         "validation_subset": 0,
         "training_subset": 0
       }
+      ]
 ```
   其余位置无需修改。<br>
 
@@ -29,5 +31,4 @@ cv_task使用说明
 ----------
 ```
 python fate_flow_client.py -f submit_job -d../examples/federatedml-1.x-examples/homo_nn/test_homo_nn_train_then_predict.json  -c ../examples/federatedml-1.x-examples/homo_nn/cv.json 
-
 ```
