@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-current_version=
+current_version=v1.3.2
 fate_dir=/data/projects/fate
 
 
