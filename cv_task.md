@@ -2,13 +2,13 @@ cv_task使用说明
 ===============
 文件目录结构
 ------------
-  cv_task中保留了原有工程绝大部分文件，起到库的作用，包括数据处理，构建网络等。
-  fate_flow为程序执行的目录，为了方便，将数据文件夹luna_npy放到该目录下。
-  新的执行逻辑主要在federatedml/nn/homo_nn/enter_point.py中，主要用于执行加载数据，调用模型训练，聚合，以及预测任务。
+  cv_task中保留了原有工程绝大部分文件，起到库的作用，包括数据处理，构建网络等。<br>
+  fate_flow为程序执行的目录，为了方便，将数据文件夹luna_npy放到该目录下。<br>
+  新的执行逻辑主要在federatedml/nn/homo_nn/enter_point.py中，主要用于执行加载数据，调用模型训练，聚合，以及预测任务。<br>
 
 可选择配置的文件
 -----------------
-  examples/federatedml-1.x-examples/homo_nn/cv.json中，之前通过argparse生成config_default，在本文件完成。
+  examples/federatedml-1.x-examples/homo_nn/cv.json中，之前通过argparse生成config_default，在本文件完成。<br>
   "nn_define": [
        {
         "workers": 1,
@@ -22,7 +22,7 @@ cv_task使用说明
         "validation_subset": 0,
         "training_subset": 0
       }
-  其余位置无需修改。
+  其余位置无需修改。<br>
 
 执行任务
 ----------
