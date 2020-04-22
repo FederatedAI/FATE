@@ -51,8 +51,11 @@ def layers(layer, config, type):
             return torch.nn.BatchNorm2d()
         if layer == "dropout":
             return torch.nn.Dropout()
-    else：
-        print("layer config not support!")
+
+    else:
+        print("layer not support!")
+
+
 
 
 def build_pytorch(nn_define, optimizer, loss, metrics):
