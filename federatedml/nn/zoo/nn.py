@@ -46,7 +46,10 @@ def build_nn_model(input_shape, nn_define, loss, optimizer, metrics,
 
 
 def restore_nn_model(config_type, model_bytes):
-    if config_type =="pytorch" or "cv":
+    if config_type =="pytorch":
+        from federatedml.nn.backend.pytorch.nn_model import restore_pytorch_nn_model
+        return restore_pytorch_nn_model(model_bytes)
+    elif config_type =="cv":
         from federatedml.nn.backend.pytorch.nn_model import restore_pytorch_nn_model
         return restore_pytorch_nn_model(model_bytes)
     else:

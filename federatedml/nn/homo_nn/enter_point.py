@@ -233,19 +233,19 @@ class HomoNNClient(HomoNNBase):
                                          pin_memory=False)
                 epoch_degree = float(len(trainloader))
                 metrics = []
+                self.nn_model._model.train()
                 for i, (data, target, coord) in enumerate(trainloader):
                     # print('shape of data:', data.shape)
                     # print('shape of coord:', coord.shape)
                     # print('*******************', i, "/", str(len(trainloader)))
                     Logger.info(f"{i}:shape of data: {data.shape}, shape of coord:{coord.shape}")
-                    output = model(data, coord)
+                    output = self.nn_model._model(data, coord)
                     loss_output = loss(output, target)
                     optimizer.zero_grad()
                     loss_output[0].backward()
                     optimizer.step()
                     metrics.append(loss_output)
-                    Logger.info(f"finish{i}")
-                    break
+                    Logger.info(f"finish{i}th data")
                 metrics = np.asarray(metrics, np.float32)
                 #metrics
                 acc = (np.sum(metrics[:, 6]) + np.sum(metrics[:, 8])) / (np.sum(metrics[:, 7]) + np.sum(metrics[:, 9]))
@@ -306,6 +306,7 @@ class HomoNNClient(HomoNNBase):
         if self.config_type == "cv":
 
             config_default = ObjDict(self.nn_define[0])
+            Logger.info(f"{self.nn_define}")
             config, model, loss, get_pbb = net.get_model()
             #加载预测模型
             dataset_validation = dataloader_detector.get_trainloader("validation", config, config_default)
@@ -315,7 +316,7 @@ class HomoNNClient(HomoNNBase):
                                         pin_memory=False)
             Logger.info("validate begin.")
             # 这个是为了模型中的batchnorm/dropout在training跟testing时区分
-            model.eval()
+            self.nn_model._model.eval()
             metrics = []
             start_time = time.time()
             for i, (data, target, coord) in enumerate(validateloader):
@@ -330,7 +331,6 @@ class HomoNNClient(HomoNNBase):
                     output = self.nn_model._model(data, coord)
                 loss_output = loss(output, target, train=False)
                 metrics.append(loss_output)
-
 
             end_time = time.time()
 

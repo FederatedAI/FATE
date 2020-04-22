@@ -109,8 +109,8 @@ class HomoNNParam(BaseParam):
             for layer in self.nn_define:
                 pb.nn_define.append(json.dumps(layer))
         elif self.config_type == "cv":
-            for layer in self.nn_define:
-                pb.nn_define.append(json.dumps(layer))
+            for config in self.nn_define:
+                pb.nn_define.append(json.dumps(config))
 
 
         pb.batch_size = self.batch_size
