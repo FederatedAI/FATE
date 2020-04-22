@@ -1,12 +1,12 @@
 #!/bin/bash
 
 
-current_version=v1.3.2
+current_version=
 fate_dir=/data/projects/fate
 
 
 dir=$(dirname $(readlink -f "$0"))
-python_dir="$dir/$current_version/python"
+python_dir="$dir/python"
 
 
 echo "start update file"
