@@ -35,7 +35,7 @@ if [[ -e "eggroll" ]];then
         [yY]*)
                 echo "[INFO] Delete the original eggroll"
                 rm -rf eggroll
-                git clone ${eggroll_git_url} -b ${eggroll_git_branch} eggroll
+                git clone ${eggroll_git_url} -b ${eggroll_git_branch} --depth=1 eggroll
                 break
                 ;;
         [nN]*)
@@ -48,7 +48,7 @@ if [[ -e "eggroll" ]];then
         esac
     done
 else
-    git clone ${eggroll_git_url} -b ${eggroll_git_branch} eggroll
+    git clone ${eggroll_git_url} -b ${eggroll_git_branch} --depth=1 eggroll
 fi
 
 cd ${source_code_dir}
@@ -62,7 +62,7 @@ if [[ -e "fateboard" ]];then
         [yY]*)
                 echo "[INFO] Delete the original fateboard"
                 rm -rf fateboard
-                git clone ${fateboard_git_url} -b ${fateboard_git_branch} fateboard
+                git clone ${fateboard_git_url} -b ${fateboard_git_branch} --depth=1 fateboard
                 break
                 ;;
         [nN]*)
@@ -75,7 +75,7 @@ if [[ -e "fateboard" ]];then
         esac
     done
 else
-    git clone ${fateboard_git_url} -b ${fateboard_git_branch} fateboard
+    git clone ${fateboard_git_url} -b ${fateboard_git_branch} --depth=1 fateboard
 fi
 
 egg_version=$(grep -E -m 1 -o "<eggroll.version>(.*)</eggroll.version>" ${source_code_dir}/eggroll/pom.xml| tr -d '[\\-a-z<>//]' | awk -F "eggroll.version" '{print $2}')
