@@ -26,11 +26,10 @@ from grpc._cython import cygrpc
 from werkzeug.serving import run_simple
 from werkzeug.wsgi import DispatcherMiddleware
 
-from arch.api import session, Backend
 from fate_flow.utils.proto_compatibility import proxy_pb2_grpc
 from fate_flow.apps.data_access_app import manager as data_access_app_manager
 from fate_flow.apps.job_app import manager as job_app_manager
-from fate_flow.apps.machine_learning_model_app import manager as model_app_manager
+from fate_flow.apps.model_app import manager as model_app_manager
 from fate_flow.apps.pipeline_app import manager as pipeline_app_manager
 from fate_flow.apps.table_app import manager as table_app_manager
 from fate_flow.apps.tracking_app import manager as tracking_app_manager
@@ -89,8 +88,7 @@ if __name__ == '__main__':
     if args.standalone_node:
         RuntimeConfig.init_config(WORK_MODE=WorkMode.STANDALONE)
         RuntimeConfig.init_config(HTTP_PORT=CLUSTER_STANDALONE_JOB_SERVER_PORT)
-
-    session.init(mode=RuntimeConfig.WORK_MODE, backend=Backend.EGGROLL)
+    RuntimeConfig.init_env()
     queue_manager.init_job_queue()
     job_controller.JobController.init()
     PrivilegeAuth.init()

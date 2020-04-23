@@ -29,6 +29,7 @@ from federatedml.optim.convergence import converge_func_factory
 from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import HeteroNNMeta
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import HeteroNNParam
 from federatedml.util import consts
+from federatedml.param.evaluation_param import EvaluateParam
 
 LOGGER = log_utils.getLogger()
 MODELMETA = "HeteroNNGuestMeta"
@@ -197,11 +198,22 @@ class HeteroNNGuest(HeteroNNBase):
         model_param.iter_epoch = self.iter_epoch
         model_param.hetero_nn_model_param.CopyFrom(self.model.get_hetero_nn_model_param())
         model_param.num_label = self.num_label
+        model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
 
         for loss in self.history_loss:
             model_param.history_loss.append(loss)
 
         return model_param
+
+    def get_metrics_param(self):
+        if self.task_type == consts.CLASSIFICATION:
+            if self.num_label == 2:
+                return EvaluateParam(eval_type="binary",
+                                     pos_label=1, metrics=self.metrics)
+            else:
+                return EvaluateParam(eval_type="multi", metrics=self.metrics)
+        else:
+            return EvaluateParam(eval_type="regression", metrics=self.metrics)
 
     def prepare_batch_data(self, batch_generator, data_inst):
         batch_generator.initialize_batch_generator(data_inst, self.batch_size)

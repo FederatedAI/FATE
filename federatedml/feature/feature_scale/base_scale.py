@@ -28,9 +28,10 @@ LOGGER = log_utils.getLogger()
 
 class BaseScale(object):
     def __init__(self, params):
-        self.area = params.area
+        # self.area = params.area
         self.mode = params.mode
-        self.param_scale_column_idx = params.scale_column_idx
+        self.param_scale_col_indexes = params.scale_col_indexes
+        self.param_scale_names = params.scale_names
         self.feat_upper = params.feat_upper
         self.feat_lower = params.feat_lower
         self.data_shape = None
@@ -77,21 +78,28 @@ class BaseScale(object):
 
     def _get_scale_column_idx(self, data):
         data_shape = self._get_data_shape(data)
-        if self.area == 'col':
-            if isinstance(self.param_scale_column_idx, list):
-                if len(self.param_scale_column_idx) > 0:
-                    max_col_idx = max(self.param_scale_column_idx)
+        if self.param_scale_col_indexes != -1:
+            if isinstance(self.param_scale_col_indexes, list):
+                if len(self.param_scale_col_indexes) > 0:
+                    max_col_idx = max(self.param_scale_col_indexes)
                     if max_col_idx >= data_shape:
                         raise ValueError(
                             "max column index in area is:{}, should less than data shape:{}".format(max_col_idx,
                                                                                                     data_shape))
-                scale_column_idx = self.param_scale_column_idx
+                scale_column_idx = self.param_scale_col_indexes
+
+                header = data_overview.get_header(data)
+
+                scale_names = set(header).intersection(set(self.param_scale_names))
+                idx_from_name = list(map(lambda n: header.index(n), scale_names))
+
+                scale_column_idx = scale_column_idx + idx_from_name
                 scale_column_idx = list(set(scale_column_idx))
                 scale_column_idx.sort()
             else:
                 LOGGER.warning(
                     "parameter scale_column_idx should be a list, but not:{}, set scale column to all columns".format(
-                        type(self.param_scale_column_idx)))
+                        type(self.param_scale_col_indexes)))
                 scale_column_idx = [i for i in range(data_shape)]
         else:
             scale_column_idx = [i for i in range(data_shape)]

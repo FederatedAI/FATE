@@ -50,7 +50,7 @@ class ScaleParam(BaseParam):
 
     """
 
-    def __init__(self, method=None, mode="normal", scale_col_indexes=-1, scale_names=None, feat_upper=1, feat_lower=0,
+    def __init__(self, method=None, mode="normal", scale_col_indexes=-1, scale_names=None, feat_upper=None, feat_lower=None,
                  with_mean=True, with_std=True, need_run=True):
         super().__init__()
         if scale_names is None:
@@ -85,9 +85,6 @@ class ScaleParam(BaseParam):
         #     raise ValueError("scale param's feat_upper {} not supported, should be float or int".format(
         #         self.feat_upper))
 
-        # if type(self.feat_lower).__name__ not in ["float", "int"]:
-        #     raise ValueError("scale param's feat_lower {} not supported, should be float or int".format(
-        #         self.feat_lower))
 
         if self.scale_col_indexes != -1  and not isinstance(self.scale_col_indexes, list):
             raise ValueError("scale_col_indexes is should be -1 or a list")

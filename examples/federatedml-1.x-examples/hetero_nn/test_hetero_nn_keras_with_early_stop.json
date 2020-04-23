@@ -97,12 +97,13 @@
       "early_stop": "diff",
       "loss": "binary_crossentropy",
       "metrics": [
-        "accuracy",
-        "AUC"
+        "AUC",
+        "ks"
       ],
       "epochs": 100,
       "validation_freqs": 1,
-      "early_stopping_rounds": 10
+      "early_stopping_rounds": 15,
+      "use_first_metric_only": true
     }
   }
 }

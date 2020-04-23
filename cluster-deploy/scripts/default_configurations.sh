@@ -1,13 +1,13 @@
 #!/bin/bash
 fate_cos_address=https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com
-version=1.3.0
+version=1.3.1
 egg_version=
 meta_service_version=
 roll_version=
 federation_version=
 proxy_version=
 fateboard_version=
-python_version=1.3.0
+python_version=1.3.1
 jdk_version=8u192
 mysql_version=8.0.13
 redis_version=5.0.2
@@ -16,6 +16,7 @@ eggroll_meta_service_db_name=eggroll_meta
 deploy_ssh_port=22
 enable_init_env=1  # 1 for turn on, 0 for turn off
 use_external_db=0  # 1 for turn on, 0 for turn off
+mysql_port=3306
 
 package_init() {
     output_packages_dir=$1
