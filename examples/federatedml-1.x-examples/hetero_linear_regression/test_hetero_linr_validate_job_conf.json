@@ -102,6 +102,9 @@
       "decay_sqrt": false,
       "early_stopping_rounds": 3,
       "validation_freqs": 3,
+      "metrics": ["explained_variance", "mean_absolute_error", "mean_squared_error",
+                  "median_absolute_error", "r2_score", "root_mean_squared_error"],
+      "use_first_metric_only": false,
       "init_param": {
         "init_method": "zeros"
       },

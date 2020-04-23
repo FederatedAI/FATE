@@ -97,7 +97,7 @@ class LinearParam(BaseParam):
                  encrypt_param=EncryptParam(), sqn_param=StochasticQuasiNewtonParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  cv_param=CrossValidationParam(), decay=1, decay_sqrt=True, validation_freqs=None,
-                 early_stopping_rounds=None, stepwise_param=StepwiseParam()):
+                 early_stopping_rounds=None, stepwise_param=StepwiseParam(), metrics=[], use_first_metric_only=False):
         super(LinearParam, self).__init__()
         self.penalty = penalty
         self.tol = tol
@@ -118,18 +118,22 @@ class LinearParam(BaseParam):
         self.sqn_param = copy.deepcopy(sqn_param)
         self.early_stopping_rounds = early_stopping_rounds
         self.stepwise_param = copy.deepcopy(stepwise_param)
+        self.metrics = metrics
+        self.use_first_metric_only = use_first_metric_only
 
     def check(self):
         descr = "linear_regression_param's "
 
-        if type(self.penalty).__name__ != "str":
+        if self.penalty is None:
+            self.penalty = 'NONE'
+        elif type(self.penalty).__name__ != "str":
             raise ValueError(
                 descr + "penalty {} not supported, should be str type".format(self.penalty))
-        else:
-            self.penalty = self.penalty.upper()
-            if self.penalty not in ['L1', 'L2', 'NONE']:
-                raise ValueError(
-                    "penalty {} not supported, penalty should be 'L1', 'L2' or 'none'".format(self.penalty))
+
+        self.penalty = self.penalty.upper()
+        if self.penalty not in ['L1', 'L2', 'NONE']:
+            raise ValueError(
+                "penalty {} not supported, penalty should be 'L1', 'L2' or 'none'".format(self.penalty))
 
         if type(self.tol).__name__ not in ["int", "float"]:
             raise ValueError(
@@ -215,5 +219,9 @@ class LinearParam(BaseParam):
             if self.validation_freqs is None:
                 raise ValueError("validation freqs must be set when early stopping is enabled")
 
+        if not isinstance(self.metrics, list):
+            raise ValueError("metrics should be a list")
 
+        if not isinstance(self.use_first_metric_only, bool):
+            raise ValueError("use_first_metric_only should be a boolean")
         return True

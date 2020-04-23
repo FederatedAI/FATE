@@ -80,7 +80,8 @@ class LocalBaseline(ModelBase):
                   'is_converged': is_converged,
                   'weight': weight_dict,
                   'intercept': intercept,
-                  'header': self.header
+                  'header': self.header,
+                  'best_iteration': -1
                   }
         return result
 
@@ -102,7 +103,8 @@ class LocalBaseline(ModelBase):
                       'is_converged': is_converged,
                       'weight': weight_dict,
                       'intercept': intercept,
-                      'header': self.header
+                      'header': self.header,
+                      'best_iteration': -1
                       }
             param_protobuf_obj = lr_model_param_pb2.SingleModel(**result)
             ovr_pb_objs.append(param_protobuf_obj)
