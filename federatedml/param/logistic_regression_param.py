@@ -98,7 +98,7 @@ class LogisticParam(BaseParam):
                  decay=1, decay_sqrt=True,
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  stepwise_param=StepwiseParam(),
-                 metric=[],
+                 metrics=[],
                  use_first_metric_only=False
                  ):
         super(LogisticParam, self).__init__()
