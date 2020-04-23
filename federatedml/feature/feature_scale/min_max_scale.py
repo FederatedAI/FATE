@@ -124,7 +124,7 @@ class MinMaxScale(BaseScale):
 
         meta_proto_obj = ScaleMeta(method="min_max_scale",
                                    mode=self.mode,
-                                   area=self.area,
+                                   area="null",
                                    scale_column=scale_column,
                                    feat_upper=self._get_upper(self.data_shape),
                                    feat_lower=self._get_lower(self.data_shape),

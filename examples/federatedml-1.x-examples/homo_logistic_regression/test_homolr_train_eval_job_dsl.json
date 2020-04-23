@@ -10,7 +10,7 @@
                 }
             },
             "output": {
-                "data": ["train_data"],
+                "data": ["train"],
                 "model": ["dataio"]
             }
          },
@@ -27,28 +27,32 @@
                 ]
             },
             "output": {
-                "data": ["eval_data"],
-                "model": ["dataio"]
+                "data": ["eval_data"]
             }
-         },
-        "hetero_poisson_0": {
-            "module": "HeteroPoisson",
+        },
+        "homo_lr_0": {
+            "module": "HomoLR",
             "input": {
                 "data": {
-                    "train_data": ["dataio_0.train_data"],
+                    "train_data": [
+                        "dataio_0.train"
+                    ],
                     "eval_data": ["dataio_1.eval_data"]
+
                 }
             },
             "output": {
                 "data": ["train"],
-                "model": ["hetero_poisson_model"]
+                "model": ["homolr"]
             }
         },
         "evaluation_0": {
             "module": "Evaluation",
             "input": {
                 "data": {
-                    "data": ["hetero_poisson_0.train"]
+                    "data": [
+                        "homo_lr_0.train"
+                    ]
                 }
             }
         }

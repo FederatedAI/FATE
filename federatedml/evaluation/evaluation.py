@@ -167,8 +167,8 @@ class Evaluation(ModelBase):
                         consts.REGRESSION: self.regression_support_func}
 
         self.round_num = 6
-	
-	# record name of train and validate dataset
+
+        # record name of train and validate dataset
         self.validate_key = set()
         self.train_key = set()
 
@@ -729,8 +729,6 @@ class Evaluation(ModelBase):
         ----------
         labels: value list. The labels of data set.
         pred_scores: pred_scores: value list. The predict results of model. It should be corresponding to labels each data.
-        thresholds: value list. This parameter effective only for 'binary'. The predict scores will be 1 if it larger than thresholds, if not,
-                    if will be 0. If not only one threshold in it, it will return several results according to the thresholds. default None
         Returns
         ----------
         float
@@ -753,8 +751,6 @@ class Evaluation(ModelBase):
         ----------
         labels: value list. The labels of data set.
         pred_scores: pred_scores: value list. The predict results of model. It should be corresponding to labels each data.
-        thresholds: value list. This parameter effective only for 'binary'. The predict scores will be 1 if it larger than thresholds, if not,
-                    if will be 0. If not only one threshold in it, it will return several results according to the thresholds. default None
         Returns
         ----------
         float
@@ -778,9 +774,6 @@ class Evaluation(ModelBase):
         ----------
         labels: value list. The labels of data set.
         pred_scores: pred_scores: value list. The predict results of model. It should be corresponding to labels each data.
-        thresholds: value list. This parameter effective only for 'binary'. The predict scores will be 1 if it larger than thresholds, if not,
-                    if will be 0. If not only one threshold in it, it will return several results according to the thresholds. default None
-        result_filter: value list. If result_filter is not None, it will filter the label results not in result_filter.
         Returns
         ----------
         dict

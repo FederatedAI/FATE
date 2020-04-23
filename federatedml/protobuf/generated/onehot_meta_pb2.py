@@ -7,7 +7,6 @@ from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
-from google.protobuf import descriptor_pb2
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -19,6 +18,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='onehot-meta.proto',
   package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
+  serialized_options=_b('B\017OneHotMetaProto'),
   serialized_pb=_b('\n\x11onehot-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"K\n\nOneHotMeta\x12\x1b\n\x13transform_col_names\x18\x01 \x03(\t\x12\x0e\n\x06header\x18\x02 \x03(\t\x12\x10\n\x08need_run\x18\x03 \x01(\x08\x42\x11\x42\x0fOneHotMetaProtob\x06proto3')
 )
 
@@ -38,28 +38,28 @@ _ONEHOTMETA = _descriptor.Descriptor(
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='header', full_name='com.webank.ai.fate.core.mlmodel.buffer.OneHotMeta.header', index=1,
       number=2, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='need_run', full_name='com.webank.ai.fate.core.mlmodel.buffer.OneHotMeta.need_run', index=2,
       number=3, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -80,6 +80,5 @@ OneHotMeta = _reflection.GeneratedProtocolMessageType('OneHotMeta', (_message.Me
 _sym_db.RegisterMessage(OneHotMeta)
 
 
-DESCRIPTOR.has_options = True
-DESCRIPTOR._options = _descriptor._ParseOptions(descriptor_pb2.FileOptions(), _b('B\017OneHotMetaProto'))
+DESCRIPTOR._options = None
 # @@protoc_insertion_point(module_scope)
