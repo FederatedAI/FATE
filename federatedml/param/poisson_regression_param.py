@@ -90,6 +90,13 @@ class PoissonParam(BaseParam):
     validation_freqs: int, list, tuple, set, or None
         validation frequency during training.
 
+    metrics: list, default: []
+        Specify which metrics to be used when performing evaluation during trainign process.
+        If set as empty, default metrics will be used. For regression tasks, default metrics are ['root_mean_squared_error', 'mean_absolute_error']
+
+    use_first_metric_only: bool, default: False
+        Indicate whether to use the first metric in `metrics` as the only criterion for early stopping judgement.
+
     """
 
     def __init__(self, penalty='L2',

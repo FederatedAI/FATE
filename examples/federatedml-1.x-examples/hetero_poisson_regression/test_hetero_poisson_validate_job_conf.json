@@ -194,8 +194,7 @@
       "exposure_colname": "exposure",
       "validation_freqs": 5,
       "early_stopping_rounds": 5,
-      "metrics": ["explained_variance", "mean_absolute_error", "mean_squared_error",
-                  "median_absolute_error", "root_mean_squared_error"],
+      "metrics": ["mean_absolute_error", "root_mean_squared_error"],
       "use_first_metric_only": false,
       "init_param": {
         "init_method": "zeros",
