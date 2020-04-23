@@ -23,14 +23,14 @@
         "data": {
           "train_data": [
             {
-              "name": "hetero_vehicle_b",
-              "namespace": "hetero_guest_vehicle"
+              "name": "hetero_breast_b",
+              "namespace": "hetero_breast_guest"
             }
           ],
           "eval_data": [
             {
-              "name": "hetero_vehicle_b",
-              "namespace": "hetero_guest_vehicle"
+              "name": "hetero_breast_b",
+              "namespace": "hetero_breast_guest"
             }
           ]
         }
@@ -43,18 +43,8 @@
         "missing_fill": [true],
         "outlier_replace": [true]
       },
-      "local_baseline_0": {
-        "model_name": ["LogisticRegression"],
-        "model_opts": [{"penalty": "l2", "tol":0.0001, "C":1.0, "fit_intercept": true,
-                       "solver": "lbfgs", "max_iter":100, "multi_class":"ovr"}],
-        "need_run": [true]
-      },
       "evaluation_0": {
-          "eval_type": ["multi"],
-          "pos_label": [1]
-      },
-      "evaluation_1": {
-          "eval_type": ["multi"],
+          "eval_type": ["binary"],
           "pos_label": [1]
       }
     },
@@ -63,14 +53,14 @@
         "data": {
           "train_data": [
             {
-              "name": "hetero_vehicle_a",
-              "namespace": "hetero_host_vehicle"
+              "name": "hetero_breast_a",
+              "namespace": "hetero_breast_host"
             }
           ],
           "eval_data": [
             {
-              "name": "hetero_vehicle_a",
-              "namespace": "hetero_host_vehicle"
+              "name": "hetero_breast_a",
+              "namespace": "hetero_breast_host"
             }
           ]
         }
@@ -79,15 +69,6 @@
         "with_label": [false],
         "output_format": ["dense"],
         "outlier_replace": [true]
-      },
-      "local_baseline_0": {
-        "need_run": [false]
-      },
-      "evaluation_0": {
-        "need_run": [false]
-      },
-      "evaluation_1": {
-          "need_run": [false]
       }
     }
   },
@@ -101,8 +82,18 @@
       "early_stop": "weight_diff",
       "batch_size": -1,
       "learning_rate": 0.15,
+      "validation_freqs": 1,
+      "early_stopping_rounds": 3,
+      "metrics": [],
+      "use_first_metric_only": false,
       "init_param": {
         "init_method": "random_uniform"
+      },
+      "sqn_param": {
+        "update_interval_L": 3,
+        "memory_M": 5,
+        "sample_size": 5000,
+        "random_seed": null
       },
       "cv_param": {
         "n_splits": 5,
@@ -112,12 +103,12 @@
         "evaluate_param": {
           "eval_type": "binary"
         }
-      },
-      "intersect_0": {
-        "intersect_method": "rsa",
-        "sync_intersect_ids": true,
-        "only_output_key": false
       }
+    },
+    "intersect_0": {
+      "intersect_method": "rsa",
+      "sync_intersect_ids": true,
+      "only_output_key": false
     }
   }
 }

@@ -19,10 +19,79 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
   serialized_options=_b('B\026PearsonModelParamProto'),
-  serialized_pb=_b('\n\x19pearson-model-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\x92\x02\n\x11PearsonModelParam\x12\r\n\x05party\x18\x01 \x01(\t\x12\x0f\n\x07parties\x18\x02 \x03(\t\x12\r\n\x05shape\x18\x03 \x01(\x05\x12\x0e\n\x06shapes\x18\x04 \x03(\x05\x12\r\n\x05names\x18\x05 \x03(\t\x12K\n\ranonymous_map\x18\t \x03(\x0b\x32\x34.com.webank.ai.fate.core.mlmodel.buffer.AnonymousMap\x12\x0c\n\x04\x63orr\x18\x06 \x03(\x01\x12\x12\n\nlocal_corr\x18\x07 \x03(\x01\x12@\n\tall_names\x18\x08 \x03(\x0b\x32-.com.webank.ai.fate.core.mlmodel.buffer.Names\"\x16\n\x05Names\x12\r\n\x05names\x18\x01 \x03(\t\"/\n\x0c\x41nonymousMap\x12\x11\n\tanonymous\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\tB\x18\x42\x16PearsonModelParamProtob\x06proto3')
+  serialized_pb=_b('\n\x19pearson-model-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\x16\n\x05Names\x12\r\n\x05names\x18\x01 \x03(\t\"/\n\x0c\x41nonymousMap\x12\x11\n\tanonymous\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\"\x92\x02\n\x11PearsonModelParam\x12\r\n\x05party\x18\x01 \x01(\t\x12\x0f\n\x07parties\x18\x02 \x03(\t\x12\r\n\x05shape\x18\x03 \x01(\x05\x12\x0e\n\x06shapes\x18\x04 \x03(\x05\x12\r\n\x05names\x18\x05 \x03(\t\x12K\n\ranonymous_map\x18\t \x03(\x0b\x32\x34.com.webank.ai.fate.core.mlmodel.buffer.AnonymousMap\x12\x0c\n\x04\x63orr\x18\x06 \x03(\x01\x12\x12\n\nlocal_corr\x18\x07 \x03(\x01\x12@\n\tall_names\x18\x08 \x03(\x0b\x32-.com.webank.ai.fate.core.mlmodel.buffer.NamesB\x18\x42\x16PearsonModelParamProtob\x06proto3')
 )
 
 
+
+
+_NAMES = _descriptor.Descriptor(
+  name='Names',
+  full_name='com.webank.ai.fate.core.mlmodel.buffer.Names',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='names', full_name='com.webank.ai.fate.core.mlmodel.buffer.Names.names', index=0,
+      number=1, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=69,
+  serialized_end=91,
+)
+
+
+_ANONYMOUSMAP = _descriptor.Descriptor(
+  name='AnonymousMap',
+  full_name='com.webank.ai.fate.core.mlmodel.buffer.AnonymousMap',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='anonymous', full_name='com.webank.ai.fate.core.mlmodel.buffer.AnonymousMap.anonymous', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='name', full_name='com.webank.ai.fate.core.mlmodel.buffer.AnonymousMap.name', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=93,
+  serialized_end=140,
+)
 
 
 _PEARSONMODELPARAM = _descriptor.Descriptor(
@@ -107,92 +176,16 @@ _PEARSONMODELPARAM = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=70,
-  serialized_end=344,
-)
-
-
-_NAMES = _descriptor.Descriptor(
-  name='Names',
-  full_name='com.webank.ai.fate.core.mlmodel.buffer.Names',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='names', full_name='com.webank.ai.fate.core.mlmodel.buffer.Names.names', index=0,
-      number=1, type=9, cpp_type=9, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=346,
-  serialized_end=368,
-)
-
-
-_ANONYMOUSMAP = _descriptor.Descriptor(
-  name='AnonymousMap',
-  full_name='com.webank.ai.fate.core.mlmodel.buffer.AnonymousMap',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='anonymous', full_name='com.webank.ai.fate.core.mlmodel.buffer.AnonymousMap.anonymous', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='name', full_name='com.webank.ai.fate.core.mlmodel.buffer.AnonymousMap.name', index=1,
-      number=2, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=370,
+  serialized_start=143,
   serialized_end=417,
 )
 
 _PEARSONMODELPARAM.fields_by_name['anonymous_map'].message_type = _ANONYMOUSMAP
 _PEARSONMODELPARAM.fields_by_name['all_names'].message_type = _NAMES
-DESCRIPTOR.message_types_by_name['PearsonModelParam'] = _PEARSONMODELPARAM
 DESCRIPTOR.message_types_by_name['Names'] = _NAMES
 DESCRIPTOR.message_types_by_name['AnonymousMap'] = _ANONYMOUSMAP
+DESCRIPTOR.message_types_by_name['PearsonModelParam'] = _PEARSONMODELPARAM
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
-
-PearsonModelParam = _reflection.GeneratedProtocolMessageType('PearsonModelParam', (_message.Message,), dict(
-  DESCRIPTOR = _PEARSONMODELPARAM,
-  __module__ = 'pearson_model_param_pb2'
-  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.PearsonModelParam)
-  ))
-_sym_db.RegisterMessage(PearsonModelParam)
 
 Names = _reflection.GeneratedProtocolMessageType('Names', (_message.Message,), dict(
   DESCRIPTOR = _NAMES,
@@ -207,6 +200,13 @@ AnonymousMap = _reflection.GeneratedProtocolMessageType('AnonymousMap', (_messag
   # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.AnonymousMap)
   ))
 _sym_db.RegisterMessage(AnonymousMap)
+
+PearsonModelParam = _reflection.GeneratedProtocolMessageType('PearsonModelParam', (_message.Message,), dict(
+  DESCRIPTOR = _PEARSONMODELPARAM,
+  __module__ = 'pearson_model_param_pb2'
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.PearsonModelParam)
+  ))
+_sym_db.RegisterMessage(PearsonModelParam)
 
 
 DESCRIPTOR._options = None
