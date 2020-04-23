@@ -76,9 +76,6 @@
                 "data": {
                     "data": ["hetero_lr_0.hetero_lr_data"]
                 }
-            },
-            "output": {
-                "data": ["evaluate"]
             }
         }
     }

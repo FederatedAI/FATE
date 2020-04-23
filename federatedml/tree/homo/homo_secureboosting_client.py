@@ -33,6 +33,8 @@ from typing import List, Tuple
 import numpy as np
 from arch.api.utils import log_utils
 
+from federatedml.model_selection.k_fold import KFold
+
 from federatedml.util.classify_label_checker import ClassifyLabelChecker, RegressionLabelChecker
 
 LOGGER = log_utils.getLogger()
@@ -456,3 +458,10 @@ class HomoSecureBoostingTreeClient(BoostingTree):
         self.set_model_param(model_param)
         self.set_loss_function(self.objective_param)
 
+    def cross_validation(self, data_instances):
+        if not self.need_run:
+            return data_instances
+        kflod_obj = KFold()
+        cv_param = self._get_cv_param()
+        kflod_obj.run(cv_param, data_instances, self, True)
+        return data_instances

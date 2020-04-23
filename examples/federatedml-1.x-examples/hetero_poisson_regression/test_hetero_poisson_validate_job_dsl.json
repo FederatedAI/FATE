@@ -40,7 +40,7 @@
                 }
             },
             "output": {
-                "data": ["hetero_poisson_data"],
+                "data": ["train"],
                 "model": ["hetero_poisson_model"]
             }
         },
@@ -48,11 +48,8 @@
             "module": "Evaluation",
             "input": {
                 "data": {
-                    "data": ["hetero_poisson_0.hetero_poisson_data"]
+                    "data": ["hetero_poisson_0.train"]
                 }
-            },
-            "output": {
-                "data": ["evaluate"]
             }
         }
     }

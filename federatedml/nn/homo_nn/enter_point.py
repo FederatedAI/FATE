@@ -102,7 +102,7 @@ class HomoNNServer(HomoNNBase):
 
     def callback_loss(self, iter_num, loss):
         metric_meta = MetricMeta(name='train',
-                                 metric_type=MetricType.LOSS,
+                                 metric_type="LOSS",
                                  extra_metas={
                                      "unit_name": "iters",
                                  })
@@ -184,7 +184,6 @@ class HomoNNClient(HomoNNBase):
                                            optimizer=self.optimizer,
                                            loss=self.loss,
                                            metrics=self.metrics)
-
 
     def fit(self, data_inst, *args):
 
