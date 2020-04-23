@@ -82,7 +82,6 @@
         {
           "layer": "Dense",
           "units": 5,
-          "use_bias": false,
           "activation": "relu"
         },
         {
@@ -100,11 +99,11 @@
         "early_stop": "diff",
         "eps": 1e-4
       },
-      "loss": "categorical_crossentropy",
+      "loss": "mean_squared_error",
       "metrics": [
         "accuracy"
       ],
-      "max_iter": 10
+      "max_iter": 15
     }
   }
 }

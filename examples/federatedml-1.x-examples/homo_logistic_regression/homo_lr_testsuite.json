@@ -51,6 +51,14 @@
 
   ],
   "tasks": {
+    "train": {
+      "conf": "./test_homolr_train_job_conf.json",
+      "dsl": "./test_homolr_train_job_dsl.json"
+    },
+    "train_eval": {
+      "conf": "test_homolr_train_eval_job_conf.json",
+      "dsl": "test_homolr_train_eval_job_dsl.json"
+    },
     "cv": {
       "conf": "./test_homolr_cv_job_conf.json",
       "dsl": "./test_homolr_cv_job_dsl.json"
@@ -59,10 +67,7 @@
       "conf": "./test_homolr_evaluate_job_conf.json",
       "dsl": "./test_homolr_evaluate_job_dsl.json"
     },
-    "train": {
-      "conf": "./test_homolr_train_job_conf.json",
-      "dsl": "./test_homolr_train_job_dsl.json"
-    },
+
     "multi_host": {
       "conf": "./test_multi_host_job_conf.json",
       "dsl": "./test_homolr_train_job_dsl.json"
