@@ -28,7 +28,7 @@ from fate_flow.settings import BOARD_DASHBOARD_URL, USE_AUTHENTICATION
 from fate_flow.utils import detect_utils
 from fate_flow.utils import job_utils
 from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_dsl_parser, get_job_log_directory
-from fate_flow.utils.string_utils import RandomString
+from arch.api.impl.based_spark.based_hdfs.string_utils import RandomString
 
 
 class JobController(object):

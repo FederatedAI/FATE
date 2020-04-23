@@ -23,8 +23,9 @@ from arch.api.base.table import Table
 from arch.api.impl.based_spark import util
 from arch.api.impl.utils.split import split_put, split_get
 from arch.api.utils.profile_util import log_elapsed
-from pickle import dumps as p_dumps, loads as p_loads
-
+#from pickle import dumps as p_dumps, loads as p_loads
+from arch.api.utils import log_utils
+LOGGER = log_utils.getLogger()
 
 class RDDTable(Table):
     delimiter = '\t'
@@ -36,7 +37,8 @@ class RDDTable(Table):
                   partitions: int = 1,
                   create_if_missing: bool = True):
         rdd = RDDTable.rdd_from_hdfs(namespace=namespace, name=name, create_if_missing=create_if_missing)
-        return RDDTable(session_id=session_id, namespace=namespace, name=name, partitions=partitions, rdd=rdd)
+        if rdd:
+            return RDDTable(session_id=session_id, namespace=namespace, name=name, partitions=partitions, rdd=rdd)
     
 
     # noinspection PyProtectedMember
@@ -63,13 +65,13 @@ class RDDTable(Table):
     
     @classmethod
     def get_path(cls, sc, hdfs_path):
-        path_class = sc._gateway.jvm.org.apache.hadoop.fs.path
+        path_class = sc._gateway.jvm.org.apache.hadoop.fs.Path
         return path_class(hdfs_path)
     
 
     @classmethod
     def get_file_system(cls, sc):
-        filesystem_class = sc._gateway.jvm.org.apache.hadoop.fs.FilFileSystem
+        filesystem_class = sc._gateway.jvm.org.apache.hadoop.fs.FileSystem
         hadoop_configuration = sc._jsc.hadoopConfiguration()
         return filesystem_class.get(hadoop_configuration)
 
@@ -88,7 +90,7 @@ class RDDTable(Table):
             raise AssertionError("hdfs path {} not exists.".format(hdfs_path))
 
         for k, v in kv_list:
-            content = u"{}{}{}\n".format(p_dumps(k), DDTable.delimiter, p_dumps(v))
+            content = u"{}{}{}\n".format(k, RDDTable.delimiter, v)
             out.write(bytearray(content, "utf-8"))
         out.flush()
         out.close()
@@ -107,8 +109,8 @@ class RDDTable(Table):
 
     @classmethod
     def map2dic(cls, m):
-        filds = m.strip().partition(RDDTable.delimiter)
-        return p_loads(filds[0]), p_loads(filds[2])
+        fields = m.strip().partition(RDDTable.delimiter)
+        return fields[0], fields[2]
 
 
     @classmethod
@@ -119,11 +121,12 @@ class RDDTable(Table):
         fs = RDDTable.get_file_system(sc)
         path = RDDTable.get_path(sc, hdfs_path)
         if(fs.exists(path)):
-            rdd = sc.textFile(path).map(RDDTable.map2dic).persist(util.get_storage_level())
+            rdd = sc.textFile(hdfs_path).map(RDDTable.map2dic).persist(util.get_storage_level())
         elif create_if_missing:
             rdd = sc.emptyRDD().persist(util.get_storage_level())
         else:
-            raise AssertionError("hdfs path {} not exists.".format(hdfs_path))
+            LOGGER.error("hdfs path {} not exists.".format(hdfs_path))
+            rdd = None
         return rdd
 
 
@@ -303,7 +306,7 @@ class RDDTable(Table):
 
     # noinspection PyPep8Naming
     def take(self, n=1, keysOnly=False, use_serialize=True):
-        rtn = self._rdd.take(n)
+        rtn = self.rdd().take(n)
         if keysOnly:
             rtn = [pair[0] for pair in rtn]
         return rtn
@@ -313,14 +316,14 @@ class RDDTable(Table):
         return self.take(1, keysOnly, use_serialize)[0]
 
     def count(self, **kwargs):
-        return self._rdd.count()
+        return self.rdd().count()
 
     @log_elapsed
     def save_as(self, name, namespace, partition=None, use_serialize=True, persistent=True, **kwargs):
         if partition is None:
             partition = self._partitions
 
-        it = self._rdd.toLocalIterator()
+        it = self.rdd().toLocalIterator()
         from arch.api import session
         rdd_table = session.table(name=name, namespace=namespace, partition=partition, persistent=persistent)
         rdd_table.put_all(kv_list=it)

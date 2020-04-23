@@ -23,6 +23,7 @@ class FederationRuntime(Federation):
 
     def __init__(self, session_id, runtime_conf):
         super().__init__(session_id, runtime_conf)
+        LOGGER.debug("runtime_conf:{}.".format(runtime_conf))
         self._role = runtime_conf.get("local").get("role")
         self._party_id = str(runtime_conf.get("local").get("party_id"))
         self._session_id = session_id
