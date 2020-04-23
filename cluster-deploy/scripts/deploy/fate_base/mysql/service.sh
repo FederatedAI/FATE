@@ -53,7 +53,9 @@ stop() {
     if [[ -n ${pid} ]]; then
         echo "killing:`ps aux | grep ${pid} | grep -v grep`"
         kill -9 ${pid}
-        kill -9 `lsof -i:3306 | grep -i "LISTEN" | awk '{print $2}'`
+        mysqld_pid=`cat ${basepath}/data/mysqld.pid`
+        kill -9 ${mysqld_pid}
+        # kill -9 `lsof -i:3306 | grep -i "LISTEN" | awk '{print $2}'`
         if [[ $? -eq 0 ]]; then
             echo "killed"
         else

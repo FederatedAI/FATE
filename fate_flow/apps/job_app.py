@@ -19,7 +19,7 @@ import tarfile
 
 from flask import Flask, request, send_file
 
-from arch.api.utils.core import json_loads
+from arch.api.utils.core_utils import json_loads
 from fate_flow.driver.job_controller import JobController
 from fate_flow.driver.task_scheduler import TaskScheduler
 from fate_flow.manager.data_manager import query_data_view
@@ -79,7 +79,7 @@ def query_job():
 
 
 @manager.route('/update', methods=['POST'])
-def job_update():
+def update_job():
     job_info = request.json
     jobs = job_utils.query_job(job_id=job_info['job_id'], party_id=job_info['party_id'], role=job_info['role'])
     if not jobs:
@@ -136,7 +136,7 @@ def query_task():
 
 
 @manager.route('/data/view/query', methods=['POST'])
-def data_view_query():
+def query_data_view():
     data_views = query_data_view(**request.json)
     if not data_views:
         return get_json_result(retcode=101, retmsg='find data view failed')
@@ -152,6 +152,6 @@ def clean_job():
 
 @manager.route('/clean/queue', methods=['POST'])
 @job_utils.job_server_routing()
-def queue_clean():
+def clean_queue():
     TaskScheduler.clean_queue()
     return get_json_result(retcode=0, retmsg='success')

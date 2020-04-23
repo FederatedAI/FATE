@@ -1,0 +1,12 @@
+{
+    "module_path":  "fate_flow/components",
+    "default_runtime_conf": "model_operation_param.json",
+    "param_class" : "fate_flow/param/model_operation_param.py/ModelStoreParam",
+    "role":
+    {
+        "local":
+        {
+            "program": "model_operation_components.py/ModelStore"
+        }
+    }
+}

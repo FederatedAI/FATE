@@ -12,6 +12,7 @@ fateboard_port=8080
 fate_flow_port=9380
 fate_flow_ip=
 db_ip=
+db_port=
 db_user=
 db_password=
 db_name=fate_flow

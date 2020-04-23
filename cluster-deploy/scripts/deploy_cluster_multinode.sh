@@ -233,6 +233,7 @@ config_python() {
 packaging_mysql() {
     cp configurations.sh configurations.sh.tmp
     sed -i.bak "s/mysql_version=.*/mysql_version=${mysql_version}/g" ./configurations.sh.tmp
+    sed -i.bak "s/mysql_port=.*/mysql_port=${mysql_port}/g" ./configurations.sh.tmp
     sed -i.bak "s/user=.*/user=${user}/g" ./configurations.sh.tmp
     sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
@@ -300,6 +301,7 @@ packaging_fate_flow() {
     sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
 
+    sed -i.bak "s/db_port=.*/db_port=${mysql_port}/g" ./configurations.sh.tmp
     sed -i.bak "s/db_user=.*/db_user=${db_auth[0]}/g" ./configurations.sh.tmp
     sed -i.bak "s/db_password=.*/db_password=${db_auth[1]}/g" ./configurations.sh.tmp
     sed -i.bak "s/redis_password=.*/redis_password=${redis_password}/g" ./configurations.sh.tmp
@@ -332,7 +334,7 @@ config_fate_flow() {
 
 packaging_federatedml() {
     cp configurations.sh configurations.sh.tmp
-	cp services.env service.env.tmp
+	  cp services.env service.env.tmp
     sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
@@ -375,6 +377,7 @@ packaging_fateboard() {
     sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s/db_port=.*/db_port=${mysql_port}/g" ./configurations.sh.tmp
     sed -i.bak "s/db_user=.*/db_user=${db_auth[0]}/g" ./configurations.sh.tmp
     sed -i.bak "s/db_password=.*/db_password=${db_auth[1]}/g" ./configurations.sh.tmp
     sed -i.bak "s/node_list=.*/node_list=()/g" ./configurations.sh.tmp
@@ -488,6 +491,7 @@ packaging_metaservice() {
     sed -i.bak "s#source_code_dir=.*#source_code_dir=${source_code_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#output_packages_dir=.*#output_packages_dir=${output_packages_dir}#g" ./configurations.sh.tmp
     sed -i.bak "s#deploy_packages_dir=.*#deploy_packages_dir=${deploy_packages_dir}#g" ./configurations.sh.tmp
+    sed -i.bak "s/db_port=.*/db_port=${mysql_port}/g" ./configurations.sh.tmp
     sed -i.bak "s/db_user=.*/db_user=${db_auth[0]}/g" ./configurations.sh.tmp
     sed -i.bak "s/db_password=.*/db_password=${db_auth[1]}/g" ./configurations.sh.tmp
     sed -i.bak "s/db_name=.*/db_name=${eggroll_meta_service_db_name}/g" ./configurations.sh.tmp

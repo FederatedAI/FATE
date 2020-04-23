@@ -12,6 +12,7 @@ deploy_packages_dir=
 party_id=
 port=8590
 db_ip=
+db_port=
 db_user=
 db_password=
 db_name=

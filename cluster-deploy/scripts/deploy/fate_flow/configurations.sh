@@ -9,6 +9,7 @@ deploy_packages_dir=
 venv_dir=
 python_path=
 db_ip=
+db_port=
 db_user=
 db_password=
 db_name=
