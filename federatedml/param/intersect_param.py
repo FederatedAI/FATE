@@ -116,9 +116,11 @@ class IntersectParam(BaseParam):
     repeated_id_owner: str, which role has the repeated ids
     """
 
-    def __init__(self, intersect_method=consts.RAW, random_bit=128, sync_intersect_ids=True, join_role="guest",
+    def __init__(self, intersect_method: str = consts.RAW, random_bit=128, sync_intersect_ids=True,
+                 join_role=consts.GUEST,
                  with_encode=False, only_output_key=False, encode_params=EncodeParam(),
-                 intersect_cache_param=IntersectCache(), repeated_id_process=False, repeated_id_owner="guest"):
+                 intersect_cache_param=IntersectCache(), repeated_id_process=False, repeated_id_owner=consts.GUEST,
+                 allow_info_share: bool = False, info_owner=consts.GUEST):
         super().__init__()
         self.intersect_method = intersect_method
         self.random_bit = random_bit
@@ -130,6 +132,8 @@ class IntersectParam(BaseParam):
         self.intersect_cache_param = intersect_cache_param
         self.repeated_id_process = repeated_id_process
         self.repeated_id_owner = repeated_id_owner
+        self.allow_info_share = allow_info_share
+        self.info_owner = info_owner
 
     def check(self):
         descr = "intersect param's"
@@ -169,6 +173,15 @@ class IntersectParam(BaseParam):
         self.repeated_id_owner = self.check_and_change_lower(self.repeated_id_owner,
                                                              [consts.GUEST],
                                                              descr)
+
+        if type(self.allow_info_share).__name__ != "bool":
+            raise ValueError(
+                "intersect param's allow_info_sync {} not supported, should be bool type".format(
+                    self.allow_info_share))
+
+        self.info_owner = self.check_and_change_lower(self.info_owner,
+                                                      [consts.GUEST, consts.HOST],
+                                                      descr)
 
         self.encode_params.check()
         LOGGER.debug("Finish intersect parameter check!")
