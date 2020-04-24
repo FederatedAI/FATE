@@ -71,9 +71,11 @@ class ValidationStrategy(object):
 
         if early_stopping_rounds is not None:
             self.sync_status = True
-
             if early_stopping_rounds <= 0:
                 raise ValueError('early stopping error should be larger than 0')
+            if self.mode == consts.HOMO:
+                raise ValueError('early stopping is not supported for homo algorithms')
+
             LOGGER.debug("early stopping round is {}".format(self.early_stopping_rounds))
 
         self.cur_best_model = None
@@ -132,15 +134,12 @@ class ValidationStrategy(object):
         Returns bool
         """
         LOGGER.info('checking early stopping')
-        if self.mode == consts.HETERO:
-            LOGGER.warning('early stopping is not supported for homo algorithms, skip checking')
-            return False
-        else:
-            no_improvement_dict = self.performance_recorder.no_improvement_round
-            for metric in no_improvement_dict:
-                if no_improvement_dict[metric] >= self.early_stopping_rounds:
-                    return True
-            return False
+
+        no_improvement_dict = self.performance_recorder.no_improvement_round
+        for metric in no_improvement_dict:
+            if no_improvement_dict[metric] >= self.early_stopping_rounds:
+                return True
+        return False
 
     def sync_performance_recorder(self, epoch):
         """
@@ -151,6 +150,9 @@ class ValidationStrategy(object):
 
         elif self.mode == consts.HETERO:
             self.performance_recorder = self.transfer_inst.validation_status.get(idx=-1, suffix=(epoch,))[0]
+
+        else:
+            return
 
     def need_stop(self):
         return False if not self.early_stopping_rounds else self.check_early_stopping()
@@ -246,7 +248,7 @@ class ValidationStrategy(object):
             LOGGER.debug(self.performance_recorder.cur_best_performance)
             LOGGER.debug(self.performance_recorder.no_improvement_round)
 
-        if self.early_stopping_rounds and self.is_best_performance_updated():
+        if self.early_stopping_rounds and self.is_best_performance_updated() and self.mode == consts.HETERO:
             self.cur_best_model = {'model': {'best_model': model.export_model()}}
             self.best_iteration = epoch
             LOGGER.debug('cur best model saved')
