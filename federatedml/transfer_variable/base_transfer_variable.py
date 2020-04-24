@@ -164,3 +164,7 @@ class BaseTransferVariables(object):
     @staticmethod
     def local_party():
         return RuntimeInstance.FEDERATION.local_party
+
+    @staticmethod
+    def roles_to_parties(roles: list) -> list:
+        return RuntimeInstance.FEDERATION.roles_to_parties(roles)
