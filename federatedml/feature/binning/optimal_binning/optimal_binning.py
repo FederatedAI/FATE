@@ -112,7 +112,7 @@ class OptimalBinning(BaseBinning):
             init_binning_obj = QuantileBinningTool(param_obj=init_bucket_param, allow_duplicate=False)
         else:
             init_binning_obj = BucketBinning(params=init_bucket_param)
-
+        init_binning_obj.set_bin_inner_param(self.bin_inner_param)
         init_split_points = init_binning_obj.fit_split_points(data_instances)
         is_sparse = data_overview.is_sparse_data(data_instances)
 

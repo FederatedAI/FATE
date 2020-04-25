@@ -18,12 +18,14 @@
 
 import functools
 import uuid
+from arch.api.utils import log_utils
 
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.quantile_summaries import quantile_summary_factory
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.statistic import data_overview
 from federatedml.util import consts
+LOGGER = log_utils.getLogger()
 
 
 class QuantileBinning(BaseBinning):
@@ -70,6 +72,8 @@ class QuantileBinning(BaseBinning):
                             }
         """
         header = data_overview.get_header(data_instances)
+        LOGGER.debug("in _fit_split_point, cols_map: {}".format(self.bin_inner_param.bin_cols_map))
+
         self._default_setting(header)
         # self._init_cols(data_instances)
         percent_value = 1.0 / self.bin_num
@@ -78,6 +82,7 @@ class QuantileBinning(BaseBinning):
         percentile_rate = [i * percent_value for i in range(1, self.bin_num)]
         percentile_rate.append(1.0)
         is_sparse = data_overview.is_sparse_data(data_instances)
+        LOGGER.debug("in _fit_split_point, cols_map: {}".format(self.bin_inner_param.bin_cols_map))
 
         # self._fit_split_point_deprecate(data_instances, is_sparse, percentile_rate)
         self._fit_split_point(data_instances, is_sparse, percentile_rate)
@@ -123,6 +128,7 @@ class QuantileBinning(BaseBinning):
                                   cols_dict=self.bin_inner_param.bin_cols_map,
                                   header=self.header,
                                   is_sparse=is_sparse)
+            LOGGER.debug("in _fit_split_point, cols_map: {}".format(self.bin_inner_param.bin_cols_map))
             summary_dict = data_instances.mapPartitions2(f)
             summary_dict = summary_dict.reduce(lambda s1, s2: s1.merge(s2), key_func=lambda key: key[1])
             if is_sparse:
