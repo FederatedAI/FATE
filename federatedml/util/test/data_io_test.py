@@ -19,7 +19,7 @@ import time
 import random
 import string
 import unittest
-from fate_flow.manager.tracking import Tracking 
+from fate_flow.manager.tracking_manager import Tracking
 
 
 from federatedml.util.data_io import DataIO

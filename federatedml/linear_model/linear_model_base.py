@@ -20,6 +20,7 @@ from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.model_selection import start_cross_validation
+from federatedml.model_selection.stepwise import start_stepwise
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.optim.initialize import Initializer
 from federatedml.optim.optimizer import optimizer_factory
@@ -51,8 +52,9 @@ class BaseLinearModel(ModelBase):
         self.model_weights = None
         self.validation_freqs = None
         self.need_one_vs_rest = False
-        self.in_one_vs_rest = False
+        self.need_call_back_loss = True
         self.init_param_obj = None
+        self.validation_strategy = None
 
     def _init_model(self, params):
         self.model_param = params
@@ -65,6 +67,10 @@ class BaseLinearModel(ModelBase):
         self.converge_func = converge_func_factory(params.early_stop, params.tol)
         self.encrypted_calculator = None
         self.validation_freqs = params.validation_freqs
+        self.validation_strategy = None
+        self.early_stopping_rounds = params.early_stopping_rounds
+        self.metrics = params.metrics
+        self.use_first_metric_only = params.use_first_metric_only
 
     def get_features_shape(self, data_instances):
         if self.feature_shape is not None:
@@ -98,6 +104,12 @@ class BaseLinearModel(ModelBase):
         }
         return result
 
+    def disable_callback_loss(self):
+        self.need_call_back_loss = False
+
+    def enable_callback_loss(self):
+        self.need_call_back_loss = True
+
     def callback_loss(self, iter_num, loss):
         metric_meta = MetricMeta(name='train',
                                  metric_type="LOSS",
@@ -118,7 +130,8 @@ class BaseLinearModel(ModelBase):
         abnormal_detection.empty_feature_detection(data_instances)
 
     def init_validation_strategy(self, train_data=None, validate_data=None):
-        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs)
+        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs, self.early_stopping_rounds,
+                                                 self.use_first_metric_only)
         validation_strategy.set_train_data(train_data)
         validation_strategy.set_validate_data(validate_data)
         return validation_strategy
@@ -126,10 +139,19 @@ class BaseLinearModel(ModelBase):
     def cross_validation(self, data_instances):
         return start_cross_validation.run(self, data_instances)
 
+    def stepwise(self, data_instances):
+        self.disable_callback_loss()
+        return start_stepwise.run(self, data_instances)
+
     def _get_cv_param(self):
         self.model_param.cv_param.role = self.role
         self.model_param.cv_param.mode = self.mode
         return self.model_param.cv_param
+
+    def _get_stepwise_param(self):
+        self.model_param.stepwise_param.role = self.role
+        self.model_param.stepwise_param.mode = self.mode
+        return self.model_param.stepwise_param
 
     def set_schema(self, data_instance, header=None):
         if header is None:

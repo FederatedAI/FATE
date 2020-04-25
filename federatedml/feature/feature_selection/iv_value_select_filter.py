@@ -90,15 +90,10 @@ class Guest(IVValueSelectFilter):
                     threshold = self.value_threshold
                 else:
                     threshold = self.host_thresholds[host_id]
-                LOGGER.debug("host_properties.header: {}, host_bin_results: {}".format(
-                    host_properties.header, self.binning_obj.host_results[host_id].bin_results.all_cols_results))
 
                 fit_iv_values(self.binning_obj.host_results[host_id],
                               threshold,
                               host_properties)
-                LOGGER.debug("In iv_value fit, host_properties.left_col_indexes: {}, last_left_col_indexes: {}".format(
-                    host_properties.left_col_indexes, host_properties.last_left_col_indexes
-                ))
 
             self.sync_obj.sync_select_results(self.host_selection_properties, suffix=suffix)
         return self

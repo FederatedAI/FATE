@@ -19,7 +19,7 @@ import random
 import unittest
 
 from arch.api import session
-from fate_flow.manager.tracking import Tracking 
+from fate_flow.manager.tracking_manager import Tracking
 from federatedml.feature.instance import Instance
 from federatedml.feature.sampler import RandomSampler
 from federatedml.feature.sampler import StratifiedSampler

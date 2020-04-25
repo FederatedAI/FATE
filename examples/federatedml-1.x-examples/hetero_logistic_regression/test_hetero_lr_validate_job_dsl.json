@@ -31,12 +31,38 @@
                 "model": ["dataio"]
             }
          },
+         "intersection_0": {
+             "module": "Intersection",
+             "input": {
+                 "data": {
+                     "data": [
+                         "dataio_0.train_data"
+                     ]
+                 }
+             },
+             "output": {
+                 "data": ["train"]
+             }
+         },
+         "intersection_1": {
+             "module": "Intersection",
+             "input": {
+                 "data": {
+                     "data": [
+                         "dataio_1.eval_data"
+                     ]
+                 }
+             },
+             "output": {
+                 "data": ["eval_data"]
+             }
+         },
         "hetero_lr_0": {
             "module": "HeteroLR",
             "input": {
                 "data": {
-                    "train_data": ["dataio_0.train_data"],
-                    "eval_data": ["dataio_1.eval_data"]
+                    "train_data": ["intersection_0.train"],
+                    "eval_data": ["intersection_1.eval_data"]
                 }
             },
             "output": {
@@ -50,9 +76,6 @@
                 "data": {
                     "data": ["hetero_lr_0.hetero_lr_data"]
                 }
-            },
-            "output": {
-                "data": ["evaluate"]
             }
         }
     }

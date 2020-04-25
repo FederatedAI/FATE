@@ -26,15 +26,23 @@ class SessionStop(object):
         parser.add_argument('-j', '--job_id', required=True, type=str, help="job id")
         parser.add_argument('-w', '--work_mode', required=True, type=str, help="work mode")
         parser.add_argument('-b', '--backend', required=True, type=str, help="backend")
+        parser.add_argument('-c', '--command', required=True, type=str, help="command")
         args = parser.parse_args()
-        job_id = args.job_id
+        session_job_id = args.job_id
+        fate_job_id = session_job_id.split('_')[0]
         work_mode = int(args.work_mode)
         backend = int(args.backend)
-        session.init(job_id=job_id, mode=work_mode, backend=backend, set_log_dir=False)
+        command = args.command
+        session.init(job_id=session_job_id, mode=work_mode, backend=backend, set_log_dir=False)
         try:
-            schedule_logger(job_id.split('_')[0]).info('start stop session {}'.format(session.get_session_id()))
-            session.stop()
-            schedule_logger(job_id.split('_')[0]).info('stop session {} success'.format(session.get_session_id()))
+            schedule_logger(fate_job_id).info('start {} session {}'.format(command, session.get_session_id()))
+            if command == 'stop':
+                session.stop()
+            elif command == 'kill':
+                session.kill()
+            else:
+                schedule_logger(fate_job_id).info('{} session {} failed, this command is not supported'.format(command, session.get_session_id()))
+            schedule_logger(fate_job_id).info('{} session {} success'.format(command, session.get_session_id()))
         except Exception as e:
             pass
 

@@ -50,7 +50,7 @@ class HeteroPoissonHost(HeteroPoissonBase):
         LOGGER.info("Enter hetero_poisson host")
         self._abnormal_detection(data_instances)
 
-        validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 
         self.header = self.get_header(data_instances)
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
@@ -80,8 +80,8 @@ class HeteroPoissonHost(HeteroPoissonBase):
                 batch_feat_inst = self.transform(batch_data)
                 optim_host_gradient, _ = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_feat_inst,
-                    self.model_weights,
                     self.encrypted_calculator,
+                    self.model_weights,
                     self.optimizer,
                     self.n_iter_,
                     batch_index)
@@ -97,7 +97,12 @@ class HeteroPoissonHost(HeteroPoissonBase):
 
             LOGGER.info("Get is_converged flag from arbiter:{}".format(self.is_converged))
 
-            validation_strategy.validate(self, self.n_iter_)
+            if self.validation_strategy:
+                LOGGER.debug('Poisson host running validation')
+                self.validation_strategy.validate(self, self.n_iter_)
+                if self.validation_strategy.need_stop():
+                    LOGGER.debug('early stopping triggered')
+                    break
 
             self.n_iter_ += 1
             LOGGER.info("iter: {}, is_converged: {}".format(self.n_iter_, self.is_converged))
@@ -106,6 +111,9 @@ class HeteroPoissonHost(HeteroPoissonBase):
 
         if not self.is_converged:
             LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))
+
+        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
+            self.load_model(self.validation_strategy.cur_best_model)
 
     def predict(self, data_instances):
         """

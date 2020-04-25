@@ -23,8 +23,8 @@
         "data": {
           "train_data": [
             {
-              "name": "hetero_default_credit_b",
-              "namespace": "hetero_guest_default_credit"
+              "name": "hetero_breast_b",
+              "namespace": "hetero_breast_guest"
             }
           ]
         }
@@ -47,8 +47,8 @@
         "data": {
           "train_data": [
             {
-              "name": "hetero_default_credit_a",
-              "namespace": "hetero_host_default_credit"
+              "name": "hetero_breast_a",
+              "namespace": "hetero_breast_host"
             }
           ]
         }

@@ -1,0 +1,58 @@
+{
+  "data": [
+    {
+      "file": "examples/data/breast_homo_guest.csv",
+      "head": 1,
+      "partition": 10,
+      "table_name": "homo_breast_guest",
+      "namespace": "homo_breast_guest",
+      "role": "guest_0"
+    },
+    {
+      "file": "examples/data/breast_homo_host.csv",
+      "head": 1,
+      "partition": 10,
+      "table_name": "homo_breast_host",
+      "namespace": "homo_breast_host",
+      "role": "host_0"
+    },
+    {
+      "file": "examples/data/vehicle_scale_homo_guest.csv",
+      "head": 1,
+      "partition": 10,
+      "table_name": "homo_guest",
+      "namespace": "vehicle_scale",
+      "role": "guest_0"
+    },
+    {
+      "file": "examples/data/vehicle_scale_homo_host.csv",
+      "head": 1,
+      "partition": 10,
+      "table_name": "homo_host",
+      "namespace": "vehicle_scale",
+      "role": "host_0"
+    },    
+    {
+      "file": "examples/data/vehicle_scale_homo_host.csv",
+      "head": 1,
+      "partition": 10,
+      "table_name": "homo_host",
+      "namespace": "vehicle_scale",
+      "role": "host_1"
+    }
+  ],
+  "tasks": {
+    "single_layer": {
+      "conf": "./pytorch_homo_dnn_single_layer.json",
+      "dsl": "./test_homo_nn_train_then_predict.json"
+    },
+    "multi_layer": {
+      "conf": "./pytorch_homo_dnn_multi_layer.json",
+      "dsl": "./test_homo_nn_train_then_predict.json"
+    },
+    "multi_label": {
+      "conf": "./pytorch_homo_dnn_multi_label.json",
+      "dsl": "./test_homo_nn_train_then_predict.json"
+    }
+  }
+}

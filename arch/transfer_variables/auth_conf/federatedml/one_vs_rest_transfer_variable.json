@@ -1,0 +1,21 @@
+{
+  "OneVsRestTransferVariable": {
+    "aggregate_classes": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host",
+        "arbiter"
+      ]
+    },
+    "host_classes": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    }
+  }
+}

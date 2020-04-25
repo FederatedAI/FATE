@@ -1,0 +1,76 @@
+{
+  "HomoNNDefaultTransVar": {
+    "SecureAggregatorTransVar.AggregatorTransVar.ModelScatterTransVar.client_model": {
+      "src": [
+        "guest",
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "SecureAggregatorTransVar.AggregatorTransVar.ModelBroadcasterTransVar.server_model": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "SecureAggregatorTransVar.RandomPaddingCipherTransVar.UUIDTransVar.uuid": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "SecureAggregatorTransVar.RandomPaddingCipherTransVar.DHTransVar.p_power_r": {
+      "src": [
+        "guest",
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "SecureAggregatorTransVar.RandomPaddingCipherTransVar.DHTransVar.p_power_r_bc": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "SecureAggregatorTransVar.RandomPaddingCipherTransVar.DHTransVar.pubkey": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "LossScatterTransVar.loss": {
+      "src": [
+        "guest",
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "HasConvergedTransVar.has_converged": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest",
+        "host"
+      ]
+    }
+  }
+}

@@ -77,14 +77,8 @@
       "nn_define": [
         {
           "layer": "Dense",
-          "units": 3,
-          "use_bias": false,
+          "units": 6,
           "activation": "relu"
-        },
-        {
-          "layer": "Dense",
-          "units": 2,
-          "activation": "selu"
         },
         {
           "layer": "Dense",
@@ -94,9 +88,8 @@
       ],
       "batch_size": -1,
       "optimizer": {
-        "optimizer": "Adadelta",
-        "learning_rate": 0.05,
-        "rho": 0.95
+        "optimizer": "Adam",
+        "learning_rate": 0.05
       },
       "early_stop": {
         "early_stop": "diff",
@@ -108,7 +101,7 @@
         "AUC",
         "Hinge"
       ],
-      "max_iter": 10
+      "max_iter": 5
     }
   }
 }

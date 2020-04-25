@@ -41,19 +41,6 @@ class Union(ModelBase):
         self.is_data_instance = False
         self.is_empty_feature = False
 
-    def _run_data(self, data_sets=None, stage=None):
-        if not self.need_run:
-            return
-        data = {}
-        for data_key in data_sets:
-            for key in data_sets[data_key].keys():
-                if data_sets[data_key].get(key, None):
-                    data[data_key] = data_sets[data_key][key]
-        if stage == "fit":
-            self.data_output = self.fit(data)
-        else:
-            LOGGER.warning("Union has not transform, return")
-
     @staticmethod
     def _keep_first(v1, v2):
         return v1
@@ -97,11 +84,8 @@ class Union(ModelBase):
         self.is_data_instance = isinstance(entry[1], Instance)
 
     def fit(self, data):
-        if data is None:
-            LOGGER.warning("Union receives no data input.")
-            return
         if not isinstance(data, dict):
-            data = {"data": data}
+            raise ValueError("Union module must receive more than one table as input.")
         empty_count = 0
         combined_table = None
         combined_schema = None
@@ -115,7 +99,7 @@ class Union(ModelBase):
             metrics.append(Metric(key, num_data))
 
             if num_data == 0:
-                LOGGER.warning("Table {} has no entries.".format(key))
+                LOGGER.warning("Table {} is empty.".format(key))
                 empty_count += 1
                 continue
             if combined_table is None:
@@ -123,21 +107,20 @@ class Union(ModelBase):
             if self.is_data_instance:
                 self.is_empty_feature = data_overview.is_empty_feature(local_table)
                 if self.is_empty_feature:
-                    LOGGER.warning("Table {} has no entries.".format(key))
+                    LOGGER.warning("Table {} has empty feature.".format(key))
 
             if combined_table is None:
                 # first table to combine
                 combined_table = local_table
+                if self.is_data_instance:
+                    combined_schema = local_table.schema
+                    combined_table.schema = combined_schema
             else:
                 self.check_schema_id(local_schema, combined_schema)
                 self.check_schema_label_name(local_schema, combined_schema)
                 self.check_schema_header(local_schema, combined_schema)
                 combined_table = combined_table.union(local_table, self._keep_first)
 
-            combined_schema = make_schema(local_table.schema.get("header"),
-                                              local_table.schema.get("sid"),
-                                              local_table.schema.get("label_name"))
-            combined_table.schema = combined_schema
             # only check feature length if not empty
             if self.is_data_instance and not self.is_empty_feature:
                 self.feature_count = len(combined_schema.get("header"))
@@ -158,7 +141,6 @@ class Union(ModelBase):
                                      metric_name=self.metric_name,
                                      metric_meta=MetricMeta(name=self.metric_name, metric_type=self.metric_type))
 
-        LOGGER.debug("after union schema: {}".format(combined_table.schema))
-
         LOGGER.info("Union operation finished. Total {} empty tables encountered.".format(empty_count))
         return combined_table
+

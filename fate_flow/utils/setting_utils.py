@@ -19,7 +19,7 @@ from kazoo.client import KazooClient
 from kazoo.security import make_digest_acl
 
 from arch.api.utils import file_utils
-from arch.api.utils.core import get_lan_ip
+from arch.api.utils.core_utils import get_lan_ip
 
 
 class CenterConfig(object):

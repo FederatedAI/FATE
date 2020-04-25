@@ -39,28 +39,29 @@ source ${config_path}
 packaging() {
     source ../../default_configurations.sh
     package_init ${output_packages_dir} ${module_name}
-	cp -r ${source_code_dir}/${module_name} ${output_packages_dir}/source
+	  cp -r ${source_code_dir}/${module_name} ${output_packages_dir}/source
 	return 0
 }
 
 config() {
     config_label=$4
-	cd ${output_packages_dir}/config/${config_label}
-	cp ${source_code_dir}/${module_name}/service.sh ./${module_name}/conf
-	cp ${source_code_dir}/${module_name}/settings.py ./${module_name}/conf
-	cd ./${module_name}/conf
+    cd ${output_packages_dir}/config/${config_label}
+    cp ${source_code_dir}/${module_name}/service.sh ./${module_name}/conf
+    cp ${source_code_dir}/${module_name}/settings.py ./${module_name}/conf
+    cd ./${module_name}/conf
 
-	sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=${python_path}#g" ./service.sh
-	sed -i.bak "s#venv=.*#venv=${venv_dir}#g" ./service.sh
-	sed -i.bak "s/WORK_MODE =.*/WORK_MODE = 1/g" ./settings.py
-	sed -i.bak "s/'user':.*/'user': '${db_user}',/g" ./settings.py
-	sed -i.bak "s/'passwd':.*/'passwd': '${db_password}',/g" ./settings.py
-	sed -i.bak "s/'host':.*/'host': '${db_ip}',/g" ./settings.py
-	sed -i.bak "s/'name':.*/'name': '${db_name}',/g" ./settings.py
-	sed -i.bak "s/'password':.*/'password': '${redis_password}',/g" ./settings.py
-	sed -i.bak "/'host':.*/{x;s/^/./;/^\.\{2\}$/{x;s/.*/    'host': '${redis_ip}',/;x};x;}" ./settings.py
-	rm -rf ./service.sh.bak ./settings.py.bak
-	return 0
+    sed -i.bak "s#PYTHONPATH=.*#PYTHONPATH=${python_path}#g" ./service.sh
+    sed -i.bak "s#venv=.*#venv=${venv_dir}#g" ./service.sh
+    sed -i.bak "s/WORK_MODE =.*/WORK_MODE = 1/g" ./settings.py
+    sed -i.bak "s/'user':.*/'user': '${db_user}',/g" ./settings.py
+    sed -i.bak "s/'passwd':.*/'passwd': '${db_password}',/g" ./settings.py
+    sed -i.bak "s/'host':.*/'host': '${db_ip}',/g" ./settings.py
+    sed -i.bak "s/'port': 3306,/'port': ${db_port},/g" ./settings.py
+    sed -i.bak "s/'name':.*/'name': '${db_name}',/g" ./settings.py
+    sed -i.bak "s/'password':.*/'password': '${redis_password}',/g" ./settings.py
+    sed -i.bak '$!N;s/REDIS = {\n.*'host'.*,/REDIS = \{\'$'\n    \'host\': "'${redis_ip}'",/' ./settings.py
+    rm -rf ./service.sh.bak ./settings.py.bak
+    return 0
 }
 
 install () {

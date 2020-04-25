@@ -25,6 +25,7 @@ from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalc
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.init_model_param import InitParam
 from federatedml.param.predict_param import PredictParam
+from federatedml.param.stepwise_param import StepwiseParam
 from federatedml.util import consts
 
 
@@ -76,6 +77,8 @@ class PoissonParam(BaseParam):
 
     cv_param: CrossValidationParam object, default: default CrossValidationParam object
 
+    stepwise_param: StepwiseParam object, default: default StepwiseParam object
+
     decay: int or float, default: 1
         Decay rate for learning rate. learning rate will follow the following decay schedule.
         lr = lr0/(1+decay*t) if decay_sqrt is False. If decay_sqrt is True, lr = lr0 / sqrt(1+decay*t)
@@ -87,6 +90,16 @@ class PoissonParam(BaseParam):
     validation_freqs: int, list, tuple, set, or None
         validation frequency during training.
 
+    early_stopping_rounds: int, default: None
+        rounds to check early stopping criteria
+
+    metrics: list, default: []
+        Specify which metrics to be used when performing evaluation during training process.
+        If set as empty, default metrics will be used. For regression tasks, default metrics are ['root_mean_squared_error', 'mean_absolute_error']
+
+    use_first_metric_only: bool, default: False
+        Indicate whether to use the first metric in `metrics` as the only criterion for early stopping judgement.
+
     """
 
     def __init__(self, penalty='L2',
@@ -96,8 +109,9 @@ class PoissonParam(BaseParam):
                  exposure_colname = None, predict_param=PredictParam(),
                  encrypt_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
-                 cv_param=CrossValidationParam(), decay=1, decay_sqrt=True,
-                 validation_freqs=None):
+                 cv_param=CrossValidationParam(), stepwise_param=StepwiseParam(),
+                 decay=1, decay_sqrt=True,
+                 validation_freqs=None, early_stopping_rounds=None, metrics=[], use_first_metric_only=False):
         super(PoissonParam, self).__init__()
         self.penalty = penalty
         self.tol = tol
@@ -117,18 +131,24 @@ class PoissonParam(BaseParam):
         self.decay_sqrt = decay_sqrt
         self.exposure_colname = exposure_colname
         self.validation_freqs = validation_freqs
+        self.stepwise_param = stepwise_param
+        self.early_stopping_rounds = early_stopping_rounds
+        self.metrics = metrics
+        self.use_first_metric_only = use_first_metric_only
 
     def check(self):
         descr = "poisson_regression_param's "
 
-        if type(self.penalty).__name__ != "str":
+        if self.penalty is None:
+            self.penalty = 'NONE'
+        elif type(self.penalty).__name__ != "str":
             raise ValueError(
                 descr + "penalty {} not supported, should be str type".format(self.penalty))
-        else:
-            self.penalty = self.penalty.upper()
-            if self.penalty not in ['L1', 'L2', 'NONE']:
-                raise ValueError(
-                    "penalty {} not supported, penalty should be 'L1', 'L2' or 'none'".format(self.penalty))
+
+        self.penalty = self.penalty.upper()
+        if self.penalty not in ['L1', 'L2', 'NONE']:
+            raise ValueError(
+                "penalty {} not supported, penalty should be 'L1', 'L2' or 'none'".format(self.penalty))
 
         if type(self.tol).__name__ not in ["int", "float"]:
             raise ValueError(
@@ -212,5 +232,20 @@ class PoissonParam(BaseParam):
                 )
             if type(self.validation_freqs).__name__ == "int" and self.validation_freqs <= 0:
                 raise ValueError("validation strategy param's validate_freqs should greater than 0")
+        self.stepwise_param.check()
+
+        if self.early_stopping_rounds is None:
+            pass
+        elif isinstance(self.early_stopping_rounds, int):
+            if self.early_stopping_rounds < 1:
+                raise ValueError("early stopping rounds should be larger than 0 when it's integer")
+            if self.validation_freqs is None:
+                raise ValueError("validation freqs must be set when early stopping is enabled")
+
+        if not isinstance(self.metrics, list):
+            raise ValueError("metrics should be a list")
+
+        if not isinstance(self.use_first_metric_only, bool):
+            raise ValueError("use_first_metric_only should be a boolean")
 
         return True

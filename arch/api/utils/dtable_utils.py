@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 from arch.api.utils.version_control import get_latest_commit
-from arch.api.utils.core import get_commit_id
+from arch.api.utils.core_utils import get_commit_id
 gen_namespace_separator = '#'
 
 

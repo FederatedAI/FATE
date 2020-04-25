@@ -65,7 +65,9 @@ class BaseLogisticRegression(BaseLinearModel):
                   'is_converged': self.is_converged,
                   'weight': weight_dict,
                   'intercept': self.model_weights.intercept_,
-                  'header': self.header
+                  'header': self.header,
+                  'best_iteration': -1 if self.validation_strategy is None else
+                  self.validation_strategy.best_iteration
                   }
         return result
 
@@ -128,6 +130,7 @@ class BaseLogisticRegression(BaseLinearModel):
         if self.fit_intercept:
             tmp_vars = np.append(tmp_vars, single_model_obj.intercept)
         self.model_weights = LogisticRegressionWeights(tmp_vars, fit_intercept=self.fit_intercept)
+        self.n_iter_ = single_model_obj.iters
         return self
 
     def one_vs_rest_fit(self, train_data=None, validate_data=None):

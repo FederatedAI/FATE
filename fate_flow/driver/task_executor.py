@@ -21,11 +21,11 @@ import traceback
 from arch.api import federation
 from arch.api import session
 from arch.api.utils import file_utils, log_utils
-from arch.api.utils.core import current_timestamp, get_lan_ip, timestamp_to_date
+from arch.api.utils.core_utils import current_timestamp, get_lan_ip, timestamp_to_date
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import Task
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.manager.tracking import Tracking
+from fate_flow.manager.tracking_manager import Tracking
 from fate_flow.settings import API_VERSION
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
@@ -74,11 +74,6 @@ class TaskExecutor(object):
             task.f_status = TaskStatus.FAILED
             return
         try:
-            # init environment, process is shared globally
-            RuntimeConfig.init_config(WORK_MODE=job_parameters['work_mode'],
-                                      BACKEND=job_parameters.get('backend', 0))
-            session.init(job_id='{}_{}_{}'.format(task_id, role, party_id), mode=RuntimeConfig.WORK_MODE, backend=RuntimeConfig.BACKEND)
-            federation.init(job_id=task_id, runtime_conf=parameters)
             job_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, str(party_id))
             task_log_dir = os.path.join(job_log_dir, component_name)
             log_utils.LoggerFactory.set_directory(directory=task_log_dir, parent_log_dir=job_log_dir,
@@ -94,28 +89,33 @@ class TaskExecutor(object):
                                task_id=task_id,
                                model_id=job_parameters['model_id'],
                                model_version=job_parameters['model_version'],
-                               module_name=module_name)
+                               component_module_name=module_name)
             task.f_start_time = current_timestamp()
             task.f_run_ip = get_lan_ip()
             task.f_run_pid = executor_pid
             run_class_paths = parameters.get('CodePath').split('/')
-            run_class_package = '.'.join(run_class_paths[:-2]) + '.' + run_class_paths[-2].replace('.py','')
+            run_class_package = '.'.join(run_class_paths[:-2]) + '.' + run_class_paths[-2].replace('.py', '')
             run_class_name = run_class_paths[-1]
-            task_run_args = TaskExecutor.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
-                                                           job_parameters=job_parameters, job_args=job_args,
-                                                           input_dsl=task_input_dsl)
-            run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
-            run_object.set_tracker(tracker=tracker)
-            run_object.set_taskid(taskid=task_id)
             task.f_status = TaskStatus.RUNNING
             TaskExecutor.sync_task_status(job_id=job_id, component_name=component_name, task_id=task_id, role=role,
                                           party_id=party_id, initiator_party_id=job_initiator.get('party_id', None),
                                           initiator_role=job_initiator.get('role', None),
                                           task_info=task.to_json())
 
+            # init environment, process is shared globally
+            RuntimeConfig.init_config(WORK_MODE=job_parameters['work_mode'],
+                                      BACKEND=job_parameters.get('backend', 0))
+            session.init(job_id='{}_{}_{}'.format(task_id, role, party_id), mode=RuntimeConfig.WORK_MODE, backend=RuntimeConfig.BACKEND)
+            federation.init(job_id=task_id, runtime_conf=parameters)
+
             schedule_logger().info('run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
             schedule_logger().info(parameters)
             schedule_logger().info(task_input_dsl)
+            task_run_args = TaskExecutor.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
+                                                           job_parameters=job_parameters, job_args=job_args,
+                                                           input_dsl=task_input_dsl)
+            run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
+            run_object.set_tracker(tracker=tracker)
             run_object.run(parameters, task_run_args)
             output_data = run_object.save_data()
             tracker.save_output_data_table(output_data, task_output_dsl.get('data')[0] if task_output_dsl.get('data') else 'component')
@@ -125,11 +125,7 @@ class TaskExecutor(object):
             task.f_status = TaskStatus.COMPLETE
         except Exception as e:
             task.f_status = TaskStatus.FAILED
-            kill_path = os.path.join(job_utils.get_job_directory(job_id), str(role), str(party_id), component_name,
-                                     'kill')
-            if not os.path.exists(kill_path):
-                traceback.print_exc()
-                schedule_logger().exception(e)
+            schedule_logger().exception(e)
         finally:
             sync_success = False
             try:
@@ -151,6 +147,7 @@ class TaskExecutor(object):
         schedule_logger().info(
             'finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status if sync_success else TaskStatus.FAILED))
 
+        print('finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status if sync_success else TaskStatus.FAILED))
 
     @staticmethod
     def get_task_run_args(job_id, role, party_id, job_parameters, job_args, input_dsl):
@@ -183,15 +180,15 @@ class TaskExecutor(object):
                 for dsl_model_key in input_detail:
                     dsl_model_key_items = dsl_model_key.split('.')
                     if len(dsl_model_key_items) == 2:
-                        search_component_name, search_model_name = dsl_model_key_items[0], dsl_model_key_items[1]
+                        search_component_name, search_model_alias = dsl_model_key_items[0], dsl_model_key_items[1]
                     elif len(dsl_model_key_items) == 3 and dsl_model_key_items[0] == 'pipeline':
-                        search_component_name, search_model_name = dsl_model_key_items[1], dsl_model_key_items[2]
+                        search_component_name, search_model_alias = dsl_model_key_items[1], dsl_model_key_items[2]
                     else:
                         raise Exception('get input {} failed'.format(input_type))
                     models = Tracking(job_id=job_id, role=role, party_id=party_id, component_name=search_component_name,
                                       model_id=job_parameters['model_id'],
                                       model_version=job_parameters['model_version']).get_output_model(
-                        model_name=search_model_name)
+                        model_alias=search_model_alias)
                     this_type_args[search_component_name] = models
         return task_run_args
 

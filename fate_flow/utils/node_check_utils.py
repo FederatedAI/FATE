@@ -39,3 +39,19 @@ def check_nodes(func):
                 raise Exception('Authentication error: {}'.format(str(e)))
         return func(*args, **kwargs)
     return _wrapper
+
+
+def nodes_check(src_party_id, src_role, appKey, appSecret):
+    if CHECK_NODES_IDENTITY:
+        body = {
+            'partyId': src_party_id,
+            'role': src_role,
+            'appKey': appKey,
+            'appSecret': appSecret
+        }
+        try:
+            response = requests.post(url="http://{}:{}{}".format(MANAGER_HOST, MANAGER_PORT, FATE_MANAGER_NODE_CHECK), json=body).json()
+            if response['code'] != 0:
+                raise Exception(str(response['message']))
+        except Exception as e:
+            raise Exception('role {} party id {} Authentication error: {}'.format(src_role, src_party_id, str(e)))

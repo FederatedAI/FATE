@@ -19,46 +19,68 @@ import typing
 import uuid
 from typing import Iterable
 
-from arch.api import RuntimeInstance
+from arch.api import RuntimeInstance, _EGGROLL_VERSION
 from arch.api import WorkMode, Backend
-from arch.api.table.table import Table
+from arch.api.base.table import Table
+from arch.api.base.utils.store_type import StoreTypes
 from arch.api.utils import file_utils
 from arch.api.utils.log_utils import LoggerFactory
 from arch.api.utils.profile_util import log_elapsed
-from eggroll.api import StoreType
 
 
 # noinspection PyProtectedMember
 def init(job_id=None,
          mode: typing.Union[int, WorkMode] = WorkMode.STANDALONE,
          backend: typing.Union[int, Backend] = Backend.EGGROLL,
-         persistent_engine: StoreType = StoreType.LMDB,
+         persistent_engine: str = StoreTypes.ROLLPAIR_LMDB,
+         eggroll_version=None,
          set_log_dir=True):
+    if RuntimeInstance.SESSION:
+        return
+
     if isinstance(mode, int):
         mode = WorkMode(mode)
     if isinstance(backend, int):
         backend = Backend(backend)
-    if RuntimeInstance.SESSION:
-        return
     if job_id is None:
         job_id = str(uuid.uuid1())
-        if set_log_dir:
+        if True:
             LoggerFactory.set_directory()
     else:
         if set_log_dir:
             LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), 'logs', job_id))
+    if eggroll_version is None:
+        eggroll_version = _EGGROLL_VERSION
+
+    if backend.is_eggroll():
+        if eggroll_version < 2:
+            from arch.api.impl.based_1x import build
+            builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)
+
+        else:
+            from arch.api.impl.based_2x import build
+            builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)
+
+    elif backend.is_spark():
+        if eggroll_version < 2:
+            from arch.api.impl.based_spark.based_1x import build
+            builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)
+        else:
+            from arch.api.impl.based_spark.based_2x import build
+            builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)
+
+    else:
+        raise ValueError(f"backend: ${backend} unknown")
 
     RuntimeInstance.MODE = mode
-    RuntimeInstance.Backend = backend
-
-    from arch.api.table.session import build_session
-    session = build_session(job_id=job_id, work_mode=mode, backend=backend)
-    RuntimeInstance.SESSION = session
+    RuntimeInstance.BACKEND = backend
+    RuntimeInstance.BUILDER = builder
+    RuntimeInstance.SESSION = builder.build_session()
 
 
 @log_elapsed
 def table(name, namespace=None, partition=1, persistent=True, create_if_missing=True, error_if_exist=False,
-          in_place_computing=False) -> Table:
+          in_place_computing=False, **kwargs) -> Table:
     namespace = namespace or get_session_id()
     return RuntimeInstance.SESSION.table(name=name,
                                          namespace=namespace,
@@ -66,7 +88,8 @@ def table(name, namespace=None, partition=1, persistent=True, create_if_missing=
                                          persistent=persistent,
                                          in_place_computing=in_place_computing,
                                          create_if_missing=create_if_missing,
-                                         error_if_exist=error_if_exist)
+                                         error_if_exist=error_if_exist,
+                                         **kwargs)
 
 
 @log_elapsed
@@ -182,3 +205,11 @@ def save_data(kv_data: Iterable,
 
 def stop():
     RuntimeInstance.SESSION.stop()
+
+
+def kill():
+    RuntimeInstance.SESSION.kill()
+
+
+def exit():
+    RuntimeInstance.SESSION = None

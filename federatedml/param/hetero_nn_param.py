@@ -64,7 +64,6 @@ class HeteroNNParam(BaseParam):
                  interactive_layer_lr=0.9,
                  optimizer='SGD',
                  loss=None,
-                 metrics=None,
                  epochs=100,
                  batch_size=-1,
                  early_stop="diff",
@@ -73,7 +72,10 @@ class HeteroNNParam(BaseParam):
                  encrypted_mode_calculator_param = EncryptedModeCalculatorParam(mode="confusion_opt"),
                  predict_param=PredictParam(),
                  cv_param=CrossValidationParam(),
-                 validation_freqs=None):
+                 validation_freqs=None,
+                 early_stopping_rounds=None,
+                 metrics=None,
+                 use_first_metric_only=True):
         super(HeteroNNParam, self).__init__()
 
         self.task_type = task_type
@@ -86,10 +88,12 @@ class HeteroNNParam(BaseParam):
         self.epochs = epochs
         self.early_stop = early_stop
         self.tol = tol
-        self.metrics = metrics
         self.optimizer = optimizer
         self.loss = loss
         self.validation_freqs = validation_freqs
+        self.early_stopping_rounds = early_stopping_rounds
+        self.metrics = metrics or []
+        self.use_first_metric_only = use_first_metric_only
 
         self.encrypt_param = copy.deepcopy(encrypt_param)
         self.encrypted_model_calculator_param = encrypted_mode_calculator_param
@@ -138,6 +142,17 @@ class HeteroNNParam(BaseParam):
                 raise ValueError("validation_freqs should be larger than 0 when it's integer")
         elif not isinstance(self.validation_freqs, collections.Container):
             raise ValueError("validation_freqs should be None or positive integer or container")
+
+        if self.early_stopping_rounds and not isinstance(self.early_stopping_rounds, int):
+            raise ValueError("early stopping rounds should be None or int larger than 0")
+        if self.early_stopping_rounds and isinstance(self.early_stopping_rounds, int):
+            if self.early_stopping_rounds < 1:
+                raise ValueError("early stopping should be larger than 0 when it's integer")
+            if not self.validation_freqs:
+                raise ValueError("If early stopping rounds is setting, validation_freqs should not be null")
+
+        if not isinstance(self.metrics, list):
+            raise ValueError("metrics should be a list")
 
         self.encrypt_param.check()
         self.encrypted_model_calculator_param.check()

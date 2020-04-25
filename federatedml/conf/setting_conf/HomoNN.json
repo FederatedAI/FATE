@@ -4,17 +4,13 @@
     "param_class" : "federatedml/param/homo_nn_param.py/HomoNNParam",
     "role":
     {
-        "guest":
+        "guest|host":
         {
-            "program": "enter_point.py/HomoNNGuest"
-        },
-        "host":
-        {
-            "program": "enter_point.py/HomoNNHost"
+            "program": "enter_point.py/HomoNNDefaultClient"
         },
         "arbiter":
         {
-            "program": "enter_point.py/HomoNNArbiter"
+            "program": "enter_point.py/HomoNNDefaultServer"
         }
     }
 }
