@@ -72,7 +72,7 @@ class QuantileBinning(BaseBinning):
                             }
         """
         header = data_overview.get_header(data_instances)
-        LOGGER.debug("in _fit_split_point, cols_map: {}".format(self.bin_inner_param.bin_cols_map))
+        # LOGGER.debug("in _fit_split_point, cols_map: {}".format(self.bin_inner_param.bin_cols_map))
 
         self._default_setting(header)
         # self._init_cols(data_instances)
@@ -82,7 +82,7 @@ class QuantileBinning(BaseBinning):
         percentile_rate = [i * percent_value for i in range(1, self.bin_num)]
         percentile_rate.append(1.0)
         is_sparse = data_overview.is_sparse_data(data_instances)
-        LOGGER.debug("in _fit_split_point, cols_map: {}".format(self.bin_inner_param.bin_cols_map))
+        # LOGGER.debug("in _fit_split_point, cols_map: {}".format(self.bin_inner_param.bin_cols_map))
 
         # self._fit_split_point_deprecate(data_instances, is_sparse, percentile_rate)
         self._fit_split_point(data_instances, is_sparse, percentile_rate)
@@ -128,7 +128,7 @@ class QuantileBinning(BaseBinning):
                                   cols_dict=self.bin_inner_param.bin_cols_map,
                                   header=self.header,
                                   is_sparse=is_sparse)
-            LOGGER.debug("in _fit_split_point, cols_map: {}".format(self.bin_inner_param.bin_cols_map))
+            # LOGGER.debug("in _fit_split_point, cols_map: {}".format(self.bin_inner_param.bin_cols_map))
             summary_dict = data_instances.mapPartitions2(f)
             summary_dict = summary_dict.reduce(lambda s1, s2: s1.merge(s2), key_func=lambda key: key[1])
             if is_sparse:

@@ -97,7 +97,7 @@ class BaseHeteroFeatureBinning(ModelBase):
         else:
             self.bin_inner_param.add_transform_bin_indexes(params.transform_param.transform_cols)
             self.bin_inner_param.add_transform_bin_names(params.transform_param.transform_names)
-        LOGGER.debug("After _setup_bin_inner_param: {}".format(self.bin_inner_param.__dict__))
+        # LOGGER.debug("After _setup_bin_inner_param: {}".format(self.bin_inner_param.__dict__))
         self.binning_obj.set_bin_inner_param(self.bin_inner_param)
 
     def transform(self, data_instances):
