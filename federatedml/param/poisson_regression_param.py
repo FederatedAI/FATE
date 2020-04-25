@@ -90,8 +90,11 @@ class PoissonParam(BaseParam):
     validation_freqs: int, list, tuple, set, or None
         validation frequency during training.
 
+    early_stopping_rounds: int, default: None
+        rounds to check early stopping criteria
+
     metrics: list, default: []
-        Specify which metrics to be used when performing evaluation during trainign process.
+        Specify which metrics to be used when performing evaluation during training process.
         If set as empty, default metrics will be used. For regression tasks, default metrics are ['root_mean_squared_error', 'mean_absolute_error']
 
     use_first_metric_only: bool, default: False

@@ -287,7 +287,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 splitinfos = encrypted_splitinfo_host_table.mapValues(self.find_host_split).collect()
                 for _, splitinfo in splitinfos:
                     if best_splitinfo_host[_][0] == -1:
-                    if not best_splitinfo_host[_]:
                         best_splitinfo_host[_] = list(splitinfo[:2])
                         best_gains[_] = splitinfo[2]
                     elif splitinfo[0] != -1 and splitinfo[2] > best_gains[_]:

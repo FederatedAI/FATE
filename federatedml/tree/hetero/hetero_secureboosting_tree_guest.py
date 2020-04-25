@@ -474,6 +474,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         model_param.losses.extend(self.history_loss)
         model_param.classes_.extend(map(str, self.classes_))
         model_param.num_classes = self.num_classes
+
         model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
 
         feature_importances = list(self.get_feature_importance().items())
