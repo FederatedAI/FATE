@@ -62,6 +62,7 @@ from federatedml.tree import HeteroDecisionTreeGuest
 from federatedml.util import consts
 from federatedml.util.classify_label_checker import ClassifyLabelChecker
 from federatedml.util.classify_label_checker import RegressionLabelChecker
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 
@@ -385,6 +386,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                 predict_data = tree_inst.predict(data_inst)
                 self.update_f_value(new_f=predict_data, tidx=tidx, mode="predict")
 
+    @assert_io_num_rows_equal
     def predict(self, data_inst):
         LOGGER.info("start predict")
         data_inst = self.data_alignment(data_inst)

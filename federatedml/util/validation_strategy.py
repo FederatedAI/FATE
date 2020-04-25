@@ -55,7 +55,7 @@ class ValidationStrategy(object):
                 validate data will be used for evaluating
     """
     def __init__(self, role=None, mode=None, validation_freqs=None, early_stopping_rounds=None,
-                       use_first_metric_only=False):
+                 use_first_metric_only=False):
 
         self.validation_freqs = validation_freqs
         self.role = role
@@ -171,15 +171,25 @@ class ValidationStrategy(object):
         evaluate_param = model.get_metrics_param()
         evaluate_param.check()
 
+        eval_obj = Evaluation()
+        eval_type = evaluate_param.eval_type
+
         metric_list = evaluate_param.metrics
         if self.early_stopping_rounds and self.use_first_metric_only and len(metric_list) != 0:
+
+            single_metric_list = None
+            if eval_type == consts.BINARY:
+                single_metric_list = consts.BINARY_SINGLE_VALUE_METRIC
+            elif eval_type == consts.REGRESSION:
+                single_metric_list = consts.REGRESSION_SINGLE_VALUE_METRICS
+            elif eval_type == consts.MULTY:
+                single_metric_list = consts.MULTI_SINGLE_VALUE_METRIC
+
             for metric in metric_list:
-                if metric in consts.SINGLE_VALUE_METRICS:
+                if metric in single_metric_list:
                     self.first_metric = metric
                     break
 
-        eval_obj = Evaluation()
-        LOGGER.debug("evaluate type is {}".format(evaluate_param.eval_type))
         eval_obj._init_model(evaluate_param)
         eval_obj.set_tracker(model.tracker)
         data_set_name = self.make_data_set_name(model.need_cv, model.flowid,  epoch)
@@ -238,9 +248,14 @@ class ValidationStrategy(object):
                 if len(eval_result_dict) == 0:
                     raise ValueError("eval_result len is 0, no single value metric detected for early stopping checking")
 
-                if self.first_metric:
-                    eval_result_dict = {self.first_metric: eval_result_dict[self.first_metric]}
+                if self.use_first_metric_only:
+                    if self.first_metric:
+                        eval_result_dict = {self.first_metric: eval_result_dict[self.first_metric]}
+                    else:
+                        LOGGER.warning('use first metric only but no single metric found in metric list')
+
                 self.performance_recorder.update(eval_result_dict)
+
 
         if self.sync_status:
             self.sync_performance_recorder(epoch)

@@ -26,6 +26,7 @@ from federatedml.model_selection import MiniBatch
 from federatedml.optim.gradient.homo_lr_gradient import LogisticGradient
 from federatedml.util import consts
 from federatedml.util import fate_operator
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 
@@ -97,6 +98,7 @@ class HomoLRGuest(HomoLRBase):
             validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
 
+    @assert_io_num_rows_equal
     def predict(self, data_instances):
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)

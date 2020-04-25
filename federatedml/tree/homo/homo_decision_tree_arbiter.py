@@ -45,6 +45,11 @@ class HomoDecisionTreeArbiter(DecisionTree):
 
         # stored histogram for faster computation {node_id:histogram_bag}
         self.stored_histograms = {}
+        
+        if self.max_split_nodes != 0 and self.max_split_nodes % 2 == 1:
+            self.max_split_nodes += 1
+            LOGGER.warning('an even max_split_nodes value is suggested when using histogram-subtraction, max_split_nodes reset to {}'.format(self.max_split_nodes))
+
 
     def set_flowid(self, flowid=0):
         LOGGER.info("set flowid, flowid is {}".format(flowid))
@@ -109,7 +114,7 @@ class HomoDecisionTreeArbiter(DecisionTree):
             split_info = []
             # get cur layer node num:
             cur_layer_node_num = self.sync_node_sample_numbers(suffix=(dep, self.epoch_idx, self.tree_idx))
-            LOGGER.debug('we have {} nodes to split at this layer'.format(cur_layer_node_num))
+            LOGGER.debug('{} nodes to split at this layer'.format(cur_layer_node_num))
             for batch_id, i in enumerate(range(0, cur_layer_node_num, self.max_split_nodes)):
 
                 left_node_histogram = self.sync_local_histogram(suffix=(batch_id, dep, self.epoch_idx, self.tree_idx))
