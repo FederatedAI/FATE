@@ -16,6 +16,7 @@
 # -*- coding: utf-8 -*-
 import os
 
+from arch.api import Backend
 from arch.api.utils import file_utils
 from arch.api.utils import log_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -27,6 +28,7 @@ from fate_flow.utils.setting_utils import CenterConfig
 
 
 WORK_MODE = 0
+BACKEND = Backend.EGGROLL
 USE_LOCAL_DATABASE = True
 
 # upload data
@@ -136,3 +138,4 @@ SERVINGS = CenterConfig.get_settings(path=SERVING_PATH, servings_zk_path=SERVING
 BOARD_DASHBOARD_URL = 'http://%s:%d/index.html#/dashboard?job_id={}&role={}&party_id={}' % (BOARD_HOST, BOARD_PORT)
 RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
 RuntimeConfig.init_config(HTTP_PORT=HTTP_PORT)
+RuntimeConfig.init_config(BACKEND=BACKEND)

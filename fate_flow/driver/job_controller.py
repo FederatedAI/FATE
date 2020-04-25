@@ -118,7 +118,7 @@ class JobController(object):
                 runtime_conf = json_loads(job[0].f_runtime_conf)
                 roles = ','.join(runtime_conf['role'].keys())
                 party_ids = ','.join([','.join([str(j) for j in i]) for i in runtime_conf['role'].values()])
-                Tracking(job_id=job_id, role=role, party_id=party_id, task_id=task.f_task_id).clean_task(roles, party_ids)
+                # Tracking(job_id=job_id, role=role, party_id=party_id, task_id=task.f_task_id).clean_task(roles, party_ids)
                 # stop task
                 kill_status = job_utils.kill_process(int(task.f_run_pid))
                 # session stop
@@ -171,7 +171,8 @@ class JobController(object):
                                    model_id=job_parameters["model_id"],
                                    model_version=job_parameters["model_version"])
             job_tracker.job_quantity_constraint()
-            job_tracker.init_pipelined_model()
+            if job_parameters.get("job_type", "") != "predict":
+                job_tracker.init_pipelined_model()
             roles = json_loads(job_info['f_roles'])
             partner = {}
             show_role = {}

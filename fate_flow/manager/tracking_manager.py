@@ -185,7 +185,7 @@ class Tracking(object):
         :return:
         """
         if data_table:
-            persistent_table = data_table.save_as(namespace=data_table._namespace,
+            persistent_table = data_table.save_as(namespace='{}_persistent'.format(data_table._namespace),
                                                   name='{}_persistent'.format(data_table._name))
             session.save_data_table_meta(
                 {'schema': data_table.schema, 'header': data_table.schema.get('header', [])},
@@ -420,6 +420,17 @@ class Tracking(object):
             return data_view
 
     def clean_task(self, roles, party_ids):
+        schedule_logger(self.job_id).info('clean table by namespace {}'.format(self.task_id))
+        try:
+            session.clean_tables(namespace=self.task_id, regex_string='*')
+            for role in roles.split(','):
+                for party_id in party_ids.split(','):
+                    session.clean_tables(namespace=self.task_id + '_' + role + '_' + party_id, regex_string='*')
+        except Exception as e:
+            schedule_logger(self.job_id).exception(e)
+        schedule_logger(self.job_id).info('clean table by namespace {} done'.format(self.task_id))
+
+    def clean_task_old(self, roles, party_ids):
         schedule_logger(self.job_id).info('clean table by namespace {}'.format(self.task_id))
         try:
             session.init(job_id="{}:{}".format(self.task_id, fate_uuid()), mode=RuntimeConfig.WORK_MODE, backend=Backend.EGGROLL)
