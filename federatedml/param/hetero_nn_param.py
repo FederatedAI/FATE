@@ -45,7 +45,7 @@ class HeteroNNParam(BaseParam):
                 with optional key-value pairs such as learning rate.
             defaults to "SGD"
         loss:  str, a string to define loss function used
-        metric: list object, evaluation metrics
+        metrics: list object, evaluation metrics
         epochs: int, the maximum iteration for aggregation in training.
         batch_size : int, batch size when updating model.
             -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
