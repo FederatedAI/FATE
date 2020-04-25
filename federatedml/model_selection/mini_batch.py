@@ -95,10 +95,5 @@ class MiniBatch:
             # yield batch_data
             all_batch_data.append(batch_data)
             all_index_data.append(index_table)
-        total_batch_data = 0
-        for batch_data in all_batch_data:
-            total_batch_data += batch_data.count()
-
-        for
         self.all_batch_data = all_batch_data
         self.all_index_data = all_index_data
