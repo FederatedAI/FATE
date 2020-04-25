@@ -87,7 +87,7 @@ class LinearParam(BaseParam):
         validation frequency during training.
 
     early_stopping_rounds: int, default: None
-        rounds to check early stopping criteria
+        Will stop training if one metric doesn’t improve in last early_stopping_round rounds
 
     metrics: list, default: []
         Specify which metrics to be used when performing evaluation during training process.
