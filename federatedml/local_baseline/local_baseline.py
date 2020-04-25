@@ -25,8 +25,9 @@ from federatedml.model_base import ModelBase
 from federatedml.param.local_baseline_param import LocalBaselineParam
 from federatedml.protobuf.generated import lr_model_meta_pb2
 from federatedml.protobuf.generated import lr_model_param_pb2
-from federatedml.util import abnormal_detection
 from federatedml.statistic import data_overview
+from federatedml.util import abnormal_detection
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 from sklearn.linear_model import LogisticRegression
 
@@ -161,6 +162,7 @@ class LocalBaseline(ModelBase):
         }
         return result
 
+    @assert_io_num_rows_equal
     def predict(self, data_instances):
         if not self.need_run:
             return
