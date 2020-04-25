@@ -49,6 +49,9 @@
     "select_col_names": {
       "conf": "./test_hetero_feature_selection_select_cols_names_job_conf.json",
       "dsl": "./test_hetero_feature_selection_job_dsl.json"
+    },
+    "single_predict": {
+      "conf": ""
     }
   }
 }
