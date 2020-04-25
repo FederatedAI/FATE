@@ -12,6 +12,9 @@
     ],
     "host": [
       10000
+    ],
+    "arbiter": [
+      10000
     ]
   },
   "role_parameters": {
@@ -20,8 +23,14 @@
         "data": {
           "train_data": [
             {
-              "name": "hetero_default_credit_guest",
-              "namespace": "hetero"
+              "name": "hetero_breast_b",
+              "namespace": "hetero_breast_guest"
+            }
+          ],
+          "eval_data": [
+            {
+              "name": "hetero_breast_b",
+              "namespace": "hetero_breast_guest"
             }
           ]
         }
@@ -38,6 +47,12 @@
         ],
         "output_format": [
           "dense"
+        ],
+        "missing_fill": [
+          true
+        ],
+        "outlier_replace": [
+          true
         ]
       }
     },
@@ -46,8 +61,14 @@
         "data": {
           "train_data": [
             {
-              "name": "hetero_default_credit_host",
-              "namespace": "hetero"
+              "name": "hetero_breast_a",
+              "namespace": "hetero_breast_host"
+            }
+          ],
+          "eval_data": [
+            {
+              "name": "hetero_breast_a",
+              "namespace": "hetero_breast_host"
             }
           ]
         }
@@ -58,36 +79,18 @@
         ],
         "output_format": [
           "dense"
+        ],
+        "outlier_replace": [
+          true
         ]
       }
     }
   },
   "algorithm_parameters": {
-    "hetero_feature_binning_0": {
-      "method": "optimal",
-      "optimal_binning_param": {
-        "metric_method": "iv",
-        "min_bin_pct": 0.05,
-        "max_bin_pct": 0.8,
-        "init_bucket_method": "quantile",
-        "init_bin_nums": 100,
-        "mixture": true
-      },
-      "compress_thres": 10000,
-      "head_size": 10000,
-      "error": 1e-5,
-      "bin_num": 10,
-      "bin_indexes": -1,
-      "bin_names": null,
-      "category_indexes": [3, 7],
-      "category_names": ["x3", "x7"],
-      "adjustment_factor": 0.5,
-      "local_only": false,
-      "transform_param": {
-        "transform_cols": -1,
-        "transform_names": null,
-        "transform_type": "woe"
-      }
+    "intersect_0": {
+      "intersect_method": "rsa",
+      "sync_intersect_ids": true,
+      "only_output_key": false
     }
   }
 }

@@ -152,6 +152,7 @@ class BaseHeteroFeatureSelection(ModelBase):
             }
 
             header = list(model_param.header)
+            self.schema = {'header': header}
             self.curt_select_properties.set_header(header)
             self.completed_selection_result.set_header(header)
             self.curt_select_properties.set_last_left_col_indexes([x for x in range(len(header))])
