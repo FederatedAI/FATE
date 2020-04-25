@@ -37,7 +37,6 @@ def internal_server_error(e):
 
 
 @manager.route('/<access_module>', methods=['post'])
-#@session_utils.enter_session
 def download_upload(access_module):
     job_id = generate_job_id()
     if access_module == "upload" and USE_LOCAL_DATA:
@@ -65,8 +64,6 @@ def download_upload(access_module):
     if access_module == "upload":
         data['table_name'] = request_config["table_name"]
         data['namespace'] = request_config["namespace"]
-        #session.init(mode=request_config['work_mode'])
-        """
         session.init(mode=RuntimeConfig.WORK_MODE, backend=RuntimeConfig.BACKEND)
         data_table = session.get_data_table(name=request_config["table_name"], namespace=request_config["namespace"])
         count = data_table.count()
@@ -79,9 +76,6 @@ def download_upload(access_module):
                                        count))
         elif count and int(request_config.get('drop', 2)) == 1:
             data_table.destroy()
-        session.stop()
-        session.exit()
-        """
     job_dsl, job_runtime_conf = gen_data_access_job_config(request_config, access_module)
     job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = JobController.submit_job(
         {'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)
