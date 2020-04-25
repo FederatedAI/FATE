@@ -105,8 +105,6 @@ class HomoSecureBoostingTreeArbiter(BoostingTree):
             LOGGER.debug('label mapping is {}'.format(label_mapping))
             self.tree_dim = len(label_mapping) if len(label_mapping) > 2 else 1
 
-        self.federated_binning()
-
         if self.n_iter_no_change:
             self.check_convergence_func = converge_func_factory("diff", self.tol)
 
