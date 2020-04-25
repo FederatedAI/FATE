@@ -17,9 +17,7 @@ import unittest
 import uuid
 
 from arch.api import session
-import random
 import numpy as np
-from federatedml.statistic.correlation import hetero_pearson
 
 
 class TestStatistics(unittest.TestCase):
@@ -27,6 +25,7 @@ class TestStatistics(unittest.TestCase):
         session.init((str(uuid.uuid1())))
 
     def test_standardized(self):
+        from federatedml.statistic.correlation import hetero_pearson
         raw_data = np.random.rand(200, 100)
         expect = (raw_data - np.mean(raw_data, axis=0)) / np.std(raw_data, axis=0)
         data_table = session.parallelize([row for row in raw_data])
