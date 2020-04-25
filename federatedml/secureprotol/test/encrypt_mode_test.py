@@ -17,13 +17,11 @@
 import copy
 import numpy as np
 import unittest
-from arch.api import session
-from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
-from federatedml.secureprotol import PaillierEncrypt
 
 
 class TestEncryptModeCalculator(unittest.TestCase):
     def setUp(self):
+        from arch.api import session
         session.init("test_encrypt_mode_calculator")
 
         self.list_data = []
@@ -44,6 +42,8 @@ class TestEncryptModeCalculator(unittest.TestCase):
         self.data_numpy = session.parallelize(self.numpy_data, include_key=False, partition=10)
        
     def test_data_type(self, mode="strict", re_encrypted_rate=0.2):
+        from federatedml.secureprotol import PaillierEncrypt
+        from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
         encrypter = PaillierEncrypt()
         encrypter.generate_key(1024)
         encrypted_calculator = EncryptModeCalculator(encrypter, mode, re_encrypted_rate)        
@@ -70,6 +70,8 @@ class TestEncryptModeCalculator(unittest.TestCase):
             self.test_data_type(mode=mode)
 
     def test_diff_mode(self, round=10, mode="strict", re_encrypted_rate=0.2):
+        from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
+        from federatedml.secureprotol import PaillierEncrypt
         encrypter = PaillierEncrypt()
         encrypter.generate_key(1024)
         encrypted_calculator = EncryptModeCalculator(encrypter, mode, re_encrypted_rate)        
