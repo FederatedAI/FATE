@@ -54,6 +54,8 @@ class ComponentProperties(object):
         self.host_party_idlist = []
         self.local_partyid = -1
         self.guest_partyid = -1
+        self.input_data_count = 0
+        self.input_eval_data_count = 0
 
     def parse_component_param(self, component_parameters, param):
 
@@ -102,8 +104,7 @@ class ComponentProperties(object):
                 self.has_normal_input_data = True
         return self
 
-    @staticmethod
-    def extract_input_data(args):
+    def extract_input_data(self, args):
         data_sets = args.get("data")
         train_data = None
         eval_data = None
@@ -113,13 +114,19 @@ class ComponentProperties(object):
         for data_key in data_sets:
             if data_sets[data_key].get("train_data", None):
                 train_data = data_sets[data_key]["train_data"]
+                self.input_data_count = train_data.count()
 
             if data_sets[data_key].get("eval_data", None):
                 eval_data = data_sets[data_key]["eval_data"]
+                self.input_eval_data_count = eval_data.count()
 
             if data_sets[data_key].get("data", None):
                 # data = data_sets[data_key]["data"]
                 data[data_key] = data_sets[data_key]["data"]
+
+        for data_key, data_table in data.items():
+            self.input_data_count += data_table['data'].count()
+
         return train_data, eval_data, data
 
     def extract_running_rules(self, args, model):
