@@ -16,6 +16,7 @@
 
 import numpy as np
 import unittest
+import uuid
 
 from arch.api import session
 from federatedml.feature.instance import Instance
@@ -26,7 +27,8 @@ from federatedml.util import data_io
 
 class TestStepwise(unittest.TestCase):
     def setUp(self):
-        session.init("stepwise_test")
+        self.job_id = str(uuid.uuid1())
+        session.init(self.job_id)
         model = HeteroStepwise()
         model.__setattr__('role', consts.GUEST)
         model.__setattr__('fit_intercept', True)
@@ -96,6 +98,17 @@ class TestStepwise(unittest.TestCase):
         real_to_enter = ["x2", "x5"]
         to_enter = self.model.get_to_enter(self.model, self.mask, self.header)
         self.assertListEqual(to_enter, real_to_enter)
+
+    def tearDown(self):
+        session.stop()
+        try:
+            session.cleanup("*", self.job_id, True)
+        except EnvironmentError:
+            pass
+        try:
+            session.cleanup("*", self.job_id, False)
+        except EnvironmentError:
+            pass
 
 
 if __name__ == '__main__':
