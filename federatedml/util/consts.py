@@ -188,6 +188,3 @@ IMEI = 'imei'
 MD5 = 'md5'
 SHA256 = 'sha256'
 INTERSECT_CACHE_TAG = 'Za'
-
-# intersection share
-SHARE_INFO_COL_NAME = "share_info"
