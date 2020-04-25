@@ -185,7 +185,7 @@ class Tracking(object):
         :return:
         """
         if data_table:
-            persistent_table = data_table.save_as(namespace=data_table._namespace,
+            persistent_table = data_table.save_as(namespace='{}_persistent'.format(data_table._namespace),
                                                   name='{}_persistent'.format(data_table._name))
             session.save_data_table_meta(
                 {'schema': data_table.schema, 'header': data_table.schema.get('header', [])},

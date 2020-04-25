@@ -78,10 +78,6 @@ def init(job_id=None,
     RuntimeInstance.SESSION = builder.build_session()
 
 
-def is_in_session():
-    return RuntimeInstance.SESSION is not None
-
-
 @log_elapsed
 def table(name, namespace=None, partition=1, persistent=True, create_if_missing=True, error_if_exist=False,
           in_place_computing=False, **kwargs) -> Table:
