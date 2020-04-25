@@ -41,6 +41,7 @@ from federatedml.tree import FeatureHistogram
 from federatedml.tree import Node
 from federatedml.tree import Splitter
 from federatedml.util import consts
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 
@@ -693,6 +694,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         """
         return predict_data
 
+    @assert_io_num_rows_equal
     def predict(self, data_inst):
         LOGGER.info("start to predict!")
         predict_data = data_inst.mapValues(lambda data_inst: (0, 1))
