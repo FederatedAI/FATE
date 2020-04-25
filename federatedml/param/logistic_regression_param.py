@@ -80,6 +80,12 @@ class LogisticParam(BaseParam):
     multi_class: str, 'ovr', default: 'ovr'
         If it is a multi_class task, indicate what strategy to use. Currently, support 'ovr' short for one_vs_rest only.
 
+    validation_freqs: int, list, tuple, set, or None
+        validation frequency during training.
+
+    early_stopping_rounds: int, default: None
+        Will stop training if one metric doesn’t improve in last early_stopping_round rounds
+
     metrics: list, default: []
         Indicate when executing evaluation during train process, which metrics will be used. If set as empty,
         default metrics for specific task type will be used. As for binary classification, default metrics are
