@@ -106,6 +106,7 @@ class TestClassificationEvaluaction(unittest.TestCase):
         self.assertFloatEqual(acc, gt_score)
 
     def test_multi_recall(self):
+
         y_true = np.array([1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5])
         y_predict = np.array([1, 1, 2, 2, 3, 2, 1, 1, 1, 1, 3, 3, 3, 3, 2, 4, 4, 4, 4, 4, 6, 6, 6, 6, 6])
         gt_score = [0.4, 0.2, 0.8, 1, 0, 0]
