@@ -104,6 +104,8 @@ class ModelBase(object):
                              pos_label=1)
 
     def check_consistency(self):
+        if self.data_output is None:
+            return 
         if self.component_properties.input_data_count + self.component_properties.input_eval_data_count != \
                 self.data_output.count():
             raise ValueError("Input data count does not match with output data count")

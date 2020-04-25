@@ -125,7 +125,7 @@ class ComponentProperties(object):
                 data[data_key] = data_sets[data_key]["data"]
 
         for data_key, data_table in data.items():
-            self.input_data_count += data_table['data'].count()
+            self.input_data_count += data_table.count()
 
         return train_data, eval_data, data
 
