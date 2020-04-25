@@ -16,7 +16,32 @@
 import argparse
 
 from arch.api import session
+from arch.api.utils.core_utils import fate_uuid
+from fate_flow.entity.runtime_config import RuntimeConfig
 from arch.api.utils.log_utils import schedule_logger
+from fate_flow.settings import stat_logger
+
+
+def enter_session(func):
+    def _wrapper(*args, **kwargs):
+        in_session = session.is_in_session()
+        try:
+            if not in_session:
+                session.init(job_id=fate_uuid(), mode=RuntimeConfig.WORK_MODE, backend=RuntimeConfig.BACKEND)
+                stat_logger.info("enter a temporary new session {}".format(session.get_session_id()))
+            else:
+                stat_logger.info("enter an existing session {}".format(session.get_session_id()))
+            return func(*args, **kwargs)
+        finally:
+            if not in_session:
+                try:
+                    stat_logger.info("exit a temporary new session {} successfully".format(session.get_session_id()))
+                    session.stop()
+                    session.exit()
+                except Exception as e:
+                    stat_logger.info("exit a temporary new session {} failed".format(session.get_session_id()))
+                    stat_logger.exception(e)
+    return _wrapper
 
 
 class SessionStop(object):

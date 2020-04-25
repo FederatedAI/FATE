@@ -25,6 +25,7 @@ from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.model_manager import pipelined_model
 from fate_flow.settings import API_VERSION, MAX_CONCURRENT_JOB_RUN_HOST
 from fate_flow.utils import job_utils, api_utils, model_utils
+from fate_flow.utils import session_utils
 
 
 class Tracking(object):
@@ -206,6 +207,7 @@ class Tracking(object):
                                        'f_table_count_actual': data_table.count() if data_table else 0},
                             mark=True)
 
+    #@session_utils.enter_session
     def get_output_data_table(self, data_name: str = 'component'):
         """
         Get component output data table, will run in the task executor process
@@ -221,6 +223,7 @@ class Tracking(object):
             data_table_meta = data_table.get_metas()
             if data_table_meta.get('schema', None):
                 data_table.schema = data_table_meta['schema']
+            schedule_logger(self.job_id).info(data_table.count())
             return data_table
         else:
             return None
@@ -419,7 +422,19 @@ class Tracking(object):
                 data_view.save()
             return data_view
 
+    #@session_utils.enter_session
     def clean_task(self, roles, party_ids):
+        schedule_logger(self.job_id).info('clean table by namespace {}'.format(self.task_id))
+        try:
+            session.clean_tables(namespace=self.task_id, regex_string='*')
+            for role in roles.split(','):
+                for party_id in party_ids.split(','):
+                    session.clean_tables(namespace=self.task_id + '_' + role + '_' + party_id, regex_string='*')
+        except Exception as e:
+            schedule_logger(self.job_id).exception(e)
+        schedule_logger(self.job_id).info('clean table by namespace {} done'.format(self.task_id))
+
+    def clean_task_old(self, roles, party_ids):
         schedule_logger(self.job_id).info('clean table by namespace {}'.format(self.task_id))
         try:
             session.init(job_id="{}:{}".format(self.task_id, fate_uuid()), mode=RuntimeConfig.WORK_MODE, backend=Backend.EGGROLL)
