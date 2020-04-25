@@ -171,7 +171,8 @@ class JobController(object):
                                    model_id=job_parameters["model_id"],
                                    model_version=job_parameters["model_version"])
             job_tracker.job_quantity_constraint()
-            job_tracker.init_pipelined_model()
+            if job_parameters.get("job_type", "") != "predict":
+                job_tracker.init_pipelined_model()
             roles = json_loads(job_info['f_roles'])
             partner = {}
             show_role = {}
