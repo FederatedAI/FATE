@@ -256,6 +256,7 @@ class ValidationStrategy(object):
 
                 self.performance_recorder.update(eval_result_dict)
 
+
         if self.sync_status:
             self.sync_performance_recorder(epoch)
             LOGGER.debug('{} shows cur performances'.format(self.role))
