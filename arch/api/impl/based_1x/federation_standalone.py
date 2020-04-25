@@ -26,6 +26,9 @@ from eggroll.api.standalone.eggroll import _DTable
 OBJECT_STORAGE_NAME = "__federation__"
 STATUS_TABLE_NAME = "__status__"
 
+_remote_tag_histories = set()
+_get_tag_histories = set()
+
 LOGGER = getLogger()
 
 
@@ -54,6 +57,9 @@ class FederationRuntime(Federation):
         self._loop = asyncio.get_event_loop()
 
     def remote(self, obj, name: str, tag: str, parties: Union[Party, list]) -> Rubbish:
+        if (name, tag) in _remote_tag_histories:
+            raise EnvironmentError(f"remote duplicate tag {(name, tag)}")
+        _remote_tag_histories.add((name, tag))
         if isinstance(parties, Party):
             parties = [parties]
         self._remote_side_auth(name=name, parties=parties)
@@ -79,6 +85,10 @@ class FederationRuntime(Federation):
         return rubbish
 
     def get(self, name: str, tag: str, parties: Union[Party, list]) -> Tuple[list, Rubbish]:
+        if (name, tag) in _get_tag_histories:
+            raise EnvironmentError(f"get duplicate tag {(name, tag)}")
+        _remote_tag_histories.add((name, tag))
+
         if isinstance(parties, Party):
             parties = [parties]
         self._get_side_auth(name=name, parties=parties)
