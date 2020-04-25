@@ -166,12 +166,14 @@ class FederationRuntime(Federation):
         _fill_cache(self.all_parties, self.local_party, self._session_id)
 
     def remote(self, obj, name: str, tag: str, parties: Union[Party, list]) -> Rubbish:
-        if (name, tag) in _remote_tag_histories:
-            raise EnvironmentError(f"remote duplicate tag {(name, tag)}")
-        _remote_tag_histories.add((name, tag))
-
         if isinstance(parties, Party):
             parties = [parties]
+
+        for party in parties:
+            if (name, tag, party) in _remote_tag_histories:
+                raise EnvironmentError(f"remote duplicate tag {(name, tag)}")
+            _remote_tag_histories.add((name, tag, party))
+
         self._remote_side_auth(name=name, parties=parties)
         rubbish = Rubbish(name, tag)
 
@@ -255,12 +257,14 @@ class FederationRuntime(Federation):
         yield (None, rubbish)
 
     def get(self, name: str, tag: str, parties: Union[Party, list]) -> Tuple[list, Rubbish]:
-        if (name, tag) in _get_tag_histories:
-            raise EnvironmentError(f"get duplicate tag {(name, tag)}")
-        _get_tag_histories.add((name, tag))
-
         if isinstance(parties, Party):
             parties = [parties]
+
+        for party in parties:
+            if (name, tag, party) in _get_tag_histories:
+                raise EnvironmentError(f"get duplicate tag {(name, tag)}")
+            _remote_tag_histories.add((name, tag, party))
+
         rtn = {}
         rubbish = None
         for p, v in self.async_get(name, tag, parties):

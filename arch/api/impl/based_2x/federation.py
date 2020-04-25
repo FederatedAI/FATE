@@ -54,9 +54,6 @@ class FederationRuntime(Federation):
         self.role = runtime_conf.get("local").get("role")
 
     def get(self, name, tag, parties: Union[Party, list]):
-        if (name, tag) in _get_tag_histories:
-            raise EnvironmentError(f"get duplicate tag {(name, tag)}")
-        _get_tag_histories.add((name, tag))
 
         rs = self.rsc.load(name=name, tag=tag)
         rubbish = Rubbish(name, tag)
@@ -64,6 +61,11 @@ class FederationRuntime(Federation):
         if isinstance(parties, Party):
             parties = [parties]
         rs_parties = [(party.role, party.party_id) for party in parties]
+
+        for party in parties:
+            if (name, tag, party) in _get_tag_histories:
+                raise EnvironmentError(f"get duplicate tag {(name, tag)}")
+            _get_tag_histories.add((name, tag, party))
 
         # TODO:0: check if exceptions are swallowed
         futures = rs.pull(parties=rs_parties)
@@ -92,9 +94,6 @@ class FederationRuntime(Federation):
         return rtn, rubbish
 
     def remote(self, obj, name, tag, parties):
-        if (name, tag) in _remote_tag_histories:
-            raise EnvironmentError(f"remote duplicate tag {(name, tag)}")
-        _remote_tag_histories.add((name, tag))
 
         rs = self.rsc.load(name=name, tag=tag)
         rubbish = Rubbish(name=name, tag=tag)
@@ -102,6 +101,11 @@ class FederationRuntime(Federation):
         if isinstance(parties, Party):
             parties = [parties]
         rs_parties = [(party.role, party.party_id) for party in parties]
+
+        for party in parties:
+            if (name, tag, party) in _remote_tag_histories:
+                raise EnvironmentError(f"remote duplicate tag {(name, tag)}")
+            _remote_tag_histories.add((name, tag, party))
 
         if isinstance(obj, RollPair):
             futures = rs.push(obj=obj, parties=rs_parties)
