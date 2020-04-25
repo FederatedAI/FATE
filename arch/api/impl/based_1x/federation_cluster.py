@@ -38,6 +38,8 @@ OBJECT_STORAGE_NAME = "__federation__"
 ERROR_STATES = [federation_pb2.CANCELLED, federation_pb2.ERROR]
 REMOTE_FRAGMENT_OBJECT_USE_D_TABLE = True
 
+_remote_tag_histories = set()
+_get_tag_histories = set()
 LOGGER = getLogger()
 
 
@@ -164,6 +166,10 @@ class FederationRuntime(Federation):
         _fill_cache(self.all_parties, self.local_party, self._session_id)
 
     def remote(self, obj, name: str, tag: str, parties: Union[Party, list]) -> Rubbish:
+        if (name, tag) in _remote_tag_histories:
+            raise EnvironmentError(f"remote duplicate tag {(name, tag)}")
+        _remote_tag_histories.add((name, tag))
+
         if isinstance(parties, Party):
             parties = [parties]
         self._remote_side_auth(name=name, parties=parties)
@@ -249,6 +255,10 @@ class FederationRuntime(Federation):
         yield (None, rubbish)
 
     def get(self, name: str, tag: str, parties: Union[Party, list]) -> Tuple[list, Rubbish]:
+        if (name, tag) in _get_tag_histories:
+            raise EnvironmentError(f"get duplicate tag {(name, tag)}")
+        _get_tag_histories.add((name, tag))
+
         if isinstance(parties, Party):
             parties = [parties]
         rtn = {}

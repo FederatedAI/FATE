@@ -15,6 +15,9 @@ STATUS_TABLE_NAME = "__status__"
 
 LOGGER = log_utils.getLogger()
 
+_remote_tag_histories = set()
+_get_tag_histories = set()
+
 
 # noinspection PyProtectedMember
 def init_roll_site_context(runtime_conf, session_id):
@@ -51,6 +54,10 @@ class FederationRuntime(Federation):
         self.role = runtime_conf.get("local").get("role")
 
     def get(self, name, tag, parties: Union[Party, list]):
+        if (name, tag) in _get_tag_histories:
+            raise EnvironmentError(f"get duplicate tag {(name, tag)}")
+        _get_tag_histories.add((name, tag))
+
         rs = self.rsc.load(name=name, tag=tag)
         rubbish = Rubbish(name, tag)
 
@@ -85,6 +92,10 @@ class FederationRuntime(Federation):
         return rtn, rubbish
 
     def remote(self, obj, name, tag, parties):
+        if (name, tag) in _remote_tag_histories:
+            raise EnvironmentError(f"remote duplicate tag {(name, tag)}")
+        _remote_tag_histories.add((name, tag))
+
         rs = self.rsc.load(name=name, tag=tag)
         rubbish = Rubbish(name=name, tag=tag)
 

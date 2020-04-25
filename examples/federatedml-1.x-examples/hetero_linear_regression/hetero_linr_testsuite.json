@@ -36,7 +36,7 @@
     },
     "linr-validate": {
       "conf": "test_hetero_linr_validate_job_conf.json",
-      "dsl": "test_hetero_linr_train_job_dsl.json"
+      "dsl": "test_hetero_linr_validate_job_dsl.json"
     },
     "linr-cv": {
       "conf": "test_hetero_linr_cv_job_conf.json",
