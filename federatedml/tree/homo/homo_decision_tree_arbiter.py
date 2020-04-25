@@ -45,6 +45,11 @@ class HomoDecisionTreeArbiter(DecisionTree):
 
         # stored histogram for faster computation {node_id:histogram_bag}
         self.stored_histograms = {}
+        
+        if self.max_split_nodes != 0 and self.max_split_nodes % 2 == 1:
+            self.max_split_nodes += 1
+            LOGGER.warning('an even max_split_nodes value is suggested when using histogram-subtraction, max_split_nodes reset to {}'.format(self.max_split_nodes))
+
 
     def set_flowid(self, flowid=0):
         LOGGER.info("set flowid, flowid is {}".format(flowid))
