@@ -51,7 +51,8 @@
       "dsl": "./test_hetero_feature_selection_job_dsl.json"
     },
     "single_predict": {
-      "conf": ""
+      "conf": "test_hetero_feature_eval_selection_job_conf.json",
+      "dsl": "test_single_prediction_dsl.json"
     }
   }
 }
