@@ -27,35 +27,52 @@ from federatedml.feature.feature_selection.selection_properties import Selection
 import uuid
 
 
-class TestUniqueValueFilter(unittest.TestCase):
+class TestVarianceCoeFilter(unittest.TestCase):
     def setUp(self):
         self.job_id = str(uuid.uuid1())
         session.init(self.job_id)
 
-    def gen_data(self, data_num, partition):
+    def gen_data(self, data_num, feature_num, partition):
         data = []
-        header = [str(i) for i in range(2)]
-        col_1 = np.random.randint(100) * np.ones(data_num)
-        col_2 = np.random.randn(data_num)
+        header = [str(i) for i in range(feature_num)]
+        # col_2 = np.random.rand(data_num)
+        col_data = []
+        for _ in range(feature_num - 1):
+            while True:
+                col_1 = np.random.rand(data_num)
+                if np.mean(col_1) != 0:
+                    break
+            col_data.append(col_1)
+        col_data.append(10 * np.ones(data_num))
+
         for key in range(data_num):
-            data.append((key, np.array([col_1[key], col_2[key]])))
+            data.append((key, np.array([col[key] for col in col_data])))
 
         result = session.parallelize(data, include_key=True, partition=partition)
         result.schema = {'header': header}
         self.header = header
+
+        self.coe_list = []
+        for col in col_data:
+            self.coe_list.append(np.std(col) / np.mean(col))
         return result
 
     def test_unique_logic(self):
-        data_table = self.gen_data(1000, 48)
+        data_table = self.gen_data(1000, 10, 48)
         select_param = FeatureSelectionParam()
-        filter_obj = get_filter(consts.UNIQUE_VALUE, select_param)
+        select_param.variance_coe_param.value_threshold = 0.1
+        filter_obj = get_filter(consts.COEFFICIENT_OF_VARIATION_VALUE_THRES, select_param)
         select_properties = SelectionProperties()
         select_properties.set_header(self.header)
         select_properties.set_last_left_col_indexes([x for x in range(len(self.header))])
         select_properties.set_select_all_cols()
         filter_obj.set_selection_properties(select_properties)
         res_select_properties = filter_obj.fit(data_table, suffix='').selection_properties
-        self.assertEqual(res_select_properties.all_left_col_names, [self.header[1]])
+        result = [self.header[idx] for idx, x in enumerate(self.coe_list)
+                  if x >= select_param.variance_coe_param.value_threshold]
+
+        self.assertEqual(res_select_properties.all_left_col_names, result)
+        self.assertEqual(len(res_select_properties.all_left_col_names), 9)
         data_table.destroy()
 
     def tearDown(self):
