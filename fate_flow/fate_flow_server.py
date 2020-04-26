@@ -130,5 +130,6 @@ if __name__ == '__main__':
         while True:
             time.sleep(_ONE_DAY_IN_SECONDS)
     except KeyboardInterrupt:
+        session_utils.clean_server_used_session()
         server.stop(0)
         sys.exit(0)
