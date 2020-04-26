@@ -35,3 +35,4 @@ In the training process, party A and party B each compute the elements needed fo
 7. Learning rate decay mechanism
 8. Early stopping mechanism, which checks for performance change on specified metrics over training rounds. Early stopping is triggered when no improvement is found at early stopping rounds.
 9. Support sparse format data as input.
+10. Support stepwise. For details on stepwise mode, please refer [here](../../model_selection/stepwise/README.md).
