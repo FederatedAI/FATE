@@ -47,6 +47,28 @@ We have provided several upload config for you can upload example data convenien
     dsl: test_hetero_lr_train_job_dsl.json
     conf: test_multi_host_job_conf.json
 
+
+
+8. lr_sparse training task:
+    "conf": "test_hetero_lr_sparse_train_job_conf.json",
+    "dsl": "test_hetero_lr_train_job_dsl.json"
+
+6. lr_ovr_cv task:
+    dsl: test_hetero_lr_train_job_dsl.json
+    conf: test_multi_host_job_conf.json
+
+6. Multi-host training task:
+    dsl: test_hetero_lr_train_job_dsl.json
+    conf: test_multi_host_job_conf.json
+
+6. Multi-host training task:
+    dsl: test_hetero_lr_train_job_dsl.json
+    conf: test_multi_host_job_conf.json
+
+6. Multi-host training task:
+    dsl: test_hetero_lr_train_job_dsl.json
+    conf: test_multi_host_job_conf.json
+
 7. Spark backend Task:
     dsl: test_hetero_lr_train_job_dsl.json
     conf: test_spark_backend_job_conf.json
