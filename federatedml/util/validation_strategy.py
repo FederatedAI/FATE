@@ -70,12 +70,12 @@ class ValidationStrategy(object):
         self.best_iteration = -1
 
         if early_stopping_rounds is not None:
-            self.sync_status = True
             if early_stopping_rounds <= 0:
                 raise ValueError('early stopping error should be larger than 0')
             if self.mode == consts.HOMO:
                 raise ValueError('early stopping is not supported for homo algorithms')
 
+            self.sync_status = True
             LOGGER.debug("early stopping round is {}".format(self.early_stopping_rounds))
 
         self.cur_best_model = None
@@ -256,11 +256,11 @@ class ValidationStrategy(object):
 
                 self.performance_recorder.update(eval_result_dict)
 
-
         if self.sync_status:
             self.sync_performance_recorder(epoch)
-            LOGGER.debug('{} shows cur performances'.format(self.role))
+            LOGGER.debug('{} shows cur best performances'.format(self.role))
             LOGGER.debug(self.performance_recorder.cur_best_performance)
+            LOGGER.debug('{} shows early stopping no improve rounds'.format(self.role))
             LOGGER.debug(self.performance_recorder.no_improvement_round)
 
         if self.early_stopping_rounds and self.is_best_performance_updated() and self.mode == consts.HETERO:

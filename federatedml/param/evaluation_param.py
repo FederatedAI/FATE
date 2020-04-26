@@ -40,7 +40,6 @@ class EvaluateParam(BaseParam):
     def __init__(self, eval_type="binary", pos_label=1, need_run=True, metrics=None):
         super().__init__()
         self.eval_type = eval_type
-        LOGGER.debug('eval type is {}'.format(self.eval_type))
         self.pos_label = pos_label
         self.need_run = need_run
         self.metrics = metrics
@@ -63,8 +62,6 @@ class EvaluateParam(BaseParam):
         alias_name: dict = consts.ALIAS
 
         full_name_list = []
-        
-        LOGGER.debug('metric list is {}'.format(metrics_list))
 
         for metric in metrics_list:
 
@@ -97,7 +94,6 @@ class EvaluateParam(BaseParam):
             final_list.append(consts.PRECISION)
 
         ret = list(set(final_list))
-        LOGGER.debug('ret is {}'.format(ret))
         return ret
 
     def check(self):
