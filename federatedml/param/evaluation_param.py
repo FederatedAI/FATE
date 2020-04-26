@@ -45,15 +45,23 @@ class EvaluateParam(BaseParam):
         self.metrics = metrics
 
         self.default_metrics = {
-            consts.BINARY: consts.DEFAULT_BINARY_METRIC,
-            consts.MULTY: consts.DEFAULT_MULTI_METRIC,
-            consts.REGRESSION: consts.DEFAULT_REGRESSION_METRIC
+            consts.BINARY: consts.ALL_BINARY_METRICS,
+            consts.MULTY: consts.ALL_MULTI_METRICS,
+            consts.REGRESSION: consts.ALL_REGRESSION_METRICS
         }
 
         self.allowed_metrics = {
-            consts.BINARY: consts.BINARY_METRICS,
-            consts.MULTY: consts.MULTI_METRICS,
-            consts.REGRESSION: consts.REGRESSION_METRICS
+            consts.BINARY: consts.ALL_BINARY_METRICS,
+            consts.MULTY: consts.ALL_MULTI_METRICS,
+            consts.REGRESSION: consts.ALL_REGRESSION_METRICS
+        }
+
+    def use_single_value_default_metrics(self):
+
+        self.default_metrics = {
+            consts.BINARY: consts.DEFAULT_BINARY_METRIC,
+            consts.MULTY: consts.DEFAULT_MULTI_METRIC,
+            consts.REGRESSION: consts.DEFAULT_REGRESSION_METRIC
         }
 
     def _check_valid_metric(self, metrics_list):
