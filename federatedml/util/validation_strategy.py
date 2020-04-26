@@ -258,9 +258,9 @@ class ValidationStrategy(object):
 
         if self.sync_status:
             self.sync_performance_recorder(epoch)
-            LOGGER.debug('{} shows cur best performances'.format(self.role))
+            LOGGER.debug('showing early stopping status, {} shows cur best performances'.format(self.role))
             LOGGER.debug(self.performance_recorder.cur_best_performance)
-            LOGGER.debug('{} shows early stopping no improve rounds'.format(self.role))
+            LOGGER.debug('showing early stopping status, {} shows early stopping no improve rounds'.format(self.role))
             LOGGER.debug(self.performance_recorder.no_improvement_round)
 
         if self.early_stopping_rounds and self.is_best_performance_updated() and self.mode == consts.HETERO:
