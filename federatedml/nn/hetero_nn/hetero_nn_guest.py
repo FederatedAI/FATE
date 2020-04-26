@@ -30,6 +30,7 @@ from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import HeteroNNMeta
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import HeteroNNParam
 from federatedml.util import consts
 from federatedml.param.evaluation_param import EvaluateParam
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 MODELMETA = "HeteroNNGuestMeta"
@@ -132,6 +133,7 @@ class HeteroNNGuest(HeteroNNBase):
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
             self.load_model(self.validation_strategy.cur_best_model)
 
+    @assert_io_num_rows_equal
     def predict(self, data_inst):
         keys, test_x, test_y = self._load_data(data_inst)
         self.set_partition(data_inst)

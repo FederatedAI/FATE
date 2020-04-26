@@ -65,7 +65,6 @@ class PerformanceRecorder():
                               consts.KS
                             ]
 
-
         self.larger_is_better = [consts.AUC,
                                  consts.R2_SCORE,
                                  consts.PRECISION,
@@ -82,7 +81,7 @@ class PerformanceRecorder():
 
         self.cur_best_performance = {}
 
-        self.no_improvement_round = {} # record no improvement round of all metrics
+        self.no_improvement_round = {}  # record no improvement round of all metrics
 
     def has_improved(self, val: float, metric: str, cur_best: dict):
 
@@ -340,7 +339,7 @@ class Evaluation(ModelBase):
 
                     if metric in self.save_single_value_metric_list:
                         self.__save_single_value(metric_res[1], metric_name=data_type, metric_namespace=metric_namespace
-                                                 ,eval_name=metric)
+                                                 , eval_name=metric)
                         collect_dict[metric] = metric_res[1]
 
                     elif metric == consts.KS:
