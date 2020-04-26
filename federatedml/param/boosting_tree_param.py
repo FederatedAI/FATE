@@ -219,12 +219,13 @@ class BoostingTreeParam(BaseParam):
     n_iter_no_change : bool,
         when True and residual error less than tol, tree building process will stop. default: True
 
-    encrypt_param : EncodeParam Object, encrypt method use in secure boost, default: EncryptParam()
+    encrypt_param : EncodeParam Object, encrypt method use in secure boost, default: EncryptParam(), this parameter
+                    is only for hetero-secureboost
 
     bin_num: int, positive integer greater than 1, bin number use in quantile. default: 32
 
     encrypted_mode_calculator_param: EncryptedModeCalculatorParam object, the calculation mode use in secureboost,
-                                     default: EncryptedModeCalculatorParam()
+                                     default: EncryptedModeCalculatorParam(), only for hetero-secureboost
 
     use_missing: bool, accepted True, False only, use missing value in training process or not. default: False
 
@@ -237,6 +238,18 @@ class BoostingTreeParam(BaseParam):
                       if container object in python, will validate data if epochs belong to this container.
                         e.g. validation_freqs = [10, 15], will validate data when epoch equals to 10 and 15.
                       Default: None
+
+    early_stopping_rounds： should be a integer larger than 0，will stop training if one metric of one validation data
+                            doesn’t improve in last early_stopping_round rounds，
+                            need to set validation freqs and will check early_stopping every at every validation epoch,
+
+    metrics: list, default: []
+             Specify which metrics to be used when performing evaluation during training process.
+             If set as empty, default metrics will be used. For regression tasks, default metrics are
+             ['root_mean_squared_error', 'mean_absolute_error']， For binary-classificatiin tasks, default metrics
+             are ['auc', 'ks']. For multi-classification tasks, default metrics are ['accuracy', 'precision', 'recall']
+
+    use_first_metric_only: use only the first metric for early stopping
     """
 
     def __init__(self, tree_param=DecisionTreeParam(), task_type=consts.CLASSIFICATION,
