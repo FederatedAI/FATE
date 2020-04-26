@@ -91,6 +91,7 @@ HEADERS = {
     'Content-Type': 'application/json',
     'Connection': 'close'
 }
+DETECT_TABLE = ("fate_flow_detect_table_namespace", "fate_flow_detect_table_name", 50)
 # fate-serving
 SERVINGS_ZK_PATH = '/FATE-SERVICES/serving/online/publishLoad/providers'
 FATE_FLOW_ZK_PATH = '/FATE-SERVICES/flow/online/transfer/providers'

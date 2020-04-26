@@ -14,9 +14,12 @@
 #  limitations under the License.
 #
 import argparse
+import functools
 
 from arch.api import session
 from arch.api.utils.log_utils import schedule_logger
+from fate_flow.settings import stat_logger, DETECT_TABLE
+from fate_flow.entity.runtime_config import RuntimeConfig
 
 
 class SessionStop(object):
@@ -45,6 +48,43 @@ class SessionStop(object):
             schedule_logger(fate_job_id).info('{} session {} success'.format(command, session.get_session_id()))
         except Exception as e:
             pass
+
+
+def init_server_session():
+    session.init(mode=RuntimeConfig.WORK_MODE, backend=RuntimeConfig.BACKEND)
+
+
+def session_detect():
+    def _out_wrapper(func):
+        @functools.wraps(func)
+        def _wrapper(*args, **kwargs):
+            for i in range(3):
+                try:
+                    stat_logger.info("detect session {}".format(session.get_session_id()))
+                    count = session.get_data_table(namespace=DETECT_TABLE[0], name=DETECT_TABLE[1]).count()
+                    if count != DETECT_TABLE[2]:
+                        raise Exception("session {} count error".format(session.get_session_id()))
+                    stat_logger.info("session {} is ok".format(session.get_session_id()))
+                    break
+                except Exception as e:
+                    stat_logger.exception(e)
+                    stat_logger.info("start init new session")
+                    try:
+                        try:
+                            session.stop()
+                        except:
+                            pass
+                        session.exit()
+                        init_server_session()
+                        stat_logger.info("init new session successfully, {}".format(session.get_session_id()))
+                    except Exception as e:
+                        stat_logger.exception(e)
+                        stat_logger.info("init new session failed.")
+            else:
+                stat_logger.error("init new session failed.")
+            return func(*args, **kwargs)
+        return _wrapper
+    return _out_wrapper
 
 
 if __name__ == '__main__':

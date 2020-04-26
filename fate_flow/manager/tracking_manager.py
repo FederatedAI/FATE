@@ -185,14 +185,13 @@ class Tracking(object):
         :return:
         """
         if data_table:
-            persistent_table_namespace, persistent_table_name = '{}_component_output_data_persistent'.format(
-                self.component_name), data_table._name
+            persistent_table_namespace, persistent_table_name = '{}_output_data'.format(
+                self.task_id), data_table._name
             schedule_logger(self.job_id).info(
-                'persisting the component: {} output temporary table: ({} {}) to ({} {})'.format(self.component_name,
-                                                                                                data_table._namespace,
-                                                                                                data_table._name,
-                                                                                                persistent_table_namespace,
-                                                                                                persistent_table_name))
+                'persisting the component output temporary table: {} {} to {} {}'.format(data_table._namespace,
+                                                                                         data_table._name,
+                                                                                         persistent_table_namespace,
+                                                                                         persistent_table_name))
             persistent_table = data_table.save_as(
                 namespace=persistent_table_namespace,
                 name=persistent_table_name)

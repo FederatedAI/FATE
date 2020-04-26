@@ -37,9 +37,10 @@ def internal_server_error(e):
 
 
 @manager.route('/<access_module>', methods=['post'])
+@session_utils.session_detect()
 def download_upload(access_module):
     job_id = generate_job_id()
-    if access_module == "upload" and USE_LOCAL_DATA and not request.json.get('module'):
+    if access_module == "upload" and USE_LOCAL_DATA and not (request.json and not request.json.get("module")):
         file = request.files.get('file')
         filename = os.path.join(get_job_directory(job_id), 'tmp', file.filename)
         os.makedirs(os.path.dirname(filename), exist_ok=True)
@@ -64,7 +65,6 @@ def download_upload(access_module):
     if access_module == "upload":
         data['table_name'] = request_config["table_name"]
         data['namespace'] = request_config["namespace"]
-        session.init(mode=RuntimeConfig.WORK_MODE, backend=RuntimeConfig.BACKEND)
         data_table = session.get_data_table(name=request_config["table_name"], namespace=request_config["namespace"])
         count = data_table.count()
         if count and int(request_config.get('drop', 2)) == 2:
