@@ -45,11 +45,6 @@ class HomoDecisionTreeArbiter(DecisionTree):
 
         # stored histogram for faster computation {node_id:histogram_bag}
         self.stored_histograms = {}
-        
-        if self.max_split_nodes != 0 and self.max_split_nodes % 2 == 1:
-            self.max_split_nodes += 1
-            LOGGER.warning('an even max_split_nodes value is suggested when using histogram-subtraction, max_split_nodes reset to {}'.format(self.max_split_nodes))
-
 
     def set_flowid(self, flowid=0):
         LOGGER.info("set flowid, flowid is {}".format(flowid))
@@ -103,6 +98,11 @@ class HomoDecisionTreeArbiter(DecisionTree):
         g_sum, h_sum = self.aggregator.aggregate_root_node_info(suffix=('root_node_sync1', self.epoch_idx))
         LOGGER.debug('g_sum is {},h_sum is {}'.format(g_sum, h_sum))
         self.aggregator.broadcast_root_info(g_sum, h_sum, suffix=('root_node_sync2', self.epoch_idx))
+        
+        if self.max_split_nodes != 0 and self.max_split_nodes % 2 == 1:
+            self.max_split_nodes += 1
+            LOGGER.warning('an even max_split_nodes value is suggested when using histogram-subtraction, max_split_nodes reset to {}'.format(self.max_split_nodes))
+
 
         for dep in range(self.max_depth):
 
@@ -115,20 +115,26 @@ class HomoDecisionTreeArbiter(DecisionTree):
             # get cur layer node num:
             cur_layer_node_num = self.sync_node_sample_numbers(suffix=(dep, self.epoch_idx, self.tree_idx))
             LOGGER.debug('{} nodes to split at this layer'.format(cur_layer_node_num))
+
+            layer_stored_hist = {}
+
             for batch_id, i in enumerate(range(0, cur_layer_node_num, self.max_split_nodes)):
+                
+                LOGGER.debug('cur batch id is {}'.format(batch_id))
 
                 left_node_histogram = self.sync_local_histogram(suffix=(batch_id, dep, self.epoch_idx, self.tree_idx))
 
                 all_histograms = self.histogram_subtraction(left_node_histogram, self.stored_histograms)
-
+            
                 # store histogram
-                self.stored_histograms = {}
-                for left_hist in all_histograms:
-                    self.stored_histograms[left_hist.hid] = left_hist
+                for hist in all_histograms:
+                    layer_stored_hist[hist.hid] = hist
 
                 # FIXME stable parallel_partitions
                 best_splits = self.federated_find_best_split(all_histograms, parallel_partitions=10)
                 split_info += best_splits
+
+            self.stored_histograms = layer_stored_hist
 
             self.sync_best_splits(split_info, suffix=(dep, self.epoch_idx))
             LOGGER.debug('best_splits_sent')
