@@ -56,7 +56,7 @@ class EvaluateParam(BaseParam):
             consts.REGRESSION: consts.ALL_REGRESSION_METRICS
         }
 
-    def use_single_value_default_metrics(self):
+    def _use_single_value_default_metrics(self):
 
         self.default_metrics = {
             consts.BINARY: consts.DEFAULT_BINARY_METRIC,
@@ -130,5 +130,9 @@ class EvaluateParam(BaseParam):
         LOGGER.info("Finish evaluation parameter check!")
 
         return True
+
+    def check_single_value_default_metric(self):
+        self._use_single_value_default_metrics()
+        self.check()
 
 

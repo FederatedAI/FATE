@@ -24,6 +24,7 @@
 from arch.api.utils import log_utils
 from federatedml.util import consts
 from federatedml.evaluation.evaluation import Evaluation
+from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.evaluation.evaluation import PerformanceRecorder
 from federatedml.transfer_variable.transfer_class.validation_strategy_transfer_variable import  \
     ValidationStrategyVariable
@@ -168,7 +169,8 @@ class ValidationStrategy(object):
 
     def evaluate(self, predicts, model, epoch):
 
-        evaluate_param = model.get_metrics_param()
+        evaluate_param: EvaluateParam = model.get_metrics_param()
+        evaluate_param.check_single_value_default_metric()
         evaluate_param.check()
 
         eval_obj = Evaluation()
@@ -188,6 +190,7 @@ class ValidationStrategy(object):
             for metric in metric_list:
                 if metric in single_metric_list:
                     self.first_metric = metric
+                    LOGGER.debug('use {} as first metric'.format(self.first_metric))
                     break
 
         eval_obj._init_model(evaluate_param)
