@@ -45,7 +45,15 @@ class HeteroNNParam(BaseParam):
                 with optional key-value pairs such as learning rate.
             defaults to "SGD"
         loss:  str, a string to define loss function used
-        metrics: list object, evaluation metrics
+        early_stopping_rounds: int, default: None
+        Will stop training if one metric doesn’t improve in last early_stopping_round rounds
+        metrics: list, default: None
+            Indicate when executing evaluation during train process, which metrics will be used. If not set,
+            default metrics for specific task type will be used. As for binary classification, default metrics are
+            ['auc', 'ks'], for regression tasks, default metrics are ['root_mean_squared_error', 'mean_absolute_error'],
+            [ACCURACY, PRECISION, RECALL] for multi-classification task
+        use_first_metric_only: bool, default: False
+            Indicate whether to use the first metric in `metrics` as the only criterion for early stopping judgement.
         epochs: int, the maximum iteration for aggregation in training.
         batch_size : int, batch size when updating model.
             -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
