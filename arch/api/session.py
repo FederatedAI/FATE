@@ -22,6 +22,7 @@ from typing import Iterable
 from arch.api import RuntimeInstance, _EGGROLL_VERSION
 from arch.api import WorkMode, Backend
 from arch.api.base.table import Table
+from arch.api.base.session import FateSession
 from arch.api.base.utils.store_type import StoreTypes
 from arch.api.utils import file_utils
 from arch.api.utils.log_utils import LoggerFactory
@@ -213,3 +214,4 @@ def kill():
 
 def exit():
     RuntimeInstance.SESSION = None
+    FateSession.exit()

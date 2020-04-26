@@ -52,7 +52,7 @@ class TaskExecutor(object):
             schedule_logger(args.job_id).info(args)
             # init function args
             if args.job_server:
-                RuntimeConfig.init_config(HTTP_PORT=args.job_server.split(':')[1])
+                RuntimeConfig.init_config(HTTP_PORT=args.job_server.split(':')[1], IN_EXECUTOR=True)
             job_id = args.job_id
             component_name = args.component_name
             task_id = args.task_id

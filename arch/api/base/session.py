@@ -36,6 +36,10 @@ class FateSession(object):
                     FateSession._instance = instance
 
     @staticmethod
+    def exit():
+        FateSession._instance = None
+
+    @staticmethod
     def get_instance():
         return FateSession._instance
 

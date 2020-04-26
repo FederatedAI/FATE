@@ -27,6 +27,7 @@ class RuntimeConfig(object):
     USE_LOCAL_DATABASE = False
     HTTP_PORT = None
     JOB_SERVER_HOST = None
+    IN_EXECUTOR = False
     ENV = dict()
 
     @staticmethod
@@ -44,3 +45,7 @@ class RuntimeConfig(object):
     @staticmethod
     def get_env(key):
         return RuntimeConfig.ENV.get(key, None)
+
+    @staticmethod
+    def set_executor():
+        RuntimeConfig.IN_EXECUTOR = True
