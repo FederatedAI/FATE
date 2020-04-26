@@ -1,35 +1,35 @@
 {
   "data": [
       {
-          "file": "examples/data/breast_b.csv",
+          "file": "examples/data/breast_step_b.csv",
           "head": 1,
           "partition": 48,
-          "table_name": "hetero_breast_b",
-          "namespace": "hetero_breast_guest",
+          "table_name": "hetero_breast_step_b",
+          "namespace": "hetero_breast_step_guest",
           "role": "guest_0"
         },
       {
-          "file": "examples/data/breast_a.csv",
+          "file": "examples/data/breast_step_a.csv",
           "head": 1,
           "partition": 48,
-          "table_name": "hetero_breast_a",
-          "namespace": "hetero_breast_host",
+          "table_name": "hetero_breast_step_a",
+          "namespace": "hetero_breast_step_host",
           "role": "host_0"
       },
       {
-          "file": "examples/data/motor_mini_b.csv",
+          "file": "examples/data/motor_mini_step_b.csv",
           "head": 1,
           "partition": 48,
-          "table_name": "motor_mini_b",
-          "namespace": "motor_mini",
+          "table_name": "motor_mini_step_b",
+          "namespace": "motor_mini_step",
           "role": "guest_0"
       },
       {
-          "file": "examples/data/motor_mini_a.csv",
+          "file": "examples/data/motor_mini_step_a.csv",
           "head": 1,
           "partition": 48,
-          "table_name": "motor_mini_a",
-          "namespace": "motor_mini",
+          "table_name": "motor_mini_step_a",
+          "namespace": "motor_mini_step",
           "role": "host_0"
       },
       {
