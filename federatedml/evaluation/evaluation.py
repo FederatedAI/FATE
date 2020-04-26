@@ -136,7 +136,7 @@ class Evaluation(ModelBase):
         self.save_curve_metric_list = [consts.KS, consts.ROC, consts.LIFT, consts.GAIN, consts.PRECISION, consts.RECALL,
                                        consts.ACCURACY]
 
-        self.metrics = [consts.AUC, consts.ROOT_MEAN_SQUARED_ERROR]
+        self.metrics = None
         self.round_num = 6
 
         self.validate_metric = {}
@@ -146,7 +146,7 @@ class Evaluation(ModelBase):
         self.model_param = model
         self.eval_type = self.model_param.eval_type
         self.pos_label = self.model_param.pos_label
-        # self.metrics = model.metrics
+        self.metrics = model.metrics
 
     def _run_data(self, data_sets=None, stage=None):
         if not self.need_run:
