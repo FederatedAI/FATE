@@ -79,6 +79,7 @@ if __name__ == '__main__':
         }
     )
     # init
+    signal.signal(signal.SIGTERM, job_utils.cleaning)
     signal.signal(signal.SIGCHLD, job_utils.wait_child_process)
     init_database_tables()
     # init runtime config

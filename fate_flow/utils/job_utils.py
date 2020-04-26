@@ -570,3 +570,7 @@ def query_job_info(job_id):
         party_id = job.f_party_id
     return role, party_id
 
+
+def cleaning(signum, frame):
+    pass
+
