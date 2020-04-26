@@ -25,6 +25,7 @@ from federatedml.param.onehot_encoder_param import OneHotEncoderParam
 from federatedml.protobuf.generated import onehot_param_pb2, onehot_meta_pb2
 from federatedml.statistic.data_overview import get_header
 from federatedml.util import consts
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 
@@ -139,6 +140,7 @@ class OneHotEncoder(ModelBase):
 
         return data_instances
 
+    @assert_io_num_rows_equal
     def transform(self, data_instances):
         self._init_params(data_instances)
         LOGGER.debug("In Onehot transform, ori_header: {}, transfered_header: {}".format(

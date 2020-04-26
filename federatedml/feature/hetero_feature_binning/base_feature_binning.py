@@ -28,6 +28,7 @@ from federatedml.protobuf.generated import feature_binning_meta_pb2, feature_bin
 from federatedml.statistic.data_overview import get_header
 from federatedml.transfer_variable.transfer_class.hetero_feature_binning_transfer_variable import \
     HeteroFeatureBinningTransferVariable
+from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
 
@@ -100,6 +101,7 @@ class BaseHeteroFeatureBinning(ModelBase):
         # LOGGER.debug("After _setup_bin_inner_param: {}".format(self.bin_inner_param.__dict__))
         self.binning_obj.set_bin_inner_param(self.bin_inner_param)
 
+    @assert_io_num_rows_equal
     def transform(self, data_instances):
         self._setup_bin_inner_param(data_instances, self.model_param)
         data_instances = self.binning_obj.transform(data_instances, self.transform_type)

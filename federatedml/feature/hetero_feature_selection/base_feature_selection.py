@@ -33,6 +33,7 @@ from federatedml.transfer_variable.transfer_class.hetero_feature_selection_trans
     HeteroFeatureSelectionTransferVariable
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 
@@ -267,6 +268,7 @@ class BaseHeteroFeatureSelection(ModelBase):
         LOGGER.info("Finish Hetero Selection Fit and transform.")
         return new_data
 
+    @assert_io_num_rows_equal
     def transform(self, data_instances):
         self._abnormal_detection(data_instances)
         self._init_select_params(data_instances)
