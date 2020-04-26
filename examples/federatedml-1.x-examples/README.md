@@ -267,7 +267,7 @@ The logs for each party is collected separately and list in different folders. I
 
 ## FATE-FLOW Usage
 
-### 1.How to get the output data of each component:
+### 1. How to get the output data of each component:
 
 ```bash
 cd {your_fate_path}/fate_flow
@@ -289,34 +289,34 @@ component_name: the component name which you want to get, such as component_name
 
 - output_dir: the output directory
 
-### 2.How to get the output model of each component
+### 2. How to get the output model of each component
  
 ```bash
 python fate_flow_client.py -f component_output_model -j $jobid -p $party_id -r $role -cpn $component_name
 ```
 
-### 3.How to get the logs of task
+### 3. How to get the logs of task
 
 ```bash
 python fate_flow_client.py -f job_log -j $jobid -o $output_dir
 ```
  
-### 4.How to stop the job
+### 4. How to stop the job
 ```bash
 python fate_flow_client.py -f stop_job -j $jobid
 ```
 
-### 5.How to query job current status
+### 5. How to query job current status
 ```bash
 python fate_flow_client.py -f query_job -j $jobid -p party_id -r role
 ```
 
-### 6.How to get the job runtime configure
+### 6. How to get the job runtime configure
 ```bash
 python fate_flow_client.py -f job_config -j $jobid -p party_id -r role -o $output_dir
 ```
 
-### 7.How to download a table which has been uploaded before
+### 7. How to download a table which has been uploaded before
 ```bash
 python fate_flow_client.py -f download -n table_namespace -t table_name -w work_mode -o save_file
 ```
@@ -398,7 +398,7 @@ python ${your_fate_install_path}/fate_flow/fate_flow_client.py -f query_job -j {
 Once predict task finished, the first 100 records of predict result are available in FATE-board. You can also download all results through the following command.
 
 ```bash
-    python ${your_fate_install_path}/fate_flow/fate_flow_client.py -f component_output_data -j ${job_id} -p ${party_id} -r ${role} -cpn ${component_name} -o ${predict_result_output_dir}
+python ${your_fate_install_path}/fate_flow/fate_flow_client.py -f component_output_data -j ${job_id} -p ${party_id} -r ${role} -cpn ${component_name} -o ${predict_result_output_dir}
 ```
 where
 - ${job_id}: predict task's job_id
