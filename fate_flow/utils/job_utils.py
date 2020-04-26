@@ -39,8 +39,8 @@ from fate_flow.manager.data_manager import query_data_view, delete_table, delete
 from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE
 from fate_flow.utils import detect_utils
 from fate_flow.utils import api_utils
+from fate_flow.utils import session_utils
 from flask import request, redirect, url_for
-from fate_flow.utils.session_utils import SessionStop
 
 
 class IdCounter(object):
@@ -457,7 +457,7 @@ def start_session_stop(task):
     job_conf_dict = get_job_conf(task.f_job_id)
     runtime_conf = job_conf_dict['job_runtime_conf_path']
     process_cmd = [
-        'python3', sys.modules[SessionStop.__module__].__file__,
+        'python3', sys.modules[session_utils.SessionStop.__module__].__file__,
         '-j', '{}_{}_{}'.format(task.f_task_id, task.f_role, task.f_party_id),
         '-w', str(runtime_conf.get('job_parameters').get('work_mode')),
         '-b', str(runtime_conf.get('job_parameters').get('backend', 0)),
@@ -572,5 +572,5 @@ def query_job_info(job_id):
 
 
 def cleaning(signum, frame):
-    pass
+    session_utils.clean_server_used_session()
 

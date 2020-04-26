@@ -105,6 +105,7 @@ def get_upload_history():
     return get_upload_info(jobs_run_conf)
 
 
+@session_utils.session_detect()
 def get_upload_info(jobs_run_conf):
     data = []
     for job_id, job_run_conf in jobs_run_conf.items():

@@ -17,8 +17,7 @@
 import os
 
 from arch.api import Backend
-from arch.api.utils import file_utils
-from arch.api.utils import log_utils
+from arch.api.utils import file_utils, log_utils, core_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.constant_config import ModelStorage
 from arch.api.utils.core_utils import get_lan_ip
@@ -91,7 +90,7 @@ HEADERS = {
     'Content-Type': 'application/json',
     'Connection': 'close'
 }
-DETECT_TABLE = ("fate_flow_detect_table_namespace", "fate_flow_detect_table_name", 50)
+DETECT_TABLE = ("fate_flow_detect_table_namespace", "fate_flow_detect_table_name_{}".format(core_utils.fate_uuid()), 50)
 # fate-serving
 SERVINGS_ZK_PATH = '/FATE-SERVICES/serving/online/publishLoad/providers'
 FATE_FLOW_ZK_PATH = '/FATE-SERVICES/flow/online/transfer/providers'

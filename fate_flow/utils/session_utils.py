@@ -18,6 +18,7 @@ import functools
 
 from arch.api import session
 from arch.api.utils.log_utils import schedule_logger
+from arch.api.utils.core_utils import fate_uuid
 from fate_flow.settings import stat_logger, DETECT_TABLE
 from fate_flow.entity.runtime_config import RuntimeConfig
 
@@ -50,38 +51,52 @@ class SessionStop(object):
             pass
 
 
-def init_server_session():
-    session.init(mode=RuntimeConfig.WORK_MODE, backend=RuntimeConfig.BACKEND)
+def init_session_for_flow_server():
+    session.init(job_id="session_used_by_fate_flow_server_{}".format(fate_uuid()),
+                 mode=RuntimeConfig.WORK_MODE,
+                 backend=RuntimeConfig.BACKEND)
+    stat_logger.info("init session {} for fate flow server successfully".format(session.get_session_id()))
+
+
+def clean_server_used_session():
+    used_session_id = None
+    try:
+        used_session_id = session.get_session_id()
+        session.stop()
+    except:
+        pass
+    session.exit()
+    stat_logger.info("clean session {} for fate flow server done".format(used_session_id))
 
 
 def session_detect():
     def _out_wrapper(func):
         @functools.wraps(func)
         def _wrapper(*args, **kwargs):
-            for i in range(3):
-                try:
-                    stat_logger.info("detect session {}".format(session.get_session_id()))
-                    count = session.get_data_table(namespace=DETECT_TABLE[0], name=DETECT_TABLE[1]).count()
-                    if count != DETECT_TABLE[2]:
-                        raise Exception("session {} count error".format(session.get_session_id()))
-                    stat_logger.info("session {} is ok".format(session.get_session_id()))
-                    break
-                except Exception as e:
-                    stat_logger.exception(e)
-                    stat_logger.info("start init new session")
+            if not RuntimeConfig.IN_EXECUTOR:
+                for i in range(3):
                     try:
-                        try:
-                            session.stop()
-                        except:
-                            pass
-                        session.exit()
-                        init_server_session()
-                        stat_logger.info("init new session successfully, {}".format(session.get_session_id()))
+                        stat_logger.info("detect session {} by table {} {}".format(
+                            session.get_session_id(), DETECT_TABLE[0], DETECT_TABLE[1]))
+                        count = session.get_data_table(namespace=DETECT_TABLE[0], name=DETECT_TABLE[1]).count()
+                        if count != DETECT_TABLE[2]:
+                            raise Exception("session {} count error".format(session.get_session_id()))
+                        stat_logger.info("session {} is ok".format(session.get_session_id()))
+                        break
                     except Exception as e:
                         stat_logger.exception(e)
-                        stat_logger.info("init new session failed.")
+                        stat_logger.info("start init new session")
+                        try:
+                            clean_server_used_session()
+                            init_session_for_flow_server()
+                        except Exception as e:
+                            stat_logger.exception(e)
+                            stat_logger.info("init new session failed.")
+                else:
+                    stat_logger.error("init new session failed.")
             else:
-                stat_logger.error("init new session failed.")
+                # If in executor pass. TODO: detect and restore the session in executor
+                pass
             return func(*args, **kwargs)
         return _wrapper
     return _out_wrapper

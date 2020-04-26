@@ -15,8 +15,8 @@
 #
 from typing import List
 
-from arch.api import session, WorkMode, Backend
-from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64, fate_uuid
+from arch.api import session, WorkMode
+from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import DB, Job, Task, TrackingMetric, DataView
 from fate_flow.entity.constant_config import JobStatus, TaskStatus
@@ -24,7 +24,7 @@ from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.model_manager import pipelined_model
 from fate_flow.settings import API_VERSION, MAX_CONCURRENT_JOB_RUN_HOST
-from fate_flow.utils import job_utils, api_utils, model_utils
+from fate_flow.utils import job_utils, api_utils, model_utils, session_utils
 
 
 class Tracking(object):
@@ -177,6 +177,7 @@ class Tracking(object):
                 view_data[k] = v
             return view_data
 
+    @session_utils.session_detect()
     def save_output_data_table(self, data_table, data_name: str = 'component'):
         """
         Save component output data, will run in the task executor process
@@ -214,6 +215,7 @@ class Tracking(object):
                                        'f_table_count_actual': data_table.count() if data_table else 0},
                             mark=True)
 
+    @session_utils.session_detect()
     def get_output_data_table(self, data_name: str = 'component'):
         """
         Get component output data table, will run in the task executor process
@@ -427,6 +429,7 @@ class Tracking(object):
                 data_view.save()
             return data_view
 
+    @session_utils.session_detect()
     def clean_task(self, roles, party_ids):
         schedule_logger(self.job_id).info('clean table by namespace {}'.format(self.task_id))
         try:
@@ -436,24 +439,6 @@ class Tracking(object):
                     session.clean_tables(namespace=self.task_id + '_' + role + '_' + party_id, regex_string='*')
         except Exception as e:
             schedule_logger(self.job_id).exception(e)
-        schedule_logger(self.job_id).info('clean table by namespace {} done'.format(self.task_id))
-
-    def clean_task_old(self, roles, party_ids):
-        schedule_logger(self.job_id).info('clean table by namespace {}'.format(self.task_id))
-        try:
-            session.init(job_id="{}:{}".format(self.task_id, fate_uuid()), mode=RuntimeConfig.WORK_MODE, backend=Backend.EGGROLL)
-            session.clean_tables(namespace=self.task_id, regex_string='*')
-            for role in roles.split(','):
-                for party_id in party_ids.split(','):
-                    session.clean_tables(namespace=self.task_id + '_' + role + '_' + party_id, regex_string='*')
-        except Exception as e:
-            schedule_logger(self.job_id).exception(e)
-        finally:
-            try:
-                session.stop()
-                session.exit()
-            except Exception as e:
-                schedule_logger(self.job_id).exception(e)
         schedule_logger(self.job_id).info('clean table by namespace {} done'.format(self.task_id))
 
     def job_quantity_constraint(self):
