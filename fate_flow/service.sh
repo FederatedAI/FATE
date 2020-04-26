@@ -16,8 +16,9 @@
 #  limitations under the License.
 #
 
-export PYTHONPATH=
 FATE_PYTHON_ROOT=$(dirname $(dirname $(readlink -f "$0")))
+PYTHON_PATH=${FATE_PYTHON_ROOT}:${FATE_PYTHON_ROOT}/eggroll/python
+export PYTHONPATH=${PYTHON_PATH}
 log_dir=${FATE_PYTHON_ROOT}/logs
 venv=
 
@@ -43,15 +44,23 @@ status() {
 }
 
 start() {
-    sleep 8
     getpid
     if [[ ${pid} == "" ]]; then
         mklogsdir
         source ${venv}/bin/activate
         nohup python ${FATE_PYTHON_ROOT}/fate_flow/fate_flow_server.py >> "${log_dir}/console.log" 2>>"${log_dir}/error.log" &
-        sleep 3
-        getpid
-        if [[ -n ${pid} ]]; then 
+        for((i=1;i<=100;i++));
+        do
+            sleep 0.1
+            getpid
+            if [[ -n ${pid} ]]; then
+                echo "service start sucessfully. pid: ${pid}"
+                return
+            else
+                echo "check service process"
+            fi
+        done
+        if [[ -n ${pid} ]]; then
            echo "service start sucessfully. pid: ${pid}"
         else
            echo "service start failed, please check ${log_dir}/error.log and ${log_dir}/console.log"

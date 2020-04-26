@@ -185,8 +185,17 @@ class Tracking(object):
         :return:
         """
         if data_table:
-            persistent_table = data_table.save_as(namespace='{}_persistent'.format(data_table._namespace),
-                                                  name='{}_persistent'.format(data_table._name))
+            persistent_table_namespace, persistent_table_name = '{}_component_output_data_persistent'.format(
+                self.component_name), data_table._name
+            schedule_logger(self.job_id).info(
+                'persisting the component: {} output temporary table: ({} {}) to ({} {})'.format(self.component_name,
+                                                                                                data_table._namespace,
+                                                                                                data_table._name,
+                                                                                                persistent_table_namespace,
+                                                                                                persistent_table_name))
+            persistent_table = data_table.save_as(
+                namespace=persistent_table_namespace,
+                name=persistent_table_name)
             session.save_data_table_meta(
                 {'schema': data_table.schema, 'header': data_table.schema.get('header', [])},
                 data_table_namespace=persistent_table._namespace, data_table_name=persistent_table._name)
