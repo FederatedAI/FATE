@@ -12,10 +12,10 @@ This section introduces the dsl and conf for usage of different tasks.
 
     runtime_config: test_predict_conf.json
 
-3. Validate Task:
+3. Validate Task (with early-stopping parameters specified):
     dsl: test_hetero_linr_validate_job_dsl.json
 
-    runtime_config : test_hetero_validate_train_job_conf.json
+    runtime_config : test_hetero_linr_validate_job_conf.json
 
 4. Cross Validation Task:
 
@@ -25,13 +25,13 @@ This section introduces the dsl and conf for usage of different tasks.
 
 5. Multi-host Train Task:
 
-    dsl: test_hetero_linr_multi_host_train_job_dsl.json
+    dsl: test_hetero_linr_train_job_dsl.json
 
     conf: test_hetero_linr_multi_host_train_job_conf.json
 
 6. Multi-host Cross Validation Task:
 
-    dsl: test_hetero_linr_multi_host_cv_job_dsl.json
+    dsl: test_hetero_linr_train_job_dsl.json
 
     conf: test_hetero_linr_multi_host_cv_job_conf.json
 
