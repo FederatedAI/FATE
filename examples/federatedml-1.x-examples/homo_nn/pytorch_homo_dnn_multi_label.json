@@ -83,18 +83,18 @@
           "layer": "Linear",
           "name": "line1",
           "type": "normal",
-          "config": [18,6]
+          "config": [18,5]
         },
         {
           "layer": "Relu",
           "type": "activate",
-          "name": "relu1"
+          "name": "relu"
         },
         {
           "layer": "Linear",
           "name": "line2",
           "type": "normal",
-          "config": [6,4]
+          "config": [5,4]
         }
 
       ],
@@ -111,7 +111,7 @@
       "metrics": [
         "accuracy"
       ],
-      "max_iter": 2
+      "max_iter": 15
     }
   }
 }

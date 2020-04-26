@@ -13,17 +13,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import base64
-
 import grpc
 
-from arch.api import session
-from arch.api.model_manager.manager import get_model_table_partition_count
 from arch.api.proto import model_service_pb2
 from arch.api.proto import model_service_pb2_grpc
-from arch.api.utils.core import get_fate_uuid
 from fate_flow.settings import stat_logger
 from fate_flow.utils import model_utils
+from fate_flow.manager.model_manager import pipelined_model
 
 
 def generate_publish_model_info(config_data):
@@ -97,11 +93,8 @@ def bind_model_service(config_data):
 
 
 def download_model(request_data):
-    pipeline_model_table = session.table(name=request_data.get('name'), namespace=request_data.get('namespace'),
-                                         partition=get_model_table_partition_count(),
-                                         create_if_missing=False, error_if_exist=False)
-    model_data = {}
-    for storage_key, buffer_object_bytes in pipeline_model_table.collect(use_serialize=False):
-        model_data[storage_key] = base64.b64encode(buffer_object_bytes).decode()
+    model = pipelined_model.PipelinedModel(model_id=request_data.get("namespace"),
+                                           model_version=request_data.get("name"))
+    model_data = model.collect_models(in_bytes=True)
     return model_data
 

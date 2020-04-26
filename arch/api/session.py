@@ -209,3 +209,7 @@ def stop():
 
 def kill():
     RuntimeInstance.SESSION.kill()
+
+
+def exit():
+    RuntimeInstance.SESSION = None

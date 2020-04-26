@@ -90,6 +90,9 @@ class HomoSecureBoostingTreeArbiter(BoostingTree):
     def federated_binning(self):
         self.binning_obj.average_run()
 
+    def send_valid_features(self, valid_features, epoch_idx, t_idx):
+        self.transfer_inst.valid_features.remote(valid_features, idx=-1, suffix=('valid_features', epoch_idx, t_idx))
+
     def fit(self, data_inst, valid_inst=None):
 
         self.federated_binning()
@@ -102,8 +105,6 @@ class HomoSecureBoostingTreeArbiter(BoostingTree):
             LOGGER.debug('label mapping is {}'.format(label_mapping))
             self.tree_dim = len(label_mapping) if len(label_mapping) > 2 else 1
 
-        self.federated_binning()
-
         if self.n_iter_no_change:
             self.check_convergence_func = converge_func_factory("diff", self.tol)
 
@@ -112,6 +113,7 @@ class HomoSecureBoostingTreeArbiter(BoostingTree):
 
             for t_idx in range(self.tree_dim):
                 valid_feature = self.sample_valid_feature()
+                self.send_valid_features(valid_feature, epoch_idx, t_idx)
                 flow_id = self.generate_flowid(epoch_idx, t_idx)
                 new_tree = HomoDecisionTreeArbiter(self.tree_param, valid_feature=valid_feature, epoch_idx=epoch_idx,
                                                    flow_id=flow_id, tree_idx=t_idx)

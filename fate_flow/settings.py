@@ -16,16 +16,19 @@
 # -*- coding: utf-8 -*-
 import os
 
+from arch.api import Backend
 from arch.api.utils import file_utils
 from arch.api.utils import log_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
-from arch.api.utils.core import get_lan_ip
+from fate_flow.entity.constant_config import ModelStorage
+from arch.api.utils.core_utils import get_lan_ip
 import __main__
 
 from fate_flow.utils.setting_utils import CenterConfig
 
 
 WORK_MODE = 0
+BACKEND = Backend.EGGROLL
 USE_LOCAL_DATABASE = True
 
 # upload data
@@ -51,7 +54,7 @@ REDIS_QUEUE_DB_INDEX = 0
 
 DATABASE = {
     'name': 'fate_flow',
-    'user': 'root',
+    'user': 'fate_dev',
     'passwd': 'fate_dev',
     'host': '127.0.0.1',
     'port': 3306,
@@ -66,6 +69,14 @@ REDIS = {
     'max_connections': 500
 }
 
+DEFAULT_MODEL_STORE_ADDRESS = {
+    "storage": ModelStorage.REDIS,
+    "host": "127.0.0.1",
+    "port": 6379,
+    "password": "fate_dev",
+    "db": 0
+}
+
 '''
 Constants
 '''
@@ -75,8 +86,7 @@ SERVERS = 'servers'
 MAIN_MODULE = os.path.relpath(__main__.__file__)
 SERVER_MODULE = 'fate_flow_server.py'
 TASK_EXECUTOR_MODULE = 'driver/task_executor.py'
-DEFAULT_WORKFLOW_DATA_TYPE = ['train_input', 'data_input', 'id_library_input', 'model', 'predict_input',
-                              'predict_output', 'evaluation_output', 'intersect_data_output']
+TEMP_DIRECTORY = os.path.join(file_utils.get_project_base_directory(), "fate_flow", "temp")
 HEADERS = {
     'Content-Type': 'application/json',
     'Connection': 'close'
@@ -90,7 +100,7 @@ FATE_MANAGER_GET_NODE_INFO = '/node/info'
 FATE_MANAGER_NODE_CHECK = '/node/management/check'
 
 # logger
-log_utils.LoggerFactory.LEVEL = 20
+log_utils.LoggerFactory.LEVEL = 10
 # {CRITICAL: 50, FATAL:50, ERROR:40, WARNING:30, WARN:30, INFO:20, DEBUG:10, NOTSET:0}
 log_utils.LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), 'logs', 'fate_flow'))
 stat_logger = log_utils.getLogger("fate_flow_stat")
@@ -128,3 +138,4 @@ SERVINGS = CenterConfig.get_settings(path=SERVING_PATH, servings_zk_path=SERVING
 BOARD_DASHBOARD_URL = 'http://%s:%d/index.html#/dashboard?job_id={}&role={}&party_id={}' % (BOARD_HOST, BOARD_PORT)
 RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
 RuntimeConfig.init_config(HTTP_PORT=HTTP_PORT)
+RuntimeConfig.init_config(BACKEND=BACKEND)

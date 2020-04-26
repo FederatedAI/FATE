@@ -22,13 +22,13 @@ import time
 import uuid
 
 
-def get_fate_uuid():
+def fate_uuid():
     return uuid.uuid1().hex
 
 
 def get_commit_id():
     # the model may be larger, SHA1 is not used
-    return get_fate_uuid()
+    return fate_uuid()
 
 
 def string_to_bytes(string):

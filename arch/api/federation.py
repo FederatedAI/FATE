@@ -65,6 +65,10 @@ def local_party():
     return RuntimeInstance.FEDERATION.local_party
 
 
+def roles_to_parties(roles: list) -> list:
+    return RuntimeInstance.FEDERATION.roles_to_parties(roles)
+
+
 @deprecated.deprecated(version='1.2.0', reason="please use `get` api in transfer_variable instead")
 def get(name, tag: str, idx=-1):
     """

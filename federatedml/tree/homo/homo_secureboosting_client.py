@@ -33,6 +33,8 @@ from typing import List, Tuple
 import numpy as np
 from arch.api.utils import log_utils
 
+from federatedml.model_selection.k_fold import KFold
+
 from federatedml.util.classify_label_checker import ClassifyLabelChecker, RegressionLabelChecker
 
 LOGGER = log_utils.getLogger()
@@ -226,6 +228,10 @@ class HomoSecureBoostingTreeClient(BoostingTree):
     def label_alignment(self, labels: List[int]):
         self.transfer_inst.local_labels.remote(labels, suffix=('label_align', ))
 
+    def get_valid_features(self, epoch_idx, t_idx):
+        valid_feature = self.transfer_inst.valid_features.get(idx=0, suffix=('valid_features', epoch_idx, t_idx))
+        return valid_feature
+
     def fit(self, data_inst, validate_data = None,):
 
         # binning
@@ -271,8 +277,10 @@ class HomoSecureBoostingTreeClient(BoostingTree):
         for epoch_idx in range(self.num_trees):
 
             g_h = self.compute_local_grad_and_hess(self.y_hat)
-            valid_features = self.sample_valid_feature()
+            
             for t_idx in range(self.tree_dim):
+                valid_features = self.get_valid_features(epoch_idx, t_idx)
+                LOGGER.debug('valid features are {}'.format(valid_features))
                 subtree_g_h = self.get_subtree_grad_and_hess(g_h, t_idx)
                 flow_id = self.generate_flowid(epoch_idx, t_idx)
                 new_tree = HomoDecisionTreeClient(self.tree_param, self.data_bin, self.bin_split_points,
@@ -394,6 +402,7 @@ class HomoSecureBoostingTreeClient(BoostingTree):
         model_param.losses.extend(self.local_loss_history)
         model_param.classes_.extend(map(str, self.classes_))
         model_param.num_classes = self.num_classes
+        model_param.best_iteration = 0
 
         feature_importance = list(self.get_feature_importance().items())
         feature_importance = sorted(feature_importance, key=itemgetter(1), reverse=True)
@@ -456,3 +465,10 @@ class HomoSecureBoostingTreeClient(BoostingTree):
         self.set_model_param(model_param)
         self.set_loss_function(self.objective_param)
 
+    def cross_validation(self, data_instances):
+        if not self.need_run:
+            return data_instances
+        kflod_obj = KFold()
+        cv_param = self._get_cv_param()
+        kflod_obj.run(cv_param, data_instances, self, True)
+        return data_instances

@@ -28,6 +28,7 @@ from federatedml.nn.homo_nn.nn_model import restore_nn_model
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.param.homo_nn_param import HomoNNParam
 from federatedml.util import consts
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 Logger = LoggerFactory.get_logger()
 MODEL_META_NAME = "HomoNNModelMeta"
@@ -80,7 +81,7 @@ class HomoNNServer(HomoNNBase):
 
     def callback_loss(self, iter_num, loss):
         metric_meta = MetricMeta(name='train',
-                                 metric_type=MetricType.LOSS,
+                                 metric_type="LOSS",
                                  extra_metas={
                                      "unit_name": "iters",
                                  })
@@ -158,7 +159,8 @@ class HomoNNClient(HomoNNBase):
     def __build_pytorch_model(self, nn_define):
         self.nn_model = self.model_builder(nn_define=nn_define,
                                            optimizer=self.optimizer,
-                                           loss=self.loss)
+                                           loss=self.loss,
+                                           metrics=self.metrics)
 
     def fit(self, data_inst, *args):
 
@@ -209,6 +211,7 @@ class HomoNNClient(HomoNNBase):
         param_pb.saved_model_bytes = self.nn_model.export_model()
         return param_pb
 
+    @assert_io_num_rows_equal
     def predict(self, data_inst):
 
         data = self.data_converter.convert(data_inst, batch_size=self.batch_size)

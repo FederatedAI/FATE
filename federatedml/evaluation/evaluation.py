@@ -41,6 +41,7 @@ from federatedml.model_base import ModelBase
 
 LOGGER = log_utils.getLogger()
 
+
 class PerformanceRecorder():
 
     """
@@ -64,7 +65,6 @@ class PerformanceRecorder():
                               consts.KS
                             ]
 
-
         self.larger_is_better = [consts.AUC,
                                  consts.R2_SCORE,
                                  consts.PRECISION,
@@ -81,7 +81,7 @@ class PerformanceRecorder():
 
         self.cur_best_performance = {}
 
-        self.no_improvement_round = {} # record no improvement round of all metrics
+        self.no_improvement_round = {}  # record no improvement round of all metrics
 
     def has_improved(self, val: float, metric: str, cur_best: dict):
 
@@ -120,6 +120,7 @@ class PerformanceRecorder():
 
 
 class Evaluation(ModelBase):
+
     def __init__(self):
         super().__init__()
         self.model_param = EvaluateParam()
@@ -136,39 +137,9 @@ class Evaluation(ModelBase):
         self.save_curve_metric_list = [consts.KS, consts.ROC, consts.LIFT, consts.GAIN, consts.PRECISION, consts.RECALL,
                                        consts.ACCURACY]
 
-        self.regression_support_func = [
-            consts.EXPLAINED_VARIANCE,
-            consts.MEAN_ABSOLUTE_ERROR,
-            consts.MEAN_SQUARED_ERROR,
-            consts.MEDIAN_ABSOLUTE_ERROR,
-            consts.R2_SCORE,
-            consts.ROOT_MEAN_SQUARED_ERROR
-        ]
-
-        self.binary_classification_support_func = [
-            consts.AUC,
-            consts.KS,
-            consts.LIFT,
-            consts.GAIN,
-            consts.ACCURACY,
-            consts.PRECISION,
-            consts.RECALL,
-            consts.ROC
-        ]
-
-        self.multi_classification_support_func = [
-            consts.ACCURACY,
-            consts.PRECISION,
-            consts.RECALL
-        ]
-
-        self.metrics = {consts.BINARY: self.binary_classification_support_func,
-                        consts.MULTY: self.multi_classification_support_func,
-                        consts.REGRESSION: self.regression_support_func}
-
+        self.metrics = None
         self.round_num = 6
-	
-	# record name of train and validate dataset
+
         self.validate_key = set()
         self.train_key = set()
 
@@ -179,6 +150,7 @@ class Evaluation(ModelBase):
         self.model_param = model
         self.eval_type = self.model_param.eval_type
         self.pos_label = self.model_param.pos_label
+        self.metrics = model.metrics
 
     def _run_data(self, data_sets=None, stage=None):
         if not self.need_run:
@@ -229,11 +201,9 @@ class Evaluation(ModelBase):
 
         eval_result = defaultdict(list)
 
-        if self.eval_type in self.metrics:
-            metrics = self.metrics[self.eval_type]
-        else:
-            LOGGER.warning("Unknown eval_type of {}".format(self.eval_type))
-            metrics = []
+        metrics = self.metrics 
+
+        LOGGER.debug('metrics are {}'.format(metrics))
 
         for eval_metric in metrics:
             res = getattr(self, eval_metric)(labels, pred_results)
@@ -369,7 +339,7 @@ class Evaluation(ModelBase):
 
                     if metric in self.save_single_value_metric_list:
                         self.__save_single_value(metric_res[1], metric_name=data_type, metric_namespace=metric_namespace
-                                                 ,eval_name=metric)
+                                                 , eval_name=metric)
                         collect_dict[metric] = metric_res[1]
 
                     elif metric == consts.KS:
@@ -502,7 +472,7 @@ class Evaluation(ModelBase):
                         LOGGER.warning("Unknown metric:{}".format(metric))
 
         if return_single_val_metrics:
-            if len(self.validate_metric) !=0:
+            if len(self.validate_metric) != 0:
                 LOGGER.debug("return validate metric")
                 return self.validate_metric
             else:
@@ -729,8 +699,6 @@ class Evaluation(ModelBase):
         ----------
         labels: value list. The labels of data set.
         pred_scores: pred_scores: value list. The predict results of model. It should be corresponding to labels each data.
-        thresholds: value list. This parameter effective only for 'binary'. The predict scores will be 1 if it larger than thresholds, if not,
-                    if will be 0. If not only one threshold in it, it will return several results according to the thresholds. default None
         Returns
         ----------
         float
@@ -753,8 +721,6 @@ class Evaluation(ModelBase):
         ----------
         labels: value list. The labels of data set.
         pred_scores: pred_scores: value list. The predict results of model. It should be corresponding to labels each data.
-        thresholds: value list. This parameter effective only for 'binary'. The predict scores will be 1 if it larger than thresholds, if not,
-                    if will be 0. If not only one threshold in it, it will return several results according to the thresholds. default None
         Returns
         ----------
         float
@@ -778,9 +744,6 @@ class Evaluation(ModelBase):
         ----------
         labels: value list. The labels of data set.
         pred_scores: pred_scores: value list. The predict results of model. It should be corresponding to labels each data.
-        thresholds: value list. This parameter effective only for 'binary'. The predict scores will be 1 if it larger than thresholds, if not,
-                    if will be 0. If not only one threshold in it, it will return several results according to the thresholds. default None
-        result_filter: value list. If result_filter is not None, it will filter the label results not in result_filter.
         Returns
         ----------
         dict

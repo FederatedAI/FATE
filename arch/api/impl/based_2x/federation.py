@@ -15,6 +15,9 @@ STATUS_TABLE_NAME = "__status__"
 
 LOGGER = log_utils.getLogger()
 
+_remote_tag_histories = set()
+_get_tag_histories = set()
+
 
 # noinspection PyProtectedMember
 def init_roll_site_context(runtime_conf, session_id):
@@ -51,12 +54,18 @@ class FederationRuntime(Federation):
         self.role = runtime_conf.get("local").get("role")
 
     def get(self, name, tag, parties: Union[Party, list]):
+
         rs = self.rsc.load(name=name, tag=tag)
         rubbish = Rubbish(name, tag)
 
         if isinstance(parties, Party):
             parties = [parties]
         rs_parties = [(party.role, party.party_id) for party in parties]
+
+        for party in parties:
+            if (name, tag, party) in _get_tag_histories:
+                raise EnvironmentError(f"get duplicate tag {(name, tag)}")
+            _get_tag_histories.add((name, tag, party))
 
         # TODO:0: check if exceptions are swallowed
         futures = rs.pull(parties=rs_parties)
@@ -85,12 +94,18 @@ class FederationRuntime(Federation):
         return rtn, rubbish
 
     def remote(self, obj, name, tag, parties):
+
         rs = self.rsc.load(name=name, tag=tag)
         rubbish = Rubbish(name=name, tag=tag)
 
         if isinstance(parties, Party):
             parties = [parties]
         rs_parties = [(party.role, party.party_id) for party in parties]
+
+        for party in parties:
+            if (name, tag, party) in _remote_tag_histories:
+                raise EnvironmentError(f"remote duplicate tag {(name, tag)}")
+            _remote_tag_histories.add((name, tag, party))
 
         if isinstance(obj, RollPair):
             futures = rs.push(obj=obj, parties=rs_parties)
@@ -102,7 +117,7 @@ class FederationRuntime(Federation):
             futures.extend(rs.push(obj=obj, parties=rs_parties))
             for k, v in splits:
                 _split_rs = self.rsc.load(name, tag=f"{tag}.__part_{k}")
-                futures.extend(_split_rs.push(v, parties))
+                futures.extend(_split_rs.push(obj=v, parties=rs_parties))
 
         def done_callback(fut):
             if LOGGER.isEnabledFor(logging.DEBUG):

@@ -143,3 +143,7 @@ class Union(ModelBase):
 
         LOGGER.info("Union operation finished. Total {} empty tables encountered.".format(empty_count))
         return combined_table
+
+    def check_consistency(self):
+        pass
+

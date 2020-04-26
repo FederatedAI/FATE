@@ -22,9 +22,10 @@ from arch.api import session
 from fate_flow.manager.data_manager import query_data_view
 from fate_flow.settings import stat_logger, USE_LOCAL_DATA
 from fate_flow.utils.api_utils import get_json_result
-from fate_flow.utils import detect_utils, job_utils
+from fate_flow.utils import detect_utils, job_utils, session_utils
 from fate_flow.driver.job_controller import JobController
 from fate_flow.utils.job_utils import get_job_configuration, generate_job_id, get_job_directory
+from fate_flow.entity.runtime_config import RuntimeConfig
 
 manager = Flask(__name__)
 
@@ -63,6 +64,7 @@ def download_upload(access_module):
     if access_module == "upload":
         data['table_name'] = request_config["table_name"]
         data['namespace'] = request_config["namespace"]
+        session.init(mode=RuntimeConfig.WORK_MODE, backend=RuntimeConfig.BACKEND)
         data_table = session.get_data_table(name=request_config["table_name"], namespace=request_config["namespace"])
         count = data_table.count()
         if count and int(request_config.get('drop', 2)) == 2:
