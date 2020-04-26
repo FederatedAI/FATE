@@ -341,7 +341,7 @@ class Tracking(object):
                     # Termination status cannot be updated
                     # TODO:
                     pass
-                if job_info['f_status'] == JobStatus.FAILED and not job.f_end_time:
+                if (job_info['f_status'] in [JobStatus.FAILED, JobStatus.TIMEOUT]) and (not job.f_end_time):
                     job.f_end_time = current_timestamp()
                     job.f_elapsed = job.f_end_time - job.f_start_time
                     job.f_update_time = current_timestamp()
