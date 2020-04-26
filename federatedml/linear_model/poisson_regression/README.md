@@ -33,6 +33,8 @@ In the training process, party A and party B each compute the elements needed fo
 5. Support use of exposure variable. Guest party may specify "exposure_colname" in the job configuration file
 6. Support validation for every arbitrary iterations
 7. Learning rate decay mechanism
+8. Early stopping mechanism, which checks for performance change on specified metrics over training rounds. Early stopping is triggered when no improvement is found at early stopping rounds.
+9. Support sparse format data as input.
 
 ## Notes on Training
 
@@ -40,5 +42,5 @@ The performance of poisson regression is highly dependent on model meta and the 
 
 1. The module uses log link function. We suggest that you start with large penalty scale and/or small learning step. For example, setting alpha to 100 and learning rate to 0.01.
 2. We suggest that you initialize model weights at 0 when learning rate is small.
-3. The current version of HeteroPoisson module does not support multi-host, but it will accept weight difference as a stopping criteria.
-4. The current version does not support over-dispersion term.
+3. The current version of HeteroPoisson module does not support multi-host, but it also accepts weight difference as convergence criteria.
+4. The current version does not include over-dispersion term.
