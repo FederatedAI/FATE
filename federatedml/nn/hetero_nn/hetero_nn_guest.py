@@ -140,7 +140,7 @@ class HeteroNNGuest(HeteroNNBase):
 
         preds = self.model.predict(test_x)
 
-        predict_tb = session.parallelize(zip(keys, preds), include_key=True)
+        predict_tb = session.parallelize(zip(keys, preds), include_key=True, partition=data_inst._partitions)
         if self.task_type == "regression":
             result = data_inst.join(predict_tb,
                                     lambda inst, predict: [inst.label, float(predict[0]), float(predict[0]),

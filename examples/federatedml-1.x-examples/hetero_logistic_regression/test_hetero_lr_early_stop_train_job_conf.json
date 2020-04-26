@@ -87,7 +87,7 @@
       "metrics": [],
       "use_first_metric_only": false,
       "init_param": {
-        "init_method": "random_uniform"
+        "init_method": "zeros"
       },
       "sqn_param": {
         "update_interval_L": 3,

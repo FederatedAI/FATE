@@ -13,10 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from arch.api.utils import log_utils
+
+LOGGER = log_utils.getLogger()
 
 
 def assert_io_num_rows_equal(func):
-
     def _func(*args, **kwargs):
         input_count = None
         all_args = []
@@ -31,6 +33,7 @@ def assert_io_num_rows_equal(func):
 
         if input_count is not None and type(result).__name__ in ["DTable", "RDDTable"]:
             output_count = result.count()
+            LOGGER.debug(f"num row of input: {input_count} -> num row of output: {output_count}")
             if input_count != output_count:
                 raise EnvironmentError(
                     f"num row of input({input_count}) not equals to num row of output({output_count})")

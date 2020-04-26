@@ -47,7 +47,35 @@ We have provided several upload config for you can upload example data convenien
     dsl: test_hetero_lr_train_job_dsl.json
     conf: test_multi_host_job_conf.json
 
-7. Spark backend Task:
+7. lr_sparse training task:
+    "conf": "test_hetero_lr_sparse_train_job_conf.json",
+    "dsl": "test_hetero_lr_train_job_dsl.json"
+
+8. lr_sparse_sqn task:
+    "conf": "test_hetero_lr_sparse_sqn_train_job_conf.json",
+    "dsl": "test_hetero_lr_train_job_dsl.json"
+
+9. lr_ovr_cv task:
+    "conf": "test_hetero_lr_cv_ovr_job_conf.json",
+    "dsl": "test_hetero_lr_cv_job_dsl.json"
+
+10. lr_sparse_cv task:
+    "conf": "test_hetero_lr_cv_sparse_job_conf.json",
+    "dsl": "test_hetero_lr_cv_job_dsl.json"
+
+11. lr_ovr_sqn task:
+    "conf": "test_hetero_lr_ovr_sqn_job_conf.json",
+    "dsl": "test_hetero_lr_train_job_dsl.json"
+
+12. lr_sqn task:
+    "conf": "test_hetero_lr_sqn_job_conf.json",
+    "dsl": "test_hetero_lr_train_job_dsl.json"
+
+13. early_stop_lr task:
+    "conf": "test_hetero_lr_early_stop_train_job_conf.json",
+    "dsl": "test_hetero_lr_validate_job_dsl.json"
+
+14. Spark backend Task:
     dsl: test_hetero_lr_train_job_dsl.json
     conf: test_spark_backend_job_conf.json
     This task is available if you have deploy spark backend.

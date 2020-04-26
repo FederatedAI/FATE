@@ -141,6 +141,27 @@
                 ]
             }
         },
+        "hetero_feature_binning_1": {
+            "module": "HeteroFeatureBinning",
+            "input": {
+                "data": {
+                    "data": [
+                        "sample_0.train"
+                    ]
+                },
+                "model": ["hetero_feature_binning_0.binning_model"]
+            },
+            "output": {
+                "data": [
+                    "transform_data"
+                ],
+                "model": [
+                    "binning_model"
+                ]
+            },
+            "need_run": false
+        },
+
         "hetero_feature_selection_1": {
             "module": "HeteroFeatureSelection",
             "input": {

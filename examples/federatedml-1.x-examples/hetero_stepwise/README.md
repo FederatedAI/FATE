@@ -5,13 +5,13 @@ This section introduces the dsl and conf relationships for usage.
 #### Training Task.
 
 1. Logistic Regression Model:  
-    example-data: (1) guest: breast_b.csv  (2) host: breast_a.csv  
+    example-data: (1) guest: breast_step_b.csv  (2) host: breast_step_a.csv  
     dsl: test_hetero_stepwise_lr_dsl.json  
     runtime_config: test_hetero_stepwise_lr_conf.json
      
 2. Linear Regression Model:  
-    example-data: (1) guest: motor_mini_b.csv
-                  (2) host: motor_mini_a.csv  
+    example-data: (1) guest: motor_mini_step_b.csv
+                  (2) host: motor_mini_step_a.csv  
     dsl: test_hetero_stepwise_linr_dsl.json  
     runtime_config: test_hetero_stepwise_linr_conf.json
    

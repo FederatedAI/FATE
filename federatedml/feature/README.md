@@ -18,6 +18,8 @@ For multiple hosts, it is similar with one host case. Guest sends its encrypted 
 <img src="./images/multiple_host_binning.png" alt="samples" width="850" height="500" /><br/>
 Figure 2： Multi-Host Binning Principle</div>
 
+For optimal binning, there exist two kinds of methods, merge-optimal binning and split-optimal binning. When choosing metrics as iv, gini or chi-square, merge type optimal binning will be used. On the other hand, if ks is choosed, split type optimal binning will be used.
+
 ## Features
 1. Support Quantile Binning based on quantile summary algorithm.
 2. Support Bucket Binning.
@@ -26,6 +28,7 @@ Figure 2： Multi-Host Binning Principle</div>
 5. Support calculating woe and iv as well as counting positive and negative cases for each bin.
 6. Support transforming data into bin indexes.
 7. Support multiple hosts binning.
+8. Support 4 types of optimal binning.
 
 # Hetero Feature Selection
 
