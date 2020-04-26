@@ -82,6 +82,8 @@ class BaseHeteroFeatureBinning(ModelBase):
             return
 
         self.header = get_header(data_instances)
+        LOGGER.debug("_setup_bin_inner_param, get header: {}".format(self.header))
+
         self.schema = data_instances.schema
         self.bin_inner_param.set_header(self.header)
         if params.bin_indexes == -1:
@@ -100,6 +102,7 @@ class BaseHeteroFeatureBinning(ModelBase):
             self.bin_inner_param.add_transform_bin_names(params.transform_param.transform_names)
         # LOGGER.debug("After _setup_bin_inner_param: {}".format(self.bin_inner_param.__dict__))
         self.binning_obj.set_bin_inner_param(self.bin_inner_param)
+        LOGGER.debug("After _setup_bin_inner_param, header: {}".format(self.header))
 
     @assert_io_num_rows_equal
     def transform(self, data_instances):
