@@ -247,11 +247,11 @@ def component_output_data_download():
         output_data_meta_file_path = output_file_path % 'data_meta.json'
         with open(output_data_meta_file_path, 'w') as fw:
             json.dump({'header': header}, fw, indent=4)
-
-        with open(output_data_file_path, 'r+') as f:
-            content = f.read()
-            f.seek(0, 0)
-            f.write('{}\n'.format(','.join(header)) + content)
+        if request_data.get('head', True):
+            with open(output_data_file_path, 'r+') as f:
+                content = f.read()
+                f.seek(0, 0)
+                f.write('{}\n'.format(','.join(header)) + content)
         # tar
         memory_file = io.BytesIO()
         tar = tarfile.open(fileobj=memory_file, mode='w:gz')
