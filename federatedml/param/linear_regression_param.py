@@ -84,7 +84,9 @@ class LinearParam(BaseParam):
         lr = lr0/(1+decay*t) if decay_sqrt is False, otherwise, lr = lr0 / sqrt(1+decay*t)
 
     validation_freqs: int, list, tuple, set, or None
-        validation frequency during training, required when using early stopping
+        validation frequency during training, required when using early stopping.
+        The default value is None, 1 is suggested. You can set it to a number larger than 1 in order to speed up training by skipping validation rounds.
+        When it is larger than 1, a number which is divisible by "max_iter" is recommended, otherwise, you will miss the validation scores of the last training iteration.
 
     early_stopping_rounds: int, default: None
         If positive number specified, at every specified training rounds, program checks for early stopping criteria.
