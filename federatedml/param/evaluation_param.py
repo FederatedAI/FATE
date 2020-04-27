@@ -71,38 +71,39 @@ class EvaluateParam(BaseParam):
 
         full_name_list = []
 
+        metrics_list = [str.lower(i) for i in metrics_list]
+
         for metric in metrics_list:
 
-            metric = str.lower(metric)
             if metric in metric_list:
-                full_name_list.append(metric)
+                if metric not in full_name_list:
+                    full_name_list.append(metric)
                 continue
 
             valid_flag = False
             for alias, full_name in alias_name.items():
                 if metric in alias:
-                    full_name_list.append(full_name)
+                    if full_name not in full_name_list:
+                        full_name_list.append(full_name)
                     valid_flag = True
                     break
 
             if not valid_flag:
                 raise ValueError('metric {} is not supported'.format(metric))
 
-        final_list = []
         allowed_metrics = self.allowed_metrics[self.eval_type]
 
         for m in full_name_list:
-            if m in allowed_metrics:
-                final_list.append(m)
-            else:
+            if m not in allowed_metrics:
                 raise ValueError('metric {} is not used for {} task'.format(m, self.eval_type))
 
-        if consts.RECALL in final_list or consts.PRECISION in final_list:
-            final_list.append(consts.RECALL)
-            final_list.append(consts.PRECISION)
+        if consts.RECALL in full_name_list and consts.PRECISION not in full_name_list:
+            full_name_list.append(consts.PRECISION)
 
-        ret = list(set(final_list))
-        return ret
+        if consts.RECALL not in full_name_list and consts.PRECISION in full_name_list:
+            full_name_list.append(consts.RECALL)
+
+        return full_name_list
 
     def check(self):
 
