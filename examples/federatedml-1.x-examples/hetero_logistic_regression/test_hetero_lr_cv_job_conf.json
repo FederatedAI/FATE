@@ -86,7 +86,7 @@
       "batch_size": -1,
       "learning_rate": 0.15,
       "init_param": {
-        "init_method": "random_uniform"
+        "init_method": "zeros"
       },
       "cv_param": {
         "n_splits": 5,

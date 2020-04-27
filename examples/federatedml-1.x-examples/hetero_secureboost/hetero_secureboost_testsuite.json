@@ -125,6 +125,10 @@
     "train_multi_host": {
       "conf": "./test_secureboost_train_regression_multi_host_conf.json",
       "dsl": "./test_secureboost_train_dsl.json"
+    },
+    "train_with_early_stopping": {
+      "conf": "./test_secureboost_train_with_early_stopping_conf.json",
+      "dsl": "./test_secureboost_train_dsl.json"
     }
   }
 }

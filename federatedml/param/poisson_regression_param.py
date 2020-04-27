@@ -61,7 +61,7 @@ class PoissonParam(BaseParam):
         Init param method object.
 
     early_stop : str, 'weight_diff', 'diff' or 'abs', default: 'diff'
-        Method used to judge converge or not.
+        Method used to judge convergence.
             a)	diff： Use difference of loss between two iterations to judge whether converge.
             b)  weight_diff: Use difference between weights of two consecutive iterations
             c)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
@@ -88,13 +88,14 @@ class PoissonParam(BaseParam):
         lr = lr0/(1+decay*t) if decay_sqrt is False, otherwise, lr = lr0 / sqrt(1+decay*t)
 
     validation_freqs: int, list, tuple, set, or None
-        validation frequency during training.
+        validation frequency during training, required when using early stopping
 
     early_stopping_rounds: int, default: None
-        Will stop training if one metric doesn’t improve in last early_stopping_round rounds
+        If positive number specified, at every specified training rounds, program checks for early stopping criteria.
+        Validation_freqs must also be set when using early stopping.
 
     metrics: list, default: []
-        Specify which metrics to be used when performing evaluation during training process.
+        Specify which metrics to be used when performing evaluation during training process. If metrics have not improved at early_stopping rounds, trianing stops before convergence.
         If set as empty, default metrics will be used. For regression tasks, default metrics are ['root_mean_squared_error', 'mean_absolute_error']
 
     use_first_metric_only: bool, default: False

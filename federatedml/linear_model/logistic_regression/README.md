@@ -73,3 +73,6 @@ Hetero-LR support the following extra features:
 2. Support OneVeRest
 3. When modeling a multi-host task, "weight_diff" converge criteria is supported only.
 4. Support sparse format data
+5. Support early-stopping mechanism
+6. Support setting arbitrary metrics for validation during training
+7. Support stepwise. For details on stepwise mode, please refer [here](../../model_selection/stepwise/README.md).

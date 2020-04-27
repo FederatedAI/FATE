@@ -25,6 +25,7 @@ from federatedml.optim.initialize import Initializer
 from federatedml.param.logistic_regression_param import InitParam
 from federatedml.protobuf.generated import lr_model_param_pb2
 from federatedml.util.fate_operator import vec_dot
+from federatedml.param.evaluation_param import EvaluateParam
 
 LOGGER = log_utils.getLogger()
 
@@ -136,4 +137,7 @@ class BaseLogisticRegression(BaseLinearModel):
     def one_vs_rest_fit(self, train_data=None, validate_data=None):
         LOGGER.debug("Class num larger than 2, need to do one_vs_rest")
         self.one_vs_rest_obj.fit(data_instances=train_data, validate_data=validate_data)
+
+    def get_metrics_param(self):
+        return EvaluateParam(eval_type="binary", metrics=self.metrics)
 
