@@ -498,7 +498,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.trees_ = list(model_param.trees_)
         self.init_score = np.array(list(model_param.init_score))
         self.history_loss = list(model_param.losses)
-        self.classes_ = list(model_param.classes_)
+        self.classes_ = list(map(int, model_param.classes_))
         self.tree_dim = model_param.tree_dim
         self.num_classes = model_param.num_classes
         self.feature_name_fid_mapping.update(model_param.feature_name_fid_mapping)

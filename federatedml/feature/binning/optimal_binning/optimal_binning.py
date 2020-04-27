@@ -49,8 +49,6 @@ class OptimalBinning(BaseBinning):
             raise ValueError("Arguments logical error, ceil(1.0/max_bin_pct) should be smaller or equal than bin_num")
 
         self.adjustment_factor = params.adjustment_factor
-        self.event_total = None
-        self.non_event_total = None
 
     def fit_split_points(self, data_instances):
         header = data_overview.get_header(data_instances)
@@ -193,6 +191,8 @@ class OptimalBinning(BaseBinning):
 
             for idx, col_value in data_generator:
                 col_name = headers[idx]
+                if col_name not in split_points:
+                    continue
                 col_split_points = split_points[col_name]
                 bin_num = get_bin_num_func(col_value, col_split_points)
                 bucket = bucket_dict[col_name][bin_num]

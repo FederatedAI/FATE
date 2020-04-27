@@ -131,7 +131,7 @@ The key steps of learning a homo secureboost model are described below:
     leakage is prevented. Figure below shows how histogram secure aggregations are conducted.
     
     <div style="text-align:center" align=center>
-    <img src="./images/secure_agg.png" alt="framework" width="500" height="480" />
+    <img src="./images/secure_agg.png" alt="framework" width="550" height="480" />
     <br/>
     Figure 2: Secure aggregation</div>
     
