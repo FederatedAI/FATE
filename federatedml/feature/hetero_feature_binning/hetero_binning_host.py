@@ -72,7 +72,14 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         send_result = {
             "encrypted_bin_sum": encrypted_bin_sum,
             "category_names": self.bin_inner_param.encode_col_name_list(self.bin_inner_param.category_names),
-            "bin_method": self.model_param.method
+            "bin_method": self.model_param.method,
+            "optimal_params": {
+                "metric_method": self.model_param.optimal_binning_param.metric_method,
+                "bin_num": self.model_param.bin_num,
+                "mixture": self.model_param.optimal_binning_param.mixture,
+                "max_bin_pct": self.model_param.optimal_binning_param.max_bin_pct,
+                "min_bin_pct": self.model_param.optimal_binning_param.min_bin_pct
+            }
         }
         LOGGER.debug("Send bin_info.category_names: {}, bin_info.bin_method: {}".format(send_result['category_names'],
                                                                                         send_result['bin_method']))

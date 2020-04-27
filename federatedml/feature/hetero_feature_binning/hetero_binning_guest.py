@@ -17,6 +17,7 @@
 import functools
 
 from arch.api.utils import log_utils
+import copy
 from federatedml.statistic import statics
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.optimal_binning.optimal_binning import OptimalBinning
@@ -84,11 +85,20 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
             LOGGER.debug("category_name: {}, host_bin_methods: {}".format(category_names, host_bin_methods))
             # if self.model_param.method == consts.OPTIMAL:
             if host_bin_methods == consts.OPTIMAL:
+                optimal_binning_params = encrypted_bin_info['optimal_params']
+
+                host_model_params = copy.deepcopy(self.model_param)
+                host_model_params.bin_num = optimal_binning_params.get('bin_num')
+                host_model_params.optimal_binning_param.metric_method = optimal_binning_params.get('metric_method')
+                host_model_params.optimal_binning_param.mixture = optimal_binning_params.get('mixture')
+                host_model_params.optimal_binning_param.max_bin_pct = optimal_binning_params.get('max_bin_pct')
+                host_model_params.optimal_binning_param.min_bin_pct = optimal_binning_params.get('min_bin_pct')
+
                 self.binning_obj.event_total, self.binning_obj.non_event_total = self.get_histogram(data_instances)
                 optimal_binning_cols = {x: y for x, y in result_counts.items() if x not in category_names}
                 host_binning_obj = self.optimal_binning_sync(optimal_binning_cols, data_instances.count(),
                                                              data_instances._partitions,
-                                                             host_idx)
+                                                             host_idx, host_model_params)
                 category_bins = {x: y for x, y in result_counts.items() if x in category_names}
                 host_binning_obj.cal_iv_woe(category_bins, self.model_param.adjustment_factor)
             else:
@@ -128,8 +138,8 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
             data_instance.label = 0
         return data_instance
 
-    def optimal_binning_sync(self, result_counts, sample_count, partitions, host_idx):
-        host_binning_obj = OptimalBinning(params=self.model_param, abnormal_list=self.binning_obj.abnormal_list)
+    def optimal_binning_sync(self, result_counts, sample_count, partitions, host_idx, host_model_params):
+        host_binning_obj = OptimalBinning(params=host_model_params, abnormal_list=self.binning_obj.abnormal_list)
         host_binning_obj.event_total = self.binning_obj.event_total
         host_binning_obj.non_event_total = self.binning_obj.non_event_total
         LOGGER.debug("Start host party optimal binning train")
