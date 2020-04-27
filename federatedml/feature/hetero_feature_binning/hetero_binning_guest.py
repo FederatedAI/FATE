@@ -17,6 +17,8 @@
 import functools
 
 from arch.api.utils import log_utils
+import copy
+from federatedml.statistic import statics
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.optimal_binning.optimal_binning import OptimalBinning
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
@@ -41,7 +43,6 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         self._setup_bin_inner_param(data_instances, self.model_param)
 
         self.binning_obj.fit_split_points(data_instances)
-        LOGGER.debug("After fit, binning_obj split_points: {}".format(self.binning_obj.split_points))
 
         label_counts = data_overview.count_labels(data_instances)
         if label_counts > 2:
@@ -70,19 +71,36 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
 
         self.binning_obj.cal_local_iv(data_instances, label_table=label_table)
 
-        encrypted_bin_sums = self.transfer_variable.encrypted_bin_sum.get(idx=-1)
+        encrypted_bin_infos = self.transfer_variable.encrypted_bin_sum.get(idx=-1)
         # LOGGER.debug("encrypted_bin_sums: {}".format(encrypted_bin_sums))
 
         LOGGER.info("Get encrypted_bin_sum from host")
-        for host_idx, encrypted_bin_sum in enumerate(encrypted_bin_sums):
+        for host_idx, encrypted_bin_info in enumerate(encrypted_bin_infos):
             host_party_id = self.component_properties.host_party_idlist[host_idx]
+            encrypted_bin_sum = encrypted_bin_info['encrypted_bin_sum']
+            host_bin_methods = encrypted_bin_info['bin_method']
+            category_names = encrypted_bin_info['category_names']
             result_counts = self.__decrypt_bin_sum(encrypted_bin_sum, cipher)
             LOGGER.debug("Received host {} result, length of buckets: {}".format(host_idx, len(result_counts)))
+            LOGGER.debug("category_name: {}, host_bin_methods: {}".format(category_names, host_bin_methods))
+            # if self.model_param.method == consts.OPTIMAL:
+            if host_bin_methods == consts.OPTIMAL:
+                optimal_binning_params = encrypted_bin_info['optimal_params']
 
-            if self.model_param.method == consts.OPTIMAL:
-                host_binning_obj = self.optimal_binning_sync(result_counts, data_instances.count(),
+                host_model_params = copy.deepcopy(self.model_param)
+                host_model_params.bin_num = optimal_binning_params.get('bin_num')
+                host_model_params.optimal_binning_param.metric_method = optimal_binning_params.get('metric_method')
+                host_model_params.optimal_binning_param.mixture = optimal_binning_params.get('mixture')
+                host_model_params.optimal_binning_param.max_bin_pct = optimal_binning_params.get('max_bin_pct')
+                host_model_params.optimal_binning_param.min_bin_pct = optimal_binning_params.get('min_bin_pct')
+
+                self.binning_obj.event_total, self.binning_obj.non_event_total = self.get_histogram(data_instances)
+                optimal_binning_cols = {x: y for x, y in result_counts.items() if x not in category_names}
+                host_binning_obj = self.optimal_binning_sync(optimal_binning_cols, data_instances.count(),
                                                              data_instances._partitions,
-                                                             host_idx)
+                                                             host_idx, host_model_params)
+                category_bins = {x: y for x, y in result_counts.items() if x in category_names}
+                host_binning_obj.cal_iv_woe(category_bins, self.model_param.adjustment_factor)
             else:
                 host_binning_obj = BaseBinning()
                 host_binning_obj.cal_iv_woe(result_counts, self.model_param.adjustment_factor)
@@ -120,8 +138,8 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
             data_instance.label = 0
         return data_instance
 
-    def optimal_binning_sync(self, result_counts, sample_count, partitions, host_idx):
-        host_binning_obj = OptimalBinning(params=self.model_param, abnormal_list=self.binning_obj.abnormal_list)
+    def optimal_binning_sync(self, result_counts, sample_count, partitions, host_idx, host_model_params):
+        host_binning_obj = OptimalBinning(params=host_model_params, abnormal_list=self.binning_obj.abnormal_list)
         host_binning_obj.event_total = self.binning_obj.event_total
         host_binning_obj.non_event_total = self.binning_obj.non_event_total
         LOGGER.debug("Start host party optimal binning train")
@@ -132,3 +150,14 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
                                                  role=consts.HOST,
                                                  idx=host_idx)
         return host_binning_obj
+
+    @staticmethod
+    def get_histogram(data_instances):
+        static_obj = statics.MultivariateStatisticalSummary(data_instances, cols_index=-1)
+        label_historgram = static_obj.get_label_histogram()
+        event_total = label_historgram.get(1, 0)
+        non_event_total = label_historgram.get(0, 0)
+        if event_total == 0 or non_event_total == 0:
+            LOGGER.warning(f"event_total or non_event_total might have errors, event_total: {event_total},"
+                           f" non_event_total: {non_event_total}")
+        return event_total, non_event_total

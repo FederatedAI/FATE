@@ -1,5 +1,17 @@
 ## Hetero Poisson Regression Configuration Usage Guide.
 
+#### Upload data
+
+We have provided several upload config for you can upload example data conveniently.
+
+1. dvisits set
+    1. Guest Party Data: test_hetero_poisson_upload_data_guest.json
+    2. Host Party Data: test_hetero_poisson_upload_data_host.json
+
+    This data set can be applied for train task, train & validation task, cv task and lr with feature engineering task that list below.
+
+#### Example Tasks
+
 This section introduces the dsl and conf for usage of different tasks.
 
 1. Train Task:

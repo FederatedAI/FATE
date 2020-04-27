@@ -183,7 +183,7 @@ Here is an example of configuring upload_data.json:
     {
       "file": "examples/data/breast_b.csv",
       "head": 1,
-      "partition": 10,
+      "partition": 48,
       "work_mode": 0,
       "table_name": "hetero_breast_b",
       "namespace": "hetero_guest_breast"

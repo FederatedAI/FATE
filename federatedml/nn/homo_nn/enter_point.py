@@ -221,11 +221,11 @@ class HomoNNClient(HomoNNBase):
 
         if num_output_units[0] == 1:
             kv = [(x[0], (0 if x[1][0] <= threshold else 1, x[1][0].item())) for x in zip(data.get_keys(), predict)]
-            pred_tbl = session.parallelize(kv, include_key=True)
+            pred_tbl = session.parallelize(kv, include_key=True, partition=data_inst.get_partitions())
             return data_inst.join(pred_tbl, lambda d, pred: [d.label, pred[0], pred[1], {"label": pred[0]}])
         else:
             kv = [(x[0], (x[1].argmax(), [float(e) for e in x[1]])) for x in zip(data.get_keys(), predict)]
-            pred_tbl = session.parallelize(kv, include_key=True)
+            pred_tbl = session.parallelize(kv, include_key=True, partition=data_inst.get_partitions())
             return data_inst.join(pred_tbl,
                                   lambda d, pred: [d.label, pred[0].item(),
                                                    pred[1][pred[0]] / (sum(pred[1])),
