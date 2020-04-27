@@ -17,10 +17,14 @@
 #
 
 FATE_PYTHON_ROOT=$(dirname $(dirname $(readlink -f "$0")))
-PYTHON_PATH=${FATE_PYTHON_ROOT}:${FATE_PYTHON_ROOT}/eggroll/python
+EGGROLL_HOME=$(dirname ${FATE_PYTHON_ROOT})/eggroll
+PYTHON_PATH=${FATE_PYTHON_ROOT}:${EGGROLL_HOME}/python
 export PYTHONPATH=${PYTHON_PATH}
+export EGGROLL_HOME=${EGGROLL_HOME}
+echo "PYTHONPATH: "${PYTHONPATH}
+echo "EGGROLL_HOME: "${EGGROLL_HOME}
 log_dir=${FATE_PYTHON_ROOT}/logs
-venv=
+venv=/data/projects/fate/common/python/venv
 
 module=fate_flow_server.py
 
@@ -56,8 +60,6 @@ start() {
             if [[ -n ${pid} ]]; then
                 echo "service start sucessfully. pid: ${pid}"
                 return
-            else
-                echo "check service process"
             fi
         done
         if [[ -n ${pid} ]]; then
@@ -75,9 +77,19 @@ stop() {
     if [[ -n ${pid} ]]; then
         echo "killing:
         `ps aux | grep ${pid} | grep -v grep`"
+        for((i=1;i<=100;i++));
+        do
+            sleep 0.1
+            kill ${pid}
+            getpid
+            if [[ ! -n ${pid} ]]; then
+                echo "killed by SIGTERM"
+                return
+            fi
+        done
         kill -9 ${pid}
         if [[ $? -eq 0 ]]; then
-            echo "killed"
+            echo "killed by SIGKILL"
         else
             echo "kill error"
         fi
