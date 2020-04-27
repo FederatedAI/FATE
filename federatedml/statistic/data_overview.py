@@ -131,7 +131,8 @@ class DataStatistics(object):
     def __sparse_values_set(instances, static_col_indexes: list):
         tmp_result = {idx: set() for idx in static_col_indexes}
         for _, instance in instances:
-            for idx, value in instance.features.get_all_data:
+            data_generator = instance.features.get_all_data()
+            for idx, value in data_generator:
                 if idx not in tmp_result:
                     continue
                 tmp_result[idx].add(value)

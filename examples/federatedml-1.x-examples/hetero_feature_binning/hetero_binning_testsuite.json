@@ -117,6 +117,10 @@
     "multi_host_sparse_optimal": {
       "conf": "./multi_hosts_sparse_optimal_binning_job_conf.json",
       "dsl": "./test_hetero_binning_job_dsl.json"
+    },
+    "asymmetric_job":{
+      "conf": "./test_asymmetric_job_conf.json",
+      "dsl": "./test_hetero_binning_job_dsl.json"
     }
   }
 }

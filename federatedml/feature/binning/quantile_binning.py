@@ -176,6 +176,8 @@ class QuantileBinning(BaseBinning):
                 data_generator = instant.features.get_all_data()
                 for col_idx, col_value in data_generator:
                     col_name = header[col_idx]
+                    if col_name not in cols_dict:
+                        continue
                     summary = summary_dict[col_name]
                     summary.insert(col_value)
 

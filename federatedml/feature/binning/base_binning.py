@@ -43,6 +43,8 @@ class BaseBinning(object):
             return
         self.params = params
         self.bin_num = params.bin_num
+        self.event_total = None
+        self.non_event_total = None
 
         if abnormal_list is None:
             self.abnormal_list = []

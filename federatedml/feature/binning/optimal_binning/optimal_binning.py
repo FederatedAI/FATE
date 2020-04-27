@@ -49,8 +49,6 @@ class OptimalBinning(BaseBinning):
             raise ValueError("Arguments logical error, ceil(1.0/max_bin_pct) should be smaller or equal than bin_num")
 
         self.adjustment_factor = params.adjustment_factor
-        self.event_total = None
-        self.non_event_total = None
 
     def fit_split_points(self, data_instances):
         header = data_overview.get_header(data_instances)
