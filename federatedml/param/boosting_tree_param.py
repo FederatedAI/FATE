@@ -238,6 +238,10 @@ class BoostingTreeParam(BaseParam):
                       if container object in python, will validate data if epochs belong to this container.
                         e.g. validation_freqs = [10, 15], will validate data when epoch equals to 10 and 15.
                       Default: None
+                      The default value is None, 1 is suggested. You can set it to a number larger than 1 in order to
+                      speed up training by skipping validation rounds. When it is larger than 1, a number which is
+                      divisible by "num_trees" is recommended, otherwise, you will miss the validation scores
+                      of last training iteration.
 
     early_stopping_rounds： should be a integer larger than 0，will stop training if one metric of one validation data
                             doesn’t improve in last early_stopping_round rounds，

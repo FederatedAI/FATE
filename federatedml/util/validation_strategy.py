@@ -171,7 +171,6 @@ class ValidationStrategy(object):
 
         evaluate_param: EvaluateParam = model.get_metrics_param()
         evaluate_param.check_single_value_default_metric()
-        evaluate_param.check()
 
         eval_obj = Evaluation()
         eval_type = evaluate_param.eval_type
@@ -267,11 +266,7 @@ class ValidationStrategy(object):
             LOGGER.debug(self.performance_recorder.no_improvement_round)
 
         if self.early_stopping_rounds and self.is_best_performance_updated() and self.mode == consts.HETERO:
-            self.cur_best_model = {'model': {'best_model': model.export_model()}}
+            best_model = model.export_model()
+            self.cur_best_model = {'model': {'best_model': best_model}} if best_model is not None else None
             self.best_iteration = epoch
             LOGGER.debug('cur best model saved')
-
-
-
-
-

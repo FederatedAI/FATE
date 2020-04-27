@@ -3,7 +3,7 @@
       {
           "file": "examples/data/breast_b.csv",
           "head": 1,
-          "partition": 10,
+          "partition": 48,
           "table_name": "breast_b_intersect",
           "namespace": "hetero",
           "role": "guest_0"
@@ -11,7 +11,7 @@
       {
           "file": "examples/data/breast_a.csv",
           "head": 1,
-          "partition": 10,
+          "partition": 48,
           "table_name": "breast_a_intersect",
           "namespace": "hetero",
           "role": "host_0"
@@ -19,7 +19,7 @@
     {
           "file": "examples/data/breast_a.csv",
           "head": 1,
-          "partition": 10,
+          "partition": 48,
           "table_name": "breast_a_intersect",
           "namespace": "hetero",
           "role": "host_1"

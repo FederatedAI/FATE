@@ -57,6 +57,9 @@ class FederationRuntime(Federation):
         self._loop = asyncio.get_event_loop()
 
     def remote(self, obj, name: str, tag: str, parties: Union[Party, list]) -> Rubbish:
+        if obj is None:
+            raise EnvironmentError(f"federation try to remote None to {parties} with name {name}, tag {tag}")
+
         if isinstance(parties, Party):
             parties = [parties]
 
@@ -121,6 +124,8 @@ class FederationRuntime(Federation):
 
             else:  # todo: should standalone mode split large object?
                 obj = _object_table.get(r)
+                if obj is None:
+                    raise EnvironmentError(f"federation get None from {parties} with name {name}, tag {tag}")
                 rtn.append(obj)
                 rubbish.add_obj(_object_table, r)
                 rubbish.add_obj(_status_table, r)
