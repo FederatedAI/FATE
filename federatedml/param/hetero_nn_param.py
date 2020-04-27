@@ -53,6 +53,16 @@ class HeteroNNParam(BaseParam):
         early_stop : str, accept 'diff' only in this version, default: 'diff'
             Method used to judge converge or not.
                 a)	diff： Use difference of loss between two iterations to judge whether converge.
+        validation_freqs: None or positive integer or container object in python. Do validation in training process or Not.
+                  if equals None, will not do validation in train process;
+                  if equals positive integer, will validate data every validation_freqs epochs passes;
+                  if container object in python, will validate data if epochs belong to this container.
+                    e.g. validation_freqs = [10, 15], will validate data when epoch equals to 10 and 15.
+                  Default: None
+                  The default value is None, 1 is suggested. You can set it to a number larger than 1 in order to
+                  speed up training by skipping validation rounds. When it is larger than 1, a number which is
+                  divisible by "epochs" is recommended, otherwise, you will miss the validation scores
+                  of last training epoch.
     """
 
     def __init__(self,
