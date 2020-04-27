@@ -18,7 +18,13 @@ For multiple hosts, it is similar with one host case. Guest sends its encrypted 
 <img src="./images/multiple_host_binning.png" alt="samples" width="850" height="500" /><br/>
 Figure 2： Multi-Host Binning Principle</div>
 
-For optimal binning, there exist two kinds of methods, merge-optimal binning and split-optimal binning. When choosing metrics as iv, gini or chi-square, merge type optimal binning will be used. On the other hand, if ks is choosed, split type optimal binning will be used.
+For optimal binning, each party use quantile binning or bucket binning find initial split points. Then Guest will send encrypted labels to Host. Host use them calculate histogram of each bin and send back to Guest. Then start optimal binning methods.
+
+<div style="text-align:center", align=center>
+<img src="./images/optimal_binning.png" alt="samples" width="850" height="500" /><br/>
+Figure 2： Multi-Host Binning Principle</div>
+
+There exist two kinds of methods, merge-optimal binning and split-optimal binning. When choosing metrics as iv, gini or chi-square, merge type optimal binning will be used. On the other hand, if ks is choosed, split type optimal binning will be used.
 
 ## Features
 1. Support Quantile Binning based on quantile summary algorithm.
