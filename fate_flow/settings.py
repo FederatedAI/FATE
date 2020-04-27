@@ -19,7 +19,6 @@ import os
 from arch.api import Backend
 from arch.api.utils import file_utils, log_utils, core_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.entity.constant_config import ModelStorage
 from arch.api.utils.core_utils import get_lan_ip
 import __main__
 
@@ -50,31 +49,9 @@ _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000 * 20  # ms
 JOB_DEFAULT_TIMEOUT = 7 * 24 * 60 * 60
 REDIS_QUEUE_DB_INDEX = 0
-
-DATABASE = {
-    'name': 'fate_flow',
-    'user': 'fate_dev',
-    'passwd': 'fate_dev',
-    'host': '127.0.0.1',
-    'port': 3306,
-    'max_connections': 100,
-    'stale_timeout': 30,
-}
-
-REDIS = {
-    'host': '127.0.0.1',
-    'port': 6379,
-    'password': 'fate_dev',
-    'max_connections': 500
-}
-
-DEFAULT_MODEL_STORE_ADDRESS = {
-    "storage": ModelStorage.REDIS,
-    "host": "127.0.0.1",
-    "port": 6379,
-    "password": "fate_dev",
-    "db": 0
-}
+BASE_SERVICE_CONF = file_utils.load_yaml_conf(os.path.join(file_utils.get_project_base_directory(), "arch/conf/base_service_conf.yaml"))
+DATABASE = BASE_SERVICE_CONF.get("database", {})
+DEFAULT_MODEL_STORE_ADDRESS = BASE_SERVICE_CONF.get("default_model_store_address", {})
 
 '''
 Constants
