@@ -72,16 +72,19 @@ class FederationRuntime(Federation):
         rtn = []
         for party, future in zip(rs_parties, futures):
             obj = future.result()
+            if obj is None:
+                raise EnvironmentError(f"federation get None from {party} with name {name}, tag {tag}")
+
             LOGGER.info(f'federation got data. name: {name}, tag: {tag}')
             if isinstance(obj, RollPair):
                 rtn.append(obj)
                 rubbish.add_table(obj)
                 if LOGGER.isEnabledFor(logging.DEBUG):
-                    LOGGER.debug(f'federation got roll pair count: {obj.count()} for name: {name}, tag: {tag}')
+                    LOGGER.debug(f'federation got roll pair with count {obj.count()}, name {name}, tag {tag}')
 
             elif is_split_head(obj):
                 num_split = obj.num_split()
-                LOGGER.info(f'federation getting split data. name: {name}, tag: {tag}, num split: {num_split}')
+                LOGGER.debug(f'federation getting split data with name {name}, tag {tag}, num split {num_split}')
                 split_objs = []
                 for k in range(num_split):
                     _split_rs = self.rsc.load(name, tag=f"{tag}.__part_{k}")
@@ -90,6 +93,7 @@ class FederationRuntime(Federation):
                 rtn.append(obj)
 
             else:
+                LOGGER.debug(f'federation get obj with type {type(obj)} from {party} with name {name}, tag {tag}')
                 rtn.append(obj)
         return rtn, rubbish
 
@@ -111,7 +115,7 @@ class FederationRuntime(Federation):
             futures = rs.push(obj=obj, parties=rs_parties)
             rubbish.add_table(obj)
         else:
-
+            LOGGER.debug(f"federation remote obj with type {type(obj)} to {parties} with name {name}, tag {tag}")
             futures = []
             obj, splits = maybe_split_object(obj)
             futures.extend(rs.push(obj=obj, parties=rs_parties))

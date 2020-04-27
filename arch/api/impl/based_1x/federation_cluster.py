@@ -166,6 +166,9 @@ class FederationRuntime(Federation):
         _fill_cache(self.all_parties, self.local_party, self._session_id)
 
     def remote(self, obj, name: str, tag: str, parties: Union[Party, list]) -> Rubbish:
+        if obj is None:
+            raise EnvironmentError(f"federation try to remote None to {parties} with name {name}, tag {tag}")
+
         if isinstance(parties, Party):
             parties = [parties]
 
@@ -269,6 +272,8 @@ class FederationRuntime(Federation):
         rubbish = None
         for p, v in self.async_get(name, tag, parties):
             if p is not None:
+                if v is None:
+                    raise EnvironmentError(f"federation get None from {p} with name {name}, tag {tag}")
                 rtn[p] = v
             else:
                 rubbish = v
