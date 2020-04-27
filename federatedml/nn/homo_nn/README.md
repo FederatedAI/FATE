@@ -21,6 +21,8 @@ In each iteration, each party trains its model on its own data. After that, all 
 Please note that random numbers are carefully generated so that the random numbers of all parties add up an zero matrix and thus disappear automatically. For more detailed explanations, please refer to [Secure Analytics: Federated Learning and Secure Aggregation](https://inst.eecs.berkeley.edu/~cs261/fa18/scribe/10_15.pdf). Since there is no model transferred in plaintext, except for the owner of the model, no other party can obtain the real information of the model.
 
 ## 2. Features
+
+### tensorflow backend
  
 1. supported layers:
     - Dense
@@ -184,3 +186,83 @@ A string is needed, please refer to supported losses in Features part.
 2. max_iter:  max aggregation number, a positive integer,
 3. early_stop: diff or abs
 4. metrics: a string name, refer to [doc](https://www.tensorflow.org/versions/r1.14/api_docs/python/tf/keras/metrics), such as Accuracy, AUC ...
+
+
+##4. Pytorch Model Configuration
+
+There are some difference in nn configuration build by pytorch compared to tf or keras.   
+
+### config_type
+
+pytorch, if use pytorch to build your model。
+### nn_define
+
+Each layer is represented as an object in json. 
+supported layers in pytorch:
+
+- Linear
+    ```json
+      {
+      "layer": "Linear",
+      "name": #string,
+      "type": "normal",
+      "config": [input_num,output_num]
+    }
+    ```
+
+    other normal layers:
+    - BatchNorm2d
+    - dropout.
+
+- activate
+    ```json
+        {
+          "layer": "Relu",
+          "type": "activate",
+          "name": #string
+        }
+    ```
+  
+    other activate layers:
+    - "Selu"
+    - LeakyReLU"
+    - "Tanh"
+    - "Sigmoid"
+    - "Relu",
+    - "Tanh"
+
+### optimizer
+
+A json object is needed
+
+```json
+"optimizer": {
+  "optimizer": "Adam",
+  "learning_rate": 0.05
+}
+```
+
+optimizer include "Adam","SGD","RMSprop","Adagrad"
+
+### loss
+
+A string is needed, supported losses include:
+- "CrossEntropyLoss"
+- "MSELoss"
+- "BCELoss"
+- "BCEWithLogitsLoss"
+- "NLLLoss"
+- "L1Loss"
+- "SmoothL1Loss"
+- "HingeEmbeddingLoss"
+
+### metrics
+
+A string is needed, supported metrics include: 
+- auccuray
+- precision
+- recall
+- auc
+- f1
+- fbeta
+                     

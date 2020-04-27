@@ -96,7 +96,7 @@ class TestStepwise(unittest.TestCase):
 
     def test_get_to_enter(self):
         real_to_enter = ["x2", "x5"]
-        to_enter = self.model.get_to_enter(self.model, self.mask, self.header)
+        to_enter = self.model.get_to_enter(self.mask, self.mask, self.header)
         self.assertListEqual(to_enter, real_to_enter)
 
     def tearDown(self):

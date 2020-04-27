@@ -22,6 +22,7 @@ from typing import Iterable
 from arch.api import RuntimeInstance, _EGGROLL_VERSION
 from arch.api import WorkMode, Backend
 from arch.api.base.table import Table
+from arch.api.base.session import FateSession
 from arch.api.base.utils.store_type import StoreTypes
 from arch.api.utils import file_utils
 from arch.api.utils.log_utils import LoggerFactory
@@ -93,8 +94,11 @@ def table(name, namespace=None, partition=1, persistent=True, create_if_missing=
 
 
 @log_elapsed
-def parallelize(data: Iterable, include_key=False, name=None, partition=1, namespace=None, persistent=False,
+def parallelize(data: Iterable, include_key=False, name=None, partition=None, namespace=None, persistent=False,
                 create_if_missing=True, error_if_exist=False, chunk_size=100000, in_place_computing=False) -> Table:
+
+    if partition is None:
+        raise ValueError("partition should be manual set in this version")
     return RuntimeInstance.SESSION.parallelize(data=data, include_key=include_key, name=name, partition=partition,
                                                namespace=namespace,
                                                persistent=persistent,
@@ -213,3 +217,4 @@ def kill():
 
 def exit():
     RuntimeInstance.SESSION = None
+    FateSession.exit()

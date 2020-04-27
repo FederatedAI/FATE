@@ -24,6 +24,7 @@
 from arch.api.utils import log_utils
 from federatedml.util import consts
 from federatedml.evaluation.evaluation import Evaluation
+from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.evaluation.evaluation import PerformanceRecorder
 from federatedml.transfer_variable.transfer_class.validation_strategy_transfer_variable import  \
     ValidationStrategyVariable
@@ -70,12 +71,12 @@ class ValidationStrategy(object):
         self.best_iteration = -1
 
         if early_stopping_rounds is not None:
-            self.sync_status = True
             if early_stopping_rounds <= 0:
                 raise ValueError('early stopping error should be larger than 0')
             if self.mode == consts.HOMO:
                 raise ValueError('early stopping is not supported for homo algorithms')
 
+            self.sync_status = True
             LOGGER.debug("early stopping round is {}".format(self.early_stopping_rounds))
 
         self.cur_best_model = None
@@ -168,7 +169,8 @@ class ValidationStrategy(object):
 
     def evaluate(self, predicts, model, epoch):
 
-        evaluate_param = model.get_metrics_param()
+        evaluate_param: EvaluateParam = model.get_metrics_param()
+        evaluate_param.check_single_value_default_metric()
         evaluate_param.check()
 
         eval_obj = Evaluation()
@@ -188,6 +190,7 @@ class ValidationStrategy(object):
             for metric in metric_list:
                 if metric in single_metric_list:
                     self.first_metric = metric
+                    LOGGER.debug('use {} as first metric'.format(self.first_metric))
                     break
 
         eval_obj._init_model(evaluate_param)
@@ -256,11 +259,11 @@ class ValidationStrategy(object):
 
                 self.performance_recorder.update(eval_result_dict)
 
-
         if self.sync_status:
             self.sync_performance_recorder(epoch)
-            LOGGER.debug('{} shows cur performances'.format(self.role))
+            LOGGER.debug('showing early stopping status, {} shows cur best performances'.format(self.role))
             LOGGER.debug(self.performance_recorder.cur_best_performance)
+            LOGGER.debug('showing early stopping status, {} shows early stopping no improve rounds'.format(self.role))
             LOGGER.debug(self.performance_recorder.no_improvement_round)
 
         if self.early_stopping_rounds and self.is_best_performance_updated() and self.mode == consts.HETERO:

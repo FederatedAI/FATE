@@ -49,6 +49,7 @@
             "bin_num": 50,
             "early_stopping_rounds": 3,
             "metrics": ["rmse"],
+            "validation_freqs": 1,
             "objective_param": {
                 "objective": "lse"
             },

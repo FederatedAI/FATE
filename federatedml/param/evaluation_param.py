@@ -40,21 +40,28 @@ class EvaluateParam(BaseParam):
     def __init__(self, eval_type="binary", pos_label=1, need_run=True, metrics=None):
         super().__init__()
         self.eval_type = eval_type
-        LOGGER.debug('eval type is {}'.format(self.eval_type))
         self.pos_label = pos_label
         self.need_run = need_run
         self.metrics = metrics
 
         self.default_metrics = {
-            consts.BINARY: consts.DEFAULT_BINARY_METRIC,
-            consts.MULTY: consts.DEFAULT_MULTI_METRIC,
-            consts.REGRESSION: consts.DEFAULT_REGRESSION_METRIC
+            consts.BINARY: consts.ALL_BINARY_METRICS,
+            consts.MULTY: consts.ALL_MULTI_METRICS,
+            consts.REGRESSION: consts.ALL_REGRESSION_METRICS
         }
 
         self.allowed_metrics = {
-            consts.BINARY: consts.BINARY_METRICS,
-            consts.MULTY: consts.MULTI_METRICS,
-            consts.REGRESSION: consts.REGRESSION_METRICS
+            consts.BINARY: consts.ALL_BINARY_METRICS,
+            consts.MULTY: consts.ALL_MULTI_METRICS,
+            consts.REGRESSION: consts.ALL_REGRESSION_METRICS
+        }
+
+    def _use_single_value_default_metrics(self):
+
+        self.default_metrics = {
+            consts.BINARY: consts.DEFAULT_BINARY_METRIC,
+            consts.MULTY: consts.DEFAULT_MULTI_METRIC,
+            consts.REGRESSION: consts.DEFAULT_REGRESSION_METRIC
         }
 
     def _check_valid_metric(self, metrics_list):
@@ -63,8 +70,6 @@ class EvaluateParam(BaseParam):
         alias_name: dict = consts.ALIAS
 
         full_name_list = []
-        
-        LOGGER.debug('metric list is {}'.format(metrics_list))
 
         for metric in metrics_list:
 
@@ -97,7 +102,6 @@ class EvaluateParam(BaseParam):
             final_list.append(consts.PRECISION)
 
         ret = list(set(final_list))
-        LOGGER.debug('ret is {}'.format(ret))
         return ret
 
     def check(self):
@@ -126,5 +130,9 @@ class EvaluateParam(BaseParam):
         LOGGER.info("Finish evaluation parameter check!")
 
         return True
+
+    def check_single_value_default_metric(self):
+        self._use_single_value_default_metrics()
+        self.check()
 
 
