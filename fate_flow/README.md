@@ -273,7 +273,7 @@ And then, will you can make online inference request to FATE-Serving by only spe
 
 
 #### How to download the generated data in the middle of the algorithm?
-- You can use ``python fate_flow_client.py -f component_output_model -j $job_id -r $role -g $guest -cpn $component_name -o $output_path``
+- You can use ``python fate_flow_client.py -f component_output_data -j $job_id -r $role -p $party_id -cpn $component_name -o $output_path``
 
 
 #### If the same file upload is executed twice, will fate delete the first data and upload it again?
