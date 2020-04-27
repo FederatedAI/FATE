@@ -98,6 +98,8 @@ class FederationRuntime(Federation):
         return rtn, rubbish
 
     def remote(self, obj, name, tag, parties):
+        if obj is None:
+            raise EnvironmentError(f"federation try to remote None to {parties} with name {name}, tag {tag}")
 
         rs = self.rsc.load(name=name, tag=tag)
         rubbish = Rubbish(name=name, tag=tag)
