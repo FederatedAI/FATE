@@ -191,6 +191,8 @@ class OptimalBinning(BaseBinning):
 
             for idx, col_value in data_generator:
                 col_name = headers[idx]
+                if col_name not in split_points:
+                    continue
                 col_split_points = split_points[col_name]
                 bin_num = get_bin_num_func(col_value, col_split_points)
                 bucket = bucket_dict[col_name][bin_num]
