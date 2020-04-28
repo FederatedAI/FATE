@@ -1,3 +1,4 @@
+work_mode: 0
 database:
   name: fate_flow
   user: fate_dev
@@ -6,6 +7,12 @@ database:
   port: 3306
   max_connections: 100
   stale_timeout: 30
+redis:
+  host: 127.0.0.1
+  port: 6379
+  password: WEBANK_2014_fate_dev
+  max_connections: 500
+  db: 0
 default_model_store_address:
   storage: redis
   host: 127.0.0.1
