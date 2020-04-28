@@ -26,7 +26,7 @@ import __main__
 from fate_flow.utils.setting_utils import CenterConfig
 
 
-WORK_MODE = 0
+WORK_MODE = get_base_config('work_mode', 0)
 BACKEND = Backend.EGGROLL
 USE_LOCAL_DATABASE = True
 
