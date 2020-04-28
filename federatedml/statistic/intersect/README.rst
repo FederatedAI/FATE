@@ -1,4 +1,4 @@
-Introduction
+Intersection
 ============
 
 This module provide some method of PSI(Private Set Intersection)
@@ -30,13 +30,13 @@ Each :math:`Y-A` includes different random value which binds to each value in :m
 Using this module, we can get the intersection ids between two parties in security and efficiently.  
 
 RAW Intersection
-^^^^^^^^^^^^^^^^
+----------------
 
 This intersection module implements the simple intersection method that A or B as a sender will sends all his ids to another, and another one 
 will find the sample ids according to it's ids. Finally it will send the intersection ids to the sender.
 
 Multi-Host Intersection
-^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------
 
 Both rsa and raw intersection support multi-host. It means a guest can do intersection with more than one host simultaneously and finally get the common ID with all hosts. 
 
@@ -51,7 +51,8 @@ See in :ref:`figure 2`, this is a introduction to a guest intersect with two hos
 guest will send common IDs to every host if necessary.
 
 Repeated ID intersection
-^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------
+
 We support repeated id intersection for some applications. For this case, one should provide the mask id which map to the repeated ids.   
 For instances, in Guest, your data is
 ::
