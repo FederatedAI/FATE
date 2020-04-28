@@ -19,7 +19,7 @@ class TestRsaIntersectGuest(unittest.TestCase):
         self.rsa_op2 = RsaIntersect(intersect_param)
 
     def data_to_eggroll_table(self, data):
-        return session.parallelize(data, include_key=True)
+        return session.parallelize(data, include_key=True, partition=2)
 
     def test_func_map_raw_id_to_encrypt_id(self):
         d1 = [("a", 1), ("b", 2), ("c", 3)]
