@@ -114,8 +114,8 @@ class TestHuberLoss(unittest.TestCase):
         self.huber_loss = HuberLoss(self.delta)
         self.y_list = [i % 2 for i in range(100)]
         self.predict_list = [random.random() for i in range(100)]
-        self.y = session.parallelize(self.y_list, include_key=False)
-        self.predict = session.parallelize(self.predict_list, include_key=False)
+        self.y = session.parallelize(self.y_list, include_key=False, partition=16)
+        self.predict = session.parallelize(self.predict_list, include_key=False, partition=16)
 
     def test_predict(self):
         for y in self.y_list:
@@ -157,8 +157,8 @@ class TestFairLoss(unittest.TestCase):
         self.fair_loss = FairLoss(self.c)
         self.y_list = [i % 2 for i in range(100)]
         self.predict_list = [random.random() for i in range(100)]
-        self.y = session.parallelize(self.y_list, include_key=False)
-        self.predict = session.parallelize(self.predict_list, include_key=False)
+        self.y = session.parallelize(self.y_list, include_key=False, partition=16)
+        self.predict = session.parallelize(self.predict_list, include_key=False, partition=16)
 
     def test_predict(self):
         for y in self.y_list:
@@ -199,8 +199,8 @@ class TestLogCoshLoss(unittest.TestCase):
         self.log_cosh_loss = LogCoshLoss()
         self.y_list = [i % 2 for i in range(100)]
         self.predict_list = [random.random() for i in range(100)]
-        self.y = session.parallelize(self.y_list, include_key=False)
-        self.predict = session.parallelize(self.predict_list, include_key=False)
+        self.y = session.parallelize(self.y_list, include_key=False, partition=16)
+        self.predict = session.parallelize(self.predict_list, include_key=False, partition=16)
 
     def test_predict(self):
         for y in self.y_list:
@@ -243,8 +243,8 @@ class TestTweedieLoss(unittest.TestCase):
         self.tweedie_loss = TweedieLoss(self.rho)
         self.y_list = [i % 2 for i in range(100)]
         self.predict_list = [random.random() for i in range(100)]
-        self.y = session.parallelize(self.y_list, include_key=False)
-        self.predict = session.parallelize(self.predict_list, include_key=False)
+        self.y = session.parallelize(self.y_list, include_key=False, partition=16)
+        self.predict = session.parallelize(self.predict_list, include_key=False, partition=16)
 
     def test_predict(self):
         for y in self.y_list:
