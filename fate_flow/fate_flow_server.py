@@ -96,7 +96,7 @@ if __name__ == '__main__':
                                  name=DETECT_TABLE[1],
                                  partition=DETECT_TABLE[2],
                                  persistent=True)
-    session.parallelize(range(DETECT_TABLE[2]), namespace=DETECT_TABLE[0], name=DETECT_TABLE[1])
+    session.parallelize(range(DETECT_TABLE[2]), namespace=DETECT_TABLE[0], name=DETECT_TABLE[1], partition=DETECT_TABLE[2])
     RuntimeConfig.init_env()
     queue_manager.init_job_queue()
     job_controller.JobController.init()

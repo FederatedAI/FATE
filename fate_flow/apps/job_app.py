@@ -137,7 +137,7 @@ def query_task():
 
 @manager.route('/data/view/query', methods=['POST'])
 def query_data_view():
-    data_views = query_data_view(**request.json)
+    data_views = job_utils.query_data_view(**request.json)
     if not data_views:
         return get_json_result(retcode=101, retmsg='find data view failed')
     return get_json_result(retcode=0, retmsg='success', data=[data_view.to_json() for data_view in data_views])

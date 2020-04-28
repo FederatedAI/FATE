@@ -19,7 +19,7 @@ class TestRsaIntersectHost(unittest.TestCase):
         self.raw_operator = RawIntersectionHost(intersect_param)
 
     def data_to_eggroll_table(self, data):
-        return session.parallelize(data, include_key=True)
+        return session.parallelize(data, include_key=True,partition=2)
 
     def test_func_generate_rsa_key(self):
         res = self.rsa_operator.generate_rsa_key(1024)
