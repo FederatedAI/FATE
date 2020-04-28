@@ -42,7 +42,7 @@ class TestMinMaxScaler(unittest.TestCase):
 
     def data_to_eggroll_table(self, data, jobid, partition=1, work_mode=0):
         session.init(jobid, mode=work_mode)
-        data_table = session.parallelize(data, include_key=False)
+        data_table = session.parallelize(data, include_key=False, partition=partition)
         return data_table
 
     def sklearn_attribute_format(self, scaler, feature_range):
