@@ -53,10 +53,13 @@ class DataSplitParam(BaseParam):
         Specify the point(s) by which continuous label values are bucketed into bins for stratified split.
         eg.[0.2] for two bins or [0.1, 1, 3] for 4 bins
 
+    need_run: bool, default: True
+        Specify whether to run data split
+
     """
 
     def __init__(self, random_state=None, test_size=None, train_size=None, validate_size=None, stratified=False,
-                 shuffle=True, split_points=True):
+                 shuffle=True, split_points=True, need_run=True):
         super(DataSplitParam, self).__init__()
         self.random_state = random_state
         self.test_size = test_size
@@ -65,29 +68,31 @@ class DataSplitParam(BaseParam):
         self.stratified = stratified
         self.shuffle = shuffle
         self.split_points = split_points
+        self.need_run = need_run
 
     def check(self):
         model_param_descr = "data split param's "
         if self.random_state is not None:
             if not isinstance(self.random_state, int):
                 raise ValueError(f"{model_param_descr} random state should be int type")
-            self.check_nonnegative_number(self.random_state, model_param_descr)
+            self.check_nonnegative_number(self.random_state, f"{model_param_descr} random_state ")
 
         if self.test_size is not None:
-            self.check_nonnegative_number(self.test_size, model_param_descr)
+            self.check_nonnegative_number(self.test_size, f"{model_param_descr} test_size ")
             if isinstance(self.test_size, float):
-                self.check_decimal_float(self.test_size, model_param_descr)
+                self.check_decimal_float(self.test_size, f"{model_param_descr} test_size ")
         if self.train_size is not None:
-            self.check_nonnegative_number(self.train_size, model_param_descr)
+            self.check_nonnegative_number(self.train_size, f"{model_param_descr} train_size ")
             if isinstance(self.train_size, float):
-                self.check_decimal_float(self.train_size, model_param_descr)
+                self.check_decimal_float(self.train_size, f"{model_param_descr} train_size ")
         if self.validate_size is not None:
-            self.check_nonnegative_number(self.validate_size, model_param_descr)
+            self.check_nonnegative_number(self.validate_size, f"{model_param_descr} validate_size ")
             if isinstance(self.validate_size, float):
-                self.check_decimal_float(self.validate_size, model_param_descr)
+                self.check_decimal_float(self.validate_size, f"{model_param_descr} validate_size ")
 
-        self.check_boolean(self.stratified, model_param_descr)
-        self.check_boolean(self.shuffle, model_param_descr)
+        self.check_boolean(self.stratified, f"{model_param_descr} stratified ")
+        self.check_boolean(self.shuffle, f"{model_param_descr} shuffle ")
+        self.check_boolean(self.need_run, f"{model_param_descr} need run ")
 
         if self.split_points is not None:
             if not isinstance(self.split_points, list):

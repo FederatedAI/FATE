@@ -43,6 +43,7 @@ class DataSplitter(ModelBase):
         self.stratified = params.stratified
         self.shuffle = params.shuffle
         self.split_points = params.split_points
+        self.need_run = params.need_run
         return
 
     @staticmethod

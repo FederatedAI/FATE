@@ -29,6 +29,8 @@ class HeteroDataSplitHost(DataSplitter):
         self.transfer_variable = DataSplitTransferVariable()
 
     def fit(self, data_inst):
+        if self.need_run is False:
+            return
         LOGGER.debug(f"Enter Hetero {self.role} Data Split fit")
 
         id_train = self.transfer_variable.id_train.get(idx=0)
@@ -46,6 +48,8 @@ class HeteroDataSplitGuest(DataSplitter):
 
     def fit(self, data_inst):
         LOGGER.debug(f"Enter Hetero {self.role} Data Split fit")
+        if self.need_run is False:
+            return
         self.param_validator(data_inst)
 
         ids = self._get_ids(data_inst)
