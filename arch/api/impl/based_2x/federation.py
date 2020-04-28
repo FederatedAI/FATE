@@ -133,7 +133,7 @@ class FederationRuntime(Federation):
                 import signal
                 pid = os.getpid()
                 LOGGER.exception(f"remote fail, terminating process(pid={pid})")
-                signal.signal(pid, signal.SIGTERM)
+                os.kill(pid, signal.SIGTERM)
                 raise e
 
             if LOGGER.isEnabledFor(logging.DEBUG):
