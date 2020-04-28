@@ -33,7 +33,7 @@ Data IO module accepts the following input data format and transforms them to de
       1 0 1 0
       1 1 0 1
 
-:tag:value input format: the input DTable's value is a list of tag:value, like a mixed svm-light and tag input-format. data io module first aggregates all tags occurred in input table, then changes all input line to one-hot representation in sorting the occurred tags by lexicographic order, then fill the occur item with value. e.g. assume values is
+:tag-value input format: the input DTable's value is a list of tag:value, like a mixed svm-light and tag input-format. data io module first aggregates all tags occurred in input table, then changes all input line to one-hot representation in sorting the occurred tags by lexicographic order, then fill the occur item with value. e.g. assume values is
    ::
 
       a:0.2 c:1.5
