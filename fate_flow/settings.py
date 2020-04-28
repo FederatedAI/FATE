@@ -20,6 +20,7 @@ from arch.api import Backend
 from arch.api.utils import file_utils, log_utils, core_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
 from arch.api.utils.core_utils import get_lan_ip
+from arch.api.utils.conf_utils import get_base_config
 import __main__
 
 from fate_flow.utils.setting_utils import CenterConfig
@@ -48,10 +49,8 @@ MAX_CONCURRENT_JOB_RUN_HOST = 10
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000 * 20  # ms
 JOB_DEFAULT_TIMEOUT = 7 * 24 * 60 * 60
-REDIS_QUEUE_DB_INDEX = 0
-BASE_SERVICE_CONF = file_utils.load_yaml_conf(os.path.join(file_utils.get_project_base_directory(), "arch/conf/base_service_conf.yaml"))
-DATABASE = BASE_SERVICE_CONF.get("database", {})
-DEFAULT_MODEL_STORE_ADDRESS = BASE_SERVICE_CONF.get("default_model_store_address", {})
+DATABASE = get_base_config("database", {})
+DEFAULT_MODEL_STORE_ADDRESS = get_base_config("default_model_store_address", {})
 
 '''
 Constants

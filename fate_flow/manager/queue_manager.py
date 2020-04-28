@@ -24,7 +24,7 @@ from fate_flow.db.db_models import DB, Job, Queue
 
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.constant_config import WorkMode
-from fate_flow.settings import REDIS_QUEUE_DB_INDEX, stat_logger
+from fate_flow.settings import stat_logger
 
 
 class BaseQueue:
