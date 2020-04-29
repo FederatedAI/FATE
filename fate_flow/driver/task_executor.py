@@ -116,6 +116,7 @@ class TaskExecutor(object):
                                                            input_dsl=task_input_dsl)
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
             run_object.set_tracker(tracker=tracker)
+            run_object.set_taskid(taskid=task_id)
             run_object.run(parameters, task_run_args)
             output_data = run_object.save_data()
             tracker.save_output_data_table(output_data, task_output_dsl.get('data')[0] if task_output_dsl.get('data') else 'component')
