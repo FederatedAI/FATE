@@ -24,6 +24,11 @@ import six
 # noinspection PyPep8Naming
 @six.add_metaclass(abc.ABCMeta)
 class Table(object):
+    """
+    table for distributed computation and storage
+
+    This is a abstract class to be impl.
+    """
 
     @abc.abstractmethod
     def get_namespace(self):
@@ -60,34 +65,83 @@ class Table(object):
     @abc.abstractmethod
     def collect(self, min_chunk_size=0, use_serialize=True) -> list:
         """
+        Returns an iterator of (key, value) 2-tuple from the Table.
 
-        Args:
-            min_chunk_size: AAA
-            use_serialize: BBB
+        Parameters
+        ---------
+        min_chunk_size : int
+          Minimum chunk size (key bytes + value bytes) returned if end of table is not hit.
+          0 indicates a default chunk size (partition_num * 1.75 MB)
+          negative number indicates no chunk limit, i.e. returning all records.
+          Default chunk size is recommended if there is no special needs from user.
 
-        Returns: CCC
+        Returns
+        -------
+        Iterator
 
-        Examples:
-
-            >>> from arch.api import session
-            >>> a = session.parallelize(range(10))
-            >>> b = a.collect(min_chunk_size=1000)
-            >>> list(b)
-            [(0, 0), (1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6), (7, 7), (8, 8), (9, 9)]
+        Examples
+        --------
+        >>> a = session.parallelize(range(10))
+        >>> b = a.collect(min_chunk_size=1000)
+        >>>list(b)
+        [(0, 0), (1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6), (7, 7), (8, 8), (9, 9)]
         """
-
         pass
 
     @abc.abstractmethod
     def delete(self, k, use_serialize=True):
+        """
+        Returns the deleted value corresponding to the key.
+
+        Parameters
+        ----------
+          k : object
+            Key object. Will be serialized. Must be less than 512 bytes.
+        Returns
+        -------
+        object
+          Corresponding value of the deleted key. Returns None if key does not exist.
+
+        Examples
+        --------
+        >>> a = session.parallelize(range(10))
+        >>> a.delete(1)
+        1
+        """
         pass
 
     @abc.abstractmethod
     def destroy(self):
+        """
+        Destroys this Table, freeing its associated storage resources.
+
+        Returns
+        -------
+        None
+
+        Examples
+        ----------
+        >>> a = session.parallelize(range(10))
+        >>> a.destroy()
+        """
         pass
 
     @abc.abstractmethod
     def count(self):
+        """
+        Returns the number of elements in the Table.
+
+        Returns
+        -------
+        int
+          Number of elements in this Table.
+
+        Examples
+        --------
+        >>> a = session.parallelize(range(10))
+        >>> a.count()
+        10
+        """
         pass
 
     @abc.abstractmethod
@@ -100,6 +154,26 @@ class Table(object):
 
     @abc.abstractmethod
     def first(self, keysOnly=False, use_serialize=True):
+        """
+        Returns the first element of a Table. Shortcut of `take(1, keysOnly)`
+
+        Parameters
+        ----------
+        keysOnly : bool
+          Whether to return keys only. `True` returns keys only and `False` returns both keys and values.
+        use_serialize : bool
+
+        Returns
+        -------
+        tuple or object
+          First element of the Table. It is a tuple if `keysOnly=False`, or an object if `keysOnly=True`.
+
+        Examples
+        --------
+        >>> a = session.parallelize([1, 2, 3])
+        >>> a.first()
+        (1, 1)
+        """
         pass
 
     @abc.abstractmethod
