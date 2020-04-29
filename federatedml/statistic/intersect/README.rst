@@ -90,7 +90,7 @@ This switch is "repeated_id_process" in the parameter of intersection, set it to
 Param
 ------
 
-.. autoclass:: federatedml.param.intersect_param.IntersectParam
+.. automodule:: federatedml.param.intersect_param
    :members:
 
 Feature
