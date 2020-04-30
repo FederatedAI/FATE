@@ -3,13 +3,13 @@ DSL & Task Submit Runtime Conf Setting
 
 To make the modeling task more flexible, currently, FATE use its own domain-specific language(DSL) to describe modeling task. With usage of this DSL, modeling components such as data-io, feature-engineering and classification/regression module etc. can be combined as a Directed Acyclic Graph(DAG). Therefore, user can take and combine the algorithm components flexibly according to their needs.
 
-In addition, each component has their own parameters to be configured. Also, the configuration may differ from party to party. For convenience, FATE use configure all parameters for all parties and all components in one file. This guide will show you how to create such a configure file.
+In addition, each component has their own parameters to be configured. Also, the configuration may differ from party to party. For convenience, FATE configure all parameters for all parties and all components in one file. This guide will show you how to create such a configure file.
 
 
 DSL Configure File
 ------------------
 
-We use json file which is actually a dict as a dsl config file. The first level of the dict is always "components" showing you are going to add components in your modeling task.
+We use json file which is actually a dict as a dsl config file. The first level of the dict is always "components," which indicates content in the dict are components in your modeling task.
 
 ::
   
@@ -20,7 +20,7 @@ We use json file which is actually a dict as a dsl config file. The first level 
     }
 
 
-Then each component should be defined in second level. Here is an example of setting a component:
+Then each component should be defined on the second level. Here is an example of setting a component:
 
 ::
   
@@ -41,26 +41,26 @@ Then each component should be defined in second level. Here is an example of set
     }
 
 
-As the example shows, user define the component name as key of this module. But this module should end up with a "\_num" where the num should start with 0.
+As the example shows, user define the component name as key of this module. Note this module name should end up with a "\_num" where the num should start with 0.
 
 
 Field Specification
 ^^^^^^^^^^^^^^^^^^^
 
 :module: 
-  Specify which component use. This field should be strictly same with file name in federatedml/conf/setting_conf except the .json suffix.
+  Specify which component to use. This field should strictly match the file name in federatedml/conf/setting_conf except the .json suffix.
 
-:input: There are two type of input, data and model.
+:input: There are two types of input, data and model.
 
   1. Data: There are three possible data_input type:
 
         1. data: typically used in data_io, feature_engineering modules and evaluation.
         2. train_data: Used in homo_lr, hetero_lr and secure_boost. If this field is provided, the task will be parse as a **fit** task
-        3. eval_data: If train_data is provided, this field is optional. In this case, this data will be used as validation set. If train_data is not provided, this task will be parse as a **predict** or **transform** task.
+        3. eval_data: If train_data is provided, this field is optional. In this case, this data will be used as validation set. If train_data is not provided, this task will be parsed as a **predict** or **transform** task.
 
-  2. Model: There are two possible model-input type:
+  2. Model: There are two possible model-input types:
 
-        1. model: This is a model input by same type of component. For example, hetero_binning_0 run as a fit component, and hetero_binning_1 take model output of hetero_binning_0 as input so that can be used to transform or predict.
+        1. model: This is a model input by the same type of component. For example, hetero_binning_0 run as a fit component, and hetero_binning_1 take model output of hetero_binning_0 as input so that can be used to transform or predict.
 
         Here's an example showing this logic:
 
@@ -109,7 +109,7 @@ Field Specification
             }
 
 
-  3. output: Same as input, two type of output may occur which are data and model.
+  3. output: Same as input, two types of output may occur which are data and model.
     
     1. Data: Specify the output data name
     2. Model: Specify the output model name
@@ -120,7 +120,7 @@ Field Specification
 Submit Runtime Conf
 -------------------
 
-Beside the dsl conf, users also need to prepare a submit runtime conf to set the parameters of each component.
+Besides the dsl conf, user also need to prepare a submit runtime conf to set the parameters of each component.
 
 :initiator:
   To begin with, the initiator should be specified in this runtime conf. Here is an exmaple of setting initiator:
@@ -193,7 +193,7 @@ Beside the dsl conf, users also need to prepare a submit runtime conf to set the
 
   Then, user can config parameters for each components. The component names should match names defined in the dsl config file. The content of each component parameters are defined in Param class located in federatedml/param.
 
-:algorithm_parameters: If there are some parameters are same among all parties, they can be set in algorithm_parameters. Here is an example showing how to do that.
+:algorithm_parameters: If some parameters are the same among all parties, they can be set in algorithm_parameters. Here is an example showing how to do that.
   ::
 
     "hetero_feature_binning_0": {
@@ -223,9 +223,9 @@ Beside the dsl conf, users also need to prepare a submit runtime conf to set the
       }
     }
 
-  Same with the form in role parameters, each key of the parameters are names of components that defined in dsl config file.
+  Same with the form in role parameters, each key of the parameters are names of components that are defined in dsl config file.
 
-After finished these setting and submit the task, fate-flow will combine the parameters list in role-parameters and algorithm parameters. If there are still some fields are not defined, values in default runtime conf will be used. Then fate-flow will send these config files to their corresponding parties and start the federated modeling task.
+After setting config files and submitting the task, fate-flow will combine the parameter list in role-parameters and algorithm parameters. If there are still some undefined fields, values in default runtime conf will be used. Then fate-flow will send these config files to their corresponding parties and start the federated modeling task.
 
 
 Multi-host configuration
@@ -275,4 +275,4 @@ Each parameter set for host should also be list in a list. The number of element
         "outlier_replace": [true, true, true]
       }
 
-The parameters set in algorithm parameters can keep it as it is. The parameters will be copied for every party.
+The parameters set in algorithm parameters need not be copied into host role parameters. Algorithm parameters will be copied for every party.

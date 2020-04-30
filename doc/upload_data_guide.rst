@@ -101,4 +101,4 @@ After running this command, the following information is shown if it is success.
       "created_at": "2019-08-01 15:27:50"
   }
 
-And as this output shown, the table_name and namespace has been list which can be taken as input config in submit-runtime conf.
+And as this output shown, table_name and namespace have been listed, which can be taken as input config in submit-runtime conf.

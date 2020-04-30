@@ -6,7 +6,7 @@ This module provide some method of PSI(Private Set Intersection)
 RSA Intersection
 ----------------
 
-This  folder contains code for implementing algorithm based on [`RSA Intersection`__]. This work is built on FATE, eggroll and federation API that construct the secure, distributed and parallel infrastructure.
+This folder contains code for implementing algorithm based on [`RSA Intersection`__]. This work is built on FATE, eggroll and federation API that construct the secure, distributed and parallel infrastructure.
 
 .. __: https://books.google.com.hk/books?id=zfvf37_YS8cC&pg=PA73&lpg=PA73&dq=rsa+commutative+encryption&source=bl&ots=LbOiyIlr3E&sig=IIWlTGeoU0C8dRiN10uH2OAwobQ&hl=zh-CN&sa=X&ved=0ahUKEwiLoozC1tbXAhVDnJQKHbP7DvAQ6AEIdTAJ#v=onepage&q&f=false.
 
@@ -24,8 +24,8 @@ In :ref:`figure 1` ,Party A has user id u1,u2,u3,u4, while Party B has u1,u2,u3,
 party A and party B know their same user ids, which are u1,u2,u3, but party A know nothing about
 other user ids of party B, like u5, and party B know nothing about party A except u1,u2,u3 as well.
 While party A and party B transmit their processed id information to the other party, like :math:`Y-A` and :math:`Z-B`,
-it will not leak any raw ids. :math:`Z-B` can be safely because of the privacy key of party B.
-Each :math:`Y-A` includes different random value which binds to each value in :math:`X-A` and will be safely as well.
+it will not leak any raw ids. :math:`Z-B` can be safe because of the privacy key of party B.
+Each :math:`Y-A` includes different random value which binds to each value in :math:`X-A` and will be safe as well.
 
 Using this module, we can get the intersection ids between two parties in security and efficiently.  
 
@@ -47,7 +47,7 @@ Both rsa and raw intersection support multi-host. It means a guest can do inters
 
    Figure 2 (multi-hosts Intersection)
 
-See in :ref:`figure 2`, this is a introduction to a guest intersect with two hosts, and it is the same as more than two hosts. Firstly, guest will intersect with each host and get intersective IDs respectively. Secondly, guest will find common IDs from all intersection results. Finally,
+See in :ref:`figure 2`, this is a introduction to a guest intersect with two hosts, and it is the same as more than two hosts. Firstly, guest will intersect with each host and get overlapping IDs respectively. Secondly, guest will find common IDs from all intersection results. Finally,
 guest will send common IDs to every host if necessary.
 
 Repeated ID intersection
@@ -98,7 +98,7 @@ Feature
 
 Both RSA and RAW intersection supports the following features:
 
-1. Support multi-host modeling task. The detail configuration for multi-host modeling task is located [Here](../../../doc/dsl_conf_setting_guide.md)
+1. Support multi-host modeling task. The detail configuration for multi-host modeling task is located `here. <../../../doc/dsl_conf_setting_guide.rst>`_
 
 2. Repeated ID intersection using ID expanding.
 

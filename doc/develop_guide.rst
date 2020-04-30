@@ -181,13 +181,13 @@ For example, in "federatedml/conf/default_runtime_conf/logistic_regression_param
 Step 4. Define the transfer variable json of this module and generate transfer variable object. (Optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This step is needed only when this module is federated, which means there exist information interaction between different parties.
+This step is needed only when this module is federated, which means there exists information interaction between different parties.
 
 .. Note:: 
    
-   this json file should be put under the fold federatedml/transfer_variable_conf.
+   this json file should be put under the folder arch/transfer_variables/auth_conf/federatedml.
 
-In the json file, first thing you need to do is to define the name of the transfer_variable object, for example, like "HeteroLRTransferVariable". Secondly, define the transfer_variables. The transfer_variable include three fields: 
+In the json file, first thing you need to do is to define the name of the transfer_variable object, for example, like "HeteroLRTransferVariable". Secondly, define the transfer_variables. The transfer_variable includes three fields:
 
 :variable name: a string represents variable name
 :src: should be one of "guest", "host", "arbiter", it stands for where interactive information is sending from.
@@ -216,30 +216,43 @@ The following is the content of "hetero_lr.json".
     }
 
 
-After finish writing this json file, run the python program of :download:`arch/transfer_variables/transfer_variable_generate.py <../arch/transfer_variables/transfer_variable_generate.py>`, you will get a transfer_variable python class object, in `arch/transfer_variables/auth_conf`, xxx is the file name of this json file.
+After finish writing this json file, run the python program of :download:`arch/transfer_variables/transfer_variable_generate.py <../arch/transfer_variables/transfer_variable_generate.py>`, you will get a transfer_variable python class object, in `federatedml/transfer_variable/transfer_class/xxx_transfer_variable.py`, xxx is the file name of this json file.
  
  
 Step 5. Define your module, it should inherit model_base
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The rule of running of module of fate_flow_client is that:
+The rule of running a module with fate_flow_client is that:
 
 1. retrieves the setting_conf and find the "module" and "role" fields of setting conf.
 2. it initializes the running object of every party.
-3. calls the run method of running object.
+3. calls the fit method of running object.
 4. calls the save_data method if needed.
 5. calls the export_model method if needed.
 
 In this section, we describe how to do 3-5. Many common interfaces are provided in :download:`federatedml/model_base.py <../federatedml/model_base.py>`.
 
-:override run interface if needed:
-   The run function holds the form of following.
+:Override fit interface if needed:
+   The fit function holds the form of following.
    
    .. code-block:: python
 
-      def run(self, component_parameters=None, args=None):
+      def fit(self, train_data, validate_data):
 
-   Both component_parameters and args are dict objects. "args" contains input data sets and input models of the module in the form of DTable. The naming of each element is defined in user's dsl config file. On the other hand, "component_parameters" is the parameter variables of this module which is defined in module parameter class mentioned in step 1. These configured parameters are user-defined or taken from default values setting in default runtime conf.
+   Both train_data and validate_data are DTables from upstream components(DataIO for example).
+   You can develop your own federated ML algorithms by realizing fit functions of different roles (guest and host in hetero algorithms, for example). By importing transfer variable(introduced in section 4)
+   from federatedml/transfer_variable/transfer_class you can exchange data between roles.
+   Fit functions will be called simultaneously while running an algorithm module and all roles will build a model collaboratively.
+
+
+:Override predict interface if needed:
+   The fit function holds the form of following.
+
+   .. code-block:: python
+
+      def predict(self, data_inst, ):
+
+   Data_inst is a DTable. Similar to fit function, you can define the prediction procedure in the predict function of different roles.
 
 :Define your save_data interface:
    so that fate-flow can obtain output data through it when needed.
@@ -249,7 +262,7 @@ In this section, we describe how to do 3-5. Many common interfaces are provided 
       def save_data(self):
           return self.data_output
 
-:define export_model interface:
+:Define export_model interface:
    Similar with part b, define your export_model interface so that fate-flow can obtain output model when needed. The format should be a dict contains both "Meta" and "Param" proto buffer generated. Here is an example showing how to export model.
 
    .. code-block:: python
@@ -281,7 +294,7 @@ After finished developing, here is a simple example for starting a modeling task
       This step is needed for every data-provide node(i.e. Guest and Host).
 
 :2. Start your modeling task:
-   In this step, two config files corresponding to dsl config file and component config file should be prepared. Please make sure the table_name and namespace in the conf file match with upload_data conf. should be Then run the following command:
+   In this step, two config files corresponding to dsl config file and component config file should be prepared. Please make sure that the table_name and namespace in the conf file match with upload_data conf. Then run the following command:
   
    .. code-block:: bash
 
@@ -290,4 +303,4 @@ After finished developing, here is a simple example for starting a modeling task
 :3. Check log files:
    Now you can check out the log in the following path: `${your_install_path}/logs/{your jobid}`.
 
-For more detail information about dsl configure file and parameter configure files, please check out `examples/federatedml-1.x-examples`
+For more detailed information about dsl configure file and parameter configure files, please check out `examples/federatedml-1.x-examples`.
