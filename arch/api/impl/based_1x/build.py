@@ -53,7 +53,7 @@ class Builder(build.Builder):
     # noinspection PyUnresolvedReferences,PyProtectedMember
     def build_wrapper(self):
         if self._work_mode.is_standalone():
-            from eggroll.api.standalone.eggroll import _DTable
+            from arch.standalone.standalone.eggroll import _DTable
             return FederationWrapped(session_id=self._session_id, dtable_cls=_DTable, table_cls=self._table_cls)
 
         elif self._work_mode.is_cluster():
