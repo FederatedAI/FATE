@@ -1,7 +1,7 @@
 # Contributing
 
 When contributing to this repository, please first discuss the change you wish to make via issue,
-email, or any other method with the owners of this repository before making a change. 
+email whose address is contact@FedAI.org (or use the link [mailto](mailto:contact@FedAI.org) directly), or any other method with the owners of this repository before making a change. For more contact information, you may also refer to our [official website](https://www.fedai.org/)
 
 Please note we have a code of conduct, please follow it in all your interactions with the project.
 

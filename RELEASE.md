@@ -1,3 +1,12 @@
+# Release 1.3.1
+## Major Features and Improvements
+>Deploy
+* Support deploying by MacOS
+* Support using external db
+* Deploy JDK and Python environments on demand
+* Improve MySQL and FATE Flow service.sh
+* Support more custom deployment configurations in the default_configurations.sh, such as ssh_port, mysql_port and so one.
+
 # Release 1.3.0
 ## Major Features and Improvements
 >FederatedREC
@@ -16,7 +25,7 @@
 * Add abnormal parameters and input data detection in OneHot Encoder
 * fix not passing validate data to fit process to support evaluate validation data during training process
 
->Fate-Flow
+>FATE-Flow
 * Add clean job CLI for cleaning output and intermediate results, including data, metrics and sessions
 * Support for obtaining table namespace and name of output data via CLI
 * Fix KillJob unsuccessful execution in some special cases
