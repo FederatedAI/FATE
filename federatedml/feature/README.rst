@@ -61,6 +61,8 @@ Features
 
 8. Support 4 types of optimal binning.
 
+9. Support asymmetric binning methods on Host & Guest sides.
+
 
 Hetero Feature Selection
 ========================

@@ -96,7 +96,7 @@ Alogorithm List
 +------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
 | `Local Baseline`_            | LocalBaseline             | Wrapper that runs     | Input      |                |             | Logistic     |
 |                              |                           | sklearn Logistic      | DTable.    |                |             | Regression.  |
-|                              |                           | Regression model with |            |                |             |              |
+|                              |                           | Regression model with |            |                |             | model.       |
 |                              |                           | local data.           |            |                |             |              |
 +------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
 | `Hetero-LinR`_               | HeteroLinR                | Build hetero linear   | Input      | \              | \           | Linear       |

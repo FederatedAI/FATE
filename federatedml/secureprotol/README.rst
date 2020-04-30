@@ -29,7 +29,7 @@ Paillier encryption is a kind of addition homomorphic encryption who belongs to 
     2. Decode: decode back as what it is.
 
 
-:Addition and Scalar Multiplication: Please refer to the same pages with encrypt step above for details.
+:Addition and Scalar Multiplication: Please refer to the links above with encrypt step for details.
 
 
 

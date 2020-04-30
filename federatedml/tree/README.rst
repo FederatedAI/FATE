@@ -45,7 +45,7 @@ The parties continue the split finding process until finishing constructed the t
    
    Figure 3: A Single Decision Tree
 
-To use the learned model to classify a new instance, firstly the active party judge if current tree node belongs to it or not. IF the current tree belongs to active party, then it can use its (feature, split_bin_val) lookup table to decide going to left child node of right,otherwise, the active party sends the node id to designated passive party, the passive party looks at its lookup table and sends back to active party which branch should the current node goes to. This process stops until the current node is a leave. The following figure shows the federated inference process.
+To use the learned model to classify a new instance, firstly the active party judge if current tree node belongs to it or not. If the current tree belongs to active party, then it can use its (feature, split_bin_val) lookup table to decide going to left child node of right,otherwise, the active party sends the node id to designated passive party, the passive party looks at its lookup table and sends back to active party which branch should the current node goes to. This process stops until the current node is a leave. The following figure shows the federated inference process.
 
 .. figure:: images/federated_inference.png
    :align: center
@@ -53,7 +53,7 @@ To use the learned model to classify a new instance, firstly the active party ju
 
    Figure 4: Process of Federated Inference
 
-By following the SecureBoost framework, multiple parties can jointly build tree ensembled model without leaking privacy 
+By following the SecureBoost framework, multiple parties can jointly build tree ensemble model without leaking privacy
 in federated learning. If you want to learn more about the algorithm details, you can read the paper attached above.
 
 
@@ -94,7 +94,7 @@ Other features
 Homo Secureboost
 ----------------
 
-Unlike Hetero Secureboost, Homo secureboost is conducted under a different setting. In homo secureboost, every participant(clients) holds data that shares the same feature space, and jointly train a GBDT model without leaking any data sample.
+Unlike Hetero Secureboost, Homo Secureboost is conducted under a different setting. In homo secureboost, every participant(clients) holds data that shares the same feature space, and jointly train a GBDT model without leaking any data sample.
 
 The figure below shows the overall framework of the homo secureboost algorithm.
 

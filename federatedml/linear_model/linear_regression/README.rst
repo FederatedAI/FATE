@@ -67,7 +67,7 @@ Features
 
 7. Learning rate decay mechanism
 
-8. Early stopping mechanism, which checks for performance change on specified metrics over training rounds. Early stopping is triggered when no improvement is found at early stopping rounds.
+8. Support early stopping mechanism, which checks for performance change on specified metrics over training rounds. Early stopping is triggered when no improvement is found at early stopping rounds.
 
 9. Support sparse format data as input.
 
