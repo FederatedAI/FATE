@@ -119,6 +119,7 @@ if __name__ == '__main__':
     # start http server
     try:
         run_simple(hostname=IP, port=RuntimeConfig.HTTP_PORT, application=app, threaded=True)
+        stat_logger.info("FATE Flow server start Successfully")
     except OSError as e:
         traceback.print_exc()
         os.kill(os.getpid(), signal.SIGKILL)

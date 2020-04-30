@@ -39,7 +39,7 @@ source ${config_path}
 packaging() {
     source ../../default_configurations.sh
     package_init ${output_packages_dir} ${module_name}
-	  cp -r ${source_code_dir}/${module_name} ${output_packages_dir}/source
+	cp -r ${source_code_dir}/${module_name} ${output_packages_dir}/source
 	return 0
 }
 
