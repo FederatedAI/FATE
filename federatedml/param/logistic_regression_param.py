@@ -80,6 +80,20 @@ class LogisticParam(BaseParam):
     multi_class: str, 'ovr', default: 'ovr'
         If it is a multi_class task, indicate what strategy to use. Currently, support 'ovr' short for one_vs_rest only.
 
+    validation_freqs: int, list, tuple, set, or None
+        validation frequency during training.
+
+    early_stopping_rounds: int, default: None
+        Will stop training if one metric doesn’t improve in last early_stopping_round rounds
+
+    metrics: list, default: []
+        Indicate when executing evaluation during train process, which metrics will be used. If set as empty,
+        default metrics for specific task type will be used. As for binary classification, default metrics are
+        ['auc', 'ks']
+
+    use_first_metric_only: bool, default: False
+        Indicate whether use the first metric only for early stopping judgement.
+
     """
 
     def __init__(self, penalty='L2',
@@ -89,7 +103,9 @@ class LogisticParam(BaseParam):
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
-                 stepwise_param=StepwiseParam()
+                 stepwise_param=StepwiseParam(),
+                 metrics=[],
+                 use_first_metric_only=False
                  ):
         super(LogisticParam, self).__init__()
         self.penalty = penalty
@@ -110,6 +126,8 @@ class LogisticParam(BaseParam):
         self.validation_freqs = validation_freqs
         self.stepwise_param = copy.deepcopy(stepwise_param)
         self.early_stopping_rounds = early_stopping_rounds
+        self.metrics = metrics
+        self.use_first_metric_only = use_first_metric_only
 
     def check(self):
         descr = "logistic_param's"
@@ -201,6 +219,7 @@ class LogisticParam(BaseParam):
 
         return True
 
+
 class HomoLogisticParam(LogisticParam):
     """
     Parameters
@@ -221,7 +240,10 @@ class HomoLogisticParam(LogisticParam):
                  encrypt_param=EncryptParam(), re_encrypt_batches=2,
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True,
-                 aggregate_iters=1, multi_class='ovr', validation_freqs=None
+                 aggregate_iters=1, multi_class='ovr', validation_freqs=None,
+                 early_stopping_rounds=None,
+                 metrics=['auc', 'ks'],
+                 use_first_metric_only=False
                  ):
         super(HomoLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                 batch_size=batch_size,
@@ -230,7 +252,9 @@ class HomoLogisticParam(LogisticParam):
                                                 encrypt_param=encrypt_param, predict_param=predict_param,
                                                 cv_param=cv_param, multi_class=multi_class,
                                                 validation_freqs=validation_freqs,
-                                                decay=decay, decay_sqrt=decay_sqrt)
+                                                decay=decay, decay_sqrt=decay_sqrt,
+                                                early_stopping_rounds=early_stopping_rounds,
+                                                metrics=metrics, use_first_metric_only=use_first_metric_only)
         self.re_encrypt_batches = re_encrypt_batches
         self.aggregate_iters = aggregate_iters
 
@@ -270,7 +294,9 @@ class HeteroLogisticParam(LogisticParam):
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  decay=1, decay_sqrt=True, sqn_param=StochasticQuasiNewtonParam(),
-                 multi_class='ovr', validation_freqs=None, early_stopping_rounds=None
+                 multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
+                 metrics=['auc', 'ks'],
+                 use_first_metric_only=False
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                   batch_size=batch_size,
@@ -279,7 +305,10 @@ class HeteroLogisticParam(LogisticParam):
                                                   predict_param=predict_param, cv_param=cv_param,
                                                   decay=decay,
                                                   decay_sqrt=decay_sqrt, multi_class=multi_class,
-                                                  validation_freqs=validation_freqs, early_stopping_rounds=early_stopping_rounds)
+                                                  validation_freqs=validation_freqs,
+                                                  early_stopping_rounds=early_stopping_rounds,
+                                                  metrics=metrics,
+                                                  use_first_metric_only=use_first_metric_only)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.sqn_param = copy.deepcopy(sqn_param)
 

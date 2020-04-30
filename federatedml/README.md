@@ -171,6 +171,14 @@ Build hetero neural network module.
 - Data Input: Input DTable.
 - Model Output: hetero neural network model.
 
+#### 19. [Homo Secure Boosting](./tree/README.md)
+Build homo secure boosting module through multiple parties.
+
+Corresponding module name: HomoSecureBoost
+
+- Data Input: DTable, values are instances.
+- Model Output: SecureBoost Model, consists of model-meta and model-param
+
 ### Secure Protocol
 #### 1. [Homomorphic Encryption](./secureprotol/README.md)
 

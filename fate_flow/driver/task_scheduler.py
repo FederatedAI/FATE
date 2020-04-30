@@ -19,7 +19,7 @@ import sys
 import time
 from threading import Timer
 
-from arch.api.utils.core import current_timestamp, base64_encode, json_loads, get_lan_ip
+from arch.api.utils.core_utils import current_timestamp, base64_encode, json_loads, get_lan_ip
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import Job
 from fate_flow.driver.task_executor import TaskExecutor
@@ -384,7 +384,7 @@ class TaskScheduler(object):
                               work_mode=work_mode)
 
     @staticmethod
-    def finish_job(job_id, job_runtime_conf):
+    def finish_job(job_id, job_runtime_conf, stop=False):
         job_parameters = job_runtime_conf['job_parameters']
         job_initiator = job_runtime_conf['initiator']
         model_id_base64 = base64_encode(job_parameters['model_id'])
@@ -394,21 +394,22 @@ class TaskScheduler(object):
         for role, partys in job_runtime_conf['role'].items():
             for party_id in partys:
                 # save pipeline
-                federated_api(job_id=job_id,
-                              method='POST',
-                              endpoint='/{}/schedule/{}/{}/{}/{}/{}/save/pipeline'.format(
-                                  API_VERSION,
-                                  job_id,
-                                  role,
-                                  party_id,
-                                  model_id_base64,
-                                  model_version_base64
-                              ),
-                              src_party_id=job_initiator['party_id'],
-                              dest_party_id=party_id,
-                              src_role=job_initiator['role'],
-                              json_body={},
-                              work_mode=job_parameters['work_mode'])
+                if not stop:
+                    federated_api(job_id=job_id,
+                                  method='POST',
+                                  endpoint='/{}/schedule/{}/{}/{}/{}/{}/save/pipeline'.format(
+                                      API_VERSION,
+                                      job_id,
+                                      role,
+                                      party_id,
+                                      model_id_base64,
+                                      model_version_base64
+                                  ),
+                                  src_party_id=job_initiator['party_id'],
+                                  dest_party_id=party_id,
+                                  src_role=job_initiator['role'],
+                                  json_body={},
+                                  work_mode=job_parameters['work_mode'])
                 # clean
                 federated_api(job_id=job_id,
                               method='POST',

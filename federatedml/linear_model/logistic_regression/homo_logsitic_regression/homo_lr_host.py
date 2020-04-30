@@ -28,6 +28,7 @@ from federatedml.optim.gradient.homo_lr_gradient import LogisticGradient, Taylor
 from federatedml.protobuf.generated import lr_model_param_pb2
 from federatedml.util import consts
 from federatedml.util import fate_operator
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 
@@ -89,7 +90,7 @@ class HomoLRHost(HomoLRBase):
         while self.n_iter_ < self.max_iter + 1:
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
 
-            if (self.n_iter_ > 0 and self.n_iter_ % self.aggregate_iters == 0) or self.n_iter_ == self.max_iter:
+            if ((self.n_iter_ + 1) % self.aggregate_iters == 0) or self.n_iter_ == self.max_iter:
                 weight = self.aggregator.aggregate_then_get(model_weights, degree=degree,
                                                             suffix=self.n_iter_)
                 # LOGGER.debug("Before aggregate: {}, degree: {} after aggregated: {}".format(
@@ -134,6 +135,7 @@ class HomoLRHost(HomoLRBase):
 
         LOGGER.info("Finish Training task, total iters: {}".format(self.n_iter_))
 
+    @assert_io_num_rows_equal
     def predict(self, data_instances):
 
         LOGGER.info(f'Start predict task')

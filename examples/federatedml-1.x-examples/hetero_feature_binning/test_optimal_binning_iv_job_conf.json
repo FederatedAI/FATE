@@ -64,7 +64,7 @@
   },
   "algorithm_parameters": {
     "hetero_feature_binning_0": {
-      "method": "quantile",
+      "method": "optimal",
       "optimal_binning_param": {
         "metric_method": "iv",
         "min_bin_pct": 0.05,

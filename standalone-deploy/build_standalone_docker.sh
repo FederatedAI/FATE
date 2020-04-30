@@ -115,7 +115,7 @@ init() {
     cp -r ./fate_flow/* ./fate/data
 
     sed -i.bak "s#^fateflow.url=.*#fateflow.url=http://python:9380#g" ./fateboard/conf/application.properties
-    sed -i.bak "s#^spring.datasource.url=.*#spring.datasource.url=jdbc:sqlite:/fate/fate_flow/fate_flow_sqlite.db#g" ./fateboard/conf/application.properties
+    sed -i.bak "s#^fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:/fate/fate_flow/fate_flow_sqlite.db#g" ./fateboard/conf/application.properties
     sed -i.bak "s#^spring.datasource.driver-Class-Name=.*#spring.datasource.driver-Class-Name=org.sqlite.JDBC#g" ./fateboard/conf/application.properties
     tar -cf ./docker/fateboard/fateboard.tar fateboard
 

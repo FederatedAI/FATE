@@ -293,6 +293,11 @@ class HeteroStepwise(object):
         metas["direction"] = self.direction
         metas["n_count"] = int(self.n_count)
 
+        host_party_id = model.component_properties.host_party_idlist[0]
+        guest_party_id = model.component_properties.guest_partyid
+        metas["host_features_anonym"] = [f"host_{host_party_id}_{i}" for i in range(len(host_mask))]
+        metas["guest_features_anonym"] = [f"guest_{guest_party_id}_{i}" for i in range(len(guest_mask))]
+
         model_info = self.models_trained[step_best]
         loss = model_info.get_loss()
         ic_val = model_info.get_score()

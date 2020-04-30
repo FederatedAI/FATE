@@ -70,6 +70,7 @@ class TestBucketBinning(unittest.TestCase):
 
     def tearDown(self):
         self.table.destroy()
+        session.stop()
 
 
 if __name__ == '__main__':

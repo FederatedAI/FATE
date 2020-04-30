@@ -25,8 +25,9 @@ from federatedml.model_base import ModelBase
 from federatedml.param.local_baseline_param import LocalBaselineParam
 from federatedml.protobuf.generated import lr_model_meta_pb2
 from federatedml.protobuf.generated import lr_model_param_pb2
-from federatedml.util import abnormal_detection
 from federatedml.statistic import data_overview
+from federatedml.util import abnormal_detection
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 from sklearn.linear_model import LogisticRegression
 
@@ -80,7 +81,8 @@ class LocalBaseline(ModelBase):
                   'is_converged': is_converged,
                   'weight': weight_dict,
                   'intercept': intercept,
-                  'header': self.header
+                  'header': self.header,
+                  'best_iteration': -1
                   }
         return result
 
@@ -102,7 +104,8 @@ class LocalBaseline(ModelBase):
                       'is_converged': is_converged,
                       'weight': weight_dict,
                       'intercept': intercept,
-                      'header': self.header
+                      'header': self.header,
+                      'best_iteration': -1
                       }
             param_protobuf_obj = lr_model_param_pb2.SingleModel(**result)
             ovr_pb_objs.append(param_protobuf_obj)
@@ -112,7 +115,10 @@ class LocalBaseline(ModelBase):
             'completed_models': ovr_pb_objs,
             'one_vs_rest_classes': ovr_pb_classes
         }
-        return one_vs_rest_result
+        param_result = {'one_vs_rest_result': one_vs_rest_result,
+                        'need_one_vs_rest': True,
+                        'header': self.header}
+        return param_result
 
     def _get_param(self):
         header = self.header
@@ -122,7 +128,7 @@ class LocalBaseline(ModelBase):
             return param_protobuf_obj
         if self.need_one_vs_rest:
             result = self._get_model_param_ovr()
-            param_protobuf_obj = lr_model_param_pb2.OneVsRestResult(**result)
+            param_protobuf_obj = lr_model_param_pb2.LRModelParam(**result)
 
         else:
             result = self._get_model_param()
@@ -156,6 +162,7 @@ class LocalBaseline(ModelBase):
         }
         return result
 
+    @assert_io_num_rows_equal
     def predict(self, data_instances):
         if not self.need_run:
             return

@@ -196,12 +196,16 @@ class KFold(BaseCrossValidator):
             return join_data_insts
 
     def evaluate(self, eval_data, fold_name, model):
+
         if eval_data is None:
             return
+
         eval_obj = Evaluation()
         # LOGGER.debug("In KFold, evaluate_param is: {}".format(self.evaluate_param.__dict__))
         # eval_obj._init_model(self.evaluate_param)
         eval_param = model.get_metrics_param()
+
+        eval_param.check_single_value_default_metric()
         eval_obj._init_model(eval_param)
         eval_obj.set_tracker(model.tracker)
         eval_data = {fold_name: eval_data}

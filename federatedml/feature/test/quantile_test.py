@@ -84,7 +84,7 @@ class TestInstance(unittest.TestCase):
             sparse_vec = SparseVector(indices, data, 30)
             self.sparse_inst.append((i, Instance(features=sparse_vec)))
 
-        self.sparse_table = session.parallelize(self.sparse_inst, include_key=True)
+        self.sparse_table = session.parallelize(self.sparse_inst, include_key=True, partition=48)
         self.sparse_table.schema = {"header": ["fid" + str(i) for i in range(30)]}
         # self.sparse_table = eggroll.parallelize(sparse_inst, include_key=True, partition=1)
 

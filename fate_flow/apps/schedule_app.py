@@ -16,7 +16,7 @@
 
 from flask import Flask, request
 
-from arch.api.utils.core import base64_decode
+from arch.api.utils.core_utils import base64_decode
 from fate_flow.driver.job_controller import JobController
 from fate_flow.driver.task_scheduler import TaskScheduler
 from fate_flow.settings import stat_logger

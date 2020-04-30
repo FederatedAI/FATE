@@ -43,16 +43,6 @@
                 "data": ["train"],
                 "model": ["train"]
             }
-      },
-      "evaluation_0": {
-          "module": "Evaluation",
-           "input": {
-                "data": {
-                    "data": [
-                        "secureboost_0.train"
-                    ]
-                }
-            }
-        }
+      }
   }
 }

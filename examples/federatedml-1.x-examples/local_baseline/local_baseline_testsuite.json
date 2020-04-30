@@ -1,25 +1,25 @@
 {
   "data": [
       {
-          "file": "examples/data/breast_b.csv",
+          "file": "examples/data/vehicle_scale_b.csv",
           "head": 1,
-          "partition": 10,
-          "table_name": "hetero_breast_b",
-          "namespace": "hetero_breast_guest",
+          "partition": 48,
+          "table_name": "hetero_vehicle_b",
+          "namespace": "hetero_guest_vehicle",
           "role": "guest_0"
         },
       {
-          "file": "examples/data/breast_a.csv",
+          "file": "examples/data/vehicle_scale_a.csv",
           "head": 1,
-          "partition": 10,
-          "table_name": "hetero_breast_a",
-          "namespace": "hetero_breast_host",
+          "partition": 48,
+          "table_name": "hetero_vehicle_a",
+          "namespace": "hetero_host_vehicle",
           "role": "host_0"
         },
       {
           "file": "examples/data/breast_homo_guest.csv",
           "head": 1,
-          "partition": 10,
+          "partition": 48,
           "table_name": "homo_breast_b",
           "namespace": "homo_breast_guest",
           "role": "guest_0"
@@ -27,7 +27,7 @@
       {
           "file": "examples/data/breast_homo_host.csv",
           "head": 1,
-          "partition": 10,
+          "partition": 48,
           "table_name": "homo_breast_a",
           "namespace": "homo_breast_host",
           "role": "host_0"

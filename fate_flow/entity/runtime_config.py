@@ -13,7 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils.core import get_lan_ip
+import os
+import dotenv
+
+from arch.api.utils.core_utils import get_lan_ip
+from arch.api.utils.file_utils import get_project_base_directory
 
 
 class RuntimeConfig(object):
@@ -23,6 +27,8 @@ class RuntimeConfig(object):
     USE_LOCAL_DATABASE = False
     HTTP_PORT = None
     JOB_SERVER_HOST = None
+    IN_EXECUTOR = False
+    ENV = dict()
 
     @staticmethod
     def init_config(**kwargs):
@@ -31,3 +37,15 @@ class RuntimeConfig(object):
                 setattr(RuntimeConfig, k, v)
                 if k == 'HTTP_PORT':
                     setattr(RuntimeConfig, 'JOB_SERVER_HOST', "{}:{}".format(get_lan_ip(), RuntimeConfig.HTTP_PORT))
+
+    @staticmethod
+    def init_env():
+        RuntimeConfig.ENV.update(dotenv.dotenv_values(dotenv_path=os.path.join(get_project_base_directory(), "fate.env")))
+
+    @staticmethod
+    def get_env(key):
+        return RuntimeConfig.ENV.get(key, None)
+
+    @staticmethod
+    def set_executor():
+        RuntimeConfig.IN_EXECUTOR = True
