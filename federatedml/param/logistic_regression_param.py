@@ -86,7 +86,7 @@ class LogisticParam(BaseParam):
     early_stopping_rounds: int, default: None
         Will stop training if one metric doesn’t improve in last early_stopping_round rounds
 
-    metrics: list, default: []
+    metrics: list or None, default: None
         Indicate when executing evaluation during train process, which metrics will be used. If set as empty,
         default metrics for specific task type will be used. As for binary classification, default metrics are
         ['auc', 'ks']
@@ -104,7 +104,7 @@ class LogisticParam(BaseParam):
                  decay=1, decay_sqrt=True,
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  stepwise_param=StepwiseParam(),
-                 metrics=[],
+                 metrics=None,
                  use_first_metric_only=False
                  ):
         super(LogisticParam, self).__init__()
@@ -126,7 +126,7 @@ class LogisticParam(BaseParam):
         self.validation_freqs = validation_freqs
         self.stepwise_param = copy.deepcopy(stepwise_param)
         self.early_stopping_rounds = early_stopping_rounds
-        self.metrics = metrics
+        self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
 
     def check(self):
