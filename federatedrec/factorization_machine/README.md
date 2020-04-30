@@ -1,6 +1,6 @@
 # Federated Factorization Machine
 
-Factorization Machine(FM) is a  supervised learning approach incorporates second-order feature interaction.
+Factorization Machine(FM) is a supervised learning approach incorporates second-order feature interaction.
 Federated factorization machine computes these cross-party cross-features and their gradients under encryption. 
 
 Here we simplify participants of the federation process into three parties. Party A represents Guest, party B represents Host. Party C, which is also known as “Arbiter,” is a third party that works as coordinator. Party C is responsible for generating private and public keys.
