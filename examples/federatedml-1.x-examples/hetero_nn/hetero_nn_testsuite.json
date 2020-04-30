@@ -3,7 +3,7 @@
       {
           "file": "examples/data/breast_b.csv",
           "head": 1,
-          "partition": 10,
+          "partition": 48,
           "table_name": "breast_b",
           "namespace": "hetero",
           "role": "guest_0"
@@ -11,7 +11,7 @@
       {
           "file": "examples/data/breast_a.csv",
           "head": 1,
-          "partition": 10,
+          "partition": 48,
           "table_name": "breast_a",
           "namespace": "hetero",
           "role": "host_0"
@@ -19,7 +19,7 @@
       {
           "file": "examples/data/vehicle_scale_b.csv",
           "head": 1,
-          "partition": 10,
+          "partition": 48,
           "table_name": "vehicle_scale_b",
           "namespace": "hetero",
           "role": "guest_0"
@@ -27,7 +27,7 @@
       {
           "file": "examples/data/vehicle_scale_a.csv",
           "head": 1,
-          "partition": 10,
+          "partition": 48,
           "table_name": "vehicle_scale_a",
           "namespace": "hetero",
           "role": "host_0"

@@ -33,6 +33,7 @@ from federatedml.transfer_variable.transfer_class.hetero_feature_selection_trans
     HeteroFeatureSelectionTransferVariable
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 
@@ -50,6 +51,7 @@ class BaseHeteroFeatureSelection(ModelBase):
         self.completed_selection_result = CompletedSelectionResults()
 
         self.schema = None
+        self.header = None
         self.party_name = 'Base'
         # Possible previous model
         self.binning_model = None
@@ -64,10 +66,14 @@ class BaseHeteroFeatureSelection(ModelBase):
         # self.local_only = params.local_only
 
     def _init_select_params(self, data_instances):
-        if self.schema is not None:
+        if self.schema is None:
+            self.schema = data_instances.schema
+
+        if self.header is not None:
             return
         self.schema = data_instances.schema
         header = get_header(data_instances)
+        self.header = header
         self.curt_select_properties.set_header(header)
         self.curt_select_properties.set_last_left_col_indexes([x for x in range(len(header))])
         if self.model_param.select_col_indexes == -1:
@@ -152,6 +158,8 @@ class BaseHeteroFeatureSelection(ModelBase):
             }
 
             header = list(model_param.header)
+            # self.schema = {'header': header}
+            self.header = header
             self.curt_select_properties.set_header(header)
             self.completed_selection_result.set_header(header)
             self.curt_select_properties.set_last_left_col_indexes([x for x in range(len(header))])
@@ -191,6 +199,9 @@ class BaseHeteroFeatureSelection(ModelBase):
 
         new_data = data_instances.mapValues(f)
 
+        LOGGER.debug("When transfering, all left_col_names: {}".format(
+            self.completed_selection_result.all_left_col_names
+        ))
         new_data = self.set_schema(new_data, self.completed_selection_result.all_left_col_names)
 
         one_data = new_data.first()[1]
@@ -266,6 +277,7 @@ class BaseHeteroFeatureSelection(ModelBase):
         LOGGER.info("Finish Hetero Selection Fit and transform.")
         return new_data
 
+    @assert_io_num_rows_equal
     def transform(self, data_instances):
         self._abnormal_detection(data_instances)
         self._init_select_params(data_instances)

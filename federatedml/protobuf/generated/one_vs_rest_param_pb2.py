@@ -7,7 +7,6 @@ from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
-from google.protobuf import descriptor_pb2
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -19,6 +18,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='one-vs-rest-param.proto',
   package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
+  serialized_options=_b('B\023OneVsRestParamProto'),
   serialized_pb=_b('\n\x17one-vs-rest-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"u\n\x0eOneVsRestParam\x12\x0f\n\x07\x63lasses\x18\x01 \x03(\t\x12R\n\x11\x63lassifier_models\x18\x02 \x03(\x0b\x32\x37.com.webank.ai.fate.core.mlmodel.buffer.ClassifierModel\"2\n\x0f\x43lassifierModel\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x11\n\tnamespace\x18\x04 \x01(\tB\x15\x42\x13OneVsRestParamProtob\x06proto3')
 )
 
@@ -38,21 +38,21 @@ _ONEVSRESTPARAM = _descriptor.Descriptor(
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='classifier_models', full_name='com.webank.ai.fate.core.mlmodel.buffer.OneVsRestParam.classifier_models', index=1,
       number=2, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -76,21 +76,21 @@ _CLASSIFIERMODEL = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='namespace', full_name='com.webank.ai.fate.core.mlmodel.buffer.ClassifierModel.namespace', index=1,
       number=4, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
@@ -120,6 +120,5 @@ ClassifierModel = _reflection.GeneratedProtocolMessageType('ClassifierModel', (_
 _sym_db.RegisterMessage(ClassifierModel)
 
 
-DESCRIPTOR.has_options = True
-DESCRIPTOR._options = _descriptor._ParseOptions(descriptor_pb2.FileOptions(), _b('B\023OneVsRestParamProto'))
+DESCRIPTOR._options = None
 # @@protoc_insertion_point(module_scope)

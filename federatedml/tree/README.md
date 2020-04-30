@@ -88,6 +88,7 @@ tweedie-loss、fair-loss、 log-cosh-loss
 * Support missing value in train and predict process
 * Support evaluate training and validate data during training process
 * Support another homomorphic encryption method called "Iterative Affine" since FATE-1.1 
+* Support early stopping in FATE-1.4, to use early stopping, see [Boosting Tree Param](../param/boosting_tree_param.py)
 
 ### Homo Secureboost
 
@@ -130,7 +131,7 @@ The key steps of learning a homo secureboost model are described below:
     leakage is prevented. Figure below shows how histogram secure aggregations are conducted.
     
     <div style="text-align:center" align=center>
-    <img src="./images/secure_agg.png" alt="framework" width="500" height="480" />
+    <img src="./images/secure_agg.png" alt="framework" width="550" height="480" />
     <br/>
     Figure 2: Secure aggregation</div>
     

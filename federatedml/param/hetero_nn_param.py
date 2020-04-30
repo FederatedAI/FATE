@@ -45,7 +45,15 @@ class HeteroNNParam(BaseParam):
                 with optional key-value pairs such as learning rate.
             defaults to "SGD"
         loss:  str, a string to define loss function used
-        metrics: list object, evaluation metrics
+        early_stopping_rounds: int, default: None
+        Will stop training if one metric doesn’t improve in last early_stopping_round rounds
+        metrics: list, default: None
+            Indicate when executing evaluation during train process, which metrics will be used. If not set,
+            default metrics for specific task type will be used. As for binary classification, default metrics are
+            ['auc', 'ks'], for regression tasks, default metrics are ['root_mean_squared_error', 'mean_absolute_error'],
+            [ACCURACY, PRECISION, RECALL] for multi-classification task
+        use_first_metric_only: bool, default: False
+            Indicate whether to use the first metric in `metrics` as the only criterion for early stopping judgement.
         epochs: int, the maximum iteration for aggregation in training.
         batch_size : int, batch size when updating model.
             -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
@@ -53,6 +61,16 @@ class HeteroNNParam(BaseParam):
         early_stop : str, accept 'diff' only in this version, default: 'diff'
             Method used to judge converge or not.
                 a)	diff： Use difference of loss between two iterations to judge whether converge.
+        validation_freqs: None or positive integer or container object in python. Do validation in training process or Not.
+                  if equals None, will not do validation in train process;
+                  if equals positive integer, will validate data every validation_freqs epochs passes;
+                  if container object in python, will validate data if epochs belong to this container.
+                    e.g. validation_freqs = [10, 15], will validate data when epoch equals to 10 and 15.
+                  Default: None
+                  The default value is None, 1 is suggested. You can set it to a number larger than 1 in order to
+                  speed up training by skipping validation rounds. When it is larger than 1, a number which is
+                  divisible by "epochs" is recommended, otherwise, you will miss the validation scores
+                  of last training epoch.
     """
 
     def __init__(self,
@@ -64,7 +82,6 @@ class HeteroNNParam(BaseParam):
                  interactive_layer_lr=0.9,
                  optimizer='SGD',
                  loss=None,
-                 metrics=None,
                  epochs=100,
                  batch_size=-1,
                  early_stop="diff",
@@ -74,7 +91,9 @@ class HeteroNNParam(BaseParam):
                  predict_param=PredictParam(),
                  cv_param=CrossValidationParam(),
                  validation_freqs=None,
-                 early_stopping_rounds=None):
+                 early_stopping_rounds=None,
+                 metrics=None,
+                 use_first_metric_only=True):
         super(HeteroNNParam, self).__init__()
 
         self.task_type = task_type
@@ -87,11 +106,12 @@ class HeteroNNParam(BaseParam):
         self.epochs = epochs
         self.early_stop = early_stop
         self.tol = tol
-        self.metrics = metrics
         self.optimizer = optimizer
         self.loss = loss
         self.validation_freqs = validation_freqs
         self.early_stopping_rounds = early_stopping_rounds
+        self.metrics = metrics or []
+        self.use_first_metric_only = use_first_metric_only
 
         self.encrypt_param = copy.deepcopy(encrypt_param)
         self.encrypted_model_calculator_param = encrypted_mode_calculator_param
@@ -146,6 +166,11 @@ class HeteroNNParam(BaseParam):
         if self.early_stopping_rounds and isinstance(self.early_stopping_rounds, int):
             if self.early_stopping_rounds < 1:
                 raise ValueError("early stopping should be larger than 0 when it's integer")
+            if not self.validation_freqs:
+                raise ValueError("If early stopping rounds is setting, validation_freqs should not be null")
+
+        if not isinstance(self.metrics, list):
+            raise ValueError("metrics should be a list")
 
         self.encrypt_param.check()
         self.encrypted_model_calculator_param.check()

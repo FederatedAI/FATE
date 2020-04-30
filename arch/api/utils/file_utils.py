@@ -16,6 +16,7 @@
 
 import json
 import os
+from ruamel import yaml
 
 from cachetools import LRUCache
 from cachetools import cached
@@ -54,6 +55,16 @@ def dump_json_conf(config_data, conf_path):
             json.dump(config_data, f, indent=4)
     except:
         raise EnvironmentError("loading json file config from '{}' failed!".format(json_conf_path))
+
+
+def load_yaml_conf(conf_path):
+    if not os.path.isabs(conf_path):
+        conf_path = os.path.join(get_project_base_directory(), conf_path)
+    try:
+        with open(conf_path) as f:
+            return yaml.safe_load(f)
+    except Exception as e:
+        raise EnvironmentError("loading yaml file config from {} failed:".format(conf_path), e)
 
 
 if __name__ == "__main__":

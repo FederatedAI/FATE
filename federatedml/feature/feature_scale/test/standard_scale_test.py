@@ -55,8 +55,7 @@ class TestStandardScaler(unittest.TestCase):
         component_param = {
             "method": "standard_scale",
             "mode": "normal",
-            "area": "all",
-            "scale_column_idx": [],
+            "scale_col_indexes": [],
             "with_mean": True,
             "with_std": True,
         }
@@ -152,8 +151,7 @@ class TestStandardScaler(unittest.TestCase):
     # test with (area="col", scale_column_idx=[], with_mean=True, with_std=True):
     def test_fit6(self):
         scale_param = self.get_scale_param()
-        scale_param.scale_column_idx = []
-        scale_param.area = "col"
+        scale_param.scale_col_indexes = []
 
         standard_scaler = StandardScale(scale_param)
         fit_instance = standard_scaler.fit(self.table_instance)
@@ -232,13 +230,11 @@ class TestStandardScaler(unittest.TestCase):
         scale_column_idx = [1, 2, 4]
 
         scale_param = self.get_scale_param()
-        scale_param.scale_column_idx = []
         scale_param.feat_upper = [2, 2, 2, 2, 2, 2]
         scale_param.feat_lower = [1, 1, 1, 1, 1, 1]
         scale_param.with_mean = True
         scale_param.with_std = True
-        scale_param.scale_column_idx = scale_column_idx
-        scale_param.area = "col"
+        scale_param.scale_col_indexes = scale_column_idx
 
         standard_scaler = StandardScale(scale_param)
         fit_instance = standard_scaler.fit(self.table_instance)
@@ -281,14 +277,13 @@ class TestStandardScaler(unittest.TestCase):
         scale_column_idx = [1, 2, 4]
 
         scale_param = self.get_scale_param()
-        scale_param.scale_column_idx = []
+        scale_param.scale_col_indexes = []
         scale_param.feat_upper = 0.8
         scale_param.feat_lower = 0.2
         scale_param.with_mean = True
         scale_param.with_std = True
         scale_param.mode = "cap"
-        scale_param.scale_column_idx = scale_column_idx
-        scale_param.area = "col"
+        scale_param.scale_col_indexes = scale_column_idx
 
         standard_scaler = StandardScale(scale_param)
         fit_instance = standard_scaler.fit(self.table_instance)
@@ -378,7 +373,6 @@ class TestStandardScaler(unittest.TestCase):
         scale_param = self.get_scale_param()
         scale_param.with_mean = False
         scale_param.with_std = False
-        scale_param.area = "all"
         scale_param.scale_column_idx = []
 
         standard_scaler = StandardScale(scale_param)
@@ -392,7 +386,6 @@ class TestStandardScaler(unittest.TestCase):
         scale_param = self.get_scale_param()
         scale_param.with_mean = False
         scale_param.with_std = False
-        scale_param.area = "col"
         scale_param.scale_column_idx = []
 
         standard_scaler = StandardScale(scale_param)
@@ -404,7 +397,6 @@ class TestStandardScaler(unittest.TestCase):
     def test_cols_select_fit_and_transform(self):
         scale_param = self.get_scale_param()
         scale_param.scale_column_idx = [1, 2, 4]
-        scale_param.area = "col"
         standard_scaler = StandardScale(scale_param)
         fit_data = standard_scaler.fit(self.table_instance)
 
@@ -429,7 +421,6 @@ class TestStandardScaler(unittest.TestCase):
     def test_cols_select_fit_and_transform_repeat(self):
         scale_param = self.get_scale_param()
         scale_param.scale_column_idx = [1, 1, 2, 2, 4, 5, 5]
-        scale_param.area = "col"
         standard_scaler = StandardScale(scale_param)
         fit_data = standard_scaler.fit(self.table_instance)
         scale_column_idx = standard_scaler.scale_column_idx

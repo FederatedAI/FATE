@@ -24,4 +24,7 @@ message Pipeline {
     bytes inference_dsl = 1;
     bytes train_dsl = 2;
     bytes train_runtime_conf = 3;
+    string fate_version = 4;
+    string model_id = 5;
+    string model_version = 6;
 }

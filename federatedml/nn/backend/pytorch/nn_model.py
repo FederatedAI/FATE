@@ -1,3 +1,19 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+
 import copy
 import io
 import os
@@ -42,14 +58,20 @@ def layers(layer, config, type):
             return torch.nn.LeakyReLU()
         if layer == "Tanh":
             return torch.nn.Tanh()
-
-    else:
+        if layer == "Softmax":
+            return torch.nn.Softmax(0)
+    elif type == "normal":
         if layer == "Linear":
             return torch.nn.Linear(config[0], config[1])
         if layer == "BatchNorm2d":
             return torch.nn.BatchNorm2d()
         if layer == "dropout":
             return torch.nn.Dropout()
+
+    else:
+        print("layer not support!")
+
+
 
 
 def build_pytorch(nn_define, optimizer, loss, metrics):

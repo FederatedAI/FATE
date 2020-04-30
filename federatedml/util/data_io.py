@@ -40,6 +40,7 @@ from federatedml.protobuf.generated.data_io_param_pb2 import OutlierParam
 from federatedml.statistic import data_overview
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 
@@ -163,6 +164,7 @@ class DenseFeatureReader(object):
 
         return data_instance
 
+    @assert_io_num_rows_equal
     def transform(self, input_data_features, input_data_labels):
         schema = make_schema(self.header, self.sid_name, self.label_name)
 

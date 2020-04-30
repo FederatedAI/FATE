@@ -61,7 +61,7 @@ config() {
 
 	sed -i.bak "s/party.id=.*/party.id=${party_id}/g" ./conf/meta-service.properties
 	sed -i.bak "s/service.port=.*/service.port=${port}/g" ./conf/meta-service.properties
-	sed -i.bak "s#//.*?#//${db_ip}:3306/${db_name}?#g" ./conf/meta-service.properties
+	sed -i.bak "s#//.*?#//${db_ip}:${db_port}/${db_name}?#g" ./conf/meta-service.properties
 	sed -i.bak "s/jdbc.username=.*/jdbc.username=${db_user}/g" ./conf/meta-service.properties
 	sed -i.bak "s/jdbc.password=.*/jdbc.password=${db_password}/g" ./conf/meta-service.properties
 

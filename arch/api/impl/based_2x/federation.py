@@ -15,6 +15,9 @@ STATUS_TABLE_NAME = "__status__"
 
 LOGGER = log_utils.getLogger()
 
+_remote_tag_histories = set()
+_get_tag_histories = set()
+
 
 # noinspection PyProtectedMember
 def init_roll_site_context(runtime_conf, session_id):
@@ -51,6 +54,7 @@ class FederationRuntime(Federation):
         self.role = runtime_conf.get("local").get("role")
 
     def get(self, name, tag, parties: Union[Party, list]):
+
         rs = self.rsc.load(name=name, tag=tag)
         rubbish = Rubbish(name, tag)
 
@@ -58,21 +62,29 @@ class FederationRuntime(Federation):
             parties = [parties]
         rs_parties = [(party.role, party.party_id) for party in parties]
 
+        for party in parties:
+            if (name, tag, party) in _get_tag_histories:
+                raise EnvironmentError(f"get duplicate tag {(name, tag)}")
+            _get_tag_histories.add((name, tag, party))
+
         # TODO:0: check if exceptions are swallowed
         futures = rs.pull(parties=rs_parties)
         rtn = []
         for party, future in zip(rs_parties, futures):
             obj = future.result()
+            if obj is None:
+                raise EnvironmentError(f"federation get None from {party} with name {name}, tag {tag}")
+
             LOGGER.info(f'federation got data. name: {name}, tag: {tag}')
             if isinstance(obj, RollPair):
                 rtn.append(obj)
                 rubbish.add_table(obj)
                 if LOGGER.isEnabledFor(logging.DEBUG):
-                    LOGGER.debug(f'federation got roll pair count: {obj.count()} for name: {name}, tag: {tag}')
+                    LOGGER.debug(f'federation got roll pair with count {obj.count()}, name {name}, tag {tag}')
 
             elif is_split_head(obj):
                 num_split = obj.num_split()
-                LOGGER.info(f'federation getting split data. name: {name}, tag: {tag}, num split: {num_split}')
+                LOGGER.debug(f'federation getting split data with name {name}, tag {tag}, num split {num_split}')
                 split_objs = []
                 for k in range(num_split):
                     _split_rs = self.rsc.load(name, tag=f"{tag}.__part_{k}")
@@ -81,10 +93,14 @@ class FederationRuntime(Federation):
                 rtn.append(obj)
 
             else:
+                LOGGER.debug(f'federation get obj with type {type(obj)} from {party} with name {name}, tag {tag}')
                 rtn.append(obj)
         return rtn, rubbish
 
     def remote(self, obj, name, tag, parties):
+        if obj is None:
+            raise EnvironmentError(f"federation try to remote None to {parties} with name {name}, tag {tag}")
+
         rs = self.rsc.load(name=name, tag=tag)
         rubbish = Rubbish(name=name, tag=tag)
 
@@ -92,11 +108,16 @@ class FederationRuntime(Federation):
             parties = [parties]
         rs_parties = [(party.role, party.party_id) for party in parties]
 
+        for party in parties:
+            if (name, tag, party) in _remote_tag_histories:
+                raise EnvironmentError(f"remote duplicate tag {(name, tag)}")
+            _remote_tag_histories.add((name, tag, party))
+
         if isinstance(obj, RollPair):
             futures = rs.push(obj=obj, parties=rs_parties)
             rubbish.add_table(obj)
         else:
-
+            LOGGER.debug(f"federation remote obj with type {type(obj)} to {parties} with name {name}, tag {tag}")
             futures = []
             obj, splits = maybe_split_object(obj)
             futures.extend(rs.push(obj=obj, parties=rs_parties))
@@ -105,8 +126,18 @@ class FederationRuntime(Federation):
                 futures.extend(_split_rs.push(obj=v, parties=rs_parties))
 
         def done_callback(fut):
+            try:
+                result = fut.result()
+            except Exception as e:
+                import os
+                import signal
+                pid = os.getpid()
+                LOGGER.exception(f"remote fail, terminating process(pid={pid})")
+                os.kill(pid, signal.SIGTERM)
+                raise e
+
             if LOGGER.isEnabledFor(logging.DEBUG):
-                LOGGER.debug("federation remote done called:{}".format(fut.result()))
+                LOGGER.debug(f"federation remote done called:{result}")
 
         for future in futures:
             future.add_done_callback(done_callback)

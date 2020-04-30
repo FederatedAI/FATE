@@ -16,16 +16,18 @@
 # -*- coding: utf-8 -*-
 import os
 
-from arch.api.utils import file_utils
-from arch.api.utils import log_utils
+from arch.api import Backend
+from arch.api.utils import file_utils, log_utils, core_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
-from arch.api.utils.core import get_lan_ip
+from arch.api.utils.core_utils import get_lan_ip
+from arch.api.utils.conf_utils import get_base_config
 import __main__
 
 from fate_flow.utils.setting_utils import CenterConfig
 
 
-WORK_MODE = 0
+WORK_MODE = get_base_config('work_mode', 0)
+BACKEND = Backend.EGGROLL
 USE_LOCAL_DATABASE = True
 
 # upload data
@@ -47,24 +49,8 @@ MAX_CONCURRENT_JOB_RUN_HOST = 10
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000 * 20  # ms
 JOB_DEFAULT_TIMEOUT = 7 * 24 * 60 * 60
-REDIS_QUEUE_DB_INDEX = 0
-
-DATABASE = {
-    'name': 'fate_flow',
-    'user': 'root',
-    'passwd': 'fate_dev',
-    'host': '127.0.0.1',
-    'port': 3306,
-    'max_connections': 100,
-    'stale_timeout': 30,
-}
-
-REDIS = {
-    'host': '127.0.0.1',
-    'port': 6379,
-    'password': 'fate_dev',
-    'max_connections': 500
-}
+DATABASE = get_base_config("database", {})
+DEFAULT_MODEL_STORE_ADDRESS = get_base_config("default_model_store_address", {})
 
 '''
 Constants
@@ -75,12 +61,12 @@ SERVERS = 'servers'
 MAIN_MODULE = os.path.relpath(__main__.__file__)
 SERVER_MODULE = 'fate_flow_server.py'
 TASK_EXECUTOR_MODULE = 'driver/task_executor.py'
-DEFAULT_WORKFLOW_DATA_TYPE = ['train_input', 'data_input', 'id_library_input', 'model', 'predict_input',
-                              'predict_output', 'evaluation_output', 'intersect_data_output']
+TEMP_DIRECTORY = os.path.join(file_utils.get_project_base_directory(), "fate_flow", "temp")
 HEADERS = {
     'Content-Type': 'application/json',
     'Connection': 'close'
 }
+DETECT_TABLE = ("fate_flow_detect_table_namespace", "fate_flow_detect_table_name_{}".format(core_utils.fate_uuid()), 50)
 # fate-serving
 SERVINGS_ZK_PATH = '/FATE-SERVICES/serving/online/publishLoad/providers'
 FATE_FLOW_ZK_PATH = '/FATE-SERVICES/flow/online/transfer/providers'
@@ -128,3 +114,4 @@ SERVINGS = CenterConfig.get_settings(path=SERVING_PATH, servings_zk_path=SERVING
 BOARD_DASHBOARD_URL = 'http://%s:%d/index.html#/dashboard?job_id={}&role={}&party_id={}' % (BOARD_HOST, BOARD_PORT)
 RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
 RuntimeConfig.init_config(HTTP_PORT=HTTP_PORT)
+RuntimeConfig.init_config(BACKEND=BACKEND)

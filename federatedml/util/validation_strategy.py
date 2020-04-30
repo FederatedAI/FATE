@@ -24,6 +24,7 @@
 from arch.api.utils import log_utils
 from federatedml.util import consts
 from federatedml.evaluation.evaluation import Evaluation
+from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.evaluation.evaluation import PerformanceRecorder
 from federatedml.transfer_variable.transfer_class.validation_strategy_transfer_variable import  \
     ValidationStrategyVariable
@@ -54,7 +55,8 @@ class ValidationStrategy(object):
                 if validate_data not equal to None, and judge need to validate data according to validation_freqs,
                 validate data will be used for evaluating
     """
-    def __init__(self, role=None, mode=None, validation_freqs=None, early_stopping_rounds=None):
+    def __init__(self, role=None, mode=None, validation_freqs=None, early_stopping_rounds=None,
+                 use_first_metric_only=False):
 
         self.validation_freqs = validation_freqs
         self.role = role
@@ -64,10 +66,17 @@ class ValidationStrategy(object):
         self.validate_data = None
         self.sync_status = False
         self.early_stopping_rounds = early_stopping_rounds
+        self.use_first_metric_only = use_first_metric_only
+        self.first_metric = None
+        self.best_iteration = -1
 
         if early_stopping_rounds is not None:
+            if early_stopping_rounds <= 0:
+                raise ValueError('early stopping error should be larger than 0')
+            if self.mode == consts.HOMO:
+                raise ValueError('early stopping is not supported for homo algorithms')
+
             self.sync_status = True
-            # self.validation_freqs = 1
             LOGGER.debug("early stopping round is {}".format(self.early_stopping_rounds))
 
         self.cur_best_model = None
@@ -126,6 +135,7 @@ class ValidationStrategy(object):
         Returns bool
         """
         LOGGER.info('checking early stopping')
+
         no_improvement_dict = self.performance_recorder.no_improvement_round
         for metric in no_improvement_dict:
             if no_improvement_dict[metric] >= self.early_stopping_rounds:
@@ -142,6 +152,9 @@ class ValidationStrategy(object):
         elif self.mode == consts.HETERO:
             self.performance_recorder = self.transfer_inst.validation_status.get(idx=-1, suffix=(epoch,))[0]
 
+        else:
+            return
+
     def need_stop(self):
         return False if not self.early_stopping_rounds else self.check_early_stopping()
 
@@ -156,9 +169,29 @@ class ValidationStrategy(object):
 
     def evaluate(self, predicts, model, epoch):
 
-        evaluate_param = model.get_metrics_param()
+        evaluate_param: EvaluateParam = model.get_metrics_param()
+        evaluate_param.check_single_value_default_metric()
+
         eval_obj = Evaluation()
-        LOGGER.debug("evaluate type is {}".format(evaluate_param.eval_type))
+        eval_type = evaluate_param.eval_type
+
+        metric_list = evaluate_param.metrics
+        if self.early_stopping_rounds and self.use_first_metric_only and len(metric_list) != 0:
+
+            single_metric_list = None
+            if eval_type == consts.BINARY:
+                single_metric_list = consts.BINARY_SINGLE_VALUE_METRIC
+            elif eval_type == consts.REGRESSION:
+                single_metric_list = consts.REGRESSION_SINGLE_VALUE_METRICS
+            elif eval_type == consts.MULTY:
+                single_metric_list = consts.MULTI_SINGLE_VALUE_METRIC
+
+            for metric in metric_list:
+                if metric in single_metric_list:
+                    self.first_metric = metric
+                    LOGGER.debug('use {} as first metric'.format(self.first_metric))
+                    break
+
         eval_obj._init_model(evaluate_param)
         eval_obj.set_tracker(model.tracker)
         data_set_name = self.make_data_set_name(model.need_cv, model.flowid,  epoch)
@@ -212,19 +245,28 @@ class ValidationStrategy(object):
             LOGGER.debug('showing eval_result_dict here')
             LOGGER.debug(eval_result_dict)
 
-            self.performance_recorder.update(eval_result_dict)
+            if self.early_stopping_rounds:
+
+                if len(eval_result_dict) == 0:
+                    raise ValueError("eval_result len is 0, no single value metric detected for early stopping checking")
+
+                if self.use_first_metric_only:
+                    if self.first_metric:
+                        eval_result_dict = {self.first_metric: eval_result_dict[self.first_metric]}
+                    else:
+                        LOGGER.warning('use first metric only but no single metric found in metric list')
+
+                self.performance_recorder.update(eval_result_dict)
 
         if self.sync_status:
             self.sync_performance_recorder(epoch)
-            LOGGER.debug('{} shows cur performances'.format(self.role))
+            LOGGER.debug('showing early stopping status, {} shows cur best performances'.format(self.role))
             LOGGER.debug(self.performance_recorder.cur_best_performance)
+            LOGGER.debug('showing early stopping status, {} shows early stopping no improve rounds'.format(self.role))
             LOGGER.debug(self.performance_recorder.no_improvement_round)
 
-        if self.early_stopping_rounds and self.is_best_performance_updated():
-            self.cur_best_model = {'model': {'best_model': model.export_model()}}
+        if self.early_stopping_rounds and self.is_best_performance_updated() and self.mode == consts.HETERO:
+            best_model = model.export_model()
+            self.cur_best_model = {'model': {'best_model': best_model}} if best_model is not None else None
+            self.best_iteration = epoch
             LOGGER.debug('cur best model saved')
-
-
-
-
-

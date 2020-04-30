@@ -36,6 +36,10 @@ class FateSession(object):
                     FateSession._instance = instance
 
     @staticmethod
+    def exit():
+        FateSession._instance = None
+
+    @staticmethod
     def get_instance():
         return FateSession._instance
 
@@ -116,7 +120,7 @@ class FateSession(object):
         :param data_table_namespace: table name of this data table
         :return:
         """
-        from arch.api.utils.core import json_dumps
+        from arch.api.utils.core_utils import json_dumps
         data_meta_table = FateSession.get_instance().table(name="%s.meta" % data_table_name,
                                                            namespace=data_table_namespace,
                                                            partition=1,
@@ -136,7 +140,7 @@ class FateSession(object):
         :param data_table_namespace: table name of this data table
         :return:
         """
-        from arch.api.utils.core import json_loads
+        from arch.api.utils.core_utils import json_loads
         data_meta_table = FateSession.get_instance().table(name="%s.meta" % data_table_name,
                                                            namespace=data_table_namespace,
                                                            create_if_missing=True,
@@ -161,7 +165,7 @@ class FateSession(object):
         :param data_table_namespace: table name of this data table
         :return:
         """
-        from arch.api.utils.core import json_loads
+        from arch.api.utils.core_utils import json_loads
         data_meta_table = FateSession.get_instance().table(name="%s.meta" % data_table_name,
                                                            namespace=data_table_namespace,
                                                            partition=1,
