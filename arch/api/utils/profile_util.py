@@ -18,13 +18,14 @@ import time
 
 from arch.api.utils import log_utils
 import inspect
-
+from functools import wraps
 LOGGER = log_utils.getLogger("PROFILING")
 
 
 def log_elapsed(func):
     func_name = func.__name__
 
+    @wraps(func)
     def _fn(*args, **kwargs):
         t = time.time()
         name = f"{func_name}#{kwargs['func_tag']}" if 'func_tag' in kwargs else func_name

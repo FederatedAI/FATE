@@ -243,7 +243,7 @@ class BoostingTreeParam(BaseParam):
                       divisible by "num_trees" is recommended, otherwise, you will miss the validation scores
                       of last training iteration.
 
-    early_stopping_rounds： should be a integer larger than 0，will stop training if one metric of one validation data
+    early_stopping_rounds: should be a integer larger than 0，will stop training if one metric of one validation data
                             doesn’t improve in last early_stopping_round rounds，
                             need to set validation freqs and will check early_stopping every at every validation epoch,
 
