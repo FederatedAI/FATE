@@ -44,11 +44,9 @@ class KFold(BaseCrossValidator):
         self.shuffle = param.shuffle
         self.random_seed = param.random_seed
         # self.evaluate_param = param.evaluate_param
-        np.random.seed(self.random_seed)
+        # np.random.seed(self.random_seed)
 
     def split(self, data_inst):
-        np.random.seed(self.random_seed)
-
         header = data_inst.schema.get('header')
 
         data_sids_iter, data_size = collect_index(data_inst)
@@ -59,14 +57,13 @@ class KFold(BaseCrossValidator):
                 key_type = type(sid)
             data_sids.append(sid)
         data_sids = np.array(data_sids)
-        if self.shuffle:
-            np.random.shuffle(data_sids)
+        # if self.shuffle:
+        #     np.random.shuffle(data_sids)
 
-        kf = sk_KFold(n_splits=self.n_splits)
+        kf = sk_KFold(n_splits=self.n_splits, shuffle=self.shuffle, random_state=self.random_seed)
 
         n = 0
         for train, test in kf.split(data_sids):
-
             train_sids = data_sids[train]
             test_sids = data_sids[test]
 
@@ -94,9 +91,12 @@ class KFold(BaseCrossValidator):
         if data_inst is None:
             self._arbiter_run(original_model)
             return
-
+        total_data_count = data_inst.count()
         LOGGER.debug("data_inst count: {}".format(data_inst.count()))
-        data_generator = self.split(data_inst)
+        if self.mode == consts.HOMO or self.role == consts.GUEST:
+            data_generator = self.split(data_inst)
+        else:
+            data_generator = [(data_inst, data_inst)] * self.n_splits
         fold_num = 0
         for train_data, test_data in data_generator:
             model = copy.deepcopy(original_model)
@@ -106,12 +106,15 @@ class KFold(BaseCrossValidator):
 
             LOGGER.info("KFold fold_num is: {}".format(fold_num))
             if self.mode == consts.HETERO:
-                self._align_data_index(train_data, model.flowid, consts.TRAIN_DATA)
+                train_data = self._align_data_index(train_data, model.flowid, consts.TRAIN_DATA)
                 LOGGER.info("Train data Synchronized")
-                self._align_data_index(test_data, model.flowid, consts.TEST_DATA)
+                test_data = self._align_data_index(test_data, model.flowid, consts.TEST_DATA)
                 LOGGER.info("Test data Synchronized")
             LOGGER.debug("train_data count: {}".format(train_data.count()))
-
+            if train_data.count() + test_data.count() != total_data_count:
+                raise EnvironmentError("In cv fold: {}, train count: {}, test count: {}, original data count: {}."
+                                       "Thus, 'train count + test count = total count' condition is not satisfied"
+                                       .format(fold_num, train_data.count(), test_data.count(), total_data_count))
             this_flowid = 'train.' + str(fold_num)
             LOGGER.debug("In CV, set_flowid flowid is : {}".format(this_flowid))
             model.set_flowid(this_flowid)
@@ -139,8 +142,8 @@ class KFold(BaseCrossValidator):
                 fold_name = "_".join(['validate', 'fold', str(fold_num)])
                 pred_res = pred_res.mapValues(lambda value: value + ['validate'])
                 self.evaluate(pred_res, fold_name, model)
-            fold_num += 1
             LOGGER.debug("Finish fold: {}".format(fold_num))
+            fold_num += 1
         LOGGER.debug("Finish all fold running")
 
         return
@@ -166,8 +169,9 @@ class KFold(BaseCrossValidator):
         header = data_instance.schema.get('header')
 
         if data_application is None:
-            LOGGER.warning("not data_application!")
-            return
+            # LOGGER.warning("not data_application!")
+            # return
+            raise ValueError("In _align_data_index, data_application should be provided.")
 
         transfer_variable = CrossValidationTransferVariable()
         if data_application == consts.TRAIN_DATA:
@@ -175,8 +179,7 @@ class KFold(BaseCrossValidator):
         elif data_application == consts.TEST_DATA:
             transfer_id = transfer_variable.test_sid
         else:
-            LOGGER.warning("data_application error!")
-            return
+            raise ValueError("In _align_data_index, data_application should be provided.")
 
         if self.role == consts.GUEST:
             data_sid = data_instance.mapValues(lambda v: 1)
@@ -185,7 +188,7 @@ class KFold(BaseCrossValidator):
                                idx=-1,
                                suffix=(flowid,))
             LOGGER.info("remote {} to host".format(data_application))
-            return None
+            return data_instance
         elif self.role == consts.HOST:
             data_sid = transfer_id.get(idx=0,
                                        suffix=(flowid,))
