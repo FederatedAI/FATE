@@ -13,9 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from arch.api.utils import log_utils
 from fate_flow.entity.constant_config import ModelStorage
 from fate_flow.manager.model_manager import redis_model_storage
-from arch.api.utils import log_utils
+from fate_flow.components.component_base import ComponentBase
 
 LOGGER = log_utils.getLogger()
 
@@ -25,7 +26,7 @@ ModelStorageClassMap = {
 }
 
 
-class ModelStore(object):
+class ModelStore(ComponentBase):
     def run(self, component_parameters: dict = None, run_args: dict = None):
         parameters = component_parameters.get("ModelStoreParam", dict)
         model_storage = ModelStorageClassMap.get(parameters["store_address"]["storage"])()
@@ -34,17 +35,8 @@ class ModelStore(object):
                             store_address=parameters["store_address"],
                             )
 
-    def set_tracker(self, tracker):
-        pass
 
-    def save_data(self):
-        pass
-
-    def export_model(self):
-        pass
-
-
-class ModelRestore(object):
+class ModelRestore(ComponentBase):
     def run(self, component_parameters: dict = None, run_args: dict = None):
         parameters = component_parameters.get("ModelRestoreParam", dict)
         model_storage = ModelStorageClassMap.get(parameters["store_address"]["storage"])()
@@ -52,12 +44,3 @@ class ModelRestore(object):
                               model_version=parameters["model_version"],
                               store_address=parameters["store_address"],
                               )
-
-    def set_tracker(self, tracker):
-        pass
-
-    def save_data(self):
-        pass
-
-    def export_model(self):
-        pass
