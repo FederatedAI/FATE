@@ -226,20 +226,33 @@ The rule of running a module with fate_flow_client is that:
 
 1. retrieves the setting_conf and find the "module" and "role" fields of setting conf.
 2. it initializes the running object of every party.
-3. calls the run method of running object.
+3. calls the fit method of running object.
 4. calls the save_data method if needed.
-5. class the export_model method if needed.
+5. calls the export_model method if needed.
 
 In this section, we describe how to do 3-5. Many common interfaces are provided in :download:`federatedml/model_base.py <../federatedml/model_base.py>`.
 
-:override run interface if needed:
-   The run function holds the form of following.
+:Override fit interface if needed:
+   The fit function holds the form of following.
    
    .. code-block:: python
 
-      def run(self, component_parameters=None, args=None):
+      def fit(self, train_data, validate_data):
 
-   Both component_parameters and args are dict objects. "args" contains input data sets and input models of the module in the form of DTable. The naming of each element is defined in user's dsl config file. On the other hand, "component_parameters" is the parameter variables of this module which is defined in module parameter class mentioned in step 1. These configured parameters are user-defined or taken from default values setting in default runtime conf.
+   Both train_data and validate_data are DTables from upstream components(DataIO for example).
+   You can develop your own federated ML algorithms by realizing fit functions of different roles (guest and host in hetero algorithms, for example). By importing transfer variable(introduced in section 4)
+   from federatedml/transfer_variable/transfer_class you can exchange data between roles.
+   Fit functions will be called simultaneously while running an algorithm module and all roles will build a model collaboratively.
+
+
+:Override predict interface if needed:
+   The fit function holds the form of following.
+
+   .. code-block:: python
+
+      def predict(self, data_inst, ):
+
+   Data_inst is a DTable. Similar to fit function, you can define the prediction procedure in the predict function of different roles.
 
 :Define your save_data interface:
    so that fate-flow can obtain output data through it when needed.
@@ -249,7 +262,7 @@ In this section, we describe how to do 3-5. Many common interfaces are provided 
       def save_data(self):
           return self.data_output
 
-:define export_model interface:
+:Define export_model interface:
    Similar with part b, define your export_model interface so that fate-flow can obtain output model when needed. The format should be a dict contains both "Meta" and "Param" proto buffer generated. Here is an example showing how to export model.
 
    .. code-block:: python
