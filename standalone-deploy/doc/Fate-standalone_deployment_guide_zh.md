@@ -12,7 +12,38 @@
 | 文件系统 | 1.  500G硬盘挂载在/ data目录下； 2.创建/ data / projects目录，目录属主为：app:apps |
 |   网络   | 需要良好的网络连接                                           |
 
-#  2. 在主机中安装FATE
+1. 主机需要能够访问外部网络，从公共网络中拉取安装包和docker镜像。
+
+2. 依赖[docker](https://download.docker.com/linux/)和[docker-compose](https://github.com/docker/compose/releases/tag/1.24.0)，docker建议版本为18.09，docker-compose建议版本为1.24.0，您可以使用以下命令验证docker环境：docker --version和docker-compose --version，docker的起停和其他操作请参考docker --help。
+
+3. 执行之前，请检查8080、9060和9080端口是否已被占用。 如果要再次执行，请使用docker命令删除以前的容器和镜像。
+
+   请按照以下步骤操作:
+
+
+```
+#获取安装包
+FATE $ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.3.0.tar.gz
+FATE $tar -xvf docker_standalone-fate-1.3.0.tar.gz
+
+#执行部署
+FATE $ cd docker_standalone-fate-1.3.0
+FATE $ bash install_standalone_docker.sh
+
+#验证和测试
+FATE $ CONTAINER_ID=`docker ps -aqf "name=fate_python"`
+FATE $ docker exec -t -i ${CONTAINER_ID} bash
+FATE $ bash ./federatedml/test/run_test.sh
+
+```
+
+有些用例算法在 [examples](../../examples/federatedml-1.x-examples) 文件夹下, 请尝试使用。
+
+您还可以通过浏览器体验算法过程看板，访问：Http://hostip:8080。
+
+
+
+#### 2) 在主机中安装FATE
 
 1. 检查本地8080、9360、9380端口是否被占用。
 
@@ -25,22 +56,21 @@
 2. 下载独立版本的压缩包并解压缩。
 
    ```
-   cd /data/projects
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.4.0.tar.gz
-   tar -xf  standalone-fate-master-1.4.0.tar.gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.3.0.tar.gz
+   tar -xvf  standalone-fate-master-1.3.0.tar.gz
    ```
 
 3. 进入FATE目录并执行init.sh.
 
    ```
-   cd standalone-fate-master-1.4.0
+   cd standalone-fate-master-1.3.0
    source init.sh init
    ```
 
 4. 执行测试.
 
    ```
-   cd standalone-fate-master-1.4.0
+   cd standalone-fate-master-1.3.0
    bash ./federatedml/test/run_test.sh
    ```
 
