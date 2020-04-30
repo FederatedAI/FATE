@@ -1,5 +1,5 @@
 Federation API
-==============
+--------------
 
 .. automodule:: arch.api.federation
    :members:

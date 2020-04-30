@@ -1,5 +1,8 @@
-Developing guides for develop a runnable algorithm module of FATE
-=================================================================
+Developing guides
+=================
+
+Develop a runnable algorithm module of FATE
+-------------------------------------------
 
 In this document, it describes how to develop an algorithm module, which can be callable under the architecture of FATE.
 
@@ -18,7 +21,7 @@ To develop a module, the following 5 steps are needed.
 In the following sections we will describe the 5 steps in detail, with toy_example.
 
 Step 1. Define the parameter object this module will use
---------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Parameter object is the only way to pass user-define runtime parameters to the developing module, so every module has it's own parameter object. In order to define a usable parameter object, three steps will be needed.
 
@@ -92,7 +95,7 @@ thirdly, override the check interface:
 
     
 Step 2. Define the setting conf of the new module
--------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The purpose to define a setting conf is that fate_flow module extract this file to get the information of how to start program of the module.
 
@@ -148,7 +151,7 @@ Take hetero-lr to explain too, users can find it in :download:`federatedml/conf/
 Have a look at the above content in HeteroLR.json, HeteroLR is a federation module, its' guest program is define in federatedml/logistic_regression/hetero_logistic_regression/hetero_lr_guest.py and HeteroLRGuest is the guest class object. The same rules holds in host and arbiter class too. Fate_flow combine's module_path and role's program to run this module. "param_class" indicates that the parameter class object of HeteroLR is defined in "federatedml/param/logistic_regression_param.py", and the class name is LogisticParam. And default runtime conf is in :download:`federatedml/param/logistic_regression_param.py <../federatedml/param/logistic_regression_param.py>`
 
 Step 3. Define the default runtime conf of this module (Optional)
------------------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Default runtime conf set default values for variables defined in parameter class which will be used in case without user configuration.
 
@@ -176,7 +179,7 @@ For example, in "federatedml/conf/default_runtime_conf/logistic_regression_param
     
 
 Step 4. Define the transfer variable json of this module and generate transfer variable object. (Optional)
-----------------------------------------------------------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This step is needed only when this module is federated, which means there exist information interaction between different parties.
 
@@ -217,7 +220,7 @@ After finish writing this json file, run the python program of :download:`arch/t
  
  
 Step 5. Define your module, it should inherit model_base
---------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The rule of running of module of fate_flow_client is that:
 
@@ -262,7 +265,7 @@ In this section, we describe how to do 3-5. Many common interfaces are provided 
 
 
 Start a modeling task
-=====================
+---------------------
 
 After finished developing, here is a simple example for starting a modeling task.
 

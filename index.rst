@@ -7,10 +7,10 @@ https://fate.fedai.org
 
 .. toctree::
    :caption: Install
-   :maxdepth: 3
+   :maxdepth: 2
 
-   standalone <doc/readthedoc/install/standalone>
-   cluster <doc/readthedoc/install/cluster>
+   Standalone <standalone-deploy/README>
+   Cluster <cluster-deploy/README>
 
 
 .. toctree::
@@ -30,21 +30,20 @@ https://fate.fedai.org
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Develop
 
    Develop Guide <doc/develop_guide>
-   Federation <doc/api/federation_api>
-   Session <doc/api/session_api>
-   Table <doc/api/table_api>
 
-materials
----------
+.. toctree::
+   :maxdepth: 3
+   :glob:
+   :caption: API
 
-1. :download:`[arch] <doc/FATE_v1.1_ARCH_SIMPLE_201911_v2.pdf>`
-2. :download:`[workshop] <doc/SecureBoost-ijcai2019-workshop.pdf>`
+   doc/api/*
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Materials
 
-
-
-
+   doc/materials

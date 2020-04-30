@@ -1,5 +1,5 @@
 Session API
-===========
+-----------
 
 .. automodule:: arch.api.session
    :members:
