@@ -87,9 +87,9 @@ audit_logger = log_utils.audit_logger()
 """
 Services 
 """
-IP = '0.0.0.0'
-GRPC_PORT = 9360
-HTTP_PORT = 9380
+IP = get_base_config("fate_flow", {}).get("host", "0.0.0.0")
+HTTP_PORT = get_base_config("fate_flow", {}).get("http_port")
+GRPC_PORT = get_base_config("fate_flow", {}).get("grpc_port")
 
 # standalone job will be send to the standalone job server when FATE-Flow work on cluster deploy mode,
 # but not the port for FATE-Flow on standalone deploy mode.
