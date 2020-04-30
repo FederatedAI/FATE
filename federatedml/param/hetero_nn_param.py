@@ -169,8 +169,11 @@ class HeteroNNParam(BaseParam):
             if not self.validation_freqs:
                 raise ValueError("If early stopping rounds is setting, validation_freqs should not be null")
 
-        if not isinstance(self.metrics, list):
+        if self.metrics is not None and not isinstance(self.metrics, list):
             raise ValueError("metrics should be a list")
+
+        if not isinstance(self.use_first_metric_only, bool):
+            raise ValueError("use_first_metric_only should be a boolean")
 
         self.encrypt_param.check()
         self.encrypted_model_calculator_param.check()

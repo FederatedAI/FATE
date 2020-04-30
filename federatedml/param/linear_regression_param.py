@@ -230,9 +230,10 @@ class LinearParam(BaseParam):
             if self.validation_freqs is None:
                 raise ValueError("validation freqs must be set when early stopping is enabled")
 
-        if not isinstance(self.metrics, list):
+        if self.metrics is not None and not isinstance(self.metrics, list):
             raise ValueError("metrics should be a list")
 
         if not isinstance(self.use_first_metric_only, bool):
             raise ValueError("use_first_metric_only should be a boolean")
+
         return True
