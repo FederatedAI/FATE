@@ -29,7 +29,8 @@ author = 'FederatedAI'
 extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon'
+    'sphinx.ext.napoleon',
+    "autodocsumm"
 ]
 
 autosummary_generate = True

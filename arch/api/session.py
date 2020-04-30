@@ -39,7 +39,7 @@ def init(job_id=None,
     """
     Initializes session, should be called before all.
 
-    Parameter
+    Parameters
     ---------
     job_id : string
       job id and default table namespace of this runtime.
@@ -113,7 +113,7 @@ def table(name, namespace=None, partition=1, persistent=True, create_if_missing=
     """
     Loads an existing Table.
 
-    Parameter
+    Parameters
     ---------
     name : string
       Table name of result Table.
@@ -157,7 +157,7 @@ def parallelize(data: Iterable, include_key=False, name=None, partition=None, na
     """
     Transforms an existing iterable data into a Table.
 
-    Parameter
+    Parameters
     ---------
     data : Iterable
       Data to be put.
@@ -203,7 +203,7 @@ def cleanup(name, namespace, persistent=False):
     """
     Destroys Table(s). Wildcard can be used in `name` parameter.
 
-    Parameter
+    Parameters
     ---------
     name : string
       Table name to be cleanup. Wildcard can be used here.
@@ -260,11 +260,10 @@ def get_session_id():
 
 
 def get_data_table(name, namespace):
-
     """
     return data table instance by table name and table name space
 
-    Parameter
+    Parameters
     ---------
     name : string
       table name of data table
@@ -288,7 +287,7 @@ def save_data_table_meta(kv, data_table_name, data_table_namespace):
     """
     Saves metas(in kv) to meta table associated with the table named `data_table_name` and namespaced `data_table_namespace`.
 
-    Parameter
+    Parameters
     ---------
     kv : dict
       metas to save. v should be serialized by JSON
@@ -314,7 +313,7 @@ def get_data_table_meta(key, data_table_name, data_table_namespace):
     """
     Gets meta keyed by `key` from meta table associated with table named `data_table_name` and namespaced `data_table_namespace`.
 
-    Parameter
+    Parameters
     ---------
     key : string
       associated key.
@@ -342,7 +341,7 @@ def get_data_table_metas(data_table_name, data_table_namespace):
     """
     Gets metas from meta table associated with table named `data_table_name` and namespaced `data_table_namespace`.
 
-    Parameter
+    Parameters
     ---------
     data_table_name : string
       table name of this data table
@@ -379,7 +378,7 @@ def save_data(kv_data: Iterable,
     """
     Saves data to table, optional add version.
 
-    Parameter
+    Parameters
     ---------
     kv_data : Iterable
       data to be saved 

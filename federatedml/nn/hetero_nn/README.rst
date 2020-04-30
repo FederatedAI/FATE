@@ -77,10 +77,8 @@ Backward Propagation Process also consists of three parts.
 	1. Party B calculates the error delta_act of activation function's output by delta.  
 	2. Party B propagates delta_bottomB = delta_act * W_B to bottom model, then updates W_B(W_B -= eta * delta_act * alpha_B).
 	3. Party B generates noise epsilon_B, calculates [delta_act * (W_A + epsilon_B] and sends it to party A.
-	4. Party A encrypts epsilon_acc, sends [epsilon_acc] to party B.  
-	   Then party B decrypts the received value, generates noise epsilon_A, adds epsilon_A / eta to decrypted result(delta_act * W_A + epsilon_B + epsilon_A / eta) and add epsilon_A to accumulate noise epsilon_acc(epsilon_acc += epsilon_A). Party A sends the addition result to party B. (delta_act * W_A + epsilon_B + epsilon_A / eta)  
-	5. Party B receives [epsilon_acc] and delta_act * W_A + epsilon_B + epsilon_A / eta. Firstly it sends party A's bottom model output' error [alpha_A * W_A + acc] to host. 
-	   Secondly updates W_A -= eta * (delta_act * W_A + epsilon_B + epsilon_A / eta - epsilon_B) = eta * delta_act * W_A - epsilon_B = W_TRUE - epsilon_acc. Where W_TRUE represents the actually weights.  
+	4. Party A encrypts epsilon_acc, sends [epsilon_acc] to party B. Then party B decrypts the received value, generates noise epsilon_A, adds epsilon_A / eta to decrypted result(delta_act * W_A + epsilon_B + epsilon_A / eta) and add epsilon_A to accumulate noise epsilon_acc(epsilon_acc += epsilon_A). Party A sends the addition result to party B. (delta_act * W_A + epsilon_B + epsilon_A / eta)
+	5. Party B receives [epsilon_acc] and delta_act * W_A + epsilon_B + epsilon_A / eta. Firstly it sends party A's bottom model output' error [alpha_A * W_A + acc] to host. Secondly updates W_A -= eta * (delta_act * W_A + epsilon_B + epsilon_A / eta - epsilon_B) = eta * delta_act * W_A - epsilon_B = W_TRUE - epsilon_acc. Where W_TRUE represents the actually weights.
 	6. Party A decrypts [alpha_A * (W_A + acc)] and passes alpha_A * (W_A + acc) to its bottom model.
 
 
