@@ -228,7 +228,7 @@ The rule of running of module of fate_flow_client is that:
 2. it initializes the running object of every party.
 3. calls the run method of running object.
 4. calls the save_data method if needed.
-5. class the export_model method if needed.
+5. calls the export_model method if needed.
 
 In this section, we describe how to do 3-5. Many common interfaces are provided in :download:`federatedml/model_base.py <../federatedml/model_base.py>`.
 
