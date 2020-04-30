@@ -4,7 +4,7 @@ DataIO
 Data IO is the most basic component of Fate Algorithm module. 
 It transforms the input DTable to a DTable whose values are Instance Object defined in federatedml.feature.instance, 
 and what's more, the transformed Dtable is the input data format of all other algorithm module, such as intersect、
-homo and hetero LR、SecureBoost and so on.
+homo LR and hetero LR、SecureBoost and so on.
 
 Data IO module accepts the following input data format and transforms them to desired output DTable.
 
