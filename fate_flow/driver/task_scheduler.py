@@ -120,14 +120,25 @@ class TaskScheduler(object):
         if job.f_status == JobStatus.COMPLETE:
             job.f_progress = 100
         job.f_update_time = current_timestamp()
-        TaskScheduler.sync_job_status(job_id=job_id, roles=job_runtime_conf['role'],
-                                      work_mode=job_parameters['work_mode'],
-                                      initiator_party_id=job_initiator['party_id'],
-                                      initiator_role=job_initiator['role'],
-                                      job_info=job.to_json())
+        try:
+            TaskScheduler.finish_job(job_id=job_id, job_runtime_conf=job_runtime_conf)
+        except Exception as e:
+            schedule_logger(job_id).exception(e)
+            job.f_status = JobStatus.FAILED
+
         if job.f_status == JobStatus.FAILED:
             TaskScheduler.stop(job_id=job_id, end_status=JobStatus.FAILED)
-        TaskScheduler.finish_job(job_id=job_id, job_runtime_conf=job_runtime_conf)
+
+        try:
+            TaskScheduler.sync_job_status(job_id=job_id, roles=job_runtime_conf['role'],
+                                          work_mode=job_parameters['work_mode'],
+                                          initiator_party_id=job_initiator['party_id'],
+                                          initiator_role=job_initiator['role'],
+                                          job_info=job.to_json())
+        except Exception as e:
+            schedule_logger(job_id).exception(e)
+            schedule_logger(job_id).warning('job {} sync status failed'.format(job.f_job_id))
+
         schedule_logger(job_id).info('job {} finished, status is {}'.format(job.f_job_id, job.f_status))
         t.cancel()
 

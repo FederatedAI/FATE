@@ -20,8 +20,21 @@ from enum import IntEnum
 from arch.api.base.build import Builder
 from arch.api.base.federation import Federation
 from arch.api.base.utils.wrap import FederationWrapped
+from arch.api.utils import log_utils
 
-_EGGROLL_VERSION = 2
+LOGGER = log_utils.getLogger()
+
+
+def _infer_eggroll_version():
+    try:
+        import eggroll.roll_pair
+    except ImportError:
+        #LOGGER.warning("can't import eggroll.roll_pair, assuming eggroll 1.x deployed")
+        return 1
+    return 2
+
+
+_EGGROLL_VERSION = _infer_eggroll_version()
 
 
 class WorkMode(IntEnum):
