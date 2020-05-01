@@ -47,9 +47,10 @@ mkdir -p ${package_dir}/python/arch
 cp -r arch/conf ${package_dir}/python/arch/
 cp -r arch/api ${package_dir}/python/arch/
 cp -r arch/transfer_variables ${package_dir}/python/arch/
+cp -r arch/standalone ${package_dir}/python/arch/
 cp .env requirements.txt RELEASE.md ${package_dir}/python/
 cp -r examples federatedml federatedrec fate_flow ${package_dir}/python/
-cp scripts/*  ${package_dir}/
+cp -r bin  ${package_dir}/
 echo "[INFO] Package fate done"
 
 echo "[INFO] Package fateboard start"
