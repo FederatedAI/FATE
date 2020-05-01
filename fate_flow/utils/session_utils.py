@@ -21,6 +21,7 @@ from arch.api.utils.log_utils import schedule_logger
 from arch.api.utils.core_utils import fate_uuid
 from fate_flow.settings import stat_logger, DETECT_TABLE
 from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.entity.constant_config import ProcessRole
 
 
 class SessionStop(object):
@@ -73,7 +74,7 @@ def session_detect():
     def _out_wrapper(func):
         @functools.wraps(func)
         def _wrapper(*args, **kwargs):
-            if not RuntimeConfig.IN_EXECUTOR:
+            if RuntimeConfig.PROCESS_ROLE in [ProcessRole.SERVER]:
                 for i in range(3):
                     try:
                         stat_logger.info("detect session {} by table {} {}".format(

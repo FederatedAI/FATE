@@ -27,7 +27,7 @@ class Table(object):
     """
     table for distributed computation and storage
 
-    This is a abstract class to be impl.
+    This is a abstract class to be implemented.
     """
 
     @abc.abstractmethod

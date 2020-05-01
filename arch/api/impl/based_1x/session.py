@@ -68,7 +68,10 @@ class FateSessionImpl(FateSession):
         self._session_id = eggroll_session.get_session_id()
 
         # convert to StoreType class in eggroll v1.x
-        from arch.standalone import StoreType as StoreTypeV1
+        if work_mode.is_standalone():
+            from arch.standalone import StoreType as StoreTypeV1
+        else:
+            from eggroll.api import StoreType as StoreTypeV1
         if persistent_engine == StoreTypes.ROLLPAIR_LMDB:
             self._persistent_engine = StoreTypeV1.LMDB
         elif persistent_engine == StoreTypes.ROLLPAIR_LEVELDB:
