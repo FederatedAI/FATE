@@ -81,7 +81,7 @@
       "optimizer": "nesterov_momentum_sgd",
       "eps": 1e-4,
       "alpha": 0.01,
-      "max_iter": 30,
+      "max_iter": 10,
       "converge_func": "diff",
       "batch_size": -1,
       "learning_rate": 0.15,
@@ -89,7 +89,7 @@
         "init_method": "zeros"
       },
       "cv_param": {
-        "n_splits": 5,
+        "n_splits": 3,
         "shuffle": false,
         "random_seed": 103,
         "need_cv": true
