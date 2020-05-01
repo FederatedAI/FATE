@@ -87,7 +87,7 @@
       "max_iter": 30,
       "converge_func": "diff",
       "multi_class": "ovr",
-      "batch_size": 32,
+      "batch_size": -1,
       "learning_rate": 0.15,
       "init_param": {
         "init_method": "zeros"
