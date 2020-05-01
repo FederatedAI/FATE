@@ -120,7 +120,7 @@ class JobController(object):
                 party_ids = ','.join([','.join([str(j) for j in i]) for i in runtime_conf['role'].values()])
                 # Tracking(job_id=job_id, role=role, party_id=party_id, task_id=task.f_task_id).clean_task(roles, party_ids)
                 # stop task
-                kill_status = job_utils.kill_process(int(task.f_run_pid))
+                kill_status = job_utils.kill_task_executor_process(task)
                 # session stop
                 job_utils.start_session_stop(task)
             except Exception as e:

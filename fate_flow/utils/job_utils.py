@@ -357,19 +357,47 @@ def wait_child_process(signum, frame):
             raise
 
 
-def kill_process(pid, only_child=False):
+def is_task_executor_process(task: Task, process: psutil.Process):
+    """
+    check the process if task executor or not by command
+    :param task:
+    :param process:
+    :return:
+    """
+    # Todo: The same map should be used for run task command
+    run_cmd_map = {
+        3: "f_job_id",
+        5: "f_component_name",
+        7: "f_task_id",
+        9: "f_role",
+        11: "f_party_id"
+    }
+    for i, k in run_cmd_map.items():
+        if process.cmdline()[i] != getattr(task, k):
+            schedule_logger(task.f_job_id).info("{} {}".format(process.cmdline()[i], getattr(task, k)))
+            return False
+    else:
+        return True
+
+
+def kill_task_executor_process(task: Task, only_child=False):
     try:
+        pid = int(task.f_run_pid)
         if not pid:
             return False
-        stat_logger.info("try to stop process pid:{}".format(pid))
+        schedule_logger(task.f_job_id).info("try to stop job {} task {} {} {} process pid:{}".format(
+            task.f_job_id, task.f_task_id, task.f_role, task.f_party_id, pid))
         if not check_job_process(pid):
             return True
         p = psutil.Process(int(pid))
+        if not is_task_executor_process(task=task, process=p):
+            schedule_logger(task.f_job_id).warning("this pid is not task executor: {}".format(" ".join(p.cmdline())))
+            return False
         for child in p.children(recursive=True):
-            if check_job_process(child.pid):
+            if check_job_process(child.pid) and is_task_executor_process(task=task, process=child):
                 child.kill()
         if not only_child:
-            if check_job_process(p.pid):
+            if check_job_process(p.pid) and is_task_executor_process(task=task, process=p):
                 p.kill()
         return True
     except Exception as e:
