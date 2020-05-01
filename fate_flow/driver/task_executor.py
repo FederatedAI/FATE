@@ -29,7 +29,7 @@ from fate_flow.manager.tracking_manager import Tracking
 from fate_flow.settings import API_VERSION
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
-from fate_flow.entity.constant_config import TaskStatus
+from fate_flow.entity.constant_config import TaskStatus, ProcessRole
 
 
 class TaskExecutor(object):
@@ -52,7 +52,8 @@ class TaskExecutor(object):
             schedule_logger(args.job_id).info(args)
             # init function args
             if args.job_server:
-                RuntimeConfig.init_config(HTTP_PORT=args.job_server.split(':')[1], IN_EXECUTOR=True)
+                RuntimeConfig.init_config(HTTP_PORT=args.job_server.split(':')[1])
+                RuntimeConfig.set_process_role(ProcessRole.EXECUTOR)
             job_id = args.job_id
             component_name = args.component_name
             task_id = args.task_id
@@ -116,6 +117,7 @@ class TaskExecutor(object):
                                                            input_dsl=task_input_dsl)
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
             run_object.set_tracker(tracker=tracker)
+            run_object.set_taskid(taskid=task_id)
             run_object.run(parameters, task_run_args)
             output_data = run_object.save_data()
             tracker.save_output_data_table(output_data, task_output_dsl.get('data')[0] if task_output_dsl.get('data') else 'component')

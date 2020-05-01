@@ -45,7 +45,7 @@ USE_CONFIGURATION_CENTER = False
 ZOOKEEPER_HOSTS = ['127.0.0.1:2181']
 
 MAX_CONCURRENT_JOB_RUN = 5
-MAX_CONCURRENT_JOB_RUN_HOST = 10
+MAX_CONCURRENT_JOB_RUN_HOST = 5
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000 * 20  # ms
 JOB_DEFAULT_TIMEOUT = 7 * 24 * 60 * 60
@@ -87,9 +87,9 @@ audit_logger = log_utils.audit_logger()
 """
 Services 
 """
-IP = '0.0.0.0'
-GRPC_PORT = 9360
-HTTP_PORT = 9380
+IP = get_base_config("fate_flow", {}).get("host", "0.0.0.0")
+HTTP_PORT = get_base_config("fate_flow", {}).get("http_port")
+GRPC_PORT = get_base_config("fate_flow", {}).get("grpc_port")
 
 # standalone job will be send to the standalone job server when FATE-Flow work on cluster deploy mode,
 # but not the port for FATE-Flow on standalone deploy mode.

@@ -18,6 +18,7 @@ import dotenv
 
 from arch.api.utils.core_utils import get_lan_ip
 from arch.api.utils.file_utils import get_project_base_directory
+from fate_flow.entity.constant_config import ProcessRole
 
 
 class RuntimeConfig(object):
@@ -27,7 +28,8 @@ class RuntimeConfig(object):
     USE_LOCAL_DATABASE = False
     HTTP_PORT = None
     JOB_SERVER_HOST = None
-    IN_EXECUTOR = False
+    IS_SERVER = False
+    PROCESS_ROLE = None
     ENV = dict()
 
     @staticmethod
@@ -40,12 +42,13 @@ class RuntimeConfig(object):
 
     @staticmethod
     def init_env():
-        RuntimeConfig.ENV.update(dotenv.dotenv_values(dotenv_path=os.path.join(get_project_base_directory(), "fate.env")))
+        RuntimeConfig.ENV.update(dotenv.dotenv_values(dotenv_path=os.path.join(get_project_base_directory(), ".env")))
 
     @staticmethod
     def get_env(key):
         return RuntimeConfig.ENV.get(key, None)
 
     @staticmethod
-    def set_executor():
-        RuntimeConfig.IN_EXECUTOR = True
+    def set_process_role(process_role: PROCESS_ROLE):
+        RuntimeConfig.PROCESS_ROLE = process_role
+

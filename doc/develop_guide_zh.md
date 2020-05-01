@@ -154,7 +154,7 @@ param_class：在步骤 1 中定义的 param_class 的路径，它是参数 pyth
 
 ### 第四步：定义此模块的传递变量 json 文件并生成传递变量对象。（可选）
 
-仅在此模块被联邦时（即不同参与方之间存在信息交互）才需要执行此步骤。请注意，应将其放在 "federatedml/transfer_variable_conf" 文件夹中。在 json 文件中，您需要做的第一件事就是定义 transfer_variable 对象的名称，例如 “HeteroLRTransferVariable”。然后，定义 transfer_variables。transfer_variable 包含三个字段：
+仅在此模块被联邦时（即不同参与方之间存在信息交互）才需要执行此步骤。请注意，应将其放在 "arch/transfer_variables/auth_conf/federatedml" 文件夹中。在 json 文件中，您需要做的第一件事就是定义 transfer_variable 对象的名称，例如 “HeteroLRTransferVariable”。然后，定义 transfer_variables。transfer_variable 包含三个字段：
 
 a. 变量名
 b. src：应为 "guest"，"host"，"arbiter" 之一，它表示发送交互信息从何处发出。
@@ -181,8 +181,8 @@ C. dst：应为 "guest"，"host"，"arbiter" 的某些组合列表，用于定�
         }
     }
 ```
-在 json 文件编写完成后，运行 federatedml/util/transfer_variable_generator.py 程序，
-您将在 federatedml/util/transfer_variable/xxx_transfer_variable.py 中获得一个 transfer_variable python 类对象，xxx 是此 json 文件的文件名。
+在 json 文件编写完成后，运行 arch/transfer_variables/transfer_variable_generate.py 程序，
+您将在 federatedml/transfer_variable/transfer_class/xxx_transfer_variable.py 中获得一个 transfer_variable python 类对象，xxx 是此 json 文件的文件名。
 
 
 ### 第五步：定义您的模块（应继承 model_base）。

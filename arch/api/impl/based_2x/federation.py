@@ -126,8 +126,18 @@ class FederationRuntime(Federation):
                 futures.extend(_split_rs.push(obj=v, parties=rs_parties))
 
         def done_callback(fut):
+            try:
+                result = fut.result()
+            except Exception as e:
+                import os
+                import signal
+                pid = os.getpid()
+                LOGGER.exception(f"remote fail, terminating process(pid={pid})")
+                os.kill(pid, signal.SIGTERM)
+                raise e
+
             if LOGGER.isEnabledFor(logging.DEBUG):
-                LOGGER.debug("federation remote done called:{}".format(fut.result()))
+                LOGGER.debug(f"federation remote done called:{result}")
 
         for future in futures:
             future.add_done_callback(done_callback)

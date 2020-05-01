@@ -38,7 +38,7 @@ from fate_flow.apps.permission_app import manager as permission_app_manager
 from fate_flow.db.db_models import init_database_tables
 from fate_flow.driver import dag_scheduler, job_controller, job_detector
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.entity.constant_config import WorkMode
+from fate_flow.entity.constant_config import WorkMode, ProcessRole
 from fate_flow.manager import queue_manager
 from fate_flow.settings import IP, GRPC_PORT, CLUSTER_STANDALONE_JOB_SERVER_PORT, _ONE_DAY_IN_SECONDS, \
     MAX_CONCURRENT_JOB_RUN, stat_logger, API_VERSION, ZOOKEEPER_HOSTS, USE_CONFIGURATION_CENTER, SERVINGS_ZK_PATH, \
@@ -94,10 +94,10 @@ if __name__ == '__main__':
     session_utils.init_session_for_flow_server()
     detect_table = session.table(namespace=DETECT_TABLE[0],
                                  name=DETECT_TABLE[1],
-                                 partition=DETECT_TABLE[2],
-                                 persistent=True)
+                                 partition=DETECT_TABLE[2])
     session.parallelize(range(DETECT_TABLE[2]), namespace=DETECT_TABLE[0], name=DETECT_TABLE[1], partition=DETECT_TABLE[2])
     RuntimeConfig.init_env()
+    RuntimeConfig.set_process_role(ProcessRole.SERVER)
     queue_manager.init_job_queue()
     job_controller.JobController.init()
     PrivilegeAuth.init()
@@ -119,6 +119,7 @@ if __name__ == '__main__':
     # start http server
     try:
         run_simple(hostname=IP, port=RuntimeConfig.HTTP_PORT, application=app, threaded=True)
+        stat_logger.info("FATE Flow server start Successfully")
     except OSError as e:
         traceback.print_exc()
         os.kill(os.getpid(), signal.SIGKILL)

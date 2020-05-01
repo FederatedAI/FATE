@@ -19,9 +19,9 @@ from typing import Union, Tuple
 from arch.api.base.federation import Rubbish, Party, Federation
 from arch.api.base.utils.store_type import StoreTypes
 from arch.api.utils.log_utils import getLogger
-from eggroll.api.standalone.eggroll import Standalone
+from arch.standalone.standalone.eggroll import Standalone
 # noinspection PyProtectedMember
-from eggroll.api.standalone.eggroll import _DTable
+from arch.standalone.standalone.eggroll import _DTable
 
 OBJECT_STORAGE_NAME = "__federation__"
 STATUS_TABLE_NAME = "__status__"

@@ -62,3 +62,8 @@ class ModelOperation(object):
     RESTORE = "restore"
     LOAD = "load"
     BIND = "bind"
+
+
+class ProcessRole(object):
+    SERVER = "server"
+    EXECUTOR = "executor"
