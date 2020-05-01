@@ -1,7 +1,5 @@
 from arch.api.utils import log_utils
 
-LOGGER = log_utils.getLogger()
-
 try:
     from eggroll.core.proto import basic_meta_pb2
     from eggroll.core.proto import proxy_pb2, proxy_pb2_grpc
