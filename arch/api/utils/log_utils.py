@@ -24,6 +24,7 @@ from arch.api.utils import file_utils
 
 class LoggerFactory(object):
     TYPE = "FILE"
+    FORMAT = "[%(levelname)s] [%(asctime)s] [%(process)s:%(thread)s] - %(filename)s[line:%(lineno)d]: %(message)s"
     LEVEL = logging.DEBUG
     logger_dict = {}
     global_handler_dict = {}
@@ -112,7 +113,7 @@ class LoggerFactory(object):
                 log_file = os.path.join(log_dir, "{}.log".format(class_name))
         else:
             log_file = os.path.join(log_dir, "fate_flow_{}.log".format(log_type) if level == LoggerFactory.LEVEL else 'error.log')
-        formatter = logging.Formatter('"%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s"')
+        formatter = logging.Formatter(LoggerFactory.FORMAT)
         handler = TimedRotatingFileHandler(log_file,
                                            when='D',
                                            interval=1,
