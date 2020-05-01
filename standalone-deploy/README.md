@@ -26,7 +26,7 @@ It is strongly recommended to use docker, which greatly reduces the possibility 
 ```
 #Get code
 FATE $ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.4.0.tar.gz
-FATE $tar -xvf docker_standalone-fate-1.4.0.tar.gz
+FATE $tar -xzvf docker_standalone-fate-1.4.0.tar.gz
 
 #Execute the command
 FATE $ cd docker_standalone-fate-1.4.0
@@ -60,7 +60,7 @@ Http://hostip:8080.
 
    ```
    wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.4.0.tar.gz
-   tar -xvf  standalone-fate-master-1.4.0.tar.gz
+   tar -xzvf  standalone-fate-master-1.4.0.tar.gz
    ```
 
 3. Enter FATE directory and execute the init.sh.

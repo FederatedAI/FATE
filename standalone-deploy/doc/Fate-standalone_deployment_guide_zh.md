@@ -26,7 +26,7 @@
 ```
 #获取安装包
 FATE $ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.4.0.tar.gz
-FATE $tar -xvf docker_standalone-fate-1.4.0.tar.gz
+FATE $tar -xzvf docker_standalone-fate-1.4.0.tar.gz
 
 #执行部署
 FATE $ cd docker_standalone-fate-1.4.0
@@ -59,7 +59,7 @@ FATE $ bash ./federatedml/test/run_test.sh
 
    ```
    wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.4.0.tar.gz
-   tar -xvf  standalone-fate-master-1.4.0.tar.gz
+   tar -xzvf  standalone-fate-master-1.4.0.tar.gz
    ```
 
 3. 进入FATE目录并执行init.sh.
