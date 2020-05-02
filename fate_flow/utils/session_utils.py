@@ -79,7 +79,7 @@ def session_detect():
                     try:
                         stat_logger.info("detect session {} by table {} {}".format(
                             session.get_session_id(), DETECT_TABLE[0], DETECT_TABLE[1]))
-                        count = session.get_data_table(namespace=DETECT_TABLE[0], name=DETECT_TABLE[1]).count()
+                        count = session.table(namespace=DETECT_TABLE[0], name=DETECT_TABLE[1], persistent=True).count()
                         if count != DETECT_TABLE[2]:
                             raise Exception("session {} count error".format(session.get_session_id()))
                         stat_logger.info("session {} is ok".format(session.get_session_id()))
