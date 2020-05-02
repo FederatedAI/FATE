@@ -374,7 +374,6 @@ def is_task_executor_process(task: Task, process: psutil.Process):
     }
     for i, k in run_cmd_map.items():
         if process.cmdline()[i] != getattr(task, k):
-            schedule_logger(task.f_job_id).info("{} {}".format(process.cmdline()[i], getattr(task, k)))
             return False
     else:
         return True
