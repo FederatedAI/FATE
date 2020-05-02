@@ -373,7 +373,13 @@ def is_task_executor_process(task: Task, process: psutil.Process):
         11: "f_party_id"
     }
     for i, k in run_cmd_map.items():
-        if process.cmdline()[i] != getattr(task, k):
+        if len(process.cmdline()) > i and process.cmdline()[i] == getattr(task, k):
+            continue
+        else:
+            # todo: The logging level should be obtained first
+            if len(process.cmdline()) > i:
+                schedule_logger(task.f_job_id).debug(process.cmdline()[i])
+                schedule_logger(task.f_job_id).debug(getattr(task, k))
             return False
     else:
         return True
