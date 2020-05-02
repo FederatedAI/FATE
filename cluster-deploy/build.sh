@@ -133,6 +133,6 @@ rm -rf python fateboard eggroll
 echo "[INFO] Compress done"
 echo "[INFO] A total of `ls ${package_dir} | wc -l | awk '{print $1}'` packages:"
 ls -lrt ${package_dir}
-cd ${source_dir}/cluster_deploy/
+cd ${source_dir}/cluster-deploy/
 tar czf ${package_dir_name}".tar.gz" ${package_dir_name}
 rm -rf ${package_dir}
