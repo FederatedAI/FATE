@@ -96,6 +96,10 @@ if __name__ == '__main__':
                                  name=DETECT_TABLE[1],
                                  partition=DETECT_TABLE[2])
     session.parallelize(range(DETECT_TABLE[2]), namespace=DETECT_TABLE[0], name=DETECT_TABLE[1], partition=DETECT_TABLE[2])
+    time.sleep(1)
+    if detect_table.count() != DETECT_TABLE[2]:
+        stat_logger.info("init detect table error, the amount is wrong")
+        sys.exit(1)
     RuntimeConfig.init_env()
     RuntimeConfig.set_process_role(ProcessRole.SERVER)
     queue_manager.init_job_queue()
