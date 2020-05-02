@@ -84,7 +84,7 @@
       "optimizer": "sqn",
       "tol": 1e-4,
       "alpha": 0.00001,
-      "max_iter": 30,
+      "max_iter": 10,
       "early_stop": "diff",
       "batch_size": 5000,
       "learning_rate": 0.15,
@@ -100,7 +100,7 @@
         "random_seed": null
       },
       "cv_param": {
-        "n_splits": 5,
+        "n_splits": 3,
         "shuffle": false,
         "random_seed": 103,
         "need_cv": false,
