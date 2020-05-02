@@ -25,11 +25,11 @@ It is strongly recommended to use docker, which greatly reduces the possibility 
 
 ```
 #Get code
-FATE $ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.3.1.tar.gz
-FATE $tar -xvf docker_standalone-fate-1.3.1.tar.gz
+FATE $ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.4.0.tar.gz
+FATE $tar -xzvf docker_standalone-fate-1.4.0.tar.gz
 
 #Execute the command
-FATE $ cd docker_standalone-fate-1.3.1
+FATE $ cd docker_standalone-fate-1.4.0
 FATE $ bash install_standalone_docker.sh
 
 #Validation results
@@ -59,21 +59,21 @@ Http://hostip:8080.
 2. Download the compressed package of stand-alone version and decompress it. 
 
    ```
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.3.1.tar.gz
-   tar -xvf  standalone-fate-master-1.3.1.tar.gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.4.0.tar.gz
+   tar -xzvf  standalone-fate-master-1.4.0.tar.gz
    ```
 
 3. Enter FATE directory and execute the init.sh.
 
    ```
-   cd standalone-fate-master-1.3.1
+   cd standalone-fate-master-1.4.0
    source init.sh init
    ```
 
 4. Execution test.
 
    ```
-   cd standalone-fate-master-1.3.1
+   cd standalone-fate-master-1.4.0
    bash ./federatedml/test/run_test.sh
    ```
 
