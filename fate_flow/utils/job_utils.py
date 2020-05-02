@@ -373,7 +373,9 @@ def is_task_executor_process(task: Task, process: psutil.Process):
         11: "f_party_id"
     }
     for i, k in run_cmd_map.items():
-        if process.cmdline()[i] != getattr(task, k):
+        if len(process.cmdline()) > i and process.cmdline()[i] == getattr(task, k):
+            continue
+        else:
             return False
     else:
         return True
