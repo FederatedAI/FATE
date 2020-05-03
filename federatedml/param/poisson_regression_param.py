@@ -96,7 +96,7 @@ class PoissonParam(BaseParam):
         If positive number specified, at every specified training rounds, program checks for early stopping criteria.
         Validation_freqs must also be set when using early stopping.
 
-    metrics: list, default: []
+    metrics: list or None, default: None
         Specify which metrics to be used when performing evaluation during training process. If metrics have not improved at early_stopping rounds, trianing stops before convergence.
         If set as empty, default metrics will be used. For regression tasks, default metrics are ['root_mean_squared_error', 'mean_absolute_error']
 
@@ -114,7 +114,7 @@ class PoissonParam(BaseParam):
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  cv_param=CrossValidationParam(), stepwise_param=StepwiseParam(),
                  decay=1, decay_sqrt=True,
-                 validation_freqs=None, early_stopping_rounds=None, metrics=[], use_first_metric_only=False):
+                 validation_freqs=None, early_stopping_rounds=None, metrics=None, use_first_metric_only=False):
         super(PoissonParam, self).__init__()
         self.penalty = penalty
         self.tol = tol
@@ -136,7 +136,7 @@ class PoissonParam(BaseParam):
         self.validation_freqs = validation_freqs
         self.stepwise_param = stepwise_param
         self.early_stopping_rounds = early_stopping_rounds
-        self.metrics = metrics
+        self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
 
     def check(self):
@@ -245,7 +245,7 @@ class PoissonParam(BaseParam):
             if self.validation_freqs is None:
                 raise ValueError("validation freqs must be set when early stopping is enabled")
 
-        if not isinstance(self.metrics, list):
+        if self.metrics is not None and not isinstance(self.metrics, list):
             raise ValueError("metrics should be a list")
 
         if not isinstance(self.use_first_metric_only, bool):

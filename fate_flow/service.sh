@@ -29,7 +29,13 @@ venv=/data/projects/fate/common/python/venv
 module=fate_flow_server.py
 
 getpid() {
-    pid=`lsof -i:9380 | awk 'NR==2{print $2}'`
+    pid1=`lsof -i:9380 | grep 'LISTEN' | awk '{print $2}'`
+    pid2=`lsof -i:9360 | grep 'LISTEN' | awk '{print $2}'`
+    if [[ -n ${pid1} && "x"${pid1} = "x"${pid2} ]];then
+        pid=$pid1
+    elif [[ -z ${pid1} && -z ${pid2} ]];then
+        pid=
+    fi
 }
 
 mklogsdir() {
@@ -75,8 +81,7 @@ start() {
 stop() {
     getpid
     if [[ -n ${pid} ]]; then
-        echo "killing:
-        `ps aux | grep ${pid} | grep -v grep`"
+        echo "killing: `ps aux | grep ${pid} | grep -v grep`"
         for((i=1;i<=100;i++));
         do
             sleep 0.1

@@ -2,7 +2,7 @@ Federated Machine Learning
 ==========================
 [`中文`_]
 
-.. _中文: README_zh.rst
+.. _中文: README_zh.md
 
 FederatedML includes implementation of many common machine learning algorithms on federated learning. All modules are developed in a decoupling modular approach to enhance scalability. Specifically, we provide:
 
@@ -186,6 +186,7 @@ Alogorithm List
    evaluation/README
    statistic/correlation/README
    nn/hetero_nn/README
+   model_selection/stepwise/README
 
 
 

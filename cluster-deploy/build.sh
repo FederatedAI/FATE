@@ -17,8 +17,8 @@
 #
 
 set -e
-source_dir=$(cd `dirname $0`; pwd)
-
+source_dir=$(cd `dirname $0`; cd ../;pwd)
+echo ${source_dir}
 if [[ -n ${1} ]]; then
     version_tag=$1
 else
@@ -29,7 +29,7 @@ cd ${source_dir}
 version=`grep "FATE=" .env | awk -F '=' '{print $2}'`
 fateboard_version=`grep "FATEBOARD=" .env | awk -F '=' '{print $2}'`
 package_dir_name="FATE_install_"${version}-${version_tag}
-package_dir=${source_dir}/${package_dir_name}
+package_dir=${source_dir}/cluster-deploy/${package_dir_name}
 echo "[INFO] Build info"
 echo "[INFO] version: "${version}
 echo "[INFO] version tag: "${version_tag}
@@ -47,9 +47,10 @@ mkdir -p ${package_dir}/python/arch
 cp -r arch/conf ${package_dir}/python/arch/
 cp -r arch/api ${package_dir}/python/arch/
 cp -r arch/transfer_variables ${package_dir}/python/arch/
+cp -r arch/standalone ${package_dir}/python/arch/
 cp .env requirements.txt RELEASE.md ${package_dir}/python/
 cp -r examples federatedml federatedrec fate_flow ${package_dir}/python/
-cp scripts/*  ${package_dir}/
+cp -r bin  ${package_dir}/
 echo "[INFO] Package fate done"
 
 echo "[INFO] Package fateboard start"
@@ -132,6 +133,6 @@ rm -rf python fateboard eggroll
 echo "[INFO] Compress done"
 echo "[INFO] A total of `ls ${package_dir} | wc -l | awk '{print $1}'` packages:"
 ls -lrt ${package_dir}
-cd ${source_dir}
+cd ${source_dir}/cluster-deploy/
 tar czf ${package_dir_name}".tar.gz" ${package_dir_name}
 rm -rf ${package_dir}

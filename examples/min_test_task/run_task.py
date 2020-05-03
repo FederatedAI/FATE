@@ -42,9 +42,10 @@ RUNNING = 'running'
 FAIL = 'failed'
 STUCK = 'stuck'
 # READY = 'ready'
-MAX_INTERSECT_TIME = 600
-MAX_TRAIN_TIME = 3600
-OTHER_TASK_TIME = 300
+MAX_INTERSECT_TIME = 3600   # In millisecond
+MAX_TRAIN_TIME = 7200       # In millisecond
+WAIT_UPLOAD_TIME = 1000
+OTHER_TASK_TIME = 7200
 # RETRY_JOB_STATUS_TIME = 5
 STATUS_CHECKER_TIME = 10
 
@@ -162,7 +163,7 @@ class UploadTask(TaskManager):
             raise ValueError(
                 "upload data exec fail, status:{}, stdout:{}".format(status, stdout))
         print("Upload output is {}".format(stdout))
-        time.sleep(6)
+        time.sleep(WAIT_UPLOAD_TIME / 100)
         count = self.get_table_info(self.table_name, self.name_space)
         print("Upload Data, role: {}, count: {}".format(self.role, count))
         if self.role == HOST:
@@ -235,6 +236,8 @@ class TrainTask(TaskManager):
             job_status = self.start_block_func(self._check_cpn_status, params,
                                                exit_func=self._check_exit, max_waiting_time=max_time)
             print("component name: {}, job_status: {}".format(cpn, job_status))
+            if job_status == FAIL:
+                exit(1)
 
         auc = self._get_auc(jobid)
         if auc < self.task_hetero_lr_base_auc:
@@ -249,6 +252,7 @@ class TrainTask(TaskManager):
         upload_obj.run()
         guest_table_name = upload_obj.table_name
         guest_namespace = upload_obj.name_space
+        time.sleep(WAIT_UPLOAD_TIME / 100)
         table_info = self.get_table_info(guest_table_name, guest_namespace)
         count = table_info['data']['count']
         if count != self.task_data_count:
