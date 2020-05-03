@@ -22,13 +22,15 @@ from arch.api.impl.based_spark.util import broadcast_eggroll_session
 class Builder(build2x.Builder):
     _table_cls = RDDTable
 
-    def __init__(self, session_id, work_mode, persistent_engine):
-        super().__init__(session_id=session_id, work_mode=work_mode, persistent_engine=persistent_engine)
+    def __init__(self, session_id, work_mode, persistent_engine, options: dict = None):
+        super().__init__(session_id=session_id, work_mode=work_mode, persistent_engine=persistent_engine,
+                         options=options)
 
     def build_session(self):
         from arch.api.impl.based_2x.session import build_eggroll_session, build_eggroll_runtime
         from arch.api.impl.based_spark.based_2x.session import FateSessionImpl
-        eggroll_session = build_eggroll_session(work_mode=self._work_mode, job_id=self._session_id)
+        eggroll_session = build_eggroll_session(work_mode=self._work_mode, job_id=self._session_id,
+                                                options=self._options)
         self._session_id = eggroll_session.get_session_id()
         broadcast_eggroll_session(work_mode=self._work_mode, eggroll_session=eggroll_session)
         eggroll_runtime = build_eggroll_runtime(eggroll_session=eggroll_session)

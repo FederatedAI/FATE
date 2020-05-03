@@ -13,6 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import typing
+import copy
+
 from arch.api.base import build
 from arch.api.base.utils.wrap import FederationWrapped
 from arch.api.impl.based_2x.federation import FederationRuntime
@@ -24,14 +27,15 @@ from eggroll.roll_pair.roll_pair import RollPair
 class Builder(build.Builder):
     _table_cls = DTable
 
-    def __init__(self, session_id, work_mode, persistent_engine):
+    def __init__(self, session_id, work_mode, persistent_engine, options: dict = None):
         self._session_id = session_id
         self._work_mode = work_mode
         self._persistent_engine = persistent_engine
+        self._options = dict() if options is None else copy.deepcopy(options)
 
     def build_session(self):
         return build_session(job_id=self._session_id, work_mode=self._work_mode,
-                             persistent_engine=self._persistent_engine)
+                             persistent_engine=self._persistent_engine, options=self._options)
 
     def build_federation(self, federation_id, runtime_conf, server_conf_path):
         return FederationRuntime(session_id=federation_id, runtime_conf=runtime_conf)
