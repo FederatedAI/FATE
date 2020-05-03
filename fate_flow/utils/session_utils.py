@@ -55,7 +55,9 @@ class SessionStop(object):
 def init_session_for_flow_server():
     session.init(job_id="session_used_by_fate_flow_server_{}".format(fate_uuid()),
                  mode=RuntimeConfig.WORK_MODE,
-                 backend=RuntimeConfig.BACKEND)
+                 backend=RuntimeConfig.BACKEND,
+                 options={"eggroll.session.processors.per.node": 1})
+    # Options are used with different backend on demand
     stat_logger.info("init session {} for fate flow server successfully".format(session.get_session_id()))
 
 
