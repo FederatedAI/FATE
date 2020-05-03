@@ -35,7 +35,8 @@ def init(job_id=None,
          backend: typing.Union[int, Backend] = Backend.EGGROLL,
          persistent_engine: str = StoreTypes.ROLLPAIR_LMDB,
          eggroll_version=None,
-         set_log_dir=True):
+         set_log_dir=True,
+         options: dict = None):
     """
     Initializes session, should be called before all.
 
@@ -53,6 +54,8 @@ def init(job_id=None,
         
         - eggroll: `Backend.EGGROLL` or 0
         - spark: `Backend.SAPRK` or 1
+    options : None or dict
+      additional options
 
     Returns
     -------
@@ -88,7 +91,8 @@ def init(job_id=None,
 
         else:
             from arch.api.impl.based_2x import build
-            builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)
+            builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine,
+                                    options=options)
 
     elif backend.is_spark():
         if eggroll_version < 2:
@@ -96,7 +100,8 @@ def init(job_id=None,
             builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)
         else:
             from arch.api.impl.based_spark.based_2x import build
-            builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)
+            builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine,
+                                    options=options)
 
     else:
         raise ValueError(f"backend: ${backend} unknown")
