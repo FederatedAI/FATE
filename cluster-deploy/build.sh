@@ -28,13 +28,13 @@ fi
 cd ${source_dir}
 version=`grep "FATE=" .env | awk -F '=' '{print $2}'`
 fateboard_version=`grep "FATEBOARD=" .env | awk -F '=' '{print $2}'`
-package_dir_name="FATE_install_"${version}-${version_tag}
+package_dir_name="FATE_install_"${version}
 package_dir=${source_dir}/cluster-deploy/${package_dir_name}
 echo "[INFO] Build info"
 echo "[INFO] version: "${version}
 echo "[INFO] version tag: "${version_tag}
 echo "[INFO] Package output dir is "${package_dir}
-rm -rf ${package_dir} ${package_dir}".tar.gz"
+rm -rf ${package_dir} ${package_dir}-${version_tag}".tar.gz"
 mkdir -p ${package_dir}
 
 eggroll_git_url=`grep -A 3 '"eggroll"' .gitmodules | grep 'url' | awk -F '= ' '{print $2}'`
@@ -134,5 +134,5 @@ echo "[INFO] Compress done"
 echo "[INFO] A total of `ls ${package_dir} | wc -l | awk '{print $1}'` packages:"
 ls -lrt ${package_dir}
 cd ${source_dir}/cluster-deploy/
-tar czf ${package_dir_name}".tar.gz" ${package_dir_name}
+tar czf ${package_dir_name}-${version_tag}".tar.gz" ${package_dir_name}
 rm -rf ${package_dir}
