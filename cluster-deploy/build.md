@@ -15,7 +15,7 @@
 ```bash
 git clone https://github.com/FederatedAI/FATE.git -b v1.4.0 --depth=1
 cd FATE/cluster-deploy
-sh build.sh release 
+bash build.sh release 
 ```
 The **depth** parameter represents the code that only gets the latest commit, which can speed up the clone.
 The **release** is the version tag, which you can modify.
