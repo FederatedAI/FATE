@@ -285,7 +285,7 @@ class Table(object):
         pass
 
     @abc.abstractmethod
-    def save_as(self, name, namespace, partition=None, use_serialize=True):
+    def save_as(self, name, namespace, partition=None, use_serialize=True, **kwargs):
         """
         Transforms a temporary table to a persistent table.
 
