@@ -7,7 +7,7 @@
         "work_mode": 0,
         "job_type": "predict",
         "model_id": "arbiter-10000#guest-9999#host-10000#model",
-        "model_version": "202004252018350464911"
+        "model_version": "202005032228228503873"
     },
     "role": {
         "guest": [9999],

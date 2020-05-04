@@ -436,9 +436,20 @@ class Tracking(object):
                                                                           self.role,
                                                                           self.party_id))
         try:
-            session.clean_tables(namespace=self.task_id, regex_string='*')
             for role in roles.split(','):
                 for party_id in party_ids.split(','):
+                    # clean up the last tables of the federation
+                    namespace_clean = job_utils.generate_session_id(task_id=self.task_id,
+                                                                    role=role,
+                                                                    party_id=party_id)
+                    schedule_logger(self.job_id).info('clean table by namespace {} on {} {}'.format(namespace_clean,
+                                                                                                    self.role,
+                                                                                                    self.party_id))
+                    session.clean_tables(namespace=namespace_clean, regex_string='*')
+                    schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
+                                                                                                         self.role,
+                                                                                                         self.party_id))
+                    # clean up the task input data table
                     namespace_clean = job_utils.generate_task_input_data_namespace(task_id=self.task_id,
                                                                                    role=role,
                                                                                    party_id=party_id)
