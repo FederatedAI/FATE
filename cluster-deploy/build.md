@@ -13,7 +13,7 @@
 
 ## 3. Build
 ```bash
-git clone https://github.com/FederatedAI/FATE.git -b v1.4.0 -depth=1
+git clone https://github.com/FederatedAI/FATE.git -b v1.4.0 --depth=1
 cd FATE/cluster-deploy
 sh build.sh release 
 ```
