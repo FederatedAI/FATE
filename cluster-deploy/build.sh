@@ -116,9 +116,10 @@ else
     git clone ${eggroll_git_url} -b ${eggroll_git_branch} --depth=1 eggroll
 fi
 cd ./eggroll
-sh ./deploy/auto-packaging.sh
+cd ./deploy
+sh ./auto-packaging.sh
 mkdir -p ${package_dir}/eggroll
-mv eggroll.tar.gz ${package_dir}/eggroll/
+mv ${source_dir}/eggroll/eggroll.tar.gz ${package_dir}/eggroll/
 cd ${package_dir}/eggroll/
 tar xzf eggroll.tar.gz
 rm -rf eggroll.tar.gz
