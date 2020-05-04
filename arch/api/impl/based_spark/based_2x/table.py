@@ -288,8 +288,9 @@ class RDDTable(Table):
             partition = self._partitions
         if self._dtable:
             from arch.api import RuntimeInstance
-            persistent_engine = RuntimeInstance.SESSION.get_persistent_engine()
-            options = dict(store_type=persistent_engine)
+            options = kwargs.get("options", {})
+            store_type = options.get("store_type", RuntimeInstance.SESSION.get_persistent_engine())
+            options["store_type"] = store_type
             saved_table = self._dtable.save_as(name=name, namespace=namespace, partition=partition, options=options)
             return RDDTable.from_dtable(session_id=self._session_id, dtable=saved_table)
         else:
