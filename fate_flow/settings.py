@@ -112,6 +112,12 @@ SERVINGS = CenterConfig.get_settings(path=SERVING_PATH, servings_zk_path=SERVING
                                      use_zk=USE_CONFIGURATION_CENTER, hosts=ZOOKEEPER_HOSTS,
                                      server_conf_path=SERVER_CONF_PATH)
 BOARD_DASHBOARD_URL = 'http://%s:%d/index.html#/dashboard?job_id={}&role={}&party_id={}' % (BOARD_HOST, BOARD_PORT)
+
+# switch
+SAVE_AS_TASK_INPUT_DATA_SWITCH = True
+SAVE_AS_TASK_INPUT_DATA_IN_MEMORY = True
+
+# init
 RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
 RuntimeConfig.init_config(HTTP_PORT=HTTP_PORT)
 RuntimeConfig.init_config(BACKEND=BACKEND)

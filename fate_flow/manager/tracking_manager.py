@@ -16,6 +16,7 @@
 from typing import List
 
 from arch.api import session, WorkMode
+from arch.api.base.table import Table
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import DB, Job, Task, TrackingMetric, DataView
@@ -178,7 +179,7 @@ class Tracking(object):
             return view_data
 
     @session_utils.session_detect()
-    def save_output_data_table(self, data_table, data_name: str = 'component'):
+    def save_output_data_table(self, data_table: Table, data_name: str = 'component'):
         """
         Save component output data, will run in the task executor process
         :param data_table:
@@ -186,11 +187,11 @@ class Tracking(object):
         :return:
         """
         if data_table:
-            persistent_table_namespace, persistent_table_name = '{}_output_data'.format(
-                self.task_id), data_table._name
+            persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(
+                self.task_id), data_table.get_name()
             schedule_logger(self.job_id).info(
-                'persisting the component output temporary table: {} {} to {} {}'.format(data_table._namespace,
-                                                                                         data_table._name,
+                'persisting the component output temporary table: {} {} to {} {}'.format(data_table.get_namespace(),
+                                                                                         data_table.get_name(),
                                                                                          persistent_table_namespace,
                                                                                          persistent_table_name))
             persistent_table = data_table.save_as(
@@ -198,9 +199,9 @@ class Tracking(object):
                 name=persistent_table_name)
             session.save_data_table_meta(
                 {'schema': data_table.schema, 'header': data_table.schema.get('header', [])},
-                data_table_namespace=persistent_table._namespace, data_table_name=persistent_table._name)
+                data_table_namespace=persistent_table.get_namespace(), data_table_name=persistent_table.get_name())
             data_table_info = {
-                data_name: {'name': persistent_table._name, 'namespace': persistent_table._namespace}}
+                data_name: {'name': persistent_table.get_name(), 'namespace': persistent_table.get_namespace()}}
         else:
             data_table_info = {}
         session.save_data(
@@ -431,15 +432,39 @@ class Tracking(object):
 
     @session_utils.session_detect()
     def clean_task(self, roles, party_ids):
-        schedule_logger(self.job_id).info('clean table by namespace {}'.format(self.task_id))
+        schedule_logger(self.job_id).info('clean task {} on {} {}'.format(self.task_id,
+                                                                          self.role,
+                                                                          self.party_id))
         try:
-            session.clean_tables(namespace=self.task_id, regex_string='*')
             for role in roles.split(','):
                 for party_id in party_ids.split(','):
-                    session.clean_tables(namespace=self.task_id + '_' + role + '_' + party_id, regex_string='*')
+                    # clean up the last tables of the federation
+                    namespace_clean = job_utils.generate_session_id(task_id=self.task_id,
+                                                                    role=role,
+                                                                    party_id=party_id)
+                    schedule_logger(self.job_id).info('clean table by namespace {} on {} {}'.format(namespace_clean,
+                                                                                                    self.role,
+                                                                                                    self.party_id))
+                    session.clean_tables(namespace=namespace_clean, regex_string='*')
+                    schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
+                                                                                                         self.role,
+                                                                                                         self.party_id))
+                    # clean up the task input data table
+                    namespace_clean = job_utils.generate_task_input_data_namespace(task_id=self.task_id,
+                                                                                   role=role,
+                                                                                   party_id=party_id)
+                    schedule_logger(self.job_id).info('clean table by namespace {} on {} {}'.format(namespace_clean,
+                                                                                                    self.role,
+                                                                                                    self.party_id))
+                    session.clean_tables(namespace=namespace_clean, regex_string='*')
+                    schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
+                                                                                                         self.role,
+                                                                                                         self.party_id))
         except Exception as e:
             schedule_logger(self.job_id).exception(e)
-        schedule_logger(self.job_id).info('clean table by namespace {} done'.format(self.task_id))
+        schedule_logger(self.job_id).info('clean task {} on {} {} done'.format(self.task_id,
+                                                                               self.role,
+                                                                               self.party_id))
 
     def job_quantity_constraint(self):
         if RuntimeConfig.WORK_MODE == WorkMode.CLUSTER:

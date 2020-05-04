@@ -69,6 +69,16 @@ def generate_task_id(job_id, component_name):
     return '{}_{}'.format(job_id, component_name)
 
 
+def generate_session_id(task_id, role, party_id):
+    return '{}_{}_{}'.format(task_id, role, party_id)
+
+
+def generate_task_input_data_namespace(task_id, role, party_id):
+    return "input_data_{}".format(generate_session_id(task_id=task_id,
+                                                      role=role,
+                                                      party_id=party_id))
+
+
 def get_job_directory(job_id):
     return os.path.join(file_utils.get_project_base_directory(), 'jobs', job_id)
 
