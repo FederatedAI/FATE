@@ -460,7 +460,7 @@ class Tracking(object):
 #                     schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
 #                                                                                                          self.role,
 #                                                                                                          self.party_id))
-                    # clean up namespace: task_id ,data table
+                    # clean namespace: task_id ,data table
                     namespace_clean = self.task_id
                     schedule_logger(self.job_id).info('clean table by namespace {} on {} {}'.format(namespace_clean,
                                                                                                     self.role,
