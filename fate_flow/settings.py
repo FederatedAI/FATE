@@ -66,7 +66,7 @@ HEADERS = {
     'Content-Type': 'application/json',
     'Connection': 'close'
 }
-DETECT_TABLE = ("fate_flow_detect_table_namespace", "fate_flow_detect_table_name_{}".format(core_utils.fate_uuid()), 16)
+DETECT_TABLE = ("fate_flow_detect_table_namespace", "fate_flow_detect_table_name", 16)
 # fate-serving
 SERVINGS_ZK_PATH = '/FATE-SERVICES/serving/online/publishLoad/providers'
 FATE_FLOW_ZK_PATH = '/FATE-SERVICES/flow/online/transfer/providers'
