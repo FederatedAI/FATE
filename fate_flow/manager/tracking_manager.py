@@ -464,7 +464,7 @@ class Tracking(object):
                     namespace_clean = self.task_id
                     schedule_logger(self.job_id).info('clean table by namespace {}'.format(namespace_clean))
                     session.clean_tables(namespace=namespace_clean, regex_string='*')
-                    schedule_logger(self.job_id).info('clean table by namespace done'.format(namespace_clean))
+                    schedule_logger(self.job_id).info('clean table by namespace {} done'.format(namespace_clean))
                     
         except Exception as e:
             schedule_logger(self.job_id).exception(e)
