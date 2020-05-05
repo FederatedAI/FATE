@@ -382,13 +382,19 @@ def is_task_executor_process(task: Task, process: psutil.Process):
         9: "f_role",
         11: "f_party_id"
     }
+    try:
+        cmdline = process.cmdline()
+    except Exception as e:
+        # Not sure whether the process is a task executor process, operations processing is required
+        schedule_logger(task.f_job_id).warning(e)
+        return False
     for i, k in run_cmd_map.items():
-        if len(process.cmdline()) > i and process.cmdline()[i] == getattr(task, k):
+        if len(cmdline) > i and cmdline[i] == getattr(task, k):
             continue
         else:
             # todo: The logging level should be obtained first
-            if len(process.cmdline()) > i:
-                schedule_logger(task.f_job_id).debug(process.cmdline()[i])
+            if len(cmdline) > i:
+                schedule_logger(task.f_job_id).debug(cmdline[i])
                 schedule_logger(task.f_job_id).debug(getattr(task, k))
             return False
     else:
