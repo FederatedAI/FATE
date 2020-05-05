@@ -197,9 +197,9 @@ class TaskExecutor(object):
                                 origin_table_schema = data_table.schema
                                 save_as_options = {"store_type": StoreTypes.ROLLPAIR_IN_MEMORY} if SAVE_AS_TASK_INPUT_DATA_IN_MEMORY else {}
                                 data_table = data_table.save_as(
-                                    namespace=job_utils.generate_task_input_data_namespace(task_id=task_id,
-                                                                                           role=role,
-                                                                                           party_id=party_id),
+                                    namespace=job_utils.generate_session_id(task_id=task_id,
+                                                                            role=role,
+                                                                            party_id=party_id),
                                     name=data_table.get_name(), options=save_as_options)
                                 data_table.save_metas(origin_table_metas)
                                 data_table.schema = origin_table_schema
