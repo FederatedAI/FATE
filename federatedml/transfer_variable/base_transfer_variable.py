@@ -69,6 +69,14 @@ class Variable(object):
         self._auto_clean = True
         self._preserve_num = 2
 
+    # copy never create a new instance
+    def __copy__(self):
+        return self
+
+    # deepcopy never create a new instance
+    def __deepcopy__(self, memo):
+        return self
+
     def set_preserve_num(self, n):
         self._preserve_num = n
         return self
