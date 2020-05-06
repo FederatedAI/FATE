@@ -57,9 +57,9 @@ The following configuration information is for one-sided server configuration. I
 
 | party  | partyid | hostname      | IP          | os                      | software             | services                                                |
 | ------ | ------- | ------------- | ----------- | ----------------------- | -------------------- | ------------------------------------------------------- |
-| PartyA | 9999    | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate，eggroll，mysql | fate_flow，fateboard，clustermanager，nodemanger，mysql |
-| PartyA | 9999    | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate,eggroll         | nodemanger，rollsite                                    |
-| PartyB | 10000   | VM_0_3_centos | 192.168.0.3 | CentOS 7.2/Ubuntu 16.04 | fate，eggroll，mysql | all                                                     |
+| PartyA | 9999    | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate, eggroll, mysql | fate_flow, fateboard, clustermanager, nodemanger, mysql |
+| PartyA | 9999    | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate, eggroll        | nodemanger, rollsite                                    |
+| PartyB | 10000   | VM_0_3_centos | 192.168.0.3 | CentOS 7.2/Ubuntu 16.04 | fate, eggroll, mysql | all                                                     |
 
 ### 3.3 Basic environment configuration
 
