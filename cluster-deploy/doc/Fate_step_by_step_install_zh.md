@@ -132,11 +132,9 @@ chown -R app:apps /data/projects
 
 ```
 #centos
-yum -y install gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpcdevel
-libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel
-zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan lsof sysstat telnet psmisc
+yum -y install gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpcdevel libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan lsof sysstat telnet psmisc
 #ubuntu
-apt-get install -y gcc g++ make openssl supervisor libgmp-dev  libmpfr-dev libmpc-dev libaio1 libaio-dev numactl autoconf automake libtool libffi-dev libssl1.0.0 libssl-dev  liblz4-1 liblz4-dev liblz4-1-dbg liblz4-tool  zlib1g zlib1g-dbg zlib1g-dev
+apt-get install -y gcc g++ make openssl supervisor libgmp-dev  libmpfr-dev libmpc-dev libaio1 libaio-dev numactl autoconf automake libtool libffi-dev libssl1.0.0 libssl-dev liblz4-1 liblz4-dev liblz4-1-dbg liblz4-tool  zlib1g zlib1g-dbg zlib1g-dev
 cd /usr/lib/x86_64-linux-gnu
 if [ ! -f "libssl.so.10" ];then
    ln -s libssl.so.1.0.0 libssl.so.10
