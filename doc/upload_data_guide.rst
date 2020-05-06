@@ -1,5 +1,8 @@
 Upload Data Guide
 =================
+[`中文`_]
+
+.. _中文: upload_data_guide_zh.rst
 
 Before start a modeling task, the data to be used should be uploaded. Typically, a party is usually a cluster which include multiple nodes. Thus, when we upload these data, the data will be allocated to those nodes.
 

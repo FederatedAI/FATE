@@ -1,5 +1,8 @@
 Developing guides
 =================
+[`中文`_]
+
+.. _中文: develop_guide.rst
 
 Develop a runnable algorithm module of FATE
 -------------------------------------------
@@ -246,7 +249,7 @@ In this section, we describe how to do 3-5. Many common interfaces are provided 
 
 
 :Override predict interface if needed:
-   The fit function holds the form of following.
+   The predict function holds the form of following.
 
    .. code-block:: python
 
