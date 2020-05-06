@@ -221,11 +221,11 @@ tar xzf fate-cluster-install-1.4.0-rc4-build2-c7-u18.tar.gz
 | redis_pass       | 默认                                          | redis密码，暂未使用                                          |
 | mysql_user       | 默认：fate                                    | msyql的应用连接账号                                          |
 | mysql_port       | 默认：3306，根据实际情况修改                  | msql服务监听的端口                                           |
-| host_id          | 默认 : 9999，根据实施规划修改                 | HOST端的party id。                                           |
+| host_id          | 默认 : 10000，根据实施规划修改                | HOST端的party id。                                           |
 | host_ip          | 192.168.0.1                                   | HOST端的ip                                                   |
 | host_mysql_ip    | 默认和host_ip保持一致                         | HOST端mysql的ip                                              |
 | host_mysql_pass  | 可设置为：fate_dev                            | HOST端msyql的应用连接账号                                    |
-| guest_id         | 默认 : 10000，根据实施规划修改                | GUEST端的party id                                            |
+| guest_id         | 默认 : 9999，根据实施规划修改                 | GUEST端的party id                                            |
 | guest_ip         | 192.168.0.2                                   | GUEST端的ip                                                  |
 | guest_mysql_ip   | 默认和guest_ip保持一致                        | GUEST端mysql的ip                                             |
 | guest_mysql_pass | 可设置为：fate_dev                            | GUEST端msyql的应用连接账号                                   |
@@ -267,7 +267,7 @@ mysql_user="fate"
 mysql_port="3306"
 
 #host party id
-host_id="9999"
+host_id="10000"
 #host ip
 host_ip="192.168.0.1"
 #host mysql ip
@@ -275,7 +275,7 @@ host_mysql_ip="${host_ip}"
 host_mysql_pass="fate_dev"
 
 #guest party id
-guest_id="10000"
+guest_id="9999"
 #guest ip
 guest_ip="192.168.0.2"
 #guest mysql ip
@@ -325,7 +325,7 @@ mysql_user="fate"
 mysql_port="3306"
 
 #host party id
-host_id="9999"
+host_id="10000"
 #host ip
 host_ip="192.168.0.1"
 #host mysql ip
@@ -433,19 +433,7 @@ sh service.sh start
 
 ### 6.1.1 单边测试
 
-1）192.168.0.1上执行，guest_partyid和host_partyid都设为9999：
-
-```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/toy_example/
-python run_toy_example.py 9999 9999 1
-```
-
-类似如下结果表示成功：
-
-"2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
-
-2）192.168.0.2上执行，guest_partyid和host_partyid都设为10000：
+1）192.168.0.1上执行，guest_partyid和host_partyid都设为10000：
 
 ```
 source /data/projects/fate/init_env.sh
@@ -457,9 +445,21 @@ python run_toy_example.py 10000 10000 1
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
-### 6.1.2 两边测试
+2）192.168.0.2上执行，guest_partyid和host_partyid都设为9999：
 
-选定9999为guest方，在192.168.0.1上执行：
+```
+source /data/projects/fate/init_env.sh
+cd /data/projects/fate/python/examples/toy_example/
+python run_toy_example.py 9999 9999 1
+```
+
+类似如下结果表示成功：
+
+"2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
+
+### 6.1.2 双边测试
+
+选定9999为guest方，在192.168.0.2上执行：
 
 ```
 source /data/projects/fate/init_env.sh

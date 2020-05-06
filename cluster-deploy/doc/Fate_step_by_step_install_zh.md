@@ -132,11 +132,9 @@ chown -R app:apps /data/projects
 
 ```
 #centos
-yum -y install gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpcdevel
-libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel
-zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan lsof sysstat telnet psmisc
+yum -y install gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpcdevel libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan lsof sysstat telnet psmisc
 #ubuntu
-apt-get install -y gcc g++ make openssl supervisor libgmp-dev  libmpfr-dev libmpc-dev libaio1 libaio-dev numactl autoconf automake libtool libffi-dev libssl1.0.0 libssl-dev  liblz4-1 liblz4-dev liblz4-1-dbg liblz4-tool  zlib1g zlib1g-dbg zlib1g-dev
+apt-get install -y gcc g++ make openssl supervisor libgmp-dev  libmpfr-dev libmpc-dev libaio1 libaio-dev numactl autoconf automake libtool libffi-dev libssl1.0.0 libssl-dev liblz4-1 liblz4-dev liblz4-1-dbg liblz4-tool  zlib1g zlib1g-dbg zlib1g-dev
 cd /usr/lib/x86_64-linux-gnu
 if [ ! -f "libssl.so.10" ];then
    ln -s libssl.so.1.0.0 libssl.so.10
@@ -419,7 +417,7 @@ eggroll.resourcemanager.bootstrap.roll_pair_master.jvm.options=
 eggroll.rollsite.coordinator=webank
 eggroll.rollsite.host=192.168.0.1
 eggroll.rollsite.port=9370
-eggroll.rollsite.party.id=9999
+eggroll.rollsite.party.id=10000
 eggroll.rollsite.route.table.path=conf/route_table.json
 
 eggroll.session.processors.per.node=16
@@ -460,7 +458,7 @@ eggroll.resourcemanager.bootstrap.roll_pair_master.jvm.options=
 eggroll.rollsite.coordinator=webank
 eggroll.rollsite.host=192.168.0.3
 eggroll.rollsite.port=9370
-eggroll.rollsite.party.id=10000
+eggroll.rollsite.party.id=9999
 eggroll.rollsite.route.table.path=conf/route_table.json
 
 eggroll.session.processors.per.node=16
@@ -482,7 +480,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
 {
   "route_table":
   {
-    "9999":
+    "10000":
     {
       "default":[
         {
@@ -497,7 +495,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
         }
       ]      
     },
-    "10000":
+    "9999":
     {
       "default":[
         {
@@ -519,7 +517,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
 {
   "route_table":
   {
-    "10000":
+    "9999":
     {
       "default":[
         {
@@ -534,7 +532,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
         }
       ]      
     },
-    "9999":
+    "10000":
     {
       "default":[
         {
@@ -847,19 +845,7 @@ sh service.sh start
 
 ### 6.1.1 单边测试
 
-1）192.168.0.1上执行，guest_partyid和host_partyid都设为9999：
-
-```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/toy_example/
-python run_toy_example.py 9999 9999 1
-```
-
-类似如下结果表示成功：
-
-"2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
-
-2）192.168.0.3上执行，guest_partyid和host_partyid都设为10000：
+1）192.168.0.1上执行，guest_partyid和host_partyid都设为10000：
 
 ```
 source /data/projects/fate/init_env.sh
@@ -871,9 +857,21 @@ python run_toy_example.py 10000 10000 1
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
+2）192.168.0.3上执行，guest_partyid和host_partyid都设为10000：
+
+```
+source /data/projects/fate/init_env.sh
+cd /data/projects/fate/python/examples/toy_example/
+python run_toy_example.py 9999 9999 1
+```
+
+类似如下结果表示成功：
+
+"2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
+
 ### 6.1.2 双边测试
 
-选定9999为guest方，在192.168.0.1上执行：
+选定9999为guest方，在192.168.0.3上执行：
 
 ```
 source /data/projects/fate/init_env.sh
