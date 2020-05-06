@@ -285,7 +285,7 @@ class Table(object):
         pass
 
     @abc.abstractmethod
-    def save_as(self, name, namespace, partition=None, use_serialize=True):
+    def save_as(self, name, namespace, partition=None, use_serialize=True, **kwargs):
         """
         Transforms a temporary table to a persistent table.
 
@@ -691,5 +691,5 @@ class Table(object):
     def save_metas(self, kv):
         from .session import FateSession
         return FateSession.save_data_table_meta(kv=kv,
-                                                data_table_name="%s.meta" % self.get_name(),
+                                                data_table_name=self.get_name(),
                                                 data_table_namespace=self.get_namespace())
