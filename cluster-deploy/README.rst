@@ -59,7 +59,7 @@ modules. Specific module information is as follows:
 .. raw:: html
 
    <div style="text-align:center", align=center>
-   <img src="./images/arc.png" />
+   <img src="./images/arch.png" />
    </div>
 
 3. Installation Preparation
@@ -535,10 +535,10 @@ Configuration file: /data/projects/fate/eggroll/conf/eggroll.properties
    eggroll.rollsite.coordinator=webank
    eggroll.rollsite.host=192.168.0.1
    eggroll.rollsite.port=9370
-   eggroll.rollsite.party.id=9999
+   eggroll.rollsite.party.id=10000
    eggroll.rollsite.route.table.path=conf/route_table.json
 
-   eggroll.session.processors.per.node=16
+   eggroll.session.processors.per.node=4
    eggroll.session.start.timeout.ms=180000
    eggroll.rollsite.adapter.sendbuf.size=1048576
    eggroll.rollpair.transferpair.sendbuf.size=4150000
@@ -576,10 +576,10 @@ Configuration file: /data/projects/fate/eggroll/conf/eggroll.properties
    eggroll.rollsite.coordinator=webank
    eggroll.rollsite.host=192.168.0.3
    eggroll.rollsite.port=9370
-   eggroll.rollsite.party.id=10000
+   eggroll.rollsite.party.id=9999
    eggroll.rollsite.route.table.path=conf/route_table.json
 
-   eggroll.session.processors.per.node=16
+   eggroll.session.processors.per.node=4
    eggroll.session.start.timeout.ms=180000
    eggroll.rollsite.adapter.sendbuf.size=1048576
    eggroll.rollpair.transferpair.sendbuf.size=4150000
@@ -984,20 +984,6 @@ guest_partyid，host_partyid，work_mode.
 ^^^^^^^^^^^^^^^^^^^^^
 
 1) Executed on 192.168.0.1, guest_partyid and host_partyid are set to
-   9999:
-
-::
-
-   source /data/projects/fate/init_env.sh
-   cd /data/projects/fate/python/examples/toy_example/
-   python run_toy_example.py 9999 9999 1
-
-A result similar to the following indicates success:
-
-“2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success
-to calculate secure_sum, it is 1999.9999999999998”
-
-2) Executed on 192.168.0.3, guest_partyid and host_partyid are set to
    10000:
 
 ::
@@ -1011,10 +997,24 @@ A result similar to the following indicates success:
 “2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success
 to calculate secure_sum, it is 1999.9999999999998”
 
+2) Executed on 192.168.0.3, guest_partyid and host_partyid are set to
+   9999:
+
+::
+
+   source /data/projects/fate/init_env.sh
+   cd /data/projects/fate/python/examples/toy_example/
+   python run_toy_example.py 9999 9999 1
+
+A result similar to the following indicates success:
+
+“2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success
+to calculate secure_sum, it is 1999.9999999999998”
+
 5.1.2 Bilateral test
 ^^^^^^^^^^^^^^^^^^^^
 
-Select 9999 as the guest and execute on 192.168.0.1:
+Select 9999 as the guest and execute on 192.168.0.3:
 
 ::
 
@@ -1032,8 +1032,8 @@ to calculate secure_sum, it is 1999.9999999999998”
 
 Start the virtual environment in host and guest respectively.
 
-5.2.1 Fast mode*\*
-^^^^^^^^^^^^^^^^^^
+5.2.1 Fast mode
+^^^^^^^^^^^^^^^
 
 In the node of guest and host parties, set the fields: guest_id,
 host_id, arbiter_id in run_task.py according to your actual setting.
@@ -1063,8 +1063,8 @@ Wait a few minutes, a result showing “success” indicates that the
 operation is successful. In other cases, if FAILED or stuck, it means
 failure.
 
-5.2.2 Normal mode*\*
-^^^^^^^^^^^^^^^^^^^^
+5.2.2 Normal mode
+^^^^^^^^^^^^^^^^^
 
 Just replace the word “fast” with “normal” in all the commands, the rest
 is the same with fast mode.
