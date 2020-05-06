@@ -922,7 +922,7 @@ sh run.sh host fast
 
 Get the values of "host_table" and "host_namespace" from test results, and pass them to following command.
 
-In the node of guest part, run: 
+In the node of guest party, run: 
 
 ```
 source /data/projects/fate/init_env.sh
