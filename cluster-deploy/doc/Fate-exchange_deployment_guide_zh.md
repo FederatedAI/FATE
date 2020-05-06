@@ -240,7 +240,22 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
 EOF
 ```
 
+### 5.5.4 各party路由信息修改
 
+**需要连接exchange的各party的rollsite模块，app用户修改**
+
+修改/data/projects/fate/proxy/conf/route_table.json部分，路由信息指向部署好的exchange：
+
+```
+ "partyid": {
+            "default": [
+                {
+                    "ip": "192.168.0.1",
+                    "port": 9370
+                }
+            ]
+        }
+```
 
 ## 5.6 启动服务
 
