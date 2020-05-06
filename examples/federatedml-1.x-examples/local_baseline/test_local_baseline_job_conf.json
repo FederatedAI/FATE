@@ -46,7 +46,7 @@
       "local_baseline_0": {
         "model_name": ["LogisticRegression"],
         "model_opts": [{"penalty": "l2", "tol":0.0001, "C":1.0, "fit_intercept": true,
-                       "solver": "lbfgs", "max_iter":10, "multi_class":"ovr"}],
+                       "solver": "lbfgs", "max_iter":5, "multi_class":"ovr"}],
         "need_run": [true]
       },
       "evaluation_0": {
@@ -99,7 +99,7 @@
       "alpha": 0.0001,
       "max_iter": 30,
       "early_stop": "diff",
-      "batch_size": 200,
+      "batch_size": -1,
       "learning_rate": 0.15,
       "init_param": {
         "init_method": "zeros"
