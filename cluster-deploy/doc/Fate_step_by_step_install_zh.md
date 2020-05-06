@@ -1020,8 +1020,8 @@ netstat -tlnp | grep 8080
 | fateboard          | /data/projects/fate/fateboard/logs                 |
 | mysql              | /data/projects/fate/common/mysql/mysql-8.0.13/logs |
 
-# 8. other
+# 8. 其他
 
-## 8.1 eggroll & fate package build
+## 8.1 eggroll&fate打包构建
 
-refer to [build guide](./build.md) 
+参见[build指导](../build.md) 
