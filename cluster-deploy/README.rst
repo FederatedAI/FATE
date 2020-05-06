@@ -22,31 +22,38 @@ thirdparty：
 In a party, FATE (Federated AI Technology Enabler) has the following
 modules. Specific module information is as follows:
 
-+----------+----------+------------------------------------------------+
-| Module   | Port of  | Module function                                |
-| Name     | module   |                                                |
-+==========+==========+================================================+
-| fate_flo | 9360;938 | Federated learning pipeline management module, |
-| w        | 0        | there is only one service for each party       |
-+----------+----------+------------------------------------------------+
-| fateboar | 8080     | Federated learning process visualization       |
-| d        |          | module, only one service needs to be deployed  |
-|          |          | per party                                      |
-+----------+----------+------------------------------------------------+
-| clusterm | 4670     | The cluster manager manages the cluster, only  |
-| anager   |          | one instance needs to be deployed per party    |
-+----------+----------+------------------------------------------------+
-| nodemang | 4671     | Node manager manages the resources of each     |
-| er       |          | machine, each party can have multiple of this  |
-|          |          | service, but a server can only have one        |
-+----------+----------+------------------------------------------------+
-| rollsite | 9370     | Cross-site or cross-party communication        |
-|          |          | components, equivalent to proxy + federation,  |
-|          |          | each party has only one service                |
-+----------+----------+------------------------------------------------+
-| mysql    | 3306     | Data storage, clustermanager and fateflow      |
-|          |          | dependency, each party only needs one service  |
-+----------+----------+------------------------------------------------+
+.. list-table:: Modules
+   :widths: 20 20 60
+   :header-rows: 1
+
+   * - Module Name
+     - Port of module
+     - Module function
+
+   * - fate_flow
+     - 9360; 9380
+     - Federated learning pipeline management module, there is only one service for each party
+   
+   * - fateboard
+     - 8080
+     - Federated learning process visualization module, only one service needs to be deployed per party   
+   
+   * - clusterm
+     - 4670
+     - The cluster manager manages the cluster, only one instance needs to be deployed per party  
+   
+   * - nodemanger
+     - 4671
+     - Node manager manages the resources of each machine, each party can have multiple of this service, but a server can only have one
+   
+   * - rollsite
+     - 9370
+     - Cross-site or cross-party communication components, equivalent to proxy + federation, each party has only one service
+   
+   * - mysql
+     - 3306
+     - Data storage, clustermanager and fateflow dependency, each party only needs one service
+
 
 2. Deployment Architecture
 --------------------------
@@ -56,11 +63,10 @@ modules. Specific module information is as follows:
 
 ​ Example deployment in one party
 
-.. raw:: html
+.. figure:: images/arch.png
+   :align: center
+   :width: 500
 
-   <div style="text-align:center", align=center>
-   <img src="./images/arch.png" />
-   </div>
 
 3. Installation Preparation
 ---------------------------
@@ -72,59 +78,73 @@ The following configuration information is for one-sided server
 configuration. If there are multiple parties, please refer to this
 configuration to replicate this environment:
 
-+------------------+---------------------------------------------------+
-| Server           |                                                   |
-+==================+===================================================+
-| **Quantity**     | 1 or more than 1 (according to the actual server  |
-|                  | allocation module provided)                       |
-+------------------+---------------------------------------------------+
-| **Configuration**| 8 core / 16G memory / 500G hard disk / 10M        |
-|                  | bandwidth                                         |
-+------------------+---------------------------------------------------+
-| **Operating      | Version: CentOS Linux release 7.2                 |
-| System**         |                                                   |
-+------------------+---------------------------------------------------+
-| **Dependency     | yum source gcc gcc-c++ make autoconfig            |
-| Package**        | openssl-devel supervisor gmp-devel mpfr-devel     |
-|                  | libmpc-devel libaio numactl autoconf automake     |
-|                  | libtool libffi-dev                                |
-+------------------+---------------------------------------------------+
-| **Users**        | User: app owner:apps (app user can sudo su root   |
-|                  | without password)                                 |
-+------------------+---------------------------------------------------+
-| **File System**  | 1. The 500G hard disk is mounted to the /data     |
-|                  | directory. 2. Create /data/projects directory,    |
-|                  | projects directory belongs to app:apps.           |
-+------------------+---------------------------------------------------+
+
+.. list-table::
+   :widths: 30 70
+   :header-rows: 1
+
+   * - Server
+     - 
+
+   * - **Quantity**
+     - 1 or more than 1 (according to the actual server allocation module provided)
+   
+   * - **Configuration**
+     - 8 core / 16G memory / 500G hard disk / 10M bandwidth
+   
+   * - **Operating System**
+     - Version: CentOS Linux release 7.2
+   
+   * - **Dependency Package**
+     - yum source gcc gcc-c++ make autoconfig openssl-devel supervisor gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-dev
+   
+   * - **Users**
+     - User: app owner: apps (app user can sudo su root without password)
+   
+   * - **File System**
+     - 1. The 500G hard disk is mounted to the /data directory. 
+       2. Create /data/projects directory, projects directory belongs to app:apps.
+
 
 3.2 Cluster planning
 ~~~~~~~~~~~~~~~~~~~~
 
-+--------+---------+---------+---------+---------+---------+---------+
-| party  | partyid | h       | IP      | os      | s       | s       |
-|        |         | ostname |         |         | oftware | ervices |
-+========+=========+=========+=========+=========+=========+=========+
-| PartyA | 9999    | VM_0_1  | 192.    | CentOS  | fate,   | fat     |
-|        |         | _centos | 168.0.1 | 7.2     | e       | e_flow, |
-|        |         |         |         | /Ubuntu | ggroll, | fat     |
-|        |         |         |         | 16.04   | mysql   | eboard, |
-|        |         |         |         |         |         | c       |
-|        |         |         |         |         |         | lusterm |
-|        |         |         |         |         |         | anager, |
-|        |         |         |         |         |         | node    |
-|        |         |         |         |         |         | manger, |
-|        |         |         |         |         |         | mysql   |
-+--------+---------+---------+---------+---------+---------+---------+
-| PartyA | 9999    | VM_0_2  | 192.    | CentOS  | fate,   | node    |
-|        |         | _centos | 168.0.2 | 7.2     | eggroll | manger, |
-|        |         |         |         | /Ubuntu |         | r       |
-|        |         |         |         | 16.04   |         | ollsite |
-+--------+---------+---------+---------+---------+---------+---------+
-| PartyB | 10000   | VM_0_3  | 192.    | CentOS  | fate,   | all     |
-|        |         | _centos | 168.0.3 | 7.2     | e       |         |
-|        |         |         |         | /Ubuntu | ggroll, |         |
-|        |         |         |         | 16.04   | mysql   |         |
-+--------+---------+---------+---------+---------+---------+---------+
+.. list-table::
+   :widths: 10 10 10 10 10 10 40
+   :header-rows: 1
+
+   * - party
+     - partyid
+     - hostname
+     - IP
+     - os
+     - software
+     - services
+   
+   * - PartyA
+     - 9999
+     - VM_0_1_centos
+     - 192.168.0.1
+     - CentOS 7.2/ Ubuntu 16.04
+     - fate, eggroll, mysql
+     - fate_flow, fateboard, clustermanager, nodemanger, mysql
+   
+   * - PartyA
+     - 9999
+     - VM_0_2_centos
+     - 192.168.0.2
+     - CentOS 7.2/Ubuntu 16.04
+     - fate, eggroll
+     - nodemanger, rollsite
+   
+   * - PartyB
+     - 10000
+     - VM_0_3_centos
+     - 192.168.0.3
+     - CentOS 7.2/Ubuntu 16.04
+     - fate, eggroll, mysql 
+     - all
+
 
 3.3 Basic environment configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -132,58 +152,70 @@ configuration to replicate this environment:
 3.3.1 hostname configuration (optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**1) Modify the host name**
+:Modify the host name:
+   Run under the 192.168.0.1 root user:
+   ::
 
-**Run under the 192.168.0.1 root user:**
+     hostnamectl set-hostname VM_0_1_centos
 
-hostnamectl set-hostname VM_0_1_centos
+   Run under the 192.168.0.2 root user:
+   ::
 
-**Run under the 192.168.0.2 root user:：**
+     hostnamectl set-hostname VM_0_2_centos
 
-hostnamectl set-hostname VM_0_2_centos
+   Run under the 192.168.0.3 root user:
+   ::
 
-**Run under the 192.168.0.3 root user:**
+     hostnamectl set-hostname VM_0_3_centos
 
-hostnamectl set-hostname VM_0_3_centos
+:Add Host Mapping:
+   Execute under the root user of the target server (192.168.0.1 192.168.0.2 192.168.0.3):
+   ::
 
-**2) Add Host Mapping**
+     vim /etc/hosts
 
-**Execute under the root user of the target server (192.168.0.1
-192.168.0.2 192.168.0.3):**
+     192.168.0.1 VM_0_1_centos
+     192.168.0.2 VM_0_2_centos
+     192.168.0.3 VM_0_3_centos
 
-vim /etc/hosts
-
-192.168.0.1 VM_0_1_centos
-
-192.168.0.2 VM_0_2_centos
-
-192.168.0.3 VM_0_3_centos
 
 3.3.2 Close selinux (optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**Execute under the root user of the target server (192.168.0.1
-192.168.0.2 192.168.0.3):**
+Confirm whether selinux is installed:
 
-Confirm whether selinux is installed
+Execute under the root user of the target server (192.168.0.1 192.168.0.2 192.168.0.3): 
 
-Centos system executes: rpm -qa \| grep selinux
 
-Ubuntu system executes: apt list –installed \| grep selinux
+1. Centos system executes:
+   ::
 
-If selinux is already installed, execute: setenforce 0
+     rpm -qa \| grep selinux
+
+2. Ubuntu system executes:
+   :: 
+
+     apt list –installed \| grep selinux
+
+
+If selinux is already installed, execute
+   
+   ::
+
+     setenforce 0
+
 
 3.3.3 Modify the maximum number of open files in Linux
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**Execute under the root user of the target server (192.168.0.1
-192.168.0.2 192.168.0.3):**
+**Execute under the root user of the target server (192.168.0.1 192.168.0.2 192.168.0.3):**
 
-vim /etc/security/limits.conf
+::
+  
+  vim /etc/security/limits.conf
+  \* soft nofile 65536
+  \* hard nofile 65536
 
-\* soft nofile 65536
-
-\* hard nofile 65536
 
 3.3.4 Turn off the firewall (optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1179,17 +1211,24 @@ Start / stop / status / restart mysql service
 6.3 Service log
 ~~~~~~~~~~~~~~~
 
-+--------------------+----------------------------------------------------+
-| Service            | Log path                                           |
-+====================+====================================================+
-| eggroll            | /data/projects/fate/eggroll/logs                   |
-+--------------------+----------------------------------------------------+
-| fate_flow&Task log | /data/projects/fate/python/logs                    |
-+--------------------+----------------------------------------------------+
-| fateboard          | /data/projects/fate/fateboard/logs                 |
-+--------------------+----------------------------------------------------+
-| mysql              | /data/projects/fate/common/mysql/mysql-8.0.13/logs |
-+--------------------+----------------------------------------------------+
+.. list-table::
+   :widths: 30 70
+   :header-rows: 1
+
+   * - Service
+     - Log path
+   
+   * - eggroll
+     - /data/projects/fate/eggroll/logs
+   
+   * - fate_flow&Task log
+     - /data/projects/fate/python/logs
+   
+   * - fateboard
+     - /data/projects/fate/fateboard/logs
+   
+   * - mysql
+     - /data/projects/fate/common/mysql/mysql-8.0.13/logs
 
 7. other
 --------
