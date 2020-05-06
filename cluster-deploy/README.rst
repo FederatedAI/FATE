@@ -100,31 +100,41 @@ configuration to replicate this environment:
 3.2 Cluster planning
 ~~~~~~~~~~~~~~~~~~~~
 
-+--------+---------+---------+---------+---------+---------+---------+
-| party  | partyid | h       | IP      | os      | s       | s       |
-|        |         | ostname |         |         | oftware | ervices |
-+========+=========+=========+=========+=========+=========+=========+
-| PartyA | 9999    | VM_0_1  | 192.    | CentOS  | fate,   | fat     |
-|        |         | _centos | 168.0.1 | 7.2     | e       | e_flow, |
-|        |         |         |         | /Ubuntu | ggroll, | fat     |
-|        |         |         |         | 16.04   | mysql   | eboard, |
-|        |         |         |         |         |         | c       |
-|        |         |         |         |         |         | lusterm |
-|        |         |         |         |         |         | anager, |
-|        |         |         |         |         |         | node    |
-|        |         |         |         |         |         | manger, |
-|        |         |         |         |         |         | mysql   |
-+--------+---------+---------+---------+---------+---------+---------+
-| PartyA | 9999    | VM_0_2  | 192.    | CentOS  | fate,   | node    |
-|        |         | _centos | 168.0.2 | 7.2     | eggroll | manger, |
-|        |         |         |         | /Ubuntu |         | r       |
-|        |         |         |         | 16.04   |         | ollsite |
-+--------+---------+---------+---------+---------+---------+---------+
-| PartyB | 10000   | VM_0_3  | 192.    | CentOS  | fate,   | all     |
-|        |         | _centos | 168.0.3 | 7.2     | e       |         |
-|        |         |         |         | /Ubuntu | ggroll, |         |
-|        |         |         |         | 16.04   | mysql   |         |
-+--------+---------+---------+---------+---------+---------+---------+
+.. list-table:: Role & information
+    :widths: 10 10 15 15 20 20 20
+    :header-rows: 1
+
+    * - party
+      - partyid
+      - hostname
+      - IP
+      - os
+      - software
+      - services
+
+    * - PartyA
+      - 9999
+      - VM_0_1_centos
+      - 192.168.0.1
+      - CentOS 7.2/Ubuntu 16.04
+      - fate, eggroll, mysql
+      - fate_flow, fateboard, clustermanager, nodemanager, mysql
+
+    * - PartyB
+      - 9999
+      - VM_0_2_centos
+      - 192.168.0.2
+      - CentOS 7.2/Ubuntu 16.04
+      - fate, eggroll
+      - nodemanager, rollsite
+
+    * - PartyC
+      - 10000
+      - VM_0_3_centos
+      - 192.168.0.3
+      - CentOS 7.2/Ubuntu 16.04
+      - fate, eggroll, mysql
+      - all
 
 3.3 Basic environment configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
