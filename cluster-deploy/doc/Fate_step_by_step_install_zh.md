@@ -420,7 +420,7 @@ eggroll.rollsite.port=9370
 eggroll.rollsite.party.id=10000
 eggroll.rollsite.route.table.path=conf/route_table.json
 
-eggroll.session.processors.per.node=16
+eggroll.session.processors.per.node=4
 eggroll.session.start.timeout.ms=180000
 eggroll.rollsite.adapter.sendbuf.size=1048576
 eggroll.rollpair.transferpair.sendbuf.size=4150000
@@ -461,7 +461,7 @@ eggroll.rollsite.port=9370
 eggroll.rollsite.party.id=9999
 eggroll.rollsite.route.table.path=conf/route_table.json
 
-eggroll.session.processors.per.node=16
+eggroll.session.processors.per.node=4
 eggroll.session.start.timeout.ms=180000
 eggroll.rollsite.adapter.sendbuf.size=1048576
 eggroll.rollpair.transferpair.sendbuf.size=4150000
