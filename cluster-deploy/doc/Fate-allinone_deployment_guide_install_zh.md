@@ -457,14 +457,14 @@ python run_toy_example.py 10000 10000 1
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
-### 6.1.2 两边测试
+### 6.1.2 双边测试
 
-选定9999为guest方，在192.168.0.1上执行：
+选定10000为guest方，在192.168.0.2上执行：
 
 ```
 source /data/projects/fate/init_env.sh
 cd /data/projects/fate/python/examples/toy_example/
-python run_toy_example.py 9999 10000 1
+python run_toy_example.py 10000 9999 1
 ```
 
 类似如下结果表示成功：
