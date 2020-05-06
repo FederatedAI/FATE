@@ -47,7 +47,7 @@ ZOOKEEPER_HOSTS = ['127.0.0.1:2181']
 MAX_CONCURRENT_JOB_RUN = 5
 MAX_CONCURRENT_JOB_RUN_HOST = 5
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
-DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000 * 20  # ms
+DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000 * 60  # ms
 JOB_DEFAULT_TIMEOUT = 7 * 24 * 60 * 60
 DATABASE = get_base_config("database", {})
 DEFAULT_MODEL_STORE_ADDRESS = get_base_config("default_model_store_address", {})
@@ -66,7 +66,7 @@ HEADERS = {
     'Content-Type': 'application/json',
     'Connection': 'close'
 }
-DETECT_TABLE = ("fate_flow_detect_table_namespace", "fate_flow_detect_table_name_{}".format(core_utils.fate_uuid()), 50)
+DETECT_TABLE = ("fate_flow_detect_table_namespace", "fate_flow_detect_table_name", 16)
 # fate-serving
 SERVINGS_ZK_PATH = '/FATE-SERVICES/serving/online/publishLoad/providers'
 FATE_FLOW_ZK_PATH = '/FATE-SERVICES/flow/online/transfer/providers'
@@ -112,6 +112,12 @@ SERVINGS = CenterConfig.get_settings(path=SERVING_PATH, servings_zk_path=SERVING
                                      use_zk=USE_CONFIGURATION_CENTER, hosts=ZOOKEEPER_HOSTS,
                                      server_conf_path=SERVER_CONF_PATH)
 BOARD_DASHBOARD_URL = 'http://%s:%d/index.html#/dashboard?job_id={}&role={}&party_id={}' % (BOARD_HOST, BOARD_PORT)
+
+# switch
+SAVE_AS_TASK_INPUT_DATA_SWITCH = True
+SAVE_AS_TASK_INPUT_DATA_IN_MEMORY = True
+
+# init
 RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
 RuntimeConfig.init_config(HTTP_PORT=HTTP_PORT)
 RuntimeConfig.init_config(BACKEND=BACKEND)

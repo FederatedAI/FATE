@@ -46,7 +46,8 @@ class Server(secure_aggregator.Server):
 
 
 class Client(secure_aggregator.Client):
-    def __init__(self, trans_var: SecureAggregatorTransVar = SecureAggregatorTransVar(), enable_secure_aggregate=True):
+    def __init__(self, trans_var: SecureSumAggregatorTransVar = SecureSumAggregatorTransVar(),
+                 enable_secure_aggregate=True):
         super().__init__(trans_var=trans_var, enable_secure_aggregate=enable_secure_aggregate)
 
 

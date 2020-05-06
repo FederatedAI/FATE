@@ -297,7 +297,7 @@ class TaskScheduler(object):
         return True
 
     @staticmethod
-    def start_task(job_id, component_name, task_id, role, party_id, task_config):
+    def run_task(job_id, component_name, task_id, role, party_id, task_config):
         schedule_logger(job_id).info(
             'job {} {} {} {} task subprocess is ready'.format(job_id, component_name, role, party_id, task_config))
         task_process_start_status = False
@@ -325,6 +325,7 @@ class TaskScheduler(object):
                     '-r', role,
                     '-p', party_id,
                     '-c', task_config_path,
+                    '--processors_per_node', str(task_config['job_parameters'].get("processors_per_node", 0)),
                     '--job_server', '{}:{}'.format(get_lan_ip(), HTTP_PORT),
                 ]
             elif backend.is_spark():

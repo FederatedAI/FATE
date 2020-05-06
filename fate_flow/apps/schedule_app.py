@@ -84,7 +84,7 @@ def clean(job_id, role, party_id, roles, party_ids):
 @manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/run', methods=['POST'])
 @request_authority_certification
 def run_task(job_id, component_name, task_id, role, party_id):
-    TaskScheduler.start_task(job_id, component_name, task_id, role, party_id, request.json)
+    TaskScheduler.run_task(job_id, component_name, task_id, role, party_id, request.json)
     return get_json_result(retcode=0, retmsg='success')
 
 

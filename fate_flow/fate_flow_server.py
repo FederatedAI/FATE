@@ -92,10 +92,6 @@ if __name__ == '__main__':
         RuntimeConfig.init_config(WORK_MODE=WorkMode.STANDALONE)
         RuntimeConfig.init_config(HTTP_PORT=CLUSTER_STANDALONE_JOB_SERVER_PORT)
     session_utils.init_session_for_flow_server()
-    detect_table = session.table(namespace=DETECT_TABLE[0],
-                                 name=DETECT_TABLE[1],
-                                 partition=DETECT_TABLE[2])
-    session.parallelize(range(DETECT_TABLE[2]), namespace=DETECT_TABLE[0], name=DETECT_TABLE[1], partition=DETECT_TABLE[2])
     RuntimeConfig.init_env()
     RuntimeConfig.set_process_role(ProcessRole.SERVER)
     queue_manager.init_job_queue()

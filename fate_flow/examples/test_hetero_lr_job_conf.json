@@ -4,7 +4,8 @@
         "party_id": 9999
     },
     "job_parameters": {
-        "work_mode": 0
+        "work_mode": 1,
+        "processors_per_node": 1
     },
     "role": {
         "guest": [9999],
