@@ -14,7 +14,7 @@ thirdparty：
 
 ## 1.     Module Information
 
-In a party, FATE (Federated AI Technology Enabler) has the following modules,The specific module information is as follows:
+In a party, FATE (Federated AI Technology Enabler) has the following modules. Specific module information is as follows:
 
 | Module Name    | Port of module | Module function                                              |
 | -------------- | -------------- | ------------------------------------------------------------ |
@@ -27,7 +27,7 @@ In a party, FATE (Federated AI Technology Enabler) has the following modules,The
 
 ## 2. Deployment Architecture
 
-### **2.1. Unilateral Deployment Architecture **
+### **2.1 Unilateral Deployment Architecture **
 
 
 
@@ -42,7 +42,7 @@ In a party, FATE (Federated AI Technology Enabler) has the following modules,The
 
 ### **3.1. Server Configuration**
 
-The following configuration is a one-sided server configuration information. If there are multiple parties, please refer to this configuration to copy this environment:
+The following configuration information is for one-sided server configuration. If there are multiple parties, please refer to this configuration to replicate this environment:
 
 | Server                 |                                                              |
 | ---------------------- | ------------------------------------------------------------ |
@@ -51,9 +51,9 @@ The following configuration is a one-sided server configuration information. If 
 | **Operating System**   | Version: CentOS Linux release 7.2                            |
 | **Dependency Package** | yum source gcc gcc-c++ make autoconfig openssl-devel supervisor gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-dev |
 | **Users**              | User: app owner:apps (app user can sudo su root without password) |
-| **File System**        | 1. The  500G hard disk is mounted to the /data directory.                                                                               2. Created /data/projects directory, projects directory belongs to app:apps. |
+| **File System**        | 1. The  500G hard disk is mounted to the /data directory. 2. Create /data/projects directory, projects directory belongs to app:apps. |
 
-### 3.2. Cluster planning
+### 3.2 Cluster planning
 
 | party  | partyid | hostname      | IP          | os                      | software             | services                                                |
 | ------ | ------- | ------------- | ----------- | ----------------------- | -------------------- | ------------------------------------------------------- |
@@ -61,7 +61,7 @@ The following configuration is a one-sided server configuration information. If 
 | PartyA | 9999    | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate,eggroll         | nodemanger，rollsite                                    |
 | PartyB | 10000   | VM_0_3_centos | 192.168.0.3 | CentOS 7.2/Ubuntu 16.04 | fate，eggroll，mysql | all                                                     |
 
-### 3.3. Basic environment configuration
+### 3.3 Basic environment configuration
 
 #### 3.3.1 hostname configuration (optional)
 
@@ -97,11 +97,11 @@ vim /etc/hosts
 
 Confirm whether selinux is installed
 
-The centos system executes: rpm -qa | grep selinux
+Centos system executes: rpm -qa | grep selinux
 
-The ubuntu system executes:  apt list --installed | grep selinux
+Ubuntu system executes:  apt list --installed | grep selinux
 
-If selinux is installed, execute: setenforce 0
+If selinux is already installed, execute: setenforce 0
 
 #### 3.3.3 Modify the maximum number of open files in Linux
 
@@ -167,7 +167,7 @@ if [ ! -f "libssl.so.10" ];then
 fi
 ```
 
-## 3.4 Increase virtual memory
+### 3.4 Increase virtual memory
 
 **Execute under the root user of the target server (192.168.0.1 192.168.0.2 192.168.0.3)**
 
@@ -184,12 +184,12 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 
 
 
-4.Project deployment
-==========
+## 4.Project deployment
 
-Note: The installation directory of this guide is /data/projects/install by default, the user is the app, and it is modified according to the actual situation during installation.
 
-4.1 Get the installation package
+Note: The installation directory of this guide is /data/projects/install by default, the user is the app, and it should be modified according to the actual situation during installation.
+
+### 4.1 Get the installation package
 ------------
 
 Execute under the app user of the target server (192.168.0.1 has an external network environment):
@@ -202,12 +202,12 @@ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.0-rc3.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.0-rc4.tar.gz
 
-#传输到192.168.0.2和192.168.0.3
+#Send to 192.168.0.2和192.168.0.3
 scp *.tar.gz app@192.168.0.2:/data/projects/install
 scp *.tar.gz app@192.168.0.3:/data/projects/install
 ```
 
-## 4.2 Deploy mysql
+### 4.2 Deploy mysql
 
 **Execute under the app user of the target server (192.168.0.1 192.168.0.3)**
 
@@ -233,7 +233,7 @@ cp my.cnf /data/projects/fate/common/mysql/mysql-8.0.13/conf
 cd /data/projects/fate/common/mysql/mysql-8.0.13/
 ./bin/mysqld --initialize --user=app --basedir=/data/projects/fate/common/mysql/mysql-8.0.13 --datadir=/data/projects/fate/data/mysql > logs/init.log 2>&1
 cat logs/init.log |grep root@localhost
-#Note that the root @ localhost: in the output information is the initial password of the mysql user root, which needs to be recorded, and the password to be changed later needs to be used
+#Note that the root @ localhost: in the output information is the initial password of the mysql user root, which should be recorded for later changing password
 
 #Start service
 cd /data/projects/fate/common/mysql/mysql-8.0.13/
@@ -297,26 +297,26 @@ mysql>select * from server_node;
 
 
 
-## 4.3 Deploy jdk
+### 4.3 Deploy jdk
 
 **Execute under the app user of the target server (192.168.0.1 192.168.0.2 192.168.0.3)**
 
 ```
 #Create jdk installation directory
 mkdir -p /data/projects/fate/common/jdk
-#解压缩
+#Unzip the package
 cd /data/projects/install
 tar xzf jdk-8u192-linux-x64.tar.gz -C /data/projects/fate/common/jdk
 cd /data/projects/fate/common/jdk
 mv jdk1.8.0_192 jdk-8u192
 ```
 
-## 4.4 Deploy python
+### 4.4 Deploy python
 
 **Execute under the app user of the target server (192.168.0.1 192.168.0.2 192.168.0.3)**
 
 ```
-#Create python virtual installation director
+#Create python virtual installation directory
 mkdir -p /data/projects/fate/common/python
 
 #Install miniconda3
@@ -325,7 +325,7 @@ tar xvf python-env-1.4.0-rc3.tar.gz
 cd python-env
 sh Miniconda3-4.5.4-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
 
-#Install virtualenv and create virtualized environment
+#Install virtualenv and create virtual environment
 /data/projects/fate/common/miniconda3/bin/pip install virtualenv-20.0.18-py2.py3-none-any.whl -f . --no-index
 
 /data/projects/fate/common/miniconda3/bin/virtualenv -p /data/projects/fate/common/miniconda3/bin/python3.6 --no-wheel --no-setuptools --no-download /data/projects/fate/common/python/venv
@@ -342,10 +342,10 @@ pip list | wc -l
 
 
 
-4.5 Deploy eggroll&fate
+### 4.5 Deploy eggroll&fate
 --------
 
-### 4.5.1 Software deployment
+#### 4.5.1 Software deployment
 
 ```
 #Software deployment
@@ -371,11 +371,11 @@ export PATH=\$PATH:\$JAVA_HOME/bin
 EOF
 ```
 
-### 4.5.2 eggroll system configuration file modification
+#### 4.5.2 eggroll system configuration file modification
 
-This configuration file rollsite, clustermanager, and nodemanager are shared, and multiple hosts on each party are consistent, and the content needs to be modified:
+This configuration file are shared among rollsite, clustermanager, and nodemanager, and configuration across multiple hosts on each party should be consistent. Content needs to be modified:
 
-- Database driver, the database corresponds to the connection IP, port, user name and password used by the party. The port is usually the default.
+- Database driver, the database corresponds to the connection IP, port, user name and password used by the party. Usually the default value for the port should suffice.
 
   eggroll.resourcemanager.clustermanager.jdbc.driver.class.name
 
@@ -383,7 +383,7 @@ This configuration file rollsite, clustermanager, and nodemanager are shared, an
 
   eggroll.resourcemanager.clustermanager.jdbc.password
 
-- Corresponding to the IP, port, nodemanager port, process tag, and port of the party clustermanager, the default is generally enough.
+- Corresponding to the IP, port, nodemanager port, process tag, and port of the party clustermanager. Usually the default value for the port should suffice.
 
   eggroll.resourcemanager.clustermanager.host
 
@@ -401,7 +401,7 @@ This configuration file rollsite, clustermanager, and nodemanager are shared, an
 
   eggroll.resourcemanager.bootstrap.roll_pair_master.javahome
 
-- Corresponding to the party rollsite's IP and port, and the party's Party Id modification, rollsite's port is usually the default.
+- Modify IP and port corresponding to the party rollsite and the party's Party Id. Default value for rollsite's port generally should suffice.
 
   eggroll.rollsite.host
   eggroll.rollsite.port
@@ -495,9 +495,9 @@ eggroll.rollpair.transferpair.sendbuf.size=4150000
 EOF
 ```
 
-### 4.5.3 eggroll routing configuration file modification
+#### 4.5.3 eggroll routing configuration file modification
 
-This configuration file rollsite is used to configure routing information. You can manually configure it by referring to the following example, or you can use the following command to complete:
+This configuration file rollsite is used to configure routing information. You can manually configure it by referring to the following example, or you can use the following command:
 
 Configuration file: /data/projects/fate/eggroll/conf/route_table.json
 
@@ -577,7 +577,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
 EOF
 ```
 
-### 4.5.4 fate depends on service configuration file modification
+#### 4.5.4 fate dependent service configuration file modification
 
 - fateflow
 
@@ -653,7 +653,7 @@ cat > /data/projects/fate/python/arch/conf/server_conf.json << EOF
 EOF
 ```
 
-### 4.5.5 Fate database information configuration file modification
+#### 4.5.5 Fate database information configuration file modification
 
 - work_mode(1 means cluster mode, default)
 
@@ -661,7 +661,7 @@ EOF
 
 - Redis IP, port, password (no configuration required for temporary use of redis)
 
-  This configuration file format should be configured according to the yaml format, otherwise the error will be parsed, you can refer to the following example to manually configure, or you can use the following command to complete.
+  This configuration file should be in yaml format, otherwise an error will be raised during parsing, you can refer to the following example to manually configure, or you can use the following command.
 
   Configuration file: /data/projects/fate/python/arch/conf/base_conf.yaml
 
@@ -725,7 +725,7 @@ default_model_store_address:
 EOF
 ```
 
-### 4.5.6 fateboard configuration file modification
+#### 4.5.6 fateboard configuration file modification
 
 1）application.properties
 
@@ -790,7 +790,7 @@ vi service.sh
 export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 ```
 
-## 4.6 Start service
+### 4.6 Start service
 
 **Execute under the app user of the target server (192.168.0.2)**
 
@@ -811,7 +811,7 @@ cd /data/projects/fate/eggroll
 sh ./bin/eggroll.sh clustermanager start
 sh ./bin/eggroll.sh nodemanager start
 
-#Start the fate service, fateflow depends on the start of rollsite and mysql, and then start fateflow after the eggroll of all nodes is started, Otherwise, you will get stuck and report an error.
+#Start the fate service, fateflow depends on the start of rollsite and mysql. Make sure to start fateflow after eggroll of all nodes have been started. Otherwise, you will get stuck, and an error will be raised.
 
 source /data/projects/fate/init_env.sh
 cd /data/projects/fate/python/fate_flow
@@ -836,7 +836,7 @@ cd /data/projects/fate/fateboard
 sh service.sh start
 ```
 
-## 4.7 identify the problem
+### 4.7 identify the problem
 
 1) eggroll log
 
@@ -864,7 +864,7 @@ sh service.sh start
 
 ### 5.1 Toy_example deployment verification
 
-You need to set 3 parameters for this test: guest_partyid，host_partyid，work_mode。
+You need to set 3 parameters for this test: guest_partyid，host_partyid，work_mode.
 
 #### 5.1.1 Unilateral test
 
@@ -880,7 +880,7 @@ A result similar to the following indicates success:
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
 
-2) Executed on 192.168.0.2, guest_partyid and host_partyid are set to 10000:
+2) Executed on 192.168.0.3, guest_partyid and host_partyid are set to 10000:
 
 ```
 source /data/projects/fate/init_env.sh
@@ -908,15 +908,15 @@ A result similar to the following indicates success:：
 
 
 
-### 5.2. Minimization testing
+### 5.2 Minimization testing
 
-Start the virtualization environment in host and guest respectively.
+Start the virtual environment in host and guest respectively.
 
 #### 5.2.1 Fast mode**
 
-In the node of guest and host parts, set the fields: guest_id, host_id, arbiter_id  in run_task.py as you requirement. This file locates in / data / projects / fate / python / examples / min_test_task/.
+In the node of guest and host parties, set the fields: guest_id, host_id, arbiter_id in run_task.py according to your actual setting. This file is located in / data / projects / fate / python / examples / min_test_task/.
 
-In the  node of host part, running:
+In the node of host party, run:
 
 ```
 source /data/projects/fate/init_env.sh
@@ -926,7 +926,7 @@ sh run.sh host fast
 
 Get the values of "host_table" and "host_namespace" from test results, and pass them to following command.
 
-In the node of guest part, running: 
+In the node of guest part, run: 
 
 ```
 source /data/projects/fate/init_env.sh
@@ -934,7 +934,7 @@ cd /data/projects/fate/python/examples/min_test_task/
 sh run.sh guest fast ${host_table} ${host_namespace}
 ```
 
-Wait a few minutes, see the result show "success" field to indicate that the operation is successful.
+Wait a few minutes, a result showing "success" indicates that the operation is successful.
 In other cases, if FAILED or stuck, it means failure.
 
 #### 5.2.2 Normal mode**
@@ -943,17 +943,18 @@ Just replace the word "fast" with "normal" in all the commands, the rest is the 
 
 ### 5.3. Fateboard testing
 
-Fateboard is a web service.  Get the ip of fateboard. If fateboard service is launched successfully, you can see the task information by visiting http://${fateboard-ip}:8080.
+Fateboard is a web service. Get the ip of fateboard. If fateboard service is launched successfully, you can see the task information by visiting http://${fateboard-ip}:8080.
+Firewall may need to be opened. When fateboard and fatefow are deployed to separate servers, you need to specify server information of fateflow service on Fateboard page: click the gear icon on the top right corner of Board homepage -> click "add" -> fill in ip, os user, ssh, and password for fateflow service. 
 
-6. System operation and maintenance
+## 6. System operation and maintenance
 ================
 
-6.1 Service management
+### 6.1 Service management
 ------------
 
 **Execute under the app user of the target server (192.168.0.1 192.168.0.2 192.168.0.3)**
 
-### 6.1.1 Eggroll Service Management
+#### 6.1.1 Eggroll Service Management
 
 ```
 source /data/projects/fate/init_env.sh
@@ -972,7 +973,7 @@ Start / stop / status / restart a single module (optional: clustermanager, nodem
 sh ./bin/eggroll.sh clustermanager start/stop/status/restart
 ```
 
-###  6.1.2 Fate Service Management
+#### 6.1.2 Fate Service Management
 
 1) Start / stop / status / restart fate_flow service
 
@@ -991,7 +992,7 @@ cd /data/projects/fate/fateboard
 sh service.sh start|stop|status|restart
 ```
 
-### 6.1.3 Mysql Service Management
+#### 6.1.3 Mysql Service Management
 
 Start / stop / status / restart mysql service
 
@@ -1000,11 +1001,11 @@ cd /data/projects/fate/common/mysql/mysql-8.0.13
 sh ./service.sh start|stop|status|restart
 ```
 
-## 6.2 View processes and ports
+### 6.2 View processes and ports
 
 **Execute under the app user of the target server (192.168.0.1 192.168.0.2 192.168.0.3)**
 
-### 6.2.1 View progress
+#### 6.2.1 View progress
 
 ```
 #See if the process starts according to the deployment plan
@@ -1015,7 +1016,7 @@ ps -ef | grep -i fate_flow_server.py
 ps -ef | grep -i fateboard
 ```
 
-### 6.2.2 View process port
+#### 6.2.2 View process port
 
 ```
 #Check whether the process port exists according to the deployment plan
@@ -1033,7 +1034,7 @@ netstat -tlnp | grep 8080
 
 
 
-## 6.3 Service log
+### 6.3 Service log
 
 | Service            | Log path                                           |
 | ------------------ | -------------------------------------------------- |
@@ -1042,8 +1043,8 @@ netstat -tlnp | grep 8080
 | fateboard          | /data/projects/fate/fateboard/logs                 |
 | mysql              | /data/projects/fate/common/mysql/mysql-8.0.13/logs |
 
-# 7. other
+## 7. other
 
-## 7.1 eggroll & fate package build
+### 7.1 eggroll & fate package build
 
 refer to [build guide](./build.md) 
