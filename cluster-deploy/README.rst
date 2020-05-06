@@ -1147,7 +1147,7 @@ Start / stop / status / restart mysql service
 **Execute under the app user of the target server (192.168.0.1
 192.168.0.2 192.168.0.3)**
 
-6.2.1 View progress
+6.2.1 View process
 ^^^^^^^^^^^^^^^^^^^
 
 ::
