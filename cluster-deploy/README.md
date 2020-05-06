@@ -188,7 +188,6 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 Note: The installation directory of this guide is /data/projects/install by default, the user is the app, and it should be modified according to the actual situation during installation.
 
 ### 4.1 Get the installation package
-------------
 
 Execute under the app user of the target server (192.168.0.1 has an external network environment):
 
@@ -341,7 +340,6 @@ pip list | wc -l
 
 
 ### 4.5 Deploy eggroll&fate
---------
 
 #### 4.5.1 Software deployment
 
@@ -945,10 +943,8 @@ Fateboard is a web service. Get the ip of fateboard. If fateboard service is lau
 Firewall may need to be opened. When fateboard and fatefow are deployed to separate servers, you need to specify server information of fateflow service on Fateboard page: click the gear icon on the top right corner of Board homepage -> click "add" -> fill in ip, os user, ssh, and password for fateflow service. 
 
 ## 6. System operation and maintenance
-================
 
 ### 6.1 Service management
-------------
 
 **Execute under the app user of the target server (192.168.0.1 192.168.0.2 192.168.0.3)**
 
