@@ -999,7 +999,7 @@ sh ./service.sh start|stop|status|restart
 
 **Execute under the app user of the target server (192.168.0.1 192.168.0.2 192.168.0.3)**
 
-#### 6.2.1 View progress
+#### 6.2.1 View process
 
 ```
 #See if the process starts according to the deployment plan
