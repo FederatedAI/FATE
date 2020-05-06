@@ -480,7 +480,7 @@ python run_toy_example.py 9999 10000 1
 
 该文件在/data/projects/fate/python/examples/min_test_task/目录下。
 
-**在Host节点192.168.0.1上运行：**
+**在Host节点上运行：**
 
 ```
 source /data/projects/fate/init_env.sh
@@ -490,7 +490,7 @@ sh run.sh host fast
 
 从测试结果中获取“host_table”和“host_namespace”的值，并将它们作为参数传递给下述guest方命令。
 
-**在Guest节点192.168.0.2上运行：**
+**在Guest节点上运行：**
 
 ```
 source /data/projects/fate/init_env.sh
