@@ -33,23 +33,23 @@ modules. Specific module information is as follows:
    * - fate_flow
      - 9360; 9380
      - Federated learning pipeline management module, there is only one service for each party
-   
+
    * - fateboard
      - 8080
-     - Federated learning process visualization module, only one service needs to be deployed per party   
-   
+     - Federated learning process visualization module, only one service needs to be deployed per party
+
    * - clusterm
      - 4670
-     - The cluster manager manages the cluster, only one instance needs to be deployed per party  
-   
+     - The cluster manager manages the cluster, only one instance needs to be deployed per party
+
    * - nodemanger
      - 4671
      - Node manager manages the resources of each machine, each party can have multiple of this service, but a server can only have one
-   
+
    * - rollsite
      - 9370
      - Cross-site or cross-party communication components, equivalent to proxy + federation, each party has only one service
-   
+
    * - mysql
      - 3306
      - Data storage, clustermanager and fateflow dependency, each party only needs one service
@@ -84,67 +84,66 @@ configuration to replicate this environment:
    :header-rows: 1
 
    * - Server
-     - 
+     -
 
    * - **Quantity**
      - 1 or more than 1 (according to the actual server allocation module provided)
-   
+
    * - **Configuration**
      - 8 core / 16G memory / 500G hard disk / 10M bandwidth
-   
+
    * - **Operating System**
      - Version: CentOS Linux release 7.2
-   
+
    * - **Dependency Package**
      - yum source gcc gcc-c++ make autoconfig openssl-devel supervisor gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-dev
-   
+
    * - **Users**
      - User: app owner: apps (app user can sudo su root without password)
-   
+
    * - **File System**
-     - 1. The 500G hard disk is mounted to the /data directory. 
+     - 1. The 500G hard disk is mounted to the /data directory.
        2. Create /data/projects directory, projects directory belongs to app:apps.
 
 
 3.2 Cluster planning
 ~~~~~~~~~~~~~~~~~~~~
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 40
-   :header-rows: 1
+.. list-table:: Role & information
+    :widths: 10 10 15 15 20 20 20
+    :header-rows: 1
 
-   * - party
-     - partyid
-     - hostname
-     - IP
-     - os
-     - software
-     - services
-   
-   * - PartyA
-     - 9999
-     - VM_0_1_centos
-     - 192.168.0.1
-     - CentOS 7.2/ Ubuntu 16.04
-     - fate, eggroll, mysql
-     - fate_flow, fateboard, clustermanager, nodemanger, mysql
-   
-   * - PartyA
-     - 9999
-     - VM_0_2_centos
-     - 192.168.0.2
-     - CentOS 7.2/Ubuntu 16.04
-     - fate, eggroll
-     - nodemanger, rollsite
-   
-   * - PartyB
-     - 10000
-     - VM_0_3_centos
-     - 192.168.0.3
-     - CentOS 7.2/Ubuntu 16.04
-     - fate, eggroll, mysql 
-     - all
+    * - party
+      - partyid
+      - hostname
+      - IP
+      - os
+      - software
+      - services
 
+    * - PartyA
+      - 9999
+      - VM_0_1_centos
+      - 192.168.0.1
+      - CentOS 7.2/Ubuntu 16.04
+      - fate, eggroll, mysql
+      - fate_flow, fateboard, clustermanager, nodemanager, mysql
+
+    * - PartyB
+      - 9999
+      - VM_0_2_centos
+      - 192.168.0.2
+      - CentOS 7.2/Ubuntu 16.04
+      - fate, eggroll
+      - nodemanager, rollsite
+
+    * - PartyC
+      - 10000
+      - VM_0_3_centos
+      - 192.168.0.3
+      - CentOS 7.2/Ubuntu 16.04
+      - fate, eggroll, mysql
+      - all
 
 3.3 Basic environment configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -184,7 +183,7 @@ configuration to replicate this environment:
 
 Confirm whether selinux is installed:
 
-Execute under the root user of the target server (192.168.0.1 192.168.0.2 192.168.0.3): 
+Execute under the root user of the target server (192.168.0.1 192.168.0.2 192.168.0.3):
 
 
 1. Centos system executes:
@@ -193,13 +192,13 @@ Execute under the root user of the target server (192.168.0.1 192.168.0.2 192.16
      rpm -qa \| grep selinux
 
 2. Ubuntu system executes:
-   :: 
+   ::
 
      apt list –installed \| grep selinux
 
 
 If selinux is already installed, execute
-   
+
    ::
 
      setenforce 0
@@ -211,7 +210,7 @@ If selinux is already installed, execute
 **Execute under the root user of the target server (192.168.0.1 192.168.0.2 192.168.0.3):**
 
 ::
-  
+
   vim /etc/security/limits.conf
   \* soft nofile 65536
   \* hard nofile 65536
@@ -1179,7 +1178,7 @@ Start / stop / status / restart mysql service
 **Execute under the app user of the target server (192.168.0.1
 192.168.0.2 192.168.0.3)**
 
-6.2.1 View progress
+6.2.1 View process
 ^^^^^^^^^^^^^^^^^^^
 
 ::
@@ -1217,16 +1216,16 @@ Start / stop / status / restart mysql service
 
    * - Service
      - Log path
-   
+
    * - eggroll
      - /data/projects/fate/eggroll/logs
-   
+
    * - fate_flow&Task log
      - /data/projects/fate/python/logs
-   
+
    * - fateboard
      - /data/projects/fate/fateboard/logs
-   
+
    * - mysql
      - /data/projects/fate/common/mysql/mysql-8.0.13/logs
 
