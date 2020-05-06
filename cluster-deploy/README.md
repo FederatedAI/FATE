@@ -38,8 +38,6 @@ In a party, FATE (Federated AI Technology Enabler) has the following modules. Sp
 </div>
 
 
-
-
 ## 3. Installation Preparation
 
 ### **3.1. Server Configuration**
