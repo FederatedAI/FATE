@@ -112,7 +112,7 @@ def generate_label_data(ids):
         print(SAMPLE_NUM)
         raise ValueError("len ids should equal to sample number")
 
-    header = ['id', 'y'] + ['x' + str(i) for i in range(FEATURE_NUM)]
+    header = ['id', 'y'] + ['x' + str(i) for i in range(2)]
     yield header
 
     counter = 0
