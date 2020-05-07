@@ -59,7 +59,9 @@ def layers(layer, config, type):
         if layer == "Tanh":
             return torch.nn.Tanh()
         if layer == "Softmax":
-            return torch.nn.Softmax(0)
+            return torch.nn.Softmax(1)
+        if layer =="LogSoftmax":
+            return torch.nn.LogSoftmax(1)
 
     elif type == "normal":
         if layer == "Linear":
@@ -159,7 +161,6 @@ class PytorchNNModel(NNModel):
                 optimizer.step()
 
     def evaluate(self, data: data.dataset, **kwargs):
-
         metircs = {}
         loss_metircs = []
         loss_fuc = []
@@ -269,7 +270,6 @@ class PytorchNNModel(NNModel):
         model = torch.load(f)
         f.close()
         return PytorchNNModel(model)
-
 
 # class PredictNN(NNModel):
 #     def __init__(self, model):
