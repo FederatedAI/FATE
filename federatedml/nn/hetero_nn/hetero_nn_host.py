@@ -140,5 +140,6 @@ class HeteroNNHost(HeteroNNBase):
     def _get_model_param(self):
         model_param = HeteroNNParam()
         model_param.hetero_nn_model_param.CopyFrom(self.model.get_hetero_nn_model_param())
+        model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
 
         return model_param
