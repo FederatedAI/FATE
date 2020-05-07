@@ -19,6 +19,12 @@
 | -------- | -------- | ------------- | ----------- | ----------------------- | -------- | -------- |
 | exchange | exchange | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | eggroll  | rollsite |
 
+架构图：
+
+<div style="text-align:center", align=center>
+<img src="../images/proxy_zh.png" />
+</div>
+
 # 3.组件说明
 
 | 软件产品 | 组件     | 端口 | 说明                                                         |
@@ -268,13 +274,19 @@ cd /data/projects/fate/eggroll
 sh ./bin/eggroll.sh rollsite start
 ```
 
-## 5.7 问题定位
+## 5.7 验证和问题定位
 
-1）rollsite日志
+1）跑一个双边toy测试，看是否可以测试通过，通过则表示配置无误，具体用例参考allinone部署文档。
 
-/data/projects/fate/eggroll/logs/eggroll/bootstrap.rollsite.err
+2）查看exchange日志，看第1步用例涉及到的partyid是否有路由信息，
 
-/data/projects/fate/eggroll/logs/eggroll/rollsite.jvm.err.log
+​       日志：/data/projects/fate/eggroll/logs/eggroll/rollsite.jvm.log
+
+3）rollsite错误日志
+
+​      /data/projects/fate/eggroll/logs/eggroll/bootstrap.rollsite.err
+
+​      /data/projects/fate/eggroll/logs/eggroll/rollsite.jvm.err.log
 
 6.系统运维
 ================

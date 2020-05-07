@@ -21,6 +21,12 @@
 | PartyA | 9999    | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate,eggroll         | nodemanger，rollsite                                    |
 | PartyB | 10000   | VM_0_3_centos | 192.168.0.3 | CentOS 7.2/Ubuntu 16.04 | fate，eggroll，mysql | all                                                     |
 
+架构图：
+
+<div style="text-align:center", align=center>
+<img src="../images/arch_zh.png" />
+</div>
+
 # 3.组件说明
 
 | 软件产品 | 组件           | 端口      | 说明                                                         |
@@ -173,7 +179,7 @@ cd /data/projects/install
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.0-rc3.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.0-rc3.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.0-rc4.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.0-release.tar.gz
 
 #传输到192.168.0.2和192.168.0.3
 scp *.tar.gz app@192.168.0.2:/data/projects/install
@@ -324,7 +330,7 @@ pip list | wc -l
 #部署软件
 #在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）app用户下执行:
 cd /data/projects/install
-tar xf FATE_install_1.4.0-rc4.tar.gz
+tar xf FATE_install_1.4.0-release.tar.gz
 cd FATE_install_1.4*
 tar xvf python.tar.gz -C /data/projects/fate/
 tar xvf eggroll.tar.gz -C /data/projects/fate
