@@ -31,7 +31,7 @@ In a party, FATE (Federated AI Technology Enabler) has the following modules. Sp
 
 
 
-​                                                        Example deployment in two party
+​                                                        Example deployment in two parties
 
 <div style="text-align:center", align=center>
 <img src="./images/arch_en.png" />

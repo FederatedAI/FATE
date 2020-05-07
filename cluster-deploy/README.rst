@@ -61,7 +61,7 @@ modules. Specific module information is as follows:
 2.1 Bilateral Deployment Architecture
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-​ Example deployment in two party
+​ Example deployment in two parties
 
 .. figure:: images/arch_en.png
    :align: center
