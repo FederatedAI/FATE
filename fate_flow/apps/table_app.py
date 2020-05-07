@@ -15,6 +15,7 @@
 #
 from fate_flow.manager.data_manager import query_data_view, delete_table
 from fate_flow.utils.api_utils import get_json_result
+from fate_flow.utils import session_utils
 from fate_flow.settings import stat_logger
 from arch.api.utils.dtable_utils import get_table_info
 from arch.api import session
@@ -30,6 +31,7 @@ def internal_server_error(e):
 
 
 @manager.route('/delete', methods=['post'])
+@session_utils.session_detect()
 def table_delete():
     request_data = request.json
     data_views = query_data_view(**request_data)
@@ -42,6 +44,7 @@ def table_delete():
         table.destroy()
         data.append({'table_name': table_name,
                      'namespace': namespace})
+        status = True
     elif data_views:
         status, data = delete_table(data_views)
     else:
@@ -50,6 +53,7 @@ def table_delete():
 
 
 @manager.route('/<table_func>', methods=['post'])
+@session_utils.session_detect()
 def dtable(table_func):
     config = request.json
     if table_func == 'table_info':

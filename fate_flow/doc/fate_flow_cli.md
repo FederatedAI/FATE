@@ -196,8 +196,10 @@ python fate_flow_client.py -f download -c examples/download_guest.json
 - description: upload table
 - parameter:
     * -c --config: config path, Required
+    * -drop --drop: Operations before file upload, Optional 
 ```bash
-python fate_flow_client.py -f upload -c examples/upload_guest.json
+python fate_flow_client.py -f upload -c examples/upload_guest.json 
+python fate_flow_client.py -f upload -c examples/upload_guest.json -drop 0(or1)
 ```
 
 
@@ -266,10 +268,37 @@ python fate_flow_client.py -f bind -c $conf_path
 
 
 
-#### version
-- description: query model version history
+#### store
+- description: store model
 - parameter:
-    * -n --namespace: namespace, Required
+    * -c --config: config path, Required
 ```bash
-python fate_flow_client.py -f version -n $namespce
+python fate_flow_client.py -f store -c $conf_path
+```
+
+
+#### restore
+- description: restore mode
+- parameter:
+    * -c --config: config path, Required
+```bash
+python fate_flow_client.py -f restore -c $conf_path
+```
+
+
+#### export
+- description: export model
+- parameter:
+    * -c --config: config path, Required
+```bash
+python fate_flow_client.py -f export -c $conf_path
+```
+
+
+#### import
+- description: import model
+- parameter:
+    * -c --config: config path, Required
+```bash
+python fate_flow_client.py -f import -c $conf_path
 ```

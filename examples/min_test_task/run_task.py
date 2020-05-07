@@ -15,6 +15,8 @@ download_config_file = home_dir + "/config/download.json"
 hetero_lr_config_file = home_dir + "/config/test_hetero_lr_train_job_conf.json"
 hetero_lr_dsl_file = home_dir + "/config/test_hetero_lr_train_job_dsl.json"
 
+predict_task_file = home_dir + "/config/test_predict_conf.json"
+
 guest_import_data_file = home_dir + "/config/data/breast_b.csv"
 fate_flow_path = home_dir + "/../../fate_flow/fate_flow_client.py"
 
@@ -42,9 +44,10 @@ RUNNING = 'running'
 FAIL = 'failed'
 STUCK = 'stuck'
 # READY = 'ready'
-MAX_INTERSECT_TIME = 600
-MAX_TRAIN_TIME = 3600
-OTHER_TASK_TIME = 300
+MAX_INTERSECT_TIME = 3600  # In millisecond
+MAX_TRAIN_TIME = 7200  # In millisecond
+WAIT_UPLOAD_TIME = 1000
+OTHER_TASK_TIME = 7200
 # RETRY_JOB_STATUS_TIME = 5
 STATUS_CHECKER_TIME = 10
 
@@ -133,12 +136,12 @@ class UploadTask(TaskManager):
 
     def _parse_argv(self, argv):
         role = argv[2]
-        if role == GUEST:
-            self.party_id = guest_id
-        elif role == HOST:
-            self.party_id = host_id
-        else:
-            raise ValueError("Unsupported role:{}".format(role))
+        # if role == GUEST:
+        #     self.party_id = guest_id
+        # elif role == HOST:
+        #     self.party_id = host_id
+        # else:
+        #     raise ValueError("Unsupported role:{}".format(role))
         self.role = role
         self.data_file = argv[3]
         if not os.path.exists(self.data_file):
@@ -162,7 +165,7 @@ class UploadTask(TaskManager):
             raise ValueError(
                 "upload data exec fail, status:{}, stdout:{}".format(status, stdout))
         print("Upload output is {}".format(stdout))
-        time.sleep(6)
+        time.sleep(WAIT_UPLOAD_TIME / 100)
         count = self.get_table_info(self.table_name, self.name_space)
         print("Upload Data, role: {}, count: {}".format(self.role, count))
         if self.role == HOST:
@@ -192,6 +195,8 @@ class TrainTask(TaskManager):
         self.method = 'all'
         self.guest_table_name = None
         self.guest_namespace = None
+        self.model_id = None
+        self.model_version = None
 
     def _parse_argv(self, argv):
         self._data_type = argv[2]
@@ -217,6 +222,8 @@ class TrainTask(TaskManager):
                           config_dir_path, "-d", hetero_lr_dsl_file]
         stdout = self.start_task(start_task_cmd)
         status = stdout["retcode"]
+        self.model_id = stdout['data']['model_info']['model_id']
+        self.model_version = stdout['data']['model_info']['model_version']
         if status != 0:
             raise ValueError(
                 "Training task exec fail, status:{}, stdout:{}".format(status, stdout))
@@ -235,12 +242,50 @@ class TrainTask(TaskManager):
             job_status = self.start_block_func(self._check_cpn_status, params,
                                                exit_func=self._check_exit, max_waiting_time=max_time)
             print("component name: {}, job_status: {}".format(cpn, job_status))
+            if job_status == FAIL:
+                exit(1)
 
         auc = self._get_auc(jobid)
         if auc < self.task_hetero_lr_base_auc:
             print("[Warning]  The auc: {} is lower than expect value: {}".format(auc, self.task_hetero_lr_base_auc))
         else:
             print("[Train] train auc:{}".format(auc))
+        time.sleep(WAIT_UPLOAD_TIME / 100)
+        self.start_predict_task()
+
+    def start_predict_task(self):
+        config_dir_path = self._make_runtime_conf("predict")
+        start_task_cmd = ['python', fate_flow_path, "-f", "submit_job", "-c", config_dir_path]
+        stdout = self.start_task(start_task_cmd)
+        status = stdout["retcode"]
+        if status != 0:
+            raise ValueError(
+                "Training task exec fail, status:{}, stdout:{}".format(status, stdout))
+        else:
+            jobid = stdout["jobId"]
+
+        components = self._parse_dsl_components()
+        for cpn in components:
+            params = [jobid, cpn]
+            if "intersect" in cpn:
+                max_time = MAX_INTERSECT_TIME
+            elif 'lr' in cpn:
+                max_time = MAX_TRAIN_TIME
+            elif 'evaluat' in cpn:
+                continue
+            else:
+                max_time = OTHER_TASK_TIME
+            job_status = self.start_block_func(self._check_cpn_status, params,
+                                               exit_func=self._check_exit, max_waiting_time=max_time)
+            print("component name: {}, job_status: {}".format(cpn, job_status))
+            if job_status == FAIL:
+                exit(1)
+        print("[Predict Task] Predict success")
+        # auc = self._get_auc(jobid)
+        # if auc < self.task_hetero_lr_base_auc:
+        #     print("[Warning]  The auc: {} is lower than expect value: {}".format(auc, self.task_hetero_lr_base_auc))
+        # else:
+        #     print("[Train] train auc:{}".format(auc))
 
     def _upload_data(self):
         upload_obj = UploadTask()
@@ -249,6 +294,7 @@ class TrainTask(TaskManager):
         upload_obj.run()
         guest_table_name = upload_obj.table_name
         guest_namespace = upload_obj.name_space
+        time.sleep(WAIT_UPLOAD_TIME / 100)
         table_info = self.get_table_info(guest_table_name, guest_namespace)
         count = table_info['data']['count']
         if count != self.task_data_count:
@@ -259,8 +305,12 @@ class TrainTask(TaskManager):
             print("Test upload task success, upload count match DTable count")
         return guest_table_name, guest_namespace
 
-    def _make_runtime_conf(self):
-        with open(hetero_lr_config_file, 'r', encoding='utf-8') as f:
+    def _make_runtime_conf(self, conf_type='train'):
+        if conf_type == 'train':
+            input_template = hetero_lr_config_file
+        else:
+            input_template = predict_task_file
+        with open(input_template, 'r', encoding='utf-8') as f:
             json_info = json.loads(f.read())
 
         json_info['role']['guest'] = [guest_id]
@@ -269,14 +319,24 @@ class TrainTask(TaskManager):
 
         json_info['initiator']['party_id'] = guest_id
         json_info['job_parameters']['work_mode'] = work_mode
+        if self.model_id is not None:
+            json_info["job_parameters"]["model_id"] = self.model_id
+            json_info["job_parameters"]["model_version"] = self.model_version
 
         table_info = {"name": self.guest_table_name,
                       "namespace": self.guest_namespace}
-        json_info["role_parameters"]["guest"]["args"]["data"]["train_data"] = [table_info]
+        if conf_type == 'train':
+            json_info["role_parameters"]["guest"]["args"]["data"]["train_data"] = [table_info]
+        else:
+            json_info["role_parameters"]["guest"]["args"]["data"]["eval_data"] = [table_info]
 
         table_info = {"name": self.host_name,
                       "namespace": self.host_namespace}
-        json_info["role_parameters"]["host"]["args"]["data"]["train_data"] = [table_info]
+        if conf_type == 'train':
+            json_info["role_parameters"]["host"]["args"]["data"]["train_data"] = [table_info]
+        else:
+            json_info["role_parameters"]["host"]["args"]["data"]["eval_data"] = [table_info]
+
         config = json.dumps(json_info)
         config_path = gen_unique_path('submit_job_guest')
         config_dir_path = os.path.dirname(config_path)

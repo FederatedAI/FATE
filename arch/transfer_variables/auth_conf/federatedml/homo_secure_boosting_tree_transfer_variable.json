@@ -53,6 +53,10 @@
         "guest",
         "host"
       ]
+    },
+    "valid_features": {
+      "src": ["arbiter"],
+      "dst": ["guest", "host"]
     }
   }
 }

@@ -526,6 +526,9 @@ class Sampler(ModelBase):
     def transform(self, data_inst):
         return self.run_sample(data_inst, self.task_type, self.role)
 
+    def check_consistency(self):
+        pass
+
     """
     def run(self, component_parameters, args=None):
         self._init_runtime_parameters(component_parameters)

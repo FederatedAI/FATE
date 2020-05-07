@@ -109,6 +109,9 @@ class IntersectModelBase(ModelBase):
             LOGGER.info("intersect_ids:{}".format(self.intersect_ids.count()))
         return self.intersect_ids
 
+    def check_consistency(self):
+        pass
+
 
 class IntersectHost(IntersectModelBase):
     def __init__(self):

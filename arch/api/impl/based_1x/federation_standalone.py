@@ -19,12 +19,15 @@ from typing import Union, Tuple
 from arch.api.base.federation import Rubbish, Party, Federation
 from arch.api.base.utils.store_type import StoreTypes
 from arch.api.utils.log_utils import getLogger
-from eggroll.api.standalone.eggroll import Standalone
+from arch.standalone.standalone.eggroll import Standalone
 # noinspection PyProtectedMember
-from eggroll.api.standalone.eggroll import _DTable
+from arch.standalone.standalone.eggroll import _DTable
 
 OBJECT_STORAGE_NAME = "__federation__"
 STATUS_TABLE_NAME = "__status__"
+
+_remote_tag_histories = set()
+_get_tag_histories = set()
 
 LOGGER = getLogger()
 
@@ -54,8 +57,17 @@ class FederationRuntime(Federation):
         self._loop = asyncio.get_event_loop()
 
     def remote(self, obj, name: str, tag: str, parties: Union[Party, list]) -> Rubbish:
+        if obj is None:
+            raise EnvironmentError(f"federation try to remote None to {parties} with name {name}, tag {tag}")
+
         if isinstance(parties, Party):
             parties = [parties]
+
+        for party in parties:
+            if (name, tag, party) in _remote_tag_histories:
+                raise EnvironmentError(f"remote duplicate tag {(name, tag)}")
+            _remote_tag_histories.add((name, tag, party))
+
         self._remote_side_auth(name=name, parties=parties)
 
         rubbish = Rubbish(name, tag)
@@ -81,6 +93,12 @@ class FederationRuntime(Federation):
     def get(self, name: str, tag: str, parties: Union[Party, list]) -> Tuple[list, Rubbish]:
         if isinstance(parties, Party):
             parties = [parties]
+
+        for party in parties:
+            if (name, tag, party) in _get_tag_histories:
+                raise EnvironmentError(f"get duplicate tag {(name, tag)}")
+            _remote_tag_histories.add((name, tag, party))
+
         self._get_side_auth(name=name, parties=parties)
 
         _status_table = _get_meta_table(STATUS_TABLE_NAME, self._session_id)
@@ -106,6 +124,8 @@ class FederationRuntime(Federation):
 
             else:  # todo: should standalone mode split large object?
                 obj = _object_table.get(r)
+                if obj is None:
+                    raise EnvironmentError(f"federation get None from {parties} with name {name}, tag {tag}")
                 rtn.append(obj)
                 rubbish.add_obj(_object_table, r)
                 rubbish.add_obj(_status_table, r)

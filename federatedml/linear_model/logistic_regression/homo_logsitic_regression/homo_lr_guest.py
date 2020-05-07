@@ -26,6 +26,7 @@ from federatedml.model_selection import MiniBatch
 from federatedml.optim.gradient.homo_lr_gradient import LogisticGradient
 from federatedml.util import consts
 from federatedml.util import fate_operator
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 
@@ -59,7 +60,7 @@ class HomoLRGuest(HomoLRBase):
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
 
             self.optimizer.set_iters(self.n_iter_)
-            if (self.n_iter_ > 0 and self.n_iter_ % self.aggregate_iters == 0) or self.n_iter_ == max_iter:
+            if ((self.n_iter_ + 1) % self.aggregate_iters == 0) or self.n_iter_ == max_iter:
                 weight = self.aggregator.aggregate_then_get(model_weights, degree=degree,
                                                             suffix=self.n_iter_)
                 LOGGER.debug("Before aggregate: {}, degree: {} after aggregated: {}".format(
@@ -97,6 +98,7 @@ class HomoLRGuest(HomoLRBase):
             validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
 
+    @assert_io_num_rows_equal
     def predict(self, data_instances):
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)

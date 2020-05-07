@@ -20,11 +20,12 @@ from flask import Flask, request
 
 from arch.api import session
 from fate_flow.manager.data_manager import query_data_view
-from fate_flow.settings import stat_logger, USE_LOCAL_DATA
+from fate_flow.settings import stat_logger, USE_LOCAL_DATA, WORK_MODE
 from fate_flow.utils.api_utils import get_json_result
-from fate_flow.utils import detect_utils, job_utils
+from fate_flow.utils import detect_utils, job_utils, session_utils
 from fate_flow.driver.job_controller import JobController
 from fate_flow.utils.job_utils import get_job_configuration, generate_job_id, get_job_directory
+from fate_flow.entity.runtime_config import RuntimeConfig
 
 manager = Flask(__name__)
 
@@ -36,9 +37,10 @@ def internal_server_error(e):
 
 
 @manager.route('/<access_module>', methods=['post'])
+@session_utils.session_detect()
 def download_upload(access_module):
     job_id = generate_job_id()
-    if access_module == "upload" and USE_LOCAL_DATA:
+    if access_module == "upload" and USE_LOCAL_DATA and not (request.json and request.json.get("module")):
         file = request.files.get('file')
         filename = os.path.join(get_job_directory(job_id), 'tmp', file.filename)
         os.makedirs(os.path.dirname(filename), exist_ok=True)
@@ -63,18 +65,18 @@ def download_upload(access_module):
     if access_module == "upload":
         data['table_name'] = request_config["table_name"]
         data['namespace'] = request_config["namespace"]
-        session.init(mode=request_config['work_mode'])
-        data_table = session.get_data_table(name=request_config["table_name"], namespace=request_config["namespace"])
-        count = data_table.count()
-        if count and int(request_config.get('drop', 2)) == 2:
-            return get_json_result(retcode=100,
-                                   retmsg='The data table already exists, table data count:{}.'
-                                          'If you still want to continue uploading, please add the parameter -drop. '
-                                          '0 means not to delete and continue uploading, '
-                                          '1 means to upload again after deleting the table'.format(
-                                       count))
-        elif count and int(request_config.get('drop', 2)) == 1:
-            data_table.destroy()
+        if WORK_MODE != 0:
+            data_table = session.get_data_table(name=request_config["table_name"], namespace=request_config["namespace"])
+            count = data_table.count()
+            if count and int(request_config.get('drop', 2)) == 2:
+                return get_json_result(retcode=100,
+                                       retmsg='The data table already exists, table data count:{}.'
+                                              'If you still want to continue uploading, please add the parameter -drop. '
+                                              '0 means not to delete and continue uploading, '
+                                              '1 means to upload again after deleting the table'.format(
+                                           count))
+            elif count and int(request_config.get('drop', 2)) == 1:
+                data_table.destroy()
     job_dsl, job_runtime_conf = gen_data_access_job_config(request_config, access_module)
     job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = JobController.submit_job(
         {'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)
@@ -104,6 +106,7 @@ def get_upload_history():
     return get_upload_info(jobs_run_conf)
 
 
+@session_utils.session_detect()
 def get_upload_info(jobs_run_conf):
     data = []
     for job_id, job_run_conf in jobs_run_conf.items():

@@ -35,7 +35,21 @@ class HeteroPearson(ModelBase):
         self.callback_metrics = []
         self.corr = None
         self.local_corr = None
-        self._parties = federation.all_parties()
+
+        # since multi-host not supported yet, we assume parties are one from guest and one from host
+        self._parties = []
+        guest_parties = federation.roles_to_parties(["guest"])
+        if len(guest_parties) != 1:
+            raise ValueError(f"num of guest party should be one, but {len(guest_parties)} provided")
+        self._parties.extend(guest_parties)
+
+        host_parties = federation.roles_to_parties(["host"])
+        if len(host_parties) < 1:
+            raise ValueError(f"no host party found")
+        if len(host_parties) > 1:
+            raise ValueError(f"multi-host not supported yet, {len(host_parties)} provided")
+        self._parties.extend(host_parties)
+
         self._local_party = federation.local_party()
         self._other_party = self._parties[0] if self._parties[0] != self._local_party else self._parties[1]
         self.shapes = []
@@ -92,7 +106,7 @@ class HeteroPearson(ModelBase):
         n, normed = self._standardized(data)
         self.local_corr = table_dot(normed, normed)
 
-        with SPDZ("pearson") as spdz:
+        with SPDZ("pearson", local_party=self._local_party, all_parties=self._parties) as spdz:
             source = [normed, self._other_party]
             if self._local_party.role == "guest":
                 x, y = FixedPointTensor.from_source("x", source[0]), FixedPointTensor.from_source("y", source[1])

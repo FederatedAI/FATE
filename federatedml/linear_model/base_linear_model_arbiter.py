@@ -70,7 +70,8 @@ class HeteroBaseArbiter(BaseLinearModel):
     #         LOGGER.info("Task is predict, No need for arbiter to involve.")
 
     def init_validation_strategy(self, train_data=None, validate_data=None):
-        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs, self.early_stopping_rounds)
+        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs, self.early_stopping_rounds,
+                                                 self.use_first_metric_only)
         return validation_strategy
 
     def fit(self, data_instances=None, validate_data=None):
