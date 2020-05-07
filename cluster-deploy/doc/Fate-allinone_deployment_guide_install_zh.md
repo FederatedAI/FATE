@@ -199,7 +199,7 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate-cluster-install-1.4.0-rc4-build2-c7-u18.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate-cluster-install-1.4.0-rc5-build-c7-u18.tar.gz
 tar xzf fate-cluster-install-1.4.0-rc4-build2-c7-u18.tar.gz
 ```
 
