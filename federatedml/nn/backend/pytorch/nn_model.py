@@ -54,7 +54,7 @@ def layers(layer, config, type):
             return torch.nn.Dropout(config)
 
     else:
-        print("layer not support！")
+        print("layer not support!")
 
 
 def build_pytorch(nn_define, optimizer, loss, metrics):
