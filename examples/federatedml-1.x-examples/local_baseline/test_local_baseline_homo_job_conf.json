@@ -31,7 +31,7 @@
       },
       "local_baseline_0": {
         "model_name": ["LogisticRegression"],
-        "model_opts": [null],
+        "model_opts": [{"max_iter": 30}],
         "need_run": [true]
       },
       "evaluation_0": {
