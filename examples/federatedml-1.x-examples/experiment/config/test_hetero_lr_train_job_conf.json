@@ -1,22 +1,22 @@
 {
   "initiator": {
     "role": "guest",
-    "party_id": 9990
+    "party_id": 9999
   },
   "job_parameters": {
     "work_mode": 1
   },
   "role": {
-    "guest": [9990],
-    "host": [10017],
-    "arbiter": [10017]
+    "guest": [9999],
+    "host": [10000],
+    "arbiter": [10000]
   },
   "role_parameters": {
     "guest": {
       "args": {
         "data": {
-          "train_data": [{"name": "lx_data_with_label_after_intersection_header_1", "namespace": "hetero"}],
-          "eval_data": [{"name": "lx_data_with_label_after_intersection_header_1", "namespace": "hetero"}]
+          "train_data": [{"name": "guest_data_name", "namespace": "namespace"}],
+          "eval_data": [{"name": "guest_data_name", "namespace": "namespace"}]
         }
       },
       "dataio_0": {
@@ -62,8 +62,8 @@
     "host": {
       "args": {
         "data": {
-          "train_data": [{"name": "llxx_09_10", "namespace": "hetero"}],
-          "eval_data": [{"name": "llxx_09_10", "namespace": "hetero"}]
+          "train_data": [{"name": "host_data_name", "namespace": "namespace"}],
+          "eval_data": [{"name": "host_data_name", "namespace": "namespace"}]
         }
       },
       "dataio_0": {

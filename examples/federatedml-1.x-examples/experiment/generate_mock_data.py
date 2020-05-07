@@ -27,7 +27,7 @@ def generate_tag_1_data(ids):
     for sample_i in range(SAMPLE_NUM):
         one_data = [ids[sample_i]]
         for feature_i in range(FEATURE_NUM):
-            tag = str(int(random.random() * abs(TAG_INTERVAL[1] - TAG_INTERVAL[0])) + TAG_INTERVAL[0])
+            tag = str(random.randint(TAG_INTERVAL[0], TAG_INTERVAL[1]))
             value = '1.0'
             tag_value = ":".join([tag, value])
             one_data.append(tag_value)
@@ -47,7 +47,7 @@ def generate_tag_float_value_data(ids):
     for sample_i in range(SAMPLE_NUM):
         one_data = [ids[sample_i]]
         for feature_i in range(FEATURE_NUM):
-            tag = str(int(random.random() * abs(TAG_INTERVAL[1] - TAG_INTERVAL[0])) + TAG_INTERVAL[0])
+            tag = str(random.randint(TAG_INTERVAL[0], TAG_INTERVAL[1]))
             value = str(round(100 * random.random(), 2))
             tag_value = ":".join([tag, value])
             one_data.append(tag_value)
@@ -68,11 +68,10 @@ def generate_tag_data(ids):
     for sample_i in range(SAMPLE_NUM):
         one_data = [ids[sample_i]]
         for feature_i in range(FEATURE_NUM):
-            tag = str(int(random.random() * abs(TAG_INTERVAL[1] - TAG_INTERVAL[0])) + TAG_INTERVAL[0])
-
+            tag = str(random.randint(TAG_INTERVAL[0], TAG_INTERVAL[1]))
             value = ''
             for i in range(VALUE_LENGTH):
-                value += v_str[int(random.random() * 14 % 14)]
+                value += v_str[int(random.random() * 14)]
             tag_value = ":".join([tag, value])
             one_data.append(tag_value)
 
@@ -93,9 +92,8 @@ def generate_tag_value_data(ids):
     for sample_i in range(SAMPLE_NUM):
         one_data = [ids[sample_i]]
         for feature_i in range(FEATURE_NUM):
-            tag = str(int(random.random() * abs(TAG_INTERVAL[1] - TAG_INTERVAL[0])) + TAG_INTERVAL[0])
-            value = str(
-                int(random.random() * abs(VALUE_INTERVAL[1] - VALUE_INTERVAL[0])) + VALUE_INTERVAL[0])
+            tag = str(random.randint(TAG_INTERVAL[0], TAG_INTERVAL[1]))
+            value = str(random.randint(VALUE_INTERVAL[0], VALUE_INTERVAL[1]))
             tag_value = ":".join([tag, value])
             one_data.append(tag_value)
 
