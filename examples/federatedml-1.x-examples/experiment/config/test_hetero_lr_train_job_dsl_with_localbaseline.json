@@ -198,9 +198,6 @@
                     "data": ["hetero_lr_0.train","local_baseline_0.local_baseline_data"]
                 }
             },
-            "output": {
-                "data": ["evaluate"]
-            },
             "need_deploy": false
         }
     }
