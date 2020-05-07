@@ -20,6 +20,12 @@
 | PartyA | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate,eggroll,mysql | fate_flow，fateboard，clustermanager，nodemanger，rollsite，mysql |
 | PartyB | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate,eggroll,mysql | fate_flow，fateboard，clustermanager，nodemanger，rollsite，mysql |
 
+架构图：
+
+<div style="text-align:center", align=center>
+<img src="../images/arch_zh.png" />
+</div>
+
 # 3.组件说明
 
 | 软件产品 | 组件           | 端口      | 说明                                                         |

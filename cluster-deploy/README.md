@@ -27,15 +27,16 @@ In a party, FATE (Federated AI Technology Enabler) has the following modules. Sp
 
 ## 2. Deployment Architecture
 
-### **2.1 Unilateral Deployment Architecture **
+### **2.1 Bilateral Deployment Architecture **
 
 
 
-​                                                        Example deployment in one party
+​                                                        Example deployment in two party
 
 <div style="text-align:center", align=center>
-<img src="./images/arch.png" />
+<img src="./images/arch_en.png" />
 </div>
+
 
 
 ## 3. Installation Preparation
@@ -197,7 +198,7 @@ cd /data/projects/install
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.0-rc3.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.0-rc3.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.0-rc4.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.0-release.tar.gz
 
 #Send to 192.168.0.2和192.168.0.3
 scp *.tar.gz app@192.168.0.2:/data/projects/install
@@ -347,7 +348,7 @@ pip list | wc -l
 #Software deployment
 #Execute under the app user of the target server (192.168.0.1 192.168.0.2 192.168.0.3)
 cd /data/projects/install
-tar xf FATE_install_1.4.0-rc4.tar.gz
+tar xf FATE_install_1.4.0-release.tar.gz
 cd FATE_install_1.4*
 tar xvf python.tar.gz -C /data/projects/fate/
 tar xvf eggroll.tar.gz -C /data/projects/fate
