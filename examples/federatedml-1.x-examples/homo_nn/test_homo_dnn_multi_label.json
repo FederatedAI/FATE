@@ -99,7 +99,7 @@
         "early_stop": "diff",
         "eps": 1e-4
       },
-      "loss": "mean_squared_error",
+      "loss": "categorical_crossentropy",
       "metrics": [
         "accuracy"
       ],

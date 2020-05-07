@@ -60,18 +60,17 @@ def layers(layer, config, type):
             return torch.nn.Tanh()
         if layer == "Softmax":
             return torch.nn.Softmax(0)
+
     elif type == "normal":
         if layer == "Linear":
             return torch.nn.Linear(config[0], config[1])
         if layer == "BatchNorm2d":
             return torch.nn.BatchNorm2d()
         if layer == "dropout":
-            return torch.nn.Dropout()
+            return torch.nn.Dropout(config)
 
     else:
         print("layer not support!")
-
-
 
 
 def build_pytorch(nn_define, optimizer, loss, metrics):
@@ -147,7 +146,12 @@ class PytorchNNModel(NNModel):
         for epoch in range(epochs):
             for batch_id, (feature, label) in enumerate(train_data):
                 feature = torch.tensor(feature, dtype=torch.float32)
-                label = torch.tensor(label, dtype=torch.float32)
+                if isinstance(loss_fn, torch.nn.CrossEntropyLoss):
+                    label = torch.tensor(label, dtype=torch.long)
+                    temp = label.t()
+                    label = temp[0]
+                else:
+                    label = torch.tensor(label, dtype=torch.float32)
                 y_pre = self._model(feature)
                 optimizer.zero_grad()
                 loss = loss_fn(y_pre, label)
@@ -155,7 +159,6 @@ class PytorchNNModel(NNModel):
                 optimizer.step()
 
     def evaluate(self, data: data.dataset, **kwargs):
-
 
         metircs = {}
         loss_metircs = []
@@ -168,14 +171,13 @@ class PytorchNNModel(NNModel):
                     loss_fuc.append(build_loss_fn(func))
                 else:
                     other_metrics.append(func)
-
         self._model.eval()
         loss_fn = build_loss_fn(self._loss)
         evaluate_data = DataLoader(data, batch_size=data.batch_size, shuffle=False)
         result = np.zeros((len(data), data.y_shape[0]))
         eval_label = np.zeros((len(data), data.y_shape[0]))
         if loss_metircs:
-           loss_metircs_result = [0 for i in range(len(loss_metircs))]
+            loss_metircs_result = [0 for i in range(len(loss_metircs))]
         num_output_units = data.get_shape()[1]
         index = 0
         batch_num = 0
@@ -186,10 +188,14 @@ class PytorchNNModel(NNModel):
             y = self._model(feature)
             result[index:index + feature.shape[0]] = y.detach().numpy()
             eval_label[index:index + feature.shape[0]] = label.detach().numpy()
+            if isinstance(loss_fn, torch.nn.CrossEntropyLoss):
+                label = torch.tensor(label, dtype=torch.long)
+                temp = label.t()
+                label = temp[0]
             eval_loss = loss_fn(y, label)
             if loss_metircs:
                 for i in range(len(loss_fuc)):
-                    f=loss_fuc[i]
+                    f = loss_fuc[i]
                     res = f(y, label)
                     loss_metircs_result[i] += res.item()
             loss += eval_loss
@@ -198,10 +204,10 @@ class PytorchNNModel(NNModel):
 
         metircs["loss"] = loss.item() * data.batch_size / len(data)
         if loss_metircs:
-            i=0
+            i = 0
             for func in loss_metircs:
                 metircs[func] = loss_metircs_result[i] * data.batch_size / len(data)
-                i+=1
+                i += 1
         if len(other_metrics) > 0:
             if num_output_units[0] == 1:
                 for i in range(len(data)):
@@ -246,7 +252,6 @@ class PytorchNNModel(NNModel):
             index += feature.shape[0]
         return result
 
-
     def export_model(self):
         f = tempfile.TemporaryFile()
         try:
@@ -257,7 +262,6 @@ class PytorchNNModel(NNModel):
         finally:
             f.close()
 
-
     def restore_model(model_bytes):
         f = tempfile.TemporaryFile()
         f.write(model_bytes)
@@ -265,9 +269,6 @@ class PytorchNNModel(NNModel):
         model = torch.load(f)
         f.close()
         return PytorchNNModel(model)
-
-
-
 
 
 # class PredictNN(NNModel):
@@ -321,10 +322,13 @@ class PytorchData(data.Dataset):
         self.x_shape = one_data.features.shape
 
         num_label = len(data_instances.map(lambda x, y: [x, {y.label}]).reduce(lambda x, y: x | y))
-        if num_label == 2:
-            self.y_shape = (1,)
+        if num_label:
+            if num_label == 2:
+                self.y_shape = (1,)
+            else:
+                self.y_shape = (num_label,)
             self.x = np.zeros((self.size, *self.x_shape))
-            self.y = np.zeros((self.size, *self.y_shape))
+            self.y = np.zeros((self.size, 1))
             index = 0
             self._keys = []
             for k, inst in data_instances.collect():
@@ -334,17 +338,17 @@ class PytorchData(data.Dataset):
                 index += 1
 
         # encoding label in one-hot
-        elif num_label > 2:
-            self.y_shape = (num_label,)
-            self.x = np.zeros((self.size, *self.x_shape))
-            self.y = np.zeros((self.size, *self.y_shape))
-            index = 0
-            self._keys = []
-            for k, inst in data_instances.collect():
-                self._keys.append(k)
-                self.x[index] = inst.features
-                self.y[index][inst.label] = 1
-                index += 1
+        # elif num_label > 2:
+        #     self.y_shape = (num_label,)
+        #     self.x = np.zeros((self.size, *self.x_shape))
+        #     self.y = np.zeros((self.size, *self.y_shape))
+        #     index = 0
+        #     self._keys = []
+        #     for k, inst in data_instances.collect():
+        #         self._keys.append(k)
+        #         self.x[index] = inst.features
+        #         self.y[index][inst.label] = 1
+        #         index += 1
         else:
             raise ValueError(f"num_label is {num_label}")
 

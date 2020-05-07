@@ -107,7 +107,7 @@
         "early_stop": "diff",
         "eps": 1e-4
       },
-      "loss": "MSELoss",
+      "loss": "CrossEntropyLoss",
       "metrics": [
         "accuracy"
       ],
