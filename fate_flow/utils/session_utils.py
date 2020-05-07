@@ -57,6 +57,7 @@ def init_session_for_flow_server():
     session.init(job_id="session_used_by_fate_flow_server_{}".format(fate_uuid()),
                  mode=RuntimeConfig.WORK_MODE,
                  backend=RuntimeConfig.BACKEND,
+                 store_engine=RuntimeConfig.STORE_ENGINE,
                  options={"eggroll.session.processors.per.node": 1})
     # init session detect table
     detect_table = session.table(namespace=DETECT_TABLE[0], name=DETECT_TABLE[1], partition=DETECT_TABLE[2])
