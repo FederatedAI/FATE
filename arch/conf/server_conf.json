@@ -19,7 +19,7 @@
 		},
 		"proxy": {
 			"host": "localhost",
-			"port": 9371
+			"port": 9370
 		},
 		"fatemanager": {
 			"host": "localhost",

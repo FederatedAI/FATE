@@ -25,9 +25,9 @@ from eggroll.core.constants import SerdesTypes
 from eggroll.roll_pair.roll_pair import RollPairContext
 
 
-def build_eggroll_session(job_id, work_mode: WorkMode):
+def build_eggroll_session(job_id, work_mode: WorkMode, options: dict = None):
     from eggroll.core.session import session_init
-    options = {}
+    options = dict() if options is None else options
     if work_mode == WorkMode.STANDALONE:
         options['eggroll.session.deploy.mode'] = "standalone"
     elif work_mode == WorkMode.CLUSTER:
@@ -41,8 +41,8 @@ def build_eggroll_runtime(eggroll_session):
     return rpc
 
 
-def build_session(job_id, work_mode: WorkMode, persistent_engine: str):
-    eggroll_session = build_eggroll_session(work_mode=work_mode, job_id=job_id)
+def build_session(job_id, work_mode: WorkMode, persistent_engine: str, options: dict = None):
+    eggroll_session = build_eggroll_session(work_mode=work_mode, job_id=job_id, options=options)
     session = FateSessionImpl(eggroll_session, persistent_engine)
     return session
 

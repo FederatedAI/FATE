@@ -2,7 +2,7 @@
 
 This module provides tools to help us implement homogeneous federated learning algorithms. Two levels of abstraction are provided:
 
-1. sync: implement communication interaction in a logically independent process, witch could be reused sin different procedure.
+1. sync: implement communication interaction in a logically independent process, witch could be reused in different procedures.
 2. procedure: use syncs to describe high-level logical. 
 
 #### procedure
@@ -173,7 +173,7 @@ Client:
 
 ##### model_broadcast_sync
 
-Braodcast model to clients.
+Broadcast model to clients.
 
 Arbiter:
 ```python
@@ -213,7 +213,7 @@ Client:
 
 ##### paillier_keygen_sync
 
-Create Pallier ciphers
+Create Paillier ciphers
 
 Arbiter:
 ```python

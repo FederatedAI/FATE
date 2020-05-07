@@ -59,6 +59,10 @@ class FactorizationGradient(object):
     def compute_loss(values, w, embed, intercept):
         LOGGER.info("compute loss")
         X, Y = load_data(values)
+        batch_size = len(X)
+        if batch_size == 0:
+            LOGGER.warning("This partition got 0 data")
+            return None
         fm = fm_func(X, embed)
         func = np.vectorize(activation.log_logistic)
         expo = np.multiply(-Y.transpose(), X.dot(w) + fm + intercept)

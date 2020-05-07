@@ -64,7 +64,7 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
         self.config_type = hetero_nn_param.config_type
         self.optimizer = hetero_nn_param.optimizer
         self.loss = hetero_nn_param.loss
-        self.metrics = hetero_nn_param.metrics
+        # self.metrics = hetero_nn_param.metrics
         self.hetero_nn_param = hetero_nn_param
 
     def set_empty(self):
@@ -161,8 +161,10 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
 
         model_meta.loss = self.loss
 
+        """
         for metric in self.metrics:
             model_meta.metrics.append(metric)
+        """
 
         optimizer_param = OptimizerParam()
         optimizer_param.optimizer = self.optimizer.optimizer
@@ -191,9 +193,11 @@ class HeteroNNKerasGuestModel(HeteroNNGuestModel):
         self.interactive_layer_define = json.loads(model_meta.interactive_layer_define)
         self.loss = model_meta.loss
 
+        """
         self.metrics = []
         for metric in self.metrics:
             self.metrics.append(metric)
+        """
 
         self.optimizer.optimizer = model_meta.optimizer_param.optimizer
         self.optimizer.kwargs = json.loads(model_meta.optimizer_param.kwargs)

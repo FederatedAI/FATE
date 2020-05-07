@@ -4,5 +4,5 @@
 	"table_name":"hetero_citeulike_train_host",
 	"namespace":"hetero_host_citeulike",
 	"head": 1,
-	"partition": 10
+	"partition": 48
 }

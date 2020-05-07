@@ -179,7 +179,7 @@ class HeteroMFClient(HeteroMFBase):
 
         key_values = [(x[0], (0 if x[1][0] <= threshold else 1, x[1][0].item()))
                       for x in zip(data.get_keys(), predict)]
-        pred_tbl = fate_session.parallelize(key_values, include_key=True)
+        pred_tbl = fate_session.parallelize(key_values, include_key=True, partition=data_inst._partitions)
         return data_inst.join(
             pred_tbl, lambda d, pred: [
                 float(d.features.get_data(2)), pred[0], pred[1], {

@@ -16,15 +16,26 @@
 #  limitations under the License.
 #
 
-export PYTHONPATH=
 FATE_PYTHON_ROOT=$(dirname $(dirname $(readlink -f "$0")))
+EGGROLL_HOME=$(dirname ${FATE_PYTHON_ROOT})/eggroll
+PYTHON_PATH=${FATE_PYTHON_ROOT}:${EGGROLL_HOME}/python
+export PYTHONPATH=${PYTHON_PATH}
+export EGGROLL_HOME=${EGGROLL_HOME}
+echo "PYTHONPATH: "${PYTHONPATH}
+echo "EGGROLL_HOME: "${EGGROLL_HOME}
 log_dir=${FATE_PYTHON_ROOT}/logs
-venv=
+venv=/data/projects/fate/common/python/venv
 
 module=fate_flow_server.py
 
 getpid() {
-    pid=`lsof -i:9380 | awk 'NR==2{print $2}'`
+    pid1=`lsof -i:9380 | grep 'LISTEN' | awk '{print $2}'`
+    pid2=`lsof -i:9360 | grep 'LISTEN' | awk '{print $2}'`
+    if [[ -n ${pid1} && "x"${pid1} = "x"${pid2} ]];then
+        pid=$pid1
+    elif [[ -z ${pid1} && -z ${pid2} ]];then
+        pid=
+    fi
 }
 
 mklogsdir() {
@@ -43,15 +54,21 @@ status() {
 }
 
 start() {
-    sleep 8
     getpid
     if [[ ${pid} == "" ]]; then
         mklogsdir
         source ${venv}/bin/activate
         nohup python ${FATE_PYTHON_ROOT}/fate_flow/fate_flow_server.py >> "${log_dir}/console.log" 2>>"${log_dir}/error.log" &
-        sleep 3
-        getpid
-        if [[ -n ${pid} ]]; then 
+        for((i=1;i<=100;i++));
+        do
+            sleep 0.1
+            getpid
+            if [[ -n ${pid} ]]; then
+                echo "service start sucessfully. pid: ${pid}"
+                return
+            fi
+        done
+        if [[ -n ${pid} ]]; then
            echo "service start sucessfully. pid: ${pid}"
         else
            echo "service start failed, please check ${log_dir}/error.log and ${log_dir}/console.log"
@@ -64,11 +81,20 @@ start() {
 stop() {
     getpid
     if [[ -n ${pid} ]]; then
-        echo "killing:
-        `ps aux | grep ${pid} | grep -v grep`"
+        echo "killing: `ps aux | grep ${pid} | grep -v grep`"
+        for((i=1;i<=100;i++));
+        do
+            sleep 0.1
+            kill ${pid}
+            getpid
+            if [[ ! -n ${pid} ]]; then
+                echo "killed by SIGTERM"
+                return
+            fi
+        done
         kill -9 ${pid}
         if [[ $? -eq 0 ]]; then
-            echo "killed"
+            echo "killed by SIGKILL"
         else
             echo "kill error"
         fi

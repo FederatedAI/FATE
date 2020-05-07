@@ -25,11 +25,11 @@
 
 ```
 #获取安装包
-FATE $ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.3.0.tar.gz
-FATE $tar -xvf docker_standalone-fate-1.3.0.tar.gz
+FATE $ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.4.0.tar.gz
+FATE $tar -xzvf docker_standalone-fate-1.4.0.tar.gz
 
 #执行部署
-FATE $ cd docker_standalone-fate-1.3.0
+FATE $ cd docker_standalone-fate-1.4.0
 FATE $ bash install_standalone_docker.sh
 
 #验证和测试
@@ -58,21 +58,21 @@ FATE $ bash ./federatedml/test/run_test.sh
 2. 下载独立版本的压缩包并解压缩。
 
    ```
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.3.0.tar.gz
-   tar -xvf  standalone-fate-master-1.3.0.tar.gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.4.0.tar.gz
+   tar -xzvf  standalone-fate-master-1.4.0.tar.gz
    ```
 
 3. 进入FATE目录并执行init.sh.
 
    ```
-   cd standalone-fate-master-1.3.0
+   cd standalone-fate-master-1.4.0
    source init.sh init
    ```
 
 4. 执行测试.
 
    ```
-   cd standalone-fate-master-1.3.0
+   cd standalone-fate-master-1.4.0
    bash ./federatedml/test/run_test.sh
    ```
 

@@ -62,6 +62,7 @@ from federatedml.tree import HeteroDecisionTreeGuest
 from federatedml.util import consts
 from federatedml.util.classify_label_checker import ClassifyLabelChecker
 from federatedml.util.classify_label_checker import RegressionLabelChecker
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 
@@ -385,6 +386,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                 predict_data = tree_inst.predict(data_inst)
                 self.update_f_value(new_f=predict_data, tidx=tidx, mode="predict")
 
+    @assert_io_num_rows_equal
     def predict(self, data_inst):
         LOGGER.info("start predict")
         data_inst = self.data_alignment(data_inst)
@@ -475,6 +477,8 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         model_param.classes_.extend(map(str, self.classes_))
         model_param.num_classes = self.num_classes
 
+        model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
+
         feature_importances = list(self.get_feature_importance().items())
         feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
         feature_importance_param = []
@@ -494,7 +498,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.trees_ = list(model_param.trees_)
         self.init_score = np.array(list(model_param.init_score))
         self.history_loss = list(model_param.losses)
-        self.classes_ = list(model_param.classes_)
+        self.classes_ = list(map(int, model_param.classes_))
         self.tree_dim = model_param.tree_dim
         self.num_classes = model_param.num_classes
         self.feature_name_fid_mapping.update(model_param.feature_name_fid_mapping)
@@ -503,11 +507,11 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         if self.task_type == consts.CLASSIFICATION:
             if self.num_classes == 2:
                 return EvaluateParam(eval_type="binary",
-                                     pos_label=self.classes_[1])
+                                     pos_label=self.classes_[1], metrics=self.metrics)
             else:
-                return EvaluateParam(eval_type="multi")
+                return EvaluateParam(eval_type="multi", metrics=self.metrics)
         else:
-            return EvaluateParam(eval_type="regression")
+            return EvaluateParam(eval_type="regression", metrics=self.metrics)
 
     def export_model(self):
 

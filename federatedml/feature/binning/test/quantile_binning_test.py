@@ -125,16 +125,16 @@ class TestQuantileBinning(unittest.TestCase):
         result.schema = {'header': header}
         return result
 
-    # def tearDown(self):
-    #     session.stop()
-        # try:
-        #     session.cleanup("*", self.job_id, True)
-        # except EnvironmentError:
-        #     pass
-        # try:
-        #     session.cleanup("*", self.job_id, False)
-        # except EnvironmentError:
-        #     pass
+    def tearDown(self):
+        session.stop()
+        try:
+            session.cleanup("*", self.job_id, True)
+        except EnvironmentError:
+            pass
+        try:
+            session.cleanup("*", self.job_id, False)
+        except EnvironmentError:
+            pass
 
 
 if __name__ == '__main__':

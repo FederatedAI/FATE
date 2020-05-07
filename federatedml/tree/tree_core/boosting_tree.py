@@ -86,7 +86,9 @@ class BoostingTree(ModelBase):
         self.cv_param = boostingtree_param.cv_param
         self.validation_freqs = boostingtree_param.validation_freqs
         self.early_stopping_rounds = boostingtree_param.early_stopping_rounds
-
+        self.metrics = boostingtree_param.metrics
+        self.use_first_metric_only = boostingtree_param.use_first_metric_only
+        
         if self.use_missing:
             self.tree_param.use_missing = self.use_missing
             self.tree_param.zero_as_missing = self.zero_as_missing
@@ -144,7 +146,7 @@ class BoostingTree(ModelBase):
         pass
 
     def init_validation_strategy(self, train_data=None, validate_data=None):
-        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs, self.early_stopping_rounds)
+        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs, self.early_stopping_rounds, self.use_first_metric_only)
         validation_strategy.set_train_data(train_data)
         validation_strategy.set_validate_data(validate_data)
         return validation_strategy

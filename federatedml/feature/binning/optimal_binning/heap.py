@@ -74,11 +74,11 @@ class IvHeapNode(HeapNode):
         self.non_event_total = self.left_bucket.non_event_total
 
         if self.event_count == 0 or self.non_event_count == 0:
-            event_rate = 1.0 * (self.event_count + self.adjustment_factor) / self.event_total
-            non_event_rate = 1.0 * (self.non_event_count + self.adjustment_factor) / self.non_event_total
+            event_rate = 1.0 * (self.event_count + self.adjustment_factor) / max(self.event_total, 1)
+            non_event_rate = 1.0 * (self.non_event_count + self.adjustment_factor) / max(self.non_event_total, 1)
         else:
-            event_rate = 1.0 * self.event_count / self.event_total
-            non_event_rate = 1.0 * self.non_event_count / self.non_event_total
+            event_rate = 1.0 * self.event_count / max(self.event_total, 1)
+            non_event_rate = 1.0 * self.non_event_count / max(self.non_event_total, 1)
         merge_woe = math.log(event_rate / non_event_rate)
 
         merge_iv = (event_rate - non_event_rate) * merge_woe
@@ -182,9 +182,32 @@ class MinHeap(object):
         self.node_list.append(heap_node)
         self._move_up(self.size - 1)
 
+    def remove_empty_node(self, removed_bucket_id):
+        for n_id, node in enumerate(self.node_list):
+            if node.left_bucket.idx == removed_bucket_id or node.right_bucket.idx == removed_bucket_id:
+                self.delete_index_k(n_id)
+
+    def delete_index_k(self, k):
+        if k >= self.size:
+            return
+        if k == self.size - 1:
+            self.node_list.pop()
+            self.size -= 1
+        else:
+            self.node_list[k] = self.node_list[self.size - 1]
+            self.node_list.pop()
+            self.size -= 1
+            if k == 0:
+                self._move_down(k)
+            else:
+                parent_idx = self._get_parent_index(k)
+                if self.node_list[parent_idx].score < self.node_list[k].score:
+                    self._move_down(k)
+                else:
+                    self._move_up(k)
+
     def pop(self):
         min_node = self.node_list[0] if not self.is_empty else None
-
         if min_node is not None:
             self.node_list[0] = self.node_list[self.size - 1]
             self.node_list.pop()
@@ -238,9 +261,9 @@ class MinHeap(object):
             return
         while True:
             parent_idx = self._get_parent_index(curt_idx)
+
             if parent_idx is None:
                 break
-
             if self.node_list[curt_idx].score < self.node_list[parent_idx].score:
                 self._switch_node(curt_idx, parent_idx)
                 curt_idx = parent_idx

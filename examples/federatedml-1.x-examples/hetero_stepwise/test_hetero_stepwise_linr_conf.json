@@ -23,8 +23,8 @@
         "data": {
           "train_data": [
             {
-              "name": "motor_mini_b",
-              "namespace": "motor_mini"
+              "name": "motor_mini_step_b",
+              "namespace": "motor_mini_step"
             }
           ]
         }
@@ -47,8 +47,8 @@
         "data": {
           "train_data": [
             {
-              "name": "motor_mini_a",
-              "namespace": "motor_mini"
+              "name": "motor_mini_step_a",
+              "namespace": "motor_mini_step"
             }
           ]
         }
@@ -70,7 +70,7 @@
       "optimizer": "sgd",
       "tol": 1e-3,
       "alpha": 0.01,
-      "max_iter": 10,
+      "max_iter": 5,
       "early_stop": "diff",
       "batch_size": -1,
       "learning_rate": 0.15,
