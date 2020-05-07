@@ -187,6 +187,8 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         LOGGER.debug("self.feature_name_fid_mapping is {}".format(self.feature_name_fid_mapping))
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
 
+        model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
+
         param_name = "HeteroSecureBoostingTreeHostParam"
 
         return param_name, model_param
