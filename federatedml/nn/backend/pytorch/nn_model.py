@@ -59,14 +59,16 @@ def layers(layer, config, type):
         if layer == "Tanh":
             return torch.nn.Tanh()
         if layer == "Softmax":
-            return torch.nn.Softmax(0)
+            return torch.nn.Softmax(1)
+        if layer == "LogSoftmax":
+            return torch.nn.LogSoftmax(1)
     elif type == "normal":
         if layer == "Linear":
             return torch.nn.Linear(config[0], config[1])
         if layer == "BatchNorm2d":
             return torch.nn.BatchNorm2d()
         if layer == "dropout":
-            return torch.nn.Dropout()
+            return torch.nn.Dropout(config)
 
     else:
         print("layer not support!")
