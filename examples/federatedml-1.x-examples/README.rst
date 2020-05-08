@@ -222,6 +222,7 @@ This config file is used to config parameters for all components among every par
 An example of config files can be shown as:
 
     .. code-block::
+
         {
             "initiator": {
                 "role": "guest",
@@ -242,8 +243,8 @@ An example of config files can be shown as:
                     10000
                 ]
             },
-            "role_parameters": {},
-            "algorithm_parameters": {},
+            "role_parameters": {"Your role parameters"},
+            "algorithm_parameters": {"Your algorithm parameters"},
         }
 
     You can set processor_per_node in job_parameters.
