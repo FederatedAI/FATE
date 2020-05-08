@@ -221,32 +221,32 @@ This config file is used to config parameters for all components among every par
 
 An example of config files can be shown as:
 
-    .. code-block:: json
+    .. code-block:: 
         {
-          "initiator": {
-            "role": "guest",
-            "party_id": 10000
-          },
-          "job_parameters": {
-            "work_mode": 1
-            "processor_per_node": 6
-          },
-          "role": {
-            "guest": [
-              10000
-            ],
-            "host": [
-              10000
-            ],
-            "arbiter": [
-              10000
-            ]
-          },
-        "role_parameters": {"Your role parameters"},
-        "algorithm_parameters": {"Your algorithm parameters"},
+            "initiator": {
+                "role": "guest",
+                "party_id": 10000
+            },
+            "job_parameters": {
+                "work_mode": 1
+                "processor_per_node": 6
+            },
+            "role": {
+                "guest": [
+                    10000
+                ],
+                "host": [
+                    10000
+                ],
+                "arbiter": [
+                    10000
+                ]
+            },
+            "role_parameters": {"Your role parameters"},
+            "algorithm_parameters": {"Your algorithm parameters"},
         }
 
-You can set processor_per_node in job_parameters. 
+You can set processor_per_node in job_parameters.
 
 Step4: Start Modeling Task
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
