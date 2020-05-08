@@ -167,7 +167,7 @@ To make FATE be able to use your data, you need to upload them. Thus, a upload-d
     For example, if your cores per machine is 20, node = 2 and you want to start 6 processor per node.
     Then partitions = int(20 * 0.8 / 6) * 2 = 4
 
-
+    The way you set processor per node has been shown on step 3 below which specified submit runtime conf setting.
 
 
 Step2: Define your modeling task structure
@@ -218,6 +218,35 @@ This config file is used to config parameters for all components among every par
 2. role: Indicate all the party ids for all roles.
 3. role_parameters: Those parameters are differ from roles and roles are defined here separately. Please note each parameter are list, each element of which corresponds to a party in this role.
 4. algorithm_parameters: Those parameters are same among all parties are here.
+
+An example of config files can be shown as:
+
+    .. code-block:: json
+        {
+          "initiator": {
+            "role": "guest",
+            "party_id": 10000
+          },
+          "job_parameters": {
+            "work_mode": 1
+            "processor_per_node": 6
+          },
+          "role": {
+            "guest": [
+              10000
+            ],
+            "host": [
+              10000
+            ],
+            "arbiter": [
+              10000
+            ]
+          },
+        "role_parameters": {"Your role parameters"},
+        "algorithm_parameters": {"Your algorithm parameters"},
+        }
+
+You can set processor_per_node in job_parameters. 
 
 Step4: Start Modeling Task
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
