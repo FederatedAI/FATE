@@ -36,7 +36,7 @@ class AffineCipher(object):
             a = random.SystemRandom().getrandbits(int(key_size * a_ratio))
             if math.gcd(n, a) == 1:
                 break
-        b = random.SystemRandom().getrandbits(int(key_size * b_ratio))
+        b = random.SystemRandom().getrandbits(max(1, int(key_size * b_ratio)))
         return AffineCipherKey(a, b, n, encode_precision)
 
 
