@@ -199,8 +199,8 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate-cluster-install-1.4.0-rc5-build-c7-u18.tar.gz
-tar xzf fate-cluster-install-1.4.0-rc5-build-c7-u18.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate-cluster-install-1.4.0-rc5-build3-c7-u18.tar.gz
+tar xzf fate-cluster-install-1.4.0-rc5-build3-c7-u18.tar.gz
 ```
 
 5.2 配置文件修改和示例
@@ -217,10 +217,9 @@ tar xzf fate-cluster-install-1.4.0-rc5-build-c7-u18.tar.gz
 | roles            | 默认："host" "guest"                          | 部署的角色，有HOST端、GUEST端                                |
 | version          | 默认：1.4.0                                   | Fate 版本号                                                  |
 | pbase            | 默认： /data/projects                         | 项目根目录                                                   |
-| lbase            | 默认：/data/logs                              | 日志存放目录。                                               |
-| ssh_user         | 默认：app                                     | ssh连接目标机器的用户，也是部署后文件的属主。                |
-| ssh_group        | 默认：apps                                    | ssh连接目标的用户的属组，也是部署后文件的属组。              |
-| ssh_port         | 默认：36000,根据实际情况修改                  | ssh连接端口                                                  |
+| ssh_user         | 默认：app                                     | ssh连接目标机器的用户，也是部署后文件的属主                  |
+| ssh_group        | 默认：apps                                    | ssh连接目标的用户的属组，也是部署后文件的属组                |
+| ssh_port         | 默认：22,根据实际情况修改                     | ssh连接端口，部署前确认好端口，不然会报连接错误              |
 | eggroll_dbname   | 默认：eggroll_meta                            | eggroll连接的DB名字                                          |
 | fate_flow_dbname | 默认：fate_flow                               | fate_flow、fateboard等连接的DB名字                           |
 | mysql_admin_pass | 可设置为fate_dev                              | mysql的管理员（root）密码                                    |
@@ -230,11 +229,11 @@ tar xzf fate-cluster-install-1.4.0-rc5-build-c7-u18.tar.gz
 | host_id          | 默认 : 10000，根据实施规划修改                | HOST端的party id。                                           |
 | host_ip          | 192.168.0.1                                   | HOST端的ip                                                   |
 | host_mysql_ip    | 默认和host_ip保持一致                         | HOST端mysql的ip                                              |
-| host_mysql_pass  | 可设置为：fate_dev                            | HOST端msyql的应用连接账号                                    |
+| host_mysql_pass  | 可设置为fate_dev                              | HOST端msyql的应用连接账号                                    |
 | guest_id         | 默认 : 9999，根据实施规划修改                 | GUEST端的party id                                            |
 | guest_ip         | 192.168.0.2                                   | GUEST端的ip                                                  |
 | guest_mysql_ip   | 默认和guest_ip保持一致                        | GUEST端mysql的ip                                             |
-| guest_mysql_pass | 可设置为：fate_dev                            | GUEST端msyql的应用连接账号                                   |
+| guest_mysql_pass | 可设置为fate_dev                              | GUEST端msyql的应用连接账号                                   |
 | dbmodules        | 默认："mysql"                                 | DB组件的部署模块列表，如mysql                                |
 | basemodules      | 默认："base" "java" "python" "eggroll" "fate" | 非DB组件的部署模块列表，如 "base"、 "java"、 "python" 、"eggroll" 、"fate" |
 
@@ -247,8 +246,6 @@ roles=( "host" "guest" )
 version="1.4.0"
 #project base
 pbase="/data/projects"
-#log base
-lbase="/data/logs"
 
 #user who connects dest machine by ssh
 ssh_user="app"
@@ -305,8 +302,6 @@ roles=( "host" )
 version="1.4.0"
 #project base
 pbase="/data/projects"
-#log base
-lbase="/data/logs"
 
 #user who connects dest machine by ssh
 ssh_user="app"
@@ -371,41 +366,7 @@ nohup sh ./deploy.sh > logs/boot.log 2>&1 &
 - tail -f logs/deploy-mysql-guest.log  （实时打印GUEST端mysql的部署情况）
 - tail -f logs/deploy-mysql-host.log    （实时打印HOST端mysql的部署情况）
 
-## 5.4 启动服务
-
-**在目标服务器（192.168.0.1）app用户下执行**
-
-```
-#启动eggroll服务
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/eggroll
-sh ./bin/eggroll.sh all start
-
-#启动fate服务
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/fate_flow
-sh service.sh start
-cd /data/projects/fate/fateboard
-sh service.sh start
-```
-
-**在目标服务器（192.168.0.2）app用户下执行**
-
-```
-#启动eggroll服务
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/eggroll
-sh ./bin/eggroll.sh all start
-
-#启动fate服务
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/fate_flow
-sh service.sh start
-cd /data/projects/fate/fateboard
-sh service.sh start
-```
-
-## 5.5 问题定位
+## 5.4 问题定位
 
 1）eggroll日志
 
