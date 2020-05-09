@@ -188,19 +188,54 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 或者使用5.1章节的代码包中的脚本创建，app用户执行：
 
 ```
-sh /data/projects/install/tools/makeVirtualDisk.sh
-current user has sudo privilege(yes|no):yes            (是否有sudo权限)
-Enter store directory:/data/temp                      （设置虚拟内存文件的存放路径）
-Enter the size of virtual disk(such as 64G/128G):32G  （设置虚拟内存文件的大小）
-/data/temp 32 1
+sh /data/projects/fate-cluster-install/tools/makeVirtualDisk.sh
+Waring: please make sure has enough space of your disk first!!! （请确认有足够的存储空间）
+current user has sudo privilege(yes|no):yes      （是否有sudo权限，输入yes，不能简写）
+Enter store directory:/data    （设置虚拟内存文件的存放路径，确保目录存在和不要设置在根目录）
+Enter the size of virtual disk(such as 64G/128G):128G  （设置虚拟内存文件的大小，32G的倍数，数字后要带单位G，一般设置为128G即可）
+/data 32 1
 32768+0 records in
 32768+0 records out
-34359738368 bytes (34 GB) copied, 267.449 s, 128 MB/s
+34359738368 bytes (34 GB) copied, 200.544 s, 171 MB/s
 Setting up swapspace version 1, size = 33554428 KiB
-no label, UUID=92fa34ba-02ef-4011-90e9-10a1347af068
+no label, UUID=58ce153c-feac-4989-b684-c100e4edca0b
+/data 32 2
+32768+0 records in
+32768+0 records out
+34359738368 bytes (34 GB) copied, 200.712 s, 171 MB/s
+Setting up swapspace version 1, size = 33554428 KiB
+no label, UUID=d44e27ed-966b-4477-b46e-fcda4e3057c2
+/data 32 3
+32768+0 records in
+32768+0 records out
+34359738368 bytes (34 GB) copied, 200.905 s, 171 MB/s
+Setting up swapspace version 1, size = 33554428 KiB
+no label, UUID=ab5db8d7-bc09-43fb-b23c-fc11aef1a3b6
+/data 32 4
+32768+0 records in
+32768+0 records out
+34359738368 bytes (34 GB) copied, 201.013 s, 171 MB/s
+Setting up swapspace version 1, size = 33554428 KiB
+no label, UUID=c125ede3-7ffd-4110-9dc8-ebdf4fab0fd1
 ```
 
+校验
 
+```
+cat /proc/swaps
+
+Filename                                Type            Size    Used    Priority
+/data/swapfile32G_1                     file            33554428        0       -1
+/data/swapfile32G_2                     file            33554428        0       -2
+/data/swapfile32G_3                     file            33554428        0       -3
+/data/swapfile32G_4                     file            33554428        0       -4
+
+free -m
+              total        used        free      shared  buff/cache   available
+Mem:          15715        6885          91         254        8739        8461
+Swap:        131071           0      131071
+
+```
 
 5.项目部署
 ==========
@@ -377,11 +412,14 @@ nohup sh ./deploy.sh > logs/boot.log 2>&1 &
 
 部署日志输出在fate-cluster-install/allInone/logs目录下,实时查看是否有报错：
 
-- tail -f logs/boot.log （这个有报错信息才会输出，部署结束，查看一下即可）
-- tail -f logs/deploy-guest.log （实时打印GUEST端的部署情况）
-- tail -f logs/deploy-host.log    （实时打印HOST端的部署情况）
-- tail -f logs/deploy-mysql-guest.log  （实时打印GUEST端mysql的部署情况）
-- tail -f logs/deploy-mysql-host.log    （实时打印HOST端mysql的部署情况）
+```
+cd logs
+tail -f boot.log （这个有报错信息才会输出，部署结束，查看一下即可）
+tail -f deploy-guest.log （实时打印GUEST端的部署情况）
+tail -f deploy-mysql-guest.log  （实时打印GUEST端mysql的部署情况）
+tail -f deploy-host.log    （实时打印HOST端的部署情况）
+tail -f deploy-mysql-host.log    （实时打印HOST端mysql的部署情况）
+```
 
 ## 5.4 问题定位
 
