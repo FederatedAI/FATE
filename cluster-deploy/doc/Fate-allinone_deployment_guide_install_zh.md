@@ -170,9 +170,11 @@ ssh app\@192.168.0.2
 
 ## 4.6 增加虚拟内存
 
-**在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）root用户下执行**
+**目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）**
 
-生产环境使用时，因内存计算需要增加128G虚拟内存，参考：
+生产环境使用时，因内存计算需要增加128G虚拟内存，执行前需检查存储空间是否足够。
+
+手工创建，root用户执行：
 
 ```
 cd /data
@@ -181,6 +183,21 @@ mkswap /data/swapfile128G
 swapon /data/swapfile128G
 cat /proc/swaps
 echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
+```
+
+或者使用5.1章节的代码包中的脚本创建，app用户执行：
+
+```
+sh /data/projects/install/tools/makeVirtualDisk.sh
+current user has sudo privilege(yes|no):yes            (是否有sudo权限)
+Enter store directory:/data/temp                      （设置虚拟内存文件的存放路径）
+Enter the size of virtual disk(such as 64G/128G):32G  （设置虚拟内存文件的大小）
+/data/temp 32 1
+32768+0 records in
+32768+0 records out
+34359738368 bytes (34 GB) copied, 267.449 s, 128 MB/s
+Setting up swapspace version 1, size = 33554428 KiB
+no label, UUID=92fa34ba-02ef-4011-90e9-10a1347af068
 ```
 
 
@@ -199,8 +216,8 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate-cluster-install-1.4.0-rc5-build3-c7-u18.tar.gz
-tar xzf fate-cluster-install-1.4.0-rc5-build3-c7-u18.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate-cluster-install-1.4.0-release-c7-u18.tar.gz
+tar xzf fate-cluster-install-1.4.0-release-c7-u18.tar.gz
 ```
 
 5.2 配置文件修改和示例
@@ -572,3 +589,17 @@ netstat -tlnp | grep 8080
 | fate_flow&任务日志 | /data/projects/fate/python/logs    |
 | fateboard          | /data/projects/fate/fateboard/logs |
 | mysql              | /data/logs/mysql/                  |
+
+# 8. 附录
+
+## 8.1 Eggroll参数调优
+
+配置文件路径：/data/projects/fate/eggroll/conf/eggroll.properties
+
+配置参数：eggroll.session.processors.per.node
+
+假定 CPU核数（cpu cores）为 c, Nodemanager的数量为 n，需要同时运行的任务数为 p，则：
+
+egg_num=eggroll.session.processors.per.node = c * 0.8 / p
+
+partitions （roll pair分区数）= egg_num * n
