@@ -1,4 +1,4 @@
-# Release 1.3.1
+# Release 1.4.0
 ## Major Features and Improvements
 > FederatedML
 * Support Homo Secureboost
