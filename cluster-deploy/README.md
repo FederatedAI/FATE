@@ -58,9 +58,9 @@ The following configuration information is for one-sided server configuration. I
 
 | party  | partyid | hostname      | IP          | os                      | software             | services                                                |
 | ------ | ------- | ------------- | ----------- | ----------------------- | -------------------- | ------------------------------------------------------- |
-| PartyA | 9999    | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate, eggroll, mysql | fate_flow, fateboard, clustermanager, nodemanger, mysql |
-| PartyA | 9999    | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate, eggroll        | nodemanger, rollsite                                    |
-| PartyB | 10000   | VM_0_3_centos | 192.168.0.3 | CentOS 7.2/Ubuntu 16.04 | fate, eggroll, mysql | all                                                     |
+| PartyA | 10000   | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate, eggroll, mysql | fate_flow, fateboard, clustermanager, nodemanger, mysql |
+| PartyA | 10000   | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate, eggroll        | nodemanger, rollsite                                    |
+| PartyB | 9999    | VM_0_3_centos | 192.168.0.3 | CentOS 7.2/Ubuntu 16.04 | fate, eggroll, mysql | all                                                     |
 
 ### 3.3 Basic environment configuration
 
@@ -195,9 +195,9 @@ Execute under the app user of the target server (192.168.0.1 has an external net
 ```
 mkdir -p /data/projects/install
 cd /data/projects/install
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.0-rc3.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.0-release.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.0-rc3.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.0-release.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.0-release.tar.gz
 
 #Send to 192.168.0.2和192.168.0.3
@@ -218,7 +218,7 @@ mkdir -p /data/projects/fate/data/mysql
 
 #Unzip the package
 cd /data/projects/install
-tar xzvf mysql-1.4.0-rc3.tar.gz
+tar xzvf mysql-1.4.0-release.tar.gz
 cd mysql
 tar xf mysql-8.0.13.tar.gz -C /data/projects/fate/common/mysql
 
@@ -319,7 +319,7 @@ mkdir -p /data/projects/fate/common/python
 
 #Install miniconda3
 cd /data/projects/install
-tar xvf python-env-1.4.0-rc3.tar.gz
+tar xvf python-env-1.4.0-release.tar.gz
 cd python-env
 sh Miniconda3-4.5.4-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
 
@@ -1043,3 +1043,15 @@ netstat -tlnp | grep 8080
 ### 7.1 eggroll & fate package build
 
 refer to [build guide](./build.md) 
+
+## 7.2 Eggroll parameter tuning
+
+Configuration file path: /data/projects/fate/eggroll/conf/eggroll.properties
+
+Configuration file path: eggroll.session.processors.per.node
+
+Assume that the CPU cores (cpu cores) are: c, The number of Nodemanager is: n, The number of tasks to be run simultaneously is p, then:
+
+egg_num=eggroll.session.processors.per.node = c * 0.8 / p
+
+partitions (Number of roll pair partitions) = egg_num * n
