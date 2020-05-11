@@ -167,6 +167,7 @@ COEFFICIENT_OF_VARIATION_VALUE_THRES = 'coefficient_of_variation_value_thres'
 # COEFFICIENT_OF_VARIATION_PERCENTILE = 'coefficient_of_variation_percentile'
 OUTLIER_COLS = 'outlier_cols'
 MANUALLY_FILTER = 'manually'
+PERCENTAGE_VALUE = 'percentage_value'
 
 # imputer
 MIN = 'min'
