@@ -1,0 +1,7 @@
+{
+    "components" : {
+        "secure_add_example_0": {
+            "module": "SecureAddExample"
+        }
+    }
+}
