@@ -154,16 +154,24 @@ class PercentageValueParam(BaseParam):
     ----------
     upper_pct: float, [0., 1.], default: 1.0
         The upper percentage threshold for filtering.
+
+    error: float, 0 <= error < 1 default: 0.001
+        The error of tolerance of binning. The final split point comes from original data, and the rank
+        of this value is close to the exact rank. More precisely,
+        floor((p - 2 * error) * N) <= rank(x) <= ceil((p + 2 * error) * N)
+        where p is the quantile in float, and N is total number of data.
     """
 
-    def __init__(self, upper_pct=1.0):
+    def __init__(self, upper_pct=1.0, error=consts.DEFAULT_RELATIVE_ERROR):
         super().__init__()
         self.upper_pct = upper_pct
+        self.error = error
 
     def check(self):
         descr = "Percentage Filter param's"
         if self.upper_pct not in [0, 1]:
             self.check_decimal_float(self.upper_pct, descr)
+        self.check_decimal_float(self.error, descr)
         return True
 
 

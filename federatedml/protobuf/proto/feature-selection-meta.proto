@@ -29,6 +29,7 @@ message FeatureSelectionMeta {
     OutlierColsSelectionMeta outlier_meta = 8;
     ManuallyFilterMeta manually_meta = 9;
     bool need_run = 10;
+    PercentageValueFilterMeta pencentage_value_meta = 11;
 }
 
 message UniqueValueMeta {
@@ -56,4 +57,9 @@ message OutlierColsSelectionMeta {
 
 message ManuallyFilterMeta {
     repeated string filter_out_names = 1;
+}
+
+message PercentageValueFilterMeta {
+    double upper_pct = 1;
+    double error = 2;
 }
