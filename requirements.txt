@@ -25,3 +25,5 @@ torch==1.4.0
 torchvision==0.5.0
 tornado==6.0.4
 Werkzeug==0.15.3
+cos-python-sdk-v5==1.8.0
+dicttoxml==1.7.4
