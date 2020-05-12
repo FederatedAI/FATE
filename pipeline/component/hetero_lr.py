@@ -31,5 +31,19 @@ class HeteroLR(Component, HeteroLogisticParam):
         self._module_name = "HeteroLR"
 
     def summary(self, data, metric_keyword):
-        pass
+        if data is None:
+            return
+        # stepwise info
+        metrics = {}
+        for namespace in data:
+            for name in data[namespace]:
+                metric_data = data[namespace][name]["meta"]
+                print(f"metric_data: {metric_data}")
+                for metric_name, metric_val in metric_data.items():
+                    if not metric_keyword or metric_name in metric_keyword:
+                        metrics[metric_name] = metric_val
 
+        for metric_name in metric_keyword:
+            if metric_name not in metrics:
+                metrics[metric_name] = None
+        return metrics

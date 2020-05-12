@@ -16,19 +16,19 @@
 
 from pipeline.component.component_base import Component
 from pipeline.interface.output import Output
-from federatedml.param.linear_regression_param import LinearParam
+from federatedml.param.poisson_regression_param import PoissonParam
 
 
-class HeteroLinR(Component, LinearParam):
+class HeteroPoisson(Component, PoissonParam):
     def __init__(self, **kwargs):
         Component.__init__(self, **kwargs)
 
         print (self.name)
         new_kwargs = self.erase_component_base_param(**kwargs)
 
-        LinearParam.__init__(self, **new_kwargs)
+        PoissonParam.__init__(self, **new_kwargs)
         self.output = Output(self.name)
-        self._module_name = "HeteroLinR"
+        self._module_name = "HeteroPoisson"
 
     def summary(self, data, metric_keyword):
         if data is None:
