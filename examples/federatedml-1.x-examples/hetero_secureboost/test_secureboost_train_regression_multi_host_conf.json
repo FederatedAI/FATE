@@ -16,7 +16,7 @@
             "args": {
                 "data": {
                     "train_data": [{"name": "motor_mini_b", "namespace": "hetero"}],
-                    "eval_data": [{"name": "motor_mini_b", "namespace": "hetero"}]
+                    "validate_data": [{"name": "motor_mini_b", "namespace": "hetero"}]
                 }
             },
             "dataio_0":{
@@ -31,7 +31,7 @@
                 "data": {
                     "train_data": [{"name": "motor_mini_a_1", "namespace": "hetero"},
                                    {"name": "motor_mini_a_2", "namespace": "hetero"}],
-                    "eval_data": [{"name": "motor_mini_a_1", "namespace": "hetero"},
+                    "validate_data": [{"name": "motor_mini_a_1", "namespace": "hetero"},
                                   {"name": "motor_mini_a_2", "namespace": "hetero"}]
                 }
             },

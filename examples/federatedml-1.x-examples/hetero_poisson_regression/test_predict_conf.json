@@ -18,14 +18,14 @@
         "guest": {
             "args": {
                 "data": {
-                    "eval_data": [{"name": "dvisits_b", "namespace": "dvisits"}]
+                    "validate_data": [{"name": "dvisits_b", "namespace": "dvisits"}]
                 }
             }
         },
         "host": {
             "args": {
                 "data": {
-                    "eval_data": [{"name": "dvisits_a", "namespace": "dvisits"}]
+                    "validate_data": [{"name": "dvisits_a", "namespace": "dvisits"}]
                 }
             }
         }

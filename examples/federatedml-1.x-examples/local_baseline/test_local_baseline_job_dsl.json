@@ -19,7 +19,7 @@
             "input": {
                 "data": {
                     "data": [
-                        "args.eval_data"
+                        "args.validate_data"
                     ]
                 },
                 "model": [
@@ -27,7 +27,7 @@
                 ]
             },
             "output": {
-                "data": ["eval_data"],
+                "data": ["validate_data"],
                 "model": ["dataio"]
             }
          },
@@ -36,7 +36,7 @@
             "input": {
                 "data": {
                     "train_data": ["dataio_0.train_data"],
-                    "eval_data": ["dataio_1.eval_data"]
+                    "validate_data": ["dataio_1.validate_data"]
                 }
             },
             "output": {
@@ -57,7 +57,7 @@
             "input": {
                 "data": {
                     "train_data": ["dataio_0.train_data"],
-                    "eval_data": ["dataio_1.eval_data"]
+                    "validate_data": ["dataio_1.validate_data"]
                 }
             },
             "output": {

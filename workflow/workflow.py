@@ -234,8 +234,8 @@ class WorkFlow(object):
 
         return predict_result
 
-    def save_eval_result(self, eval_data):
-        session.parallelize([eval_data],
+    def save_eval_result(self, validate_data):
+        session.parallelize([validate_data],
                             include_key=False,
                             name=self.workflow_param.evaluation_output_table,
                             namespace=self.workflow_param.evaluation_output_namespace,
@@ -638,12 +638,12 @@ class WorkFlow(object):
                 self._initialize_model(self.config_path)
 
     def load_eval_result(self):
-        eval_data = session.table(
+        validate_data = session.table(
             name=self.workflow_param.evaluation_output_table,
             namespace=self.workflow_param.evaluation_output_namespace,
         )
-        LOGGER.debug("Evaluate result loaded: {}".format(eval_data))
-        return eval_data
+        LOGGER.debug("Evaluate result loaded: {}".format(validate_data))
+        return validate_data
 
     def homo_cross_validation(self, data_instance):
         n_splits = self.workflow_param.n_splits
@@ -726,17 +726,17 @@ class WorkFlow(object):
 
         return data_instance, fit_config
 
-    def evaluate(self, eval_data):
-        if eval_data is None:
-            LOGGER.info("not eval_data!")
+    def evaluate(self, validate_data):
+        if validate_data is None:
+            LOGGER.info("not validate_data!")
             return None
 
-        eval_data_local = eval_data.collect()
+        validate_data_local = validate_data.collect()
         labels = []
         pred_prob = []
         pred_labels = []
         data_num = 0
-        for data in eval_data_local:
+        for data in validate_data_local:
             data_num += 1
             labels.append(data[1][0])
             pred_prob.append(data[1][1])

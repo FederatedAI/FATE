@@ -15,7 +15,7 @@
             "args": {
                 "data": {
                     "train_data": [{"name": "stu_b_train", "namespace": "hetero"}],
-                    "eval_data": [{"name": "stu_b_test", "namespace": "hetero"}]
+                    "validate_data": [{"name": "stu_b_test", "namespace": "hetero"}]
                 }
             },
             "dataio_0":{
@@ -29,7 +29,7 @@
             "args": {
                 "data": {
                     "train_data": [{"name": "stu_a_train", "namespace": "hetero"}],
-                    "eval_data": [{"name": "stu_a_test", "namespace": "hetero"}]
+                    "validate_data": [{"name": "stu_a_test", "namespace": "hetero"}]
                 }
             },
              "dataio_0":{

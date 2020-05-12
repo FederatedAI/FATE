@@ -18,14 +18,14 @@
         "guest": {
             "args": {
                 "data": {
-                    "eval_data": [{"name": "hetero_svd_guest_1000", "namespace": "hetero_svd_t"}]
+                    "validate_data": [{"name": "hetero_svd_guest_1000", "namespace": "hetero_svd_t"}]
                 }
             }
         },
         "host": {
             "args": {
                 "data": {
-                    "eval_data": [{"name": "hetero_svd_host_1000", "namespace": "hetero_svd_t"}]
+                    "validate_data": [{"name": "hetero_svd_host_1000", "namespace": "hetero_svd_t"}]
                 }
             }
         }

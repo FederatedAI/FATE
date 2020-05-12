@@ -27,7 +27,7 @@
               "namespace": "hetero_breast_guest"
             }
           ],
-          "eval_data": [
+          "validate_data": [
             {
               "name": "hetero_breast_b",
               "namespace": "hetero_breast_guest"
@@ -57,7 +57,7 @@
               "namespace": "hetero_breast_host"
             }
           ],
-          "eval_data": [
+          "validate_data": [
             {
               "name": "hetero_breast_a",
               "namespace": "hetero_breast_host"

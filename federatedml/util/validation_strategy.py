@@ -195,8 +195,8 @@ class ValidationStrategy(object):
         eval_obj._init_model(evaluate_param)
         eval_obj.set_tracker(model.tracker)
         data_set_name = self.make_data_set_name(model.need_cv, model.flowid,  epoch)
-        eval_data = {data_set_name: predicts}
-        eval_result_dict = eval_obj.fit(eval_data, return_result=True)
+        validate_data = {data_set_name: predicts}
+        eval_result_dict = eval_obj.fit(validate_data, return_result=True)
         eval_obj.save_data()
         LOGGER.debug("end to eval")
 

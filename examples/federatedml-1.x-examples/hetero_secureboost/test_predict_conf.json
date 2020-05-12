@@ -17,14 +17,14 @@
         "guest": {
             "args": {
                 "data": {
-                    "eval_data": [{"name": "breast_b", "namespace": "hetero"}]
+                    "validate_data": [{"name": "breast_b", "namespace": "hetero"}]
                 }
             }
         },
         "host": {
             "args": {
                 "data": {
-                    "eval_data": [{"name": "breast_a", "namespace": "hetero"}]
+                    "validate_data": [{"name": "breast_a", "namespace": "hetero"}]
                 }
             }
         }

@@ -333,15 +333,15 @@
             <span class="n">join_data_insts</span><span class="o">.</span><span class="n">schema</span><span class="p">[</span><span class="s1">&#39;header&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">header</span>
             <span class="k">return</span> <span class="n">join_data_insts</span>
 
-<div class="viewcode-block" id="KFold.evaluate"><a class="viewcode-back" href="../../../federatedml.model_selection.html#federatedml.model_selection.KFold.KFold.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eval_data</span><span class="p">,</span> <span class="n">fold_name</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">eval_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="KFold.evaluate"><a class="viewcode-back" href="../../../federatedml.model_selection.html#federatedml.model_selection.KFold.KFold.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">validate_data</span><span class="p">,</span> <span class="n">fold_name</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">validate_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="n">eval_obj</span> <span class="o">=</span> <span class="n">Evaluation</span><span class="p">()</span>
         <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;In KFold, evaluate_param is: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluate_param</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">))</span>
         <span class="n">eval_obj</span><span class="o">.</span><span class="n">_init_model</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluate_param</span><span class="p">)</span>
         <span class="n">eval_obj</span><span class="o">.</span><span class="n">set_tracker</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">tracker</span><span class="p">)</span>
-        <span class="n">eval_data</span> <span class="o">=</span> <span class="p">{</span><span class="n">fold_name</span><span class="p">:</span> <span class="n">eval_data</span><span class="p">}</span>
-        <span class="n">eval_obj</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">eval_data</span><span class="p">)</span>
+        <span class="n">validate_data</span> <span class="o">=</span> <span class="p">{</span><span class="n">fold_name</span><span class="p">:</span> <span class="n">validate_data</span><span class="p">}</span>
+        <span class="n">eval_obj</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">validate_data</span><span class="p">)</span>
         <span class="n">eval_obj</span><span class="o">.</span><span class="n">save_data</span><span class="p">()</span></div></div>
 
 </pre></div>

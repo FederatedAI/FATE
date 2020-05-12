@@ -27,7 +27,7 @@
               "namespace": "motor_mini"
             }
           ],
-          "eval_data": [
+          "validate_data": [
             {
               "name": "motor_mini_b",
               "namespace": "motor_mini"
@@ -65,7 +65,7 @@
               "namespace": "motor_mini"
             }
           ],
-          "eval_data": [
+          "validate_data": [
             {
               "name": "motor_mini_a",
               "namespace": "motor_mini"

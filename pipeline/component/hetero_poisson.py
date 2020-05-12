@@ -33,7 +33,7 @@ class HeteroPoisson(Component, PoissonParam):
     def summary(self, data, metric_keyword):
         if data is None:
             return
-        # stepwise info
+        # meta info
         metrics = {}
         for namespace in data:
             for name in data[namespace]:
