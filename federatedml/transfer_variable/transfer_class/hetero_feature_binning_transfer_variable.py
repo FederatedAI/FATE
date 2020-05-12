@@ -30,6 +30,7 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 class HeteroFeatureBinningTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.encrypted_bin_sum = self._create_variable(name='encrypted_bin_sum')
-        self.encrypted_label = self._create_variable(name='encrypted_label')
-        self.paillier_pubkey = self._create_variable(name='paillier_pubkey')
+        self.bucket_idx = self._create_variable(name='bucket_idx', src=['guest'], dst=['host'])
+        self.encrypted_bin_sum = self._create_variable(name='encrypted_bin_sum', src=['host'], dst=['guest'])
+        self.encrypted_label = self._create_variable(name='encrypted_label', src=['guest'], dst=['host'])
+        self.paillier_pubkey = self._create_variable(name='paillier_pubkey', src=['guest'], dst=['host'])

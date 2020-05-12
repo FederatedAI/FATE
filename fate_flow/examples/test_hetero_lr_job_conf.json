@@ -1,13 +1,14 @@
 {
     "initiator": {
         "role": "guest",
-        "party_id": 10000
+        "party_id": 9999
     },
     "job_parameters": {
-        "work_mode": 0
+        "work_mode": 1,
+        "processors_per_node": 1
     },
     "role": {
-        "guest": [10000],
+        "guest": [9999],
         "host": [10000],
         "arbiter": [10000]
     },

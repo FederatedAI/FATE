@@ -17,9 +17,9 @@
 #  limitations under the License.
 #
 from federatedml.model_base import ModelBase
-from federatedml.transfer_variable.transfer_class.hetero_nn_transfer_variable import HeteroNNTransferVariable
-from federatedml.param.hetero_nn_param import HeteroNNParam
 from federatedml.model_selection import start_cross_validation
+from federatedml.param.hetero_nn_param import HeteroNNParam
+from federatedml.transfer_variable.transfer_class.hetero_nn_transfer_variable import HeteroNNTransferVariable
 from federatedml.util import consts
 from federatedml.util.validation_strategy import ValidationStrategy
 
@@ -44,11 +44,13 @@ class HeteroNNBase(ModelBase):
 
         self.partition = None
         self.validation_freqs = None
+        self.early_stopping_rounds = None
+        self.metrics = []
+        self.use_first_metric_only = False
 
         self.data_x = []
         self.data_y = []
         self.transfer_variable = HeteroNNTransferVariable()
-
         self.model_param = HeteroNNParam()
         self.mode = consts.HETERO
 
@@ -59,6 +61,10 @@ class HeteroNNBase(ModelBase):
 
         self.early_stop = hetero_nn_param.early_stop
         self.validation_freqs = hetero_nn_param.validation_freqs
+        self.early_stopping_rounds = hetero_nn_param.early_stopping_rounds
+        self.metrics = hetero_nn_param.metrics
+        self.use_first_metric_only = hetero_nn_param.use_first_metric_only
+
         self.tol = hetero_nn_param.tol
 
         self.predict_param = hetero_nn_param.predict_param
@@ -75,7 +81,8 @@ class HeteroNNBase(ModelBase):
         self.set_flowid(new_flowid)
 
     def init_validation_strategy(self, train_data=None, validate_data=None):
-        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs)
+        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs,
+                                                 self.early_stopping_rounds, self.use_first_metric_only)
         validation_strategy.set_train_data(train_data)
         validation_strategy.set_validate_data(validate_data)
         return validation_strategy
@@ -111,4 +118,3 @@ class HeteroNNBase(ModelBase):
 
     def cross_validation(self, data_instances):
         return start_cross_validation.run(self, data_instances)
-

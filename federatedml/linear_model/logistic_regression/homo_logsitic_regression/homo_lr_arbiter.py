@@ -57,7 +57,7 @@ class HomoLRArbiter(HomoLRBase):
         while self.n_iter_ < max_iter + 1:
             suffix = (self.n_iter_,)
 
-            if (self.n_iter_ > 0 and self.n_iter_ % self.aggregate_iters == 0) or self.n_iter_ == max_iter:
+            if ((self.n_iter_ + 1) % self.aggregate_iters == 0) or self.n_iter_ == max_iter:
                 merged_model = self.aggregator.aggregate_and_broadcast(ciphers_dict=host_ciphers,
                                                                        suffix=suffix)
                 total_loss = self.aggregator.aggregate_loss(host_has_no_cipher_ids, suffix)

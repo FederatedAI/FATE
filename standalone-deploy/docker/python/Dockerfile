@@ -33,7 +33,7 @@ WORKDIR /fate
 #COPY . /fate
 ADD fate.tar /fate
 ADD docker-entrypoint.sh /fate
-ADD requirements.txt /fate
+#ADD requirements.txt /fate
 
 RUN rm /bin/sh && ln -sf /bin/bash /bin/sh
 

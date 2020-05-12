@@ -19,7 +19,7 @@ import sys
 import time
 from threading import Timer
 
-from arch.api.utils.core import current_timestamp, base64_encode, json_loads, get_lan_ip
+from arch.api.utils.core_utils import current_timestamp, base64_encode, json_loads, get_lan_ip
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import Job
 from fate_flow.driver.task_executor import TaskExecutor
@@ -43,16 +43,16 @@ class TaskScheduler(object):
                 else:
                     job.f_is_initiator = 0
                 response_json = federated_api(job_id=job.f_job_id,
-                              method='POST',
-                              endpoint='/{}/schedule/{}/{}/{}/create'.format(
-                                  API_VERSION,
-                                  job.f_job_id,
-                                  role,
-                                  party_id),
-                              src_party_id=job_initiator['party_id'],
-                              dest_party_id=party_id, src_role=job_initiator['role'],
-                              json_body=job.to_json(),
-                              work_mode=job.f_work_mode)
+                                              method='POST',
+                                              endpoint='/{}/schedule/{}/{}/{}/create'.format(
+                                                  API_VERSION,
+                                                  job.f_job_id,
+                                                  role,
+                                                  party_id),
+                                              src_party_id=job_initiator['party_id'],
+                                              dest_party_id=party_id, src_role=job_initiator['role'],
+                                              json_body=job.to_json(),
+                                              work_mode=job.f_work_mode)
                 if response_json["retcode"]:
                     job.f_status = JobStatus.FAILED
                     TaskScheduler.sync_job_status(job_id=job.f_job_id, roles=roles,
@@ -60,8 +60,9 @@ class TaskScheduler(object):
                                                   initiator_party_id=job_initiator['party_id'],
                                                   initiator_role=job_initiator['role'],
                                                   job_info=job.to_json())
-                    raise Exception("an error occurred while creating the job: role {} party_id {}".format(role, party_id)
-                                    + "\n" + str(response_json["retmsg"]))
+                    raise Exception(
+                        "an error occurred while creating the job: role {} party_id {}".format(role, party_id)
+                        + "\n" + str(response_json["retmsg"]))
 
     @staticmethod
     def run_job(job_id, initiator_role, initiator_party_id):
@@ -119,12 +120,25 @@ class TaskScheduler(object):
         if job.f_status == JobStatus.COMPLETE:
             job.f_progress = 100
         job.f_update_time = current_timestamp()
-        TaskScheduler.sync_job_status(job_id=job_id, roles=job_runtime_conf['role'],
-                                      work_mode=job_parameters['work_mode'],
-                                      initiator_party_id=job_initiator['party_id'],
-                                      initiator_role=job_initiator['role'],
-                                      job_info=job.to_json())
-        TaskScheduler.finish_job(job_id=job_id, job_runtime_conf=job_runtime_conf)
+        try:
+            TaskScheduler.finish_job(job_id=job_id, job_runtime_conf=job_runtime_conf)
+        except Exception as e:
+            schedule_logger(job_id).exception(e)
+            job.f_status = JobStatus.FAILED
+
+        if job.f_status == JobStatus.FAILED:
+            TaskScheduler.stop(job_id=job_id, end_status=JobStatus.FAILED)
+
+        try:
+            TaskScheduler.sync_job_status(job_id=job_id, roles=job_runtime_conf['role'],
+                                          work_mode=job_parameters['work_mode'],
+                                          initiator_party_id=job_initiator['party_id'],
+                                          initiator_role=job_initiator['role'],
+                                          job_info=job.to_json())
+        except Exception as e:
+            schedule_logger(job_id).exception(e)
+            schedule_logger(job_id).warning('job {} sync status failed'.format(job.f_job_id))
+
         schedule_logger(job_id).info('job {} finished, status is {}'.format(job.f_job_id, job.f_status))
         t.cancel()
 
@@ -244,7 +258,7 @@ class TaskScheduler(object):
             return True
 
     @staticmethod
-    def check_task_status(job_id, component, interval=0.25):
+    def check_task_status(job_id, component, interval=0.5):
         task_id = job_utils.generate_task_id(job_id=job_id, component_name=component.get_name())
         while True:
             try:
@@ -283,7 +297,7 @@ class TaskScheduler(object):
         return True
 
     @staticmethod
-    def start_task(job_id, component_name, task_id, role, party_id, task_config):
+    def run_task(job_id, component_name, task_id, role, party_id, task_config):
         schedule_logger(job_id).info(
             'job {} {} {} {} task subprocess is ready'.format(job_id, component_name, role, party_id, task_config))
         task_process_start_status = False
@@ -311,32 +325,31 @@ class TaskScheduler(object):
                     '-r', role,
                     '-p', party_id,
                     '-c', task_config_path,
+                    '--processors_per_node', str(task_config['job_parameters'].get("processors_per_node", 0)),
                     '--job_server', '{}:{}'.format(get_lan_ip(), HTTP_PORT),
                 ]
             elif backend.is_spark():
                 if "SPARK_HOME" not in os.environ:
                     raise EnvironmentError("SPARK_HOME not found")
-                spark_submit_config = task_config['job_parameters'].get("spark_submit_config", dict())
-                deploy_mode = spark_submit_config.get("deploy-mode", "client")
-                queue = spark_submit_config.get("queue", "default")
-                driver_memory = spark_submit_config.get("driver-memory", "1g")
-                num_executors = spark_submit_config.get("num-executors", 2)
-                executor_memory = spark_submit_config.get("executor-memory", "1g")
-                executor_cores = spark_submit_config.get("executor-cores", 1)
+                spark_home = os.environ["SPARK_HOME"]
 
+                # additional configs
+                spark_submit_config = task_config['job_parameters'].get("spark_submit_config", dict())
+
+                deploy_mode = spark_submit_config.get("deploy-mode", "client")
                 if deploy_mode not in ["client"]:
                     raise ValueError(f"deploy mode {deploy_mode} not supported")
-                spark_home = os.environ["SPARK_HOME"]
+
                 spark_submit_cmd = os.path.join(spark_home, "bin/spark-submit")
-                process_cmd = [
-                    spark_submit_cmd,
-                    f'--name={task_id}#{role}',
-                    f'--deploy-mode={deploy_mode}',
-                    f'--queue={queue}',
-                    f'--driver-memory={driver_memory}',
-                    f'--num-executors={num_executors}',
-                    f'--executor-memory={executor_memory}',
-                    f'--executor-cores={executor_cores}',
+                process_cmd = [spark_submit_cmd, f'--name={task_id}#{role}']
+                for k, v in spark_submit_config.items():
+                    if k != "conf":
+                        process_cmd.append(f'--{k}={v}')
+                if "conf" in spark_submit_config:
+                    for ck, cv in spark_submit_config["conf"].items():
+                        process_cmd.append(f'--conf')
+                        process_cmd.append(f'{ck}={cv}')
+                process_cmd.extend([
                     sys.modules[TaskExecutor.__module__].__file__,
                     '-j', job_id,
                     '-n', component_name,
@@ -346,7 +359,7 @@ class TaskScheduler(object):
                     '-c', task_config_path,
                     '--job_server',
                     '{}:{}'.format(get_lan_ip(), HTTP_PORT),
-                ]
+                ])
             else:
                 raise ValueError(f"${backend} supported")
 
@@ -383,7 +396,7 @@ class TaskScheduler(object):
                               work_mode=work_mode)
 
     @staticmethod
-    def finish_job(job_id, job_runtime_conf):
+    def finish_job(job_id, job_runtime_conf, stop=False):
         job_parameters = job_runtime_conf['job_parameters']
         job_initiator = job_runtime_conf['initiator']
         model_id_base64 = base64_encode(job_parameters['model_id'])
@@ -393,21 +406,22 @@ class TaskScheduler(object):
         for role, partys in job_runtime_conf['role'].items():
             for party_id in partys:
                 # save pipeline
-                federated_api(job_id=job_id,
-                              method='POST',
-                              endpoint='/{}/schedule/{}/{}/{}/{}/{}/save/pipeline'.format(
-                                  API_VERSION,
-                                  job_id,
-                                  role,
-                                  party_id,
-                                  model_id_base64,
-                                  model_version_base64
-                              ),
-                              src_party_id=job_initiator['party_id'],
-                              dest_party_id=party_id,
-                              src_role=job_initiator['role'],
-                              json_body={},
-                              work_mode=job_parameters['work_mode'])
+                if not stop:
+                    federated_api(job_id=job_id,
+                                  method='POST',
+                                  endpoint='/{}/schedule/{}/{}/{}/{}/{}/save/pipeline'.format(
+                                      API_VERSION,
+                                      job_id,
+                                      role,
+                                      party_id,
+                                      model_id_base64,
+                                      model_version_base64
+                                  ),
+                                  src_party_id=job_initiator['party_id'],
+                                  dest_party_id=party_id,
+                                  src_role=job_initiator['role'],
+                                  json_body={},
+                                  work_mode=job_parameters['work_mode'])
                 # clean
                 federated_api(job_id=job_id,
                               method='POST',
@@ -484,6 +498,36 @@ class TaskScheduler(object):
                 raise Exception('Current role is not this job initiator')
             schedule_logger(job_id).info('send {} job {} {} command failed'.format("cancel" if is_cancel else "kill", job_id, component_name))
             raise Exception('can not found job: {}'.format(job_id))
+
+    @staticmethod
+    def clean_queue():
+        schedule_logger().info('get clean queue command')
+        jobs = job_utils.query_job(is_initiator=1, status=JobStatus.WAITING)
+        if jobs:
+            for job in jobs:
+                schedule_logger(job.f_job_id).info(
+                    'start send {} job {} command success'.format(JobStatus.CANCELED, job.f_job_id))
+                job_info = {'f_job_id': job.f_job_id, 'f_status': JobStatus.CANCELED}
+                roles = json_loads(job.f_roles)
+                job_work_mode = job.f_work_mode
+                initiator_party_id = job.f_party_id
+
+                TaskScheduler.sync_job_status(job_id=job.f_job_id, roles=roles, initiator_party_id=initiator_party_id,
+                                              initiator_role=job.f_role,
+                                              work_mode=job_work_mode,
+                                              job_info=job_info)
+                job_runtime_conf = json_loads(job.f_runtime_conf)
+                event = job_utils.job_event(job.f_job_id,
+                                            job_runtime_conf['initiator']['role'],
+                                            job_runtime_conf['initiator']['party_id'])
+                try:
+                    RuntimeConfig.JOB_QUEUE.del_event(event)
+                    schedule_logger(job.f_job_id).info(
+                        'send {} job {} command success'.format(JobStatus.CANCELED, job.f_job_id))
+                except Exception as e:
+                    schedule_logger(job.f_job_id).error(e)
+        else:
+            raise Exception('There are no jobs in the queue')
 
     @staticmethod
     def job_handler(*args, **kwargs):

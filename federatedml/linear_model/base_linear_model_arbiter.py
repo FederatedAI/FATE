@@ -20,6 +20,7 @@ from federatedml.framework.hetero.procedure import paillier_cipher, batch_genera
 from federatedml.linear_model.linear_model_base import BaseLinearModel
 from federatedml.util import consts
 from federatedml.util import fate_operator
+from federatedml.util.validation_strategy import ValidationStrategy
 
 LOGGER = log_utils.getLogger()
 
@@ -68,6 +69,11 @@ class HeteroBaseArbiter(BaseLinearModel):
     #     else:
     #         LOGGER.info("Task is predict, No need for arbiter to involve.")
 
+    def init_validation_strategy(self, train_data=None, validate_data=None):
+        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs, self.early_stopping_rounds,
+                                                 self.use_first_metric_only)
+        return validation_strategy
+
     def fit(self, data_instances=None, validate_data=None):
         """
         Train linear model of role arbiter
@@ -82,7 +88,7 @@ class HeteroBaseArbiter(BaseLinearModel):
         self.batch_generator.initialize_batch_generator()
         self.gradient_loss_operator.set_total_batch_nums(self.batch_generator.batch_num)
 
-        validation_strategy = self.init_validation_strategy()
+        self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 
         while self.n_iter_ < self.max_iter:
             iter_loss = None
@@ -114,8 +120,9 @@ class HeteroBaseArbiter(BaseLinearModel):
             # if converge
             if iter_loss is not None:
                 iter_loss /= self.batch_generator.batch_num
-                if not self.in_one_vs_rest:
+                if self.need_call_back_loss:
                     self.callback_loss(self.n_iter_, iter_loss)
+                self.loss_history.append(iter_loss)
 
             if self.model_param.early_stop == 'weight_diff':
                 LOGGER.debug("total_gradient: {}".format(total_gradient))
@@ -133,8 +140,16 @@ class HeteroBaseArbiter(BaseLinearModel):
 
             self.converge_procedure.sync_converge_info(self.is_converged, suffix=(self.n_iter_,))
 
-            validation_strategy.validate(self, self.n_iter_)
+            if self.validation_strategy:
+                LOGGER.debug('Linear Arbiter running validation')
+                self.validation_strategy.validate(self, self.n_iter_)
+                if self.validation_strategy.need_stop():
+                    LOGGER.debug('early stopping triggered')
+                    break
 
             self.n_iter_ += 1
             if self.is_converged:
                 break
+        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
+            self.load_model(self.validation_strategy.cur_best_model)
+        LOGGER.debug("finish running linear model arbiter")

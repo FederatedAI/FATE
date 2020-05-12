@@ -71,6 +71,7 @@ Key configuration item description:
 | GRPC_PORT | listen port for the grpc server of FATE-Flow | default 9360 |
 | HTTP_PORT | listen port for the http server of FATE-Flow | default 9380 |
 | WORK_MODE | the work mode of FATE-Flow | 0 for standalone, 1 for cluster |
+| USE_LOCAL_DATA | ways to upload data  | True means use client data, False means use server data |
 | USE_LOCAL_DATABASE | Whether to use a local database(sqlite) | False for no, True for yes |
 | USE_AUTHENTICATION | Whether to enable authentication | False for no, True for yes |
 | USE_CONFIGURATION_CENTER  | Whether to use zookeeper | False for no, True for yes |
@@ -158,10 +159,18 @@ FATE-Flow provide [**REST API**](./doc/fate_flow_rest_api.md) and [**Command Lin
 Let's start using the client to run a Federated Learning Pipeline Job example(**Standalone**).
 
 ### Offline Modeling
-#### Upload Data
+#### Upload Data(guest/host)
 ```bash
 python fate_flow_client.py -f upload -c examples/upload_guest.json
 python fate_flow_client.py -f upload -c examples/upload_host.json
+```
+#### Note 1:
+The configuration item **USE_LOCAL_DATA** in FATE-Flow Server represents whether to use the data on the FATE-Flow client machine when uploading data, and the default is use(True).
+If the configuration **USE_LOCAL_DATA** of FATE-Flow Server is set to **True**, and you still want to use the data on the machine where the FATE-Flow Server is located, you can change the Client's USE_LOCAL_DATA to False and add it to the upload configuration "**module**" parameter, the parameter value is not empty.
+#### Note 2: 
+When the cluster deployment uses the same table to upload data, it is necessary to carry the **drop** parameter (0 represents overwriting upload, 1 represents deleting the previous data and re-uploading)
+```bash
+python fate_flow_client.py -f upload -c examples/upload_guest.json -drop 0
 ```
 
 #### Submit Job
@@ -273,7 +282,7 @@ And then, will you can make online inference request to FATE-Serving by only spe
 
 
 #### How to download the generated data in the middle of the algorithm?
-- You can use ``python fate_flow_client.py -f component_output_model -j $job_id -r $role -g $guest -cpn $component_name -o $output_path``
+- You can use ``python fate_flow_client.py -f component_output_data -j $job_id -r $role -p $party_id -cpn $component_name -o $output_path``
 
 
 #### If the same file upload is executed twice, will fate delete the first data and upload it again?

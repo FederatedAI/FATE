@@ -6,7 +6,7 @@
       "table_name":"hetero_citeulike_train_guest",
       "namespace":"hetero_guest_citeulike",
       "head": 1,
-      "partition": 10
+      "partition": 48
     },
     {
       "role": "host_0",
@@ -14,7 +14,7 @@
       "table_name":"hetero_citeulike_train_host",
       "namespace":"hetero_host_citeulike",
       "head": 1,
-      "partition": 10
+      "partition": 48
     },
     {
       "role": "guest_0",
@@ -22,7 +22,7 @@
       "table_name":"hetero_citeulike_evaluation",
       "namespace":"hetero_guest_citeulike",
       "head": 1,
-      "partition": 10
+      "partition": 48
     }
   ],
   "tasks": {

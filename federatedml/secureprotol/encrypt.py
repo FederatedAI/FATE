@@ -15,6 +15,7 @@
 #
 
 import numpy as np
+import torch
 from collections import Iterable
 from Cryptodome import Random
 from Cryptodome.PublicKey import RSA
@@ -230,6 +231,14 @@ class PadsCipher(Encrypt):
                 else:
                     ret = rand.add_rand_pads(ret, -1.0)
             return ret
+        elif isinstance(value, torch.Tensor):
+            ret = value.numpy()
+            for uid, rand in self._rands.items():
+                if uid > self._uuid:
+                    ret = rand.add_rand_pads(ret, 1.0)
+                else:
+                    ret = rand.add_rand_pads(ret, -1.0)
+            return torch.Tensor(ret)
         else:
             ret = value
             for uid, rand in self._rands.items():

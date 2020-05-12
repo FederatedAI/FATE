@@ -1,0 +1,13 @@
+{
+  "LossScatterTransVar": {
+    "loss": {
+      "src": [
+        "guest",
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    }
+  }
+}

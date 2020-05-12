@@ -31,27 +31,8 @@ class HomoNNParam(BaseParam):
     """
     Parameters used for Homo Neural Network.
 
-    Args:
-        secure_aggregate: enable secure aggregation or not, defaults to True.
-        aggregate_every_n_epoch: aggregate model every n epoch, defaults to 1.
-        config_type: one of "nn", "keras", "tf"
-        nn_define: a dict represents the structure of neural network.
-        optimizer: optimizer method, accept following types:
-            1. a string, one of "Adadelta", "Adagrad", "Adam", "Adamax", "Nadam", "RMSprop", "SGD"
-            2. a dict, with a required key-value pair keyed by "optimizer",
-                with optional key-value pairs such as learning rate.
-            defaults to "SGD"
-        loss: a string
-        metrics:
-        max_iter: the maximum iteration for aggregation in training.
-        batch_size : batch size when updating model.
-            -1 means use all data in a batch. i.e. Not to use mini-batch strategy.
-            defaults to -1.
-        early_stop : str, 'diff', 'weight_diff' or 'abs', default: 'diff'
-            Method used to judge converge or not.
-                a)	diff： Use difference of loss between two iterations to judge whether converge.
-                b)  weight_diff: Use difference between weights of two consecutive iterations
-                c)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
+    Parameters
+    ----------
     """
 
     def __init__(self,
@@ -86,7 +67,7 @@ class HomoNNParam(BaseParam):
         self.cv_param = copy.deepcopy(cv_param)
 
     def check(self):
-        supported_config_type = ["nn", "keras"]
+        supported_config_type = ["nn", "keras","pytorch"]
         if self.config_type not in supported_config_type:
             raise ValueError(f"config_type should be one of {supported_config_type}")
         self.early_stop = _parse_early_stop(self.early_stop)
@@ -104,6 +85,9 @@ class HomoNNParam(BaseParam):
                 pb.nn_define.append(json.dumps(layer))
         elif self.config_type == "keras":
             pb.nn_define.append(json.dumps(self.nn_define))
+        elif self.config_type == "pytorch":
+            for layer in self.nn_define:
+                pb.nn_define.append(json.dumps(layer))
 
         pb.batch_size = self.batch_size
         pb.max_iter = self.max_iter
@@ -129,6 +113,9 @@ class HomoNNParam(BaseParam):
                 self.nn_define.append(json.loads(layer))
         elif self.config_type == "keras":
             self.nn_define = pb.nn_define[0]
+        elif self.config_type== "pytorch":
+            for layer in pb.nn_define:
+                self.nn_define.append(json.loads(layer))
         else:
             raise ValueError(f"{self.config_type} is not supported")
 

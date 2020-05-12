@@ -17,14 +17,18 @@
 #  limitations under the License.
 
 import functools
-
-from federatedml.feature.binning.base_binning import Binning
-from federatedml.feature.binning.quantile_summaries import quantile_summary_factory
-from federatedml.statistic import data_overview
 import uuid
+from arch.api.utils import log_utils
+
+from federatedml.feature.binning.base_binning import BaseBinning
+from federatedml.feature.binning.quantile_summaries import quantile_summary_factory
+from federatedml.param.feature_binning_param import FeatureBinningParam
+from federatedml.statistic import data_overview
+from federatedml.util import consts
+LOGGER = log_utils.getLogger()
 
 
-class QuantileBinning(Binning):
+class QuantileBinning(BaseBinning):
     """
     After quantile binning, the numbers of elements in each binning are equal.
 
@@ -42,7 +46,7 @@ class QuantileBinning(Binning):
     optimizations).
     """
 
-    def __init__(self, params, abnormal_list=None, allow_duplicate=False):
+    def __init__(self, params: FeatureBinningParam, abnormal_list=None, allow_duplicate=False):
         super(QuantileBinning, self).__init__(params, abnormal_list)
         self.summary_dict = None
         self.allow_duplicate = allow_duplicate
@@ -68,6 +72,8 @@ class QuantileBinning(Binning):
                             }
         """
         header = data_overview.get_header(data_instances)
+        # LOGGER.debug("in _fit_split_point, cols_map: {}".format(self.bin_inner_param.bin_cols_map))
+
         self._default_setting(header)
         # self._init_cols(data_instances)
         percent_value = 1.0 / self.bin_num
@@ -76,6 +82,7 @@ class QuantileBinning(Binning):
         percentile_rate = [i * percent_value for i in range(1, self.bin_num)]
         percentile_rate.append(1.0)
         is_sparse = data_overview.is_sparse_data(data_instances)
+        # LOGGER.debug("in _fit_split_point, cols_map: {}".format(self.bin_inner_param.bin_cols_map))
 
         # self._fit_split_point_deprecate(data_instances, is_sparse, percentile_rate)
         self._fit_split_point(data_instances, is_sparse, percentile_rate)
@@ -121,6 +128,7 @@ class QuantileBinning(Binning):
                                   cols_dict=self.bin_inner_param.bin_cols_map,
                                   header=self.header,
                                   is_sparse=is_sparse)
+            # LOGGER.debug("in _fit_split_point, cols_map: {}".format(self.bin_inner_param.bin_cols_map))
             summary_dict = data_instances.mapPartitions2(f)
             summary_dict = summary_dict.reduce(lambda s1, s2: s1.merge(s2), key_func=lambda key: key[1])
             if is_sparse:
@@ -168,6 +176,8 @@ class QuantileBinning(Binning):
                 data_generator = instant.features.get_all_data()
                 for col_idx, col_value in data_generator:
                     col_name = header[col_idx]
+                    if col_name not in cols_dict:
+                        continue
                     summary = summary_dict[col_name]
                     summary.insert(col_value)
 
@@ -185,7 +195,6 @@ class QuantileBinning(Binning):
             if s_p not in split_point:
                 split_point.append(s_p)
         return split_point
-
 
     @staticmethod
     def approxi_quantile(data_instances, params, cols_dict, abnormal_list, header, is_sparse):
@@ -305,3 +314,15 @@ class QuantileBinning(Binning):
             summary = summary_dict[col_name]
             result[col_name] = summary.query(query_point)
         return result
+
+
+class QuantileBinningTool(QuantileBinning):
+    """
+    Use for quantile binning data directly.
+    """
+
+    def __init__(self, bin_nums=consts.G_BIN_NUM, param_obj: FeatureBinningParam = None,
+                 abnormal_list=None, allow_duplicate=False):
+        if param_obj is None:
+            param_obj = FeatureBinningParam(bin_num=bin_nums)
+        super().__init__(params=param_obj, abnormal_list=abnormal_list, allow_duplicate=allow_duplicate)

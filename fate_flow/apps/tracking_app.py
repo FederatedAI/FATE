@@ -22,12 +22,12 @@ import tarfile
 from flask import Flask, request, send_file
 from google.protobuf import json_format
 
-from arch.api.utils.core import deserialize_b64
-from arch.api.utils.core import get_fate_uuid
-from arch.api.utils.core import json_loads
+from arch.api.utils.core_utils import deserialize_b64
+from arch.api.utils.core_utils import fate_uuid
+from arch.api.utils.core_utils import json_loads
 from fate_flow.db.db_models import Job, DB
 from fate_flow.manager.data_manager import query_data_view, delete_metric_data
-from fate_flow.manager.tracking import Tracking
+from fate_flow.manager.tracking_manager import Tracking
 from fate_flow.settings import stat_logger
 from fate_flow.utils import job_utils, data_utils
 from fate_flow.utils.api_utils import get_json_result, error_response
@@ -181,16 +181,13 @@ def component_output_model():
         if buffer_name.endswith('Param'):
             output_model_json = json_format.MessageToDict(buffer_object, including_default_value_fields=True)
     if output_model_json:
-        pipeline_output_model = tracker.get_output_model_meta()
+        component_define = tracker.get_component_define()
         this_component_model_meta = {}
-        for k, v in pipeline_output_model.items():
-            if k.endswith('_module_name'):
-                if k == '{}_module_name'.format(request_data['component_name']):
-                    this_component_model_meta['module_name'] = v
-            else:
-                k_i = k.split('.')
-                if '.'.join(k_i[:-1]) == request_data['component_name']:
-                    this_component_model_meta[k] = v
+        for buffer_name, buffer_object in output_model.items():
+            if buffer_name.endswith('Meta'):
+                this_component_model_meta['meta_data'] = json_format.MessageToDict(buffer_object,
+                                                                                   including_default_value_fields=True)
+        this_component_model_meta.update(component_define)
         return get_json_result(retcode=0, retmsg='success', data=output_model_json, meta=this_component_model_meta)
     else:
         return get_json_result(retcode=0, retmsg='no data', data={})
@@ -232,7 +229,7 @@ def component_output_data_download():
         return error_response(response_code=500, retmsg='limit is 0')
     output_data_count = 0
     have_data_label = False
-    output_tmp_dir = os.path.join(os.getcwd(), 'tmp/{}'.format(get_fate_uuid()))
+    output_tmp_dir = os.path.join(os.getcwd(), 'tmp/{}'.format(fate_uuid()))
     output_file_path = '{}/output_%s'.format(output_tmp_dir)
     output_data_file_path = output_file_path % 'data.csv'
     os.makedirs(os.path.dirname(output_data_file_path), exist_ok=True)
@@ -250,7 +247,11 @@ def component_output_data_download():
         output_data_meta_file_path = output_file_path % 'data_meta.json'
         with open(output_data_meta_file_path, 'w') as fw:
             json.dump({'header': header}, fw, indent=4)
-
+        if request_data.get('head', True):
+            with open(output_data_file_path, 'r+') as f:
+                content = f.read()
+                f.seek(0, 0)
+                f.write('{}\n'.format(','.join(header)) + content)
         # tar
         memory_file = io.BytesIO()
         tar = tarfile.open(fileobj=memory_file, mode='w:gz')

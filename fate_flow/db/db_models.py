@@ -24,7 +24,7 @@ from playhouse.apsw_ext import APSWDatabase
 from playhouse.pool import PooledMySQLDatabase
 
 from arch.api.utils import log_utils
-from arch.api.utils.core import current_timestamp
+from arch.api.utils.core_utils import current_timestamp
 from fate_flow.entity.constant_config import WorkMode
 from fate_flow.settings import DATABASE, WORK_MODE, stat_logger, USE_LOCAL_DATABASE
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -106,6 +106,15 @@ def init_database_tables():
         DB.create_tables(table_objs)
 
 
+class Queue(DataBaseModel):
+    f_job_id = CharField(max_length=100)
+    f_event = CharField(max_length=500)
+    f_is_waiting = IntegerField(default=1)
+
+    class Meta:
+        db_table = "t_queue"
+
+
 class Job(DataBaseModel):
     f_job_id = CharField(max_length=25)
     f_name = CharField(max_length=500, null=True, default='')
@@ -166,8 +175,8 @@ class DataView(DataBaseModel):
     f_component_name = TextField()
     f_create_time = BigIntegerField()
     f_update_time = BigIntegerField(null=True)
-    f_table_create_count = IntegerField(default=True)
-    f_table_now_count = IntegerField(null=True)
+    f_table_count_upload = IntegerField(null=True)
+    f_table_count_actual = IntegerField(null=True)
     f_partition = IntegerField(null=True)
     f_task_id = CharField(max_length=100)
     f_type = CharField(max_length=50, null=True)

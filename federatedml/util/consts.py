@@ -64,6 +64,72 @@ R2_SCORE = "r2_score"
 ROOT_MEAN_SQUARED_ERROR = "root_mean_squared_error"
 ROC = "roc"
 
+# evaluation alias metric
+ALL_METRIC_NAME = [AUC, KS, LIFT, GAIN, PRECISION, RECALL, ACCURACY, EXPLAINED_VARIANCE, MEAN_ABSOLUTE_ERROR,
+                   MEAN_SQUARED_ERROR, MEAN_SQUARED_LOG_ERROR, MEDIAN_ABSOLUTE_ERROR, R2_SCORE, ROOT_MEAN_SQUARED_ERROR,
+                   ROC]
+ALIAS = {
+    ('l1', 'mae', 'regression_l1'): MEAN_ABSOLUTE_ERROR,
+    ('l2', 'mse', 'regression_l2', 'regression'): MEAN_SQUARED_ERROR,
+    ('l2_root', 'rmse'): ROOT_MEAN_SQUARED_ERROR,
+    ('msle', ): MEAN_SQUARED_LOG_ERROR,
+    ('r2', ): R2_SCORE,
+    ('acc', ): ACCURACY
+}
+
+# default evaluation metrics
+DEFAULT_BINARY_METRIC = [AUC, KS]
+DEFAULT_REGRESSION_METRIC = [ROOT_MEAN_SQUARED_ERROR, MEAN_ABSOLUTE_ERROR]
+DEFAULT_MULTI_METRIC = [ACCURACY, PRECISION, RECALL]
+
+# allowed metrics for different tasks
+ALL_BINARY_METRICS = [
+    AUC,
+    KS,
+    LIFT,
+    GAIN,
+    ACCURACY,
+    PRECISION,
+    RECALL,
+    ROC
+]
+
+ALL_REGRESSION_METRICS = [
+    EXPLAINED_VARIANCE,
+    MEAN_ABSOLUTE_ERROR,
+    MEAN_SQUARED_ERROR,
+    MEDIAN_ABSOLUTE_ERROR,
+    R2_SCORE,
+    ROOT_MEAN_SQUARED_ERROR
+]
+ALL_MULTI_METRICS = [
+    ACCURACY,
+    PRECISION,
+    RECALL
+]
+
+# single value metrics
+REGRESSION_SINGLE_VALUE_METRICS = [
+    EXPLAINED_VARIANCE,
+    MEAN_ABSOLUTE_ERROR,
+    MEAN_SQUARED_ERROR,
+    MEAN_SQUARED_LOG_ERROR,
+    MEDIAN_ABSOLUTE_ERROR,
+    R2_SCORE,
+    ROOT_MEAN_SQUARED_ERROR,
+]
+
+BINARY_SINGLE_VALUE_METRIC = [
+    AUC,
+    KS
+]
+
+MULTI_SINGLE_VALUE_METRIC = [
+    PRECISION,
+    RECALL,
+    ACCURACY
+]
+
 # workflow
 TRAIN_DATA = "train_data"
 TEST_DATA = "test_data"
@@ -91,6 +157,7 @@ ONE_HOT_LIMIT = 1024   # No more than 10 possible values
 
 QUANTILE = 'quantile'
 BUCKET = 'bucket'
+OPTIMAL = 'optimal'
 
 # Feature selection methods
 UNIQUE_VALUE = 'unique_value'

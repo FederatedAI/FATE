@@ -219,12 +219,13 @@ class BoostingTreeParam(BaseParam):
     n_iter_no_change : bool,
         when True and residual error less than tol, tree building process will stop. default: True
 
-    encrypt_param : EncodeParam Object, encrypt method use in secure boost, default: EncryptParam()
+    encrypt_param : EncodeParam Object, encrypt method use in secure boost, default: EncryptParam(), this parameter
+                    is only for hetero-secureboost
 
     bin_num: int, positive integer greater than 1, bin number use in quantile. default: 32
 
     encrypted_mode_calculator_param: EncryptedModeCalculatorParam object, the calculation mode use in secureboost,
-                                     default: EncryptedModeCalculatorParam()
+                                     default: EncryptedModeCalculatorParam(), only for hetero-secureboost
 
     use_missing: bool, accepted True, False only, use missing value in training process or not. default: False
 
@@ -237,6 +238,22 @@ class BoostingTreeParam(BaseParam):
                       if container object in python, will validate data if epochs belong to this container.
                         e.g. validation_freqs = [10, 15], will validate data when epoch equals to 10 and 15.
                       Default: None
+                      The default value is None, 1 is suggested. You can set it to a number larger than 1 in order to
+                      speed up training by skipping validation rounds. When it is larger than 1, a number which is
+                      divisible by "num_trees" is recommended, otherwise, you will miss the validation scores
+                      of last training iteration.
+
+    early_stopping_rounds: should be a integer larger than 0，will stop training if one metric of one validation data
+                            doesn’t improve in last early_stopping_round rounds，
+                            need to set validation freqs and will check early_stopping every at every validation epoch,
+
+    metrics: list, default: []
+             Specify which metrics to be used when performing evaluation during training process.
+             If set as empty, default metrics will be used. For regression tasks, default metrics are
+             ['root_mean_squared_error', 'mean_absolute_error']， For binary-classificatiin tasks, default metrics
+             are ['auc', 'ks']. For multi-classification tasks, default metrics are ['accuracy', 'precision', 'recall']
+
+    use_first_metric_only: use only the first metric for early stopping
     """
 
     def __init__(self, tree_param=DecisionTreeParam(), task_type=consts.CLASSIFICATION,
@@ -247,7 +264,8 @@ class BoostingTreeParam(BaseParam):
                  use_missing=False, zero_as_missing=False,
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 validation_freqs=None):
+                 validation_freqs=None, early_stopping_rounds=None, metrics=None, use_first_metric_only=True):
+        
         self.tree_param = copy.deepcopy(tree_param)
         self.task_type = task_type
         self.objective_param = copy.deepcopy(objective_param)
@@ -264,6 +282,9 @@ class BoostingTreeParam(BaseParam):
         self.predict_param = copy.deepcopy(predict_param)
         self.cv_param = copy.deepcopy(cv_param)
         self.validation_freqs = validation_freqs
+        self.early_stopping_rounds = early_stopping_rounds
+        self.metrics = metrics
+        self.use_first_metric_only = use_first_metric_only
 
     def check(self):
         self.tree_param.check()
@@ -311,6 +332,20 @@ class BoostingTreeParam(BaseParam):
                 raise ValueError("validation_freqs should be larger than 0 when it's integer")
         elif not isinstance(self.validation_freqs, collections.Container):
             raise ValueError("validation_freqs should be None or positive integer or container")
+
+        if self.early_stopping_rounds is None:
+            pass
+        elif isinstance(self.early_stopping_rounds, int):
+            if self.early_stopping_rounds < 1:
+                raise ValueError("early stopping rounds should be larger than 0 when it's integer")
+            if self.validation_freqs is None:
+                raise ValueError("validation freqs must be set when early stopping is enabled")
+
+        if self.metrics is not None and not isinstance(self.metrics, list):
+            raise ValueError("metrics should be a list")
+
+        if not isinstance(self.use_first_metric_only, bool):
+            raise ValueError("use_first_metric_only should be a boolean")
 
         return True
 

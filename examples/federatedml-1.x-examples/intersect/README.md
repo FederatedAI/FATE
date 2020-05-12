@@ -4,22 +4,26 @@ This section introduces the dsl and conf for usage of different type of task.
 
 #### Intersection Task.
 
-1. Rsa intersection:
-    dsl: test_intersect_job_dsl.json
+1. Rsa intersection:  
+    dsl: test_intersect_job_dsl.json  
     runtime_config : test_intersect_job_rsa_conf.json
 
-2. Raw intersection:
-    dsl: test_intersect_job_dsl.json
+2. Raw intersection:  
+    dsl: test_intersect_job_dsl.json  
     runtime_config : test_intersect_job_raw_conf.json
     
-3. Rsa multi-hosts intersection:
-    dsl: test_intersect_job_dsl.json
-    runtime_config : test_intersect_job_rsa_multi_host_conf.json
+3. Rsa multi-hosts intersection:  
+    dsl: test_intersect_job_dsl.json  
+    runtime_config : test_intersect_job_rsa_multi_host_conf.json  
     This dsl is an example of guest do intersection with two hosts using rsa intersection. It can be used as more than two hosts, as well as raw intersection.
     
-4. Rsa intersection using cache to speed up:
-    dsl: test_intersect_job_dsl.json
-    runtime_config: test_intersect_job_rsa_using_cache.json
+4. Rsa intersection using cache to speed up:  
+    dsl: test_intersect_job_dsl.json  
+    runtime_config: test_intersect_job_rsa_using_cache.json  
+    
+5. intersection without dataio:sometimes just want to use intersection only to find the same ID, without dataio conponent can be fastest to do it.  
+    dsl: test_intersect_without_dataio_job_dsl.json  
+    runtime_cpnfig: test_intersect_without_dataio_job_conf.json
     
 Users can use following commands to running the task.
 

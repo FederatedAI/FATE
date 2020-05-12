@@ -1,0 +1,82 @@
+{
+    "components" : {
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.train_data"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["dataio"]
+            }
+         },
+        "dataio_1": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.eval_data"
+                    ]
+                },
+                "model": [
+                    "dataio_0.dataio"
+                ]
+            },
+            "output": {
+                "data": ["eval"],
+                "model": ["dataio"]
+            }
+         },
+         "intersection_0": {
+             "module": "Intersection",
+             "input": {
+                 "data": {
+                     "data": [
+                         "dataio_0.train"
+                     ]
+                 }
+             },
+             "output": {
+                 "data": ["train"]
+             }
+         },
+        "intersection_1": {
+             "module": "Intersection",
+             "input": {
+                 "data": {
+                     "data": [
+                         "dataio_1.eval"
+                     ]
+                 }
+             },
+             "output": {
+                 "data": ["eval"]
+             }
+         },
+        "hetero_linr_0": {
+            "module": "HeteroLinR",
+            "input": {
+                "data": {
+                    "train_data": ["intersection_0.train"],
+                    "eval_data": ["intersection_1.eval"]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["hetero_linr"]
+            }
+        },
+        "evaluation_0": {
+            "module": "Evaluation",
+            "input": {
+                "data": {
+                    "data": ["hetero_linr_0.train"]
+                }
+            }
+        }
+    }
+}

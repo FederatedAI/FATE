@@ -16,7 +16,7 @@
 
 from flask import Flask, request
 
-from arch.api.utils.core import base64_decode
+from arch.api.utils.core_utils import base64_decode
 from fate_flow.driver.job_controller import JobController
 from fate_flow.driver.task_scheduler import TaskScheduler
 from fate_flow.settings import stat_logger
@@ -84,7 +84,7 @@ def clean(job_id, role, party_id, roles, party_ids):
 @manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/run', methods=['POST'])
 @request_authority_certification
 def run_task(job_id, component_name, task_id, role, party_id):
-    TaskScheduler.start_task(job_id, component_name, task_id, role, party_id, request.json)
+    TaskScheduler.run_task(job_id, component_name, task_id, role, party_id, request.json)
     return get_json_result(retcode=0, retmsg='success')
 
 

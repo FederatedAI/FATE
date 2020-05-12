@@ -1,0 +1,13 @@
+{
+  "ValidationStrategyVariable": {
+    "validation_status": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host",
+        "arbiter"
+      ]
+    }
+  }
+}
