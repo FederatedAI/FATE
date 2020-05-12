@@ -150,18 +150,9 @@ buildModule() {
   cp -r ${package_dir}/python ${source_dir}/docker-build/docker/modules/eggroll/python
   cp -r ${package_dir}/eggroll/ ${source_dir}/docker-build/docker/modules/eggroll/eggroll
 
-  # handle client
-  [ -d ${source_dir}/docker-build/docker/modules/client/arch ] && rm -rf ${source_dir}/docker-build/docker/modules/client/arch
-  [ -d ${source_dir}/docker-build/docker/modules/client/fate_flow ] && rm -rf ${source_dir}/docker-build/docker/modules/client/fate_flow
-  [ -d ${source_dir}/docker-build/docker/modules/client/examples ] && rm -rf ${source_dir}/docker-build/docker/modules/client/examples
-  cp -r ${package_dir}/python/arch ${source_dir}/docker-build/docker/modules/client/arch
-  cp -r ${package_dir}/python/fate_flow ${source_dir}/docker-build/docker/modules/client/fate_flow
-  cp -r ${package_dir}/python/examples ${source_dir}/docker-build/docker/modules/client/examples
-
   cd ${source_dir}
 
-  #for module in "client" "federation" "proxy" "roll" "meta-service" "fateboard" "egg" "python"
-  for module in "python" "fateboard" "client" "eggroll"
+  for module in "python" "fateboard" "eggroll"
   do
       echo "### START BUILDING ${module} ###"
       docker build --build-arg version=${version} --build-arg fateboard_version=${fateboard_version} --build-arg PREFIX=${PREFIX} --build-arg BASE_TAG=${BASE_TAG} --no-cache -t ${PREFIX}/${module}:${TAG} -f ${source_dir}/docker-build/docker/modules/${module}/Dockerfile ${source_dir}/docker-build/docker/modules/${module}
@@ -175,16 +166,13 @@ buildModule() {
   rm -rf ${source_dir}/docker-build/docker/modules/fateboard/fateboard
   rm -rf ${source_dir}/docker-build/docker/modules/eggroll/eggroll
   rm -rf ${source_dir}/docker-build/docker/modules/eggroll/python
-  rm -rf ${source_dir}/docker-build/docker/modules/client/arch
-  rm -rf ${source_dir}/docker-build/docker/modules/client/fate_flow
-  rm -rf ${source_dir}/docker-build/docker/modules/client/examples
 
   echo ""
 }
 
 pushImage() {
   ## push image
-  for module in "python" "eggroll" "fateboard" "client"
+  for module in "python" "eggroll" "fateboard"
   do
       echo "### START PUSH ${module} ###"
       docker push ${PREFIX}/${module}:${TAG}

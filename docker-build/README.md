@@ -59,7 +59,6 @@ REPOSITORY                            TAG
 federatedai/eggroll                   <TAG>
 federatedai/fateboard                 <TAG>
 federatedai/python                    <TAG>
-federatedai/client                    <TAG>
 federatedai/base-image                <TAG>
 ```
 

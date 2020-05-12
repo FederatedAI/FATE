@@ -50,7 +50,6 @@ FATE（Federated AI Technology Enable）是一个工业级的分布式联邦学�
   federatedai/eggroll                   <TAG>
   federatedai/fateboard                 <TAG>
   federatedai/python                    <TAG>
-  federatedai/client                    <TAG>
   federatedai/base-image                <TAG>
 ```
 
