@@ -163,8 +163,8 @@ python fate_flow_client.py -f upload -c examples/upload_guest.json
 python fate_flow_client.py -f upload -c examples/upload_host.json
 ```
 #### 注1：
-配置中**USE_LOCAL_DATA**默认为**True**，**True**代表使用FATE-Flow Client所在机器上的数据，**False**代表使用FATE-Flow Server所在机器上的数据,可根据实际需求修改配置。
-如果**USE_LOCAL_DATA**设为**True**，并且还是想要使用FATE-Flow Server所在机器上的数据，可将client的USE_LOCAL_DATA改为False，并在上传配置中添加“**module**”参数，参数值非空即可。
+FATE-Flow Server中的配置项**USE_LOCAL_DATA**代表上传数据时是否使用FATE-Flow客户端机器上的数据,默认使用（True）。
+如果FATE-Flow Server的配置**USE_LOCAL_DATA**设为**True**，并且还是想要使用FATE-Flow Server所在机器上的数据，可将Client的USE_LOCAL_DATA改为False，并在上传配置中添加“**module**”参数，参数值非空即可。
 
 #### 注2：
 集群部署使用同一个表上传数据时，需携带**drop**参数（0代表覆盖上传，1代表删除之前的数据并重新上传）

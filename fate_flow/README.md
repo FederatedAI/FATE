@@ -165,9 +165,8 @@ python fate_flow_client.py -f upload -c examples/upload_guest.json
 python fate_flow_client.py -f upload -c examples/upload_host.json
 ```
 #### Note 1:
-In the configuration, **USE_LOCAL_DATA** defaults to **True**, **True** represents data on the machine where the FATE-Flow Client is located, and **False** represents data on the machine where the FATE-Flow Server is located Modify the configuration according to actual needs.
-If **USE_LOCAL_DATA** is set to **True**, and you still want to use the data on the machine where the FATE-Flow Server is located, you can change the client's USE_LOCAL_DATA to False, and add "**module**" parameter in the upload configuration, the parameter value is not empty.
-
+The configuration item **USE_LOCAL_DATA** in FATE-Flow Server represents whether to use the data on the FATE-Flow client machine when uploading data, and the default is use(True).
+If the configuration **USE_LOCAL_DATA** of FATE-Flow Server is set to **True**, and you still want to use the data on the machine where the FATE-Flow Server is located, you can change the Client's USE_LOCAL_DATA to False and add it to the upload configuration "**module**" parameter, the parameter value is not empty.
 #### Note 2: 
 When the cluster deployment uses the same table to upload data, it is necessary to carry the **drop** parameter (0 represents overwriting upload, 1 represents deleting the previous data and re-uploading)
 ```bash
