@@ -58,12 +58,12 @@ modules. Specific module information is as follows:
 2. Deployment Architecture
 --------------------------
 
-2.1 Unilateral Deployment Architecture
+2.1 Bilateral Deployment Architecture
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-​ Example deployment in one party
+​ Example deployment in two parties
 
-.. figure:: images/arch.png
+.. figure:: images/arch_en.png
    :align: center
    :width: 500
 
@@ -122,7 +122,7 @@ configuration to replicate this environment:
       - services
 
     * - PartyA
-      - 9999
+      - 10000
       - VM_0_1_centos
       - 192.168.0.1
       - CentOS 7.2/Ubuntu 16.04
@@ -130,7 +130,7 @@ configuration to replicate this environment:
       - fate_flow, fateboard, clustermanager, nodemanager, mysql
 
     * - PartyB
-      - 9999
+      - 10000
       - VM_0_2_centos
       - 192.168.0.2
       - CentOS 7.2/Ubuntu 16.04
@@ -138,7 +138,7 @@ configuration to replicate this environment:
       - nodemanager, rollsite
 
     * - PartyC
-      - 10000
+      - 9999
       - VM_0_3_centos
       - 192.168.0.3
       - CentOS 7.2/Ubuntu 16.04
@@ -307,10 +307,10 @@ external network environment):
 
    mkdir -p /data/projects/install
    cd /data/projects/install
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.0-rc3.tar.gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.0-release.tar.gz
    wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.0-rc3.tar.gz
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.0-rc4.tar.gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.0-release.tar.gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.0-release.tar.gz
 
    #Send to 192.168.0.2和192.168.0.3
    scp *.tar.gz app@192.168.0.2:/data/projects/install
@@ -332,7 +332,7 @@ external network environment):
 
    #Unzip the package
    cd /data/projects/install
-   tar xzvf mysql-1.4.0-rc3.tar.gz
+   tar xzvf mysql-1.4.0-release.tar.gz
    cd mysql
    tar xf mysql-8.0.13.tar.gz -C /data/projects/fate/common/mysql
 
@@ -434,7 +434,7 @@ external network environment):
 
    #Install miniconda3
    cd /data/projects/install
-   tar xvf python-env-1.4.0-rc3.tar.gz
+   tar xvf python-env-1.4.0-release.tar.gz
    cd python-env
    sh Miniconda3-4.5.4-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
 
@@ -462,7 +462,7 @@ external network environment):
    #Software deployment
    #Execute under the app user of the target server (192.168.0.1 192.168.0.2 192.168.0.3)
    cd /data/projects/install
-   tar xf FATE_install_1.4.0-rc4.tar.gz
+   tar xf FATE_install_1.4.0-release.tar.gz
    cd FATE_install_1.4*
    tar xvf python.tar.gz -C /data/projects/fate/
    tar xvf eggroll.tar.gz -C /data/projects/fate
@@ -645,7 +645,7 @@ Configuration file: /data/projects/fate/eggroll/conf/route_table.json
              "port": 9360,
              "ip": "192.168.0.1"
            }
-         ]      
+         ]
        },
        "10000":
        {
@@ -682,7 +682,7 @@ Configuration file: /data/projects/fate/eggroll/conf/route_table.json
              "port": 9360,
              "ip": "192.168.0.3"
            }
-         ]      
+         ]
        },
        "9999":
        {
@@ -1077,7 +1077,7 @@ In the node of host party, run:
 
    source /data/projects/fate/init_env.sh
    cd /data/projects/fate/python/examples/min_test_task/
-   sh run.sh host fast         
+   sh run.sh host fast
 
 Get the values of “host_table” and “host_namespace” from test results,
 and pass them to following command.
@@ -1236,3 +1236,16 @@ Start / stop / status / restart mysql service
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 refer to `build guide <./build.md>`__
+
+7.2 Eggroll parameter tuning
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Configuration file path: /data/projects/fate/eggroll/conf/eggroll.properties
+
+Configuration file path: eggroll.session.processors.per.node
+
+Assume that the CPU cores (cpu cores) are: c, The number of Nodemanager is: n, The number of tasks to be run simultaneously is p, then:
+
+egg_num=eggroll.session.processors.per.node = c * 0.8 / p
+
+partitions (Number of roll pair partitions) = egg_num * n
