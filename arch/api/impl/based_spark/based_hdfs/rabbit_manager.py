@@ -275,8 +275,8 @@ if __name__ == "__main__":
     rabbit_manager.CreateQueue("testing1", queue_name)
 
     ## construct host uri with username, password and vhost
-    #host_uri = "amqp://{}:{}@10.117.32.175:5673/{}".format("happy", "happy", "testing1") 
-    host_uri = "amqp://{}:{}@10.117.32.175:5672".format("happy", "happy") 
+    #host_uri = "amqp://{}:{}@192.168.1.1:5673/{}".format("happy", "happy", "testing1") 
+    host_uri = "amqp://{}:{}@192.168.1.1:5672".format("happy", "happy") 
     print(host_uri)
     result = rabbit_manager.FederateQueue(host_uri, "testing1", queue_name)
     print(result)
