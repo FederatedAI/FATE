@@ -256,7 +256,7 @@ class JobController(object):
     @staticmethod
     def cancel_job(job_id, role, party_id, job_initiator):
         schedule_logger(job_id).info('{} {} get cancel waiting job {} command'.format(role, party_id, job_id))
-        jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
+        jobs = job_utils.query_job(job_id=job_id)
         if jobs:
             job = jobs[0]
             job_runtime_conf = json_loads(job.f_runtime_conf)
@@ -270,10 +270,6 @@ class JobController(object):
             schedule_logger(job_id).info('cancel waiting job successfully, job id is {}'.format(job.f_job_id))
             return True
         else:
-            jobs = job_utils.query_job(job_id=job_id)
-            if jobs:
-                raise Exception(
-                    'role {} party id {} cancel waiting job {} failed, not is initiator'.format(role, party_id, job_id))
             raise Exception('role {} party id {} cancel waiting job failed, no find jod {}'.format(role, party_id, job_id))
 
 

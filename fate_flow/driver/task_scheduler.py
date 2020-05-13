@@ -441,9 +441,12 @@ class TaskScheduler(object):
         schedule_logger(job_id, delete=True)
 
     @staticmethod
-    def stop(job_id, end_status=JobStatus.FAILED, component_name=''):
+    def stop(job_id, end_status=JobStatus.FAILED, component_name='', role='', party_id=''):
         schedule_logger(job_id).info('get {} job {} {} command'.format("cancel" if end_status == JobStatus.CANCELED else "stop", job_id, component_name))
-        jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
+        if role and party_id:
+            jobs = job_utils.query_job(job_id=job_id, role=role, party_id=party_id)
+        else:
+            jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
         cancel_success = False
         is_cancel = (end_status == JobStatus.CANCELED)
         if jobs:
@@ -493,9 +496,6 @@ class TaskScheduler(object):
             if is_cancel:
                 return cancel_success
         else:
-            jobs = job_utils.query_job(job_id=job_id)
-            if jobs:
-                raise Exception('Current role is not this job initiator')
             schedule_logger(job_id).info('send {} job {} {} command failed'.format("cancel" if is_cancel else "kill", job_id, component_name))
             raise Exception('can not found job: {}'.format(job_id))
 
