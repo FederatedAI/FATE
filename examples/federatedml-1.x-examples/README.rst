@@ -179,7 +179,7 @@ We have provided several example dsl files located in the corresponding algorith
     1. component_name: key of a component. This name should end with a "_num" such as "_0", "_1" etc. And the number should start with 0. This is used to distinguish multiple same kind of components that may exist.
 
     2. module: Specify which component use. This field should be one of the algorithm modules FATE supported.
-       The supported algorithms can be referred to [here](../../federatedml/README.rst)
+       The supported algorithms can be referred to `[here]<../../federatedml/README.rst>`_
 
         1. input: There are two type of input, data and model.
 
