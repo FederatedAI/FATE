@@ -16,19 +16,19 @@
 
 from pipeline.component.component_base import Component
 from pipeline.interface.output import Output
-from federatedml.param.hetero_nn_param import HeteroNNParam
+from federatedml.param.logistic_regression_param import HomoLogisticParam
 
 
-class HeteroNN(Component, HeteroNNParam):
+class HomoLR(Component, HomoLogisticParam):
     def __init__(self, **kwargs):
         Component.__init__(self, **kwargs)
 
         print (self.name)
         new_kwargs = self.erase_component_base_param(**kwargs)
 
-        HeteroNNParam.__init__(self, **new_kwargs)
+        HomoLogisticParam.__init__(self, **new_kwargs)
         self.output = Output(self.name)
-        self._module_name = "HeteroNN"
+        self._module_name = "HomoLR"
 
     def summary(self, data, metric_keyword):
         if data is None:

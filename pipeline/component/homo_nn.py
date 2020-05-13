@@ -16,19 +16,19 @@
 
 from pipeline.component.component_base import Component
 from pipeline.interface.output import Output
-from federatedml.param.hetero_nn_param import HeteroNNParam
+from federatedml.param.homo_nn_param import HomoNNParam
 
 
-class HeteroNN(Component, HeteroNNParam):
+class HomoNN(Component, HomoNNParam):
     def __init__(self, **kwargs):
         Component.__init__(self, **kwargs)
 
         print (self.name)
         new_kwargs = self.erase_component_base_param(**kwargs)
 
-        HeteroNNParam.__init__(self, **new_kwargs)
+        HomoNNParam.__init__(self, **new_kwargs)
         self.output = Output(self.name)
-        self._module_name = "HeteroNN"
+        self._module_name = "HomoNN"
 
     def summary(self, data, metric_keyword):
         if data is None:
