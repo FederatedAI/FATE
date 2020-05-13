@@ -58,7 +58,7 @@ print (pipeline.get_component("hetero_nn_0").get_model_param())
 
 # predict
 
-pipeline = PipeLine().predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
+pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
                               feed_dict={input_0:
                                              {"guest":
                                                   {9999: guest_train_data},
