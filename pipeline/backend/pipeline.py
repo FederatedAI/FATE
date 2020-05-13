@@ -256,7 +256,7 @@ class PipeLine(object):
         submit_conf["job_parameters"] = {
             "work_mode": work_mode,
             "backend": backend,
-            "version": 2
+            "version": VERSION
         }
 
         if job_type is not None:
@@ -279,28 +279,30 @@ class PipeLine(object):
                 if role not in data_source:
                     data_source[role] = {}
 
-                    if VERSION == 1:
+                if VERSION == 1:
+                    if "args" not in data_source[role]:
                         data_source[role]["args"] = {"data": {}}
-                        all_party = self._get_role_conf()[role]
-                        data = [{}] * len(all_party)
-                        for idx in range(len(all_party)):
-                            _party_id = all_party[idx]
-                            if _party_id not in _input_dict[role]:
-                                raise ValueError(
-                                    "In Pipeline, to use dsl version-1, all party's data in role should be list, but role: {}, party: {} not found".format(
-                                        role, _party_id))
-                            data[idx] = _input_dict[role][_party_id]
 
-                        data_source[role]["args"]["data"][_input.name] = data
-                        continue
+                    all_party = self._get_role_conf()[role]
+                    data = [{}] * len(all_party)
+                    for idx in range(len(all_party)):
+                        _party_id = all_party[idx]
+                        if _party_id not in _input_dict[role]:
+                            raise ValueError(
+                                "In Pipeline, to use dsl version-1, all party's data in role should be list, but role: {}, party: {} not found".format(
+                                    role, _party_id))
+                        data[idx] = _input_dict[role][_party_id]
 
-                    for _party_id in _input_dict[role]:
-                        _party_index = self._get_party_index(role, _party_id)
-                        if _party_index not in data_source[role]:
-                            data_source[role][_party_index] = {}
-                            data_source[role][_party_index]["source"] = {}
+                    data_source[role]["args"]["data"][_input.name] = data
+                    continue
 
-                        data_source[role][_party_index]["source"][_input.name] = _input_dict[role][_party_id]
+                for _party_id in _input_dict[role]:
+                    _party_index = self._get_party_index(role, _party_id)
+                    if _party_index not in data_source[role]:
+                        data_source[role][_party_index] = {}
+                        data_source[role][_party_index]["source"] = {}
+
+                    data_source[role][_party_index]["source"][_input.name] = _input_dict[role][_party_id]
 
         if "role_parameters" not in submit_conf:
             submit_conf["role_parameters"] = data_source
@@ -314,6 +316,8 @@ class PipeLine(object):
                 else:
                     submit_conf["role_parameters"][role].update(data_source[role])
 
+        import pprint
+        pprint.pprint(submit_conf)
         return submit_conf
 
     def fit(self, backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, feed_dict=None):
