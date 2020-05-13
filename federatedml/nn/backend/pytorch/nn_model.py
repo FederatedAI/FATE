@@ -1,19 +1,3 @@
-#
-#  Copyright 2019 The FATE Authors. All Rights Reserved.
-#
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
-#
-
 import copy
 import io
 import os
@@ -60,7 +44,7 @@ def layers(layer, config, type):
             return torch.nn.Tanh()
         if layer == "Softmax":
             return torch.nn.Softmax(1)
-        if layer =="LogSoftmax":
+        if layer == "LogSoftmax":
             return torch.nn.LogSoftmax(1)
 
     elif type == "normal":
@@ -106,13 +90,13 @@ def build_loss_fn(loss):
 
 def build_optimzer(optim, model):
     if optim.optimizer == "Adam":
-        return torch.optim.Adam(model.parameters(), lr=optim.kwargs.get("learning_rate"))
+        return torch.optim.Adam(model.parameters(), **optim.kwargs)
     elif optim.optimizer == "SGD":
-        return torch.optim.SGD(model.parameters(), lr=optim.kwargs.get("learning_rate"))
+        return torch.optim.SGD(model.parameters(), **optim.kwargs)
     elif optim.optimizer == "RMSprop":
-        return torch.optim.RMSprop(model.parameters(), lr=optim.kwargs.get("learning_rate"))
+        return torch.optim.RMSprop(model.parameters(), **optim.kwargs)
     elif optim.optimizer == "Adagrad":
-        return torch.optim.Adagrad(model.parameters(), lr=optim.kwargs.get("learning_rate"))
+        return torch.optim.Adagrad(model.parameters(), **optim.kwargs)
     else:
         print("not support")
 
@@ -148,7 +132,7 @@ class PytorchNNModel(NNModel):
         for epoch in range(epochs):
             for batch_id, (feature, label) in enumerate(train_data):
                 feature = torch.tensor(feature, dtype=torch.float32)
-                if isinstance(loss_fn, torch.nn.CrossEntropyLoss):
+                if isinstance(loss_fn, torch.nn.CrossEntropyLoss) | isinstance(loss_fn, torch.nn.NLLLoss):
                     label = torch.tensor(label, dtype=torch.long)
                     temp = label.t()
                     label = temp[0]
@@ -161,6 +145,7 @@ class PytorchNNModel(NNModel):
                 optimizer.step()
 
     def evaluate(self, data: data.dataset, **kwargs):
+
         metircs = {}
         loss_metircs = []
         loss_fuc = []
@@ -175,24 +160,25 @@ class PytorchNNModel(NNModel):
         self._model.eval()
         loss_fn = build_loss_fn(self._loss)
         evaluate_data = DataLoader(data, batch_size=data.batch_size, shuffle=False)
-        result = np.zeros((len(data), data.y_shape[0]))
+        result = np.zeros((len(data), data.output_shape[0]))
         eval_label = np.zeros((len(data), data.y_shape[0]))
         if loss_metircs:
             loss_metircs_result = [0 for i in range(len(loss_metircs))]
-        num_output_units = data.get_shape()[1]
+        num_output_units = data.output_shape
         index = 0
         batch_num = 0
         loss = 0
         for batch_id, (feature, label) in enumerate(evaluate_data):
             feature = torch.tensor(feature, dtype=torch.float32)
-            label = torch.tensor(label, dtype=torch.float32)
             y = self._model(feature)
             result[index:index + feature.shape[0]] = y.detach().numpy()
-            eval_label[index:index + feature.shape[0]] = label.detach().numpy()
-            if isinstance(loss_fn, torch.nn.CrossEntropyLoss):
+            eval_label[index:index + feature.shape[0]] = label
+            if isinstance(loss_fn, torch.nn.CrossEntropyLoss) | isinstance(loss_fn, torch.nn.NLLLoss):
                 label = torch.tensor(label, dtype=torch.long)
                 temp = label.t()
                 label = temp[0]
+            else:
+                label = torch.tensor(label, dtype=torch.float32)
             eval_loss = loss_fn(y, label)
             if loss_metircs:
                 for i in range(len(loss_fuc)):
@@ -233,16 +219,20 @@ class PytorchNNModel(NNModel):
                         print("metrics not support ")
             else:
                 acc = 0
-                for i in range(len(data)):
-                    if (result[i].argmax() == eval_label[i].argmax()):
-                        acc += 1;
-                    metircs["auccuray"] = acc / len(data)
-
+                if data.use_one_hot:
+                    for i in range(len(data)):
+                        if (result[i].argmax() == eval_label[i].argmax()):
+                            acc += 1;
+                else:
+                    for i in range(len(data)):
+                        if (result[i].argmax() == eval_label[i]):
+                            acc += 1;
+                metircs["auccuray"] = acc / len(data)
         return metircs
 
     def predict(self, data: data.dataset, **kwargs):
 
-        result = np.zeros((len(data), data.y_shape[0]))
+        result = np.zeros((len(data), data.output_shape[0]))
         predict_data = DataLoader(data, batch_size=data.batch_size, shuffle=False)
         index = 0
         for batch_id, (feature, label) in enumerate(predict_data):
@@ -271,44 +261,8 @@ class PytorchNNModel(NNModel):
         f.close()
         return PytorchNNModel(model)
 
-# class PredictNN(NNModel):
-#     def __init__(self, model):
-#         self._model: torch.nn.Sequential = model
-#
-#     def predict(self, data: data.dataset, **kwargs):
-#         # size = len(data)
-#         result = np.zeros((len(data), data.y_shape[0]))
-#         predict_data = DataLoader(data, batch_size=1, shuffle=False)
-#         index = 0
-#         for batch_id, (feature, label) in enumerate(predict_data):
-#             feature = torch.tensor(feature, dtype=torch.float32)
-#             label = torch.tensor(label, dtype=torch.float32)
-#             y = self._model(feature)
-#             result[index] = y.detach().numpy()
-#             index += 1
-#         return result
-#
-#     def export_model(self):
-#         f = tempfile.TemporaryFile()
-#         try:
-#             torch.save(self._model, f)
-#             f.seek(0)
-#             model_bytes = f.read()
-#             return model_bytes
-#         finally:
-#             f.close()
-#
-#     def restore_model(model_bytes):
-#         f = tempfile.TemporaryFile()
-#         f.write(model_bytes)
-#         f.seek(0)
-#         model = torch.load(f)
-#         f.close()
-#         return PredictNN(model)
-#
-
 class PytorchData(data.Dataset):
-    def __init__(self, data_instances, batch_size):
+    def __init__(self, data_instances, batch_size, encode_label):
         self.size = data_instances.count()
 
         if self.size <= 0:
@@ -322,13 +276,34 @@ class PytorchData(data.Dataset):
         self.x_shape = one_data.features.shape
 
         num_label = len(data_instances.map(lambda x, y: [x, {y.label}]).reduce(lambda x, y: x | y))
-        if num_label:
-            if num_label == 2:
-                self.y_shape = (1,)
-            else:
+        # encoding label in one-hot
+        if encode_label:
+            self.use_one_hot = True
+            if num_label > 2:
                 self.y_shape = (num_label,)
+                self.output_shape = self.y_shape
+                self.x = np.zeros((self.size, *self.x_shape))
+                self.y = np.zeros((self.size, *self.y_shape))
+                index = 0
+                self._keys = []
+                for k, inst in data_instances.collect():
+                    self._keys.append(k)
+                    self.x[index] = inst.features
+                    self.y[index][inst.label] = 1
+                    index += 1
+            else:
+                raise ValueError(f"num_label is {num_label}")
+        else:
+            self.use_one_hot = False
+            self.y_shape = (1,)
+            if num_label == 2:
+                self.output_shape = self.y_shape
+            elif num_label > 2:
+                self.output_shape = (num_label,)
+            else:
+                 raise ValueError(f"num_label is {num_label}")
             self.x = np.zeros((self.size, *self.x_shape))
-            self.y = np.zeros((self.size, 1))
+            self.y = np.zeros((self.size, *self.y_shape))
             index = 0
             self._keys = []
             for k, inst in data_instances.collect():
@@ -336,21 +311,6 @@ class PytorchData(data.Dataset):
                 self.x[index] = inst.features
                 self.y[index] = inst.label
                 index += 1
-
-        # encoding label in one-hot
-        # elif num_label > 2:
-        #     self.y_shape = (num_label,)
-        #     self.x = np.zeros((self.size, *self.x_shape))
-        #     self.y = np.zeros((self.size, *self.y_shape))
-        #     index = 0
-        #     self._keys = []
-        #     for k, inst in data_instances.collect():
-        #         self._keys.append(k)
-        #         self.x[index] = inst.features
-        #         self.y[index][inst.label] = 1
-        #         index += 1
-        else:
-            raise ValueError(f"num_label is {num_label}")
 
     def __getitem__(self, index):
 
@@ -363,10 +323,9 @@ class PytorchData(data.Dataset):
         return self._keys
 
     def get_shape(self):
-        return self.x_shape, self.y_shape
+        return self.x_shape, self.output_shape
 
 
 class PytorchDataConverter(DataConverter):
     def convert(self, data, *args, **kwargs):
         return PytorchData(data, *args, **kwargs)
-

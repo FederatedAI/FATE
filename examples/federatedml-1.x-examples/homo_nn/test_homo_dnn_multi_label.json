@@ -78,6 +78,7 @@
   "algorithm_parameters": {
     "homo_nn_0": {
       "config_type": "nn",
+      "encode_label": true,
       "nn_define": [
         {
           "layer": "Dense",
