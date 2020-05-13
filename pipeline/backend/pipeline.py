@@ -16,6 +16,7 @@
 import copy
 import pickle
 import pprint
+from collections import ChainMap
 from types import SimpleNamespace
 
 from pipeline.backend.config import Backend, WorkMode
@@ -28,6 +29,7 @@ from pipeline.interface.data import Data
 from pipeline.interface.model import Model
 # from pipeline.parser.dsl_parser import DSLParser
 from pipeline.utils.invoker.job_submitter import JobInvoker
+from pipeline.utils import tools
 
 
 class PipeLine(object):
@@ -217,7 +219,6 @@ class PipeLine(object):
         for name, component in self._components.items():
             param_conf = component.get_config(version=VERSION, roles=self._roles)
 
-            print("param conf ", param_conf)
             if "algorithm_parameters" in param_conf:
                 algorithm_param_conf = param_conf["algorithm_parameters"]
                 if "algorithm_parameters" not in self._train_conf:
@@ -226,7 +227,7 @@ class PipeLine(object):
 
             if "role_parameters" in param_conf:
                 role_param_conf = param_conf["role_parameters"]
-                self._train_conf["role_parameters"] = role_param_conf
+                self._train_conf["role_parameters"] = tools.merge_dict(role_param_conf, self._train_conf["role_parameters"])
 
         import pprint
         pprint.pprint(self._train_conf)
