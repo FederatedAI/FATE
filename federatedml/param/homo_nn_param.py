@@ -31,6 +31,8 @@ class HomoNNParam(BaseParam):
     """
     Parameters used for Homo Neural Network.
 
+    Parameters
+    ----------
     Args:
         secure_aggregate: enable secure aggregation or not, defaults to True.
         aggregate_every_n_epoch: aggregate model every n epoch, defaults to 1.
