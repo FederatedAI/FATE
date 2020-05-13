@@ -114,7 +114,7 @@
       "batch_size": -1,
       "optimizer": {
         "optimizer": "Adadelta",
-        "lr": 0.05,
+        "learning_rate": 0.05,
         "rho": 0.95
       },
       "early_stop": {
