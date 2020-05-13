@@ -32,7 +32,7 @@ class HeteroLR(Component, HeteroLogisticParam):
 
     def summary(self, data, metric_keyword):
         if data is None:
-            return ""
+            return
         # meta info
         metrics = {}
         for namespace in data:

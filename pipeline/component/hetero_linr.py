@@ -32,7 +32,7 @@ class HeteroLinR(Component, LinearParam):
 
     def summary(self, data, metric_keyword):
         if data is None:
-            return ""
+            return
         # meta info
         metrics = {}
         for namespace in data:
