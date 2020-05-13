@@ -3,7 +3,6 @@ from pipeline.component.dataio import DataIO
 from pipeline.component.input import Input
 from pipeline.component.intersection import Intersection
 from pipeline.component.union import Union
-from pipeline.component.hetero_lr import HeteroLR
 from pipeline.interface.data import Data
 from pipeline.interface.model import Model
 from pipeline.backend.config import Backend
@@ -73,8 +72,8 @@ pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
 
                        })
 
-#print (pipeline.get_component("intersection_0").get_output_data())
-#print (pipeline.get_component("dataio_0").get_model_param())
+# print (pipeline.get_component("intersection_0").get_output_data())
+# print (pipeline.get_component("dataio_0").get_model_param())
 print(pipeline.get_component("union_0").summary())
 # pipeline.get_component("intersection_0").summary("intersect_count", "intersect_rate")
 
