@@ -72,7 +72,7 @@ We provided functions such as tracking component output models or logs etc. thro
 
 ## Doc
 ### API doc
-FATE provides some API documents in [doc-api](./doc/api/), including federatedml, eggroll, federation.
+FATE provides some API documents in [doc-api](https://fate.readthedocs.io/en/latest/?badge=latest)
 ### Develop Guide doc
 How to develop your federated learning algorithm using FATE? you can see FATE develop guide document in [develop-guide](./doc/develop_guide.md)
 ### Other doc
