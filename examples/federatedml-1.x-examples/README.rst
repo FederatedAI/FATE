@@ -153,21 +153,13 @@ To make FATE be able to use your data, you need to upload them. Thus, a upload-d
     5. work_mode: Indicate if using standalone version or cluster version. 0 represent for standalone version and 1 stand for cluster version.
 
 .. Note::
-    We suggest you fully consider the resource of modeling machines before setting partition number. The recommended partition number is related to your cores of machines, number of machines and concurrent number you want. Suppose you have
-        core_num per machine = n,
-        num of node(machine) = m,
-        your designed processors per node = p
+    We suggest you fully consider the resource of modeling machines before setting partition number.
 
-    Then
-        eggs = int(n * 0.8 / p)
-        partitions = egg * m
-    where
-        partitions = int(n * 0.8 / p) * m
+    Assume that the CPU cores (cpu cores) are: c, The number of Nodemanager is: n, The number of tasks to be run simultaneously is p, then:
 
-    For example, if your cores per machine is 20, node = 2 and you want to start 6 processor per node.
-    Then partitions = int(20 * 0.8 / 6) * 2 = 4
+    egg_num=eggroll.session.processors.per.node = c * 0.8 / p
 
-    The way you set processor per node has been shown on step 3 below which specified submit runtime conf setting.
+    partitions (Number of roll pair partitions) = egg_num * n
 
 
 Step2: Define your modeling task structure
