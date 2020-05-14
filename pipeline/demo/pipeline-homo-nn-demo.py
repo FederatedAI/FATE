@@ -23,7 +23,24 @@ dataio_0 = DataIO(name="dataio_0")
 dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense")
 dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=True)
 
-homo_nn_0 = HomoNN(name="homo_nn_0")
+homo_nn_0 = HomoNN(name="homo_nn_0",
+                   config_type="nn",
+                   nn_define=[{
+                                "layer": "Dense",
+                                "units": 1,
+                                "activation": "sigmoid"
+                             }],
+                   optimizer={
+                                "optimizer": "Adam",
+                                "learning_rate": 0.05
+                             },
+                   early_stop={
+                                "early_stop": "diff",
+                                "eps": 1e-4
+                            },
+                   loss="binary_crossentropy",
+                   max_iter=5
+      )
 
 print ("get input_0's name {}".format(input_0.name))
 pipeline.add_component(dataio_0, data=Data(data=input_0.data))

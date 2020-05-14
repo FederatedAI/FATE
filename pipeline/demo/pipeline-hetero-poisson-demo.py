@@ -13,7 +13,7 @@ host = 10000
 arbiter = 10002
 
 guest_train_data = {"name": "dvisits_b", "namespace": "dvisits"}
-host_train_data = [{"name": "dvisits_a", "namespace": "dvisits"}]
+host_train_data = {"name": "dvisits_a", "namespace": "dvisits"}
 
 input_0 = Input(name="train_data")
 print ("get input_0's init name {}".format(input_0.name))
@@ -39,7 +39,7 @@ pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
              feed_dict={input_0:
                            {"guest": {9999: guest_train_data},
                             "host": {
-                              10000: host_train_data[0]
+                              10000: host_train_data
                              }
                             }
 
@@ -59,7 +59,7 @@ pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
                                              {"guest":
                                                   {9999: guest_train_data},
                                               "host": {
-                                                  10000: host_train_data[0]
+                                                  10000: host_train_data
                                               }
                                               }
                                          })

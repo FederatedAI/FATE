@@ -14,9 +14,7 @@ host = 10000
 arbiter = 10002
 
 guest_train_data = {"name": "breast_b", "namespace": "hetero"}
-host_train_data = [{"name": "breast_a", "namespace": "hetero"},
-                   {"name": "breast_a", "namespace": "hetero"},
-                   { "name": "breast_a", "namespace": "hetero"}]
+host_train_data = {"name": "breast_a", "namespace": "hetero"}
 
 input_0 = Input(name="train_data")
 input_1 = Input(name="validate_data")
@@ -56,13 +54,13 @@ pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
              feed_dict={input_0:
                            {"guest": {guest: guest_train_data},
                             "host": {
-                              host: host_train_data[0]
+                              host: host_train_data
                              }
                             },
                         input_1:
                            {"guest": {guest: guest_train_data},
                             "host": {
-                              host: host_train_data[0]
+                              host: host_train_data
                              }
                             }
 
@@ -82,13 +80,13 @@ pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
                                 {"guest": {
                                     guest: guest_train_data},
                                  "host": {
-                                     host: host_train_data[0]}
+                                     host: host_train_data}
                                 },
                             input_1:
                                  {"guest": {
                                      guest: guest_train_data},
                                   "host": {
-                                     host: host_train_data[0]}
+                                     host: host_train_data}
                                  }
                              })
 

@@ -9,22 +9,20 @@ from pipeline.backend.config import WorkMode
 
 
 guest = 9999
-hosts = [10000, 10001]
+host = 10000
 arbiter = 10002
 
 guest_train_data = {"name": "breast_b", "namespace": "hetero"}
-host_train_data = [{"name": "breast_a", "namespace": "hetero"},
-                   {"name": "breast_a", "namespace": "hetero"},
-                   { "name": "breast_a", "namespace": "hetero"}]
+host_train_data = {"name": "breast_a", "namespace": "hetero"}
 
 input_0 = Input(name="train_data")
 print ("get input_0's init name {}".format(input_0.name))
 
-pipeline = PipeLine().set_initiator(role='guest', party_id=9999).set_roles(guest=9999, host=10000, arbiter=arbiter)
+pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host, arbiter=arbiter)
 dataio_0 = DataIO(name="dataio_0")
 
-dataio_0.get_party_instance(role='guest', party_id=9999).algorithm_param(with_label=True, output_format="dense")
-dataio_0.get_party_instance(role='host', party_id=10000).algorithm_param(with_label=False)
+dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense")
+dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
 
 intersect_0 = Intersection(name="intersection_0")
 hetero_lr_0 = HeteroLR(name="hetero_lr_0", early_stop="weight_diff", max_iter=2,
@@ -44,7 +42,7 @@ pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
              feed_dict={input_0:
                            {"guest": {9999: guest_train_data},
                             "host": {
-                              10000: host_train_data[0]
+                              10000: host_train_data
                              }
                             }
 
@@ -64,7 +62,7 @@ pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
                                              {"guest":
                                                   {9999: guest_train_data},
                                               "host": {
-                                                  10000: host_train_data[0]
+                                                  10000: host_train_data
                                               }
                                               }
                                          })
