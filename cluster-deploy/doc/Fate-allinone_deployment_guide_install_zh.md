@@ -262,6 +262,10 @@ tar xzf fate-cluster-install-1.4.0-release-c7-u18.tar.gz
 
 修改配置文件fate-cluster-install/allInone/conf/setup.conf.
 
+```
+vi fate-cluster-install/allInone/conf/setup.conf
+```
+
 配置文件setup.conf说明：
 
 | 配置项           | 配置项值                                      | 说明                                                         |
