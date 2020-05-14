@@ -269,6 +269,7 @@ tar xzf fate-cluster-install-1.4.0-release-c7-u18.tar.gz
 | roles            | 默认："host" "guest"                          | 部署的角色，有HOST端、GUEST端                                |
 | version          | 默认：1.4.0                                   | Fate 版本号                                                  |
 | pbase            | 默认： /data/projects                         | 项目根目录                                                   |
+| lbase            | 默认：/data/logs                              | 保持默认不要修改                                             |
 | ssh_user         | 默认：app                                     | ssh连接目标机器的用户，也是部署后文件的属主                  |
 | ssh_group        | 默认：apps                                    | ssh连接目标的用户的属组，也是部署后文件的属组                |
 | ssh_port         | 默认：22,根据实际情况修改                     | ssh连接端口，部署前确认好端口，不然会报连接错误              |
