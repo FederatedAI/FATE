@@ -57,19 +57,6 @@ pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
 print (pipeline.get_component("hetero_lr_0").summary())
 # pipeline.get_component("intersection_0").summary("intersect_count", "intersect_rate")
 
-
-# predict
-
-pipeline = PipeLine().predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
-                              feed_dict={input_0:
-                                             {"guest":
-                                                  {9999: guest_train_data},
-                                              "host": {
-                                                  10000: host_train_data[0]
-                                              }
-                                              }
-                                         })
-
 with open("output.pkl", "wb") as fout:
     fout.write(pipeline.dump())
 
