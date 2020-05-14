@@ -346,7 +346,7 @@ class PipeLine(object):
                                                           job_type="predict",
                                                           model_info=self._model_info)
 
-        self._predict_job_id, _ = self._job_invoker.submit_job(sumbit_conf=predict_conf)
+        self._predict_job_id, _ = self._job_invoker.submit_job(submit_conf=predict_conf)
         self._job_invoker.monitor_job_status(self._predict_job_id,
                                              self._initiator.role,
                                              self._initiator.party_id)
