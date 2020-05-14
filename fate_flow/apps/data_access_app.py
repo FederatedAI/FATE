@@ -42,7 +42,7 @@ def download_upload(access_module):
     job_id = generate_job_id()
     if access_module == "upload" and USE_LOCAL_DATA and not (request.json and request.json.get("module")):
         file = request.files['file']
-        filename = os.path.join(get_job_directory(job_id), 'tmp', file.filename)
+        filename = os.path.join(get_job_directory(job_id), 'fate_upload_tmp', file.filename)
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         try:
             file.save(filename)
