@@ -78,16 +78,19 @@ print (pipeline.get_component("hetero_lr_0").summary())
 # predict
 
 pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
-                              feed_dict={input_1:
-                                             {"guest":
-                                                  {guest: guest_train_data},
-                                              "host": {
-                                                  host: host_train_data[0]
-                                              }
-                                              }
-                                         })
+                 feed_dict={input_0:
+                                {"guest": {
+                                    guest: guest_train_data},
+                                 "host": {
+                                     host: host_train_data[0]}
+                                },
+                            input_1:
+                                 {"guest": {
+                                     guest: guest_train_data},
+                                  "host": {
+                                     host: host_train_data[0]}
+                                 }
+                             })
 
 with open("output.pkl", "wb") as fout:
     fout.write(pipeline.dump())
-
-
