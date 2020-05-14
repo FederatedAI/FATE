@@ -27,7 +27,7 @@ dataio_0.get_party_instance(role='guest', party_id=9999).algorithm_param(with_la
 dataio_0.get_party_instance(role='host', party_id=[10000, 10001]).algorithm_param(with_label=False)
 
 intersect_0 = Intersection(name="intersection_0")
-hetero_nn_0 = HeteroNN(name="hetero_nn_0", early_stop="weight_diff", epochs=3)
+hetero_nn_0 = HeteroNN(name="hetero_nn_0", epochs=3)
 
 print ("get input_0's name {}".format(input_0.name))
 pipeline.add_component(dataio_0, data=Data(data=input_0.data))

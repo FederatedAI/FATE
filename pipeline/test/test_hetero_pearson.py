@@ -18,7 +18,7 @@
 from pipeline.component.hetero_pearson import HeteroPearson
 
 
-a = HeteroPearson(name="hetero_pearson_0")
+a = HeteroPearson(name="hetero_pearson_0", column_indexes=[4, 2])
 
 print (a.output.data)
 print (a.output.model)

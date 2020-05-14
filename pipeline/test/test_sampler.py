@@ -18,7 +18,7 @@
 from pipeline.component.sampler import FederatedSample
 
 
-a = FederatedSample(name="federated_sample_0")
+a = FederatedSample(name="federated_sample_0", method="upsample")
 
 print (a.output.data)
 print (a.output.model)

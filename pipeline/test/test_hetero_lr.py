@@ -18,7 +18,8 @@
 from pipeline.component.hetero_lr import HeteroLR
 
 
-a = HeteroLR(name="hetero_lr_0")
+a = HeteroLR(name="hetero_lr_0", early_stop="weight_diff",
+             cv_param={"n_splits": 3, "shuffle": False, "need_cv": True})
 
 print (a.output.data)
 print (a.output.model)
