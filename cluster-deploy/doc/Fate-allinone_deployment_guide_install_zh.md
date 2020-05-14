@@ -260,7 +260,7 @@ tar xzf fate-cluster-install-1.4.0-release-c7-u18.tar.gz
 
 **在目标服务器（192.168.0.1）app用户下执行**
 
-进入到fate-cluster-install/allInone/conf目录下，修改配置文件setup.conf.
+修改配置文件fate-cluster-install/allInone/conf/setup.conf.
 
 配置文件setup.conf说明：
 
@@ -407,19 +407,18 @@ basemodules=( "base" "java" "python" "eggroll" "fate" )
 按照上述配置含义修改setup.conf文件对应的配置项后，然后在fate-cluster-install/allInone目录下执行部署脚本：
 
 ```
-cd fate-cluster-install\allInone
+cd fate-cluster-install/allInone
 nohup sh ./deploy.sh > logs/boot.log 2>&1 &
 ```
 
 部署日志输出在fate-cluster-install/allInone/logs目录下,实时查看是否有报错：
 
 ```
-cd logs
-tail -f boot.log （这个有报错信息才会输出，部署结束，查看一下即可）
-tail -f deploy-guest.log （实时打印GUEST端的部署情况）
-tail -f deploy-mysql-guest.log  （实时打印GUEST端mysql的部署情况）
-tail -f deploy-host.log    （实时打印HOST端的部署情况）
-tail -f deploy-mysql-host.log    （实时打印HOST端mysql的部署情况）
+tail -f ./logs/boot.log （这个有报错信息才会输出，部署结束，查看一下即可）
+tail -f ./logs/deploy-guest.log （实时打印GUEST端的部署情况）
+tail -f ./logs/deploy-mysql-guest.log  （实时打印GUEST端mysql的部署情况）
+tail -f ./logs/deploy-host.log    （实时打印HOST端的部署情况）
+tail -f ./logs/deploy-mysql-host.log    （实时打印HOST端mysql的部署情况）
 ```
 
 ## 5.4 问题定位
