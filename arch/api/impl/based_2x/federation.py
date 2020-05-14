@@ -56,6 +56,8 @@ class FederationRuntime(Federation):
 
     def get(self, name, tag, parties: Union[Party, list]):
 
+        self._get_side_auth(name, parties)
+
         rs = self.rsc.load(name=name, tag=tag)
         rubbish = Rubbish(name, tag)
 
@@ -99,6 +101,9 @@ class FederationRuntime(Federation):
         return rtn, rubbish
 
     def remote(self, obj, name, tag, parties):
+
+        self._remote_side_auth(name, tag)
+
         if obj is None:
             raise EnvironmentError(f"federation try to remote None to {parties} with name {name}, tag {tag}")
 
