@@ -67,16 +67,6 @@ pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
                                  }
                                  }
                             })
-pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
-                              feed_dict={input_0:
-                                             {"guest":
-                                                  {9999: guest_train_data},
-                                              "host": {
-                                                  10000: host_train_data[0],
-                                                  10001: host_train_data[1]
-                                              }
-                                              }
-                                         })
 
 with open("output.pkl", "wb") as fout:
     fout.write(pipeline.dump())
