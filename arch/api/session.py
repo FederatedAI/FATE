@@ -19,7 +19,7 @@ import typing
 import uuid
 from typing import Iterable
 
-from arch.api import RuntimeInstance, _EGGROLL_VERSION
+from arch.api import RuntimeInstance
 from arch.api import WorkMode, Backend, StoreEngine
 from arch.api.base.table import Table
 from arch.api.base.session import FateSession
@@ -84,10 +84,12 @@ def init(job_id=None,
     else:
         if set_log_dir:
             LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), 'logs', job_id))
-    if eggroll_version is None:
-        eggroll_version = _EGGROLL_VERSION
+    
 
     if backend.is_eggroll():
+        if eggroll_version is None:
+            from arch.api.impl.based_2x import _EGGROLL_VERSION
+            eggroll_version = _EGGROLL_VERSION
         if eggroll_version < 2:
             from arch.api.impl.based_1x import build
             builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)
@@ -99,6 +101,9 @@ def init(job_id=None,
 
     elif backend.is_spark():
         if store_engine.is_eggroll():
+            if eggroll_version is None:
+                from arch.api.impl.based_2x import _EGGROLL_VERSION
+                eggroll_version = _EGGROLL_VERSION
             if eggroll_version < 2:
                 from arch.api.impl.based_spark.based_1x import build
                 builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)

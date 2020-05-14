@@ -292,7 +292,10 @@ class RDDTable(Table):
         self._rdd = None
 
     def get(self, k, use_serialize=True, maybe_large_value=False):
-        return self.rdd().lookup(k)
+        value = self.rdd().lookup(k)
+        if len(value) > 0:
+            return value[0]
+        return None
 
     def delete(self, k, use_serialize=True):
         pass

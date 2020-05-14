@@ -13,3 +13,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
+def _infer_eggroll_version():
+    try:
+        import eggroll.roll_pair
+    except ImportError:
+        return 1
+    return 2
+
+
+_EGGROLL_VERSION = _infer_eggroll_version()

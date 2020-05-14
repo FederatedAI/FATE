@@ -23,15 +23,6 @@ from arch.api.base.utils.wrap import FederationWrapped
 from arch.api.utils import log_utils
 
 
-def _infer_eggroll_version():
-    try:
-        import eggroll.roll_pair
-    except ImportError:
-        return 1
-    return 2
-
-
-_EGGROLL_VERSION = _infer_eggroll_version()
 
 
 class WorkMode(IntEnum):

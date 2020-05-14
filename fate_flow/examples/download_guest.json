@@ -1,6 +1,8 @@
 {
   "output_path": "./fate_flow_test_breast_b.csv",
-  "work_mode": 0,
+  "work_mode": 1,
+  "store_engine": 1,
+  "backend": 1,
   "namespace": "fate_flow_test_breast",
   "table_name": "breast_b"
 }

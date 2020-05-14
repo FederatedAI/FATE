@@ -54,7 +54,7 @@ def segment_transfer_enabled(max_part_size=None):
     """
 
     if max_part_size is None:
-        from arch.api import _EGGROLL_VERSION
+        from arch.api.impl.based_2x import _EGGROLL_VERSION
         if _EGGROLL_VERSION == 1:
             max_part_size = 0xeffe20
         elif _EGGROLL_VERSION == 2:

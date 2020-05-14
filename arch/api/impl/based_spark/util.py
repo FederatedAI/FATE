@@ -48,7 +48,7 @@ def maybe_create_eggroll_client():
     from pyspark.taskcontext import TaskContext
     mode, eggroll_session = pickle.loads(bytes.fromhex(TaskContext.get().getLocalProperty(_EGGROLL_CLIENT)))
 
-    from arch.api import _EGGROLL_VERSION
+    from arch.api.impl.based_2x import _EGGROLL_VERSION
     if _EGGROLL_VERSION < 2:
         if mode == 1:
             from eggroll.api.cluster.eggroll import _EggRoll

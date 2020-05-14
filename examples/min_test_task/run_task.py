@@ -25,6 +25,8 @@ host_id = 10000
 arbiter_id = 10000
 
 work_mode = 1
+store_engine = 1
+backend = 1
 
 intersect_output_name = ''
 intersect_output_namespace = ''
@@ -177,6 +179,8 @@ class UploadTask(TaskManager):
             json_info = json.loads(f.read())
         json_info["file"] = self.data_file
         json_info['work_mode'] = work_mode
+        json_info['store_engine'] = store_engine
+        json_info['backend'] = backend
 
         time_str = get_timeid()
         self.table_name = '{}_table_name_{}'.format(self.role, time_str)
@@ -319,6 +323,8 @@ class TrainTask(TaskManager):
 
         json_info['initiator']['party_id'] = guest_id
         json_info['job_parameters']['work_mode'] = work_mode
+        json_info['job_parameters']['store_engine'] = store_engine
+        json_info['job_parameters']['backend'] = backend
         if self.model_id is not None:
             json_info["job_parameters"]["model_id"] = self.model_id
             json_info["job_parameters"]["model_version"] = self.model_version

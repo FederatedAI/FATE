@@ -21,6 +21,7 @@ EGGROLL_HOME=$(dirname ${FATE_PYTHON_ROOT})/eggroll
 PYTHON_PATH=${FATE_PYTHON_ROOT}:${EGGROLL_HOME}/python
 export PYTHONPATH=${PYTHON_PATH}
 export EGGROLL_HOME=${EGGROLL_HOME}
+export SPARK_HOME=/data/projects/common/spark/spark-2.4.1-bin-hadoop2.7
 echo "PYTHONPATH: "${PYTHONPATH}
 echo "EGGROLL_HOME: "${EGGROLL_HOME}
 log_dir=${FATE_PYTHON_ROOT}/logs
