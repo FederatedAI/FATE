@@ -56,7 +56,7 @@ class FederationRuntime(Federation):
 
     def get(self, name, tag, parties: Union[Party, list]):
 
-        self._get_side_auth(name, tag)
+        self._get_side_auth(name, parties)
 
         rs = self.rsc.load(name=name, tag=tag)
         rubbish = Rubbish(name, tag)
