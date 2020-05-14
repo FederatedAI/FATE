@@ -293,7 +293,11 @@ class PipeLine(object):
                                     role, _party_id))
                         data[idx] = _input_dict[role][_party_id]
 
-                    data_source[role]["args"]["data"][_input.name] = data
+                    if job_type != "predict":
+                        data_source[role]["args"]["data"][_input.name] = data
+                    else:
+                        data_source[role]["args"]["data"]["eval_data"] = data
+
                     continue
 
                 for _party_id in _input_dict[role]:
