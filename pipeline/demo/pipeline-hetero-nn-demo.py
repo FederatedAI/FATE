@@ -42,7 +42,8 @@ hetero_nn_0 = HeteroNN(name="hetero_nn_0",
                        top_nn_define={
                            "class_name": "Sequential",
                            "config": {"name": "sequential_2",
-                                      "layers": [{"class_name": "Dense", "config": {"name": "dense_2", "trainable": True, "batch_input_shape": [None, 2], "dtype": "float32", "units": 1, "activation": "sigmoid", "use_bias": True, "kernel_initializer": {"class_name": "Constant", "config": {"value": 1, "dtype": "float32"}}, "bias_initializer": {"class_name": "Zeros", "config": {"dtype": "float32"}}, "kernel_regularizer": None, "bias_regularizer": None, "activity_regularizer": None, "kernel_constraint": None, "bias_constraint": None}}]}, "keras_version": "2.2.4-tf", "backend": "tensorflow"},
+                                      "layers": [{"class_name": "Dense",
+                                                  "config": {"name": "dense_2", "trainable": True, "batch_input_shape": [None, 2], "dtype": "float32", "units": 1, "activation": "sigmoid", "use_bias": True, "kernel_initializer": {"class_name": "Constant", "config": {"value": 1, "dtype": "float32"}}, "bias_initializer": {"class_name": "Zeros", "config": {"dtype": "float32"}}, "kernel_regularizer": None, "bias_regularizer": None, "activity_regularizer": None, "kernel_constraint": None, "bias_constraint": None}}]}, "keras_version": "2.2.4-tf", "backend": "tensorflow"},
                        loss="binary_crossentropy",
                        early_stop="diff",
                        epochs=5
