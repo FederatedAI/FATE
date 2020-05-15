@@ -34,87 +34,17 @@ class BaseQueue:
     def is_ready(self):
         return self.ready
 
-    def put_event(self, event):
+    def put_event(self, event, status=None, job_id=None):
         pass
 
-    def get_event(self):
+    def get_event(self, status=None):
         return None
 
-    def qsize(self):
+    def qsize(self, status=None):
         pass
 
     def clean(self):
         pass
-
-
-class RedisQueue(BaseQueue):
-    def __init__(self, queue_name, host, port, password, max_connections):
-        super(RedisQueue, self).__init__()
-        self.queue_name = queue_name
-        self.pool = redis.ConnectionPool(host=host, port=port, password=password, max_connections=max_connections,
-                                         db=REDIS_QUEUE_DB_INDEX)
-        if self.is_ready():
-            stat_logger.info('init redis queue')
-        else:
-            stat_logger.error('init redis queue error!')
-            raise Exception('init redis queue error!')
-
-    def get_conn(self):
-        return redis.Redis(connection_pool=self.pool, decode_responses=True)
-
-    def get_event(self):
-        try:
-            conn = self.get_conn()
-            content = conn.brpop([self.queue_name])
-            event = self.parse_event(content[1])
-            stat_logger.info('get event from redis queue: {}'.format(event))
-            return event
-        except Exception as e:
-            stat_logger.error('get event from redis queue failed')
-            stat_logger.exception(e)
-            return None
-
-    def is_ready(self):
-        self.ready = self.test_connection()
-        return self.ready
-
-    def put_event(self, event):
-        try:
-            conn = self.get_conn()
-            ret = conn.lpush(self.queue_name, json.dumps(event))
-            stat_logger.info('put event into redis queue {}: {}'.format('successfully' if ret else 'failed', event))
-        except Exception as e:
-            stat_logger.error('put event into redis queue failed')
-            stat_logger.exception(e)
-            raise e
-
-    def del_event(self, event):
-        try:
-            conn = self.get_conn()
-            ret = conn.lrem(self.queue_name, 1, json.dumps(event))
-            stat_logger.info('delete event from redis queue {}: {}'.format('successfully' if ret else 'failed', event))
-            if not ret:
-                raise Exception('job not in redis queue')
-        except Exception as e:
-            stat_logger.info('delete event from redis queue failed:{}'.format(str(e)))
-            raise Exception('delete event from redis queue failed')
-
-    def parse_event(self, content):
-        return json.loads(content.decode())
-
-    def test_connection(self):
-        try:
-            conn = self.get_conn()
-            if (conn.echo("cccccc")):
-                return True
-            else:
-                return False
-        except BaseException:
-            return False
-
-    def qsize(self):
-        conn = self.get_conn()
-        return conn.llen(self.queue_name)
 
 
 class MysqlQueue(BaseQueue):
@@ -153,22 +83,22 @@ class MysqlQueue(BaseQueue):
         else:
             raise Exception('mysql lock {} did not exist.'.format(lock_name))
 
-    def put_event(self, event):
+    def put_event(self, event, status=None, job_id=''):
         try:
-            self.put(event)
+            self.put(item=event, status=status, job_id=job_id)
             stat_logger.info('put event into queue successfully: {}'.format(event))
         except Exception as e:
             stat_logger.error('put event into queue failed')
             stat_logger.exception(e)
             raise e
 
-    def put(self, item, block=True, timeout=None):
+    def put(self, item, block=True, timeout=None, status=None, job_id=''):
         with self.not_full:
             with DB.connection_context():
                 error = None
                 MysqlQueue.lock(DB, 'fate_flow_job_queue', 10)
                 try:
-                    self.update_event(item=item)
+                    self.update_event(item=item, status=status, job_id=job_id)
                 except Exception as e:
                     error =e
                 MysqlQueue.unlock(DB, 'fate_flow_job_queue')
@@ -176,9 +106,9 @@ class MysqlQueue(BaseQueue):
                     raise Exception(e)
             self.not_empty.notify()
 
-    def get_event(self):
+    def get_event(self, status=None):
         try:
-            event = self.get(block=True)
+            event = self.get(block=True, status=status)
             stat_logger.info('get event from queue successfully: {}'.format(event))
             return event
         except Exception as e:
@@ -186,19 +116,19 @@ class MysqlQueue(BaseQueue):
             stat_logger.exception(e)
             return None
 
-    def get(self, block=True, timeout=None):
+    def get(self, block=True, timeout=None, status=None):
         with self.not_empty:
             if not block:
-                if not self.query_events():
+                if not self.query_events(status):
                     raise Exception
             elif timeout is None:
-                while not self.query_events():
+                while not self.query_events(status):
                     self.not_empty.wait()
             elif timeout < 0:
                 raise ValueError("'timeout' must be a non-negative number")
             else:
                 endtime = time() + timeout
-                while not self.query_events():
+                while not self.query_events(status):
                     remaining = endtime - time()
                     if remaining <= 0.0:
                         raise Exception
@@ -207,7 +137,9 @@ class MysqlQueue(BaseQueue):
                 error = None
                 MysqlQueue.lock(DB, 'fate_flow_job_queue', 10)
                 try:
-                    item = Queue.select().where(Queue.f_is_waiting == 1)[0]
+                    if not status:
+                        status = 1
+                    item = Queue.select().where(Queue.f_is_waiting == status)[0]
                     if item:
                         self.update_event(item.f_job_id)
                 except Exception as e:
@@ -225,19 +157,26 @@ class MysqlQueue(BaseQueue):
         else:
             stat_logger.info('delete event from  queue success: {}'.format(event))
 
-    def query_events(self):
+    def query_events(self, status=None):
+        if not status:
+            status = 1
         with DB.connection_context():
-            events = Queue.select().where(Queue.f_is_waiting == 1)
+            events = Queue.select().where(Queue.f_is_waiting == status)
             return [event for event in events]
 
-    def update_event(self, job_id=None, item=None):
-        if job_id:
-            event = Queue.select().where(Queue.f_job_id == job_id)[0]
-            event.f_is_waiting = 0
+    def update_event(self, job_id='', item=None, status=None):
+        events = Queue.select().where(Queue.f_job_id == job_id)
+        if events:
+            if not status:
+                status = 0
+            event = events[0]
+            event.f_is_waiting = status
         else:
             event = Queue()
             event.f_job_id = item.get('job_id')
             event.f_event = json.dumps(item)
+            if status:
+                event.f_is_waiting = status
         event.save()
 
     def dell(self, item):
@@ -248,7 +187,7 @@ class MysqlQueue(BaseQueue):
                 try:
                     job_id = item.get('job_id')
                     event = Queue.select().where(Queue.f_job_id == job_id)[0]
-                    if event.f_is_waiting != 1:
+                    if event.f_is_waiting != 1 or event.f_is_waiting != 3:
                         del_status = False
                     event.f_is_waiting = 2
                     event.save()
@@ -259,35 +198,12 @@ class MysqlQueue(BaseQueue):
             self.not_full.notify()
         return del_status
 
-
-class InProcessQueue(BaseQueue):
-    def __init__(self):
-        super(InProcessQueue, self).__init__()
-        self.queue = queue.Queue()
-        self.ready = True
-        stat_logger.info('init in-process queue')
-
-    def put_event(self, event):
-        try:
-            self.queue.put(event)
-            stat_logger.info('put event into in-process queue successfully: {}'.format(event))
-        except Exception as e:
-            stat_logger.error('put event into in-process queue failed')
-            stat_logger.exception(e)
-            raise e
-
-    def get_event(self):
-        try:
-            event = self.queue.get(block=True)
-            stat_logger.info('get event from in-process queue successfully: {}'.format(event))
-            return event
-        except Exception as e:
-            stat_logger.error('get event from in-process queue failed')
-            stat_logger.exception(e)
-            return None
-
-    def qsize(self):
-        return self.queue.qsize()
+    def qsize(self, status=None):
+        if not status:
+            status = 1
+        with DB.connection_context():
+            events = Queue.select().where(Queue.f_is_waiting == status)
+            return len(events)
 
 
 class ListQueue(BaseQueue):
@@ -302,7 +218,7 @@ class ListQueue(BaseQueue):
         self.unfinished_tasks = 0
         stat_logger.info('init in-process queue')
 
-    def put_event(self, event):
+    def put_event(self, event, status=None, job_id=None):
         try:
             self.put(event)
             stat_logger.info('put event into in-process queue successfully: {}'.format(event))
@@ -380,7 +296,7 @@ class ListQueue(BaseQueue):
             self.not_full.notify()
             return item
 
-    def qsize(self):
+    def qsize(self, status=None):
         return len(self.queue)
 
 

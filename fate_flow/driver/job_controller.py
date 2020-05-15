@@ -170,7 +170,6 @@ class JobController(object):
             job_tracker = Tracking(job_id=job_id, role=role, party_id=party_id,
                                    model_id=job_parameters["model_id"],
                                    model_version=job_parameters["model_version"])
-            job_tracker.job_quantity_constraint()
             if job_parameters.get("job_type", "") != "predict":
                 job_tracker.init_pipelined_model()
             roles = json_loads(job_info['f_roles'])
@@ -252,6 +251,10 @@ class JobController(object):
                     'job {} component {} on {} {} clean failed'.format(job_id, task.f_component_name, role, party_id))
                 schedule_logger(job_id).exception(e)
         schedule_logger(job_id).info('job {} on {} {} clean done'.format(job_id, role, party_id))
+
+    @staticmethod
+    def check_job_run(role, event):
+        return job_utils.job_quantity_constraint(role, event)
 
     @staticmethod
     def cancel_job(job_id, role, party_id, job_initiator):

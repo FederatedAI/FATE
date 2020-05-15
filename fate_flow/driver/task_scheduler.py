@@ -54,15 +54,55 @@ class TaskScheduler(object):
                                               json_body=job.to_json(),
                                               work_mode=job.f_work_mode)
                 if response_json["retcode"]:
-                    job.f_status = JobStatus.FAILED
+                    job_info = {'f_status': JobStatus.FAILED}
                     TaskScheduler.sync_job_status(job_id=job.f_job_id, roles=roles,
                                                   work_mode=job.f_work_mode,
                                                   initiator_party_id=job_initiator['party_id'],
                                                   initiator_role=job_initiator['role'],
-                                                  job_info=job.to_json())
+                                                  job_info=job_info)
                     raise Exception(
                         "an error occurred while creating the job: role {} party_id {}".format(role, party_id)
                         + "\n" + str(response_json["retmsg"]))
+
+    @staticmethod
+    def check(job_id, initiator_role, initiator_party_id):
+        job_dsl, job_runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id,
+                                                                                        role=initiator_role,
+                                                                                        party_id=initiator_party_id)
+        job_parameters = job_runtime_conf.get('job_parameters', {})
+        job_initiator = job_runtime_conf.get('initiator', {})
+        status = TaskScheduler.check_job_run(job_id=job_id, roles=job_runtime_conf['role'],
+                                             work_mode=job_parameters['work_mode'],
+                                             initiator_party_id=job_initiator['party_id'],
+                                             initiator_role=job_initiator['role'],
+                                             job_info={
+                                                 'job_id': job_id,
+                                                 'initiator_role': initiator_role,
+                                                 'initiator_party_id': initiator_party_id
+                                             })
+        return status
+
+    @staticmethod
+    def check_job_run(job_id, roles, work_mode, initiator_party_id, initiator_role, job_info):
+        for role, partys in roles.items():
+            job_info['f_role'] = role
+            for party_id in partys:
+                job_info['f_party_id'] = party_id
+                response = federated_api(job_id=job_id,
+                                         method='POST',
+                                         endpoint='/{}/schedule/{}/{}/{}/check'.format(
+                                             API_VERSION,
+                                             job_id,
+                                             role,
+                                             party_id),
+                                         src_party_id=initiator_party_id,
+                                         dest_party_id=party_id,
+                                         src_role=initiator_role,
+                                         json_body=job_info,
+                                         work_mode=work_mode)
+                if response['retcode'] == 101:
+                    return False
+        return True
 
     @staticmethod
     def run_job(job_id, initiator_role, initiator_party_id):
@@ -71,6 +111,17 @@ class TaskScheduler(object):
                                                                                         party_id=initiator_party_id)
         job_parameters = job_runtime_conf.get('job_parameters', {})
         job_initiator = job_runtime_conf.get('initiator', {})
+        status = TaskScheduler.check_job_run(job_id=job_id, roles=job_runtime_conf['role'],
+                                             work_mode=job_parameters['work_mode'],
+                                             initiator_party_id=job_initiator['party_id'],
+                                             initiator_role=job_initiator['role'],
+                                             job_info={
+                                                 'job_id': job_id,
+                                                 'initiator_role': initiator_role,
+                                                 'initiator_party_id': initiator_party_id
+                                             })
+        if not status:
+            return -1
         dag = get_job_dsl_parser(dsl=job_dsl,
                                  runtime_conf=job_runtime_conf,
                                  train_runtime_conf=train_runtime_conf)

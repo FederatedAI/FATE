@@ -476,13 +476,6 @@ class Tracking(object):
                                                                                self.role,
                                                                                self.party_id))
 
-    def job_quantity_constraint(self):
-        if RuntimeConfig.WORK_MODE == WorkMode.CLUSTER:
-            if self.role == 'host':
-                running_jobs = job_utils.query_job(status='running', role=self.role)
-                if len(running_jobs) >= MAX_CONCURRENT_JOB_RUN_HOST:
-                    raise Exception('The job running on the host side exceeds the maximum running amount')
-
     def get_table_namespace(self, job_level: bool = False):
         return self.table_namespace if not job_level else self.job_table_namespace
 
