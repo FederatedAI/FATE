@@ -25,10 +25,27 @@ dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_l
 dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
 
 intersect_0 = Intersection(name="intersection_0")
-hetero_nn_0 = HeteroNN(name="hetero_nn_0", bottom_nn_define={"class_name": "Sequential", "config": {"name": "sequential", "layers": [{"class_name": "Dense", "config": {"name": "dense", "trainable": True, "batch_input_shape": [None, 1], "dtype": "float32", "units": 3, "activation": "relu", "use_bias": True, "kernel_initializer": {"class_name": "Constant", "config": {"value": 1, "dtype": "float32"}}, "bias_initializer": {"class_name": "Zeros", "config": {"dtype": "float32"}}, "kernel_regularizer": None, "bias_regularizer": None, "activity_regularizer": None, "kernel_constraint": None, "bias_constraint": None}}]}, "keras_version": "2.2.4-tf", "backend": "tensorflow"},
-          interactive_layer_define={"class_name": "Sequential", "config": {"name": "sequential_3", "layers": [{"class_name": "Dense", "config": {"name": "dense_3", "trainable": True, "batch_input_shape": [None, 3], "dtype": "float32", "units": 2, "activation": "relu", "use_bias": True, "kernel_initializer": {"class_name": "Constant", "config": {"value": 1, "dtype": "float32"}}, "bias_initializer": {"class_name": "Zeros", "config": {"dtype": "float32"}}, "kernel_regularizer": None, "bias_regularizer": None, "activity_regularizer": None, "kernel_constraint": None, "bias_constraint": None}}]}, "keras_version": "2.2.4-tf", "backend": "tensorflow"},
-          top_nn_define={"class_name": "Sequential", "config": {"name": "sequential_2", "layers": [{"class_name": "Dense", "config": {"name": "dense_2", "trainable": True, "batch_input_shape": [None, 2], "dtype": "float32", "units": 1, "activation": "sigmoid", "use_bias": True, "kernel_initializer": {"class_name": "Constant", "config": {"value": 1, "dtype": "float32"}}, "bias_initializer": {"class_name": "Zeros", "config": {"dtype": "float32"}}, "kernel_regularizer": None, "bias_regularizer": None, "activity_regularizer": None, "kernel_constraint": None, "bias_constraint": None}}]}, "keras_version": "2.2.4-tf", "backend": "tensorflow"},
-          loss="binary_crossentropy", early_stop="diff", epochs=5
+hetero_nn_0 = HeteroNN(name="hetero_nn_0",
+                       bottom_nn_define={
+                           "class_name": "Sequential",
+                           "config": {"name": "sequential",
+                                      "layers": [{"class_name": "Dense",
+                                                  "config": {"name": "dense", "trainable": True, "batch_input_shape": [None, 1], "dtype": "float32", "units": 3, "activation": "relu", "use_bias": True, "kernel_initializer": {"class_name": "Constant", "config": {"value": 1, "dtype": "float32"}}, "bias_initializer": {"class_name": "Zeros", "config": {"dtype": "float32"}}, "kernel_regularizer": None, "bias_regularizer": None, "activity_regularizer": None, "kernel_constraint": None, "bias_constraint": None}}]},
+                           "keras_version": "2.2.4-tf",
+                           "backend": "tensorflow"
+                       },
+                       interactive_layer_define={
+                           "class_name": "Sequential",
+                           "config": {"name": "sequential_3",
+                                      "layers": [{"class_name": "Dense",
+                                                  "config": {"name": "dense_3", "trainable": True, "batch_input_shape": [None, 3], "dtype": "float32", "units": 2, "activation": "relu", "use_bias": True, "kernel_initializer": {"class_name": "Constant", "config": {"value": 1, "dtype": "float32"}}, "bias_initializer": {"class_name": "Zeros", "config": {"dtype": "float32"}}, "kernel_regularizer": None, "bias_regularizer": None, "activity_regularizer": None, "kernel_constraint": None, "bias_constraint": None}}]}, "keras_version": "2.2.4-tf", "backend": "tensorflow"},
+                       top_nn_define={
+                           "class_name": "Sequential",
+                           "config": {"name": "sequential_2",
+                                      "layers": [{"class_name": "Dense", "config": {"name": "dense_2", "trainable": True, "batch_input_shape": [None, 2], "dtype": "float32", "units": 1, "activation": "sigmoid", "use_bias": True, "kernel_initializer": {"class_name": "Constant", "config": {"value": 1, "dtype": "float32"}}, "bias_initializer": {"class_name": "Zeros", "config": {"dtype": "float32"}}, "kernel_regularizer": None, "bias_regularizer": None, "activity_regularizer": None, "kernel_constraint": None, "bias_constraint": None}}]}, "keras_version": "2.2.4-tf", "backend": "tensorflow"},
+                       loss="binary_crossentropy",
+                       early_stop="diff",
+                       epochs=5
       )
 
 print ("get input_0's name {}".format(input_0.name))
