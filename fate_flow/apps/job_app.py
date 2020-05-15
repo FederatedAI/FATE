@@ -64,11 +64,9 @@ def submit_job():
 @job_utils.job_server_routing()
 def stop_job():
     job_id = request.json.get('job_id')
-    role = request.json.get('role')
-    party_id = request.json.get('party_id')
-    response = TaskScheduler.stop(job_id=job_id, role=role, party_id=party_id, end_status=JobStatus.CANCELED)
+    response = TaskScheduler.stop(job_id=job_id, end_status=JobStatus.CANCELED, is_initiator=False)
     if not response:
-        TaskScheduler.stop(job_id=request.json.get('job_id', ''), end_status=JobStatus.FAILED)
+        TaskScheduler.stop(job_id=request.json.get('job_id', ''), end_status=JobStatus.FAILED, is_initiator=False)
         return get_json_result(retcode=0, retmsg='kill job success')
     return get_json_result(retcode=0, retmsg='cancel job success')
 

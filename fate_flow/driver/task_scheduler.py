@@ -111,6 +111,11 @@ class TaskScheduler(object):
                                                                                         party_id=initiator_party_id)
         job_parameters = job_runtime_conf.get('job_parameters', {})
         job_initiator = job_runtime_conf.get('initiator', {})
+        job_info = {
+            'job_id': job_id,
+            'initiator_role': initiator_role,
+            'initiator_party_id': initiator_party_id
+        }
         status = TaskScheduler.check_job_run(job_id=job_id, roles=job_runtime_conf['role'],
                                              work_mode=job_parameters['work_mode'],
                                              initiator_party_id=job_initiator['party_id'],
@@ -121,7 +126,7 @@ class TaskScheduler(object):
                                                  'initiator_party_id': initiator_party_id
                                              })
         if not status:
-            return -1
+            return job_info
         dag = get_job_dsl_parser(dsl=job_dsl,
                                  runtime_conf=job_runtime_conf,
                                  train_runtime_conf=train_runtime_conf)
@@ -492,10 +497,10 @@ class TaskScheduler(object):
         schedule_logger(job_id, delete=True)
 
     @staticmethod
-    def stop(job_id, end_status=JobStatus.FAILED, component_name='', role='', party_id=''):
+    def stop(job_id, end_status=JobStatus.FAILED, component_name='', is_initiator=True):
         schedule_logger(job_id).info('get {} job {} {} command'.format("cancel" if end_status == JobStatus.CANCELED else "stop", job_id, component_name))
-        if role and party_id:
-            jobs = job_utils.query_job(job_id=job_id, role=role, party_id=party_id)
+        if not is_initiator:
+            jobs = job_utils.query_job(job_id=job_id)
         else:
             jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
         cancel_success = False

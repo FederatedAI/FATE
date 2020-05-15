@@ -19,8 +19,7 @@ from concurrent.futures import as_completed
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.driver.job_controller import TaskScheduler
 from fate_flow.manager.queue_manager import BaseQueue
-
-
+from fate_flow.settings import RE_ENTRY_QUEUE_TIME
 
 
 class DAGScheduler(threading.Thread):
@@ -46,6 +45,7 @@ class DAGScheduler(threading.Thread):
                         result = future.result()
                         if isinstance(result, dict):
                             self.queue.put_event(result, status=3, job_id=result['job_id'])
+                        break
                 job_event = self.queue.get_event()
                 status = TaskScheduler.check(job_event['job_id'], job_event['initiator_role'], job_event['initiator_party_id'])
                 if not status:
@@ -80,5 +80,5 @@ def put_events(queue):
     for i in range(n):
         event = queue.get_event(status=3)
         queue.put_event(event, job_id=event['job_id'], status=1)
-    t = threading.Timer(120, put_events, [queue])
+    t = threading.Timer(RE_ENTRY_QUEUE_TIME, put_events, [queue])
     t.start()
