@@ -22,9 +22,9 @@ from federatedml.param.intersect_param import IntersectParam
 from federatedml.statistic.intersect import RawIntersectionHost, RawIntersectionGuest, RsaIntersectionHost, \
     RsaIntersectionGuest
 from federatedml.statistic.intersect.repeat_id_process import RepeatedIDIntersect
-from federatedml.util import consts
 from federatedml.transfer_variable.transfer_class.intersection_func_transfer_variable import \
     IntersectionFuncTransferVariable
+from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
@@ -82,9 +82,10 @@ class IntersectModelBase(ModelBase):
         self.intersection_obj.guest_party_id = self.guest_party_id
         self.intersection_obj.host_party_id_list = self.host_party_id_list
 
-    def __share_info(self, data:session.table) -> session.table:
+    def __share_info(self, data: session.table) -> session.table:
         LOGGER.info("Start to share information with another role")
-        info_share = self.transfer_variable.info_share_from_guest if self.model_param.info_owner == consts.GUEST else self.transfer_variable.info_share_from_host
+        info_share = self.transfer_variable.info_share_from_guest if self.model_param.info_owner == consts.GUEST else \
+            self.transfer_variable.info_share_from_host
         party_role = consts.GUEST if self.model_param.info_owner == consts.HOST else consts.HOST
 
         if self.role == self.model_param.info_owner:
@@ -116,7 +117,8 @@ class IntersectModelBase(ModelBase):
         else:
             self.intersect_ids = info_share.get(idx=0)
             self.intersect_ids.schema['header'] = [consts.SHARE_INFO_COL_NAME]
-            LOGGER.info("Get share information from {}, header:{}".format(self.model_param.info_owner, self.intersect_ids))
+            LOGGER.info(
+                "Get share information from {}, header:{}".format(self.model_param.info_owner, self.intersect_ids))
 
         return self.intersect_ids
 
@@ -141,7 +143,7 @@ class IntersectModelBase(ModelBase):
         self.intersect_ids = self.intersection_obj.run(data)
 
         if self.model_param.allow_info_share:
-           self.intersect_ids = self.__share_info(data)
+            self.intersect_ids = self.__share_info(data)
 
         LOGGER.info("Finish intersection")
 
