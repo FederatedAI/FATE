@@ -224,7 +224,7 @@ class KerasSequenceData(tf.keras.utils.Sequence):
     def get_shape(self):
         return self.x_shape, self.y_shape
 
-    def __init__(self, data_instances, batch_size, encode_label):
+    def __init__(self, data_instances, batch_size):
         self.size = data_instances.count()
         if self.size <= 0:
             raise ValueError("empty data")
@@ -233,25 +233,8 @@ class KerasSequenceData(tf.keras.utils.Sequence):
         self.x_shape = one_data.features.shape
 
         num_label = len(data_instances.map(lambda x, y: [x, {y.label}]).reduce(lambda x, y: x | y))
-        if encode_label:
-            if num_label > 2:
-                self.y_shape = (num_label,)
-                self.x = np.zeros((self.size, *self.x_shape))
-                self.y = np.zeros((self.size, *self.y_shape))
-                index = 0
-                self._keys = []
-                for k, inst in data_instances.collect():
-                    self._keys.append(k)
-                    self.x[index] = inst.features
-                    self.y[index][inst.label] = 1
-                    index += 1
-            else:
-                raise ValueError(f"num_label is {num_label}")
-        else:
-            if num_label >= 2:
-                self.y_shape = (1,)
-            else:
-                 raise ValueError(f"num_label is {num_label}")
+        if num_label == 2:
+            self.y_shape = (1,)
             self.x = np.zeros((self.size, *self.x_shape))
             self.y = np.zeros((self.size, *self.y_shape))
             index = 0
@@ -261,6 +244,21 @@ class KerasSequenceData(tf.keras.utils.Sequence):
                 self.x[index] = inst.features
                 self.y[index] = inst.label
                 index += 1
+
+        # encoding label in one-hot
+        elif num_label > 2:
+            self.y_shape = (num_label,)
+            self.x = np.zeros((self.size, *self.x_shape))
+            self.y = np.zeros((self.size, *self.y_shape))
+            index = 0
+            self._keys = []
+            for k, inst in data_instances.collect():
+                self._keys.append(k)
+                self.x[index] = inst.features
+                self.y[index][inst.label] = 1
+                index += 1
+        else:
+            raise ValueError(f"num_label is {num_label}")
 
         self.batch_size = batch_size if batch_size > 0 else self.size
 
