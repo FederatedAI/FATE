@@ -23,12 +23,12 @@ from arch.api.utils.core_utils import current_timestamp, base64_encode, json_loa
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import Job
 from fate_flow.driver.task_executor import TaskExecutor
+from fate_flow.entity.constant_config import JobStatus, Backend, TaskStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.settings import API_VERSION, HTTP_PORT
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
 from fate_flow.utils.job_utils import query_task, get_job_dsl_parser, query_job
-from fate_flow.entity.constant_config import JobStatus, Backend, TaskStatus
 
 
 class TaskScheduler(object):
@@ -138,10 +138,9 @@ class TaskScheduler(object):
         except Exception as e:
             schedule_logger(job_id).exception(e)
             schedule_logger(job_id).warning('job {} sync status failed'.format(job.f_job_id))
-
-        schedule_logger(job_id).info('job {} finished, status is {}'.format(job.f_job_id, job.f_status))
         t.cancel()
-
+        schedule_logger(job_id).info('job {} finished, status is {}'.format(job.f_job_id, job.f_status))
+        schedule_logger(job_id, delete=True)
 
     @staticmethod
     def run_component(job_id, job_runtime_conf, job_parameters, job_initiator, job_args, dag, component):
@@ -407,21 +406,21 @@ class TaskScheduler(object):
             for party_id in partys:
                 # save pipeline
                 if not stop:
-                    federated_api(job_id=job_id,
-                                  method='POST',
-                                  endpoint='/{}/schedule/{}/{}/{}/{}/{}/save/pipeline'.format(
-                                      API_VERSION,
-                                      job_id,
-                                      role,
-                                      party_id,
-                                      model_id_base64,
-                                      model_version_base64
-                                  ),
-                                  src_party_id=job_initiator['party_id'],
-                                  dest_party_id=party_id,
-                                  src_role=job_initiator['role'],
-                                  json_body={},
-                                  work_mode=job_parameters['work_mode'])
+                    response = federated_api(job_id=job_id,
+                                             method='POST',
+                                             endpoint='/{}/schedule/{}/{}/{}/{}/{}/save/pipeline'.format(
+                                                 API_VERSION,
+                                                 job_id,
+                                                 role,
+                                                 party_id,
+                                                 model_id_base64,
+                                                 model_version_base64
+                                             ),
+                                             src_party_id=job_initiator['party_id'],
+                                             dest_party_id=party_id,
+                                             src_role=job_initiator['role'],
+                                             json_body={},
+                                             work_mode=job_parameters['work_mode'])
                 # clean
                 federated_api(job_id=job_id,
                               method='POST',
@@ -438,7 +437,6 @@ class TaskScheduler(object):
                               src_role=job_initiator['role'],
                               json_body={},
                               work_mode=job_parameters['work_mode'])
-        schedule_logger(job_id, delete=True)
 
     @staticmethod
     def stop(job_id, end_status=JobStatus.FAILED, component_name=''):
