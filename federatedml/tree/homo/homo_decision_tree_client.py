@@ -57,6 +57,11 @@ class HomoDecisionTreeClient(DecisionTree):
         self.epoch_idx = epoch_idx
         self.tree_idx = tree_idx
 
+        # check max_split_nodes
+        if self.max_split_nodes != 0 and self.max_split_nodes % 2 == 1:
+            self.max_split_nodes += 1
+            LOGGER.warning('an even max_split_nodes value is suggested when using histogram-subtraction, max_split_nodes reset to {}'.format(self.max_split_nodes))
+
         self.transfer_inst = HomoDecisionTreeTransferVariable()
 
         """

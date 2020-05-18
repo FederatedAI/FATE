@@ -35,6 +35,7 @@ class HeteroSVDppBase(ModelBase):
         self.aggregator = None
         self.user_ids_sync = None
         self.average_rate_sync = None
+        self.has_registered = False
 
     def _iter_suffix(self):
         return self.aggregator_iter,
@@ -44,9 +45,11 @@ class HeteroSVDppBase(ModelBase):
         self.params = params
         self.transfer_variable = HeteroSVDppTransferVariable()
         secure_aggregate = params.secure_aggregate
-        self.aggregator = aggregator.with_role(role=self.role,
-                                               transfer_variable=self.transfer_variable,
-                                               enable_secure_aggregate=secure_aggregate)
+        if not self.has_registered:
+            self.aggregator = aggregator.with_role(role=self.role,
+                                                   transfer_variable=self.transfer_variable,
+                                                   enable_secure_aggregate=secure_aggregate)
+            self.has_registered = True
         self.max_iter = params.max_iter
         self.aggregator_iter = 0
 

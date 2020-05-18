@@ -67,8 +67,9 @@ Fate-Flow部署在``$PYTHONPATH/fate_flow/``中，它依赖两个配置文件：
 | - | - | - |
 | IP | FATE-Flow 的监听地址 | 默认0.0.0.0 |
 | GRPC_PORT | 监听 FATE-Flow grpc 服务的端口 | 默认9360 |
-| HTTP_PORT | FATE-Flow的http服务器的侦听端口 | 默认9380
+| HTTP_PORT | FATE-Flow的http服务器的侦听端口 | 默认9380 |
 | WORK_MODE | FATE-Flow的工作模式 | 0(单机模式), 1(群集模式)|
+| USE_LOCAL_DATA | 是否使用FATE-Flow客户端机器上的数据 | True代表使用,False代表不使用 |
 | USE_LOCAL_DATABASE  |是否使用本地数据库(sqlite) | False表示否, True表示是|
 | USE_AUTHENTICATION | 是否启用身份验证 | False表示否, True表示是|
 | USE_CONFIGURATION_CENTER |是否使用Zookeeper | False表示否, True表示是|
@@ -156,10 +157,19 @@ FATE-Flow提供 [**REST API**](./doc/fate_flow_rest_api.md)和[**命令行界面
 让我们开始使用client端来运行一个联邦学习Pipeline任务 (**单机版本**).
 
 ### 离线建模
-#### 上传数据
+#### 上传数据(guest/host)
 ```bash
 python fate_flow_client.py -f upload -c examples/upload_guest.json
 python fate_flow_client.py -f upload -c examples/upload_host.json
+```
+#### 注1：
+FATE-Flow Server中的配置项**USE_LOCAL_DATA**代表上传数据时是否使用FATE-Flow客户端机器上的数据,默认使用（True）。
+如果FATE-Flow Server的配置**USE_LOCAL_DATA**设为**True**，并且还是想要使用FATE-Flow Server所在机器上的数据，可将Client的USE_LOCAL_DATA改为False，并在上传配置中添加“**module**”参数，参数值非空即可。
+
+#### 注2：
+集群部署使用同一个表上传数据时，需携带**drop**参数（0代表覆盖上传，1代表删除之前的数据并重新上传）
+```bash
+python fate_flow_client.py -f upload -c examples/upload_guest.json -drop 0
 ```
 
 #### 提交任务

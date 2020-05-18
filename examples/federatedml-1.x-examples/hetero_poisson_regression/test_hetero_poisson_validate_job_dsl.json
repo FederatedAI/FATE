@@ -10,7 +10,7 @@
                 }
             },
             "output": {
-                "data": ["train_data"],
+                "data": ["train"],
                 "model": ["dataio"]
             }
          },
@@ -27,21 +27,47 @@
                 ]
             },
             "output": {
-                "data": ["eval_data"],
+                "data": ["eval"],
                 "model": ["dataio"]
             }
+         },
+         "intersection_0": {
+             "module": "Intersection",
+             "input": {
+                 "data": {
+                     "data": [
+                         "dataio_0.train"
+                     ]
+                 }
+             },
+             "output": {
+                 "data": ["train"]
+             }
+         },
+        "intersection_1": {
+             "module": "Intersection",
+             "input": {
+                 "data": {
+                     "data": [
+                         "dataio_1.eval"
+                     ]
+                 }
+             },
+             "output": {
+                 "data": ["eval"]
+             }
          },
         "hetero_poisson_0": {
             "module": "HeteroPoisson",
             "input": {
                 "data": {
-                    "train_data": ["dataio_0.train_data"],
-                    "eval_data": ["dataio_1.eval_data"]
+                    "train_data": ["intersection_0.train"],
+                    "eval_data": ["intersection_1.eval"]
                 }
             },
             "output": {
                 "data": ["train"],
-                "model": ["hetero_poisson_model"]
+                "model": ["hetero_poisson"]
             }
         },
         "evaluation_0": {

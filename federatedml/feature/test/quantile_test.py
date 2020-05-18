@@ -19,6 +19,7 @@ import unittest
 import numpy as np
 import random
 from arch.api import session
+import uuid
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.feature.instance import Instance
 # from federatedml.feature.quantile import Quantile
@@ -27,37 +28,13 @@ from federatedml.param.feature_binning_param import FeatureBinningParam
 
 
 class TestInstance(unittest.TestCase):
-    # def setUp(self):
-    #     eggroll.init("test_instance")
-    #     dense_inst = []
-    #     headers = ['x' + str(i) for i in range(20)]
-    #     for i in range(100):
-    #         inst = Instance(features=(i % 16 * np.ones(20)))
-    #         dense_inst.append((i, inst))
-    #     self.dense_table = eggroll.parallelize(dense_inst, include_key=True, partition=2)
-    #     self.dense_table.schema = {'header': headers}
-    #     sparse_inst = []
-    #     col_zero = []
-    #     for i in range(100):
-    #         indices = []
-    #         data = []
-    #         for j in range(20):
-    #             val = ((i + 5) ** 3 + (j + 1) ** 4) % 16
-    #             if val > 0:
-    #                 indices.append(j)
-    #                 data.append(val)
-    #             if j == 0:
-    #                 col_zero.append(val)
-    #         sparse_vec = SparseVector(indices, data, 20)
-    #         inst = Instance(features=sparse_vec)
-    #         sparse_inst.append((i, inst))
-    #
-    #     self.sparse_inst = sparse_inst
-    #     self.sparse_table = eggroll.parallelize(sparse_inst, include_key=True, partition=1)
-    #     self.sparse_table.schema = {'header': headers}
-
     def setUp(self):
-        session.init("test_instance")
+
+        self.job_id = str(uuid.uuid1())
+        session.init(self.job_id)
+        # session.init("test_instance")
+
+    def gen_data(self):
 
         dense_inst = []
         headers = ['x' + str(i) for i in range(20)]
@@ -84,7 +61,7 @@ class TestInstance(unittest.TestCase):
             sparse_vec = SparseVector(indices, data, 30)
             self.sparse_inst.append((i, Instance(features=sparse_vec)))
 
-        self.sparse_table = session.parallelize(self.sparse_inst, include_key=True)
+        self.sparse_table = session.parallelize(self.sparse_inst, include_key=True, partition=48)
         self.sparse_table.schema = {"header": ["fid" + str(i) for i in range(30)]}
         # self.sparse_table = eggroll.parallelize(sparse_inst, include_key=True, partition=1)
 
@@ -112,7 +89,9 @@ class TestInstance(unittest.TestCase):
 
     """
 
+    """
     def test_new_sparse_quantile(self):
+        self.gen_data()
         param_obj = FeatureBinningParam(bin_num=4)
         binning_obj = QuantileBinning(param_obj)
         binning_obj.fit_split_points(self.sparse_table)
@@ -120,8 +99,10 @@ class TestInstance(unittest.TestCase):
         bin_result = dict([(key, inst.features) for key, inst in data_bin.collect()])
         for i in range(20):
             self.assertTrue(len(self.sparse_inst[i][1].features.sparse_vec) == len(bin_result[i].sparse_vec))
+    """
 
     def test_new_dense_quantile(self):
+        self.gen_data()
         param_obj = FeatureBinningParam(bin_num=4)
         binning_obj = QuantileBinning(param_obj)
         binning_obj.fit_split_points(self.dense_table)
@@ -138,6 +119,17 @@ class TestInstance(unittest.TestCase):
 
         for split_points in bin_splitpoints:
             self.assertTrue(len(split_points) <= 4)
+
+    def tearDown(self):
+        session.stop()
+        try:
+            session.cleanup("*", self.job_id, True)
+        except EnvironmentError:
+            pass
+        try:
+            session.cleanup("*", self.job_id, False)
+        except EnvironmentError:
+            pass
 
 
 if __name__ == '__main__':

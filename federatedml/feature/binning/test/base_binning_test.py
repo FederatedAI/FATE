@@ -70,6 +70,7 @@ class TestBaseBinningFunctions(unittest.TestCase):
     def tearDown(self):
         for table in self.table_list:
             table.destroy()
+        session.stop()
 
 
 if __name__ == '__main__':

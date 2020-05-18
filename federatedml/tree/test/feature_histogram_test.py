@@ -43,10 +43,10 @@ class TestFeatureHistogram(unittest.TestCase):
             data_insts.append((Instance(features=sparse_vec), (1, random.randint(0, 3))))
         self.node_map = {0: 0, 1: 1, 2: 2, 3: 3}
         self.data_insts = data_insts
-        self.data_bin = session.parallelize(data_insts, include_key=False)
+        self.data_bin = session.parallelize(data_insts, include_key=False, partition=16)
 
         self.grad_and_hess_list = [(random.random(), random.random()) for i in range(1000)]
-        self.grad_and_hess = session.parallelize(self.grad_and_hess_list, include_key=False)
+        self.grad_and_hess = session.parallelize(self.grad_and_hess_list, include_key=False, partition=16)
 
         bin_split_points = []
         for i in range(10):
@@ -103,6 +103,9 @@ class TestFeatureHistogram(unittest.TestCase):
             for j in range(len(data1[i])):
                 data1[i][j] += data2[i][j]
                 self.assertTrue(data1[i][j] == agg_histograms[i][j])
+
+    def tearDown(self):
+        session.stop()
 
 
 if __name__ == '__main__':

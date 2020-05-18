@@ -147,11 +147,9 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         self.remote_loss_intermediate(en_wx, suffix=current_suffix)
 
         loss_regular = optimizer.loss_norm(model_weights)
-        if loss_regular is None:
-            en_loss_regular = loss_regular
-        else:
+        if loss_regular is not None:
             en_loss_regular = cipher_operator.encrypt(loss_regular)
-        self.remote_loss_regular(en_loss_regular, suffix=current_suffix)
+            self.remote_loss_regular(en_loss_regular, suffix=current_suffix)
 
 
 class Arbiter(hetero_linear_model_gradient.Arbiter, loss_sync.Arbiter):

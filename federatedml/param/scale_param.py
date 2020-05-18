@@ -59,6 +59,7 @@ class ScaleParam(BaseParam):
         self.method = method
         self.mode = mode
         self.feat_upper = feat_upper
+        # LOGGER.debug("self.feat_upper:{}, type:{}".format(self.feat_upper, type(self.feat_upper)))
         self.feat_lower = feat_lower
         self.scale_col_indexes = scale_col_indexes
         self.scale_names = scale_names
@@ -79,14 +80,11 @@ class ScaleParam(BaseParam):
         self.mode = self.check_and_change_lower(self.mode,
                                                 [consts.NORMAL, consts.CAP],
                                                 descr)
-
+        # LOGGER.debug("self.feat_upper:{}, type:{}".format(self.feat_upper, type(self.feat_upper)))
         # if type(self.feat_upper).__name__ not in ["float", "int"]:
         #     raise ValueError("scale param's feat_upper {} not supported, should be float or int".format(
         #         self.feat_upper))
-        #
-        # if type(self.feat_lower).__name__ not in ["float", "int"]:
-        #     raise ValueError("scale param's feat_lower {} not supported, should be float or int".format(
-        #         self.feat_lower))
+
 
         if self.scale_col_indexes != -1  and not isinstance(self.scale_col_indexes, list):
             raise ValueError("scale_col_indexes is should be -1 or a list")

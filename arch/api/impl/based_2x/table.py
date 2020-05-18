@@ -64,11 +64,14 @@ class DTable(Table):
 
     @log_elapsed
     def save_as(self, name, namespace, partition=None, use_serialize=True, **kwargs):
+
+        from arch.api import RuntimeInstance
+        options = kwargs.get("options", {})
+        store_type = options.get("store_type", RuntimeInstance.SESSION.get_persistent_engine())
+        options["store_type"] = store_type
+
         if partition is None:
             partition = self._partitions
-        from arch.api import RuntimeInstance
-        persistent_engine = RuntimeInstance.SESSION.get_persistent_engine()
-        options = dict(store_type=persistent_engine)
         saved_table = self._dtable.save_as(name=name, namespace=namespace, partition=partition, options=options)
         return self.from_dtable(self._session_id, saved_table)
 

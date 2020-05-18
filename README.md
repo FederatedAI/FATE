@@ -1,6 +1,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![CodeStyle](https://img.shields.io/badge/Check%20Style-Google-brightgreen)](https://checkstyle.sourceforge.io/google_style.html) [![Pinpoint Satellite](https://img.shields.io/endpoint?url=https%3A%2F%2Fscan.sbrella.com%2Fadmin%2Fapi%2Fv1%2Fpinpoint%2Fshield%2FFederatedAI%2FFATE)](https://github.com/mmyjona/FATE-Serving/pulls) [![Style](https://img.shields.io/badge/Check%20Style-Black-black)](https://checkstyle.sourceforge.io/google_style.html) [![Build Status](https://travis-ci.org/FederatedAI/FATE.svg?branch=develop-1.4)](https://travis-ci.org/FederatedAI/FATE)
 [![codecov](https://codecov.io/gh/FederatedAI/FATE/branch/develop-1.4/graph/badge.svg)](https://codecov.io/gh/FederatedAI/FATE)
-
+[![Documentation Status](https://readthedocs.org/projects/fate/badge/?version=latest)](https://fate.readthedocs.io/en/latest/?badge=latest)
+  
 <div align="center">
   <img src="./doc/images/FATE_logo.png">
 </div>
@@ -71,7 +72,7 @@ We provided functions such as tracking component output models or logs etc. thro
 
 ## Doc
 ### API doc
-FATE provides some API documents in [doc-api](./doc/api/), including federatedml, eggroll, federation.
+FATE provides some API documents in [doc-api](https://fate.readthedocs.io/en/latest/?badge=latest)
 ### Develop Guide doc
 How to develop your federated learning algorithm using FATE? you can see FATE develop guide document in [develop-guide](./doc/develop_guide.md)
 ### Other doc

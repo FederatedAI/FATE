@@ -84,13 +84,13 @@
       "optimizer": "nesterov_momentum_sgd",
       "eps": 1e-5,
       "alpha": 0.0001,
-      "max_iter": 30,
+      "max_iter": 10,
       "converge_func": "diff",
       "multi_class": "ovr",
-      "batch_size": 32,
+      "batch_size": -1,
       "learning_rate": 0.15,
       "init_param": {
-        "init_method": "random_uniform"
+        "init_method": "zeros"
       }
     }
   }

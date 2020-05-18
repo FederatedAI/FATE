@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 from arch.api import session
-from arch.api.utils.core import json_loads, json_dumps, bytes_to_string
+from arch.api.utils.core_utils import json_loads, json_dumps, bytes_to_string
 from arch.api.utils import log_utils
 LOGGER = log_utils.getLogger()
 

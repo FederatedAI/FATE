@@ -1,3 +1,48 @@
+# Release 1.4.0
+## Major Features and Improvements
+> FederatedML
+* Support Homo Secureboost
+* Support AIC/BIC-based Stepwise for Linear Models
+* Add Hetero Optimal Feature Binning, support iv/gini/chi-square/ks,and allow asymmetric binning methods 
+* Interoperate with AI ecosystem: Add pytorch backend for Homo NN
+* Homo Framework factorization, simplify developing homo algorithms
+* Early stopping strategy for hetero algorithms.
+* Local Baseline supports multi-class classification
+* Add consistency check to Predict function
+* Optimize validation strategy，3x speed up in-training validation
+
+> FATE-Flow
+* Refactoring model management, native file directory storage, storage structure is more flexible, more information
+* Support model import and export, store and restore with reliable distributed system(Redis is currently supported)
+* Using MySQL instead of Redis to implement Job Queue, reducing system complexity
+* Support for uploading client local files
+* Automatically detects the existence of the table and provides the destroy option
+* Separate system, algorithm, scheduling command log, scheduling command log can be independently audited
+
+> Eggroll  
+>> Stability Boosts:
+* New resource management components introduce the brand new session mechanism. Processors can be cleaned up with a simple method call, even the session goes wrong.
+* Removes storage service. No C++ / native library compilation is needed.
+* Federated learning algorithms can still work at a 28% packet loss rate.
+>> Performance Boosts:
+* Performances of federated learning algorithms are improved on Eggroll 2. Some algorithms get 10x performance boost.
+* Join interface is 16x faster than pyspark under federated learning scenarios.
+>> User Experiences Boosts:
+* Quick deployment. Maven, pip, config and start.
+* Light dependencies. Check our requirements.txt / pom.xml and see.
+* Easy debugging. Necessary running contexts are provided. Runtime status are kept in log files and databases.
+* Few daemon processes. And they are all JVM applications.
+
+
+# Release 1.3.1
+## Major Features and Improvements
+>Deploy
+* Support deploying by MacOS
+* Support using external db
+* Deploy JDK and Python environments on demand
+* Improve MySQL and FATE Flow service.sh
+* Support more custom deployment configurations in the default_configurations.sh, such as ssh_port, mysql_port and so one.
+
 # Release 1.3.0
 ## Major Features and Improvements
 >FederatedREC
@@ -16,7 +61,7 @@
 * Add abnormal parameters and input data detection in OneHot Encoder
 * fix not passing validate data to fit process to support evaluate validation data during training process
 
->Fate-Flow
+>FATE-Flow
 * Add clean job CLI for cleaning output and intermediate results, including data, metrics and sessions
 * Support for obtaining table namespace and name of output data via CLI
 * Fix KillJob unsuccessful execution in some special cases

@@ -36,3 +36,4 @@ class HomoSecureBoostingTreeTransferVariable(BaseTransferVariables):
         self.stop_flag = self._create_variable(name='stop_flag', src=['arbiter'], dst=['guest', 'host'])
         self.local_labels = self._create_variable(name='local_labels', src=['guest', 'host'], dst=['arbiter'])
         self.label_mapping = self._create_variable(name='label_mapping', src=['arbiter'], dst=['guest', 'host'])
+        self.valid_features = self._create_variable(name='valid_features', src=['arbiter'], dst=['guest', 'host'])

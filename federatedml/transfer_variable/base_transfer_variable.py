@@ -19,6 +19,10 @@ from typing import Union
 from arch.api import RuntimeInstance
 from arch.api.base.utils.clean import Cleaner
 from arch.api.base.utils.party import Party
+from arch.api.utils import log_utils
+from functools import wraps
+
+LOGGER = log_utils.getLogger()
 
 
 class TransferNameSpace(object):
@@ -34,10 +38,29 @@ class TransferNameSpace(object):
         return '.'.join(tags)
 
 
+def _singleton_variable(cls):
+    instances = {}
+
+    @wraps(cls)
+    def get_instance(*args, **kwargs):
+        if "name" in kwargs:
+            name = kwargs["name"]
+        else:
+            name = args[0]
+        if name not in instances:
+            instances[name] = cls(*args, **kwargs)
+        return instances[name]
+
+    return get_instance
+
+
+@_singleton_variable
 class Variable(object):
+
     def __init__(self, name: str,
                  src: typing.Tuple[str],
                  dst: typing.Tuple[str]):
+        LOGGER.debug(f"create variable with name={name}, src={src}, dst={dst}")
         self.name = name
         self._src = src
         self._dst = dst
@@ -45,6 +68,14 @@ class Variable(object):
         self._remote_cleaner = Cleaner()
         self._auto_clean = True
         self._preserve_num = 2
+
+    # copy never create a new instance
+    def __copy__(self):
+        return self
+
+    # deepcopy never create a new instance
+    def __deepcopy__(self, memo):
+        return self
 
     def set_preserve_num(self, n):
         self._preserve_num = n
@@ -163,14 +194,6 @@ class BaseTransferVariables(object):
     def _disable__singleton(cls):
         cls.__singleton = False
 
-    def __new__(cls, *args, **kwargs):
-        if cls.__singleton:
-            if cls.__name__ not in cls.__instance:
-                cls.__instance[cls.__name__] = object.__new__(cls)
-            return cls.__instance[cls.__name__]
-        else:
-            return object.__new__(cls)
-
     # noinspection PyMethodMayBeStatic
     def set_flowid(self, flowid):
         TransferNameSpace.set_namespace(str(flowid))
@@ -185,3 +208,7 @@ class BaseTransferVariables(object):
     @staticmethod
     def local_party():
         return RuntimeInstance.FEDERATION.local_party
+
+    @staticmethod
+    def roles_to_parties(roles: list) -> list:
+        return RuntimeInstance.FEDERATION.roles_to_parties(roles)

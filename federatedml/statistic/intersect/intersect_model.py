@@ -165,6 +165,9 @@ class IntersectModelBase(ModelBase):
         LOGGER.info("intersect_ids header:{}".format(self.intersect_ids.schema))
         return self.intersect_ids
 
+    def check_consistency(self):
+        pass
+
 
 class IntersectHost(IntersectModelBase):
     def __init__(self):

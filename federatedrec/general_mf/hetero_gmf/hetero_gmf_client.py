@@ -178,7 +178,7 @@ class HeteroGMFClient(HeteroGMFBase):
                                                training=True, flow_id=self.flowid)
             keys = data.get_keys()
             labels = data.get_validate_labels()
-            label_data = fate_session.parallelize(zip(keys, labels), include_key=True)
+            label_data = fate_session.parallelize(zip(keys, labels), include_key=True, partition=data_inst._partitions)
         else:
             # use GMFSequencePredictData in prediction procedure
             data = self.data_converter.convert(data_inst, batch_size=self.batch_size, training=False)
@@ -191,7 +191,7 @@ class HeteroGMFClient(HeteroGMFBase):
         threshold = self.params.predict_param.threshold
 
         kv = [(x[0], (0 if x[1] <= threshold else 1, x[1].item())) for x in zip(data.get_keys(), predict)]
-        pred_tbl = fate_session.parallelize(kv, include_key=True)
+        pred_tbl = fate_session.parallelize(kv, include_key=True, partition=data_inst._partitions)
         pred_data = label_data.join(pred_tbl, lambda d, pred: [d, pred[0], pred[1], {"label": pred[0]}])
         LOGGER.info(f"pred_data sample: {pred_data.take(20)}")
         return pred_data

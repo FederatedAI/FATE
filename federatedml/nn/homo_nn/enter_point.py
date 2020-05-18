@@ -28,6 +28,7 @@ from federatedml.nn.homo_nn.nn_model import restore_nn_model
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.param.homo_nn_param import HomoNNParam
 from federatedml.util import consts
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 Logger = LoggerFactory.get_logger()
 MODEL_META_NAME = "HomoNNModelMeta"
@@ -80,7 +81,7 @@ class HomoNNServer(HomoNNBase):
 
     def callback_loss(self, iter_num, loss):
         metric_meta = MetricMeta(name='train',
-                                 metric_type=MetricType.LOSS,
+                                 metric_type="LOSS",
                                  extra_metas={
                                      "unit_name": "iters",
                                  })
@@ -136,6 +137,7 @@ class HomoNNClient(HomoNNBase):
         self.optimizer = param.optimizer
         self.loss = param.loss
         self.metrics = param.metrics
+        self.encode_label = param.encode_label
 
         self.data_converter = nn_model.get_data_converter(self.config_type)
         self.model_builder = nn_model.get_nn_builder(config_type=self.config_type)
@@ -162,8 +164,7 @@ class HomoNNClient(HomoNNBase):
                                            metrics=self.metrics)
 
     def fit(self, data_inst, *args):
-
-        data = self.data_converter.convert(data_inst, batch_size=self.batch_size)
+        data = self.data_converter.convert(data_inst, batch_size=self.batch_size, encode_label=self.encode_label)
         if self.config_type == "pytorch":
             self.__build_pytorch_model(self.nn_define)
         else:
@@ -210,20 +211,21 @@ class HomoNNClient(HomoNNBase):
         param_pb.saved_model_bytes = self.nn_model.export_model()
         return param_pb
 
+    @assert_io_num_rows_equal
     def predict(self, data_inst):
 
-        data = self.data_converter.convert(data_inst, batch_size=self.batch_size)
+        data = self.data_converter.convert(data_inst, batch_size=self.batch_size, encode_label=self.encode_label)
         predict = self.nn_model.predict(data)
         num_output_units = data.get_shape()[1]
         threshold = self.param.predict_param.threshold
 
         if num_output_units[0] == 1:
             kv = [(x[0], (0 if x[1][0] <= threshold else 1, x[1][0].item())) for x in zip(data.get_keys(), predict)]
-            pred_tbl = session.parallelize(kv, include_key=True)
+            pred_tbl = session.parallelize(kv, include_key=True, partition=data_inst.get_partitions())
             return data_inst.join(pred_tbl, lambda d, pred: [d.label, pred[0], pred[1], {"label": pred[0]}])
         else:
             kv = [(x[0], (x[1].argmax(), [float(e) for e in x[1]])) for x in zip(data.get_keys(), predict)]
-            pred_tbl = session.parallelize(kv, include_key=True)
+            pred_tbl = session.parallelize(kv, include_key=True, partition=data_inst.get_partitions())
             return data_inst.join(pred_tbl,
                                   lambda d, pred: [d.label, pred[0].item(),
                                                    pred[1][pred[0]] / (sum(pred[1])),

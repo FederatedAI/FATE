@@ -84,7 +84,7 @@
         {
           "layer": "Relu",
           "type": "activate",
-          "name": "selu1"
+          "name": "relu"
         },
         {
           "layer": "Linear",
@@ -95,13 +95,13 @@
         {
           "layer": "Sigmoid",
           "type": "activate",
-          "name": "sigmoid1"
+          "name": "sigmoid"
         }
       ],
       "batch_size": -1,
       "optimizer": {
         "optimizer": "Adam",
-        "learning_rate": 0.05
+        "lr": 0.05
       },
       "early_stop": {
         "early_stop": "diff",
@@ -111,8 +111,7 @@
       "metrics": [
         "accuracy"
       ],
-      "max_iter": 2
+      "max_iter": 5
     }
   }
 }
-

@@ -110,14 +110,18 @@ class OptimalBinningParam(BaseParam):
         if self.metric_method in ['chi_square', 'chi-square']:
             self.metric_method = 'chi_square'
         self.check_valid_value(self.metric_method, descr, ['iv', 'gini', 'chi_square', 'ks'])
+        self.check_positive_integer(self.init_bin_nums, descr)
+
+        self.init_bucket_method = self.init_bucket_method.lower()
+        self.check_valid_value(self.init_bucket_method, descr, ['quantile', 'bucket'])
+
         if self.max_bin_pct not in [1, 0]:
             self.check_decimal_float(self.max_bin_pct, descr)
         if self.min_bin_pct not in [1, 0]:
             self.check_decimal_float(self.min_bin_pct, descr)
         if self.min_bin_pct > self.max_bin_pct:
             raise ValueError("Optimal binning's min_bin_pct should less or equal than max_bin_pct")
-        if math.ceil(1.0 / self.max_bin_pct) > self.max_bin:
-            raise ValueError("Arguments logical error, ceil(1.0/max_bin_pct) should be smaller or equal than bin_num")
+
         self.check_boolean(self.mixture, descr)
         self.check_positive_integer(self.init_bin_nums, descr)
 
@@ -219,3 +223,4 @@ class FeatureBinningParam(BaseParam):
         self.check_defined_type(self.category_names, descr, ['list', "NoneType"])
         self.check_open_unit_interval(self.adjustment_factor, descr)
         self.transform_param.check()
+        self.optimal_binning_param.check()

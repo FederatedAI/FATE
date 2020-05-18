@@ -24,7 +24,6 @@
             },
             "output": {
                 "data": ["intersect_data"],
-                "model": ["intersect_results"]
             }
         }
     }
