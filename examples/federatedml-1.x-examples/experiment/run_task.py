@@ -18,6 +18,7 @@ predict_task_file = home_dir + "/config/test_predict_conf.json"
 
 fate_flow_path = home_dir + "/../../../fate_flow/fate_flow_client.py"
 
+# Should be one of "tag_integer_value", "tag", "tag_float_value", "tag_1" or "label"
 HOST_DATA_TYPE = 'tag_integer_value'
 
 intersect_output_name = ''

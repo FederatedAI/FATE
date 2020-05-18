@@ -17,9 +17,9 @@
 
 | party  | partyid | 主机名        | IP地址      | 操作系统                | 安装软件             | 服务                                                    |
 | ------ | ------- | ------------- | ----------- | ----------------------- | -------------------- | ------------------------------------------------------- |
-| PartyA | 9999    | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate，eggroll，mysql | fate_flow，fateboard，clustermanager，nodemanger，mysql |
-| PartyA | 9999    | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate,eggroll         | nodemanger，rollsite                                    |
-| PartyB | 10000   | VM_0_3_centos | 192.168.0.3 | CentOS 7.2/Ubuntu 16.04 | fate，eggroll，mysql | all                                                     |
+| PartyA | 10000   | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate，eggroll，mysql | fate_flow，fateboard，clustermanager，nodemanger，mysql |
+| PartyA | 10000   | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate,eggroll         | nodemanger，rollsite                                    |
+| PartyB | 9999    | VM_0_3_centos | 192.168.0.3 | CentOS 7.2/Ubuntu 16.04 | fate，eggroll，mysql | all                                                     |
 
 架构图：
 
@@ -176,9 +176,9 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 ```
 mkdir -p /data/projects/install
 cd /data/projects/install
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.0-rc3.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.0-release.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.0-rc3.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.0-release.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.0-release.tar.gz
 
 #传输到192.168.0.2和192.168.0.3
@@ -199,7 +199,7 @@ mkdir -p /data/projects/fate/data/mysql
 
 #解压缩软件包
 cd /data/projects/install
-tar xzvf mysql-1.4.0-rc3.tar.gz
+tar xzvf mysql-1.4.0-release.tar.gz
 cd mysql
 tar xf mysql-8.0.13.tar.gz -C /data/projects/fate/common/mysql
 
@@ -300,7 +300,7 @@ mkdir -p /data/projects/fate/common/python
 
 #安装miniconda3
 cd /data/projects/install
-tar xvf python-env-1.4.0-rc3.tar.gz
+tar xvf python-env-1.4.0-release.tar.gz
 cd python-env
 sh Miniconda3-4.5.4-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
 
@@ -1024,8 +1024,20 @@ netstat -tlnp | grep 8080
 | fateboard          | /data/projects/fate/fateboard/logs                 |
 | mysql              | /data/projects/fate/common/mysql/mysql-8.0.13/logs |
 
-# 8. 其他
+# 8. 附录
 
 ## 8.1 eggroll&fate打包构建
 
 参见[build指导](../build.md) 
+
+## 8.2 Eggroll参数调优
+
+配置文件路径：/data/projects/fate/eggroll/conf/eggroll.properties
+
+配置参数：eggroll.session.processors.per.node
+
+假定 CPU核数（cpu cores）为 c, Nodemanager的数量为 n，需要同时运行的任务数为 p，则：
+
+egg_num=eggroll.session.processors.per.node = c * 0.8 / p
+
+partitions （roll pair分区数）= egg_num * n

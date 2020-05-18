@@ -19,7 +19,6 @@ pycryptodomex==3.6.6
 python-dotenv==0.13.0
 redis==3.0.1
 requests==2.23.0
-ruamel-yaml==0.16.10
 scikit-learn==0.19.2
 scipy==1.1.0
 six==1.14.0
