@@ -41,6 +41,7 @@ class PipeLine(object):
         self._train_dsl = {}
         self._predict_dsl = {}
         self._train_conf = {}
+        self._upload_conf = {}
         self._cur_state = None
         print("init train_conf {}".format(self._train_conf))
         self._job_invoker = JobInvoker()
@@ -160,6 +161,13 @@ class PipeLine(object):
                     self._components_input[component.name][attr] = val
                 else:
                     self._components_input[component.name][attr] = [val]
+
+    def add_upload_data(self, file, table_name, namespace, head=1, partition=16):
+        self._upload_conf["file"] = file
+        self._upload_conf["table_name"] = table_name
+        self._upload_conf["namespace"] = namespace
+        self._upload_conf["head"] = head
+        self._upload_conf["partition"] = partition
 
     def _get_task_inst(self, job_id, name, init_role, party_id):
         return TaskInfo(jobid=job_id,
@@ -354,6 +362,14 @@ class PipeLine(object):
         self._job_invoker.monitor_job_status(self._predict_job_id,
                                              self._initiator.role,
                                              self._initiator.party_id)
+
+    def upload(self, work_mode=WorkMode.STANDALONE):
+        self._upload_conf["work_mode"] = work_mode
+        self._train_job_id, detail_info = self._job_invoker.upload_data(self._upload_conf)
+        self._train_board_url = detail_info["board_url"]
+        self._job_invoker.monitor_job_status(self._train_job_id,
+                                             "local",
+                                             0)
 
     def dump(self):
         return pickle.dumps(self)

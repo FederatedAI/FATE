@@ -30,6 +30,7 @@ FATE_FLOW_CLIENT = FATE_HOME + "fate_flow/fate_flow_client.py"
 
 class JobFunc:
     SUMMIT_JOB = "submit_job"
+    UPLOAD = "upload"
     COMPONENT_OUTPUT_MODEL = "component_output_model"
     COMPONENT_METRIC = "component_metric_all"
     JOB_STATUS = "query_job"
@@ -93,6 +94,32 @@ class JobInvoker(object):
 
         return job_id, data
 
+    def upload_data(self, submit_conf=None):
+        with tempfile.TemporaryDirectory() as job_dir:
+            submit_path = os.path.join(job_dir, "job_runtime_conf.json")
+            with open(submit_path, "w") as fout:
+                fout.write(json.dumps(submit_conf))
+
+            cmd = ["python", FATE_FLOW_CLIENT,
+                   "-f", JobFunc.UPLOAD,
+                   "-c", submit_path]
+
+            result = self._run_cmd(cmd)
+            try:
+                result = json.loads(result)
+                if 'retcode' not in result or result["retcode"] != 0:
+                    raise ValueError
+
+                if "jobId" not in result:
+                    raise ValueError
+
+                job_id = result["jobId"]
+                data = result["data"]
+            except ValueError:
+                raise ValueError("job submit failed, err msg: {}".format(result))
+
+        return job_id, data
+
     def monitor_job_status(self, job_id, role, party_id):
         while True:
             ret_code, ret_msg, data = self.query_job(job_id, role, party_id)
@@ -128,7 +155,7 @@ class JobInvoker(object):
 
             ret_code = result["retcode"]
             ret_msg = result["retmsg"]
-
+            print(f"query job result is {result}")
             data = result["data"][0]
             return ret_code, ret_msg, data
         except ValueError:
