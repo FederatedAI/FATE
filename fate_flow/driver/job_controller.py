@@ -32,10 +32,12 @@ from arch.api.impl.based_spark.based_hdfs.string_utils import RandomString
 
 class JobController(object):
     task_executor_pool = None
+    mq_info = {}
 
     @staticmethod
     def init():
-        pass
+        JobController.mq_info['user'] = RandomString(4) 
+        JobController.mq_info['pswd'] = RandomString(10)
 
     @staticmethod
     def submit_job(job_data, job_id=None):
@@ -49,10 +51,7 @@ class JobController(object):
         job_initiator = job_runtime_conf['initiator']
         job_type = job_parameters.get('job_type', '')
         # add mq info
-        mq_info = {}
-        mq_info['user'] = RandomString(4) 
-        mq_info['pswd'] = RandomString(10)
-        job_parameters['mq_info'] = mq_info
+        job_parameters['mq_info'] = JobController.mq_info
         
         if job_type != 'predict':
             # generate job model info

@@ -90,7 +90,8 @@ class RDDTable(Table):
             raise AssertionError("hdfs path {} not exists.".format(hdfs_path))
 
         for k, v in kv_list:
-            content = u"{}{}{}\n".format(k, RDDTable.delimiter, v)
+            import pickle
+            content = u"{}{}{}\n".format(k, RDDTable.delimiter, pickle.dumps(v).hex())
             out.write(bytearray(content, "utf-8"))
         out.flush()
         out.close()
@@ -110,7 +111,8 @@ class RDDTable(Table):
     @classmethod
     def map2dic(cls, m):
         fields = m.strip().partition(RDDTable.delimiter)
-        return fields[0], fields[2]
+        import pickle
+        return fields[0], pickle.loads(bytes.fromhex(fields[2]))
 
 
     @classmethod

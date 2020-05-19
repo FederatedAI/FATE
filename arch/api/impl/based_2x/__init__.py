@@ -17,7 +17,7 @@
 def _infer_eggroll_version():
     try:
         import eggroll.roll_pair
-    except ImportError:
+    except:
         return 1
     return 2
 

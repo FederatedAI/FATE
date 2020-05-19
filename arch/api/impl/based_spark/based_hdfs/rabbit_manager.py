@@ -5,6 +5,9 @@
 
 import requests, json, time, string, random
 from arch.api.impl.based_spark.based_hdfs.string_utils import RandomString
+from arch.api.utils import log_utils
+
+LOGGER = log_utils.getLogger()
 
 cHttpTemplate = "http://{}/api/{}"
 cCommonHttpHeader = {'Content-Type': 'application/json'}
@@ -25,26 +28,32 @@ class RabbitManager:
                 "tags": ""
                }
         result = requests.put(url, headers=cCommonHttpHeader, json=body, auth=(self.user, self.password))
+        LOGGER.debug(result)
         return result
 
     def DeleteUser(self, user):
         url = cHttpTemplate.format(self.endpoint, "users/" + user)
         result = requests.delete(url, auth=(self.user, self.password))
+        LOGGER.debug(result)
         return result
 
     def CreateVhost(self, vhost):
         url = cHttpTemplate.format(self.endpoint, "vhosts/" + vhost)
         result = requests.put(url, headers=cCommonHttpHeader, auth=(self.user, self.password))
+        LOGGER.debug(result)
+        self.AddUserToVhost(self.user, vhost)
         return result
 
     def DeleteVhost(self, vhost):
         url = cHttpTemplate.format(self.endpoint, "vhosts/" + vhost)
         result = requests.delete(url, auth=(self.user, self.password))
+        LOGGER.debug(result)
         return result
         
     def GetVhosts(self):
         url = cHttpTemplate.format(self.endpoint, "vhosts")
         result = requests.get(url, auth=(self.user, self.password))
+        LOGGER.debug(result)
         return result
 
     def AddUserToVhost(self, user, vhost):
@@ -56,16 +65,19 @@ class RabbitManager:
                }
 
         result = requests.put(url, headers=cCommonHttpHeader, json=body, auth=(self.user, self.password))
+        LOGGER.debug(result)
         return result
 
     def RemoveUserFromVhost(self, user, vhost):
         url = cHttpTemplate.format(self.endpoint, "{}/{}/{}".format("permissions", vhost, user))
         result = requests.delete(url, auth=(self.user, self.password))
+        LOGGER.debug(result)
         return result
         
     def GetExchanges(self):
         url = cHttpTemplate.format(self.endpoint, "exchanges/federated")
         result = requests.get(url, auth=(self.user, self.password))
+        LOGGER.debug(result)
         return result
     
     def CreateExchange(self, vhost, exchange_name): 
@@ -80,11 +92,13 @@ class RabbitManager:
                 }
 
         result = requests.put(url, headers=cCommonHttpHeader, json=body, auth=(self.user, self.password))
+        LOGGER.debug(result)
         return result
 
     def DeleteExchange(self, vhost, exchange_name):
         url = cHttpTemplate.format(self.endpoint, "{}/{}/{}".format("exchanges", vhost, exchange_name))
         result = requests.delete(url, auth=(self.user, self.password))
+        LOGGER.debug(result)
         return result
 
     def CreateQueue(self, vhost, queue_name):
@@ -97,11 +111,13 @@ class RabbitManager:
                }
 
         result = requests.put(url, headers=cCommonHttpHeader, json=body, auth=(self.user, self.password))
+        LOGGER.debug(result)
         return result
 
     def DeleteQueue(self, vhost, queue_name):
         url = cHttpTemplate.format(self.endpoint, "{}/{}/{}".format("queues", vhost, queue_name))
         result = requests.delete(url, auth=(self.user, self.password))
+        LOGGER.debug(result)
         return result
         
     def BindExchangeToQueue(self, vhost, exchange_name, queue_name):
@@ -116,6 +132,7 @@ class RabbitManager:
                }
 
         result = requests.post(url, headers=cCommonHttpHeader, json=body, auth=(self.user, self.password))
+        LOGGER.debug(result)
         return result
 
     def UnbindExchangeToQueue(self, vhost, exchange_name, queue_name):
@@ -126,6 +143,7 @@ class RabbitManager:
                                                                               queue_name))
 
         result = requests.delete(url, auth=(self.user, self.password))
+        LOGGER.debug(result)
         return result
 
     def _set_federated_upstream(self, upstream_host, upstream_name, vhost):
@@ -142,6 +160,7 @@ class RabbitManager:
                }
 
         result = requests.put(url, headers=cCommonHttpHeader, json=body, auth=(self.user, self.password))
+        LOGGER.debug(result)
         return result
 
     def _unset_federated_upstream(self, upstream_name, vhost):
@@ -151,6 +170,7 @@ class RabbitManager:
                                                                        upstream_name))
 
         result = requests.delete(url, auth=(self.user, self.password))
+        LOGGER.debug(result)
         return result
 
     def _set_federated_queue_policy(self, upstream_name, vhost,  policy_name):
@@ -167,6 +187,7 @@ class RabbitManager:
                 }
 
         result = requests.put(url, headers=cCommonHttpHeader, json=body, auth=(self.user, self.password))
+        LOGGER.debug(result)
         return result
 
     def _unset_federated_queue_policy(self, policy_name, vhost):
@@ -175,32 +196,35 @@ class RabbitManager:
                                                                     policy_name))
         
         result = requests.delete(url, auth=(self.user, self.password))
+        LOGGER.debug(result)
         return result
 
     # Create federate queue with upstream
-    def FederateQueue(self, upstream_host, vhost, queue_name, union_name=""):
+    def FederateQueue(self, upstream_host, vhost, union_name=""):
+        import time
+        time.sleep(5)
         # union name is used for both upstream name and policy name
         # give a random string if not union_name was provided
         if union_name == "":
             union_name = RandomString()
 
-        result_set_upstream = self._set_federated_upstream(upstream_host, union_name, vhost)
+        self._set_federated_upstream(upstream_host, union_name, vhost)
 
-        result_set_policy = self._set_federated_queue_policy(union_name, vhost, union_name)
+        self._set_federated_queue_policy(union_name, vhost, union_name)
 
-        if(result_set_upstream.status_code != requests.codes.created):
-            # should be loogged
-            print("Unable to create federated queue")
-            print(result_set_upstream.text)
-            # caller need to check None
-            return None 
-        elif(result_set_upstream.status_code != requests.codes.created):
-            print("Unable to create federated queue")
-            print(result_set_policy.text)
-            return None
-        else:
-            # return union_name for later operation
-            return union_name
+        # if(result_set_upstream.status_code != requests.codes.created):
+        #     # should be loogged
+        #     print("result_set_upstream fail.")
+        #     print(result_set_upstream.text)
+        #     # caller need to check None
+        #     # return None 
+        # elif(result_set_policy.status_code != requests.codes.created):
+        #     print("result_set_policy fail.")
+        #     print(result_set_policy.text)
+        #     #return None
+        #else:
+        # return union_name for later operation
+        return union_name
 
 
     def DeFederateQueue(self, union_name, vhost):
