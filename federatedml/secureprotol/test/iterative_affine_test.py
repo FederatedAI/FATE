@@ -49,6 +49,27 @@ class TestAffine(unittest.TestCase):
             
             de_en_res = self.key.decrypt(en_res)
             self.assertAlmostEqual(de_en_res, res)
+
+    def test_mul(self):
+        x_li = (np.ones(100) * np.random.randint(100)).tolist()
+        y_li = (np.ones(100) * np.random.randint(1000) * -1).tolist()
+        z_li = (np.ones(100) * np.random.rand()).tolist()
+        t_li = range(100)
+
+        for i in range(len(x_li)):
+            x = x_li[i]
+            y = int(y_li[i])
+            z = z_li[i]
+            t = int(t_li[i])
+            en_x = self.key.encrypt(x)
+            en_z = self.key.encrypt(z)
+
+            en_res = (en_x * y + en_z) * t
+
+            res = (x * y + z) * t
+
+            de_en_res = self.key.decrypt(en_res)
+            self.assertAlmostEqual(de_en_res, res)
             
    
 if __name__ == '__main__': 
