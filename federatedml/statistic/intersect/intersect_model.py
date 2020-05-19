@@ -97,7 +97,7 @@ class IntersectModelBase(ModelBase):
                     if isinstance(one_data[1], Instance):
                         share_data = data.join(self.intersect_ids, lambda d, i: [d.features[share_info_col_idx]])
                     else:
-                        share_data = data.join(lambda d, i: [d[share_info_col_idx]])
+                        share_data = data.join(self.intersect_ids, lambda d, i: [d[share_info_col_idx]])
 
                     info_share.remote(share_data,
                                       role=party_role,
