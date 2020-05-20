@@ -37,7 +37,7 @@ class ManuallyFilter(BaseFilterMethod):
     def _transfer_params(self):
         header = self.selection_properties.header
         col_name_maps = self.selection_properties.col_name_maps
-        if (self.filter_param.filter_out_names or self.filter_param.filter_out_names) is not None:
+        if (self.filter_param.filter_out_indexes or self.filter_param.filter_out_names) is not None:
             self.filter_out_indexes = self.filter_param.filter_out_indexes
             self.filter_out_names = self.filter_param.filter_out_names
         else:
