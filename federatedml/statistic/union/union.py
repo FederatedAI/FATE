@@ -21,7 +21,6 @@ from federatedml.feature.instance import Instance
 from federatedml.param.union_param import UnionParam
 from federatedml.model_base import ModelBase
 from federatedml.statistic import data_overview
-from federatedml.util.data_io import make_schema
 
 LOGGER = log_utils.getLogger()
 
@@ -116,10 +115,12 @@ class Union(ModelBase):
                     combined_schema = local_table.schema
                     combined_table.schema = combined_schema
             else:
+                old_schema = combined_schema
                 self.check_schema_id(local_schema, combined_schema)
                 self.check_schema_label_name(local_schema, combined_schema)
                 self.check_schema_header(local_schema, combined_schema)
                 combined_table = combined_table.union(local_table, self._keep_first)
+                combined_table.schema = old_schema
 
             # only check feature length if not empty
             if self.is_data_instance and not self.is_empty_feature:
