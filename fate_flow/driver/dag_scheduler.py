@@ -48,15 +48,13 @@ class DAGScheduler(threading.Thread):
                 if len(all_jobs) == self.concurrent_num:
                     for future in as_completed(all_jobs):
                         all_jobs.remove(future)
-                        result = future.result()
-                        if isinstance(result, dict):
-                            self.queue.put_event(result, status=3, job_id=result['job_id'])
                         break
                 job_event = self.queue.get_event()
                 schedule_logger(job_event['job_id']).info('start check all role status')
                 status = TaskScheduler.check(job_event['job_id'], job_event['initiator_role'], job_event['initiator_party_id'])
                 schedule_logger(job_event['job_id']).info('check all role status success, status is {}'.format(status))
                 if not status:
+                    TaskScheduler.cancel_ready(job_event['job_id'], job_event['initiator_role'], job_event['initiator_party_id'])
                     schedule_logger(job_event['job_id']).info('host is busy, job {} into waiting......'.format(job_event['job_id']))
                     is_failed = self.queue.put_event(job_event, status=3, job_id=job_event['job_id'])
                     schedule_logger(job_event['job_id']).info('job into queue_2 status is {}'.format('success' if not is_failed else 'failed'))

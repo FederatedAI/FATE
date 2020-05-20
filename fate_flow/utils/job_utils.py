@@ -611,11 +611,4 @@ def cleaning(signum, frame):
     sys.exit(0)
 
 
-def job_quantity_constraint(role, event=None, put=True):
-    if RuntimeConfig.WORK_MODE == WorkMode.CLUSTER:
-        if role == LIMIT_ROLE:
-            running_jobs = query_job(status='running', role=role)
-            if len(running_jobs) >= MAX_CONCURRENT_JOB_RUN_HOST:
-                return False
-    return True
 

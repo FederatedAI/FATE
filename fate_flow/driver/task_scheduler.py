@@ -73,30 +73,49 @@ class TaskScheduler(object):
                                                                                         party_id=initiator_party_id)
         job_parameters = job_runtime_conf.get('job_parameters', {})
         job_initiator = job_runtime_conf.get('initiator', {})
-        status = TaskScheduler.check_job_run(job_id=job_id, roles=job_runtime_conf['role'],
-                                             work_mode=job_parameters['work_mode'],
-                                             initiator_party_id=job_initiator['party_id'],
-                                             initiator_role=job_initiator['role'],
-                                             job_info={
-                                                 'job_id': job_id,
-                                                 'initiator_role': initiator_role,
-                                                 'initiator_party_id': initiator_party_id
-                                             })
+        status = TaskScheduler.check_job(job_id=job_id, roles=job_runtime_conf['role'],
+                                         work_mode=job_parameters['work_mode'],
+                                         initiator_party_id=job_initiator['party_id'],
+                                         initiator_role=job_initiator['role'],
+                                         job_info={
+                                             'job_id': job_id,
+                                             'initiator_role': initiator_role,
+                                             'initiator_party_id': initiator_party_id
+                                         })
         return status
 
     @staticmethod
-    def check_job_run(job_id, roles, work_mode, initiator_party_id, initiator_role, job_info):
+    def cancel_ready(job_id, initiator_role, initiator_party_id):
+        job_dsl, job_runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id,
+                                                                                        role=initiator_role,
+                                                                                        party_id=initiator_party_id)
+        job_parameters = job_runtime_conf.get('job_parameters', {})
+        job_initiator = job_runtime_conf.get('initiator', {})
+        status = TaskScheduler.check_job(job_id=job_id, roles=job_runtime_conf['role'],
+                                         work_mode=job_parameters['work_mode'],
+                                         initiator_party_id=job_initiator['party_id'],
+                                         initiator_role=job_initiator['role'],
+                                         job_info={
+                                             'f_tag': 'cancel_ready'
+                                         },
+                                         way='status')
+        return status
+
+    @staticmethod
+    def check_job(job_id, roles, work_mode, initiator_party_id, initiator_role, job_info, way='check'):
         for role, partys in roles.items():
             job_info['f_role'] = role
             for party_id in partys:
                 job_info['f_party_id'] = party_id
                 response = federated_api(job_id=job_id,
                                          method='POST',
-                                         endpoint='/{}/schedule/{}/{}/{}/check'.format(
+                                         endpoint='/{}/schedule/{}/{}/{}/{}'.format(
                                              API_VERSION,
                                              job_id,
                                              role,
-                                             party_id),
+                                             party_id,
+                                             way
+                                         ),
                                          src_party_id=initiator_party_id,
                                          dest_party_id=party_id,
                                          src_role=initiator_role,
@@ -116,22 +135,6 @@ class TaskScheduler(object):
                                                                                         party_id=initiator_party_id)
         job_parameters = job_runtime_conf.get('job_parameters', {})
         job_initiator = job_runtime_conf.get('initiator', {})
-        job_info = {
-            'job_id': job_id,
-            'initiator_role': initiator_role,
-            'initiator_party_id': initiator_party_id
-        }
-        status = TaskScheduler.check_job_run(job_id=job_id, roles=job_runtime_conf['role'],
-                                             work_mode=job_parameters['work_mode'],
-                                             initiator_party_id=job_initiator['party_id'],
-                                             initiator_role=job_initiator['role'],
-                                             job_info={
-                                                 'job_id': job_id,
-                                                 'initiator_role': initiator_role,
-                                                 'initiator_party_id': initiator_party_id
-                                             })
-        if not status:
-            return job_info
         dag = get_job_dsl_parser(dsl=job_dsl,
                                  runtime_conf=job_runtime_conf,
                                  train_runtime_conf=train_runtime_conf)
@@ -147,6 +150,7 @@ class TaskScheduler(object):
         job.f_start_time = current_timestamp()
         job.f_status = JobStatus.RUNNING
         job.f_update_time = current_timestamp()
+        job.f_tag = 'end_waiting'
         TaskScheduler.sync_job_status(job_id=job_id, roles=job_runtime_conf['role'],
                                       work_mode=job_parameters['work_mode'],
                                       initiator_party_id=job_initiator['party_id'],
