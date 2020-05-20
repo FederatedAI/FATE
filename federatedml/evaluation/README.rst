@@ -1,5 +1,8 @@
-### Evaluation
-This module provide some evaluation method for classification and regression. It contains:
+Evaluation
+==========
+
+This module provides some evaluation method for classification and regression. It contains:
+
 1. AUC: Compute AUC for binary classification.
 2. KS: Compute Kolmogorov-Smirnov for binary classification.
 3. LIFT: Compute lift of binary classification.
@@ -14,5 +17,12 @@ This module provide some evaluation method for classification and regression. It
 12. R2_SCORE: Compute R^2 (coefficient of determination) score
 13. ROOT_MEAN_SQUARED_ERROR: Compute the root of mean square error
 
-All of the evaluation above can be used for classification, while regression just support EXPLAINED_VARIANCE, MEAN_ABSOLUTE_ERROR, 
+All of the evaluation metrics above can be used for classification, while regression only support EXPLAINED_VARIANCE, MEAN_ABSOLUTE_ERROR,
 MEAN_SQUARED_ERROR, MEAN_SQUARED_LOG_ERROR, MEDIAN_ABSOLUTE_ERROR, R2_SCORE, ROOT_MEAN_SQUARED_ERROR
+
+
+Param
+------
+
+.. automodule:: federatedml.param.evaluation_param
+   :members:
