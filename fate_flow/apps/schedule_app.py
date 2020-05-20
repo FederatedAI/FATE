@@ -92,3 +92,14 @@ def run_task(job_id, component_name, task_id, role, party_id):
 def task_status(job_id, component_name, task_id, role, party_id):
     JobController.update_task_status(job_id, component_name, task_id, role, party_id, request.json)
     return get_json_result(retcode=0, retmsg='success')
+
+
+@manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/input/args', methods=['POST'])
+def query_task_input_args(job_id, component_name, task_id, role, party_id):
+    task_input_args = JobController.query_task_input_args(job_id, task_id, role, party_id,
+                                                          job_args=request.json.get('job_args', {}),
+                                                          job_parameters=request.json.get('job_parameters', {}),
+                                                          input_dsl=request.json.get('input', {}),
+                                                          filter_type=['data'],
+                                                          filter_attr={'data': ['partitions']})
+    return get_json_result(retcode=0, retmsg='success', data=task_input_args)

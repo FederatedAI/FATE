@@ -25,7 +25,7 @@ from fate_flow.db.db_models import Job
 from fate_flow.driver.task_executor import TaskExecutor
 from fate_flow.entity.constant_config import JobStatus, Backend, TaskStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.settings import API_VERSION, HTTP_PORT
+from fate_flow.settings import API_VERSION, HTTP_PORT, TASK_INPUT_REPARTITION_SWITCH
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
 from fate_flow.utils.job_utils import query_task, get_job_dsl_parser, query_job
@@ -149,6 +149,10 @@ class TaskScheduler(object):
         module_name = component.get_module()
         task_id = job_utils.generate_task_id(job_id=job_id, component_name=component_name)
         schedule_logger(job_id).info('job {} run component {}'.format(job_id, component_name))
+        # todo: Use TaskParameter class instead of dictionary, as does JobParameter
+        task_parameters = {}
+        extra_task_parameters = TaskScheduler.align_task_parameters(job_id, job_parameters, job_initiator, job_args, component, task_id)
+        task_parameters.update(extra_task_parameters)
         for role, partys_parameters in parameters.items():
             for party_index in range(len(partys_parameters)):
                 party_parameters = partys_parameters[party_index]
@@ -173,7 +177,7 @@ class TaskScheduler(object):
                               json_body={'job_parameters': job_parameters,
                                          'job_initiator': job_initiator,
                                          'job_args': party_job_args,
-                                         'parameters': party_parameters,
+                                         'task_parameters': task_parameters,
                                          'module_name': module_name,
                                          'input': component.get_input(),
                                          'output': component.get_output(),
@@ -233,6 +237,50 @@ class TaskScheduler(object):
                 end_status = JobStatus.FAILED
             TaskScheduler.stop(job_id=job_id, end_status=end_status)
             return False
+
+    @staticmethod
+    def align_task_parameters(job_id, job_parameters, job_initiator, job_args, component, task_id):
+        parameters = component.get_role_parameters()
+        component_name = component.get_name()
+        extra_task_parameters = {'input_data_partition': 0}  # Large integers are not used
+        for role, partys_parameters in parameters.items():
+            for party_index in range(len(partys_parameters)):
+                party_parameters = partys_parameters[party_index]
+                if role in job_args:
+                    party_job_args = job_args[role][party_index]['args']
+                else:
+                    party_job_args = {}
+                dest_party_id = party_parameters.get('local', {}).get('party_id')
+                if job_parameters.get('task_input_repartition', TASK_INPUT_REPARTITION_SWITCH):
+                    response = federated_api(job_id=job_id,
+                                             method='POST',
+                                             endpoint='/{}/schedule/{}/{}/{}/{}/{}/input/args'.format(
+                                                 API_VERSION,
+                                                 job_id,
+                                                 component_name,
+                                                 task_id,
+                                                 role,
+                                                 dest_party_id),
+                                             src_party_id=job_initiator['party_id'],
+                                             dest_party_id=dest_party_id,
+                                             src_role=job_initiator['role'],
+                                             json_body={'job_parameters': job_parameters,
+                                                        'job_args': party_job_args,
+                                                        'input': component.get_input()},
+                                             work_mode=job_parameters['work_mode'])
+                    if response['retcode'] == 0:
+                        for input_data in response.get('data', {}).get('data', {}).values():
+                            for data_table_info in input_data.values():
+                                if data_table_info:
+                                    partitions = data_table_info['partitions']
+                                    if extra_task_parameters['input_data_partition'] == 0 or partitions < extra_task_parameters['input_data_partition']:
+                                        extra_task_parameters['input_data_partition'] = partitions
+                    else:
+                        raise Exception('job {} component {} align task parameters failed on {} {}'.format(job_id,
+                                                                                                           component_name,
+                                                                                                           role,
+                                                                                                           dest_party_id))
+        return extra_task_parameters
 
     @staticmethod
     def check_dependencies(job_id, dag, component):

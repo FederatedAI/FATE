@@ -151,6 +151,20 @@ class JobController(object):
                                                          task_info.get('f_status', '')))
 
     @staticmethod
+    def query_task_input_args(job_id, task_id, role, party_id, job_args, job_parameters, input_dsl, filter_type=None, filter_attr=None):
+        task_run_args = TaskExecutor.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
+                                                       task_id=task_id,
+                                                       job_args=job_args,
+                                                       job_parameters=job_parameters,
+                                                       task_parameters={},
+                                                       input_dsl=input_dsl,
+                                                       if_save_as_task_input_data=False,
+                                                       filter_type=filter_type,
+                                                       filter_attr=filter_attr
+                                                       )
+        return task_run_args
+
+    @staticmethod
     def update_job_status(job_id, role, party_id, job_info, create=False):
         job_info['f_run_ip'] = RuntimeConfig.JOB_SERVER_HOST
         if create:
