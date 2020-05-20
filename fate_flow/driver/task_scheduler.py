@@ -42,27 +42,91 @@ class TaskScheduler(object):
                     job.f_is_initiator = 1
                 else:
                     job.f_is_initiator = 0
-                response_json = federated_api(job_id=job.f_job_id,
-                                              method='POST',
-                                              endpoint='/{}/schedule/{}/{}/{}/create'.format(
-                                                  API_VERSION,
-                                                  job.f_job_id,
-                                                  role,
-                                                  party_id),
-                                              src_party_id=job_initiator['party_id'],
-                                              dest_party_id=party_id, src_role=job_initiator['role'],
-                                              json_body=job.to_json(),
-                                              work_mode=job.f_work_mode)
-                if response_json["retcode"]:
-                    job.f_status = JobStatus.FAILED
+                try:
+                    response_json = federated_api(job_id=job.f_job_id,
+                                                  method='POST',
+                                                  endpoint='/{}/schedule/{}/{}/{}/create'.format(
+                                                      API_VERSION,
+                                                      job.f_job_id,
+                                                      role,
+                                                      party_id),
+                                                  src_party_id=job_initiator['party_id'],
+                                                  dest_party_id=party_id, src_role=job_initiator['role'],
+                                                  json_body=job.to_json(),
+                                                  work_mode=job.f_work_mode)
+                    if response_json['retcode']:
+                        raise Exception("an error occurred while creating the job: role {} party_id {}".format(role, party_id)+ "\n" + str(response_json["retmsg"]))
+                except Exception as e:
+                    job_info = {'f_status': JobStatus.CANCELED}
                     TaskScheduler.sync_job_status(job_id=job.f_job_id, roles=roles,
                                                   work_mode=job.f_work_mode,
                                                   initiator_party_id=job_initiator['party_id'],
                                                   initiator_role=job_initiator['role'],
-                                                  job_info=job.to_json())
-                    raise Exception(
-                        "an error occurred while creating the job: role {} party_id {}".format(role, party_id)
-                        + "\n" + str(response_json["retmsg"]))
+                                                  job_info=job_info,
+                                                  sync_failed=True)
+                    raise Exception(e)
+
+    @staticmethod
+    def check(job_id, initiator_role, initiator_party_id):
+        job_dsl, job_runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id,
+                                                                                        role=initiator_role,
+                                                                                        party_id=initiator_party_id)
+        job_parameters = job_runtime_conf.get('job_parameters', {})
+        job_initiator = job_runtime_conf.get('initiator', {})
+        status = TaskScheduler.check_job(job_id=job_id, roles=job_runtime_conf['role'],
+                                         work_mode=job_parameters['work_mode'],
+                                         initiator_party_id=job_initiator['party_id'],
+                                         initiator_role=job_initiator['role'],
+                                         job_info={
+                                             'job_id': job_id,
+                                             'initiator_role': initiator_role,
+                                             'initiator_party_id': initiator_party_id
+                                         })
+        return status
+
+    @staticmethod
+    def cancel_ready(job_id, initiator_role, initiator_party_id):
+        job_dsl, job_runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id,
+                                                                                        role=initiator_role,
+                                                                                        party_id=initiator_party_id)
+        job_parameters = job_runtime_conf.get('job_parameters', {})
+        job_initiator = job_runtime_conf.get('initiator', {})
+        status = TaskScheduler.check_job(job_id=job_id, roles=job_runtime_conf['role'],
+                                         work_mode=job_parameters['work_mode'],
+                                         initiator_party_id=job_initiator['party_id'],
+                                         initiator_role=job_initiator['role'],
+                                         job_info={
+                                             'f_tag': 'cancel_ready'
+                                         },
+                                         way='status')
+        return status
+
+    @staticmethod
+    def check_job(job_id, roles, work_mode, initiator_party_id, initiator_role, job_info, way='check'):
+        for role, partys in roles.items():
+            job_info['f_role'] = role
+            for party_id in partys:
+                job_info['f_party_id'] = party_id
+                response = federated_api(job_id=job_id,
+                                         method='POST',
+                                         endpoint='/{}/schedule/{}/{}/{}/{}'.format(
+                                             API_VERSION,
+                                             job_id,
+                                             role,
+                                             party_id,
+                                             way
+                                         ),
+                                         src_party_id=initiator_party_id,
+                                         dest_party_id=party_id,
+                                         src_role=initiator_role,
+                                         json_body=job_info,
+                                         work_mode=work_mode)
+                try:
+                    if response['retcode'] == 101:
+                        return False
+                except:
+                    return False
+        return True
 
     @staticmethod
     def run_job(job_id, initiator_role, initiator_party_id):
@@ -86,6 +150,7 @@ class TaskScheduler(object):
         job.f_start_time = current_timestamp()
         job.f_status = JobStatus.RUNNING
         job.f_update_time = current_timestamp()
+        job.f_tag = 'end_waiting'
         TaskScheduler.sync_job_status(job_id=job_id, roles=job_runtime_conf['role'],
                                       work_mode=job_parameters['work_mode'],
                                       initiator_party_id=job_initiator['party_id'],
@@ -424,23 +489,29 @@ class TaskScheduler(object):
                                                                                'success' if task_process_start_status else 'failed'))
 
     @staticmethod
-    def sync_job_status(job_id, roles, work_mode, initiator_party_id, initiator_role, job_info):
+    def sync_job_status(job_id, roles, work_mode, initiator_party_id, initiator_role, job_info, sync_failed=False):
         for role, partys in roles.items():
             job_info['f_role'] = role
             for party_id in partys:
                 job_info['f_party_id'] = party_id
-                federated_api(job_id=job_id,
-                              method='POST',
-                              endpoint='/{}/schedule/{}/{}/{}/status'.format(
-                                  API_VERSION,
-                                  job_id,
-                                  role,
-                                  party_id),
-                              src_party_id=initiator_party_id,
-                              dest_party_id=party_id,
-                              src_role=initiator_role,
-                              json_body=job_info,
-                              work_mode=work_mode)
+                try:
+                    federated_api(job_id=job_id,
+                                  method='POST',
+                                  endpoint='/{}/schedule/{}/{}/{}/status'.format(
+                                      API_VERSION,
+                                      job_id,
+                                      role,
+                                      party_id),
+                                  src_party_id=initiator_party_id,
+                                  dest_party_id=party_id,
+                                  src_role=initiator_role,
+                                  json_body=job_info,
+                                  work_mode=work_mode)
+                except Exception as e:
+                    if sync_failed:
+                        pass
+                    else:
+                        raise Exception(e)
 
     @staticmethod
     def finish_job(job_id, job_runtime_conf, stop=False):
@@ -489,9 +560,12 @@ class TaskScheduler(object):
                               work_mode=job_parameters['work_mode'])
 
     @staticmethod
-    def stop(job_id, end_status=JobStatus.FAILED, component_name=''):
+    def stop(job_id, end_status=JobStatus.FAILED, component_name='', is_initiator=True):
         schedule_logger(job_id).info('get {} job {} {} command'.format("cancel" if end_status == JobStatus.CANCELED else "stop", job_id, component_name))
-        jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
+        if not is_initiator:
+            jobs = job_utils.query_job(job_id=job_id)
+        else:
+            jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
         cancel_success = False
         is_cancel = (end_status == JobStatus.CANCELED)
         if jobs:
@@ -541,9 +615,6 @@ class TaskScheduler(object):
             if is_cancel:
                 return cancel_success
         else:
-            jobs = job_utils.query_job(job_id=job_id)
-            if jobs:
-                raise Exception('Current role is not this job initiator')
             schedule_logger(job_id).info('send {} job {} {} command failed'.format("cancel" if is_cancel else "kill", job_id, component_name))
             raise Exception('can not found job: {}'.format(job_id))
 

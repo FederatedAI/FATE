@@ -96,7 +96,7 @@ def request_execute_server(request, execute_host):
         response = action(url=url, json=request.json, headers=HEADERS)
         return jsonify(response.json())
     except requests.exceptions.ConnectionError as e:
-        return get_json_result(retcode=999, retmsg='please start execute server: {}'.format(execute_host))
+        return get_json_result(retcode=999, retmsg='please start fate flow server: {}'.format(execute_host))
     except Exception as e:
         raise Exception('local request error: {}'.format(e))
 

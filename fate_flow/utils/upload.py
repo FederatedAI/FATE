@@ -64,6 +64,13 @@ class Upload(object):
         session.init(mode=self.parameters['work_mode'])
         data_table_count = self.save_data_table(table_name, namespace, head, self.parameters.get('in_version', False))
         LOGGER.info("------------load data finish!-----------------")
+        # rm tmp file
+        try:
+            if '{}/fate_upload_tmp'.format(job_id) in self.parameters['file']:
+                LOGGER.info("remove tmp upload file")
+                shutil.rmtree(os.path.join(self.parameters["file"].split('tmp')[0], 'tmp'))
+        except:
+            LOGGER.info("remove tmp file failed")
         LOGGER.info("file: {}".format(self.parameters["file"]))
         LOGGER.info("total data_count: {}".format(data_table_count))
         LOGGER.info("table name: {}, table namespace: {}".format(table_name, namespace))
