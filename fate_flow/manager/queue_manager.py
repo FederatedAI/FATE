@@ -24,7 +24,7 @@ from fate_flow.db.db_models import DB, Job, Queue
 
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.constant_config import WorkMode
-from fate_flow.settings import stat_logger
+from fate_flow.settings import stat_logger, RE_ENTRY_QUEUE_MAX
 
 
 class BaseQueue:
@@ -85,31 +85,34 @@ class MysqlQueue(BaseQueue):
 
     def put_event(self, event, status=None, job_id=''):
         try:
-            self.put(item=event, status=status, job_id=job_id)
+            is_failed = self.put(item=event, status=status, job_id=job_id)
             stat_logger.info('put event into queue successfully: {}'.format(event))
+            return is_failed
         except Exception as e:
             stat_logger.error('put event into queue failed')
             stat_logger.exception(e)
             raise e
 
     def put(self, item, block=True, timeout=None, status=None, job_id=''):
+        is_failed = False
         with self.not_full:
             with DB.connection_context():
                 error = None
                 MysqlQueue.lock(DB, 'fate_flow_job_queue', 10)
                 try:
-                    self.update_event(item=item, status=status, job_id=job_id)
+                    is_failed = self.update_event(item=item, status=status, job_id=job_id, operating='put')
                 except Exception as e:
                     error =e
                 MysqlQueue.unlock(DB, 'fate_flow_job_queue')
                 if error:
                     raise Exception(e)
             self.not_empty.notify()
+            return is_failed
 
     def get_event(self, status=None):
         try:
             event = self.get(block=True, status=status)
-            stat_logger.info('get event from queue successfully: {}'.format(event))
+            stat_logger.info('get event from queue successfully: {}, status {}'.format(event, status))
             return event
         except Exception as e:
             stat_logger.error('get event from queue failed')
@@ -141,7 +144,7 @@ class MysqlQueue(BaseQueue):
                         status = 1
                     item = Queue.select().where(Queue.f_is_waiting == status)[0]
                     if item:
-                        self.update_event(item.f_job_id)
+                        self.update_event(item.f_job_id, operating='get')
                 except Exception as e:
                     error = e
                 MysqlQueue.unlock(DB, 'fate_flow_job_queue')
@@ -164,16 +167,24 @@ class MysqlQueue(BaseQueue):
             events = Queue.select().where(Queue.f_is_waiting == status)
             return [event for event in events]
 
-    def update_event(self, job_id='', item=None, status=None):
+    def update_event(self, job_id='', item=None, status=None, operating=None):
         events = Queue.select().where(Queue.f_job_id == job_id)
         if events:
             if not status:
                 status = 0
             event = events[0]
             event.f_is_waiting = status
+            if operating == 'put':
+                if event.f_frequency <= RE_ENTRY_QUEUE_MAX and status==3:
+                    event.f_frequency += 1
+                else:
+                    event.f_is_waiting = 4
+                    event.save()
+                    return True
         else:
             event = Queue()
             event.f_job_id = item.get('job_id')
+            event.f_frequency = 1
             event.f_event = json.dumps(item)
             if status:
                 event.f_is_waiting = status
@@ -187,7 +198,7 @@ class MysqlQueue(BaseQueue):
                 try:
                     job_id = item.get('job_id')
                     event = Queue.select().where(Queue.f_job_id == job_id)[0]
-                    if event.f_is_waiting != 1 or event.f_is_waiting != 3:
+                    if event.f_is_waiting == 0 or event.f_is_waiting == 2:
                         del_status = False
                     event.f_is_waiting = 2
                     event.save()
@@ -227,7 +238,7 @@ class ListQueue(BaseQueue):
             stat_logger.exception(e)
             raise e
 
-    def get_event(self):
+    def get_event(self, status=None):
         try:
             event = self.get(block=True)
             stat_logger.info('get event from in-process queue successfully: {}'.format(event))

@@ -24,7 +24,7 @@ import time
 import re
 
 import requests
-from requests_toolbelt import MultipartEncoder
+from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
 from arch.api.utils import file_utils
 from arch.api.utils.core_utils import get_lan_ip
@@ -164,6 +164,11 @@ def call_fun(func, config_data, dsl_path, config_path):
                     data = MultipartEncoder(
                         fields={'file': (os.path.basename(file_name), fp, 'application/octet-stream')}
                     )
+
+                    def read_callback(monitor):
+                        loading = '{:.0f}%'.format((monitor.bytes_read/monitor.len)*100)
+                        print(loading)
+                    data = MultipartEncoderMonitor(data, read_callback)
                     response = requests.post("/".join([server_url, "data", func.replace('_', '/')]), data=data,
                                              params=config_data,
                                              headers={'Content-Type': data.content_type})
