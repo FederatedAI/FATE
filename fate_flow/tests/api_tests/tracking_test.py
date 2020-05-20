@@ -9,7 +9,7 @@ from arch.api.utils import file_utils
 from fate_flow.settings import HTTP_PORT, API_VERSION
 
 
-class TestDataAccess(unittest.TestCase):
+class TestTracking(unittest.TestCase):
     def setUp(self):
         self.sleep_time = 10
         self.success_job_dir = './jobs/'
