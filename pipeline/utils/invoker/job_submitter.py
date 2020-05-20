@@ -94,7 +94,10 @@ class JobInvoker(object):
 
         return job_id, data
 
-    def upload_data(self, submit_conf=None):
+    def upload_data(self, submit_conf=None, drop=0):
+        if submit_conf:
+            file_path = submit_conf["file"]
+            submit_conf["file"] = os.path.join(FATE_HOME, file_path)
         with tempfile.TemporaryDirectory() as job_dir:
             submit_path = os.path.join(job_dir, "job_runtime_conf.json")
             with open(submit_path, "w") as fout:
@@ -102,7 +105,9 @@ class JobInvoker(object):
 
             cmd = ["python", FATE_FLOW_CLIENT,
                    "-f", JobFunc.UPLOAD,
-                   "-c", submit_path]
+                   "-c", submit_path,
+                   "-drop", str(drop)
+                  ]
 
             result = self._run_cmd(cmd)
             try:

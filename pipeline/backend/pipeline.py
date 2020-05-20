@@ -41,7 +41,7 @@ class PipeLine(object):
         self._train_dsl = {}
         self._predict_dsl = {}
         self._train_conf = {}
-        self._upload_conf = {}
+        self._upload_conf = []
         self._cur_state = None
         print("init train_conf {}".format(self._train_conf))
         self._job_invoker = JobInvoker()
@@ -163,11 +163,12 @@ class PipeLine(object):
                     self._components_input[component.name][attr] = [val]
 
     def add_upload_data(self, file, table_name, namespace, head=1, partition=16):
-        self._upload_conf["file"] = file
-        self._upload_conf["table_name"] = table_name
-        self._upload_conf["namespace"] = namespace
-        self._upload_conf["head"] = head
-        self._upload_conf["partition"] = partition
+        data_conf = {"file": file,
+                     "table_name": table_name,
+                     "namespace": namespace,
+                     "head": head,
+                     "partition": partition}
+        self._upload_conf.append(data_conf)
 
     def _get_task_inst(self, job_id, name, init_role, party_id):
         return TaskInfo(jobid=job_id,
@@ -240,6 +241,11 @@ class PipeLine(object):
         import pprint
         pprint.pprint(self._train_conf)
         return self._train_conf
+
+    def _construct_upload_conf(self, data_conf, work_mode):
+        upload_conf = copy.deepcopy(data_conf)
+        upload_conf["work_mode"] = work_mode
+        return upload_conf
 
     def _get_job_parameters(self, job_type="train", backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, version=2):
         job_parameters = {
@@ -363,13 +369,14 @@ class PipeLine(object):
                                              self._initiator.role,
                                              self._initiator.party_id)
 
-    def upload(self, work_mode=WorkMode.STANDALONE):
-        self._upload_conf["work_mode"] = work_mode
-        self._train_job_id, detail_info = self._job_invoker.upload_data(self._upload_conf)
-        self._train_board_url = detail_info["board_url"]
-        self._job_invoker.monitor_job_status(self._train_job_id,
-                                             "local",
-                                             0)
+    def upload(self, work_mode=WorkMode.STANDALONE, drop=0):
+        for data_conf in self._upload_conf:
+            upload_conf = self._construct_upload_conf(data_conf, work_mode)
+            self._train_job_id, detail_info = self._job_invoker.upload_data(upload_conf, int(drop))
+            self._train_board_url = detail_info["board_url"]
+            self._job_invoker.monitor_job_status(self._train_job_id,
+                                                 "local",
+                                                 0)
 
     def dump(self):
         return pickle.dumps(self)
