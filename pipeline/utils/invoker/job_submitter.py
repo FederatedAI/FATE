@@ -29,7 +29,7 @@ FATE_FLOW_CLIENT = FATE_HOME + "fate_flow/fate_flow_client.py"
 
 
 class JobFunc:
-    SUMMIT_JOB = "submit_job"
+    SUBMIT_JOB = "submit_job"
     UPLOAD = "upload"
     COMPONENT_OUTPUT_MODEL = "component_output_model"
     COMPONENT_METRIC = "component_metric_all"
@@ -72,7 +72,7 @@ class JobInvoker(object):
                 fout.write(json.dumps(submit_conf))
 
             cmd = ["python", FATE_FLOW_CLIENT,
-                   "-f", JobFunc.SUMMIT_JOB,
+                   "-f", JobFunc.SUBMIT_JOB,
                    "-c", submit_path]
 
             if dsl:
@@ -168,7 +168,7 @@ class JobInvoker(object):
 
     def query_task(self, job_id, cpn_name, role, party_id):
         cmd = ["python", FATE_FLOW_CLIENT,
-               "-f", JobFunc.SUMMIT_JOB,
+               "-f", JobFunc.SUBMIT_JOB,
                "-j", job_id,
                "-cpn", cpn_name,
                "-r", role,
