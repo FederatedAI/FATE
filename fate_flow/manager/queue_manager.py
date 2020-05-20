@@ -175,7 +175,7 @@ class MysqlQueue(BaseQueue):
             event = events[0]
             event.f_is_waiting = status
             if operating == 'put':
-                if event.f_frequency <= RE_ENTRY_QUEUE_MAX and status==3:
+                if event.f_frequency <= RE_ENTRY_QUEUE_MAX:
                     event.f_frequency += 1
                 else:
                     event.f_is_waiting = 4
