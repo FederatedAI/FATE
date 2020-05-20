@@ -42,7 +42,7 @@ class RuntimeConfig(object):
 
     @staticmethod
     def init_env():
-        RuntimeConfig.ENV.update(dotenv.dotenv_values(dotenv_path=os.path.join(get_project_base_directory(), ".env")))
+        RuntimeConfig.ENV.update(dotenv.dotenv_values(dotenv_path=os.path.join(get_project_base_directory(), "fate.env")))
 
     @staticmethod
     def get_env(key):
