@@ -32,7 +32,6 @@ class HeteroPearson(ModelBase):
         super().__init__()
         self.model_param = PearsonParam()
         self.role = None
-        self.callback_metrics = []
         self.corr = None
         self.local_corr = None
 
@@ -105,20 +104,21 @@ class HeteroPearson(ModelBase):
         data = self._select_columns(data_instance)
         n, normed = self._standardized(data)
         self.local_corr = table_dot(normed, normed)
+        self.local_corr /= n
+        if self.model_param.cross_parties:
+            with SPDZ("pearson", local_party=self._local_party, all_parties=self._parties) as spdz:
+                source = [normed, self._other_party]
+                if self._local_party.role == "guest":
+                    x, y = FixedPointTensor.from_source("x", source[0]), FixedPointTensor.from_source("y", source[1])
+                else:
+                    y, x = FixedPointTensor.from_source("y", source[0]), FixedPointTensor.from_source("x", source[1])
+                m1 = len(x.value.first()[1])
+                m2 = len(y.value.first()[1])
+                self.shapes.append(m1)
+                self.shapes.append(m2)
 
-        with SPDZ("pearson", local_party=self._local_party, all_parties=self._parties) as spdz:
-            source = [normed, self._other_party]
-            if self._local_party.role == "guest":
-                x, y = FixedPointTensor.from_source("x", source[0]), FixedPointTensor.from_source("y", source[1])
-            else:
-                y, x = FixedPointTensor.from_source("y", source[0]), FixedPointTensor.from_source("x", source[1])
-            m1 = len(x.value.first()[1])
-            m2 = len(y.value.first()[1])
-            self.shapes.append(m1)
-            self.shapes.append(m2)
+                self.corr = spdz.dot(x, y, "corr").get() / n
 
-            self.corr = spdz.dot(x, y, "corr").get() / n
-            self.local_corr /= n
         self._callback()
 
     @staticmethod
@@ -133,6 +133,7 @@ class HeteroPearson(ModelBase):
         return meta_pb
 
     def _get_param(self):
+        # todo: fix me
         from federatedml.protobuf.generated import pearson_model_param_pb2
         param_pb = pearson_model_param_pb2.PearsonModelParam()
         param_pb.party = f"({self._local_party.role},{self._local_party.party_id})"
@@ -168,6 +169,3 @@ class HeteroPearson(ModelBase):
                                      metric_name="correlation",
                                      metric_meta=MetricMeta(name="pearson",
                                                             metric_type="CORRELATION_GRAPH"))
-        self.tracker.log_metric_data(metric_namespace="statistic",
-                                     metric_name="correlation",
-                                     metrics=self.callback_metrics)
