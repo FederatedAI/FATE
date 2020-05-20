@@ -469,6 +469,8 @@ class TaskScheduler(object):
                                              src_role=job_initiator['role'],
                                              json_body={},
                                              work_mode=job_parameters['work_mode'])
+                    if response['retcode'] != 0:
+                        raise Exception('job {} save pipeline failed on role {} party {}'.format(job_id, role, party_id))
                 # clean
                 federated_api(job_id=job_id,
                               method='POST',
