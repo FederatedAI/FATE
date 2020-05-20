@@ -152,26 +152,22 @@ class PercentageValueParam(BaseParam):
 
     Parameters
     ----------
-    upper_pct: float, [0., 1.], default: 1.0
-        The upper percentage threshold for filtering.
+    upper_pct: float, [0.1, 1.], default: 1.0
+        The upper percentage threshold for filtering, upper_pct should not be less than 0.1.
 
-    error: float, 0 <= error < 1 default: 0.001
-        The error of tolerance of binning. The final split point comes from original data, and the rank
-        of this value is close to the exact rank. More precisely,
-        floor((p - 2 * error) * N) <= rank(x) <= ceil((p + 2 * error) * N)
-        where p is the quantile in float, and N is total number of data.
     """
 
-    def __init__(self, upper_pct=1.0, error=consts.DEFAULT_RELATIVE_ERROR):
+    def __init__(self, upper_pct=1.0):
         super().__init__()
         self.upper_pct = upper_pct
-        self.error = error
 
     def check(self):
         descr = "Percentage Filter param's"
         if self.upper_pct not in [0, 1]:
             self.check_decimal_float(self.upper_pct, descr)
-        self.check_decimal_float(self.error, descr)
+        if self.upper_pct < consts.PERCENTAGE_VALUE_LIMIT:
+            raise ValueError(descr + f" {self.upper_pct} not supported,"
+                                     f" should not be smaller than {consts.PERCENTAGE_VALUE_LIMIT}")
         return True
 
 
@@ -192,6 +188,9 @@ class ManuallyFilterParam(BaseParam):
 
     left_col_names: list of string, default: None
         Specify left col names
+
+    Both Filter_out or left parameters only works for this specific filter. For instances, if you set some columns left
+    in this filter but those columns are filtered by other filters, those columns will NOT left in final.
 
     Please note that (left_col_indexes & left_col_names) cannot use with
         (filter_out_indexes & filter_out_names) simultaneously.

@@ -61,5 +61,4 @@ message ManuallyFilterMeta {
 
 message PercentageValueFilterMeta {
     double upper_pct = 1;
-    double error = 2;
 }

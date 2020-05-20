@@ -18,7 +18,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
   serialized_options=b'B\031FeatureSelectionMetaProto',
-  serialized_pb=b'\n\x1c\x66\x65\x61ture-selection-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xbc\x05\n\x14\x46\x65\x61tureSelectionMeta\x12\x16\n\x0e\x66ilter_methods\x18\x01 \x03(\t\x12\x0c\n\x04\x63ols\x18\x03 \x03(\t\x12L\n\x0bunique_meta\x18\x04 \x01(\x0b\x32\x37.com.webank.ai.fate.core.mlmodel.buffer.UniqueValueMeta\x12S\n\riv_value_meta\x18\x05 \x01(\x0b\x32<.com.webank.ai.fate.core.mlmodel.buffer.IVValueSelectionMeta\x12]\n\x12iv_percentile_meta\x18\x06 \x01(\x0b\x32\x41.com.webank.ai.fate.core.mlmodel.buffer.IVPercentileSelectionMeta\x12]\n\x11variance_coe_meta\x18\x07 \x01(\x0b\x32\x42.com.webank.ai.fate.core.mlmodel.buffer.VarianceOfCoeSelectionMeta\x12V\n\x0coutlier_meta\x18\x08 \x01(\x0b\x32@.com.webank.ai.fate.core.mlmodel.buffer.OutlierColsSelectionMeta\x12Q\n\rmanually_meta\x18\t \x01(\x0b\x32:.com.webank.ai.fate.core.mlmodel.buffer.ManuallyFilterMeta\x12\x10\n\x08need_run\x18\n \x01(\x08\x12`\n\x15pencentage_value_meta\x18\x0b \x01(\x0b\x32\x41.com.webank.ai.fate.core.mlmodel.buffer.PercentageValueFilterMeta\"\x1e\n\x0fUniqueValueMeta\x12\x0b\n\x03\x65ps\x18\x01 \x01(\x01\"C\n\x14IVValueSelectionMeta\x12\x17\n\x0fvalue_threshold\x18\x01 \x01(\x01\x12\x12\n\nlocal_only\x18\x02 \x01(\x08\"M\n\x19IVPercentileSelectionMeta\x12\x1c\n\x14percentile_threshold\x18\x01 \x01(\x01\x12\x12\n\nlocal_only\x18\x02 \x01(\x08\"5\n\x1aVarianceOfCoeSelectionMeta\x12\x17\n\x0fvalue_threshold\x18\x01 \x01(\x01\"G\n\x18OutlierColsSelectionMeta\x12\x12\n\npercentile\x18\x01 \x01(\x01\x12\x17\n\x0fupper_threshold\x18\x02 \x01(\x01\".\n\x12ManuallyFilterMeta\x12\x18\n\x10\x66ilter_out_names\x18\x01 \x03(\t\"=\n\x19PercentageValueFilterMeta\x12\x11\n\tupper_pct\x18\x01 \x01(\x01\x12\r\n\x05\x65rror\x18\x02 \x01(\x01\x42\x1b\x42\x19\x46\x65\x61tureSelectionMetaProtob\x06proto3'
+  serialized_pb=b'\n\x1c\x66\x65\x61ture-selection-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xbc\x05\n\x14\x46\x65\x61tureSelectionMeta\x12\x16\n\x0e\x66ilter_methods\x18\x01 \x03(\t\x12\x0c\n\x04\x63ols\x18\x03 \x03(\t\x12L\n\x0bunique_meta\x18\x04 \x01(\x0b\x32\x37.com.webank.ai.fate.core.mlmodel.buffer.UniqueValueMeta\x12S\n\riv_value_meta\x18\x05 \x01(\x0b\x32<.com.webank.ai.fate.core.mlmodel.buffer.IVValueSelectionMeta\x12]\n\x12iv_percentile_meta\x18\x06 \x01(\x0b\x32\x41.com.webank.ai.fate.core.mlmodel.buffer.IVPercentileSelectionMeta\x12]\n\x11variance_coe_meta\x18\x07 \x01(\x0b\x32\x42.com.webank.ai.fate.core.mlmodel.buffer.VarianceOfCoeSelectionMeta\x12V\n\x0coutlier_meta\x18\x08 \x01(\x0b\x32@.com.webank.ai.fate.core.mlmodel.buffer.OutlierColsSelectionMeta\x12Q\n\rmanually_meta\x18\t \x01(\x0b\x32:.com.webank.ai.fate.core.mlmodel.buffer.ManuallyFilterMeta\x12\x10\n\x08need_run\x18\n \x01(\x08\x12`\n\x15pencentage_value_meta\x18\x0b \x01(\x0b\x32\x41.com.webank.ai.fate.core.mlmodel.buffer.PercentageValueFilterMeta\"\x1e\n\x0fUniqueValueMeta\x12\x0b\n\x03\x65ps\x18\x01 \x01(\x01\"C\n\x14IVValueSelectionMeta\x12\x17\n\x0fvalue_threshold\x18\x01 \x01(\x01\x12\x12\n\nlocal_only\x18\x02 \x01(\x08\"M\n\x19IVPercentileSelectionMeta\x12\x1c\n\x14percentile_threshold\x18\x01 \x01(\x01\x12\x12\n\nlocal_only\x18\x02 \x01(\x08\"5\n\x1aVarianceOfCoeSelectionMeta\x12\x17\n\x0fvalue_threshold\x18\x01 \x01(\x01\"G\n\x18OutlierColsSelectionMeta\x12\x12\n\npercentile\x18\x01 \x01(\x01\x12\x17\n\x0fupper_threshold\x18\x02 \x01(\x01\".\n\x12ManuallyFilterMeta\x12\x18\n\x10\x66ilter_out_names\x18\x01 \x03(\t\".\n\x19PercentageValueFilterMeta\x12\x11\n\tupper_pct\x18\x01 \x01(\x01\x42\x1b\x42\x19\x46\x65\x61tureSelectionMetaProtob\x06proto3'
 )
 
 
@@ -339,13 +339,6 @@ _PERCENTAGEVALUEFILTERMETA = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='error', full_name='com.webank.ai.fate.core.mlmodel.buffer.PercentageValueFilterMeta.error', index=1,
-      number=2, type=1, cpp_type=5, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -359,7 +352,7 @@ _PERCENTAGEVALUEFILTERMETA = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=1131,
-  serialized_end=1192,
+  serialized_end=1177,
 )
 
 _FEATURESELECTIONMETA.fields_by_name['unique_meta'].message_type = _UNIQUEVALUEMETA
