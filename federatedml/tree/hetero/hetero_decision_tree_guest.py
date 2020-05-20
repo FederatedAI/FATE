@@ -367,7 +367,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         self.feature_importances_[(sitename, fid)] += inc
 
     def update_tree_node_queue(self, splitinfos, max_depth_reach):
-        LOGGER.info("update tree node, splitlist length is {}, tree node queue size is".format(
+        LOGGER.info("update tree node, splitlist length is {}, tree node queue size is {}".format(
             len(splitinfos), len(self.tree_node_queue)))
         new_tree_node_queue = []
         for i in range(len(self.tree_node_queue)):
