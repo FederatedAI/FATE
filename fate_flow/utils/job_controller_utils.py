@@ -1,4 +1,4 @@
-import threading
+from multiprocessing import Lock
 
 from arch.standalone import WorkMode
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -8,7 +8,7 @@ from fate_flow.utils import job_utils
 
 
 def job_quantity_constraint(job_id, role, party_id, job_info):
-    lock = threading.Lock()
+    lock = Lock()
     lock.acquire()
     try:
         if RuntimeConfig.WORK_MODE == WorkMode.CLUSTER:
