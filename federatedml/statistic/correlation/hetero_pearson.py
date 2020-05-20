@@ -106,7 +106,8 @@ class HeteroPearson(ModelBase):
         self.local_corr = table_dot(normed, normed)
         self.local_corr /= n
         if self.model_param.cross_parties:
-            with SPDZ("pearson", local_party=self._local_party, all_parties=self._parties) as spdz:
+            with SPDZ("pearson", local_party=self._local_party, all_parties=self._parties,
+                      use_mix_rand=self.model_param.use_mix_rand):
                 source = [normed, self._other_party]
                 if self._local_party.role == "guest":
                     x, y = FixedPointTensor.from_source("x", source[0]), FixedPointTensor.from_source("y", source[1])
