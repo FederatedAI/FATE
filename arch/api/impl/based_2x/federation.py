@@ -55,14 +55,13 @@ class FederationRuntime(Federation):
         self.role = runtime_conf.get("local").get("role")
 
     def get(self, name, tag, parties: Union[Party, list]):
-
+        if isinstance(parties, Party):
+            parties = [parties]
         self._get_side_auth(name, parties)
 
         rs = self.rsc.load(name=name, tag=tag)
         rubbish = Rubbish(name, tag)
 
-        if isinstance(parties, Party):
-            parties = [parties]
         rs_parties = [(party.role, party.party_id) for party in parties]
 
         for party in parties:
@@ -101,7 +100,8 @@ class FederationRuntime(Federation):
         return rtn, rubbish
 
     def remote(self, obj, name, tag, parties):
-
+        if isinstance(parties, Party):
+            parties = [parties]
         self._remote_side_auth(name, parties)
 
         if obj is None:
@@ -110,8 +110,6 @@ class FederationRuntime(Federation):
         rs = self.rsc.load(name=name, tag=tag)
         rubbish = Rubbish(name=name, tag=tag)
 
-        if isinstance(parties, Party):
-            parties = [parties]
         rs_parties = [(party.role, party.party_id) for party in parties]
 
         for party in parties:
