@@ -102,7 +102,7 @@ class FederationRuntime(Federation):
 
     def remote(self, obj, name, tag, parties):
 
-        self._remote_side_auth(name, tag)
+        self._remote_side_auth(name, parties)
 
         if obj is None:
             raise EnvironmentError(f"federation try to remote None to {parties} with name {name}, tag {tag}")
