@@ -370,7 +370,7 @@ class Evaluation(ModelBase):
 
     def __save_accuracy_curve(self, metric, metric_res, metric_name, metric_namespace, data_name):
 
-        if self.eval_type == consts.BINARY:
+        if self.eval_type == consts.MULTY:
             return
 
         score, cuts, thresholds = metric_res[1]
