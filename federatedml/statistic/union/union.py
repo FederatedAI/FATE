@@ -33,10 +33,13 @@ class Union(ModelBase):
         self.metric_name = "union"
         self.metric_namespace = "train"
         self.metric_type = "UNION"
+        self.repeated_ids = None
+        self.key = None
 
     def _init_model(self, params):
         self.model_param = params
         self.allow_missing = params.allow_missing
+        self.keep_duplicate = params.keep_duplicate
         self.feature_count = 0
         self.is_data_instance = False
         self.is_empty_feature = False
@@ -44,6 +47,15 @@ class Union(ModelBase):
     @staticmethod
     def _keep_first(v1, v2):
         return v1
+
+    def _renew_id(self, k, v):
+        result = []
+        if k in self.repeated_ids:
+            new_k = f"{k}_{self.key}"
+            result.append((new_k, v))
+        else:
+            result.append((k, v))
+        return result
 
     def check_schema_id(self, local_schema, old_schema):
         if not self.is_data_instance:
@@ -116,10 +128,17 @@ class Union(ModelBase):
                     combined_schema = local_table.schema
                     combined_table.schema = combined_schema
             else:
+                old_schema = combined_table.schema
                 self.check_schema_id(local_schema, combined_schema)
                 self.check_schema_label_name(local_schema, combined_schema)
                 self.check_schema_header(local_schema, combined_schema)
+                if self.keep_duplicate:
+                    repeated_ids = combined_table.join(local_table, lambda v1, v2: 1)
+                    self.repeated_ids = [v[0] for v in repeated_ids.collect()]
+                    self.key = key
+                    local_table = local_table.flatMap(self._renew_id)
                 combined_table = combined_table.union(local_table, self._keep_first)
+                combined_table.schema = old_schema
 
             # only check feature length if not empty
             if self.is_data_instance and not self.is_empty_feature:
