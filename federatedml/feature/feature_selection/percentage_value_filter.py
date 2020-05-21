@@ -51,13 +51,17 @@ class PercentageValueFilter(BaseFilterMethod):
         thres_num = math.ceil(total_num * self.upper_pct)
         mode_res = self._find_kth_mode(data_instances, k)
         for col_index, mode_info in mode_res.items():
-            mode_num = mode_info[1]
             col_name = self.selection_properties.header[col_index]
+            if mode_info is None:
+                self.selection_properties.add_left_col_name(col_name)
+                self.selection_properties.add_feature_value(col_name, False)
+                continue
+            mode_num = mode_info[1]
             if mode_num <= thres_num:
                 self.selection_properties.add_left_col_name(col_name)
-                self.selection_properties.add_feature_value(col_name, True)
-            else:
                 self.selection_properties.add_feature_value(col_name, False)
+            else:
+                self.selection_properties.add_feature_value(col_name, True)
 
         self._keep_one_feature(pick_high=True)
         return self
@@ -188,7 +192,10 @@ class PercentageValueFilter(BaseFilterMethod):
         mode_candidate_statics = data_instances.mapPartitions(static_func).reduce(merge_candidates_num)
         result = {}
         for col_index, candidate_dict in mode_candidate_statics.items():
-            res = sorted(candidate_dict.items(), key=operator.itemgetter(1), reverse=True)[0]
+            if len(candidate_dict) > 0:
+                res = sorted(candidate_dict.items(), key=operator.itemgetter(1), reverse=True)[0]
+            else:
+                res = None
             result[col_index] = res
 
         return result
