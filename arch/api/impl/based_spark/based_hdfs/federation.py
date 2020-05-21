@@ -7,6 +7,7 @@ from arch.api.utils import file_utils
 from arch.api.utils import log_utils
 from arch.api.impl.based_spark.based_hdfs.rabbit_manager import RabbitManager
 from arch.api.impl.based_spark.based_hdfs.table import RDDTable
+from arch.api.impl.based_spark.based_hdfs.mq_channel import MQChannel
 from arch.api.impl.based_spark import util
 from functools import partial
 import pika
@@ -35,20 +36,21 @@ class FederationRuntime(Federation):
         _path = file_utils.get_project_base_directory() + "/arch/conf/server_conf.json"
         server_conf = file_utils.load_json_conf(_path)
         self._mq_conf = server_conf.get('servers').get('rabbitmq')
-        self._host = self._mq_conf.get(self._party_id).get("host")
-        self._port = self._mq_conf.get(self._party_id).get("port")
+        self._self_mq = {}
+        self._self_mq["host"] = self._mq_conf.get(self._party_id).get("host")
+        self._self_mq["port"] = self._mq_conf.get(self._party_id).get("port")
         self._mng_port = self._mq_conf.get(self._party_id).get("mng_port")
         base_user = self._mq_conf.get(self._party_id).get("user")
         base_password = self._mq_conf.get(self._party_id).get("password")
 
-        self._rabbit_manager = RabbitManager(base_user, base_password, "{}:{}".format(self._host, self._mng_port))
+        self._rabbit_manager = RabbitManager(base_user, base_password, "{}:{}".format(self._self_mq["host"], self._mng_port))
 
         mq_info = runtime_conf.get("job_parameters", {}).get("mq_info", {})
-        self._user = mq_info.get("user")
-        self._password = mq_info.get("pswd")
+        self._self_mq["user"] = mq_info.get("user")
+        self._self_mq["password"] = mq_info.get("pswd")
 
         # initial user
-        self._rabbit_manager.CreateUser(self._user, self._password)
+        self._rabbit_manager.CreateUser(self._self_mq["user"], self._self_mq["password"])
 
         self._queque_map = {}
         self._channels_map = {}
@@ -76,7 +78,7 @@ class FederationRuntime(Federation):
                 # initial vhost
                 union_name, vhost = self.gen_vhost_name(party_id)
                 self._rabbit_manager.CreateVhost(vhost)
-                self._rabbit_manager.AddUserToVhost(self._user, vhost)
+                self._rabbit_manager.AddUserToVhost(self._self_mq["user"], vhost)
                 names["vhost"] = vhost
 
                 # initial send queue, the name is send-${vhost}
@@ -92,7 +94,7 @@ class FederationRuntime(Federation):
                 host = self._mq_conf.get(party_id).get("host")
                 port = self._mq_conf.get(party_id).get("port")
                 
-                upstream_uri = "amqp://{}:{}@{}:{}".format(self._user, self._password, host, port)
+                upstream_uri = "amqp://{}:{}@{}:{}".format(self._self_mq["user"], self._self_mq["password"], host, port)
                 union_name = self._rabbit_manager.FederateQueue(upstream_host=upstream_uri, vhost=vhost, union_name=union_name)
                 names["union"] = union_name
 
@@ -103,36 +105,22 @@ class FederationRuntime(Federation):
 
 
     def get_channels(self, mq_names, host, port, user, password):
+        LOGGER.debug("mq_names:{}.".format(mq_names))
         channel_infos = []
         for party_id, names in mq_names.items():
             info = self._channels_map.get(party_id)
             if info is None:
-                info = FederationRuntime.get_channel(host, port, user, password, names, party_id)
+                info = FederationRuntime._get_channel(host, port, user, password, names, party_id)
                 self._channels_map[party_id] = info
             channel_infos.append(info)
+        LOGGER.debug("channel_infos:{}.".format(channel_infos))
         return channel_infos
     
 
     @staticmethod
-    def get_channel(host, port, user, password, names, party_id):
-        credentials = pika.PlainCredentials(user, password)
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host, port, names["vhost"], credentials))
-        info= {}
-        info["channel"] = connection.channel()
-        info["send"] = names["send"]
-        info["receive"] = names["receive"]
-        info["party_id"] = party_id
-        return info
-
-
-    @staticmethod
-    def _get_channels(mq_names, host, port, user, password):
-        LOGGER.debug("mq_names:{}.".format(mq_names))
-        channel_infos = []
-        for party_id, names in mq_names.items():
-            channel_infos.append(FederationRuntime.get_channel(host, port, user, password, names, party_id))
-        LOGGER.debug("channel_infos:{}.".format(channel_infos))
-        return channel_infos
+    def _get_channel(host, port, user, password, names, party_id):
+        return MQChannel(host=host, port=port, user=user, password=password, party_id=party_id,
+                         vhost=names["vhost"], send_queue_name=names["send"], receive_queue_name=names["receive"])
 
 
     @staticmethod
@@ -141,13 +129,13 @@ class FederationRuntime(Federation):
         for info in channel_infos:
             properties=pika.BasicProperties(
                 content_type='application/json',
-                app_id=info["party_id"],
+                app_id=info._party_id,
                 message_id=name,
                 correlation_id=tag,
                 headers=headers
             )
-            LOGGER.debug("basic_publish, info:{}, properties:{}, data:{}.".format(info, properties, json.dumps(data)))
-            info["channel"].basic_publish(exchange='', routing_key=info["send"], body=json.dumps(data), properties=properties)
+            LOGGER.debug("_send_kv, info:{}, properties:{}, data:{}.".format(info, properties, json.dumps(data)))
+            info.basic_publish(body=json.dumps(data), properties=properties)
 
     
     @staticmethod
@@ -155,23 +143,32 @@ class FederationRuntime(Federation):
         for info in channel_infos:
             properties=pika.BasicProperties(
                 content_type='text/plain',
-                app_id=info["party_id"],
+                app_id=info._party_id,
                 message_id=name,
                 correlation_id=tag
             )
             LOGGER.debug("_send_obj, body:{},  properties:{}.".format(data, properties))
-            info["channel"].basic_publish(exchange='', routing_key=info["send"], body=data, properties=properties)
+            info.basic_publish(body=data, properties=properties)
 
+
+    # can't pickle _thread.lock objects
+    @staticmethod
+    def _get_channels(mq_names, host, port, user, password):
+        channel_infos = []
+        for party_id, names in mq_names.items():
+            info = FederationRuntime._get_channel(host, port, user, password, names, party_id)
+            channel_infos.append(info)
+        return channel_infos
 
 
     @staticmethod
-    def _partition_send(kvs, mq_names, host, port, user, password, name, tag, total_size, partitions):
-        LOGGER.debug("_partition_send, mq_names:{}, total_size:{}, partitions:{}.".format(mq_names, total_size, partitions))
-        channel_infos = FederationRuntime._get_channels(mq_names=mq_names, host=host, port=port, user=user, password=password)
-        LOGGER.debug("channel_infos:{}.".format(channel_infos))
+    def _partition_send(kvs, name, tag, total_size, partitions, mq_names, self_mq):
+        LOGGER.debug("_partition_send, total_size:{}, partitions:{}, mq_names:{}, self_mq:{}.".format(total_size, partitions, mq_names, self_mq))
+        channel_infos = FederationRuntime._get_channels(mq_names=mq_names, host=self_mq["host"], port=self_mq["port"], 
+                                                        user=self_mq["user"], password=self_mq["password"])
         data = []
         lines = 0
-        MESSAGE_MAX_SIZE = 100 #200000
+        MESSAGE_MAX_SIZE = 200000
         for k, v in kvs:
             el = {}
             el['k'] = p_dumps(k).hex()
@@ -190,12 +187,12 @@ class FederationRuntime(Federation):
     def _receive(channel_info, name, tag):
         count = 0
         obj = None
-        for method, properties, body in channel_info["channel"].consume(queue=channel_info["receive"]):
+        for method, properties, body in channel_info.consume():
             LOGGER.debug("_receive, count:{}, method:{}, properties:{}.".format(count, method, properties))
             if properties.message_id == name and properties.correlation_id == tag:
                 if properties.content_type == 'text/plain':
                     obj = p_loads(body)
-                    channel_info["channel"].basic_ack(delivery_tag=method.delivery_tag)
+                    channel_info.basic_ack(delivery_tag=method.delivery_tag)
                     break
                 elif properties.content_type == 'application/json':
                     data = json.loads(body)
@@ -208,20 +205,20 @@ class FederationRuntime(Federation):
                     else:
                         obj = sc.parallelize(data_iter, properties.headers["partitions"]).persist(util.get_storage_level())
                     if count == properties.headers["total_size"]:
-                        channel_info["channel"].basic_ack(delivery_tag=method.delivery_tag)
+                        channel_info.basic_ack(delivery_tag=method.delivery_tag)
                         break
 
-                channel_info["channel"].basic_ack(delivery_tag=method.delivery_tag)
+                channel_info.basic_ack(delivery_tag=method.delivery_tag)
         # return any pending messages
-        channel_info["channel"].cancel()
+        channel_info.cancel()
         return obj
 
     def get(self, name, tag, parties: Union[Party, list]):
         LOGGER.debug("start to get obj, name={}, tag={}, parties={}.".format(name, tag, parties))
         rubbish = Rubbish(name=name, tag=tag)
         mq_names = self.get_mq_names(parties)
-        channel_infos = self.get_channels(mq_names=mq_names, host=self._host, port=self._port, 
-                                            user=self._user, password=self._password)
+        channel_infos = self.get_channels(mq_names=mq_names, host=self._self_mq["host"], port=self._self_mq["port"], 
+                                            user=self._self_mq["user"], password=self._self_mq["password"])
         
         rtn = []
         for info in channel_infos:
@@ -246,21 +243,16 @@ class FederationRuntime(Federation):
             total_size=obj.count()
             partitions=obj.getNumPartitions()
             LOGGER.debug("start to remote RDD, total_size={}, partitions={}.".format(total_size, partitions))
-            send_func = partial(FederationRuntime._partition_send, 
-                        mq_names=mq_names, 
-                        host=self._host, port=self._port, 
-                        user=self._user, password=self._password,
-                        name=name, tag=tag, total_size=total_size, partitions=partitions)
+            send_func = partial(FederationRuntime._partition_send, name=name, tag=tag, 
+                                total_size=total_size, partitions=partitions, mq_names=mq_names, self_mq=self._self_mq)
             obj.mapPartitions(send_func).collect()
             rubbish.add_table(obj)
         else:
-            channel_infos = self.get_channels(mq_names=mq_names, host=self._host, port=self._port, 
-                                            user=self._user, password=self._password)
+            channel_infos = self.get_channels(mq_names=mq_names, host=self._self_mq["host"], port=self._self_mq["port"], 
+                                          user=self._self_mq["user"], password=self._self_mq["password"])
             FederationRuntime._send_obj(name=name, tag=tag, data=p_dumps(obj), channel_infos=channel_infos)
         LOGGER.debug("finish remote obj, name={}, tag={}, parties={}.".format(name, tag, parties))
         return rubbish
-
-            
 
 
 
