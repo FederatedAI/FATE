@@ -164,10 +164,16 @@ def call_fun(func, config_data, dsl_path, config_path):
                     data = MultipartEncoder(
                         fields={'file': (os.path.basename(file_name), fp, 'application/octet-stream')}
                     )
+                    tag = [0]
 
                     def read_callback(monitor):
-                        loading = '{:.0f}%'.format((monitor.bytes_read/monitor.len)*100)
-                        print(loading)
+                        if config_data.get('verbose') == 1:
+                            sys.stdout.write("\r UPLOADING:{0}{1}".format("|" * (monitor.bytes_read * 100 // monitor.len), '%.2f%%' % (monitor.bytes_read * 100 // monitor.len)))
+                            sys.stdout.flush()
+                            if monitor.bytes_read /monitor.len == 1:
+                                tag[0] += 1
+                                if tag[0] == 2:
+                                    sys.stdout.write('\n')
                     data = MultipartEncoderMonitor(data, read_callback)
                     response = requests.post("/".join([server_url, "data", func.replace('_', '/')]), data=data,
                                              params=config_data,
@@ -265,6 +271,7 @@ if __name__ == "__main__":
     parser.add_argument('-m', '--model', required=False, type=str, help="TrackingMetric model id")
     parser.add_argument('-drop', '--drop', required=False, type=str, help="drop data table")
     parser.add_argument('-limit', '--limit', required=False, type=int, help="limit number")
+    parser.add_argument('-verbose', '--verbose', required=False, type=int, help="number 0 or 1")
     parser.add_argument('-src_party_id', '--src_party_id', required=False, type=str, help="src party id")
     parser.add_argument('-src_role', '--src_role', required=False, type=str, help="src role")
     parser.add_argument('-privilege_role', '--privilege_role', required=False, type=str, help="privilege role")
