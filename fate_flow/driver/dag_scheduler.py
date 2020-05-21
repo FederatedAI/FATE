@@ -13,14 +13,16 @@
 #  limitations under the License.
 #
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
+
+from fate_flow.entity.constant_config import JobStatus
 
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.driver.job_controller import TaskScheduler
 from fate_flow.manager.queue_manager import BaseQueue
-
-
+from fate_flow.settings import RE_ENTRY_QUEUE_TIME, stat_logger
 
 
 class DAGScheduler(threading.Thread):
@@ -35,17 +37,35 @@ class DAGScheduler(threading.Thread):
             schedule_logger().error('queue is not ready')
             return False
         all_jobs = []
+
+        t = threading.Thread(target=queue_put_events, args=[self.queue])
+        t.start()
+
         while True:
             try:
+                if not t.is_alive():
+                    t.start()
                 if len(all_jobs) == self.concurrent_num:
                     for future in as_completed(all_jobs):
                         all_jobs.remove(future)
                         break
                 job_event = self.queue.get_event()
-                schedule_logger(job_event['job_id']).info('schedule job {}'.format(job_event))
-                future = self.job_executor_pool.submit(DAGScheduler.handle_event, job_event)
-                future.add_done_callback(DAGScheduler.get_result)
-                all_jobs.append(future)
+                schedule_logger(job_event['job_id']).info('start check all role status')
+                status = TaskScheduler.check(job_event['job_id'], job_event['initiator_role'], job_event['initiator_party_id'])
+                schedule_logger(job_event['job_id']).info('check all role status success, status is {}'.format(status))
+                if not status:
+                    TaskScheduler.cancel_ready(job_event['job_id'], job_event['initiator_role'], job_event['initiator_party_id'])
+                    schedule_logger(job_event['job_id']).info('host is busy, job {} into waiting......'.format(job_event['job_id']))
+                    is_failed = self.queue.put_event(job_event, status=3, job_id=job_event['job_id'])
+                    schedule_logger(job_event['job_id']).info('job into queue_2 status is {}'.format('success' if not is_failed else 'failed'))
+                    if is_failed:
+                        schedule_logger(job_event['job_id']).info('start to cancel job')
+                        TaskScheduler.stop(job_id=job_event['job_id'], end_status=JobStatus.CANCELED)
+                else:
+                    schedule_logger(job_event['job_id']).info('schedule job {}'.format(job_event))
+                    future = self.job_executor_pool.submit(DAGScheduler.handle_event, job_event)
+                    future.add_done_callback(DAGScheduler.get_result)
+                    all_jobs.append(future)
             except Exception as e:
                 schedule_logger().exception(e)
 
@@ -63,3 +83,17 @@ class DAGScheduler(threading.Thread):
     @staticmethod
     def get_result(future):
         future.result()
+
+
+def queue_put_events(queue):
+    while True:
+        n = queue.qsize(status=3)
+        stat_logger.info('start run queue_2, total num {}'.format(n))
+        for i in range(n):
+            event = queue.get_event(status=3)
+            is_failed = queue.put_event(event, job_id=event['job_id'], status=1)
+            schedule_logger(event['job_id']).info('job into queue_1 status is {}'.format('success' if not is_failed else 'failed'))
+            if is_failed:
+                schedule_logger(event['job_id']).info('start to cancel job')
+                TaskScheduler.stop(job_id=event['job_id'], end_status=JobStatus.CANCELED)
+        time.sleep(RE_ENTRY_QUEUE_TIME)
