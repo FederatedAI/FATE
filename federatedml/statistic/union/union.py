@@ -61,7 +61,7 @@ class Union(ModelBase):
             local_sid_name = local_table.get_meta("sid")
             combined_sid_name = combined_table.get_meta("sid")
         else:
-            local_schema, combined_table = local_table.schema, combined_table.schema
+            local_schema, combined_schema = local_table.schema, combined_table.schema
             local_sid_name = local_schema.get("sid")
             combined_sid_name = combined_schema.get("sid")
         if local_sid_name != combined_sid_name:
