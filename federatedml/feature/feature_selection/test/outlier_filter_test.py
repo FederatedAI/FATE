@@ -53,7 +53,7 @@ class TestVarianceCoeFilter(unittest.TestCase):
 
         return result
 
-    def test_unique_logic(self):
+    def test_filter_logic(self):
         data_table = self.gen_data(1000, 10, 48)
         select_param = FeatureSelectionParam()
         select_param.outlier_param.percentile = 0.9

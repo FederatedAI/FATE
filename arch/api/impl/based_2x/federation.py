@@ -9,6 +9,7 @@ from arch.api.utils import log_utils
 from arch.api.utils.splitable import maybe_split_object, is_split_head, split_get
 from eggroll.core.meta_model import ErEndpoint
 from eggroll.roll_pair.roll_pair import RollPair
+from eggroll.roll_site.roll_site import RollSite
 
 OBJECT_STORAGE_NAME = "__federation__"
 STATUS_TABLE_NAME = "__status__"
@@ -54,12 +55,13 @@ class FederationRuntime(Federation):
         self.role = runtime_conf.get("local").get("role")
 
     def get(self, name, tag, parties: Union[Party, list]):
+        if isinstance(parties, Party):
+            parties = [parties]
+        self._get_side_auth(name, parties)
 
         rs = self.rsc.load(name=name, tag=tag)
         rubbish = Rubbish(name, tag)
 
-        if isinstance(parties, Party):
-            parties = [parties]
         rs_parties = [(party.role, party.party_id) for party in parties]
 
         for party in parties:
@@ -98,14 +100,16 @@ class FederationRuntime(Federation):
         return rtn, rubbish
 
     def remote(self, obj, name, tag, parties):
+        if isinstance(parties, Party):
+            parties = [parties]
+        self._remote_side_auth(name, parties)
+
         if obj is None:
             raise EnvironmentError(f"federation try to remote None to {parties} with name {name}, tag {tag}")
 
         rs = self.rsc.load(name=name, tag=tag)
         rubbish = Rubbish(name=name, tag=tag)
 
-        if isinstance(parties, Party):
-            parties = [parties]
         rs_parties = [(party.role, party.party_id) for party in parties]
 
         for party in parties:
@@ -141,4 +145,38 @@ class FederationRuntime(Federation):
 
         for future in futures:
             future.add_done_callback(done_callback)
+
+        # warning, temporary workaround， should be remote in near released version
+        if not isinstance(obj, RollPair):
+            for obj_table in _get_remote_obj_store_table(rs_parties, rs):
+                rubbish.add_table(obj_table)
+
         return rubbish
+
+
+# warning, temporary workaround， should be remote in near released version
+def _get_remote_obj_store_table(parties, rollsite):
+    from eggroll.roll_site.utils.roll_site_utils import create_store_name
+    from eggroll.core.transfer_model import ErRollSiteHeader
+    tables = []
+    for role_party_id in parties:
+        _role = role_party_id[0]
+        _party_id = str(role_party_id[1])
+
+        _options = {}
+        obj_type = 'object'
+        roll_site_header = ErRollSiteHeader(
+            roll_site_session_id=rollsite.roll_site_session_id,
+            name=rollsite.name,
+            tag=rollsite.tag,
+            src_role=rollsite.local_role,
+            src_party_id=rollsite.party_id,
+            dst_role=_role,
+            dst_party_id=_party_id,
+            data_type=obj_type,
+            options=_options)
+        _tagged_key = create_store_name(roll_site_header)
+        namespace = rollsite.roll_site_session_id
+        tables.append(rollsite.ctx.rp_ctx.load(namespace, _tagged_key))
+
+    return tables

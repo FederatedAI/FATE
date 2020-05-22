@@ -91,6 +91,9 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         self.tree_dim = self.transfer_variable.tree_dim.get(idx=0)
         LOGGER.info("tree dim is %d" % (self.tree_dim))
 
+    def sync_predict_start_round(self):
+        return self.transfer_variable.predict_start_round.get(idx=0)
+
     def sync_stop_flag(self, num_round):
         LOGGER.info("sync stop flag from guest, boosting round is {}".format(num_round))
         stop_flag = self.transfer_variable.stop_flag.get(idx=0,
@@ -151,7 +154,8 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         LOGGER.info("start predict")
         data_inst = self.data_alignment(data_inst)
         rounds = len(self.trees_) // self.tree_dim
-        for i in range(rounds):
+        predict_start_round = self.sync_predict_start_round()
+        for i in range(predict_start_round, rounds):
             # n_tree = self.trees_[i]
             for tidx in range(self.tree_dim):
                 tree_inst = HeteroDecisionTreeHost(self.tree_param)
@@ -186,6 +190,8 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         model_param.trees_.extend(self.trees_)
         LOGGER.debug("self.feature_name_fid_mapping is {}".format(self.feature_name_fid_mapping))
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
+
+        model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
 
         param_name = "HeteroSecureBoostingTreeHostParam"
 

@@ -269,4 +269,4 @@ class ValidationStrategy(object):
             best_model = model.export_model()
             self.cur_best_model = {'model': {'best_model': best_model}} if best_model is not None else None
             self.best_iteration = epoch
-            LOGGER.debug('cur best model saved')
+            LOGGER.debug('cur best model saved, best iter is {}'.format(self.best_iteration))

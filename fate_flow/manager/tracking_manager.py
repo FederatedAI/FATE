@@ -346,6 +346,8 @@ class Tracking(object):
                     job.f_end_time = current_timestamp()
                     job.f_elapsed = job.f_end_time - job.f_start_time
                     job.f_update_time = current_timestamp()
+                if (job_info['f_status'] in [JobStatus.FAILED, JobStatus.TIMEOUT, JobStatus.CANCELED]):
+                    job.f_tag = 'failed'
             for k, v in job_info.items():
                 try:
                     if k in ['f_job_id', 'f_role', 'f_party_id'] or v == getattr(Job, k).default:
@@ -449,10 +451,19 @@ class Tracking(object):
                     schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
                                                                                                          self.role,
                                                                                                          self.party_id))
-                    # clean up the task input data table
-                    namespace_clean = job_utils.generate_task_input_data_namespace(task_id=self.task_id,
-                                                                                   role=role,
-                                                                                   party_id=party_id)
+#                     # clean the task input data table
+#                     namespace_clean = job_utils.generate_task_input_data_namespace(task_id=self.task_id,
+#                                                                                    role=role,
+#                                                                                    party_id=party_id)
+#                     schedule_logger(self.job_id).info('clean table by namespace {} on {} {}'.format(namespace_clean,
+#                                                                                                     self.role,
+#                                                                                                     self.party_id))
+#                     session.clean_tables(namespace=namespace_clean, regex_string='*')
+#                     schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
+#                                                                                                          self.role,
+#                                                                                                          self.party_id))
+                    # clean namespace: task_id ,data table
+                    namespace_clean = self.task_id
                     schedule_logger(self.job_id).info('clean table by namespace {} on {} {}'.format(namespace_clean,
                                                                                                     self.role,
                                                                                                     self.party_id))
@@ -460,18 +471,12 @@ class Tracking(object):
                     schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
                                                                                                          self.role,
                                                                                                          self.party_id))
+                    
         except Exception as e:
             schedule_logger(self.job_id).exception(e)
         schedule_logger(self.job_id).info('clean task {} on {} {} done'.format(self.task_id,
                                                                                self.role,
                                                                                self.party_id))
-
-    def job_quantity_constraint(self):
-        if RuntimeConfig.WORK_MODE == WorkMode.CLUSTER:
-            if self.role == 'host':
-                running_jobs = job_utils.query_job(status='running', role=self.role)
-                if len(running_jobs) >= MAX_CONCURRENT_JOB_RUN_HOST:
-                    raise Exception('The job running on the host side exceeds the maximum running amount')
 
     def get_table_namespace(self, job_level: bool = False):
         return self.table_namespace if not job_level else self.job_table_namespace

@@ -26,7 +26,7 @@ import typing
 import uuid
 
 import psutil
-from fate_flow.entity.constant_config import TaskStatus
+from fate_flow.entity.constant_config import TaskStatus, WorkMode
 
 from arch.api.utils import file_utils
 from arch.api.utils.core_utils import current_timestamp
@@ -36,7 +36,7 @@ from fate_flow.db.db_models import DB, Job, Task, DataView
 from fate_flow.driver.dsl_parser import DSLParser
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.data_manager import query_data_view, delete_table, delete_metric_data
-from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE
+from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE, MAX_CONCURRENT_JOB_RUN_HOST, LIMIT_ROLE
 from fate_flow.utils import detect_utils
 from fate_flow.utils import api_utils
 from fate_flow.utils import session_utils
@@ -250,20 +250,6 @@ def query_task(**kwargs):
         return [task for task in tasks]
 
 
-def query_data_view(**kwargs):
-    with DB.connection_context():
-        filters = []
-        for f_n, f_v in kwargs.items():
-            attr_name = 'f_%s' % f_n
-            if hasattr(DataView, attr_name):
-                filters.append(operator.attrgetter('f_%s' % f_n)(DataView) == f_v)
-        if filters:
-            data_views = DataView.select().where(*filters)
-        else:
-            data_views = []
-        return [data_view for data_view in data_views]
-
-
 def success_task_count(job_id):
     count = 0
     tasks = query_task(job_id=job_id)
@@ -382,13 +368,19 @@ def is_task_executor_process(task: Task, process: psutil.Process):
         9: "f_role",
         11: "f_party_id"
     }
+    try:
+        cmdline = process.cmdline()
+    except Exception as e:
+        # Not sure whether the process is a task executor process, operations processing is required
+        schedule_logger(task.f_job_id).warning(e)
+        return False
     for i, k in run_cmd_map.items():
-        if len(process.cmdline()) > i and process.cmdline()[i] == getattr(task, k):
+        if len(cmdline) > i and cmdline[i] == getattr(task, k):
             continue
         else:
             # todo: The logging level should be obtained first
-            if len(process.cmdline()) > i:
-                schedule_logger(task.f_job_id).debug(process.cmdline()[i])
+            if len(cmdline) > i:
+                schedule_logger(task.f_job_id).debug(cmdline[i])
                 schedule_logger(task.f_job_id).debug(getattr(task, k))
             return False
     else:
@@ -617,4 +609,6 @@ def query_job_info(job_id):
 def cleaning(signum, frame):
     session_utils.clean_server_used_session()
     sys.exit(0)
+
+
 

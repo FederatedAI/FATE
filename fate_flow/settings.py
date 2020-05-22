@@ -44,10 +44,17 @@ CHECK_NODES_IDENTITY = False
 USE_CONFIGURATION_CENTER = False
 ZOOKEEPER_HOSTS = ['127.0.0.1:2181']
 
+# job maximum number  of the initiator
 MAX_CONCURRENT_JOB_RUN = 5
+
+# Limit the number of jobs on the host side
+LIMIT_ROLE = 'host'
 MAX_CONCURRENT_JOB_RUN_HOST = 5
+RE_ENTRY_QUEUE_TIME = 2*60
+RE_ENTRY_QUEUE_MAX = 60
+
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
-DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000 * 20  # ms
+DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000 * 60  # ms
 JOB_DEFAULT_TIMEOUT = 7 * 24 * 60 * 60
 DATABASE = get_base_config("database", {})
 DEFAULT_MODEL_STORE_ADDRESS = get_base_config("default_model_store_address", {})
@@ -66,7 +73,7 @@ HEADERS = {
     'Content-Type': 'application/json',
     'Connection': 'close'
 }
-DETECT_TABLE = ("fate_flow_detect_table_namespace", "fate_flow_detect_table_name_{}".format(core_utils.fate_uuid()), 16)
+DETECT_TABLE = ("fate_flow_detect_table_namespace", "fate_flow_detect_table_name", 16)
 # fate-serving
 SERVINGS_ZK_PATH = '/FATE-SERVICES/serving/online/publishLoad/providers'
 FATE_FLOW_ZK_PATH = '/FATE-SERVICES/flow/online/transfer/providers'
@@ -116,6 +123,7 @@ BOARD_DASHBOARD_URL = 'http://%s:%d/index.html#/dashboard?job_id={}&role={}&part
 # switch
 SAVE_AS_TASK_INPUT_DATA_SWITCH = True
 SAVE_AS_TASK_INPUT_DATA_IN_MEMORY = True
+TASK_INPUT_REPARTITION_SWITCH = True
 
 # init
 RuntimeConfig.init_config(WORK_MODE=WORK_MODE)

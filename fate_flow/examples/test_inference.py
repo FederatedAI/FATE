@@ -8,7 +8,7 @@ import time
 
 ids = ["18576635456", "13512345432"]
 
-url1 = "http://172.16.153.71:8059/federation/1.0/inference"
+url1 = "http://127.0.0.1:8059/federation/1.0/inference"
 
 for i in range(2):
     request_data_tmp = {

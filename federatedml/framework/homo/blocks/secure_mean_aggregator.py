@@ -29,7 +29,7 @@ class SecureMeanAggregatorTransVar(SecureAggregatorTransVar):
 
 
 class Server(secure_aggregator.Server):
-    def __init__(self, trans_var: SecureAggregatorTransVar = SecureMeanAggregatorTransVar(),
+    def __init__(self, trans_var: SecureMeanAggregatorTransVar = SecureMeanAggregatorTransVar(),
                  enable_secure_aggregate=True):
         super().__init__(trans_var=trans_var, enable_secure_aggregate=enable_secure_aggregate)
 
@@ -53,7 +53,7 @@ class Server(secure_aggregator.Server):
 
 
 class Client(secure_aggregator.Client):
-    def __init__(self, trans_var: SecureAggregatorTransVar = SecureAggregatorTransVar(), enable_secure_aggregate=True):
+    def __init__(self, trans_var: SecureMeanAggregatorTransVar = SecureMeanAggregatorTransVar(), enable_secure_aggregate=True):
         super().__init__(trans_var=trans_var, enable_secure_aggregate=enable_secure_aggregate)
 
     def send_weighted_model(self, weighted_model, weight: float, suffix=tuple()):

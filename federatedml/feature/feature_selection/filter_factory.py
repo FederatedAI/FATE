@@ -21,6 +21,7 @@ from federatedml.feature.feature_selection import iv_value_select_filter, iv_per
 from federatedml.feature.feature_selection.variance_coe_filter import VarianceCoeFilter
 from federatedml.feature.feature_selection.outlier_filter import OutlierFilter
 from federatedml.feature.feature_selection.manually_filter import ManuallyFilter
+from federatedml.feature.feature_selection.percentage_value_filter import PercentageValueFilter
 from federatedml.param.feature_selection_param import FeatureSelectionParam
 from federatedml.util import consts
 
@@ -55,6 +56,10 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
     elif filter_name == consts.MANUALLY_FILTER:
         manually_param = model_param.manually_param
         return ManuallyFilter(manually_param)
+
+    elif filter_name == consts.PERCENTAGE_VALUE:
+        percentage_value_param = model_param.percentage_value_param
+        return PercentageValueFilter(percentage_value_param)
 
     else:
         raise ValueError("filter method: {} does not exist".format(filter_name))
