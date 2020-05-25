@@ -113,7 +113,7 @@ class FederationRuntime(Federation):
                 info = FederationRuntime._get_channel(host, port, user, password, names, party_id)
                 self._channels_map[party_id] = info
             channel_infos.append(info)
-        LOGGER.debug("channel_infos:{}.".format(channel_infos))
+        LOGGER.debug("got channel_infos.")
         return channel_infos
     
 
@@ -147,7 +147,7 @@ class FederationRuntime(Federation):
                 message_id=name,
                 correlation_id=tag
             )
-            LOGGER.debug("_send_obj, body:{},  properties:{}.".format(data, properties))
+            LOGGER.debug("_send_obj, properties:{}.".format(properties))
             info.basic_publish(body=data, properties=properties)
 
 
