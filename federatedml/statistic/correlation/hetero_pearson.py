@@ -107,7 +107,7 @@ class HeteroPearson(ModelBase):
         self.local_corr /= n
         if self.model_param.cross_parties:
             with SPDZ("pearson", local_party=self._local_party, all_parties=self._parties,
-                      use_mix_rand=self.model_param.use_mix_rand):
+                      use_mix_rand=self.model_param.use_mix_rand) as spdz:
                 source = [normed, self._other_party]
                 if self._local_party.role == "guest":
                     x, y = FixedPointTensor.from_source("x", source[0]), FixedPointTensor.from_source("y", source[1])
@@ -138,6 +138,7 @@ class HeteroPearson(ModelBase):
         from federatedml.protobuf.generated import pearson_model_param_pb2
         param_pb = pearson_model_param_pb2.PearsonModelParam()
         param_pb.party = f"({self._local_party.role},{self._local_party.party_id})"
+
         for shape, party in zip(self.shapes, self._parties):
             param_pb.shapes.append(shape)
             param_pb.parties.append(f"({party.role},{party.party_id})")
