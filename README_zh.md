@@ -70,7 +70,7 @@ FATE提供了名为 fate-flow 的工具用来跟踪组件输出模型或日志�
 ### API 文档
 FATE在 [doc-api](./doc/api/) 文件夹中提供了API文档，包括 federatedml, eggroll, federation.
 ### 开发者文档
-如何使用FATE开发联邦学习算法？您可以在 [develop-guide](./doc/develop_guide.md) 中查看FATE开发指南。
+如何使用FATE开发联邦学习算法？您可以在 [develop-guide](./doc/develop_guide_zh.rst) 中查看FATE开发指南。
 
 ### 其他文档
 FATE还在 [doc](./doc/) 中提供了许多其他文档。这些文档可以帮助您更好地了解FATE。
