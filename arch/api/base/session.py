@@ -151,6 +151,7 @@ class FateSession(object):
         if data_meta_table:
             value_bytes = data_meta_table.get(key, use_serialize=False)
             if value_bytes:
+                print("value of meta:{}.".format(value_bytes))
                 return json_loads(value_bytes)
             else:
                 return None

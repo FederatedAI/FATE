@@ -91,7 +91,7 @@ class RDDTable(Table):
 
         for k, v in kv_list:
             import pickle
-            content = u"{}{}{}\n".format(k, RDDTable.delimiter, pickle.dumps(v).hex())
+            content = u"{}{}{}\n".format(k, RDDTable.delimiter, pickle.dumps((v)).hex())
             out.write(bytearray(content, "utf-8"))
         out.flush()
         out.close()

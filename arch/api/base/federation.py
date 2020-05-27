@@ -107,3 +107,15 @@ class Federation(object):
         :return: a tuple, with a list of results and an instance of Cleaner for latter clean tasks.
         """
         pass
+
+
+    def cleanup(self):
+        """
+        clean up all temporary objects use by federation instance
+
+        Returns
+        -------
+        None
+        nothing returns
+        """
+        pass

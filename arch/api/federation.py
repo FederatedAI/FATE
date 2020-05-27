@@ -186,3 +186,15 @@ def remote(obj, name: str, tag: str, role=None, idx=-1):
             role = [role]
         dst_nodes = RuntimeInstance.FEDERATION.roles_to_parties(role)
         return RuntimeInstance.FEDERATION.remote(obj=obj, name=name, tag=tag, parties=dst_nodes)
+
+
+def cleanup():
+    """
+    clean up all temporary objects use by federation instance
+
+    Returns
+    -------
+    None
+      nothing returns
+    """
+    return RuntimeInstance.FEDERATION.cleanup()

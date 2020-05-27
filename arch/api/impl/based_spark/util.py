@@ -44,6 +44,7 @@ def maybe_create_eggroll_client():
     a tricky way to set eggroll client which may be used by spark tasks.
     WARM: This may be removed or adjusted in future!
     """
+
     import pickle
     from pyspark.taskcontext import TaskContext
     mode, eggroll_session = pickle.loads(bytes.fromhex(TaskContext.get().getLocalProperty(_EGGROLL_CLIENT)))

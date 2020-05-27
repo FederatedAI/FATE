@@ -28,8 +28,8 @@ from fate_flow.entity.constant_config import Backend, StoreEngine, WorkMode
 
 
 WORK_MODE = get_base_config('work_mode', 0)
-BACKEND=Backend.EGGROLL
-STORE_ENGINE=StoreEngine.EGGROLL
+BACKEND=Backend.SPARK
+STORE_ENGINE=StoreEngine.HDFS
 
 USE_LOCAL_DATABASE = True
 

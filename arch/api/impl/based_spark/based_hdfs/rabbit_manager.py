@@ -208,20 +208,20 @@ class RabbitManager:
         if union_name == "":
             union_name = RandomString()
 
-        self._set_federated_upstream(upstream_host, union_name, vhost)
+        result_set_upstream = self._set_federated_upstream(upstream_host, union_name, vhost)
 
-        self._set_federated_queue_policy(union_name, vhost, union_name)
+        result_set_policy = self._set_federated_queue_policy(union_name, vhost, union_name)
 
-        # if(result_set_upstream.status_code != requests.codes.created):
-        #     # should be loogged
-        #     print("result_set_upstream fail.")
-        #     print(result_set_upstream.text)
-        #     # caller need to check None
-        #     # return None 
-        # elif(result_set_policy.status_code != requests.codes.created):
-        #     print("result_set_policy fail.")
-        #     print(result_set_policy.text)
-        #     #return None
+        if(result_set_upstream.status_code != requests.codes.created):
+            # should be loogged
+            print("result_set_upstream fail.")
+            print(result_set_upstream.text)
+            # caller need to check None
+            # return None 
+        elif(result_set_policy.status_code != requests.codes.created):
+            print("result_set_policy fail.")
+            print(result_set_policy.text)
+            #return None
         #else:
         # return union_name for later operation
         return union_name

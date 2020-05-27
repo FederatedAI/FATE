@@ -624,3 +624,22 @@ def cleaning(signum, frame):
     session_utils.clean_server_used_session()
     sys.exit(0)
 
+
+def federation_cleanup(job, task):
+    from arch.api import Backend, StoreEngine
+    from arch.api.base.federation import Party
+
+    runtime_conf = json_loads(job.f_runtime_conf)
+    job_parameters = runtime_conf['job_parameters']
+    backend = Backend(job_parameters['backend'])
+    store_engine = StoreEngine(job_parameters['store_engine'])
+
+    if backend.is_spark() and store_engine.is_hdfs():
+        runtime_conf['local'] = {'role': job.f_role, 'party_id': job.f_party_id}
+        parties = [Party(k, p) for k,v in runtime_conf['role'].items() for p in v ]
+        from arch.api.impl.based_spark.based_hdfs.federation import FederationRuntime
+        fed = FederationRuntime(session_id=task.f_task_id, runtime_conf=runtime_conf)
+        fed.generate_mq_names(parties=parties)
+        fed.cleanup()
+
+        

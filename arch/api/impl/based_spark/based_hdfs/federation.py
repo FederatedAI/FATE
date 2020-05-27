@@ -40,17 +40,17 @@ class FederationRuntime(Federation):
         self._self_mq["host"] = self._mq_conf.get(self._party_id).get("host")
         self._self_mq["port"] = self._mq_conf.get(self._party_id).get("port")
         self._mng_port = self._mq_conf.get(self._party_id).get("mng_port")
-        base_user = self._mq_conf.get(self._party_id).get("user")
-        base_password = self._mq_conf.get(self._party_id).get("password")
+        base_user = self._mq_conf.get(self._party_id).get('user')
+        base_password = self._mq_conf.get(self._party_id).get('password')
 
         self._rabbit_manager = RabbitManager(base_user, base_password, "{}:{}".format(self._self_mq["host"], self._mng_port))
 
-        mq_info = runtime_conf.get("job_parameters", {}).get("mq_info", {})
-        self._self_mq["user"] = mq_info.get("user")
-        self._self_mq["password"] = mq_info.get("pswd")
+        federation_info = runtime_conf.get("job_parameters", {}).get("federation_info", {})
+        self._self_mq['union_name'] = federation_info.get('union_name')
+        self._self_mq['policy_id'] = federation_info.get("policy_id")
 
         # initial user
-        self._rabbit_manager.CreateUser(self._self_mq["user"], self._self_mq["password"])
+        self._rabbit_manager.CreateUser(self._self_mq['union_name'], self._self_mq['policy_id'])
 
         self._queque_map = {}
         self._channels_map = {}
@@ -64,6 +64,16 @@ class FederationRuntime(Federation):
         return union_name, vhost_name
 
 
+    def gen_names(self, party_id):
+        names = {}
+        union_name, vhost = self.gen_vhost_name(party_id)
+        names["vhost"] = vhost
+        names["union"] = union_name
+        names["send"] = "{}-{}".format("send", vhost)
+        names["receive"] = "{}-{}".format("receive", vhost)
+        return names
+
+
     def get_mq_names(self, parties: Union[Party, list]):
         if isinstance(parties, Party):
             parties = [parties]
@@ -73,35 +83,39 @@ class FederationRuntime(Federation):
             LOGGER.debug("get_mq_names, party_id={}, self._mq_conf={}.".format(party_id, self._mq_conf))
             names = self._queque_map.get(party_id)
             if names is None:
-                names = {}
+                names = self.gen_names(party_id)
 
                 # initial vhost
-                union_name, vhost = self.gen_vhost_name(party_id)
-                self._rabbit_manager.CreateVhost(vhost)
-                self._rabbit_manager.AddUserToVhost(self._self_mq["user"], vhost)
-                names["vhost"] = vhost
+                self._rabbit_manager.CreateVhost(names["vhost"])
+                self._rabbit_manager.AddUserToVhost(self._self_mq['union_name'], names["vhost"])
 
                 # initial send queue, the name is send-${vhost}
-                send_queue_name = "{}-{}".format("send", vhost)
-                self._rabbit_manager.CreateQueue(vhost, send_queue_name)
-                names["send"] = send_queue_name
+                self._rabbit_manager.CreateQueue(names["vhost"], names["send"])
 
                 # initial receive queue, the name is receive-${vhost}
-                receive_queue_name = "{}-{}".format("receive", vhost)
-                self._rabbit_manager.CreateQueue(vhost, receive_queue_name)
-                names["receive"] = receive_queue_name
+                self._rabbit_manager.CreateQueue(names["vhost"], names["receive"])
 
                 host = self._mq_conf.get(party_id).get("host")
                 port = self._mq_conf.get(party_id).get("port")
                 
-                upstream_uri = "amqp://{}:{}@{}:{}".format(self._self_mq["user"], self._self_mq["password"], host, port)
-                union_name = self._rabbit_manager.FederateQueue(upstream_host=upstream_uri, vhost=vhost, union_name=union_name)
-                names["union"] = union_name
+                upstream_uri = "amqp://{}:{}@{}:{}".format(self._self_mq['union_name'], self._self_mq['policy_id'], host, port)
+                self._rabbit_manager.FederateQueue(upstream_host=upstream_uri, vhost=names["vhost"], union_name=names["union"])
 
                 self._queque_map[party_id] = names
             mq_names[party_id] = names
         LOGGER.debug("get_mq_names:{}".format(mq_names))
         return mq_names
+
+    
+    def generate_mq_names(self, parties: Union[Party, list]):
+        if isinstance(parties, Party):
+            parties = [parties]
+        party_ids = [str(party.party_id) for party in parties]
+        for party_id in party_ids:
+            LOGGER.debug("generate_mq_names, party_id={}, self._mq_conf={}.".format(party_id, self._mq_conf))
+            names = self.gen_names(party_id)
+            self._queque_map[party_id] = names
+        LOGGER.debug("generate_mq_names:{}".format(self._queque_map))
 
 
     def get_channels(self, mq_names, host, port, user, password):
@@ -165,7 +179,7 @@ class FederationRuntime(Federation):
     def _partition_send(kvs, name, tag, total_size, partitions, mq_names, self_mq):
         LOGGER.debug("_partition_send, total_size:{}, partitions:{}, mq_names:{}, self_mq:{}.".format(total_size, partitions, mq_names, self_mq))
         channel_infos = FederationRuntime._get_channels(mq_names=mq_names, host=self_mq["host"], port=self_mq["port"], 
-                                                        user=self_mq["user"], password=self_mq["password"])
+                                                        user=self_mq['union_name'], password=self_mq['policy_id'])
         data = []
         lines = 0
         MESSAGE_MAX_SIZE = 200000
@@ -218,7 +232,7 @@ class FederationRuntime(Federation):
         rubbish = Rubbish(name=name, tag=tag)
         mq_names = self.get_mq_names(parties)
         channel_infos = self.get_channels(mq_names=mq_names, host=self._self_mq["host"], port=self._self_mq["port"], 
-                                            user=self._self_mq["user"], password=self._self_mq["password"])
+                                            user=self._self_mq['union_name'], password=self._self_mq['policy_id'])
         
         rtn = []
         for info in channel_infos:
@@ -249,10 +263,22 @@ class FederationRuntime(Federation):
             rubbish.add_table(obj)
         else:
             channel_infos = self.get_channels(mq_names=mq_names, host=self._self_mq["host"], port=self._self_mq["port"], 
-                                          user=self._self_mq["user"], password=self._self_mq["password"])
+                                          user=self._self_mq['union_name'], password=self._self_mq['policy_id'])
             FederationRuntime._send_obj(name=name, tag=tag, data=p_dumps(obj), channel_infos=channel_infos)
         LOGGER.debug("finish remote obj, name={}, tag={}, parties={}.".format(name, tag, parties))
         return rubbish
 
 
+    def cleanup(self):
+        LOGGER.debug("federation start to cleanup...")
+        for party_id, names in self._queque_map.items():
+            LOGGER.debug("cleanup partyid={}, names={}.".format(party_id, names))
+            self._rabbit_manager.DeFederateQueue(union_name=names["union"], vhost=names["vhost"])
+            self._rabbit_manager.DeleteQueue(vhost=names["vhost"], queue_name=names["send"])
+            self._rabbit_manager.DeleteQueue(vhost=names["vhost"], queue_name=names["receive"])
+            self._rabbit_manager.DeleteVhost(vhost=names["vhost"])
+        self._queque_map.clear()
+        if self._self_mq['union_name']:
+            LOGGER.debug("clean user {}.".format(self._self_mq['union_name']))
+            self._rabbit_manager.DeleteUser(user=self._self_mq['union_name'])
 

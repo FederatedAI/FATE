@@ -69,7 +69,6 @@ class TaskExecutor(object):
             task_input_dsl = task_config['input']
             task_output_dsl = task_config['output']
             parameters = TaskExecutor.get_parameters(job_id, component_name, role, party_id)
-            # parameters.get('job_parameters', {}).update(job_parameters.get('mq_info', {}))
             # parameters = task_config['parameters']
             module_name = task_config['module_name']
         except Exception as e:
