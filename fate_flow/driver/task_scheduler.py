@@ -183,7 +183,7 @@ class TaskScheduler(object):
                 if response['retcode']:
                     if 'not authorized' in response['retmsg']:
                         raise Exception('run component {} not authorized'.format(component_name))
-        component_task_status = TaskScheduler.check_task_status(job_id=job_id, component=component)
+        component_task_status = TaskScheduler.check_task_status(job_id=job_id, job_parameters=job_parameters, component=component)
         job_status = TaskScheduler.check_job_status(job_id)
         if component_task_status and job_status:
             task_success = True
@@ -209,7 +209,9 @@ class TaskScheduler(object):
                 try:
                     schedule_logger(job_id).info(
                         'job {} check component {} dependencies status'.format(job_id, next_component.get_name()))
-                    dependencies_status = TaskScheduler.check_dependencies(job_id=job_id, dag=dag,
+                    dependencies_status = TaskScheduler.check_dependencies(job_id=job_id,
+                                                                           job_parameters=job_parameters,
+                                                                           dag=dag,
                                                                            component=next_component)
                     job_status = TaskScheduler.check_job_status(job_id)
                     schedule_logger(job_id).info(
@@ -236,7 +238,7 @@ class TaskScheduler(object):
             return False
 
     @staticmethod
-    def check_dependencies(job_id, dag, component):
+    def check_dependencies(job_id, job_parameters, dag, component):
         role, party_id = job_utils.query_job_info(job_id)
         dependencies = dag.get_dependency(role=role, party_id=int(party_id)).get('dependencies', {})
         if not dependencies:
@@ -247,7 +249,7 @@ class TaskScheduler(object):
         for dependent_component in dependent_component_names:
             dependent_component_name = dependent_component["component_name"]
             dependent_component = dag.get_component_info(dependent_component_name)
-            dependent_component_task_status = TaskScheduler.check_task_status(job_id, dependent_component)
+            dependent_component_task_status = TaskScheduler.check_task_status(job_id, job_parameters, dependent_component)
             schedule_logger(job_id).info('job {} component {} dependency {} status is {}'.format(job_id, component.get_name(),
                                                                                          dependent_component_name,
                                                                                          dependent_component_task_status))
@@ -258,7 +260,7 @@ class TaskScheduler(object):
             return True
 
     @staticmethod
-    def check_task_status(job_id, component, interval=0.5):
+    def check_task_status(job_id, job_parameters, component, interval=0.5):
         task_id = job_utils.generate_task_id(job_id=job_id, component_name=component.get_name())
         while True:
             try:
@@ -275,7 +277,8 @@ class TaskScheduler(object):
                         schedule_logger(job_id).info(
                             'job {} component {} run on {} {} status is {}'.format(job_id, component.get_name(), _role,
                                                                                    _party_id, task_status))
-                        status_collect.add(task_status)
+                        if _role not in job_parameters.get("assistant_role", []):
+                            status_collect.add(task_status)
                 if 'failed' in status_collect:
                     return False
                 if 'timeout' in status_collect:
