@@ -550,9 +550,6 @@ class Evaluation(ModelBase):
                         LOGGER.debug('pr quantile called')
                         self.__save_pr_table(metric, metric_res, metric_name, metric_namespace)
 
-                    else:
-                        LOGGER.warning('metric {} is not supported'.format(metric))
-
         if return_single_val_metrics:
             if len(self.validate_metric) != 0:
                 LOGGER.debug("return validate metric")
