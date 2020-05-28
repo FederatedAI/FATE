@@ -28,7 +28,7 @@ from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
 from arch.api.utils import file_utils
 from arch.api.utils.core_utils import get_lan_ip
-from fate_flow.settings import SERVERS, ROLE, API_VERSION, USE_LOCAL_DATA
+from fate_flow.settings import SERVERS, ROLE, API_VERSION
 from fate_flow.utils import detect_utils
 
 server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
@@ -155,7 +155,7 @@ def call_fun(func, config_data, dsl_path, config_path):
         else:
             response = requests.post("/".join([server_url, "tracking", func.replace('_', '/')]), json=config_data)
     elif func in DATA_FUNC:
-        if USE_LOCAL_DATA and func == 'upload':
+        if func == 'upload' and config_data.get('use_local_data', 1) != 0:
             file_name = config_data.get('file')
             if not os.path.isabs(file_name):
                 file_name = os.path.join(file_utils.get_project_base_directory(), file_name)
