@@ -17,7 +17,6 @@ import pandas as pd
 
 ROUND_NUM = 6
 
-
 def neg_pos_count(labels: np.ndarray, pos_label: int):
     pos_num = ((labels == pos_label) + 0).sum()
     neg_num = len(labels) - pos_num
@@ -234,7 +233,7 @@ class Lift(BiClassMetric):
 
         confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(labels, pred_scores, add_to_end=False)
 
-        lifts_x, lifts_y = self.compute_metric_from_confusion_mat(confusion_mat, len(labels),)
+        lifts_y, lifts_x = self.compute_metric_from_confusion_mat(confusion_mat, len(labels),)
 
         return lifts_y, lifts_x, list(score_threshold)
 
@@ -290,7 +289,7 @@ class Gain(BiClassMetric):
 
         confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(labels, pred_scores, add_to_end=False)
 
-        gain_x, gain_y = self.compute_metric_from_confusion_mat(confusion_mat, len(labels))
+        gain_y, gain_x = self.compute_metric_from_confusion_mat(confusion_mat, len(labels))
 
         return gain_y, gain_x, list(score_threshold)
 
@@ -405,7 +404,10 @@ class FScore(BiClassMetric):
         r_score = recall_computer.compute_metric_from_confusion_mat(confusion_mat, formatted=False)
 
         beta_2 = beta * beta
-        f_score = (1 + beta_2) * ((p_score * r_score) / (beta_2 * p_score + r_score))
+        denominator = (beta_2 * p_score + r_score)
+        denominator[denominator == 0] = 1e-6  # in case denominator is 0
+        numerator = (1 + beta_2) * (p_score * r_score)
+        f_score = numerator / denominator
 
         return f_score
 
