@@ -37,7 +37,7 @@ class BaseQueue:
     def put_event(self, event, status=None, job_id=None):
         pass
 
-    def get_event(self, status=None):
+    def get_event(self, status=None, end_status=None):
         return None
 
     def qsize(self, status=None):
@@ -109,9 +109,9 @@ class MysqlQueue(BaseQueue):
             self.not_empty.notify()
             return is_failed
 
-    def get_event(self, status=None):
+    def get_event(self, status=None, end_status=None):
         try:
-            event = self.get(block=True, status=status)
+            event = self.get(block=True, status=status, end_status=end_status)
             stat_logger.info('get event from queue successfully: {}, status {}'.format(event, status))
             return event
         except Exception as e:
@@ -119,7 +119,7 @@ class MysqlQueue(BaseQueue):
             stat_logger.exception(e)
             return None
 
-    def get(self, block=True, timeout=None, status=None):
+    def get(self, block=True, timeout=None, status=None, end_status=None):
         with self.not_empty:
             if not block:
                 if not self.query_events(status):
@@ -144,7 +144,7 @@ class MysqlQueue(BaseQueue):
                         status = 1
                     item = Queue.select().where(Queue.f_is_waiting == status)[0]
                     if item:
-                        self.update_event(item.f_job_id, operating='get')
+                        self.update_event(item.f_job_id, operating='get', status=end_status)
                 except Exception as e:
                     error = e
                 MysqlQueue.unlock(DB, 'fate_flow_job_queue')
@@ -238,7 +238,7 @@ class ListQueue(BaseQueue):
             stat_logger.exception(e)
             raise e
 
-    def get_event(self, status=None):
+    def get_event(self, status=None, end_status=None):
         try:
             event = self.get(block=True)
             stat_logger.info('get event from in-process queue successfully: {}'.format(event))

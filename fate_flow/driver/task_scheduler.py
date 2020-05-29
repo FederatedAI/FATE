@@ -560,12 +560,33 @@ class TaskScheduler(object):
                               work_mode=job_parameters['work_mode'])
 
     @staticmethod
-    def stop(job_id, end_status=JobStatus.FAILED, component_name='', is_initiator=True):
-        schedule_logger(job_id).info('get {} job {} {} command'.format("cancel" if end_status == JobStatus.CANCELED else "stop", job_id, component_name))
-        if not is_initiator:
+    def start_stop(job_id):
+        schedule_logger(job_id).info('get {} job {}command'.format('stop', job_id))
+        jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
+        if not jobs:
             jobs = job_utils.query_job(job_id=job_id)
+        if jobs:
+            job_info = {'job_id': job_id}
+            job_work_mode = jobs[0].f_work_mode
+            initiator_party_id = jobs[0].f_initiator_party_id
+            response = federated_api(job_id=job_id,
+                                     method='POST',
+                                     endpoint='/{}/job/stop/do'.format(
+                                         API_VERSION),
+                                     src_party_id=initiator_party_id,
+                                     dest_party_id=initiator_party_id,
+                                     src_role=None,
+                                     json_body=job_info,
+                                     work_mode=job_work_mode)
+            return response
         else:
-            jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
+            schedule_logger(job_id).info('send {} job {} stop command failed, no find this job'.format(job_id, component_name))
+            raise Exception('can not found job: {}'.format(job_id))
+
+    @staticmethod
+    def stop(job_id, end_status=JobStatus.FAILED, component_name=''):
+        schedule_logger(job_id).info('get {} job {} {} command'.format("cancel" if end_status == JobStatus.CANCELED else "stop", job_id, component_name))
+        jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
         cancel_success = False
         is_cancel = (end_status == JobStatus.CANCELED)
         if jobs:

@@ -38,6 +38,10 @@ class DAGScheduler(threading.Thread):
             return False
         all_jobs = []
 
+        # get Mediation queue job
+        mediation_queue_put_events(self.queue)
+
+
         t = threading.Thread(target=queue_put_events, args=[self.queue])
         t.start()
 
@@ -49,7 +53,7 @@ class DAGScheduler(threading.Thread):
                     for future in as_completed(all_jobs):
                         all_jobs.remove(future)
                         break
-                job_event = self.queue.get_event()
+                job_event = self.queue.get_event(end_status=5)
                 schedule_logger(job_event['job_id']).info('start check all role status')
                 status = TaskScheduler.check(job_event['job_id'], job_event['initiator_role'], job_event['initiator_party_id'])
                 schedule_logger(job_event['job_id']).info('check all role status success, status is {}'.format(status))
@@ -97,3 +101,21 @@ def queue_put_events(queue):
                 schedule_logger(event['job_id']).info('start to cancel job')
                 TaskScheduler.stop(job_id=event['job_id'], end_status=JobStatus.CANCELED)
         time.sleep(RE_ENTRY_QUEUE_TIME)
+
+
+def mediation_queue_put_events(queue):
+    n = queue.qsize(status=5)
+    stat_logger.info('start check mediation queue, total num {}'.format(n))
+    for i in range(n):
+        event = queue.get_event(status=5)
+        TaskScheduler.cancel_ready(event['job_id'], event['initiator_role'], event['initiator_party_id'])
+        is_failed = queue.put_event(event, job_id=event['job_id'], status=1)
+        schedule_logger(event['job_id']).info('job into queue_1 status is {}'.format('success' if not is_failed else 'failed'))
+        if is_failed:
+            schedule_logger(event['job_id']).info('start to cancel job')
+            TaskScheduler.stop(job_id=event['job_id'], end_status=JobStatus.CANCELED)
+
+
+
+
+
