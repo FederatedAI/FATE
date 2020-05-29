@@ -39,6 +39,14 @@ Below lists example data sets and their information.
     3. "default_credit_homo_host_2.csv"
     4. "default_creidt_homo_test.csv"
 
+#### student_homo:
+- 13 features
+- [source](https://archive.ics.uci.edu/ml/datasets/student+performance)
+- data sets:
+    1. "student_homo_guest.csv"
+    2. "student_homo_host.csv"
+    3. "student_homo_test.csv"
+
 #### vehicle\_scale_homo:
 - 18 features
 - [source](https://archive.ics.uci.edu/ml/datasets/Statlog+(Vehicle+Silhouettes))
@@ -50,48 +58,66 @@ Below lists example data sets and their information.
 ## Vertically Divided Data
 > For Heterogeneous Federated Learning
 
-#### breast:
+#### breast_hetero:
 - 30 features
 - [source](https://www.kaggle.com/uciml/breast-cancer-wisconsin-data)
+- data sets:
+    1. "breast_hetero_guest.csv"
+    2. "breast_hetero_host.csv"
+    3. "breast_hetero_mini_guest.csv"
 
-#### breast_step:
+#### breast_hetero_mini:
 - 7 features
 - [source](https://www.kaggle.com/uciml/breast-cancer-wisconsin-data)
+- data sets:
+    1. "breast_hetero_mini_guest.csv"
+    2. "breast_hetero_mini_host.csv"
 
-#### default_credit:
+#### default_credit_hetero:
 - 23 features
 - [source](https://archive.ics.uci.edu/ml/datasets/default+of+credit+card+clients)
+- data sets:
+    1. "default_credit_hetero_guest.csv"
+    2. "default_credit_hetero_host.csv"
 
-#### dvisits:
+#### dvisits_hetero:
 - 12 features
 - [source](https://www.rdocumentation.org/packages/faraway/versions/1.0.7/topics/dvisits)
+- data sets:
+    1. "dvisits_hetero_guest.csv"
+    2. "dvisits_hetero_host.csv"
 
-#### give_credit:
-- 10 features
-- [source](https://www.kaggle.com/c/GiveMeSomeCredit/data)
+#### ionosphere_scale_hetero
+- 34 features
+- [source](https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/ionosphere_scale)
+- data sets:
+    1. "ionosphere_scale_hetero_guest.csv"
+    2. "ionosphere_scale_hetero_host.csv"
 
-#### motor_mini:
+#### motor_hetero:
 - 11 features
 - [source](https://www.kaggle.com/wkirgsn/electric-motor-temperature)
+- data sets:
+    1. "motor_hetero_guest.csv"
+    2. "motor_hetero_host.csv"
 
-#### motor_mini_step:
+#### motor_hetero_mini:
 - 7 features
 - [source](https://www.kaggle.com/wkirgsn/electric-motor-temperature)
-
-#### student-mat:
+- data sets:
+    1. "motor_hetero_mini_guest.csv"
+    2. "motor_hetero_mini_host.csv"
+    
+#### student_hetero:
 - 13 features
 - [source](https://archive.ics.uci.edu/ml/datasets/student+performance)
+- data sets:
+    1. "student_hetero_guest.csv"
+    2. "student_hetero_host.csv"
 
-#### vehicle_scale:
+#### vehicle_scale_hetero:
 - 18 features
 - [source](https://archive.ics.uci.edu/ml/datasets/Statlog+(Vehicle+Silhouettes))
 - data sets:
     1. "vehicle_scale_hetero_guest.csv"
     2. "vehicle_scale_hetero_host.csv"
-
-#### ionosphere_scale
-- 34 features
-- [source](https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/ionosphere_scale)
-
-## Other Data
-
