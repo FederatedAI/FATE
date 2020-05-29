@@ -138,12 +138,12 @@ class UploadTask(TaskManager):
 
     def _parse_argv(self, argv):
         role = argv[2]
-        # if role == GUEST:
-        #     self.party_id = guest_id
-        # elif role == HOST:
-        #     self.party_id = host_id
-        # else:
-        #     raise ValueError("Unsupported role:{}".format(role))
+        if role == GUEST:
+            self.party_id = guest_id
+        elif role == HOST:
+            self.party_id = host_id
+        else:
+            raise ValueError("Unsupported role:{}".format(role))
         self.role = role
         self.data_file = argv[3]
         if not os.path.exists(self.data_file):
@@ -181,6 +181,7 @@ class UploadTask(TaskManager):
         json_info['work_mode'] = work_mode
         json_info['store_engine'] = store_engine
         json_info['backend'] = backend
+        json_info['party_id'] = self.party_id
 
         time_str = get_timeid()
         self.table_name = '{}_table_name_{}'.format(self.role, time_str)
@@ -294,6 +295,7 @@ class TrainTask(TaskManager):
     def _upload_data(self):
         upload_obj = UploadTask()
         upload_obj.role = GUEST
+        upload_obj.party_id = guest_id
         upload_obj.data_file = self.data_file
         upload_obj.run()
         guest_table_name = upload_obj.table_name

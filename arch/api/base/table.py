@@ -233,6 +233,16 @@ class Table(object):
         """
         pass
 
+
+    def local_count(self):
+        from arch.api import RuntimeInstance
+        if RuntimeInstance.STORE_ENGINE.is_hdfs():
+            return self.local_count()
+        else:
+            return self.count()
+
+
+
     @abc.abstractmethod
     def take(self, n=1, keysOnly=False, use_serialize=True):
         """

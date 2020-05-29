@@ -23,7 +23,7 @@ from arch.api.base.table import Table
 from arch.api.impl.based_spark import util
 from arch.api.impl.utils.split import split_put, split_get
 from arch.api.utils.profile_util import log_elapsed
-#from pickle import dumps as p_dumps, loads as p_loads
+from fate_flow.db.db_models import DB, TableMeta
 from arch.api.utils import log_utils
 LOGGER = log_utils.getLogger()
 
@@ -75,6 +75,56 @@ class RDDTable(Table):
         hadoop_configuration = sc._jsc.hadoopConfiguration()
         return filesystem_class.get(hadoop_configuration)
 
+
+    @classmethod
+    def update_table_meta(cls, namespace, name, records):
+        try:
+            from arch.api.utils.core_utils import current_timestamp
+            with DB.connection_context():
+                metas = TableMeta.select().where(TableMeta.f_table_namespace == namespace,
+                                                    TableMeta.f_table_name == name)
+                is_insert = True
+                if metas:
+                    meta = metas[0]
+                    is_insert = False
+                else:
+                    meta = TableMeta()
+                    meta.f_table_namespace = namespace
+                    meta.f_table_name = name
+                    meta.f_create_time = current_timestamp()
+                    meta.f_records = 0
+                meta.f_records = meta.f_records + records
+                meta.f_update_time = current_timestamp()
+                if is_insert:
+                    meta.save(force_insert=True)
+                else:
+                    meta.save()
+        except Exception as e:
+            LOGGER.error("update_table_meta exception:{}.".format(e))
+
+
+    @classmethod
+    def get_table_meta(cls, namespace, name):
+        try:
+            with DB.connection_context():
+                metas = TableMeta.select().where(TableMeta.f_table_namespace == namespace,
+                                                    TableMeta.f_table_name == name)
+                if metas:
+                    return metas[0]
+        except Exception as e:
+            LOGGER.error("update_table_meta exception:{}.".format(e))
+
+
+    @classmethod
+    def delete_table_meta(cls, namespace, name):
+        try:
+            with DB.connection_context():
+                TableMeta.delete().where(TableMeta.f_table_namespace == namespace, \
+                    TableMeta.f_table_name == name).execute()
+        except Exception as e:
+            LOGGER.error("delete_table_meta {}, {}, exception:{}.".format(namespace, name, e))
+
+
     @classmethod
     def write2hdfs(cls, namespace, name, kv_list: Iterable, create_if_missing: bool = True):
         from pyspark import SparkContext
@@ -89,12 +139,16 @@ class RDDTable(Table):
         else:
             raise AssertionError("hdfs path {} not exists.".format(hdfs_path))
 
+        counter = 0
         for k, v in kv_list:
             import pickle
             content = u"{}{}{}\n".format(k, RDDTable.delimiter, pickle.dumps((v)).hex())
             out.write(bytearray(content, "utf-8"))
+            counter = counter + 1
         out.flush()
         out.close()
+        
+        RDDTable.update_table_meta(namespace=namespace, name=name, records=counter)
 
 
     @classmethod
@@ -106,6 +160,8 @@ class RDDTable(Table):
         fs = RDDTable.get_file_system(sc)
         if(fs.exists(path)):
             fs.delete(path)
+
+        RDDTable.delete_table_meta(namespace=namespace, name=name)
 
 
     @classmethod
@@ -127,7 +183,7 @@ class RDDTable(Table):
         elif create_if_missing:
             rdd = sc.emptyRDD().persist(util.get_storage_level())
         else:
-            LOGGER.error("hdfs path {} not exists.".format(hdfs_path))
+            LOGGER.debug("hdfs path {} not exists.".format(hdfs_path))
             rdd = None
         return rdd
 
@@ -300,11 +356,12 @@ class RDDTable(Table):
         return None
 
     def delete(self, k, use_serialize=True):
-        pass
+        raise NotImplementedError("not support delete single key in hdfs based table yet!")
 
     def destroy(self):
         self.delete_file_from_hdfs(namespace=self._namespace, name=self._name)
         self._rdd = None
+        
 
     def put_if_absent(self, k, v, use_serialize=True):
         self.put(k=k, v=v, use_serialize=use_serialize)
@@ -322,6 +379,15 @@ class RDDTable(Table):
 
     def count(self, **kwargs):
         return self.rdd().count()
+
+    
+    def local_count(self, **kwargs):
+        meta = RDDTable.get_table_meta(namespace=self._namespace, name=self._name)
+        if meta:
+            return meta.f_records
+        else:
+            return -1
+
 
     @log_elapsed
     def save_as(self, name, namespace, partition=None, use_serialize=True, persistent=True, **kwargs):

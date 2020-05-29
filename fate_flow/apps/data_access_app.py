@@ -138,7 +138,7 @@ def gen_data_access_job_config(config_data, access_module):
         "role_parameters": {}
     }
     initiator_role = "local"
-    initiator_party_id = 0
+    initiator_party_id = config_data.get('party_id', 0)
     job_runtime_conf["initiator"]["role"] = initiator_role
     job_runtime_conf["initiator"]["party_id"] = initiator_party_id
     job_runtime_conf["job_parameters"]["work_mode"] = int(config_data["work_mode"])
