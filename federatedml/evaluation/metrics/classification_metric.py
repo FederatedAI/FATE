@@ -96,7 +96,6 @@ class ThresholdCutter(object):
         data_size = len(sorted_scores)
         indexs = [int(data_size * cut) for cut in cuts]
         score_threshold = [sorted_scores[idx] for idx in indexs]
-
         return score_threshold, cuts
 
     @staticmethod
@@ -312,13 +311,13 @@ class BiClassPrecision(BiClassMetric):
     Compute binary classification precision
     """
 
-    def compute_metric_from_confusion_mat(self, confusion_mat, formatted=True):
+    def compute_metric_from_confusion_mat(self, confusion_mat, formatted=True, impute_val=1.0):
         numerator = confusion_mat['tp']
         denominator = (confusion_mat['tp'] + confusion_mat['fp'])
         zero_indexes = (denominator == 0)
         denominator[zero_indexes] = 1
         precision_scores = numerator / denominator
-        precision_scores[zero_indexes] = 1.0
+        precision_scores[zero_indexes] = impute_val  # impute_val is for prettifying when drawing pr curves
 
         if formatted:
             score_formatted = [[0, i] for i in precision_scores]
@@ -391,13 +390,21 @@ class MultiClassAccuracy(object):
         return accuracy_score(labels, pred_scores, normalize)
 
 
-class FScore(BiClassMetric):
+class FScore(object):
 
     """
     Compute F score from bi-class confusion mat
     """
+    @staticmethod
+    def compute(labels, pred_scores, beta=1):
 
-    def compute_metric_from_confusion_mat(self, confusion_mat, beta=1):
+        sorted_labels, sorted_scores = sort_score_and_label(labels, pred_scores)
+        score_threshold, cuts = ThresholdCutter.cut_by_step(sorted_scores, steps=0.01)
+        score_threshold.append(0)
+        confusion_mat = ConfusionMatrix.compute(sorted_labels, sorted_scores,
+                                                                      score_threshold,
+                                                                      ret=['tp', 'fp', 'fn', 'tn'])
+
         precision_computer = BiClassPrecision()
         recall_computer = BiClassRecall()
         p_score = precision_computer.compute_metric_from_confusion_mat(confusion_mat, formatted=False)
@@ -409,7 +416,7 @@ class FScore(BiClassMetric):
         numerator = (1 + beta_2) * (p_score * r_score)
         f_score = numerator / denominator
 
-        return f_score
+        return f_score, score_threshold, cuts
 
 
 class PSI(object):
@@ -418,7 +425,13 @@ class PSI(object):
                 debug=False, str_intervals=False, round_num=3, pos_label=1):
 
         """
+        train/validate scores: predicted scores on train/validate set
+        train/validate labels: true labels
+        debug: print debug message
         if train&validate labels are not None, count positive sample percentage in every interval
+        pos_label: pos label
+        round_num： round number
+        str_intervals: return str intervals
         """
 
         train_scores = np.array(train_scores)
@@ -439,8 +452,11 @@ class PSI(object):
             train_pos_perc = np.array(list(train_pos_count['count'])) / np.array(train_count['count'])
             validate_pos_perc = np.array(list(validate_pos_count['count'])) / np.array(validate_count['count'])
 
+            # handle special cases
             train_pos_perc[train_pos_perc == np.inf] = -1
             validate_pos_perc[validate_pos_perc == np.inf] = -1
+            train_pos_perc[train_pos_perc == np.nan] = 0
+            validate_pos_perc[validate_pos_perc == np.nan] = 0
 
         if debug:
             print(train_count)
