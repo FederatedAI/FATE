@@ -61,10 +61,20 @@ class StandardScale(BaseScale):
 
     @staticmethod
     def __scale(data, mean, std, process_cols_list):
+        features = np.array(data.features, dtype=float)
         for i in process_cols_list:
-            data.features[i] = np.around((data.features[i] - mean[i]) / std[i], 6)
+            features[i] = np.around((data.features[i] - mean[i]) / std[i], 6)
 
+        data.features = features
         return data
+
+    # @staticmethod
+    # def __scale(data, mean, std, process_cols_list):
+    #     features = np.array(data.features, dtype=float)
+    #     for i in process_cols_list:
+    #         data.features[i] = np.around((data.features[i] - mean[i]) / std[i], 6)
+    #
+    #     return data
 
     def fit(self, data):
         """
