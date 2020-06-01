@@ -222,15 +222,15 @@ class HomoNNClient(HomoNNBase):
         if num_output_units == 1:
             kv = [(x[0], (0 if x[1][0] <= threshold else 1, x[1][0].item())) for x in zip(data.get_keys(), predict)]
             pred_tbl = session.parallelize(kv, include_key=True, partition=data_inst.get_partitions())
-            return data_inst.join(pred_tbl, lambda d, pred: [d.label, pred[0], pred[1], {"label": pred[0]}])
+            return data_inst.join(pred_tbl,
+                                  lambda d, pred: [d.label, pred[0], pred[1], {"0": 1 - pred[1], "1": pred[1]}])
         else:
             kv = [(x[0], (x[1].argmax(), [float(e) for e in x[1]])) for x in zip(data.get_keys(), predict)]
             pred_tbl = session.parallelize(kv, include_key=True, partition=data_inst.get_partitions())
             return data_inst.join(pred_tbl,
                                   lambda d, pred: [d.label, pred[0].item(),
-                                                   pred[1][pred[0]] / (sum(pred[1])),
-                                                   {"raw_predict": pred[1]}])
-
+                                                   pred[1][pred[0]],
+                                                   {v: pred[1][v] for v in range(len(pred[1]))}])
     def load_model(self, model_dict):
         model_dict = list(model_dict["model"].values())[0]
         model_obj = _extract_param(model_dict)
