@@ -308,7 +308,7 @@ class Evaluation(ModelBase):
 
             single_val_metric = metric_res[1]
 
-        elif metric is consts.KS:
+        elif metric == consts.KS:
             best_ks, fpr, tpr, thresholds, cuts = metric_res[1]
             single_val_metric = best_ks
 
