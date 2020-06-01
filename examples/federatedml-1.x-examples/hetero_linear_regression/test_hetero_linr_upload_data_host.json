@@ -4,5 +4,5 @@
     "partition": 16,
     "work_mode": 0,
     "table_name": "motor_mini_a",
-    "namespace": "motor_mini"
+    "namespace": "experiment"
 }

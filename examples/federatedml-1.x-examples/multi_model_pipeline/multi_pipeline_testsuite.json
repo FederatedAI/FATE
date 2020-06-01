@@ -5,7 +5,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "breast_b",
-            "namespace": "hetero",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
@@ -13,7 +13,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "breast_a",
-            "namespace": "hetero",
+            "namespace": "experiment",
             "role": "host_0"
         }
     ],

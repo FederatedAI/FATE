@@ -215,11 +215,11 @@ Step4: Start Modeling Task
           "head": 1,
           "partition": 48,
           "work_mode": 0,
-          "table_name": "hetero_breast_b",
+          "table_name": "breast_hetero_guest",
           "namespace": "hetero_guest_breast"
         }
 
-    We use **hetero_breast_b** & **hetero_guest_breast** as guest party's table name and namespace. To use default runtime conf, please set host party's name and namespace as **hetero_breast_a** & **hetero_host_breast** and upload the data with path of  **examples/data/breast_hetero_host.csv**
+    We use **breast_hetero_guest** & **experiment** as guest party's table name and namespace. To use default runtime conf, please set host party's name and namespace as **breast_hetero_host** & **hetero_host_breast** and upload the data with path of  **examples/data/breast_hetero_host.csv**
 
     To use other data set, please change your file path and table_name & namespace. Please do not upload different data set with same table_name and namespace.
 
@@ -236,7 +236,7 @@ Step4: Start Modeling Task
         "guest": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "hetero_breast_b", "namespace": "hetero_guest_breast"}]
+                    "train_data": [{"name": "breast_hetero_guest", "namespace": "hetero_guest_breast"}]
                 }
             }
  

@@ -4,8 +4,8 @@
             "file": "examples/data/breast_hetero_guest.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "hetero_breast_b",
-            "namespace": "hetero_breast_guest",
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
@@ -13,15 +13,15 @@
             "head": 1,
             "partition": 16,
             "table_name": "hetero_default_credit_guest",
-            "namespace": "hetero",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
             "file": "examples/data/breast_hetero_host.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "hetero_breast_a",
-            "namespace": "hetero_breast_host",
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
             "role": "host_0"
         },
         {
@@ -29,15 +29,15 @@
             "head": 1,
             "partition": 16,
             "table_name": "hetero_default_credit_host",
-            "namespace": "hetero",
+            "namespace": "experiment",
             "role": "host_0"
         },
         {
             "file": "examples/data/breast_hetero_host.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "hetero_breast_a",
-            "namespace": "hetero_breast_host",
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
             "role": "host_1"
         },
         {
@@ -45,7 +45,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "hetero_default_credit_host",
-            "namespace": "hetero",
+            "namespace": "experiment",
             "role": "host_1"
         }
     ],

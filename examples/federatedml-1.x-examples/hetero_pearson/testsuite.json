@@ -5,8 +5,8 @@
             "head": 1,
             "partition": 16,
             "work_mode": 0,
-            "table_name": "hetero_breast_b",
-            "namespace": "hetero_breast_guest",
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
@@ -14,8 +14,8 @@
             "head": 1,
             "partition": 16,
             "work_mode": 0,
-            "table_name": "hetero_breast_a",
-            "namespace": "hetero_breast_host",
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
             "role": "host_0"
         },
         {
@@ -24,7 +24,7 @@
             "partition": 16,
             "work_mode": 0,
             "table_name": "hetero_vehicle_b",
-            "namespace": "hetero_guest_vehicle",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
@@ -33,7 +33,7 @@
             "partition": 16,
             "work_mode": 0,
             "table_name": "hetero_vehicle_a",
-            "namespace": "hetero_host_vehicle",
+            "namespace": "experiment",
             "role": "host_0"
         }
     ],
@@ -50,7 +50,7 @@
                                     "data": [
                                         {
                                             "name": "hetero_vehicle_b",
-                                            "namespace": "hetero_guest_vehicle"
+                                            "namespace": "experiment"
                                         }
                                     ]
                                 }
@@ -62,7 +62,7 @@
                                     "data": [
                                         {
                                             "name": "hetero_vehicle_a",
-                                            "namespace": "hetero_host_vehicle"
+                                            "namespace": "experiment"
                                         }
                                     ]
                                 }

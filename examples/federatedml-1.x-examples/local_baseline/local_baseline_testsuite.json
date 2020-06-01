@@ -5,7 +5,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "hetero_vehicle_b",
-            "namespace": "hetero_guest_vehicle",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
@@ -13,7 +13,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "hetero_vehicle_a",
-            "namespace": "hetero_host_vehicle",
+            "namespace": "experiment",
             "role": "host_0"
         },
         {
@@ -21,7 +21,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "homo_breast_b",
-            "namespace": "homo_breast_guest",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
@@ -29,7 +29,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "homo_breast_a",
-            "namespace": "homo_breast_host",
+            "namespace": "experiment",
             "role": "host_0"
         }
     ],

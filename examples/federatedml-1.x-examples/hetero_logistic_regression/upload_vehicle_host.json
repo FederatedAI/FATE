@@ -4,5 +4,5 @@
     "partition": 16,
     "work_mode": 0,
     "table_name": "hetero_vehicle_a",
-    "namespace": "hetero_host_vehicle"
+    "namespace": "experiment"
 }

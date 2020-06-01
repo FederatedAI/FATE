@@ -21,7 +21,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "motor_mini_step_b",
-            "namespace": "motor_mini_step",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
@@ -29,7 +29,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "motor_mini_step_a",
-            "namespace": "motor_mini_step",
+            "namespace": "experiment",
             "role": "host_0"
         },
         {
@@ -37,7 +37,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "dvisits_b",
-            "namespace": "dvisits",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
@@ -45,7 +45,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "dvisits_a",
-            "namespace": "dvisits",
+            "namespace": "experiment",
             "role": "host_0"
         }
     ],

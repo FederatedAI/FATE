@@ -5,7 +5,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "motor_mini_b",
-            "namespace": "motor_mini",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
@@ -13,7 +13,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "motor_mini_a",
-            "namespace": "motor_mini",
+            "namespace": "experiment",
             "role": "host_0"
         },
         {
@@ -21,7 +21,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "motor_mini_a",
-            "namespace": "motor_mini",
+            "namespace": "experiment",
             "role": "host_1"
         }
     ],
