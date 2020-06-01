@@ -20,13 +20,13 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "student-mat_b",
+                            "name": "student_hetero_guest",
                             "namespace": "experiment"
                         }
                     ],
                     "eval_data": [
                         {
-                            "name": "student-mat_b",
+                            "name": "student_hetero_guest",
                             "namespace": "experiment"
                         }
                     ]
@@ -52,13 +52,13 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "student-mat_a",
+                            "name": "student_hetero_host",
                             "namespace": "experiment"
                         }
                     ],
                     "eval_data": [
                         {
-                            "name": "student-mat_a",
+                            "name": "student_hetero_host",
                             "namespace": "experiment"
                         }
                     ]

@@ -20,13 +20,13 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "vehicle_scale_b",
+                            "name": "vehicle_scale_hetero_guest",
                             "namespace": "experiment"
                         }
                     ],
                     "eval_data": [
                         {
-                            "name": "vehicle_scale_b",
+                            "name": "vehicle_scale_hetero_guest",
                             "namespace": "experiment"
                         }
                     ]
@@ -52,13 +52,13 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "vehicle_scale_a",
+                            "name": "vehicle_scale_hetero_host",
                             "namespace": "experiment"
                         }
                     ],
                     "eval_data": [
                         {
-                            "name": "vehicle_scale_a",
+                            "name": "vehicle_scale_hetero_host",
                             "namespace": "experiment"
                         }
                     ]
