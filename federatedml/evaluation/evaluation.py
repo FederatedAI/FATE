@@ -227,6 +227,9 @@ class Evaluation(ModelBase):
                     res = self.metric_interface.psi(self.psi_train_scores, self.psi_validate_scores, self.psi_train_labels, self.psi_validate_labels)
                     eval_result[eval_metric].append(mode)
                     eval_result[eval_metric].append(res)
+                    # delete saved scores after computing a psi pair
+
+                    self.psi_train_scores, self.psi_validate_scores = None, None
 
         return eval_result
 
@@ -534,6 +537,8 @@ class Evaluation(ModelBase):
 
                         self.__save_pr_curve(precision_recall, data_type)
 
+                        precision_recall = {}  # reset cached dict
+
                     elif metric == consts.PSI:
                         self.__save_psi_table(metric, metric_res, metric_name, metric_namespace)
 
@@ -549,9 +554,6 @@ class Evaluation(ModelBase):
                     elif metric == consts.QUANTILE_PR:
                         LOGGER.debug('pr quantile called')
                         self.__save_pr_table(metric, metric_res, metric_name, metric_namespace)
-
-                    else:
-                        LOGGER.warning('metric {} is not supported'.format(metric))
 
         if return_single_val_metrics:
             if len(self.validate_metric) != 0:
