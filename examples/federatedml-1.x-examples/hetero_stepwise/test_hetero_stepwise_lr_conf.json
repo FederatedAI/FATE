@@ -23,8 +23,8 @@
         "data": {
           "train_data": [
             {
-              "name": "hetero_breast_step_b",
-              "namespace": "hetero_breast_step_guest"
+              "name": "breast_hetero_mini_guest",
+              "namespace": "experiment"
             }
           ]
         }
@@ -47,8 +47,8 @@
         "data": {
           "train_data": [
             {
-              "name": "hetero_breast_step_a",
-              "namespace": "hetero_breast_step_host"
+              "name": "breast_hetero_mini_host",
+              "namespace": "experiment"
             }
           ]
         }

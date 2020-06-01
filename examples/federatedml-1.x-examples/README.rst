@@ -66,8 +66,8 @@ Standalone Version
         # TASK = 'predict'
         
         # Put your data to /example/data folder and indicate the data names here
-        GUEST_DATA_SET = 'breast_b.csv'
-        HOST_DATA_SET = 'breast_a.csv'
+        GUEST_DATA_SET = 'breast_hetero_guest.csv'
+        HOST_DATA_SET = 'breast_hetero_host.csv'
         # GUEST_DATA_SET = 'breast_homo_guest.csv'
         # HOST_DATA_SET = 'breast_homo_host.csv'
         
@@ -211,7 +211,7 @@ Step4: Start Modeling Task
     .. code-block:: json
 
         {
-          "file": "examples/data/breast_b.csv",
+          "file": "examples/data/breast_hetero_guest.csv",
           "head": 1,
           "partition": 48,
           "work_mode": 0,
@@ -219,7 +219,7 @@ Step4: Start Modeling Task
           "namespace": "hetero_guest_breast"
         }
 
-    We use **hetero_breast_b** & **hetero_guest_breast** as guest party's table name and namespace. To use default runtime conf, please set host party's name and namespace as **hetero_breast_a** & **hetero_host_breast** and upload the data with path of  **examples/data/breast_a.csv**
+    We use **hetero_breast_b** & **hetero_guest_breast** as guest party's table name and namespace. To use default runtime conf, please set host party's name and namespace as **hetero_breast_a** & **hetero_host_breast** and upload the data with path of  **examples/data/breast_hetero_host.csv**
 
     To use other data set, please change your file path and table_name & namespace. Please do not upload different data set with same table_name and namespace.
 
