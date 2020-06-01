@@ -230,7 +230,7 @@ class HomoNNClient(HomoNNBase):
             return data_inst.join(pred_tbl,
                                   lambda d, pred: [d.label, pred[0].item(),
                                                    pred[1][pred[0]],
-                                                   {v: pred[1][v] for v in range(len(pred[1]))}])
+                                                   {str(v): pred[1][v] for v in range(len(pred[1]))}])
     def load_model(self, model_dict):
         model_dict = list(model_dict["model"].values())[0]
         model_obj = _extract_param(model_dict)
