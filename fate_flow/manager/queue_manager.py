@@ -40,6 +40,9 @@ class BaseQueue:
     def get_event(self, status=None, end_status=None):
         return None
 
+    def set_status(self, job_id=None, status=None):
+        return None
+
     def qsize(self, status=None):
         pass
 
@@ -152,6 +155,20 @@ class MysqlQueue(BaseQueue):
                     raise Exception(e)
                 self.not_full.notify()
                 return json.loads(item.f_event)
+
+    def set_status(self, status=None, job_id=None):
+        is_failed = False
+        with DB.connection_context():
+            error = None
+            MysqlQueue.lock(DB, 'fate_flow_job_queue', 10)
+            try:
+                is_failed = self.update_event(status=status, job_id=job_id)
+            except Exception as e:
+                error =e
+            MysqlQueue.unlock(DB, 'fate_flow_job_queue')
+            if error:
+                raise Exception(e)
+            return is_failed
 
     def del_event(self, event):
         ret = self.dell(event)

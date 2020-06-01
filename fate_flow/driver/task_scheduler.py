@@ -561,7 +561,7 @@ class TaskScheduler(object):
 
     @staticmethod
     def start_stop(job_id):
-        schedule_logger(job_id).info('get {} job {}command'.format('stop', job_id))
+        schedule_logger(job_id).info('get {} job {} command'.format('stop', job_id))
         jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
         if not jobs:
             jobs = job_utils.query_job(job_id=job_id)
@@ -580,7 +580,7 @@ class TaskScheduler(object):
                                      work_mode=job_work_mode)
             return response
         else:
-            schedule_logger(job_id).info('send {} job {} stop command failed, no find this job'.format(job_id, component_name))
+            schedule_logger(job_id).info('send {} job stop command failed, no find this job'.format(job_id))
             raise Exception('can not found job: {}'.format(job_id))
 
     @staticmethod
@@ -602,6 +602,8 @@ class TaskScheduler(object):
                                               initiator_role=initiator_job.f_role,
                                               work_mode=job_work_mode,
                                               job_info=job_info)
+            if is_cancel:
+                roles = {initiator_job.f_role: [initiator_job.f_party_id]}
             for role, partys in roles.items():
                 for party_id in partys:
                     response = federated_api(job_id=job_id,

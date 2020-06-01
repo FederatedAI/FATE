@@ -66,6 +66,7 @@ class DAGScheduler(threading.Thread):
                         schedule_logger(job_event['job_id']).info('start to cancel job')
                         TaskScheduler.stop(job_id=job_event['job_id'], end_status=JobStatus.CANCELED)
                 else:
+                    self.queue.set_status(job_id=job_event['job_id'], status=0)
                     schedule_logger(job_event['job_id']).info('schedule job {}'.format(job_event))
                     future = self.job_executor_pool.submit(DAGScheduler.handle_event, job_event)
                     future.add_done_callback(DAGScheduler.get_result)
