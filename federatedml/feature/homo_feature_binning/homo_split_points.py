@@ -126,7 +126,6 @@ class HomoFeatureBinningClient(object):
         suffix = tuple(list(self.suffix) + [str(quantile_points)])
         self.aggregator.send_model(query_points, suffix)
         query_points = self.aggregator.get_aggregated_model(suffix)
-        print("query_result: {}, query_points.unboxed: {}".format(query_result, query_points.unboxed))
         query_points = {k: v for k, v in query_points.unboxed.items()}
         return query_points
 
