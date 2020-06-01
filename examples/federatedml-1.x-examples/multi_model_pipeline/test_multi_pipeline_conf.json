@@ -23,7 +23,7 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "breast_b",
+                            "name": "breast_hetero_guest",
                             "namespace": "experiment"
                         }
                     ]
@@ -55,7 +55,7 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "breast_a",
+                            "name": "breast_hetero_host",
                             "namespace": "experiment"
                         }
                     ]
@@ -94,7 +94,7 @@
             "optimizer": "rmsprop",
             "eps": 1e-05,
             "alpha": 0.01,
-            "max_iter": 3,
+            "max_iter": 10,
             "converge_func": "diff",
             "batch_size": 320,
             "learning_rate": 0.15,
@@ -107,7 +107,7 @@
             "optimizer": "rmsprop",
             "eps": 1e-05,
             "alpha": 0.01,
-            "max_iter": 3,
+            "max_iter": 10,
             "converge_func": "diff",
             "batch_size": 320,
             "learning_rate": 0.15,
@@ -129,10 +129,10 @@
                 "need_cv": true,
                 "shuffle": false
             },
-            "num_trees": 3
+            "num_trees": 5
         },
         "hetero_secureboost_1": {
-            "num_trees": 3,
+            "num_trees": 5,
             "shuffle": false
         }
     }

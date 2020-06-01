@@ -21,13 +21,13 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "motor_mini_b",
+                            "name": "motor_hetero_guest",
                             "namespace": "experiment"
                         }
                     ],
                     "eval_data": [
                         {
-                            "name": "motor_mini_b",
+                            "name": "motor_hetero_guest",
                             "namespace": "experiment"
                         }
                     ]
@@ -53,21 +53,21 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "motor_mini_a_1",
+                            "name": "motor_hetero_host_1",
                             "namespace": "experiment"
                         },
                         {
-                            "name": "motor_mini_a_2",
+                            "name": "motor_hetero_host_2",
                             "namespace": "experiment"
                         }
                     ],
                     "eval_data": [
                         {
-                            "name": "motor_mini_a_1",
+                            "name": "motor_hetero_host_1",
                             "namespace": "experiment"
                         },
                         {
-                            "name": "motor_mini_a_2",
+                            "name": "motor_hetero_host_2",
                             "namespace": "experiment"
                         }
                     ]
@@ -89,7 +89,7 @@
         "secureboost_0": {
             "task_type": "regression",
             "learning_rate": 0.1,
-            "num_trees": 3,
+            "num_trees": 50,
             "subsample_feature_rate": 1,
             "n_iter_no_change": false,
             "tol": 0.0001,

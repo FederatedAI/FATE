@@ -23,7 +23,7 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "hetero_vehicle_b",
+                            "name": "vehicle_scale_hetero_guest",
                             "namespace": "experiment"
                         }
                     ]
@@ -68,7 +68,7 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "hetero_vehicle_a",
+                            "name": "vehicle_scale_hetero_host",
                             "namespace": "experiment"
                         }
                     ]
@@ -106,7 +106,7 @@
             "optimizer": "nesterov_momentum_sgd",
             "eps": 1e-05,
             "alpha": 0.0001,
-            "max_iter": 3,
+            "max_iter": 10,
             "converge_func": "diff",
             "multi_class": "ovr",
             "batch_size": -1,

@@ -143,7 +143,7 @@
             "optimizer": "rmsprop",
             "eps": 1e-05,
             "alpha": 0.01,
-            "max_iter": 3,
+            "max_iter": 10,
             "converge_func": "diff",
             "batch_size": -1,
             "learning_rate": 0.15,

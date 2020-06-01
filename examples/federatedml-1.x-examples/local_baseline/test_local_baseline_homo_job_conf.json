@@ -23,7 +23,7 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "homo_breast_b",
+                            "name": "breast_homo_guest",
                             "namespace": "experiment"
                         }
                     ]
@@ -35,7 +35,7 @@
                 ],
                 "model_opts": [
                     {
-                        "max_iter": 3
+                        "max_iter": 30
                     }
                 ],
                 "need_run": [
@@ -64,7 +64,7 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "homo_breast_a",
+                            "name": "breast_homo_host",
                             "namespace": "experiment"
                         }
                     ]
@@ -94,7 +94,7 @@
             "optimizer": "sgd",
             "tol": 0.0001,
             "alpha": 0.01,
-            "max_iter": 3,
+            "max_iter": 30,
             "early_stop": "weight_diff",
             "batch_size": -1,
             "learning_rate": 0.15,

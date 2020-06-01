@@ -3,6 +3,6 @@
     "head": 1,
     "partition": 16,
     "work_mode": 0,
-    "table_name": "dvisits_a",
+    "table_name": "dvisits_hetero_host",
     "namespace": "experiment"
 }

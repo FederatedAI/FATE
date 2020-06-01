@@ -46,7 +46,7 @@ TASK = 'train'
 # TASK = 'predict'
 
 # Put your data to /examples/data folder and indicate the data names here
-# GUEST_DATA_SET = 'breast_b.csv'
+# GUEST_DATA_SET = 'breast_hetero_guest.csv'
 # HOST_DATA_SET = 'breast_hetero_host.csv'
 GUEST_DATA_SET = 'default_credit_homo_guest.csv'
 HOST_DATA_SET = 'default_credit_homo_host.csv'

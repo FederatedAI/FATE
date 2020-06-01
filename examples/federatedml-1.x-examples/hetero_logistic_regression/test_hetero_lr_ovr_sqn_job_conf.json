@@ -23,7 +23,7 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "hetero_vehicle_b",
+                            "name": "vehicle_scale_hetero_guest",
                             "namespace": "experiment"
                         }
                     ]
@@ -68,7 +68,7 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "hetero_vehicle_a",
+                            "name": "vehicle_scale_hetero_host",
                             "namespace": "experiment"
                         }
                     ]
@@ -106,7 +106,7 @@
             "optimizer": "sqn",
             "tol": 0.0001,
             "alpha": 1e-05,
-            "max_iter": 3,
+            "max_iter": 10,
             "early_stop": "diff",
             "batch_size": 5000,
             "learning_rate": 0.15,

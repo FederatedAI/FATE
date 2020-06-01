@@ -3,6 +3,6 @@
     "head": 1,
     "partition": 16,
     "work_mode": 0,
-    "table_name": "hetero_vehicle_a",
+    "table_name": "vehicle_scale_hetero_host",
     "namespace": "experiment"
 }

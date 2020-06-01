@@ -4,7 +4,7 @@
             "file": "examples/data/dvisits_hetero_guest.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "dvisits_b",
+            "table_name": "dvisits_hetero_guest",
             "namespace": "experiment",
             "role": "guest_0"
         },
@@ -12,7 +12,7 @@
             "file": "examples/data/dvisits_hetero_host.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "dvisits_a",
+            "table_name": "dvisits_hetero_host",
             "namespace": "experiment",
             "role": "host_0"
         }

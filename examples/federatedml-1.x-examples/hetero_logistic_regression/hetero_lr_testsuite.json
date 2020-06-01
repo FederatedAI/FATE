@@ -28,7 +28,7 @@
             "file": "examples/data/vehicle_scale_hetero_guest.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "hetero_vehicle_b",
+            "table_name": "vehicle_scale_hetero_guest",
             "namespace": "experiment",
             "role": "guest_0"
         },
@@ -36,7 +36,7 @@
             "file": "examples/data/vehicle_scale_hetero_host.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "hetero_vehicle_a",
+            "table_name": "vehicle_scale_hetero_host",
             "namespace": "experiment",
             "role": "host_0"
         }

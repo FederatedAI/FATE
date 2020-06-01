@@ -263,7 +263,7 @@
             "metrics": [
                 "accuracy"
             ],
-            "epochs": 3,
+            "epochs": 100,
             "tol": -1
         }
     }

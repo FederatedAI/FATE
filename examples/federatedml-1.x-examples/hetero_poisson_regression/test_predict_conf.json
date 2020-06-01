@@ -26,7 +26,7 @@
                 "data": {
                     "eval_data": [
                         {
-                            "name": "dvisits_b",
+                            "name": "dvisits_hetero_guest",
                             "namespace": "experiment"
                         }
                     ]
@@ -38,7 +38,7 @@
                 "data": {
                     "eval_data": [
                         {
-                            "name": "dvisits_a",
+                            "name": "dvisits_hetero_host",
                             "namespace": "experiment"
                         }
                     ]

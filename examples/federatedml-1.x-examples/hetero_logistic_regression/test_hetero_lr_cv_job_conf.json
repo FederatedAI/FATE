@@ -81,7 +81,7 @@
             "optimizer": "nesterov_momentum_sgd",
             "eps": 0.0001,
             "alpha": 0.01,
-            "max_iter": 3,
+            "max_iter": 10,
             "converge_func": "diff",
             "batch_size": -1,
             "learning_rate": 0.15,

@@ -23,13 +23,13 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "dvisits_b",
+                            "name": "dvisits_hetero_guest",
                             "namespace": "experiment"
                         }
                     ],
                     "eval_data": [
                         {
-                            "name": "dvisits_b",
+                            "name": "dvisits_hetero_guest",
                             "namespace": "experiment"
                         }
                     ]
@@ -176,13 +176,13 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "dvisits_a",
+                            "name": "dvisits_hetero_host",
                             "namespace": "experiment"
                         }
                     ],
                     "eval_data": [
                         {
-                            "name": "dvisits_a",
+                            "name": "dvisits_hetero_host",
                             "namespace": "experiment"
                         }
                     ]
@@ -310,7 +310,7 @@
             "optimizer": "rmsprop",
             "tol": 0.001,
             "alpha": 100.0,
-            "max_iter": 3,
+            "max_iter": 20,
             "early_stop": "weight_diff",
             "decay": 0.0,
             "decay_sqrt": false,

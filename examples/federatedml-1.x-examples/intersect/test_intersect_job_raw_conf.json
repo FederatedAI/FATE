@@ -20,7 +20,7 @@
                 "data": {
                     "data": [
                         {
-                            "name": "breast_b_intersect",
+                            "name": "breast_hetero_guest",
                             "namespace": "experiment"
                         }
                     ]
@@ -40,7 +40,7 @@
                 "data": {
                     "data": [
                         {
-                            "name": "breast_a_intersect",
+                            "name": "breast_hetero_host",
                             "namespace": "experiment"
                         }
                     ]

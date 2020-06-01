@@ -23,7 +23,7 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "motor_mini_step_b",
+                            "name": "motor_hetero_mini_guest",
                             "namespace": "experiment"
                         }
                     ]
@@ -63,7 +63,7 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "motor_mini_step_a",
+                            "name": "motor_hetero_mini_host",
                             "namespace": "experiment"
                         }
                     ]
@@ -96,7 +96,7 @@
             "optimizer": "sgd",
             "tol": 0.001,
             "alpha": 0.01,
-            "max_iter": 3,
+            "max_iter": 5,
             "early_stop": "diff",
             "batch_size": -1,
             "learning_rate": 0.15,

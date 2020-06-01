@@ -3,6 +3,6 @@
     "head": 1,
     "partition": 16,
     "work_mode": 0,
-    "table_name": "motor_mini_a",
+    "table_name": "motor_hetero_host",
     "namespace": "experiment"
 }

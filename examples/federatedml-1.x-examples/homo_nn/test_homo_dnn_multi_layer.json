@@ -101,7 +101,7 @@
                 "AUC",
                 "Hinge"
             ],
-            "max_iter": 3
+            "max_iter": 5
         }
     }
 }

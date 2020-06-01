@@ -23,7 +23,7 @@
                 "data": {
                     "eval_data": [
                         {
-                            "name": "breast_b",
+                            "name": "breast_hetero_guest",
                             "namespace": "experiment"
                         }
                     ]
@@ -35,7 +35,7 @@
                 "data": {
                     "eval_data": [
                         {
-                            "name": "breast_a",
+                            "name": "breast_hetero_host",
                             "namespace": "experiment"
                         }
                     ]

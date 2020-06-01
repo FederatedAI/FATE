@@ -26,7 +26,7 @@
                 "data": {
                     "eval_data": [
                         {
-                            "name": "motor_mini_b",
+                            "name": "motor_hetero_guest",
                             "namespace": "experiment"
                         }
                     ]
@@ -38,7 +38,7 @@
                 "data": {
                     "eval_data": [
                         {
-                            "name": "motor_mini_a",
+                            "name": "motor_hetero_host",
                             "namespace": "experiment"
                         }
                     ]

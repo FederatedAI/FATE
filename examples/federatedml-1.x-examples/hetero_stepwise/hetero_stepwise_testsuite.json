@@ -20,7 +20,7 @@
             "file": "examples/data/motor_hetero_mini_guest.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "motor_mini_step_b",
+            "table_name": "motor_hetero_mini_guest",
             "namespace": "experiment",
             "role": "guest_0"
         },
@@ -28,7 +28,7 @@
             "file": "examples/data/motor_hetero_mini_host.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "motor_mini_step_a",
+            "table_name": "motor_hetero_mini_host",
             "namespace": "experiment",
             "role": "host_0"
         },
@@ -36,7 +36,7 @@
             "file": "examples/data/dvisits_hetero_guest.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "dvisits_b",
+            "table_name": "dvisits_hetero_guest",
             "namespace": "experiment",
             "role": "guest_0"
         },
@@ -44,7 +44,7 @@
             "file": "examples/data/dvisits_hetero_host.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "dvisits_a",
+            "table_name": "dvisits_hetero_host",
             "namespace": "experiment",
             "role": "host_0"
         }

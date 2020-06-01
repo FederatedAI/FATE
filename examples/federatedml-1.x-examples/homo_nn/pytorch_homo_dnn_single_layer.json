@@ -103,7 +103,7 @@
             "metrics": [
                 "accuracy"
             ],
-            "max_iter": 3
+            "max_iter": 2
         }
     }
 }

@@ -23,7 +23,7 @@
             "head": 1,
             "partition": 16,
             "work_mode": 0,
-            "table_name": "hetero_vehicle_b",
+            "table_name": "vehicle_scale_hetero_guest",
             "namespace": "experiment",
             "role": "guest_0"
         },
@@ -32,7 +32,7 @@
             "head": 1,
             "partition": 16,
             "work_mode": 0,
-            "table_name": "hetero_vehicle_a",
+            "table_name": "vehicle_scale_hetero_host",
             "namespace": "experiment",
             "role": "host_0"
         }
@@ -49,7 +49,7 @@
                                 "data": {
                                     "data": [
                                         {
-                                            "name": "hetero_vehicle_b",
+                                            "name": "vehicle_scale_hetero_guest",
                                             "namespace": "experiment"
                                         }
                                     ]
@@ -61,7 +61,7 @@
                                 "data": {
                                     "data": [
                                         {
-                                            "name": "hetero_vehicle_a",
+                                            "name": "vehicle_scale_hetero_host",
                                             "namespace": "experiment"
                                         }
                                     ]

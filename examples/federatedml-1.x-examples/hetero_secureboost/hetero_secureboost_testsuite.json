@@ -4,7 +4,7 @@
             "file": "examples/data/breast_hetero_guest.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "breast_b",
+            "table_name": "breast_hetero_guest",
             "namespace": "experiment",
             "role": "guest_0"
         },
@@ -12,7 +12,7 @@
             "file": "examples/data/breast_hetero_host.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "breast_a",
+            "table_name": "breast_hetero_host",
             "namespace": "experiment",
             "role": "host_0"
         },
@@ -68,7 +68,7 @@
             "file": "examples/data/motor_hetero_guest.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "motor_mini_b",
+            "table_name": "motor_hetero_guest",
             "namespace": "experiment",
             "role": "guest_0"
         },
@@ -76,7 +76,7 @@
             "file": "examples/data/motor_hetero_host_1.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "motor_mini_a_1",
+            "table_name": "motor_hetero_host_1",
             "namespace": "experiment",
             "role": "host_0"
         },
@@ -84,7 +84,7 @@
             "file": "examples/data/motor_hetero_host_2.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "motor_mini_a_2",
+            "table_name": "motor_hetero_host_2",
             "namespace": "experiment",
             "role": "host_1"
         }
