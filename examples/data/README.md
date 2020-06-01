@@ -37,7 +37,7 @@ Below lists example data sets and their information.
     1. "default_credit_homo_guest.csv"
     2. "default_credit_homo_host_1.csv"
     3. "default_credit_homo_host_2.csv"
-    4. "default_creidt_homo_test.csv"
+    4. "default_credit_homo_test.csv"
 
 #### student_homo:
 - 13 features
