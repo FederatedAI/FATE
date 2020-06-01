@@ -173,8 +173,13 @@ class LocalBaseline(ModelBase):
 
         predict_result = data_instances.mapValues(lambda x: x.label)
         predict_result = predict_result.join(pred_prob, lambda x, y: (x, y))
-        predict_result = predict_result.join(pred_label, lambda x, y: [x[0], int(y), x[1][classes.index(y)],
-                                                                       dict(zip(classes, list(x[1])))])
+        if len(classes) > 2:
+            predict_result = predict_result.join(pred_label, lambda x, y: [x[0], int(y), x[1][classes.index(y)],
+                                                                           dict(zip(classes, list(x[1])))])
+        else:
+            predict_result = predict_result.join(pred_label, lambda x, y: [x[0], int(y), x[1][1],
+                                                                           dict(zip(classes, list(x[1])))])
+
         return predict_result
 
     def fit(self, data_instances, validate_data=None):

@@ -19,6 +19,12 @@
 | -------- | -------- | ------------- | ----------- | ----------------------- | -------- | -------- |
 | exchange | exchange | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | eggroll  | rollsite |
 
+架构图：
+
+<div style="text-align:center", align=center>
+<img src="../images/proxy_zh.png" />
+</div>
+
 # 3.组件说明
 
 | 软件产品 | 组件     | 端口 | 说明                                                         |
@@ -136,7 +142,7 @@ fi
 ```
 cd /data/projects/install
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.0-rc4.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.0-release.tar.gz
 ```
 
 ## 5.2 部署jdk
@@ -163,7 +169,7 @@ mv jdk1.8.0_192 jdk-8u192
 #部署软件
 #在目标服务器（192.168.0.1）app用户下执行:
 cd /data/projects/install
-tar xf FATE_install_1.4.0-rc4.tar.gz
+tar xf FATE_install_1.4.0-release.tar.gz
 cd FATE_install_1.4*
 tar xvf eggroll.tar.gz -C /data/projects/fate
 
@@ -268,13 +274,19 @@ cd /data/projects/fate/eggroll
 sh ./bin/eggroll.sh rollsite start
 ```
 
-## 5.7 问题定位
+## 5.7 验证和问题定位
 
-1）rollsite日志
+1）跑一个双边toy测试，看是否可以测试通过，通过则表示配置无误，具体用例参考allinone部署文档。
 
-/data/projects/fate/eggroll/logs/eggroll/bootstrap.rollsite.err
+2）查看exchange日志，看第1步用例涉及到的partyid是否有路由信息，
 
-/data/projects/fate/eggroll/logs/eggroll/rollsite.jvm.err.log
+​       日志：/data/projects/fate/eggroll/logs/eggroll/rollsite.jvm.log
+
+3）rollsite错误日志
+
+​      /data/projects/fate/eggroll/logs/eggroll/bootstrap.rollsite.err
+
+​      /data/projects/fate/eggroll/logs/eggroll/rollsite.jvm.err.log
 
 6.系统运维
 ================
