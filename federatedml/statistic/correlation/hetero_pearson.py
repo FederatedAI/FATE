@@ -35,25 +35,30 @@ class HeteroPearson(ModelBase):
         self.corr = None
         self.local_corr = None
 
-        # since multi-host not supported yet, we assume parties are one from guest and one from host
-        self._parties = []
-        guest_parties = federation.roles_to_parties(["guest"])
-        if len(guest_parties) != 1:
-            raise ValueError(f"num of guest party should be one, but {len(guest_parties)} provided")
-        self._parties.extend(guest_parties)
-
-        host_parties = federation.roles_to_parties(["host"])
-        if len(host_parties) < 1:
-            raise ValueError(f"no host party found")
-        if len(host_parties) > 1:
-            raise ValueError(f"multi-host not supported yet, {len(host_parties)} provided")
-        self._parties.extend(host_parties)
-
-        self._local_party = federation.local_party()
-        self._other_party = self._parties[0] if self._parties[0] != self._local_party else self._parties[1]
         self.shapes = []
         self.names = []
-        assert len(self._parties) == 2, "support 2 parties only"
+        self.parties = []
+        self.local_party = None
+        self.other_party = None
+        self._set_parties()
+
+    def _set_parties(self):
+        # since multi-host not supported yet, we assume parties are one from guest and one from host
+        parties = []
+        guest_parties = federation.roles_to_parties(["guest"])
+        host_parties = federation.roles_to_parties(["host"])
+        if len(guest_parties) != 1 or len(host_parties) != 1:
+            raise ValueError(f"one guest and one host required, "
+                             f"while {len(guest_parties)} guest and {len(host_parties)} host provided")
+        parties.extend(guest_parties)
+        parties.extend(host_parties)
+
+        local_party = federation.local_party()
+        other_party = parties[0] if parties[0] != local_party else parties[1]
+
+        self.parties = parties
+        self.local_party = local_party
+        self.other_party = other_party
 
     def _init_model(self, param):
         super()._init_model(param)
@@ -101,15 +106,17 @@ class HeteroPearson(ModelBase):
         return n, data.mapValues(lambda x: (x - mu) / sigma)
 
     def fit(self, data_instance):
+        # local
         data = self._select_columns(data_instance)
         n, normed = self._standardized(data)
         self.local_corr = table_dot(normed, normed)
         self.local_corr /= n
+
         if self.model_param.cross_parties:
-            with SPDZ("pearson", local_party=self._local_party, all_parties=self._parties,
+            with SPDZ("pearson", local_party=self.local_party, all_parties=self.parties,
                       use_mix_rand=self.model_param.use_mix_rand) as spdz:
-                source = [normed, self._other_party]
-                if self._local_party.role == "guest":
+                source = [normed, self.other_party]
+                if self.local_party.role == "guest":
                     x, y = FixedPointTensor.from_source("x", source[0]), FixedPointTensor.from_source("y", source[1])
                 else:
                     y, x = FixedPointTensor.from_source("y", source[0]), FixedPointTensor.from_source("x", source[1])
@@ -119,6 +126,9 @@ class HeteroPearson(ModelBase):
                 self.shapes.append(m2)
 
                 self.corr = spdz.dot(x, y, "corr").get() / n
+        else:
+            self.shapes.append(self.local_corr.shape[0])
+            self.parties = [self.local_party]
 
         self._callback()
 
@@ -134,31 +144,37 @@ class HeteroPearson(ModelBase):
         return meta_pb
 
     def _get_param(self):
-        # todo: fix me
         from federatedml.protobuf.generated import pearson_model_param_pb2
         param_pb = pearson_model_param_pb2.PearsonModelParam()
-        param_pb.party = f"({self._local_party.role},{self._local_party.party_id})"
 
-        for shape, party in zip(self.shapes, self._parties):
+        # local
+        param_pb.party = f"({self.local_party.role},{self.local_party.party_id})"
+        param_pb.shape = self.local_corr.shape[0]
+        for v in self.local_corr.reshape(-1):
+            param_pb.local_corr.append(max(-1.0, min(float(v), 1.0)))
+        for idx, name in enumerate(self.names):
+            param_pb.names.append(name)
+            anonymous = param_pb.anonymous_map.add()
+            anonymous.name = name
+            anonymous.anonymous = f"{self.local_party.role}_{self.local_party.party_id}_{idx}"
+
+        # global
+        for shape, party in zip(self.shapes, self.parties):
             param_pb.shapes.append(shape)
             param_pb.parties.append(f"({party.role},{party.party_id})")
+
             _names = param_pb.all_names.add()
-            if party == self._local_party:
+            if party == self.local_party:
                 for name in self.names:
                     _names.names.append(name)
             else:
                 for i in range(shape):
                     _names.names.append(f"{party.role}_{party.party_id}_{i}")
-        param_pb.shape = self.local_corr.shape[0]
-        for idx, name in enumerate(self.names):
-            param_pb.names.append(name)
-            anonymous = param_pb.anonymous_map.add()
-            anonymous.name = name
-            anonymous.anonymous = f"{self._local_party.role}_{self._local_party.party_id}_{idx}"
-        for v in self.corr.reshape(-1):
-            param_pb.corr.append(max(-1.0, min(float(v), 1.0)))
-        for v in self.local_corr.reshape(-1):
-            param_pb.local_corr.append(max(-1.0, min(float(v), 1.0)))
+
+        if self.model_param.cross_parties:
+            for v in self.corr.reshape(-1):
+                param_pb.corr.append(max(-1.0, min(float(v), 1.0)))
+
         return param_pb
 
     def export_model(self):
