@@ -220,6 +220,12 @@ class PipeLine(object):
 
         print("train_dsl : ", self._train_dsl)
 
+    def get_train_job_id(self):
+        return self._train_job_id
+
+    def get_predict_job_id(self):
+        return self._predict_job_id
+
     def _construct_train_conf(self):
         self._train_conf["initiator"] = self._get_initiator_conf()
         self._train_conf["role"] = self._roles
