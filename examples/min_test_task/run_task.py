@@ -327,6 +327,13 @@ class TrainTask(TaskManager):
         json_info['job_parameters']['work_mode'] = work_mode
         json_info['job_parameters']['store_engine'] = store_engine
         json_info['job_parameters']['backend'] = backend
+        if backend == 1:
+            json_info['job_parameters']['spark_submit_config'] = {
+                "driver-memory": "4g",
+                "executor-memory": "4g",
+                "num-executors": 16,
+                "executor-cores": 1
+            }
         if self.model_id is not None:
             json_info["job_parameters"]["model_id"] = self.model_id
             json_info["job_parameters"]["model_version"] = self.model_version
