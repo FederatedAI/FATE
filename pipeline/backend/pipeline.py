@@ -72,8 +72,11 @@ class PipeLine(object):
             print("locals:", local_parameters)
             if role == 'self':
                 continue
-
+ 
             party_id = local_parameters.get(role)
+            if party_id is None:
+                continue
+
             self._roles[role] = []
             if isinstance(party_id, int):
                 self._roles[role].append(party_id)
