@@ -119,7 +119,7 @@ chown -R app:apps /data/projects
 
 ```
 #centos
-yum -y install gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpcdevel libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan lsof sysstat telnet psmisc
+yum -y install gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan lsof sysstat telnet psmisc
 #ubuntu
 apt-get install -y gcc g++ make openssl supervisor libgmp-dev  libmpfr-dev libmpc-dev libaio1 libaio-dev numactl autoconf automake libtool libffi-dev libssl1.0.0 libssl-dev  liblz4-1 liblz4-dev liblz4-1-dbg liblz4-tool  zlib1g zlib1g-dbg zlib1g-dev
 cd /usr/lib/x86_64-linux-gnu
@@ -246,14 +246,14 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
 EOF
 ```
 
-### 5.5.4 各party路由信息修改
+### 5.5.4 各party默认路由信息修改
 
 **需要连接exchange的各party的rollsite模块，app用户修改**
 
-修改/data/projects/fate/proxy/conf/route_table.json部分，路由信息指向部署好的exchange：
+修改/data/projects/fate/eggroll/conf/route_table.json部分，默认路由信息指向部署好的exchange，不需要配置对端fateflow信息，修改后需重启rollsite：
 
 ```
- "partyid": {
+ "default": {
             "default": [
                 {
                     "ip": "192.168.0.1",
