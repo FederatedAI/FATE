@@ -167,14 +167,14 @@ class JobInvoker(object):
         except ValueError:
             raise ValueError("query job result is {}, can not parse useful info".format(result))
 
-    def get_output_data_table(self, job_id, component, role, party_id):
+    def get_output_data_table(self, job_id, cpn_name, role, party_id):
         job_invoker = JobInvoker()
         cmd = ["python", FATE_FLOW_CLIENT,
                "-f", JobFunc.COMPONENT_OUTPUT_DATA_TABLE,
                "-j", job_id,
                "-r", role,
                "-p", str(party_id),
-               "-cpn", component]
+               "-cpn", cpn_name]
         result = job_invoker._run_cmd(cmd)
         try:
             result = json.loads(result)
