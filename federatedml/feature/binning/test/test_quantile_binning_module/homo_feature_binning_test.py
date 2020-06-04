@@ -123,6 +123,10 @@ class TestHomoFeatureBinning():
         guest_split_points = (1, 2, 3)
         host_split_points = [(4, 5, 6), (7, 8, 9), (10, 11, 12)]
 
+        from federatedml.param.feature_binning_param import FeatureBinningParam
+        bin_param = FeatureBinningParam(bin_indexes=[1, 5])
+        binning_obj.set_bin_param(bin_param)
+
         if self.role == GUEST:
             data_inst = self._gen_data(1000, 10, 16, expect_split_points=guest_split_points,
                                        is_sparse=is_sparse, use_random=True)

@@ -100,6 +100,28 @@ class IVPercentileSelectionParam(BaseParam):
         return True
 
 
+class IVTopKParam(BaseParam):
+    """
+    Use information values to select features.
+
+    Parameters
+    ----------
+    k: int, should be greater than 0, default: 10
+        Percentile threshold for iv_percentile method
+    """
+
+    def __init__(self, k=10, local_only=False):
+        super().__init__()
+        self.k = k
+        self.local_only = local_only
+
+    def check(self):
+        descr = "IV selection param's"
+        self.check_positive_integer(self.k, descr)
+        self.check_boolean(self.local_only, descr)
+        return True
+
+
 class VarianceOfCoeSelectionParam(BaseParam):
     """
     Use coefficient of variation to select features. When judging, the absolute value will be used.
@@ -232,7 +254,8 @@ class FeatureSelectionParam(BaseParam):
         Specify which columns need to calculated. Each element in the list represent for a column name in header.
 
     filter_methods: list, ["manually", "unique_value", "iv_value_thres", "iv_percentile",
-                "coefficient_of_variation_value_thres", "outlier_cols", "percentage_value"],
+                "coefficient_of_variation_value_thres", "outlier_cols", "percentage_value",
+                "iv_top_k"],
                  default: ["unique_value"]
 
         Specify the filter methods used in feature selection. The orders of filter used is depended on this list.
@@ -302,7 +325,8 @@ class FeatureSelectionParam(BaseParam):
             method = method.lower()
             self.check_valid_value(method, descr, [consts.UNIQUE_VALUE, consts.IV_VALUE_THRES, consts.IV_PERCENTILE,
                                                    consts.COEFFICIENT_OF_VARIATION_VALUE_THRES, consts.OUTLIER_COLS,
-                                                   consts.MANUALLY_FILTER, consts.PERCENTAGE_VALUE])
+                                                   consts.MANUALLY_FILTER, consts.PERCENTAGE_VALUE,
+                                                   "iv_top_k"])
             self.filter_methods[idx] = method
 
         self.check_defined_type(self.select_col_indexes, descr, ['list', 'int'])

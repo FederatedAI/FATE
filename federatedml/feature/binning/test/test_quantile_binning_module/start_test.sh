@@ -25,11 +25,13 @@ echo current_dir is $(dirname "$0")
 #nohup python hetero_feature_binning_guest_test.py ${jobid} > nohup.guest &
 #nohup python hetero_feature_binning_host_test.py ${jobid} > nohup.host &
 
-nohup python hetero_feature_binning_test.py -j ${jobid} -r guest > nohup.guest &
-nohup python hetero_feature_binning_test.py -j ${jobid} -r host > nohup.host &
+#nohup python hetero_feature_binning_test.py -j ${jobid} -r guest > nohup.guest &
+#nohup python hetero_feature_binning_test.py -j ${jobid} -r host > nohup.host &
 
-#nohup python homo_feature_binning_test.py -j ${jobid} -r guest -pid 9999 > nohup.guest &
-#nohup python homo_feature_binning_test.py -j ${jobid} -r arbiter -pid 9998 > nohup.arbiter &
-#nohup python homo_feature_binning_test.py -j ${jobid} -r host -pid 10000 > nohup.host1 &
-#nohup python homo_feature_binning_test.py -j ${jobid} -r host -pid 10001 > nohup.host2 &
-#nohup python homo_feature_binning_test.py -j ${jobid} -r host -pid 10002 > nohup.host3 &
+rm  -rf nohup.*
+
+nohup python homo_feature_binning_test.py -j ${jobid} -r guest -pid 9999 > nohup.guest &
+nohup python homo_feature_binning_test.py -j ${jobid} -r arbiter -pid 9998 > nohup.arbiter &
+nohup python homo_feature_binning_test.py -j ${jobid} -r host -pid 10000 > nohup.host1 &
+nohup python homo_feature_binning_test.py -j ${jobid} -r host -pid 10001 > nohup.host2 &
+nohup python homo_feature_binning_test.py -j ${jobid} -r host -pid 10002 > nohup.host3 &

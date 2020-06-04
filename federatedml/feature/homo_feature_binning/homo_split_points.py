@@ -49,6 +49,9 @@ class HomoFeatureBinningServer(object):
         agg_quantile_points = self.aggregator.mean_model(suffix=suffix)
         self.aggregator.send_aggregated_model(agg_quantile_points, suffix=suffix)
 
+    def set_bin_param(self, bin_param: FeatureBinningParam):
+        return self
+
 
 class HomoFeatureBinningClient(object):
     def __init__(self, bin_method=consts.QUANTILE):
