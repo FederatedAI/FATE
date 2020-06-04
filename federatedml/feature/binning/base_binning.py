@@ -85,7 +85,7 @@ class BaseBinning(object):
         self.bin_inner_param.add_category_indexes(self.params.category_indexes)
         self.bin_inner_param.add_category_names(self.params.category_names)
 
-        if params.transform_param.transform_cols == -1:
+        if self.params.transform_param.transform_cols == -1:
             self.bin_inner_param.set_transform_all()
         else:
             self.bin_inner_param.add_transform_bin_indexes(self.params.transform_param.transform_cols)
