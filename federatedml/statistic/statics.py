@@ -399,16 +399,20 @@ class MultivariateStatisticalSummary(object):
                 continue
 
             summary_obj = self.summary_statistics[col_name]
-            if data_type == 'mean':
-                result[col_name] = summary_obj.mean
-            elif data_type == 'variance':
-                result[col_name] = summary_obj.variance
-            elif data_type == 'max_value':
-                result[col_name] = summary_obj.max_value
-            elif data_type == 'min_value':
-                result[col_name] = summary_obj.min_value
-            elif data_type == 'std_variance':
-                result[col_name] = summary_obj.std_variance
+
+            if hasattr(summary_obj, data_type):
+                result[col_name] = getattr(summary_obj, data_type)
+
+            # if data_type == 'mean':
+            #     result[col_name] = summary_obj.mean
+            # elif data_type == 'variance':
+            #     result[col_name] = summary_obj.variance
+            # elif data_type == 'max_value':
+            #     result[col_name] = summary_obj.max_value
+            # elif data_type == 'min_value':
+            #     result[col_name] = summary_obj.min_value
+            # elif data_type == 'std_variance':
+            #     result[col_name] = summary_obj.std_variance
 
         return result
 
