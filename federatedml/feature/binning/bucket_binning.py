@@ -50,8 +50,8 @@ class BucketBinning(BaseBinning):
                             ...]                         # Other features
 
         """
-        header = data_overview.get_header(data_instances)
-        self._default_setting(header)
+        # header = data_overview.get_header(data_instances)
+        self._default_setting(data_instances)
 
         # is_sparse = data_overview.is_sparse_data(data_instances)
         # if is_sparse:

@@ -71,10 +71,12 @@ class QuantileBinning(BaseBinning):
                             ...                         # Other features
                             }
         """
-        header = data_overview.get_header(data_instances)
+        # header = data_overview.get_header(data_instances)
         # LOGGER.debug("in _fit_split_point, cols_map: {}".format(self.bin_inner_param.bin_cols_map))
 
-        self._default_setting(header)
+        # self._default_setting(header)
+        self._default_setting(data_instances)
+
         # self._init_cols(data_instances)
         percent_value = 1.0 / self.bin_num
 

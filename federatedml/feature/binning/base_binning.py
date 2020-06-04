@@ -25,7 +25,7 @@ from federatedml.feature.binning.bin_inner_param import BinInnerParam
 from federatedml.feature.binning.bin_result import BinColResults, BinResults
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.statistic import data_overview
-
+import numpy as np
 # from federatedml.statistic import statics
 
 LOGGER = log_utils.getLogger()
@@ -62,14 +62,37 @@ class BaseBinning(object):
     def split_points(self):
         return self.bin_results.all_split_points
 
-    def _default_setting(self, header):
+    def _default_setting(self, data_instances):
         if self.bin_inner_param is not None:
             return
-        bin_inner_param = BinInnerParam()
-        bin_inner_param.set_header(header)
-        bin_inner_param.set_bin_all()
-        bin_inner_param.set_transform_all()
-        self.set_bin_inner_param(bin_inner_param)
+        self.bin_inner_param = BinInnerParam()
+        # bin_inner_param.set_header(header)
+        # bin_inner_param.set_bin_all()
+        # bin_inner_param.set_transform_all()
+        # self.set_bin_inner_param(bin_inner_param)
+        from federatedml.statistic.data_overview import get_header
+        header = get_header(data_instances)
+        # LOGGER.debug("_setup_bin_inner_param, get header: {}".format(self.header))
+
+        # self.schema = data_instances.schema
+        self.bin_inner_param.set_header(header)
+        if self.params.bin_indexes == -1:
+            self.bin_inner_param.set_bin_all()
+        else:
+            self.bin_inner_param.add_bin_indexes(self.params.bin_indexes)
+            self.bin_inner_param.add_bin_names(self.params.bin_names)
+
+        self.bin_inner_param.add_category_indexes(self.params.category_indexes)
+        self.bin_inner_param.add_category_names(self.params.category_names)
+
+        if params.transform_param.transform_cols == -1:
+            self.bin_inner_param.set_transform_all()
+        else:
+            self.bin_inner_param.add_transform_bin_indexes(self.params.transform_param.transform_cols)
+            self.bin_inner_param.add_transform_bin_names(self.params.transform_param.transform_names)
+        # LOGGER.debug("After _setup_bin_inner_param: {}".format(self.bin_inner_param.__dict__))
+        self.set_bin_inner_param(self.bin_inner_param)
+        LOGGER.debug("After _setup_bin_inner_param, header: {}".format(self.header))
 
     def fit_split_points(self, data_instances):
         """
