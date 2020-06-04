@@ -123,7 +123,7 @@ BOARD_DASHBOARD_URL = 'http://%s:%d/index.html#/dashboard?job_id={}&role={}&part
 # switch
 SAVE_AS_TASK_INPUT_DATA_SWITCH = True
 SAVE_AS_TASK_INPUT_DATA_IN_MEMORY = True
-TASK_INPUT_REPARTITION_SWITCH = True
+ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH = True
 
 # init
 RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
