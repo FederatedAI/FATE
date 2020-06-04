@@ -43,15 +43,17 @@ class MinMaxScale(BaseScale):
         """
         Scale operator for each column. The input data type is data_instance
         """
+        features = np.array(data.features, dtype=float)
         for i in process_cols_list:
-            value = data.features[i]
+            value = features[i]
             if value > max_value_list[i]:
                 value = max_value_list[i]
             elif value < min_value_list[i]:
                 value = min_value_list[i]
 
-            data.features[i] = np.around((value - min_value_list[i]) / scale_value_list[i], 6)
+            features[i] = np.around((value - min_value_list[i]) / scale_value_list[i], 6)
 
+        data.features = features
         return data
 
     def fit(self, data):
