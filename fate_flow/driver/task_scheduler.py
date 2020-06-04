@@ -25,7 +25,7 @@ from fate_flow.db.db_models import Job
 from fate_flow.driver.task_executor import TaskExecutor
 from fate_flow.entity.constant_config import JobStatus, Backend, TaskStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.settings import API_VERSION, HTTP_PORT, TASK_INPUT_REPARTITION_SWITCH
+from fate_flow.settings import API_VERSION, HTTP_PORT, ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
 from fate_flow.utils.job_utils import query_task, get_job_dsl_parser, query_job
@@ -316,7 +316,7 @@ class TaskScheduler(object):
                 else:
                     party_job_args = {}
                 dest_party_id = party_parameters.get('local', {}).get('party_id')
-                if job_parameters.get('task_input_repartition', TASK_INPUT_REPARTITION_SWITCH):
+                if job_parameters.get('align_task_input_data_partition', ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH):
                     response = federated_api(job_id=job_id,
                                              method='POST',
                                              endpoint='/{}/schedule/{}/{}/{}/{}/{}/input/args'.format(

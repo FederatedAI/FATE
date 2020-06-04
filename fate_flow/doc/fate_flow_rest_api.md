@@ -188,7 +188,7 @@
     * job_id: Required,String: job id
     * role: Required,String: role information
     * party_id: Required,Integer
-    * component_name: Required,String: conponent name
+    * component_name: Required,String: component name
 - response structure
     * retcode: return code,Integer
     * retmsg: return code description,String
@@ -215,7 +215,7 @@
     * role: Required,String: role information
     * party_id: Required,Integer: party id
     * component_name: Required,String: component name
-    * metric_name: Required,String: meric name
+    * metric_name: Required,String: metric name
     * metric_namespace: Required,String: metric namespace
 
 - response structure
