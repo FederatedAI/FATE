@@ -148,16 +148,17 @@ class Union(ModelBase):
                     local_table = local_table.flatMap(self._renew_id)
 
                 combined_table = combined_table.union(local_table, self._keep_first)
-                if self.is_data_instance:
-                    combined_table.schema = combined_schema
-                else:
-                    combined_table.save_metas(combined_metas)
 
             # only check feature length if not empty
             if self.is_data_instance and not self.is_empty_feature:
                 self.feature_count = len(combined_schema.get("header"))
                 LOGGER.debug("feature count: {}".format(self.feature_count))
                 combined_table.mapValues(self.check_feature_length)
+
+        if self.is_data_instance:
+            combined_table.schema = combined_schema
+        else:
+            combined_table.save_metas(combined_metas)
 
         if combined_table is None:
             num_data = 0
