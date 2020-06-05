@@ -104,15 +104,19 @@ Ubuntu system executes:  apt list --installed | grep selinux
 
 If selinux is already installed, execute: setenforce 0
 
-#### 3.3.3 Modify the maximum number of open files in Linux
+#### 3.3.3 Modify linux system parameters
 
 **Execute under the root user of the target server (192.168.0.1 192.168.0.2 192.168.0.3):**
 
-vim /etc/security/limits.conf
+1) vim /etc/security/limits.conf
 
 \* soft nofile 65536
 
 \* hard nofile 65536
+
+2) vim /etc/security/limits.d/20-nproc.conf
+
+\* soft nproc unlimited
 
 #### 3.3.4 Turn off the firewall (optional)
 
@@ -504,7 +508,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
 {
   "route_table":
   {
-    "9999":
+    "10000":
     {
       "default":[
         {
@@ -519,7 +523,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
         }
       ]      
     },
-    "10000":
+    "9999":
     {
       "default":[
         {
@@ -541,7 +545,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
 {
   "route_table":
   {
-    "10000":
+    "9999":
     {
       "default":[
         {
@@ -556,7 +560,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
         }
       ]      
     },
-    "9999":
+    "10000":
     {
       "default":[
         {
