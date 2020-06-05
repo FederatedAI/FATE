@@ -177,6 +177,32 @@ class ModelBase(object):
                                    "sid_name": schema.get('sid_name')}
         return predict_data
 
+
+    def predict_score_to_output(self, data_instances, predict_score, classes=None, threshold=None):
+        # regression
+        if classes is None:
+            predict_result = data_instances.join(predict_score, lambda d, pred: [d.label, pred, pred, {"label": pred}])
+        # binary
+        elif isinstance(classes, list) and len(classes) == 2:
+            pred_label = predict_score.mapValues(lambda x: 1 if x > threshold else 0)
+            predict_result = data_instances.mapValues(lambda x: x.label)
+            predict_result = predict_result.join(predict_score, lambda x, y: (x, y))
+            predict_result = predict_result.join(pred_label, lambda x, y: [x[0], y, x[1],
+                                                                           {"0": (1 - x[1]), "1": x[1]}])
+
+        # multi-label: input = array of predicted score of all labels
+        elif isinstance(classes, list) and len(classes) > 2:
+            #pred_label = predict_score.mapValues(lambda x: classes[x.index(max(x))])
+
+            predict_result = data_instances.mapValues(lambda x: x.label)
+            predict_result = predict_result.join(predict_score, lambda x, y: [x, int(classes[x.index(max(x))]),
+                                                                              max(y), dict(zip(classes, list(y)))])
+        else:
+            raise ValueError(f"Model's classes type is {type(classes)}, classes must be None or list.")
+
+        return predict_result
+
+
     def callback_meta(self, metric_name, metric_namespace, metric_meta):
         if self.need_cv:
             metric_name = '.'.join([metric_name, str(self.cv_fold)])
