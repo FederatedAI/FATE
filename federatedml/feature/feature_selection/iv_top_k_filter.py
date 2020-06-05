@@ -23,6 +23,7 @@ from arch.api.utils import log_utils
 from federatedml.feature.feature_selection.filter_base import BaseFilterMethod
 from federatedml.feature.feature_selection.iv_value_select_filter import fit_iv_values
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
+from federatedml.feature.feature_selection.iv_percentile_filter import IVPercentileFilter
 from federatedml.framework.hetero.sync import selection_info_sync
 from federatedml.param.feature_selection_param import IVPercentileSelectionParam
 from federatedml.protobuf.generated import feature_selection_meta_pb2
@@ -31,31 +32,6 @@ from federatedml.util import consts
 LOGGER = log_utils.getLogger()
 
 
-class IVPercentileFilter(BaseFilterMethod, metaclass=abc.ABCMeta):
-    """
-    filter the columns if iv value is less than a percentile threshold
-    """
-
-    def __init__(self, filter_param):
-        super().__init__(filter_param)
-        self.transfer_variable = None
-        self.binning_obj: BaseHeteroFeatureBinning = None
-        self.local_only = False
-        self.sync_obj = None
-
-    def set_transfer_variable(self, transfer_variable):
-        self.transfer_variable = transfer_variable
-        self.sync_obj.register_selection_trans_vars(transfer_variable)
-
-    def _parse_filter_param(self, filter_param):
-        self.percentile_threshold = filter_param.percentile_threshold
-        self.local_only = filter_param.local_only
-
-    def set_binning_obj(self, binning_model):
-        if binning_model is None:
-            raise ValueError("To use iv filter, binning module should be called and setup in 'isomatric_model'"
-                             " input for feature selection.")
-        self.binning_obj = binning_model
 
 
 class Guest(IVPercentileFilter):
@@ -63,12 +39,15 @@ class Guest(IVPercentileFilter):
         super().__init__(filter_param)
         self.host_selection_properties = []
         self.sync_obj = selection_info_sync.Guest()
+    
+    def _parse_filter_param(self, filter_param):
+        self.percentile_threshold = filter_param.percentile_threshold
+        self.local_only = filter_param.local_only
 
     def fit(self, data_instances, suffix):
         if not self.local_only:
             self.host_selection_properties = self.sync_obj.sync_select_cols(suffix=suffix)
 
-        value_threshold = self.get_value_threshold()
         self.selection_properties = fit_iv_values(self.binning_obj.binning_obj,
                                                   value_threshold,
                                                   self.selection_properties)

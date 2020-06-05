@@ -289,6 +289,7 @@ class FeatureSelectionParam(BaseParam):
                  unique_param=UniqueValueParam(),
                  iv_value_param=IVValueSelectionParam(),
                  iv_percentile_param=IVPercentileSelectionParam(),
+                 iv_top_k_param=IVTopKParam(),
                  variance_coe_param=VarianceOfCoeSelectionParam(),
                  outlier_param=OutlierColsSelectionParam(),
                  manually_param=ManuallyFilterParam(),
@@ -310,6 +311,7 @@ class FeatureSelectionParam(BaseParam):
         self.unique_param = copy.deepcopy(unique_param)
         self.iv_value_param = copy.deepcopy(iv_value_param)
         self.iv_percentile_param = copy.deepcopy(iv_percentile_param)
+        self.iv_top_k_param = copy.deepcopy(iv_top_k_param)
         self.variance_coe_param = copy.deepcopy(variance_coe_param)
         self.outlier_param = copy.deepcopy(outlier_param)
         self.manually_param = copy.deepcopy(manually_param)
@@ -326,7 +328,7 @@ class FeatureSelectionParam(BaseParam):
             self.check_valid_value(method, descr, [consts.UNIQUE_VALUE, consts.IV_VALUE_THRES, consts.IV_PERCENTILE,
                                                    consts.COEFFICIENT_OF_VARIATION_VALUE_THRES, consts.OUTLIER_COLS,
                                                    consts.MANUALLY_FILTER, consts.PERCENTAGE_VALUE,
-                                                   "iv_top_k"])
+                                                   consts.IV_TOP_K])
             self.filter_methods[idx] = method
 
         self.check_defined_type(self.select_col_indexes, descr, ['list', 'int'])
