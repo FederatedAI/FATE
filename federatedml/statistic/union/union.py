@@ -15,6 +15,7 @@
 #
 
 from arch.api.utils import log_utils
+from arch.api import session
 
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.feature.instance import Instance
@@ -149,16 +150,19 @@ class Union(ModelBase):
 
                 combined_table = combined_table.union(local_table, self._keep_first)
 
+                if self.is_data_instance:
+                    combined_table.schema = combined_schema
+                else:
+                    combined_metas["namespace"] = combined_table.get_namespace()
+                    session.save_data_table_meta(combined_metas, combined_table.get_name(),
+                                                 combined_table.get_namespace())
+
             # only check feature length if not empty
             if self.is_data_instance and not self.is_empty_feature:
                 self.feature_count = len(combined_schema.get("header"))
                 LOGGER.debug("feature count: {}".format(self.feature_count))
                 combined_table.mapValues(self.check_feature_length)
 
-        if self.is_data_instance:
-            combined_table.schema = combined_schema
-        else:
-            combined_table.save_metas(combined_metas)
 
         if combined_table is None:
             num_data = 0
@@ -175,8 +179,8 @@ class Union(ModelBase):
                                      metric_meta=MetricMeta(name=self.metric_name, metric_type=self.metric_type))
 
         LOGGER.info("Union operation finished. Total {} empty tables encountered.".format(empty_count))
-        if not self.is_data_instance:
-            LOGGER.debug(f"output dtable's metas is {combined_table.get_metas()}")
+        # if not self.is_data_instance:
+        #   LOGGER.debug(f"output dtable's metas is {combined_table.get_metas()}")
         return combined_table
 
     def check_consistency(self):

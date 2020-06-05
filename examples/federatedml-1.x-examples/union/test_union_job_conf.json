@@ -20,14 +20,14 @@
         "data": {
           "data0": [
             {
-              "name": "hetero_breast_b",
-              "namespace": "hetero_breast_guest"
+              "name": "breast_hetero_guest",
+              "namespace": "experiment"
             }
           ],
           "data1": [
             {
-              "name": "hetero_breast_b",
-              "namespace": "hetero_breast_guest"
+              "name": "breast_hetero_guest",
+              "namespace": "experiment"
             }
           ]
         }
@@ -47,7 +47,8 @@
         "outlier_replace": [false]
       },
       "union_0": {
-        "need_run": [true]
+        "need_run": [true],
+        "keep_duplicate": [true]
       }
     },
     "host": {
@@ -55,14 +56,14 @@
             "data": {
           "data0": [
             {
-              "name": "hetero_breast_a",
-              "namespace": "hetero_breast_host"
+              "name": "breast_hetero_host",
+              "namespace": "experiment"
             }
           ],
           "data1": [
             {
-              "name": "hetero_breast_a",
-              "namespace": "hetero_breast_host"
+              "name": "breast_hetero_host",
+              "namespace": "experiment"
             }
           ]
         }
@@ -80,7 +81,8 @@
         "outlier_replace": [false]
       },
       "union_0": {
-        "need_run": [true]
+        "need_run": [true],
+        "keep_duplicate": [false]
       }
     }
   }
