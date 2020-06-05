@@ -227,6 +227,9 @@ class Evaluation(ModelBase):
                     res = self.metric_interface.psi(self.psi_train_scores, self.psi_validate_scores, self.psi_train_labels, self.psi_validate_labels)
                     eval_result[eval_metric].append(mode)
                     eval_result[eval_metric].append(res)
+                    # delete saved scores after computing a psi pair
+
+                    self.psi_train_scores, self.psi_validate_scores = None, None
 
         return eval_result
 
@@ -308,7 +311,7 @@ class Evaluation(ModelBase):
 
             single_val_metric = metric_res[1]
 
-        elif metric is consts.KS:
+        elif metric == consts.KS:
             best_ks, fpr, tpr, thresholds, cuts = metric_res[1]
             single_val_metric = best_ks
 
@@ -318,6 +321,20 @@ class Evaluation(ModelBase):
 
         return single_val_metric
 
+    @staticmethod
+    def __filter_duplicate_roc_data_point(fpr, tpr, thresholds):
+
+        data_point_set = set()
+        new_fpr, new_tpr, new_threshold = [], [], []
+        for fpr_, tpr_, thres in zip(fpr, tpr, thresholds):
+            if (fpr_, tpr_, thres) not in data_point_set:
+                data_point_set.add((fpr_, tpr_, thres))
+                new_fpr.append(fpr_)
+                new_tpr.append(tpr_)
+                new_threshold.append(thres)
+
+        return new_fpr, new_tpr, new_threshold
+
     def __save_roc_curve(self, data_name, metric_name, metric_namespace, metric_res):
         fpr, tpr, thresholds, _ = metric_res
 
@@ -325,11 +342,7 @@ class Evaluation(ModelBase):
         fpr.append(1.0)
         tpr.append(1.0)
 
-        fpr, tpr, idx_list = self.__filt_override_unit_ordinate_coordinate(fpr, tpr)
-        edge_idx = idx_list[-1]
-        if edge_idx == len(thresholds):
-            idx_list = idx_list[:-1]
-        thresholds = [thresholds[idx] for idx in idx_list]
+        fpr, tpr, thresholds = self.__filter_duplicate_roc_data_point(fpr, tpr, thresholds)
 
         self.__save_curve_data(fpr, tpr, metric_name, metric_namespace)
         self.__save_curve_meta(metric_name=metric_name, metric_namespace=metric_namespace,
@@ -369,6 +382,9 @@ class Evaluation(ModelBase):
                                curve_name=data_name, thresholds=thresholds)
 
     def __save_accuracy_curve(self, metric, metric_res, metric_name, metric_namespace, data_name):
+
+        if self.eval_type == consts.MULTY:
+            return
 
         score, cuts, thresholds = metric_res[1]
 
@@ -531,6 +547,8 @@ class Evaluation(ModelBase):
 
                         self.__save_pr_curve(precision_recall, data_type)
 
+                        precision_recall = {}  # reset cached dict
+
                     elif metric == consts.PSI:
                         self.__save_psi_table(metric, metric_res, metric_name, metric_namespace)
 
@@ -546,9 +564,6 @@ class Evaluation(ModelBase):
                     elif metric == consts.QUANTILE_PR:
                         LOGGER.debug('pr quantile called')
                         self.__save_pr_table(metric, metric_res, metric_name, metric_namespace)
-
-                    else:
-                        LOGGER.warning('metric {} is not supported'.format(metric))
 
         if return_single_val_metrics:
             if len(self.validate_metric) != 0:

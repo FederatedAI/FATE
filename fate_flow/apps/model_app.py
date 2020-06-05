@@ -16,9 +16,6 @@
 import os
 import shutil
 
-from arch.api.utils.dtable_utils import get_table_info
-
-from arch.api.utils.version_control import version_history, save_version
 from flask import Flask, request, send_file
 
 from fate_flow.settings import stat_logger, API_VERSION, SERVING_PATH, SERVINGS_ZK_PATH, \
@@ -106,26 +103,6 @@ def bind_model_service():
 def transfer_model():
     model_data = publish_model.download_model(request.json)
     return get_json_result(retcode=0, retmsg="success", data=model_data)
-
-
-@manager.route('/version/save', methods=['POST'])
-def save_table_version():
-    save_version(name=request.json.get('name'),
-                 namespace=request.json.get('namespace'),
-                 version_log=request.json.get('version_log'))
-    return get_json_result(retcode=0, retmsg='success')
-
-
-@manager.route('/table_info', methods=['POST'])
-def get_table():
-    table_name, namespace = get_table_info(config=request.json.get('config'), create=request.json.get('create'))
-    return get_json_result(retcode=0, retmsg='success', data={'table_name':table_name, 'namespace': namespace})
-
-
-@manager.route('/version_history', methods=['POST'])
-def query_model_version_history():
-    history = version_history(data_table_namespace=request.json.get("namespace"))
-    return get_json_result(data=history)
 
 
 @manager.route('/<model_operation>', methods=['post', 'get'])

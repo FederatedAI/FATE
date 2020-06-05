@@ -341,11 +341,16 @@ class Tracking(object):
                 if job.f_status in [JobStatus.COMPLETE, JobStatus.FAILED]:
                     # Termination status cannot be updated
                     # TODO:
-                    pass
+                    return
                 if (job_info['f_status'] in [JobStatus.FAILED, JobStatus.TIMEOUT]) and (not job.f_end_time):
+                    if not job.f_start_time:
+                        return
                     job.f_end_time = current_timestamp()
                     job.f_elapsed = job.f_end_time - job.f_start_time
                     job.f_update_time = current_timestamp()
+                if (job_info['f_status'] in [JobStatus.FAILED, JobStatus.TIMEOUT,
+                                             JobStatus.CANCELED, JobStatus.COMPLETE]):
+                    job.f_tag = 'job_end'
             for k, v in job_info.items():
                 try:
                     if k in ['f_job_id', 'f_role', 'f_party_id'] or v == getattr(Job, k).default:
@@ -475,13 +480,6 @@ class Tracking(object):
         schedule_logger(self.job_id).info('clean task {} on {} {} done'.format(self.task_id,
                                                                                self.role,
                                                                                self.party_id))
-
-    def job_quantity_constraint(self):
-        if RuntimeConfig.WORK_MODE == WorkMode.CLUSTER:
-            if self.role == 'host':
-                running_jobs = job_utils.query_job(status='running', role=self.role)
-                if len(running_jobs) >= MAX_CONCURRENT_JOB_RUN_HOST:
-                    raise Exception('The job running on the host side exceeds the maximum running amount')
 
     def get_table_namespace(self, job_level: bool = False):
         return self.table_namespace if not job_level else self.job_table_namespace

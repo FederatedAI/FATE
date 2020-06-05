@@ -175,19 +175,19 @@ class PytorchNNModel(NNModel):
         self._model.eval()
         loss_fn = build_loss_fn(self._loss)
         evaluate_data = DataLoader(data, batch_size=data.batch_size, shuffle=False)
-        result = np.zeros((len(data), data.output_shape[0]))
-        eval_label = np.zeros((len(data), data.y_shape[0]))
         if loss_metircs:
             loss_metircs_result = [0 for i in range(len(loss_metircs))]
-        num_output_units = data.output_shape
-        index = 0
-        batch_num = 0
+
         loss = 0
         for batch_id, (feature, label) in enumerate(evaluate_data):
             feature = torch.tensor(feature, dtype=torch.float32)
             y = self._model(feature)
-            result[index:index + feature.shape[0]] = y.detach().numpy()
-            eval_label[index:index + feature.shape[0]] = label
+            if batch_id == 0:
+                result = y.detach().numpy()
+                eval_label = label.detach().numpy()
+            else:
+                result = np.vstack((result, y.detach().numpy()))
+                eval_label = np.vstack((eval_label, label.detach().numpy()))
             if isinstance(loss_fn, torch.nn.CrossEntropyLoss) | isinstance(loss_fn, torch.nn.NLLLoss):
                 label = torch.tensor(label, dtype=torch.long)
                 temp = label.t()
@@ -201,8 +201,6 @@ class PytorchNNModel(NNModel):
                     res = f(y, label)
                     loss_metircs_result[i] += res.item()
             loss += eval_loss
-            index += feature.shape[0]
-            batch_num += 1
 
         metircs["loss"] = loss.item() * data.batch_size / len(data)
         if loss_metircs:
@@ -210,8 +208,9 @@ class PytorchNNModel(NNModel):
             for func in loss_metircs:
                 metircs[func] = loss_metircs_result[i] * data.batch_size / len(data)
                 i += 1
+        num_output_units = result.shape[1]
         if len(other_metrics) > 0:
-            if num_output_units[0] == 1:
+            if num_output_units == 1:
                 for i in range(len(data)):
                     if (result[i] > 0.5):
                         result[i] = 1
@@ -247,15 +246,15 @@ class PytorchNNModel(NNModel):
 
     def predict(self, data: data.dataset, **kwargs):
 
-        result = np.zeros((len(data), data.output_shape[0]))
         predict_data = DataLoader(data, batch_size=data.batch_size, shuffle=False)
-        index = 0
         for batch_id, (feature, label) in enumerate(predict_data):
             feature = torch.tensor(feature, dtype=torch.float32)
             # label = torch.tensor(label, dtype=torch.float32)
             y = self._model(feature)
-            result[index:index + feature.shape[0]] = y.detach().numpy()
-            index += feature.shape[0]
+            if batch_id == 0:
+                result = y.detach().numpy()
+            else:
+                result = np.vstack((result, y.detach().numpy()))
         return result
 
     def export_model(self):
@@ -279,10 +278,8 @@ class PytorchNNModel(NNModel):
 class PytorchData(data.Dataset):
     def __init__(self, data_instances, batch_size, encode_label):
         self.size = data_instances.count()
-
         if self.size <= 0:
             raise ValueError("empty data")
-
         if batch_size == -1:
             self.batch_size = self.size
         else:
