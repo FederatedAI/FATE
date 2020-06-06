@@ -105,10 +105,10 @@ class MysqlQueue(BaseQueue):
                 try:
                     is_failed = self.update_event(item=item, status=status, job_id=job_id, operating='put')
                 except Exception as e:
-                    error =e
+                    error = e
                 MysqlQueue.unlock(DB, 'fate_flow_job_queue')
                 if error:
-                    raise Exception(e)
+                    raise Exception(error)
             self.not_empty.notify()
             return is_failed
 
