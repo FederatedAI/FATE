@@ -26,6 +26,10 @@
 # =============================================================================
 
 from numpy import random
+import numpy as np
+import scipy.sparse as sp
+import functools
+import copy
 
 from arch.api.utils import log_utils
 from federatedml.feature.binning.quantile_binning import QuantileBinning
@@ -57,6 +61,9 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         self.bin_sparse_points = None
         self.data_bin = None
         self.role = consts.HOST
+
+        # For fast histogram
+        self.data_bin_dense = None
 
     def convert_feature_to_bin(self, data_instance):
         LOGGER.info("convert feature to bins")
@@ -100,6 +107,26 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
                                                          suffix=(num_round,))
         return stop_flag
 
+    @staticmethod
+    def sparse_to_array(data, feature_sparse_point_array, use_missing, zero_as_missing):
+        new_data = copy.deepcopy(data)
+        new_feature_sparse_point_array = copy.deepcopy(feature_sparse_point_array)
+        for k, v in data.features.get_all_data():
+            if v == NoneType():
+                value = -1
+            else:
+                value = v
+            new_feature_sparse_point_array[k] = value
+
+        # as most sparse point is bin-0
+        # when mark it as a missing value (-1), offset it to make it sparse
+        if not use_missing or (use_missing and not zero_as_missing):
+            offset = 0
+        else:
+            offset = 1
+        new_data.features = sp.csc_matrix(np.array(new_feature_sparse_point_array) + offset)
+        return new_data
+
     def fit(self, data_inst, validate_data=None):
 
         LOGGER.info("begin to train secureboosting guest model")
@@ -109,6 +136,20 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         self.convert_feature_to_bin(data_inst)
         self.sync_tree_dim()
 
+        # get dense array of bin num
+        # fill in sparse point first then non sparse point value
+        if not self.use_missing or (self.use_missing and not self.zero_as_missing):
+            feature_sparse_point_array = [self.bin_sparse_points[i] for i in range(len(self.bin_sparse_points))]
+        else:
+            feature_sparse_point_array = [-1 for i in range(len(self.bin_sparse_points))]
+        sparse_to_array = functools.partial(
+            HeteroSecureBoostingTreeHost.sparse_to_array,
+            feature_sparse_point_array=feature_sparse_point_array,
+            use_missing=self.use_missing,
+            zero_as_missing=self.zero_as_missing
+        )
+        self.data_bin_dense = self.data_bin.mapValues(sparse_to_array)
+
         self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
 
         for i in range(self.num_trees):
@@ -117,12 +158,14 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
                 tree_inst = HeteroDecisionTreeHost(self.tree_param)
 
                 tree_inst.set_inputinfo(data_bin=self.data_bin, bin_split_points=self.bin_split_points,
-                                        bin_sparse_points=self.bin_sparse_points)
+                                        bin_sparse_points=self.bin_sparse_points, data_bin_dense=self.data_bin_dense)
 
                 valid_features = self.sample_valid_features()
                 tree_inst.set_flowid(self.generate_flowid(i, tidx))
                 tree_inst.set_runtime_idx(self.component_properties.local_partyid)
                 tree_inst.set_valid_features(valid_features)
+                tree_inst.set_encrypter_type(self.encrypt_param.method.lower())
+                tree_inst.set_bin_num(self.bin_num)
 
                 tree_inst.fit()
                 tree_meta, tree_param = tree_inst.get_model()
