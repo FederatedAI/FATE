@@ -197,8 +197,11 @@ class Tracking(object):
             persistent_table = data_table.save_as(
                 namespace=persistent_table_namespace,
                 name=persistent_table_name)
+            persistent_table_metas = {}
+            persistent_table_metas.update(data_table.get_metas())
+            persistent_table_metas["schema"] = data_table.schema
             session.save_data_table_meta(
-                {'schema': data_table.schema, 'header': data_table.schema.get('header', [])},
+                persistent_table_metas,
                 data_table_namespace=persistent_table.get_namespace(), data_table_name=persistent_table.get_name())
             data_table_info = {
                 data_name: {'name': persistent_table.get_name(), 'namespace': persistent_table.get_namespace()}}
