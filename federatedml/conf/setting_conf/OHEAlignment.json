@@ -6,11 +6,11 @@
     {
         "guest":
         {
-            "program": "OHE_alignment_guest.py/OHEAlignmentGuest"
+            "program": "OHE_alignment_base.py/OHEAlignmentGuest"
         },
         "host":
         {
-            "program": "OHE_alignment_host.py/OHEAlignmentHost"
+            "program": "OHE_alignment_base.py/OHEAlignmentHost"
         },
         "arbiter":
         {
