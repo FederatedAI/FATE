@@ -336,6 +336,7 @@ class FeatureSelectionParam(BaseParam):
         self.unique_param.check()
         self.iv_value_param.check()
         self.iv_percentile_param.check()
+        self.iv_top_k_param.check()
         self.variance_coe_param.check()
         self.outlier_param.check()
         self.manually_param.check()
