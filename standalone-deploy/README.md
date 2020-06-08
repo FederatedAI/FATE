@@ -22,19 +22,45 @@ It is strongly recommended to use docker, which greatly reduces the possibility 
 
 ```
 #Get code
-FATE $ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.4.0.tar.gz
-FATE $tar -xzvf docker_standalone-fate-1.4.0.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.4.1.tar.gz
+tar -xzvf docker_standalone-fate-1.4.1.tar.gz
 
 #Execute the command
-FATE $ cd docker_standalone-fate-1.4.0
-FATE $ bash install_standalone_docker.sh
-
-#Validation results
-FATE $ CONTAINER_ID=`docker ps -aqf "name=fate_python"`
-FATE $ docker exec -t -i ${CONTAINER_ID} bash
-FATE $ bash ./federatedml/test/run_test.sh
-
+cd docker_standalone-fate-1.4.1
+bash install_standalone_docker.sh
 ```
+
+4. Test
+
+   - Unit Test
+
+   ```
+   CONTAINER_ID=`docker ps -aqf "name=fate_python"`
+   docker exec -t -i ${CONTAINER_ID} bash
+   bash ./federatedml/test/run_test.sh
+   ```
+
+   If success,  the screen shows like blow:
+
+   ```
+   there are 0 failed test
+   ```
+
+   - Toy_example Test
+
+   ```
+   CONTAINER_ID=`docker ps -aqf "name=fate_python"`
+   docker exec -t -i ${CONTAINER_ID} bash
+   python ./examples/toy_example/run_toy_example.py 10000 10000 0
+   ```
+
+   If success,  the screen shows like blow:
+
+   ```
+   success to calculate secure_sum, it is 2000.0
+   ```
+
+   
 
 There are a few algorithms under [examples](../examples/federatedml-1.x-examples) folder, try them out!
 
@@ -53,28 +79,51 @@ Http://hostip:8080.
    netstat -apln|grep 9380
    ```
 
-2. Download the compressed package of stand-alone version and decompress it. 
+2. Download the compressed package of stand-alone version and decompress it.
 
    ```
-   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.4.0.tar.gz
-   tar -xzvf  standalone-fate-master-1.4.0.tar.gz
+   wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.4.1.tar.gz
+   tar -xzvf  standalone-fate-master-1.4.1.tar.gz
    ```
 
 3. Enter FATE directory and execute the init.sh.
 
    ```
-   cd standalone-fate-master-1.4.0
+   cd standalone-fate-master-1.4.1
    source init.sh init
    ```
 
-4. Execution test.
+4. Test
+
+   - Unit Test
 
    ```
-   cd standalone-fate-master-1.4.0
+   cd standalone-fate-master-1.4.1
    bash ./federatedml/test/run_test.sh
    ```
 
-There are a few algorithms under [examples](https://github.com/FederatedAI/FATE/tree/master/examples/federatedml-1.0-examples) folder, try them out!
+   If success,  the screen shows like blow:
+
+   ```
+   there are 0 failed test
+   ```
+
+   - Toy_example Test
+
+   ```
+   cd standalone-fate-master-1.4.1
+   python ./examples/toy_example/run_toy_example.py 10000 10000 0
+   ```
+
+   If success,  the screen shows like blow:
+
+   ```
+   success to calculate secure_sum, it is 2000.0
+   ```
+
+   
+
+There are a few algorithms under [examples](../examples/federatedml-1.x-examples) folder, try them out!
 
 You can also experience the fateboard access via a browser:
 Http://hostip:8080.
