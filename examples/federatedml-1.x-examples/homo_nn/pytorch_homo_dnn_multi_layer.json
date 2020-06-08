@@ -101,7 +101,7 @@
       "batch_size": -1,
       "optimizer": {
         "optimizer": "Adam",
-        "learning_rate": 0.05
+        "lr": 0.05
       },
       "early_stop": {
         "early_stop": "diff",

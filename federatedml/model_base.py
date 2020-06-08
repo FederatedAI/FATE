@@ -40,8 +40,8 @@ class ModelBase(object):
         self.component_properties = ComponentProperties()
 
     def _init_runtime_parameters(self, component_parameters):
-        param_extracter = ParamExtract()
-        param = param_extracter.parse_param_from_config(self.model_param, component_parameters)
+        param_extractor = ParamExtract()
+        param = param_extractor.parse_param_from_config(self.model_param, component_parameters)
         param.check()
         self.role = self.component_properties.parse_component_param(component_parameters, param).role
         self._init_model(param)
@@ -98,6 +98,8 @@ class ModelBase(object):
             # LOGGER.debug("One data: {}".format(self.data_output.first()[1].features))
         LOGGER.debug("saved_result is : {}, data_output: {}".format(saved_result, self.data_output))
         self.check_consistency()
+
+
 
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary",

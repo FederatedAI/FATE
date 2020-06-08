@@ -154,7 +154,7 @@ class MultivariateStatisticalSummary(object):
         self.summary_statistics = summary_statistic_dict.reduce(self.aggregate_statics)
         self.finish_fit_statics = True
 
-    def _static_quantile_summaries(self):
+    def _static_quantile_summaries(self, error):
         """
         Static summaries so that can query a specific quantile point
         """
@@ -163,7 +163,8 @@ class MultivariateStatisticalSummary(object):
 
         partition_cal = functools.partial(self.static_summaries_in_partition,
                                           cols_dict=self.cols_dict,
-                                          abnormal_list=self.abnormal_list)
+                                          abnormal_list=self.abnormal_list,
+                                          error=error)
         quantile_summary_dict = self.data_instances.mapPartitions(partition_cal)
         self.quantile_summary_dict = quantile_summary_dict.reduce(self.aggregate_statics)
         self.finish_fit_summaries = True
@@ -216,7 +217,7 @@ class MultivariateStatisticalSummary(object):
         return summary_statistic_dict
 
     @staticmethod
-    def static_summaries_in_partition(data_instances, cols_dict, abnormal_list):
+    def static_summaries_in_partition(data_instances, cols_dict, abnormal_list, error):
         """
         Statics sums, sum_square, max and min value through one traversal
 
@@ -238,7 +239,7 @@ class MultivariateStatisticalSummary(object):
         """
         summary_dict = {}
         for col_name in cols_dict:
-            summary_dict[col_name] = QuantileSummaries(abnormal_list=abnormal_list)
+            summary_dict[col_name] = QuantileSummaries(abnormal_list=abnormal_list, error=error)
 
         for k, instances in data_instances:
             if isinstance(instances, Instance):
@@ -302,7 +303,7 @@ class MultivariateStatisticalSummary(object):
 
         return medians
 
-    def get_quantile_point(self, quantile, cols_dict=None):
+    def get_quantile_point(self, quantile, cols_dict=None, error=consts.DEFAULT_RELATIVE_ERROR):
         """
         Return the specific quantile point value
 
@@ -313,6 +314,9 @@ class MultivariateStatisticalSummary(object):
 
         cols_dict : dict
             Specify which column(s) need to apply statistic.
+
+        error: float
+            Error for quantile summary
 
         Returns
         -------
@@ -325,7 +329,7 @@ class MultivariateStatisticalSummary(object):
         if cols_dict is None:
             cols_dict = self.cols_dict
 
-        self._static_quantile_summaries()
+        self._static_quantile_summaries(error=error)
 
         for col_name in cols_dict:
             if col_name not in self.quantile_summary_dict:
