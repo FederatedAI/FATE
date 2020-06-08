@@ -4,16 +4,16 @@
             "file": "examples/data/breast_homo_guest.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "homo_breast_guest",
-            "namespace": "homo_breast_guest",
+            "table_name": "breast_homo_guest",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
             "file": "examples/data/breast_homo_host.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "homo_breast_host",
-            "namespace": "homo_breast_host",
+            "table_name": "breast_homo_host",
+            "namespace": "experiment",
             "role": "host_0"
         },
         {
@@ -21,7 +21,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "homo_guest",
-            "namespace": "vehicle_scale",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
@@ -29,7 +29,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "homo_host",
-            "namespace": "vehicle_scale",
+            "namespace": "experiment",
             "role": "host_0"
         },
         {
@@ -37,7 +37,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "homo_host",
-            "namespace": "vehicle_scale",
+            "namespace": "experiment",
             "role": "host_1"
         }
     ],
