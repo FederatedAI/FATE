@@ -644,8 +644,7 @@ class TaskScheduler(object):
     @staticmethod
     def clean_queue():
         schedule_logger().info('get clean queue command')
-        # jobs = job_utils.query_job(is_initiator=1, status=JobStatus.WAITING)
-        jobs = job_utils.query_job(status=JobStatus.WAITING)
+        jobs = job_utils.query_job(is_initiator=1, status=JobStatus.WAITING)
         if jobs:
             for job in jobs:
                 schedule_logger(job.f_job_id).info(
