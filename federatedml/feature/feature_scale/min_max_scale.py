@@ -51,7 +51,7 @@ class MinMaxScale(BaseScale):
             elif value < min_value_list[i]:
                 value = min_value_list[i]
 
-            features[i] = np.around((value - min_value_list[i]) / scale_value_list[i], 6)
+            features[i] = (value - min_value_list[i]) / scale_value_list[i]
 
         data.features = features
         return data
@@ -139,8 +139,8 @@ class MinMaxScale(BaseScale):
         if self.header:
             for i, header in enumerate(self.header):
                 if i in self.scale_column_idx:
-                    param_obj = ColumnScaleParam(column_upper=np.round(self.column_max_value[i], self.round_num),
-                                                 column_lower=np.round(self.column_min_value[i], self.round_num))
+                    param_obj = ColumnScaleParam(column_upper=self.column_max_value[i],
+                                                 column_lower=self.column_min_value[i])
                     min_max_scale_param_dict[header] = param_obj
 
         param_proto_obj = ScaleParam(col_scale_param=min_max_scale_param_dict,
