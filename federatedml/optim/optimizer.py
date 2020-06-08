@@ -18,7 +18,6 @@
 
 import numpy as np
 
-
 from arch.api.utils import log_utils
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.util import consts
@@ -34,9 +33,7 @@ class _Optimizer(object):
         self.penalty = penalty
         self.decay = decay
         self.decay_sqrt = decay_sqrt
-        self.mu = None
-        
-        
+
     def decay_learning_rate(self):
         if self.decay_sqrt:
             lr = self.learning_rate / np.sqrt(1 + self.decay * self.iters)
@@ -84,7 +81,7 @@ class _Optimizer(object):
 
         return new_param
 
-    def add_regular_to_grad(self, grad, lr_weights, use_fedprox = False, model_weights = None, prev_round_weights = None):
+    def add_regular_to_grad(self, grad, lr_weights):
 
         if self.penalty == consts.L2_PENALTY:
             if lr_weights.fit_intercept:
@@ -93,45 +90,10 @@ class _Optimizer(object):
                 new_grad = np.append(gradient_without_intercept, grad[-1])
             else:
                 new_grad = grad + self.alpha * lr_weights.coef_
-        
-        else: 
+        else:
             new_grad = grad
 
         return new_grad
-
-    def regularization_update_with_fedprox(self, model_weights: LinearModelWeights, prev_round_weights: LinearModelWeights, grad ):
-        """This function applies additional proximal term
-
-        Args:
-            model_weights: model weights in current round
-            prev_round_weights: model weights in previous aggregation round
-            grad: gradient 
-        Returns:
-            new weights 
-        
-        """
-        LOGGER.debug("**AIFEL** additional proximal term with prev weights as {} and current weights as {}".format(prev_round_weights.unboxed, model_weights.unboxed))
-        new_weights = self.regularization_update(model_weights, grad)
-        coef_ = new_weights.unboxed
-
-        # additional proxmial term 
-        if new_weights.fit_intercept:
-            coef_without_intercept = coef_[: -1] 
-        else:
-            coef_without_intercept = coef_
-
-        LOGGER.debug("**AIFEL** before applying fedprox weights {}".format(coef_without_intercept))
-        coef_without_intercept -= self.mu * (model_weights.coef_ - prev_round_weights.coef_)
-        LOGGER.debug("**AIFEL** after applying fedprox weights {} with difference {}".format(coef_without_intercept,model_weights.coef_ - prev_round_weights.coef_))
-
-        if new_weights.fit_intercept:
-            new_coef_ = np.append(coef_without_intercept, coef_[-1])
-        else:
-            new_coef_ = coef_without_intercept
-        
-        new_weights = LinearModelWeights(new_coef_, new_weights.fit_intercept)
-        LOGGER.debug("**AIFEL** new weights after fedprox{}".format(new_weights.unboxed))
-        return new_weights
 
     def regularization_update(self, model_weights: LinearModelWeights, grad):
         if self.penalty == consts.L1_PENALTY:
@@ -153,69 +115,31 @@ class _Optimizer(object):
         loss_norm = 0.5 * self.alpha * np.dot(coef_, coef_)
         return loss_norm
 
-    def __fedprox_norm(self, model_weights, prev_round_weights = None):
-        prev_round_coef_ = prev_round_weights.coef_
-        coef_ = model_weights.coef_
-        diff = coef_ - prev_round_coef_
-        loss_norm = self.mu * 0.5 * np.dot(diff, diff)
-        return loss_norm
-
-    def loss_norm(self, model_weights: LinearModelWeights, use_fedprox = None, prev_round_weights = None):
-        
+    def loss_norm(self, model_weights: LinearModelWeights):
         if self.penalty == consts.L1_PENALTY:
             loss_norm_value = self.__l1_loss_norm(model_weights)
-            # add proximal term         
-            if use_fedprox == True:
-                LOGGER.debug("**AIFEL** calculating norm with use_fedprox = {} and penalty  = {} ".format(use_fedprox, self.penalty))
-                fedprox_term = self.__fedprox_norm(model_weights, prev_round_weights)
-                loss_norm_value += fedprox_term
-                LOGGER.debug("**AIFEL** fedprox norm is {}".format(fedprox_term))
         elif self.penalty == consts.L2_PENALTY:
             loss_norm_value = self.__l2_loss_norm(model_weights)
-            # add proximal term         
-            if use_fedprox == True:
-                LOGGER.debug("**AIFEL** calculating norm with use_fedprox = {} and penalty  = {} ".format(use_fedprox, self.penalty))
-                fedprox_term = self.__fedprox_norm(model_weights, prev_round_weights)
-                loss_norm_value += fedprox_term
-                LOGGER.debug("**AIFEL** fedprox norm is {}".format(fedprox_term))
         else:
             loss_norm_value = None
-        
         return loss_norm_value
-        
-    def update_model(self, model_weights: LinearModelWeights, grad, use_fedprox = None, prev_round_weights = None, has_applied=True):
-        
-        """This function updates the model weights.
 
-        Args:
-            model_weights: model weights in current round
-            grad: gradient calculated based on the weights
-            use_fedprox: if true, use fedprox else no fedprox is applied
-            prev_round_weights: model weights in previous aggregated round
-            has_applied: if false, regularization terms to be applied
+    def hess_vector_norm(self, delta_s: LinearModelWeights):
+        if self.penalty == consts.L1_PENALTY:
+            return LinearModelWeights(np.zeros_like(delta_s.unboxed), fit_intercept=delta_s.fit_intercept)
+        elif self.penalty == consts.L2_PENALTY:
+            return LinearModelWeights(self.alpha * np.array(delta_s.unboxed), fit_intercept=delta_s.fit_intercept)
+        else:
+            return LinearModelWeights(np.zeros_like(delta_s.unboxed), fit_intercept=delta_s.fit_intercept)
 
-        Returns:
-            updated model weight obtained
-
-        """
+    def update_model(self, model_weights: LinearModelWeights, grad, has_applied=True):
 
         if not has_applied:
-            LOGGER.info("grad = {}, grad shape = {}".format(grad, len(grad)))
             grad = self.add_regular_to_grad(grad, model_weights)
             delta_grad = self.apply_gradients(grad)
-        
         else:
-            LOGGER.info("{}".format(grad))
             delta_grad = grad
-
-        if use_fedprox:
-            model_weights = self.regularization_update_with_fedprox(model_weights, prev_round_weights, delta_grad )
-            # LOGGER.debug("**AIFEL** use_fedprox = {}".format(use_fedprox))
-
-        else: 
-            model_weights = self.regularization_update(model_weights, delta_grad)
-            
-
+        model_weights = self.regularization_update(model_weights, delta_grad)
         return model_weights
 
 
@@ -314,6 +238,25 @@ class _AdamOptimizer(_Optimizer):
         return delta_grad
 
 
+class _StochasticQuansiNewtonOptimizer(_Optimizer):
+    def __init__(self, learning_rate, alpha, penalty, decay, decay_sqrt):
+        super().__init__(learning_rate, alpha, penalty, decay, decay_sqrt)
+        self.__opt_hess = None
+
+    def apply_gradients(self, grad):
+        learning_rate = self.decay_learning_rate()
+        LOGGER.debug("__opt_hess is: {}".format(self.__opt_hess))
+        if self.__opt_hess is None:
+            delta_grad = learning_rate * grad
+        else:
+            delta_grad = learning_rate * self.__opt_hess.dot(grad)
+            LOGGER.debug("In sqn updater, grad: {}, delta_grad: {}".format(grad, delta_grad))
+        return delta_grad
+
+    def set_hess_matrix(self, hess_matrix):
+        self.__opt_hess = hess_matrix
+
+
 def optimizer_factory(param):
     try:
         optimizer_type = param.optimizer
@@ -339,5 +282,7 @@ def optimizer_factory(param):
         return _AdamOptimizer(*init_params)
     elif optimizer_type == 'adagrad':
         return _AdaGradOptimizer(*init_params)
+    elif optimizer_type == 'sqn':
+        return _StochasticQuansiNewtonOptimizer(*init_params)
     else:
         raise NotImplementedError("Optimize method cannot be recognized: {}".format(optimizer_type))
