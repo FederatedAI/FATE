@@ -48,6 +48,7 @@ class StandardScale(BaseScale):
 
     @staticmethod
     def __scale_with_column_range(data, column_upper, column_lower, mean, std, process_cols_list):
+        features = np.array(data.features, dtype=float)
         for i in process_cols_list:
             value = data.features[i]
             if value > column_upper[i]:
@@ -55,7 +56,8 @@ class StandardScale(BaseScale):
             elif value < column_lower[i]:
                 value = column_lower[i]
 
-            data.features[i] = (value - mean[i]) / std[i]
+            features[i] = (value - mean[i]) / std[i]
+        data.features = features
 
         return data
 
