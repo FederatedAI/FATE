@@ -356,6 +356,8 @@ class Tracking(object):
                 if (job_info['f_status'] in [JobStatus.FAILED, JobStatus.TIMEOUT,
                                              JobStatus.CANCELED, JobStatus.COMPLETE]):
                     job.f_tag = 'job_end'
+                if job.f_status == JobStatus.CANCELED:
+                    job_info.pop('f_status')
             update_fields = []
             for k, v in job_info.items():
                 try:
