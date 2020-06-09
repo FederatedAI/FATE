@@ -23,6 +23,43 @@ import time
 
 from examples.test import submit
 
+upload_data = {
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "count": 569
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "count": 569
+        },
+        {
+            "file": "examples/data/default_credit_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "default_credit_hetero_guest",
+            "namespace": "experiment",
+            "count": 30000
+        },
+        {
+            "file": "examples/data/default_credit_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "default_credit_hetero_host",
+            "namespace": "experiment",
+            "count": 30000
+        }
+    ]
+}
+
 
 def check_data_count(submitter, fate_home, table_name, namespace, expect_count):
     fate_flow_path = os.path.join(fate_home, "../fate_flow/fate_flow_client.py")
@@ -40,9 +77,9 @@ def check_data_count(submitter, fate_home, table_name, namespace, expect_count):
     print(f"[{time.strftime('%Y-%m-%d %X')}] check_data_out {stdout} \n")
 
 
-def data_upload(submitter, file_name, check_interval, fate_home):
-    with open(file_name) as f:
-        upload_config = json.loads(f.read())
+def data_upload(submitter, upload_config, check_interval, fate_home):
+    # with open(file_name) as f:
+    #     upload_config = json.loads(f.read())
 
     task_data = upload_config["data"]
     for data in task_data:
@@ -60,7 +97,9 @@ def data_upload(submitter, file_name, check_interval, fate_home):
 
 
 def main():
-    fate_home = os.path.abspath(f"{os.getcwd()}/../")
+    import examples
+    fate_home = os.path.dirname(examples.__file__)
+    # fate_home = os.path.abspath(f"{os.getcwd()}/../")
 
     arg_parser = argparse.ArgumentParser()
 
@@ -92,8 +131,7 @@ def main():
                                  existing_strategy=existing_strategy,
                                  spark_submit_config=spark_submit_config)
 
-    config_path = fate_home + '/min_test_task/config/upload.json'
-    data_upload(submitter, config_path, interval, fate_home)
+    data_upload(submitter, upload_data, interval, fate_home)
 
 
 if __name__ == "__main__":
