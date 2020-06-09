@@ -19,9 +19,10 @@ import requests
 from flask import jsonify
 from flask import Response
 
+from arch.api.utils.log_utils import audit_logger
 from fate_flow.entity.constant_config import WorkMode
 from fate_flow.settings import DEFAULT_GRPC_OVERALL_TIMEOUT, CHECK_NODES_IDENTITY, MANAGER_HOST, MANAGER_PORT, \
-    FATE_MANAGER_GET_NODE_INFO, HEADERS, audit_logger
+    FATE_MANAGER_GET_NODE_INFO, HEADERS
 from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_proxy_data_channel
 from fate_flow.entity.runtime_config import RuntimeConfig
 
@@ -44,9 +45,9 @@ def error_response(response_code, retmsg):
 def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, json_body, work_mode,
                   overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
     if int(dest_party_id) == 0:
-        return local_api(method=method, endpoint=endpoint, json_body=json_body)
+        return local_api(job_id=job_id, method=method, endpoint=endpoint, json_body=json_body)
     if work_mode == WorkMode.STANDALONE:
-        return local_api(method=method, endpoint=endpoint, json_body=json_body)
+        return local_api(job_id=job_id, method=method, endpoint=endpoint, json_body=json_body)
     elif work_mode == WorkMode.CLUSTER:
         return remote_api(job_id=job_id, method=method, endpoint=endpoint, src_party_id=src_party_id, src_role=src_role,
                           dest_party_id=dest_party_id, json_body=json_body, overall_timeout=overall_timeout)
@@ -64,7 +65,7 @@ def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, 
     try:
         channel, stub = get_proxy_data_channel()
         _return = stub.unaryCall(_packet)
-        audit_logger.info("grpc api response: {}".format(_return))
+        audit_logger(job_id).info("grpc api response: {}".format(_return))
         channel.close()
         json_body = json.loads(_return.body.value)
         return json_body
@@ -77,15 +78,15 @@ def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, 
         raise Exception('{}rpc request error: {}'.format(tips,e))
 
 
-def local_api(method, endpoint, json_body):
+def local_api(method, endpoint, json_body, job_id=None):
     try:
         url = "http://{}{}".format(RuntimeConfig.JOB_SERVER_HOST, endpoint)
-        audit_logger.info('local api request: {}'.format(url))
+        audit_logger(job_id).info('local api request: {}'.format(url))
         action = getattr(requests, method.lower(), None)
         response = action(url=url, json=json_body, headers=HEADERS)
-        audit_logger.info(response.text)
+        audit_logger(job_id).info(response.text)
         response_json_body = response.json()
-        audit_logger.info('local api response: {} {}'.format(endpoint, response_json_body))
+        audit_logger(job_id).info('local api response: {} {}'.format(endpoint, response_json_body))
         return response_json_body
     except Exception as e:
         raise Exception('local request error: {}'.format(e))
@@ -96,7 +97,7 @@ def request_execute_server(request, execute_host):
         endpoint = request.base_url.replace(request.host_url, '')
         method = request.method
         url = "http://{}/{}".format(execute_host, endpoint)
-        audit_logger.info('sub request: {}'.format(url))
+        audit_logger().info('sub request: {}'.format(url))
         action = getattr(requests, method.lower(), None)
         response = action(url=url, json=request.json, headers=HEADERS)
         return jsonify(response.json())
