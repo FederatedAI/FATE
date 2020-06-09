@@ -79,8 +79,8 @@ SERVINGS_ZK_PATH = '/FATE-SERVICES/serving/online/publishLoad/providers'
 FATE_FLOW_ZK_PATH = '/FATE-SERVICES/flow/online/transfer/providers'
 FATE_FLOW_MODEL_TRANSFER_PATH = '/v1/model/transfer'
 # fate-manager
-FATE_MANAGER_GET_NODE_INFO = '/node/info'
-FATE_MANAGER_NODE_CHECK = '/node/management/check'
+FATE_MANAGER_GET_NODE_INFO = '/fate-manager/api/site/secretinfo'
+FATE_MANAGER_NODE_CHECK = '/fate-manager/api/site/checksite'
 
 # logger
 log_utils.LoggerFactory.LEVEL = 10

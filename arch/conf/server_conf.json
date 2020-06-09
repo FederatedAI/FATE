@@ -15,7 +15,8 @@
 		},
 		"fateboard": {
 			"host": "localhost",
-			"port": 8080
+			"port": 8080,
+			"federatedId": 0
 		},
 		"proxy": {
 			"host": "localhost",

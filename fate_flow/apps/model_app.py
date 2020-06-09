@@ -25,7 +25,6 @@ from fate_flow.manager.model_manager import publish_model
 from fate_flow.manager.model_manager import pipelined_model
 from fate_flow.utils.api_utils import get_json_result, federated_api
 from fate_flow.utils.job_utils import generate_job_id, runtime_conf_basic
-from fate_flow.utils.node_check_utils import check_nodes
 from fate_flow.utils.setting_utils import CenterConfig
 from fate_flow.utils.detect_utils import check_config
 from fate_flow.entity.constant_config import ModelOperation
@@ -75,7 +74,6 @@ def load_model():
 
 
 @manager.route('/load/do', methods=['POST'])
-@check_nodes
 def do_load_model():
     request_data = request.json
     request_data["servings"] = CenterConfig.get_settings(path=SERVING_PATH, servings_zk_path=SERVINGS_ZK_PATH,

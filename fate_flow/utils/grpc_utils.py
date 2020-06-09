@@ -62,8 +62,8 @@ class UnaryServicer(proxy_pb2_grpc.DataTransferServiceServicer):
         param_dict = json.loads(param)
         param_dict['src_party_id'] = str(src.partyId)
         try:
-            nodes_check(param_dict.get('src_party_id'), param_dict.get('src_role'), param_dict.get('appKey'),
-                        param_dict.get('appSecret'))
+            nodes_check(param_dict.get('src_party_id'), param_dict.get('_src_role'), param_dict.get('appKey'),
+                        param_dict.get('appSecret'), str(dst.partyId))
         except Exception as e:
             resp_json = {
                 "retcode": 100,
