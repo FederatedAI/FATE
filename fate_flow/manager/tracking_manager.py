@@ -354,18 +354,20 @@ class Tracking(object):
                 if (job_info['f_status'] in [JobStatus.FAILED, JobStatus.TIMEOUT,
                                              JobStatus.CANCELED, JobStatus.COMPLETE]):
                     job.f_tag = 'job_end'
+            update_fields = []
             for k, v in job_info.items():
                 try:
                     if k in ['f_job_id', 'f_role', 'f_party_id'] or v == getattr(Job, k).default:
                         continue
                     setattr(job, k, v)
+                    update_fields.append(getattr(Job, k))
                 except:
                     pass
 
             if is_insert:
                 job.save(force_insert=True)
             else:
-                job.save()
+                job.save(only=update_fields)
 
     def save_task(self, role, party_id, task_info):
         with DB.connection_context():
