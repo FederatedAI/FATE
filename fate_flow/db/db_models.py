@@ -110,6 +110,7 @@ class Queue(DataBaseModel):
     f_job_id = CharField(max_length=100)
     f_event = CharField(max_length=500)
     f_is_waiting = IntegerField(default=1)
+    f_frequency = IntegerField(default=0)
 
     class Meta:
         db_table = "t_queue"

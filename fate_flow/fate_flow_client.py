@@ -24,6 +24,7 @@ import time
 import re
 
 import requests
+from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
 from arch.api.utils import file_utils
 from arch.api.utils.core_utils import get_lan_ip
@@ -159,11 +160,21 @@ def call_fun(func, config_data, dsl_path, config_path):
             if not os.path.isabs(file_name):
                 file_name = os.path.join(file_utils.get_project_base_directory(), file_name)
             if os.path.exists(file_name):
-                files = {'file': open(file_name, 'rb')}
+                with open(file_name, 'rb') as fp:
+                    data = MultipartEncoder(
+                        fields={'file': (os.path.basename(file_name), fp, 'application/octet-stream')}
+                    )
+
+                    def read_callback(monitor):
+                        loading = '{:.0f}%'.format((monitor.bytes_read/monitor.len)*100)
+                        print(loading)
+                    data = MultipartEncoderMonitor(data, read_callback)
+                    response = requests.post("/".join([server_url, "data", func.replace('_', '/')]), data=data,
+                                             params=config_data,
+                                             headers={'Content-Type': data.content_type})
             else:
                 raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
                                 'please check the path: {}'.format(file_name))
-            response = requests.post("/".join([server_url, "data", func.replace('_', '/')]), data=config_data, files=files)
         else:
             response = requests.post("/".join([server_url, "data", func.replace('_', '/')]), json=config_data)
         try:
