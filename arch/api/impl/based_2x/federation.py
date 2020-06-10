@@ -140,9 +140,6 @@ class FederationRuntime(Federation):
                 os.kill(pid, signal.SIGTERM)
                 raise e
 
-            if LOGGER.isEnabledFor(logging.DEBUG):
-                LOGGER.debug(f"federation remote done called:{result}")
-
         for future in futures:
             future.add_done_callback(done_callback)
 
