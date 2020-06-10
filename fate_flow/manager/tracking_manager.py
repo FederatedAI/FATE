@@ -349,7 +349,7 @@ class Tracking(object):
                     if not job.f_start_time:
                         return
                     job_info['f_end_time'] = current_timestamp()
-                    job_info['f_elapsed'] = job.f_end_time - job.f_start_time
+                    job_info['f_elapsed'] = job_info['f_end_time'] - job.f_start_time
                     job_info['f_update_time'] = current_timestamp()
 
                 if (job_info['f_status'] in [JobStatus.FAILED, JobStatus.TIMEOUT,
