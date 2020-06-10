@@ -122,7 +122,7 @@ class Job(DataBaseModel):
     f_name = CharField(max_length=500, null=True, default='')
     f_description = TextField(null=True, default='')
     f_tag = CharField(max_length=50, null=True, index=True, default='')
-    f_role = CharField(max_length=10, index=True)
+    f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
     f_roles = TextField()
     f_work_mode = IntegerField()
@@ -151,7 +151,7 @@ class Task(DataBaseModel):
     f_job_id = CharField(max_length=25)
     f_component_name = TextField()
     f_task_id = CharField(max_length=100)
-    f_role = CharField(max_length=10, index=True)
+    f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
     f_operator = CharField(max_length=100, null=True)
     f_run_ip = CharField(max_length=100, null=True)
@@ -170,7 +170,7 @@ class Task(DataBaseModel):
 
 class DataView(DataBaseModel):
     f_job_id = CharField(max_length=25)
-    f_role = CharField(max_length=10, index=True)
+    f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
     f_table_name = CharField(max_length=500, null=True)
     f_table_namespace = CharField(max_length=500, null=True)
@@ -196,7 +196,7 @@ class DataView(DataBaseModel):
 
 class MachineLearningModelMeta(DataBaseModel):
     f_id = BigIntegerField(primary_key=True)
-    f_role = CharField(max_length=10, index=True)
+    f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
     f_roles = TextField()
     f_job_id = CharField(max_length=25)
@@ -238,7 +238,7 @@ class TrackingMetric(DataBaseModel):
     f_job_id = CharField(max_length=25)
     f_component_name = TextField()
     f_task_id = CharField(max_length=100)
-    f_role = CharField(max_length=10, index=True)
+    f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
     f_metric_namespace = CharField(max_length=180, index=True)
     f_metric_name = CharField(max_length=180, index=True)
