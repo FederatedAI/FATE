@@ -459,8 +459,8 @@ class PSI(object):
             # handle special cases
             train_pos_perc[train_pos_perc == np.inf] = -1
             validate_pos_perc[validate_pos_perc == np.inf] = -1
-            train_pos_perc[train_pos_perc == np.nan] = 0
-            validate_pos_perc[validate_pos_perc == np.nan] = 0
+            train_pos_perc[np.isnan(train_pos_perc)] = 0
+            validate_pos_perc[np.isnan(validate_pos_perc)] = 0
 
         if debug:
             print(train_count)
