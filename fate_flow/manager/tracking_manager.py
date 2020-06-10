@@ -348,12 +348,13 @@ class Tracking(object):
                 if (job_info['f_status'] in [JobStatus.FAILED, JobStatus.TIMEOUT]) and (not job.f_end_time):
                     if not job.f_start_time:
                         return
-                    job.f_end_time = current_timestamp()
-                    job.f_elapsed = job.f_end_time - job.f_start_time
-                    job.f_update_time = current_timestamp()
+                    job_info['f_end_time'] = current_timestamp()
+                    job_info['f_elapsed'] = job.f_end_time - job.f_start_time
+                    job_info['f_update_time'] = current_timestamp()
+
                 if (job_info['f_status'] in [JobStatus.FAILED, JobStatus.TIMEOUT,
                                              JobStatus.CANCELED, JobStatus.COMPLETE]):
-                    job.f_tag = 'job_end'
+                    job_info['f_tag'] = 'job_end'
             update_fields = []
             for k, v in job_info.items():
                 try:
