@@ -178,7 +178,7 @@ class ModelBase(object):
         return predict_data
 
 
-    def predict_score_to_output(self, data_instances, predict_score, classes=None, threshold=None):
+    def predict_score_to_output(self, data_instances, predict_score, classes=None, threshold=0.5):
         # regression
         if classes is None:
             predict_result = data_instances.join(predict_score, lambda d, pred: [d.label, pred, pred, {"label": pred}])
