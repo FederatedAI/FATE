@@ -580,4 +580,7 @@ class Evaluation(ModelBase):
 
     @staticmethod
     def extract_data(data: dict):
-        return data
+        result = {}
+        for k, v in data.items():
+            result[".".join(k.split(".")[:-1])] = v
+        return result
