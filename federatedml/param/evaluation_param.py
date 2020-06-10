@@ -134,6 +134,16 @@ class EvaluateParam(BaseParam):
 
     def check_single_value_default_metric(self):
         self._use_single_value_default_metrics()
+
+        # in validation strategy, psi f1-score and confusion-mat pr-quantile are not supported in cur version
+        if self.metrics is None or len(self.metrics) == 0:
+            self.metrics = self.default_metrics[self.eval_type]
+            LOGGER.warning('use default metric {} for eval type {}'.format(self.metrics, self.eval_type))
+
+        ban_metric = [consts.PSI, consts.F1_SCORE, consts.CONFUSION_MAT, consts.QUANTILE_PR]
+        for metric in self.metrics:
+            if metric in ban_metric:
+                self.metrics.remove(metric)
         self.check()
 
 

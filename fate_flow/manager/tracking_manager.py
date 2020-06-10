@@ -78,7 +78,8 @@ class Tracking(object):
         request_body['metric_name'] = metric_name
         request_body['metrics'] = [serialize_b64(metric, to_str=True) for metric in metrics]
         request_body['job_level'] = job_level
-        response = api_utils.local_api(method='POST',
+        response = api_utils.local_api(job_id=self.job_id,
+                                       method='POST',
                                        endpoint='/{}/tracking/{}/{}/{}/{}/{}/metric_data/save'.format(
                                            API_VERSION,
                                            self.job_id,
@@ -129,7 +130,8 @@ class Tracking(object):
         request_body['metric_name'] = metric_name
         request_body['metric_meta'] = serialize_b64(metric_meta, to_str=True)
         request_body['job_level'] = job_level
-        response = api_utils.local_api(method='POST',
+        response = api_utils.local_api(job_id=self.job_id,
+                                       method='POST',
                                        endpoint='/{}/tracking/{}/{}/{}/{}/{}/metric_meta/save'.format(
                                            API_VERSION,
                                            self.job_id,
@@ -197,8 +199,11 @@ class Tracking(object):
             persistent_table = data_table.save_as(
                 namespace=persistent_table_namespace,
                 name=persistent_table_name)
+            persistent_table_metas = {}
+            persistent_table_metas.update(data_table.get_metas())
+            persistent_table_metas["schema"] = data_table.schema
             session.save_data_table_meta(
-                {'schema': data_table.schema, 'header': data_table.schema.get('header', [])},
+                persistent_table_metas,
                 data_table_namespace=persistent_table.get_namespace(), data_table_name=persistent_table.get_name())
             data_table_info = {
                 data_name: {'name': persistent_table.get_name(), 'namespace': persistent_table.get_namespace()}}
@@ -341,25 +346,32 @@ class Tracking(object):
                 if job.f_status in [JobStatus.COMPLETE, JobStatus.FAILED]:
                     # Termination status cannot be updated
                     # TODO:
-                    pass
+                    return
                 if (job_info['f_status'] in [JobStatus.FAILED, JobStatus.TIMEOUT]) and (not job.f_end_time):
+                    if not job.f_start_time:
+                        return
                     job.f_end_time = current_timestamp()
                     job.f_elapsed = job.f_end_time - job.f_start_time
                     job.f_update_time = current_timestamp()
-                if (job_info['f_status'] in [JobStatus.FAILED, JobStatus.TIMEOUT, JobStatus.CANCELED]):
-                    job.f_tag = 'failed'
+                if (job_info['f_status'] in [JobStatus.FAILED, JobStatus.TIMEOUT,
+                                             JobStatus.CANCELED, JobStatus.COMPLETE]):
+                    job.f_tag = 'job_end'
+                if job.f_status == JobStatus.CANCELED:
+                    job_info.pop('f_status')
+            update_fields = []
             for k, v in job_info.items():
                 try:
                     if k in ['f_job_id', 'f_role', 'f_party_id'] or v == getattr(Job, k).default:
                         continue
                     setattr(job, k, v)
+                    update_fields.append(getattr(Job, k))
                 except:
                     pass
 
             if is_insert:
                 job.save(force_insert=True)
             else:
-                job.save()
+                job.save(only=update_fields)
 
     def save_task(self, role, party_id, task_info):
         with DB.connection_context():
@@ -451,17 +463,6 @@ class Tracking(object):
                     schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
                                                                                                          self.role,
                                                                                                          self.party_id))
-#                     # clean the task input data table
-#                     namespace_clean = job_utils.generate_task_input_data_namespace(task_id=self.task_id,
-#                                                                                    role=role,
-#                                                                                    party_id=party_id)
-#                     schedule_logger(self.job_id).info('clean table by namespace {} on {} {}'.format(namespace_clean,
-#                                                                                                     self.role,
-#                                                                                                     self.party_id))
-#                     session.clean_tables(namespace=namespace_clean, regex_string='*')
-#                     schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
-#                                                                                                          self.role,
-#                                                                                                          self.party_id))
                     # clean namespace: task_id ,data table
                     namespace_clean = self.task_id
                     schedule_logger(self.job_id).info('clean table by namespace {} on {} {}'.format(namespace_clean,

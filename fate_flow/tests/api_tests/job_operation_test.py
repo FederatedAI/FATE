@@ -10,7 +10,7 @@ from arch.api.utils import file_utils
 from fate_flow.settings import HTTP_PORT, API_VERSION
 
 
-class TestDataAccess(unittest.TestCase):
+class TestJobOperation(unittest.TestCase):
     def setUp(self):
         self.dsl_path = 'fate_flow/examples/test_hetero_lr_job_dsl.json'
         self.config_path = 'fate_flow/examples/test_hetero_lr_job_conf.json'

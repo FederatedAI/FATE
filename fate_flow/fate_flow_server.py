@@ -35,6 +35,7 @@ from fate_flow.apps.table_app import manager as table_app_manager
 from fate_flow.apps.tracking_app import manager as tracking_app_manager
 from fate_flow.apps.schedule_app import manager as schedule_app_manager
 from fate_flow.apps.permission_app import manager as permission_app_manager
+from fate_flow.apps.version_app import manager as version_app_manager
 from fate_flow.db.db_models import init_database_tables
 from fate_flow.driver import dag_scheduler, job_controller, job_detector
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -76,7 +77,8 @@ if __name__ == '__main__':
             '/{}/tracking'.format(API_VERSION): tracking_app_manager,
             '/{}/pipeline'.format(API_VERSION): pipeline_app_manager,
             '/{}/schedule'.format(API_VERSION): schedule_app_manager,
-            '/{}/permission'.format(API_VERSION): permission_app_manager
+            '/{}/permission'.format(API_VERSION): permission_app_manager,
+            '/{}/version'.format(API_VERSION): version_app_manager
         }
     )
     # init
@@ -96,6 +98,8 @@ if __name__ == '__main__':
     RuntimeConfig.set_process_role(ProcessRole.SERVER)
     queue_manager.init_job_queue()
     job_controller.JobController.init()
+    history_job_clean = job_controller.JobClean()
+    history_job_clean.start()
     PrivilegeAuth.init()
     CenterConfig.init(ZOOKEEPER_HOSTS, USE_CONFIGURATION_CENTER, FATE_FLOW_ZK_PATH, HTTP_PORT,
                       FATE_FLOW_MODEL_TRANSFER_PATH)

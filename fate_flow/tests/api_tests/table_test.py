@@ -5,7 +5,7 @@ import requests
 from fate_flow.settings import HTTP_PORT, API_VERSION, WORK_MODE
 
 
-class TestDataAccess(unittest.TestCase):
+class TestTable(unittest.TestCase):
     def setUp(self):
         self.upload_config = {"file": "examples/data/breast_b.csv", "head": 1, "partition": 10, "work_mode": WORK_MODE, "namespace": "fate_flow_tabletest_breast", "table_name": "breast_b", "use_local_data": 0, 'drop': 0}
         self.server_url = "http://{}:{}/{}".format('127.0.0.1', HTTP_PORT, API_VERSION)

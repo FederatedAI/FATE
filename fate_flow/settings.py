@@ -79,8 +79,8 @@ SERVINGS_ZK_PATH = '/FATE-SERVICES/serving/online/publishLoad/providers'
 FATE_FLOW_ZK_PATH = '/FATE-SERVICES/flow/online/transfer/providers'
 FATE_FLOW_MODEL_TRANSFER_PATH = '/v1/model/transfer'
 # fate-manager
-FATE_MANAGER_GET_NODE_INFO = '/node/info'
-FATE_MANAGER_NODE_CHECK = '/node/management/check'
+FATE_MANAGER_GET_NODE_INFO = '/fate-manager/api/site/secretinfo'
+FATE_MANAGER_NODE_CHECK = '/fate-manager/api/site/checksite'
 
 # logger
 log_utils.LoggerFactory.LEVEL = 10
@@ -89,7 +89,6 @@ log_utils.LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_d
 stat_logger = log_utils.getLogger("fate_flow_stat")
 detect_logger = log_utils.getLogger("fate_flow_detect")
 access_logger = log_utils.getLogger("fate_flow_access")
-audit_logger = log_utils.audit_logger()
 
 """
 Services 
@@ -123,7 +122,7 @@ BOARD_DASHBOARD_URL = 'http://%s:%d/index.html#/dashboard?job_id={}&role={}&part
 # switch
 SAVE_AS_TASK_INPUT_DATA_SWITCH = True
 SAVE_AS_TASK_INPUT_DATA_IN_MEMORY = True
-TASK_INPUT_REPARTITION_SWITCH = True
+ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH = True
 
 # init
 RuntimeConfig.init_config(WORK_MODE=WORK_MODE)

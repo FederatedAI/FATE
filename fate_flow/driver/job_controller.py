@@ -13,6 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import threading
+import time
+
 from fate_flow.utils.authentication_utils import authentication_check
 from federatedml.protobuf.generated import pipeline_pb2
 from arch.api.utils import dtable_utils
@@ -288,6 +291,16 @@ class JobController(object):
             return True
         else:
             raise Exception('role {} party id {} cancel waiting job failed, no find jod {}'.format(role, party_id, job_id))
+
+
+class JobClean(threading.Thread):
+    def run(self):
+        time.sleep(5)
+        jobs = job_utils.query_job(status='running', is_initiator=1)
+        job_ids = set([job.f_job_id for job in jobs])
+        for job_id in job_ids:
+            schedule_logger(job_id).info('fate flow server start clean job')
+            TaskScheduler.stop(job_id, JobStatus.FAILED)
 
 
 
