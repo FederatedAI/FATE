@@ -43,8 +43,10 @@ possibility of encountering problems.
       cd docker_standalone-fate-1.4.1
       bash install_standalone_docker.sh
 
+
 4. Test
-    1.Unit Test
+
+   1. Unit Test
 
    ::
 
@@ -58,7 +60,7 @@ possibility of encountering problems.
 
       there are 0 failed test
 
-   2.Toy_example Test
+   2. Toy_example Test
 
    ::
 
@@ -78,6 +80,7 @@ out!
 
 You can also experience the fateboard access via a browser:
 Http://hostip:8080.
+
 
 2) Install FATE in Host
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -106,7 +109,8 @@ Http://hostip:8080.
       source init.sh init
 
 4. Test
-    1.Unit Test
+
+   1. Unit Test
 
    ::
 
@@ -119,7 +123,7 @@ Http://hostip:8080.
 
       there are 0 failed test
 
-   2.Toy_example Test
+   2. Toy_example Test
 
    ::
 
