@@ -24,7 +24,7 @@ _get_tag_histories = set()
 def init_roll_site_context(runtime_conf, session_id):
     from eggroll.roll_site.roll_site import RollSiteContext
     from eggroll.roll_pair.roll_pair import RollPairContext
-    LOGGER.info("init_roll_site_context runtime_conf: {}".format(runtime_conf))
+    LOGGER.debug("init_roll_site_context runtime_conf: {}".format(runtime_conf))
     session_instance = FateSession.get_instance()._eggroll.get_session()
     rp_context = RollPairContext(session_instance)
 
@@ -42,7 +42,7 @@ def init_roll_site_context(runtime_conf, session_id):
                }
 
     rs_context = RollSiteContext(session_id, rp_ctx=rp_context, options=options)
-    LOGGER.info("init_roll_site_context done: {}".format(rs_context.__dict__))
+    LOGGER.debug("init_roll_site_context done: {}".format(rs_context.__dict__))
     return rp_context, rs_context
 
 
@@ -77,7 +77,7 @@ class FederationRuntime(Federation):
             if obj is None:
                 raise EnvironmentError(f"federation get None from {party} with name {name}, tag {tag}")
 
-            LOGGER.info(f'federation got data. name: {name}, tag: {tag}')
+            LOGGER.debug(f'federation got data. name: {name}, tag: {tag}')
             if isinstance(obj, RollPair):
                 rtn.append(obj)
                 rubbish.add_table(obj)
