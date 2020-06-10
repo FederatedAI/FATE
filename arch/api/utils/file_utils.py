@@ -98,15 +98,17 @@ def load_yaml_conf(conf_path):
 
 
 def set_server_conf(config):
+    # manager
     federatedId = config.get('federatedId')
-    data = load_json_conf_real_time(SERVER_CONF_PATH)
-    manager_conf = data.get(SERVERS).get('fatemanager', {})
+    server_conf = load_json_conf_real_time(SERVER_CONF_PATH)
+    manager_conf = server_conf.get(SERVERS).get('fatemanager', {})
     if manager_conf:
-        data[SERVERS]['fatemanager']['federatedId'] = federatedId
+        server_conf[SERVERS]['fatemanager']['federatedId'] = federatedId
     else:
-        raise Exception('there is no manager configuration')
+        server_conf[SERVERS]['fatemanager'] = {}
+        server_conf[SERVERS]['fatemanager']['federatedId'] = federatedId
     json_conf_path = os.path.join(get_project_base_directory(), SERVER_CONF_PATH)
-    rewrite_json_file(json_conf_path, data)
+    rewrite_json_file(json_conf_path, server_conf)
     return {'federatedId': federatedId}
 
 
