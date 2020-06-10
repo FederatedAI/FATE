@@ -13,10 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_flow.settings import stat_logger
+from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.settings import stat_logger, SERVER_CONF_PATH, SERVERS
 from flask import Flask, request
 
-from arch.api.utils.file_utils import get_fate_env, set_server_conf
+from arch.api.utils.file_utils import set_server_conf
 from fate_flow.utils.api_utils import get_json_result
 
 
@@ -31,12 +32,12 @@ def internal_server_error(e):
 
 @manager.route('/get', methods=['POST'])
 def get_fate_version_info():
-    module, version = get_fate_env(request.json.get('module'))
-    return get_json_result(data={module: version})
+    version = RuntimeConfig.get_env(request.json.get('module', 'FATE'))
+    return get_json_result(data={request.json.get('module'): version})
 
 
 @manager.route('/set', methods=['POST'])
 def set_fate_server_info():
-    data = set_server_conf(request.json)
+    data = set_server_conf(request.json, SERVER_CONF_PATH, SERVERS)
     return get_json_result(data=data)
 

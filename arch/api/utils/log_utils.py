@@ -210,13 +210,13 @@ def schedule_logger(job_id=None, delete=False):
                 try:
                     for key in LoggerFactory.schedule_logger_dict.keys():
                         if job_id in key:
-                            del LoggerFactory.schedule_logger_dict[job_id]
+                            del LoggerFactory.schedule_logger_dict[key]
                 except:
                     pass
             return True
         key = job_id + 'schedule'
         if key in LoggerFactory.schedule_logger_dict:
-            return LoggerFactory.schedule_logger_dict[job_id]
+            return LoggerFactory.schedule_logger_dict[key]
         return LoggerFactory.get_schedule_logger(job_id)
 
 
