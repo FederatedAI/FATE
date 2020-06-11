@@ -18,7 +18,10 @@ syntax = "proto3";
 
 package com.webank.ai.fate.core.mlmodel.buffer;
 option java_outer_classname = "LRModelMetaProto";
-import "predict-meta.proto";
+
+message PredictMeta {
+    double threshold = 1;
+}
 
 message LRModelMeta {
     string penalty = 1;
@@ -35,4 +38,3 @@ message LRModelMeta {
     bool need_one_vs_rest = 12;
     PredictMeta predict_param = 13;
 }
-

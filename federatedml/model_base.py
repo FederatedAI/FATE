@@ -193,10 +193,10 @@ class ModelBase(object):
         # multi-label: input = array of predicted score of all labels
         elif isinstance(classes, list) and len(classes) > 2:
             #pred_label = predict_score.mapValues(lambda x: classes[x.index(max(x))])
-
+            classes = [str(val) for val in classes]
             predict_result = data_instances.mapValues(lambda x: x.label)
-            predict_result = predict_result.join(predict_score, lambda x, y: [x, int(classes[x.index(max(x))]),
-                                                                              max(y), dict(zip(classes, list(y)))])
+            predict_result = predict_result.join(predict_score, lambda x, y: [x, int(classes[y.argmax()]),
+                                                                              y.max(), dict(zip(classes, list(y)))])
         else:
             raise ValueError(f"Model's classes type is {type(classes)}, classes must be None or list.")
 
