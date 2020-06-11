@@ -17,7 +17,10 @@
 #  limitations under the License.
 #
 
+import copy
+
 from federatedml.param.base_param import BaseParam
+from federatedml.param.predict_param import PredictParam
 
 class LocalBaselineParam(BaseParam):
     """
@@ -30,14 +33,17 @@ class LocalBaselineParam(BaseParam):
     model_opts: dict or none, default None
         Param to be used as input into baseline model
 
+    predict_param: PredictParam object, default: default PredictParam object
+
     need_run: bool, default True
         Indicate if this module needed to be run
     """
 
-    def __init__(self, model_name="LogisticRegression", model_opts=None, need_run=True):
+    def __init__(self, model_name="LogisticRegression", model_opts=None, predict_param=PredictParam(), need_run=True):
         super(LocalBaselineParam, self).__init__()
         self.model_name = model_name
         self.model_opts = model_opts
+        self.predict_param = copy.deepcopy(predict_param)
         self.need_run = need_run
 
     def check(self):
@@ -52,5 +58,6 @@ class LocalBaselineParam(BaseParam):
                 raise ValueError(descr + " model_opts must be None or dict.")
         if self.model_opts is None:
             self.model_opts = {}
+        self.predict_param.check()
 
         return True
