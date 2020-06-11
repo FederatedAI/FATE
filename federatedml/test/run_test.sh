@@ -43,7 +43,7 @@ traverse_folder() {
         file_fullname=$1/$file
         if [ -d $file_fullname ]; then
             traverse_folder $file_fullname
-		elif [[ $file =~ _test.py$ ]] && [[ $1 =~ /test$ || $1 =~ tests$ ]]; then
+        elif [[ $file =~ _test.py$ ]] && [[ $1 =~ /test$ || $1 =~ tests$ ]]; then
             if [[ $file_fullname =~ "ftl" ]]; then
                 continue
             else
