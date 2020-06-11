@@ -1,6 +1,6 @@
 ## ****FATE Stand-alone Deployment Guide****
 
-The stand-alone version provides three deployment methods, which can be selected according to your actual situation:
+The stand-alone version provides 2 deployment methods, which can be selected according to your actual situation:
 
 - Install FATE using Docker [Chinese guide](./doc/Fate-standalone_deployment_guide_zh.md) *(Recommended)* 
 
