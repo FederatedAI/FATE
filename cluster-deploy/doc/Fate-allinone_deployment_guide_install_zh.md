@@ -260,7 +260,11 @@ tar xzf fate-cluster-install-1.4.0-release-c7-u18.tar.gz
 
 **在目标服务器（192.168.0.1）app用户下执行**
 
-进入到fate-cluster-install/allInone/conf目录下，修改配置文件setup.conf.
+修改配置文件fate-cluster-install/allInone/conf/setup.conf.
+
+```
+vi fate-cluster-install/allInone/conf/setup.conf
+```
 
 配置文件setup.conf说明：
 
@@ -269,6 +273,7 @@ tar xzf fate-cluster-install-1.4.0-release-c7-u18.tar.gz
 | roles            | 默认："host" "guest"                          | 部署的角色，有HOST端、GUEST端                                |
 | version          | 默认：1.4.0                                   | Fate 版本号                                                  |
 | pbase            | 默认： /data/projects                         | 项目根目录                                                   |
+| lbase            | 默认：/data/logs                              | 保持默认不要修改                                             |
 | ssh_user         | 默认：app                                     | ssh连接目标机器的用户，也是部署后文件的属主                  |
 | ssh_group        | 默认：apps                                    | ssh连接目标的用户的属组，也是部署后文件的属组                |
 | ssh_port         | 默认：22,根据实际情况修改                     | ssh连接端口，部署前确认好端口，不然会报连接错误              |
@@ -406,19 +411,18 @@ basemodules=( "base" "java" "python" "eggroll" "fate" )
 按照上述配置含义修改setup.conf文件对应的配置项后，然后在fate-cluster-install/allInone目录下执行部署脚本：
 
 ```
-cd fate-cluster-install\allInone
+cd fate-cluster-install/allInone
 nohup sh ./deploy.sh > logs/boot.log 2>&1 &
 ```
 
 部署日志输出在fate-cluster-install/allInone/logs目录下,实时查看是否有报错：
 
 ```
-cd logs
-tail -f boot.log （这个有报错信息才会输出，部署结束，查看一下即可）
-tail -f deploy-guest.log （实时打印GUEST端的部署情况）
-tail -f deploy-mysql-guest.log  （实时打印GUEST端mysql的部署情况）
-tail -f deploy-host.log    （实时打印HOST端的部署情况）
-tail -f deploy-mysql-host.log    （实时打印HOST端mysql的部署情况）
+tail -f ./logs/boot.log （这个有报错信息才会输出，部署结束，查看一下即可）
+tail -f ./logs/deploy-guest.log （实时打印GUEST端的部署情况）
+tail -f ./logs/deploy-mysql-guest.log  （实时打印GUEST端mysql的部署情况）
+tail -f ./logs/deploy-host.log    （实时打印HOST端的部署情况）
+tail -f ./logs/deploy-mysql-host.log    （实时打印HOST端mysql的部署情况）
 ```
 
 ## 5.4 问题定位

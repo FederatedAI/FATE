@@ -1,0 +1,30 @@
+{
+    "components" : {
+        "union_0": {
+            "module": "Union",
+            "input": {
+                "data": {
+                        "data_0": ["args.data0"],
+                        "data_1": ["args.data1"]
+                }
+            },
+            "output": {
+                "data": ["data"]
+            }
+        },
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "union_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["data"],
+                "model": ["dataio"]
+            }
+         }
+    }
+}

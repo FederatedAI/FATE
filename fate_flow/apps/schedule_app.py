@@ -47,6 +47,15 @@ def job_status(job_id, role, party_id):
     return get_json_result(retcode=0, retmsg='success')
 
 
+@manager.route('/<job_id>/<role>/<party_id>/check', methods=['POST'])
+def job_check(job_id, role, party_id):
+    status = JobController.check_job_run(job_id, role, party_id, job_info=request.json)
+    if status:
+        return get_json_result(retcode=0, retmsg='success')
+    else:
+        return get_json_result(retcode=101, retmsg='The job running on the host side exceeds the maximum running amount')
+
+
 @manager.route('/<job_id>/<role>/<party_id>/<model_id>/<model_version>/save/pipeline', methods=['POST'])
 @request_authority_certification
 def save_pipeline(job_id, role, party_id, model_id, model_version):
@@ -92,3 +101,14 @@ def run_task(job_id, component_name, task_id, role, party_id):
 def task_status(job_id, component_name, task_id, role, party_id):
     JobController.update_task_status(job_id, component_name, task_id, role, party_id, request.json)
     return get_json_result(retcode=0, retmsg='success')
+
+
+@manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/input/args', methods=['POST'])
+def query_task_input_args(job_id, component_name, task_id, role, party_id):
+    task_input_args = JobController.query_task_input_args(job_id, task_id, role, party_id,
+                                                          job_args=request.json.get('job_args', {}),
+                                                          job_parameters=request.json.get('job_parameters', {}),
+                                                          input_dsl=request.json.get('input', {}),
+                                                          filter_type=['data'],
+                                                          filter_attr={'data': ['partitions']})
+    return get_json_result(retcode=0, retmsg='success', data=task_input_args)

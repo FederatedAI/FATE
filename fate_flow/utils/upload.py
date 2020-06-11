@@ -43,8 +43,9 @@ class Upload(object):
             self.parameters["file"] = os.path.join(file_utils.get_project_base_directory(), self.parameters["file"])
         if not os.path.exists(self.parameters["file"]):
             raise Exception("%s is not exist, please check the configure" % (self.parameters["file"]))
-        table_name, namespace = dtable_utils.get_table_info(config=self.parameters,
-                                                            create=True)
+        if not os.path.getsize(self.parameters["file"]):
+            raise Exception("%s is an empty file" % (self.parameters["file"]))
+        table_name, namespace = dtable_utils.get_table_info(config=self.parameters, create=True)
         _namespace, _table_name = self.generate_table_name(self.parameters["file"])
         if namespace is None:
             namespace = _namespace
@@ -64,6 +65,13 @@ class Upload(object):
         session.init(mode=self.parameters['work_mode'])
         data_table_count = self.save_data_table(table_name, namespace, head, self.parameters.get('in_version', False))
         LOGGER.info("------------load data finish!-----------------")
+        # rm tmp file
+        try:
+            if '{}/fate_upload_tmp'.format(job_id) in self.parameters['file']:
+                LOGGER.info("remove tmp upload file")
+                shutil.rmtree(os.path.join(self.parameters["file"].split('tmp')[0], 'tmp'))
+        except:
+            LOGGER.info("remove tmp file failed")
         LOGGER.info("file: {}".format(self.parameters["file"]))
         LOGGER.info("total data_count: {}".format(data_table_count))
         LOGGER.info("table name: {}, table namespace: {}".format(table_name, namespace))
