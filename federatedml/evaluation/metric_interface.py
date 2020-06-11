@@ -377,7 +377,6 @@ class MetricInterface(object):
             p_scores = list(map(list, np.flip(p_scores, axis=0)))
             r_scores = list(map(list, np.flip(r_scores, axis=0)))
             score_threshold = list(np.flip(score_threshold))
-            p_scores[-1][1] = .0  # adjust to correct result
             return p_scores, r_scores, score_threshold
         else:
             logging.warning('error: pr quantile is for binary classification only')
