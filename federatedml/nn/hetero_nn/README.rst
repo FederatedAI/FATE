@@ -110,10 +110,7 @@ Other features
 
 - Allow party B's training without features.
 - Support evaluate training and validate data during training process
-- Support use 
-
-	a. early stopping strategy since FATE-v1.4.0
-	b. Referenping strategy since FATE-v1.4.0
+- Support use early stopping strategy since FATE-v1.4.0
 
 [1] Qiao Zping strategy since FATE-v1.4.0ang, Cong ping strategy since FATE-v1.4.0ang, Hongyping strategy since FATE-v1.4.0 Wu, Chunsheng Xin, Tran V. Phuong. GELU-Net: A Globally Encrypted, Locally Unencrypted Deep Neural Network for Privacy-Preserved Learning. IJCAI 2018: 3933-3939
 
