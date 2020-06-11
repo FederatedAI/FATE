@@ -1,3 +1,22 @@
+# Release 1.4.1
+## Major Features and Improvements
+> FederatedML
+* Reconstructed Evaluation Module improves efficiency by 60 times
+* Add PSI, confusion matrix, f1-score  and quantile threshold support for Precision/Recall in Evaluation.
+* Add option to retain duplicated keys in Union.
+* Support filter feature based on mode
+* Manual filter allows manually set columns to retain
+* Auto recoginize whether a data set includes a label column in predict process
+* Bug-fix: Missing schema after merge in Union; Fail to align label of multi-class in homo_nn with PyTorch backend; Floating-point precision error and value error due to int-type input in Feature Scale
+
+> FATE-Flow
+* Allow the host to stop the job
+* Optimize the task queue
+* Automatically align the input table partitions of all participants when the job is running
+* Fate flow client large file upload optimization
+* Fixed some bugs with abnormal status
+
+
 # Release 1.4.0
 ## Major Features and Improvements
 > FederatedML
