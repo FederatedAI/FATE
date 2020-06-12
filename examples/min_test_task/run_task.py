@@ -238,7 +238,6 @@ class TrainTask(TaskManager):
                jobid, "-p", str(self.guest_id), "-r", "guest",
                "-cpn", evaluation_component_name]
         eval_res = self.start_block_task(cmd, max_waiting_time=OTHER_TASK_TIME)
-        print("eval_res: {}".format(eval_res))
         eval_results = eval_res['data']['train'][self.train_component_name]['data']
         time_print("Get auc eval res: {}".format(eval_results))
         auc = 0
