@@ -53,6 +53,9 @@ class SparseVector(object):
     def get_shape(self):
         return self.shape
 
+    def set_shape(self, shape):
+        self.shape = shape
+
     def get_all_data(self):
         for idx, data in self.sparse_vec.items():
             yield idx, data

@@ -39,6 +39,8 @@ from federatedml.transfer_variable.transfer_class.hetero_secure_boost_transfer_v
 from federatedml.tree import BoostingTree
 from federatedml.tree import HeteroDecisionTreeHost
 from federatedml.util import consts
+from federatedml.tree.tree_core.predict_cache import PredictDataCache
+from federatedml.statistic import data_overview
 
 LOGGER = log_utils.getLogger()
 
@@ -57,6 +59,8 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         self.bin_sparse_points = None
         self.data_bin = None
         self.role = consts.HOST
+        self.predict_data_cache = PredictDataCache()
+        self.data_alignment_map = {}
 
     def convert_feature_to_bin(self, data_instance):
         LOGGER.info("convert feature to bins")
@@ -152,7 +156,17 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
 
     def predict(self, data_inst, predict_param=None):
         LOGGER.info("start predict")
-        data_inst = self.data_alignment(data_inst)
+        cache_dataset_key = self.predict_data_cache.get_data_key(data_inst)
+        if cache_dataset_key in self.data_alignment_map:
+            data_inst = self.data_alignment_map[cache_dataset_key]
+        else:
+            data_inst = self.data_alignment(data_inst)
+            header = [None] * len(self.feature_name_fid_mapping)
+            for idx, col in self.feature_name_fid_mapping.items():
+                header[idx] = col
+            data_inst = data_overview.header_alignment(data_inst, header)
+            self.data_alignment_map[cache_dataset_key] = data_inst
+
         rounds = len(self.trees_) // self.tree_dim
         predict_start_round = self.sync_predict_start_round()
         for i in range(predict_start_round, rounds):
