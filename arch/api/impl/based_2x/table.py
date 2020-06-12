@@ -196,5 +196,5 @@ class DTable(Table):
 
     @log_elapsed
     def flatMap(self, func, **kwargs):
-        _temp_table = self.from_dtable(self._session_id, self._dtable.flat_map(func))
-        return _temp_table.save_as(name=f"{_temp_table._name}.save_as", namespace=_temp_table._namespace)
+        return self.from_dtable(session_id=self._session_id,
+                                dtable=self._dtable.flat_map(func).map(lambda k, v: (k, v)))

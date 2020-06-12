@@ -1,0 +1,20 @@
+{
+    "module_path":  "federatedml/feature/OHE_with_alignment",
+    "default_runtime_conf": "onehot_encoder_with_alignment_param.json",
+    "param_class" : "federatedml/param/onehot_encoder_with_alignment_param.py/OHEAlignmentParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "OHE_alignment_base.py/OHEAlignmentGuest"
+        },
+        "host":
+        {
+            "program": "OHE_alignment_base.py/OHEAlignmentHost"
+        },
+        "arbiter":
+        {
+            "program": "OHE_alignment_arbiter.py/OHEAlignmentArbiter"
+        }
+    }
+}

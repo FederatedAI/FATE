@@ -303,6 +303,10 @@ class MetricInterface(object):
 
     def f1_score(self, labels, pred_scores):
 
+        """
+        compute f1_score for binary classification result
+        """
+
         if self.eval_type == consts.BINARY:
             f1_scores, score_threshold, cuts = classification_metric.FScore().compute(labels, pred_scores)
             return list(f1_scores), list(cuts), list(score_threshold)
@@ -311,11 +315,24 @@ class MetricInterface(object):
 
     def confusion_mat(self, labels, pred_scores):
 
+        """
+        compute confusion matrix
+        """
+
         if self.eval_type == consts.BINARY:
-            operator = classification_metric.BiClassMetric()
-            confusion_mat, score_threshold, cuts = operator.prepare_confusion_mat(labels, pred_scores, add_to_end=True)
-            for key in confusion_mat:
-                confusion_mat[key] = self.__to_int_list(confusion_mat[key])
+
+            sorted_labels, sorted_scores = classification_metric.sort_score_and_label(labels, pred_scores)
+            score_threshold, cuts = classification_metric.ThresholdCutter.cut_by_step(sorted_scores, steps=0.01)
+            score_threshold.append(0)
+            confusion_mat = classification_metric.ConfusionMatrix.compute(sorted_labels, sorted_scores,
+                                                                          score_threshold,
+                                                                          ret=['tp', 'fp', 'fn', 'tn'])
+
+            confusion_mat['tp'] = self.__to_int_list(confusion_mat['tp'])
+            confusion_mat['fp'] = self.__to_int_list(confusion_mat['fp'])
+            confusion_mat['fn'] = self.__to_int_list(confusion_mat['fn'])
+            confusion_mat['tn'] = self.__to_int_list(confusion_mat['tn'])
+
             return confusion_mat, cuts, score_threshold
         else:
             logging.warning('error: f-score metric is for binary classification only')
@@ -357,7 +374,6 @@ class MetricInterface(object):
             r = classification_metric.BiClassRecall(cut_method='quantile', remove_duplicate=False)
             p_scores, score_threshold, cuts = p.compute(labels, pred_scores)
             r_scores, score_threshold, cuts = r.compute(labels, pred_scores)
-            LOGGER.debug('p quantile thresholds are {}, r quantile thresholds are {}'.format(p_scores, r_scores))
             p_scores = list(map(list, np.flip(p_scores, axis=0)))
             r_scores = list(map(list, np.flip(r_scores, axis=0)))
             score_threshold = list(np.flip(score_threshold))

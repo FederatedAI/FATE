@@ -197,8 +197,11 @@ class Tracking(object):
             persistent_table = data_table.save_as(
                 namespace=persistent_table_namespace,
                 name=persistent_table_name)
+            persistent_table_metas = {}
+            persistent_table_metas.update(data_table.get_metas())
+            persistent_table_metas["schema"] = data_table.schema
             session.save_data_table_meta(
-                {'schema': data_table.schema, 'header': data_table.schema.get('header', [])},
+                persistent_table_metas,
                 data_table_namespace=persistent_table.get_namespace(), data_table_name=persistent_table.get_name())
             data_table_info = {
                 data_name: {'name': persistent_table.get_name(), 'namespace': persistent_table.get_namespace()}}
@@ -341,25 +344,31 @@ class Tracking(object):
                 if job.f_status in [JobStatus.COMPLETE, JobStatus.FAILED]:
                     # Termination status cannot be updated
                     # TODO:
-                    pass
+                    return
                 if (job_info['f_status'] in [JobStatus.FAILED, JobStatus.TIMEOUT]) and (not job.f_end_time):
-                    job.f_end_time = current_timestamp()
-                    job.f_elapsed = job.f_end_time - job.f_start_time
-                    job.f_update_time = current_timestamp()
-                if (job_info['f_status'] in [JobStatus.FAILED, JobStatus.TIMEOUT, JobStatus.CANCELED]):
-                    job.f_tag = 'failed'
+                    if not job.f_start_time:
+                        return
+                    job_info['f_end_time'] = current_timestamp()
+                    job_info['f_elapsed'] = job_info['f_end_time'] - job.f_start_time
+                    job_info['f_update_time'] = current_timestamp()
+
+                if (job_info['f_status'] in [JobStatus.FAILED, JobStatus.TIMEOUT,
+                                             JobStatus.CANCELED, JobStatus.COMPLETE]):
+                    job_info['f_tag'] = 'job_end'
+            update_fields = []
             for k, v in job_info.items():
                 try:
                     if k in ['f_job_id', 'f_role', 'f_party_id'] or v == getattr(Job, k).default:
                         continue
                     setattr(job, k, v)
+                    update_fields.append(getattr(Job, k))
                 except:
                     pass
 
             if is_insert:
                 job.save(force_insert=True)
             else:
-                job.save()
+                job.save(only=update_fields)
 
     def save_task(self, role, party_id, task_info):
         with DB.connection_context():

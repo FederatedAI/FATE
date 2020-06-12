@@ -1,0 +1,24 @@
+{
+  "OHEAlignmentTransferVariable": {
+
+    "guest_columns": {
+      "src": "guest",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "host_columns": {
+      "src": "host",
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "aligned_columns": {
+      "src":"arbiter",
+      "dst": [
+        "guest",
+        "host"
+      ]
+    }
+  }
+}
