@@ -30,7 +30,7 @@ class TestJobOperation(unittest.TestCase):
         job_id = response.json()['jobId']
 
         # query
-        response = requests.post("/".join([self.server_url, 'job', 'query']), json={'job_id': job_id})
+        response = requests.post("/".join([self.server_url, 'job', 'query']), json={'job_id': job_id, 'role': 'guest'})
         self.assertTrue(int(response.json()['retcode']) == 0)
         job_info = response.json()['data'][0]
 
@@ -42,8 +42,8 @@ class TestJobOperation(unittest.TestCase):
         response = requests.post("/".join([self.server_url, 'job', 'config']), json={'job_id': job_id, 'role': job_info['f_role'], 'party_id': job_info['f_party_id']})
         self.assertTrue(int(response.json()['retcode']) == 0)
 
-        print('waiting 3s ...')
-        time.sleep(3)
+        print('waiting 10s ...')
+        time.sleep(10)
 
         # stop
         response = requests.post("/".join([self.server_url, 'job', 'stop']), json={'job_id': job_id})
