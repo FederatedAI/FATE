@@ -41,12 +41,12 @@
         	"feature_scale_0": {
         		"method": ["min_max_scale"],
         		"area": ["col"],
-        		"scale_column_idx": [[0,3,4,7,9]]
+        		"scale_col_indexes": [[0,3,4,7,9]]
       		},
       		"feature_scale_1": {
         		"method": ["min_max_scale"],
         		"area": ["col"],
-        		"scale_column_idx": [[0,3,4,7,9]]
+        		"scale_col_indexes": [[0,3,4,7,9]]
       		},
             "evaluation_0": {
                 "eval_type": ["binary"],
@@ -85,7 +85,7 @@
             	"need_run": [true],
         		"method": ["min_max_scale"],
         		"area": ["col"],
-        		"scale_column_idx": [[0,3,4,7,9]]
+        		"scale_col_indexes": [[0,3,4,7,9]]
       		},
             "evaluation_0": {
                 "need_run": [false],
