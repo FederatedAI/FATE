@@ -610,6 +610,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         if self.tree_node_queue:
             self.update_tree_node_queue([], True)
+            self.data_bin_with_node_dispatch = self.data_bin.join(self.node_dispatch,
+                                                                  lambda data_inst, dispatch_info: (
+                                                                      data_inst, dispatch_info))
+
             self.redispatch_node(self.max_depth, max_depth_reach=True)
 
         self.sync_tree()
