@@ -76,16 +76,20 @@ ubuntu系统执行：apt list --installed | grep selinux
 
 如果已安装了selinux就执行：setenforce 0
 
-4.3 修改Linux最大打开文件数
+4.3 修改Linux系统参数
 ---------------------------
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
 
-vim /etc/security/limits.conf
+1）vim /etc/security/limits.conf
 
 \* soft nofile 65536
 
 \* hard nofile 65536
+
+2）vim /etc/security/limits.d/20-nproc.conf
+
+\* soft nproc unlimited
 
 4.4 关闭防火墙(可选)
 --------------
