@@ -157,8 +157,8 @@ class OneHotEncoder(ModelBase):
         new_data = data_instances.mapValues(f)
         self.set_schema(new_data)
 
-        one_data = new_data.first()[1].features
-        LOGGER.debug("transfered data is : {}".format(one_data))
+        # one_data = new_data.first()[1].features
+        # LOGGER.debug("transfered data is : {}".format(one_data))
 
         return new_data
 
