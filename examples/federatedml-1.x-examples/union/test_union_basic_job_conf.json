@@ -17,20 +17,20 @@
         "data": {
           "data0": [
             {
-              "name": "hetero_breast_b",
-              "namespace": "hetero_breast_guest"
+              "name": "breast_hetero_guest",
+              "namespace": "experiment"
             }
           ],
           "data1": [
             {
-              "name": "hetero_breast_b",
-              "namespace": "hetero_breast_guest"
+              "name": "breast_hetero_guest",
+              "namespace": "experiment"
             }
           ],
           "data2": [
             {
-              "name": "hetero_breast_b",
-              "namespace": "hetero_breast_guest"
+              "name": "breast_hetero_guest",
+              "namespace": "experiment"
             }
           ]
         }

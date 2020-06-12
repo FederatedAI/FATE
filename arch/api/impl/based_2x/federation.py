@@ -24,7 +24,7 @@ _get_tag_histories = set()
 def init_roll_site_context(runtime_conf, session_id):
     from eggroll.roll_site.roll_site import RollSiteContext
     from eggroll.roll_pair.roll_pair import RollPairContext
-    LOGGER.info("init_roll_site_context runtime_conf: {}".format(runtime_conf))
+    LOGGER.debug("init_roll_site_context runtime_conf: {}".format(runtime_conf))
     session_instance = FateSession.get_instance()._eggroll.get_session()
     rp_context = RollPairContext(session_instance)
 
@@ -42,7 +42,7 @@ def init_roll_site_context(runtime_conf, session_id):
                }
 
     rs_context = RollSiteContext(session_id, rp_ctx=rp_context, options=options)
-    LOGGER.info("init_roll_site_context done: {}".format(rs_context.__dict__))
+    LOGGER.debug("init_roll_site_context done: {}".format(rs_context.__dict__))
     return rp_context, rs_context
 
 
@@ -55,12 +55,13 @@ class FederationRuntime(Federation):
         self.role = runtime_conf.get("local").get("role")
 
     def get(self, name, tag, parties: Union[Party, list]):
+        if isinstance(parties, Party):
+            parties = [parties]
+        self._get_side_auth(name, parties)
 
         rs = self.rsc.load(name=name, tag=tag)
         rubbish = Rubbish(name, tag)
 
-        if isinstance(parties, Party):
-            parties = [parties]
         rs_parties = [(party.role, party.party_id) for party in parties]
 
         for party in parties:
@@ -76,7 +77,7 @@ class FederationRuntime(Federation):
             if obj is None:
                 raise EnvironmentError(f"federation get None from {party} with name {name}, tag {tag}")
 
-            LOGGER.info(f'federation got data. name: {name}, tag: {tag}')
+            LOGGER.debug(f'federation got data. name: {name}, tag: {tag}')
             if isinstance(obj, RollPair):
                 rtn.append(obj)
                 rubbish.add_table(obj)
@@ -99,14 +100,16 @@ class FederationRuntime(Federation):
         return rtn, rubbish
 
     def remote(self, obj, name, tag, parties):
+        if isinstance(parties, Party):
+            parties = [parties]
+        self._remote_side_auth(name, parties)
+
         if obj is None:
             raise EnvironmentError(f"federation try to remote None to {parties} with name {name}, tag {tag}")
 
         rs = self.rsc.load(name=name, tag=tag)
         rubbish = Rubbish(name=name, tag=tag)
 
-        if isinstance(parties, Party):
-            parties = [parties]
         rs_parties = [(party.role, party.party_id) for party in parties]
 
         for party in parties:
@@ -136,9 +139,6 @@ class FederationRuntime(Federation):
                 LOGGER.exception(f"remote fail, terminating process(pid={pid})")
                 os.kill(pid, signal.SIGTERM)
                 raise e
-
-            if LOGGER.isEnabledFor(logging.DEBUG):
-                LOGGER.debug(f"federation remote done called:{result}")
 
         for future in futures:
             future.add_done_callback(done_callback)

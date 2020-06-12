@@ -96,6 +96,8 @@ if __name__ == '__main__':
     RuntimeConfig.set_process_role(ProcessRole.SERVER)
     queue_manager.init_job_queue()
     job_controller.JobController.init()
+    history_job_clean = job_controller.JobClean()
+    history_job_clean.start()
     PrivilegeAuth.init()
     CenterConfig.init(ZOOKEEPER_HOSTS, USE_CONFIGURATION_CENTER, FATE_FLOW_ZK_PATH, HTTP_PORT,
                       FATE_FLOW_MODEL_TRANSFER_PATH)

@@ -11,7 +11,7 @@ Before sending your pull requests, make sure you followed this list.
 
 - Read [contributing guidelines](CONTRIBUTING.md).
 - Read [Code of Conduct](CODE_OF_CONDUCT.md).
-- Follow the instruction of [develop guide](./doc/develop_guide.md)
+- Follow the instruction of [develop guide](./doc/develop_guide.rst)
 - Ensure you have signed the [Developer Certificate of Origin (DCO)](https://developercertificate.org/).
 - Check if my changes are consistent with the [guidelines](https://github.com/FederatedAI/FATE/blob/master/CONTRIBUTING.md#contributing-to-fate).
 - Changes are consistent with the [PEP.8 Python Coding Style](https://www.python.org/dev/peps/pep-0008/).
@@ -34,7 +34,7 @@ We are more than glad to accept your patches. To start with, please make sure yo
 
 Once you are ready to send your pull request, we will create a contributor branch to which you can send pull request. Then, FATE team members will be assigned to review and test your pull request. Once the review is pass, your contribution is accepted and will be released in a future version.
 
-If you have ideas of new features but don't know how to start with, a [develop guide](./doc/develop_guide.md)  has been provided
+If you have ideas of new features but don't know how to start with, a [develop guide](./doc/develop_guide.rst)  has been provided
 
 ## Contributing
 
