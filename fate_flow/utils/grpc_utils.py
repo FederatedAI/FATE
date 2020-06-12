@@ -21,13 +21,15 @@ from fate_flow.utils.proto_compatibility import basic_meta_pb2
 from fate_flow.utils.proto_compatibility import proxy_pb2, proxy_pb2_grpc
 import grpc
 
-from fate_flow.settings import ROLE, IP, GRPC_PORT, PROXY_HOST, PROXY_PORT, HEADERS, DEFAULT_GRPC_OVERALL_TIMEOUT
+from fate_flow.settings import ROLE, IP, GRPC_PORT, HEADERS, DEFAULT_GRPC_OVERALL_TIMEOUT
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.utils.node_check_utils import nodes_check
+from fate_flow.utils.service_utils import ServiceUtils
 
 
 def get_proxy_data_channel():
-    channel = grpc.insecure_channel('{}:{}'.format(PROXY_HOST, PROXY_PORT))
+    channel = grpc.insecure_channel('{}:{}'.format(ServiceUtils.get_item("proxy", "host"),
+                                                   ServiceUtils.get_item("proxy", "port")))
     stub = proxy_pb2_grpc.DataTransferServiceStub(channel)
     return channel, stub
 

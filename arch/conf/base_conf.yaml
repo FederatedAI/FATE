@@ -1,4 +1,5 @@
-work_mode: 0
+work_mode: 1
+use_registry: false
 fate_flow:
   host: 0.0.0.0
   http_port: 9380
@@ -11,12 +12,14 @@ database:
   port: 3306
   max_connections: 100
   stale_timeout: 30
-redis:
-  host: 127.0.0.1
+zookeeper:
+  hosts:
+    - 127.0.0.1
+    - 127.0.0.1
   port: 6379
-  password: fate_dev
-  max_connections: 500
-  db: 0
+  use_acl: true
+  user: fate
+  password: fate
 default_model_store_address:
   storage: redis
   host: 127.0.0.1

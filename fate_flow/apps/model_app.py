@@ -18,14 +18,13 @@ import shutil
 
 from flask import Flask, request, send_file
 
-from fate_flow.settings import stat_logger, API_VERSION, SERVING_PATH, SERVINGS_ZK_PATH, \
-    USE_CONFIGURATION_CENTER, ZOOKEEPER_HOSTS, SERVER_CONF_PATH, DEFAULT_MODEL_STORE_ADDRESS, TEMP_DIRECTORY
+from fate_flow.settings import stat_logger, API_VERSION, DEFAULT_MODEL_STORE_ADDRESS, TEMP_DIRECTORY
 from fate_flow.driver.job_controller import JobController
 from fate_flow.manager.model_manager import publish_model
 from fate_flow.manager.model_manager import pipelined_model
 from fate_flow.utils.api_utils import get_json_result, federated_api
 from fate_flow.utils.job_utils import generate_job_id, runtime_conf_basic
-from fate_flow.utils.setting_utils import CenterConfig
+from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils.detect_utils import check_config
 from fate_flow.entity.constant_config import ModelOperation
 
@@ -76,9 +75,7 @@ def load_model():
 @manager.route('/load/do', methods=['POST'])
 def do_load_model():
     request_data = request.json
-    request_data["servings"] = CenterConfig.get_settings(path=SERVING_PATH, servings_zk_path=SERVINGS_ZK_PATH,
-                                                         use_zk=USE_CONFIGURATION_CENTER, hosts=ZOOKEEPER_HOSTS,
-                                                         server_conf_path=SERVER_CONF_PATH)
+    request_data["servings"] = ServiceUtils.get("servings", [])
     load_status = publish_model.load_model(config_data=request_data)
     return get_json_result(retcode=(0 if load_status else 101))
 
@@ -88,9 +85,7 @@ def bind_model_service():
     request_config = request.json
     if not request_config.get('servings'):
         # get my party all servings
-        request_config['servings'] = CenterConfig.get_settings(path=SERVING_PATH, servings_zk_path=SERVINGS_ZK_PATH,
-                                                               use_zk=USE_CONFIGURATION_CENTER, hosts=ZOOKEEPER_HOSTS,
-                                                               server_conf_path=SERVER_CONF_PATH)
+        request_config['servings'] = ServiceUtils.get("servings", [])
     if not request_config.get('service_id'):
         return get_json_result(retcode=101, retmsg='no service id')
     bind_status, service_id = publish_model.bind_model_service(config_data=request_config)
