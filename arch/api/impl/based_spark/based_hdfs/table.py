@@ -36,7 +36,7 @@ class RDDTable(Table):
                   name: str = None,
                   partitions: int = 1,
                   create_if_missing: bool = True):
-        rdd = RDDTable.rdd_from_hdfs(namespace=namespace, name=name, create_if_missing=create_if_missing)
+        rdd = RDDTable.rdd_from_hdfs(namespace=namespace, name=name, partitions=partitions, create_if_missing=create_if_missing)
         if rdd:
             return RDDTable(session_id=session_id, namespace=namespace, name=name, partitions=partitions, rdd=rdd)
     
@@ -172,14 +172,14 @@ class RDDTable(Table):
 
 
     @classmethod
-    def rdd_from_hdfs(cls, namespace, name, create_if_missing: bool = True):
+    def rdd_from_hdfs(cls, namespace, name, partitions: int = 1, create_if_missing: bool = True):
         from pyspark import SparkContext
         sc = SparkContext.getOrCreate()
         hdfs_path = RDDTable.generate_hdfs_path(namespace=namespace, name=name)
         fs = RDDTable.get_file_system(sc)
         path = RDDTable.get_path(sc, hdfs_path)
         if(fs.exists(path)):
-            rdd = sc.textFile(hdfs_path).map(RDDTable.map2dic).persist(util.get_storage_level())
+            rdd = sc.textFile(hdfs_path, partitions).map(RDDTable.map2dic).persist(util.get_storage_level())
         elif create_if_missing:
             rdd = sc.emptyRDD().persist(util.get_storage_level())
         else:
@@ -256,7 +256,7 @@ class RDDTable(Table):
     # noinspection PyProtectedMember,PyUnresolvedReferences
     @log_elapsed
     def _rdd_from_hdfs(self):
-        self._rdd = RDDTable.rdd_from_hdfs(namespace=self._namespace, name=self._name, create_if_missing=False)
+        self._rdd = RDDTable.rdd_from_hdfs(namespace=self._namespace, name=self._name, partitions=self._partitions, create_if_missing=False)
         return self._rdd
 
 
