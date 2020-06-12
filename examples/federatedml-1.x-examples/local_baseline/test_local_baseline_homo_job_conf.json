@@ -35,7 +35,7 @@
                 ],
                 "model_opts": [
                     {
-                        "max_iter": 30
+                        "max_iter": 2, "tol": 1e-4, "solver": "saga"
                     }
                 ],
                 "need_run": [
@@ -89,18 +89,18 @@
             "label_type": "int",
             "output_format": "dense"
         },
-        "homo_lr_0": {
-            "penalty": "L2",
-            "optimizer": "sgd",
-            "tol": 0.0001,
-            "alpha": 0.01,
-            "max_iter": 30,
-            "early_stop": "weight_diff",
-            "batch_size": -1,
-            "learning_rate": 0.15,
-            "init_param": {
-                "init_method": "random_uniform"
-            }
-        }
+    "homo_lr_0": {
+      "penalty": "L2",
+      "optimizer": "sgd",
+      "tol": 1e-4,
+      "alpha": 0.01,
+      "max_iter": 30,
+      "early_stop": "weight_diff",
+      "batch_size": -1,
+      "learning_rate": 0.15,
+      "init_param": {
+        "init_method": "zeros"
+      }
     }
+  }
 }

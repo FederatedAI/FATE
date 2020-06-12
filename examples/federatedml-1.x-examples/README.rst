@@ -1,3 +1,9 @@
+FATE Usage
+==========
+
+If you want to experience FATE quickly, we have provided you a quick start tool which can start a hetero-lr task quickly. After that, you are more than welcome to use provided configuration to experience algorithms listed. Before you upload and start training task, it is highly recommended that you read the configuration guide below.
+
+
 Quick Start
 ===========
 
@@ -123,8 +129,8 @@ Then all you need to do is running the following command:
 Please note this works only if you have finished the trainning task.
 
 
-Start Training Task
--------------------
+Start Training Task Manually
+============================
 
 There are three config files need to be prepared to build a algorithm model in FATE.
 
@@ -134,7 +140,7 @@ There are three config files need to be prepared to build a algorithm model in F
 
 
 Step1: Define upload data config file
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------------------
 
 To make FATE be able to use your data, you need to upload them. Thus, a upload-data conf is needed. A sample file named "upload_data.json" has been provided in current folder.
 
@@ -145,6 +151,15 @@ To make FATE be able to use your data, you need to upload them. Thus, a upload-d
     3. partition: Specify how many partitions used to store the data
     4. table_name & namespace: Indicators for stored data table.
     5. work_mode: Indicate if using standalone version or cluster version. 0 represent for standalone version and 1 stand for cluster version.
+
+.. Note::
+    We suggest you fully consider the resource of modeling machines before setting partition number.
+
+    Assume that the CPU cores (cpu cores) are: c, The number of Nodemanager is: n, The number of tasks to be run simultaneously is p, then:
+
+    egg_num=eggroll.session.processors.per.node = c * 0.8 / p
+
+    partitions (Number of roll pair partitions) = egg_num * n
 
 
 Step2: Define your modeling task structure
@@ -164,7 +179,7 @@ We have provided several example dsl files located in the corresponding algorith
     1. component_name: key of a component. This name should end with a "_num" such as "_0", "_1" etc. And the number should start with 0. This is used to distinguish multiple same kind of components that may exist.
 
     2. module: Specify which component use. This field should be one of the algorithm modules FATE supported.
-       The supported algorithms can be referred to [here](../../federatedml/README.md)
+       The supported algorithms can be referred to `here <../../federatedml/README.rst>`__
 
         1. input: There are two type of input, data and model.
 
@@ -196,6 +211,36 @@ This config file is used to config parameters for all components among every par
 3. role_parameters: Those parameters are differ from roles and roles are defined here separately. Please note each parameter are list, each element of which corresponds to a party in this role.
 4. algorithm_parameters: Those parameters are same among all parties are here.
 
+An example of config files can be shown as:
+
+    .. code-block::
+
+        {
+            "initiator": {
+                "role": "guest",
+                "party_id": 10000
+            },
+            "job_parameters": {
+                "work_mode": 1
+                "processor_per_node": 6
+            },
+            "role": {
+                "guest": [
+                    10000
+                ],
+                "host": [
+                    10000
+                ],
+                "arbiter": [
+                    10000
+                ]
+            },
+            "role_parameters": {"Your role parameters"},
+            "algorithm_parameters": {"Your algorithm parameters"},
+        }
+
+    You can set processor_per_node in job_parameters.
+
 Step4: Start Modeling Task
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -213,7 +258,7 @@ Step4: Start Modeling Task
         {
           "file": "examples/data/breast_hetero_guest.csv",
           "head": 1,
-          "partition": 48,
+          "partition": 8,
           "work_mode": 0,
           "table_name": "breast_hetero_guest",
           "namespace": "hetero_guest_breast"

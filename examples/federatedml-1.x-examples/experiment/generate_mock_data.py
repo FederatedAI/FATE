@@ -64,16 +64,16 @@ def generate_tag_data(ids):
         raise ValueError("len ids should equal to sample number")
 
     counter = 0
-    v_str = "0123456789abcd"
+    # v_str = "0123456789abcd"
     for sample_i in range(SAMPLE_NUM):
         one_data = [ids[sample_i]]
         for feature_i in range(FEATURE_NUM):
             tag = str(random.randint(TAG_INTERVAL[0], TAG_INTERVAL[1]))
-            value = ''
-            for i in range(VALUE_LENGTH):
-                value += v_str[int(random.random() * 14)]
-            tag_value = ":".join([tag, value])
-            one_data.append(tag_value)
+            # value = ''
+            # for i in range(VALUE_LENGTH):
+            #     value += v_str[int(random.random() * 14)]
+            # tag_value = ":".join([tag, value])
+            one_data.append(tag)
 
         counter += 1
         if counter % 10000 == 0:

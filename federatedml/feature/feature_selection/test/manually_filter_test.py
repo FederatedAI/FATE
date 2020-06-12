@@ -28,7 +28,7 @@ from federatedml.param.feature_selection_param import FeatureSelectionParam
 from federatedml.util import consts
 
 
-class TestVarianceCoeFilter(unittest.TestCase):
+class TestManuallyFilter(unittest.TestCase):
     def setUp(self):
         self.job_id = str(uuid.uuid1())
         session.init(self.job_id)
@@ -49,11 +49,27 @@ class TestVarianceCoeFilter(unittest.TestCase):
         self.header = header
         return result
 
-    def test_unique_logic(self):
+    def test_filter_logic(self):
         data_table = self.gen_data(1000, 10, 48)
         select_param = FeatureSelectionParam()
         select_param.manually_param.filter_out_indexes = [9, 8, 7]
         select_param.manually_param.filter_out_names = ['6', '5', '4']
+        filter_obj = get_filter(consts.MANUALLY_FILTER, select_param)
+        select_properties = SelectionProperties()
+        select_properties.set_header(self.header)
+        select_properties.set_last_left_col_indexes([x for x in range(len(self.header))])
+        select_properties.set_select_all_cols()
+        filter_obj.set_selection_properties(select_properties)
+        res_select_properties = filter_obj.fit(data_table, suffix='').selection_properties
+        result = ['0', '1', '2', '3']
+        self.assertEqual(res_select_properties.all_left_col_names, result)
+        data_table.destroy()
+
+    def test_left_logic(self):
+        data_table = self.gen_data(1000, 10, 48)
+        select_param = FeatureSelectionParam()
+        select_param.manually_param.left_col_indexes = [0, 1]
+        select_param.manually_param.left_col_names = ['3', '2']
         filter_obj = get_filter(consts.MANUALLY_FILTER, select_param)
         select_properties = SelectionProperties()
         select_properties.set_header(self.header)

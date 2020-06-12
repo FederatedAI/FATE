@@ -53,6 +53,14 @@
         "single_predict": {
             "conf": "test_hetero_feature_eval_selection_job_conf.json",
             "dsl": "test_single_prediction_dsl.json"
+        },
+        "percentage_filter":{
+            "conf": "test_hetero_feature_selection_percentage_value_job_conf.json",
+            "dsl": "test_hetero_feature_selection_job_dsl.json"
+        },
+        "manually_left_filter":{
+            "conf": "test_hetero_feature_selection_manually_left_job_conf.json",
+            "dsl": "test_hetero_feature_selection_job_dsl.json"
         }
     }
 }

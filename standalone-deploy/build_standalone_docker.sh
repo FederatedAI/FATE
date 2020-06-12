@@ -85,9 +85,12 @@ init() {
     cp -r arch/api ${basepath}/arch
     cp -r arch/transfer_variables ${basepath}/arch
     cp -r arch/standalone ${basepath}/arch
-    cp .env requirements.txt RELEASE.md ${basepath}
+    cp fate.env requirements.txt RELEASE.md ${basepath}
     cp -r  federatedml examples fate_flow  federatedrec ${basepath}
-    docker run -v ${fatepath}/fateboard:/data/projects/fate/fateboard  --entrypoint="" maven:3.6-jdk-8 /bin/bash -c "cd /data/projects/fate/fateboard && mvn clean package -DskipTests"
+    #docker run -v ${fatepath}/fateboard:/data/projects/fate/fateboard  --entrypoint="" maven:3.6-jdk-8 /bin/bash -c "cd /data/projects/fate/fateboard && mvn clean package -DskipTests"
+    cd ${fatepath}/fateboard
+    mvn clean package
+    cd -
     if [ ! -d "${basepath}/fateboard" ];then
        mkdir -p ${basepath}/fateboard
     fi
@@ -107,10 +110,9 @@ init() {
     touch ./ssh/ssh.properties
 
     cd ${basepath}
-#    cp ../requirements.txt ./docker/python
     sed -i.bak "s#^MarkupSafe==.*#MarkupSafe==1.1.1#g" ./requirements.txt
     rm  ./requirements.txt.bak
-    tar -cf ./docker/python/fate.tar arch federatedml  examples fate_flow  federatedrec .env requirements.txt RELEASE.md
+    tar -cf ./docker/python/fate.tar arch federatedml  examples fate_flow  federatedrec fate.env requirements.txt RELEASE.md
 
     logPath="./fate/log"
     if [ ! -d "$logPath" ]; then
@@ -132,7 +134,7 @@ init() {
     docker restart fate_python
     sleep 5
     docker restart fate_fateboard
-    rm -rf arch federatedml  examples fate_flow  federatedrec .env requirements.txt RELEASE.md
+    rm -rf arch federatedml  examples fate_flow  federatedrec fate.env requirements.txt RELEASE.md
     rm docker/python/fate.tar
 #    rm docker/python/requirements.txt
     rm docker/fateboard/fateboard.tar
