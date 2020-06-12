@@ -29,6 +29,7 @@ evaluation_component_name = 'evaluation_0'
 START = 'start'
 SUCCESS = 'success'
 RUNNING = 'running'
+WAITING = 'waiting'
 FAIL = 'failed'
 STUCK = 'stuck'
 # READY = 'ready'
@@ -228,7 +229,7 @@ class TrainTask(TaskManager):
         if status is None:
             return True
 
-        if status in [RUNNING, START]:
+        if status in [RUNNING, START, WAITING]:
             return False
         return True
 
@@ -237,7 +238,8 @@ class TrainTask(TaskManager):
                jobid, "-p", str(self.guest_id), "-r", "guest",
                "-cpn", evaluation_component_name]
         eval_res = self.start_block_task(cmd, max_waiting_time=OTHER_TASK_TIME)
-        eval_results = eval_res['data']['train']["{}.data".format(self.train_component_name)]['data']
+        print("eval_res: {}".format(eval_res))
+        eval_results = eval_res['data']['train'][self.train_component_name]['data']
         time_print("Get auc eval res: {}".format(eval_results))
         auc = 0
         for metric_name, metric_value in eval_results:
@@ -374,8 +376,6 @@ def main():
     arg_parser.add_argument("-hid", "--host_id", type=int, help="host party id", required=True)
     arg_parser.add_argument("-aid", "--arbiter_id", type=int, help="arbiter party id", required=True)
 
-    arg_parser.add_argument("-i", "--interval", type=int, help="check job status every i seconds, defaults to 1",
-                            default=1)
     arg_parser.add_argument("--add_sbt", help="test sbt or not", action="store_true")
 
     args = arg_parser.parse_args()

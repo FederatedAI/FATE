@@ -1,75 +1,26 @@
 Description
-~~~~~~~~~~~
+===========
 
 This is the minimum test task for installation. Using this you can test
 if the installation of FATE is successful or not.
 
-Test task case
-^^^^^^^^^^^^^^
+Before You Start
+----------------
 
-It includes three cases: 1. Test data upload 2. Test intersection 3.
-Test algorithm, e.g. in the case is Hetero-lr It includes two mode: fast
-and normal. For fast, you can use this to make sure if some wrong with
-installation quickly. After test fast mode, you should run normal mode
-as well.
+Please make sure you have already deploy FATE correctly and already upload data in both sides. You can upload data easily by a `provided script <../scripts/README.rst>`_
 
 Usage
 ^^^^^
 
-copy this to installation/example/ > cp -r min_test_task
-install_path/example/
+All you need to do is just run the following command in guest party:
 
-In Host, you should do this before guest >sh run.sh host fast
+    .. code-block:: bash
 
-After running this command, table_name and namespace of uploaded data
-will be shown. Use them as input parameter of next step.
+        python run_task.py -m {work_mode} -gid {guest_id} -hid {host_id}, -aid {arbiter_id}
 
-In guest, make sure Host is finish >sh run.sh guest fast
-${host_table_name} ${host_namespace}
+This test will automatically take breast as test data set.
 
-After a short period of waiting time, you can see the test case is
-successfully or not. If mode fast is successful, run mode normal is
-necessary.
+There are some more parameters that you may need:
 
-Similar to fast mode, run the following two steps:
-
-In Host, you should do this before guest >sh run.sh host normal
-
-Get host table name and namespace
-
-In guest, make sure Host is finish >sh run.sh guest normal
-${host_table_name} ${host_namespace}
-
-Test Result
-^^^^^^^^^^^
-
-The process of min-test can be described as the following steps.
-
-Host Party
-''''''''''
-
-   sh run.sh host normal(or fast)
-
-In host part, only uploading data operation is called by the command.
-
-Guest Party
-'''''''''''
-
-   sh run.sh guest normal(or fast) ${host_table_name} ${host_namespace}
-
-In guest party, there are three tests are going to be verified.
-
-1. Upload Data test This is same with host part. Upload the data in
-   Eggroll and check if DTable count match the number of your uploaded
-   file.
-
-2. Intersect Guest will start an intersect task which the expected
-   intersect count is already known. After finish the intersect job, the
-   intersected data will be download and check if data length is equal
-   to expected count.
-
-3. Hetero-lr Train After that, a hetero-lr modeling task will be
-   started. This min-test script will keep checking the status of this
-   task. Once the task is finished, it obtains the evaluation result and
-   see if the auc matches expected value for corresponding pre-defined
-   data set.
+1. -f: file type. "fast" means breast data set, "normal" means default credit data set.
+2. --add_sbt: if set, it will test hetero-secureboost task after testing hetero-lr.
