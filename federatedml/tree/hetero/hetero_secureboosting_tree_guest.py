@@ -64,6 +64,7 @@ from federatedml.util import consts
 from federatedml.util.classify_label_checker import ClassifyLabelChecker
 from federatedml.util.classify_label_checker import RegressionLabelChecker
 from federatedml.util.io_check import assert_io_num_rows_equal
+from federatedml.statistic import data_overview
 
 LOGGER = log_utils.getLogger()
 
@@ -99,6 +100,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.role = consts.GUEST
 
         self.transfer_variable = HeteroSecureBoostingTreeTransferVariable()
+        self.data_alignment_map = {}
 
     def set_loss(self, objective_param):
         loss_type = objective_param.objective
@@ -411,7 +413,16 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
     def predict(self, data_inst):
         LOGGER.info("start predict")
         cache_dataset_key = self.predict_data_cache.get_data_key(data_inst)
-        data_inst = self.data_alignment(data_inst)
+        if cache_dataset_key in self.data_alignment_map:
+            data_inst = self.data_alignment_map[cache_dataset_key]
+        else:
+            data_inst = self.data_alignment(data_inst)
+            header = [None] * len(self.feature_name_fid_mapping)
+            for idx, col in self.feature_name_fid_mapping.items():
+                header[idx] = col
+            data_inst = data_overview.header_alignment(data_inst, header)
+            self.data_alignment_map[cache_dataset_key] = data_inst
+
         self.predict_f_value(data_inst, cache_dataset_key)
         if self.task_type == consts.CLASSIFICATION:
             loss_method = self.loss
