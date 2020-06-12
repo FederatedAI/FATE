@@ -1,0 +1,34 @@
+{
+  "data": [
+      {
+          "file": "examples/data/unified_dataset_noniid_1_1000.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "heart_nonscaled_noniid_guest",
+          "namespace": "AIFEL_heart",
+          "role": "guest_0"
+        },
+      {
+          "file": "examples/data/unified_dataset_noniid_2_1000_mani.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "heart_nonscaled_noniid_host",
+          "namespace": "AIFEL_heart",
+          "role": "host_0"
+        },
+        {
+          "file": "examples/data/unified_dataset_validation_1000.csv",
+          "head": 1,
+          "partition": 10,
+          "table_name": "heart_nonscaled_iid_valid",
+          "namespace": "AIFEL_heart",
+          "role": "host_0"
+        }
+  ],
+  "tasks": {
+    "lr": {
+      "conf": "train_job_conf.json",
+      "dsl": "train_job_dsl.json"
+    }
+  }
+}
