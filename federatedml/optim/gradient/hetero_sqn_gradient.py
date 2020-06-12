@@ -93,9 +93,9 @@ class HeteroStochasticQuansiNewton(hetero_linear_model_gradient.HeteroGradientBa
 
         if self.iter_k % self.update_interval_L == 0:
             self.count_t += 1
-            LOGGER.debug("Before division, this_w_tilde: {}".format(self.this_w_tilde.unboxed))
+            # LOGGER.debug("Before division, this_w_tilde: {}".format(self.this_w_tilde.unboxed))
             self.this_w_tilde /= self.update_interval_L
-            LOGGER.debug("After division, this_w_tilde: {}".format(self.this_w_tilde.unboxed))
+            # LOGGER.debug("After division, this_w_tilde: {}".format(self.this_w_tilde.unboxed))
 
             if self.count_t > 0:
                 LOGGER.info("iter_k: {}, count_t: {}, start to update hessian".format(self.iter_k, self.count_t))
@@ -103,8 +103,8 @@ class HeteroStochasticQuansiNewton(hetero_linear_model_gradient.HeteroGradientBa
             self.last_w_tilde = self.this_w_tilde
             self.this_w_tilde = LinearModelWeights(np.zeros_like(self.last_w_tilde.unboxed),
                                                    self.last_w_tilde.fit_intercept)
-            LOGGER.debug("After replace, last_w_tilde: {}, this_w_tilde: {}".format(self.last_w_tilde.unboxed,
-                                                                                    self.this_w_tilde.unboxed))
+            # LOGGER.debug("After replace, last_w_tilde: {}, this_w_tilde: {}".format(self.last_w_tilde.unboxed,
+            #                                                                         self.this_w_tilde.unboxed))
 
         return gradient_results
 
@@ -141,7 +141,7 @@ class HeteroStochasticQuansiNewtonHost(HeteroStochasticQuansiNewton):
         suffix = (self.n_iter, self.batch_index)
         sampled_data = self.sqn_sync.sync_sample_data(data_instances, suffix=suffix)
         delta_s = self.this_w_tilde - self.last_w_tilde
-        LOGGER.debug("In _update_hessian, delta_s: {}".format(delta_s.unboxed))
+        # LOGGER.debug("In _update_hessian, delta_s: {}".format(delta_s.unboxed))
         host_forwards = self.gradient_computer.compute_sqn_forwards(sampled_data, delta_s, cipher_operator)
         # host_forwards = cipher_operator.encrypt_list(host_forwards)
         self.sqn_sync.remote_host_forwards(host_forwards, suffix=suffix)
@@ -184,9 +184,9 @@ class HeteroStochasticQuansiNewtonArbiter(HeteroStochasticQuansiNewton):
         self._update_w_tilde(LinearModelWeights(delta_grad, fit_intercept=False))
         if self.iter_k % self.update_interval_L == 0:
             self.count_t += 1
-            LOGGER.debug("Before division, this_w_tilde: {}".format(self.this_w_tilde.unboxed))
+            # LOGGER.debug("Before division, this_w_tilde: {}".format(self.this_w_tilde.unboxed))
             self.this_w_tilde /= self.update_interval_L
-            LOGGER.debug("After division, this_w_tilde: {}".format(self.this_w_tilde.unboxed))
+            # LOGGER.debug("After division, this_w_tilde: {}".format(self.this_w_tilde.unboxed))
 
             if self.count_t > 0:
                 LOGGER.info("iter_k: {}, count_t: {}, start to update hessian".format(self.iter_k, self.count_t))
@@ -203,9 +203,9 @@ class HeteroStochasticQuansiNewtonArbiter(HeteroStochasticQuansiNewton):
         hess_vectors = self.sqn_sync.sync_hess_vector(suffix)
         hess_vectors = np.array(cipher_operator.decrypt_list(hess_vectors))
         delta_s = self.this_w_tilde - self.last_w_tilde
-        LOGGER.debug("In update hessian, hess_vectors: {}, delta_s: {}".format(
-            hess_vectors, delta_s.unboxed
-        ))
+        # LOGGER.debug("In update hessian, hess_vectors: {}, delta_s: {}".format(
+        #     hess_vectors, delta_s.unboxed
+        # ))
         self.opt_v = self._update_memory_vars(hess_vectors, self.opt_v)
         self.opt_s = self._update_memory_vars(delta_s.unboxed, self.opt_s)
         self._compute_hess_matrix()
@@ -224,7 +224,7 @@ class HeteroStochasticQuansiNewtonArbiter(HeteroStochasticQuansiNewton):
         return memory_vars
 
     def _compute_hess_matrix(self):
-        LOGGER.debug("opt_v: {}, opt_s: {}".format(self.opt_v, self.opt_s))
+        # LOGGER.debug("opt_v: {}, opt_s: {}".format(self.opt_v, self.opt_s))
         rho = sum(self.opt_v[-1] * self.opt_s[-1]) / sum(self.opt_v[-1] * self.opt_v[-1])
         LOGGER.debug("in _compute_hess_matrix, rho0 = {}".format(rho))
         n = self.opt_s[0].shape[0]
