@@ -453,22 +453,16 @@ class Tracking(object):
         try:
             for role in roles.split(','):
                 for party_id in party_ids.split(','):
-                    # clean up the last tables of the federation
+                    # clean up temporary tables
                     namespace_clean = job_utils.generate_session_id(task_id=self.task_id,
                                                                     role=role,
                                                                     party_id=party_id)
-                    schedule_logger(self.job_id).info('clean table by namespace {} on {} {}'.format(namespace_clean,
-                                                                                                    self.role,
-                                                                                                    self.party_id))
                     session.clean_tables(namespace=namespace_clean, regex_string='*')
                     schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
                                                                                                          self.role,
                                                                                                          self.party_id))
-                    # clean namespace: task_id ,data table
+                    # clean up the last tables of the federation
                     namespace_clean = self.task_id
-                    schedule_logger(self.job_id).info('clean table by namespace {} on {} {}'.format(namespace_clean,
-                                                                                                    self.role,
-                                                                                                    self.party_id))
                     session.clean_tables(namespace=namespace_clean, regex_string='*')
                     schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
                                                                                                          self.role,
