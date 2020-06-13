@@ -1,4 +1,4 @@
-work_mode: 1
+work_mode: 0
 use_registry: false
 fate_flow:
   host: 0.0.0.0
@@ -19,8 +19,11 @@ zookeeper:
   user: fate
   password: fate
 model_store_address:
-  storage: redis
+  storage: mysql
+  name: model
   host: 127.0.0.1
-  port: 6379
-  password: fate_dev
-  db: 0
+  port: 3306
+  user: fate_dev
+  passwd: fate_dev
+  max_connections: 10
+  stale_timeout: 10

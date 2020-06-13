@@ -11,8 +11,6 @@
     "job_parameters": {
         "work_mode": 1,
         "model_id": "arbiter-10000#guest-9999#host-10000#model",
-        "model_version": "202006122116502527621",
-        "load_type": "FILE",
-        "file_path": "/data/projects/fate-serving-2.0/serving-server/guest#9999#arbiter-10000#guest-9999#host-10000#model_202006122116502527621.zip"
+        "model_version": "202006122116502527621"
     }
 }

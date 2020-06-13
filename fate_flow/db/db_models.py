@@ -73,10 +73,10 @@ else:
     DB = None
 
 
-def close_connection(db_connection):
+def close_connection():
     try:
-        if db_connection:
-            db_connection.close()
+        if DB:
+            DB.close()
     except Exception as e:
         LOGGER.exception(e)
 
@@ -89,10 +89,10 @@ class DataBaseModel(Model):
         return self.__dict__['__data__']
 
     def save(self, *args, **kwargs):
-        if hasattr(self, "update_date"):
-            self.update_date = datetime.datetime.now()
-        if hasattr(self, "update_time"):
-            self.update_time = current_timestamp()
+        if hasattr(self, "f_update_date"):
+            self.f_update_date = datetime.datetime.now()
+        if hasattr(self, "f_update_time"):
+            self.f_update_time = current_timestamp()
         super(DataBaseModel, self).save(*args, **kwargs)
 
 

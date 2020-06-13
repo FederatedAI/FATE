@@ -149,6 +149,7 @@ def gen_model_operation_job_config(config_data: dict, model_operation: ModelOper
         component_parameters["model_id"] = [config_data["model_id"]]
         component_parameters["model_version"] = [config_data["model_version"]]
         component_parameters["store_address"] = [MODEL_STORE_ADDRESS]
+        component_parameters["force_update"] = [config_data.get("force_update", False)]
         job_runtime_conf["role_parameters"][initiator_role] = {component_name: component_parameters}
         job_dsl["components"][component_name] = {
             "module": "Model{}".format(model_operation.capitalize())
