@@ -60,7 +60,7 @@ _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000 * 60  # ms
 JOB_DEFAULT_TIMEOUT = 7 * 24 * 60 * 60
 DATABASE = get_base_config("database", {})
-DEFAULT_MODEL_STORE_ADDRESS = get_base_config("default_model_store_address", {})
+MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
 
 '''
 Constants

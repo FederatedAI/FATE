@@ -18,7 +18,7 @@ import shutil
 
 from flask import Flask, request, send_file
 
-from fate_flow.settings import stat_logger, API_VERSION, DEFAULT_MODEL_STORE_ADDRESS, TEMP_DIRECTORY
+from fate_flow.settings import stat_logger, API_VERSION, MODEL_STORE_ADDRESS, TEMP_DIRECTORY
 from fate_flow.driver.job_controller import JobController
 from fate_flow.manager.model_manager import publish_model
 from fate_flow.manager.model_manager import pipelined_model
@@ -26,6 +26,7 @@ from fate_flow.utils.api_utils import get_json_result, federated_api
 from fate_flow.utils.job_utils import generate_job_id, runtime_conf_basic
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils.detect_utils import check_config
+from fate_flow.utils.model_utils import gen_party_model_id
 from fate_flow.entity.constant_config import ModelOperation
 
 manager = Flask(__name__)
@@ -102,10 +103,11 @@ def transfer_model():
 def operate_model(model_operation):
     request_config = request.json or request.form.to_dict()
     job_id = generate_job_id()
-    required_arguments = ["model_id", "model_version"]
     if model_operation not in [ModelOperation.STORE, ModelOperation.RESTORE, ModelOperation.EXPORT, ModelOperation.IMPORT]:
         raise Exception('Can not support this operating now: {}'.format(model_operation))
+    required_arguments = ["model_id", "model_version", "role", "party_id"]
     check_config(request_config, required_arguments=required_arguments)
+    request_config["model_id"] = gen_party_model_id(model_id=request_config["model_id"], role=request_config["role"], party_id=request_config["party_id"])
     if model_operation in [ModelOperation.EXPORT, ModelOperation.IMPORT]:
         if model_operation == ModelOperation.IMPORT:
             file = request.files.get('file')
@@ -144,11 +146,9 @@ def gen_model_operation_job_config(config_data: dict, model_operation: ModelOper
     if model_operation in [ModelOperation.STORE, ModelOperation.RESTORE]:
         component_name = "{}_0".format(model_operation)
         component_parameters = dict()
-        component_parameters.update(config_data)
-        for k, v in config_data.items():
-            component_parameters[k] = [v]
-        if "store_address" not in config_data:
-            component_parameters["store_address"] = [DEFAULT_MODEL_STORE_ADDRESS]
+        component_parameters["model_id"] = [config_data["model_id"]]
+        component_parameters["model_version"] = [config_data["model_version"]]
+        component_parameters["store_address"] = [MODEL_STORE_ADDRESS]
         job_runtime_conf["role_parameters"][initiator_role] = {component_name: component_parameters}
         job_dsl["components"][component_name] = {
             "module": "Model{}".format(model_operation.capitalize())
