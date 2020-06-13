@@ -26,6 +26,8 @@ from fate_flow.settings import stat_logger, SERVER_CONF_PATH, SERVICES_SUPPORT_R
 
 
 class ServiceUtils(object):
+    ZOOKEEPER_CLIENT = None
+
     @staticmethod
     def get(service_name, default=None):
         if get_base_config("use_registry", False) and service_name in SERVICES_SUPPORT_REGISTRY:
@@ -39,7 +41,7 @@ class ServiceUtils(object):
     @staticmethod
     def get_from_file(service_name, default=None):
         server_conf = file_utils.load_json_conf(SERVER_CONF_PATH)
-        return server_conf.get("SERVERS").get(service_name, default)
+        return server_conf.get("servers").get(service_name, default)
 
     @staticmethod
     def get_zk():
@@ -73,6 +75,7 @@ class ServiceUtils(object):
             fate_flow_model_transfer_service = '{}/{}'.format(FATE_SERVICES_REGISTERED_PATH.get("fateflow", ""), parse.quote(model_transfer_url, safe=' '))
             try:
                 zk.create(fate_flow_model_transfer_service, makepath=True)
+                stat_logger.info("register path {} to {}".format(fate_flow_model_transfer_service, ";".join(get_base_config("zookeeper", {}).get("hosts"))))
             except Exception as e:
                 stat_logger.exception(e)
             zk.stop()

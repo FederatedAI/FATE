@@ -291,6 +291,8 @@ class TaskExecutor(object):
         package_name = "monkey_patch"
         package_path = os.path.join(file_utils.get_project_base_directory(), package_name)
         for f in os.listdir(package_path):
+            if not os.path.isdir(f) or f == "__pycache__":
+                continue
             patch_module = importlib.import_module(package_name + '.' + f + '.monkey_patch')
             patch_module.patch_all()
 

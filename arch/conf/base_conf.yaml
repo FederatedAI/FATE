@@ -14,9 +14,7 @@ database:
   stale_timeout: 30
 zookeeper:
   hosts:
-    - 127.0.0.1
-    - 127.0.0.1
-  port: 6379
+    - 127.0.0.1:2281
   use_acl: true
   user: fate
   password: fate

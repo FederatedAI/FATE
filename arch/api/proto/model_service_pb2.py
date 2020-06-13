@@ -34,7 +34,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.api.mlmodel.manager',
   syntax='proto3',
   serialized_options=_b('B\021ModelServiceProto'),
-  serialized_pb=_b('\n\x13model_service.proto\x12&com.webank.ai.fate.api.mlmodel.manager\"\x18\n\x05Party\x12\x0f\n\x07partyId\x18\x01 \x03(\t\"*\n\tLocalInfo\x12\x0c\n\x04role\x18\x01 \x01(\t\x12\x0f\n\x07partyId\x18\x02 \x01(\t\"1\n\tModelInfo\x12\x11\n\ttableName\x18\x01 \x01(\t\x12\x11\n\tnamespace\x18\x02 \x01(\t\"\xd9\x01\n\rRoleModelInfo\x12_\n\rroleModelInfo\x18\x01 \x03(\x0b\x32H.com.webank.ai.fate.api.mlmodel.manager.RoleModelInfo.RoleModelInfoEntry\x1ag\n\x12RoleModelInfoEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12@\n\x05value\x18\x02 \x01(\x0b\x32\x31.com.webank.ai.fate.api.mlmodel.manager.ModelInfo:\x02\x38\x01\"\xc8\x03\n\x0ePublishRequest\x12@\n\x05local\x18\x01 \x01(\x0b\x32\x31.com.webank.ai.fate.api.mlmodel.manager.LocalInfo\x12N\n\x04role\x18\x02 \x03(\x0b\x32@.com.webank.ai.fate.api.mlmodel.manager.PublishRequest.RoleEntry\x12P\n\x05model\x18\x03 \x03(\x0b\x32\x41.com.webank.ai.fate.api.mlmodel.manager.PublishRequest.ModelEntry\x12\x11\n\tserviceId\x18\x04 \x01(\t\x1aZ\n\tRoleEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12<\n\x05value\x18\x02 \x01(\x0b\x32-.com.webank.ai.fate.api.mlmodel.manager.Party:\x02\x38\x01\x1a\x63\n\nModelEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x44\n\x05value\x18\x02 \x01(\x0b\x32\x35.com.webank.ai.fate.api.mlmodel.manager.RoleModelInfo:\x02\x38\x01\"S\n\x0fPublishResponse\x12\x12\n\nstatusCode\x18\x01 \x01(\x05\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\r\n\x05\x65rror\x18\x03 \x01(\t\x12\x0c\n\x04\x64\x61ta\x18\x04 \x01(\x0c\x32\x8e\x02\n\x0cModelService\x12~\n\x0bpublishLoad\x12\x36.com.webank.ai.fate.api.mlmodel.manager.PublishRequest\x1a\x37.com.webank.ai.fate.api.mlmodel.manager.PublishResponse\x12~\n\x0bpublishBind\x12\x36.com.webank.ai.fate.api.mlmodel.manager.PublishRequest\x1a\x37.com.webank.ai.fate.api.mlmodel.manager.PublishResponseB\x13\x42\x11ModelServiceProtob\x06proto3')
+  serialized_pb=_b('\n\x13model_service.proto\x12&com.webank.ai.fate.api.mlmodel.manager\"\x18\n\x05Party\x12\x0f\n\x07partyId\x18\x01 \x03(\t\"*\n\tLocalInfo\x12\x0c\n\x04role\x18\x01 \x01(\t\x12\x0f\n\x07partyId\x18\x02 \x01(\t\"1\n\tModelInfo\x12\x11\n\ttableName\x18\x01 \x01(\t\x12\x11\n\tnamespace\x18\x02 \x01(\t\"\xd9\x01\n\rRoleModelInfo\x12_\n\rroleModelInfo\x18\x01 \x03(\x0b\x32H.com.webank.ai.fate.api.mlmodel.manager.RoleModelInfo.RoleModelInfoEntry\x1ag\n\x12RoleModelInfoEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12@\n\x05value\x18\x02 \x01(\x0b\x32\x31.com.webank.ai.fate.api.mlmodel.manager.ModelInfo:\x02\x38\x01\"5\n\rUnloadRequest\x12\x11\n\ttableName\x18\x01 \x01(\t\x12\x11\n\tnamespace\x18\x02 \x01(\t\"5\n\x0eUnloadResponse\x12\x12\n\nstatusCode\x18\x01 \x01(\t\x12\x0f\n\x07message\x18\x02 \x01(\t\"H\n\rUnbindRequest\x12\x11\n\tserviceId\x18\x01 \x01(\t\x12\x11\n\ttableName\x18\x02 \x01(\t\x12\x11\n\tnamespace\x18\x03 \x01(\t\"5\n\x0eUnbindResponse\x12\x12\n\nstatusCode\x18\x01 \x01(\t\x12\x0f\n\x07message\x18\x02 \x01(\t\"\x85\x01\n\x11QueryModelRequest\x12\x11\n\tserviceId\x18\x01 \x01(\t\x12\x11\n\ttableName\x18\x02 \x01(\t\x12\x11\n\tnamespace\x18\x03 \x01(\t\x12\x12\n\nbeginIndex\x18\x04 \x01(\x05\x12\x10\n\x08\x65ndIndex\x18\x05 \x01(\x05\x12\x11\n\tqueryType\x18\x06 \x01(\x05\"\x0f\n\rModelBindInfo\"f\n\x0bModelInfoEx\x12\x11\n\ttableName\x18\x01 \x01(\t\x12\x11\n\tnamespace\x18\x02 \x01(\t\x12\x11\n\tserviceId\x18\x03 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x04 \x01(\t\x12\r\n\x05index\x18\x05 \x01(\x05\"\x7f\n\x12QueryModelResponse\x12\x0f\n\x07retcode\x18\x01 \x01(\t\x12\x0f\n\x07message\x18\x02 \x01(\t\x12G\n\nmodelInfos\x18\x03 \x03(\x0b\x32\x33.com.webank.ai.fate.api.mlmodel.manager.ModelInfoEx\"\x92\x04\n\x0ePublishRequest\x12@\n\x05local\x18\x01 \x01(\x0b\x32\x31.com.webank.ai.fate.api.mlmodel.manager.LocalInfo\x12N\n\x04role\x18\x02 \x03(\x0b\x32@.com.webank.ai.fate.api.mlmodel.manager.PublishRequest.RoleEntry\x12P\n\x05model\x18\x03 \x03(\x0b\x32\x41.com.webank.ai.fate.api.mlmodel.manager.PublishRequest.ModelEntry\x12\x11\n\tserviceId\x18\x04 \x01(\t\x12\x11\n\ttableName\x18\x05 \x01(\t\x12\x11\n\tnamespace\x18\x06 \x01(\t\x12\x10\n\x08loadType\x18\x07 \x01(\t\x12\x10\n\x08\x66ilePath\x18\x08 \x01(\t\x1aZ\n\tRoleEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12<\n\x05value\x18\x02 \x01(\x0b\x32-.com.webank.ai.fate.api.mlmodel.manager.Party:\x02\x38\x01\x1a\x63\n\nModelEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\x44\n\x05value\x18\x02 \x01(\x0b\x32\x35.com.webank.ai.fate.api.mlmodel.manager.RoleModelInfo:\x02\x38\x01\"S\n\x0fPublishResponse\x12\x12\n\nstatusCode\x18\x01 \x01(\x05\x12\x0f\n\x07message\x18\x02 \x01(\t\x12\r\n\x05\x65rror\x18\x03 \x01(\t\x12\x0c\n\x04\x64\x61ta\x18\x04 \x01(\x0c\x32\x89\x06\n\x0cModelService\x12~\n\x0bpublishLoad\x12\x36.com.webank.ai.fate.api.mlmodel.manager.PublishRequest\x1a\x37.com.webank.ai.fate.api.mlmodel.manager.PublishResponse\x12~\n\x0bpublishBind\x12\x36.com.webank.ai.fate.api.mlmodel.manager.PublishRequest\x1a\x37.com.webank.ai.fate.api.mlmodel.manager.PublishResponse\x12\x80\x01\n\rpublishOnline\x12\x36.com.webank.ai.fate.api.mlmodel.manager.PublishRequest\x1a\x37.com.webank.ai.fate.api.mlmodel.manager.PublishResponse\x12\x83\x01\n\nqueryModel\x12\x39.com.webank.ai.fate.api.mlmodel.manager.QueryModelRequest\x1a:.com.webank.ai.fate.api.mlmodel.manager.QueryModelResponse\x12w\n\x06unload\x12\x35.com.webank.ai.fate.api.mlmodel.manager.UnloadRequest\x1a\x36.com.webank.ai.fate.api.mlmodel.manager.UnloadResponse\x12w\n\x06unbind\x12\x35.com.webank.ai.fate.api.mlmodel.manager.UnbindRequest\x1a\x36.com.webank.ai.fate.api.mlmodel.manager.UnbindResponseB\x13\x42\x11ModelServiceProtob\x06proto3')
 )
 
 
@@ -215,6 +215,359 @@ _ROLEMODELINFO = _descriptor.Descriptor(
 )
 
 
+_UNLOADREQUEST = _descriptor.Descriptor(
+  name='UnloadRequest',
+  full_name='com.webank.ai.fate.api.mlmodel.manager.UnloadRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='tableName', full_name='com.webank.ai.fate.api.mlmodel.manager.UnloadRequest.tableName', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='namespace', full_name='com.webank.ai.fate.api.mlmodel.manager.UnloadRequest.namespace', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=404,
+  serialized_end=457,
+)
+
+
+_UNLOADRESPONSE = _descriptor.Descriptor(
+  name='UnloadResponse',
+  full_name='com.webank.ai.fate.api.mlmodel.manager.UnloadResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='statusCode', full_name='com.webank.ai.fate.api.mlmodel.manager.UnloadResponse.statusCode', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='message', full_name='com.webank.ai.fate.api.mlmodel.manager.UnloadResponse.message', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=459,
+  serialized_end=512,
+)
+
+
+_UNBINDREQUEST = _descriptor.Descriptor(
+  name='UnbindRequest',
+  full_name='com.webank.ai.fate.api.mlmodel.manager.UnbindRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='serviceId', full_name='com.webank.ai.fate.api.mlmodel.manager.UnbindRequest.serviceId', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='tableName', full_name='com.webank.ai.fate.api.mlmodel.manager.UnbindRequest.tableName', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='namespace', full_name='com.webank.ai.fate.api.mlmodel.manager.UnbindRequest.namespace', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=514,
+  serialized_end=586,
+)
+
+
+_UNBINDRESPONSE = _descriptor.Descriptor(
+  name='UnbindResponse',
+  full_name='com.webank.ai.fate.api.mlmodel.manager.UnbindResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='statusCode', full_name='com.webank.ai.fate.api.mlmodel.manager.UnbindResponse.statusCode', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='message', full_name='com.webank.ai.fate.api.mlmodel.manager.UnbindResponse.message', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=588,
+  serialized_end=641,
+)
+
+
+_QUERYMODELREQUEST = _descriptor.Descriptor(
+  name='QueryModelRequest',
+  full_name='com.webank.ai.fate.api.mlmodel.manager.QueryModelRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='serviceId', full_name='com.webank.ai.fate.api.mlmodel.manager.QueryModelRequest.serviceId', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='tableName', full_name='com.webank.ai.fate.api.mlmodel.manager.QueryModelRequest.tableName', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='namespace', full_name='com.webank.ai.fate.api.mlmodel.manager.QueryModelRequest.namespace', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='beginIndex', full_name='com.webank.ai.fate.api.mlmodel.manager.QueryModelRequest.beginIndex', index=3,
+      number=4, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='endIndex', full_name='com.webank.ai.fate.api.mlmodel.manager.QueryModelRequest.endIndex', index=4,
+      number=5, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='queryType', full_name='com.webank.ai.fate.api.mlmodel.manager.QueryModelRequest.queryType', index=5,
+      number=6, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=644,
+  serialized_end=777,
+)
+
+
+_MODELBINDINFO = _descriptor.Descriptor(
+  name='ModelBindInfo',
+  full_name='com.webank.ai.fate.api.mlmodel.manager.ModelBindInfo',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=779,
+  serialized_end=794,
+)
+
+
+_MODELINFOEX = _descriptor.Descriptor(
+  name='ModelInfoEx',
+  full_name='com.webank.ai.fate.api.mlmodel.manager.ModelInfoEx',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='tableName', full_name='com.webank.ai.fate.api.mlmodel.manager.ModelInfoEx.tableName', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='namespace', full_name='com.webank.ai.fate.api.mlmodel.manager.ModelInfoEx.namespace', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='serviceId', full_name='com.webank.ai.fate.api.mlmodel.manager.ModelInfoEx.serviceId', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='content', full_name='com.webank.ai.fate.api.mlmodel.manager.ModelInfoEx.content', index=3,
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='index', full_name='com.webank.ai.fate.api.mlmodel.manager.ModelInfoEx.index', index=4,
+      number=5, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=796,
+  serialized_end=898,
+)
+
+
+_QUERYMODELRESPONSE = _descriptor.Descriptor(
+  name='QueryModelResponse',
+  full_name='com.webank.ai.fate.api.mlmodel.manager.QueryModelResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='retcode', full_name='com.webank.ai.fate.api.mlmodel.manager.QueryModelResponse.retcode', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='message', full_name='com.webank.ai.fate.api.mlmodel.manager.QueryModelResponse.message', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='modelInfos', full_name='com.webank.ai.fate.api.mlmodel.manager.QueryModelResponse.modelInfos', index=2,
+      number=3, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=900,
+  serialized_end=1027,
+)
+
+
 _PUBLISHREQUEST_ROLEENTRY = _descriptor.Descriptor(
   name='RoleEntry',
   full_name='com.webank.ai.fate.api.mlmodel.manager.PublishRequest.RoleEntry',
@@ -248,8 +601,8 @@ _PUBLISHREQUEST_ROLEENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=670,
-  serialized_end=760,
+  serialized_start=1369,
+  serialized_end=1459,
 )
 
 _PUBLISHREQUEST_MODELENTRY = _descriptor.Descriptor(
@@ -285,8 +638,8 @@ _PUBLISHREQUEST_MODELENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=762,
-  serialized_end=861,
+  serialized_start=1461,
+  serialized_end=1560,
 )
 
 _PUBLISHREQUEST = _descriptor.Descriptor(
@@ -324,6 +677,34 @@ _PUBLISHREQUEST = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='tableName', full_name='com.webank.ai.fate.api.mlmodel.manager.PublishRequest.tableName', index=4,
+      number=5, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='namespace', full_name='com.webank.ai.fate.api.mlmodel.manager.PublishRequest.namespace', index=5,
+      number=6, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='loadType', full_name='com.webank.ai.fate.api.mlmodel.manager.PublishRequest.loadType', index=6,
+      number=7, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='filePath', full_name='com.webank.ai.fate.api.mlmodel.manager.PublishRequest.filePath', index=7,
+      number=8, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -336,8 +717,8 @@ _PUBLISHREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=405,
-  serialized_end=861,
+  serialized_start=1030,
+  serialized_end=1560,
 )
 
 
@@ -388,13 +769,14 @@ _PUBLISHRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=863,
-  serialized_end=946,
+  serialized_start=1562,
+  serialized_end=1645,
 )
 
 _ROLEMODELINFO_ROLEMODELINFOENTRY.fields_by_name['value'].message_type = _MODELINFO
 _ROLEMODELINFO_ROLEMODELINFOENTRY.containing_type = _ROLEMODELINFO
 _ROLEMODELINFO.fields_by_name['roleModelInfo'].message_type = _ROLEMODELINFO_ROLEMODELINFOENTRY
+_QUERYMODELRESPONSE.fields_by_name['modelInfos'].message_type = _MODELINFOEX
 _PUBLISHREQUEST_ROLEENTRY.fields_by_name['value'].message_type = _PARTY
 _PUBLISHREQUEST_ROLEENTRY.containing_type = _PUBLISHREQUEST
 _PUBLISHREQUEST_MODELENTRY.fields_by_name['value'].message_type = _ROLEMODELINFO
@@ -406,6 +788,14 @@ DESCRIPTOR.message_types_by_name['Party'] = _PARTY
 DESCRIPTOR.message_types_by_name['LocalInfo'] = _LOCALINFO
 DESCRIPTOR.message_types_by_name['ModelInfo'] = _MODELINFO
 DESCRIPTOR.message_types_by_name['RoleModelInfo'] = _ROLEMODELINFO
+DESCRIPTOR.message_types_by_name['UnloadRequest'] = _UNLOADREQUEST
+DESCRIPTOR.message_types_by_name['UnloadResponse'] = _UNLOADRESPONSE
+DESCRIPTOR.message_types_by_name['UnbindRequest'] = _UNBINDREQUEST
+DESCRIPTOR.message_types_by_name['UnbindResponse'] = _UNBINDRESPONSE
+DESCRIPTOR.message_types_by_name['QueryModelRequest'] = _QUERYMODELREQUEST
+DESCRIPTOR.message_types_by_name['ModelBindInfo'] = _MODELBINDINFO
+DESCRIPTOR.message_types_by_name['ModelInfoEx'] = _MODELINFOEX
+DESCRIPTOR.message_types_by_name['QueryModelResponse'] = _QUERYMODELRESPONSE
 DESCRIPTOR.message_types_by_name['PublishRequest'] = _PUBLISHREQUEST
 DESCRIPTOR.message_types_by_name['PublishResponse'] = _PUBLISHRESPONSE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
@@ -445,6 +835,62 @@ RoleModelInfo = _reflection.GeneratedProtocolMessageType('RoleModelInfo', (_mess
   ))
 _sym_db.RegisterMessage(RoleModelInfo)
 _sym_db.RegisterMessage(RoleModelInfo.RoleModelInfoEntry)
+
+UnloadRequest = _reflection.GeneratedProtocolMessageType('UnloadRequest', (_message.Message,), dict(
+  DESCRIPTOR = _UNLOADREQUEST,
+  __module__ = 'model_service_pb2'
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.api.mlmodel.manager.UnloadRequest)
+  ))
+_sym_db.RegisterMessage(UnloadRequest)
+
+UnloadResponse = _reflection.GeneratedProtocolMessageType('UnloadResponse', (_message.Message,), dict(
+  DESCRIPTOR = _UNLOADRESPONSE,
+  __module__ = 'model_service_pb2'
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.api.mlmodel.manager.UnloadResponse)
+  ))
+_sym_db.RegisterMessage(UnloadResponse)
+
+UnbindRequest = _reflection.GeneratedProtocolMessageType('UnbindRequest', (_message.Message,), dict(
+  DESCRIPTOR = _UNBINDREQUEST,
+  __module__ = 'model_service_pb2'
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.api.mlmodel.manager.UnbindRequest)
+  ))
+_sym_db.RegisterMessage(UnbindRequest)
+
+UnbindResponse = _reflection.GeneratedProtocolMessageType('UnbindResponse', (_message.Message,), dict(
+  DESCRIPTOR = _UNBINDRESPONSE,
+  __module__ = 'model_service_pb2'
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.api.mlmodel.manager.UnbindResponse)
+  ))
+_sym_db.RegisterMessage(UnbindResponse)
+
+QueryModelRequest = _reflection.GeneratedProtocolMessageType('QueryModelRequest', (_message.Message,), dict(
+  DESCRIPTOR = _QUERYMODELREQUEST,
+  __module__ = 'model_service_pb2'
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.api.mlmodel.manager.QueryModelRequest)
+  ))
+_sym_db.RegisterMessage(QueryModelRequest)
+
+ModelBindInfo = _reflection.GeneratedProtocolMessageType('ModelBindInfo', (_message.Message,), dict(
+  DESCRIPTOR = _MODELBINDINFO,
+  __module__ = 'model_service_pb2'
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.api.mlmodel.manager.ModelBindInfo)
+  ))
+_sym_db.RegisterMessage(ModelBindInfo)
+
+ModelInfoEx = _reflection.GeneratedProtocolMessageType('ModelInfoEx', (_message.Message,), dict(
+  DESCRIPTOR = _MODELINFOEX,
+  __module__ = 'model_service_pb2'
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.api.mlmodel.manager.ModelInfoEx)
+  ))
+_sym_db.RegisterMessage(ModelInfoEx)
+
+QueryModelResponse = _reflection.GeneratedProtocolMessageType('QueryModelResponse', (_message.Message,), dict(
+  DESCRIPTOR = _QUERYMODELRESPONSE,
+  __module__ = 'model_service_pb2'
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.api.mlmodel.manager.QueryModelResponse)
+  ))
+_sym_db.RegisterMessage(QueryModelResponse)
 
 PublishRequest = _reflection.GeneratedProtocolMessageType('PublishRequest', (_message.Message,), dict(
 
@@ -488,8 +934,8 @@ _MODELSERVICE = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=949,
-  serialized_end=1219,
+  serialized_start=1648,
+  serialized_end=2425,
   methods=[
   _descriptor.MethodDescriptor(
     name='publishLoad',
@@ -507,6 +953,42 @@ _MODELSERVICE = _descriptor.ServiceDescriptor(
     containing_service=None,
     input_type=_PUBLISHREQUEST,
     output_type=_PUBLISHRESPONSE,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='publishOnline',
+    full_name='com.webank.ai.fate.api.mlmodel.manager.ModelService.publishOnline',
+    index=2,
+    containing_service=None,
+    input_type=_PUBLISHREQUEST,
+    output_type=_PUBLISHRESPONSE,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='queryModel',
+    full_name='com.webank.ai.fate.api.mlmodel.manager.ModelService.queryModel',
+    index=3,
+    containing_service=None,
+    input_type=_QUERYMODELREQUEST,
+    output_type=_QUERYMODELRESPONSE,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='unload',
+    full_name='com.webank.ai.fate.api.mlmodel.manager.ModelService.unload',
+    index=4,
+    containing_service=None,
+    input_type=_UNLOADREQUEST,
+    output_type=_UNLOADRESPONSE,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='unbind',
+    full_name='com.webank.ai.fate.api.mlmodel.manager.ModelService.unbind',
+    index=5,
+    containing_service=None,
+    input_type=_UNBINDREQUEST,
+    output_type=_UNBINDRESPONSE,
     serialized_options=None,
   ),
 ])
