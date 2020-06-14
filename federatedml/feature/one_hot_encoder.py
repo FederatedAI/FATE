@@ -147,8 +147,8 @@ class OneHotEncoder(ModelBase):
             self.inner_param.header, self.inner_param.result_header
         ))
 
-        one_data = data_instances.first()[1].features
-        LOGGER.debug("Before transform, data is : {}".format(one_data))
+        # one_data = data_instances.first()[1].features
+        # LOGGER.debug("Before transform, data is : {}".format(one_data))
 
         f = functools.partial(self.transfer_one_instance,
                               col_maps=self.col_maps,
@@ -157,8 +157,8 @@ class OneHotEncoder(ModelBase):
         new_data = data_instances.mapValues(f)
         self.set_schema(new_data)
 
-        one_data = new_data.first()[1].features
-        LOGGER.debug("transfered data is : {}".format(one_data))
+        # one_data = new_data.first()[1].features
+        # LOGGER.debug("transfered data is : {}".format(one_data))
 
         return new_data
 
