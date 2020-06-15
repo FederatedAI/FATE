@@ -199,10 +199,10 @@ Execute under the app user of the target server (192.168.0.1 has an external net
 ```
 mkdir -p /data/projects/install
 cd /data/projects/install
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.0-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.1-release.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.0-release.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.0-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.1-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.1-release.tar.gz
 
 #Send to 192.168.0.2和192.168.0.3
 scp *.tar.gz app@192.168.0.2:/data/projects/install
@@ -222,7 +222,7 @@ mkdir -p /data/projects/fate/data/mysql
 
 #Unzip the package
 cd /data/projects/install
-tar xzvf mysql-1.4.0-release.tar.gz
+tar xzvf mysql-*.tar.gz
 cd mysql
 tar xf mysql-8.0.13.tar.gz -C /data/projects/fate/common/mysql
 
@@ -323,7 +323,7 @@ mkdir -p /data/projects/fate/common/python
 
 #Install miniconda3
 cd /data/projects/install
-tar xvf python-env-1.4.0-release.tar.gz
+tar xvf python-env-*.tar.gz
 cd python-env
 sh Miniconda3-4.5.4-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
 
@@ -336,7 +336,7 @@ sh Miniconda3-4.5.4-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
 tar xvf pip-packages-fate-*.tar.gz
 source /data/projects/fate/common/python/venv/bin/activate
 pip install setuptools-42.0.2-py2.py3-none-any.whl
-pip install -r pip-packages-fate-1.4.0/requirements.txt -f ./pip-packages-fate-1.4.0 --no-index
+pip install -r pip-packages-fate-1.4.1/requirements.txt -f ./pip-packages-fate-1.4.1 --no-index
 pip list | wc -l
 #The result should be 158
 ```
@@ -352,8 +352,8 @@ pip list | wc -l
 #Software deployment
 #Execute under the app user of the target server (192.168.0.1 192.168.0.2 192.168.0.3)
 cd /data/projects/install
-tar xf FATE_install_1.4.0-release.tar.gz
-cd FATE_install_1.4*
+tar xf FATE_install_*.tar.gz
+cd FATE_install_*
 tar xvf python.tar.gz -C /data/projects/fate/
 tar xvf eggroll.tar.gz -C /data/projects/fate
 

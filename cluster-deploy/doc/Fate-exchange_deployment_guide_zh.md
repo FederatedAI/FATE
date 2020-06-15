@@ -146,7 +146,7 @@ fi
 ```
 cd /data/projects/install
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.0-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.1-release.tar.gz
 ```
 
 ## 5.2 部署jdk
@@ -173,8 +173,8 @@ mv jdk1.8.0_192 jdk-8u192
 #部署软件
 #在目标服务器（192.168.0.1）app用户下执行:
 cd /data/projects/install
-tar xf FATE_install_1.4.0-release.tar.gz
-cd FATE_install_1.4*
+tar xf FATE_install_*.tar.gz
+cd FATE_install_*
 tar xvf eggroll.tar.gz -C /data/projects/fate
 
 #设置环境变量文件
