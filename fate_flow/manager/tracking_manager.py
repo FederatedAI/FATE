@@ -78,7 +78,8 @@ class Tracking(object):
         request_body['metric_name'] = metric_name
         request_body['metrics'] = [serialize_b64(metric, to_str=True) for metric in metrics]
         request_body['job_level'] = job_level
-        response = api_utils.local_api(method='POST',
+        response = api_utils.local_api(job_id=self.job_id,
+                                       method='POST',
                                        endpoint='/{}/tracking/{}/{}/{}/{}/{}/metric_data/save'.format(
                                            API_VERSION,
                                            self.job_id,
@@ -129,7 +130,8 @@ class Tracking(object):
         request_body['metric_name'] = metric_name
         request_body['metric_meta'] = serialize_b64(metric_meta, to_str=True)
         request_body['job_level'] = job_level
-        response = api_utils.local_api(method='POST',
+        response = api_utils.local_api(job_id=self.job_id,
+                                       method='POST',
                                        endpoint='/{}/tracking/{}/{}/{}/{}/{}/metric_meta/save'.format(
                                            API_VERSION,
                                            self.job_id,
@@ -355,6 +357,8 @@ class Tracking(object):
                 if (job_info['f_status'] in [JobStatus.FAILED, JobStatus.TIMEOUT,
                                              JobStatus.CANCELED, JobStatus.COMPLETE]):
                     job_info['f_tag'] = 'job_end'
+                if job.f_status == JobStatus.CANCELED:
+                    job_info.pop('f_status')
             update_fields = []
             for k, v in job_info.items():
                 try:
@@ -449,33 +453,16 @@ class Tracking(object):
         try:
             for role in roles.split(','):
                 for party_id in party_ids.split(','):
-                    # clean up the last tables of the federation
+                    # clean up temporary tables
                     namespace_clean = job_utils.generate_session_id(task_id=self.task_id,
                                                                     role=role,
                                                                     party_id=party_id)
-                    schedule_logger(self.job_id).info('clean table by namespace {} on {} {}'.format(namespace_clean,
-                                                                                                    self.role,
-                                                                                                    self.party_id))
                     session.clean_tables(namespace=namespace_clean, regex_string='*')
                     schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
                                                                                                          self.role,
                                                                                                          self.party_id))
-#                     # clean the task input data table
-#                     namespace_clean = job_utils.generate_task_input_data_namespace(task_id=self.task_id,
-#                                                                                    role=role,
-#                                                                                    party_id=party_id)
-#                     schedule_logger(self.job_id).info('clean table by namespace {} on {} {}'.format(namespace_clean,
-#                                                                                                     self.role,
-#                                                                                                     self.party_id))
-#                     session.clean_tables(namespace=namespace_clean, regex_string='*')
-#                     schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
-#                                                                                                          self.role,
-#                                                                                                          self.party_id))
-                    # clean namespace: task_id ,data table
+                    # clean up the last tables of the federation
                     namespace_clean = self.task_id
-                    schedule_logger(self.job_id).info('clean table by namespace {} on {} {}'.format(namespace_clean,
-                                                                                                    self.role,
-                                                                                                    self.party_id))
                     session.clean_tables(namespace=namespace_clean, regex_string='*')
                     schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
                                                                                                          self.role,
