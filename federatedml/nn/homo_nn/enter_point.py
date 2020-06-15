@@ -29,6 +29,9 @@ from federatedml.optim.convergence import converge_func_factory
 from federatedml.param.homo_nn_param import HomoNNParam
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
+from federatedml.util.homo_label_encoder import HomoLabelEncoderArbiter
+from federatedml.util.homo_label_encoder import HomoLabelEncoderClient
+import json
 
 Logger = LoggerFactory.get_logger()
 MODEL_META_NAME = "HomoNNModelMeta"
@@ -103,6 +106,8 @@ class HomoNNServer(HomoNNBase):
         return is_converged
 
     def fit(self, data_inst):
+        label_mapping = HomoLabelEncoderArbiter().label_alignment()
+        Logger.warning('label mapping is {}'.format(label_mapping))
         while self.aggregate_iteration_num < self.max_aggregate_iteration_num:
             self.model = self.aggregator.weighted_mean_model(suffix=self._suffix())
             self.aggregator.send_aggregated_model(model=self.model, suffix=self._suffix())
@@ -162,9 +167,39 @@ class HomoNNClient(HomoNNBase):
                                            optimizer=self.optimizer,
                                            loss=self.loss,
                                            metrics=self.metrics)
+    def class_alignment(self):
+        for i in reversed(self.nn_define):
+            if self.config_type == "pytorch":
+                if i['layer'] == "Linear":
+                   self.output_dim = i['config'][1]
+                   break
+            else:
+                if i['layer'] == "Dense":
+                    self.output_dim = i['units']
+                    break
 
+    def reset_output_dim(self, num_class):
+        self.output_dim = num_class
+        for i in reversed(self.nn_define):
+            if self.config_type == "pytorch" :
+               if i['layer'] == "Linear":
+                  i['config'][1] = num_class
+                  break
+            else:
+                if i['layer'] == "Dense":
+                    i['units'] = num_class
+                    break
     def fit(self, data_inst, *args):
-        data = self.data_converter.convert(data_inst, batch_size=self.batch_size, encode_label=self.encode_label)
+        local_classes = data_inst.map(lambda x, y: [x, {y.label}]).reduce(lambda x, y: x | y)
+        new_classes, new_label_mapping = HomoLabelEncoderClient().label_alignment(local_classes)
+        self.class_alignment()
+        if self.output_dim != len(new_label_mapping):
+           if self.output_dim == 1 and len(new_label_mapping)==2:
+               pass
+           else:
+                self.reset_output_dim(len(new_label_mapping))
+        self.label_mapping = {str(k):v for k, v in new_label_mapping.items()}
+        data = self.data_converter.convert(data_inst, batch_size=self.batch_size, encode_label=self.encode_label, label_mapping=self.label_mapping)
         if self.config_type == "pytorch":
             self.__build_pytorch_model(self.nn_define)
         else:
@@ -209,15 +244,17 @@ class HomoNNClient(HomoNNBase):
         from federatedml.protobuf.generated import nn_model_param_pb2
         param_pb = nn_model_param_pb2.NNModelParam()
         param_pb.saved_model_bytes = self.nn_model.export_model()
+        param_pb.label_mapping = json.dumps(self.label_mapping)
         return param_pb
 
     @assert_io_num_rows_equal
     def predict(self, data_inst):
 
-        data = self.data_converter.convert(data_inst, batch_size=self.batch_size, encode_label=self.encode_label)
+        data = self.data_converter.convert(data_inst, batch_size=self.batch_size, encode_label=self.encode_label, label_mapping=self.label_mapping)
         predict = self.nn_model.predict(data)
         num_output_units = predict.shape[1]
         threshold = self.param.predict_param.threshold
+        self.predict_mapping = {str(v): k for k, v in self.label_mapping.items()}
 
         if num_output_units == 1:
             kv = [(x[0], (0 if x[1][0] <= threshold else 1, x[1][0].item())) for x in zip(data.get_keys(), predict)]
@@ -225,11 +262,11 @@ class HomoNNClient(HomoNNBase):
             return data_inst.join(pred_tbl,
                                   lambda d, pred: [d.label, pred[0], pred[1], {"0": 1 - pred[1], "1": pred[1]}])
         else:
-            kv = [(x[0], (x[1].argmax(), [float(e) for e in x[1]])) for x in zip(data.get_keys(), predict)]
+            kv = [(x[0], ((self.predict_mapping[str(x[1].argmax())], x[1].argmax()), [float(e) for e in x[1]])) for x in zip(data.get_keys(), predict)]
             pred_tbl = session.parallelize(kv, include_key=True, partition=data_inst.get_partitions())
             return data_inst.join(pred_tbl,
-                                  lambda d, pred: [d.label, pred[0].item(),
-                                                   pred[1][pred[0]],
+                                  lambda d, pred: [d.label, pred[0][0],
+                                                   pred[1][pred[0][1]],
                                                    {str(v): pred[1][v] for v in range(len(pred[1]))}])
     def load_model(self, model_dict):
         model_dict = list(model_dict["model"].values())[0]
@@ -239,6 +276,7 @@ class HomoNNClient(HomoNNBase):
         self._init_model(self.model_param)
         self.aggregate_iteration_num = meta_obj.aggregate_iter
         self.nn_model = restore_nn_model(self.config_type, model_obj.saved_model_bytes)
+        self.label_mapping = json.loads(model_obj.label_mapping)
 
 
 # server: Arbiter, clients: Guest and Hosts
