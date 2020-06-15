@@ -72,8 +72,11 @@ class PipeLine(object):
             print("locals:", local_parameters)
             if role == 'self':
                 continue
-
+ 
             party_id = local_parameters.get(role)
+            if party_id is None:
+                continue
+
             self._roles[role] = []
             if isinstance(party_id, int):
                 self._roles[role].append(party_id)
@@ -219,6 +222,12 @@ class PipeLine(object):
             raise ValueError("there are no components to train")
 
         print("train_dsl : ", self._train_dsl)
+
+    def get_train_job_id(self):
+        return self._train_job_id
+
+    def get_predict_job_id(self):
+        return self._predict_job_id
 
     def _construct_train_conf(self):
         self._train_conf["initiator"] = self._get_initiator_conf()

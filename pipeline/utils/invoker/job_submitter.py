@@ -36,6 +36,7 @@ class JobFunc:
     JOB_STATUS = "query_job"
     TASK_STATUS = "query_task"
     COMPONENT_OUTPUT_DATA = "component_output_data"
+    COMPONENT_OUTPUT_DATA_TABLE = "component_output_data_table"
 
 
 class JobInvoker(object):
@@ -165,6 +166,27 @@ class JobInvoker(object):
             return ret_code, ret_msg, data
         except ValueError:
             raise ValueError("query job result is {}, can not parse useful info".format(result))
+
+    def get_output_data_table(self, job_id, cpn_name, role, party_id):
+        job_invoker = JobInvoker()
+        cmd = ["python", FATE_FLOW_CLIENT,
+               "-f", JobFunc.COMPONENT_OUTPUT_DATA_TABLE,
+               "-j", job_id,
+               "-r", role,
+               "-p", str(party_id),
+               "-cpn", cpn_name]
+        result = job_invoker._run_cmd(cmd)
+        try:
+            result = json.loads(result)
+            if 'retcode' not in result or result["retcode"] != 0:
+                raise ValueError
+
+            if "data" not in result:
+                raise ValueError
+            data = result["data"]
+        except ValueError:
+            raise ValueError("job submit failed, err msg: {}".format(result))
+        return data
 
     def query_task(self, job_id, cpn_name, role, party_id):
         cmd = ["python", FATE_FLOW_CLIENT,
