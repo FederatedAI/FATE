@@ -25,5 +25,6 @@ message NNModelParam {
     repeated double loss_history = 3;
     bool is_converged = 4;
     repeated string header = 5;
+    string label_mapping = 6;
 }
 
