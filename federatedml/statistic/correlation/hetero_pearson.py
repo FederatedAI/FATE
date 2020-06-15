@@ -178,7 +178,8 @@ class HeteroPearson(ModelBase):
         return param_pb
 
     def export_model(self):
-        return self._build_model_dict(meta=self._get_meta(), param=self._get_param())
+        if self.model_param.need_run:
+            return self._build_model_dict(meta=self._get_meta(), param=self._get_param())
 
     # noinspection PyTypeChecker
     def _callback(self):
