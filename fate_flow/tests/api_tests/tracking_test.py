@@ -6,7 +6,7 @@ import unittest
 import requests
 from arch.api.utils import file_utils
 
-from fate_flow.settings import HTTP_PORT, API_VERSION
+from fate_flow.settings import HTTP_PORT, API_VERSION, WORK_MODE
 
 
 class TestTracking(unittest.TestCase):
@@ -19,16 +19,11 @@ class TestTracking(unittest.TestCase):
         self.server_url = "http://{}:{}/{}".format('127.0.0.1', HTTP_PORT, API_VERSION)
 
     def test_tracking(self):
-        # submit job
-        # if os.path.exists(self.success_job_dir) and os.listdir(self.success_job_dir):
-        #     job_id = os.listdir(self.success_job_dir)[-1]
-        #     job_info = file_utils.load_json_conf(os.path.abspath(os.path.join(self.success_job_dir, job_id)))
-        #     self.assertIsInstance(job_info, dict)
-        # else:
         with open(os.path.join(file_utils.get_project_base_directory(), self.dsl_path), 'r') as f:
             dsl_data = json.load(f)
         with open(os.path.join(file_utils.get_project_base_directory(), self.config_path), 'r') as f:
             config_data = json.load(f)
+            config_data['job_parameters']['work_mode'] = WORK_MODE
         response = requests.post("/".join([self.server_url, 'job', 'submit']),
                                  json={'job_dsl': dsl_data, 'job_runtime_conf': config_data})
         self.assertTrue(response.status_code in [200, 201])
@@ -69,27 +64,6 @@ class TestTracking(unittest.TestCase):
 
         # test_job_data_view
         test_component(self, 'job/data_view')
-
-    # def test_component_parameters_test(self):
-    #     test_component(self, 'component/parameters')
-    #
-    # def test_component_metric_all(self):
-    #     test_component(self, 'component/metric/all')
-    #
-    # def test_component_metric(self):
-    #     test_component(self, 'component/metrics')
-    #
-    # def test_component_output_model(self):
-    #     test_component(self, 'component/output/model')
-    #
-    # def test_component_output_data(self):
-    #     test_component(self, 'component/output/data')
-    #
-    # def test_component_output_data_download(self):
-    #     test_component(self, 'component/output/data')
-    #
-    # def test_job_data_view(self):
-    #     test_component(self, 'component/output/data')
 
 
 def test_component(self, fun):
