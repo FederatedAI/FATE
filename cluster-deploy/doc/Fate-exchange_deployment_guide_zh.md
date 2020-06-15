@@ -149,7 +149,21 @@ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.1-release.tar.gz
 ```
 
-## 5.2 部署jdk
+## 5.2 操作系统参数检查
+
+**在目标服务器（192.168.0.1）app用户下执行**
+
+```
+#文件句柄数，不低于65535，如不满足需参考4.3章节重新设置
+ulimit -n
+65535
+
+#用户进程数，不低于64000，如不满足需参考4.3章节重新设置
+ulimit -u
+65535
+```
+
+## 5.3 部署jdk
 
 **在目标服务器（192.168.0.1）app用户下执行**:
 
@@ -164,10 +178,10 @@ mv jdk1.8.0_192 jdk-8u192
 ```
 
 
-5.3 部署eggroll
+5.4 部署eggroll
 --------
 
-### **5.3.1软件部署**
+### **5.4.1软件部署**
 
 ```
 #部署软件
@@ -185,7 +199,7 @@ export PATH=\$PATH:\$JAVA_HOME/bin
 EOF
 ```
 
-### 5.5.2 eggroll系统配置文件修改
+### 5.4.2 eggroll系统配置文件修改
 
 - 对应party rollsite的IP、端口、本party的Party Id修改，rollsite的端口一般默认即可。
 
@@ -211,7 +225,7 @@ eggroll.rollsite.adapter.sendbuf.size=1048576
 EOF
 ```
 
-### 5.5.3 eggroll路由配置文件修改
+### 5.4.3 eggroll路由配置文件修改
 
 此配置文件rollsite使用，配置路由信息，可以参考如下例子手工配置，也可以使用以下指令完成：
 
@@ -250,7 +264,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
 EOF
 ```
 
-### 5.5.4 各party默认路由信息修改
+### 5.4.4 各party默认路由信息修改
 
 **需要连接exchange的各party的rollsite模块，app用户修改**
 
@@ -267,7 +281,7 @@ EOF
         }
 ```
 
-## 5.6 启动服务
+## 5.5 启动服务
 
 **在目标服务器（192.168.0.1）app用户下执行**
 
@@ -278,7 +292,7 @@ cd /data/projects/fate/eggroll
 sh ./bin/eggroll.sh rollsite start
 ```
 
-## 5.7 验证和问题定位
+## 5.6 验证和问题定位
 
 1）跑一个双边toy测试，看是否可以测试通过，通过则表示配置无误，具体用例参考allinone部署文档。
 

@@ -190,7 +190,26 @@ scp *.tar.gz app@192.168.0.2:/data/projects/install
 scp *.tar.gz app@192.168.0.3:/data/projects/install
 ```
 
-## 5.2 部署mysql
+## 5.2 操作系统参数检查
+
+**在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）app用户下执行**
+
+```
+#虚拟内存，size不低于128G，如不满足需参考4.6章节重新设置
+cat /proc/swaps
+Filename                                Type            Size    Used    Priority
+/data/swapfile128G                      file            134217724       384     -1
+
+#文件句柄数，不低于65535，如不满足需参考4.3章节重新设置
+ulimit -n
+65535
+
+#用户进程数，不低于64000，如不满足需参考4.3章节重新设置
+ulimit -u
+65535
+```
+
+## 5.3 部署mysql
 
 **在目标服务器（192.168.0.1 192.168.0.3）app用户下执行**
 
@@ -280,7 +299,7 @@ mysql>select * from server_node;
 
 
 
-## 5.3 部署jdk
+## 5.4 部署jdk
 
 **在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）app用户下执行**:
 
@@ -294,7 +313,7 @@ cd /data/projects/fate/common/jdk
 mv jdk1.8.0_192 jdk-8u192
 ```
 
-## 5.4 部署python
+## 5.5 部署python
 
 **在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）app用户下执行**:
 
@@ -325,10 +344,10 @@ pip list | wc -l
 
 
 
-5.5 部署eggroll&fate
+5.6 部署eggroll&fate
 --------
 
-### **5.5.1软件部署**
+### **5.6.1软件部署**
 
 ```
 #部署软件
@@ -354,7 +373,7 @@ export PATH=\$PATH:\$JAVA_HOME/bin
 EOF
 ```
 
-### 5.5.2 eggroll系统配置文件修改
+### 5.6.2 eggroll系统配置文件修改
 
 此配置文件rollsite，clustermanager，nodemanager共用，每端party多台主机保持一致，需修改内容：
 
@@ -478,7 +497,7 @@ eggroll.rollpair.transferpair.sendbuf.size=4150000
 EOF
 ```
 
-### 5.5.3 eggroll路由配置文件修改
+### 5.6.3 eggroll路由配置文件修改
 
 此配置文件rollsite使用，配置路由信息，可以参考如下例子手工配置，也可以使用以下指令完成：
 
@@ -560,7 +579,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
 EOF
 ```
 
-### 5.5.4 fate依赖服务配置文件修改
+### 5.6.4 fate依赖服务配置文件修改
 
 - fateflow
 
@@ -636,7 +655,7 @@ cat > /data/projects/fate/python/arch/conf/server_conf.json << EOF
 EOF
 ```
 
-### 5.5.5 fate数据库信息配置文件修改
+### 5.6.5 fate数据库信息配置文件修改
 
 - work_mode(为1表示集群模式，默认)
 
@@ -708,7 +727,7 @@ default_model_store_address:
 EOF
 ```
 
-### 5.5.6 fateboard配置文件修改
+### 5.6.6 fateboard配置文件修改
 
 1）application.properties
 
@@ -775,7 +794,7 @@ export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 
 
 
-## 5.6 启动服务
+## 5.7 启动服务
 
 **在目标服务器（192.168.0.2）app用户下执行**
 
@@ -821,7 +840,7 @@ cd /data/projects/fate/fateboard
 sh service.sh start
 ```
 
-## 5.7 问题定位
+## 5.8 问题定位
 
 1）eggroll日志
 
