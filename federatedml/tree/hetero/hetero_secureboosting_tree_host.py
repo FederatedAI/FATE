@@ -118,6 +118,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         for i in range(self.num_trees):
             # n_tree = []
             for tidx in range(self.tree_dim):
+                LOGGER.info("start to fit, boost round: {}, tree index: {}".format(i, tidx))
                 tree_inst = HeteroDecisionTreeHost(self.tree_param)
 
                 tree_inst.set_inputinfo(data_bin=self.data_bin, bin_split_points=self.bin_split_points,
@@ -172,6 +173,7 @@ class HeteroSecureBoostingTreeHost(BoostingTree):
         for i in range(predict_start_round, rounds):
             # n_tree = self.trees_[i]
             for tidx in range(self.tree_dim):
+                LOGGER.info("start to predict, boost round: {}, tree index: {}".format(i, tidx))
                 tree_inst = HeteroDecisionTreeHost(self.tree_param)
                 tree_inst.load_model(self.tree_meta, self.trees_[i * self.tree_dim + tidx])
                 # tree_inst.set_tree_model(self.trees_[i * self.tree_dim + tidx])
