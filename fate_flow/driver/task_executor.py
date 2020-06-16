@@ -181,8 +181,7 @@ class TaskExecutor(object):
 
                                 data_table = session.table(
                                     namespace=job_args['data'][search_data_name]['namespace'],
-                                    name=job_args['data'][search_data_name]['name'],
-                                    partition=job_parameters.get('partition', 1))
+                                    name=job_args['data'][search_data_name]['name'])
                             else:
                                 data_table = None
                         else:
