@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from torch.utils.data import Dataset
+from torch.utils.data.sampler import Sampler
 import os
 import time
 import collections
@@ -8,6 +9,9 @@ import random
 from scipy.ndimage import zoom
 import warnings
 from scipy.ndimage.interpolation import rotate
+from .utils.utils import *
+from .utils.datasets import *
+from .utils.parse_config import *
 
 import pandas as pd
 import json
@@ -435,6 +439,48 @@ def get_trainloader(phase, config, config_default, split_comber=None):
     print('======', phase, "dataset constructed, len:", xgloader.__len__())
 
     return xgloader
+
+
+def get_dataset(phase):
+    wd = os.getcwd()
+    data_config = parse_data_config(os.path.join(wd, "../cv_task/config/custom.data"))
+    train_path = data_config["train"]
+    valid_path = data_config["valid"]
+    class_names = load_classes(data_config["names"])
+    if phase == 'train':
+        dataset = ListDataset(train_path, augment=True, multiscale=True)
+    elif phase == 'valid':
+        dataset = ListDataset(valid_path, augment=False, multiscale=False)
+
+    return dataset, class_names
+
+
+
+class sampler(Sampler):
+  def __init__(self, train_size, batch_size):
+    self.num_data = train_size
+    self.num_per_batch = int(train_size / batch_size)
+    self.batch_size = batch_size
+    self.range = torch.arange(0,batch_size).view(1, batch_size).long()
+    self.leftover_flag = False
+    if train_size % batch_size:
+      self.leftover = torch.arange(self.num_per_batch*batch_size, train_size).long()
+      self.leftover_flag = True
+
+  def __iter__(self):
+    rand_num = torch.randperm(self.num_per_batch).view(-1,1) * self.batch_size
+    self.rand_num = rand_num.expand(self.num_per_batch, self.batch_size) + self.range
+
+    self.rand_num_view = self.rand_num.view(-1)
+
+    if self.leftover_flag:
+      self.rand_num_view = torch.cat((self.rand_num_view, self.leftover),0)
+
+    return iter(self.rand_num_view)
+
+  def __len__(self):
+    return self.num_data
+
 
 if __name__ == 'main':
     # if True:

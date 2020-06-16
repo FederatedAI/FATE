@@ -87,7 +87,7 @@ class HomoNNParam(BaseParam):
         self.cv_param = copy.deepcopy(cv_param)
 
     def check(self):
-        supported_config_type = ["nn", "keras", "pytorch", "cv"]
+        supported_config_type = ["nn", "keras", "pytorch", "cv", "yolo", "faster"]
         if self.config_type not in supported_config_type:
             raise ValueError(f"config_type should be one of {supported_config_type}")
         self.early_stop = _parse_early_stop(self.early_stop)
@@ -111,8 +111,12 @@ class HomoNNParam(BaseParam):
         elif self.config_type == "cv":
             for config in self.nn_define:
                 pb.nn_define.append(json.dumps(config))
-
-
+        elif self.config_type == "yolo":
+            for config in self.nn_define:
+                pb.nn_define.append(json.dumps(config))
+        elif self.config_type == "faster":
+            for config in self.nn_define:
+                pb.nn_define.append(json.dumps(config))
         pb.batch_size = self.batch_size
         pb.max_iter = self.max_iter
 
@@ -141,6 +145,14 @@ class HomoNNParam(BaseParam):
             for layer in pb.nn_define:
                 self.nn_define.append(json.loads(layer))
         elif self.config_type== "cv":
+            self.nn_define.clear()
+            for config in pb.nn_define:
+                self.nn_define.append(json.loads(config))
+        elif self.config_type== "yolo":
+            self.nn_define.clear()
+            for config in pb.nn_define:
+                self.nn_define.append(json.loads(config))
+        elif self.config_type== "faster":
             self.nn_define.clear()
             for config in pb.nn_define:
                 self.nn_define.append(json.loads(config))

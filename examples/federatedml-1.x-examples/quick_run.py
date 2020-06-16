@@ -36,8 +36,11 @@ HOST = 'host'
 # DSL_PATH = 'hetero_logistic_regression/test_hetero_lr_train_job_dsl.json'
 # SUBMIT_CONF_PATH = 'hetero_logistic_regression/test_hetero_lr_train_job_conf.json'
 
-DSL_PATH = 'homo_logistic_regression/test_homolr_train_job_dsl.json'
-SUBMIT_CONF_PATH = 'homo_logistic_regression/test_homolr_train_job_conf.json'
+# DSL_PATH = 'homo_logistic_regression/test_homolr_train_job_dsl.json'
+# SUBMIT_CONF_PATH = 'homo_logistic_regression/test_homolr_train_job_conf.json'
+
+DSL_PATH = 'homo_nn/test_homo_nn_train_then_predict.json'
+SUBMIT_CONF_PATH = 'homo_nn/cv.json'
 
 TEST_PREDICT_CONF = HOME_DIR + '/test_predict_conf.json'
 
@@ -48,8 +51,8 @@ TASK = 'train'
 # Put your data to /examples/data folder and indicate the data names here
 # GUEST_DATA_SET = 'breast_b.csv'
 # HOST_DATA_SET = 'breast_a.csv'
-GUEST_DATA_SET = 'default_credit_homo_guest.csv'
-HOST_DATA_SET = 'default_credit_homo_host.csv'
+GUEST_DATA_SET = 'breast_homo_guest.csv'
+HOST_DATA_SET = 'breast_homo_host.csv'
 
 
 # Define your party ids here

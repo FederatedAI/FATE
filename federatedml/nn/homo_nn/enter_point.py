@@ -28,15 +28,36 @@ from federatedml.nn.homo_nn.nn_model import restore_nn_model
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.param.homo_nn_param import HomoNNParam
 from federatedml.util import consts
-from cv_task import dataloader_detector
+from cv_task import dataloader_detector, net, models
+from cv_task.utils.utils import *
+
+# from cv_task.lib.roi_data_layer.roidb import combined_roidb
+# from cv_task.lib.roi_data_layer.roibatchLoader import roibatchLoader
+# from cv_task.lib.model.utils.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
+# from cv_task.lib.model.utils.net_utils import weights_normal_init, save_net, load_net, \
+#       adjust_learning_rate, save_checkpoint, clip_gradient
+# from cv_task.lib.model.faster_rcnn.vgg16 import vgg16
+
+from cv_task.utils.config import opt
+from cv_task.data.dataset import Dataset, TestDataset, inverse_normalize
+from cv_task.model import FasterRCNNVGG16
+from torch.utils import data as data_
+from cv_task.fasterrcnntrainer import FasterRCNNTrainer
+from cv_task.utils import array_tool as at
+from cv_task.utils.vis_tool import visdom_bbox
+from cv_task.utils.eval_tool import eval_detection_voc
+
 import torch
 from torch.autograd import Variable
 from federatedml.nn.backend.pytorch.nn_model import PytorchNNModel
-from cv_task import net
 from torch.utils.data import DataLoader
+from torch.utils.data.sampler import Sampler
 import numpy as np
 import time
+import os
 
+import warnings
+warnings.filterwarnings("ignore")
 
 Logger = LoggerFactory.get_logger()
 MODEL_META_NAME = "HomoNNModelMeta"
@@ -160,9 +181,16 @@ class HomoNNClient(HomoNNBase):
 
         self.data_converter = nn_model.get_data_converter(self.config_type)
         self.model_builder = nn_model.get_nn_builder(config_type=self.config_type)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # self.device = torch.device("cpu")
+
 
     def _is_converged(self, data, epoch_degree):
         if self.config_type=="cv":
+            loss = data
+        elif self.config_type == "yolo":
+            loss = data
+        elif self.config_type == "faster":
             loss = data
         else:
             metrics = self.nn_model.evaluate(data)
@@ -204,6 +232,25 @@ class HomoNNClient(HomoNNBase):
                                            optimizer=optimizer,
                                            loss=loss)
             epoch_degree = float(len(dataset_train))*self.aggregate_every_n_epoch
+        elif self.config_type == "yolo":
+            config_default = ObjDict(self.nn_define[0])
+            model = models.get_model()
+            dataset_train, _ = dataloader_detector.get_dataset('train')
+            optimizer = torch.optim.Adam(model.parameters())
+            self.nn_model = PytorchNNModel(model=model,
+                                           optimizer=optimizer,
+                                           loss=None)
+            epoch_degree = float(len(dataset_train))*self.aggregate_every_n_epoch
+        elif self.config_type == "faster":
+            config_default = ObjDict(self.nn_define[0])
+            dataset = Dataset(opt)
+            base_model = FasterRCNNVGG16()
+            model = FasterRCNNTrainer(base_model)
+            optimizer = model.optimizer
+            self.nn_model = PytorchNNModel(model=model,
+                                           optimizer=optimizer,
+                                           loss=None)
+            epoch_degree = float(len(dataset))*self.aggregate_every_n_epoch
 
         else:
             data = self.data_converter.convert(data_inst, batch_size=self.batch_size)
@@ -255,16 +302,64 @@ class HomoNNClient(HomoNNBase):
                                  total_loss, classification_loss,
                                  bbox_regressiong_loss_1, bbox_regressiong_loss_2,
                                  bbox_regressiong_loss_3, bbox_regressiong_loss_4))
+            elif self.config_type == "yolo":
+                trainloader = DataLoader(dataset_train,
+                                         batch_size=config_default.batch_size,
+                                         shuffle=True,
+                                         num_workers=config_default.workers,
+                                         pin_memory=False,
+                                         collate_fn=dataset_train.collate_fn)
+                epoch_degree = float(len(trainloader))
+                self.nn_model._model.to(self.device)
+                self.nn_model._model.train()
+                metrics = []
+
+                for batch_i, (_, imgs, targets) in enumerate(trainloader):
+                    imgs = Variable(imgs.to(self.device))
+                    targets = Variable(targets.to(self.device), requires_grad=False)
+
+                    loss, outputs = self.nn_model._model(imgs, targets)
+                    loss.backward()
+                    optimizer.step()
+                    optimizer.zero_grad()
+                    log_str = "---- [Batch %d/%d] ----" % (batch_i, len(trainloader))
+                    log_str += f"---- Total loss {loss.item()}"
+                    metrics.append(loss.item())
+                    Logger.info(log_str)
+                    # assert False
+                total_loss = np.mean(metrics)
+                data = total_loss
+            elif self.config_type == "faster":
+                trainloader = data_.DataLoader(dataset,
+                                         batch_size=1,
+                                         shuffle=True,
+                                         num_workers=1)
+                self.nn_model._model.reset_meters()
+                self.nn_model._model.to(self.device)
+                self.nn_model._model.train()
+                for ii, (img, bbox_, label_, scale) in enumerate(trainloader):
+                    scale = at.scalar(scale)
+                    img, bbox, label = img.to(self.device).float(), bbox_.to(self.device), label_.to(self.device)
+                    self.nn_model._model.train_step(img, bbox, label, scale)
+                    loss = self.nn_model._model.get_meter_data()
+                    total_loss = loss["total_loss"]
+                    log_str = "---- [Batch %d/%d] ----" % (ii, len(trainloader))
+                    log_str += f"---- Total loss {total_loss}"
+                    Logger.info(log_str)
+                data = total_loss
+
             else:
                 self.nn_model.train(data, aggregate_every_n_epoch=self.aggregate_every_n_epoch)
 
             # send model for aggregate, then set aggregated model to local
+            self.nn_model._model.to( torch.device("cpu"))
             self.aggregator.send_weighted_model(weighted_model=self.nn_model.get_model_weights(),
                                                 weight=epoch_degree * self.aggregate_every_n_epoch,
                                                 suffix=self._suffix())
 
             weights = self.aggregator.get_aggregated_model(suffix=self._suffix())
             self.nn_model.set_model_weights(weights=weights)
+            self.nn_model._model.to(self.device)
             #calc loss and check convergence
             if self._is_converged(data, epoch_degree):
                 Logger.info(f"early stop at iter {self.aggregate_iteration_num}")
@@ -294,8 +389,12 @@ class HomoNNClient(HomoNNBase):
         if self.config_type == "cv":
             config_default = ObjDict(self.nn_define[0])
             Logger.info(f"{self.nn_define}")
-            #这里只有的model不会用于预测，使用的模型为self.nn_model
             config, model, loss, get_pbb = net.get_model()
+            #这里只有的model不会用于预测，使用的模型为self.nn_model
+            if type(self.nn_model._model) == dict:
+                state_dict = self.nn_model._model["model"]
+                self.nn_model._model = model
+                self.nn_model._model.load_state_dict(state_dict)
             dataset_validation = dataloader_detector.get_trainloader("validation", config, config_default)
             validateloader = DataLoader(dataset_validation,
                                         batch_size=config_default.batch_size,
@@ -336,6 +435,86 @@ class HomoNNClient(HomoNNBase):
                       np.mean(metrics[:, 5]))
             print(msg)
             Logger.info(msg)
+        elif self.config_type == "yolo":
+            dataset_valid, class_names = dataloader_detector.get_dataset('valid')
+            validloader = DataLoader(dataset_valid,
+                                     batch_size=1,
+                                     shuffle=False,
+                                     pin_memory=False,
+                                     collate_fn=dataset_valid.collate_fn)
+            if type(self.nn_model._model) == dict:
+                state_dict = self.nn_model._model["model"]
+                model = models.get_model()
+                self.nn_model._model = model
+                self.nn_model._model.load_state_dict(state_dict)
+            self.nn_model._model.to(self.device)
+            self.nn_model._model.eval()
+            Logger.info("validate begin.")
+            labels = []
+            sample_metrics = []
+            for batch_i, (_, imgs, targets) in enumerate(validloader):
+                labels += targets[:, 1].tolist()
+                # Rescale target
+                targets[:, 2:] = xywh2xyxy(targets[:, 2:])
+                targets[:, 2:] *= 416
+
+                imgs = Variable(imgs.type(torch.FloatTensor).to(self.device), requires_grad=False)
+                with torch.no_grad():
+                    outputs = self.nn_model._model(imgs)
+                    outputs = non_max_suppression(outputs, conf_thres=0.5, nms_thres=0.5)
+                sample_metrics += get_batch_statistics(outputs, targets, iou_threshold=0.5)
+                # Concatenate sample statistics
+            if len(sample_metrics) == 0:
+                precision, recall, AP, f1, ap_class = np.array([0]), np.array([0]), np.array([0]), np.array([0]), np.array([0], dtype=np.int)
+            else:
+                true_positives, pred_scores, pred_labels = [np.concatenate(x, 0) for x in list(zip(*sample_metrics))]
+                precision, recall, AP, f1, ap_class = ap_per_class(true_positives, pred_scores, pred_labels, labels)
+            evaluation_metrics = [
+                ("val_precision", precision.mean()),
+                ("val_recall", recall.mean()),
+                ("val_mAP", AP.mean()),
+                ("val_f1", f1.mean()),
+            ]
+            Logger.info(evaluation_metrics)
+
+            # Print class APs and mAP
+            # ap_table = [["Index", "Class name", "AP"]]
+            # for i, c in enumerate(ap_class):
+            #     ap_table += [[c, class_names[c], "%.5f" % AP[i]]]
+            # Logger.info(AsciiTable(ap_table).table)
+            Logger.info(f"---- mAP {AP.mean()}")
+            # assert False
+        elif self.config_type == "faster":
+            if type(self.nn_model._model) == dict:
+                state_dict = self.nn_model._model["model"]
+                base_model = FasterRCNNVGG16()
+                model = FasterRCNNTrainer(base_model)
+                self.nn_model._model = model
+                self.nn_model._model.load_state_dict(state_dict)
+            self.nn_model._model.to(self.device)
+            self.nn_model._model.eval()
+            testset = TestDataset(opt)
+            test_dataloader = data_.DataLoader(testset,
+                                               batch_size=1,
+                                               num_workers=1,
+                                               shuffle=False, pin_memory=True)
+            pred_bboxes, pred_labels, pred_scores = list(), list(), list()
+            gt_bboxes, gt_labels, gt_difficults = list(), list(), list()
+            for ii, (imgs, sizes, gt_bboxes_, gt_labels_, gt_difficults_) in enumerate(test_dataloader):
+                sizes = [sizes[0][0].item(), sizes[1][0].item()]
+                pred_bboxes_, pred_labels_, pred_scores_ = self.nn_model._model.faster_rcnn.predict(imgs, [sizes])
+                gt_bboxes += list(gt_bboxes_.numpy())
+                gt_labels += list(gt_labels_.numpy())
+                gt_difficults += list(gt_difficults_.numpy())
+                pred_bboxes += pred_bboxes_
+                pred_labels += pred_labels_
+                pred_scores += pred_scores_
+
+            result = eval_detection_voc(
+                pred_bboxes, pred_labels, pred_scores,
+                gt_bboxes, gt_labels, gt_difficults,
+                use_07_metric=True)
+            Logger.info(f"---- test result {result}")
         else:
             data = self.data_converter.convert(data_inst, batch_size=self.batch_size)
             predict = self.nn_model.predict(data)

@@ -78,6 +78,15 @@ def get_nn_builder(config_type):
     elif config_type == "cv":
         from cv_task import net
         return net.get_model()
+    elif config_type == "yolo":
+        from cv_task import models
+        return models.get_model()
+    elif config_type == "faster":
+        from cv_task.model import FasterRCNNVGG16
+        from cv_task.fasterrcnntrainer import FasterRCNNTrainer
+        base_model = FasterRCNNVGG16()
+        model = FasterRCNNTrainer(base_model)
+        return model
     else:
         raise ValueError(f"{config_type} is not supported")
 

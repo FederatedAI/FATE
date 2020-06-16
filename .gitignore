@@ -8,6 +8,11 @@ __pycache__
 *.class
 .project
 *.prefs
+fate_flow
+*.png
+*.jpg
+.installed.cfg
+*.egg
 
 # excluded paths
 /arch/core/target/
@@ -32,3 +37,20 @@ __pycache__
 /audit/
 .vscode/*
 /eggroll/
+
+examples/data
+miniconda3-fate-1.1
+jdk
+cv_task/data/custom
+cv_task/data/VOCdevkit
+cv_task/data/Street_Dataset
+bin/
+build/
+develop-eggs/
+dist/
+eggs/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/

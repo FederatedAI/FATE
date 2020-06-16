@@ -52,6 +52,12 @@ def restore_nn_model(config_type, model_bytes):
     elif config_type =="cv":
         from federatedml.nn.backend.pytorch.nn_model import restore_pytorch_nn_model
         return restore_pytorch_nn_model(model_bytes)
+    elif config_type =="yolo":
+        from federatedml.nn.backend.pytorch.nn_model import restore_pytorch_nn_model
+        return restore_pytorch_nn_model(model_bytes)
+    elif config_type =="faster":
+        from federatedml.nn.backend.pytorch.nn_model import restore_pytorch_nn_model
+        return restore_pytorch_nn_model(model_bytes)
     else:
         return restore_keras_nn_model(model_bytes)
 

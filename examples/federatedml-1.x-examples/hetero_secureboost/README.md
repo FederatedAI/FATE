@@ -38,6 +38,13 @@ This section introduces the dsl and conf relationships for usage.
     (1) evaluate data during training process, check the "validation_freqs" field in runtime_config  
     (2) another homomorphic encryption method "Iterative Affine", check "encrypt_param" field in runtime_config.
     
+6. Early stopping example
+    example-data: (1) guest: student-mat_b.csv
+                  (2) host: student-mat_a.csv  
+    dsl: test_secureboost_train_dsl.json  
+    runtime_config: test_secureboost_train_with_early_stopping_conf.json
+    
+
 #### Cross Validation Class
 
 1. Binary-Class:  

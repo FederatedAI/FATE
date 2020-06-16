@@ -73,10 +73,10 @@
   },
   "algorithm_parameters": {
     "homo_nn_0": {
-      "config_type": "cv",
+      "config_type": "faster",
       "nn_define": [
        {
-        "workers": 1,
+        "workers": 2,
         "epochs":1,
         "batch_size":1,
         "lr": 0.01,
