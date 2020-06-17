@@ -492,7 +492,7 @@ class DSLParser(object):
         name_component_maps = {}
 
         for component in self.components:
-            name = component.gget_name()
+            name = component.get_name()
             vertex = self.component_name_index.get(name)
             hierarchical_structure[max_depth[vertex]].append(name)
 
