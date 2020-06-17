@@ -488,7 +488,7 @@ class DSLParser(object):
                 max_depth[down_vertex] = max(max_depth[down_vertex], max_depth[vertex] + 1)
 
         max_dep = max(max_depth)
-        hierarchical_structure = [[] * (max_dep + 1)]
+        hierarchical_structure = [[] for i in range(max_dep + 1)]
         name_component_maps = {}
 
         for component in self.components:
