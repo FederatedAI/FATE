@@ -112,9 +112,13 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         LOGGER.info("Finish feature binning fit and transform")
         return self.data_output
 
+    # @staticmethod
+    # def encrypt(x, cipher):
+    #     return cipher.encrypt(x), cipher.encrypt(1 - x)
+    
     @staticmethod
     def encrypt(x, cipher):
-        return cipher.encrypt(x), cipher.encrypt(1 - x)
+        return cipher.encrypt(x)
 
     @staticmethod
     def __decrypt_bin_sum(encrypted_bin_sum, cipher):

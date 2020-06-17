@@ -19,12 +19,15 @@ import os
 import subprocess
 import tempfile
 import time
+
+import fate_flow
+
 from pipeline.backend import config as conf
 from pipeline.backend.config import JobStatus
 from pipeline.backend.config import StatusCode
 
-
-FATE_HOME = os.getcwd() + "/../../"
+# FATE_HOME = os.getcwd() + "/../../"
+FATE_HOME = os.path.dirname(fate_flow.__file__) + '/../'
 FATE_FLOW_CLIENT = FATE_HOME + "fate_flow/fate_flow_client.py"
 
 
@@ -108,7 +111,7 @@ class JobInvoker(object):
                    "-f", JobFunc.UPLOAD,
                    "-c", submit_path,
                    "-drop", str(drop)
-                  ]
+                   ]
 
             result = self._run_cmd(cmd)
             try:
@@ -131,18 +134,18 @@ class JobInvoker(object):
             ret_code, ret_msg, data = self.query_job(job_id, role, party_id)
             status = data["f_status"]
             if status == JobStatus.SUCCESS:
-                print ("job is success!!!")
+                print("job is success!!!")
                 return StatusCode.SUCCESS
 
             if status == JobStatus.FAIL:
-                print ("job is failed, please check out job {} by fate board or fate_flow cli".format(job_id))
+                print("job is failed, please check out job {} by fate board or fate_flow cli".format(job_id))
                 return StatusCode.FAIL
 
             if status == JobStatus.WAITING:
-                print ("job {} is still waiting")
+                print("job {} is still waiting")
 
             if status == JobStatus.RUNNING:
-                print ("job {} now is running component {}".format(job_id, data["f_current_tasks"]))
+                print("job {} now is running component {}".format(job_id, data["f_current_tasks"]))
 
             time.sleep(conf.TIME_QUERY_FREQS)
 
@@ -157,7 +160,7 @@ class JobInvoker(object):
         try:
             result = json.loads(result)
             if 'retcode' not in result:
-                raise  ValueError("can not query_job")
+                raise ValueError("can not query_job")
 
             ret_code = result["retcode"]
             ret_msg = result["retmsg"]
@@ -200,7 +203,7 @@ class JobInvoker(object):
         try:
             result = json.loads(result)
             if 'retcode' not in result:
-                raise  ValueError("can not query component {}' task status".format(cpn_name))
+                raise ValueError("can not query component {}' task status".format(cpn_name))
 
             ret_code = result["retcode"]
             ret_msg = result["retmsg"]
@@ -235,8 +238,22 @@ class JobInvoker(object):
                 for line in fin:
                     data.append(line.strip())
 
-            print (data[:10])
+            print(data[:10])
             return data
+
+    def get_output_data_table(self, job_id, cpn_name, role, party_id):
+        with tempfile.TemporaryDirectory() as job_dir:
+            cmd = ["python", FATE_FLOW_CLIENT,
+                   "-f", JobFunc.COMPONENT_OUTPUT_DATA_TABLE,
+                   "-j", job_id,
+                   "-cpn", cpn_name,
+                   "-r", role,
+                   "-p", str(party_id)]
+
+            result = self._run_cmd(cmd)
+            result = json.loads(result)
+            print("Component_data_table result: {}".format(result))
+            return result
 
     def get_model_param(self, job_id, cpn_name, role, party_id):
         result = None
@@ -251,11 +268,11 @@ class JobInvoker(object):
             result = self._run_cmd(cmd)
             result = json.loads(result)
             if "data" not in result:
-                print ("job {}, component {} has no output model param".format(job_id, cpn_name))
+                print("job {}, component {} has no output model param".format(job_id, cpn_name))
                 return
             return result["data"]
         except:
-            print ("Can not get output model, err msg is {}".format(result))
+            print("Can not get output model, err msg is {}".format(result))
 
     def get_metric(self, job_id, cpn_name, role, party_id):
         result = None
@@ -270,10 +287,8 @@ class JobInvoker(object):
             result = self._run_cmd(cmd)
             result = json.loads(result)
             if "data" not in result:
-                print ("job {}, component {} has no output metric".format(job_id, cpn_name))
+                print("job {}, component {} has no output metric".format(job_id, cpn_name))
                 return
             return result["data"]
         except:
-            print ("Can not get output model, err msg is {}".format(result))
-
-
+            print("Can not get output model, err msg is {}".format(result))

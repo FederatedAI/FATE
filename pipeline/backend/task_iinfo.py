@@ -69,4 +69,7 @@ class TaskInfo(object):
             args = set(args)
         return self._component.summary(data, set(args))
 
+    def get_data_table(self):
+        return self._job_client.get_output_data_table(self._jobid, self._component.name, self._role, self._party_id)
+
 
