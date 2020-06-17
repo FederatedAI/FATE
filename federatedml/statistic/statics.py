@@ -17,6 +17,7 @@
 import functools
 import math
 import sys
+import numpy as np
 
 from arch.api.utils import log_utils
 from federatedml.feature.binning.quantile_binning import QuantileBinning
@@ -25,12 +26,74 @@ from federatedml.feature.instance import Instance
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.statistic import data_overview
+import copy
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
 
 class SummaryStatistics(object):
+    def __init__(self, length, abnormal_list=None):
+        self.abnormal_list = abnormal_list
+        self.sum = np.zeros(length)
+        self.sum_square = np.zeros(length)
+        self.max_value = -np.inf * np.ones(length)
+        self.min_value = np.inf * np.ones(length)
+        self.count = np.zeros(length)
+
+    def add_rows(self, rows):
+        if self.abnormal_list is None:
+            self.count += 1
+            self.sum += rows
+            self.sum_square += rows ** 2
+            self.max_value = np.max([self.max_value, rows], axis=0)
+            self.min_value = np.min([self.min_value, rows], axis=0)
+        else:
+            for idx, value in enumerate(rows):
+                if value in self.abnormal_list:
+                    continue
+                self.count[idx] += 1
+                self.sum[idx] += value
+                self.sum_square[idx] += value ** 2
+                self.max_value[idx] = np.max([self.max_value[idx], value])
+                self.min_value[idx] = np.min([self.min_value[idx], value])
+
+    def merge(self, other):
+        self.count += other.count
+        self.sum += other.sum
+        self.sum_square += other.sum_square
+        self.max_value = np.max([self.max_value, other.max_value], axis=0)
+        self.min_value = np.min([self.min_value, other.min_value], axis=0)
+        return self
+
+    @property
+    def mean(self):
+        return self.sum / self.count
+
+    @property
+    def max(self):
+        return self.max_value
+
+    @property
+    def min(self):
+        return self.min_value
+
+    @property
+    def variance(self):
+        mean = self.mean
+        variance = self.sum_square / self.count - mean ** 2
+        if math.fabs(variance) < consts.FLOAT_ZERO:
+            return 0.0
+        return variance
+
+    @property
+    def std_variance(self):
+        if math.fabs(self.variance) < consts.FLOAT_ZERO:
+            return 0.0
+        return math.sqrt(self.variance)
+
+
+class SummaryStatistics2(object):
     def __init__(self, abnormal_list=None):
         if abnormal_list is None:
             self.abnormal_list = []
@@ -76,6 +139,14 @@ class SummaryStatistics(object):
         return self.sum / self.count
 
     @property
+    def max(self):
+        return self.max_value
+
+    @property
+    def min(self):
+        return self.min_value
+
+    @property
     def variance(self):
         mean = self.mean
         variance = self.sum_square / self.count - mean ** 2
@@ -98,60 +169,41 @@ class MultivariateStatisticalSummary(object):
     def __init__(self, data_instances, cols_index=-1, abnormal_list=None):
         self.finish_fit_statics = False     # Use for static data
         self.finish_fit_summaries = False   # Use for quantile data
-        self.summary_statistics = {}
+        self.summary_statistics = None
+        self.header = None
         self.quantile_summary_dict = {}
         self.cols_dict = {}
-        self.medians = None
+        # self.medians = None
         self.data_instances = data_instances
-        self.cols_index = cols_index
-        if abnormal_list is None:
-            self.abnormal_list = []
-        else:
-            self.abnormal_list = abnormal_list
-        self._init_cols(data_instances)
-
+        self.cols_index = None
+        self.abnormal_list = abnormal_list
+        self.__init_cols(data_instances, cols_index)
         self.label_summary = None
 
-    def _init_cols(self, data_instances):
-
-        # Already initialized
-        if len(self.cols_dict) != 0:
-            return
-
+    def __init_cols(self, data_instances, cols_index):
         header = data_overview.get_header(data_instances)
         self.header = header
-        if self.cols_index == -1:
-            self.cols = header
+        if cols_index == -1:
             self.cols_index = [i for i in range(len(header))]
         else:
-            cols = []
-            for idx in self.cols_index:
-                try:
-                    idx = int(idx)
-                except ValueError:
-                    raise ValueError("In binning module, selected index: {} is not integer".format(idx))
-
-                if idx >= len(header):
-                    raise ValueError(
-                        "In binning module, selected index: {} exceed length of data dimension".format(idx))
-                cols.append(header[idx])
-            self.cols = cols
-
-        self.cols_dict = {}
-        for col in self.cols:
-            col_index = header.index(col)
-            self.cols_dict[col] = col_index
+            self.cols_index = cols_index
+        self.cols_dict = {header[indices]: indices for indices in self.cols_index}
+        self.summary_statistics = SummaryStatistics(length=len(self.cols_index),
+                                                    abnormal_list=self.abnormal_list)
 
     def _static_sums(self):
         """
         Statics sum, sum_square, max_value, min_value,
         so that variance is available.
         """
+        is_sparse = data_overview.is_sparse_data(self.data_instances)
         partition_cal = functools.partial(self.static_in_partition,
-                                          cols_dict=self.cols_dict,
-                                          abnormal_list=self.abnormal_list)
-        summary_statistic_dict = self.data_instances.mapPartitions(partition_cal)
-        self.summary_statistics = summary_statistic_dict.reduce(self.aggregate_statics)
+                                          cols_index=self.cols_index,
+                                          summary_statistics=copy.deepcopy(self.summary_statistics),
+                                          is_sparse=is_sparse)
+        self.summary_statistics = self.data_instances.mapPartitions(partition_cal).\
+            reduce(lambda x, y: x.merge(y))
+        # self.summary_statistics = summary_statistic_dict.reduce(self.aggregate_statics)
         self.finish_fit_statics = True
 
     def _static_quantile_summaries(self, error):
@@ -170,7 +222,7 @@ class MultivariateStatisticalSummary(object):
         self.finish_fit_summaries = True
 
     @staticmethod
-    def static_in_partition(data_instances, cols_dict, abnormal_list):
+    def static_in_partition(data_instances, cols_index, summary_statistics, is_sparse):
         """
         Statics sums, sum_square, max and min value through one traversal
 
@@ -179,42 +231,29 @@ class MultivariateStatisticalSummary(object):
         data_instances : DTable
             The input data
 
-        cols_dict : dict
+        cols_index : indices
             Specify which column(s) need to apply statistic.
 
-        abnormal_list: list
-            Specify which values are not permitted.
+        summary_statistics: SummaryStatistics
 
         Returns
         -------
         Dict of SummaryStatistics object
 
         """
-        summary_statistic_dict = {}
-        for col_name in cols_dict:
-            summary_statistic_dict[col_name] = SummaryStatistics(abnormal_list)
 
         for k, instances in data_instances:
-            if isinstance(instances, Instance):
-                features = instances.features
-            else:
-                features = instances
-
-            if isinstance(features, SparseVector):
-                is_sparse = True
-            else:
-                is_sparse = False
-
-            for col_name, col_index in cols_dict.items():
-                if is_sparse:
-                    sparse_data = features.get_sparse_vector()
-                    value = sparse_data.get(col_index, 0)
+            if not is_sparse:
+                if isinstance(instances, Instance):
+                    features = instances.features
                 else:
-                    value = features[col_index]
-                stat_obj = summary_statistic_dict[col_name]
-                stat_obj.add_value(value)
-
-        return summary_statistic_dict
+                    features = instances
+                row_values = features[cols_index]
+            else:
+                sparse_data = instances.features.get_sparse_vector()
+                row_values = np.array([sparse_data.get(x, 0) for x in cols_index])
+            summary_statistics.add_rows(row_values)
+        return summary_statistics
 
     @staticmethod
     def static_summaries_in_partition(data_instances, cols_dict, abnormal_list, error):
@@ -268,22 +307,6 @@ class MultivariateStatisticalSummary(object):
             static_1.merge(s_dict2[col_name])
             new_dict[col_name] = static_1
         return new_dict
-
-    def get_mean(self, cols_dict=None):
-        """
-        Return the mean value(s) of the given column
-
-        Parameters
-        ----------
-        cols_dict : dict
-            Specify which column(s) need to apply statistic.
-
-        Returns
-        -------
-        return a dict of result mean.
-
-        """
-        return self._prepare_data(cols_dict, "mean")
 
     def get_median(self, cols_dict=None):
         medians = {}
@@ -342,8 +365,7 @@ class MultivariateStatisticalSummary(object):
         return quantile_points
 
     def _get_quantile_median(self):
-        cols_index = self._get_cols_index()
-        bin_param = FeatureBinningParam(bin_num=2, bin_indexes=cols_index)
+        bin_param = FeatureBinningParam(bin_num=2, bin_indexes=self.cols_index)
         binning_obj = QuantileBinning(bin_param, abnormal_list=self.abnormal_list)
         split_points = binning_obj.fit_split_points(self.data_instances)
         medians = {}
@@ -351,34 +373,35 @@ class MultivariateStatisticalSummary(object):
             medians[col_name] = split_point[0]
         return medians
 
-    def _get_cols_index(self):
-        cols_index = []
-        for col in self.cols:
-            idx = self.cols_dict[col]
-            cols_index.append(idx)
-        return cols_index
+    def get_mean(self):
+        """
+        Return the mean value(s) of the given column
 
-    def get_variance(self, cols_dict=None):
-        return self._prepare_data(cols_dict, "variance")
+        Returns
+        -------
+        return a dict of result mean.
 
-    def get_std_variance(self, cols_dict=None):
-        return self._prepare_data(cols_dict, "std_variance")
+        """
+        return self.get_statics("mean")
 
-    def get_max(self, cols_dict=None):
-        return self._prepare_data(cols_dict, "max_value")
+    def get_variance(self):
+        return self.get_statics("variance")
 
-    def get_min(self, cols_dict=None):
-        return self._prepare_data(cols_dict, "min_value")
+    def get_std_variance(self):
+        return self.get_statics("std_variance")
 
-    def _prepare_data(self, cols_dict, data_type):
+    def get_max(self):
+        return self.get_statics("max_value")
+
+    def get_min(self):
+        return self.get_statics("min_value")
+
+    def get_statics(self, data_type):
         """
         Return the specific static value(s) of the given column
 
         Parameters
         ----------
-        cols_dict : dict
-            Specify which column(s) need to apply statistic.
-
         data_type : str, "mean", "variance", "std_variance", "max_value" or "mim_value"
             Specify which type to show.
 
@@ -389,27 +412,12 @@ class MultivariateStatisticalSummary(object):
         if not self.finish_fit_statics:
             self._static_sums()
 
-        if cols_dict is None:
-            cols_dict = self.cols_dict
+        if hasattr(self.summary_statistics, data_type):
+            result_row = getattr(self.summary_statistics, data_type)
+        else:
+            raise ValueError(f"Statistic data type: {data_type} cannot be recognized")
 
-        result = {}
-        for col_name, col_index in cols_dict.items():
-            if col_name not in self.cols_dict:
-                LOGGER.warning("feature {} has not been static yet. Has been skipped".format(col_name))
-                continue
-
-            summary_obj = self.summary_statistics[col_name]
-            if data_type == 'mean':
-                result[col_name] = summary_obj.mean
-            elif data_type == 'variance':
-                result[col_name] = summary_obj.variance
-            elif data_type == 'max_value':
-                result[col_name] = summary_obj.max_value
-            elif data_type == 'min_value':
-                result[col_name] = summary_obj.min_value
-            elif data_type == 'std_variance':
-                result[col_name] = summary_obj.std_variance
-
+        result = {self.header[x]: result_row[x] for x in self.cols_index}
         return result
 
     @staticmethod

@@ -17,10 +17,10 @@ class TestStatistics(unittest.TestCase):
         session.init("test_instance")
         dense_inst = []
         dense_not_inst = []
-        headers = ['x' + str(i) for i in range(20)]
+        headers = ['x' + str(i) for i in range(100)]
         self.header = headers
         self.eps = 1e-5
-        self.count = 100
+        self.count = 10000
         self.dense_data_transpose = []
         for i in range(self.count):
             features = i % 16 * np.ones(20)
@@ -45,7 +45,8 @@ class TestStatistics(unittest.TestCase):
                                                                    abnormal_list=[None])
 
     def test_MultivariateStatisticalSummary(self):
-
+        import time
+        t0 = time.time()
         for col in self.col_index:
             col_name = self.header[col]
             this_data = self.dense_data_transpose[col]
@@ -62,6 +63,7 @@ class TestStatistics(unittest.TestCase):
             self.assertTrue(math.fabs(var - real_var) < self.eps)
             self.assertTrue(max_value == real_max)
             self.assertTrue(min_value == real_min)
+        print("total time: {}".format(time.time() - t0))
 
     def test_median(self):
         error = consts.DEFAULT_RELATIVE_ERROR

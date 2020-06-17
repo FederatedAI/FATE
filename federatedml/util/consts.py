@@ -205,3 +205,15 @@ SHA256 = 'sha256'
 INTERSECT_CACHE_TAG = 'Za'
 
 SHARE_INFO_COL_NAME = "share_info"
+
+# statistics
+COUNT = 'count'
+STANDARD_DEVIATION = 'stddev'
+SUMMARY = 'summary'
+DESCRIBE = 'describe'
+SUM = 'sum'
+COVARIANCE = 'cov'
+CORRELATION = 'corr'
+VARIANCE = 'variance'
+
+
