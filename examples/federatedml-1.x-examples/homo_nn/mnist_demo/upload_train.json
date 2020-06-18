@@ -1,0 +1,8 @@
+{
+    "file": "examples/federatedml-1.x-examples/homo_nn/mnist_demo/mnist.train.csv",
+    "head": 1,
+    "partition": 1,
+    "work_mode": 0,
+    "table_name": "train",
+    "namespace": "experiments"
+}
