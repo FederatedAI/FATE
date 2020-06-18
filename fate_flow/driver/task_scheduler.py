@@ -566,13 +566,15 @@ class TaskScheduler(object):
                               work_mode=job_parameters['work_mode'])
 
     @staticmethod
-    def start_stop(job_id):
+    def start_stop(job_id, operate=None):
         schedule_logger(job_id).info('get {} job {} command'.format('stop', job_id))
         jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
         if not jobs:
             jobs = job_utils.query_job(job_id=job_id)
         if jobs:
             job_info = {'job_id': job_id}
+            if operate:
+                job_info['operate'] = operate
             job_work_mode = jobs[0].f_work_mode
             initiator_party_id = jobs[0].f_initiator_party_id
             response = federated_api(job_id=job_id,
