@@ -182,7 +182,7 @@ mkdir -p /data/projects/install
 cd /data/projects/install
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.1-release.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.1-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.0-release.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.1-release.tar.gz
 
 #传输到192.168.0.2和192.168.0.3
