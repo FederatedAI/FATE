@@ -246,8 +246,7 @@ def component_output_data_download():
     output_file_path = '{}/output_%s'.format(output_tmp_dir)
     i = 0
     for output_data_table in output_data_tables:
-        output_data_file_path = output_file_path % 'data_{}.csv'.format(i)
-
+        output_data_file_path = output_file_path % '{}_data.csv'.format(i)
         os.makedirs(os.path.dirname(output_data_file_path), exist_ok=True)
         with open(output_data_file_path, 'w') as fw:
             for k, v in output_data_table.collect():
