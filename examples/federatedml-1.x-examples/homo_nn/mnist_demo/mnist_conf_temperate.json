@@ -115,7 +115,7 @@
     "homo_nn_0": {
       "config_type": "keras",
       "nn_define": $nn_define,
-      "batch_size": -1,
+      "batch_size": 1000,
       "optimizer": {
         "optimizer": "Adam",
         "learning_rate": 0.05
