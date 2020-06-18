@@ -199,17 +199,36 @@ Execute under the app user of the target server (192.168.0.1 has an external net
 ```
 mkdir -p /data/projects/install
 cd /data/projects/install
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.0-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.1-release.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.0-release.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.0-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.1-release.tar.gz
 
 #Send to 192.168.0.2和192.168.0.3
 scp *.tar.gz app@192.168.0.2:/data/projects/install
 scp *.tar.gz app@192.168.0.3:/data/projects/install
 ```
 
-### 4.2 Deploy mysql
+### 4.2 Operating system parameter check
+
+**Execute under the app user of the target server (192.168.0.1 192.168.0.2 192.168.0.3)**
+
+```
+#Virtual memory, the size is not less than 128G, if it is not satisfied, please refer to #Chapter 4.6 to reset
+cat /proc/swaps
+Filename                                Type            Size    Used    Priority
+/data/swapfile128G                      file            134217724       384     -1
+
+#The number of file handles is not less than 65535. If it is not satisfied, please refer #to Chapter 4.3 to reset
+ulimit -n
+65535
+
+#The number of user processes is not less than 64000, if it is not satisfied, please #refer to Chapter 4.3 to reset
+ulimit -u
+65535
+```
+
+### 4.3 Deploy mysql
 
 **Execute under the app user of the target server (192.168.0.1 192.168.0.3)**
 
@@ -222,7 +241,7 @@ mkdir -p /data/projects/fate/data/mysql
 
 #Unzip the package
 cd /data/projects/install
-tar xzvf mysql-1.4.0-release.tar.gz
+tar xzvf mysql-*.tar.gz
 cd mysql
 tar xf mysql-8.0.13.tar.gz -C /data/projects/fate/common/mysql
 
@@ -299,7 +318,7 @@ mysql>select * from server_node;
 
 
 
-### 4.3 Deploy jdk
+### 4.4 Deploy jdk
 
 **Execute under the app user of the target server (192.168.0.1 192.168.0.2 192.168.0.3)**
 
@@ -313,7 +332,7 @@ cd /data/projects/fate/common/jdk
 mv jdk1.8.0_192 jdk-8u192
 ```
 
-### 4.4 Deploy python
+### 4.5 Deploy python
 
 **Execute under the app user of the target server (192.168.0.1 192.168.0.2 192.168.0.3)**
 
@@ -323,7 +342,7 @@ mkdir -p /data/projects/fate/common/python
 
 #Install miniconda3
 cd /data/projects/install
-tar xvf python-env-1.4.0-release.tar.gz
+tar xvf python-env-*.tar.gz
 cd python-env
 sh Miniconda3-4.5.4-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
 
@@ -336,7 +355,7 @@ sh Miniconda3-4.5.4-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
 tar xvf pip-packages-fate-*.tar.gz
 source /data/projects/fate/common/python/venv/bin/activate
 pip install setuptools-42.0.2-py2.py3-none-any.whl
-pip install -r pip-packages-fate-1.4.0/requirements.txt -f ./pip-packages-fate-1.4.0 --no-index
+pip install -r pip-packages-fate-1.4.1/requirements.txt -f ./pip-packages-fate-1.4.1 --no-index
 pip list | wc -l
 #The result should be 158
 ```
@@ -344,16 +363,16 @@ pip list | wc -l
 
 
 
-### 4.5 Deploy eggroll&fate
+### 4.6 Deploy eggroll&fate
 
-#### 4.5.1 Software deployment
+#### 4.6.1 Software deployment
 
 ```
 #Software deployment
 #Execute under the app user of the target server (192.168.0.1 192.168.0.2 192.168.0.3)
 cd /data/projects/install
-tar xf FATE_install_1.4.0-release.tar.gz
-cd FATE_install_1.4*
+tar xf FATE_install_*.tar.gz
+cd FATE_install_*
 tar xvf python.tar.gz -C /data/projects/fate/
 tar xvf eggroll.tar.gz -C /data/projects/fate
 
@@ -372,7 +391,7 @@ export PATH=\$PATH:\$JAVA_HOME/bin
 EOF
 ```
 
-#### 4.5.2 eggroll system configuration file modification
+#### 4.6.2 eggroll system configuration file modification
 
 This configuration file are shared among rollsite, clustermanager, and nodemanager, and configuration across multiple hosts on each party should be consistent. Content needs to be modified:
 
@@ -496,7 +515,7 @@ eggroll.rollpair.transferpair.sendbuf.size=4150000
 EOF
 ```
 
-#### 4.5.3 eggroll routing configuration file modification
+#### 4.6.3 eggroll routing configuration file modification
 
 This configuration file rollsite is used to configure routing information. You can manually configure it by referring to the following example, or you can use the following command:
 
@@ -578,7 +597,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
 EOF
 ```
 
-#### 4.5.4 fate dependent service configuration file modification
+#### 4.6.4 fate dependent service configuration file modification
 
 - fateflow
 
@@ -654,7 +673,7 @@ cat > /data/projects/fate/python/arch/conf/server_conf.json << EOF
 EOF
 ```
 
-#### 4.5.5 Fate database information configuration file modification
+#### 4.6.5 Fate database information configuration file modification
 
 - work_mode(1 means cluster mode, default)
 
@@ -726,7 +745,7 @@ default_model_store_address:
 EOF
 ```
 
-#### 4.5.6 fateboard configuration file modification
+#### 4.6.6 fateboard configuration file modification
 
 1）application.properties
 
@@ -791,7 +810,7 @@ vi service.sh
 export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 ```
 
-### 4.6 Start service
+### 4.7 Start service
 
 **Execute under the app user of the target server (192.168.0.2)**
 
@@ -837,7 +856,7 @@ cd /data/projects/fate/fateboard
 sh service.sh start
 ```
 
-### 4.7 identify the problem
+### 4.8 identify the problem
 
 1) eggroll log
 
