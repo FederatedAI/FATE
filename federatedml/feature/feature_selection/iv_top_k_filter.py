@@ -70,7 +70,8 @@ class Guest(IVPercentileFilter):
                     if col_name in host_select_param.select_col_names:
                         total_values.append(col_results.iv)
         sorted_value = sorted(total_values, reverse=True)
-        return sorted_value[self.k]
+
+        return sorted_value[min(self.k, len(sorted_value) - 1)]
 
     def get_meta_obj(self, meta_dicts):
         result = feature_selection_meta_pb2.IVTopKSelectionMeta(k=self.k,

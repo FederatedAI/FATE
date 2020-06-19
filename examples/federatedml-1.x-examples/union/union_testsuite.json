@@ -18,7 +18,7 @@
         },
         {
             "file": "examples/data/tag_value_1000_140.csv",
-            "head": 1,
+            "head": 0,
             "partition": 16,
             "table_name": "tag_value_1",
             "namespace": "experiment",
@@ -26,7 +26,7 @@
         },
         {
             "file": "examples/data/tag_value_1000_140.csv",
-            "head": 1,
+            "head": 0,
             "partition": 16,
             "table_name": "tag_value_2",
             "namespace": "experiment",
@@ -34,7 +34,7 @@
         },
         {
             "file": "examples/data/tag_value_1000_140.csv",
-            "head": 1,
+            "head": 0,
             "partition": 16,
             "table_name": "tag_value_3",
             "namespace": "experiment",

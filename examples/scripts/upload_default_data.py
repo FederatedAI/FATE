@@ -23,43 +23,6 @@ import time
 
 from examples.test import submit
 
-upload_data = {
-    "data": [
-        {
-            "file": "examples/data/breast_hetero_guest.csv",
-            "head": 1,
-            "partition": 16,
-            "table_name": "breast_hetero_guest",
-            "namespace": "experiment",
-            "count": 569
-        },
-        {
-            "file": "examples/data/breast_hetero_host.csv",
-            "head": 1,
-            "partition": 16,
-            "table_name": "breast_hetero_host",
-            "namespace": "experiment",
-            "count": 569
-        },
-        {
-            "file": "examples/data/default_credit_hetero_guest.csv",
-            "head": 1,
-            "partition": 16,
-            "table_name": "default_credit_hetero_guest",
-            "namespace": "experiment",
-            "count": 30000
-        },
-        {
-            "file": "examples/data/default_credit_hetero_host.csv",
-            "head": 1,
-            "partition": 16,
-            "table_name": "default_credit_hetero_host",
-            "namespace": "experiment",
-            "count": 30000
-        }
-    ]
-}
-
 
 def check_data_count(submitter, fate_home, table_name, namespace, expect_count):
     fate_flow_path = os.path.join(fate_home, "../fate_flow/fate_flow_client.py")
@@ -96,6 +59,13 @@ def data_upload(submitter, upload_config, check_interval, fate_home):
         check_data_count(submitter, fate_home, data["table_name"], data["namespace"], data["count"])
 
 
+def read_data(fate_home):
+    config_file = os.path.join(fate_home, "scripts/config.json")
+    with open(config_file, 'r', encoding='utf-8') as f:
+        json_info = json.loads(f.read())
+    return json_info
+
+
 def main():
     import examples
     fate_home = os.path.dirname(examples.__file__)
@@ -130,6 +100,8 @@ def main():
                                  backend=backend,
                                  existing_strategy=existing_strategy,
                                  spark_submit_config=spark_submit_config)
+
+    upload_data = read_data(fate_home)
 
     data_upload(submitter, upload_data, interval, fate_home)
 
