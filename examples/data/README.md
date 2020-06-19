@@ -23,6 +23,7 @@ Below lists example data sets and their information.
 
 #### breast_homo:
 - 30 features
+- label type: binary
 - [source](https://www.kaggle.com/uciml/breast-cancer-wisconsin-data)
 - data sets: 
     1. "breast_homo_guest.csv"
@@ -37,6 +38,7 @@ Below lists example data sets and their information.
 
 #### default_credit_homo:
 - 23 features
+- label type: binary
 - [source](https://archive.ics.uci.edu/ml/datasets/default+of+credit+card+clients)
 - data sets: 
     1. "default_credit_homo_guest.csv"
@@ -54,6 +56,7 @@ Below lists example data sets and their information.
 
 #### student_homo:
 - 13 features
+- label type: continuous
 - [source](https://archive.ics.uci.edu/ml/datasets/student+performance)
 - data sets:
     1. "student_homo_guest.csv"
@@ -68,6 +71,7 @@ Below lists example data sets and their information.
 
 #### vehicle\_scale_homo:
 - 18 features
+- label type: multi-class
 - [source](https://archive.ics.uci.edu/ml/datasets/Statlog+(Vehicle+Silhouettes))
 - data sets:
     1. "vehicle_scale_homo_guest.csv"
@@ -85,6 +89,7 @@ Below lists example data sets and their information.
 
 #### breast_hetero:
 - 30 features
+- label type: binary
 - [source](https://www.kaggle.com/uciml/breast-cancer-wisconsin-data)
 - data sets:
     1. "breast_hetero_guest.csv"
@@ -96,6 +101,7 @@ Below lists example data sets and their information.
 
 #### breast_hetero_mini:
 - 7 features
+- label type: binary
 - [source](https://www.kaggle.com/uciml/breast-cancer-wisconsin-data)
 - data sets:
     1. "breast_hetero_mini_guest.csv"
@@ -107,6 +113,7 @@ Below lists example data sets and their information.
 
 #### default_credit_hetero:
 - 23 features
+- label type: binary
 - [source](https://archive.ics.uci.edu/ml/datasets/default+of+credit+card+clients)
 - data sets:
     1. "default_credit_hetero_guest.csv"
@@ -118,6 +125,7 @@ Below lists example data sets and their information.
 
 #### dvisits_hetero:
 - 12 features
+- label type: continuous
 - [source](https://www.rdocumentation.org/packages/faraway/versions/1.0.7/topics/dvisits)
 - data sets:
     1. "dvisits_hetero_guest.csv"
@@ -129,6 +137,7 @@ Below lists example data sets and their information.
 
 #### ionosphere_scale_hetero
 - 34 features
+- label type: binary
 - [source](https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/ionosphere_scale)
 - data sets:
     1. "ionosphere_scale_hetero_guest.csv"
@@ -140,6 +149,7 @@ Below lists example data sets and their information.
 
 #### motor_hetero:
 - 11 features
+- label type: continuous
 - [source](https://www.kaggle.com/wkirgsn/electric-motor-temperature)
 - data sets:
     1. "motor_hetero_guest.csv"
@@ -157,6 +167,7 @@ Below lists example data sets and their information.
 
 #### motor_hetero_mini:
 - 7 features
+- label type: continuous
 - [source](https://www.kaggle.com/wkirgsn/electric-motor-temperature)
 - data sets:
     1. "motor_hetero_mini_guest.csv"
@@ -168,6 +179,7 @@ Below lists example data sets and their information.
     
 #### student_hetero:
 - 13 features
+- label type: continuous
 - [source](https://archive.ics.uci.edu/ml/datasets/student+performance)
 - data sets:
     1. "student_hetero_guest.csv"
@@ -179,6 +191,7 @@ Below lists example data sets and their information.
 
 #### vehicle_scale_hetero:
 - 18 features
+- label type: multi-class
 - [source](https://archive.ics.uci.edu/ml/datasets/Statlog+(Vehicle+Silhouettes))
 - data sets:
     1. "vehicle_scale_hetero_guest.csv"
