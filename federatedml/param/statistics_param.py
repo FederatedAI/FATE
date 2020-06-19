@@ -56,13 +56,15 @@ class StatisticsParam(BaseParam):
     LEGAL_QUANTILE = re.compile("^(100)|([1-9]?[1-9])%$")
 
     def __init__(self, statistics="summary", column_names=None,
-                 column_indexes=-1, need_run=True, abnormal_list=None):
+                 column_indexes=-1, need_run=True, abnormal_list=None,
+                 quantile_error=consts.DEFAULT_RELATIVE_ERROR):
         super().__init__()
         self.statistics = statistics
         self.column_names = column_names
         self.column_indexes = column_indexes
         self.abnormal_list = abnormal_list
         self.need_run = need_run
+        self.quantile_error=quantile_error
         if column_names is None:
             self.column_names = []
         if column_indexes is None:
@@ -120,3 +122,6 @@ class StatisticsParam(BaseParam):
 
         if not isinstance(self.abnormal_list, list):
             raise ValueError(f"abnormal_list should be list of int or string.")
+
+        self.check_decimal_float(self.quantile_error, "Statistics's param quantile_error ")
+        return True

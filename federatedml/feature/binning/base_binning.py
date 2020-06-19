@@ -402,12 +402,6 @@ class BaseBinning(object):
     @staticmethod
     def get_bin_num(value, split_points):
         col_bin_num = bisect.bisect_left(split_points, value)
-        # col_bin_num = len(split_points) - 1
-        # for bin_num, split_point in enumerate(split_points):
-        #     if value <= split_point:
-        #         col_bin_num = bin_num
-        #         break
-        # assert col_bin_num < len(split_points)
         return col_bin_num
 
     @staticmethod

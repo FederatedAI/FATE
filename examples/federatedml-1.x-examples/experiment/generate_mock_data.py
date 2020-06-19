@@ -1,5 +1,6 @@
 import random
 import sys
+import numpy as np
 
 SAMPLE_NUM = 10000
 
@@ -110,14 +111,16 @@ def generate_label_data(ids):
         print(SAMPLE_NUM)
         raise ValueError("len ids should equal to sample number")
 
-    header = ['id', 'y'] + ['x' + str(i) for i in range(2)]
+    header = ['id', 'y'] + ['x' + str(i) for i in range(FEATURE_NUM)]
     yield header
 
     counter = 0
     for sample_i in range(SAMPLE_NUM):
         one_data = [ids[sample_i], round(random.random())]
-        for feature_i in range(2):
-            one_data.append(random.random())
+        features = list(np.random.random(FEATURE_NUM))
+        one_data += features
+        # for feature_i in range(FEATURE_NUM):
+        #     one_data.append(random.random())
         counter += 1
         if counter % 10000 == 0:
             print("generate data {}".format(counter))
