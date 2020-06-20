@@ -99,25 +99,12 @@ def init(job_id=None,
             builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine,
                                     options=options)
 
-    elif backend.is_spark():
-        if store_engine.is_eggroll():
-            if eggroll_version is None:
-                from arch.api.impl.based_2x import _EGGROLL_VERSION
-                eggroll_version = _EGGROLL_VERSION
-            if eggroll_version < 2:
-                from arch.api.impl.based_spark.based_1x import build
-                builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)
-            else:
-                from arch.api.impl.based_spark.based_2x import build
-                builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)
-        elif store_engine.is_hdfs():
+    elif backend.is_spark():        
+        if store_engine.is_hdfs():
             from arch.api.impl.based_spark.based_hdfs import build
             builder = build.Builder(session_id=job_id)
         else:
-            from arch.api.impl.based_spark.based_2x import build
-            builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine,
-                                    options=options)
-
+            raise ValueError("spark only support hdfs store_engine")
     else:
         raise ValueError(f"backend: ${backend} unknown")
 
