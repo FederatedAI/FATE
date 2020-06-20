@@ -4,7 +4,7 @@
 ########################################################
 
 import requests, json, time, string, random
-from arch.api.impl.based_spark.util import RandomString
+from arch.api.utils import string_utils
 from arch.api.utils import log_utils
 
 LOGGER = log_utils.getLogger()
@@ -206,7 +206,7 @@ class RabbitManager:
         # union name is used for both upstream name and policy name
         # give a random string if not union_name was provided
         if union_name == "":
-            union_name = RandomString()
+            union_name = string_utils.RandomString()
 
         result_set_upstream = self._set_federated_upstream(upstream_host, union_name, vhost)
 
