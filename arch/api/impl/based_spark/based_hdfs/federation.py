@@ -170,7 +170,7 @@ class FederationRuntime(Federation):
                 correlation_id=tag,
                 headers=headers
             )
-            LOGGER.debug("_send_kv, info:{}, properties:{}, data:{}.".format(info, properties, json.dumps(data)))
+            LOGGER.debug("_send_kv, info:{}, properties:{}.".format(info, properties))
             info.basic_publish(body=json.dumps(data), properties=properties)
 
     @staticmethod
