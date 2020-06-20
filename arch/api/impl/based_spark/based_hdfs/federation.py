@@ -261,7 +261,7 @@ class FederationRuntime(Federation):
             LOGGER.info(f'federation got data. name: {name}, tag: {tag}')
             if isinstance(obj, RDD):
                 rtn.append(obj)
-#                 rubbish.add_table(obj)
+                # rubbish.add_table(obj)
             else:
                 rtn.append(obj)
         LOGGER.debug("finish get obj, name={}, tag={}, parties={}.".format(name, tag, parties))
@@ -279,7 +279,7 @@ class FederationRuntime(Federation):
             send_func = partial(FederationRuntime._partition_send, name=name, tag=tag, 
                                 total_size=total_size, partitions=partitions, mq_names=mq_names, self_mq=self._self_mq)
             obj.mapPartitions(send_func).collect()
-#             rubbish.add_table(obj)
+            # rubbish.add_table(obj)
         else:
             channel_infos = self.get_channels(mq_names=mq_names, host=self._self_mq["host"], port=self._self_mq["port"], 
                                           user=self._self_mq['union_name'], password=self._self_mq['policy_id'])

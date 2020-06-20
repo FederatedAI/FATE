@@ -239,8 +239,8 @@ class RDDTable(Table):
                                                name=self._name,
                                                partitions=self._partitions, 
                                                create_if_missing=False)
-            return self._rdd
-   
+            return self._rdd   
+
     def get_partitions(self):
         return self._partitions
 
