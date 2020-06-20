@@ -264,7 +264,7 @@ class RDDTable(Table):
 
     @log_elapsed
     def mapPartitions2(self, func, **kwargs):
-        return self._tmp_table_from_rdd(self.rdd().mapPartitions())
+        return self._tmp_table_from_rdd(self.rdd().mapPartitions(func))
 
     @log_elapsed
     def reduce(self, func, key_func=None, **kwargs):
