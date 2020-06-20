@@ -181,17 +181,24 @@ class TaskExecutor(object):
 
                                 data_table = session.table(
                                     namespace=job_args['data'][search_data_name]['namespace'],
-                                    name=job_args['data'][search_data_name]['name'])
+                                    name=job_args['data'][search_data_name]['name'],
+                                    partition=job_parameters.get("partition", 1)
+                                    )
                             else:
                                 data_table = None
                         else:
                             data_table = Tracking(job_id=job_id, role=role, party_id=party_id,
                                                   component_name=search_component_name).get_output_data_table(
-                                data_name=search_data_name)
+                                data_name=search_data_name,
+                                partition=job_parameters.get("partition", 1)
+                                )
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
                             search_component_name, {})
                         # todo: If the same component has more than one identical input, save as is repeated
-                        if SAVE_AS_TASK_INPUT_DATA_SWITCH:
+                        
+                        backend = job_parameters.get('backend', 0)
+                        
+                        if SAVE_AS_TASK_INPUT_DATA_SWITCH and backend == 0:
                             if data_table:
                                 schedule_logger().info("start save as task {} input data table {} {}".format(
                                     task_id,

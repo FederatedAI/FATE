@@ -217,7 +217,7 @@ class Tracking(object):
                             mark=True)
 
     @session_utils.session_detect()
-    def get_output_data_table(self, data_name: str = 'component'):
+    def get_output_data_table(self, data_name: str = 'component', partition=1):
         """
         Get component output data table, will run in the task executor process
         :param data_name:
@@ -226,9 +226,11 @@ class Tracking(object):
         output_data_info_table = session.table(name=Tracking.output_table_name('data'),
                                                namespace=self.table_namespace)
         data_table_info = output_data_info_table.get(data_name)
+      
         if data_table_info:
             data_table = session.table(name=data_table_info.get('name', ''),
-                                       namespace=data_table_info.get('namespace', ''))
+                                       namespace=data_table_info.get('namespace', ''),
+                                       partition=partition)
             data_table_meta = data_table.get_metas()
             if data_table_meta.get('schema', None):
                 data_table.schema = data_table_meta['schema']

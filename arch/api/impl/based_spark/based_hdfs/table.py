@@ -21,11 +21,11 @@ from typing import Iterable
 
 from arch.api.base.table import Table
 from arch.api.impl.based_spark import util
-from arch.api.impl.utils.split import split_put, split_get
 from arch.api.utils.profile_util import log_elapsed
 from fate_flow.db.db_models import DB, TableMeta
 from arch.api.utils import log_utils
 LOGGER = log_utils.getLogger()
+
 
 class RDDTable(Table):
     delimiter = '\t'
@@ -36,45 +36,46 @@ class RDDTable(Table):
                   name: str = None,
                   partitions: int = 1,
                   create_if_missing: bool = True):
-        rdd = RDDTable.rdd_from_hdfs(namespace=namespace, name=name, create_if_missing=create_if_missing)
+        rdd = RDDTable.rdd_from_hdfs(namespace=namespace, name=name, partitions=partitions, create_if_missing=create_if_missing)
         if rdd:
             return RDDTable(session_id=session_id, namespace=namespace, name=name, partitions=partitions, rdd=rdd)
     
-
     # noinspection PyProtectedMember
     @classmethod
-    def from_dtable(cls, session_id: str, dtable):
+    def from_dtable(cls, session_id: str, rdd):
+        """
+        to make it compatible with FederationWrapped
+        """    
+        rdd = util.materialize(rdd)        
+        namespace = str(uuid.uuid1())
+        name = str(uuid.uuid1())
+        return RDDTable.from_rdd(rdd=rdd, session_id=session_id, namespace=namespace, name=name)
+    
+    def dtable(self):
         """
         to make it compatible with FederationWrapped
         """
-        namespace = str(uuid.uuid1())
-        name = str(uuid.uuid1())
-        return RDDTable.from_rdd(rdd=dtable, job_id=session_id, namespace=namespace, name=name)
-
+        return self.rdd()
 
     @classmethod
-    def from_rdd(cls, rdd, job_id: str, namespace: str, name: str):
+    def from_rdd(cls, rdd, session_id: str, namespace: str, name: str):
         partitions = rdd.getNumPartitions()
-        return RDDTable(session_id=job_id, namespace=namespace, name=name, partitions=partitions, rdd=rdd)
-
+        return RDDTable(session_id=session_id, namespace=namespace, name=name, partitions=partitions, rdd=rdd)
 
     @classmethod
     def generate_hdfs_path(cls, namespace, name):
         return "/fate/{}/{}".format(namespace, name)
-    
     
     @classmethod
     def get_path(cls, sc, hdfs_path):
         path_class = sc._gateway.jvm.org.apache.hadoop.fs.Path
         return path_class(hdfs_path)
     
-
     @classmethod
     def get_file_system(cls, sc):
         filesystem_class = sc._gateway.jvm.org.apache.hadoop.fs.FileSystem
         hadoop_configuration = sc._jsc.hadoopConfiguration()
         return filesystem_class.get(hadoop_configuration)
-
 
     @classmethod
     def update_table_meta(cls, namespace, name, records):
@@ -102,7 +103,6 @@ class RDDTable(Table):
         except Exception as e:
             LOGGER.error("update_table_meta exception:{}.".format(e))
 
-
     @classmethod
     def get_table_meta(cls, namespace, name):
         try:
@@ -114,7 +114,6 @@ class RDDTable(Table):
         except Exception as e:
             LOGGER.error("update_table_meta exception:{}.".format(e))
 
-
     @classmethod
     def delete_table_meta(cls, namespace, name):
         try:
@@ -123,7 +122,6 @@ class RDDTable(Table):
                     TableMeta.f_table_name == name).execute()
         except Exception as e:
             LOGGER.error("delete_table_meta {}, {}, exception:{}.".format(namespace, name, e))
-
 
     @classmethod
     def write2hdfs(cls, namespace, name, kv_list: Iterable, create_if_missing: bool = True):
@@ -150,7 +148,6 @@ class RDDTable(Table):
         
         RDDTable.update_table_meta(namespace=namespace, name=name, records=counter)
 
-
     @classmethod
     def delete_file_from_hdfs(cls, namespace, name):
         from pyspark import SparkContext
@@ -163,23 +160,21 @@ class RDDTable(Table):
 
         RDDTable.delete_table_meta(namespace=namespace, name=name)
 
-
     @classmethod
     def map2dic(cls, m):
         fields = m.strip().partition(RDDTable.delimiter)
         import pickle
         return fields[0], pickle.loads(bytes.fromhex(fields[2]))
 
-
     @classmethod
-    def rdd_from_hdfs(cls, namespace, name, create_if_missing: bool = True):
+    def rdd_from_hdfs(cls, namespace, name, partitions: int = 1, create_if_missing: bool = True):
         from pyspark import SparkContext
         sc = SparkContext.getOrCreate()
         hdfs_path = RDDTable.generate_hdfs_path(namespace=namespace, name=name)
         fs = RDDTable.get_file_system(sc)
         path = RDDTable.get_path(sc, hdfs_path)
         if(fs.exists(path)):
-            rdd = sc.textFile(hdfs_path).map(RDDTable.map2dic).persist(util.get_storage_level())
+            rdd = sc.textFile(hdfs_path, partitions).map(RDDTable.map2dic).persist(util.get_storage_level())
         elif create_if_missing:
             rdd = sc.emptyRDD().persist(util.get_storage_level())
         else:
@@ -226,13 +221,9 @@ class RDDTable(Table):
                         name=name,
                         partitions=rdd.getNumPartitions(),
                         rdd=rdd)
-
-    # self._rdd should not be pickled(spark requires all transformer/action to be invoked in driver).
+   
     def __getstate__(self):
-        state = dict(self.__dict__)
-        if "_rdd" in state:
-            del state["_rdd"]
-        return state
+        pass
 
     @staticmethod
     def _valid_param_check(rdd, namespace, partitions):
@@ -244,22 +235,12 @@ class RDDTable(Table):
         if hasattr(self, "_rdd") and self._rdd is not None:
             return self._rdd
         else:
-            return self._rdd_from_hdfs()
-
-    def dtable(self):
-        """
-        to make it compatible with FederationWrapped
-        """
-        return self.rdd()
-
-
-    # noinspection PyProtectedMember,PyUnresolvedReferences
-    @log_elapsed
-    def _rdd_from_hdfs(self):
-        self._rdd = RDDTable.rdd_from_hdfs(namespace=self._namespace, name=self._name, create_if_missing=False)
-        return self._rdd
-
-
+            self._rdd = RDDTable.rdd_from_hdfs(namespace=self._namespace, 
+                                               name=self._name,
+                                               partitions=self._partitions, 
+                                               create_if_missing=False)
+            return self._rdd
+   
     def get_partitions(self):
         return self._partitions
 
@@ -360,8 +341,7 @@ class RDDTable(Table):
 
     def destroy(self):
         self.delete_file_from_hdfs(namespace=self._namespace, name=self._name)
-        self._rdd = None
-        
+        self._rdd = None        
 
     def put_if_absent(self, k, v, use_serialize=True):
         self.put(k=k, v=v, use_serialize=use_serialize)
@@ -379,7 +359,6 @@ class RDDTable(Table):
 
     def count(self, **kwargs):
         return self.rdd().count()
-
     
     def local_count(self, **kwargs):
         meta = RDDTable.get_table_meta(namespace=self._namespace, name=self._name)
@@ -388,14 +367,15 @@ class RDDTable(Table):
         else:
             return -1
 
-
     @log_elapsed
     def save_as(self, name, namespace, partition=None, use_serialize=True, persistent=True, **kwargs):
         if partition is None:
             partition = self._partitions
-
-        it = self.rdd().toLocalIterator()
-        from arch.api import session
-        rdd_table = session.table(name=name, namespace=namespace, partition=partition, persistent=persistent)
+                        
+        it = self.rdd().toLocalIterator()        
+        rdd_table = RDDTable.from_hdfs(session_id=self._session_id, 
+                                       namespace=namespace, name=name, 
+                                       partitions=partition)
         rdd_table.put_all(kv_list=it)
+        
         return rdd_table

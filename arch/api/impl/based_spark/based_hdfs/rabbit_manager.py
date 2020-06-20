@@ -4,7 +4,7 @@
 ########################################################
 
 import requests, json, time, string, random
-from arch.api.impl.based_spark.based_hdfs.string_utils import RandomString
+from arch.api.impl.based_spark.util import RandomString
 from arch.api.utils import log_utils
 
 LOGGER = log_utils.getLogger()

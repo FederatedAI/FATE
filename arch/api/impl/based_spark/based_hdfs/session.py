@@ -26,7 +26,7 @@ __all__ = ["FateSessionImpl"]
 # noinspection PyUnresolvedReferences
 class FateSessionImpl(FateSession):
     """
-    manage RDDTable, use EggRoleStorage as storage
+    manage RDDTable
     """
 
     def __init__(self, session_id):
@@ -65,7 +65,7 @@ class FateSessionImpl(FateSession):
         rdd = util.materialize(rdd)
         if namespace is None:
             namespace = self._session_id
-        return RDDTable.from_rdd(rdd=rdd, job_id=self._session_id, namespace=namespace, name=name)
+        return RDDTable.from_rdd(rdd=rdd, session_id=self._session_id, namespace=namespace, name=name)
 
     def cleanup(self, name, namespace, persistent):
         pass

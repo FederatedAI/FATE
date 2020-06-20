@@ -17,23 +17,6 @@
 
 import uuid
 
-# noinspection PyPackageRequirements
-
-from arch.api.impl.based_spark.util import maybe_create_eggroll_client
-
-
-def _save_as_func(rdd, name, namespace, partition, persistent):
-    from arch.api import session
-    dup = session.table(name=name, namespace=namespace, partition=partition, persistent=persistent)
-
-    def _func(_, it):
-        maybe_create_eggroll_client()
-        dup.put_all(list(it))
-        return 1,
-
-    rdd.mapPartitionsWithIndex(_func, preservesPartitioning=False).collect()
-    return dup
-
 
 # noinspection PyUnresolvedReferences
 def _map(rdd, func):

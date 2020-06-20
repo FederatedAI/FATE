@@ -1,3 +1,34 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+
 import logging
 
 from typing import Union
@@ -19,9 +50,7 @@ from pyspark import SparkContext
 LOGGER = log_utils.getLogger()
 
 
-
 class FederationRuntime(Federation):
-
     def __init__(self, session_id, runtime_conf):
         super().__init__(session_id, runtime_conf)
         LOGGER.debug("runtime_conf:{}.".format(runtime_conf))
@@ -30,7 +59,6 @@ class FederationRuntime(Federation):
         self._session_id = session_id
         #init mq here
         self.init_mq_context(runtime_conf)
-
 
     def init_mq_context(self, runtime_conf):
         _path = file_utils.get_project_base_directory() + "/arch/conf/server_conf.json"
@@ -55,14 +83,12 @@ class FederationRuntime(Federation):
         self._queque_map = {}
         self._channels_map = {}
 
-
     def gen_vhost_name(self, party_id):
         parties = [self._party_id, party_id]
         parties.sort()
         union_name = "{}-{}".format(parties[0], parties[1])
         vhost_name = "{}-{}".format(self._session_id, union_name)
         return union_name, vhost_name
-
 
     def gen_names(self, party_id):
         names = {}
@@ -72,7 +98,6 @@ class FederationRuntime(Federation):
         names["send"] = "{}-{}".format("send", vhost)
         names["receive"] = "{}-{}".format("receive", vhost)
         return names
-
 
     def get_mq_names(self, parties: Union[Party, list]):
         if isinstance(parties, Party):
@@ -106,7 +131,6 @@ class FederationRuntime(Federation):
         LOGGER.debug("get_mq_names:{}".format(mq_names))
         return mq_names
 
-    
     def generate_mq_names(self, parties: Union[Party, list]):
         if isinstance(parties, Party):
             parties = [parties]
@@ -116,7 +140,6 @@ class FederationRuntime(Federation):
             names = self.gen_names(party_id)
             self._queque_map[party_id] = names
         LOGGER.debug("generate_mq_names:{}".format(self._queque_map))
-
 
     def get_channels(self, mq_names, host, port, user, password):
         LOGGER.debug("mq_names:{}.".format(mq_names))
@@ -129,7 +152,6 @@ class FederationRuntime(Federation):
             channel_infos.append(info)
         LOGGER.debug("got channel_infos.")
         return channel_infos
-    
 
     @staticmethod
     def _get_channel(host, port, user, password, names, party_id):
@@ -151,7 +173,6 @@ class FederationRuntime(Federation):
             LOGGER.debug("_send_kv, info:{}, properties:{}, data:{}.".format(info, properties, json.dumps(data)))
             info.basic_publish(body=json.dumps(data), properties=properties)
 
-    
     @staticmethod
     def _send_obj(name, tag, data, channel_infos):
         for info in channel_infos:
@@ -164,7 +185,6 @@ class FederationRuntime(Federation):
             LOGGER.debug("_send_obj, properties:{}.".format(properties))
             info.basic_publish(body=data, properties=properties)
 
-
     # can't pickle _thread.lock objects
     @staticmethod
     def _get_channels(mq_names, host, port, user, password):
@@ -173,7 +193,6 @@ class FederationRuntime(Federation):
             info = FederationRuntime._get_channel(host, port, user, password, names, party_id)
             channel_infos.append(info)
         return channel_infos
-
 
     @staticmethod
     def _partition_send(kvs, name, tag, total_size, partitions, mq_names, self_mq):
@@ -196,7 +215,6 @@ class FederationRuntime(Federation):
         FederationRuntime._send_kv(name=name, tag=tag, data=data, channel_infos=channel_infos, total_size=total_size, partitions=partitions)
         return data
 
-
     @staticmethod
     def _receive(channel_info, name, tag):
         count = 0
@@ -216,6 +234,9 @@ class FederationRuntime(Federation):
                     if obj:
                         rdd = sc.parallelize(data_iter, properties.headers["partitions"])
                         obj = obj.union(rdd)
+                        LOGGER.debug("before coalesce: federation get union partition %d, count: %d" % (obj.getNumPartitions(), obj.count()))
+                        obj = obj.coalesce(properties.headers["partitions"])
+                        LOGGER.debug("end coalesce: federation get union partition %d, count: %d" % (obj.getNumPartitions(), obj.count()))
                     else:
                         obj = sc.parallelize(data_iter, properties.headers["partitions"]).persist(util.get_storage_level())
                     if count == properties.headers["total_size"]:
@@ -240,13 +261,11 @@ class FederationRuntime(Federation):
             LOGGER.info(f'federation got data. name: {name}, tag: {tag}')
             if isinstance(obj, RDD):
                 rtn.append(obj)
-                rubbish.add_table(obj)
+#                 rubbish.add_table(obj)
             else:
                 rtn.append(obj)
         LOGGER.debug("finish get obj, name={}, tag={}, parties={}.".format(name, tag, parties))
-        return rtn, rubbish
-        
-
+        return rtn, rubbish      
 
     def remote(self, obj, name, tag, parties: Union[Party, list]):
         LOGGER.debug("start to remote obj, name={}, tag={}, parties={}.".format(name, tag, parties))
@@ -260,15 +279,14 @@ class FederationRuntime(Federation):
             send_func = partial(FederationRuntime._partition_send, name=name, tag=tag, 
                                 total_size=total_size, partitions=partitions, mq_names=mq_names, self_mq=self._self_mq)
             obj.mapPartitions(send_func).collect()
-            rubbish.add_table(obj)
+#             rubbish.add_table(obj)
         else:
             channel_infos = self.get_channels(mq_names=mq_names, host=self._self_mq["host"], port=self._self_mq["port"], 
                                           user=self._self_mq['union_name'], password=self._self_mq['policy_id'])
             FederationRuntime._send_obj(name=name, tag=tag, data=p_dumps(obj), channel_infos=channel_infos)
         LOGGER.debug("finish remote obj, name={}, tag={}, parties={}.".format(name, tag, parties))
         return rubbish
-
-
+    
     def cleanup(self):
         LOGGER.debug("federation start to cleanup...")
         for party_id, names in self._queque_map.items():

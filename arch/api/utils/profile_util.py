@@ -32,5 +32,9 @@ def log_elapsed(func):
         rtn = func(*args, **kwargs)
         frame = inspect.getouterframes(inspect.currentframe(), 2)
         LOGGER.debug(f"{frame[1].filename.split('/')[-1]}:{frame[1].lineno} call {name}, takes {time.time() - t}s")
+        try:
+            LOGGER.debug("call %s partition %d"%(name, rtn._partitions))
+        except:
+            LOGGER.debug("not RDDTAble")
         return rtn
     return _fn
