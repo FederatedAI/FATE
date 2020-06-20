@@ -27,7 +27,7 @@ from fate_flow.manager.tracking_manager import Tracking
 from fate_flow.settings import BOARD_DASHBOARD_URL, USE_AUTHENTICATION
 from fate_flow.utils import detect_utils, job_utils
 from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_dsl_parser, get_job_log_directory
-from arch.api.impl.based_spark.based_hdfs.string_utils import RandomString
+from arch.api.utils import string_utils
 
 
 class JobController(object):
@@ -50,8 +50,8 @@ class JobController(object):
         job_type = job_parameters.get('job_type', '')
         # add mq info
         federation_info = {}
-        federation_info['union_name'] = RandomString(4) 
-        federation_info['policy_id'] = RandomString(10)
+        federation_info['union_name'] = string_utils.RandomString(4) 
+        federation_info['policy_id'] = string_utils.RandomString(10)
         job_parameters['federation_info'] = federation_info
         
         if job_type != 'predict':

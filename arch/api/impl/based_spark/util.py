@@ -14,8 +14,6 @@
 #  limitations under the License.
 #
 
-import random, string
-
 
 RDD_ATTR_NAME = "_rdd"
 
@@ -30,13 +28,4 @@ def materialize(rdd):
     rdd.persist(get_storage_level())
     rdd.mapPartitionsWithIndex(lambda ind, it: (1,)).collect()
     return rdd
-
-
-def RandomString(stringLength=6):
-    letters = string.ascii_lowercase
-    return ''.join(random.choice(letters) for i in range(stringLength))
-
-def RandomNumberString(stringLength=6):
-    letters = string.octdigits
-    return ''.join(random.choice(letters) for i in range(stringLength))
 
