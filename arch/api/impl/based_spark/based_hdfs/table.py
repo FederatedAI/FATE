@@ -42,11 +42,11 @@ class RDDTable(Table):
     
     # noinspection PyProtectedMember
     @classmethod
-    def from_dtable(cls, session_id: str, rdd):
+    def from_dtable(cls, session_id: str, dtable):
         """
         to make it compatible with FederationWrapped
         """    
-        rdd = util.materialize(rdd)        
+        rdd = util.materialize(dtable)        
         namespace = str(uuid.uuid1())
         name = str(uuid.uuid1())
         return RDDTable.from_rdd(rdd=rdd, session_id=session_id, namespace=namespace, name=name)

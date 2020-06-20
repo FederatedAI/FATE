@@ -631,8 +631,8 @@ def federation_cleanup(job, task):
 
     runtime_conf = json_loads(job.f_runtime_conf)
     job_parameters = runtime_conf['job_parameters']
-    backend = Backend(job_parameters['backend'])
-    store_engine = StoreEngine(job_parameters['store_engine'])
+    backend = Backend(job_parameters.get('backend', 0))
+    store_engine = StoreEngine(job_parameters.get('store_engine', 0))
 
     if backend.is_spark() and store_engine.is_hdfs():
         runtime_conf['local'] = {'role': job.f_role, 'party_id': job.f_party_id}
