@@ -14,18 +14,14 @@
 #  limitations under the License.
 #
 
-
-RDD_ATTR_NAME = "_rdd"
-
-
-# noinspection PyUnresolvedReferences
-def get_storage_level():
-    from pyspark import StorageLevel
-    return StorageLevel.MEMORY_AND_DISK
+import random, string
 
 
-def materialize(rdd):
-    rdd = rdd.persist(get_storage_level())
-    rdd.count()
-    return rdd
+def RandomString(stringLength=6):
+    letters = string.ascii_lowercase
+    return ''.join(random.choice(letters) for i in range(stringLength))
+
+def RandomNumberString(stringLength=6):
+    letters = string.octdigits
+    return ''.join(random.choice(letters) for i in range(stringLength))
 
