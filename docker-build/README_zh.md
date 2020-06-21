@@ -26,8 +26,8 @@ FATE（Federated AI Technology Enable）是一个工业级的分布式联邦学�
 用户在开始构建镜像之前需要配置“.env”，通过该文件，镜像在构建完毕后会被打上相应的标签以后续使用，例子如下：
 ```
   PREFIX=federatedai
-  BASE_TAG=1.3.0-release
-  TAG=1.3.0-release
+  BASE_TAG=1.4.0-release
+  TAG=1.4.0-release
 
   # PREFIX: 用于要推送的镜像仓库(Registry)以及其命名空间
   # BASE_TAG: 基础镜像的标签
@@ -47,13 +47,9 @@ FATE（Federated AI Technology Enable）是一个工业级的分布式联邦学�
 一个输出的例子如下：
 ```
   REPOSITORY                            TAG
-  federatedai/egg                       <TAG>
+  federatedai/eggroll                   <TAG>
   federatedai/fateboard                 <TAG>
-  federatedai/meta-service              <TAG>
   federatedai/python                    <TAG>
-  federatedai/roll                      <TAG>
-  federatedai/proxy                     <TAG>
-  federatedai/federation                <TAG>
   federatedai/base-image                <TAG>
 ```
 
@@ -71,11 +67,10 @@ FATE（Federated AI Technology Enable）是一个工业级的分布式联邦学�
 
 ## 使用离线镜像（可选）
 对于一些用户而言，他们的机器可能不允许访问互联网，从而无法下载相应的镜像。此时可以将构建好的镜像打包成一个压缩文件，传输到要部署的机器上之后再把镜像解压出来。
-因为FATE的部署需要用到redis和mysql的Docker镜像，因此在构建镜像的机器上没有这两个镜像的话还需要手动拉取。拉取及打包镜像的命令如下:
+因为FATE的部署需要用到mysql的Docker镜像，因此在构建镜像的机器上没有这两个镜像的话还需要手动拉取。拉取及打包镜像的命令如下:
 ```
-$ docker pull redis
 $ docker pull mysql
-$ docker save $(docker images | grep -E "redis|mysql" | awk '{print $1":"$2}') -o third-party.images.tar.gz
+$ docker save $(docker images | grep -E "mysql" | awk '{print $1":"$2}') -o third-party.images.tar.gz
 $ docker save $(docker images | grep federatedai| grep -v -E "base|builder" | awk '{print $1":"$2}') -o fate.images.tar.gz
 ```
 
@@ -86,4 +81,4 @@ $ docker load -i fate.images.tar.gz
 ```
 
 部署
-Docker镜像生成后可以使用Docker Compose或Kubernetes来部署FATE，部署步骤请参考Kubefate项目，代码仓库地址：https://github.com/FederatedAI/KubeFATE。
+Docker镜像生成后可以使用Docker Compose或Kubernetes来部署FATE，部署步骤请参考Kubefate项目，代码仓库地址：https://github.com/FederatedAI/KubeFATE

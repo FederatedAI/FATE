@@ -83,16 +83,20 @@ ubuntu系统执行：apt list --installed | grep selinux
 
 如果已安装了selinux就执行：setenforce 0
 
-4.3 修改Linux最大打开文件数
+4.3 修改Linux系统参数
 ---------------------------
 
 **在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）root用户下执行：**
 
-vim /etc/security/limits.conf
+1）vim /etc/security/limits.conf
 
 \* soft nofile 65536
 
 \* hard nofile 65536
+
+2）vim /etc/security/limits.d/20-nproc.conf
+
+\* soft nproc unlimited
 
 4.4 关闭防火墙(可选)
 --------------
@@ -138,7 +142,7 @@ chown -R app:apps /data/projects
 
 ```
 #centos
-yum -y install gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpcdevel libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan lsof sysstat telnet psmisc
+yum -y install gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan lsof sysstat telnet psmisc
 #ubuntu
 apt-get install -y gcc g++ make openssl supervisor libgmp-dev  libmpfr-dev libmpc-dev libaio1 libaio-dev numactl autoconf automake libtool libffi-dev libssl1.0.0 libssl-dev liblz4-1 liblz4-dev liblz4-1-dbg liblz4-tool  zlib1g zlib1g-dbg zlib1g-dev
 cd /usr/lib/x86_64-linux-gnu
@@ -257,13 +261,13 @@ mysql>flush privileges;
 
 #insert配置数据
 1) 192.168.0.1执行
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.1', '9460', 'CLUSTER_MANAGER', 'HEALTHY');
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.1', '9461', 'NODE_MANAGER', 'HEALTHY');
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.2', '9461', 'NODE_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.1', '4670', 'CLUSTER_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.1', '4671', 'NODE_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.2', '4671', 'NODE_MANAGER', 'HEALTHY');
 
 2) 192.168.0.3执行
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.3', '9460', 'CLUSTER_MANAGER', 'HEALTHY');
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.3', '9461', 'NODE_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.3', '4670', 'CLUSTER_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.3', '4671', 'NODE_MANAGER', 'HEALTHY');
 
 #校验
 mysql>select User,Host from mysql.user;
@@ -278,7 +282,7 @@ mysql>select * from server_node;
 
 ## 5.3 部署jdk
 
-**在目标服务器（192.168.0.1 192.168.0.1 192.168.0.3）app用户下执行**:
+**在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）app用户下执行**:
 
 ```
 #创建jdk安装目录
@@ -421,7 +425,7 @@ eggroll.resourcemanager.bootstrap.roll_pair_master.mainclass=com.webank.eggroll.
 eggroll.resourcemanager.bootstrap.roll_pair_master.jvm.options=
 # for roll site. rename in the next round
 eggroll.rollsite.coordinator=webank
-eggroll.rollsite.host=192.168.0.1
+eggroll.rollsite.host=192.168.0.2
 eggroll.rollsite.port=9370
 eggroll.rollsite.party.id=10000
 eggroll.rollsite.route.table.path=conf/route_table.json
