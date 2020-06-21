@@ -13,9 +13,10 @@
     * file: Required, String: upload file location       
     * head: Required,Integer: determine if there is a data header   
     * partition: Required,Integer: set the number of partitions to save data   
+    * module: Optional,String: If you need to use the data of the machine where the FATE-Flow server is located, this value is not empty. 
   
 - response structure
-    * job_id: download job id,String
+    * job_id: upload job id,String
     * data: return data for submitting job ,Object
 
 
