@@ -174,12 +174,16 @@ class RDDTable(Table):
         fs = RDDTable.get_file_system(sc)
         path = RDDTable.get_path(sc, hdfs_path)
         if(fs.exists(path)):
-            rdd = sc.textFile(hdfs_path, partitions).map(RDDTable.map2dic).persist(util.get_storage_level())
+            rdd = sc.textFile(hdfs_path, partitions).map(RDDTable.map2dic)
         elif create_if_missing:
-            rdd = sc.emptyRDD().persist(util.get_storage_level())
+            rdd = sc.emptyRDD()
         else:
             LOGGER.debug("hdfs path {} not exists.".format(hdfs_path))
             rdd = None
+                    
+        if rdd is not None:
+            rdd = util.materialize(rdd)
+            
         return rdd
 
 
