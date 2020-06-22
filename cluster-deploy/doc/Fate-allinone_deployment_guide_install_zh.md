@@ -255,11 +255,28 @@ Swap:        131071           0      131071
 
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate-cluster-install-1.4.0-release-c7-u18.tar.gz
-tar xzf fate-cluster-install-1.4.0-release-c7-u18.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate-cluster-install-1.4.1-release-c7-u18.tar.gz
+tar xzf fate-cluster-install-1.4.1-release-c7-u18.tar.gz
 ```
 
-5.2 配置文件修改和示例
+## 5.2 部署前检查
+
+**在目标服务器（192.168.0.1 192.168.0.2 ）app用户下执行**
+
+把检查脚本fate-cluster-install/tools/check.sh从192.168.0.1拷贝到192.168.0.2
+
+```
+#在192.168.0.1和192.168.0.2服务器上分别执行检查脚本
+sh ./check.sh
+
+#确认app用户已配置sudo
+#虚拟内存，size不低于128G，如不满足需参考4.6章节重新设置
+#文件句柄数，不低于65535，如不满足需参考4.3章节重新设置
+#用户进程数，不低于64000，如不满足需参考4.3章节重新设置
+#确认部署前没有fate进程和端口冲突
+```
+
+5.3 配置文件修改和示例
 ----------------
 
 **在目标服务器（192.168.0.1）app用户下执行**
@@ -275,7 +292,7 @@ vi fate-cluster-install/allInone/conf/setup.conf
 | 配置项           | 配置项值                                      | 说明                                                         |
 | ---------------- | --------------------------------------------- | ------------------------------------------------------------ |
 | roles            | 默认："host" "guest"                          | 部署的角色，有HOST端、GUEST端                                |
-| version          | 默认：1.4.0                                   | Fate 版本号                                                  |
+| version          | 默认：1.4.1                                   | Fate 版本号                                                  |
 | pbase            | 默认： /data/projects                         | 项目根目录                                                   |
 | lbase            | 默认：/data/logs                              | 保持默认不要修改                                             |
 | ssh_user         | 默认：app                                     | ssh连接目标机器的用户，也是部署后文件的属主                  |
@@ -304,7 +321,7 @@ vi fate-cluster-install/allInone/conf/setup.conf
 #to install role
 roles=( "host" "guest" )
 
-version="1.4.0"
+version="1.4.1"
 #project base
 pbase="/data/projects"
 
@@ -360,7 +377,7 @@ basemodules=( "base" "java" "python" "eggroll" "fate" )
 #to install role
 roles=( "host" )
 
-version="1.4.0"
+version="1.4.1"
 #project base
 pbase="/data/projects"
 
@@ -409,7 +426,7 @@ dbmodules=( "mysql" )
 basemodules=( "base" "java" "python" "eggroll" "fate" )
 ```
 
-5.3 部署
+5.4 部署
 --------
 
 按照上述配置含义修改setup.conf文件对应的配置项后，然后在fate-cluster-install/allInone目录下执行部署脚本：
@@ -429,7 +446,7 @@ tail -f ./logs/deploy-host.log    （实时打印HOST端的部署情况）
 tail -f ./logs/deploy-mysql-host.log    （实时打印HOST端mysql的部署情况）
 ```
 
-## 5.4 问题定位
+## 5.5 问题定位
 
 1）eggroll日志
 
