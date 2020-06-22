@@ -104,15 +104,19 @@ Ubuntu system executes:  apt list --installed | grep selinux
 
 If selinux is already installed, execute: setenforce 0
 
-#### 3.3.3 Modify the maximum number of open files in Linux
+#### 3.3.3 Modify linux system parameters
 
 **Execute under the root user of the target server (192.168.0.1 192.168.0.2 192.168.0.3):**
 
-vim /etc/security/limits.conf
+1) vim /etc/security/limits.conf
 
 \* soft nofile 65536
 
 \* hard nofile 65536
+
+2) vim /etc/security/limits.d/20-nproc.conf
+
+\* soft nproc unlimited
 
 #### 3.3.4 Turn off the firewall (optional)
 
@@ -156,7 +160,7 @@ chown -R app:apps /data/projects
 
 ```
 #centos
-yum -y install gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpcdevel libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan lsof sysstat telnet psmisc
+yum -y install gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan lsof sysstat telnet psmisc
 #ubuntu
 apt-get install -y gcc g++ make openssl supervisor libgmp-dev  libmpfr-dev libmpc-dev libaio1 libaio-dev numactl autoconf automake libtool libffi-dev libssl1.0.0 libssl-dev liblz4-1 liblz4-dev liblz4-1-dbg liblz4-tool  zlib1g zlib1g-dbg zlib1g-dev
 cd /usr/lib/x86_64-linux-gnu
@@ -276,13 +280,13 @@ mysql>flush privileges;
 
 #insert configuration data
 1) 192.168.0.1 execute
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.1', '9460', 'CLUSTER_MANAGER', 'HEALTHY');
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.1', '9461', 'NODE_MANAGER', 'HEALTHY');
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.2', '9461', 'NODE_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.1', '4670', 'CLUSTER_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.1', '4671', 'NODE_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.2', '4671', 'NODE_MANAGER', 'HEALTHY');
 
 2) 192.168.0.3 execute
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.3', '9460', 'CLUSTER_MANAGER', 'HEALTHY');
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.3', '9461', 'NODE_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.3', '4670', 'CLUSTER_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.3', '4671', 'NODE_MANAGER', 'HEALTHY');
 
 #check
 mysql>select User,Host from mysql.user;
@@ -439,7 +443,7 @@ eggroll.resourcemanager.bootstrap.roll_pair_master.mainclass=com.webank.eggroll.
 eggroll.resourcemanager.bootstrap.roll_pair_master.jvm.options=
 # for roll site. rename in the next round
 eggroll.rollsite.coordinator=webank
-eggroll.rollsite.host=192.168.0.1
+eggroll.rollsite.host=192.168.0.2
 eggroll.rollsite.port=9370
 eggroll.rollsite.party.id=10000
 eggroll.rollsite.route.table.path=conf/route_table.json
@@ -504,7 +508,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
 {
   "route_table":
   {
-    "9999":
+    "10000":
     {
       "default":[
         {
@@ -519,7 +523,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
         }
       ]      
     },
-    "10000":
+    "9999":
     {
       "default":[
         {
@@ -541,7 +545,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
 {
   "route_table":
   {
-    "10000":
+    "9999":
     {
       "default":[
         {
@@ -556,7 +560,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
         }
       ]      
     },
-    "9999":
+    "10000":
     {
       "default":[
         {
@@ -907,34 +911,42 @@ A result similar to the following indicates success:：
 
 ### 5.2 Minimization testing
 
+Start the virtual environment in host and guest respectively. Please make sure you have already uploaded the preset dataset through the provided script. 
+
+#### 5.2.1 Upload preset Data
+
+You can upload some preset data through one simple script easily. The script is located at /data/projects/fate/python/examples/scripts/
+
+You can run this script as simple as running the following command:
+```
+python upload_default_data.py -m 1
+```
+
+For more details, please refer to [scripts' README](../examples/scripts/README.rst)
+
 Start the virtual environment in host and guest respectively.
 
-#### 5.2.1 Fast mode
+#### 5.2.2 Fast mode
 
-In the node of guest and host parties, set the fields: guest_id, host_id, arbiter_id in run_task.py according to your actual setting. This file is located in / data / projects / fate / python / examples / min_test_task/.
+In fast mode, min-test will start a relatively small date set (breast data set) which contains 569 lines of data.
 
-In the node of host party, run:
-
-```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/min_test_task/
-sh run.sh host fast 		
-```
-
-Get the values of "host_table" and "host_namespace" from test results, and pass them to following command.
-
-In the node of guest party, run: 
+All you need to do is just run the following command in guest party:
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/min_test_task/
-sh run.sh guest fast ${host_table} ${host_namespace}
+   python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
 ```
+
+This test will automatically take breast as test data set.
+
+There are some more parameters that you may need:
+
+1. -f: file type. "fast" means breast data set, "normal" means default credit data set.
+2. --add_sbt: if set, it will test hetero-secureboost task after testing hetero-lr.
 
 Wait a few minutes, a result showing "success" indicates that the operation is successful.
 In other cases, if FAILED or stuck, it means failure.
 
-#### 5.2.2 Normal mode
+#### 5.2.3 Normal mode
 
 Just replace the word "fast" with "normal" in all the commands, the rest is the same with fast mode.
 

@@ -83,16 +83,20 @@ ubuntu系统执行：apt list --installed | grep selinux
 
 如果已安装了selinux就执行：setenforce 0
 
-4.3 修改Linux最大打开文件数
+4.3 修改Linux系统参数
 ---------------------------
 
 **在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）root用户下执行：**
 
-vim /etc/security/limits.conf
+1）vim /etc/security/limits.conf
 
 \* soft nofile 65536
 
 \* hard nofile 65536
+
+2）vim /etc/security/limits.d/20-nproc.conf
+
+\* soft nproc unlimited
 
 4.4 关闭防火墙(可选)
 --------------
@@ -138,7 +142,7 @@ chown -R app:apps /data/projects
 
 ```
 #centos
-yum -y install gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpcdevel libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan lsof sysstat telnet psmisc
+yum -y install gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan lsof sysstat telnet psmisc
 #ubuntu
 apt-get install -y gcc g++ make openssl supervisor libgmp-dev  libmpfr-dev libmpc-dev libaio1 libaio-dev numactl autoconf automake libtool libffi-dev libssl1.0.0 libssl-dev liblz4-1 liblz4-dev liblz4-1-dbg liblz4-tool  zlib1g zlib1g-dbg zlib1g-dev
 cd /usr/lib/x86_64-linux-gnu
@@ -257,13 +261,13 @@ mysql>flush privileges;
 
 #insert配置数据
 1) 192.168.0.1执行
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.1', '9460', 'CLUSTER_MANAGER', 'HEALTHY');
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.1', '9461', 'NODE_MANAGER', 'HEALTHY');
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.2', '9461', 'NODE_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.1', '4670', 'CLUSTER_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.1', '4671', 'NODE_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.2', '4671', 'NODE_MANAGER', 'HEALTHY');
 
 2) 192.168.0.3执行
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.3', '9460', 'CLUSTER_MANAGER', 'HEALTHY');
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.3', '9461', 'NODE_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.3', '4670', 'CLUSTER_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.3', '4671', 'NODE_MANAGER', 'HEALTHY');
 
 #校验
 mysql>select User,Host from mysql.user;
@@ -278,7 +282,7 @@ mysql>select * from server_node;
 
 ## 5.3 部署jdk
 
-**在目标服务器（192.168.0.1 192.168.0.1 192.168.0.3）app用户下执行**:
+**在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）app用户下执行**:
 
 ```
 #创建jdk安装目录
@@ -421,7 +425,7 @@ eggroll.resourcemanager.bootstrap.roll_pair_master.mainclass=com.webank.eggroll.
 eggroll.resourcemanager.bootstrap.roll_pair_master.jvm.options=
 # for roll site. rename in the next round
 eggroll.rollsite.coordinator=webank
-eggroll.rollsite.host=192.168.0.1
+eggroll.rollsite.host=192.168.0.2
 eggroll.rollsite.port=9370
 eggroll.rollsite.party.id=10000
 eggroll.rollsite.route.table.path=conf/route_table.json
@@ -892,33 +896,38 @@ python run_toy_example.py 9999 10000 1
 6.2 最小化测试
 --------------
 
-### **6.2.1 快速模式：**
+### **6.2.1 上传预设数据：**
 
-在guest和host两方各任一egg节点中，根据需要在run_task.py中设置字段：guest_id，host_id，arbiter_id。
+您可以通过一个简单的脚本一键上传部分预设的数据。这个脚本被放置在：/data/projects/fate/python/examples/scripts/ 路径下。
 
-该文件在/data/projects/fate/python/examples/min_test_task/目录下。
-
-**在Host节点上运行：**
+您可以直接运行下列命令完成上传：
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/min_test_task/
-sh run.sh host fast
+python upload_default_data.py -m 1
 ```
 
-从测试结果中获取“host_table”和“host_namespace”的值，并将它们作为参数传递给下述guest方命令。
+更多细节信息，敬请参考[脚本README](../examples/scripts/README.rst)
 
-**在Guest节点上运行：**
+### **6.2.2 快速模式：**
 
+请确保guest和host两方均已分别通过给定脚本上传了预设数据。
+
+然后可以进入/data/projects/fate/python/examples/min_test_task/目录，找到最小化测试脚本。
+
+快速模式下，最小化测试脚本将使用一个相对较小的数据集，即包含了569条数据的breast数据集。
+您只需要在guest端运行下列语句，即可启动最小化测试：
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/min_test_task/
-sh run.sh guest fast ${host_table} ${host_namespace} 
+   python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
 ```
 
-等待几分钟，看到结果显示“成功”字段，表明操作成功。在其他情况下，如果失败或卡住，则表示失败。
+其他一些可能有用的参数包括：
 
-### **6.2.2 正常模式**：
+1. -f: 使用的文件类型. "fast" 代表 breast数据集, "normal" 代表 default credit 数据集.
+2. --add_sbt: 如果被设置为True, 将在运行完lr以后，启动secureboost任务。
+
+若数分钟后在结果中显示了“success”字样则表明该操作已经运行成功了。若出现“FAILED”或者程序卡住，则意味着测试失败。
+
+### **6.2.3 正常模式**：
 
 只需在命令中将“fast”替换为“normal”，其余部分与快速模式相同。
 

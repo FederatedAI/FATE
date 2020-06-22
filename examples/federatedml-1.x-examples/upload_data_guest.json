@@ -3,6 +3,6 @@
     "head": 1,
     "partition": 16,
     "work_mode": 0,
-    "table_name": "homo_breast_guest",
-    "namespace": "homo_breast_guest"
+    "table_name": "breast_homo_guest",
+    "namespace": "experiment"
 }
