@@ -122,7 +122,7 @@ class HeteroLRGuest(HeteroLRBase):
                     self.n_iter_,
                     batch_index
                 )
-                LOGGER.debug('optim_guest_gradient: {}'.format(optim_guest_gradient))
+                # LOGGER.debug('optim_guest_gradient: {}'.format(optim_guest_gradient))
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.update_local_model(fore_gradient, data_instances, self.model_weights.coef_, **training_info)
 
@@ -131,7 +131,7 @@ class HeteroLRGuest(HeteroLRBase):
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optim_guest_gradient)
                 batch_index += 1
-                LOGGER.debug("lr_weight, iters: {}, update_model: {}".format(self.n_iter_, self.model_weights.unboxed))
+                # LOGGER.debug("lr_weight, iters: {}, update_model: {}".format(self.n_iter_, self.model_weights.unboxed))
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
@@ -150,7 +150,7 @@ class HeteroLRGuest(HeteroLRBase):
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
             self.load_model(self.validation_strategy.cur_best_model)
 
-        LOGGER.debug("Final lr weights: {}".format(self.model_weights.unboxed))
+        # LOGGER.debug("Final lr weights: {}".format(self.model_weights.unboxed))
 
     @assert_io_num_rows_equal
     def predict(self, data_instances):

@@ -37,7 +37,7 @@ class SPDZ(object):
     def has_instance(cls):
         return cls.__instance is not None
 
-    def __init__(self, name="ss", q_field=2 << 60, local_party=None, all_parties=None):
+    def __init__(self, name="ss", q_field=2 << 60, local_party=None, all_parties=None, use_mix_rand=False):
         self.name_service = naming.NamingService(name)
         self._prev_name_service = None
         self._pre_instance = None
@@ -50,6 +50,7 @@ class SPDZ(object):
             raise EnvironmentError("support 2-party secret share only")
         self.public_key, self.private_key = PaillierKeypair.generate_keypair(1024)
         self.q_field = q_field
+        self.use_mix_rand = use_mix_rand
 
     def __enter__(self):
         self._prev_name_service = NamingService.set_instance(self.name_service)

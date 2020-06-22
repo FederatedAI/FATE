@@ -31,7 +31,8 @@ def generate_publish_model_info(config_data):
         for party_id in role_party:
             config_data['model'][role][party_id] = {
                 'model_id': model_utils.gen_party_model_id(model_id, role, party_id),
-                'model_version': model_version}
+                'model_version': model_version
+            }
 
 
 def load_model(config_data):
@@ -53,6 +54,8 @@ def load_model(config_data):
             stat_logger.info('request serving: {} load model'.format(serving))
             load_model_request.local.role = config_data.get('local').get('role')
             load_model_request.local.partyId = config_data.get('local').get('party_id')
+            load_model_request.loadType = config_data['job_parameters'].get("load_type", "FATEFLOW")
+            load_model_request.filePath = config_data['job_parameters'].get("file_path", "")
             stat_logger.info(load_model_request)
             response = stub.publishLoad(load_model_request)
             stat_logger.info(

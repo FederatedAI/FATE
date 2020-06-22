@@ -61,12 +61,19 @@ def submit_job():
 
 
 @manager.route('/stop', methods=['POST'])
+def start_stop_job():
+    job_id = request.json.get('job_id')
+    response = TaskScheduler.start_stop(job_id=job_id)
+    return get_json_result(retcode=response.get('retcode'), retmsg=response.get('retmsg'))
+
+
+@manager.route('/stop/do', methods=['POST'])
 @job_utils.job_server_routing()
 def stop_job():
     job_id = request.json.get('job_id')
-    response = TaskScheduler.stop(job_id=job_id, end_status=JobStatus.CANCELED, is_initiator=False)
+    response = TaskScheduler.stop(job_id=job_id, end_status=JobStatus.CANCELED)
     if not response:
-        TaskScheduler.stop(job_id=request.json.get('job_id', ''), end_status=JobStatus.FAILED, is_initiator=False)
+        TaskScheduler.stop(job_id=request.json.get('job_id', ''), end_status=JobStatus.FAILED)
         return get_json_result(retcode=0, retmsg='kill job success')
     return get_json_result(retcode=0, retmsg='cancel job success')
 

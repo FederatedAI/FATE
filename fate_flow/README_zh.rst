@@ -242,7 +242,7 @@ API <./doc/fate_flow_rest_api.rst>`__\ 和\ `命令行界面 <./doc/fate_flow_cl
         Server中的配置项\ **USE_LOCAL_DATA**\ 代表上传数据时是否使用FATE-Flow客户端机器上的数据,默认使用（True）。
         如果FATE-Flow
         Server的配置\ **USE_LOCAL_DATA**\ 设为\ **True**\ ，并且还是想要使用FATE-Flow
-        Server所在机器上的数据，可将Client的USE_LOCAL_DATA改为False，并在上传配置中添加“**module**”参数，参数值非空即可。
+        Server所在机器上的数据，可在上传配置中添加“**use_local_data**”参数，参数值为0(默认为1)。
 
     .. Note::
 

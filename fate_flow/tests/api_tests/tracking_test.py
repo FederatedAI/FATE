@@ -36,7 +36,7 @@ class TestTracking(unittest.TestCase):
         job_id = response.json()['jobId']
         job_info = {'f_status': 'running'}
         for i in range(60):
-            response = requests.post("/".join([self.server_url, 'job', 'query']), json={'job_id': job_id})
+            response = requests.post("/".join([self.server_url, 'job', 'query']), json={'job_id': job_id, 'role': 'guest'})
             self.assertTrue(response.status_code in [200, 201])
             job_info = response.json()['data'][0]
             if job_info['f_status'] in ['success', 'failed', 'canceled']:

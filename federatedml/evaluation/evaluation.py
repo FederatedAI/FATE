@@ -321,6 +321,20 @@ class Evaluation(ModelBase):
 
         return single_val_metric
 
+    @staticmethod
+    def __filter_duplicate_roc_data_point(fpr, tpr, thresholds):
+
+        data_point_set = set()
+        new_fpr, new_tpr, new_threshold = [], [], []
+        for fpr_, tpr_, thres in zip(fpr, tpr, thresholds):
+            if (fpr_, tpr_, thres) not in data_point_set:
+                data_point_set.add((fpr_, tpr_, thres))
+                new_fpr.append(fpr_)
+                new_tpr.append(tpr_)
+                new_threshold.append(thres)
+
+        return new_fpr, new_tpr, new_threshold
+
     def __save_roc_curve(self, data_name, metric_name, metric_namespace, metric_res):
         fpr, tpr, thresholds, _ = metric_res
 
@@ -328,11 +342,7 @@ class Evaluation(ModelBase):
         fpr.append(1.0)
         tpr.append(1.0)
 
-        fpr, tpr, idx_list = self.__filt_override_unit_ordinate_coordinate(fpr, tpr)
-        edge_idx = idx_list[-1]
-        if edge_idx == len(thresholds):
-            idx_list = idx_list[:-1]
-        thresholds = [thresholds[idx] for idx in idx_list]
+        fpr, tpr, thresholds = self.__filter_duplicate_roc_data_point(fpr, tpr, thresholds)
 
         self.__save_curve_data(fpr, tpr, metric_name, metric_namespace)
         self.__save_curve_meta(metric_name=metric_name, metric_namespace=metric_namespace,
@@ -570,4 +580,7 @@ class Evaluation(ModelBase):
 
     @staticmethod
     def extract_data(data: dict):
-        return data
+        result = {}
+        for k, v in data.items():
+            result[".".join(k.split(".")[:-1])] = v
+        return result

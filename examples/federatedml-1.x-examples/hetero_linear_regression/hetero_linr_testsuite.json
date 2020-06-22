@@ -1,27 +1,27 @@
 {
     "data": [
         {
-            "file": "examples/data/motor_mini_b.csv",
+            "file": "examples/data/motor_hetero_guest.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "motor_mini_b",
-            "namespace": "motor_mini",
+            "table_name": "motor_hetero_guest",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
-            "file": "examples/data/motor_mini_a.csv",
+            "file": "examples/data/motor_hetero_host.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "motor_mini_a",
-            "namespace": "motor_mini",
+            "table_name": "motor_hetero_host",
+            "namespace": "experiment",
             "role": "host_0"
         },
         {
-            "file": "examples/data/motor_mini_a.csv",
+            "file": "examples/data/motor_hetero_host.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "motor_mini_a",
-            "namespace": "motor_mini",
+            "table_name": "motor_hetero_host",
+            "namespace": "experiment",
             "role": "host_1"
         }
     ],

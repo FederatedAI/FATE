@@ -1,51 +1,51 @@
 {
     "data": [
         {
-            "file": "examples/data/breast_step_b.csv",
+            "file": "examples/data/breast_hetero_mini_guest.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "hetero_breast_step_b",
-            "namespace": "hetero_breast_step_guest",
+            "table_name": "breast_hetero_mini_guest",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
-            "file": "examples/data/breast_step_a.csv",
+            "file": "examples/data/breast_hetero_mini_host.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "hetero_breast_step_a",
-            "namespace": "hetero_breast_step_host",
+            "table_name": "breast_hetero_mini_host",
+            "namespace": "experiment",
             "role": "host_0"
         },
         {
-            "file": "examples/data/motor_mini_step_b.csv",
+            "file": "examples/data/motor_hetero_mini_guest.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "motor_mini_step_b",
-            "namespace": "motor_mini_step",
+            "table_name": "motor_hetero_mini_guest",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
-            "file": "examples/data/motor_mini_step_a.csv",
+            "file": "examples/data/motor_hetero_mini_host.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "motor_mini_step_a",
-            "namespace": "motor_mini_step",
+            "table_name": "motor_hetero_mini_host",
+            "namespace": "experiment",
             "role": "host_0"
         },
         {
-            "file": "examples/data/dvisits_b.csv",
+            "file": "examples/data/dvisits_hetero_guest.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "dvisits_b",
-            "namespace": "dvisits",
+            "table_name": "dvisits_hetero_guest",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
-            "file": "examples/data/dvisits_a.csv",
+            "file": "examples/data/dvisits_hetero_host.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "dvisits_a",
-            "namespace": "dvisits",
+            "table_name": "dvisits_hetero_host",
+            "namespace": "experiment",
             "role": "host_0"
         }
     ],

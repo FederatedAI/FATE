@@ -398,7 +398,7 @@ def kill_task_executor_process(task: Task, only_child=False):
             return True
         p = psutil.Process(int(pid))
         if not is_task_executor_process(task=task, process=p):
-            schedule_logger(task.f_job_id).warning("this pid is not task executor: {}".format(" ".join(p.cmdline())))
+            schedule_logger(task.f_job_id).warning("this pid {} is not task executor".format(pid))
             return False
         for child in p.children(recursive=True):
             if check_job_process(child.pid) and is_task_executor_process(task=task, process=child):

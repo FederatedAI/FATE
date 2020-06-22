@@ -17,6 +17,7 @@ import pandas as pd
 
 ROUND_NUM = 6
 
+
 def neg_pos_count(labels: np.ndarray, pos_label: int):
     pos_num = ((labels == pos_label) + 0).sum()
     neg_num = len(labels) - pos_num
@@ -137,6 +138,9 @@ class KS(object):
         confusion_mat = ConfusionMatrix.compute(sorted_labels, sorted_scores, score_threshold, ret=['tp', 'fp'])
 
         pos_num, neg_num = neg_pos_count(sorted_labels, pos_label=pos_label)
+
+        assert pos_num > 0 and neg_num > 0, "error when computing KS metric, pos sample number and neg sample number" \
+                                            "must be larger than 0"
 
         tpr_arr = confusion_mat['tp'] / pos_num
         fpr_arr = confusion_mat['fp'] / neg_num
@@ -455,8 +459,8 @@ class PSI(object):
             # handle special cases
             train_pos_perc[train_pos_perc == np.inf] = -1
             validate_pos_perc[validate_pos_perc == np.inf] = -1
-            train_pos_perc[train_pos_perc == np.nan] = 0
-            validate_pos_perc[validate_pos_perc == np.nan] = 0
+            train_pos_perc[np.isnan(train_pos_perc)] = 0
+            validate_pos_perc[np.isnan(validate_pos_perc)] = 0
 
         if debug:
             print(train_count)

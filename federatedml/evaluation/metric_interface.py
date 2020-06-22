@@ -327,6 +327,12 @@ class MetricInterface(object):
             confusion_mat = classification_metric.ConfusionMatrix.compute(sorted_labels, sorted_scores,
                                                                           score_threshold,
                                                                           ret=['tp', 'fp', 'fn', 'tn'])
+
+            confusion_mat['tp'] = self.__to_int_list(confusion_mat['tp'])
+            confusion_mat['fp'] = self.__to_int_list(confusion_mat['fp'])
+            confusion_mat['fn'] = self.__to_int_list(confusion_mat['fn'])
+            confusion_mat['tn'] = self.__to_int_list(confusion_mat['tn'])
+
             return confusion_mat, cuts, score_threshold
         else:
             logging.warning('error: f-score metric is for binary classification only')
@@ -371,7 +377,6 @@ class MetricInterface(object):
             p_scores = list(map(list, np.flip(p_scores, axis=0)))
             r_scores = list(map(list, np.flip(r_scores, axis=0)))
             score_threshold = list(np.flip(score_threshold))
-            p_scores[-1][1] = .0  # adjust to correct result
             return p_scores, r_scores, score_threshold
         else:
             logging.warning('error: pr quantile is for binary classification only')

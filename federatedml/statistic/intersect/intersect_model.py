@@ -111,7 +111,7 @@ class IntersectModelBase(ModelBase):
                                       role=party_role,
                                       idx=-1)
             else:
-                LOGGER.warning(
+                raise ValueError(
                     "'allow_info_share' is true, and 'info_owner' is {}, but can not header in data, not to do information sharing".format(
                         self.model_param.info_owner))
         else:
@@ -161,8 +161,8 @@ class IntersectModelBase(ModelBase):
 
     def save_data(self):
         if self.intersect_ids is not None:
-            LOGGER.info("intersect_ids:{}".format(self.intersect_ids.count()))
-        LOGGER.info("intersect_ids header:{}".format(self.intersect_ids.schema))
+            LOGGER.info("intersect_ids count:{}".format(self.intersect_ids.count()))
+            LOGGER.info("intersect_ids header schema:{}".format(self.intersect_ids.schema))
         return self.intersect_ids
 
     def check_consistency(self):
