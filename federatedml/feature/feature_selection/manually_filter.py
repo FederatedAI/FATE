@@ -26,23 +26,37 @@ LOGGER = log_utils.getLogger()
 
 class ManuallyFilter(BaseFilterMethod):
     def __init__(self, filter_param: ManuallyFilterParam):
-        self.filter_out_indexes = []
-        self.filter_out_names = []
+        self.filter_out_indexes = None
+        self.filter_out_names = None
+        self.filter_param = None
         super().__init__(filter_param)
 
     def _parse_filter_param(self, filter_param):
-        self.filter_out_indexes = filter_param.filter_out_indexes
-        self.filter_out_names = filter_param.filter_out_names
+        self.filter_param = filter_param
+
+    def _transfer_params(self):
+        header = self.selection_properties.header
+        col_name_maps = self.selection_properties.col_name_maps
+        if (self.filter_param.filter_out_indexes or self.filter_param.filter_out_names) is not None:
+            self.filter_out_indexes = self.filter_param.filter_out_indexes
+            self.filter_out_names = self.filter_param.filter_out_names
+        else:
+            filter_out_set = set([i for i in range(len(header))])
+            if self.filter_param.left_col_indexes is not None:
+                filter_out_set = filter_out_set.difference(self.filter_param.left_col_indexes)
+            if self.filter_param.left_col_names is not None:
+                left_idx = [col_name_maps.get(name) for name in self.filter_param.left_col_names]
+                filter_out_set = filter_out_set.difference(left_idx)
+            self.filter_out_indexes = list(filter_out_set)
+
         if self.filter_out_indexes is None:
             self.filter_out_indexes = []
 
         if self.filter_out_names is None:
             self.filter_out_names = []
-        LOGGER.debug("In _parse_filter_param, filter_out_indexes: {}, filter_out_names: {}".format(
-            filter_param.filter_out_indexes, filter_param.filter_out_names
-        ))
 
     def fit(self, data_instances, suffix):
+        self._transfer_params()
         all_filter_out_names = []
         for col_idx, col_name in zip(self.selection_properties.select_col_indexes,
                                      self.selection_properties.select_col_names):
@@ -61,4 +75,3 @@ class ManuallyFilter(BaseFilterMethod):
         result = feature_selection_meta_pb2.ManuallyFilterMeta(filter_out_names=self.filter_out_names)
         meta_dicts['manually_meta'] = result
         return meta_dicts
-

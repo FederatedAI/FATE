@@ -69,7 +69,12 @@ def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, 
         json_body = json.loads(_return.body.value)
         return json_body
     except Exception as e:
-        raise Exception('rpc request error: {}'.format(e))
+        tips = ''
+        if 'Error received from peer' in str(e):
+            tips = 'Please check if the fate flow server of the other party is started. '
+        if 'failed to connect to all addresses' in str(e):
+            tips = 'Please check whether the rollsite service(port: 9370) is started. '
+        raise Exception('{}rpc request error: {}'.format(tips,e))
 
 
 def local_api(method, endpoint, json_body):
@@ -96,7 +101,7 @@ def request_execute_server(request, execute_host):
         response = action(url=url, json=request.json, headers=HEADERS)
         return jsonify(response.json())
     except requests.exceptions.ConnectionError as e:
-        return get_json_result(retcode=999, retmsg='please start execute server: {}'.format(execute_host))
+        return get_json_result(retcode=999, retmsg='please start fate flow server: {}'.format(execute_host))
     except Exception as e:
         raise Exception('local request error: {}'.format(e))
 
