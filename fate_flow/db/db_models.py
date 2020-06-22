@@ -66,7 +66,14 @@ class BaseDataBase(object):
             raise Exception('can not init database')
 
 
-DB = BaseDataBase().database_connection
+MAIN_FILE_PATH = os.path.realpath(__main__.__file__)
+if MAIN_FILE_PATH.endswith('fate_flow_server.py') or \
+        MAIN_FILE_PATH.endswith('task_executor.py') or \
+        MAIN_FILE_PATH.find("/unittest/__main__.py"):
+    DB = BaseDataBase().database_connection
+else:
+    # Initialize the database only when the server is started.
+    DB = None
 
 
 def close_connection():
