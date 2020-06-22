@@ -112,7 +112,8 @@ class DataStatistics(ModelBase):
 
         self.statistic_obj = MultivariateStatisticalSummary(data_instances,
                                                             cols_index=self.inner_param.static_indices,
-                                                            abnormal_list=self.model_param.abnormal_list)
+                                                            abnormal_list=self.model_param.abnormal_list,
+                                                            error=self.model_param.quantile_error)
         results = None
         for stat_name in self._numeric_statics:
             stat_res = self.statistic_obj.get_statics(stat_name)
@@ -126,7 +127,10 @@ class DataStatistics(ModelBase):
 
         for query_point in self._quantile_statics:
             q = float(query_point[:-1]) / 100
-            res = self.statistic_obj.get_quantile_point(q, error=self.model_param.quantile_error)
-            for k, v in res.items():
-                results[k][query_point] = v
+            res = self.statistic_obj.get_quantile_point(q)
+            if results is None:
+                results = res
+            else:
+                for k, v in res.items():
+                    results[k][query_point] = v
         return results

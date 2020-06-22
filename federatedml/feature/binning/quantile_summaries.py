@@ -63,10 +63,10 @@ class QuantileSummaries(object):
         if x in self.abnormal_list:
             return
 
-        # try:
-        #     x = float(x)
-        # except ValueError:
-        #     return
+        try:
+            x = float(x)
+        except ValueError:
+            return
 
         self.head_sampled.append(x)
         if len(self.head_sampled) >= self.head_size:

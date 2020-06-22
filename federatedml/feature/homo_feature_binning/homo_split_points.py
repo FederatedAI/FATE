@@ -118,8 +118,8 @@ class HomoFeatureBinningClient(object):
         if self.bin_obj is None:
             self.fit(data_instances)
 
-        bin_col_names = self.bin_obj.bin_inner_param.bin_names
-        query_result = self.bin_obj.query_quantile_point(bin_col_names, quantile_points)
+        # bin_col_names = self.bin_obj.bin_inner_param.bin_names
+        query_result = self.bin_obj.query_quantile_point(quantile_points)
 
         query_points = DictWeights(d=query_result)
         
