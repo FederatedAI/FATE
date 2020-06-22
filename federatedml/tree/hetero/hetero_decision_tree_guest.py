@@ -485,7 +485,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         """
         return dispatch_node_host_result
 
-    def redispatch_node(self, dep=-1):
+    def redispatch_node(self, dep=-1, max_depth_reach=False):
         LOGGER.info("redispatch node of depth {}".format(dep))
         dispatch_node_method = functools.partial(self.dispatch_node,
                                                  tree_=self.tree_,
@@ -509,6 +509,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
             self.predict_weights = leaf
         else:
             self.predict_weights = self.predict_weights.union(leaf)
+
+        if max_depth_reach:
+            return
 
         dispatch_guest_result = dispatch_guest_result.subtractByKey(leaf)
 
@@ -601,10 +604,17 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
                 batch += 1
 
-            max_depth_reach = True if dep + 1 == self.max_depth else False
-            self.update_tree_node_queue(splitinfos, max_depth_reach)
+            self.update_tree_node_queue(splitinfos, False)
 
             self.redispatch_node(dep)
+
+        if self.tree_node_queue:
+            self.update_tree_node_queue([], True)
+            self.data_bin_with_node_dispatch = self.data_bin.join(self.node_dispatch,
+                                                                  lambda data_inst, dispatch_info: (
+                                                                      data_inst, dispatch_info))
+
+            self.redispatch_node(self.max_depth, max_depth_reach=True)
 
         self.sync_tree()
         self.convert_bin_to_real()

@@ -9,8 +9,8 @@
         "arbiter": ["10000"]
     },
     "job_parameters": {
-        "work_mode": 0,
-        "model_id": "arbiter-10000#guest-10000#host-10000#model",
-        "model_version": "2019081217340125761469"
+        "work_mode": 1,
+        "model_id": "arbiter-10000#guest-9999#host-10000#model",
+        "model_version": "202006122116502527621"
     }
 }

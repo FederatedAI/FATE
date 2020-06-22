@@ -30,6 +30,10 @@
             "conf": "./test_hetero_feature_selection_job_conf.json",
             "dsl": "./test_hetero_feature_selection_job_dsl.json"
         },
+        "iv_top_k": {
+            "conf": "./test_hetero_iv_topk_selection_job_conf.json",
+            "dsl": "./test_hetero_feature_selection_job_dsl.json"
+        },
         "iv_selection": {
             "conf": "test_iv_selection_job_conf.json",
             "dsl": "test_hetero_feature_selection_job_dsl.json"

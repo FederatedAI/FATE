@@ -70,7 +70,7 @@ class HomoLRHost(HomoLRBase):
         w = self.cipher_operator.encrypt_list(self.model_weights.unboxed)
         self.model_weights = LogisticRegressionWeights(w, self.model_weights.fit_intercept)
 
-        LOGGER.debug("After init, model_weights: {}".format(self.model_weights.unboxed))
+        # LOGGER.debug("After init, model_weights: {}".format(self.model_weights.unboxed))
 
         mini_batch_obj = MiniBatch(data_inst=data_instances, batch_size=self.batch_size)
 
@@ -181,7 +181,5 @@ class HomoLRHost(HomoLRBase):
                                                              weight=weight_dict,
                                                              intercept=intercept,
                                                              header=header)
-        from google.protobuf import json_format
-        json_result = json_format.MessageToJson(param_protobuf_obj)
-        LOGGER.debug("json_result: {}".format(json_result))
+
         return param_protobuf_obj
