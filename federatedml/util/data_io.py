@@ -562,6 +562,7 @@ class SparseTagReader(object):
         self.missing_fill_method = data_io_param.missing_fill_method
         self.default_value = data_io_param.default_value
         self.missing_impute_rate = None
+        self.missing_impute = None
 
     @staticmethod
     def agg_tag(kvs, delimitor=' ', with_label=True, tag_with_value=False, tag_value_delimitor=":"):
@@ -642,9 +643,14 @@ class SparseTagReader(object):
             data, self.default_value = imputer_processor.fit(input_data,
                                                              replace_method=self.missing_fill_method,
                                                              replace_value=self.default_value)
+            LOGGER.debug("self.default_value is {}".format(self.default_value))
         else:
             data = imputer_processor.transform(input_data,
                                                transform_value=self.default_value)
+        if self.missing_impute is None:
+            self.missing_impute = imputer_processor.get_missing_value_list()
+
+        LOGGER.debug("self.missing_impute is {}".format(self.missing_impute))
 
         self.missing_impute_rate = imputer_processor.get_impute_rate(mode)
 
@@ -789,7 +795,7 @@ class SparseTagReader(object):
 
         missing_imputer_meta, missing_imputer_param = save_missing_imputer_model(self.missing_fill,
                                                                                  self.missing_fill_method,
-                                                                                 None,
+                                                                                 self.missing_impute,
                                                                                  self.default_value,
                                                                                  self.missing_impute_rate,
                                                                                  self.header,
@@ -816,7 +822,7 @@ class SparseTagReader(object):
             model_param)
 
         self.missing_fill, self.missing_fill_method, \
-        _, self.default_value = load_missing_imputer_model(self.header,
+        self.missing_impute, self.default_value = load_missing_imputer_model(self.header,
                                                            "Imputer",
                                                            model_meta.imputer_meta,
                                                            model_param.imputer_param)
