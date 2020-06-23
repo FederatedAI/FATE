@@ -439,11 +439,11 @@ class HomoSecureBoostingTreeClient(BoostingTree):
         if self.task_type == consts.CLASSIFICATION:
             if self.num_classes == 2:
                 return EvaluateParam(eval_type="binary",
-                                     pos_label=self.classes_[1])
+                                     pos_label=self.classes_[1], metrics=self.metrics)
             else:
-                return EvaluateParam(eval_type="multi")
+                return EvaluateParam(eval_type="multi", metrics=self.metrics)
         else:
-            return EvaluateParam(eval_type="regression")
+            return EvaluateParam(eval_type="regression", metrics=self.metrics)
 
     def export_model(self):
         if self.need_cv:
