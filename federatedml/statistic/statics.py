@@ -218,10 +218,7 @@ class MultivariateStatisticalSummary(object):
         bin_param = FeatureBinningParam(bin_num=2, bin_indexes=self.cols_index,
                                         error=self.error)
         self.binning_obj = QuantileBinning(bin_param, abnormal_list=self.abnormal_list)
-        split_points = self.binning_obj.fit_split_points(self.data_instances)
-        print(f"quantile_summary_obj count: "
-              f"{list(self.binning_obj.summary_dict.values())[0].count},"
-              f"split_pints: {split_points}")
+        self.binning_obj.fit_split_points(self.data_instances)
 
         return self.binning_obj
 

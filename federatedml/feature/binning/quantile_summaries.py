@@ -21,7 +21,6 @@ import math
 
 from federatedml.util import consts
 from arch.api.utils import log_utils
-import numpy as np
 
 LOGGER = log_utils.getLogger()
 
@@ -106,7 +105,7 @@ class QuantileSummaries(object):
         self.count = current_count
 
     def compress(self):
-        # self._insert_head_buffer()
+        self._insert_head_buffer()
         # merge_threshold = math.floor(2 * self.error * self.count) - 1
         merge_threshold = 2 * self.error * self.count
         compressed = self._compress_immut(merge_threshold)

@@ -142,38 +142,38 @@ class BaseHeteroFeatureSelection(ModelBase):
         self.model_output = result
         return result
 
+    def _load_selection_model(self, model_dict):
+        LOGGER.debug("Feature selection need run: {}".format(self.need_run))
+        if not self.need_run:
+            return
+        model_param = list(model_dict.get('model').values())[0].get(MODEL_PARAM_NAME)
+        model_meta = list(model_dict.get('model').values())[0].get(MODEL_META_NAME)
+
+        self.model_output = {
+            MODEL_META_NAME: model_meta,
+            MODEL_PARAM_NAME: model_param
+        }
+
+        header = list(model_param.header)
+        # self.schema = {'header': header}
+        self.header = header
+        self.curt_select_properties.set_header(header)
+        self.completed_selection_result.set_header(header)
+        self.curt_select_properties.set_last_left_col_indexes([x for x in range(len(header))])
+        self.curt_select_properties.add_select_col_names(header)
+
+        final_left_cols_names = dict(model_param.final_left_cols.left_cols)
+        LOGGER.debug("final_left_cols_names: {}".format(final_left_cols_names))
+        for col_name, _ in final_left_cols_names.items():
+            self.curt_select_properties.add_left_col_name(col_name)
+        self.completed_selection_result.add_filter_results(filter_name='conclusion',
+                                                           select_properties=self.curt_select_properties)
+        self.update_curt_select_param()
+
     def load_model(self, model_dict):
 
         if 'model' in model_dict:
-            # self._parse_need_run(model_dict, MODEL_META_NAME)
-            LOGGER.debug("Feature selection need run: {}".format(self.need_run))
-            if not self.need_run:
-                return
-            model_param = list(model_dict.get('model').values())[0].get(MODEL_PARAM_NAME)
-            model_meta = list(model_dict.get('model').values())[0].get(MODEL_META_NAME)
-
-            self.model_output = {
-                MODEL_META_NAME: model_meta,
-                MODEL_PARAM_NAME: model_param
-            }
-
-            header = list(model_param.header)
-            # self.schema = {'header': header}
-            self.header = header
-            self.curt_select_properties.set_header(header)
-            self.completed_selection_result.set_header(header)
-            self.curt_select_properties.set_last_left_col_indexes([x for x in range(len(header))])
-            self.curt_select_properties.add_select_col_names(header)
-
-            final_left_cols_names = dict(model_param.final_left_cols.left_cols)
-            LOGGER.debug("final_left_cols_names: {}".format(final_left_cols_names))
-            for col_name, _ in final_left_cols_names.items():
-                self.curt_select_properties.add_left_col_name(col_name)
-            self.completed_selection_result.add_filter_results(filter_name='conclusion',
-                                                               select_properties=self.curt_select_properties)
-            self.update_curt_select_param()
-            LOGGER.debug("After load model, completed_selection_result.all_left_col_indexes: {}".format(
-                self.completed_selection_result.all_left_col_indexes))
+            self._load_selection_model(model_dict)
 
         if 'isometric_model' in model_dict:
 

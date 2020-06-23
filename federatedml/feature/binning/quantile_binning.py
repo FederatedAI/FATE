@@ -83,7 +83,6 @@ class QuantileBinning(BaseBinning):
         percentile_rate.append(1.0)
         is_sparse = data_overview.is_sparse_data(data_instances)
         # LOGGER.debug("in _fit_split_point, cols_map: {}".format(self.bin_inner_param.bin_cols_map))
-        print(f"percentile_rate: {percentile_rate}")
         # self._fit_split_point_deprecate(data_instances, is_sparse, percentile_rate)
         self._fit_split_point(data_instances, is_sparse, percentile_rate)
 
@@ -170,7 +169,6 @@ class QuantileBinning(BaseBinning):
                     features = instant.features
                 else:
                     features = instant
-                print("In feature_summary, features: {}".format(features))
                 for col_name, summary in summary_dict.items():
                     col_index = cols_dict[col_name]
                     summary.insert(features[col_index])
