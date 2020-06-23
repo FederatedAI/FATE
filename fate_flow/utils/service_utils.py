@@ -74,11 +74,10 @@ class ServiceUtils(object):
             model_transfer_url = 'http://{}:{}{}'.format(get_lan_ip(), HTTP_PORT, FATE_FLOW_MODEL_TRANSFER_ENDPOINT)
             fate_flow_model_transfer_service = '{}/{}'.format(FATE_SERVICES_REGISTERED_PATH.get("fateflow", ""), parse.quote(model_transfer_url, safe=' '))
             try:
-                zk.create(fate_flow_model_transfer_service, makepath=True)
+                zk.create(fate_flow_model_transfer_service, makepath=True, ephemeral=True)
                 stat_logger.info("register path {} to {}".format(fate_flow_model_transfer_service, ";".join(get_base_config("zookeeper", {}).get("hosts"))))
             except Exception as e:
                 stat_logger.exception(e)
-            zk.stop()
 
 
 def nodes_unquote(nodes):
