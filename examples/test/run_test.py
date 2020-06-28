@@ -91,7 +91,11 @@ def run_testsuite(submitter, env, file_name, err_name, check_interval=3, skip_da
                     env=env, task_data=configs["data"],
                     check_interval=check_interval)
 
-    for task_name, task_config in configs["tasks"].items():
+    # non deps first
+    ordered = [(task_name, task_config, "deps" in task_config) for task_name, task_config in configs["tasks"].items()]
+    ordered = sorted(ordered, key=lambda x: x[2])
+    print(f"todo tasks: {[triple[0] for triple in ordered]}")
+    for task_name, task_config, _ in ordered:
         try:
             if "conf" not in task_config:
                 raise ValueError(f"conf not specified in {task_name}@{file_name}")
@@ -186,7 +190,6 @@ def main():
     backend = args.backend
 
     submit.set_logger(output_file)
-
 
     @register
     def _on_exit():
