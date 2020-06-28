@@ -200,15 +200,7 @@ class Tracking(object):
             session.save_data_table_meta(
                 {'schema': data_table.schema, 'header': data_table.schema.get('header', [])},
                 data_table_namespace=persistent_table.get_namespace(), data_table_name=persistent_table.get_name())
-            data_table_info = {
-                data_name: {'name': persistent_table.get_name(), 'namespace': persistent_table.get_namespace()}}
-        else:
-            data_table_info = {}
-        session.save_data(
-            data_table_info.items(),
-            name=Tracking.output_table_name('data'),
-            namespace=self.table_namespace,
-            partition=48)
+
         self.save_data_view(self.role, self.party_id,
                             data_info={'f_table_name': persistent_table._name if data_table else '',
                                        'f_table_namespace': persistent_table._namespace if data_table else '',
@@ -223,14 +215,12 @@ class Tracking(object):
         :param data_name:
         :return:
         """
-        output_data_info_table = session.table(name=Tracking.output_table_name('data'),
-                                               namespace=self.table_namespace)
-        data_table_info = output_data_info_table.get(data_name)
+        data_view = self.query_data_view(self.role, self.party_id, mark=True)
       
-        if data_table_info:
-            data_table = session.table(name=data_table_info.get('name', ''),
-                                       namespace=data_table_info.get('namespace', ''),
-                                       partition=partition)
+        if data_view:
+            data_table = session.table(name=data_view.f_table_name,
+                                       namespace=data_view.f_table_namespace,
+                                       partition=data_view.f_partition)
             data_table_meta = data_table.get_metas()
             if data_table_meta.get('schema', None):
                 data_table.schema = data_table_meta['schema']
@@ -431,6 +421,19 @@ class Tracking(object):
             else:
                 data_view.save()
             return data_view
+    
+    def query_data_view(self, role, party_id, mark=False):
+        with DB.connection_context():
+            data_views = DataView.select().where(DataView.f_job_id == self.job_id,
+                                                 DataView.f_component_name == self.component_name,
+                                                 DataView.f_task_id == self.task_id,
+                                                 DataView.f_role == role,
+                                                 DataView.f_party_id == party_id)
+            if mark and self.component_name == "upload_0":
+                return
+            if data_views:
+                return data_views[0]
+
 
     @session_utils.session_detect()
     def clean_task(self, roles, party_ids):
