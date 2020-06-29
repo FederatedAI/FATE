@@ -21,7 +21,6 @@ import random
 
 from arch.api.utils import log_utils
 from federatedml.feature.feature_selection.selection_properties import SelectionProperties
-
 LOGGER = log_utils.getLogger()
 
 
@@ -29,16 +28,6 @@ class BaseFilterMethod(object):
     """
     Use for filter columns
 
-    Attributes
-    ----------
-    cols: list of int
-        Col index to do selection
-
-    left_cols: dict,
-        k is col_index, value is bool that indicate whether it is left or not.
-
-    feature_values: dict
-        k is col_name, v is the value that used to judge whether left or not.
     """
 
     def __init__(self, filter_param):

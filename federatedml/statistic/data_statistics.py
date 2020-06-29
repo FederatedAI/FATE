@@ -22,9 +22,13 @@ from federatedml.param.statistics_param import StatisticsParam
 from arch.api.utils import log_utils
 from federatedml.statistic.data_overview import get_header
 from federatedml.statistic.statics import MultivariateStatisticalSummary
+from federatedml.protobuf.generated import statistic_meta_pb2, statistic_param_pb2
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
+
+MODEL_PARAM_NAME = 'StatisticParam'
+MODEL_META_NAME = 'StatisticMeta'
 
 
 class StatisticInnerParam(object):
@@ -80,6 +84,8 @@ class DataStatistics(ModelBase):
         self._numeric_statics = []
         self._quantile_statics = []
 
+        self.feature_value_pb = []
+
     def _init_model(self, model_param):
         self.model_param = model_param
         for stat_name in self.model_param.statistics:
@@ -107,7 +113,7 @@ class DataStatistics(ModelBase):
             self.inner_param.add_static_names(self.model_param.column_names)
         return self
 
-    def fit_local(self, data_instances):
+    def fit(self, data_instances):
         self._init_param(data_instances)
 
         self.statistic_obj = MultivariateStatisticalSummary(data_instances,
@@ -117,6 +123,7 @@ class DataStatistics(ModelBase):
         results = None
         for stat_name in self._numeric_statics:
             stat_res = self.statistic_obj.get_statics(stat_name)
+            self.feature_value_pb.append(self._convert_pb(stat_res, stat_name))
             if results is None:
                 results = stat_res
             else:
@@ -128,9 +135,49 @@ class DataStatistics(ModelBase):
         for query_point in self._quantile_statics:
             q = float(query_point[:-1]) / 100
             res = self.statistic_obj.get_quantile_point(q)
+            self.feature_value_pb.append(self._convert_pb(res, query_point))
+
             if results is None:
                 results = res
             else:
                 for k, v in res.items():
                     results[k][query_point] = v
         return results
+
+    def _convert_pb(self, stat_res, stat_name):
+        values = [stat_res[col_name] for col_name in self.inner_param.static_names]
+        return statistic_param_pb2.SingleFeatureValue(
+            values=values,
+            col_names=self.inner_param.static_names,
+            value_name=stat_name
+        )
+
+    def export_model(self):
+        if self.model_output is not None:
+            return self.model_output
+
+        meta_obj = self._get_meta()
+        param_obj = self._get_param()
+        result = {
+            MODEL_META_NAME: meta_obj,
+            MODEL_PARAM_NAME: param_obj
+        }
+        self.model_output = result
+        return result
+
+    def _get_meta(self):
+        return statistic_meta_pb2.StatisticMeta(
+            statistics=self.model_param.statistics,
+            static_columns=self.inner_param.static_names,
+            quantile_error=self.model_param.quantile_error,
+            need_run=self.model_param.need_run
+        )
+
+    def _get_param(self):
+        all_result = statistic_param_pb2.OnePartyResult(
+            results=self.feature_value_pb
+        )
+        return statistic_param_pb2.ModelParam(
+            self_values=all_result,
+            model_name=consts.STATISTIC_MODEL
+        )

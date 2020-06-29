@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from arch.api import session
-from federatedml.statistic.statistic_model import StatisticModel
+from federatedml.statistic.data_statistics import DataStatistics
 from federatedml.param.statistics_param import StatisticsParam
 import uuid
 
@@ -30,9 +30,9 @@ class TestStatisticCpn(unittest.TestCase):
         statistics_param.check()
         print(statistics_param.statistics)
         test_data = self.gen_data(1000, 16)
-        test_obj = StatisticModel()
+        test_obj = DataStatistics()
         test_obj.model_param = statistics_param
-        test_obj.fit_local(test_data)
+        test_obj.fit(test_data)
         self.assertEqual(True, False)
 
     def tearDown(self):

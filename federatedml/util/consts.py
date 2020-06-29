@@ -177,6 +177,11 @@ COEFFICIENT_OF_VARIATION_VALUE_THRES = 'coefficient_of_variation_value_thres'
 OUTLIER_COLS = 'outlier_cols'
 MANUALLY_FILTER = 'manually'
 PERCENTAGE_VALUE = 'percentage_value'
+IV_FILTER = 'iv_filter'
+STATISTIC_FILTER = 'statistic_filter'
+
+# Selection Pre-model
+STATISTIC_MODEL = 'statistic_model'
 
 # imputer
 MIN = 'min'

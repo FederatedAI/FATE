@@ -50,9 +50,9 @@ class IVValueSelectFilter(BaseFilterMethod, metaclass=abc.ABCMeta):
     """
 
     def __init__(self, filter_param: IVValueSelectionParam):
+        self.local_only = False
         super().__init__(filter_param)
         self.binning_obj = None
-        self.local_only = False
         self.transfer_variable = None
         self.sync_obj = None
 

@@ -32,6 +32,7 @@ from federatedml.statistic.data_overview import get_header
 from federatedml.transfer_variable.transfer_class.hetero_feature_selection_transfer_variable import \
     HeteroFeatureSelectionTransferVariable
 from federatedml.util import abnormal_detection
+from federatedml.feature.hetero_feature_selection.isometric_model import IsometricModel
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
 
@@ -58,6 +59,7 @@ class BaseHeteroFeatureSelection(ModelBase):
         self.static_obj = None
         self.model_param = FeatureSelectionParam()
         self.meta_dicts = {}
+        self.isometric_models = {}
 
     def _init_model(self, params):
         self.model_param = params
@@ -170,21 +172,30 @@ class BaseHeteroFeatureSelection(ModelBase):
                                                            select_properties=self.curt_select_properties)
         self.update_curt_select_param()
 
-    def load_model(self, model_dict):
+    def _load_isometric_model(self, iso_model):
+        LOGGER.debug(f"In _load_isometric_model, iso_model: {iso_model}")
+        for cpn_name, model_dict in iso_model.items():
+            for name, model_param in model_dict.items():
+                if not name.endswith("Param"):
+                    continue
+                model_name = model_param.model_name
+                if model_name in self.isometric_models:
+                    raise ValueError("Should not load two same type isometric models"
+                                     " in feature selection")
+                curt_model = IsometricModel()
+                curt_model.set_model_pb(model_param)
+                self.isometric_models[model_name] = curt_model
 
+        # for model_name, model_dict in iso_model.items():
+
+    def load_model(self, model_dict):
+        LOGGER.debug(f"In load_model, model_dict: {model_dict}")
         if 'model' in model_dict:
             self._load_selection_model(model_dict)
 
         if 'isometric_model' in model_dict:
+            self._load_isometric_model(model_dict['isometric_model'])
 
-            LOGGER.debug("Has isometric_model, model_dict: {}".format(model_dict))
-            if self.party_name == consts.GUEST:
-                self.binning_model = HeteroFeatureBinningGuest()
-            else:
-                self.binning_model = HeteroFeatureBinningHost()
-
-            new_model_dict = {'model': model_dict['isometric_model']}
-            self.binning_model.load_model(new_model_dict)
 
     @staticmethod
     def select_cols(instance, left_col_idx):
