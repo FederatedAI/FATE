@@ -50,9 +50,9 @@ class IVValueSelectFilter(BaseFilterMethod, metaclass=abc.ABCMeta):
     """
 
     def __init__(self, filter_param: IVValueSelectionParam):
+        self.local_only = False
         super().__init__(filter_param)
         self.binning_obj = None
-        self.local_only = False
         self.transfer_variable = None
         self.sync_obj = None
 
@@ -111,9 +111,13 @@ class Host(IVValueSelectFilter):
         self.sync_obj = selection_info_sync.Host()
 
     def _parse_filter_param(self, filter_param):
-        self.local_only = False
+        self.local_only = filter_param.local_only
 
     def fit(self, data_instances, suffix):
+        if self.local_only:
+            for col_name in self.selection_properties.last_left_col_names:
+                self.selection_properties.add_left_col_name(col_name)
+            return self
         encoded_names = self.binning_obj.bin_inner_param.encode_col_name_list(
             self.selection_properties.select_col_names)
         LOGGER.debug("selection_properties.select_col_names: {}, encoded_names: {}".format(
