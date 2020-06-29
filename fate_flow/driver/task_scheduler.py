@@ -23,9 +23,9 @@ from arch.api.utils.core_utils import current_timestamp, base64_encode, json_loa
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import Job
 from fate_flow.driver.task_executor import TaskExecutor
-from fate_flow.entity.constant_config import JobStatus, Backend, TaskStatus
+from fate_flow.entity.constant_config import JobStatus, Backend, TaskStatus, WorkMode
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.settings import API_VERSION, HTTP_PORT, ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH
+from fate_flow.settings import API_VERSION, HTTP_PORT, ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH, WORK_MODE
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
 from fate_flow.utils.job_utils import query_task, get_job_dsl_parser, query_job
@@ -68,20 +68,23 @@ class TaskScheduler(object):
 
     @staticmethod
     def check(job_id, initiator_role, initiator_party_id):
-        job_dsl, job_runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id,
-                                                                                        role=initiator_role,
-                                                                                        party_id=initiator_party_id)
-        job_parameters = job_runtime_conf.get('job_parameters', {})
-        job_initiator = job_runtime_conf.get('initiator', {})
-        status = TaskScheduler.check_job(job_id=job_id, roles=job_runtime_conf['role'],
-                                         work_mode=job_parameters['work_mode'],
-                                         initiator_party_id=job_initiator['party_id'],
-                                         initiator_role=job_initiator['role'],
-                                         job_info={
-                                             'job_id': job_id,
-                                             'initiator_role': initiator_role,
-                                             'initiator_party_id': initiator_party_id
-                                         })
+        if WORK_MODE == WorkMode.CLUSTER:
+            job_dsl, job_runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id,
+                                                                                            role=initiator_role,
+                                                                                            party_id=initiator_party_id)
+            job_parameters = job_runtime_conf.get('job_parameters', {})
+            job_initiator = job_runtime_conf.get('initiator', {})
+            status = TaskScheduler.check_job(job_id=job_id, roles=job_runtime_conf['role'],
+                                             work_mode=job_parameters['work_mode'],
+                                             initiator_party_id=job_initiator['party_id'],
+                                             initiator_role=job_initiator['role'],
+                                             job_info={
+                                                 'job_id': job_id,
+                                                 'initiator_role': initiator_role,
+                                                 'initiator_party_id': initiator_party_id
+                                             })
+        else:
+            status = True
         return status
 
     @staticmethod
@@ -563,13 +566,15 @@ class TaskScheduler(object):
                               work_mode=job_parameters['work_mode'])
 
     @staticmethod
-    def start_stop(job_id):
+    def start_stop(job_id, operate=None):
         schedule_logger(job_id).info('get {} job {} command'.format('stop', job_id))
         jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
         if not jobs:
             jobs = job_utils.query_job(job_id=job_id)
         if jobs:
             job_info = {'job_id': job_id}
+            if operate:
+                job_info['operate'] = operate
             job_work_mode = jobs[0].f_work_mode
             initiator_party_id = jobs[0].f_initiator_party_id
             response = federated_api(job_id=job_id,
