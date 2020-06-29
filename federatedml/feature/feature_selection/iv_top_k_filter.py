@@ -84,26 +84,6 @@ class Guest(IVPercentileFilter):
         result = sorted(all_iv_map.items(), key=operator.itemgetter(1), reverse=True)
         return result
 
-    # def get_value_threshold(self):
-    #     total_values = []
-    #     for col_name, col_results in self.binning_obj.binning_obj.bin_results.all_cols_results.items():
-    #         if col_name in self.selection_properties.select_col_names:
-    #             total_values.append(col_results.iv)
-    #
-    #     if not self.local_only:
-    #         LOGGER.debug("host_results: {}, host_selection_properties: {}".format(
-    #             self.binning_obj.host_results, self.host_selection_properties
-    #         ))
-    #
-    #         for host_id, host_binning_obj in enumerate(self.binning_obj.host_results):
-    #             host_select_param = self.host_selection_properties[host_id]
-    #             for col_name, col_results in host_binning_obj.bin_results.all_cols_results.items():
-    #                 if col_name in host_select_param.select_col_names:
-    #                     total_values.append(col_results.iv)
-    #     sorted_value = sorted(total_values, reverse=True)
-    #
-    #     return sorted_value[min(self.k, len(sorted_value) - 1)]
-
     def get_meta_obj(self, meta_dicts):
         result = feature_selection_meta_pb2.IVTopKSelectionMeta(k=self.k,
                                                                 local_only=self.local_only)
