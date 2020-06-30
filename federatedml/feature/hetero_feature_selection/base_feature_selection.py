@@ -23,8 +23,7 @@ from google.protobuf import json_format
 from arch.api.utils import log_utils
 from federatedml.feature.feature_selection import filter_factory
 from federatedml.feature.feature_selection.selection_properties import SelectionProperties, CompletedSelectionResults
-from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureBinningGuest
-from federatedml.feature.hetero_feature_binning.hetero_binning_host import HeteroFeatureBinningHost
+from federatedml.feature.hetero_feature_selection.isometric_model import IsometricModel
 from federatedml.model_base import ModelBase
 from federatedml.param.feature_selection_param import FeatureSelectionParam
 from federatedml.protobuf.generated import feature_selection_param_pb2, feature_selection_meta_pb2
@@ -32,8 +31,6 @@ from federatedml.statistic.data_overview import get_header
 from federatedml.transfer_variable.transfer_class.hetero_feature_selection_transfer_variable import \
     HeteroFeatureSelectionTransferVariable
 from federatedml.util import abnormal_detection
-from federatedml.feature.hetero_feature_selection.isometric_model import IsometricModel
-from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
@@ -196,7 +193,6 @@ class BaseHeteroFeatureSelection(ModelBase):
         if 'isometric_model' in model_dict:
             self._load_isometric_model(model_dict['isometric_model'])
 
-
     @staticmethod
     def select_cols(instance, left_col_idx):
         instance.features = instance.features[left_col_idx]
@@ -243,13 +239,6 @@ class BaseHeteroFeatureSelection(ModelBase):
         new_select_properties.set_header(self.curt_select_properties.header)
         new_select_properties.set_last_left_col_indexes(self.curt_select_properties.all_left_col_indexes)
         new_select_properties.add_select_col_names(self.curt_select_properties.left_col_names)
-        LOGGER.debug("In update_curt_select_param, header: {}, cols_map: {},"
-                     "last_left_col_indexes: {}, select_col_names: {}".format(
-            new_select_properties.header,
-            new_select_properties.col_name_maps,
-            new_select_properties.last_left_col_indexes,
-            new_select_properties.select_col_names
-        ))
         self.curt_select_properties = new_select_properties
 
     def _filter(self, data_instances, method, suffix):

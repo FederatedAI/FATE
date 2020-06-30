@@ -118,3 +118,15 @@ def norm(vector, p=2):
         vector = np.array(vector)
 
     return np.linalg.norm(vector, p)
+
+
+def generate_anonymous(fid, party_id=None, role=None, model=None):
+    if model is None:
+        if party_id is None or role is None:
+            raise ValueError("party_id or role should be provided when generating"
+                             "anonymous.")
+    if party_id is None:
+        party_id = model.component_properties.local_partyid
+    if role is None:
+        role = model.role
+    return "_".join([role, party_id, fid])

@@ -21,6 +21,7 @@ from federatedml.feature.hetero_feature_selection.isometric_model import Isometr
 from federatedml.framework.hetero.sync import selection_info_sync
 from federatedml.param.feature_selection_param import CommonFilterParam
 from federatedml.util import consts
+from federatedml.util import fate_operator
 
 
 class IsoModelFilter(BaseFilterMethod):
@@ -35,8 +36,8 @@ class IsoModelFilter(BaseFilterMethod):
             self.sync_obj = selection_info_sync.Host()
         else:
             raise ValueError(f"Feature selection do not need role: {self.role}")
-        self._suffix_list = None
         self.host_selection_properties = None
+        self.party_id = None
 
     def _parse_filter_param(self, filter_param: CommonFilterParam):
         self.metrics = filter_param.metrics
@@ -49,15 +50,46 @@ class IsoModelFilter(BaseFilterMethod):
         self.select_federated = filter_param.select_federated
         self._validation_check()
 
-    def apply_suffix(self, suffix):
-        self._suffix_list = suffix
-
     def fit(self, data_instances, suffix):
-        self.host_selection_properties = self.sync_obj.sync_select_cols(suffix=suffix)
+        self._sync_select_info(suffix)
+        if self.role == consts.GUEST:
+            self._guest_fit()
+        else:
+            self.host_fit()
+        return self
 
+
+    def _sync_select_info(self, suffix):
+        if not self.select_federated:
+            return
+        if self.role == consts.GUEST:
+            assert isinstance(self.sync_obj, selection_info_sync.Guest)
+            self.host_selection_properties = self.sync_obj.sync_select_cols(suffix=suffix)
+        else:
+            encoded_names = []
+            for fid, col_name in enumerate(self.selection_properties.select_col_names):
+                encoded_names.append(fate_operator.generate_anonymous(
+                    fid=fid, role=self.role, party_id=self.party_id
+                ))
+            self.sync_obj.sync_select_cols(encoded_names, suffix=suffix)
+
+    def _guest_fit(self):
+        pass
+
+    def host_fit(self):
+        if not self.select_federated:
+            return
 
     def get_meta_obj(self, meta_dicts):
         pass
 
     def _validation_check(self):
         return True
+
+    def set_component_properties(self, cpp):
+        from federatedml.util.component_properties import ComponentProperties
+        assert isinstance(cpp, ComponentProperties)
+        self.party_id = cpp.local_partyid
+
+    def set_transfer_variable(self, transfer_variable):
+        self.sync_obj.register_selection_trans_vars(transfer_variable)

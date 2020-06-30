@@ -211,3 +211,9 @@ class ModelBase(object):
         if len(data) == 1:
             return list(data.values())[0]
         return data
+
+    @staticmethod
+    def pass_data(data):
+        if isinstance(data, dict) and len(data) >= 1:
+            data = list(data.values())[0]
+        return data
