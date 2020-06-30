@@ -22,6 +22,7 @@ from federatedml.linear_model.linear_regression.hetero_linear_regression.hetero_
 from federatedml.optim.gradient import hetero_linr_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import consts
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 
@@ -109,7 +110,10 @@ class HeteroLinRHost(HeteroLinRBase):
                 break
         if not self.is_converged:
             LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))
+        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
+            self.load_model(self.validation_strategy.cur_best_model)
 
+    @assert_io_num_rows_equal
     def predict(self, data_instances):
         """
         Prediction of linR

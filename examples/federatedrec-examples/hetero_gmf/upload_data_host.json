@@ -1,8 +1,0 @@
-{
-	"work_mode":0,
-	"file":"examples/data/citeulike_a_host.csv",
-	"table_name":"hetero_citeulike_train_host",
-	"namespace":"hetero_host_citeulike",
-	"head": 1,
-	"partition": 10
-}

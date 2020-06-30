@@ -49,3 +49,22 @@ class TaskStatus(object):
     COMPLETE = 'success'
     FAILED = 'failed'
     TIMEOUT = 'timeout'
+
+
+class ModelStorage(object):
+    REDIS = "redis"
+    MYSQL = "mysql"
+
+
+class ModelOperation(object):
+    EXPORT = "export"
+    IMPORT = "import"
+    STORE = "store"
+    RESTORE = "restore"
+    LOAD = "load"
+    BIND = "bind"
+
+
+class ProcessRole(object):
+    SERVER = "server"
+    EXECUTOR = "executor"

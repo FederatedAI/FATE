@@ -10,7 +10,7 @@
                 }
             },
             "output": {
-                "data": ["train_data"],
+                "data": ["train"],
                 "model": ["dataio"]
             }
          },
@@ -27,32 +27,55 @@
                 ]
             },
             "output": {
-                "data": ["eval_data"],
+                "data": ["eval"],
                 "model": ["dataio"]
             }
+         },
+         "intersection_0": {
+             "module": "Intersection",
+             "input": {
+                 "data": {
+                     "data": [
+                         "dataio_0.train"
+                     ]
+                 }
+             },
+             "output": {
+                 "data": ["train"]
+             }
+         },
+        "intersection_1": {
+             "module": "Intersection",
+             "input": {
+                 "data": {
+                     "data": [
+                         "dataio_1.eval"
+                     ]
+                 }
+             },
+             "output": {
+                 "data": ["eval"]
+             }
          },
         "hetero_linr_0": {
             "module": "HeteroLinR",
             "input": {
                 "data": {
-                    "train_data": ["dataio_0.train_data"],
-                    "eval_data": ["dataio_1.eval_data"]
+                    "train_data": ["intersection_0.train"],
+                    "eval_data": ["intersection_1.eval"]
                 }
             },
             "output": {
-                "data": ["hetero_linr_data"],
-                "model": ["hetero_linr_model"]
+                "data": ["train"],
+                "model": ["hetero_linr"]
             }
         },
         "evaluation_0": {
             "module": "Evaluation",
             "input": {
                 "data": {
-                    "data": ["hetero_linr_0.hetero_linr_data"]
+                    "data": ["hetero_linr_0.train"]
                 }
-            },
-            "output": {
-                "data": ["evaluate"]
             }
         }
     }

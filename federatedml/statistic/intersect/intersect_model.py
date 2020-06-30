@@ -13,13 +13,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from arch.api import session
 from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric, MetricMeta
+from federatedml.feature.instance import Instance
 from federatedml.model_base import ModelBase
 from federatedml.param.intersect_param import IntersectParam
 from federatedml.statistic.intersect import RawIntersectionHost, RawIntersectionGuest, RsaIntersectionHost, \
     RsaIntersectionGuest
 from federatedml.statistic.intersect.repeat_id_process import RepeatedIDIntersect
+from federatedml.transfer_variable.transfer_class.intersection_func_transfer_variable import \
+    IntersectionFuncTransferVariable
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
@@ -41,6 +45,8 @@ class IntersectModelBase(ModelBase):
         self.guest_party_id = None
         self.host_party_id = None
         self.host_party_id_list = None
+
+        self.transfer_variable = IntersectionFuncTransferVariable()
 
     def __init_intersect_method(self):
         LOGGER.info("Using {} intersection, role is {}".format(self.model_param.intersect_method, self.role))
@@ -76,6 +82,46 @@ class IntersectModelBase(ModelBase):
         self.intersection_obj.guest_party_id = self.guest_party_id
         self.intersection_obj.host_party_id_list = self.host_party_id_list
 
+    def __share_info(self, data: session.table) -> session.table:
+        LOGGER.info("Start to share information with another role")
+        info_share = self.transfer_variable.info_share_from_guest if self.model_param.info_owner == consts.GUEST else \
+            self.transfer_variable.info_share_from_host
+        party_role = consts.GUEST if self.model_param.info_owner == consts.HOST else consts.HOST
+
+        if self.role == self.model_param.info_owner:
+            if data.schema.get('header') is not None:
+                try:
+                    share_info_col_idx = data.schema.get('header').index(consts.SHARE_INFO_COL_NAME)
+
+                    one_data = data.first()
+                    if isinstance(one_data[1], Instance):
+                        share_data = data.join(self.intersect_ids, lambda d, i: [d.features[share_info_col_idx]])
+                    else:
+                        share_data = data.join(self.intersect_ids, lambda d, i: [d[share_info_col_idx]])
+
+                    info_share.remote(share_data,
+                                      role=party_role,
+                                      idx=-1)
+                    LOGGER.info("Remote share information to {}".format(party_role))
+
+                except Exception as e:
+                    LOGGER.warning("Something unexpected:{}, share a empty information to {}".format(e, party_role))
+                    share_data = self.intersect_ids.mapValues(lambda v: ['null'])
+                    info_share.remote(share_data,
+                                      role=party_role,
+                                      idx=-1)
+            else:
+                raise ValueError(
+                    "'allow_info_share' is true, and 'info_owner' is {}, but can not header in data, not to do information sharing".format(
+                        self.model_param.info_owner))
+        else:
+            self.intersect_ids = info_share.get(idx=0)
+            self.intersect_ids.schema['header'] = [consts.SHARE_INFO_COL_NAME]
+            LOGGER.info(
+                "Get share information from {}, header:{}".format(self.model_param.info_owner, self.intersect_ids))
+
+        return self.intersect_ids
+
     def fit(self, data):
         self.__init_intersect_method()
 
@@ -89,7 +135,16 @@ class IntersectModelBase(ModelBase):
             proc_obj = RepeatedIDIntersect(repeated_id_owner=self.model_param.repeated_id_owner, role=self.role)
             data = proc_obj.run(data=data)
 
+        if self.model_param.allow_info_share:
+            if self.model_param.intersect_method == consts.RSA and self.model_param.info_owner == consts.GUEST \
+                    or self.model_param.intersect_method == consts.RAW and self.model_param.join_role == self.model_param.info_owner:
+                self.model_param.sync_intersect_ids = False
+
         self.intersect_ids = self.intersection_obj.run(data)
+
+        if self.model_param.allow_info_share:
+            self.intersect_ids = self.__share_info(data)
+
         LOGGER.info("Finish intersection")
 
         if self.intersect_ids:
@@ -106,8 +161,12 @@ class IntersectModelBase(ModelBase):
 
     def save_data(self):
         if self.intersect_ids is not None:
-            LOGGER.info("intersect_ids:{}".format(self.intersect_ids.count()))
+            LOGGER.info("intersect_ids count:{}".format(self.intersect_ids.count()))
+            LOGGER.info("intersect_ids header schema:{}".format(self.intersect_ids.schema))
         return self.intersect_ids
+
+    def check_consistency(self):
+        pass
 
 
 class IntersectHost(IntersectModelBase):

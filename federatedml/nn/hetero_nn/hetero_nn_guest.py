@@ -29,6 +29,8 @@ from federatedml.optim.convergence import converge_func_factory
 from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import HeteroNNMeta
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import HeteroNNParam
 from federatedml.util import consts
+from federatedml.param.evaluation_param import EvaluateParam
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 MODELMETA = "HeteroNNGuestMeta"
@@ -128,13 +130,17 @@ class HeteroNNGuest(HeteroNNBase):
         if cur_epoch == self.epochs:
             LOGGER.debug("Training process reach max training epochs {} and not converged".format(self.epochs))
 
+        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
+            self.load_model(self.validation_strategy.cur_best_model)
+
+    @assert_io_num_rows_equal
     def predict(self, data_inst):
         keys, test_x, test_y = self._load_data(data_inst)
         self.set_partition(data_inst)
 
         preds = self.model.predict(test_x)
 
-        predict_tb = session.parallelize(zip(keys, preds), include_key=True)
+        predict_tb = session.parallelize(zip(keys, preds), include_key=True, partition=data_inst._partitions)
         if self.task_type == "regression":
             result = data_inst.join(predict_tb,
                                     lambda inst, predict: [inst.label, float(predict[0]), float(predict[0]),
@@ -162,9 +168,6 @@ class HeteroNNGuest(HeteroNNBase):
     def export_model(self):
         if self.model is None:
             return
-
-        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
-            return self.validation_strategy.export_best_model()
 
         return {MODELMETA: self._get_model_meta(),
                 MODELPARAM: self._get_model_param()}
@@ -197,11 +200,22 @@ class HeteroNNGuest(HeteroNNBase):
         model_param.iter_epoch = self.iter_epoch
         model_param.hetero_nn_model_param.CopyFrom(self.model.get_hetero_nn_model_param())
         model_param.num_label = self.num_label
+        model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
 
         for loss in self.history_loss:
             model_param.history_loss.append(loss)
 
         return model_param
+
+    def get_metrics_param(self):
+        if self.task_type == consts.CLASSIFICATION:
+            if self.num_label == 2:
+                return EvaluateParam(eval_type="binary",
+                                     pos_label=1, metrics=self.metrics)
+            else:
+                return EvaluateParam(eval_type="multi", metrics=self.metrics)
+        else:
+            return EvaluateParam(eval_type="regression", metrics=self.metrics)
 
     def prepare_batch_data(self, batch_generator, data_inst):
         batch_generator.initialize_batch_generator(data_inst, self.batch_size)

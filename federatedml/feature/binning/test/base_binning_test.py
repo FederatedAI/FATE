@@ -56,9 +56,7 @@ class TestBaseBinningFunctions(unittest.TestCase):
             {0: 100, 1: 100},
             {0: 9700, 1: 300},
             {0: 2000, 1: 18000},
-            {0: 8000, 1: 2000},
-            {0: 1000, 1: 0},
-            {0: 0, 1: 1000}
+            {0: 8000, 1: 2000}
         ]
 
         partitions = [10, 1, 48, 32]
@@ -72,6 +70,7 @@ class TestBaseBinningFunctions(unittest.TestCase):
     def tearDown(self):
         for table in self.table_list:
             table.destroy()
+        session.stop()
 
 
 if __name__ == '__main__':

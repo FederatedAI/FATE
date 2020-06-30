@@ -25,6 +25,7 @@ from federatedml.optim.initialize import Initializer
 from federatedml.param.logistic_regression_param import InitParam
 from federatedml.protobuf.generated import lr_model_param_pb2
 from federatedml.util.fate_operator import vec_dot
+from federatedml.param.evaluation_param import EvaluateParam
 
 LOGGER = log_utils.getLogger()
 
@@ -53,9 +54,9 @@ class BaseLogisticRegression(BaseLinearModel):
 
     def get_single_model_param(self):
         weight_dict = {}
-        LOGGER.debug("in get_single_model_param, model_weights: {}, coef: {}, header: {}".format(
-            self.model_weights.unboxed, self.model_weights.coef_, self.header
-        ))
+        # LOGGER.debug("in get_single_model_param, model_weights: {}, coef: {}, header: {}".format(
+        #     self.model_weights.unboxed, self.model_weights.coef_, self.header
+        # ))
         for idx, header_name in enumerate(self.header):
             coef_i = self.model_weights.coef_[idx]
             weight_dict[header_name] = coef_i
@@ -65,7 +66,9 @@ class BaseLogisticRegression(BaseLinearModel):
                   'is_converged': self.is_converged,
                   'weight': weight_dict,
                   'intercept': self.model_weights.intercept_,
-                  'header': self.header
+                  'header': self.header,
+                  'best_iteration': -1 if self.validation_strategy is None else
+                  self.validation_strategy.best_iteration
                   }
         return result
 
@@ -84,11 +87,10 @@ class BaseLogisticRegression(BaseLinearModel):
             single_result = self.get_single_model_param()
             single_result['need_one_vs_rest'] = False
         single_result['one_vs_rest_result'] = one_vs_rest_result
-        LOGGER.debug("in _get_param, single_result: {}".format(single_result))
+        # LOGGER.debug("in _get_param, single_result: {}".format(single_result))
 
         param_protobuf_obj = lr_model_param_pb2.LRModelParam(**single_result)
-        json_result = json_format.MessageToJson(param_protobuf_obj)
-        LOGGER.debug("json_result: {}".format(json_result))
+
         return param_protobuf_obj
 
     def load_model(self, model_dict):
@@ -128,9 +130,13 @@ class BaseLogisticRegression(BaseLinearModel):
         if self.fit_intercept:
             tmp_vars = np.append(tmp_vars, single_model_obj.intercept)
         self.model_weights = LogisticRegressionWeights(tmp_vars, fit_intercept=self.fit_intercept)
+        self.n_iter_ = single_model_obj.iters
         return self
 
     def one_vs_rest_fit(self, train_data=None, validate_data=None):
         LOGGER.debug("Class num larger than 2, need to do one_vs_rest")
         self.one_vs_rest_obj.fit(data_instances=train_data, validate_data=validate_data)
+
+    def get_metrics_param(self):
+        return EvaluateParam(eval_type="binary", metrics=self.metrics)
 

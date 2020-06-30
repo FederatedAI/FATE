@@ -29,6 +29,8 @@ message FeatureSelectionMeta {
     OutlierColsSelectionMeta outlier_meta = 8;
     ManuallyFilterMeta manually_meta = 9;
     bool need_run = 10;
+    PercentageValueFilterMeta pencentage_value_meta = 11;
+    IVTopKSelectionMeta iv_top_k_meta = 12;
 }
 
 message UniqueValueMeta {
@@ -45,6 +47,11 @@ message IVPercentileSelectionMeta{
     bool local_only = 2;
 }
 
+message IVTopKSelectionMeta{
+    int64 k = 1;
+    bool local_only = 2;
+}
+
 message VarianceOfCoeSelectionMeta {
     double value_threshold = 1;
 }
@@ -56,4 +63,8 @@ message OutlierColsSelectionMeta {
 
 message ManuallyFilterMeta {
     repeated string filter_out_names = 1;
+}
+
+message PercentageValueFilterMeta {
+    double upper_pct = 1;
 }

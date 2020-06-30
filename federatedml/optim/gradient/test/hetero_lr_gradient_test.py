@@ -34,14 +34,16 @@ class TestHeteroLogisticGradient(unittest.TestCase):
         self.hetero_lr_gradient = hetero_lr_gradient_and_loss.Guest()
 
         size = 10
-        self.en_wx = session.parallelize([self.paillier_encrypt.encrypt(i) for i in range(size)])
+        self.en_wx = session.parallelize([self.paillier_encrypt.encrypt(i) for i in range(size)], partition=48)
         # self.en_wx = session.parallelize([self.paillier_encrypt.encrypt(i) for i in range(size)])
 
-        self.en_sum_wx_square = session.parallelize([self.paillier_encrypt.encrypt(np.square(i)) for i in range(size)])
+        self.en_sum_wx_square = session.parallelize([self.paillier_encrypt.encrypt(np.square(i)) for i in range(size)],
+                                                    partition=48)
         self.wx = np.array([i for i in range(size)])
         self.w = self.wx / np.array([1 for _ in range(size)])
         self.data_inst = session.parallelize(
-            [Instance(features=np.array([1 for _ in range(size)]), label=pow(-1, i % 2)) for i in range(size)], partition=1)
+            [Instance(features=np.array([1 for _ in range(size)]), label=pow(-1, i % 2)) for i in range(size)],
+            partition=48)
 
         # test fore_gradient
         self.fore_gradient_local = [-0.5, 0.75, 0, 1.25, 0.5, 1.75, 1, 2.25, 1.5, 2.75]
@@ -80,3 +82,4 @@ class TestHeteroLogisticGradient(unittest.TestCase):
 if __name__ == "__main__":
     session.init("1111")
     unittest.main()
+    session.stop()

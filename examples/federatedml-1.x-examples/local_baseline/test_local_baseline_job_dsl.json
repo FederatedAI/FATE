@@ -10,7 +10,7 @@
                 }
             },
             "output": {
-                "data": ["train_data"],
+                "data": ["train"],
                 "model": ["dataio"]
             }
          },
@@ -27,20 +27,46 @@
                 ]
             },
             "output": {
-                "data": ["eval_data"],
+                "data": ["eval"],
                 "model": ["dataio"]
             }
+         },
+        "intersection_0": {
+             "module": "Intersection",
+             "input": {
+                 "data": {
+                     "data": [
+                         "dataio_0.train"
+                     ]
+                 }
+             },
+             "output": {
+                 "data": ["train"]
+             }
+         },
+        "intersection_1": {
+             "module": "Intersection",
+             "input": {
+                 "data": {
+                     "data": [
+                         "dataio_1.eval"
+                     ]
+                 }
+             },
+             "output": {
+                 "data": ["train"]
+             }
          },
         "hetero_lr_0": {
             "module": "HeteroLR",
             "input": {
                 "data": {
-                    "train_data": ["dataio_0.train_data"],
-                    "eval_data": ["dataio_1.eval_data"]
+                    "train_data": ["intersection_0.train"],
+                    "eval_data": ["intersection_1.train"]
                 }
             },
             "output": {
-                "data": ["hetero_lr_data"],
+                "data": ["train"],
                 "model": ["hetero_lr_model"]
             }
         },
@@ -48,23 +74,20 @@
             "module": "Evaluation",
             "input": {
                 "data": {
-                    "data": ["hetero_lr_0.hetero_lr_data"]
+                    "data": ["hetero_lr_0.train"]
                 }
-            },
-            "output": {
-                "data": ["evaluate"]
             }
         },
         "local_baseline_0": {
             "module": "LocalBaseline",
             "input": {
                 "data": {
-                    "train_data": ["dataio_0.train_data"],
-                    "eval_data": ["dataio_1.eval_data"]
+                    "train_data": ["intersection_0.train"],
+                    "eval_data": ["intersection_1.train"]
                 }
             },
             "output": {
-                "data": ["local_baseline_data"],
+                "data": ["train"],
                 "model": ["local_baseline"]
             }
         },
@@ -72,11 +95,8 @@
             "module": "Evaluation",
             "input": {
                 "data": {
-                    "data": ["local_baseline_0.local_baseline_data"]
+                    "data": ["local_baseline_0.train"]
                 }
-            },
-            "output": {
-                "data": ["evaluate"]
             }
         }
     }

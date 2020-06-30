@@ -18,19 +18,20 @@
 
 import functools
 import math
+import random
 
 from arch.api.utils import log_utils
 from federatedml.feature.binning.bin_inner_param import BinInnerParam
 from federatedml.feature.binning.bin_result import BinColResults, BinResults
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.statistic import data_overview
-from federatedml.util import consts
+
 # from federatedml.statistic import statics
 
 LOGGER = log_utils.getLogger()
 
 
-class Binning(object):
+class BaseBinning(object):
     """
     This is use for discrete data so that can transform data or use information for feature selection.
     """
@@ -42,6 +43,8 @@ class Binning(object):
             return
         self.params = params
         self.bin_num = params.bin_num
+        self.event_total = None
+        self.non_event_total = None
 
         if abnormal_list is None:
             self.abnormal_list = []
@@ -89,7 +92,7 @@ class Binning(object):
                             ...]                         # Other features
 
         """
-        raise NotImplementedError("Should not call this function directly")
+        pass
 
     def fit_category_features(self, data_instances):
         is_sparse = data_overview.is_sparse_data(data_instances)
@@ -187,6 +190,9 @@ class Binning(object):
 
         if split_points is None:
             split_points = self.bin_results.all_split_points
+        else:
+            for col_name, sp in split_points.items():
+                self.bin_results.put_col_split_points(col_name, sp)
 
         if is_sparse:
             f = functools.partial(self._convert_sparse_data,
@@ -228,7 +234,7 @@ class Binning(object):
                 # Maybe it is because missing value add in sparse value, but
                 col_name = bin_inner_param.header[col_idx]
                 split_points = split_points_dict[col_name]
-                bin_num = Binning.get_bin_num(col_value, split_points)
+                bin_num = BaseBinning.get_bin_num(col_value, split_points)
                 indice.append(col_idx)
                 if convert_type == 'bin_num':
                     sparse_value.append(bin_num)
@@ -272,7 +278,7 @@ class Binning(object):
                     continue
                 col_name = bin_inner_param.header[col_idx]
                 split_points = split_points_dict[col_name]
-                bin_num = Binning.get_bin_num(col_value, split_points)
+                bin_num = BaseBinning.get_bin_num(col_value, split_points)
                 if convert_type == 'bin_num':
                     features[col_idx] = bin_num
                 elif convert_type == 'woe':
@@ -375,7 +381,7 @@ class Binning(object):
 
                 if col_name in cols_dict:
                     col_split_points = split_points[col_name]
-                    col_bin_num = Binning.get_bin_num(col_value, col_split_points)
+                    col_bin_num = BaseBinning.get_bin_num(col_value, col_split_points)
                     result_bin_nums[col_name] = col_bin_num
             return result_bin_nums
 
@@ -384,7 +390,7 @@ class Binning(object):
             col_split_points = split_points[col_name]
 
             value = instance.features[col_index]
-            col_bin_num = Binning.get_bin_num(value, col_split_points)
+            col_bin_num = BaseBinning.get_bin_num(value, col_split_points)
             result_bin_nums[col_name] = col_bin_num
 
         return result_bin_nums
@@ -424,9 +430,11 @@ class Binning(object):
             non_event_total += non_event_sum
 
         if event_total == 0:
-            raise ValueError("NO event label in target data")
+            # raise ValueError("NO event label in target data")
+            event_total = 1
         if non_event_total == 0:
-            raise ValueError("NO non-event label in target data")
+            # raise ValueError("NO non-event label in target data")
+            non_event_total = 1
 
         iv = 0
         event_count_array = []
@@ -444,14 +452,14 @@ class Binning(object):
             else:
                 event_rate = 1.0 * event_count / event_total
                 non_event_rate = 1.0 * non_event_count / non_event_total
-            woe_i = math.log(non_event_rate / event_rate)
+            woe_i = math.log(event_rate / non_event_rate)
 
             event_count_array.append(event_count)
             non_event_count_array.append(non_event_count)
             event_rate_array.append(event_rate)
             non_event_rate_array.append(non_event_rate)
             woe_array.append(woe_i)
-            iv_i = (non_event_rate - event_rate) * woe_i
+            iv_i = (event_rate - non_event_rate) * woe_i
             iv_array.append(iv_i)
             iv += iv_i
         return BinColResults(woe_array=woe_array, iv_array=iv_array, event_count_array=event_count_array,
@@ -533,6 +541,33 @@ class Binning(object):
 
         return result_sum
 
+    def shuffle_static_counts(self, statistic_counts):
+        """
+        Shuffle bin orders, and stored orders in self.bin_results
+
+        Parameters
+        ----------
+        statistic_counts :  dict.
+            It is like:
+                {'x1': [[event_count, non_event_count], [event_count, non_event_count] ... ],
+                 'x2': [[event_count, non_event_count], [event_count, non_event_count] ... ],
+                 ...
+                }
+
+        Returns
+        -------
+        Shuffled result
+        """
+        result = {}
+        for col_name, count_sum in statistic_counts.items():
+            this_bin_result = self.bin_results.all_cols_results.get(col_name, BinColResults())
+            shuffled_index = [x for x in range(len(count_sum))]
+            random.shuffle(shuffled_index)
+            result[col_name] = [count_sum[i] for i in shuffled_index]
+            this_bin_result.bin_anonymous = ["bin_" + str(i) for i in shuffled_index]
+            self.bin_results.all_cols_results[col_name] = this_bin_result
+        return result
+
     @staticmethod
     def aggregate_partition_label(sum1, sum2):
         """
@@ -540,14 +575,14 @@ class Binning(object):
 
         Parameters
         ----------
-        sum1 :  DTable.
+        sum1 :  dict.
             It is like:
                 {'x1': [[event_count, non_event_count], [event_count, non_event_count] ... ],
                  'x2': [[event_count, non_event_count], [event_count, non_event_count] ... ],
                  ...
                 }
 
-        sum2 : DTable
+        sum2 : dict
             Same as sum1
         Returns
         -------
@@ -577,10 +612,3 @@ class Binning(object):
                     count_sum1[idx] = tmp
 
         return sum1
-
-
-class HostBaseBinning(Binning):
-
-    def fit_split_points(self, data_instances):
-        LOGGER.warning("Should not fit split points in host binning object")
-        return

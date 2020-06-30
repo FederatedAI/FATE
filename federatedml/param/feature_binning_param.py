@@ -16,6 +16,7 @@
 #  limitations under the License.
 #
 import copy
+import math
 
 from arch.api.utils import log_utils
 from federatedml.param.base_param import BaseParam
@@ -61,6 +62,68 @@ class TransformParam(BaseParam):
                 if not isinstance(name, str):
                     raise ValueError("Elements in transform_names should be string type")
         self.check_valid_value(self.transform_type, descr, ['bin_num', 'woe', None])
+
+
+class OptimalBinningParam(BaseParam):
+    """
+    Indicate optimal binning params
+
+    Parameters
+    ----------
+    metric_method: str, default: "iv"
+        The algorithm metric method. Support iv, gini, ks, chi-square
+
+
+    min_bin_pct: float, default: 0.05
+        The minimum percentage of each bucket
+
+    max_bin_pct: float, default: 1.0
+        The maximum percentage of each bucket
+
+    init_bin_nums: int, default 100
+        Number of bins when initialize
+
+    mixture: bool, default: True
+        Whether each bucket need event and non-event records
+
+    init_bucket_method: str default: quantile
+        Init bucket methods. Accept quantile and bucket.
+
+    """
+    def __init__(self, metric_method='iv', min_bin_pct=0.05, max_bin_pct=1.0,
+                 init_bin_nums=1000, mixture=True, init_bucket_method='quantile'):
+        super().__init__()
+        self.init_bucket_method = init_bucket_method
+        self.metric_method = metric_method
+        self.max_bin = None
+        self.mixture = mixture
+        self.max_bin_pct = max_bin_pct
+        self.min_bin_pct = min_bin_pct
+        self.init_bin_nums = init_bin_nums
+        self.adjustment_factor = None
+
+    def check(self):
+        descr = "hetero binning's optimal binning param's"
+        self.check_string(self.metric_method, descr)
+
+        self.metric_method = self.metric_method.lower()
+        if self.metric_method in ['chi_square', 'chi-square']:
+            self.metric_method = 'chi_square'
+        self.check_valid_value(self.metric_method, descr, ['iv', 'gini', 'chi_square', 'ks'])
+        self.check_positive_integer(self.init_bin_nums, descr)
+
+        self.init_bucket_method = self.init_bucket_method.lower()
+        self.check_valid_value(self.init_bucket_method, descr, ['quantile', 'bucket'])
+
+        if self.max_bin_pct not in [1, 0]:
+            self.check_decimal_float(self.max_bin_pct, descr)
+        if self.min_bin_pct not in [1, 0]:
+            self.check_decimal_float(self.min_bin_pct, descr)
+        if self.min_bin_pct > self.max_bin_pct:
+            raise ValueError("Optimal binning's min_bin_pct should less or equal than max_bin_pct")
+
+        self.check_boolean(self.mixture, descr)
+        self.check_positive_integer(self.init_bin_nums, descr)
 
 
 class FeatureBinningParam(BaseParam):
@@ -125,7 +188,7 @@ class FeatureBinningParam(BaseParam):
                  head_size=consts.DEFAULT_HEAD_SIZE,
                  error=consts.DEFAULT_RELATIVE_ERROR,
                  bin_num=consts.G_BIN_NUM, bin_indexes=-1, bin_names=None, adjustment_factor=0.5,
-                 transform_param=TransformParam(),
+                 transform_param=TransformParam(), optimal_binning_param=OptimalBinningParam(),
                  local_only=False, category_indexes=None, category_names=None,
                  need_run=True):
         super(FeatureBinningParam, self).__init__()
@@ -141,20 +204,23 @@ class FeatureBinningParam(BaseParam):
         self.category_names = category_names
         self.local_only = local_only
         self.transform_param = copy.deepcopy(transform_param)
+        self.optimal_binning_param = copy.deepcopy(optimal_binning_param)
         self.need_run = need_run
 
     def check(self):
         descr = "hetero binning param's"
         self.check_string(self.method, descr)
         self.method = self.method.lower()
-        self.check_valid_value(self.method, descr, [consts.QUANTILE, consts.BUCKET])
+        self.check_valid_value(self.method, descr, [consts.QUANTILE, consts.BUCKET, consts.OPTIMAL])
         self.check_positive_integer(self.compress_thres, descr)
         self.check_positive_integer(self.head_size, descr)
         self.check_decimal_float(self.error, descr)
         self.check_positive_integer(self.bin_num, descr)
-        self.check_defined_type(self.bin_indexes, descr, ['list', 'int', 'RepeatedScalarContainer', "NoneType"])
+        if self.bin_indexes != -1:
+            self.check_defined_type(self.bin_indexes, descr, ['list', 'RepeatedScalarContainer', "NoneType"])
         self.check_defined_type(self.bin_names, descr, ['list', "NoneType"])
         self.check_defined_type(self.category_indexes, descr, ['list', "NoneType"])
         self.check_defined_type(self.category_names, descr, ['list', "NoneType"])
         self.check_open_unit_interval(self.adjustment_factor, descr)
         self.transform_param.check()
+        self.optimal_binning_param.check()

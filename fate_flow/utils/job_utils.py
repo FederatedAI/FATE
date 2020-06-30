@@ -26,24 +26,24 @@ import typing
 import uuid
 
 import psutil
-from fate_flow.entity.constant_config import TaskStatus
+from fate_flow.entity.constant_config import TaskStatus, WorkMode
 
 from arch.api.utils import file_utils
-from arch.api.utils.core import current_timestamp
-from arch.api.utils.core import json_loads, json_dumps
+from arch.api.utils.core_utils import current_timestamp
+from arch.api.utils.core_utils import json_loads, json_dumps
 from arch.api.utils.log_utils import schedule_logger
-from fate_flow.db.db_models import DB, Job, Task
+from fate_flow.db.db_models import DB, Job, Task, DataView
 from fate_flow.driver.dsl_parser import DSLParser
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.data_manager import query_data_view, delete_table, delete_metric_data
-from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT
+from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE, MAX_CONCURRENT_JOB_RUN_HOST, LIMIT_ROLE
 from fate_flow.utils import detect_utils
 from fate_flow.utils import api_utils
+from fate_flow.utils import session_utils
 from flask import request, redirect, url_for
 
-from fate_flow.utils.session_utils import SessionStop
 
-class IdCounter:
+class IdCounter(object):
     _lock = threading.RLock()
 
     def __init__(self, initial_value=0):
@@ -67,6 +67,16 @@ def generate_job_id():
 
 def generate_task_id(job_id, component_name):
     return '{}_{}'.format(job_id, component_name)
+
+
+def generate_session_id(task_id, role, party_id):
+    return '{}_{}_{}'.format(task_id, role, party_id)
+
+
+def generate_task_input_data_namespace(task_id, role, party_id):
+    return "input_data_{}".format(generate_session_id(task_id=task_id,
+                                                      role=role,
+                                                      party_id=party_id))
 
 
 def get_job_directory(job_id):
@@ -94,6 +104,20 @@ def check_pipeline_job_runtime_conf(runtime_conf: typing.Dict):
     for r in runtime_conf['role'].keys():
         for i in range(len(runtime_conf['role'][r])):
             runtime_conf['role'][r][i] = int(runtime_conf['role'][r][i])
+
+
+def runtime_conf_basic(if_local=False):
+    job_runtime_conf = {
+        "initiator": {},
+        "job_parameters": {"work_mode": WORK_MODE},
+        "role": {},
+        "role_parameters": {}
+    }
+    if if_local:
+        job_runtime_conf["initiator"]["role"] = "local"
+        job_runtime_conf["initiator"]["party_id"] = 0
+        job_runtime_conf["role"]["local"] = [0]
+    return job_runtime_conf
 
 
 def new_runtime_conf(job_dir, method, module, role, party_id):
@@ -329,19 +353,58 @@ def wait_child_process(signum, frame):
             raise
 
 
-def kill_process(pid, only_child=False):
+def is_task_executor_process(task: Task, process: psutil.Process):
+    """
+    check the process if task executor or not by command
+    :param task:
+    :param process:
+    :return:
+    """
+    # Todo: The same map should be used for run task command
+    run_cmd_map = {
+        3: "f_job_id",
+        5: "f_component_name",
+        7: "f_task_id",
+        9: "f_role",
+        11: "f_party_id"
+    }
     try:
+        cmdline = process.cmdline()
+    except Exception as e:
+        # Not sure whether the process is a task executor process, operations processing is required
+        schedule_logger(task.f_job_id).warning(e)
+        return False
+    for i, k in run_cmd_map.items():
+        if len(cmdline) > i and cmdline[i] == getattr(task, k):
+            continue
+        else:
+            # todo: The logging level should be obtained first
+            if len(cmdline) > i:
+                schedule_logger(task.f_job_id).debug(cmdline[i])
+                schedule_logger(task.f_job_id).debug(getattr(task, k))
+            return False
+    else:
+        return True
+
+
+def kill_task_executor_process(task: Task, only_child=False):
+    try:
+        pid = int(task.f_run_pid)
         if not pid:
             return False
-        stat_logger.info("try to stop process pid:{}".format(pid))
+        schedule_logger(task.f_job_id).info("try to stop job {} task {} {} {} process pid:{}".format(
+            task.f_job_id, task.f_task_id, task.f_role, task.f_party_id, pid))
         if not check_job_process(pid):
             return True
         p = psutil.Process(int(pid))
+        if not is_task_executor_process(task=task, process=p):
+            schedule_logger(task.f_job_id).warning("this pid {} is not task executor".format(pid))
+            return False
         for child in p.children(recursive=True):
-            if check_job_process(child.pid):
+            if check_job_process(child.pid) and is_task_executor_process(task=task, process=child):
                 child.kill()
         if not only_child:
-            if check_job_process(p.pid):
+            if check_job_process(p.pid) and is_task_executor_process(task=task, process=p):
                 p.kill()
         return True
     except Exception as e:
@@ -393,14 +456,47 @@ def start_clean_job(**kwargs):
         raise Exception('no found task')
 
 
+def start_clean_queue(**kwargs):
+    tasks = query_task(**kwargs)
+    if tasks:
+        for task in tasks:
+            task_info = get_task_info(task.f_job_id, task.f_role, task.f_party_id, task.f_component_name)
+            try:
+                # clean session
+                stat_logger.info('start {} {} {} {} session stop'.format(task.f_job_id, task.f_role,
+                                                                         task.f_party_id, task.f_component_name))
+                start_session_stop(task)
+            except:
+                pass
+            try:
+                # clean data table
+                stat_logger.info('start delete {} {} {} {} data table'.format(task.f_job_id, task.f_role,
+                                                                              task.f_party_id, task.f_component_name))
+                data_views = query_data_view(**task_info)
+                if data_views:
+                    delete_table(data_views)
+            except:
+                pass
+            try:
+                # clean metric data
+                stat_logger.info('start delete {} {} {} {} metric data'.format(task.f_job_id, task.f_role,
+                                                                               task.f_party_id, task.f_component_name))
+                delete_metric_data(task_info)
+            except:
+                pass
+    else:
+        raise Exception('no found task')
+
+
 def start_session_stop(task):
     job_conf_dict = get_job_conf(task.f_job_id)
     runtime_conf = job_conf_dict['job_runtime_conf_path']
     process_cmd = [
-        'python3', sys.modules[SessionStop.__module__].__file__,
+        'python3', sys.modules[session_utils.SessionStop.__module__].__file__,
         '-j', '{}_{}_{}'.format(task.f_task_id, task.f_role, task.f_party_id),
         '-w', str(runtime_conf.get('job_parameters').get('work_mode')),
         '-b', str(runtime_conf.get('job_parameters').get('backend', 0)),
+        '-c', 'stop' if task.f_status == TaskStatus.COMPLETE else 'kill'
     ]
     schedule_logger(task.f_job_id).info('start run subprocess to stop component {} session'
                                         .format(task.f_component_name))
@@ -508,4 +604,11 @@ def query_job_info(job_id):
         role = job.f_role
         party_id = job.f_party_id
     return role, party_id
+
+
+def cleaning(signum, frame):
+    session_utils.clean_server_used_session()
+    sys.exit(0)
+
+
 

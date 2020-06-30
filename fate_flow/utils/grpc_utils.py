@@ -15,21 +15,27 @@
 #
 import requests
 import json
-from arch.api.proto import proxy_pb2, proxy_pb2_grpc
-from arch.api.proto import fate_meta_pb2
+
+from arch.api.utils.log_utils import audit_logger
+from fate_flow.utils.proto_compatibility import basic_meta_pb2
+from fate_flow.utils.proto_compatibility import proxy_pb2, proxy_pb2_grpc
 import grpc
-from fate_flow.settings import ROLE, IP, GRPC_PORT, PROXY_HOST, PROXY_PORT, HEADERS, DEFAULT_GRPC_OVERALL_TIMEOUT, stat_logger
+
+from fate_flow.settings import ROLE, IP, GRPC_PORT, HEADERS, DEFAULT_GRPC_OVERALL_TIMEOUT
 from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.utils.node_check_utils import nodes_check
+from fate_flow.utils.service_utils import ServiceUtils
 
 
 def get_proxy_data_channel():
-    channel = grpc.insecure_channel('{}:{}'.format(PROXY_HOST, PROXY_PORT))
+    channel = grpc.insecure_channel('{}:{}'.format(ServiceUtils.get_item("proxy", "host"),
+                                                   ServiceUtils.get_item("proxy", "port")))
     stub = proxy_pb2_grpc.DataTransferServiceStub(channel)
     return channel, stub
 
 
 def wrap_grpc_packet(_json_body, _method, _url, _src_party_id, _dst_party_id, job_id=None, overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
-    _src_end_point = fate_meta_pb2.Endpoint(ip=IP, port=GRPC_PORT)
+    _src_end_point = basic_meta_pb2.Endpoint(ip=IP, port=GRPC_PORT)
     _src = proxy_pb2.Topic(name=job_id, partyId="{}".format(_src_party_id), role=ROLE, callback=_src_end_point)
     _dst = proxy_pb2.Topic(name=job_id, partyId="{}".format(_dst_party_id), role=ROLE, callback=None)
     _task = proxy_pb2.Task(taskId=job_id)
@@ -57,12 +63,21 @@ class UnaryServicer(proxy_pb2_grpc.DataTransferServiceServicer):
         method = header.operator
         param_dict = json.loads(param)
         param_dict['src_party_id'] = str(src.partyId)
+        try:
+            nodes_check(param_dict.get('src_party_id'), param_dict.get('_src_role'), param_dict.get('appKey'),
+                        param_dict.get('appSecret'), str(dst.partyId))
+        except Exception as e:
+            resp_json = {
+                "retcode": 100,
+                "retmsg": str(e)
+            }
+            return wrap_grpc_packet(resp_json, method, _suffix, dst.partyId, src.partyId, job_id)
         param = bytes.decode(bytes(json.dumps(param_dict), 'utf-8'))
 
         action = getattr(requests, method.lower(), None)
-        stat_logger.info('rpc receive: {}'.format(packet))
+        audit_logger(job_id).info('rpc receive: {}'.format(packet))
         if action:
-            stat_logger.info("rpc receive: {} {}".format(get_url(_suffix), param))
+            audit_logger(job_id).info("rpc receive: {} {}".format(get_url(_suffix), param))
             resp = action(url=get_url(_suffix), data=param, headers=HEADERS)
         else:
             pass

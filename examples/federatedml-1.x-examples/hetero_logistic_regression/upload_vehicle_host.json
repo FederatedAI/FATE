@@ -1,8 +1,8 @@
 {
-  "file": "examples/data/vehicle_scale_a.csv",
-  "head": 1,
-  "partition": 10,
-  "work_mode": 0,
-  "table_name": "hetero_vehicle_a",
-  "namespace": "hetero_host_vehicle"
+    "file": "examples/data/vehicle_scale_hetero_host.csv",
+    "head": 1,
+    "partition": 16,
+    "work_mode": 0,
+    "table_name": "vehicle_scale_hetero_host",
+    "namespace": "experiment"
 }

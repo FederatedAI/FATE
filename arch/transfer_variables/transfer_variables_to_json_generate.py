@@ -40,9 +40,8 @@ def search_subclasses(module_name, class_type):
         _class = inspect.getmembers(module, inspect.isclass)
         _subclass = [m for m in _class if issubclass(m[1], class_type) and m[1] != class_type]
         ret = [m[1] for m in _subclass if m[1].__module__ == module.__name__]
-    except ImportError:
-        pass
-
+    except ImportError as e:
+        print(f"import {module_name} fail, {e.args}, skip")
     return ret
 
 
@@ -94,6 +93,9 @@ def main():
                     variable_dict = {}
                     for k, v in search_transfer_variable(cls()).items():
                         variable_dict[k] = {"src": v._src, "dst": v._dst}
+
+                    if len(variable_dict) < 1:
+                        continue
                     saving_path = os.path.join(dst, f"{file_name}.json")
 
                     print(f"found transfer_class: {class_name} in {name}, saving to {saving_path}")

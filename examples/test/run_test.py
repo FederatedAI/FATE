@@ -35,21 +35,20 @@ def get_ip(env, party_id):
     return None if ip == -1 else ip
 
 
-def data_upload(submitter, env, task_data, check_interval=3):
+def data_upload(submitter, env, task_data, check_interval):
     for data in task_data:
         role, idx = data["role"].split("_", 1)
         party_id = get_party_id(env, role, int(idx))
         host_ip = get_ip(env, str(party_id))
         format_msg = f"@{data['role']}:{data['file']} >> {data['namespace']}.{data['table_name']}"
         print(f"[{time.strftime('%Y-%m-%d %X')}]uploading {format_msg}")
-        stdout = submitter.upload(data_path=data["file"],
+        job_id = submitter.upload(data_path=data["file"],
                                   namespace=data["namespace"],
                                   name=data["table_name"],
                                   partition=data["partition"],
                                   head=data["head"],
                                   remote_host=host_ip)
-        job_id = stdout["jobId"]
-        if not host_ip:
+        if job_id is not None and not host_ip:
             submitter.await_finish(job_id, check_interval=check_interval)
         else:
             print("warning: not check remote uploading status!!!")
@@ -88,9 +87,15 @@ def run_testsuite(submitter, env, file_name, err_name, check_interval=3, skip_da
         configs = json.loads(f.read())
 
     if not skip_data:
-        data_upload(submitter=submitter, env=env, task_data=configs["data"], check_interval=check_interval)
+        data_upload(submitter=submitter,
+                    env=env, task_data=configs["data"],
+                    check_interval=check_interval)
 
-    for task_name, task_config in configs["tasks"].items():
+    # non deps first
+    ordered = [(task_name, task_config, "deps" in task_config) for task_name, task_config in configs["tasks"].items()]
+    ordered = sorted(ordered, key=lambda x: x[2])
+    print(f"todo tasks: {[triple[0] for triple in ordered]}")
+    for task_name, task_config, _ in ordered:
         try:
             if "conf" not in task_config:
                 raise ValueError(f"conf not specified in {task_name}@{file_name}")
@@ -155,7 +160,7 @@ def main():
     arg_parser.add_argument("-o", "--output", type=str, help="file to save result, defaults to `test_result`",
                             default="test_result")
     arg_parser.add_argument("-e", "--error", type=str, help="file to save error")
-    arg_parser.add_argument("-m", "--mode", type=int, help="work mode", default=0, choices=[0, 1])
+    arg_parser.add_argument("-m", "--mode", type=int, help="work mode", choices=[0, 1])
     group = arg_parser.add_mutually_exclusive_group()
     group.add_argument("-d", "--dir", type=str, help="dir to find testsuites",
                        default=os.path.join(fate_home, example_path))
@@ -163,6 +168,14 @@ def main():
     arg_parser.add_argument("-i", "--interval", type=int, help="check job status every i seconds, defaults to 1",
                             default=1)
     arg_parser.add_argument("--skip_data", help="skip data upload", action="store_true")
+    arg_parser.add_argument("-f", "--force",
+                            help="table existing strategy, "
+                                 "-1 means skip upload, "
+                                 "0 means force upload, "
+                                 "1 means upload after deleting old table",
+                            type=int,
+                            choices=[-1, 0, 1])
+    arg_parser.add_argument("-b", "--backend", type=int, help="backend", choices=[0, 1])
     args = arg_parser.parse_args()
 
     env_conf = args.env_conf
@@ -173,8 +186,10 @@ def main():
     interval = args.interval
     skip_data = args.skip_data
     work_mode = args.mode
+    existing_strategy = args.force
+    backend = args.backend
 
-    submitter = submit.Submitter(fate_home=fate_home, work_mode=work_mode)
+    submit.set_logger(output_file)
 
     @register
     def _on_exit():
@@ -191,6 +206,17 @@ Have Fun!
             env = json.loads(e.read())
     except:
         raise ValueError(f"invalid env conf: {env_conf}")
+
+    spark_submit_config = env.get("spark_submit_config", {})
+    backend = backend if backend is not None else env.get("backend", 0)
+    work_mode = work_mode if work_mode is not None else env.get("work_mode", 0)
+    existing_strategy = existing_strategy if existing_strategy is not None else env.get("force_upload", -1)
+    submitter = submit.Submitter(fate_home=fate_home,
+                                 work_mode=work_mode,
+                                 backend=backend,
+                                 existing_strategy=existing_strategy,
+                                 spark_submit_config=spark_submit_config)
+
     testsuites = [suite] if suite else search_testsuite(testsuites_dir)
     print("====================================================================")
     print("testsuites:")

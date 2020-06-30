@@ -43,13 +43,18 @@ traverse_folder() {
         file_fullname=$1/$file
         if [ -d $file_fullname ]; then
             traverse_folder $file_fullname
-        elif [[ $file =~ _test.py$ ]] && [[ $1 =~ /test$ ]]; then
-            run_test $file_fullname
+		elif [[ $file =~ _test.py$ ]] && [[ $1 =~ /test$ || $1 =~ tests$ ]]; then
+            if [[ $file_fullname =~ "ftl" ]]; then
+                continue
+            else
+                run_test $file_fullname
+            fi
         fi
     done
 }
 
 traverse_folder $cur_dir/..
+traverse_folder $cur_dir/../../fate_flow/tests/api_tests
 
 echo "there are "$failed_count" failed test"
 
