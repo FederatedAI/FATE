@@ -12,8 +12,8 @@ from fate_flow.manager.queue_manager import MysqlQueue, ListQueue
 DB = BaseDataBase().database_connection
 if WORK_MODE == WorkMode.CLUSTER:
     job_queue = MysqlQueue()
-elif WORK_MODE == WORK_MODE.STANDALONE:
-    job_queue = ListQueue
+elif WORK_MODE == WorkMode.STANDALONE:
+    job_queue = ListQueue()
 
 
 class TestQueueUtil(unittest.TestCase):
