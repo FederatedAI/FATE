@@ -53,7 +53,7 @@ class SessionStop(object):
 
 
 def init_session_for_flow_server():
-    if RuntimeConfig.BACKEND.is_eggroll():
+    if Backend.EGGROLL == RuntimeConfig.BACKEND:
         # Options are used with different backend on demand
         session.init(job_id="session_used_by_fate_flow_server_{}".format(fate_uuid()),
                     mode=RuntimeConfig.WORK_MODE,
@@ -72,7 +72,7 @@ def init_session_for_flow_server():
 
 
 def clean_server_used_session():
-    if RuntimeConfig.BACKEND.is_eggroll():
+    if Backend.EGGROLL ==  RuntimeConfig.BACKEND:
         used_session_id = None
         try:
             used_session_id = session.get_session_id()
@@ -87,7 +87,7 @@ def session_detect():
     def _out_wrapper(func):
         @functools.wraps(func)
         def _wrapper(*args, **kwargs):
-            if RuntimeConfig.BACKEND.is_eggroll() and RuntimeConfig.PROCESS_ROLE in [ProcessRole.SERVER]:
+            if Backend.EGGROLL == RuntimeConfig.BACKEND and RuntimeConfig.PROCESS_ROLE in [ProcessRole.SERVER]:
                 for i in range(3):
                     try:
                         stat_logger.info("detect session {} by table {} {}".format(
