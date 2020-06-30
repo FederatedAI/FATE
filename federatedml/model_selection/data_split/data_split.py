@@ -17,7 +17,7 @@
 from sklearn.model_selection import train_test_split
 
 from arch.api.utils import log_utils
-from federatedml.feature.binning.base_binning import Binning
+from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.model_base import ModelBase
 from federatedml.param.data_split_param import DataSplitParam
 from federatedml.util import data_io
@@ -138,7 +138,7 @@ class DataSplitter(ModelBase):
 
     def transform_regression_label(self, data_inst, y):
         split_points_bin = self.split_points + [max(y)]
-        bin_labels = data_inst.mapValues(lambda v: Binning.get_bin_num(v.label, split_points_bin))
+        bin_labels = data_inst.mapValues(lambda v: BaseBinning.get_bin_num(v.label, split_points_bin))
         binned_y = [v for k, v in bin_labels.collect()]
         return binned_y
 
