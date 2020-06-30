@@ -7,49 +7,116 @@
         "work_mode": 0
     },
     "role": {
-        "guest": [10000],
-        "host": [10000,10001],
-        "arbiter": [10000]
+        "guest": [
+            10000
+        ],
+        "host": [
+            10000,
+            10001
+        ],
+        "arbiter": [
+            10000
+        ]
     },
     "role_parameters": {
         "guest": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "default_credit_guest", "namespace": "homo"}],
-                    "validate_data": [{"name": "default_credit_test", "namespace": "homo"}]
+                    "train_data": [
+                        {
+                            "name": "default_credit_guest",
+                            "namespace": "experiment"
+                        }
+                    ],
+                    "eval_data": [
+                        {
+                            "name": "default_credit_test",
+                            "namespace": "experiment"
+                        }
+                    ]
                 }
             },
-            "dataio_0":{
-                "with_label": [true],
-                "label_name": ["y"],
-                "label_type": ["int"],
-                "output_format": ["dense"]
+            "dataio_0": {
+                "with_label": [
+                    true
+                ],
+                "label_name": [
+                    "y"
+                ],
+                "label_type": [
+                    "int"
+                ],
+                "output_format": [
+                    "dense"
+                ]
             },
-            "dataio_1":{
-                "with_label": [true],
-                "label_name": ["y"],
-                "label_type": ["int"],
-                "output_format": ["dense"]
+            "dataio_1": {
+                "with_label": [
+                    true
+                ],
+                "label_name": [
+                    "y"
+                ],
+                "label_type": [
+                    "int"
+                ],
+                "output_format": [
+                    "dense"
+                ]
             }
         },
         "host": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "default_credit_host1", "namespace": "homo"}, {"name": "default_credit_host2", "namespace": "homo"}],
-                    "validate_data": [{"name": "default_credit_test", "namespace": "homo"}, {"name": "default_credit_test", "namespace": "homo"}]
+                    "train_data": [
+                        {
+                            "name": "default_credit_host1",
+                            "namespace": "experiment"
+                        },
+                        {
+                            "name": "default_credit_host2",
+                            "namespace": "experiment"
+                        }
+                    ],
+                    "eval_data": [
+                        {
+                            "name": "default_credit_test",
+                            "namespace": "experiment"
+                        },
+                        {
+                            "name": "default_credit_test",
+                            "namespace": "experiment"
+                        }
+                    ]
                 }
             },
-            "dataio_0":{
-                "with_label": [true],
-                "label_name": ["y"],
-                "label_type": ["int"],
-                "output_format": ["dense"]
+            "dataio_0": {
+                "with_label": [
+                    true
+                ],
+                "label_name": [
+                    "y"
+                ],
+                "label_type": [
+                    "int"
+                ],
+                "output_format": [
+                    "dense"
+                ]
             },
-            "dataio_1":{
-                "with_label": [true],
-                "label_name": ["y"],
-                "label_type": ["int"],
-                "output_format": ["dense"]
+            "dataio_1": {
+                "with_label": [
+                    true
+                ],
+                "label_name": [
+                    "y"
+                ],
+                "label_type": [
+                    "int"
+                ],
+                "output_format": [
+                    "dense"
+                ]
             }
         }
     },
@@ -78,7 +145,7 @@
                 "shuffle": false,
                 "random_seed": 103,
                 "need_cv": false
-             }
+            }
         }
     },
     "evaluation_0": {

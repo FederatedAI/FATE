@@ -10,22 +10,38 @@
         "model_version": ""
     },
     "role": {
-        "guest": [10000],
-        "host": [10000],
-        "arbiter": [10000]
+        "guest": [
+            10000
+        ],
+        "host": [
+            10000
+        ],
+        "arbiter": [
+            10000
+        ]
     },
     "role_parameters": {
         "guest": {
             "args": {
                 "data": {
-                    "validate_data": [{"name": "homo_breast_test", "namespace": "homo"}]
+                    "eval_data": [
+                        {
+                            "name": "homo_breast_test",
+                            "namespace": "experiment"
+                        }
+                    ]
                 }
             }
         },
         "host": {
             "args": {
                 "data": {
-                    "validate_data": [{"name": "homo_breast_test", "namespace": "homo"}]
+                    "eval_data": [
+                        {
+                            "name": "homo_breast_test",
+                            "namespace": "experiment"
+                        }
+                    ]
                 }
             }
         }

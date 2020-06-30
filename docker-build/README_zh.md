@@ -81,4 +81,4 @@ $ docker load -i fate.images.tar.gz
 ```
 
 部署
-Docker镜像生成后可以使用Docker Compose或Kubernetes来部署FATE，部署步骤请参考Kubefate项目，代码仓库地址：https://github.com/FederatedAI/KubeFATE。
+Docker镜像生成后可以使用Docker Compose或Kubernetes来部署FATE，部署步骤请参考Kubefate项目，代码仓库地址：https://github.com/FederatedAI/KubeFATE

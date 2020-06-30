@@ -10,22 +10,38 @@
         "model_version": ""
     },
     "role": {
-        "guest": [10000],
-        "host": [10000],
-        "arbiter": [10000]
+        "guest": [
+            10000
+        ],
+        "host": [
+            10000
+        ],
+        "arbiter": [
+            10000
+        ]
     },
     "role_parameters": {
         "guest": {
             "args": {
                 "data": {
-                    "validate_data": [{"name": "motor_mini_b", "namespace": "motor_mini"}]
+                    "eval_data": [
+                        {
+                            "name": "motor_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    ]
                 }
             }
         },
         "host": {
             "args": {
                 "data": {
-                    "validate_data": [{"name": "motor_mini_a", "namespace": "motor_mini"}]
+                    "eval_data": [
+                        {
+                            "name": "motor_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    ]
                 }
             }
         }

@@ -5,18 +5,18 @@ This section introduces the dsl and conf relationships for usage.
 #### Training Task.
 
 1. Binary-Class:  
-    example-data: (1) guest: breast_b.csv  (2) host: breast_a.csv  
+    example-data: (1) guest: breast_hetero_guest.csv  (2) host: breast_hetero_host.csv  
     dsl: test_hetero_nn_dsl.json 
     runtime_config: test_hetero_nn_keras.json
  
 2. Multi-Class:  
-    example-data: (1) guest: vehicle_scale_b.csv
-                  (2) host: vehicle_scale_a.csv  
+    example-data: (1) guest: vehicle_scale_hetero_guest.csv
+                  (2) host: vehicle_scale_hetero_host.csv  
     dsl: test_hetero_nn_dsl.json 
     runtime_config: test_hetero_nn_keras_multi_label.json
 
 3. Binary-Class With Early Stop Using
-    example-data: (1) guest: breast_b.csv  (2) host: breast_a.csv  
+    example-data: (1) guest: breast_hetero_guest.csv  (2) host: breast_hetero_host.csv  
     dsl: test_hetero_nn_dsl_with_early_stop.json 
     runtime_config: test_hetero_nn_keras_with_early_stop.json  
     This feature support since FATE-1.4, please have a look at the param "early_stopping_rounds", "metric", "validation_freqs"

@@ -282,9 +282,7 @@ Offline Modeling
        data, and the default is use(True). If the configuration
        **USE_LOCAL_DATA** of FATE-Flow Server is set to **True**, and you still
        want to use the data on the machine where the FATE-Flow Server is
-       located, you can change the Client’s USE_LOCAL_DATA to False and add it
-       to the upload configuration “**module**” parameter, the parameter value
-       is not empty.
+       located, you can add it to the upload configuration "**module**" parameter, the parameter value 0(default is 1).
 
     .. Note::
 

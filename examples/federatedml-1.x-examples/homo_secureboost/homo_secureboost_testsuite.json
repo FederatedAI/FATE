@@ -4,16 +4,16 @@
             "file": "examples/data/breast_homo_guest.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "homo_breast_guest",
-            "namespace": "homo",
+            "table_name": "breast_homo_guest",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
             "file": "examples/data/breast_homo_host.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "homo_breast_host",
-            "namespace": "homo",
+            "table_name": "breast_homo_host",
+            "namespace": "experiment",
             "role": "host_0"
         },
         {
@@ -21,7 +21,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "homo_breast_test",
-            "namespace": "homo",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
@@ -29,7 +29,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "homo_breast_test",
-            "namespace": "homo",
+            "namespace": "experiment",
             "role": "host_0"
         },
         {
@@ -37,7 +37,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "homo_vehicle_scale_guest",
-            "namespace": "homo",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
@@ -45,7 +45,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "homo_vehicle_scale_host",
-            "namespace": "homo",
+            "namespace": "experiment",
             "role": "host_0"
         },
         {
@@ -53,7 +53,7 @@
             "head": 1,
             "partition": 16,
             "table_name": "homo_vehicle_scale_test",
-            "namespace": "homo",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
@@ -61,103 +61,103 @@
             "head": 1,
             "partition": 16,
             "table_name": "homo_vehicle_scale_test",
-            "namespace": "homo",
+            "namespace": "experiment",
             "role": "host_0"
         },
         {
-            "file": "examples/data/homo_student_guest.csv",
+            "file": "examples/data/student_homo_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "homo_student_guest",
-            "namespace": "homo",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
-            "file": "examples/data/homo_student_host.csv",
+            "file": "examples/data/student_homo_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "homo_student_host",
-            "namespace": "homo",
+            "namespace": "experiment",
             "role": "host_0"
         },
         {
-            "file": "examples/data/homo_student_test.csv",
+            "file": "examples/data/student_homo_test.csv",
             "head": 1,
             "partition": 16,
             "table_name": "homo_student_test",
-            "namespace": "homo",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
-            "file": "examples/data/homo_student_test.csv",
+            "file": "examples/data/student_homo_test.csv",
             "head": 1,
             "partition": 16,
             "table_name": "homo_student_test",
-            "namespace": "homo",
+            "namespace": "experiment",
             "role": "host_0"
         },
         {
-            "file": "examples/data/ionosphere_scale_b.csv",
+            "file": "examples/data/ionosphere_scale_hetero_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "ionosphere_scale_guest",
-            "namespace": "homo",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
-            "file": "examples/data/ionosphere_scale_b.csv",
+            "file": "examples/data/ionosphere_scale_hetero_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "ionosphere_scale_host",
-            "namespace": "homo",
+            "namespace": "experiment",
             "role": "host_0"
         },
         {
-            "file": "examples/data/default_credit_guest_multi.csv",
+            "file": "examples/data/default_credit_homo_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "default_credit_guest",
-            "namespace": "homo",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
-            "file": "examples/data/default_credit_host1_multi.csv",
+            "file": "examples/data/default_credit_homo_host_1.csv",
             "head": 1,
             "partition": 16,
             "table_name": "default_credit_host1",
-            "namespace": "homo",
+            "namespace": "experiment",
             "role": "host_0"
         },
         {
-            "file": "examples/data/default_credit_host2_multi.csv",
+            "file": "examples/data/default_credit_homo_host_2.csv",
             "head": 1,
             "partition": 16,
             "table_name": "default_credit_host2",
-            "namespace": "homo",
+            "namespace": "experiment",
             "role": "host_1"
         },
         {
-            "file": "examples/data/default_credit_test_multi.csv",
+            "file": "examples/data/default_credit_homo_test.csv",
             "head": 1,
             "partition": 16,
             "table_name": "default_credit_test",
-            "namespace": "homo",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
-            "file": "examples/data/default_credit_test_multi.csv",
+            "file": "examples/data/default_credit_homo_test.csv",
             "head": 1,
             "partition": 16,
             "table_name": "default_credit_test",
-            "namespace": "homo",
+            "namespace": "experiment",
             "role": "host_0"
         },
         {
-            "file": "examples/data/default_credit_test_multi.csv",
+            "file": "examples/data/default_credit_homo_test.csv",
             "head": 1,
             "partition": 16,
             "table_name": "default_credit_test",
-            "namespace": "homo",
+            "namespace": "experiment",
             "role": "host_1"
         }
     ],

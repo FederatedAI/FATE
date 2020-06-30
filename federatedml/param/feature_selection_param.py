@@ -100,6 +100,28 @@ class IVPercentileSelectionParam(BaseParam):
         return True
 
 
+class IVTopKParam(BaseParam):
+    """
+    Use information values to select features.
+
+    Parameters
+    ----------
+    k: int, should be greater than 0, default: 10
+        Percentile threshold for iv_percentile method
+    """
+
+    def __init__(self, k=10, local_only=False):
+        super().__init__()
+        self.k = k
+        self.local_only = local_only
+
+    def check(self):
+        descr = "IV selection param's"
+        self.check_positive_integer(self.k, descr)
+        self.check_boolean(self.local_only, descr)
+        return True
+
+
 class VarianceOfCoeSelectionParam(BaseParam):
     """
     Use coefficient of variation to select features. When judging, the absolute value will be used.
@@ -351,6 +373,7 @@ class FeatureSelectionParam(BaseParam):
                  unique_param=UniqueValueParam(),
                  iv_value_param=IVValueSelectionParam(),
                  iv_percentile_param=IVPercentileSelectionParam(),
+                 iv_top_k_param=IVTopKParam(),
                  variance_coe_param=VarianceOfCoeSelectionParam(),
                  outlier_param=OutlierColsSelectionParam(),
                  manually_param=ManuallyFilterParam(),
@@ -374,6 +397,7 @@ class FeatureSelectionParam(BaseParam):
         self.unique_param = copy.deepcopy(unique_param)
         self.iv_value_param = copy.deepcopy(iv_value_param)
         self.iv_percentile_param = copy.deepcopy(iv_percentile_param)
+        self.iv_top_k_param = copy.deepcopy(iv_top_k_param)
         self.variance_coe_param = copy.deepcopy(variance_coe_param)
         self.outlier_param = copy.deepcopy(outlier_param)
         self.percentage_value_param = copy.deepcopy(percentage_value_param)
@@ -394,7 +418,8 @@ class FeatureSelectionParam(BaseParam):
             self.check_valid_value(method, descr, [consts.UNIQUE_VALUE, consts.IV_VALUE_THRES, consts.IV_PERCENTILE,
                                                    consts.COEFFICIENT_OF_VARIATION_VALUE_THRES, consts.OUTLIER_COLS,
                                                    consts.MANUALLY_FILTER, consts.PERCENTAGE_VALUE,
-                                                   consts.IV_FILTER, consts.STATISTIC_FILTER])
+                                                   consts.IV_FILTER, consts.STATISTIC_FILTER, consts.IV_TOP_K])
+
             self.filter_methods[idx] = method
 
         self.check_defined_type(self.select_col_indexes, descr, ['list', 'int'])
@@ -402,6 +427,7 @@ class FeatureSelectionParam(BaseParam):
         self.unique_param.check()
         self.iv_value_param.check()
         self.iv_percentile_param.check()
+        self.iv_top_k_param.check()
         self.variance_coe_param.check()
         self.outlier_param.check()
         self.manually_param.check()

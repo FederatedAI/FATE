@@ -31,12 +31,14 @@ def generate_publish_model_info(config_data):
         for party_id in role_party:
             config_data['model'][role][party_id] = {
                 'model_id': model_utils.gen_party_model_id(model_id, role, party_id),
-                'model_version': model_version}
+                'model_version': model_version
+            }
 
 
 def load_model(config_data):
     stat_logger.info(config_data)
-    success = True
+    if not config_data.get('servings'):
+        return 100, 'Please configure servings address'
     for serving in config_data.get('servings'):
         with grpc.insecure_channel(serving) as channel:
             stub = model_service_pb2_grpc.ModelServiceStub(channel)
@@ -53,14 +55,16 @@ def load_model(config_data):
             stat_logger.info('request serving: {} load model'.format(serving))
             load_model_request.local.role = config_data.get('local').get('role')
             load_model_request.local.partyId = config_data.get('local').get('party_id')
+            load_model_request.loadType = config_data['job_parameters'].get("load_type", "FATEFLOW")
+            load_model_request.filePath = config_data['job_parameters'].get("file_path", "")
             stat_logger.info(load_model_request)
             response = stub.publishLoad(load_model_request)
             stat_logger.info(
                 '{} {} load model status: {}'.format(load_model_request.local.role, load_model_request.local.partyId,
                                                      response.statusCode))
             if response.statusCode != 0:
-                success = False
-    return success
+                return response.statusCode, '{} {}'.format(response.message, response.error)
+    return 0, 'success'
 
 
 def bind_model_service(config_data):
@@ -69,7 +73,8 @@ def bind_model_service(config_data):
     initiator_party_id = config_data['initiator']['party_id']
     model_id = config_data['job_parameters']['model_id']
     model_version = config_data['job_parameters']['model_version']
-    status = True
+    if not config_data.get('servings'):
+        return 100, 'Please configure servings address'
     for serving in config_data.get('servings'):
         with grpc.insecure_channel(serving) as channel:
             stub = model_service_pb2_grpc.ModelServiceStub(channel)
@@ -88,8 +93,8 @@ def bind_model_service(config_data):
             response = stub.publishBind(publish_model_request)
             stat_logger.info(response)
             if response.statusCode != 0:
-                status = False
-    return status, service_id
+                return response.statusCode, response.message
+    return 0, None
 
 
 def download_model(request_data):

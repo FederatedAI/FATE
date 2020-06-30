@@ -7,7 +7,7 @@ from contextlib import closing
 import requests
 from arch.api.utils import file_utils
 
-from fate_flow.settings import HTTP_PORT, API_VERSION
+from fate_flow.settings import HTTP_PORT, API_VERSION, WORK_MODE
 
 
 class TestJobOperation(unittest.TestCase):
@@ -22,6 +22,7 @@ class TestJobOperation(unittest.TestCase):
             dsl_data = json.load(f)
         with open(os.path.join(file_utils.get_project_base_directory(), self.config_path), 'r') as f:
             config_data = json.load(f)
+            config_data['job_parameters']['work_mode'] = WORK_MODE
         response = requests.post("/".join([self.server_url, 'job', 'submit']),
                                  json={'job_dsl': dsl_data, 'job_runtime_conf': config_data})
         self.assertTrue(response.status_code in [200, 201])
@@ -30,7 +31,7 @@ class TestJobOperation(unittest.TestCase):
         job_id = response.json()['jobId']
 
         # query
-        response = requests.post("/".join([self.server_url, 'job', 'query']), json={'job_id': job_id})
+        response = requests.post("/".join([self.server_url, 'job', 'query']), json={'job_id': job_id, 'role': 'guest'})
         self.assertTrue(int(response.json()['retcode']) == 0)
         job_info = response.json()['data'][0]
 
@@ -42,8 +43,8 @@ class TestJobOperation(unittest.TestCase):
         response = requests.post("/".join([self.server_url, 'job', 'config']), json={'job_id': job_id, 'role': job_info['f_role'], 'party_id': job_info['f_party_id']})
         self.assertTrue(int(response.json()['retcode']) == 0)
 
-        print('waiting 3s ...')
-        time.sleep(3)
+        print('waiting 10s ...')
+        time.sleep(10)
 
         # stop
         response = requests.post("/".join([self.server_url, 'job', 'stop']), json={'job_id': job_id})

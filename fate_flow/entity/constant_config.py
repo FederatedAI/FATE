@@ -53,6 +53,7 @@ class TaskStatus(object):
 
 class ModelStorage(object):
     REDIS = "redis"
+    MYSQL = "mysql"
 
 
 class ModelOperation(object):

@@ -16,50 +16,50 @@
   },
   "role_parameters": {
     "guest": {
-      "args": {
-        "data": {
-          "train_data": [
-            {
-              "name": "hetero_breast_b",
-              "namespace": "hetero_breast_guest"
+        "args": {
+            "data": {
+                "train_data": [
+                    {
+                        "name": "breast_hetero_guest",
+                        "namespace": "experiment"
+                    }
+                ]
             }
-          ]
+        },
+        "dataio_0": {
+            "with_label": [
+                true
+            ],
+            "label_name": [
+                "y"
+            ],
+            "label_type": [
+                "int"
+            ],
+            "output_format": [
+                "dense"
+            ]
         }
-      },
-      "dataio_0": {
-        "with_label": [
-          true
-        ],
-        "label_name": [
-          "y"
-        ],
-        "label_type": [
-          "int"
-        ],
-        "output_format": [
-          "dense"
-        ]
-      }
     },
     "host": {
-      "args": {
-        "data": {
-          "train_data": [
-            {
-              "name": "hetero_breast_a",
-              "namespace": "hetero_breast_host"
+        "args": {
+            "data": {
+                "train_data": [
+                    {
+                        "name": "breast_hetero_host",
+                        "namespace": "experiment"
+                    }
+                ]
             }
-          ]
+        },
+        "dataio_0": {
+            "with_label": [
+                false
+            ],
+            "output_format": [
+                "dense"
+            ]
         }
-      },
-      "dataio_0": {
-        "with_label": [
-          false
-        ],
-        "output_format": [
-          "dense"
-        ]
-      }
     }
   },
   "algorithm_parameters": {

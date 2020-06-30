@@ -22,6 +22,9 @@ DataAccess
    -  module: Optional,String: If you need to use the data of the
       machine where the FATE-Flow server is located, this value is not
       empty.
+   -  use_local_data: Optional,String: If you need to use the data of the machine where the FATE-Flow server is located, this value is 0.
+   -  drop: Optional, Integer: When the cluster deployment uses the same table to upload data, it is necessary to carry the drop parameter,0 represents overwriting upload, 1 represents deleting the previous data and re-uploading
+
 
 -  response structure
 
@@ -170,16 +173,6 @@ Job
    -  retmsg: return code description,String
    -  data: config data, Object
 
-/v1/job/log
-~~~~~~~~~~~
-
--  request structure
-
-   -  job_id: Required, String: job id
-
--  response structure
-
-   -  data: Object
 
 /v1/job/task/query
 ~~~~~~~~~~~~~~~~~~
@@ -257,7 +250,7 @@ Tracking
    -  job_id: Required,String: job id
    -  role: Required,String: role information
    -  party_id: Required,Integer
-   -  component_name: Required,String: conponent name
+   -  component_name: Required,String: component name
 
 -  response structure
 
@@ -274,7 +267,7 @@ Tracking
    -  role: Required,String: role information
    -  party_id: Required,Integer: party id
    -  component_name: Required,String: component name
-   -  meric_name: Required,String: meric name
+   -  meric_name: Required,String: metric name
    -  metric_namespace: Required,String: metric namespace
 
 -  response structure
@@ -343,6 +336,8 @@ Pipeline
 -  request structure
 
    -  job_id: Required,String:job id
+   -  role: Required,String: role information
+   -  party_id: Required,Integer: party id
 
 -  response structure
 
@@ -358,9 +353,10 @@ Model
 
 -  request structure
 
-   -  initiator: Required,Object: job initiator information
-   -  role: Required,Object: role information
-   -  model: Requied,Object: model information
+   -  initiator: Required,Object: job initiator information, including party_id and role
+   -  job_parameters: Required,Object: job parameters information, including work_mode, model_id and model_version
+   -  role: Required,Object: role information of the parties
+   -  servings: Optional,Array: fate serving address and port
 
 -  response structure
 
@@ -375,33 +371,23 @@ Model
 -  request structure
 
    -  service_id: Required,String: service id
-   -  initiator: Required,Object: job initiator information
-   -  job_parameters: Required ,Object: model id and model version
-   -  role: Required,Object: role information
-   -  servings: Optional,Array: my party servings
+   -  initiator: Required,Object: job initiator information, including party_id and role
+   -  job_parameters: Required,Object: job parameters information, including work_mode, model_id and model_version
+   -  role: Required,Object: role information of the parties
+   -  servings: Optional,Array: fate serving address and port
 
 -  response structure
 
    -  retcode: return code, Integer
 
-/v1/model/version
-~~~~~~~~~~~~~~~~~
-
--  request structure
-
-   -  namespace: Requied,String: data table namespace
-
--  response structure
-
-   -  data: version history,Array
 
 /v1/model/transfer
 ~~~~~~~~~~~~~~~~~~
 
 -  request structure
 
-   -  name: Requied,String: data table name
-   -  namespace: Requied,String: data table namespace
+   -  name: Requied,String: model version
+   -  namespace: Requied,String: model id
 
 -  response structure
 
@@ -418,13 +404,29 @@ Table
 -  request structure
 
    -  create: Optional, Boolean: whether to create
-   -  namespace: Optional,String: download data table namespace
-   -  table_name: Optional,String: download data table name
-   -  local: Required,Object: local configuration
+   -  namespace: Optional,String: download data table namespace, need to be used with table_name
+   -  table_name: Optional,String: download data table name, need to be used with namespace
+   -  local: Optional,Object: local configuration
    -  role: Optional,Object: role information
    -  data_type: Optional,String: download file data type
    -  gen_table_info: Optional,Boolean: tag table information
 
 -  response structure
 
+   -  retcode: return code, Integer
+   -  retmsg: return code description, String
+   -  data: table information
+
+/v1/table/delete
+~~~~~~~~~~~~~~~~~~~~
+
+-  request structure
+
+   - namespace: Optional,String: download data table namespace, need to be used with table_name
+   - table_name:  Optional,String: download data table name, need to be used with namespace
+
+-  response structure
+
+   -  retcode: return code, Integer
+   -  retmsg: return code description, String
    -  data: table information
