@@ -108,5 +108,8 @@ class BaseFilterMethod(object):
         # Re-write if needed
         pass
 
+    def set_iso_model(self, model):
+        pass
+
     def get_meta_obj(self, meta_dicts):
         raise NotImplementedError("Should not call this function directly")

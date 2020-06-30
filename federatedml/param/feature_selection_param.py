@@ -194,14 +194,19 @@ class CommonFilterParam(BaseParam):
         If it is "top_k", this is the k value.
         If it is top_percentile, this is the percentile threshold.
 
+    host_thresholds: List of float or None, default: None
+        Set threshold for different host. If None, use same threshold as guest. If provided, the order should map with
+        the host id setting.
+
     """
     def __init__(self, metrics, filter_type='threshold', take_high=True, threshold=1,
-                 select_federated=True):
+                 host_thresholds=None, select_federated=True):
         super().__init__()
         self.metrics = metrics
         self.filter_type = filter_type
         self.take_high = take_high
         self.threshold = threshold
+        self.host_thresholds = host_thresholds
         self.select_federated = select_federated
 
     def check(self):
@@ -245,6 +250,12 @@ class CommonFilterParam(BaseParam):
             else:
                 if not (v == 0 or v == 1):
                     self.check_decimal_float(v, descr)
+
+        if self.host_thresholds is not None:
+            if not isinstance(self.host_thresholds, list):
+                raise ValueError("IV selection param's host_threshold should be list or None")
+        else:
+            self.host_thresholds = self.threshold
 
         for v in self.select_federated:
             self.check_boolean(v, descr)

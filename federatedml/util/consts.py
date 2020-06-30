@@ -180,9 +180,11 @@ MANUALLY_FILTER = 'manually'
 PERCENTAGE_VALUE = 'percentage_value'
 IV_FILTER = 'iv_filter'
 STATISTIC_FILTER = 'statistic_filter'
+IV = 'iv'
 
 # Selection Pre-model
 STATISTIC_MODEL = 'statistic_model'
+BINNING_MODEL = 'binning_model'
 
 # imputer
 MIN = 'min'

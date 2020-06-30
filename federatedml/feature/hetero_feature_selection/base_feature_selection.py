@@ -242,10 +242,11 @@ class BaseHeteroFeatureSelection(ModelBase):
         self.curt_select_properties = new_select_properties
 
     def _filter(self, data_instances, method, suffix):
-        this_filter = filter_factory.get_filter(filter_name=method, model_param=self.model_param, role=self.role)
+        this_filter = filter_factory.get_filter(filter_name=method, model_param=self.model_param,
+                                                role=self.role, model=self)
         this_filter.set_selection_properties(self.curt_select_properties)
-        this_filter.set_statics_obj(self.static_obj)
-        this_filter.set_binning_obj(self.binning_model)
+        # this_filter.set_statics_obj(self.static_obj)
+        # this_filter.set_binning_obj(self.binning_model)
         this_filter.set_transfer_variable(self.transfer_variable)
         self.curt_select_properties = this_filter.fit(data_instances, suffix).selection_properties
         host_select_properties = getattr(this_filter, 'host_selection_properties', None)

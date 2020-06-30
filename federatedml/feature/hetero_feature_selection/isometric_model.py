@@ -25,6 +25,20 @@ class SingleFeatureValues(object):
 
 
 class IsometricModel(object):
+    """
+    Use to Store Metric values
+
+    Properties
+    ----------
+    feature_values: dict
+        key is value name such as iv, mean etc.
+        value is SingleFeatureValues obj.
+
+    host_values: dict
+        key is host_id which is a party_id string
+        value is a dict like feature_values
+
+    """
     def __init__(self):
         self.feature_values = {}
         self.host_values = {}

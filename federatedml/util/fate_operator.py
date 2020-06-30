@@ -130,3 +130,7 @@ def generate_anonymous(fid, party_id=None, role=None, model=None):
     if role is None:
         role = model.role
     return "_".join([role, party_id, fid])
+
+
+def reconstruct_fid(encoded_name):
+    return encoded_name.split('_')[-1]
