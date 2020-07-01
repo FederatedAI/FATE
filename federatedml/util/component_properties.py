@@ -132,7 +132,7 @@ class ComponentProperties(object):
                     if eval_data is not None:
                         self.input_eval_data_count = eval_data.count()
                 else:
-                    if d_table is not None:
+                    if d_table is not None and d_table[0] is not None:
                         data[".".join([data_key, data_type])] = d_table[0]
 
         for data_key, data_table in data.items():
