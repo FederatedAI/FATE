@@ -1,11 +1,26 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
 import os
 import sys
 import json
 import time
 import click
-import traceback
-import requests
 import tarfile
+import requests
+import traceback
 
 
 def prettify(response, verbose=True):
@@ -44,7 +59,6 @@ def access_server(method, ctx, postfix, json, echo=True, **kwargs):
 
 def preprocess(**kwargs):
     config_data = {}
-    config_data.update(dict((k, v) for k, v in kwargs.items() if v is not None))
 
     if kwargs.get('conf_path'):
         conf_path = os.path.abspath(kwargs.get('conf_path'))
@@ -60,6 +74,8 @@ def preprocess(**kwargs):
                 config_data['local']['party_id'] = kwargs.get('party_id')
             if kwargs.get('role'):
                 config_data['local']['role'] = kwargs.get('role')
+
+    config_data.update(dict((k, v) for k, v in kwargs.items() if v is not None))
 
     # TODO what if job type is 'predict'
     dsl_data = {}
