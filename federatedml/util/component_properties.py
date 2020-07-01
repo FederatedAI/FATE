@@ -126,6 +126,9 @@ class ComponentProperties(object):
         data = {}
         if data_sets is None:
             return train_data, eval_data, data
+
+        LOGGER.debug(f"Input data_sets: {data_sets}")
+
         for data_key, data_dict in data_sets.items():
 
             for data_type, d_table in data_dict.items():
@@ -139,9 +142,9 @@ class ComponentProperties(object):
                     if d_table is not None:
                         data[".".join([data_key, data_type])] = d_table
 
-            if data_sets[data_key].get("data", None):
-                # data = data_sets[data_key]["data"]
-                data[data_key] = data_sets[data_key]["data"]
+            # if data_sets[data_key].get("data", None):
+            #     # data = data_sets[data_key]["data"]
+            #     data[data_key] = data_sets[data_key]["data"]
 
         for data_key, data_table in data.items():
             self.input_data_count += data_table.count()

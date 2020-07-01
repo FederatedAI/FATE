@@ -471,7 +471,7 @@ class BaseBinning(object):
 
         Parameters
         ----------
-        result_counts: DTable.
+        result_counts: dict.
             It is like:
                 {'x1': [[event_count, non_event_count], [event_count, non_event_count] ... ],
                  'x2': [[event_count, non_event_count], [event_count, non_event_count] ... ],
