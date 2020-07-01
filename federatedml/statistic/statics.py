@@ -82,11 +82,14 @@ class SummaryStatistics(object):
     def variance(self):
         mean = self.mean
         variance = self.sum_square / self.count - mean ** 2
-
         variance = np.array([x if math.fabs(x) >= consts.FLOAT_ZERO else 0.0 for x in variance])
-        # if math.fabs(variance) < consts.FLOAT_ZERO:
-        #     return 0.0
         return variance
+
+    @property
+    def coefficient_of_variance(self):
+        mean = np.array([consts.FLOAT_ZERO if math.fabs(x) < consts.FLOAT_ZERO else x \
+                         for x in self.mean])
+        return np.fabs(self.std_variance / mean)
 
     @property
     def std_variance(self):

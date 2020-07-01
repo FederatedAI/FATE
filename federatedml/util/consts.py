@@ -223,5 +223,6 @@ SUM = 'sum'
 COVARIANCE = 'cov'
 CORRELATION = 'corr'
 VARIANCE = 'variance'
+COEFFICIENT_OF_VARIATION = 'coefficient_of_variance'
 
 

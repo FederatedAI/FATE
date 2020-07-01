@@ -84,8 +84,19 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
                                        role=role, cpp=model.component_properties)
 
     elif filter_name == consts.COEFFICIENT_OF_VARIATION_VALUE_THRES:
-        coe_param = model_param.variance_coe_param
-        return VarianceCoeFilter(coe_param)
+        variance_coe_param = model_param.variance_coe_param
+        coe_param = feature_selection_param.CommonFilterParam(
+            metrics=consts.COEFFICIENT_OF_VARIATION,
+            filter_type='threshold',
+            take_high=True,
+            threshold=variance_coe_param.value_threshold
+        )
+        coe_param.check()
+        iso_model = model.isometric_models.get(consts.STATISTIC_MODEL)
+        if iso_model is None:
+            raise ValueError("None of binning model has provided when using iv filter")
+        return IsoModelFilter(coe_param, iso_model)
+
 
     elif filter_name == consts.OUTLIER_COLS:
         outlier_param = model_param.outlier_param

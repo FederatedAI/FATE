@@ -52,7 +52,7 @@ class StatisticsParam(BaseParam):
     """
 
     LEGAL_STAT = [consts.COUNT, consts.SUM, consts.MEAN, consts.STANDARD_DEVIATION,
-                  consts.MEDIAN, consts.MIN, consts.MAX, consts.VARIANCE]
+                  consts.MEDIAN, consts.MIN, consts.MAX, consts.VARIANCE, consts.COEFFICIENT_OF_VARIATION]
     LEGAL_QUANTILE = re.compile("^(100)|([1-9]?[1-9])%$")
 
     def __init__(self, statistics="summary", column_names=None,
