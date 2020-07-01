@@ -38,11 +38,17 @@ class HomoDataSplitHost(DataSplitter):
                                                                            train_size=self.train_size)
 
         validate_size, test_size = DataSplitter.get_train_test_size(self.test_size, self.validate_size)
-        id_test, id_validate, _, _ = self._split(id_test_validate, y_test_validate,
+        id_test, id_validate, y_test, y_validate = self._split(id_test_validate, y_test_validate,
                                                  test_size=validate_size, train_size=test_size)
 
-        train_data, test_data, validate_data = self.split_data(data_inst, id_train, id_test, id_validate)
-        return train_data, test_data, validate_data
+        train_data, validate_data, test_data = self.split_data(data_inst, id_train, id_test, id_validate)
+
+        self.callback_count_info(id_train, id_validate, id_test)
+        self.callback_ratio_info()
+        if self.stratified:
+            self.callback_label_info(y_train, y_validate, y_test)
+
+        return train_data, validate_data, test_data
 
 
 class HomoDataSplitGuest(DataSplitter):
@@ -63,8 +69,14 @@ class HomoDataSplitGuest(DataSplitter):
                                                                            train_size=self.train_size)
 
         validate_size, test_size = DataSplitter.get_train_test_size(self.test_size, self.validate_size)
-        id_test, id_validate, _, _ = self._split(id_test_validate, y_test_validate,
+        id_test, id_validate, y_test, y_validate = self._split(id_test_validate, y_test_validate,
                                                  test_size=validate_size, train_size=test_size)
 
-        train_data, test_data, validate_data = self.split_data(data_inst, id_train, id_test, id_validate)
-        return train_data, test_data, validate_data
+        train_data, validate_data, test_data = self.split_data(data_inst, id_train, id_test, id_validate)
+
+        self.callback_count_info(id_train, id_validate, id_test)
+        self.callback_ratio_info()
+        if self.stratified:
+            self.callback_label_info(y_train, y_validate, y_test)
+
+        return train_data, validate_data, test_data

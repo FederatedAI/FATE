@@ -14,15 +14,18 @@
 #  limitations under the License.
 #
 
+import collections
 from sklearn.model_selection import train_test_split
 
 from arch.api.utils import log_utils
+from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.model_base import ModelBase
 from federatedml.param.data_split_param import DataSplitParam
 from federatedml.util import data_io
 
 LOGGER = log_utils.getLogger()
+ROUND_NUM = 3
 
 
 class DataSplitter(ModelBase):
@@ -30,7 +33,7 @@ class DataSplitter(ModelBase):
         super().__init__()
         self.metric_name = "data_split"
         self.metric_namespace = "train"
-        self.metric_type = "DATASPLIT"
+        self.metric_type = "DATA_SPLIT"
         self.model_param = DataSplitParam()
         self.role = None
         self.need_transform = None
@@ -42,7 +45,7 @@ class DataSplitter(ModelBase):
         self.validate_size = params.validate_size
         self.stratified = params.stratified
         self.shuffle = params.shuffle
-        self.split_points = params.split_points
+        self.split_points = sorted(params.split_points)
         self.need_run = params.need_run
         return
 
@@ -69,7 +72,7 @@ class DataSplitter(ModelBase):
         if self.stratified:
             y = [v for i, v in data_inst.mapValues(lambda v: v.label).collect()]
             if self.need_transform:
-                y = self.transform_regression_label(data_inst, y)
+                y = self.transform_regression_label(data_inst)
         else:
             # make dummy y
             y = [0] * (data_inst.count())
@@ -136,11 +139,101 @@ class DataSplitter(ModelBase):
             raise ValueError(f"train_size, test_size, validate_size should sum up to 1.0 or data count")
         return
 
-    def transform_regression_label(self, data_inst, y):
-        split_points_bin = self.split_points + [max(y)]
+    def transform_regression_label(self, data_inst):
+        edge = self.split_points[-1] + 1
+        split_points_bin = self.split_points + [edge]
         bin_labels = data_inst.mapValues(lambda v: BaseBinning.get_bin_num(v.label, split_points_bin))
         binned_y = [v for k, v in bin_labels.collect()]
         return binned_y
+
+    @staticmethod
+    def get_class_freq(y, split_points=None):
+        """
+        get frequency info of a given y set; only called when stratified is true
+        :param y: list, y sample
+        :param split_points: list, split points used to bin regression values
+        :return: dict
+        """
+        freq_dict = collections.Counter(y)
+        if split_points is not None:
+            label_count = len(split_points)
+            freq_keys = freq_dict.keys()
+            # fill in count for missing bins
+            if len(freq_keys) < label_count:
+                for i in range(label_count):
+                    if i not in freq_keys:
+                        freq_dict[i] = 0
+        return freq_dict
+
+    def callback_ratio_info(self):
+        metas = {}
+
+        metas["train"] = round(self.train_size, ROUND_NUM)
+        metas["validate"] = round(self.validate_size, ROUND_NUM)
+        metas["test"] = round(self.test_size, ROUND_NUM)
+
+        metric_name = f"{self.metric_name}_ratio_info"
+        metric = [Metric(metric_name, 0)]
+        self.callback_metric(metric_name=metric_name, metric_namespace=self.metric_namespace, metric_data=metric)
+        self.tracker.set_metric_meta(metric_name=metric_name, metric_namespace=self.metric_namespace,
+                                     metric_meta=MetricMeta(name=metric_name, metric_type=self.metric_type,
+                                                            extra_metas=metas))
+
+
+    def callback_count_info(self, id_train, id_validate, id_test):
+        """
+        callback data set count info for callback
+        :param id_train: list, id of data set
+        :param id_validate: list, id of data set
+        :param id_test: list, id of data set
+        """
+        metas = {}
+
+        train_count = len(id_train)
+        metas["train"] = train_count
+
+        validate_count = len(id_validate)
+        metas["validate"] = validate_count
+
+        test_count = len(id_test)
+        metas["test"] = test_count
+
+        total_count = train_count + validate_count + test_count
+        metas["total"] = total_count
+
+        metric_name = f"{self.metric_name}_count_info"
+        metric = [Metric(metric_name, 0)]
+        self.callback_metric(metric_name=metric_name, metric_namespace=self.metric_namespace, metric_data=metric)
+        self.tracker.set_metric_meta(metric_name=metric_name, metric_namespace=self.metric_namespace,
+                                      metric_meta=MetricMeta(name=metric_name, metric_type=self.metric_type,
+                                                             extra_metas=metas))
+
+    def callback_label_info(self, y_train, y_validate, y_test):
+        """
+        callback data set y info for callback
+        :param y_train: list, y
+        :param y_validate: list, y
+        :param y_test: list, y
+        """
+        metas = {}
+
+        train_freq_dict = DataSplitter.get_class_freq(y_train, self.split_points)
+        metas["train"] = train_freq_dict
+
+        validate_freq_dict = DataSplitter.get_class_freq(y_validate, self.split_points)
+        metas["validate"] = validate_freq_dict
+
+        test_freq_dict = DataSplitter.get_class_freq(y_test, self.split_points)
+        metas["test"] = test_freq_dict
+
+        metric_name = f"{self.metric_name}_label_info"
+        metric = [Metric(metric_name, 0)]
+        self.callback_metric(metric_name=metric_name, metric_namespace=self.metric_namespace, metric_data=metric)
+        self.tracker.set_metric_meta(metric_name=metric_name, metric_namespace=self.metric_namespace,
+                                     metric_meta=MetricMeta(name=metric_name, metric_type=self.metric_type,
+                                                            extra_metas=metas))
+
+        return metas
 
     @staticmethod
     def _match_id(data_inst, ids):
@@ -148,15 +241,15 @@ class DataSplitter(ModelBase):
 
     def split_data(self, data_inst, id_train, id_test, id_validate):
         train_data = DataSplitter._match_id(data_inst, id_train)
-        test_data = DataSplitter._match_id(data_inst, id_test)
         validate_data = DataSplitter._match_id(data_inst, id_validate)
+        test_data = DataSplitter._match_id(data_inst, id_test)
 
         schema = getattr(data_inst, "schema", None)
         if schema:
             data_io.set_schema(train_data, schema)
-            data_io.set_schema(test_data, schema)
             data_io.set_schema(validate_data, schema)
-        return train_data, test_data, validate_data
+            data_io.set_schema(test_data, schema)
+        return train_data, validate_data, test_data
 
     def fit(self, data_inst):
         LOGGER.debug("fit method in data_split should not be called here.")
