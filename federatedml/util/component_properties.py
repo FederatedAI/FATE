@@ -125,16 +125,19 @@ class ComponentProperties(object):
             for data_type, d_table in data_dict.items():
                 if data_type == "train_data" and d_table is not None:
                     train_data = d_table[0]
-                    self.input_data_count = train_data.count()
+                    if train_data is not None:
+                        self.input_data_count = train_data.count()
                 elif data_type == 'eval_data' and d_table is not None:
                     eval_data = d_table[0]
-                    self.input_eval_data_count = eval_data.count()
+                    if eval_data is not None:
+                        self.input_eval_data_count = eval_data.count()
                 else:
                     if d_table is not None:
-                        data[".".join([data_key, data_type])] = d_table
+                        data[".".join([data_key, data_type])] = d_table[0]
 
         for data_key, data_table in data.items():
-            self.input_data_count += data_table.count()
+            if data_table is not None:
+                self.input_data_count += data_table.count()
 
         return train_data, eval_data, data
 
