@@ -40,7 +40,6 @@ class HeteroDataSplitHost(DataSplitter):
         train_data, validate_data, test_data = self.split_data(data_inst, id_train, id_validate, id_test)
 
         self.callback_count_info(id_train, id_validate, id_test)
-        self.callback_ratio_info()
 
         return train_data, validate_data, test_data
 
@@ -74,7 +73,6 @@ class HeteroDataSplitGuest(DataSplitter):
         train_data, validate_data, test_data = self.split_data(data_inst, id_train, id_validate, id_test)
 
         self.callback_count_info(id_train, id_validate, id_test)
-        self.callback_ratio_info()
         if self.stratified:
             self.callback_label_info(y_train, y_validate, y_test)
 

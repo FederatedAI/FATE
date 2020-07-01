@@ -45,9 +45,10 @@ class DataSplitter(ModelBase):
         self.validate_size = params.validate_size
         self.stratified = params.stratified
         self.shuffle = params.shuffle
-        self.split_points = sorted(params.split_points)
+        self.split_points = params.split_points
+        if self.split_points:
+            self.split_points = sorted(self.split_points)
         self.need_run = params.need_run
-        return
 
     @staticmethod
     def _safe_divide(n, d):
@@ -165,24 +166,9 @@ class DataSplitter(ModelBase):
                         freq_dict[i] = 0
         return freq_dict
 
-    def callback_ratio_info(self):
-        metas = {}
-
-        metas["train"] = round(self.train_size, ROUND_NUM)
-        metas["validate"] = round(self.validate_size, ROUND_NUM)
-        metas["test"] = round(self.test_size, ROUND_NUM)
-
-        metric_name = f"{self.metric_name}_ratio_info"
-        metric = [Metric(metric_name, 0)]
-        self.callback_metric(metric_name=metric_name, metric_namespace=self.metric_namespace, metric_data=metric)
-        self.tracker.set_metric_meta(metric_name=metric_name, metric_namespace=self.metric_namespace,
-                                     metric_meta=MetricMeta(name=metric_name, metric_type=self.metric_type,
-                                                            extra_metas=metas))
-
-
     def callback_count_info(self, id_train, id_validate, id_test):
         """
-        callback data set count info for callback
+        callback data set count & ratio info for callback
         :param id_train: list, id of data set
         :param id_validate: list, id of data set
         :param id_test: list, id of data set
@@ -208,6 +194,21 @@ class DataSplitter(ModelBase):
                                       metric_meta=MetricMeta(name=metric_name, metric_type=self.metric_type,
                                                              extra_metas=metas))
 
+        train_ratio = train_count / total_count
+        validate_ratio = validate_count / total_count
+        test_ratio = test_count / total_count
+
+        metas["train"] = round(train_ratio, ROUND_NUM)
+        metas["validate"] = round(validate_ratio, ROUND_NUM)
+        metas["test"] = round(test_ratio, ROUND_NUM)
+
+        metric_name = f"{self.metric_name}_ratio_info"
+        metric = [Metric(metric_name, 0)]
+        self.callback_metric(metric_name=metric_name, metric_namespace=self.metric_namespace, metric_data=metric)
+        self.tracker.set_metric_meta(metric_name=metric_name, metric_namespace=self.metric_namespace,
+                                     metric_meta=MetricMeta(name=metric_name, metric_type=self.metric_type,
+                                                            extra_metas=metas))
+
     def callback_label_info(self, y_train, y_validate, y_test):
         """
         callback data set y info for callback
@@ -225,6 +226,9 @@ class DataSplitter(ModelBase):
 
         test_freq_dict = DataSplitter.get_class_freq(y_test, self.split_points)
         metas["test"] = test_freq_dict
+
+        if self.split_points is not None:
+            metas["split_points"] = self.split_points[:-1]
 
         metric_name = f"{self.metric_name}_label_info"
         metric = [Metric(metric_name, 0)]

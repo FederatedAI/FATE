@@ -10,7 +10,7 @@ The module takes one table input as specified in job config file. Table must be 
 
 Data Split module always outputs three tables (train, test, and validate sets). Each table may be used as input of another module. Below are the rules regarding set sizes: 
     1. if all three set sizes are None, the original data input will be returned as train set, output test and validate sets empty;
-    2. if only test size or validate size is given, train size is set to bo complement given size;
-    3. only one of the three sizes is needed to split input data, but all three may be specified. The module takes either int (instance count) or float (fraction) value for set sizes, but it cannot handle mixed-type values. 
+    2. if only test size or validate size is given, train size is set to be of complement given size;
+    3. only one of the three sizes is needed to split input data, but all three may be specified. The module takes either int (instance count) or float (fraction) value for set sizes, but mixed-type inputs cannot be used. 
 
 For examples of using Data Split module, please refer [here](../../examples/federatedml-1.x-examples/data_split).
