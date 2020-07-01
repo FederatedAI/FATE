@@ -25,18 +25,22 @@ from fate_flow.utils.cli_utils import preprocess, access_server
 @click.group(short_help="Model Operations")
 @click.pass_context
 def model(ctx):
-    """Model Operations"""
+    """
+    \b
+    Provides numbers of model operational commands, including load, store, import and etc.
+    For more details, please check out the help text.
+    """
     pass
 
 
-@model.command(short_help="Load Model")
+@model.command(short_help="Load Model Command")
 @click.argument('conf_path', type=click.Path(exists=True), metavar='<CONF_PATH>')
 @click.pass_context
 def load(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    Load Model
+    Load Model Command
 
     - REQUIRED ARGUMENTS:
 
@@ -47,14 +51,14 @@ def load(ctx, **kwargs):
     access_server('post', ctx, 'model/load', config_data)
 
 
-@model.command(short_help="Bind Model")
+@model.command(short_help="Bind Model Command")
 @click.argument('conf_path', type=click.Path(exists=True), metavar='<CONF_PATH>')
 @click.pass_context
 def bind(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    Bind Model
+    Bind Model Command
 
     - REQUIRED ARGUMENTS:
 
@@ -65,14 +69,14 @@ def bind(ctx, **kwargs):
     access_server('post', ctx, 'model/bind', config_data)
 
 
-@model.command(short_help="Store Model")
+@model.command(short_help="Store Model Command")
 @click.argument('conf_path', type=click.Path(exists=True), metavar='<CONF_PATH>')
 @click.pass_context
 def store(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    Store Model
+    Store Model Command
 
     - REQUIRED ARGUMENTS:
 
@@ -83,14 +87,14 @@ def store(ctx, **kwargs):
     access_server('post', ctx, 'model/store', config_data)
 
 
-@model.command(short_help="Restore Model")
+@model.command(short_help="Restore Model Command")
 @click.argument('conf_path', type=click.Path(exists=True), metavar='<CONF_PATH>')
 @click.pass_context
 def restore(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    Restore Model
+    Restore Model Command
 
     - REQUIRED ARGUMENTS:
 
@@ -102,14 +106,14 @@ def restore(ctx, **kwargs):
 
 
 # TODO Rename this method
-@model.command(short_help="Import Model")
+@model.command(short_help="Import Model Command")
 @click.argument('conf_path', type=click.Path(exists=True), metavar='<CONF_PATH>')
 @click.pass_context
 def imp(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    Import Model
+    Import Model Command
 
     - REQUIRED ARGUMENTS:
 
@@ -129,14 +133,14 @@ def imp(ctx, **kwargs):
     access_server('post', ctx, 'model/import', config_data, files=files)
 
 
-@model.command(short_help="Export Model")
+@model.command(short_help="Export Model Command")
 @click.argument('conf_path', type=click.Path(exists=True), metavar='<CONF_PATH>')
 @click.pass_context
 def export(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    Export Model
+    Export Model Command
 
     - REQUIRED ARGUMENTS:
 

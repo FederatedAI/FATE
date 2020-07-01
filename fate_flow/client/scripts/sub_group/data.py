@@ -26,26 +26,37 @@ from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 @click.group(short_help="Data Operations")
 @click.pass_context
 def data(ctx):
-    """Data Operations Descriptions"""
+    """
+    \b
+    Provides numbers of data operational commands, including upload, download and etc.
+    For more details, please check out the help text.
+    """
     pass
 
 
-@data.command(short_help="Upload Table")
+@data.command(short_help="Upload Table Command")
 @click.argument('conf_path', type=click.Path(exists=True), metavar='<CONF_PATH>')
-@click.option('-d', '--drop', metavar="[DROP]", help="Operations before file upload")
+@click.option('-v', '--verbose', type=click.Choice([0, 1]), default=0, metavar="[VERBOSE]",
+              help="Verbose mode, 0 means 'disable'(default), 1 means 'enable'")
+@click.option('-d', '--drop', type=click.Choice([0, 1]), metavar="[DROP]", default=0,
+              help="Drop data before uploading. If 'drop' is set to be 0 (defualt), when data had been uploaded before,"
+                   " current upload task would be rejected. If 'drop' is set to be 1, data of old version would be "
+                   "replaced by the latest version.")
 @click.pass_context
 def upload(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    Upload Table
+    Upload Data Table.
 
     - REQUIRED ARGUMENTS:
 
     \b
-    <CONF_PATH> : Configuration File Path
+    <CONF_PATH> : Configuration file path
 
     """
+    kwargs['drop'] = int(kwargs['drop']) if int(kwargs['drop']) else 2
+    kwargs['verbose'] = int(kwargs['verbose'])
     config_data, dsl_data = preprocess(**kwargs)
     if config_data.get('use_local_data', 1):
         file_name = config_data.get('file')
@@ -74,29 +85,31 @@ def upload(ctx, **kwargs):
         else:
             raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
                             'please check the path: {}'.format(file_name))
-        try:
-            if response.json()['retcode'] == 999:
-                start_cluster_standalone_job_server()
-                access_server('post', ctx, "data/upload", config_data)
-            else:
-                prettify(response.json())
-        except:
-            click.echo(traceback.format_exc())
+    else:
+        response = access_server('post', ctx, 'data/upload', config_data, False)
+    try:
+        if response.json()['retcode'] == 999:
+            start_cluster_standalone_job_server()
+            access_server('post', ctx, "data/upload", config_data)
+        else:
+            prettify(response.json())
+    except:
+        click.echo(traceback.format_exc())
 
 
-@data.command(short_help="Download Table")
+@data.command(short_help="Download Table Command")
 @click.argument('conf_path', type=click.Path(exists=True), metavar='<CONF_PATH>')
 @click.pass_context
 def download(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    Download Table
+    Download Data Table.
 
     - REQUIRED ARGUMENTS:
 
     \b
-    <CONF_PATH> : Configuration File Path
+    <CONF_PATH> : Configuration file path
     """
     config_data, dsl_data = preprocess(**kwargs)
     response = access_server('post', ctx, "data/download", config_data, False)
@@ -110,15 +123,16 @@ def download(ctx, **kwargs):
         click.echo(traceback.format_exc())
 
 
-@data.command(short_help="Upload Table History")
-# @click.option('-l', '--limit', metavar="[LIMIT]", default=20, help="Limit count, defaults is 20")
+@data.command(short_help="Upload History Command")
+@click.option('-l', '--limit', metavar="[LIMIT]", default=10, help="Limit count, defaults is 10")
 @click.option('-j', '--job_id', metavar="[JOB_ID]", help="Job ID")
 @click.pass_context
 def upload_history(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    Upload Table History
+    \b
+    Query Upload Table History.
     """
     config_data, dsl_data = preprocess(**kwargs)
     response = access_server('post', ctx, "data/upload/history", config_data, False)
@@ -133,7 +147,7 @@ def upload_history(ctx, **kwargs):
         click.echo(traceback.format_exc())
 
 
-@data.command(short_help="")
+# @data.command(short_help="")
 @click.pass_context
 def download_history():
     """

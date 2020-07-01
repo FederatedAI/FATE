@@ -29,19 +29,20 @@ from fate_flow.utils.cli_utils import (preprocess, download_from_request,
 @click.pass_context
 def job(ctx):
     """
-    Provides a bunch of Job Operations Methods
+    \b
+    Provides numbers of job operational commands, including submit, stop, query and etc.
+    For more details, please check out the help text.
     """
     pass
 
 
-@job.command(short_help="Submit job description")
-@click.argument('workmode', type=click.Choice(['0', '1']), metavar='<WORKMODE>')
+@job.command(short_help="Submit Job Command")
 @click.argument('conf_path', type=click.Path(exists=True), metavar='<CONF_PATH>')
 @click.argument('dsl_path', type=click.Path(exists=True), metavar='<DSL_PATH>')
 @click.pass_context
 def submit(ctx, **kwargs):
     """
-    - METHOD DESCRIPTION:
+    - COMMAND DESCRIPTION:
 
     \b
     Submit a pipeline job.
@@ -50,9 +51,8 @@ def submit(ctx, **kwargs):
     - REQUIRED ARGUMENTS:
 
     \b
-    <WORKMODE> : Workmode 0(standalone) or 1(cluster).
-    <CONF_PATH> : Configuration file path.
-    <DSL_PATH> : Dsl file path.
+    <CONF_PATH> : Configuration file path
+    <DSL_PATH> : Dsl file path
     """
     config_data, dsl_data = preprocess(**kwargs)
     post_data = {
@@ -68,25 +68,27 @@ def submit(ctx, **kwargs):
             os.system('sh service.sh start --standalone_node')
             time.sleep(5)
             access_server('post', ctx, 'job/submit', post_data)
+        else:
+            prettify(response.json())
     except:
         pass
 
 
-@job.command(short_help="List job")
-@click.option('-l', '--limit', default=20, metavar='[LIMIT]', help='Limit count, defaults is 20')
+@job.command(short_help="List Job Command")
+@click.option('-l', '--limit', default=10, metavar='[LIMIT]', help='Limit count, default is 10')
 @click.pass_context
 def list(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    List job description
+    List job.
 
     """
-    # TODO executed method
-    click.echo('Limit number is: %d' % kwargs.get('limit'))
+    config_data, dsl_data = preprocess(**kwargs)
+    access_server('post', ctx, 'job/list/job', config_data)
 
 
-@job.command(short_help="Query job")
+@job.command(short_help="Query Job Command")
 @click.option('-j', '--job_id', metavar="[JOB_ID]", help="Job ID")
 @click.option('-r', '--role', metavar="[ROLE]", help="Role")
 @click.option('-p', '--party_id', metavar="[PARTY_ID]", help="Party ID")
@@ -99,7 +101,7 @@ def query(ctx, **kwargs):
 
     \b
     Query job information by filters.
-    Used to be 'query_job'
+    Used to be 'query_job'.
     """
     config_data, dsl_data = preprocess(**kwargs)
     response = access_server('post', ctx, "job/query", config_data, False)
@@ -112,7 +114,7 @@ def query(ctx, **kwargs):
     prettify(response.json() if isinstance(response, requests.models.Response) else response)
 
 
-@job.command(short_help="Clean job")
+@job.command(short_help="Clean Job Command")
 @click.option('-j', '--job_id', metavar="[JOB_ID]", help="Job ID")
 @click.option('-r', '--role', metavar="[ROLE]", help="Role")
 @click.option('-p', '--party_id', metavar="[PARTY_ID]", help="Party ID")
@@ -123,34 +125,34 @@ def clean(ctx, **kwargs):
     - COMMAND DESCRIPTION:
 
     \b
-    Clean job description
-    Used to be 'clean_job'
+    Clean processor, data table and metric data.
+    Used to be 'clean_job'.
     """
     config_data, dsl_data = preprocess(**kwargs)
     detect_utils.check_config(config=config_data, required_arguments=['job_id'])
     access_server('post', ctx, "job/clean", config_data)
 
 
-@job.command(short_help="Stop job")
+@job.command(short_help="Stop Job Command")
 @click.argument('job_id', metavar="<JOB_ID>")
 @click.pass_context
 def stop(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    Stop job description
+    Stop a specified job.
 
     - REQUIRED ARGUMENTS:
 
     \b
-    <JOB_ID> : Provides a valid job id.
+    <JOB_ID> : A valid job id
     """
     config_data, dsl_data = preprocess(**kwargs)
     detect_utils.check_config(config=config_data, required_arguments=['job_id'])
     access_server('post', ctx, "job/stop", config_data)
 
 
-@job.command(short_help="Config job")
+@job.command(short_help="Config Job Command")
 @click.argument('job_id', metavar="<JOB_ID>")
 @click.argument('role', metavar="<ROLE>")
 @click.argument('party_id', metavar="<PARTY_ID>")
@@ -160,15 +162,15 @@ def config(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    Config job description
+    Download Configurations of A Specified Job.
 
     - REQUIRED ARGUMENTS:
 
     \b
-    <JOB_ID> : Job ID
+    <JOB_ID> : A valid job id
     <ROLE> : Role
     <PARTY_ID> : Party ID
-    <OUTPUT_PATH> : Output path
+    <OUTPUT_PATH> : Output directory path
     """
     config_data, dsl_data = preprocess(**kwargs)
     detect_utils.check_config(config=config_data, required_arguments=['job_id', 'role', 'party_id', 'output_path'])
@@ -189,7 +191,7 @@ def config(ctx, **kwargs):
     prettify(response.json() if isinstance(response, requests.models.Response) else response)
 
 
-@job.command(short_help="Log job")
+@job.command(short_help="Log Job Command")
 @click.argument('job_id', metavar="<JOB_ID>")
 @click.argument('output_path', metavar="<OUTPUT_PATH>")
 @click.pass_context
@@ -197,13 +199,13 @@ def log(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    Log job description
+    Download Log Files of A Specified Job.
 
     - REQUIRED ARGUMENTS:
 
     \b
-    <JOB_ID> : Job ID
-    <OUTPUT_PATH> : Output path
+    <JOB_ID> : A valid job id.
+    <OUTPUT_PATH> : Output directory path
     """
     config_data, dsl_data = preprocess(**kwargs)
     detect_utils.check_config(config=config_data, required_arguments=['job_id', 'output_path'])
@@ -219,3 +221,22 @@ def log(ctx, **kwargs):
         else:
             response = response.json()
     prettify(response.json() if isinstance(response, requests.models.Response) else response)
+
+
+@job.command(short_help="Query Job Data View Command")
+@click.option('-j', '--job_id', metavar="[JOB_ID]", help="Job ID")
+@click.option('-r', '--role', metavar="[ROLE]", help="Role")
+@click.option('-p', '--party_id', metavar="[PARTY_ID]", help="Party ID")
+@click.option('-cpn', '--component_name', metavar="[COMPONENT_NAME]", help="Component Name")
+@click.option('-s', '--status', metavar="[STATUS]", help="Job Status")
+@click.pass_context
+def view(ctx, **kwargs):
+    """
+    - COMMAND DESCRIPTION:
+
+    \b
+    Query job data view information by filters.
+    Used to be 'data_view_query'.
+    """
+    config_data, dsl_data = preprocess(**kwargs)
+    access_server('post', ctx, 'job/data/view/query', config_data)

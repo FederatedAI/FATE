@@ -18,14 +18,18 @@ from fate_flow.utils import detect_utils
 from fate_flow.utils.cli_utils import preprocess, access_server
 
 
-@click.group(short_help="Priviledge Operations")
+@click.group(short_help="Privilege Operations")
 @click.pass_context
-def priviledge(ctx):
-    """Priviledge Operations Descriptions"""
+def privilege(ctx):
+    """
+    \b
+    Provides numbers of privilege operational commands, including grant, query and delete.
+    For more details, please check out the help text.
+    """
     pass
 
 
-@priviledge.command(short_help="Query priviledge")
+@privilege.command(short_help="Query Privilege Command")
 @click.argument('src_party_id', metavar='<SRC_PARTY_ID>')
 @click.argument('src_role', metavar='<SRC_ROLE>')
 @click.pass_context
@@ -33,7 +37,7 @@ def query(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    Query priviledge information.
+    Query privilege information.
 
     - REQUIRED ARGUMENTS:
 
@@ -46,7 +50,7 @@ def query(ctx, **kwargs):
     access_server('post', ctx, 'permission/query/privilege', config_data)
 
 
-@priviledge.command(short_help="Grant priviledge")
+@privilege.command(short_help="Grant Privilege Command")
 @click.argument('src_party_id', metavar='<SRC_PARTY_ID>')
 @click.argument('src_role', metavar='<SRC_ROLE>')
 @click.pass_context
@@ -54,7 +58,7 @@ def grant(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    Grant priviledge.
+    Grant privilege command.
 
     - REQUIRED ARGUMENTS:
 
@@ -67,7 +71,7 @@ def grant(ctx, **kwargs):
     access_server('post', ctx, 'permission/grant/privilege', config_data)
 
 
-@priviledge.command(short_help="Delete priviledge")
+@privilege.command(short_help="Delete Privilege Command")
 @click.argument('src_party_id', metavar='<SRC_PARTY_ID>')
 @click.argument('src_role', metavar='<SRC_ROLE>')
 @click.pass_context
@@ -75,7 +79,7 @@ def delete(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    Delete priviledge.
+    Delete privilege Command.
 
     - REQUIRED ARGUMENTS:
 

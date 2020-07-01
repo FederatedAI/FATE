@@ -15,34 +15,56 @@
 #
 import os
 import click
-import requests
 from contextlib import closing
 from fate_flow.utils import detect_utils
-from fate_flow.utils.cli_utils import preprocess, download_from_request, access_server
+from fate_flow.utils.cli_utils import prettify, preprocess, download_from_request, access_server
+from fate_flow.utils.job_utils import get_job_dsl_parser_by_job_id
 
 
 @click.group(short_help="Component Operations")
 @click.pass_context
 def component(ctx):
-    """Component Operations"""
+    """
+    \b
+    Provides numbers of component operational commands, including metrics, parameters and etc.
+    For more details, please check out the help text.
+    """
     pass
 
 
-@component.command(short_help="List Components")
-@click.option('-l', '--limit', default=20, metavar='<LIMIT>', help='limit count, defaults is 20')
+@component.command(short_help="List Components Command")
+@click.argument('job_id', metavar="<JOB_ID>")
 @click.pass_context
 def list(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    List Component description
+    List components of a specified job.
+
+    - REQUIRED ARGUMENTS:
+
+    \b
+    <JOB_ID> : A valid job id
 
     """
-    # TODO executed method
-    click.echo('Limit number is: %d' % kwargs.get('limit'))
+    config_data, dsl_data = preprocess(**kwargs)
+    access_server('post', ctx, 'tracking/component/list', config_data)
+    # try:
+    #     parser = get_job_dsl_parser_by_job_id(kwargs.get('job_id'))
+    #     if parser:
+    #         prettify({
+    #             'job_id': kwargs.get('job_id'),
+    #             'components': [key for key in parser.get_dsl().get('components').keys()]
+    #         })
+    #     else:
+    #         prettify({'retcode': 100,
+    #                   'retmsg': 'No job matched, please make sure the job id is valid.'})
+    # except Exception as e:
+    #     prettify({'retcode': 100,
+    #               'retmsg': e.args})
 
 
-@component.command(short_help="Component Metrics")
+@component.command(short_help="Component Metrics Command")
 @click.argument('job_id', metavar="<JOB_ID>")
 @click.argument('role', metavar="<ROLE>")
 @click.argument('party_id', metavar="<PARTY_ID>")
@@ -52,11 +74,12 @@ def metrics(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
+    Query the List of Metrics.
 
     - REQUIRED ARGUMENTS:
 
     \b
-    <JOB_ID> : Job ID
+    <JOB_ID> : A valid job id
     <ROLE> : Role
     <PARTY_ID> : Party ID
     <COMPONENT_NAME> : Component Name
@@ -67,7 +90,7 @@ def metrics(ctx, **kwargs):
     access_server('post', ctx, 'tracking/component/metrics', config_data)
 
 
-@component.command(short_help="Component Metric All")
+@component.command(short_help="Component Metric All Command")
 @click.argument('job_id', metavar="<JOB_ID>")
 @click.argument('role', metavar="<ROLE>")
 @click.argument('party_id', metavar="<PARTY_ID>")
@@ -77,12 +100,12 @@ def metric_all(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    Query all metric data.
+    Query All Metric Data.
 
     - REQUIRED ARGUMENTS:
 
     \b
-    <JOB_ID> : Job ID
+    <JOB_ID> : A valid job id
     <ROLE> : Role
     <PARTY_ID> : Party ID
     <COMPONENT_NAME> : Component Name
@@ -93,7 +116,23 @@ def metric_all(ctx, **kwargs):
     access_server('post', ctx, 'tracking/component/metric/all', config_data)
 
 
-@component.command(short_help="Component Parameters")
+@component.command(short_help="Delete Metric Command")
+@click.option('-d', '--date', metavar="[DATE]", help="An 8-Digit Valid Date, Format Like 'YYYYMMDD'")
+@click.option('-j', '--job_id', metavar="[JOB_ID]", help="Job ID")
+@click.pass_context
+def metric_delete(ctx, **kwargs):
+    """
+    - COMMAND DESCRIPTION:
+
+    \b
+    Delete specified metric.
+    If you input two optional argument, the 'date' argument will be detected in priority.
+    """
+    config_data, dsl_data = preprocess(**kwargs)
+    access_server('post', ctx, 'tracking/component/metric/delete', config_data)
+
+
+@component.command(short_help="Component Parameters Command")
 @click.argument('job_id', metavar="<JOB_ID>")
 @click.argument('role', metavar="<ROLE>")
 @click.argument('party_id', metavar="<PARTY_ID>")
@@ -103,7 +142,7 @@ def parameters(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    Query the parameters of this component.
+    Query the parameters of a specified component.
 
     - REQUIRED ARGUMENTS:
 
@@ -119,7 +158,7 @@ def parameters(ctx, **kwargs):
     access_server('post', ctx, 'tracking/component/parameters', config_data)
 
 
-@component.command(short_help="Component Output Data")
+@component.command(short_help="Component Output Data Command")
 @click.argument('job_id', metavar="<JOB_ID>")
 @click.argument('role', metavar="<ROLE>")
 @click.argument('party_id', metavar="<PARTY_ID>")
@@ -131,16 +170,16 @@ def output_data(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    Download the output data of this component.
+    Download the Output Data of A Specified Component.
 
     - REQUIRED ARGUMENTS:
 
     \b
-    <JOB_ID> : Job ID
+    <JOB_ID> : A valid job id
     <ROLE> : Role
     <PARTY_ID> : Party ID
     <COMPONENT_NAME> : Component Name
-    <OUTPUT_PATH> : Config Output Path
+    <OUTPUT_PATH> : Output directory path
     """
     config_data, dsl_data = preprocess(**kwargs)
     detect_utils.check_config(config=config_data,
@@ -163,10 +202,10 @@ def output_data(ctx, **kwargs):
                             'retmsg': 'download failed, please check if the parameters are correct'}
         else:
             response = response.json()
-    click.echo(response.json() if isinstance(response, requests.models.Response) else response)
+    prettify(response)
 
 
-@component.command(short_help="Component Output Model")
+@component.command(short_help="Component Output Model Command")
 @click.argument('job_id', metavar="<JOB_ID>")
 @click.argument('role', metavar="<ROLE>")
 @click.argument('party_id', metavar="<PARTY_ID>")
@@ -176,12 +215,12 @@ def output_model(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    Query this component model.
+    Query the Model of A Speicied Component.
 
     - REQUIRED ARGUMENTS:
 
     \b
-    <JOB_ID> : Job ID
+    <JOB_ID> : A valid job id
     <ROLE> : Role
     <PARTY_ID> : Party ID
     <COMPONENT_NAME> : Component Name
@@ -192,7 +231,7 @@ def output_model(ctx, **kwargs):
     access_server('post', ctx, 'tracking/component/output/model', config_data)
 
 
-@component.command(short_help="Component Output Data Table")
+@component.command(short_help="Component Output Data Table Command")
 @click.argument('job_id', metavar="<JOB_ID>")
 @click.argument('role', metavar="<ROLE>")
 @click.argument('party_id', metavar="<PARTY_ID>")
@@ -202,12 +241,12 @@ def output_data_table(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    View table name and namespace.
+    View Table Name and Namespace.
 
     - REQUIRED ARGUMENTS:
 
     \b
-    <JOB_ID> : Job ID
+    <JOB_ID> : A valid job id
     <ROLE> : Role
     <PARTY_ID> : Party ID
     <COMPONENT_NAME> : Component Name

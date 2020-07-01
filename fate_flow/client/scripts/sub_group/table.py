@@ -21,11 +21,15 @@ from fate_flow.utils.cli_utils import preprocess, access_server
 @click.group(short_help="Table Operations")
 @click.pass_context
 def table(ctx):
-    """Table Operations Descriptions"""
+    """
+    \b
+    Provides numbers of table operational commands, including info and delete.
+    For more details, please check out the help text.
+    """
     pass
 
 
-@table.command(short_help="Query table information")
+@table.command(short_help="Query Table Command")
 @click.argument('namespace', metavar='<NAMESPACE>')
 @click.argument('table_name', metavar='<TABLE_NAME>')
 @click.pass_context
@@ -33,7 +37,7 @@ def info(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    Query table information
+    Query Table Information.
 
     - REQUIRED ARGUMENTS:
 
@@ -46,20 +50,21 @@ def info(ctx, **kwargs):
     access_server('post', ctx, 'table/table_info', config_data)
 
 
-@table.command(short_help="Delete table.")
+@table.command(short_help="Delete Table Command")
+# @click.argument('namespace', metavar='<NAMESPACE>')
+# @click.argument('table_name', metavar='<TABLE_NAME>')
 @click.option('-n', '--namespace', metavar='[NAMESPACE]', help='Namespace')
-@click.option('-t', '--table_name', metavar='[TABLE]', help='Table Name')
-@click.option('-j', '--job_id', metavar='[JOB_ID]', help='Job ID')
+@click.option('-t', '--table_name', metavar='[TABLE_NAME]', help='Table Name')
+@click.option('-j', '--job_id', metavar='[JOB_ID]', help='A valid job id')
 @click.option('-r', '--role', metavar='[ROLE]', help='Role')
-@click.option('-p', '--party_id', metavar='[PARTY_ID]', help='Party ID')
+@click.option('-p', '--party_id', metavar='[PARTY_ID]', help='Party id')
 @click.option('-cpn', '--component_name', metavar='[COMPONENT_NAME]', help='Component Name')
 @click.pass_context
 def delete(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    Delete table.
+    Delete A Specified Table.
     """
     config_data, dsl_data = preprocess(**kwargs)
-    access_server('post', ctx, 'model/bind', config_data)
     access_server('post', ctx, 'table/delete', config_data)

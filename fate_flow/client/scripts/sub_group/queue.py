@@ -20,18 +20,20 @@ from fate_flow.utils.cli_utils import preprocess, access_server
 @click.group(short_help="Queue Operations")
 @click.pass_context
 def queue(ctx):
-    """Queue Operations"""
+    """
+    \b
+    Provides a queue operational command, which is 'clean'.
+    For more details, please check out the help text.
+    """
     pass
 
 
-@queue.command(short_help="Clean Queue")
+@queue.command(short_help="Clean Queue Command")
 @click.pass_context
-def clean(ctx, **kwargs):
+def clean(ctx):
     """
     - COMMAND DESCRIPTION:
 
     Queue Clean Command
     """
-    # config_data, dsl_data = preprocess(**kwargs)
-    # access_server('post', ctx, 'job/clean/queue', config_data)
-    click.echo('Not Done Yet')
+    access_server('post', ctx, "job/clean/queue", json={})

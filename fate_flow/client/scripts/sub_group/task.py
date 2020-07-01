@@ -21,12 +21,16 @@ from fate_flow.utils.cli_utils import preprocess, access_server, prettify
 @click.group(short_help="Task Operations")
 @click.pass_context
 def task(ctx):
-    """Task Operations Descriptions"""
+    """
+    \b
+    Provides numbers of task operational commands, including list and query.
+    For more details, please check out the help text.
+    """
     pass
 
 
-@task.command(short_help="List Task")
-@click.option('-l', '--limit', default=20, metavar='[LIMIT]', help='Limit count, defaults equals to 20')
+@task.command(short_help="List Task Command")
+@click.option('-l', '--limit', default=10, metavar='[LIMIT]', help='Limit count, default is 10')
 @click.pass_context
 def list(ctx, **kwargs):
     """
@@ -35,11 +39,11 @@ def list(ctx, **kwargs):
     List Task description
 
     """
-    # TODO executed method
-    click.echo('Limit number is: %d' % kwargs.get('limit'))
+    config_data, dsl_data = preprocess(**kwargs)
+    access_server('post', ctx, 'job/list/task', config_data)
 
 
-@task.command(short_help="Query Task")
+@task.command(short_help="Query Task Command")
 @click.option('-j', '--job_id', metavar="[JOB_ID]", help="Job ID")
 @click.option('-p', '--party_id', metavar="[PARTY_ID]", help="Party ID")
 @click.option('-r', '--role', metavar="[ROLE]", help="Role")
@@ -50,8 +54,7 @@ def query(ctx, **kwargs):
     """
     - COMMAND DESCRIPTION:
 
-    Query Task
-
+    Query Task Command.
     """
     config_data, dsl_data = preprocess(**kwargs)
     response = access_server('post', ctx, 'job/task/query', config_data, False)
