@@ -37,7 +37,7 @@ class HeteroDataSplitHost(DataSplitter):
         id_test = self.transfer_variable.id_test.get(idx=0)
         id_validate = self.transfer_variable.id_validate.get(idx=0)
 
-        train_data, validate_data, test_data = self.split_data(data_inst, id_train, id_test, id_validate)
+        train_data, validate_data, test_data = self.split_data(data_inst, id_train, id_validate, id_test)
 
         self.callback_count_info(id_train, id_validate, id_test)
         self.callback_ratio_info()
@@ -71,7 +71,7 @@ class HeteroDataSplitGuest(DataSplitter):
         self.transfer_variable.id_test.remote(obj=id_test, role=consts.HOST, idx=-1)
         self.transfer_variable.id_validate.remote(obj=id_validate, role=consts.HOST, idx=-1)
 
-        train_data, validate_data, test_data = self.split_data(data_inst, id_train, id_test, id_validate)
+        train_data, validate_data, test_data = self.split_data(data_inst, id_train, id_validate, id_test)
 
         self.callback_count_info(id_train, id_validate, id_test)
         self.callback_ratio_info()

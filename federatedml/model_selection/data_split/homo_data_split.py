@@ -41,7 +41,7 @@ class HomoDataSplitHost(DataSplitter):
         id_test, id_validate, y_test, y_validate = self._split(id_test_validate, y_test_validate,
                                                  test_size=validate_size, train_size=test_size)
 
-        train_data, validate_data, test_data = self.split_data(data_inst, id_train, id_test, id_validate)
+        train_data, validate_data, test_data = self.split_data(data_inst, id_train, id_validate, id_test)
 
         self.callback_count_info(id_train, id_validate, id_test)
         self.callback_ratio_info()
@@ -72,7 +72,7 @@ class HomoDataSplitGuest(DataSplitter):
         id_test, id_validate, y_test, y_validate = self._split(id_test_validate, y_test_validate,
                                                  test_size=validate_size, train_size=test_size)
 
-        train_data, validate_data, test_data = self.split_data(data_inst, id_train, id_test, id_validate)
+        train_data, validate_data, test_data = self.split_data(data_inst, id_train, id_validate, id_test)
 
         self.callback_count_info(id_train, id_validate, id_test)
         self.callback_ratio_info()

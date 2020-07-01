@@ -239,7 +239,7 @@ class DataSplitter(ModelBase):
     def _match_id(data_inst, ids):
         return data_inst.filter(lambda k, v: k in ids)
 
-    def split_data(self, data_inst, id_train, id_test, id_validate):
+    def split_data(self, data_inst, id_train, id_validate, id_test):
         train_data = DataSplitter._match_id(data_inst, id_train)
         validate_data = DataSplitter._match_id(data_inst, id_validate)
         test_data = DataSplitter._match_id(data_inst, id_test)
