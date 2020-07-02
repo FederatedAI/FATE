@@ -31,6 +31,7 @@ from federatedml.secureprotol.iterative_affine import IterativeAffineCiphertext
 import numpy as np
 import scipy.sparse as sp
 import uuid
+from time import time
 
 LOGGER = log_utils.getLogger()
 
@@ -103,7 +104,7 @@ class FastFeatureHistogram(object):
         # calculation
         # Cnt Matrix
         if use_missing:
-            bin_num_vector = [i for i in range(bin_num)] + [(-1)*use_missing]  # 1 x b
+            bin_num_vector = [i for i in range(bin_num)] + [-1]  # 1 x b
         else:
             bin_num_vector = [i for i in range(bin_num)]
         bin_marker_matrix3d = np.equal.outer(bin_num_vector, feature_matrix)  # b X c X f
@@ -143,8 +144,7 @@ class FastFeatureHistogram(object):
 
     @staticmethod
     def batch_calculate_histogram(kv_iterator, node_map, bin_num, phrase_num, cipher_split_num,
-                                  valid_features, use_missing, zero_as_missing
-                                  ):
+                                  valid_features, use_missing, zero_as_missing):
 
         # initialize
         data_bins_dict = {}
@@ -234,14 +234,20 @@ class FastFeatureHistogram(object):
                     feature_bin_num = len(bin_split_points[fid]) + int(use_missing)
                     histogram = [[] for _ in range(feature_bin_num)]
                     for bid in range(len(bin_split_points[fid])):
-                        histogram[bid].append(get_obj(histograms_dict[nid][0][bid, valid_fid, 0]))
-                        histogram[bid].append(get_obj(histograms_dict[nid][0][bid, valid_fid, 1]))
-                        histogram[bid].append(histograms_dict[nid][1][bid, valid_fid])
+                        grad = histograms_dict[nid][0][bid, valid_fid, 0]
+                        hess = histograms_dict[nid][0][bid, valid_fid, 1]
+                        cnt = histograms_dict[nid][1][bid, valid_fid]
+                        histogram[bid].append(get_obj(grad))
+                        histogram[bid].append(get_obj(hess))
+                        histogram[bid].append(cnt)
 
                     if use_missing:
-                        histogram[-1].append(get_obj(histograms_dict[nid][0][-1, valid_fid, 0]))
-                        histogram[-1].append(get_obj(histograms_dict[nid][0][-1, valid_fid, 1]))
-                        histogram[-1].append(histograms_dict[nid][1][-1, valid_fid])
+                        grad = histograms_dict[nid][0][-1, valid_fid, 0]
+                        hess = histograms_dict[nid][0][-1, valid_fid, 1]
+                        cnt = histograms_dict[nid][1][-1, valid_fid]
+                        histogram[-1].append(get_obj(grad))
+                        histogram[-1].append(get_obj(hess))
+                        histogram[-1].append(cnt)
 
                     buf.append(((nid, fid), (fid, histogram)))
                     valid_fid += 1
