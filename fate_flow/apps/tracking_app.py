@@ -308,8 +308,7 @@ def component_list():
     request_data = request.json
     parser = job_utils.get_job_dsl_parser_by_job_id(job_id=request_data.get('job_id'))
     if parser:
-        return get_json_result(job_id=request_data.get('job_id'),
-                               data={'components': list(parser.get_dsl().get('components').keys())})
+        return get_json_result(data={'components': list(parser.get_dsl().get('components').keys())})
     else:
         return get_json_result(retcode=100, retmsg='No job matched, please make sure the job id is valid.')
 

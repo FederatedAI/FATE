@@ -18,7 +18,6 @@ import click
 from contextlib import closing
 from fate_flow.utils import detect_utils
 from fate_flow.utils.cli_utils import prettify, preprocess, download_from_request, access_server
-from fate_flow.utils.job_utils import get_job_dsl_parser_by_job_id
 
 
 @click.group(short_help="Component Operations")
@@ -49,19 +48,6 @@ def list(ctx, **kwargs):
     """
     config_data, dsl_data = preprocess(**kwargs)
     access_server('post', ctx, 'tracking/component/list', config_data)
-    # try:
-    #     parser = get_job_dsl_parser_by_job_id(kwargs.get('job_id'))
-    #     if parser:
-    #         prettify({
-    #             'job_id': kwargs.get('job_id'),
-    #             'components': [key for key in parser.get_dsl().get('components').keys()]
-    #         })
-    #     else:
-    #         prettify({'retcode': 100,
-    #                   'retmsg': 'No job matched, please make sure the job id is valid.'})
-    # except Exception as e:
-    #     prettify({'retcode': 100,
-    #               'retmsg': e.args})
 
 
 @component.command(short_help="Component Metrics Command")
@@ -129,6 +115,8 @@ def metric_delete(ctx, **kwargs):
     If you input two optional argument, the 'date' argument will be detected in priority.
     """
     config_data, dsl_data = preprocess(**kwargs)
+    if config_data.get('date'):
+        config_data['model'] = config_data.pop('date')
     access_server('post', ctx, 'tracking/component/metric/delete', config_data)
 
 
@@ -164,7 +152,7 @@ def parameters(ctx, **kwargs):
 @click.argument('party_id', metavar="<PARTY_ID>")
 @click.argument('component_name', metavar="<COMPONENT_NAME>")
 @click.argument('output_path', type=click.Path(), metavar="<OUTPUT_PATH>")
-@click.option('-l', '--limit', metavar="[LIMIT]", help='limit count, defaults is 20')
+@click.option('-l', '--limit', metavar="[LIMIT]", default=10, help='limit count, defaults is 10')
 @click.pass_context
 def output_data(ctx, **kwargs):
     """

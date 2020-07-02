@@ -51,8 +51,6 @@ def info(ctx, **kwargs):
 
 
 @table.command(short_help="Delete Table Command")
-# @click.argument('namespace', metavar='<NAMESPACE>')
-# @click.argument('table_name', metavar='<TABLE_NAME>')
 @click.option('-n', '--namespace', metavar='[NAMESPACE]', help='Namespace')
 @click.option('-t', '--table_name', metavar='[TABLE_NAME]', help='Table Name')
 @click.option('-j', '--job_id', metavar='[JOB_ID]', help='A valid job id')
