@@ -194,6 +194,8 @@ class DataSplitter(ModelBase):
                                       metric_meta=MetricMeta(name=metric_name, metric_type=self.metric_type,
                                                              extra_metas=metas))
 
+        metas = {}
+
         train_ratio = train_count / total_count
         validate_ratio = validate_count / total_count
         test_ratio = test_count / total_count
@@ -228,7 +230,7 @@ class DataSplitter(ModelBase):
         metas["test"] = test_freq_dict
 
         if self.split_points is not None:
-            metas["split_points"] = self.split_points[:-1]
+            metas["split_points"] = self.split_points
 
         metric_name = f"{self.metric_name}_label_info"
         metric = [Metric(metric_name, 0)]
