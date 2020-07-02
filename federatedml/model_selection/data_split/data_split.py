@@ -148,30 +148,43 @@ class DataSplitter(ModelBase):
         return binned_y
 
     @staticmethod
-    def get_class_freq(y, split_points=None):
+    def get_class_freq(y, split_points=None, label_names=None):
         """
         get frequency info of a given y set; only called when stratified is true
         :param y: list, y sample
         :param split_points: list, split points used to bin regression values
+        :param label_names: list, label names of all data
         :return: dict
         """
         freq_dict = collections.Counter(y)
+        freq_keys = freq_dict.keys()
+        # continuous label
         if split_points is not None:
             label_count = len(split_points) + 1
-            freq_keys = freq_dict.keys()
             # fill in count for missing bins
             if len(freq_keys) < label_count:
                 for i in range(label_count):
                     if i not in freq_keys:
                         freq_dict[i] = 0
+        # categorical label
+        else:
+            if label_names is None:
+                raise ValueError("No label values collected.")
+            label_count = len(label_names)
+            # fill in count for missing labels
+            if len(freq_keys) < label_count:
+                for label in label_names:
+                    if label not in freq_keys:
+                        freq_dict[label] = 0
         return freq_dict
 
-    def callback_count_info(self, id_train, id_validate, id_test):
+    def callback_count_info(self, id_train, id_validate, id_test, all_metas):
         """
         callback data set count & ratio info for callback
         :param id_train: list, id of data set
         :param id_validate: list, id of data set
         :param id_test: list, id of data set
+        :param all_metas: dict, all meta info
         """
         metas = {}
 
@@ -184,65 +197,72 @@ class DataSplitter(ModelBase):
         test_count = len(id_test)
         metas["test"] = test_count
 
-        total_count = train_count + validate_count + test_count
-        metas["total"] = total_count
+        original_count = train_count + validate_count + test_count
+        metas["original"] = original_count
 
         metric_name = f"{self.metric_name}_count_info"
-        metric = [Metric(metric_name, 0)]
-        self.callback_metric(metric_name=metric_name, metric_namespace=self.metric_namespace, metric_data=metric)
-        self.tracker.set_metric_meta(metric_name=metric_name, metric_namespace=self.metric_namespace,
-                                      metric_meta=MetricMeta(name=metric_name, metric_type=self.metric_type,
-                                                             extra_metas=metas))
+        all_metas[metric_name] = metas
 
         metas = {}
 
-        train_ratio = train_count / total_count
-        validate_ratio = validate_count / total_count
-        test_ratio = test_count / total_count
+        train_ratio = train_count / original_count
+        validate_ratio = validate_count / original_count
+        test_ratio = test_count / original_count
 
         metas["train"] = round(train_ratio, ROUND_NUM)
         metas["validate"] = round(validate_ratio, ROUND_NUM)
         metas["test"] = round(test_ratio, ROUND_NUM)
 
         metric_name = f"{self.metric_name}_ratio_info"
-        metric = [Metric(metric_name, 0)]
-        self.callback_metric(metric_name=metric_name, metric_namespace=self.metric_namespace, metric_data=metric)
-        self.tracker.set_metric_meta(metric_name=metric_name, metric_namespace=self.metric_namespace,
-                                     metric_meta=MetricMeta(name=metric_name, metric_type=self.metric_type,
-                                                            extra_metas=metas))
+        all_metas[metric_name] = metas
 
-    def callback_label_info(self, y_train, y_validate, y_test):
+        return all_metas
+
+    def callback_label_info(self, y_train, y_validate, y_test, all_metas):
         """
         callback data set y info for callback
         :param y_train: list, y
         :param y_validate: list, y
         :param y_test: list, y
+        :param all_metas: dict, all meta info
         """
         metas = {}
+        y_all = y_train + y_validate + y_test
 
-        train_freq_dict = DataSplitter.get_class_freq(y_train, self.split_points)
+        label_names = None
+        if self.split_points is None:
+            label_names = list(set(y_all))
+
+        original_freq_dict = DataSplitter.get_class_freq(y_train, self.split_points, label_names)
+        metas["original"] = original_freq_dict
+
+        train_freq_dict = DataSplitter.get_class_freq(y_train, self.split_points, label_names)
         metas["train"] = train_freq_dict
 
-        validate_freq_dict = DataSplitter.get_class_freq(y_validate, self.split_points)
+        validate_freq_dict = DataSplitter.get_class_freq(y_validate, self.split_points, label_names)
         metas["validate"] = validate_freq_dict
 
-        test_freq_dict = DataSplitter.get_class_freq(y_test, self.split_points)
+        test_freq_dict = DataSplitter.get_class_freq(y_test, self.split_points, label_names)
         metas["test"] = test_freq_dict
 
         if self.split_points is not None:
             metas["split_points"] = self.split_points
             metas["continuous_label"] = True
         else:
+            metas["label_names"] = label_names
             metas["continuous_label"] = False
 
         metric_name = f"{self.metric_name}_label_info"
-        metric = [Metric(metric_name, 0)]
-        self.callback_metric(metric_name=metric_name, metric_namespace=self.metric_namespace, metric_data=metric)
-        self.tracker.set_metric_meta(metric_name=metric_name, metric_namespace=self.metric_namespace,
-                                     metric_meta=MetricMeta(name=metric_name, metric_type=self.metric_type,
-                                                            extra_metas=metas))
+        all_metas[metric_name] = metas
 
-        return metas
+        return all_metas
+
+    def callback(self, metas):
+        metric = [Metric(self.metric_name, 0)]
+        self.callback_metric(metric_name=self.metric_name, metric_namespace=self.metric_namespace, metric_data=metric)
+        self.tracker.set_metric_meta(metric_name=self.metric_name, metric_namespace=self.metric_namespace,
+                                     metric_meta=MetricMeta(name=self.metric_name, metric_type=self.metric_type,
+                                                            extra_metas=metas))
 
     @staticmethod
     def _match_id(data_inst, ids):

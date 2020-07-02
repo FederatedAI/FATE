@@ -43,9 +43,10 @@ class HomoDataSplitHost(DataSplitter):
 
         train_data, validate_data, test_data = self.split_data(data_inst, id_train, id_validate, id_test)
 
-        self.callback_count_info(id_train, id_validate, id_test)
+        all_metas = self.callback_count_info(id_train, id_validate, id_test, {})
         if self.stratified:
-            self.callback_label_info(y_train, y_validate, y_test)
+            all_metas = self.callback_label_info(y_train, y_validate, y_test, all_metas)
+        self.callback(all_metas)
 
         return train_data, validate_data, test_data
 
@@ -73,8 +74,9 @@ class HomoDataSplitGuest(DataSplitter):
 
         train_data, validate_data, test_data = self.split_data(data_inst, id_train, id_validate, id_test)
 
-        self.callback_count_info(id_train, id_validate, id_test)
+        all_metas = self.callback_count_info(id_train, id_validate, id_test, {})
         if self.stratified:
-            self.callback_label_info(y_train, y_validate, y_test)
+            all_metas = self.callback_label_info(y_train, y_validate, y_test, all_metas)
+        self.callback(all_metas)
 
         return train_data, validate_data, test_data
