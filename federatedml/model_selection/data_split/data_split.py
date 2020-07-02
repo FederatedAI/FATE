@@ -231,6 +231,9 @@ class DataSplitter(ModelBase):
 
         if self.split_points is not None:
             metas["split_points"] = self.split_points
+            metas["continuous_label"] = True
+        else:
+            metas["continuous_label"] = False
 
         metric_name = f"{self.metric_name}_label_info"
         metric = [Metric(metric_name, 0)]
