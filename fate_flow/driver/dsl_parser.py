@@ -479,6 +479,27 @@ class DSLParser(object):
                 party_id = runtime_conf["role"].get(role)[i]
                 self.graph_dependency[role][party_id] = dependency_list[i]
 
+    def get_dsl_hierarchical_structure(self):
+        max_depth = [0] * len(self.components)
+        for idx in range(len(self.topo_rank)):
+            vertex = self.topo_rank[idx]
+            for down_name in self.component_downstream[vertex]:
+                down_vertex = self.component_name_index.get(down_name)
+                max_depth[down_vertex] = max(max_depth[down_vertex], max_depth[vertex] + 1)
+
+        max_dep = max(max_depth)
+        hierarchical_structure = [[] for i in range(max_dep + 1)]
+        name_component_maps = {}
+
+        for component in self.components:
+            name = component.get_name()
+            vertex = self.component_name_index.get(name)
+            hierarchical_structure[max_depth[vertex]].append(name)
+
+            name_component_maps[name] = component
+
+        return name_component_maps, hierarchical_structure
+
     def get_dependency(self, role, party_id):
         if role not in self.graph_dependency:
             raise ValueError("role {} is unknown, can not extract component dependency".format(role))

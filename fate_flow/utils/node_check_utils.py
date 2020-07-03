@@ -13,45 +13,30 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import functools
-
 import requests
-from flask import request
+from arch.api.utils import file_utils
 
-from fate_flow.settings import CHECK_NODES_IDENTITY, MANAGER_HOST, MANAGER_PORT, FATE_MANAGER_NODE_CHECK
-
-
-def check_nodes(func):
-    @functools.wraps(func)
-    def _wrapper(*args, **kwargs):
-        if CHECK_NODES_IDENTITY:
-            body = {
-                'partyId': request.json.get('src_party_id'),
-                'role': request.json.get('src_role'),
-                'appKey': request.json.get('appKey'),
-                'appSecret': request.json.get('appSecret')
-            }
-            try:
-                response = requests.post(url="http://{}:{}{}".format(MANAGER_HOST, MANAGER_PORT, FATE_MANAGER_NODE_CHECK), json=body).json()
-                if response['code'] != 0:
-                    raise Exception('Authentication failure: {}'.format(str(response['message'])))
-            except Exception as e:
-                raise Exception('Authentication error: {}'.format(str(e)))
-        return func(*args, **kwargs)
-    return _wrapper
+from fate_flow.settings import CHECK_NODES_IDENTITY, FATE_MANAGER_NODE_CHECK_ENDPOINT, \
+    SERVER_CONF_PATH, SERVERS
+from fate_flow.utils.service_utils import ServiceUtils
 
 
-def nodes_check(src_party_id, src_role, appKey, appSecret):
+def nodes_check(src_party_id, src_role, appKey, appSecret, dst_party_id):
     if CHECK_NODES_IDENTITY:
         body = {
-            'partyId': src_party_id,
+            'srcPartyId': int(src_party_id),
             'role': src_role,
             'appKey': appKey,
-            'appSecret': appSecret
+            'appSecret': appSecret,
+            'dstPartyId': int(dst_party_id),
+            'federatedId': file_utils.load_json_conf_real_time(SERVER_CONF_PATH).get(SERVERS).get('fatemanager', {}).get('federatedId')
         }
         try:
-            response = requests.post(url="http://{}:{}{}".format(MANAGER_HOST, MANAGER_PORT, FATE_MANAGER_NODE_CHECK), json=body).json()
+            response = requests.post(url="http://{}:{}{}".format(
+                ServiceUtils.get_item("fatemanager", "host"),
+                ServiceUtils.get_item("fatemanager", "port"),
+                FATE_MANAGER_NODE_CHECK_ENDPOINT), json=body).json()
             if response['code'] != 0:
-                raise Exception(str(response['message']))
+                raise Exception(str(response['msg']))
         except Exception as e:
-            raise Exception('role {} party id {} Authentication error: {}'.format(src_role, src_party_id, str(e)))
+            raise Exception('role {} party id {} authentication failed: {}'.format(src_role, src_party_id, str(e)))

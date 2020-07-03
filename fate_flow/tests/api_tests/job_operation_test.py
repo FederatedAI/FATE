@@ -7,7 +7,7 @@ from contextlib import closing
 import requests
 from arch.api.utils import file_utils
 
-from fate_flow.settings import HTTP_PORT, API_VERSION
+from fate_flow.settings import HTTP_PORT, API_VERSION, WORK_MODE
 
 
 class TestJobOperation(unittest.TestCase):
@@ -22,6 +22,7 @@ class TestJobOperation(unittest.TestCase):
             dsl_data = json.load(f)
         with open(os.path.join(file_utils.get_project_base_directory(), self.config_path), 'r') as f:
             config_data = json.load(f)
+            config_data['job_parameters']['work_mode'] = WORK_MODE
         response = requests.post("/".join([self.server_url, 'job', 'submit']),
                                  json={'job_dsl': dsl_data, 'job_runtime_conf': config_data})
         self.assertTrue(response.status_code in [200, 201])

@@ -16,10 +16,11 @@
 
 
 class ModelStoreParam:
-    def __init__(self, model_id: str = None, model_version: str = None, store_address: dict = None):
+    def __init__(self, model_id: str = None, model_version: str = None, store_address: dict = None, force_update: bool = False):
         self.model_id = model_id
         self.model_version = model_version
         self.store_address = store_address
+        self.force_update = force_update
 
     def check(self):
         return True
