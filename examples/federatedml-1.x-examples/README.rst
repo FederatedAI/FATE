@@ -187,7 +187,7 @@ We have provided several example dsl files located in the corresponding algorith
 
                 1. data: typically used in data_io, feature_engineering modules and evaluation.
                 2. train_data: Used in homo_lr, hetero_lr and secure_boost. If this field is provided, the task will be parse as a **fit** task
-                3. eval_data: If train_data is provided, this field is optional. In this case, this data will be used as validation set. If train_data is not provided, this task will be parse as a **predict** or **transform** task.
+                3. validate_data: If train_data is provided, this field is optional. In this case, this data will be used as validation set. If train_data is not provided, this task will be parse as a **predict** or **transform** task.
             2. model: There are two possible model-input type:
 
                 1. model: This is a model input by same type of component, used in prediction or transform stage. For example, hetero_binning_0 run as a fit component, and hetero_binning_1 take model output of hetero_binning_0 as input so that can be used to transform or predict.
@@ -474,7 +474,7 @@ This config file is used to config parameters for predicting.
 
    There is an example test config file located in :download:`["./test_predict_conf.json"] <./test_predict_conf.json>`
 3. role: Indicate all the party ids for all roles, it should be same with training process.
-4. role_parameters: Set parameters for each roles. In this case, the "eval_data", which means data going to be predicted, should be filled for both Guest and Host parties.
+4. role_parameters: Set parameters for each roles. In this case, the "validate_data", which means data going to be predicted, should be filled for both Guest and Host parties.
 
 Step3. Start your predict task
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

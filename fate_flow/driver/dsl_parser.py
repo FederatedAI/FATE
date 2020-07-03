@@ -536,7 +536,7 @@ class DSLParser(object):
                             self.predict_dsl["components"][name]["input"]["data"]["data"] = []
                             for input_data in data_set:
                                 if input_data.split(".")[0] == "args":
-                                    new_input_data = "args.eval_data"
+                                    new_input_data = "args.validate_data"
                                     self.predict_dsl["components"][name]["input"]["data"]["data"].append(new_input_data)
                                 else:
                                     pre_name = input_data.split(".")[0]
@@ -553,8 +553,8 @@ class DSLParser(object):
                         elif "train_data" in self.dsl["components"][name]["input"]["data"]:
                             input_data = self.dsl["components"][name]["input"]["data"].get("train_data")[0]
                             if input_data.split(".")[0] == "args":
-                                new_input_data = "args.eval_data"
-                                self.predict_dsl["components"][name]["input"]["data"]["eval_data"] = [new_input_data]
+                                new_input_data = "args.validate_data"
+                                self.predict_dsl["components"][name]["input"]["data"]["validate_data"] = [new_input_data]
                             else:
                                 pre_name = input_data.split(".")[0]
                                 data_suffix = input_data.split(".")[1]
@@ -563,26 +563,26 @@ class DSLParser(object):
                                                                   setting_conf_prefix=setting_conf_prefix):
 
                                     # if self.dsl["components"][pre_name].get("need_deploy", None):
-                                    self.predict_dsl["components"][name]["input"]["data"]["eval_data"] = [input_data]
+                                    self.predict_dsl["components"][name]["input"]["data"]["validate_data"] = [input_data]
                                 else:
-                                    self.predict_dsl["components"][name]["input"]["data"]["eval_data"] = \
+                                    self.predict_dsl["components"][name]["input"]["data"]["validate_data"] = \
                                         output_data_maps[
                                             pre_name][data_suffix]
 
-                        elif "eval_data" in self.dsl["components"][name]["input"]["data"]:
-                            input_data = self.dsl["components"][name]["input"]["data"].get("eval_data")[0]
+                        elif "validate_data" in self.dsl["components"][name]["input"]["data"]:
+                            input_data = self.dsl["components"][name]["input"]["data"].get("validate_data")[0]
                             if input_data.split(".")[0] == "args":
-                                new_input_data = "args.eval_data"
-                                self.predict_dsl["components"][name]["input"]["data"]["eval_data"] = new_input_data
+                                new_input_data = "args.validate_data"
+                                self.predict_dsl["components"][name]["input"]["data"]["validate_data"] = new_input_data
                             else:
                                 pre_name = input_data.split(".")[0]
                                 data_suffix = input_data.split(".")[1]
                                 pre_idx = mapping_list.get(pre_name)
                                 if self.get_need_deploy_parameter(name=pre_name,
                                                                   setting_conf_prefix=setting_conf_prefix):
-                                    self.predict_dsl["components"][name]["input"]["data"]["eval_data"] = [input_data]
+                                    self.predict_dsl["components"][name]["input"]["data"]["validate_data"] = [input_data]
                                 else:
-                                    self.predict_dsl["components"][name]["input"]["data"]["eval_data"] = \
+                                    self.predict_dsl["components"][name]["input"]["data"]["validate_data"] = \
                                         output_data_maps[
                                             pre_name].get(data_suffix)
 
@@ -603,11 +603,11 @@ class DSLParser(object):
 
                 output_data_maps[name] = {}
                 output_data_str = output_data[0]
-                if "train_data" in input_data or "eval_data" in input_data:
+                if "train_data" in input_data or "validate_data" in input_data:
                     if "train_data" in input_data:
                         up_input_data = input_data.get("train_data")[0]
                     else:
-                        up_input_data = input_data.get("eval_data")[0]
+                        up_input_data = input_data.get("validate_data")[0]
                 elif "data" in input_data:
                     up_input_data = input_data.get("data")[0]
                 else:

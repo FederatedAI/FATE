@@ -16,7 +16,7 @@
             "args": {
                 "data": {
                     "train_data": [{"name": "ionosphere_scale_guest", "namespace": "homo"}],
-                    "eval_data": [{"name": "ionosphere_scale_guest", "namespace": "homo"}]
+                    "validate_data": [{"name": "ionosphere_scale_guest", "namespace": "homo"}]
                 }
             },
             "dataio_0":{
@@ -30,7 +30,7 @@
             "args": {
                 "data": {
                     "train_data": [{"name": "ionosphere_scale_host", "namespace": "homo"}],
-                    "eval_data": [{"name": "ionosphere_scale_host", "namespace": "homo"}]
+                    "validate_data": [{"name": "ionosphere_scale_host", "namespace": "homo"}]
                 }
             },
             "dataio_0":{

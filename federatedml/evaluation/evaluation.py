@@ -238,9 +238,9 @@ class Evaluation(ModelBase):
             return
 
         self.eval_results.clear()
-        for (key, eval_data) in data.items():
-            eval_data_local = list(eval_data.collect())
-            split_data_with_label = self.split_data_with_type(eval_data_local)
+        for (key, validate_data) in data.items():
+            validate_data_local = list(validate_data.collect())
+            split_data_with_label = self.split_data_with_type(validate_data_local)
             for mode, data in split_data_with_label.items():
                 eval_result = self.evaluate_metrics(mode, data)
                 self.eval_results[key].append(eval_result)

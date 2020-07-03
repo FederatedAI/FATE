@@ -302,7 +302,7 @@ class HeteroLogisticParam(LogisticParam):
                  decay=1, decay_sqrt=True, sqn_param=StochasticQuasiNewtonParam(),
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  metrics=['auc', 'ks'],
-                 use_first_metric_only=False
+                 use_first_metric_only=False, stepwise_param=StepwiseParam()
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                   batch_size=batch_size,
@@ -314,7 +314,8 @@ class HeteroLogisticParam(LogisticParam):
                                                   validation_freqs=validation_freqs,
                                                   early_stopping_rounds=early_stopping_rounds,
                                                   metrics=metrics,
-                                                  use_first_metric_only=use_first_metric_only)
+                                                  use_first_metric_only=use_first_metric_only,
+                                                  stepwise_param=stepwise_param)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.sqn_param = copy.deepcopy(sqn_param)
 

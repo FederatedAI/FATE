@@ -27,7 +27,7 @@
               "namespace": "dvisits"
             }
           ],
-          "eval_data": [
+          "validate_data": [
             {
               "name": "dvisits_b",
               "namespace": "dvisits"
@@ -110,7 +110,7 @@
               "namespace": "dvisits"
             }
           ],
-          "eval_data": [
+          "validate_data": [
             {
               "name": "dvisits_a",
               "namespace": "dvisits"

@@ -44,7 +44,7 @@
             "module": "HeteroNN",
             "input": {
                 "data": {
-                    "eval_data": [
+                    "validate_data": [
                         "intersection_0.data"
                     ]
                 },
