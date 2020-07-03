@@ -57,7 +57,6 @@ def preprocess(**kwargs):
     config_data = {}
     if 'self' in kwargs:
         kwargs.pop('self')
-    config_data.update(dict((k, v) for k, v in kwargs.items() if v is not None))
 
     if kwargs.get('conf_path'):
         conf_path = os.path.abspath(kwargs.get('conf_path'))
@@ -73,6 +72,12 @@ def preprocess(**kwargs):
                 config_data['local']['party_id'] = kwargs.get('party_id')
             if kwargs.get('role'):
                 config_data['local']['role'] = kwargs.get('role')
+
+    config_data.update(dict((k, v) for k, v in kwargs.items() if v is not None))
+
+    for key in ['job_id', 'party_id']:
+        if isinstance(config_data.get(key), int):
+            config_data[key] = str(config_data[key])
 
     # TODO what if job type is 'predict'
     dsl_data = {}

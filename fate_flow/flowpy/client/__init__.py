@@ -15,6 +15,18 @@
 #
 from fate_flow.flowpy.client.base import BaseFlowClient
 from fate_flow.flowpy.client import api
+from arch.api.utils import file_utils
+from arch.api.utils.core_utils import get_lan_ip
+from fate_flow.settings import SERVERS, ROLE, API_VERSION
+
+server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
+
+
+default_ip = server_conf.get(SERVERS).get(ROLE).get('host')
+if default_ip in ['localhost', '127.0.0.1']:
+    default_ip = get_lan_ip()
+default_port = server_conf.get(SERVERS).get(ROLE).get('http.port')
+default_version = API_VERSION
 
 
 class FlowClient(BaseFlowClient):
@@ -27,6 +39,6 @@ class FlowClient(BaseFlowClient):
     model = api.Model()
     priviledge = api.Priviledge()
 
-    def __init__(self, ip, port, version):
+    def __init__(self, ip=default_ip, port=default_port, version=default_version):
         super().__init__(ip, port, version)
         self.API_BASE_URL = 'http://%s:%s/%s/' % (ip, port, version)
