@@ -55,6 +55,8 @@ class Job(BaseFlowAPI):
                 os.system('sh service.sh start --standalone_node')
                 time.sleep(5)
                 self._post(url='job/submit', json=post_data)
+            else:
+                prettify(response.json())
         except:
             pass
 
