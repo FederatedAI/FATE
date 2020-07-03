@@ -213,3 +213,24 @@ class ModelBase(object):
         if len(data) == 1:
             return list(data.values())[0]
         return data
+
+    @staticmethod
+    def check_schema(schema):
+        # check for illegal/non-printable chars
+        header = schema.get("header", None)
+        sid_name = schema.get("sid_name", None)
+        label_name = schema.get("label_name", None)
+        pass
+
+    @staticmethod
+    def extract_features(data, schema):
+        """
+        extract features of given data, raise error if value in schema not found
+        :param data:
+        :param schema:
+        :return:
+        """
+        pass
+
+    # @TODO: check input & output data both with header
+
