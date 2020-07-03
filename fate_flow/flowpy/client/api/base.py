@@ -20,15 +20,17 @@ class BaseFlowAPI:
     def __init__(self, client=None):
         self._client = client
 
-    def _get(self, url, echo=True, **kwargs):
-        # if getattr(self, 'API_BASE_URL', None):
-        #     kwargs['api_base_url'] = self.API_BASE_URL
-        return self._client.get(url, echo, **kwargs)
+    def _get(self, url, handle_result=True, **kwargs):
+        if handle_result:
+            return self._handle_result(self._client.get(url, **kwargs))
+        else:
+            return self._client.get(url, **kwargs)
 
-    def _post(self, url, echo=True, **kwargs):
-        # if getattr(self, 'API_BASE_URL', None):
-        #     kwargs['api_base_url'] = self.API_BASE_URL
-        return self._client.post(url, echo, **kwargs)
+    def _post(self, url, handle_result=True, **kwargs):
+        if handle_result:
+            return self._handle_result(self._client.post(url, **kwargs))
+        else:
+            return self._client.post(url, **kwargs)
 
     def _handle_result(self, response):
         return self._client._handle_result(response)

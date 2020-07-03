@@ -18,7 +18,7 @@ import re
 from contextlib import closing
 from arch.api.utils import file_utils
 from fate_flow.flowpy.client.api.base import BaseFlowAPI
-from fate_flow.flowpy.utils import prettify, preprocess
+from fate_flow.flowpy.utils import preprocess
 
 
 class Model(BaseFlowAPI):
@@ -56,7 +56,7 @@ class Model(BaseFlowAPI):
             raise FileNotFoundError('Invalid conf path, file not exists.')
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
-        with closing(self._get(url='model/export', echo=False, json=config_data, stream=True)) as response:
+        with closing(self._get(url='model/export', handle_result=False, json=config_data, stream=True)) as response:
             if response.status_code == 200:
                 archive_file_name = re.findall("filename=(.+)", response.headers["Content-Disposition"])[0]
                 os.makedirs(config_data["output_path"], exist_ok=True)
@@ -70,7 +70,7 @@ class Model(BaseFlowAPI):
                             'retmsg': 'download successfully, please check {}'.format(archive_file_path)}
             else:
                 response = response.json()
-        prettify(response)
+        return response
 
     def store(self, conf_path):
         if not os.path.exists(conf_path):
