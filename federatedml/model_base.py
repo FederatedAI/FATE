@@ -100,7 +100,6 @@ class ModelBase(object):
         self.check_consistency()
 
 
-
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary",
                              pos_label=1)
@@ -215,11 +214,21 @@ class ModelBase(object):
         return data
 
     @staticmethod
+    def check_isprintable(string, type):
+        if not string.isprintable():
+            raise ValueError(f"Non-printable string {string} encountered in {type}."
+                             f"Please check schema of input data.")
+        return
+
+    @staticmethod
     def check_schema(schema):
         # check for illegal/non-printable chars
+        # allow non-ascii chars
         header = schema.get("header", None)
+
         sid_name = schema.get("sid_name", None)
         label_name = schema.get("label_name", None)
+
         pass
 
     @staticmethod
@@ -231,6 +240,3 @@ class ModelBase(object):
         :return:
         """
         pass
-
-    # @TODO: check input & output data both with header
-
