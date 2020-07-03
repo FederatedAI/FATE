@@ -99,13 +99,7 @@ class JobInvoker(object):
             with open(submit_path, "w") as fout:
                 fout.write(json.dumps(submit_conf))
 
-            cmd = ["python", FATE_FLOW_CLIENT,
-                   "-f", JobFunc.UPLOAD,
-                   "-c", submit_path,
-                   "-drop", str(drop)
-                  ]
-
-            result = self._run_cmd(cmd)
+            result = self.client.data.upload(conf_path=submit_path, verbose=0, drop=drop)
             try:
                 result = json.loads(result)
                 if 'retcode' not in result or result["retcode"] != 0:
@@ -122,6 +116,7 @@ class JobInvoker(object):
         return job_id, data
 
     def monitor_job_status(self, job_id, role, party_id):
+        party_id = str(party_id)
         while True:
             ret_code, ret_msg, data = self.query_job(job_id, role, party_id)
             status = data["f_status"]
@@ -142,13 +137,8 @@ class JobInvoker(object):
             time.sleep(conf.TIME_QUERY_FREQS)
 
     def query_job(self, job_id, role, party_id):
-        cmd = ["python", FATE_FLOW_CLIENT,
-               "-f", JobFunc.JOB_STATUS,
-               "-j", job_id,
-               "-r", role,
-               "-p", str(party_id)]
-
-        result = self._run_cmd(cmd)
+        party_id=str(party_id)
+        result = self.client.job.query(job_id=job_id, role=role, party_id=party_id)
         try:
             result = json.loads(result)
             if 'retcode' not in result:
@@ -163,14 +153,9 @@ class JobInvoker(object):
             raise ValueError("query job result is {}, can not parse useful info".format(result))
 
     def get_output_data_table(self, job_id, cpn_name, role, party_id):
-        job_invoker = JobInvoker()
-        cmd = ["python", FATE_FLOW_CLIENT,
-               "-f", JobFunc.COMPONENT_OUTPUT_DATA_TABLE,
-               "-j", job_id,
-               "-r", role,
-               "-p", str(party_id),
-               "-cpn", cpn_name]
-        result = job_invoker._run_cmd(cmd)
+        party_id=str(party_id)
+        result = self.client.component.output_data_table(job_id=job_id, role=role,
+                                                         party_id=party_id, component_name=cpn_name)
         try:
             result = json.loads(result)
             if 'retcode' not in result or result["retcode"] != 0:
@@ -184,14 +169,9 @@ class JobInvoker(object):
         return data
 
     def query_task(self, job_id, cpn_name, role, party_id):
-        cmd = ["python", FATE_FLOW_CLIENT,
-               "-f", JobFunc.SUBMIT_JOB,
-               "-j", job_id,
-               "-cpn", cpn_name,
-               "-r", role,
-               "-p", party_id]
-
-        result = self._run_cmd(cmd)
+        party_id=str(party_id)
+        result = self.client.task.query(job_id=job_id, role=role,
+                                        party_id=party_id, component_name=cpn_name)
         try:
             result = json.loads(result)
             if 'retcode' not in result:
@@ -206,16 +186,10 @@ class JobInvoker(object):
             raise ValueError("query task result is {}, can not parse useful info".format(result))
 
     def get_output_data(self, job_id, cpn_name, role, party_id, limits=None):
+        party_id = str(party_id)
         with tempfile.TemporaryDirectory() as job_dir:
-            cmd = ["python", FATE_FLOW_CLIENT,
-                   "-f", JobFunc.COMPONENT_OUTPUT_DATA,
-                   "-j", job_id,
-                   "-cpn", cpn_name,
-                   "-r", role,
-                   "-p", str(party_id),
-                   "-o", job_dir]
-
-            result = self._run_cmd(cmd)
+            result = self.client.component.output_data(job_id=job_id, role=role,
+                                                       party_id=party_id, component_name=cpn_name)
             result = json.loads(result)
             output_dir = result["directory"]
             # output_data_meta = os.path.join(output_dir, "output_data_meta.json")
@@ -235,15 +209,10 @@ class JobInvoker(object):
 
     def get_model_param(self, job_id, cpn_name, role, party_id):
         result = None
+        party_id = str(party_id)
         try:
-            cmd = ["python", FATE_FLOW_CLIENT,
-                   "-f", JobFunc.COMPONENT_OUTPUT_MODEL,
-                   "-j", job_id,
-                   "-cpn", cpn_name,
-                   "-r", role,
-                   "-p", str(party_id)]
-
-            result = self._run_cmd(cmd)
+            result = self.client.component.output_model(job_id=job_id, role=role,
+                                                        party_id=party_id, component_name=cpn_name)
             result = json.loads(result)
             if "data" not in result:
                 print ("job {}, component {} has no output model param".format(job_id, cpn_name))
@@ -254,15 +223,10 @@ class JobInvoker(object):
 
     def get_metric(self, job_id, cpn_name, role, party_id):
         result = None
+        party_id = str(party_id)
         try:
-            cmd = ["python", FATE_FLOW_CLIENT,
-                   "-f", JobFunc.COMPONENT_METRIC,
-                   "-j", job_id,
-                   "-cpn", cpn_name,
-                   "-r", role,
-                   "-p", str(party_id)]
-
-            result = self._run_cmd(cmd)
+            result = self.client.component.metric_all(job_id=job_id, role=role,
+                                                      party_id=party_id, component_name=cpn_name)
             result = json.loads(result)
             if "data" not in result:
                 print ("job {}, component {} has no output metric".format(job_id, cpn_name))
