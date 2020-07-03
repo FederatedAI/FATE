@@ -18,7 +18,7 @@ import sys
 from arch.api.utils import file_utils
 from fate_flow.flowpy.client.api.base import BaseFlowAPI
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
-from fate_flow.flowpy.utils import preprocess, prettify, start_cluster_standalone_job_server
+from fate_flow.flowpy.utils import preprocess, start_cluster_standalone_job_server
 
 
 class Data(BaseFlowAPI):
@@ -49,44 +49,43 @@ class Data(BaseFlowAPI):
                                 sys.stdout.write('\n')
 
                 data = MultipartEncoderMonitor(data, read_callback)
-                response = self._post(url='data/upload', echo=False, data=data,
+                response = self._post(url='data/upload', data=data,
                                       params=config_data, headers={'Content-Type': data.content_type})
         else:
             raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
                             'please check the path: {}'.format(file_name))
         try:
-            if response.json()['retcode'] == 999:
+            if response['retcode'] == 999:
                 start_cluster_standalone_job_server()
-                self._post(url='data/upload', json=config_data)
+                return self._post(url='data/upload', json=config_data)
             else:
-                prettify(response.json())
+                return response
         except:
             pass
 
     def download(self, conf_path):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
-        response = self._post(url='data/download', echo=False, json=config_data)
+        response = self._post(url='data/download', json=config_data)
         try:
-            if response.json()['retcode'] == 999:
+            if response['retcode'] == 999:
                 start_cluster_standalone_job_server()
-                self._post(url='data/download', json=config_data)
+                return self._post(url='data/download', json=config_data)
             else:
-                prettify(response.json())
+                return response
         except:
             pass
 
     def upload_history(self, limit=10, job_id=None):
-        # TODO check limit
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
-        response = self._post(url='data/upload/history', echo=False, json=config_data)
+        response = self._post(url='data/upload/history', json=config_data)
         try:
-            if response.json()['retcode'] == 999:
+            if response['retcode'] == 999:
                 start_cluster_standalone_job_server()
-                self._post(url='data/upload/history', json=config_data)
+                return self._post(url='data/upload/history', json=config_data)
             else:
-                prettify(response.json())
+                return response
         except:
             pass
 

@@ -44,10 +44,11 @@ class BaseFlowClient:
         self.port = port
         self.version = version
 
-    def _request(self, method, url, echo, **kwargs):
+    def _request(self, method, url, **kwargs):
         request_url = self.API_BASE_URL + url
         try:
             response = self._http.request(method=method, url=request_url, **kwargs)
+            return response
         except Exception as e:
             exc_type, exc_value, exc_traceback_obj = sys.exc_info()
             response = {'retcode': 100, 'retmsg': str(e),
@@ -55,14 +56,6 @@ class BaseFlowClient:
             if 'Connection refused' in str(e):
                 response['retmsg'] = 'Connection refused, Please check if the fate flow service is started'
                 del response['traceback']
-            if echo:
-                print(self._handle_result(response))
-                return
-            return response
-        else:
-            if echo:
-                print(self._handle_result(response))
-                return
             return response
 
     @staticmethod
@@ -75,14 +68,15 @@ class BaseFlowClient:
             return result
 
     def _handle_result(self, response):
-        if not isinstance(response, dict):
-            result = self._decode_result(response)
+        if isinstance(response, requests.models.Response):
+            return response.json()
+        elif isinstance(response, dict):
+            return response
         else:
-            result = response
-        return json.dumps(result, indent=4, ensure_ascii=False)
+            return self._decode_result(response)
 
-    def get(self, url, echo, **kwargs):
-        return self._request(method='get', url=url, echo=echo, **kwargs)
+    def get(self, url, **kwargs):
+        return self._request(method='get', url=url, **kwargs)
 
-    def post(self, url, echo, **kwargs):
-        return self._request(method='post', url=url, echo=echo, **kwargs)
+    def post(self, url, **kwargs):
+        return self._request(method='post', url=url, **kwargs)

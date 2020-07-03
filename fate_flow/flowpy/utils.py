@@ -5,10 +5,6 @@ import typing
 import tarfile
 
 
-def prettify(response):
-    print(json.dumps(response, indent=4, ensure_ascii=False))
-
-
 def start_cluster_standalone_job_server():
     print('use service.sh to start standalone node server....')
     os.system('sh service.sh start --standalone_node')

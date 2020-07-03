@@ -16,7 +16,7 @@
 import os
 from contextlib import closing
 from fate_flow.flowpy.client.api.base import BaseFlowAPI
-from fate_flow.flowpy.utils import prettify, preprocess, check_config, download_from_request
+from fate_flow.flowpy.utils import preprocess, check_config, download_from_request
 
 
 class Component(BaseFlowAPI):
@@ -44,7 +44,7 @@ class Component(BaseFlowAPI):
         config_data, dsl_data = preprocess(**kwargs)
         if config_data.get('date'):
             config_data['model'] = config_data.pop('date')
-        self._post(url='tracking/component/metric/delete', json=config_data)
+        return self._post(url='tracking/component/metric/delete', json=config_data)
 
     def parameters(self, job_id, role, party_id, component_name):
         kwargs = locals()
@@ -64,7 +64,7 @@ class Component(BaseFlowAPI):
                                                                     config_data['party_id'])
         extract_dir = os.path.join(config_data['output_path'], tar_file_name.replace('.tar.gz', ''))
         with closing(self._get(url='tracking/component/output/data/download',
-                               echo=False, json=config_data, stream=True)) as response:
+                               handle_result=False, json=config_data, stream=True)) as response:
             if response.status_code == 200:
                 try:
                     download_from_request(http_response=response, tar_file_name=tar_file_name, extract_dir=extract_dir)
@@ -76,18 +76,18 @@ class Component(BaseFlowAPI):
                                 'retmsg': 'download failed, please check if the parameters are correct'}
             else:
                 response = response.json()
-        prettify(response)
+        return response
 
     def output_model(self, job_id, role, party_id, component_name):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
         check_config(config=config_data,
                      required_arguments=['job_id', 'component_name', 'role', 'party_id'])
-        self._post(url='tracking/component/output/model', json=config_data)
+        return self._post(url='tracking/component/output/model', json=config_data)
 
     def output_data_table(self, job_id, role, party_id, component_name):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
         check_config(config=config_data,
                      required_arguments=['job_id', 'component_name', 'role', 'party_id'])
-        self._post(url='tracking/component/output/data/table', json=config_data)
+        return self._post(url='tracking/component/output/data/table', json=config_data)

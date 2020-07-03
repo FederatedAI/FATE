@@ -22,10 +22,10 @@ class Table(BaseFlowAPI):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
         check_config(config=config_data, required_arguments=['namespace', 'table_name'])
-        self._post(url='table/table_info', json=config_data)
+        return self._post(url='table/table_info', json=config_data)
 
     def delete(self, namespace=None, table_name=None, job_id=None, role=None, party_id=None, component_name=None):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
-        self._post(url='table/delete', json=config_data)
+        return self._post(url='table/delete', json=config_data)
 
