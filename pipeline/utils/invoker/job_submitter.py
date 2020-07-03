@@ -22,10 +22,12 @@ import time
 from pipeline.backend import config as conf
 from pipeline.backend.config import JobStatus
 from pipeline.backend.config import StatusCode
+from fate_flow.settings import IP, HTTP_PORT, API_VERSION
+from fate_flow.flowpy.client import FlowClient
 
 
-FATE_HOME = os.getcwd() + "/../../"
-FATE_FLOW_CLIENT = FATE_HOME + "fate_flow/fate_flow_client.py"
+# FATE_HOME = os.getcwd() + "/../../"
+# FATE_FLOW_CLIENT = FATE_HOME + "fate_flow/fate_flow_client.py"
 
 
 class JobFunc:
@@ -41,7 +43,7 @@ class JobFunc:
 
 class JobInvoker(object):
     def __init__(self):
-        pass
+        self.client = FlowClient(ip=IP, port=HTTP_PORT, version=API_VERSION)
 
     @classmethod
     def _run_cmd(cls, cmd, output_while_running=False):
@@ -72,14 +74,7 @@ class JobInvoker(object):
             with open(submit_path, "w") as fout:
                 fout.write(json.dumps(submit_conf))
 
-            cmd = ["python", FATE_FLOW_CLIENT,
-                   "-f", JobFunc.SUBMIT_JOB,
-                   "-c", submit_path]
-
-            if dsl:
-                cmd.extend(["-d", dsl_path])
-
-            result = self._run_cmd(cmd)
+            result = self.client.job.submit(conf_path=submit_conf, dsl_path=dsl_path)
             try:
                 result = json.loads(result)
                 if 'retcode' not in result or result["retcode"] != 0:
@@ -96,9 +91,9 @@ class JobInvoker(object):
         return job_id, data
 
     def upload_data(self, submit_conf=None, drop=0):
-        if submit_conf:
-            file_path = submit_conf["file"]
-            submit_conf["file"] = os.path.join(FATE_HOME, file_path)
+        # if submit_conf:
+        #    file_path = submit_conf["file"]
+        #    submit_conf["file"] = os.path.join(FATE_HOME, file_path)
         with tempfile.TemporaryDirectory() as job_dir:
             submit_path = os.path.join(job_dir, "job_runtime_conf.json")
             with open(submit_path, "w") as fout:
