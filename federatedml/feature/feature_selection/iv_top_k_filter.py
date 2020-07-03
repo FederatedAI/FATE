@@ -16,9 +16,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import operator
+
 from arch.api.utils import log_utils
 from federatedml.feature.feature_selection.iv_percentile_filter import IVPercentileFilter
-from federatedml.feature.feature_selection.iv_value_select_filter import fit_iv_values
 from federatedml.framework.hetero.sync import selection_info_sync
 from federatedml.param.feature_selection_param import IVPercentileSelectionParam
 from federatedml.protobuf.generated import feature_selection_meta_pb2
@@ -40,38 +41,48 @@ class Guest(IVPercentileFilter):
         if not self.local_only:
             self.host_selection_properties = self.sync_obj.sync_select_cols(suffix=suffix)
 
-        value_threshold = self.get_value_threshold()
-        self.selection_properties = fit_iv_values(self.binning_obj.binning_obj,
-                                                  value_threshold,
-                                                  self.selection_properties)
+        sorted_iv = self.get_sorted_iv()
+        substitute_col_guest = None  # Used if none has been left
+        substitute_col_host = {}
+        for idx, (col_info, iv) in enumerate(sorted_iv):
+            if col_info[0] == 'guest':
+                substitute_col_guest = col_info[1]
+                if idx < self.k:
+                    self.selection_properties.add_left_col_name(col_info[1])
+                self.selection_properties.add_feature_value(col_info[1], iv)
+            else:
+                host_id = col_info[0]
+                substitute_col_host[host_id] = col_info[1]
+                if idx < self.k:
+                    self.host_selection_properties[host_id].add_left_col_name(col_info[1])
+                self.host_selection_properties[host_id].add_feature_value(col_info[1], iv)
+
+        if len(self.selection_properties.all_left_col_names) == 0:
+            self.selection_properties.add_left_col_name(substitute_col_guest)
+
+        for host_id, host_col_name in substitute_col_host.items():
+            if len(self.host_selection_properties[host_id].all_left_col_names) == 0:
+                self.host_selection_properties[host_id].add_left_col_name(host_col_name)
 
         if not self.local_only:
-            for host_id, host_binning_obj in enumerate(self.binning_obj.host_results):
-                fit_iv_values(host_binning_obj,
-                              value_threshold,
-                              self.host_selection_properties[host_id])
             self.sync_obj.sync_select_results(self.host_selection_properties, suffix=suffix)
         return self
 
-    def get_value_threshold(self):
-        total_values = []
+    def get_sorted_iv(self):
+        all_iv_map = {}
         for col_name, col_results in self.binning_obj.binning_obj.bin_results.all_cols_results.items():
             if col_name in self.selection_properties.select_col_names:
-                total_values.append(col_results.iv)
+                all_iv_map[("guest", col_name)] = col_results.iv
 
         if not self.local_only:
-            LOGGER.debug("host_results: {}, host_selection_properties: {}".format(
-                self.binning_obj.host_results, self.host_selection_properties
-            ))
-
             for host_id, host_binning_obj in enumerate(self.binning_obj.host_results):
                 host_select_param = self.host_selection_properties[host_id]
                 for col_name, col_results in host_binning_obj.bin_results.all_cols_results.items():
                     if col_name in host_select_param.select_col_names:
-                        total_values.append(col_results.iv)
-        sorted_value = sorted(total_values, reverse=True)
+                        all_iv_map[(host_id, col_name)] = col_results.iv
 
-        return sorted_value[min(self.k, len(sorted_value) - 1)]
+        result = sorted(all_iv_map.items(), key=operator.itemgetter(1), reverse=True)
+        return result
 
     def get_meta_obj(self, meta_dicts):
         result = feature_selection_meta_pb2.IVTopKSelectionMeta(k=self.k,

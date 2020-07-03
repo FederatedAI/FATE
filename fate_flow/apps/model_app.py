@@ -48,6 +48,7 @@ def load_model():
     load_status = True
     load_status_info = {}
     load_status_msg = 'success'
+    load_status_info['detail'] = {}
     for role_name, role_partys in request_config.get("role").items():
         if role_name == 'arbiter':
             continue
@@ -63,9 +64,12 @@ def load_model():
                                          src_role = initiator_role,
                                          json_body=request_config,
                                          work_mode=request_config['job_parameters']['work_mode'])
-                load_status_info[role_name][_party_id] = {}
-                load_status_info[role_name][_party_id]['retcode'] = response['retcode']
-                load_status_info[role_name][_party_id]['retmsg'] = response['retmsg']
+                load_status_info[role_name][_party_id] = response['retcode']
+                load_status_info['detail'][role_name] = {}
+                detail = {_party_id: {}}
+                detail[_party_id]['retcode'] = response['retcode']
+                detail[_party_id]['retmsg'] = response['retmsg']
+                load_status_info['detail'][role_name].update(detail)
                 if response['retcode']:
                     load_status = False
                     load_status_msg = 'failed'

@@ -83,6 +83,7 @@
     "algorithm_parameters": {
         "homo_nn_0": {
             "config_type": "nn",
+            "encode_label": true,
             "nn_define": [
                 {
                     "layer": "Dense",
@@ -104,7 +105,7 @@
                 "early_stop": "diff",
                 "eps": 0.0001
             },
-            "loss": "mean_squared_error",
+            "loss": "categorical_crossentropy",
             "metrics": [
                 "accuracy"
             ],
