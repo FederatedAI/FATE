@@ -255,6 +255,37 @@ python fate_flow_client.py -f table_delete -j $job_id
 ```bash
 python fate_flow_client.py -f load -c $conf_path
 ```
+- response example:
+```json
+{
+    "data": {
+        "detail": {
+            "guest": {
+                "9999": {
+                    "retcode": 0,
+                    "retmsg": "xxx"
+                }
+            },
+            "host": {
+                "10000": {
+                    "retcode": 0,
+                    "retmsg": "xxx"
+                }
+            }
+        },
+        "guest": {
+            "9999": 0
+        },
+        "host": {
+            "10000": 0
+        }
+    },
+    "jobId": "xxxxxxxxxxxxxxxx",
+    "retcode": 0,
+    "retmsg": "success"
+}
+
+```
 
 
 
@@ -265,7 +296,13 @@ python fate_flow_client.py -f load -c $conf_path
 ```bash
 python fate_flow_client.py -f bind -c $conf_path
 ```
-
+- response example:
+```json
+{
+    "retcode": 0,
+    "retmsg": "service id is xxx"
+}
+```
 
 
 #### store
