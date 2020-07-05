@@ -57,6 +57,8 @@ class HomoLRBase(BaseLogisticRegression):
         self.aggregator.register_aggregator(self.transfer_variable)
         self.optimizer = optimizer_factory(params)
         self.aggregate_iters = params.aggregate_iters
+        self.use_proximal = params.use_proximal
+        self.mu = params.mu
 
     @property
     def use_loss(self):
@@ -88,12 +90,18 @@ class HomoLRBase(BaseLogisticRegression):
         model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept)
         return model_weights
 
-    def _compute_loss(self, data_instances):
+    def _compute_loss(self, data_instances, prev_round_weights):
         f = functools.partial(self.gradient_operator.compute_loss,
                               coef=self.model_weights.coef_,
                               intercept=self.model_weights.intercept_)
         loss = data_instances.mapPartitions(f).reduce(fate_operator.reduce_add)
-        loss_norm = self.optimizer.loss_norm(self.model_weights)
+        if self.use_proximal: # use additional proximal term 
+            loss_norm = self.optimizer.loss_norm(self.model_weights, 
+                                                prev_round_weights)
+        else: 
+            loss_norm = self.optimizer.loss_norm(self.model_weights)
+
+
         if loss_norm is not None:
             loss += loss_norm
         loss /= data_instances.count()

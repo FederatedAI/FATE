@@ -17,6 +17,7 @@
 #  limitations under the License.
 
 import functools
+import copy
 
 from arch.api.utils import log_utils
 from federatedml.framework.homo.procedure import aggregator
@@ -27,6 +28,7 @@ from federatedml.optim.gradient.homo_lr_gradient import LogisticGradient
 from federatedml.util import consts
 from federatedml.util import fate_operator
 from federatedml.util.io_check import assert_io_num_rows_equal
+
 
 LOGGER = log_utils.getLogger()
 
@@ -56,6 +58,8 @@ class HomoLRGuest(HomoLRBase):
         model_weights = self.model_weights
 
         degree = 0
+        self.prev_round_weights = copy.deepcopy(model_weights)
+
         while self.n_iter_ < max_iter + 1:
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
 
@@ -69,7 +73,11 @@ class HomoLRGuest(HomoLRBase):
                     weight.unboxed))
 
                 self.model_weights = LogisticRegressionWeights(weight.unboxed, self.fit_intercept)
-                loss = self._compute_loss(data_instances)
+
+                # store prev_round_weights after aggregation
+                self.prev_round_weights = copy.deepcopy(self.model_weights)
+                # send loss to arbiter
+                loss = self._compute_loss(data_instances, self.prev_round_weights)
                 self.aggregator.send_loss(loss, degree=degree, suffix=(self.n_iter_,))
                 degree = 0
 
@@ -91,7 +99,14 @@ class HomoLRGuest(HomoLRBase):
                 grad /= n
                 LOGGER.debug('iter: {}, batch_index: {}, grad: {}, n: {}'.format(
                     self.n_iter_, batch_num, grad, n))
-                model_weights = self.optimizer.update_model(model_weights, grad, has_applied=False)
+                if self.use_proximal: #use proximal term
+                    model_weights = self.optimizer.update_model(model_weights, grad = grad, 
+                                                                has_applied=False, 
+                                                                prev_round_weights = self.prev_round_weights)
+                else: 
+                    model_weights = self.optimizer.update_model(model_weights, grad = grad, 
+                                                                has_applied=False)
+
                 batch_num += 1
                 degree += n
 
