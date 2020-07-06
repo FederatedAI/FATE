@@ -131,7 +131,7 @@ class HomoLRArbiter(HomoLRBase):
     #     data_statement_dict = list(data_sets.values())[0]
     #     need_eval = False
     #     for data_key in data_sets:
-    #         if 'eval_data' in data_sets[data_key]:
+    #         if 'validate_data' in data_sets[data_key]:
     #             need_eval = True
     #
     #     LOGGER.debug("data_sets: {}, data_statement_dict: {}".format(data_sets, data_statement_dict))

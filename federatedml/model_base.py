@@ -108,7 +108,7 @@ class ModelBase(object):
     def check_consistency(self):
         if not type(self.data_output) in ["DTable", "RDDTable"]:
             return
-        if self.component_properties.input_data_count + self.component_properties.input_eval_data_count != \
+        if self.component_properties.input_data_count + self.component_properties.input_validate_data_count != \
                 self.data_output.count():
             raise ValueError("Input data count does not match with output data count")
 

@@ -18,7 +18,7 @@
 		"guest": {
 			"args": {
 				"data": {
-					"eval_data":[
+					"validate_data":[
 						{
 							"namespace": "hetero_guest_citeulike",
 							"name": "hetero_citeulike_evaluation"
@@ -30,7 +30,7 @@
 		"host": {
 			"args": {
 				"data": {
-					"eval_data": [
+					"validate_data": [
 						{
 							"namespace": "hetero_host_citeulike",
 								"name": "hetero_citeulike_train_host"

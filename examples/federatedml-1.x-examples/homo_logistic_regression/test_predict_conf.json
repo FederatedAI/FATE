@@ -18,14 +18,14 @@
         "guest": {
             "args": {
                 "data": {
-                    "eval_data": [{"name": "homo_breast_guest", "namespace": "homo_breast_guest"}]
+                    "validate_data": [{"name": "homo_breast_guest", "namespace": "homo_breast_guest"}]
                 }
             }
         },
         "host": {
             "args": {
                 "data": {
-                    "eval_data": [{"name": "homo_breast_host", "namespace": "homo_breast_host"}]
+                    "validate_data": [{"name": "homo_breast_host", "namespace": "homo_breast_host"}]
                 }
             }
         }

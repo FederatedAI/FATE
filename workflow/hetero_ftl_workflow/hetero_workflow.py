@@ -78,10 +78,10 @@ class FTLWorkFlow(object):
                              ftl_data_param: FTLDataParam):
         raise NotImplementedError("method init must be define")
 
-    def save_eval_result(self, eval_data):
+    def save_eval_result(self, validate_data):
         LOGGER.info("@ save evaluation result to table with namespace: {0} and name: {1}".format(
             self.workflow_param.evaluation_output_namespace, self.workflow_param.evaluation_output_table))
-        session.parallelize([eval_data],
+        session.parallelize([validate_data],
                             include_key=False,
                             name=self.workflow_param.evaluation_output_table,
                             namespace=self.workflow_param.evaluation_output_namespace,
@@ -94,17 +94,17 @@ class FTLWorkFlow(object):
             self.workflow_param.predict_output_namespace, self.workflow_param.predict_output_table))
         predict_result.save_as(self.workflow_param.predict_output_table, self.workflow_param.predict_output_namespace)
 
-    def evaluate(self, eval_data):
-        if eval_data is None:
-            LOGGER.info("not eval_data!")
+    def evaluate(self, validate_data):
+        if validate_data is None:
+            LOGGER.info("not validate_data!")
             return None
 
-        eval_data_local = eval_data.collect()
+        validate_data_local = validate_data.collect()
         labels = []
         pred_prob = []
         pred_labels = []
         data_num = 0
-        for data in eval_data_local:
+        for data in validate_data_local:
             data_num += 1
             labels.append(data[1][0])
             pred_prob.append(data[1][1])

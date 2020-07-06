@@ -16,7 +16,7 @@
             "args": {
                 "data": {
                     "train_data": [{"name": "default_credit_guest", "namespace": "homo"}],
-                    "eval_data": [{"name": "default_credit_test", "namespace": "homo"}]
+                    "validate_data": [{"name": "default_credit_test", "namespace": "homo"}]
                 }
             },
             "dataio_0":{
@@ -36,7 +36,7 @@
             "args": {
                 "data": {
                     "train_data": [{"name": "default_credit_host1", "namespace": "homo"}, {"name": "default_credit_host2", "namespace": "homo"}],
-                    "eval_data": [{"name": "default_credit_test", "namespace": "homo"}, {"name": "default_credit_test", "namespace": "homo"}]
+                    "validate_data": [{"name": "default_credit_test", "namespace": "homo"}, {"name": "default_credit_test", "namespace": "homo"}]
                 }
             },
             "dataio_0":{

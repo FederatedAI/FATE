@@ -39,7 +39,7 @@
             "input": {
                 "data": {
                     "data": [
-                        "args.eval_data"
+                        "args.validate_data"
                     ]
                 },
                 "model": [

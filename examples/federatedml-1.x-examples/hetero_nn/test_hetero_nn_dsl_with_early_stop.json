@@ -19,7 +19,7 @@
             "input": {
                 "data": {
                     "data": [
-                        "args.eval_data"
+                        "args.validate_data"
                     ]
                 },
                 "model": [
@@ -63,7 +63,7 @@
                     "train_data": [
                         "intersection_0.data"
                     ],
-                    "eval_data": [
+                    "validate_data": [
                         "intersection_1.data"
                     ]
                 }
@@ -77,7 +77,7 @@
             "module": "HeteroNN",
             "input": {
                 "data": {
-                    "eval_data": [
+                    "validate_data": [
                         "intersection_1.data"
                     ]
                 },

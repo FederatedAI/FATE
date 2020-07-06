@@ -27,7 +27,7 @@
                 "namespace": "hetero_svd_t"
               }
             ],
-            "eval_data": [
+            "validate_data": [
               {
                 "name": "hetero_svd_guest_1000",
                 "namespace": "hetero_svd_t"
@@ -58,7 +58,7 @@
                 "namespace": "hetero_svd_t"
               }
             ],
-            "eval_data": [
+            "validate_data": [
               {
                 "name": "hetero_svd_host_1000",
                 "namespace": "hetero_svd_t"

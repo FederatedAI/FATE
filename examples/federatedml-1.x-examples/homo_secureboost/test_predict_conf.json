@@ -18,14 +18,14 @@
         "guest": {
             "args": {
                 "data": {
-                    "eval_data": [{"name": "homo_breast_test", "namespace": "homo"}]
+                    "validate_data": [{"name": "homo_breast_test", "namespace": "homo"}]
                 }
             }
         },
         "host": {
             "args": {
                 "data": {
-                    "eval_data": [{"name": "homo_breast_test", "namespace": "homo"}]
+                    "validate_data": [{"name": "homo_breast_test", "namespace": "homo"}]
                 }
             }
         }

@@ -16,7 +16,7 @@
             "args": {
                 "data": {
                     "train_data": [{"name": "homo_breast_guest", "namespace": "homo"}],
-                    "eval_data": [{"name": "homo_breast_test", "namespace": "homo"}]
+                    "validate_data": [{"name": "homo_breast_test", "namespace": "homo"}]
                 }
             },
             "dataio_0":{
@@ -30,7 +30,7 @@
             "args": {
                 "data": {
                     "train_data": [{"name": "homo_breast_host", "namespace": "homo"}],
-                    "eval_data": [{"name": "homo_breast_test", "namespace": "homo"}]
+                    "validate_data": [{"name": "homo_breast_test", "namespace": "homo"}]
                 }
             },
             "dataio_0":{
