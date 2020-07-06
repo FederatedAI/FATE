@@ -32,7 +32,6 @@ class BaseFlowClient:
         self = super().__new__(cls)
         api_endpoints = inspect.getmembers(self, _is_api_endpoint)
         for name, api in api_endpoints:
-            print('name: {}, api: {}'.format(name, api))
             api_cls = type(api)
             api = api_cls(self)
             setattr(self, name, api)
