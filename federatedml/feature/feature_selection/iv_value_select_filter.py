@@ -98,11 +98,15 @@ class Guest(IVValueSelectFilter):
             self.sync_obj.sync_select_results(self.host_selection_properties, suffix=suffix)
         return self
 
-    def get_meta_obj(self, meta_dicts):
-        result = feature_selection_meta_pb2.IVValueSelectionMeta(value_threshold=self.value_threshold,
-                                                                 local_only=self.local_only)
-        meta_dicts['iv_value_meta'] = result
-        return meta_dicts
+    # def get_meta_obj(self, meta_dicts):
+    #     result = feature_selection_meta_pb2.IVValueSelectionMeta(value_threshold=self.value_threshold,
+    #                                                              local_only=self.local_only)
+    #     meta_dicts['iv_value_meta'] = result
+    #     return meta_dicts
+
+    def get_meta_obj(self):
+        result = feature_selection_meta_pb2.FilterMeta()
+        return result
 
 
 class Host(IVValueSelectFilter):
@@ -131,7 +135,11 @@ class Host(IVValueSelectFilter):
         LOGGER.debug("In fit selected result, left_col_names: {}".format(self.selection_properties.left_col_names))
         return self
 
-    def get_meta_obj(self, meta_dicts):
-        result = feature_selection_meta_pb2.IVValueSelectionMeta(local_only=self.local_only)
-        meta_dicts['iv_value_meta'] = result
-        return meta_dicts
+    # def get_meta_obj(self, meta_dicts):
+    #     result = feature_selection_meta_pb2.IVValueSelectionMeta(local_only=self.local_only)
+    #     meta_dicts['iv_value_meta'] = result
+    #     return meta_dicts
+
+    def get_meta_obj(self):
+        result = feature_selection_meta_pb2.FilterMeta()
+        return result

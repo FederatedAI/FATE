@@ -74,6 +74,7 @@ class SelectionProperties(object):
     def add_left_col_name(self, left_col_name):
         idx = self.col_name_maps.get(left_col_name)
         if idx is None:
+            LOGGER.debug(f"left_col_name: {left_col_name}, col_name_maps: {self.col_name_maps}")
             LOGGER.warning("Adding a col_name that is not exist in header")
             return
         if idx not in self.left_col_indexes:

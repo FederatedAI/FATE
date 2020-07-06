@@ -254,8 +254,6 @@ class CommonFilterParam(BaseParam):
         if self.host_thresholds is not None:
             if not isinstance(self.host_thresholds, list):
                 raise ValueError("IV selection param's host_threshold should be list or None")
-        else:
-            self.host_thresholds = self.threshold
 
         for v in self.select_federated:
             self.check_boolean(v, descr)

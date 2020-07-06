@@ -68,10 +68,11 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         if need_shuffle:
             encrypted_bin_sum = self.binning_obj.shuffle_static_counts(encrypted_bin_sum)
 
-        encrypted_bin_sum = self.bin_inner_param.encode_col_name_dict(encrypted_bin_sum)
+        encrypted_bin_sum = self.bin_inner_param.encode_col_name_dict(encrypted_bin_sum, self)
         send_result = {
             "encrypted_bin_sum": encrypted_bin_sum,
-            "category_names": self.bin_inner_param.encode_col_name_list(self.bin_inner_param.category_names),
+            "category_names": self.bin_inner_param.encode_col_name_list(
+                self.bin_inner_param.category_names, self),
             "bin_method": self.model_param.method,
             "optimal_params": {
                 "metric_method": self.model_param.optimal_binning_param.metric_method,

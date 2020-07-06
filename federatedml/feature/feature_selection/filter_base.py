@@ -61,6 +61,7 @@ class BaseFilterMethod(object):
         raise NotImplementedError("Should not call this function directly")
 
     def set_selection_properties(self, selection_properties):
+        LOGGER.debug(f"In set_selection_properties, header: {selection_properties.header}")
         self.selection_properties = selection_properties
 
     def _keep_one_feature(self, pick_high=True):
@@ -111,5 +112,5 @@ class BaseFilterMethod(object):
     def set_iso_model(self, model):
         pass
 
-    def get_meta_obj(self, meta_dicts):
+    def get_meta_obj(self):
         raise NotImplementedError("Should not call this function directly")

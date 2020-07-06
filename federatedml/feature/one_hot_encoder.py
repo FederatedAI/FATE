@@ -219,10 +219,11 @@ class OneHotEncoder(ModelBase):
             feature = instance.features
             for col_idx, col_name in zip(inner_param.transform_indexes, inner_param.transform_names):
                 pair_obj = col_maps.get(col_name)
-                int_feature = math.ceil(feature[col_idx])
-                if int_feature != feature[col_idx]:
-                    raise ValueError("Onehot input data support integer only")
-                feature_value = int_feature
+                feature_value = feature[col_idx]
+                if not isinstance(feature_value, str):
+                    feature_value = math.ceil(feature_value)
+                    if feature_value != feature[col_idx]:
+                        raise ValueError("Onehot input data support integer or string only")
                 pair_obj.add_value(feature_value)
         return col_maps
 

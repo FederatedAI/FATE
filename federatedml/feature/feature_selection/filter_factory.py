@@ -16,20 +16,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from federatedml.feature.feature_selection.unique_value_filter import UniqueValueFilter
-from federatedml.feature.feature_selection import iv_value_select_filter, iv_percentile_filter
-from federatedml.feature.feature_selection import iv_top_k_filter
-from federatedml.feature.feature_selection.variance_coe_filter import VarianceCoeFilter
-from federatedml.feature.feature_selection.outlier_filter import OutlierFilter
+from arch.api.utils import log_utils
+from federatedml.feature.feature_selection.iso_model_filter import IsoModelFilter, FederatedIsoModelFilter
 from federatedml.feature.feature_selection.manually_filter import ManuallyFilter
 from federatedml.feature.feature_selection.percentage_value_filter import PercentageValueFilter
-from federatedml.param.feature_selection_param import FeatureSelectionParam
+from federatedml.feature.feature_selection.unique_value_filter import UniqueValueFilter
 from federatedml.param import feature_selection_param
-from federatedml.feature.feature_selection.iso_model_filter import IsoModelFilter, FederatedIsoModelFilter
+from federatedml.param.feature_selection_param import FeatureSelectionParam
 from federatedml.util import consts
+
+LOGGER = log_utils.getLogger()
 
 
 def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUEST, model=None):
+    LOGGER.debug(f"Getting filter name: {filter_name}")
+
     if filter_name == consts.UNIQUE_VALUE:
         unique_param = model_param.unique_param
         return UniqueValueFilter(unique_param)
@@ -94,13 +95,26 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
         coe_param.check()
         iso_model = model.isometric_models.get(consts.STATISTIC_MODEL)
         if iso_model is None:
-            raise ValueError("None of binning model has provided when using iv filter")
+            raise ValueError("None of statistic model has provided when using iv filter")
         return IsoModelFilter(coe_param, iso_model)
 
 
     elif filter_name == consts.OUTLIER_COLS:
         outlier_param = model_param.outlier_param
-        return OutlierFilter(outlier_param)
+        new_param = feature_selection_param.CommonFilterParam(
+            metrics=str(int(outlier_param.percentile * 100)) + "%",
+            filter_type='threshold',
+            take_high=False,
+            threshold=outlier_param.upper_threshold
+        )
+        new_param.check()
+        iso_model = model.isometric_models.get(consts.STATISTIC_MODEL)
+        if iso_model is None:
+            raise ValueError("None of statistic model has provided when using iv filter")
+        return IsoModelFilter(new_param, iso_model)
+
+        # outlier_param = model_param.outlier_param
+        # return OutlierFilter(outlier_param)
 
     elif filter_name == consts.MANUALLY_FILTER:
         manually_param = model_param.manually_param

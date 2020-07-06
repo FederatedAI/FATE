@@ -200,7 +200,11 @@ class PercentageValueFilter(BaseFilterMethod):
 
         return result
 
-    def get_meta_obj(self, meta_dicts):
-        result = feature_selection_meta_pb2.PercentageValueFilterMeta(upper_pct=self.upper_pct)
-        meta_dicts['pencentage_value_meta'] = result
-        return meta_dicts
+    # def get_meta_obj(self, meta_dicts):
+    #     result = feature_selection_meta_pb2.PercentageValueFilterMeta(upper_pct=self.upper_pct)
+    #     meta_dicts['pencentage_value_meta'] = result
+    #     return meta_dicts
+
+    def get_meta_obj(self):
+        result = feature_selection_meta_pb2.FilterMeta()
+        return result

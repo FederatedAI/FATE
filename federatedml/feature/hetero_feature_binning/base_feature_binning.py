@@ -164,12 +164,12 @@ class BaseHeteroFeatureBinning(ModelBase):
             values.append(bin_res.iv)
             col_names.append(col_name)
 
-        single_value = feature_binning_param_pb2.SingleFeatureValue(
+        single_value = feature_binning_param_pb2.BinningSingleFeatureValue(
             values=values,
             col_names=col_names,
             value_name="iv"
         )
-        bin_result = feature_binning_param_pb2.OnePartyResult(
+        bin_result = feature_binning_param_pb2.BinningOnePartyResult(
             results=[single_value]
         )
         return bin_result

@@ -20,18 +20,18 @@ package com.webank.ai.fate.core.mlmodel.buffer;
 option java_outer_classname = "StatisticParamProto";
 
 
-message SingleFeatureValue {
+message StatisticSingleFeatureValue {
     repeated double values = 1;
     repeated string col_names = 2;
     string value_name = 3;
 }
 
-message OnePartyResult {
-    repeated SingleFeatureValue results = 1;
+message StatisticOnePartyResult {
+    repeated StatisticSingleFeatureValue results = 1;
 }
 
 message ModelParam {
-    OnePartyResult self_values = 1;
-    map<string, OnePartyResult> host_values = 2;
+    StatisticOnePartyResult self_values = 1;
+    map<string, StatisticOnePartyResult> host_values = 2;
     string model_name = 3;
 }

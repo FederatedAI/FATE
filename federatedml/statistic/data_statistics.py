@@ -146,7 +146,7 @@ class DataStatistics(ModelBase):
 
     def _convert_pb(self, stat_res, stat_name):
         values = [stat_res[col_name] for col_name in self.inner_param.static_names]
-        return statistic_param_pb2.SingleFeatureValue(
+        return statistic_param_pb2.StatisticSingleFeatureValue(
             values=values,
             col_names=self.inner_param.static_names,
             value_name=stat_name
@@ -174,7 +174,7 @@ class DataStatistics(ModelBase):
         )
 
     def _get_param(self):
-        all_result = statistic_param_pb2.OnePartyResult(
+        all_result = statistic_param_pb2.StatisticOnePartyResult(
             results=self.feature_value_pb
         )
         return statistic_param_pb2.ModelParam(

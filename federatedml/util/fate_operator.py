@@ -129,8 +129,15 @@ def generate_anonymous(fid, party_id=None, role=None, model=None):
         party_id = model.component_properties.local_partyid
     if role is None:
         role = model.role
+
+    party_id = str(party_id)
+    fid = str(fid)
     return "_".join([role, party_id, fid])
 
 
 def reconstruct_fid(encoded_name):
-    return encoded_name.split('_')[-1]
+    try:
+        col_index = int(encoded_name.split('_')[-1])
+    except IndexError or ValueError:
+        raise RuntimeError(f"Decode name: {encoded_name} is not a valid value")
+    return col_index
