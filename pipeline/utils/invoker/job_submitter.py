@@ -43,7 +43,7 @@ class JobFunc:
 
 class JobInvoker(object):
     def __init__(self):
-        self.client = FlowClient(ip=IP, port=HTTP_PORT, version=API_VERSION)
+        self.client = FlowClient()
 
     @classmethod
     def _run_cmd(cls, cmd, output_while_running=False):
@@ -62,6 +62,7 @@ class JobInvoker(object):
                     print(line.strip())
 
     def submit_job(self, dsl=None, submit_conf=None):
+        dsl_path = None
         with tempfile.TemporaryDirectory() as job_dir:
             if dsl:
                 dsl_path = os.path.join(job_dir, "job_dsl.json")
@@ -74,9 +75,9 @@ class JobInvoker(object):
             with open(submit_path, "w") as fout:
                 fout.write(json.dumps(submit_conf))
 
-            result = self.client.job.submit(conf_path=submit_conf, dsl_path=dsl_path)
+            result = self.client.job.submit(conf_path=submit_path, dsl_path=dsl_path)
             try:
-                result = json.loads(result)
+                # result = json.loads(result)
                 if 'retcode' not in result or result["retcode"] != 0:
                     raise ValueError
 
@@ -91,17 +92,14 @@ class JobInvoker(object):
         return job_id, data
 
     def upload_data(self, submit_conf=None, drop=0):
-        # if submit_conf:
-        #    file_path = submit_conf["file"]
-        #    submit_conf["file"] = os.path.join(FATE_HOME, file_path)
         with tempfile.TemporaryDirectory() as job_dir:
             submit_path = os.path.join(job_dir, "job_runtime_conf.json")
             with open(submit_path, "w") as fout:
                 fout.write(json.dumps(submit_conf))
 
-            result = self.client.data.upload(conf_path=submit_path, verbose=0, drop=drop)
+            result = self.client.data.upload(conf_path=submit_path, verbose=1, drop=drop)
             try:
-                result = json.loads(result)
+                # result = json.loads(result)
                 if 'retcode' not in result or result["retcode"] != 0:
                     raise ValueError
 
@@ -140,7 +138,7 @@ class JobInvoker(object):
         party_id=str(party_id)
         result = self.client.job.query(job_id=job_id, role=role, party_id=party_id)
         try:
-            result = json.loads(result)
+            # result = json.loads(result)
             if 'retcode' not in result:
                 raise  ValueError("can not query_job")
 
@@ -157,7 +155,7 @@ class JobInvoker(object):
         result = self.client.component.output_data_table(job_id=job_id, role=role,
                                                          party_id=party_id, component_name=cpn_name)
         try:
-            result = json.loads(result)
+            # result = json.loads(result)
             if 'retcode' not in result or result["retcode"] != 0:
                 raise ValueError
 
@@ -173,7 +171,7 @@ class JobInvoker(object):
         result = self.client.task.query(job_id=job_id, role=role,
                                         party_id=party_id, component_name=cpn_name)
         try:
-            result = json.loads(result)
+            # result = json.loads(result)
             if 'retcode' not in result:
                 raise  ValueError("can not query component {}' task status".format(cpn_name))
 
@@ -190,7 +188,7 @@ class JobInvoker(object):
         with tempfile.TemporaryDirectory() as job_dir:
             result = self.client.component.output_data(job_id=job_id, role=role,
                                                        party_id=party_id, component_name=cpn_name)
-            result = json.loads(result)
+            # result = json.loads(result)
             output_dir = result["directory"]
             # output_data_meta = os.path.join(output_dir, "output_data_meta.json")
             output_data = os.path.join(output_dir, "output_data.csv")
@@ -213,7 +211,7 @@ class JobInvoker(object):
         try:
             result = self.client.component.output_model(job_id=job_id, role=role,
                                                         party_id=party_id, component_name=cpn_name)
-            result = json.loads(result)
+            # result = json.loads(result)
             if "data" not in result:
                 print ("job {}, component {} has no output model param".format(job_id, cpn_name))
                 return
@@ -227,7 +225,7 @@ class JobInvoker(object):
         try:
             result = self.client.component.metric_all(job_id=job_id, role=role,
                                                       party_id=party_id, component_name=cpn_name)
-            result = json.loads(result)
+            # result = json.loads(result)
             if "data" not in result:
                 print ("job {}, component {} has no output metric".format(job_id, cpn_name))
                 return
