@@ -22,6 +22,7 @@ from federatedml.feature.instance import Instance
 from federatedml.param.union_param import UnionParam
 from federatedml.model_base import ModelBase
 from federatedml.statistic import data_overview
+from federatedml.util.schema_check import assert_schema_consistent
 
 LOGGER = log_utils.getLogger()
 
@@ -104,6 +105,7 @@ class Union(ModelBase):
         entry = table.first()
         self.is_data_instance = isinstance(entry[1], Instance)
 
+    @assert_schema_consistent
     def fit(self, data):
         LOGGER.debug(f"fit receives data is {data}")
         if not isinstance(data, dict):

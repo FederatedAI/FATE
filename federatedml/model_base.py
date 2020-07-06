@@ -19,6 +19,7 @@ from arch.api.utils import log_utils
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.util.component_properties import ComponentProperties
 from federatedml.util.param_extract import ParamExtract
+from federatedml.statistic.data_overview import header_alignment
 
 LOGGER = log_utils.getLogger()
 
@@ -222,21 +223,31 @@ class ModelBase(object):
 
     @staticmethod
     def check_schema(schema):
-        # check for illegal/non-printable chars
+        # check for illegal/non-printable chars except for space
         # allow non-ascii chars
+        if schema is None:
+            return
         header = schema.get("header", None)
+        if header is not None:
+            for col_name in header:
+                if not col_name.isprintable():
+                    raise ValueError(f"non-printable char found in header column {col_name}, please check.")
 
         sid_name = schema.get("sid_name", None)
-        label_name = schema.get("label_name", None)
+        if sid_name is not None and not sid_name.isprintable():
+            raise ValueError(f"non-printable char found in sid_name {sid_name}, please check.")
 
-        pass
+        label_name = schema.get("label_name", None)
+        if label_name is not None and not label_name.isprintable():
+            raise ValueError(f"non-printable char found in label_name {label_name}, please check.")
 
     @staticmethod
-    def extract_features(data, schema):
+    def align_data_header(data_instances, pre_header):
         """
-        extract features of given data, raise error if value in schema not found
-        :param data:
-        :param schema:
-        :return:
+        align features of given data, raise error if value in given schema not found
+        :param data_instances: data table
+        :param pre_header: list, header of model
+        :return: dtable, aligned data
         """
-        pass
+        result_data = header_alignment(data_instances=data_instances, pre_header=pre_header)
+        return result_data
