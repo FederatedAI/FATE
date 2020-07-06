@@ -32,10 +32,8 @@ class Job(BaseFlowAPI):
         config_data, dsl_data = preprocess(**kwargs)
         return self._post(url='job/data/view/query', json=config_data)
 
-    def submit(self, conf_path, dsl_path):
+    def submit(self, conf_path, dsl_path=None):
         if not os.path.exists(conf_path):
-            raise FileNotFoundError('Invalid conf path, file not exists.')
-        if not os.path.exists(dsl_path):
             raise FileNotFoundError('Invalid conf path, file not exists.')
 
         kwargs = locals()
