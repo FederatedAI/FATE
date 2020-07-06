@@ -16,23 +16,43 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import numpy as np
+
 from federatedml.feature.feature_selection.model_adaptor import isometric_model
 from federatedml.feature.feature_selection.model_adaptor.adapter_base import BaseAdapter
+from federatedml.util import consts
 
 
 class BinningAdapter(BaseAdapter):
 
     def convert(self, model_meta, model_param):
-        result = isometric_model.IsometricModel()
-        self_values = model_param.self_values
-        for value_obj in list(self_values.results):
-            metric_name = value_obj.value_name
-            values = list(value_obj.values)
-            col_names = list(value_obj.col_names)
-            if len(values) != len(col_names):
-                raise ValueError(f"The length of values are not equal to the length"
-                                 f" of col_names with metric_name: {metric_name}")
-            metric_info = isometric_model.SingleMetricInfo(values, col_names)
+        values_dict = dict(model_param.binning_result.binning_result)
+        values = []
+        col_names = []
+        for n, v in values_dict.items():
+            values.append(v.iv)
+            col_names.append(n)
+        host_results = list(model_param.host_results)
+        host_party_ids = [int(x.party_id) for x in host_results]
+        host_values = []
+        host_col_names = []
+        for host_obj in host_results:
+            binning_result = dict(host_obj.binning_result)
+            h_values = []
+            h_col_names = []
+            for n, v in binning_result.items():
+                h_values.append(v.iv)
+                h_col_names.append(n)
+            host_values.append(np.array(h_values))
+            host_col_names.append(h_col_names)
 
-            result.add_metric_value(metric_name, metric_info)
+        single_info = isometric_model.SingleMetricInfo(
+            values=np.array(values),
+            col_names=col_names,
+            host_party_ids=host_party_ids,
+            host_values=host_values,
+            host_col_names=host_col_names
+        )
+        result = isometric_model.IsometricModel()
+        result.add_metric_value(metric_name=consts.IV, metric_info=single_info)
         return result

@@ -152,12 +152,12 @@ class FederatedIsoModelFilter(IsoModelFilter):
                 all_feature_values, col_names = value_obj.union_result()
                 host_threshold = {}
                 for host_party_id in value_obj.host_party_ids:
-                    host_id = self.cpp.host_party_idlist.index(int(host_party_id))
+                    # host_id = self.cpp.host_party_idlist.index(int(host_party_id))
 
                     if self.host_threshold is None:
-                        host_threshold[host_id] = self.threshold[idx]
+                        host_threshold[host_party_id] = self.threshold[idx]
                     else:
-                        host_threshold[host_id] = self.host_threshold[host_id][idx]
+                        host_threshold[host_party_id] = self.host_threshold[host_party_id][idx]
             else:
                 all_feature_values = value_obj.get_values()
                 col_names = value_obj.get_col_names()
@@ -186,10 +186,11 @@ class FederatedIsoModelFilter(IsoModelFilter):
                     if idx in results:
                         self.selection_properties.add_left_col_name(col_name[1])
                 else:
-                    LOGGER.debug(f"host_selection_propertied: {self.host_selection_properties}"
-                                 f"header: {self.host_selection_properties[col_name[0]].header}"
-                                 f" col_name: {col_name}")
-                    host_prop = self.host_selection_properties[col_name[0]]
+                    LOGGER.debug(f"host_selection_propertied: {self.host_selection_properties}")
+                    LOGGER.debug(f" col_name: {col_name}")
+                    host_idx = self.cpp.host_party_idlist.index(int(col_name[0]))
+                    LOGGER.debug(f"header: {self.host_selection_properties[host_idx].header}")
+                    host_prop = self.host_selection_properties[host_idx]
                     if len(self.metrics) == 1:
                         host_prop.add_feature_value(col_name[1], v)
 
