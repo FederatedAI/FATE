@@ -215,7 +215,7 @@ class ModelBase(object):
         return data
 
     @staticmethod
-    def check_schema(schema):
+    def check_schema_content(schema):
         """
         check for illegal/non-printable chars except for space
         allow non-ascii chars
