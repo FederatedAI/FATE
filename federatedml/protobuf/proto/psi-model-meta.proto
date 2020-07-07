@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package com.webank.ai.fate.core.mlmodel.buffer;
+option java_outer_classname = "BoostTreeModelParamProto";
+
+message PSIMeta{
+    int32 max_bin_num = 1;
+}
