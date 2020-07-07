@@ -98,7 +98,6 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
             raise ValueError("None of statistic model has provided when using iv filter")
         return IsoModelFilter(coe_param, iso_model)
 
-
     elif filter_name == consts.OUTLIER_COLS:
         outlier_param = model_param.outlier_param
         new_param = feature_selection_param.CommonFilterParam(
