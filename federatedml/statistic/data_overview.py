@@ -112,6 +112,7 @@ def check_legal_schema(schema):
     label_name = schema.get("label_name", None)
     if label_name is not None and not label_name.isprintable():
         raise ValueError(f"non-printable char found in label_name {label_name}, please check.")
+    LOGGER.debug(f"schema check for illegal char passed.")
 
 
 def get_data_shape(data):
