@@ -67,12 +67,18 @@ class BaseFlowClient:
             return result
 
     def _handle_result(self, response):
-        if isinstance(response, requests.models.Response):
-            return response.json()
-        elif isinstance(response, dict):
-            return response
-        else:
-            return self._decode_result(response)
+        try:
+            if isinstance(response, requests.models.Response):
+                return response.json()
+            elif isinstance(response, dict):
+                return response
+            else:
+                return self._decode_result(response)
+        except json.decoder.JSONDecodeError:
+            res = {'retcode': 100,
+                        'retmsg': "Internal server error. Nothing in response. You may check out the configuration in "
+                                  "'FATE/arch/conf/server_conf.json' and restart fate flow server."}
+            return res
 
     def get(self, url, **kwargs):
         return self._request(method='get', url=url, **kwargs)
