@@ -63,7 +63,7 @@ FATE同样为大数据场景提供了分布式运行部署架构版本。从单�
 我们提供了一个用于快速搭建训练任务的python脚本作为示例。该脚本位于：["./examples/federatedml-1.x-examples"](./examples/federatedml-1.x-examples)
 
 ###  获取模型并检查结果
-FATE提供了名为 fate-flow 的工具用来跟踪组件输出模型或日志。fate-flow的部署和使用可以在 [这里](./fate_flow/README.md) 找到。
+FATE提供了名为 fate-flow 的工具用来跟踪组件输出模型或日志。fate-flow的部署和使用可以在 [这里](./fate_flow/README.rst) 找到。
 
 
 ## 文档资料
