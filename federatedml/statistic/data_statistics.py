@@ -130,8 +130,6 @@ class DataStatistics(ModelBase):
                 for k, v in results.items():
                     results[k] = dict(**v, **stat_res[k])
 
-        print(results)
-
         for query_point in self._quantile_statics:
             q = float(query_point[:-1]) / 100
             res = self.statistic_obj.get_quantile_point(q)
@@ -140,6 +138,7 @@ class DataStatistics(ModelBase):
             if results is None:
                 results = res
             else:
+                LOGGER(f"results: {results}, res: {res}")
                 for k, v in res.items():
                     results[k][query_point] = v
         return results

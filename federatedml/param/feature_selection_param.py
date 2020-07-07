@@ -344,12 +344,12 @@ class FeatureSelectionParam(BaseParam):
     select_names : list of string, default: []
         Specify which columns need to calculated. Each element in the list represent for a column name in header.
 
-    filter_methods: list, ["manually", "iv_filter", "statistic_filter"],
+    filter_methods: list, ["manually", "iv_filter", "statistic_filter", "percentage_value"],
                  default: ["manually"]
 
         The following methods will be deprecated in future version:
         "unique_value", "iv_value_thres", "iv_percentile",
-        "coefficient_of_variation_value_thres", "outlier_cols", "percentage_value"
+        "coefficient_of_variation_value_thres", "outlier_cols"
 
         Specify the filter methods used in feature selection. The orders of filter used is depended on this list.
         Please be notified that, if a percentile method is used after some certain filter method,

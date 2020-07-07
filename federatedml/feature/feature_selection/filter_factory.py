@@ -33,7 +33,17 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
 
     if filter_name == consts.UNIQUE_VALUE:
         unique_param = model_param.unique_param
-        return UniqueValueFilter(unique_param)
+        new_param = feature_selection_param.CommonFilterParam(
+            metrics=consts.STANDARD_DEVIATION,
+            filter_type='threshold',
+            take_high=False,
+            threshold=unique_param.eps
+        )
+        new_param.check()
+        iso_model = model.isometric_models.get(consts.STATISTIC_MODEL)
+        if iso_model is None:
+            raise ValueError("None of statistic model has provided when using iv filter")
+        return IsoModelFilter(new_param, iso_model)
 
     elif filter_name == consts.IV_VALUE_THRES:
         iv_value_param = model_param.iv_value_param

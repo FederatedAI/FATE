@@ -89,10 +89,10 @@ class SummaryStatistics(object):
     def coefficient_of_variance(self):
         mean = np.array([consts.FLOAT_ZERO if math.fabs(x) < consts.FLOAT_ZERO else x \
                          for x in self.mean])
-        return np.fabs(self.std_variance / mean)
+        return np.fabs(self.stddev / mean)
 
     @property
-    def std_variance(self):
+    def stddev(self):
         return np.sqrt(self.variance)
 
 
