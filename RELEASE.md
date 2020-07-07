@@ -1,3 +1,21 @@
+# Release 1.4.2
+## Major Features and Improvements
+> FederatedML
+* Optimize performance of Pearson which increases efficiency by more than twice.
+* Optimize Min-test module: Add secure-boost as optional test task. Set partyid and work_mode as input parameters. Use pre-import data set as input so that improved test process.
+* Support tok_k iv filter in feature selection module.
+* Support filling missing value for tag:value format data in DataIO.
+* Fix bug of lacking one layer of depth of tree in HeteroSecureBoost and support automatically alignment header of input data in predict process
+* Standardize the naming of example data set and add a data pre-import script. 
+
+> FATE-Flow
+* Distinguish between user stop job and system stop job;
+* Optimized some logs;
+* Optimize zookeeper configuration
+* The model supports persistent storage to mysql
+* Push the model to the online service to support the specified storage address (local file and FATEFlowServer interface)
+
+
 # Release 1.4.1
 ## Major Features and Improvements
 > FederatedML
