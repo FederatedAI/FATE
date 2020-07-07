@@ -38,7 +38,7 @@ def job(ctx):
 
 @job.command(short_help="Submit Job Command")
 @click.argument('conf_path', type=click.Path(exists=True), metavar='<CONF_PATH>')
-@click.argument('dsl_path', type=click.Path(exists=True), metavar='<DSL_PATH>')
+@click.argument('dsl_path', type=click.Path(exists=False), default=None, metavar='<DSL_PATH>')
 @click.pass_context
 def submit(ctx, **kwargs):
     """
@@ -52,7 +52,7 @@ def submit(ctx, **kwargs):
 
     \b
     <CONF_PATH> : Configuration file path
-    <DSL_PATH> : Dsl file path
+    <DSL_PATH> : Dsl file path, default is None. If type of job is 'predict', you can leave this feature blank.
     """
     config_data, dsl_data = preprocess(**kwargs)
     post_data = {
