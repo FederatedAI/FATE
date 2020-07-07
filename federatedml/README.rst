@@ -1,6 +1,6 @@
 Federated Machine Learning
 ==========================
-[`中文`_]
+[`中文`]
 
 .. _中文: README_zh.rst
 
