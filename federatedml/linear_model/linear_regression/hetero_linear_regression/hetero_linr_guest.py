@@ -105,13 +105,10 @@ class HeteroLinRGuest(HeteroLinRBase):
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optim_guest_gradient)
                 batch_index += 1
-                LOGGER.debug(
-                    "model_weights, iters: {}, update_model: {}".format(self.n_iter_, self.model_weights.unboxed))
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
 
-            LOGGER.debug("model weights is {}".format(self.model_weights.coef_))
 
             if self.validation_strategy:
                 LOGGER.debug('LinR guest running validation')
@@ -142,6 +139,8 @@ class HeteroLinRGuest(HeteroLinRBase):
         """
         LOGGER.info("Start predict ...")
 
+        self._abnormal_detection(data_instances)
+        data_instances = self.align_data_header(data_instances, self.header)
         data_features = self.transform(data_instances)
         pred = self.compute_wx(data_features, self.model_weights.coef_, self.model_weights.intercept_)
         host_preds = self.transfer_variable.host_partial_prediction.get(idx=-1)
