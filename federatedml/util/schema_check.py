@@ -18,12 +18,13 @@ from arch.api.utils import log_utils
 LOGGER = log_utils.getLogger()
 
 def check_schema(input_schema, output_schema):
-    input_header = input_schema.get("header", None)
-    output_header = output_schema.get("header", None)
     LOGGER.debug(f"input schema: {input_schema} -> output schema: {output_schema}")
     if output_schema is None:
         raise EnvironmentError(
             f"{output_schema} is None while input data has schema.")
+
+    input_header = input_schema.get("header", None)
+    output_header = output_schema.get("header", None)
     if input_header is not None and output_header is None:
         raise EnvironmentError(
             f"{output_header} is None while input data has header.")

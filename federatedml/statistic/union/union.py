@@ -113,6 +113,7 @@ class Union(ModelBase):
         empty_count = 0
         combined_table = None
         combined_schema = None
+        combined_metas = None
         metrics = []
 
         for (key, local_table) in data.items():
@@ -140,6 +141,7 @@ class Union(ModelBase):
                 if self.is_data_instance:
                     combined_schema = combined_table.schema
                 else:
+                    combined_schema = combined_table.schema
                     combined_metas = combined_table.get_metas()
 
             else:
@@ -157,6 +159,7 @@ class Union(ModelBase):
                 if self.is_data_instance:
                     combined_table.schema = combined_schema
                 else:
+                    combined_table.schema = combined_schema
                     combined_metas["namespace"] = combined_table.get_namespace()
                     session.save_data_table_meta(combined_metas, combined_table.get_name(),
                                                  combined_table.get_namespace())
