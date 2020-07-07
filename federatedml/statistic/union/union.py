@@ -131,6 +131,8 @@ class Union(ModelBase):
                 self.is_empty_feature = data_overview.is_empty_feature(local_table)
                 if self.is_empty_feature:
                     LOGGER.warning("Table {} has empty feature.".format(key))
+                else:
+                    self.check_schema_content(local_table.schema)
 
             if combined_table is None:
                 # first table to combine
