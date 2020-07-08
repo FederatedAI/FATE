@@ -31,13 +31,9 @@ Fate exchange部署指南
 
 架构图：
 
-.. raw:: html
-
-   <div style="text-align:center" ,="" align="center">
-
-.. raw:: html
-
-   </div>
+.. image:: ../images/proxy_zh.png
+   :align: center
+   :width: 800
 
 3.组件说明
 ==========
