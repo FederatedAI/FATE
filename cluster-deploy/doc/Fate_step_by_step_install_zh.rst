@@ -35,13 +35,9 @@ Fate Cluster step by step部署指南
 
 架构图：
 
-.. raw:: html
-
-   <div style="text-align:center" ,="" align="center">
-
-.. raw:: html
-
-   </div>
+.. figure:: images/arch_zh.png
+   :align: center
+   :width: 500
 
 3.组件说明
 ==========
