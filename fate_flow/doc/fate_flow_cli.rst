@@ -17,8 +17,8 @@ submit_job
 -  description: submit a pipeline job
 -  parameter:
 
-   -  -c –config: runtime conf path, Required
-   -  -d –dsl: dsl path, Required
+   -  -c -config: runtime conf path, Required
+   -  -d -dsl: dsl path, Required
 
    .. code:: bash
 
@@ -30,7 +30,7 @@ stop_job
 -  description: cancel job or stop job
 -  parameter:
 
-   -  -j –job_id: job id, Required
+   -  -j -job_id: job id, Required
 
    .. code:: bash
 
@@ -42,10 +42,10 @@ query_job
 -  description: query job information by filters
 -  parameter:
 
-   -  -j –job_id: filter by job id, Optional
-   -  -r –role : filter by role, Optional
-   -  -p –party_id: filter by party id, Optional
-   -  -s –status: filter by status, Optional
+   -  -j -job_id: filter by job id, Optional
+   -  -r -role : filter by role, Optional
+   -  -p -party_id: filter by party id, Optional
+   -  -s -status: filter by status, Optional
 
    .. code:: bash
 
@@ -57,10 +57,10 @@ clean_job
 -  description: clean processor,data table and metric data
 -  parameter:
 
-   -  -j –job_id: filter by job id, Optional
-   -  -r –role : filter by role, Optional
-   -  -p –party_id: filter by party id, Optional
-   -  -cpn –component_name: component name, Optional
+   -  -j -job_id: filter by job id, Optional
+   -  -r -role : filter by role, Optional
+   -  -p -party_id: filter by party id, Optional
+   -  -cpn -component_name: component name, Optional
 
    .. code:: bash
 
@@ -69,10 +69,12 @@ clean_job
 data_view_query
 ~~~~~~~~~~~~~~~
 
--description: query data view information by filters - parameter: \* -j
-–job_id: filter by job id, Optional \* -r –role : filter by role,
-Optional \* -p –party_id: filter by party id, Optional \* -s –status:
-filter by status, Optional
+- description: query data view information by filters
+- parameter:
+    - j -job_id: filter by job id, Optional
+    - r -role : filter by role, Optional
+    - p -party_id: filter by party id, Optional
+    - s -status: filter by status, Optional
 
 .. code:: bash
 
@@ -87,10 +89,10 @@ job_config
 -  description: download the configuration of this job
 -  parameter:
 
-   -  -j –job_id: job id, Required
-   -  -r –role : role, Required
-   -  -p –party_id: party id, Required
-   -  -o –output_path: config output directory path, Required
+   -  -j -job_id: job id, Required
+   -  -r -role : role, Required
+   -  -p -party_id: party id, Required
+   -  -o -output_path: config output directory path, Required
 
    .. code:: bash
 
@@ -102,8 +104,8 @@ job_log
 -  description: download the log of this job
 -  parameter:
 
-   -  -j –job_id: job id, Required
-   -  -o –output_path: config output directory path, Required
+   -  -j -job_id: job id, Required
+   -  -o -output_path: config output directory path, Required
 
    .. code:: bash
 
@@ -118,11 +120,11 @@ query_task
 -  description: query task information by filters
 -  parameter:
 
-   -  -j –job_id: filter by job id, Optional
-   -  -cpn –component_name: filter by component name, Optional
-   -  -r –role : filter by role, Optional
-   -  -p –party_id: filter by party id, Optional
-   -  -s –status: filter by status, Optional
+   -  -j -job_id: filter by job id, Optional
+   -  -cpn -component_name: filter by component name, Optional
+   -  -r -role : filter by role, Optional
+   -  -p -party_id: filter by party id, Optional
+   -  -s -status: filter by status, Optional
 
    .. code:: bash
 
@@ -137,10 +139,10 @@ component_parameters
 -  description: query the parameters of this component
 -  parameter:
 
-   -  -j –job_id: job id, Required
-   -  -cpn –component_name: component name, Required
-   -  -r –role: role, Required
-   -  -p –party_id: party id, Required
+   -  -j -job_id: job id, Required
+   -  -cpn -component_name: component name, Required
+   -  -r -role: role, Required
+   -  -p -party_id: party id, Required
 
    .. code:: bash
 
@@ -152,10 +154,10 @@ component_metric_all
 -  description: query all metric data
 -  parameter:
 
-   -  -j –job_id: job id, Required
-   -  -cpn –component_name: component name, Required
-   -  -r –role: role, Required
-   -  -p –party_id: party id, Required
+   -  -j --job_id: job id, Required
+   -  -cpn --component_name: component name, Required
+   -  -r --role: role, Required
+   -  -p --party_id: party id, Required
 
    .. code:: bash
 
@@ -167,10 +169,10 @@ component_metrics
 -  description: query the list of metrics
 -  parameter:
 
-   -  -j –job_id: job id, Required
-   -  -cpn –component_name: component name, Required
-   -  -r –role: role, Required
-   -  -p –party_id: party id, Required
+   -  -j --job_id: job id, Required
+   -  -cpn --component_name: component name, Required
+   -  -r --role: role, Required
+   -  -p --party_id: party id, Required
 
    .. code:: bash
 
@@ -182,10 +184,10 @@ component_output_model
 -  description: query this component model
 -  parameter:
 
-   -  -j –job_id: job id, Required
-   -  -cpn –component_name: component name, Required
-   -  -r –role: role, Required
-   -  -p –party_id: party id, Required
+   -  -j --job_id: job id, Required
+   -  -cpn --component_name: component name, Required
+   -  -r --role: role, Required
+   -  -p --party_id: party id, Required
 
    .. code:: bash
 
@@ -197,12 +199,12 @@ component_output_data
 -  description: download the output data of this component
 -  parameter:
 
-   -  -j –job_id: job id, Required
-   -  -cpn –component_name: component name, Required
-   -  -r –role: role, Required
-   -  -p –party_id: party id, Required
-   -  -o –output_path: config output path, Required
-   -  -limit –limit: Limit quantity, Optional
+   -  -j --job_id: job id, Required
+   -  -cpn --component_name: component name, Required
+   -  -r --role: role, Required
+   -  -p --party_id: party id, Required
+   -  -o --output_path: config output path, Required
+   -  -limit --limit: Limit quantity, Optional
 
    .. code:: bash
 
@@ -214,10 +216,10 @@ component_output_data_table
 -  description: view table name and namespace
 -  parameter:
 
-   -  -j –job_id: job id, Required
-   -  -cpn –component_name: component name, Required
-   -  -r –role: role, Required
-   -  -p –party_id: party id, Required
+   -  -j --ob_id: job id, Required
+   -  -cpn --component_name: component name, Required
+   -  -r --role: role, Required
+   -  -p --party_id: party id, Required
 
    .. code:: bash
 
@@ -232,7 +234,7 @@ download
 -  description: download table
 -  parameter:
 
-   -  -c –config: config path, Required
+   -  -c --config: config path, Required
 
    .. code:: bash
 
@@ -244,8 +246,8 @@ upload
 -  description: upload table
 -  parameter:
 
-   -  -c –config: config path, Required
-   -  -drop –drop: Operations before file upload, Optional
+   -  -c --config: config path, Required
+   -  -drop --drop: Operations before file upload, Optional
 
    .. code:: bash
 
@@ -258,8 +260,8 @@ upload_history
 -  description: upload table history
 -  parameter:
 
-   -  -j –job_id: job id, Optional
-   -  -limit –limit: Limit quantity, Optional
+   -  -j --job_id: job id, Optional
+   -  -limit --limit: Limit quantity, Optional
 
    .. code:: bash
 
@@ -275,8 +277,8 @@ table_info
 -  description: query table information
 -  parameter:
 
-   -  -n –namespace: namespace, Required
-   -  -t –table_name: table name, Required
+   -  -n --namespace: namespace, Required
+   -  -t --table_name: table name, Required
 
    .. code:: bash
 
@@ -288,12 +290,12 @@ table_delete
 -  description: delete table
 -  parameter:
 
-   -  -n –namespace: namespace, Optional
-   -  -t –table_name: table name, Optional
-   -  -j –job_id: job id, Optional
-   -  -cpn –component_name: component name, Optional
-   -  -r –role: role, Optional
-   -  -p –party_id: party id, Optional
+   -  -n --namespace: namespace, Optional
+   -  -t --table_name: table name, Optional
+   -  -j --job_id: job id, Optional
+   -  -cpn --component_name: component name, Optional
+   -  -r --role: role, Optional
+   -  -p --party_id: party id, Optional
 
    .. code:: bash
 
@@ -309,11 +311,41 @@ load
 -  description: load model.
 -  parameter:
 
-   -  -c –config: config path, Required
+   -  -c --config: config path, Required
 
    .. code:: bash
 
       python fate_flow_client.py -f load -c $conf_path
+-  response example::
+
+
+    {
+        "data": {
+            "detail": {
+                "guest": {
+                    "9999": {
+                        "retcode": 0,
+                        "retmsg": "xxx"
+                    }
+                },
+                "host": {
+                    "10000": {
+                        "retcode": 0,
+                        "retmsg": "xxx"
+                    }
+                }
+            },
+            "guest": {
+                "9999": 0
+            },
+            "host": {
+                "10000": 0
+            }
+        },
+        "jobId": "xxxxxxxxxxxxxxxx",
+        "retcode": 0,
+        "retmsg": "success"
+    }
 
 bind
 ^^^^
@@ -321,11 +353,18 @@ bind
 -  description: bind model.
 -  parameter:
 
-   -  -c –config: config path, Required
+   -  -c --config: config path, Required
 
    .. code:: bash
 
       python fate_flow_client.py -f bind -c $conf_path
+
+-  response example::
+
+    {
+        "retcode": 0,
+        "retmsg": "service id is xxx"
+    }
 
 store
 ^^^^^
@@ -333,7 +372,7 @@ store
 -  description: store model
 -  parameter:
 
-   -  -c –config: config path, Required
+   -  -c --config: config path, Required
 
    .. code:: bash
 
@@ -345,7 +384,7 @@ restore
 -  description: restore mode
 -  parameter:
 
-   -  -c –config: config path, Required
+   -  -c --config: config path, Required
 
    .. code:: bash
 
@@ -357,7 +396,7 @@ export
 -  description: export model
 -  parameter:
 
-   -  -c –config: config path, Required
+   -  -c --config: config path, Required
 
    .. code:: bash
 
@@ -369,7 +408,7 @@ import
 -  description: import model
 -  parameter:
 
-   -  -c –config: config path, Required
+   -  -c --config: config path, Required
 
    .. code:: bash
 
