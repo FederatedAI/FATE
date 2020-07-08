@@ -915,33 +915,38 @@ python run_toy_example.py 9999 10000 1
 6.2 最小化测试
 --------------
 
-### **6.2.1 快速模式：**
+### **6.2.1 上传预设数据：**
 
-在guest和host两方各任一egg节点中，根据需要在run_task.py中设置字段：guest_id，host_id，arbiter_id。
+您可以通过一个简单的脚本一键上传部分预设的数据。这个脚本被放置在：/data/projects/fate/python/examples/scripts/ 路径下。
 
-该文件在/data/projects/fate/python/examples/min_test_task/目录下。
-
-**在Host节点上运行：**
+您可以直接运行下列命令完成上传：
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/min_test_task/
-sh run.sh host fast
+python upload_default_data.py -m 1
 ```
 
-从测试结果中获取“host_table”和“host_namespace”的值，并将它们作为参数传递给下述guest方命令。
+更多细节信息，敬请参考[脚本README](../../examples/scripts/README.rst)
 
-**在Guest节点上运行：**
+### **6.2.2 快速模式：**
 
+请确保guest和host两方均已分别通过给定脚本上传了预设数据。
+
+然后可以进入/data/projects/fate/python/examples/min_test_task/目录，找到最小化测试脚本。
+
+快速模式下，最小化测试脚本将使用一个相对较小的数据集，即包含了569条数据的breast数据集。
+您只需要在guest端运行下列语句，即可启动最小化测试：
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/min_test_task/
-sh run.sh guest fast ${host_table} ${host_namespace} 
+   python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
 ```
 
-等待几分钟，看到结果显示“成功”字段，表明操作成功。在其他情况下，如果失败或卡住，则表示失败。
+其他一些可能有用的参数包括：
 
-### **6.2.2 正常模式**：
+1. -f: 使用的文件类型. "fast" 代表 breast数据集, "normal" 代表 default credit 数据集.
+2. --add_sbt: 如果被设置为True, 将在运行完lr以后，启动secureboost任务。
+
+若数分钟后在结果中显示了“success”字样则表明该操作已经运行成功了。若出现“FAILED”或者程序卡住，则意味着测试失败。
+
+### **6.2.3 正常模式**：
 
 只需在命令中将“fast”替换为“normal”，其余部分与快速模式相同。
 

@@ -930,34 +930,42 @@ A result similar to the following indicates success:：
 
 ### 5.2 Minimization testing
 
+Start the virtual environment in host and guest respectively. Please make sure you have already uploaded the preset dataset through the provided script. 
+
+#### 5.2.1 Upload preset Data
+
+You can upload some preset data through one simple script easily. The script is located at /data/projects/fate/python/examples/scripts/
+
+You can run this script as simple as running the following command:
+```
+python upload_default_data.py -m 1
+```
+
+For more details, please refer to [scripts' README](../examples/scripts/README.rst)
+
 Start the virtual environment in host and guest respectively.
 
-#### 5.2.1 Fast mode
+#### 5.2.2 Fast mode
 
-In the node of guest and host parties, set the fields: guest_id, host_id, arbiter_id in run_task.py according to your actual setting. This file is located in / data / projects / fate / python / examples / min_test_task/.
+In fast mode, min-test will start a relatively small date set (breast data set) which contains 569 lines of data.
 
-In the node of host party, run:
-
-```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/min_test_task/
-sh run.sh host fast 		
-```
-
-Get the values of "host_table" and "host_namespace" from test results, and pass them to following command.
-
-In the node of guest party, run: 
+All you need to do is just run the following command in guest party:
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/min_test_task/
-sh run.sh guest fast ${host_table} ${host_namespace}
+   python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
 ```
+
+This test will automatically take breast as test data set.
+
+There are some more parameters that you may need:
+
+1. -f: file type. "fast" means breast data set, "normal" means default credit data set.
+2. --add_sbt: if set, it will test hetero-secureboost task after testing hetero-lr.
 
 Wait a few minutes, a result showing "success" indicates that the operation is successful.
 In other cases, if FAILED or stuck, it means failure.
 
-#### 5.2.2 Normal mode
+#### 5.2.3 Normal mode
 
 Just replace the word "fast" with "normal" in all the commands, the rest is the same with fast mode.
 

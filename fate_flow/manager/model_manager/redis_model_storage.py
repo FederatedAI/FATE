@@ -26,12 +26,13 @@ class RedisModelStorage(ModelStorageBase):
     def __init__(self):
         super(RedisModelStorage, self).__init__()
 
-    def store(self, model_id: str, model_version: str, store_address: dict):
+    def store(self, model_id: str, model_version: str, store_address: dict, force_update: bool = False):
         """
         Store the model from local cache to redis
         :param model_id:
         :param model_version:
         :param store_address:
+        :param force_update:
         :return:
         """
         try:
@@ -42,7 +43,7 @@ class RedisModelStorage(ModelStorageBase):
                 red.set(name=redis_store_key,
                         value=fr.read(),
                         ex=store_address.get("ex", None),
-                        nx=store_address.get("nx", None)
+                        nx=True if not force_update else False
                         )
             LOGGER.info("Store model {} {} to redis successfully using key {}".format(model_id,
                                                                                   model_version,
@@ -69,9 +70,9 @@ class RedisModelStorage(ModelStorageBase):
                     model_id, model_version, "can not found model archive data"))
             with open(model.archive_model_file_path(), "wb") as fw:
                 fw.write(model_archive_data)
+            model.unpack_model(model.archive_model_file_path())
             LOGGER.info("Restore model to {} from redis successfully using key {}".format(model.archive_model_file_path(),
                                                                                           redis_store_key))
-            model.unpack_model(model.archive_model_file_path())
         except Exception as e:
             LOGGER.exception(e)
             raise Exception("Restore model {} {} from redis failed".format(model_id, model_version))

@@ -30,6 +30,7 @@ message FeatureSelectionMeta {
     ManuallyFilterMeta manually_meta = 9;
     bool need_run = 10;
     PercentageValueFilterMeta pencentage_value_meta = 11;
+    IVTopKSelectionMeta iv_top_k_meta = 12;
 }
 
 message UniqueValueMeta {
@@ -43,6 +44,11 @@ message IVValueSelectionMeta{
 
 message IVPercentileSelectionMeta{
     double percentile_threshold = 1;
+    bool local_only = 2;
+}
+
+message IVTopKSelectionMeta{
+    int64 k = 1;
     bool local_only = 2;
 }
 

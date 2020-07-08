@@ -112,7 +112,7 @@ class LoggerFactory(object):
             else:
                 log_file = os.path.join(log_dir, "{}.log".format(class_name))
         else:
-            log_file = os.path.join(log_dir, "fate_flow_{}.log".format(log_type) if level == LoggerFactory.LEVEL else 'error.log')
+            log_file = os.path.join(log_dir, "fate_flow_{}.log".format(log_type) if level == LoggerFactory.LEVEL else 'fate_flow_{}_error.log'.format(log_type))
         formatter = logging.Formatter(LoggerFactory.FORMAT)
         handler = TimedRotatingFileHandler(log_file,
                                            when='D',
@@ -159,21 +159,29 @@ class LoggerFactory(object):
 
     @staticmethod
     def get_schedule_logger(job_id='', log_type='schedule'):
+        fate_flow_log_dir = os.path.join(file_utils.get_project_base_directory(), 'logs', 'fate_flow')
         job_log_dir = os.path.join(file_utils.get_project_base_directory(), 'logs', job_id)
         if not job_id:
-            job_log_dir = os.path.join(file_utils.get_project_base_directory(), 'logs', 'fate_flow')
+            log_dirs = [fate_flow_log_dir]
+        else:
+            if log_type == 'audit':
+                log_dirs = [job_log_dir, fate_flow_log_dir]
+            else:
+                log_dirs = [job_log_dir]
         os.makedirs(job_log_dir, exist_ok=True)
+        os.makedirs(fate_flow_log_dir, exist_ok=True)
         logger = logging.getLogger('{}_{}'.format(job_id, log_type))
         logger.setLevel(LoggerFactory.LEVEL)
-        handler = LoggerFactory.get_handler(class_name=None, level=LoggerFactory.LEVEL,
-                                            log_dir=job_log_dir, log_type=log_type)
-        error_handler = LoggerFactory.get_handler(class_name=None, level=logging.ERROR,
-                                                  log_dir=job_log_dir, log_type=log_type)
-        logger.addHandler(handler)
-        logger.addHandler(error_handler)
+        for job_log_dir in log_dirs:
+            handler = LoggerFactory.get_handler(class_name=None, level=LoggerFactory.LEVEL,
+                                                log_dir=job_log_dir, log_type=log_type)
+            error_handler = LoggerFactory.get_handler(class_name=None, level=logging.ERROR,
+                                                      log_dir=job_log_dir, log_type=log_type)
+            logger.addHandler(handler)
+            logger.addHandler(error_handler)
         if job_id:
             with LoggerFactory.lock:
-                LoggerFactory.schedule_logger_dict[job_id] = logger
+                LoggerFactory.schedule_logger_dict[job_id + log_type] = logger
         return logger
 
 
@@ -200,15 +208,21 @@ def schedule_logger(job_id=None, delete=False):
         if delete:
             with LoggerFactory.lock:
                 try:
-                    del LoggerFactory.schedule_logger_dict[job_id]
+                    for key in LoggerFactory.schedule_logger_dict.keys():
+                        if job_id in key:
+                            del LoggerFactory.schedule_logger_dict[key]
                 except:
                     pass
             return True
-        if job_id in LoggerFactory.schedule_logger_dict:
-            return LoggerFactory.schedule_logger_dict[job_id]
+        key = job_id + 'schedule'
+        if key in LoggerFactory.schedule_logger_dict:
+            return LoggerFactory.schedule_logger_dict[key]
         return LoggerFactory.get_schedule_logger(job_id)
 
 
-def audit_logger():
-    return LoggerFactory.get_schedule_logger(log_type='audit')
+def audit_logger(job_id='', log_type='audit'):
+    key = job_id + log_type
+    if key in LoggerFactory.schedule_logger_dict.keys():
+        return LoggerFactory.schedule_logger_dict[key]
+    return LoggerFactory.get_schedule_logger(job_id=job_id, log_type=log_type)
 

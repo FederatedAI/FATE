@@ -17,7 +17,6 @@ import argparse
 import importlib
 import os
 import traceback
-
 from arch.api import federation
 from arch.api import session, Backend
 from arch.api.base.utils.store_type import StoreTypes
@@ -71,6 +70,7 @@ class TaskExecutor(object):
             component_parameters = TaskExecutor.get_parameters(job_id, component_name, role, party_id)
             task_parameters = task_config['task_parameters']
             module_name = task_config['module_name']
+            TaskExecutor.monkey_patch()
         except Exception as e:
             traceback.print_exc()
             schedule_logger().exception(e)
@@ -285,6 +285,17 @@ class TaskExecutor(object):
                                           initiator_role, task_info, update=True)
         if update:
             raise Exception('job {} role {} party {} synchronize task status failed'.format(job_id, role, party_id))
+
+    @staticmethod
+    def monkey_patch():
+        package_name = "monkey_patch"
+        package_path = os.path.join(file_utils.get_project_base_directory(), "fate_flow", package_name)
+        for f in os.listdir(package_path):
+            if not os.path.isdir(f) or f == "__pycache__":
+                continue
+            patch_module = importlib.import_module("fate_flow." + package_name + '.' + f + '.monkey_patch')
+            patch_module.patch_all()
+
 
 if __name__ == '__main__':
     TaskExecutor.run_task()

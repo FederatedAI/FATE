@@ -109,10 +109,10 @@ class FixedPointTensor(TensorBase):
             encoder = fixedpoint_numpy.FixedPointEndec(q_field, base, frac)
         if isinstance(source, Table):
             source = encoder.encode(source)
-            _pre = urand_tensor(spdz.q_field, source)
+            _pre = urand_tensor(spdz.q_field, source, use_mix=spdz.use_mix_rand)
             spdz.communicator.remote_share(share=_pre, tensor_name=tensor_name, party=spdz.other_parties[0])
             for _party in spdz.other_parties[1:]:
-                r = urand_tensor(spdz.q_field, source)
+                r = urand_tensor(spdz.q_field, source, use_mix=spdz.use_mix_rand)
                 spdz.communicator.remote_share(share=_table_binary_op(r, _pre, spdz.q_field, operator.sub),
                                                tensor_name=tensor_name, party=_party)
                 _pre = r

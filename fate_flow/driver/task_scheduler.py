@@ -23,9 +23,9 @@ from arch.api.utils.core_utils import current_timestamp, base64_encode, json_loa
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import Job
 from fate_flow.driver.task_executor import TaskExecutor
-from fate_flow.entity.constant_config import JobStatus, Backend, TaskStatus
+from fate_flow.entity.constant_config import JobStatus, Backend, TaskStatus, WorkMode
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.settings import API_VERSION, HTTP_PORT, ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH
+from fate_flow.settings import API_VERSION, HTTP_PORT, ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH, WORK_MODE
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
 from fate_flow.utils.job_utils import query_task, get_job_dsl_parser, query_job
@@ -68,20 +68,23 @@ class TaskScheduler(object):
 
     @staticmethod
     def check(job_id, initiator_role, initiator_party_id):
-        job_dsl, job_runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id,
-                                                                                        role=initiator_role,
-                                                                                        party_id=initiator_party_id)
-        job_parameters = job_runtime_conf.get('job_parameters', {})
-        job_initiator = job_runtime_conf.get('initiator', {})
-        status = TaskScheduler.check_job(job_id=job_id, roles=job_runtime_conf['role'],
-                                         work_mode=job_parameters['work_mode'],
-                                         initiator_party_id=job_initiator['party_id'],
-                                         initiator_role=job_initiator['role'],
-                                         job_info={
-                                             'job_id': job_id,
-                                             'initiator_role': initiator_role,
-                                             'initiator_party_id': initiator_party_id
-                                         })
+        if WORK_MODE == WorkMode.CLUSTER:
+            job_dsl, job_runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id,
+                                                                                            role=initiator_role,
+                                                                                            party_id=initiator_party_id)
+            job_parameters = job_runtime_conf.get('job_parameters', {})
+            job_initiator = job_runtime_conf.get('initiator', {})
+            status = TaskScheduler.check_job(job_id=job_id, roles=job_runtime_conf['role'],
+                                             work_mode=job_parameters['work_mode'],
+                                             initiator_party_id=job_initiator['party_id'],
+                                             initiator_role=job_initiator['role'],
+                                             job_info={
+                                                 'job_id': job_id,
+                                                 'initiator_role': initiator_role,
+                                                 'initiator_party_id': initiator_party_id
+                                             })
+        else:
+            status = True
         return status
 
     @staticmethod
@@ -251,7 +254,7 @@ class TaskScheduler(object):
                 if response['retcode']:
                     if 'not authorized' in response['retmsg']:
                         raise Exception('run component {} not authorized'.format(component_name))
-        component_task_status = TaskScheduler.check_task_status(job_id=job_id, component=component)
+        component_task_status = TaskScheduler.check_task_status(job_id=job_id, job_parameters=job_parameters, component=component)
         job_status = TaskScheduler.check_job_status(job_id)
         if component_task_status and job_status:
             task_success = True
@@ -277,7 +280,9 @@ class TaskScheduler(object):
                 try:
                     schedule_logger(job_id).info(
                         'job {} check component {} dependencies status'.format(job_id, next_component.get_name()))
-                    dependencies_status = TaskScheduler.check_dependencies(job_id=job_id, dag=dag,
+                    dependencies_status = TaskScheduler.check_dependencies(job_id=job_id,
+                                                                           job_parameters=job_parameters,
+                                                                           dag=dag,
                                                                            component=next_component)
                     job_status = TaskScheduler.check_job_status(job_id)
                     schedule_logger(job_id).info(
@@ -348,7 +353,7 @@ class TaskScheduler(object):
         return extra_task_parameters
 
     @staticmethod
-    def check_dependencies(job_id, dag, component):
+    def check_dependencies(job_id, job_parameters, dag, component):
         role, party_id = job_utils.query_job_info(job_id)
         dependencies = dag.get_dependency(role=role, party_id=int(party_id)).get('dependencies', {})
         if not dependencies:
@@ -359,7 +364,7 @@ class TaskScheduler(object):
         for dependent_component in dependent_component_names:
             dependent_component_name = dependent_component["component_name"]
             dependent_component = dag.get_component_info(dependent_component_name)
-            dependent_component_task_status = TaskScheduler.check_task_status(job_id, dependent_component)
+            dependent_component_task_status = TaskScheduler.check_task_status(job_id, job_parameters, dependent_component)
             schedule_logger(job_id).info('job {} component {} dependency {} status is {}'.format(job_id, component.get_name(),
                                                                                          dependent_component_name,
                                                                                          dependent_component_task_status))
@@ -370,7 +375,7 @@ class TaskScheduler(object):
             return True
 
     @staticmethod
-    def check_task_status(job_id, component, interval=0.5):
+    def check_task_status(job_id, job_parameters, component, interval=0.5):
         task_id = job_utils.generate_task_id(job_id=job_id, component_name=component.get_name())
         while True:
             try:
@@ -387,7 +392,8 @@ class TaskScheduler(object):
                         schedule_logger(job_id).info(
                             'job {} component {} run on {} {} status is {}'.format(job_id, component.get_name(), _role,
                                                                                    _party_id, task_status))
-                        status_collect.add(task_status)
+                        if _role not in job_parameters.get("assistant_role", []):
+                            status_collect.add(task_status)
                 if 'failed' in status_collect:
                     return False
                 if 'timeout' in status_collect:
@@ -560,13 +566,15 @@ class TaskScheduler(object):
                               work_mode=job_parameters['work_mode'])
 
     @staticmethod
-    def start_stop(job_id):
+    def start_stop(job_id, operate=None):
         schedule_logger(job_id).info('get {} job {} command'.format('stop', job_id))
         jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
         if not jobs:
             jobs = job_utils.query_job(job_id=job_id)
         if jobs:
             job_info = {'job_id': job_id}
+            if operate:
+                job_info['operate'] = operate
             job_work_mode = jobs[0].f_work_mode
             initiator_party_id = jobs[0].f_initiator_party_id
             response = federated_api(job_id=job_id,
