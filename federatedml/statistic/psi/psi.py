@@ -15,6 +15,7 @@ import numpy as np
 from arch.api.utils import log_utils
 
 from federatedml.protobuf.generated.psi_model_param_pb2 import PsiSummary, FeaturePsi
+from federatedml.protobuf.generated.psi_model_meta_pb2 import PSIMeta
 
 LOGGER = log_utils.getLogger()
 
@@ -296,16 +297,9 @@ class PSI(ModelBase):
         # id-feature mapping convert, str interval computation
         self.str_intervals = self.get_string_interval(bin_split_points, self.id_tag_mapping,
                                                       missing_bin_idx=self.max_bin_num)
-                                                      # missing bin idx is self.max_bin_num
-
-        LOGGER.debug('str interval is {}'.format(self.str_intervals))
 
         self.interval_perc1 = self.count_dict_to_percentage(copy.deepcopy(count1), expect_table.count())
         self.interval_perc2 = self.count_dict_to_percentage(copy.deepcopy(count2), actual_table.count())
-
-        LOGGER.debug('perc1 {} perc2 {}'.format(self.interval_perc1, self.interval_perc2))
-        LOGGER.debug('psi_rs is {}'.format(self.psi_rs))
-        LOGGER.debug('total_psi is {}'.format(self.total_scores))
 
         LOGGER.info('psi computation done')
 
@@ -313,6 +307,10 @@ class PSI(ModelBase):
 
         psi_summary = PsiSummary()
         psi_summary.total_score.update(self.total_scores)
+
+        LOGGER.debug('psi total score is {}'.format(dict(psi_summary.total_score)))
+
+        psi_summary.model_name = 'psi'
 
         feat_psi_list = []
 
@@ -338,6 +336,9 @@ class PSI(ModelBase):
 
         LOGGER.debug('export model done')
 
-        return {'PSIParam': psi_summary}
+        meta = PSIMeta()
+        meta.max_bin_num = self.max_bin_num
+
+        return {'PSIParam': psi_summary, 'PSIMeta': meta}
 
 
