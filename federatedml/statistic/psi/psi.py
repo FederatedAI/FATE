@@ -310,7 +310,7 @@ class PSI(ModelBase):
 
         LOGGER.debug('psi total score is {}'.format(dict(psi_summary.total_score)))
 
-        psi_summary.model_name = 'psi'
+        psi_summary.model_name = consts.PSI
 
         feat_psi_list = []
 

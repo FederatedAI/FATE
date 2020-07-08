@@ -205,3 +205,7 @@ SHA256 = 'sha256'
 INTERSECT_CACHE_TAG = 'Za'
 
 SHARE_INFO_COL_NAME = "share_info"
+
+# adapter model name
+HOMO_SBT = 'homo_sbt'
+HETERO_SBT = 'hetero_sbt'
