@@ -26,7 +26,7 @@ LOGGER = log_utils.getLogger()
 
 
 class _Optimizer(object):
-    def __init__(self, learning_rate, alpha, penalty, decay, decay_sqrt, mu):
+    def __init__(self, learning_rate, alpha, penalty, decay, decay_sqrt, mu = 0):
         self.learning_rate = learning_rate
         self.iters = 0
         self.alpha = alpha
@@ -96,7 +96,7 @@ class _Optimizer(object):
 
         return new_grad
 
-    def regularization_update(self, model_weights: LinearModelWeights, prev_round_weights: LinearModelWeights, grad):
+    def regularization_update(self, model_weights: LinearModelWeights, grad, prev_round_weights: LinearModelWeights = None):
         if self.penalty == consts.L1_PENALTY:
             model_weights = self._l1_updator(model_weights, grad)
         elif self.penalty == consts.L2_PENALTY:
@@ -177,7 +177,7 @@ class _Optimizer(object):
             delta_grad = self.apply_gradients(grad)
         else:
             delta_grad = grad
-        model_weights = self.regularization_update(model_weights, prev_round_weights, delta_grad)
+        model_weights = self.regularization_update(model_weights, delta_grad, prev_round_weights)
         return model_weights
 
 
