@@ -41,6 +41,27 @@ class TestStatistics(unittest.TestCase):
         dense_not_inst_table.schema = {'header': headers}
         return dense_table, dense_not_inst_table, original_data
 
+    def _gen_missing_table(self):
+        headers = ['x' + str(i) for i in range(self.feature_num)]
+        dense_inst = []
+        dense_not_inst = []
+
+        original_data = 100 * np.random.random((self.count, self.feature_num))
+
+        for i in range(self.count):
+            features = original_data[i, :]
+            if i % 2 == 0:
+                features = np.array([np.nan] * self.feature_num)
+            inst = Instance(features=features)
+            dense_inst.append((i, inst))
+            dense_not_inst.append((i, features))
+
+        dense_table = session.parallelize(dense_inst, include_key=True, partition=16)
+        dense_not_inst_table = session.parallelize(dense_not_inst, include_key=True, partition=16)
+        dense_table.schema = {'header': headers}
+        dense_not_inst_table.schema = {'header': headers}
+        return dense_table, dense_not_inst_table, original_data
+
     def test_MultivariateStatisticalSummary(self):
         dense_table, dense_not_inst_table, original_data = self._gen_table_data()
         summary_obj = MultivariateStatisticalSummary(dense_table)
@@ -110,6 +131,15 @@ class TestStatistics(unittest.TestCase):
                                                   quantile_array[q_idx][idx],
                                                   error=3))
         print("quantile interface, total time: {}".format(time.time() - t0))
+
+    def test_missing_value(self):
+        dense_table, dense_not_inst_table, original_data = self._gen_missing_table()
+        summary_obj = MultivariateStatisticalSummary(dense_table, error=0)
+        t0 = time.time()
+        missing_result = summary_obj.get_missing_ratio()
+        for col_name, missing_ratio in missing_result.items():
+            self.assertEqual(missing_ratio, 0.5, msg="missing ratio should be 0.5")
+        print("calculate missing ratio, total time: {}".format(time.time() - t0))
 
     def tearDown(self):
         session.stop()

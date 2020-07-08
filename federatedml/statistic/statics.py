@@ -28,7 +28,7 @@ from federatedml.feature.instance import Instance
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.statistic import data_overview
 from federatedml.util import consts
-
+from federatedml.statistic.feature_statistic import feature_statistic
 LOGGER = log_utils.getLogger()
 
 
@@ -287,7 +287,7 @@ class MultivariateStatisticalSummary(object):
         return self.get_statics("variance")
 
     def get_std_variance(self):
-        return self.get_statics("std_variance")
+        return self.get_statics("stddev")
 
     def get_max(self):
         return self.get_statics("max_value")
@@ -313,11 +313,21 @@ class MultivariateStatisticalSummary(object):
 
         if hasattr(self.summary_statistics, data_type):
             result_row = getattr(self.summary_statistics, data_type)
+        elif hasattr(self, data_type):
+            return getattr(self, data_type)
         else:
             raise ValueError(f"Statistic data type: {data_type} cannot be recognized")
 
         result = {self.header[x]: result_row[x] for x in self.cols_index}
         return result
+
+    def get_missing_ratio(self):
+        return self.missing_ratio
+
+    @property
+    def missing_ratio(self):
+        missing_static_obj = feature_statistic.FeatureStatistic()
+        return missing_static_obj.fit(self.data_instances)
 
     @staticmethod
     def get_label_static_dict(data_instances):
