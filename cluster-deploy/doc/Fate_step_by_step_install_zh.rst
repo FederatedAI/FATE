@@ -37,7 +37,7 @@ Fate Cluster step by step部署指南
 
 .. image:: ../images/arch_zh.png
    :align: center
-   :width: 500
+   :width: 800
 
 3.组件说明
 ==========
