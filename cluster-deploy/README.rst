@@ -5,16 +5,12 @@ The Cluster version provides four deployment methods, which can be
 selected according to your actual situation:
 
 -  Install Cluster Step By Step `Chinese
-   guide <./doc/Fate_step_by_step_install_zh.md>`__
+   guide <./doc/Fate_step_by_step_install_zh.rst>`__
 -  Install AllinOne `Chinese
-   guide <./doc/Fate-allinone_deployment_guide_install_zh.md>`__
+   guide <./doc/Fate-allinone_deployment_guide_install_zh.rst>`__
 -  Install Exchange Step By Step `Chinese
-   guide <./doc/Fate-exchange_deployment_guide_zh.md>`__
+   guide <./doc/Fate-exchange_deployment_guide_zh.rst>`__
 
-thirdparty：
-
--  Hadoop+Spark Deployment `Chinese
-   guide <./doc/thirdparty_spark/Hadoop+Spark集群部署指南.md>`__
 
 1. Module Information
 ---------------------
