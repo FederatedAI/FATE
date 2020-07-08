@@ -21,7 +21,7 @@ In a party, FATE (Federated AI Technology Enabler) has the following modules. Sp
 | fate_flow      | 9360;9380      | Federated learning pipeline management module, there is only one service for each party |
 | fateboard      | 8080           | Federated learning process visualization module, only one service needs to be deployed per party |
 | clustermanager | 4670           | The cluster manager manages the cluster, only one instance needs to be deployed per party |
-| nodemanger     | 4671           | Node manager manages the resources of each machine, each party can have multiple of this service, but a server can only have one |
+| nodemanager    | 4671           | Node manager manages the resources of each machine, each party can have multiple of this service, but a server can only have one |
 | rollsite       | 9370           | Cross-site or cross-party communication components, equivalent to proxy + federation, each party has only one service |
 | mysql          | 3306           | Data storage, clustermanager and fateflow dependency, each party only needs one service |
 
@@ -56,11 +56,11 @@ The following configuration information is for one-sided server configuration. I
 
 ### 3.2 Cluster planning
 
-| party  | partyid | hostname      | IP          | os                      | software             | services                                                |
-| ------ | ------- | ------------- | ----------- | ----------------------- | -------------------- | ------------------------------------------------------- |
-| PartyA | 10000   | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate, eggroll, mysql | fate_flow, fateboard, clustermanager, nodemanger, mysql |
-| PartyA | 10000   | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate, eggroll        | nodemanger, rollsite                                    |
-| PartyB | 9999    | VM_0_3_centos | 192.168.0.3 | CentOS 7.2/Ubuntu 16.04 | fate, eggroll, mysql | all                                                     |
+| party  | partyid | hostname      | IP          | os                      | software             | services                                                 |
+| ------ | ------- | ------------- | ----------- | ----------------------- | -------------------- | -------------------------------------------------------- |
+| PartyA | 10000   | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate, eggroll, mysql | fate_flow, fateboard, clustermanager, nodemanager, mysql |
+| PartyA | 10000   | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate, eggroll        | nodemanager, rollsite                                    |
+| PartyB | 9999    | VM_0_3_centos | 192.168.0.3 | CentOS 7.2/Ubuntu 16.04 | fate, eggroll, mysql | all                                                      |
 
 ### 3.3 Basic environment configuration
 
@@ -110,9 +110,9 @@ If selinux is already installed, execute: setenforce 0
 
 1) vim /etc/security/limits.conf
 
-\* soft nofile 65536
+\* soft nofile 65535
 
-\* hard nofile 65536
+\* hard nofile 65535
 
 2) vim /etc/security/limits.d/20-nproc.conf
 
@@ -199,10 +199,10 @@ Execute under the app user of the target server (192.168.0.1 has an external net
 ```
 mkdir -p /data/projects/install
 cd /data/projects/install
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.1-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.2-release.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.1-release.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.1-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.2-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.2-release.tar.gz
 
 #Send to 192.168.0.2和192.168.0.3
 scp *.tar.gz app@192.168.0.2:/data/projects/install
@@ -934,25 +934,25 @@ Start the virtual environment in host and guest respectively. Please make sure y
 
 #### 5.2.1 Upload preset Data
 
-You can upload some preset data through one simple script easily. The script is located at /data/projects/fate/python/examples/scripts/
-
-You can run this script as simple as running the following command:
+Execute on 192.168.0.1 and 192.168.0.3 respectively::
 ```
+source /data/projects/fate/init_env.sh
+cd /data/projects/fate/python/examples/scripts/
 python upload_default_data.py -m 1
 ```
 
 For more details, please refer to [scripts' README](../examples/scripts/README.rst)
 
-Start the virtual environment in host and guest respectively.
-
 #### 5.2.2 Fast mode
 
-In fast mode, min-test will start a relatively small date set (breast data set) which contains 569 lines of data.
+Please make sure that both guest and host have uploaded the preset data through the given script respectively.In the fast mode, the minimization test script will use a relatively small data set, namely the breast data set containing 569 data.
 
-All you need to do is just run the following command in guest party:
+Select 9999 as the guest and execute on 192.168.0.3:
 
 ```
-   python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
+source /data/projects/fate/init_env.sh
+cd /data/projects/fate/python/examples/min_test_task/
+python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
 ```
 
 This test will automatically take breast as test data set.
