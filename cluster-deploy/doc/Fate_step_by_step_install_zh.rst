@@ -35,7 +35,7 @@ Fate Cluster step by step部署指南
 
 架构图：
 
-.. figure:: images/arch_zh.png
+.. image:: ../images/arch_zh.png
    :align: center
    :width: 500
 
@@ -110,9 +110,9 @@ ubuntu系统执行：apt list --installed \| grep selinux
 
 1）vim /etc/security/limits.conf
 
-\* soft nofile 65536
+\* soft nofile 65535
 
-\* hard nofile 65536
+\* hard nofile 65535
 
 2）vim /etc/security/limits.d/20-nproc.conf
 
