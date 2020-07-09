@@ -41,6 +41,7 @@ class IsoModelFilter(BaseFilterMethod):
 
     def _parse_filter_param(self, filter_param: CommonFilterParam):
         self.metrics = filter_param.metrics
+
         for m in self.metrics:
             if m not in self.iso_model.valid_value_name:
                 raise ValueError(f"Metric {m} is not in this model's valid_value_name")

@@ -153,19 +153,6 @@ class OptimalBinning(BaseBinning):
 
         bucket_table = session.parallelize(bucket_table, include_key=True, partition=data_instances.get_partitions())
 
-        namespace = bucket_table.get_namespace()
-        table_name = bucket_table.get_name()
-        from arch.api.base.utils.store_type import StoreTypes
-        from eggroll.core.pair_store import create_pair_adapter
-
-        for i in range(16):
-            with create_pair_adapter({"store_type": StoreTypes.ROLLPAIR_LMDB,
-                                      "path": f"/data/projects/fate/eggroll/data/IN_MEMORY/{namespace}/{table_name}/{i}"}) as db:
-                LOGGER.debug(f"db count is:{db.count()}")
-
-        # with create_pair_adapter({"store_type": StoreTypes.ROLLPAIR_LMDB,
-        #                           "path": f"/data/projects/fate/eggroll/data/IN_MEMORY/{namespace}/{table_name}"}) as db:
-        #     print(f"db count is:{db.count()}")
         return bucket_table
 
     @staticmethod

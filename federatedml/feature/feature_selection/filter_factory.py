@@ -24,11 +24,12 @@ from federatedml.feature.feature_selection.unique_value_filter import UniqueValu
 from federatedml.param import feature_selection_param
 from federatedml.param.feature_selection_param import FeatureSelectionParam
 from federatedml.util import consts
+import copy
 
 LOGGER = log_utils.getLogger()
 
 
-def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUEST, model=None):
+def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUEST, model=None, idx=0):
     LOGGER.debug(f"Getting filter name: {filter_name}")
 
     if filter_name == consts.UNIQUE_VALUE:
@@ -142,10 +143,16 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
 
     elif filter_name == consts.STATISTIC_FILTER:
         statistic_param = model_param.statistic_param
+        this_param = copy.deepcopy(statistic_param)
+        for attr, value in statistic_param.__dict__:
+            if value is not None:
+                value = value[idx]
+            setattr(this_param, attr, value)
+        this_param.check()
         iso_model = model.isometric_models.get(consts.STATISTIC_MODEL)
         if iso_model is None:
             raise ValueError("None of statistic model has provided when using iv filter")
-        return IsoModelFilter(statistic_param, iso_model)
+        return IsoModelFilter(this_param, iso_model)
 
     elif filter_name == consts.PSI_FILTER:
         psi_param = model_param.psi_param

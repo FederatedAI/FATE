@@ -33,6 +33,7 @@ from federatedml.transfer_variable.transfer_class.hetero_feature_selection_trans
 from federatedml.util import abnormal_detection
 from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.feature.feature_selection.model_adaptor.adapter_factory import adapter_factory
+from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
@@ -247,9 +248,11 @@ class BaseHeteroFeatureSelection(ModelBase):
         new_select_properties.add_select_col_names(self.curt_select_properties.left_col_names)
         self.curt_select_properties = new_select_properties
 
-    def _filter(self, data_instances, method, suffix):
+    def _filter(self, data_instances, method, suffix, idx=0):
         this_filter = filter_factory.get_filter(filter_name=method, model_param=self.model_param,
-                                                role=self.role, model=self)
+                                                role=self.role, model=self, idx=idx)
+        if method == consts.STATISTIC_FILTER:
+            method = self.model_param.statistic_param.metrics[idx]
         this_filter.set_selection_properties(self.curt_select_properties)
         # this_filter.set_statics_obj(self.static_obj)
         # this_filter.set_binning_obj(self.binning_model)
@@ -279,7 +282,12 @@ class BaseHeteroFeatureSelection(ModelBase):
             LOGGER.warning("None of columns has been set to select")
         else:
             for filter_idx, method in enumerate(self.filter_methods):
-                self._filter(data_instances, method, suffix=str(filter_idx))
+                if method == consts.STATISTIC_FILTER:
+                    for idx, _ in enumerate(self.model_param.statistic_param.metrics):
+                        self._filter(data_instances, method,
+                                     suffix=(str(filter_idx), str(idx)), idx=idx)
+                else:
+                    self._filter(data_instances, method, suffix=str(filter_idx))
 
         new_data = self._transfer_data(data_instances)
         LOGGER.info("Finish Hetero Selection Fit and transform.")
