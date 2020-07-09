@@ -26,7 +26,6 @@ class Table(TableABC):
 
     def __init__(self, rp: RollPair):
         self._rp = rp
-        self.schema = {}  # todo: schema?
 
     def _as_federation_format(self):
         return self._rp

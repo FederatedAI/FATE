@@ -95,6 +95,16 @@ class TableABC(metaclass=ABCMeta):
     def subtractByKey(self, other):
         ...
 
+    @property
+    def schema(self):
+        if not hasattr(self, "_schema"):
+            setattr(self, "_schema", {})
+        return getattr(self, "_schema")
+
+    @schema.setter
+    def schema(self, value):
+        setattr(self, "_schema", value)
+
 
 class SessionABC(metaclass=ABCMeta):
 

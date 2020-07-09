@@ -132,7 +132,6 @@ class Table(TableABC):
         self._namespace = namespace
         self._name = name
         self._partitions = partitions
-        self.schema = {}
 
     def __del__(self):
         if self._need_cleanup:
