@@ -14,5 +14,15 @@
 #  limitations under the License.
 #
 
-from fate_arch.session import WorkMode, Backend
 
+class TransferNameSpace(object):
+    __namespace = "default"
+
+    @classmethod
+    def set_namespace(cls, namespace):
+        cls.__namespace = namespace
+
+    @classmethod
+    def generate_tag(cls, *suffix):
+        tags = (cls.__namespace, *map(str, suffix))
+        return '.'.join(tags)

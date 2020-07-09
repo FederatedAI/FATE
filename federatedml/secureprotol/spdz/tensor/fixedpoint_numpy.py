@@ -15,8 +15,7 @@
 #
 import numpy as np
 
-from arch.api.base.table import Table
-from arch.api.base.utils.party import Party
+from fate_arch.session import is_table, Party
 from federatedml.secureprotol.spdz.beaver_triples import beaver_triplets
 from federatedml.secureprotol.spdz.tensor.base import TensorBase
 from federatedml.secureprotol.spdz.utils.random_utils import urand_tensor
@@ -47,7 +46,7 @@ class FixedPointEndec(object):
 
             field_element = upscaled % self.field
             return field_element
-        if isinstance(float_tensor, Table):
+        if is_table(float_tensor):
             s = self.base ** self.precision_fractional
             upscaled = float_tensor.mapValues(lambda x: (x * s).astype(np.int64))
             if check_range:

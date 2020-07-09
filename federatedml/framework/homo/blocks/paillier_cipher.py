@@ -35,10 +35,6 @@ class PaillierCipherTransVar(HomoTransferBase):
         self.model_re_encrypted = self.create_server_to_client_variable(name="model_re_encrypted")
 
 
-def _get_parties(roles):
-    return RuntimeInstance.FEDERATION.roles_to_parties(roles=roles)
-
-
 class Server(object):
 
     def __init__(self, trans_var: PaillierCipherTransVar = PaillierCipherTransVar()):

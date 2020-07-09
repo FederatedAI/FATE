@@ -14,29 +14,21 @@
 #  limitations under the License.
 #
 
-import os
 import typing
-import uuid
 from typing import Iterable
 
-from arch.api import RuntimeInstance, _EGGROLL_VERSION
-from arch.api import WorkMode, Backend
-from arch.api.base.table import Table
-from arch.api.base.session import FateSession
-from arch.api.base.utils.store_type import StoreTypes
-from arch.api.utils import file_utils
-from arch.api.utils.log_utils import LoggerFactory
-from arch.api.utils.profile_util import log_elapsed
+from fate_arch import session
+from fate_arch.common.log import getLogger
+from fate_arch.session import WorkMode, Backend, TableABC
+
+LOGGER = getLogger()
 
 
-# noinspection PyProtectedMember
 def init(job_id=None,
          mode: typing.Union[int, WorkMode] = WorkMode.STANDALONE,
          backend: typing.Union[int, Backend] = Backend.EGGROLL,
-         persistent_engine: str = StoreTypes.ROLLPAIR_LMDB,
-         eggroll_version=None,
-         set_log_dir=True,
-         options: dict = None):
+         options: dict = None,
+         **kwargs):
     """
     Initializes session, should be called before all.
 
@@ -67,54 +59,15 @@ def init(job_id=None,
     >>> from arch.api import session, WorkMode, Backend
     >>> session.init("a_job_id", WorkMode.Standalone, Backend.EGGROLL)
     """
-    if RuntimeInstance.SESSION:
-        return
+    if kwargs:
+        LOGGER.warning(f"{kwargs} not used, check!")
 
-    if isinstance(mode, int):
-        mode = WorkMode(mode)
-    if isinstance(backend, int):
-        backend = Backend(backend)
-    if job_id is None:
-        job_id = str(uuid.uuid1())
-        if True:
-            LoggerFactory.set_directory()
-    else:
-        if set_log_dir:
-            LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), 'logs', job_id))
-    if eggroll_version is None:
-        eggroll_version = _EGGROLL_VERSION
-
-    if backend.is_eggroll():
-        if eggroll_version < 2:
-            from arch.api.impl.based_1x import build
-            builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)
-
-        else:
-            from arch.api.impl.based_2x import build
-            builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine,
-                                    options=options)
-
-    elif backend.is_spark():
-        if eggroll_version < 2:
-            from arch.api.impl.based_spark.based_1x import build
-            builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine)
-        else:
-            from arch.api.impl.based_spark.based_2x import build
-            builder = build.Builder(session_id=job_id, work_mode=mode, persistent_engine=persistent_engine,
-                                    options=options)
-
-    else:
-        raise ValueError(f"backend: ${backend} unknown")
-
-    RuntimeInstance.MODE = mode
-    RuntimeInstance.BACKEND = backend
-    RuntimeInstance.BUILDER = builder
-    RuntimeInstance.SESSION = builder.build_session()
+    if session.has_default():
+        return session.default()
+    return session.init(job_id, mode, backend, options)
 
 
-@log_elapsed
-def table(name, namespace=None, partition=1, persistent=True, create_if_missing=True, error_if_exist=False,
-          in_place_computing=False, **kwargs) -> Table:
+def table(name, namespace, **kwargs) -> TableABC:
     """
     Loads an existing Table.
 
@@ -124,16 +77,6 @@ def table(name, namespace=None, partition=1, persistent=True, create_if_missing=
       Table name of result Table.
     namespace : string
       Table namespace of result Table.
-    partition : int
-      Number of partitions when creating new Table.
-    create_if_missing : boolean
-      Not implemented. Table will always be created if not exists.
-    error_if_exist : boolean
-      Not implemented. No error will be thrown if already exists.
-    persistent : boolean
-      Where to load the Table, `True` from persistent storage and `False` from temporary storage.
-    in_place_computing : boolean
-      Whether in-place computing is enabled.
 
     Returns
     -------
@@ -143,22 +86,12 @@ def table(name, namespace=None, partition=1, persistent=True, create_if_missing=
     Examples
     --------
     >>> from arch.api import session
-    >>> a = session.table('foo', 'bar', persistent=True)
+    >>> a = session.table('foo', 'bar')
     """
-    namespace = namespace or get_session_id()
-    return RuntimeInstance.SESSION.table(name=name,
-                                         namespace=namespace,
-                                         partition=partition,
-                                         persistent=persistent,
-                                         in_place_computing=in_place_computing,
-                                         create_if_missing=create_if_missing,
-                                         error_if_exist=error_if_exist,
-                                         **kwargs)
+    return session.default().load(name=name, namespace=namespace, **kwargs)
 
 
-@log_elapsed
-def parallelize(data: Iterable, include_key=False, name=None, partition=None, namespace=None, persistent=False,
-                create_if_missing=True, error_if_exist=False, chunk_size=100000, in_place_computing=False) -> Table:
+def parallelize(data: Iterable, partition, include_key=False, **kwargs) -> TableABC:
     """
     Transforms an existing iterable data into a Table.
 
@@ -168,20 +101,8 @@ def parallelize(data: Iterable, include_key=False, name=None, partition=None, na
       Data to be put.
     include_key : boolean
       Whether to include key when parallelizing data into table.
-    name : string
-      Table name of result Table. A default table name will be generated when `None` is used
     partition : int
       Number of partitions when parallelizing data.
-    namespace : string
-      Table namespace of result Table. job_id will be used when `None` is used.
-    create_if_missing : boolean
-      Not implemented. Table will always be created.
-    error_if_exist : boolean
-      Not implemented. No error will be thrown if already exists.
-    chunk_size : int
-      Batch size when parallelizing data into Table.
-    in_place_computing : boolean
-      Whether in-place computing is enabled.
 
     Returns
     -------
@@ -191,20 +112,12 @@ def parallelize(data: Iterable, include_key=False, name=None, partition=None, na
     Examples
     --------
     >>> from arch.api import session
-    >>> table = session.parallelize(range(10), in_place_computing=True)
+    >>> table = session.parallelize(range(10), 2)
     """
-    if partition is None:
-        raise ValueError("partition should be manual set in this version")
-    return RuntimeInstance.SESSION.parallelize(data=data, include_key=include_key, name=name, partition=partition,
-                                               namespace=namespace,
-                                               persistent=persistent,
-                                               chunk_size=chunk_size,
-                                               in_place_computing=in_place_computing,
-                                               create_if_missing=create_if_missing,
-                                               error_if_exist=error_if_exist)
+    return session.default().parallelize(data=data, partition=partition, include_key=include_key, **kwargs)
 
 
-def cleanup(name, namespace, persistent=False):
+def cleanup(name, namespace, *args, **kwargs):
     """
     Destroys Table(s). Wildcard can be used in `name` parameter.
 
@@ -214,8 +127,6 @@ def cleanup(name, namespace, persistent=False):
       Table name to be cleanup. Wildcard can be used here.
     namespace : string
       Table namespace to be cleanup. This needs to be a exact match.
-    persistent : boolean
-      Where to delete the Tables, `True` from persistent storage and `False` from temporary storage.
 
     Returns
     -------
@@ -226,25 +137,9 @@ def cleanup(name, namespace, persistent=False):
     >>> from arch.api import session
     >>> session.cleanup('foo*', 'bar', persistent=True)
     """
-    return RuntimeInstance.SESSION.cleanup(name=name, namespace=namespace, persistent=persistent)
-
-
-# noinspection PyPep8Naming
-def generateUniqueId():
-    """
-    Generates a unique ID each time it is invoked.
-
-    Returns
-    -------
-    string
-      uniqueId
-
-    Examples
-    --------
-    >>> from arch.api import session
-    >>> session.generateUniqueId()
-    """
-    return RuntimeInstance.SESSION.generateUniqueId()
+    if len(args) > 0 or len(kwargs) > 0:
+        LOGGER.warning(f"some args removed, please check! {args}, {kwargs}")
+    return session.default().cleanup(name=name, namespace=namespace)
 
 
 def get_session_id():
@@ -261,7 +156,7 @@ def get_session_id():
     >>> from arch.api import session
     >>> session.get_session_id()
     """
-    return RuntimeInstance.SESSION.get_session_id()
+    return session.default().session_id
 
 
 def get_data_table(name, namespace):
@@ -285,7 +180,32 @@ def get_data_table(name, namespace):
     >>> from arch.api import session
     >>> session.get_data_table(name, namespace)
     """
-    return RuntimeInstance.SESSION.get_data_table(name=name, namespace=namespace)
+    LOGGER.warning(f"don't use this, use table directly")
+    return session.default().load(name=name, namespace=namespace)
+
+
+def clean_tables(namespace, regex_string='*'):
+    session.default().cleanup(namespace=namespace, name=regex_string)
+
+
+def stop():
+    """
+    Stops session, clean all tables associated with this session.
+
+    Examples
+    --------
+    >>> from arch.api import session
+    >>> session.stop()
+    """
+    session.default().stop()
+
+
+def kill():
+    session.default().kill()
+
+
+def exit():
+    session.exit_session()
 
 
 def save_data_table_meta(kv, data_table_name, data_table_namespace):
@@ -367,10 +287,6 @@ def get_data_table_metas(data_table_name, data_table_namespace):
                                                         data_table_namespace=data_table_namespace)
 
 
-def clean_tables(namespace, regex_string='*'):
-    RuntimeInstance.SESSION.clean_table(namespace=namespace, regex_string=regex_string)
-
-
 def save_data(kv_data: Iterable,
               name,
               namespace,
@@ -422,24 +338,3 @@ def save_data(kv_data: Iterable,
                                              error_if_exist=error_if_exist,
                                              in_version=in_version,
                                              version_log=version_log)
-
-
-def stop():
-    """
-    Stops session, clean all tables associated with this session.
-
-    Examples
-    --------
-    >>> from arch.api import session
-    >>> session.stop()
-    """
-    RuntimeInstance.SESSION.stop()
-
-
-def kill():
-    RuntimeInstance.SESSION.kill()
-
-
-def exit():
-    RuntimeInstance.SESSION = None
-    FateSession.exit()
