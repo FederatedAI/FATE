@@ -43,6 +43,9 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         self._setup_bin_inner_param(data_instances, self.model_param)
 
         self.binning_obj.fit_split_points(data_instances)
+        if self.model_param.skip_static:
+            self.transform(data_instances)
+            return self.data_output
 
         label_counts = data_overview.count_labels(data_instances)
         if label_counts > 2:
