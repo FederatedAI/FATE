@@ -1,114 +1,86 @@
-**FATE Deployment Guide**
-=========================
+Fate Cluster step by step部署指南
+=================================
 
-The Cluster version provides four deployment methods, which can be
-selected according to your actual situation:
+1.服务器配置
+============
 
--  Install Cluster Step By Step `Chinese
-   guide <./doc/Fate_step_by_step_install_zh.rst>`__
--  Install AllinOne `Chinese
-   guide <./doc/Fate-allinone_deployment_guide_install_zh.rst>`__
--  Install Exchange Step By Step `Chinese
-   guide <./doc/Fate-exchange_deployment_guide_zh.rst>`__
++------------+-------------------------------------------------------------------------------------+
+| 服务器     |                                                                                     |
++============+=====================================================================================+
+| 数量       | >1（根据实际情况配置）                                                              |
++------------+-------------------------------------------------------------------------------------+
+| 配置       | 8 core /16GB memory / 500GB硬盘/10M带宽                                             |
++------------+-------------------------------------------------------------------------------------+
+| 操作系统   | CentOS linux 7.2及以上/Ubuntu 16.04 以上                                            |
++------------+-------------------------------------------------------------------------------------+
+| 依赖包     | （参见4.5 软件环境初始化）                                                          |
++------------+-------------------------------------------------------------------------------------+
+| 用户       | 用户：app，属主：apps（app用户需可以sudo su root而无需密码）                        |
++------------+-------------------------------------------------------------------------------------+
+| 文件系统   | 1. 500G硬盘挂载在/ data目录下； 2.创建/ data / projects目录，目录属主为：app:apps   |
++------------+-------------------------------------------------------------------------------------+
 
+2.集群规划
+==========
 
-1. Module Information
----------------------
++----------+-----------+--------------------+---------------+---------------------------+------------------------+-------------------------------------------------------------+
+| party    | partyid   | 主机名             | IP地址        | 操作系统                  | 安装软件               | 服务                                                        |
++==========+===========+====================+===============+===========================+========================+=============================================================+
+| PartyA   | 10000     | VM\_0\_1\_centos   | 192.168.0.1   | CentOS 7.2/Ubuntu 16.04   | fate，eggroll，mysql   | fate\_flow，fateboard，clustermanager，nodemanager，mysql   |
++----------+-----------+--------------------+---------------+---------------------------+------------------------+-------------------------------------------------------------+
+| PartyA   | 10000     | VM\_0\_2\_centos   | 192.168.0.2   | CentOS 7.2/Ubuntu 16.04   | fate,eggroll           | nodemanager，rollsite                                       |
++----------+-----------+--------------------+---------------+---------------------------+------------------------+-------------------------------------------------------------+
+| PartyB   | 9999      | VM\_0\_3\_centos   | 192.168.0.3   | CentOS 7.2/Ubuntu 16.04   | fate，eggroll，mysql   | all                                                         |
++----------+-----------+--------------------+---------------+---------------------------+------------------------+-------------------------------------------------------------+
 
-In a party, FATE (Federated AI Technology Enabler) has the following
-modules. Specific module information is as follows:
+架构图：
 
-+------------------+------------------+------------------------------------------------------------------------------------------------------------------------------------+
-| Module Name      | Port of module   | Module function                                                                                                                    |
-+==================+==================+====================================================================================================================================+
-| fate\_flow       | 9360;9380        | Federated learning pipeline management module, there is only one service for each party                                            |
-+------------------+------------------+------------------------------------------------------------------------------------------------------------------------------------+
-| fateboard        | 8080             | Federated learning process visualization module, only one service needs to be deployed per party                                   |
-+------------------+------------------+------------------------------------------------------------------------------------------------------------------------------------+
-| clustermanager   | 4670             | The cluster manager manages the cluster, only one instance needs to be deployed per party                                          |
-+------------------+------------------+------------------------------------------------------------------------------------------------------------------------------------+
-| nodemanager      | 4671             | Node manager manages the resources of each machine, each party can have multiple of this service, but a server can only have one   |
-+------------------+------------------+------------------------------------------------------------------------------------------------------------------------------------+
-| rollsite         | 9370             | Cross-site or cross-party communication components, equivalent to proxy + federation, each party has only one service              |
-+------------------+------------------+------------------------------------------------------------------------------------------------------------------------------------+
-| mysql            | 3306             | Data storage, clustermanager and fateflow dependency, each party only needs one service                                            |
-+------------------+------------------+------------------------------------------------------------------------------------------------------------------------------------+
-
-2. Deployment Architecture
---------------------------
-
-**2.1 Bilateral Deployment Architecture **
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-​ Example deployment in two parties
-
-.. image:: ../images/arch_en.png
+.. image:: ../images/arch_zh.png
    :align: center
    :width: 800
 
-3. Installation Preparation
----------------------------
+3.组件说明
+==========
 
-**3.1. Server Configuration**
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++------------+------------------+-------------+-----------------------------------------------------------------------------------+
+| 软件产品   | 组件             | 端口        | 说明                                                                              |
++============+==================+=============+===================================================================================+
+| fate       | fate\_flow       | 9360;9380   | 联合学习任务流水线管理模块，每个party只能有一个此服务                             |
++------------+------------------+-------------+-----------------------------------------------------------------------------------+
+| fate       | fateboard        | 8080        | 联合学习过程可视化模块，每个party只能有一个此服务                                 |
++------------+------------------+-------------+-----------------------------------------------------------------------------------+
+| eggroll    | clustermanager   | 4670        | cluster manager管理集群，每个party只能有一个此服务                                |
++------------+------------------+-------------+-----------------------------------------------------------------------------------+
+| eggroll    | nodemanager      | 4671        | node manager管理每台机器资源，每个party可有多个此服务，但一台服务器置只能有一个   |
++------------+------------------+-------------+-----------------------------------------------------------------------------------+
+| eggroll    | rollsite         | 9370        | 跨站点或者说跨party通讯组件，相当于proxy+federation，每个party只能有一个此服务    |
++------------+------------------+-------------+-----------------------------------------------------------------------------------+
+| mysql      | mysql            | 3306        | 数据存储，clustermanager和fateflow依赖，每个party只需要一个此服务                 |
++------------+------------------+-------------+-----------------------------------------------------------------------------------+
 
-The following configuration information is for one-sided server
-configuration. If there are multiple parties, please refer to this
-configuration to replicate this environment:
+4.基础环境配置
+==============
 
-+--------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Server                   |                                                                                                                                                         |
-+==========================+=========================================================================================================================================================+
-| **Quantity**             | 1 or more than 1 (according to the actual server allocation module provided)                                                                            |
-+--------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------+
-| **Configuration**        | 8 core / 16G memory / 500G hard disk / 10M bandwidth                                                                                                    |
-+--------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------+
-| **Operating System**     | Version: CentOS Linux release 7.2                                                                                                                       |
-+--------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------+
-| **Dependency Package**   | yum source gcc gcc-c++ make autoconfig openssl-devel supervisor gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-dev   |
-+--------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------+
-| **Users**                | User: app owner:apps (app user can sudo su root without password)                                                                                       |
-+--------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------+
-| **File System**          | 1. The 500G hard disk is mounted to the /data directory. 2. Create /data/projects directory, projects directory belongs to app:apps.                    |
-+--------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------+
+4.1 hostname配置(可选)
+----------------------
 
-3.2 Cluster planning
-~~~~~~~~~~~~~~~~~~~~
+**1）修改主机名**
 
-+----------+-----------+--------------------+---------------+---------------------------+------------------------+-------------------------------------------------------------+
-| party    | partyid   | hostname           | IP            | os                        | software               | services                                                    |
-+==========+===========+====================+===============+===========================+========================+=============================================================+
-| PartyA   | 10000     | VM\_0\_1\_centos   | 192.168.0.1   | CentOS 7.2/Ubuntu 16.04   | fate, eggroll, mysql   | fate\_flow, fateboard, clustermanager, nodemanager, mysql   |
-+----------+-----------+--------------------+---------------+---------------------------+------------------------+-------------------------------------------------------------+
-| PartyA   | 10000     | VM\_0\_2\_centos   | 192.168.0.2   | CentOS 7.2/Ubuntu 16.04   | fate, eggroll          | nodemanager, rollsite                                       |
-+----------+-----------+--------------------+---------------+---------------------------+------------------------+-------------------------------------------------------------+
-| PartyB   | 9999      | VM\_0\_3\_centos   | 192.168.0.3   | CentOS 7.2/Ubuntu 16.04   | fate, eggroll, mysql   | all                                                         |
-+----------+-----------+--------------------+---------------+---------------------------+------------------------+-------------------------------------------------------------+
-
-3.3 Basic environment configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-3.3.1 hostname configuration (optional)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-**1) Modify the host name**
-
-**Run under the 192.168.0.1 root user:**
+**在192.168.0.1 root用户下执行：**
 
 hostnamectl set-hostname VM\_0\_1\_centos
 
-**Run under the 192.168.0.2 root user:：**
+**在192.168.0.2 root用户下执行：**
 
 hostnamectl set-hostname VM\_0\_2\_centos
 
-**Run under the 192.168.0.3 root user:**
+**在192.168.0.3 root用户下执行：**
 
 hostnamectl set-hostname VM\_0\_3\_centos
 
-**2) Add Host Mapping**
+**2）加入主机映射**
 
-**Execute under the root user of the target server (192.168.0.1
-192.168.0.2 192.168.0.3):**
+**在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）root用户下执行：**
 
 vim /etc/hosts
 
@@ -118,43 +90,40 @@ vim /etc/hosts
 
 192.168.0.3 VM\_0\_3\_centos
 
-3.3.2 Close selinux (optional)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4.2 关闭selinux(可选)
+---------------------
 
-**Execute under the root user of the target server (192.168.0.1
-192.168.0.2 192.168.0.3):**
+**在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）root用户下执行：**
 
-Confirm whether selinux is installed
+确认是否已安装selinux
 
-Centos system executes: rpm -qa \| grep selinux
+centos系统执行：rpm -qa \| grep selinux
 
-Ubuntu system executes: apt list --installed \| grep selinux
+ubuntu系统执行：apt list --installed \| grep selinux
 
-If selinux is already installed, execute: setenforce 0
+如果已安装了selinux就执行：setenforce 0
 
-3.3.3 Modify linux system parameters
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4.3 修改Linux系统参数
+---------------------
 
-**Execute under the root user of the target server (192.168.0.1
-192.168.0.2 192.168.0.3):**
+**在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）root用户下执行：**
 
-1) vim /etc/security/limits.conf
+1）vim /etc/security/limits.conf
 
 \* soft nofile 65535
 
 \* hard nofile 65535
 
-2) vim /etc/security/limits.d/20-nproc.conf
+2）vim /etc/security/limits.d/20-nproc.conf
 
 \* soft nproc unlimited
 
-3.3.4 Turn off the firewall (optional)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4.4 关闭防火墙(可选)
+--------------------
 
-**Execute under the root user of the target server (192.168.0.1
-192.168.0.2 192.168.0.3):**
+**在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）root用户下执行**
 
-If it is a Centos system:
+如果是Centos系统：
 
 systemctl disable firewalld.service
 
@@ -162,19 +131,18 @@ systemctl stop firewalld.service
 
 systemctl status firewalld.service
 
-If it is an Ubuntu system:
+如果是Ubuntu系统：
 
 ufw disable
 
 ufw status
 
-3.3.5 Software environment initialization
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4.5 软件环境初始化
+------------------
 
-**Execute under the root user of the target server (192.168.0.1
-192.168.0.2 192.168.0.3)**
+**在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）root用户下执行**
 
-**1) create user**
+**1）创建用户**
 
 ::
 
@@ -182,7 +150,7 @@ ufw status
     useradd -s /bin/bash -g apps -d /home/app app
     passwd app
 
-**2) Create a directory**
+**2）创建目录**
 
 ::
 
@@ -190,7 +158,7 @@ ufw status
     mkdir -p /data/projects/install
     chown -R app:apps /data/projects
 
-**3) Install dependencies**
+**3）安装依赖**
 
 ::
 
@@ -204,14 +172,12 @@ ufw status
        ln -s libcrypto.so.1.0.0 libcrypto.so.10
     fi
 
-3.4 Increase virtual memory
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+4.6 增加虚拟内存
+----------------
 
-**Execute under the root user of the target server (192.168.0.1
-192.168.0.2 192.168.0.3)**
+**在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）root用户下执行**
 
-When used in a production environment, 128G virtual memory needs to be
-added due to memory calculation. Refer to:
+生产环境使用时，因内存计算需要增加128G虚拟内存，参考：
 
 ::
 
@@ -220,20 +186,17 @@ added due to memory calculation. Refer to:
     mkswap /data/swapfile128G
     swapon /data/swapfile128G
     cat /proc/swaps
-    echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
+    echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab 
 
-4.Project deployment
---------------------
+5.项目部署
+==========
 
-Note: The installation directory of this guide is /data/projects/install
-by default, the user is the app, and it should be modified according to
-the actual situation during installation.
+注：此指导安装目录默认为/data/projects/install，执行用户为app，安装时根据具体实际情况修改。
 
-4.1 Get the installation package
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+5.1 获取安装包
+--------------
 
-Execute under the app user of the target server (192.168.0.1 has an
-external network environment):
+在目标服务器（192.168.0.1 具备外网环境）app用户下执行:
 
 ::
 
@@ -244,77 +207,75 @@ external network environment):
     wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.2-release.tar.gz
     wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.2-release.tar.gz
 
-    #Send to 192.168.0.2和192.168.0.3
+    #传输到192.168.0.2和192.168.0.3
     scp *.tar.gz app@192.168.0.2:/data/projects/install
     scp *.tar.gz app@192.168.0.3:/data/projects/install
 
-4.2 Operating system parameter check
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+5.2 操作系统参数检查
+--------------------
 
-**Execute under the app user of the target server (192.168.0.1
-192.168.0.2 192.168.0.3)**
+**在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）app用户下执行**
 
 ::
 
-    #Virtual memory, the size is not less than 128G, if it is not satisfied, please refer to #Chapter 4.6 to reset
+    #虚拟内存，size不低于128G，如不满足需参考4.6章节重新设置
     cat /proc/swaps
     Filename                                Type            Size    Used    Priority
     /data/swapfile128G                      file            134217724       384     -1
 
-    #The number of file handles is not less than 65535. If it is not satisfied, please refer #to Chapter 4.3 to reset
+    #文件句柄数，不低于65535，如不满足需参考4.3章节重新设置
     ulimit -n
     65535
 
-    #The number of user processes is not less than 64000, if it is not satisfied, please #refer to Chapter 4.3 to reset
+    #用户进程数，不低于64000，如不满足需参考4.3章节重新设置
     ulimit -u
     65535
 
-4.3 Deploy mysql
-~~~~~~~~~~~~~~~~
+5.3 部署mysql
+-------------
 
-**Execute under the app user of the target server (192.168.0.1
-192.168.0.3)**
+**在目标服务器（192.168.0.1 192.168.0.3）app用户下执行**
 
-**1) MySQL installation:**
+**1）mysql安装：**
 
 ::
 
-    #Create mysql root directory
+    #建立mysql根目录
     mkdir -p /data/projects/fate/common/mysql
     mkdir -p /data/projects/fate/data/mysql
 
-    #Unzip the package
+    #解压缩软件包
     cd /data/projects/install
     tar xzvf mysql-*.tar.gz
     cd mysql
     tar xf mysql-8.0.13.tar.gz -C /data/projects/fate/common/mysql
 
-    #Configuration settings
+    #配置设置
     mkdir -p /data/projects/fate/common/mysql/mysql-8.0.13/{conf,run,logs}
     cp service.sh /data/projects/fate/common/mysql/mysql-8.0.13/
     cp my.cnf /data/projects/fate/common/mysql/mysql-8.0.13/conf
 
-    #initialization
+    #初始化
     cd /data/projects/fate/common/mysql/mysql-8.0.13/
     ./bin/mysqld --initialize --user=app --basedir=/data/projects/fate/common/mysql/mysql-8.0.13 --datadir=/data/projects/fate/data/mysql > logs/init.log 2>&1
     cat logs/init.log |grep root@localhost
-    #Note that the root @ localhost: in the output information is the initial password of the mysql user root, which should be recorded for later changing password
+    #注意输出信息中root@localhost:后的是mysql用户root的初始密码，需要记录，后面修改密码需要用到
 
-    #Start service
+    #启动服务
     cd /data/projects/fate/common/mysql/mysql-8.0.13/
     nohup ./bin/mysqld_safe --defaults-file=./conf/my.cnf --user=app >>logs/mysqld.log 2>&1 &
 
-    #Change mysql root user password
+    #修改mysql root用户密码
     cd /data/projects/fate/common/mysql/mysql-8.0.13/
     ./bin/mysqladmin -h 127.0.0.1 -P 3306 -S ./run/mysql.sock -u root -p password "fate_dev"
-    Enter Password:【Enter the root initial password】
+    Enter Password:【输入root初始密码】
 
-    #Verify login
+    #验证登陆
     cd /data/projects/fate/common/mysql/mysql-8.0.13/
     ./bin/mysql -u root -p -S ./run/mysql.sock
-    Enter Password:【Enter the modified password of root: fate_dev】
+    Enter Password:【输入root修改后密码:fate_dev】
 
-**2）Database creation, authorization and business configuration**
+**2）建库授权和业务配置**
 
 ::
 
@@ -322,109 +283,107 @@ external network environment):
     ./bin/mysql -u root -p -S ./run/mysql.sock
     Enter Password:【fate_dev】
 
-    #Create eggroll database and tables
+    #创建eggroll库表
     mysql>source /data/projects/install/mysql/create-eggroll-meta-tables.sql;
 
-    #Create fate_flow database
+    #创建fate_flow库
     mysql>CREATE DATABASE IF NOT EXISTS fate_flow;
 
-    #Create remote users and authorizations
-    1) 192.168.0.1 execute
+    #创建远程用户和授权
+    1) 192.168.0.1执行
     mysql>CREATE USER 'fate'@'192.168.0.1' IDENTIFIED BY 'fate_dev';
     mysql>GRANT ALL ON *.* TO 'fate'@'192.168.0.1';
     mysql>CREATE USER 'fate'@'192.168.0.2' IDENTIFIED BY 'fate_dev';
     mysql>GRANT ALL ON *.* TO 'fate'@'192.168.0.2';
     mysql>flush privileges;
 
-    2) 192.168.0.3 execute
+    2) 192.168.0.3执行
     mysql>CREATE USER 'fate'@'192.168.0.3' IDENTIFIED BY 'fate_dev';
     mysql>GRANT ALL ON *.* TO 'fate'@'192.168.0.3';
     mysql>flush privileges;
 
-    #insert configuration data
-    1) 192.168.0.1 execute
+    #insert配置数据
+    1) 192.168.0.1执行
     mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.1', '4670', 'CLUSTER_MANAGER', 'HEALTHY');
     mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.1', '4671', 'NODE_MANAGER', 'HEALTHY');
     mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.2', '4671', 'NODE_MANAGER', 'HEALTHY');
 
-    2) 192.168.0.3 execute
+    2) 192.168.0.3执行
     mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.3', '4670', 'CLUSTER_MANAGER', 'HEALTHY');
     mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.3', '4671', 'NODE_MANAGER', 'HEALTHY');
 
-    #check
+    #校验
     mysql>select User,Host from mysql.user;
     mysql>show databases;
     mysql>use eggroll_meta;
     mysql>show tables;
     mysql>select * from server_node;
 
-4.4 Deploy jdk
-~~~~~~~~~~~~~~
+5.4 部署jdk
+-----------
 
-**Execute under the app user of the target server (192.168.0.1
-192.168.0.2 192.168.0.3)**
+**在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）app用户下执行**:
 
 ::
 
-    #Create jdk installation directory
+    #创建jdk安装目录
     mkdir -p /data/projects/fate/common/jdk
-    #Unzip the package
+    #解压缩
     cd /data/projects/install
     tar xzf jdk-8u192-linux-x64.tar.gz -C /data/projects/fate/common/jdk
     cd /data/projects/fate/common/jdk
     mv jdk1.8.0_192 jdk-8u192
 
-4.5 Deploy python
-~~~~~~~~~~~~~~~~~
+5.5 部署python
+--------------
 
-**Execute under the app user of the target server (192.168.0.1
-192.168.0.2 192.168.0.3)**
+**在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）app用户下执行**:
 
 ::
 
-    #Create python virtual installation directory
+    #创建python虚拟化安装目录
     mkdir -p /data/projects/fate/common/python
 
-    #Install miniconda3
+    #安装miniconda3
     cd /data/projects/install
     tar xvf python-env-*.tar.gz
     cd python-env
     sh Miniconda3-4.5.4-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
 
-    #Install virtualenv and create virtual environment
+    #安装virtualenv和创建虚拟化环境
     /data/projects/fate/common/miniconda3/bin/pip install virtualenv-20.0.18-py2.py3-none-any.whl -f . --no-index
 
     /data/projects/fate/common/miniconda3/bin/virtualenv -p /data/projects/fate/common/miniconda3/bin/python3.6 --no-wheel --no-setuptools --no-download /data/projects/fate/common/python/venv
 
-    #Install dependencies
+    #安装依赖包
     tar xvf pip-packages-fate-*.tar.gz
     source /data/projects/fate/common/python/venv/bin/activate
     pip install setuptools-42.0.2-py2.py3-none-any.whl
     pip install -r pip-packages-fate-1.4.1/requirements.txt -f ./pip-packages-fate-1.4.1 --no-index
     pip list | wc -l
-    #The result should be 158
+    #结果应为158
 
-4.6 Deploy eggroll&fate
-~~~~~~~~~~~~~~~~~~~~~~~
+5.6 部署eggroll&fate
+--------------------
 
-4.6.1 Software deployment
-^^^^^^^^^^^^^^^^^^^^^^^^^
+**5.6.1软件部署**
+~~~~~~~~~~~~~~~~~
 
 ::
 
-    #Software deployment
-    #Execute under the app user of the target server (192.168.0.1 192.168.0.2 192.168.0.3)
+    #部署软件
+    #在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）app用户下执行:
     cd /data/projects/install
     tar xf FATE_install_*.tar.gz
     cd FATE_install_*
     tar xvf python.tar.gz -C /data/projects/fate/
     tar xvf eggroll.tar.gz -C /data/projects/fate
 
-    #Execute under the app user of the target server (192.168.0.1 192.168.0.3)
+    #在目标服务器（192.168.0.1 192.168.0.3）app用户下执行:
     tar xvf fateboard.tar.gz -C /data/projects/fate
 
-    #Set the environment variable file
-    #Execute under the app user of the target server (192.168.0.1 192.168.0.2 192.168.0.3)
+    #设置环境变量文件
+    #在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）app用户下执行:
     cat >/data/projects/fate/init_env.sh <<EOF
     export PYTHONPATH=/data/projects/fate/python:/data/projects/fate/eggroll/python
     export EGGROLL_HOME=/data/projects/fate/eggroll/
@@ -434,16 +393,12 @@ external network environment):
     export PATH=\$PATH:\$JAVA_HOME/bin
     EOF
 
-4.6.2 eggroll system configuration file modification
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+5.6.2 eggroll系统配置文件修改
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This configuration file are shared among rollsite, clustermanager, and
-nodemanager, and configuration across multiple hosts on each party
-should be consistent. Content needs to be modified:
+此配置文件rollsite，clustermanager，nodemanager共用，每端party多台主机保持一致，需修改内容：
 
--  Database driver, the database corresponds to the connection IP, port,
-   user name and password used by the party. Usually the default value
-   for the port should suffice.
+-  数据库驱动，数据库对应party用的连接IP，端口，用户名和密码，端口一般默认即可。
 
 eggroll.resourcemanager.clustermanager.jdbc.driver.class.name
 
@@ -451,9 +406,8 @@ eggroll.resourcemanager.clustermanager.jdbc.username
 
 eggroll.resourcemanager.clustermanager.jdbc.password
 
--  Corresponding to the IP, port, nodemanager port, process tag, and
-   port of the party clustermanager. Usually the default value for the
-   port should suffice.
+-  对应party
+   clustermanager的IP、端口，nodemanager端口，进程tag，端口一般默认即可。
 
 eggroll.resourcemanager.clustermanager.host
 
@@ -463,9 +417,8 @@ eggroll.resourcemanager.nodemanager.port
 
 eggroll.resourcemanager.process.tag
 
--  The Python virtual environment path, business code pythonpath, and
-   JAVA Home path are modified. If there is no change in the related
-   path, keep the default.
+-  Python虚拟环境路径、业务代码pythonpath、JAVA
+   Home路径修改，如果相关路径无变化，保持默认即可。
 
 eggroll.resourcemanager.bootstrap.egg\_pair.venv
 
@@ -473,21 +426,18 @@ eggroll.resourcemanager.bootstrap.egg\_pair.pythonpath
 
 eggroll.resourcemanager.bootstrap.roll\_pair\_master.javahome
 
--  Modify IP and port corresponding to the party rollsite and the
-   party's Party Id. Default value for rollsite's port generally should
-   suffice.
+-  对应party rollsite的IP、端口、本party的Party
+   Id修改，rollsite的端口一般默认即可。
 
 eggroll.rollsite.host eggroll.rollsite.port eggroll.rollsite.party.id
 
-The above parameter adjustment can be manually configured by referring
-to the following example, or can be completed using the following
-command:
+以上参数调整可以参考如下例子手工配置，也可以使用以下指令完成：
 
-Configuration file: /data/projects/fate/eggroll/conf/eggroll.properties
+配置文件：/data/projects/fate/eggroll/conf/eggroll.properties
 
 ::
 
-    #Execute under the app user of the target server (192.168.0.1 192.168.0.2)
+    #在目标服务器（192.168.0.1 192.168.0.2）app用户下修改执行
     cat > /data/projects/fate/eggroll/conf/eggroll.properties <<EOF
     [eggroll]
     #db connect inf
@@ -528,7 +478,7 @@ Configuration file: /data/projects/fate/eggroll/conf/eggroll.properties
     eggroll.rollpair.transferpair.sendbuf.size=4150000
     EOF
 
-    #Execute under the app user of the target server (192.168.0.3)
+    #在目标服务器（192.168.0.3）app用户下修改执行
     cat > /data/projects/fate/eggroll/conf/eggroll.properties <<EOF
     [eggroll]
     #db connect inf
@@ -569,18 +519,16 @@ Configuration file: /data/projects/fate/eggroll/conf/eggroll.properties
     eggroll.rollpair.transferpair.sendbuf.size=4150000
     EOF
 
-4.6.3 eggroll routing configuration file modification
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+5.6.3 eggroll路由配置文件修改
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This configuration file rollsite is used to configure routing
-information. You can manually configure it by referring to the following
-example, or you can use the following command:
+此配置文件rollsite使用，配置路由信息，可以参考如下例子手工配置，也可以使用以下指令完成：
 
-Configuration file: /data/projects/fate/eggroll/conf/route\_table.json
+配置文件: /data/projects/fate/eggroll/conf/route\_table.json
 
 ::
 
-    #Execute under the app user of the target server (192.168.0.2)
+    #在目标服务器（192.168.0.2）app用户下修改执行
     cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
     {
       "route_table":
@@ -600,7 +548,7 @@ Configuration file: /data/projects/fate/eggroll/conf/route\_table.json
             }
           ]      
         },
-        "9999":
+        "default":
         {
           "default":[
             {
@@ -617,7 +565,7 @@ Configuration file: /data/projects/fate/eggroll/conf/route\_table.json
     }
     EOF
 
-    #Execute under the app user of the target server (192.168.0.3)
+    #在目标服务器（192.168.0.3）app用户下修改执行
     cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
     {
       "route_table":
@@ -637,7 +585,7 @@ Configuration file: /data/projects/fate/eggroll/conf/route\_table.json
             }
           ]      
         },
-        "10000":
+        "default":
         {
           "default":[
             {
@@ -654,40 +602,36 @@ Configuration file: /data/projects/fate/eggroll/conf/route\_table.json
     }
     EOF
 
-4.6.4 fate dependent service configuration file modification
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+5.6.4 fate依赖服务配置文件修改
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  fateflow
 
-fateflow IP , host: 192.168.0.1,guest: 192.168.0.3
+fateflow IP ，host：192.168.0.1，guest：192.168.0.3
 
-​ grpc port: 9360
+​ grpc端口：9360
 
-​ http port: 9380
+​ http端口：9380
 
 -  fateboard
 
-​ fateboard IP, host: 192.168.0.1, guest: 192.168.0.3
+​ fateboard IP，host：192.168.0.1，guest：192.168.0.3
 
-​ fateboard port: 8080
+​ fateboard端口：8080
 
 -  proxy
 
-proxy IP, host: 192.168.0.2, guest: 192.168.0.3---Rollsite component
-corresponds to IP
+proxy IP，host：192.168.0.2，guest：192.168.0.3---rollsite组件对应IP
 
-proxy port：9370
+proxy端口：9370
 
-This file should be configured in json format, otherwise an error will
-be reported, you can refer to the following example to manually
-configure, you can also use the following instructions to complete.
+此文件要按照json格式进行配置，不然会报错，可以参考如下例子手工配置，也可以使用以下指令完成。
 
-Configuration file:
-/data/projects/fate/python/arch/conf/server\_conf.json
+配置文件：data/projects/fate/python/arch/conf/server\_conf.json
 
 ::
 
-    #Execute under the app user of the target server (192.168.0.1 192.168.0.2)
+    #在目标服务器（192.168.0.1 192.168.0.2）app用户下修改执行
     cat > /data/projects/fate/python/arch/conf/server_conf.json << EOF
     {
       "servers": {
@@ -711,7 +655,7 @@ Configuration file:
     }
     EOF
 
-    #Execute under the app user of the target server (192.168.0.3)
+    #在目标服务器（192.168.0.3）app用户下修改执行
     cat > /data/projects/fate/python/arch/conf/server_conf.json << EOF
     {
       "servers": {
@@ -735,25 +679,22 @@ Configuration file:
     }
     EOF
 
-4.6.5 Fate database information configuration file modification
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+5.6.5 fate数据库信息配置文件修改
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  work\_mode(1 means cluster mode, default)
+-  work\_mode(为1表示集群模式，默认)
 
--  db connection IP, port, account and password
+-  db的连接ip、端口、账号和密码
 
--  Redis IP, port, password (no configuration required for temporary use
-   of redis)
+-  redis IP、端口、密码（redis暂使用不需要配置）
 
-This configuration file should be in yaml format, otherwise an error
-will be raised during parsing, you can refer to the following example to
-manually configure, or you can use the following command.
+此配置文件格式要按照yaml格式配置，不然解析报错，可以参考如下例子手工配置，也可以使用以下指令完成。
 
-Configuration file: /data/projects/fate/python/arch/conf/base\_conf.yaml
+配置文件：/data/projects/fate/python/arch/conf/base\_conf.yaml
 
 ::
 
-    #Execute under the app user of the target server (192.168.0.1)
+    #在目标服务器（192.168.0.1）app用户下修改执行
     cat > /data/projects/fate/python/arch/conf/base_conf.yaml <<EOF
     work_mode: 1
     fate_flow:
@@ -782,7 +723,7 @@ Configuration file: /data/projects/fate/python/arch/conf/base\_conf.yaml
       db: 0
     EOF
 
-    #Execute under the app user of the target server (192.168.0.3)
+    #在目标服务器（192.168.0.3）app用户下修改执行
     cat > /data/projects/fate/python/arch/conf/base_conf.yaml <<EOF
     work_mode: 1
     fate_flow:
@@ -811,39 +752,34 @@ Configuration file: /data/projects/fate/python/arch/conf/base\_conf.yaml
       db: 0
     EOF
 
-4.6.6 fateboard configuration file modification
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+5.6.6 fateboard配置文件修改
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1）application.properties
 
--  Service port
+-  服务端口
 
-server.port---default
+server.port---默认
 
--  fateflow access url
+-  fateflow的访问url
 
-fateflow.url, host: http://192.168.0.1:9380, guest:
-http://192.168.0.3:9380
+fateflow.url，host：http://192.168.0.1:9380，guest：http://192.168.0.3:9380
 
--  Database connection string, account number and password
+-  数据库连接串、账号和密码
 
-fateboard.datasource.jdbc-url, host: mysql://192.168.0.1:3306, guest:
-mysql://192.168.0.3:3306
+fateboard.datasource.jdbc-url，host：mysql://192.168.0.1:3306，guest：mysql://192.168.0.3:3306
 
-fateboard.datasource.username: fate
+fateboard.datasource.username：fate
 
-fateboard.datasource.password: fate\_dev
+fateboard.datasource.password：fate\_dev
 
-The above parameter adjustment can be manually configured by referring
-to the following example, or can be completed using the following
-command:
+以上参数调整可以参考如下例子手工配置，也可以使用以下指令完成：
 
-Configuration file:
-/data/projects/fate/fateboard/conf/application.properties
+配置文件：/data/projects/fate/fateboard/conf/application.properties
 
 ::
 
-    #Execute under the app user of the target server (192.168.0.1)
+    #在目标服务器（192.168.0.1）app用户下修改执行
     cat > /data/projects/fate/fateboard/conf/application.properties <<EOF
     server.port=8080
     fateflow.url=http://192.168.0.1:9380
@@ -858,7 +794,7 @@ Configuration file:
     server.tomcat.max-connections=20000
     EOF
 
-    #Execute under the app user of the target server (192.168.0.3)
+    #在目标服务器（192.168.0.3）app用户下修改执行
     cat > /data/projects/fate/fateboard/conf/application.properties <<EOF
     server.port=8080
     fateflow.url=http://192.168.0.3:9380
@@ -877,62 +813,62 @@ Configuration file:
 
 ::
 
-    #Execute under the app user of the target server (192.168.0.1 192.168.0.3)
+    #在目标服务器（192.168.0.1 192.168.0.3）app用户下修改执行
     cd /data/projects/fate/fateboard
     vi service.sh
     export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 
-4.7 Start service
-~~~~~~~~~~~~~~~~~
+5.7 启动服务
+------------
 
-**Execute under the app user of the target server (192.168.0.2)**
+**在目标服务器（192.168.0.2）app用户下执行**
 
 ::
 
-    #Start eggroll service
+    #启动eggroll服务
     source /data/projects/fate/init_env.sh
     cd /data/projects/fate/eggroll
     sh ./bin/eggroll.sh rollsite start
     sh ./bin/eggroll.sh nodemanager start
 
-**Execute under the app user of the target server (192.168.0.1)**
+**在目标服务器（192.168.0.1）app用户下执行**
 
 ::
 
-    #Start eggroll service
+    #启动eggroll服务
     source /data/projects/fate/init_env.sh
     cd /data/projects/fate/eggroll
     sh ./bin/eggroll.sh clustermanager start
     sh ./bin/eggroll.sh nodemanager start
 
-    #Start the fate service, fateflow depends on the start of rollsite and mysql. Make sure to start fateflow after eggroll of all nodes have been started. Otherwise, you will get stuck, and an error will be raised.
-
+    #启动fate服务，fateflow依赖rollsite和mysql的启动，等所有节点的eggroll都启动后再启动fateflow，
+    否则会卡死报错
     source /data/projects/fate/init_env.sh
     cd /data/projects/fate/python/fate_flow
     sh service.sh start
     cd /data/projects/fate/fateboard
     sh service.sh start
 
-**Execute under the app user of the target server (192.168.0.3)**
+**在目标服务器（192.168.0.3）app用户下执行**
 
 ::
 
-    #Start eggroll service
+    #启动eggroll服务
     source /data/projects/fate/init_env.sh
     cd /data/projects/fate/eggroll
     sh ./bin/eggroll.sh all start
 
-    #Start fate service
+    #启动fate服务
     source /data/projects/fate/init_env.sh
     cd /data/projects/fate/python/fate_flow
     sh service.sh start
     cd /data/projects/fate/fateboard
     sh service.sh start
 
-4.8 identify the problem
-~~~~~~~~~~~~~~~~~~~~~~~~
+5.8 问题定位
+------------
 
-1) eggroll log
+1）eggroll日志
 
 /data/projects/fate/eggroll/logs/eggroll/bootstrap.clustermanager.err
 
@@ -946,28 +882,26 @@ Configuration file:
 
 /data/projects/fate/eggroll/logs/eggroll/rollsite.jvm.err.log
 
-2) fateflow log
+2）fateflow日志
 
 /data/projects/fate/python/logs/fate\_flow/
 
-3) fateboard log
+3）fateboard日志
 
 /data/projects/fate/fateboard/logs
 
-5. Test
--------
+6.测试
+======
 
-5.1 Toy\_example deployment verification
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+6.1 Toy\_example部署验证
+------------------------
 
-You need to set 3 parameters for this test:
-guest\_partyid，host\_partyid，work\_mode.
+此测试您需要设置3个参数：guest\_partyid，host\_partyid，work\_mode。
 
-5.1.1 Unilateral test
-^^^^^^^^^^^^^^^^^^^^^
+6.1.1 单边测试
+~~~~~~~~~~~~~~
 
-1) Executed on 192.168.0.1, guest\_partyid and host\_partyid are set to
-   10000:
+1）192.168.0.1上执行，guest\_partyid和host\_partyid都设为10000：
 
 ::
 
@@ -975,13 +909,12 @@ guest\_partyid，host\_partyid，work\_mode.
     cd /data/projects/fate/python/examples/toy_example/
     python run_toy_example.py 10000 10000 1
 
-A result similar to the following indicates success:
+类似如下结果表示成功：
 
 "2020-04-28 18:26:20,789 - secure\_add\_guest.py[line:126] - INFO:
 success to calculate secure\_sum, it is 1999.9999999999998"
 
-2) Executed on 192.168.0.3, guest\_partyid and host\_partyid are set to
-   9999:
+2）192.168.0.3上执行，guest\_partyid和host\_partyid都设为10000：
 
 ::
 
@@ -989,15 +922,15 @@ success to calculate secure\_sum, it is 1999.9999999999998"
     cd /data/projects/fate/python/examples/toy_example/
     python run_toy_example.py 9999 9999 1
 
-A result similar to the following indicates success:
+类似如下结果表示成功：
 
 "2020-04-28 18:26:20,789 - secure\_add\_guest.py[line:126] - INFO:
 success to calculate secure\_sum, it is 1999.9999999999998"
 
-5.1.2 Bilateral test
-^^^^^^^^^^^^^^^^^^^^
+6.1.2 双边测试
+~~~~~~~~~~~~~~
 
-Select 9999 as the guest and execute on 192.168.0.3:
+选定9999为guest方，在192.168.0.3上执行：
 
 ::
 
@@ -1005,22 +938,18 @@ Select 9999 as the guest and execute on 192.168.0.3:
     cd /data/projects/fate/python/examples/toy_example/
     python run_toy_example.py 9999 10000 1
 
-A result similar to the following indicates success:：
+类似如下结果表示成功：
 
 "2020-04-28 18:26:20,789 - secure\_add\_guest.py[line:126] - INFO:
 success to calculate secure\_sum, it is 1999.9999999999998"
 
-5.2 Minimization testing
+6.2 最小化测试
+--------------
+
+**6.2.1 上传预设数据：**
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Start the virtual environment in host and guest respectively. Please
-make sure you have already uploaded the preset dataset through the
-provided script.
-
-5.2.1 Upload preset Data
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-Execute on 192.168.0.1 and 192.168.0.3 respectively::
+分别在192.168.0.1和192.168.0.3上执行：
 
 ::
 
@@ -1028,18 +957,16 @@ Execute on 192.168.0.1 and 192.168.0.3 respectively::
     cd /data/projects/fate/python/examples/scripts/
     python upload_default_data.py -m 1
 
-For more details, please refer to `scripts'
-README <../examples/scripts/README.rst>`__
+更多细节信息，敬请参考\ `脚本README <../../examples/scripts/README.rst>`__
 
-5.2.2 Fast mode
-^^^^^^^^^^^^^^^
+**6.2.2 快速模式：**
+~~~~~~~~~~~~~~~~~~~~
 
-Please make sure that both guest and host have uploaded the preset data
-through the given script respectively.In the fast mode, the minimization
-test script will use a relatively small data set, namely the breast data
-set containing 569 data.
+请确保guest和host两方均已分别通过给定脚本上传了预设数据。
 
-Select 9999 as the guest and execute on 192.168.0.3:
+快速模式下，最小化测试脚本将使用一个相对较小的数据集，即包含了569条数据的breast数据集。
+
+选定9999为guest方，在192.168.0.3上执行：
 
 ::
 
@@ -1047,70 +974,58 @@ Select 9999 as the guest and execute on 192.168.0.3:
     cd /data/projects/fate/python/examples/min_test_task/
     python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
 
-This test will automatically take breast as test data set.
+其他一些可能有用的参数包括：
 
-There are some more parameters that you may need:
+1. -f: 使用的文件类型. "fast" 代表 breast数据集, "normal" 代表 default
+   credit 数据集.
+2. --add\_sbt: 如果被设置为True, 将在运行完lr以后，启动secureboost任务。
 
-1. -f: file type. "fast" means breast data set, "normal" means default
-   credit data set.
-2. --add\_sbt: if set, it will test hetero-secureboost task after
-   testing hetero-lr.
+若数分钟后在结果中显示了“success”字样则表明该操作已经运行成功了。若出现“FAILED”或者程序卡住，则意味着测试失败。
 
-Wait a few minutes, a result showing "success" indicates that the
-operation is successful. In other cases, if FAILED or stuck, it means
-failure.
-
-5.2.3 Normal mode
-^^^^^^^^^^^^^^^^^
-
-Just replace the word "fast" with "normal" in all the commands, the rest
-is the same with fast mode.
-
-5.3. Fateboard testing
+**6.2.3 正常模式**\ ：
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Fateboard is a web service. Get the ip of fateboard. If fateboard
-service is launched successfully, you can see the task information by
-visiting http://${fateboard-ip}:8080. Firewall may need to be opened.
-When fateboard and fatefow are deployed to separate servers, you need to
-specify server information of fateflow service on Fateboard page: click
-the gear icon on the top right corner of Board homepage -> click "add"
--> fill in ip, os user, ssh, and password for fateflow service.
+只需在命令中将“fast”替换为“normal”，其余部分与快速模式相同。
 
-6. System operation and maintenance
------------------------------------
+6.3. Fateboard testing
+----------------------
 
-6.1 Service management
-~~~~~~~~~~~~~~~~~~~~~~
+Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以通过访问
+http://192.168.0.1:8080 和 http://192.168.0.3:8080
+来查看任务信息，如果有防火墙需开通。如果fateboard和fateflow没有部署再同一台服务器，需在fateboard页面设置fateflow所部署主机的登陆信息：页面右上侧齿轮按钮--》add--》填写fateflow主机ip，os用户，ssh端口，密码。
 
-**Execute under the app user of the target server (192.168.0.1
-192.168.0.2 192.168.0.3)**
+7.系统运维
+==========
 
-6.1.1 Eggroll Service Management
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7.1 服务管理
+------------
+
+**在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）app用户下执行**
+
+7.1.1 Eggroll服务管理
+~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
     source /data/projects/fate/init_env.sh
     cd /data/projects/fate/eggroll
 
-Start / stop / status / restart all:
+启动/关闭/查看/重启所有：
 
 ::
 
     sh ./bin/eggroll.sh all start/stop/status/restart
 
-Start / stop / status / restart a single module (optional:
-clustermanager, nodemanager, rollsite):
+启动/关闭/查看/重启单个模块(可选：clustermanager，nodemanager，rollsite)：
 
 ::
 
     sh ./bin/eggroll.sh clustermanager start/stop/status/restart
 
-6.1.2 Fate Service Management
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7.1.2 Fate服务管理
+~~~~~~~~~~~~~~~~~~
 
-1) Start / stop / status / restart fate\_flow service
+1) 启动/关闭/查看/重启fate\_flow服务
 
 ::
 
@@ -1118,50 +1033,48 @@ clustermanager, nodemanager, rollsite):
     cd /data/projects/fate/python/fate_flow
     sh service.sh start|stop|status|restart
 
-If you start module by module, you need to start eggroll first and then
-start fateflow. Fateflow depends on the start of eggroll.
+如果逐个模块启动，需要先启动eggroll再启动fateflow，fateflow依赖eggroll的启动。
 
-2) Start / stop / status / restart fateboard service
+2) 启动/关闭/重启fateboard服务
 
 ::
 
     cd /data/projects/fate/fateboard
     sh service.sh start|stop|status|restart
 
-6.1.3 Mysql Service Management
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7.1.3 Mysql服务管理
+~~~~~~~~~~~~~~~~~~~
 
-Start / stop / status / restart mysql service
+启动/关闭/查看/重启mysql服务
 
 ::
 
     cd /data/projects/fate/common/mysql/mysql-8.0.13
     sh ./service.sh start|stop|status|restart
 
-6.2 View processes and ports
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+7.2 查看进程和端口
+------------------
 
-**Execute under the app user of the target server (192.168.0.1
-192.168.0.2 192.168.0.3)**
+**在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）app用户下执行**
 
-6.2.1 View process
-^^^^^^^^^^^^^^^^^^
+7.2.1 查看进程
+~~~~~~~~~~~~~~
 
 ::
 
-    #See if the process starts according to the deployment plan
+    #根据部署规划查看进程是否启动
     ps -ef | grep -i clustermanager
     ps -ef | grep -i nodemanager
     ps -ef | grep -i rollsite
     ps -ef | grep -i fate_flow_server.py
     ps -ef | grep -i fateboard
 
-6.2.2 View process port
-^^^^^^^^^^^^^^^^^^^^^^^
+7.2.2 查看进程端口
+~~~~~~~~~~~~~~~~~~
 
 ::
 
-    #Check whether the process port exists according to the deployment plan
+    #根据部署规划查看进程端口是否存在
     #clustermanager
     netstat -tlnp | grep 4670
     #nodemanager
@@ -1173,40 +1086,39 @@ Start / stop / status / restart mysql service
     #fateboard
     netstat -tlnp | grep 8080
 
-6.3 Service log
-~~~~~~~~~~~~~~~
+7.3 服务日志
+------------
 
 +-----------------------+------------------------------------------------------+
-| Service               | Log path                                             |
+| 服务                  | 日志路径                                             |
 +=======================+======================================================+
 | eggroll               | /data/projects/fate/eggroll/logs                     |
 +-----------------------+------------------------------------------------------+
-| fate\_flow&Task log   | /data/projects/fate/python/logs                      |
+| fate\_flow&任务日志   | /data/projects/fate/python/logs                      |
 +-----------------------+------------------------------------------------------+
 | fateboard             | /data/projects/fate/fateboard/logs                   |
 +-----------------------+------------------------------------------------------+
 | mysql                 | /data/projects/fate/common/mysql/mysql-8.0.13/logs   |
 +-----------------------+------------------------------------------------------+
 
-7. other
---------
+8. 附录
+=======
 
-7.1 eggroll & fate package build
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+8.1 eggroll&fate打包构建
+------------------------
 
-refer to `build guide <./build.md>`__
+参见\ `build指导 <../build.md>`__
 
-7.2 Eggroll parameter tuning
-----------------------------
+8.2 Eggroll参数调优
+-------------------
 
-Configuration file path:
-/data/projects/fate/eggroll/conf/eggroll.properties
+配置文件路径：/data/projects/fate/eggroll/conf/eggroll.properties
 
-Configuration file path: eggroll.session.processors.per.node
+配置参数：eggroll.session.processors.per.node
 
-Assume that the CPU cores (cpu cores) are: c, The number of Nodemanager
-is: n, The number of tasks to be run simultaneously is p, then:
+假定 CPU核数（cpu cores）为 c, Nodemanager的数量为
+n，需要同时运行的任务数为 p，则：
 
 egg\_num=eggroll.session.processors.per.node = c \* 0.8 / p
 
-partitions (Number of roll pair partitions) = egg\_num \* n
+partitions （roll pair分区数）= egg\_num \* n

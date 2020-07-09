@@ -71,9 +71,9 @@ ubuntu系统执行：apt list --installed | grep selinux
 
 1）vim /etc/security/limits.conf
 
-\* soft nofile 65536
+\* soft nofile 65535
 
-\* hard nofile 65536
+\* hard nofile 65535
 
 2）vim /etc/security/limits.d/20-nproc.conf
 

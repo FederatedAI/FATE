@@ -15,11 +15,11 @@
 2.集群规划
 ==========
 
-| party  | partyid | 主机名        | IP地址      | 操作系统                | 安装软件             | 服务                                                    |
-| ------ | ------- | ------------- | ----------- | ----------------------- | -------------------- | ------------------------------------------------------- |
-| PartyA | 10000   | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate，eggroll，mysql | fate_flow，fateboard，clustermanager，nodemanger，mysql |
-| PartyA | 10000   | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate,eggroll         | nodemanger，rollsite                                    |
-| PartyB | 9999    | VM_0_3_centos | 192.168.0.3 | CentOS 7.2/Ubuntu 16.04 | fate，eggroll，mysql | all                                                     |
+| party  | partyid | 主机名        | IP地址      | 操作系统                | 安装软件             | 服务                                                     |
+| ------ | ------- | ------------- | ----------- | ----------------------- | -------------------- | -------------------------------------------------------- |
+| PartyA | 10000   | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate，eggroll，mysql | fate_flow，fateboard，clustermanager，nodemanager，mysql |
+| PartyA | 10000   | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate,eggroll         | nodemanager，rollsite                                    |
+| PartyB | 9999    | VM_0_3_centos | 192.168.0.3 | CentOS 7.2/Ubuntu 16.04 | fate，eggroll，mysql | all                                                      |
 
 架构图：
 
@@ -34,7 +34,7 @@
 | fate     | fate_flow      | 9360;9380 | 联合学习任务流水线管理模块，每个party只能有一个此服务        |
 | fate     | fateboard      | 8080      | 联合学习过程可视化模块，每个party只能有一个此服务            |
 | eggroll  | clustermanager | 4670      | cluster manager管理集群，每个party只能有一个此服务           |
-| eggroll  | nodemanger     | 4671      | node manager管理每台机器资源，每个party可有多个此服务，但一台服务器置只能有一个 |
+| eggroll  | nodemanager    | 4671      | node manager管理每台机器资源，每个party可有多个此服务，但一台服务器置只能有一个 |
 | eggroll  | rollsite       | 9370      | 跨站点或者说跨party通讯组件，相当于proxy+federation，每个party只能有一个此服务 |
 | mysql    | mysql          | 3306      | 数据存储，clustermanager和fateflow依赖，每个party只需要一个此服务 |
 
@@ -90,9 +90,9 @@ ubuntu系统执行：apt list --installed | grep selinux
 
 1）vim /etc/security/limits.conf
 
-\* soft nofile 65536
+\* soft nofile 65535
 
-\* hard nofile 65536
+\* hard nofile 65535
 
 2）vim /etc/security/limits.d/20-nproc.conf
 
@@ -180,10 +180,10 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 ```
 mkdir -p /data/projects/install
 cd /data/projects/install
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.1-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.2-release.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.1-release.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.1-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.2-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.2-release.tar.gz
 
 #传输到192.168.0.2和192.168.0.3
 scp *.tar.gz app@192.168.0.2:/data/projects/install
@@ -524,7 +524,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
         }
       ]      
     },
-    "9999":
+    "default":
     {
       "default":[
         {
@@ -561,7 +561,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
         }
       ]      
     },
-    "10000":
+    "default":
     {
       "default":[
         {
@@ -917,11 +917,11 @@ python run_toy_example.py 9999 10000 1
 
 ### **6.2.1 上传预设数据：**
 
-您可以通过一个简单的脚本一键上传部分预设的数据。这个脚本被放置在：/data/projects/fate/python/examples/scripts/ 路径下。
-
-您可以直接运行下列命令完成上传：
+分别在192.168.0.1和192.168.0.3上执行：
 
 ```
+source /data/projects/fate/init_env.sh
+cd /data/projects/fate/python/examples/scripts/
 python upload_default_data.py -m 1
 ```
 
@@ -931,12 +931,14 @@ python upload_default_data.py -m 1
 
 请确保guest和host两方均已分别通过给定脚本上传了预设数据。
 
-然后可以进入/data/projects/fate/python/examples/min_test_task/目录，找到最小化测试脚本。
-
 快速模式下，最小化测试脚本将使用一个相对较小的数据集，即包含了569条数据的breast数据集。
-您只需要在guest端运行下列语句，即可启动最小化测试：
+
+选定9999为guest方，在192.168.0.3上执行：
+
 ```
-   python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
+source /data/projects/fate/init_env.sh
+cd /data/projects/fate/python/examples/min_test_task/
+python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
 ```
 
 其他一些可能有用的参数包括：
@@ -953,7 +955,7 @@ python upload_default_data.py -m 1
 6.3. Fateboard testing
 ----------------------
 
-Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以通过访问 http://192.168.0.1:8080 和 http://192.168.0.2:8080 来查看任务信息，如果有防火墙需开通。如果fateboard和fateflow没有部署再同一台服务器，需在fateboard页面设置fateflow所部署主机的登陆信息：页面右上侧齿轮按钮--》add--》填写fateflow主机ip，os用户，ssh端口，密码。
+Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以通过访问 http://192.168.0.1:8080 和 http://192.168.0.3:8080 来查看任务信息，如果有防火墙需开通。如果fateboard和fateflow没有部署再同一台服务器，需在fateboard页面设置fateflow所部署主机的登陆信息：页面右上侧齿轮按钮--》add--》填写fateflow主机ip，os用户，ssh端口，密码。
 
 7.系统运维
 ================
