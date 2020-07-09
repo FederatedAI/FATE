@@ -180,6 +180,7 @@ MANUALLY_FILTER = 'manually'
 PERCENTAGE_VALUE = 'percentage_value'
 IV_FILTER = 'iv_filter'
 STATISTIC_FILTER = 'statistic_filter'
+PSI_FILTER = 'psi_filter'
 IV = 'iv'
 
 # Selection Pre-model

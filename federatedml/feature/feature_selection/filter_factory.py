@@ -133,5 +133,26 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
         percentage_value_param = model_param.percentage_value_param
         return PercentageValueFilter(percentage_value_param)
 
+    elif filter_name == consts.IV_FILTER:
+        iv_param = model_param.iv_param
+        iso_model = model.isometric_models.get(consts.BINNING_MODEL)
+        if iso_model is None:
+            raise ValueError("None of statistic model has provided when using iv filter")
+        return IsoModelFilter(iv_param, iso_model)
+
+    elif filter_name == consts.STATISTIC_FILTER:
+        statistic_param = model_param.statistic_param
+        iso_model = model.isometric_models.get(consts.STATISTIC_MODEL)
+        if iso_model is None:
+            raise ValueError("None of statistic model has provided when using iv filter")
+        return IsoModelFilter(statistic_param, iso_model)
+
+    elif filter_name == consts.PSI_FILTER:
+        psi_param = model_param.psi_param
+        iso_model = model.isometric_models.get(consts.PSI)
+        if iso_model is None:
+            raise ValueError("None of statistic model has provided when using iv filter")
+        return IsoModelFilter(psi_param, iso_model)
+
     else:
         raise ValueError("filter method: {} does not exist".format(filter_name))

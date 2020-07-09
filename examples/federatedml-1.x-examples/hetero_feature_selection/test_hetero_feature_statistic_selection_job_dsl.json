@@ -56,6 +56,23 @@
                 "model": ["model"]
             }
         },
+        "psi_0": {
+            "module": "PSI",
+            "input": {
+                "data": {
+                    "train_data": [
+                        "intersection_0.train_data"
+                    ],
+                    "eval_data": [
+                        "intersection_0.train_data"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train_data"],
+                "model": ["model"]
+            }
+        },
         "hetero_feature_selection_0": {
             "module": "HeteroFeatureSelection",
             "input": {
@@ -66,7 +83,8 @@
                 },
                 "isometric_model": [
                     "hetero_feature_binning_0.model",
-                    "statistic_0.model"
+                    "statistic_0.model",
+                    "psi_0.model"
                 ]
             },
             "output": {

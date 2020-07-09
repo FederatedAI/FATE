@@ -5,7 +5,7 @@ from federatedml.feature.feature_selection.model_adaptor.adapter_base import Bas
 from federatedml.util import consts
 
 
-class BinningAdapter(BaseAdapter):
+class PSIAdapter(BaseAdapter):
 
     def convert(self, model_meta, model_param):
 

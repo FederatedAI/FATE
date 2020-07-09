@@ -23,7 +23,6 @@ import re
 from federatedml.param.base_param import BaseParam
 from federatedml.util import consts
 
-
 VALUE_STAT = [consts.SUM, consts.COVARIANCE, consts.CORRELATION]
 SUMMARY_STAT = [consts.COUNT, consts.MEAN, consts.STANDARD_DEVIATION, consts.MEDIAN, consts.SUMMARY,
                 consts.DESCRIBE, consts.VARIANCE]
@@ -64,7 +63,7 @@ class StatisticsParam(BaseParam):
         self.column_indexes = column_indexes
         self.abnormal_list = abnormal_list
         self.need_run = need_run
-        self.quantile_error=quantile_error
+        self.quantile_error = quantile_error
         if column_names is None:
             self.column_names = []
         if column_indexes is None:

@@ -344,7 +344,8 @@ class FeatureSelectionParam(BaseParam):
     select_names : list of string, default: []
         Specify which columns need to calculated. Each element in the list represent for a column name in header.
 
-    filter_methods: list, ["manually", "iv_filter", "statistic_filter", "percentage_value"],
+    filter_methods: list, ["manually", "iv_filter", "statistic_filter",
+                            "psi_filter","percentage_value"],
                  default: ["manually"]
 
         The following methods will be deprecated in future version:
@@ -389,6 +390,7 @@ class FeatureSelectionParam(BaseParam):
                  percentage_value_param=PercentageValueParam(),
                  iv_param=CommonFilterParam(metrics="iv"),
                  statistic_param=CommonFilterParam(metrics=""),
+                 psi_param=CommonFilterParam(metrics=consts.PSI),
                  need_run=True
                  ):
         super(FeatureSelectionParam, self).__init__()
@@ -414,6 +416,7 @@ class FeatureSelectionParam(BaseParam):
         self.manually_param = copy.deepcopy(manually_param)
         self.iv_param = copy.deepcopy(iv_param)
         self.statistic_param = copy.deepcopy(statistic_param)
+        self.psi_param = copy.deepcopy(psi_param)
 
         self.need_run = need_run
 
@@ -427,7 +430,8 @@ class FeatureSelectionParam(BaseParam):
             self.check_valid_value(method, descr, [consts.UNIQUE_VALUE, consts.IV_VALUE_THRES, consts.IV_PERCENTILE,
                                                    consts.COEFFICIENT_OF_VARIATION_VALUE_THRES, consts.OUTLIER_COLS,
                                                    consts.MANUALLY_FILTER, consts.PERCENTAGE_VALUE,
-                                                   consts.IV_FILTER, consts.STATISTIC_FILTER, consts.IV_TOP_K])
+                                                   consts.IV_FILTER, consts.STATISTIC_FILTER, consts.IV_TOP_K,
+                                                   consts.PSI_FILTER])
 
             self.filter_methods[idx] = method
 
@@ -444,3 +448,4 @@ class FeatureSelectionParam(BaseParam):
 
         self.iv_param.check()
         self.statistic_param.check()
+        self.psi_param.check()
