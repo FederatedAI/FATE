@@ -37,6 +37,12 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
 
         # Calculates split points of datas in self party
         split_points = self.binning_obj.fit_split_points(data_instances)
+        if self.model_param.skip_static:
+            if self.transform_type != 'woe':
+                data_instances = self.transform(data_instances)
+            self.set_schema(data_instances)
+            self.data_output = data_instances
+            return data_instances
 
         if not self.model_param.local_only:
             self._sync_init_bucket(data_instances, split_points)
