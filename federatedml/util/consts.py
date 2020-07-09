@@ -152,6 +152,10 @@ CONST = 'const'
 # decision tree
 MAX_SPLIT_NODES = 2 ** 16
 MAX_FEDERATED_NODES = 2 ** 10
+NORMAL_TREE = 'normal'
+COMPLETE_SECURE_TREE = 'complete_secure'
+MIX_TREE = 'mix'
+LAYERED_TREE = 'layered'
 
 TRAIN_EVALUATE = 'train_evaluate'
 VALIDATE_EVALUATE = 'validate_evaluate'
