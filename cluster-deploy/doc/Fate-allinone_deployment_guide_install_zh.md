@@ -550,7 +550,7 @@ python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
 其他一些可能有用的参数包括：
 
 1. -f: 使用的文件类型. "fast" 代表 breast数据集, "normal" 代表 default credit 数据集.
-2. --add_sbt: 如果被设置为True, 将在运行完lr以后，启动secureboost任务。
+2. --add_sbt: 如果被设置为1, 将在运行完lr以后，启动secureboost任务，设置为0则不启动secureboost任务，不设置此参数系统默认为1。
 
 若数分钟后在结果中显示了“success”字样则表明该操作已经运行成功了。若出现“FAILED”或者程序卡住，则意味着测试失败。
 

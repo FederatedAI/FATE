@@ -960,7 +960,7 @@ This test will automatically take breast as test data set.
 There are some more parameters that you may need:
 
 1. -f: file type. "fast" means breast data set, "normal" means default credit data set.
-2. --add_sbt: if set, it will test hetero-secureboost task after testing hetero-lr.
+2. --add_sbt: If it is set to 1, the secureboost task will be started after running lr. If it is set to 0, the secureboost task will not be started. If this parameter is not set, the system default is 1.
 
 Wait a few minutes, a result showing "success" indicates that the operation is successful.
 In other cases, if FAILED or stuck, it means failure.
