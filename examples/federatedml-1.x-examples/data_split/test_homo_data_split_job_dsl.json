@@ -24,8 +24,7 @@
                 }
             },
             "output": {
-                "data": ["data_split"],
-                "model": ["binning_model"]
+                "data": ["train", "validate", "test"]
             }
         }
     }

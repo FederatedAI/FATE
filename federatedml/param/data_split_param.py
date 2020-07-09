@@ -75,24 +75,24 @@ class DataSplitParam(BaseParam):
         if self.random_state is not None:
             if not isinstance(self.random_state, int):
                 raise ValueError(f"{model_param_descr} random state should be int type")
-            self.check_nonnegative_number(self.random_state, f"{model_param_descr} random_state ")
+            BaseParam.check_nonnegative_number(self.random_state, f"{model_param_descr} random_state ")
 
         if self.test_size is not None:
-            self.check_nonnegative_number(self.test_size, f"{model_param_descr} test_size ")
+            BaseParam.check_nonnegative_number(self.test_size, f"{model_param_descr} test_size ")
             if isinstance(self.test_size, float):
-                self.check_decimal_float(self.test_size, f"{model_param_descr} test_size ")
+                BaseParam.check_decimal_float(self.test_size, f"{model_param_descr} test_size ")
         if self.train_size is not None:
-            self.check_nonnegative_number(self.train_size, f"{model_param_descr} train_size ")
+            BaseParam.check_nonnegative_number(self.train_size, f"{model_param_descr} train_size ")
             if isinstance(self.train_size, float):
-                self.check_decimal_float(self.train_size, f"{model_param_descr} train_size ")
+                BaseParam.check_decimal_float(self.train_size, f"{model_param_descr} train_size ")
         if self.validate_size is not None:
-            self.check_nonnegative_number(self.validate_size, f"{model_param_descr} validate_size ")
+            BaseParam.check_nonnegative_number(self.validate_size, f"{model_param_descr} validate_size ")
             if isinstance(self.validate_size, float):
-                self.check_decimal_float(self.validate_size, f"{model_param_descr} validate_size ")
+                BaseParam.check_decimal_float(self.validate_size, f"{model_param_descr} validate_size ")
 
-        self.check_boolean(self.stratified, f"{model_param_descr} stratified ")
-        self.check_boolean(self.shuffle, f"{model_param_descr} shuffle ")
-        self.check_boolean(self.need_run, f"{model_param_descr} need run ")
+        BaseParam.check_boolean(self.stratified, f"{model_param_descr} stratified ")
+        BaseParam.check_boolean(self.shuffle, f"{model_param_descr} shuffle ")
+        BaseParam.check_boolean(self.need_run, f"{model_param_descr} need run ")
 
         if self.split_points is not None:
             if not isinstance(self.split_points, list):

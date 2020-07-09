@@ -24,8 +24,7 @@
                 }
             },
             "output": {
-                "data": ["trian", "test", "validate"],
-                "model": ["binning_model"]
+                "data": ["trian", "validate", "test"]
             }
         }
     }
