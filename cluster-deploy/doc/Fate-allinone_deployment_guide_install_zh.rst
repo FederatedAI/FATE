@@ -602,7 +602,7 @@ success to calculate secure\_sum, it is 1999.9999999999998"
 
 1. -f: 使用的文件类型. "fast" 代表 breast数据集, "normal" 代表 default
    credit 数据集.
-2. --add\_sbt: 如果被设置为True, 将在运行完lr以后，启动secureboost任务。
+2. --add\_sbt: 如果被设置为1, 将在运行完lr以后，启动secureboost任务，设置为0则不启动secureboost任务，不设置此参数系统默认为1。
 
 若数分钟后在结果中显示了“success”字样则表明该操作已经运行成功了。若出现“FAILED”或者程序卡住，则意味着测试失败。
 
