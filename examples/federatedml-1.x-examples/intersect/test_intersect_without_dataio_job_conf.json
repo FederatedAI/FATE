@@ -1,50 +1,50 @@
 {
-  "initiator": {
-    "role": "guest",
-    "party_id": 9990
-  },
-  "job_parameters": {
-    "work_mode": 0
-  },
-  "role": {
-    "guest": [
-      9990
-    ],
-    "host": [
-      9991
-    ]  
-  },
-  "role_parameters": {
-    "guest": {
-      "args": {
-        "data": {
-          "data": [
-            {
-              "name": "breast_b_0410",
-              "namespace": "hetero"
-            }
-        ]
-        }
-      }
+    "initiator": {
+        "role": "guest",
+        "party_id": 9990
     },
-    "host": {
-      "args": {
-        "data": {
-          "data": [
-            {
-              "name": "breast_a_0410",
-              "namespace": "hetero"
-            }
+    "job_parameters": {
+        "work_mode": 0
+    },
+    "role": {
+        "guest": [
+            9990
+        ],
+        "host": [
+            9991
         ]
+    },
+    "role_parameters": {
+        "guest": {
+            "args": {
+                "data": {
+                    "data": [
+                        {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    ]
+                }
+            }
+        },
+        "host": {
+            "args": {
+                "data": {
+                    "data": [
+                        {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    ]
+                }
+            }
         }
-      }
+    },
+    "algorithm_parameters": {
+        "intersect_0": {
+            "intersect_method": "rsa",
+            "sync_intersect_ids": true,
+            "only_output_key": true
+        }
     }
-  },
-  "algorithm_parameters": {
-      "intersect_0": {
-          "intersect_method": "rsa",
-          "sync_intersect_ids": true,
-          "only_output_key": true
-      }
-  }
 }

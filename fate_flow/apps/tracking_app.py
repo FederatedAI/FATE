@@ -210,9 +210,10 @@ def component_output_data():
             data_line, have_data_label = get_component_output_data_line(src_key=k, src_value=v)
             output_data.append(data_line)
             num -= 1
+        total = output_data_table.count()
     if output_data:
         header = get_component_output_data_meta(output_data_table=output_data_table, have_data_label=have_data_label)
-        return get_json_result(retcode=0, retmsg='success', data=output_data, meta={'header': header})
+        return get_json_result(retcode=0, retmsg='success', data=output_data, meta={'header': header, 'total': total})
     else:
         return get_json_result(retcode=0, retmsg='no data', data=[])
 

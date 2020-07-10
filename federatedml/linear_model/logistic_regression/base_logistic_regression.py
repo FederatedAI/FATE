@@ -54,9 +54,9 @@ class BaseLogisticRegression(BaseLinearModel):
 
     def get_single_model_param(self):
         weight_dict = {}
-        LOGGER.debug("in get_single_model_param, model_weights: {}, coef: {}, header: {}".format(
-            self.model_weights.unboxed, self.model_weights.coef_, self.header
-        ))
+        # LOGGER.debug("in get_single_model_param, model_weights: {}, coef: {}, header: {}".format(
+        #     self.model_weights.unboxed, self.model_weights.coef_, self.header
+        # ))
         for idx, header_name in enumerate(self.header):
             coef_i = self.model_weights.coef_[idx]
             weight_dict[header_name] = coef_i
@@ -87,11 +87,10 @@ class BaseLogisticRegression(BaseLinearModel):
             single_result = self.get_single_model_param()
             single_result['need_one_vs_rest'] = False
         single_result['one_vs_rest_result'] = one_vs_rest_result
-        LOGGER.debug("in _get_param, single_result: {}".format(single_result))
+        # LOGGER.debug("in _get_param, single_result: {}".format(single_result))
 
         param_protobuf_obj = lr_model_param_pb2.LRModelParam(**single_result)
-        json_result = json_format.MessageToJson(param_protobuf_obj)
-        LOGGER.debug("json_result: {}".format(json_result))
+
         return param_protobuf_obj
 
     def load_model(self, model_dict):

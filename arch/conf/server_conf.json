@@ -23,7 +23,8 @@
 		},
 		"fatemanager": {
 			"host": "localhost",
-			"port": 8001
+			"port": 8001,
+			"federatedId": 0
 		},
 		"servings": [
 			"127.0.0.1:8000"
