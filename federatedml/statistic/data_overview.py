@@ -104,6 +104,9 @@ def check_legal_schema(schema):
         for col_name in header:
             if not col_name.isprintable():
                 raise ValueError(f"non-printable char found in header column {col_name}, please check.")
+        header_set = set(header)
+        if len(header_set) != len(header):
+            raise ValueError(f"data header contains repeated values, please check.")
 
     sid_name = schema.get("sid_name", None)
     if sid_name is not None and not sid_name.isprintable():
