@@ -138,7 +138,8 @@ class HomoBoostingClient(Boosting, ABC):
             local_loss = self.compute_loss(self.y, self.y_hat)
             self.aggregator.send_local_loss(local_loss, self.data_bin.count(), suffix=(epoch_idx,))
 
-            self.run_validation(epoch_idx)
+            if self.validation_strategy:
+                self.validation_strategy.validate(self, epoch_idx)
 
             # check stop flag if n_iter_no_change is True
             if self.n_iter_no_change:

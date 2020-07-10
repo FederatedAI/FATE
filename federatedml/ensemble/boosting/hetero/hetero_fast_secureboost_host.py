@@ -3,7 +3,7 @@ from operator import itemgetter
 from federatedml.ensemble.boosting.hetero.hetero_secureboost_host import HeteroSecureBoostHost
 from federatedml.param.boosting_param import HeteroFastSecureBoostParam
 from federatedml.ensemble.basic_algorithms import HeteroFastDecisionTreeHost
-import federatedml.ensemble.boosting.hetero.hetero_fast_secureboost_plan as plan
+from federatedml.ensemble.boosting.hetero import hetero_fast_secureboost_plan as plan
 
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
 

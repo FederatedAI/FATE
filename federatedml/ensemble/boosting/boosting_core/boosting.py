@@ -350,13 +350,6 @@ class Boosting(ModelBase, ABC):
         """
         raise NotImplementedError()
 
-    def run_validation(self, epoch_idx):
-        """
-        run validation
-        """
-        if self.validation_strategy:
-            self.validation_strategy.validate(self, epoch_idx)
-
     def check_stop_condition(self, loss):
 
         should_stop_a, should_stop_b = False, False

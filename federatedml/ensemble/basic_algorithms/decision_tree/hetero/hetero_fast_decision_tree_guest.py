@@ -1,7 +1,7 @@
 import functools
 
 from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeGuest
-import federatedml.ensemble.boosting.hetero.hetero_fast_secureboost_plan as plan
+from federatedml.ensemble.boosting.hetero import hetero_fast_secureboost_plan as plan
 from federatedml.util import consts
 
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.node import Node

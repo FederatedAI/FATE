@@ -1,7 +1,7 @@
 from federatedml.ensemble.boosting.hetero.hetero_secureboost_guest import HeteroSecureBoostGuest
 from federatedml.param.boosting_param import HeteroFastSecureBoostParam
 from federatedml.ensemble.basic_algorithms import HeteroFastDecisionTreeGuest
-import federatedml.ensemble.boosting.hetero.hetero_fast_secureboost_plan as plan
+from federatedml.ensemble.boosting.hetero import hetero_fast_secureboost_plan as plan
 
 from arch.api.utils import log_utils
 
