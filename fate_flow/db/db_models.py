@@ -250,3 +250,16 @@ class TrackingMetric(DataBaseModel):
     f_type = IntegerField(index=True)  # 0 is data, 1 is meta
     f_create_time = BigIntegerField()
     f_update_time = BigIntegerField(null=True)
+
+
+class MachineLearningDataSchema(DataBaseModel):
+    f_table_name = CharField(max_length=100, index=True)
+    f_namespace = CharField(max_length=100, index=True)
+    f_create_time = BigIntegerField(default=0)
+    f_update_time = BigIntegerField(default=0)
+    f_description = TextField(null=True, default='')
+    f_content = TextField(default='')
+
+    class Meta:
+        db_table = "t_machine_learning_data_schema"
+        primary_key = CompositeKey('f_table_name', 'namespace')

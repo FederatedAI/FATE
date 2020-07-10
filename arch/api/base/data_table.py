@@ -16,12 +16,17 @@
 
 
 import abc
+import pickle
 from typing import Iterable
 
 import six
 
 
 # noinspection PyPep8Naming
+from arch.api.utils.core_utils import current_timestamp
+from fate_flow.db.db_models import DB, MachineLearningDataSchema
+
+
 @six.add_metaclass(abc.ABCMeta)
 class Table(object):
     """
@@ -149,17 +154,40 @@ class Table(object):
     meta utils
     """
 
-    def get_meta(self, key):
-        # get meta from mysql
-        meta = None
-        return meta
+    def get_schema(self):
+        with DB.connection_context():
+            schema = MachineLearningDataSchema.select().where(MachineLearningDataSchema.f_table_name == self.name,
+                                                              MachineLearningDataSchema.f_namespace == self.namespace)
+            schema_data = {}
+            if schema:
+                schema = schema[0]
+                schema_data = pickle.loads(schema.f_content)
+        return schema_data
 
-    def get_metas(self):
-        # get metas from mysql
-        metas = None
-        return metas
-
-    def save_metas(self, kv):
+    def save_schema(self, kv):
         # save metas to mysql
-        return
+        with DB.connection_context():
+            schema = MachineLearningDataSchema.select().where(MachineLearningDataSchema.f_table_name == self.name,
+                                                            MachineLearningDataSchema.f_namespace == self.namespace)
+            is_insert = True
+            if schema:
+                schema = schema[0]
+                is_insert = False
+                schema_data = pickle.loads(schema.f_content)
+                schema_data.updata(kv)
+                schema.f_content = pickle.dumps(schema_data)
+
+            else:
+                schema_data = kv
+                schema = MachineLearningDataSchema()
+                schema.f_create_time = current_timestamp()
+                schema.f_table_name = self.name
+                schema.f_namespace = self.namespace
+                schema.f_content = pickle.dumps(schema_data)
+            schema.f_update_time = current_timestamp()
+            if is_insert:
+                schema.save(force_insert=True)
+            else:
+                schema.save()
+        return schema_data
 

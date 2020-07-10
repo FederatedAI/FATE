@@ -34,39 +34,15 @@ import uuid
 from typing import Iterable
 
 from arch.api.base.data_table import Table
-from arch.api import  WorkMode, Backend, RuntimeInstance
+from arch.api import WorkMode, Backend, session
 from arch.api.base.utils.store_type import StoreTypes
 from arch.api.utils.profile_util import log_elapsed
-
-
-def get_session(session_id, mode, backend, persistent_engine):
-    from arch.api.impl.based_2x import build
-    if RuntimeInstance.SESSION:
-        return RuntimeInstance.SESSION
-    if isinstance(mode, int):
-        mode = WorkMode(mode)
-    if isinstance(backend, int):
-        backend = Backend(backend)
-    if session_id is None:
-        session_id = str(uuid.uuid1())
-
-    builder = build.Builder(session_id=session_id, work_mode=mode, persistent_engine=persistent_engine)
-    RuntimeInstance.MODE = mode
-    RuntimeInstance.BACKEND = backend
-    RuntimeInstance.BUILDER = builder
-    RuntimeInstance.SESSION = builder.build_session()
-    return RuntimeInstance.SESSION
-
-
-def get_eggroll_table(_session, namespace, name, partition, **kwargs):
-    table = _session.table(namespace=namespace, name=name, partition=partition, **kwargs)
-    return table
 
 
 # noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
 class EggRollTable(Table):
     def __init__(self,
-                 session_id,
+                 job_id: str = uuid.uuid1(),
                  mode: typing.Union[int, WorkMode] = WorkMode.STANDALONE,
                  backend: typing.Union[int, Backend] = Backend.EGGROLL,
                  persistent_engine: str = StoreTypes.ROLLPAIR_LMDB,
@@ -77,15 +53,9 @@ class EggRollTable(Table):
         self._name = name or str(uuid.uuid1())
         self._namespace = namespace or str(uuid.uuid1())
         self._partitions = partition
-        self._session_id = session_id
         self._strage_engine = persistent_engine
-        self.schema = {}
-        self._session = get_session(session_id, mode, backend, persistent_engine)
-        self._table = get_eggroll_table(_sdesson=self._session,
-                                        namespace=namespace,
-                                        name=name,
-                                        partition=partition,
-                                        **kwargs)
+        session.init(job_id=job_id, mode=mode, backend=backend, persistent_engine=persistent_engine)
+        self._table = session.table(namespace=namespace, name=name, partition=partition, **kwargs)
 
     def get_name(self):
         return self._name
