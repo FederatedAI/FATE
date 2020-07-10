@@ -217,7 +217,7 @@ class ModelBase(object):
     @staticmethod
     def check_schema_content(schema):
         """
-        check for illegal/non-printable chars except for space
+        check for repeated header & illegal/non-printable chars except for space
         allow non-ascii chars
         :param schema: dict
         :return:

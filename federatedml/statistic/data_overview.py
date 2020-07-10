@@ -95,7 +95,7 @@ def check_isprintable(string, type):
 
 
 def check_legal_schema(schema):
-    # check for illegal/non-printable chars except for space
+    # check for repeated header & illegal/non-printable chars except for space
     # allow non-ascii chars
     if schema is None:
         return
