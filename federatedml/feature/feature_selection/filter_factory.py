@@ -144,7 +144,7 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
     elif filter_name == consts.STATISTIC_FILTER:
         statistic_param = model_param.statistic_param
         this_param = copy.deepcopy(statistic_param)
-        for attr, value in statistic_param.__dict__:
+        for attr, value in statistic_param.__dict__.items():
             if value is not None:
                 value = value[idx]
             setattr(this_param, attr, value)

@@ -40,15 +40,14 @@ class IsoModelFilter(BaseFilterMethod):
         super(IsoModelFilter, self).__init__(filter_param)
 
     def _parse_filter_param(self, filter_param: CommonFilterParam):
-        self.metrics = filter_param.metrics
+        self.metrics = filter_param.metrics[0]
 
-        for m in self.metrics:
-            if m not in self.iso_model.valid_value_name:
-                raise ValueError(f"Metric {m} is not in this model's valid_value_name")
-        self.filter_type = filter_param.filter_type
-        self.take_high = filter_param.take_high
-        self.threshold = filter_param.threshold
-        self.select_federated = filter_param.select_federated
+        if self.metrics not in self.iso_model.valid_value_name:
+            raise ValueError(f"Metric {self.metrics} is not in this model's valid_value_name")
+        self.filter_type = filter_param.filter_type[0]
+        self.take_high = filter_param.take_high[0]
+        self.threshold = filter_param.threshold[0]
+        self.select_federated = filter_param.select_federated[0]
         self._validation_check()
 
     def get_meta_obj(self):
@@ -62,29 +61,31 @@ class IsoModelFilter(BaseFilterMethod):
         return result
 
     def _validation_check(self):
-        return True
+        if self.metrics == consts.IV:
+            if not self.take_high:
+                raise ValueError("Iv filter should take higher iv columns")
 
     def fit(self, data_instances, suffix):
-        for idx, m in enumerate(self.metrics):
-            metric_info = self.iso_model.get_metric_info(m)
-            all_feature_values = np.array(metric_info.values)
-            col_names = [x for x in metric_info.col_names]
+        m = self.metrics
+        metric_info = self.iso_model.get_metric_info(m)
+        all_feature_values = np.array(metric_info.values)
+        col_names = [x for x in metric_info.col_names]
 
-            filter_type = self.filter_type[idx]
-            take_high = self.take_high[idx]
-            threshold = self.threshold[idx]
-            if filter_type == "threshold":
-                results = self._threshold_fit(all_feature_values, threshold, take_high)
-            elif filter_type == "top_k":
-                results = self._top_k_fit(all_feature_values, threshold, take_high)
-            else:
-                results = self._percentile_fit(all_feature_values, threshold, take_high)
+        filter_type = self.filter_type
+        take_high = self.take_high
+        threshold = self.threshold
+        if filter_type == "threshold":
+            results = self._threshold_fit(all_feature_values, threshold, take_high)
+        elif filter_type == "top_k":
+            results = self._top_k_fit(all_feature_values, threshold, take_high)
+        else:
+            results = self._percentile_fit(all_feature_values, threshold, take_high)
 
-            for v_idx, v in enumerate(all_feature_values):
-                col_name = col_names[v_idx]
-                self.selection_properties.add_feature_value(col_name, v)
-                if idx in results:
-                    self.selection_properties.add_left_col_name(col_name)
+        for v_idx, v in enumerate(all_feature_values):
+            col_name = col_names[v_idx]
+            self.selection_properties.add_feature_value(col_name, v)
+            if idx in results:
+                self.selection_properties.add_left_col_name(col_name)
         return self
 
     def _threshold_fit(self, values, threshold, take_high):
