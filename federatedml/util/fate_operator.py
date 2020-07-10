@@ -104,12 +104,10 @@ def reduce_add(x, y):
 def norm(vector, p=2):
     """
     Get p-norm of this vector
-
     Parameters
     ----------
     vector : numpy array, Input vector
     p: int, p-norm
-
     """
     if p < 1:
         raise ValueError('p should larger or equal to 1 in p-norm')

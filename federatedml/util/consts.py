@@ -227,3 +227,7 @@ VARIANCE = 'variance'
 COEFFICIENT_OF_VARIATION = 'coefficient_of_variance'
 
 
+
+# adapter model name
+HOMO_SBT = 'homo_sbt'
+HETERO_SBT = 'hetero_sbt'
