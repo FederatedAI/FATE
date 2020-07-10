@@ -260,7 +260,7 @@ def component_output_data_download():
             # get meta
             output_data_file_list.append(output_data_file_path)
             header = get_component_output_data_meta(output_data_table=output_data_table, have_data_label=have_data_label)
-            output_data_meta_file_path = output_file_path % 'data_meta_{}.json'.format(i)
+            output_data_meta_file_path = output_file_path % 'data_{}_meta.json'.format(i)
             output_data_meta_file_list.append(output_data_meta_file_path)
             with open(output_data_meta_file_path, 'w') as fw:
                 json.dump({'header': header}, fw, indent=4)
