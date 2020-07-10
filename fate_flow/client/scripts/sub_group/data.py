@@ -36,9 +36,9 @@ def data(ctx):
 
 @data.command(short_help="Upload Table Command")
 @click.argument('conf_path', type=click.Path(exists=True), metavar='<CONF_PATH>')
-@click.option('-v', '--verbose', type=click.Choice([0, 1]), default=0, metavar="[VERBOSE]",
+@click.option('-v', '--verbose', type=click.Choice(['0', '1']), default='0', metavar="[VERBOSE]",
               help="Verbose mode, 0 means 'disable'(default), 1 means 'enable'")
-@click.option('-d', '--drop', type=click.Choice([0, 1]), metavar="[DROP]", default=0,
+@click.option('-d', '--drop', type=click.Choice(['0', '1']), metavar="[DROP]", default=0,
               help="Drop data before uploading. If 'drop' is set to be 0 (defualt), when data had been uploaded before,"
                    " current upload task would be rejected. If 'drop' is set to be 1, data of old version would be "
                    "replaced by the latest version.")
