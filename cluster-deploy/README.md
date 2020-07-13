@@ -214,16 +214,16 @@ scp *.tar.gz app@192.168.0.3:/data/projects/install
 **Execute under the app user of the target server (192.168.0.1 192.168.0.2 192.168.0.3)**
 
 ```
-#Virtual memory, the size is not less than 128G, if it is not satisfied, please refer to #Chapter 4.6 to reset
+#Virtual memory, the size is not less than 128G, if it is not satisfied, please refer to #Chapter 3.4 to reset
 cat /proc/swaps
 Filename                                Type            Size    Used    Priority
 /data/swapfile128G                      file            134217724       384     -1
 
-#The number of file handles is not less than 65535. If it is not satisfied, please refer #to Chapter 4.3 to reset
+#The number of file handles is not less than 65535. If it is not satisfied, please refer #to Chapter 3.3.3 to reset
 ulimit -n
 65535
 
-#The number of user processes is not less than 64000, if it is not satisfied, please #refer to Chapter 4.3 to reset
+#The number of user processes is not less than 64000, if it is not satisfied, please #refer to Chapter 3.3.3 to reset
 ulimit -u
 65535
 ```
