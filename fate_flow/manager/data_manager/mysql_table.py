@@ -28,36 +28,66 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
-import typing
-import uuid
-from typing import Iterable
 
-from arch.api.base.data_table import Table
-from arch.api import WorkMode, Backend, session
+import uuid
+import pymysql
+import typing
+
 from arch.api.base.utils.store_type import StoreTypes
 from arch.api.utils.profile_util import log_elapsed
-
+from arch.api import WorkMode
 
 # noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
-class EggRollTable(Table):
+from fate_flow.manager.data_manager.data_table import Table
+
+
+class MysqlTable(Table):
     def __init__(self,
-                 job_id: str = uuid.uuid1(),
                  mode: typing.Union[int, WorkMode] = WorkMode.STANDALONE,
-                 backend: typing.Union[int, Backend] = Backend.EGGROLL,
-                 persistent_engine: str = StoreTypes.ROLLPAIR_LMDB,
+                 persistent_engine: str = StoreTypes.MYSQL,
                  namespace: str = None,
                  name: str = None,
                  partition: int = 1,
-                 init_session: bool = False,
+                 database_config: dict = None,
                  **kwargs):
         self._name = name or str(uuid.uuid1())
         self._namespace = namespace or str(uuid.uuid1())
         self._partitions = partition
         self._strage_engine = persistent_engine
-        if init_session:
-            session.init(job_id=job_id, mode=mode, backend=backend, persistent_engine=persistent_engine)
-        self._table = session.table(namespace=namespace, name=name, partition=partition, **kwargs)
+        self.database_config = database_config
+        self._mode = mode
+        '''
+        database_config
+        {
+            'user': 'root',
+            'passwd': 'fate_dev',
+            'host': '127.0.0.1',
+            'port': 3306,
+            'charset': 'utf8'
+        }
+        '''
+        try:
+            self.con = pymysql.connect(host=database_config.get('host'),
+                                       user=database_config.get('user'),
+                                       passwd=database_config.get('passwd'),
+                                       port=database_config.get('port'),
+                                       db=namespace)
+            self.cur = self.con.cursor()
+        except:
+            print("DataBase connect error,please check the db config.")
+
+    def execute(self, sql, select=True):
+        self.cur.execute(sql)
+        if select:
+            while True:
+                result = self.cur.fetchone()
+                if result:
+                    yield result
+                else:
+                    break
+        else:
+            result = self.cur.fetchall()
+            return result
 
     def get_name(self):
         return self._name
@@ -66,49 +96,28 @@ class EggRollTable(Table):
         return self._namespace
 
     def get_partitions(self):
-        return self._table.get_partitions()
+        return self._partitions
 
     def get_storage_engine(self):
         return self._strage_engine
 
     def get_address(self):
-        return {'name': self._name, 'namespace': self._namespace}
-
-    def put_all(self, kv_list: Iterable, use_serialize=True, chunk_size=100000):
-        return self._table.put_all(kv_list, use_serialize, chunk_size)
+        return self.database_config
 
     @log_elapsed
     def collect(self, min_chunk_size=0, use_serialize=True, **kwargs) -> list:
-        return self._table.get_all(min_chunk_size, use_serialize, **kwargs)
-
-    def delete(self, k, use_serialize=True):
-        return self._table.delete(k=k, use_serialize=use_serialize)
+        sql = 'select * from {}'.format(self._name)
+        data = self.execute(sql)
+        return data
 
     def destroy(self):
-        return self._table.destroy()
-
-    @classmethod
-    def dtable(cls, session_id, name, namespace, partition):
-        return EggRollTable(session_id=session_id, name=name, namespace=namespace, partition=partition)
-
-    @log_elapsed
-    def save_as(self, name, namespace, partition=None, use_serialize=True, **kwargs):
-
-        from arch.api import RuntimeInstance
-        options = kwargs.get("options", {})
-        store_type = options.get("store_type", RuntimeInstance.SESSION.get_persistent_engine())
-        options["store_type"] = store_type
-
-        if partition is None:
-            partition = self._partitions
-        self._table.save_as(name=name, namespace=namespace, partition=partition, options=options)
-
-        return self.dtable(self._session_id, name, namespace, partition)
+        sql = 'drop table {}'.format(self._name)
+        return self.execute(sql)
 
     @log_elapsed
     def count(self, **kwargs):
-        return self._table.count()
+        sql = 'select count(*) from {}'.format(self._name)
+        return self.execute(sql)
 
-
-
-
+    def quit(self):
+        self.con.close()
