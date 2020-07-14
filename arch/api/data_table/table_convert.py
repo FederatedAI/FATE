@@ -28,7 +28,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from fate_flow.manager.data_manager.eggroll_table import EggRollTable
+from arch.api.data_table.eggroll_table import EggRollTable
 
 MAX_NUM = 10000
 

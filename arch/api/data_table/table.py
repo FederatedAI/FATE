@@ -54,7 +54,7 @@ class Table(object):
         pass
 
     @abc.abstractmethod
-    def load(self, kv_list: Iterable, use_serialize=True, chunk_size=100000):
+    def put_all(self, kv_list: Iterable, use_serialize=True, chunk_size=100000):
         """
         Puts (key, value) 2-tuple stream from the iterable items.
 

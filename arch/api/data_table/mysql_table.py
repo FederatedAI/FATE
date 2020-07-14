@@ -34,13 +34,12 @@ import pymysql
 import typing
 
 from arch.api.base.utils.store_type import StoreTypes
+from arch.api.data_table.table import Table
 from arch.api.utils.profile_util import log_elapsed
 from arch.api import WorkMode
 
+
 # noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
-from fate_flow.manager.data_manager.data_table import Table
-
-
 class MysqlTable(Table):
     def __init__(self,
                  mode: typing.Union[int, WorkMode] = WorkMode.STANDALONE,

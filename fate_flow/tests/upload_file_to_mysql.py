@@ -32,8 +32,6 @@ class MysqldbHelper(object):
         results = self.cur.fetchall()
 
 
-
-
 def create_db(namespace):
     conn = pymysql.connect(host=database_config.get('host'),
                            user=database_config.get('user'),
@@ -66,6 +64,7 @@ def write_to_db(conf, table_name, file_name):
                 db.con.commit()
             else:
                 break
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

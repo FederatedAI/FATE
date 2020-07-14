@@ -26,7 +26,7 @@ from arch.api.utils.core_utils import deserialize_b64
 from arch.api.utils.core_utils import fate_uuid
 from arch.api.utils.core_utils import json_loads
 from fate_flow.db.db_models import Job, DB
-from fate_flow.manager.data_manager import query_data_view, delete_metric_data
+from arch.api.data_table import query_data_view, delete_metric_data
 from fate_flow.manager.tracking_manager import Tracking
 from fate_flow.settings import stat_logger
 from fate_flow.utils import job_utils, data_utils

@@ -26,3 +26,8 @@ class StoreTypes(object):
     ROLLPAIR_CACHE = 'ROLL_PAIR_CACHE'
     ROLLPAIR_QUEUE = 'ROLL_PAIR_QUEUE'
     MYSQL = 'MYSQL'
+
+
+class StoreEngine(object):
+    MYSQL = 'MYSQL'
+    EGGROLL = 'EGGROLL'

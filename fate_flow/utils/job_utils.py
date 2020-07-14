@@ -26,17 +26,17 @@ import typing
 import uuid
 
 import psutil
-from fate_flow.entity.constant_config import TaskStatus, WorkMode
+from fate_flow.entity.constant_config import TaskStatus
 
 from arch.api.utils import file_utils
 from arch.api.utils.core_utils import current_timestamp
 from arch.api.utils.core_utils import json_loads, json_dumps
 from arch.api.utils.log_utils import schedule_logger
-from fate_flow.db.db_models import DB, Job, Task, DataView
+from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.driver.dsl_parser import DSLParser
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.manager.data_manager import query_data_view, delete_table, delete_metric_data
-from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE, MAX_CONCURRENT_JOB_RUN_HOST, LIMIT_ROLE
+from arch.api.data_table import query_data_view, delete_table, delete_metric_data
+from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE
 from fate_flow.utils import detect_utils
 from fate_flow.utils import api_utils
 from fate_flow.utils import session_utils
