@@ -46,8 +46,6 @@ LOGGER = log_utils.getLogger()
 # noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
 class HDFSTable(Table):
     def __init__(self,
-                 job_id: str = uuid.uuid1(),
-                 mode: typing.Union[int, WorkMode] = WorkMode.STANDALONE,
                  namespace: str = None,
                  name: str = None,
                  partition: int = 1,
@@ -73,11 +71,7 @@ class HDFSTable(Table):
 
     
     def put_all(self, kv_list: Iterable, use_serialize=True, chunk_size=100000):
-        from pyspark import SparkContext
-        sc = SparkContext.getOrCreate()
-        hdfs_path = HDFSTable.generate_hdfs_path(namespace=self._namespace, name=self._name)
-        path = HDFSTable.get_path(sc, hdfs_path)
-        fs = HDFSTable.get_file_system(sc)
+        path, fs = HDFSTable.get_hadoop_fs(namespace=self._namespace, name=self._name)
         if(fs.exists(path)):
             out = fs.append(path)
         else:
@@ -111,15 +105,12 @@ class HDFSTable(Table):
         -------
         Iterator
         """
+        # TODO: 
         pass
 
     
     def destroy(self):
-        from pyspark import SparkContext
-        sc = SparkContext.getOrCreate()
-        hdfs_path = HDFSTable.generate_hdfs_path(namespace=self._namespace, name=self._name)
-        path = HDFSTable.get_path(sc, hdfs_path)
-        fs = HDFSTable.get_file_system(sc)
+        path, fs = HDFSTable.get_hadoop_fs(namespace=self._namespace, name=self._name)
         if(fs.exists(path)):
             fs.delete(path)
         HDFSTable.delete_table_meta(namespace=self._namespace, name=self._name)
@@ -134,25 +125,14 @@ class HDFSTable(Table):
 
     
     def save_as(self, name, namespace, partition=None, use_serialize=True, **kwargs):
-        """
-        Transforms a temporary table to a persistent table.
+        from pyspark import SparkContext
+        sc = SparkContext.getOrCreate()
+        src_path = HDFSTable.get_path(sc, HDFSTable.generate_hdfs_path(namespace=self._namespace, name=self._name))
+        dst_path = HDFSTable.get_path(sc, HDFSTable.generate_hdfs_path(namespace=namespace, name=name))
+        fs = HDFSTable.get_file_system(sc)
+        fs.rename(src_path, dst_path)
+        return HDFSTable(self._namespace, self._name, self._partitions)
 
-        Parameters
-        ----------
-        name : string
-          Table name of result Table.
-        namespace: string
-          Table namespace of result Table.
-        partition : int
-          Number of partition for the new persistent table.
-        use_serialize
-
-        Returns
-        -------
-        Table
-           Result persistent Table.
-        """
-        pass
 
     delimiter = '\t'
     
@@ -170,6 +150,15 @@ class HDFSTable(Table):
         filesystem_class = sc._gateway.jvm.org.apache.hadoop.fs.FileSystem
         hadoop_configuration = sc._jsc.hadoopConfiguration()
         return filesystem_class.get(hadoop_configuration)
+
+    @classmethod
+    def get_hadoop_fs(cls, namespace, name):
+        from pyspark import SparkContext
+        sc = SparkContext.getOrCreate()
+        hdfs_path = HDFSTable.generate_hdfs_path(namespace=namespace, name=name)
+        path = HDFSTable.get_path(sc, hdfs_path)
+        fs = HDFSTable.get_file_system(sc)
+        return path, fs
 
     @classmethod
     def update_table_meta(cls, namespace, name, records):
