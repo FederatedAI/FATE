@@ -222,13 +222,17 @@ class ModelBase(object):
             raise ValueError(f"summary should be of dict type, received {type(new_summary)} instead.")
         self._summary = copy.deepcopy(new_summary)
 
-    def add_summary(self, new_key, new_value, ):
+    def add_summary(self, new_key, new_value):
         """
         add key:value pair to model summary
         :param new_key: str
         :param new_value: object
         :return:
         """
+        original_value = self._summary.get(new_key, None)
+        if original_value is not None:
+            LOGGER.warning(f"{new_key} already exists in model summary."
+                           f"Corresponding value {original_value} will be replaced by {new_value}")
         self._summary[new_key] = new_value
         LOGGER.debug(f"{new_key}: {new_value} added to summary.")
 
@@ -236,14 +240,28 @@ class ModelBase(object):
         """
         merge new content into model summary
         :param new_content: dict, content to be added into model summary
-        :param suffix: string, suffix used to create new key if any key in new_content already exists in model summary
+        :param suffix: string or None, suffix used to create new key if any key in new_content already exists in model summary
         :param suffix_sep:
         :return:
         """
         if not isinstance(new_content, dict):
             raise ValueError(f"To merge new content into model summary, "
                              f"value must be fo dic type, received {type(new_content)} instead.")
-        #@TODO: merge dict
+        new_summary = self.summary()
+        keyset = new_summary.keys() | new_content.keys()
+        for key in keyset:
+            if key in new_summary and key in new_content:
+                if suffix is not None:
+                    new_key = f"{key}{suffix_sep}{suffix}"
+                else:
+                    new_key = key
+                new_value = new_content.get(key)
+                new_summary[new_key] = new_value
+            elif key in new_content:
+                new_summary[key] = new_content.get(key)
+            else:
+                pass
+        self.set_summary(new_summary)
 
     @staticmethod
     def extract_data(data: dict):
