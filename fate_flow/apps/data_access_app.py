@@ -19,7 +19,7 @@ import shutil
 from flask import Flask, request
 
 from arch.api import session
-from arch.api.data_table import query_data_view
+from fate_flow.manager.data_manager import query_data_view
 from fate_flow.settings import stat_logger, USE_LOCAL_DATA, WORK_MODE
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils import detect_utils, job_utils, session_utils

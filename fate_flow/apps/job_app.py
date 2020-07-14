@@ -22,7 +22,7 @@ from flask import Flask, request, send_file
 from arch.api.utils.core_utils import json_loads
 from fate_flow.driver.job_controller import JobController
 from fate_flow.driver.task_scheduler import TaskScheduler
-from arch.api import data_table
+from fate_flow.manager import data_manager
 from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT
 from fate_flow.utils import job_utils, detect_utils
 from fate_flow.utils.api_utils import get_json_result, request_execute_server
@@ -149,7 +149,7 @@ def query_task():
 
 @manager.route('/data/view/query', methods=['POST'])
 def query_data_view():
-    data_views = data_table.query_data_view(**request.json)
+    data_views = data_manager.query_data_view(**request.json)
     if not data_views:
         return get_json_result(retcode=101, retmsg='find data view failed')
     return get_json_result(retcode=0, retmsg='success', data=[data_view.to_json() for data_view in data_views])
