@@ -289,11 +289,11 @@ class HeteroStepwise(object):
     def update_summary_client(self, model, host_mask, guest_mask, unilateral_features, host_anonym, guest_anonym):
         step_summary = {}
         if self.role == consts.GUEST:
-            guest_features = [unilateral_features[i] for i in guest_mask]
-            host_features = [host_anonym[i] for i in host_mask]
+            guest_features = [unilateral_features[i] for i in np.where(guest_mask == 1)[0]]
+            host_features = [host_anonym[i] for i in np.where(host_mask == 1)[0]]
         elif self.role == consts.HOST:
-            guest_features = [guest_anonym[i] for i in guest_mask]
-            host_features = [unilateral_features[i] for i in host_mask]
+            guest_features = [guest_anonym[i] for i in np.where(guest_mask == 1)[0]]
+            host_features = [unilateral_features[i] for i in np.where(host_mask == 1)[0]]
         else:
             raise ValueError(f"upload summary on client only applies to host or guest.")
         step_summary["guest_features"] = guest_features
