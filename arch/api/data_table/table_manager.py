@@ -43,19 +43,21 @@ def get_table(job_id: str = uuid.uuid1(),
               mode: typing.Union[int, WorkMode] = WorkMode.STANDALONE,
               backend: typing.Union[int, Backend] = Backend.EGGROLL,
               persistent_engine: str = StoreTypes.ROLLPAIR_LMDB,
-              store_engine: str = StoreEngine.EGGROLL,
+              store_engine: str = StoreEngine.EGGROLL[0],
               namespace: str = None,
               name: str = None,
               partition: int = 1,
               init_session: bool = False,
               **kwargs):
-    if store_engine == StoreEngine.MYSQL:
-        if 'database_config' in kwargs:
+
+    if store_engine in StoreEngine.MYSQL:
+        if 'data_storage_config' in kwargs:
             database_config = kwargs.get('data_storage_config')
         else:
             database_config = get_base_config("data_storage_config", {})
         return MysqlTable(mode, StoreTypes.MYSQL, namespace, name, partition, database_config)
-    if store_engine == StoreEngine.EGGROLL:
+
+    if store_engine in StoreEngine.EGGROLL:
         return EggRollTable(job_id=job_id,  mode=mode, backend=backend, persistent_engine=persistent_engine,
                             namespace=namespace, name=name, partition=partition, init_session=init_session, **kwargs)
 

@@ -150,6 +150,10 @@ class Table(object):
         """
         pass
 
+    @abc.abstractmethod
+    def close(self):
+        pass
+
     """
     meta utils
     """

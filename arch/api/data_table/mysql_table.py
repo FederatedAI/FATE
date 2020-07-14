@@ -47,13 +47,13 @@ class MysqlTable(Table):
                  namespace: str = None,
                  name: str = None,
                  partition: int = 1,
-                 database_config: dict = None,
+                 address: dict = None,
                  **kwargs):
         self._name = name or str(uuid.uuid1())
         self._namespace = namespace or str(uuid.uuid1())
         self._partitions = partition
         self._strage_engine = persistent_engine
-        self.database_config = database_config
+        self.address = address
         self._mode = mode
         '''
         database_config
@@ -66,10 +66,10 @@ class MysqlTable(Table):
         }
         '''
         try:
-            self.con = pymysql.connect(host=database_config.get('host'),
-                                       user=database_config.get('user'),
-                                       passwd=database_config.get('passwd'),
-                                       port=database_config.get('port'),
+            self.con = pymysql.connect(host=self.address.get('host'),
+                                       user=self.address.get('user'),
+                                       passwd=self.address.get('passwd'),
+                                       port=self.address.get('port'),
                                        db=namespace)
             self.cur = self.con.cursor()
         except:
@@ -118,5 +118,5 @@ class MysqlTable(Table):
         sql = 'select count(*) from {}'.format(self._name)
         return self.execute(sql)
 
-    def quit(self):
+    def close(self):
         self.con.close()

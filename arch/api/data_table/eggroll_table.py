@@ -51,6 +51,7 @@ class EggRollTable(Table):
                  partition: int = 1,
                  init_session: bool = False,
                  **kwargs):
+        self._mode = mode
         self._name = name or str(uuid.uuid1())
         self._namespace = namespace or str(uuid.uuid1())
         self._partitions = partition
@@ -104,6 +105,9 @@ class EggRollTable(Table):
         self._table.save_as(name=name, namespace=namespace, partition=partition, options=options)
 
         return self.dtable(self._session_id, name, namespace, partition)
+
+    def close(self):
+        session.stop()
 
     @log_elapsed
     def count(self, **kwargs):

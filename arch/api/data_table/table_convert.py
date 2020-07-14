@@ -28,23 +28,32 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+from arch.api.base.utils.store_type import StoreEngine
 from arch.api.data_table.eggroll_table import EggRollTable
+from arch.standalone import WorkMode
 
 MAX_NUM = 10000
 
 
-def mysql_to_eggroll(mysql_table):
-    table = EggRollTable(mode=mysql_table._mode,
-                         namespace=mysql_table._namespace,
-                         name=mysql_table._name,
-                         partition=mysql_table.partition)
-    count = 0
-    data = []
-    for line in mysql_table.collect():
-        data.append(line)
-        count += 1
-        if len(data) == MAX_NUM:
-            table.load(data)
-            count = 0
-            data = []
+def convert(table, computing_engine, **kwargs):
+    name = table.get_name()
+    namespace = table.get_namespace()
+    partition = table.get_partition()
+    mode = table._mode if table._mode else WorkMode.CLUSTER
+    computing_engine = computing_engine
+    if computing_engine == 'EGGROLL' and table.get_storage_engine not in StoreEngine.EGGROLL:
+        _table = EggRollTable(mode=mode, namespace=namespace, name=name, partition=partition)
+        count = 0
+        data = []
+        for line in _table.collect():
+            data.append(line)
+            count += 1
+            if len(data) == MAX_NUM:
+                _table.put_all(data)
+                count = 0
+                data = []
+        table.close()
+        return _table
+
+
 
