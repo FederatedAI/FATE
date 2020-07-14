@@ -60,13 +60,20 @@ def _get_transfer_conf():
     return _transfer_auth
 
 
-def _get_variable_conf(name):
-    a_name, v_name = name.split(".", 1)
-    variable_auth = _get_transfer_conf().get(a_name, {}).get(v_name, None)
+def _check_variable_auth_conf(full_name):
+    module_name, class_name, variable_name = full_name.split("$")
+    variable_auth = _get_transfer_conf().get(f"{module_name}.{class_name}", {}).get(variable_name, None)
     if variable_auth is None:
-        raise ValueError(f"Unauthorized variable: {v_name}")
+        if f"{module_name}.{class_name}" not in _get_transfer_conf():
+            raise NameError(f"{module_name}.{class_name} not found")
+        else:
+            raise NameError(f"{variable_name} not found in {module_name}.{class_name}")
+
     auth_src = variable_auth["src"]
     if not isinstance(auth_src, list):
         auth_src = [auth_src]
     auth_dst = variable_auth["dst"]
+    if not isinstance(auth_dst, list):
+        auth_dst = [auth_dst]
+
     return auth_src, auth_dst

@@ -22,17 +22,19 @@ class HomoTransferBase(BaseTransferVariables):
     def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST), prefix=None):
         super().__init__()
         if prefix is None:
-            self.prefix = self.__class__.__name__
+            self.prefix = f"{self.__class__.__module__}${self.__class__.__name__}$"
         else:
-            self.prefix = f"{prefix}.{self.__class__.__name__}"
+            self.prefix = f"{prefix}{self.__class__.__name__}."
         self.server = server
         self.clients = clients
 
     def create_client_to_server_variable(self, name):
-        return Variable(name=f"{self.prefix}.{name}", src=self.clients, dst=self.server)
+        name = f"{self.prefix}{name}"
+        return Variable.get_or_create(name, lambda: Variable(name, self.clients, self.server))
 
     def create_server_to_client_variable(self, name):
-        return Variable(name=f"{self.prefix}.{name}", src=self.server, dst=self.clients)
+        name = f"{self.prefix}{name}"
+        return Variable.get_or_create(name, lambda: Variable(name, self.server, self.clients))
 
     @staticmethod
     def get_parties(roles):

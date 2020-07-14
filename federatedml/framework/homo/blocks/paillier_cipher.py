@@ -15,7 +15,6 @@
 #
 from typing import Union
 
-from arch.api import RuntimeInstance
 from arch.api.utils import log_utils
 from federatedml.framework.homo.blocks.base import HomoTransferBase
 from federatedml.secureprotol import PaillierEncrypt

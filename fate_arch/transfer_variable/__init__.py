@@ -13,3 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
+from fate_arch.transfer_variable._transfer_variable import BaseTransferVariables, Variable
+from fate_arch.transfer_variable._enhance_variable import *

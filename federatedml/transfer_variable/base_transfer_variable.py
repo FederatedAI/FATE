@@ -14,4 +14,4 @@
 #  limitations under the License.
 #
 
-from fate_arch.transfer_variable.base_transfer_variable import *
+from fate_arch.transfer_variable import BaseTransferVariables, Variable

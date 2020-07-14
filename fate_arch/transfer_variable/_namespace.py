@@ -15,7 +15,7 @@
 #
 
 
-class TransferNameSpace(object):
+class FederationTagNamespace(object):
     __namespace = "default"
 
     @classmethod

@@ -14,4 +14,4 @@
 #  limitations under the License.
 #
 
-from fate_arch.session.impl.eggroll._split import segment_transfer_enabled
+from fate_arch.session._split import  segment_transfer_enabled

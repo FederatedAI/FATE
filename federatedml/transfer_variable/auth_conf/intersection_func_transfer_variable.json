@@ -1,0 +1,36 @@
+{
+  "federatedml.transfer_variable.transfer_class.intersection_func_transfer_variable.IntersectionFuncTransferVariable": {
+    "id_map_from_guest": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "id_map_from_host": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "info_share_from_host": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "info_share_from_guest": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    }
+  }
+}
