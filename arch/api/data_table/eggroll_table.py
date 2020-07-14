@@ -89,7 +89,7 @@ class EggRollTable(Table):
         return EggRollTable(session_id=session_id, name=name, namespace=namespace, partition=partition)
 
     @log_elapsed
-    def save_as(self, name, namespace, partition=None, use_serialize=True, **kwargs):
+    def save_as(self, name, namespace, partition=None, **kwargs):
 
         from arch.api import RuntimeInstance
         options = kwargs.get("options", {})

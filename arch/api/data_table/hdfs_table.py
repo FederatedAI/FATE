@@ -86,7 +86,7 @@ class HDFSTable(Table):
         out.flush()
         out.close()
         
-        HDFSTable.update_table_meta(namespace=self._namespace, name=self._name, records=counter)
+        HDFSTable.update_table_meta(namespace=self._namespace, name=self._name, partitions=self._partitions, records=counter)
 
     
     def collect(self, min_chunk_size=0, use_serialize=True) -> list:
@@ -124,14 +124,16 @@ class HDFSTable(Table):
             return -1
 
     
-    def save_as(self, name, namespace, partition=None, use_serialize=True, **kwargs):
+    def save_as(self, name, namespace, partition=None, **kwargs):
         from pyspark import SparkContext
         sc = SparkContext.getOrCreate()
         src_path = HDFSTable.get_path(sc, HDFSTable.generate_hdfs_path(namespace=self._namespace, name=self._name))
         dst_path = HDFSTable.get_path(sc, HDFSTable.generate_hdfs_path(namespace=namespace, name=name))
         fs = HDFSTable.get_file_system(sc)
         fs.rename(src_path, dst_path)
-        return HDFSTable(self._namespace, self._name, self._partitions)
+        records = self.count()
+        HDFSTable.update_table_meta(namespace=namespace, name=name, partitions=partition, records=records)
+        return HDFSTable(namespace, name, partition)
 
 
     delimiter = '\t'
@@ -161,7 +163,7 @@ class HDFSTable(Table):
         return path, fs
 
     @classmethod
-    def update_table_meta(cls, namespace, name, records):
+    def update_table_meta(cls, namespace, name, partitions, records):
         try:
             from arch.api.utils.core_utils import current_timestamp
             with DB.connection_context():
@@ -177,7 +179,9 @@ class HDFSTable(Table):
                     meta.f_table_name = name
                     meta.f_create_time = current_timestamp()
                     meta.f_records = 0
+                    
                 meta.f_records = meta.f_records + records
+                meta.f_partitions = partitions
                 meta.f_update_time = current_timestamp()
                 if is_insert:
                     meta.save(force_insert=True)
