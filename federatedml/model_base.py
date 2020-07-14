@@ -241,7 +241,7 @@ class ModelBase(object):
         merge new content into model summary
         :param new_content: dict, content to be added into model summary
         :param suffix: string or None, suffix used to create new key if any key in new_content already exists in model summary
-        :param suffix_sep: string, default '_', suffix separator used to
+        :param suffix_sep: string, default '_', suffix separator used to create new key
         :return:
         """
         if not isinstance(new_content, dict):
