@@ -241,12 +241,12 @@ class ModelBase(object):
         merge new content into model summary
         :param new_content: dict, content to be added into model summary
         :param suffix: string or None, suffix used to create new key if any key in new_content already exists in model summary
-        :param suffix_sep:
+        :param suffix_sep: string, default '_', suffix separator used to
         :return:
         """
         if not isinstance(new_content, dict):
             raise ValueError(f"To merge new content into model summary, "
-                             f"value must be fo dic type, received {type(new_content)} instead.")
+                             f"value must be of dict type, received {type(new_content)} instead.")
         new_summary = self.summary()
         keyset = new_summary.keys() | new_content.keys()
         for key in keyset:
