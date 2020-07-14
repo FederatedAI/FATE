@@ -20,7 +20,7 @@ from arch.api.base.table import Table
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import DB, Job, Task, TrackingMetric, DataView
-from fate_flow.entity.constant_config import JobStatus, TaskStatus
+from fate_flow.entity.constant_config import JobStatus, TaskStatus, Backend
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.model_manager import pipelined_model
@@ -205,15 +205,7 @@ class Tracking(object):
             session.save_data_table_meta(
                 persistent_table_metas,
                 data_table_namespace=persistent_table.get_namespace(), data_table_name=persistent_table.get_name())
-            data_table_info = {
-                data_name: {'name': persistent_table.get_name(), 'namespace': persistent_table.get_namespace()}}
-        else:
-            data_table_info = {}
-        session.save_data(
-            data_table_info.items(),
-            name=Tracking.output_table_name('data'),
-            namespace=self.table_namespace,
-            partition=48)
+
         self.save_data_view(self.role, self.party_id,
                             data_info={'f_table_name': persistent_table._name if data_table else '',
                                        'f_table_namespace': persistent_table._namespace if data_table else '',
@@ -222,18 +214,18 @@ class Tracking(object):
                             mark=True)
 
     @session_utils.session_detect()
-    def get_output_data_table(self, data_name: str = 'component'):
+    def get_output_data_table(self, data_name: str = 'component', partition=1):
         """
         Get component output data table, will run in the task executor process
         :param data_name:
         :return:
         """
-        output_data_info_table = session.table(name=Tracking.output_table_name('data'),
-                                               namespace=self.table_namespace)
-        data_table_info = output_data_info_table.get(data_name)
-        if data_table_info:
-            data_table = session.table(name=data_table_info.get('name', ''),
-                                       namespace=data_table_info.get('namespace', ''))
+        data_view = self.query_data_view(self.role, self.party_id, mark=True)
+      
+        if data_view:
+            data_table = session.table(name=data_view.f_table_name,
+                                       namespace=data_view.f_table_namespace,
+                                       partition=data_view.f_partition)
             data_table_meta = data_table.get_metas()
             if data_table_meta.get('schema', None):
                 data_table.schema = data_table_meta['schema']
@@ -444,9 +436,24 @@ class Tracking(object):
             else:
                 data_view.save()
             return data_view
+    
+    def query_data_view(self, role, party_id, mark=False):
+        with DB.connection_context():
+            data_views = DataView.select().where(DataView.f_job_id == self.job_id,
+                                                 DataView.f_component_name == self.component_name,
+                                                 DataView.f_task_id == self.task_id,
+                                                 DataView.f_role == role,
+                                                 DataView.f_party_id == party_id)
+            if mark and self.component_name == "upload_0":
+                return
+            if data_views:
+                return data_views[0]
+
 
     @session_utils.session_detect()
     def clean_task(self, roles, party_ids):
+        if Backend.EGGROLL != RuntimeConfig.BACKEND:
+            return
         schedule_logger(self.job_id).info('clean task {} on {} {}'.format(self.task_id,
                                                                           self.role,
                                                                           self.party_id))

@@ -64,7 +64,7 @@ def dtable(table_func):
         else:
             table = session.get_data_table(name=table_name, namespace=namespace)
             if table:
-                table_key_count = table.count()
+                table_key_count = table.local_count()
                 table_partition = table.get_partitions()
             else:
                 table_key_count = 0

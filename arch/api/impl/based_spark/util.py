@@ -13,17 +13,19 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from enum import IntEnum
-
-from fate_arch.session import WorkMode, Backend
 
 
-class StoreEngine(IntEnum):
-    EGGROLL = 0
-    HDFS = 1
+RDD_ATTR_NAME = "_rdd"
 
-    def is_hdfs(self):
-        return self.value == self.HDFS
 
-    def is_eggroll(self):
-        return self.value == self.EGGROLL
+# noinspection PyUnresolvedReferences
+def get_storage_level():
+    from pyspark import StorageLevel
+    return StorageLevel.MEMORY_AND_DISK
+
+
+def materialize(rdd):
+    rdd = rdd.persist(get_storage_level())
+    rdd.count()
+    return rdd
+

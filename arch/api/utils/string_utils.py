@@ -13,17 +13,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from enum import IntEnum
 
-from fate_arch.session import WorkMode, Backend
+import random, string
 
 
-class StoreEngine(IntEnum):
-    EGGROLL = 0
-    HDFS = 1
+def RandomString(stringLength=6):
+    letters = string.ascii_lowercase
+    return ''.join(random.choice(letters) for i in range(stringLength))
 
-    def is_hdfs(self):
-        return self.value == self.HDFS
+def RandomNumberString(stringLength=6):
+    letters = string.octdigits
+    return ''.join(random.choice(letters) for i in range(stringLength))
 
-    def is_eggroll(self):
-        return self.value == self.EGGROLL

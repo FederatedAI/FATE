@@ -62,21 +62,22 @@ def download_upload(access_module):
         raise Exception('can not support this operating: {}'.format(access_module))
     detect_utils.check_config(request_config, required_arguments=required_arguments)
     data = {}
-    if access_module == "upload":
-        data['table_name'] = request_config["table_name"]
-        data['namespace'] = request_config["namespace"]
-        if WORK_MODE != 0:
-            data_table = session.get_data_table(name=request_config["table_name"], namespace=request_config["namespace"])
-            count = data_table.count()
-            if count and int(request_config.get('drop', 2)) == 2:
-                return get_json_result(retcode=100,
-                                       retmsg='The data table already exists, table data count:{}.'
-                                              'If you still want to continue uploading, please add the parameter -drop. '
-                                              '0 means not to delete and continue uploading, '
-                                              '1 means to upload again after deleting the table'.format(
-                                           count))
-            elif count and int(request_config.get('drop', 2)) == 1:
-                data_table.destroy()
+    # move this into upload.py
+    # if access_module == "upload":
+    #     data['table_name'] = request_config["table_name"]
+    #     data['namespace'] = request_config["namespace"]
+    #     session.init(mode=request_config['work_mode'], store_engine=request_config.get('store_engine', 0))
+    #     data_table = session.get_data_table(name=request_config["table_name"], namespace=request_config["namespace"])
+    #     count = data_table.count()
+    #     if count and int(request_config.get('drop', 2)) == 2:
+    #         return get_json_result(retcode=100,
+    #                                retmsg='The data table already exists, table data count:{}.'
+    #                                       'If you still want to continue uploading, please add the parameter -drop. '
+    #                                       '0 means not to delete and continue uploading, '
+    #                                       '1 means to upload again after deleting the table'.format(
+    #                                    count))
+    #     elif count and int(request_config.get('drop', 2)) == 1:
+    #         data_table.destroy()
     job_dsl, job_runtime_conf = gen_data_access_job_config(request_config, access_module)
     job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = JobController.submit_job(
         {'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)
@@ -137,10 +138,12 @@ def gen_data_access_job_config(config_data, access_module):
         "role_parameters": {}
     }
     initiator_role = "local"
-    initiator_party_id = 0
+    initiator_party_id = config_data.get('party_id', 0)
     job_runtime_conf["initiator"]["role"] = initiator_role
     job_runtime_conf["initiator"]["party_id"] = initiator_party_id
     job_runtime_conf["job_parameters"]["work_mode"] = int(config_data["work_mode"])
+    job_runtime_conf["job_parameters"]["store_engine"] = int(config_data.get("store_engine", 0))
+    job_runtime_conf["job_parameters"]["backend"] = int(config_data.get("backend", 0))
     job_runtime_conf["role"][initiator_role] = [initiator_party_id]
     job_dsl = {
         "components": {}
@@ -156,6 +159,7 @@ def gen_data_access_job_config(config_data, access_module):
                 "namespace": [config_data["namespace"]],
                 "table_name": [config_data["table_name"]],
                 "in_version": [config_data.get("in_version")],
+                "drop": [config_data.get("drop", 2)],
             }
         }
 
