@@ -54,7 +54,7 @@ def create(session_id=None,
     global _DEFAULT_SESSION
 
     if backend.is_eggroll():
-        from fate_arch.session.impl.eggroll.session import Session
+        from fate_arch.session.impl.eggroll import Session
         sess = Session(session_id, work_mode=mode, options=options)
         _DEFAULT_SESSION = sess
         return sess

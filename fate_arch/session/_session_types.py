@@ -17,6 +17,8 @@
 
 from enum import IntEnum
 
+import typing
+
 
 class WorkMode(IntEnum):
     STANDALONE = 0
@@ -82,7 +84,7 @@ class _FederationParties(object):
     def all_parties(self):
         return [party for parties in self._parties.values for party in parties]
 
-    def roles_to_parties(self, roles: list) -> list:
+    def roles_to_parties(self, roles: typing.Iterable) -> list:
         return [party for role in roles for party in self._parties[role]]
 
     def role_to_party(self, role, idx) -> Party:

@@ -13,3 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
+from fate_arch.session.impl.standalone._session import StandaloneSession
+
+__all__ = ["StandaloneSession"]
