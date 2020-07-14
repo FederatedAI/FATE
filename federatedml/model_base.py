@@ -213,19 +213,37 @@ class ModelBase(object):
         return copy.deepcopy(self._summary)
 
     def set_summary(self, new_summary):
+        """
+        model summary setter
+        :param new_summary: dict, summary to replace original summary
+        :return:
+        """
         if not isinstance(new_summary, dict):
             raise ValueError(f"summary should be of dict type, received {type(new_summary)} instead.")
         self._summary = copy.deepcopy(new_summary)
 
-    def add_summary(self, new_key, new_value, merge=False):
-        if merge:
-            if not isinstance(new_value, dict):
-                raise ValueError(f"To merge new value into model summary, "
-                                 f"value must be fo dic type, received {type(new_value)} instead.")
-            #@TODO: use pipeline utils to merge
-        else:
-            self._summary[new_key] = new_value
+    def add_summary(self, new_key, new_value, ):
+        """
+        add key:value pair to model summary
+        :param new_key: str
+        :param new_value: object
+        :return:
+        """
+        self._summary[new_key] = new_value
         LOGGER.debug(f"{new_key}: {new_value} added to summary.")
+
+    def merge_summary(self, new_content, suffix=None, suffix_sep='_'):
+        """
+        merge new content into model summary
+        :param new_content: dict, content to be added into model summary
+        :param suffix: string, suffix used to create new key if any key in new_content already exists in model summary
+        :param suffix_sep:
+        :return:
+        """
+        if not isinstance(new_content, dict):
+            raise ValueError(f"To merge new content into model summary, "
+                             f"value must be fo dic type, received {type(new_content)} instead.")
+        #@TODO: merge dict
 
     @staticmethod
     def extract_data(data: dict):
