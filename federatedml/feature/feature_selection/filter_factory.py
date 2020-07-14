@@ -18,6 +18,7 @@
 
 from federatedml.feature.feature_selection.unique_value_filter import UniqueValueFilter
 from federatedml.feature.feature_selection import iv_value_select_filter, iv_percentile_filter
+from federatedml.feature.feature_selection import iv_top_k_filter
 from federatedml.feature.feature_selection.variance_coe_filter import VarianceCoeFilter
 from federatedml.feature.feature_selection.outlier_filter import OutlierFilter
 from federatedml.feature.feature_selection.manually_filter import ManuallyFilter
@@ -44,6 +45,13 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
             return iv_percentile_filter.Guest(iv_param)
         else:
             return iv_percentile_filter.Host(iv_param)
+
+    elif filter_name == consts.IV_TOP_K:
+        iv_param = model_param.iv_top_k_param
+        if role == consts.GUEST:
+            return iv_top_k_filter.Guest(iv_param)
+        else:
+            return iv_top_k_filter.Host(iv_param)
 
     elif filter_name == consts.COEFFICIENT_OF_VARIATION_VALUE_THRES:
         coe_param = model_param.variance_coe_param

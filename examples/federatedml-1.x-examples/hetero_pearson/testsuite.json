@@ -1,39 +1,39 @@
 {
     "data": [
         {
-            "file": "examples/data/breast_b.csv",
+            "file": "examples/data/breast_hetero_guest.csv",
             "head": 1,
             "partition": 16,
             "work_mode": 0,
-            "table_name": "hetero_breast_b",
-            "namespace": "hetero_breast_guest",
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
-            "file": "examples/data/breast_a.csv",
+            "file": "examples/data/breast_hetero_host.csv",
             "head": 1,
             "partition": 16,
             "work_mode": 0,
-            "table_name": "hetero_breast_a",
-            "namespace": "hetero_breast_host",
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
             "role": "host_0"
         },
         {
-            "file": "examples/data/vehicle_scale_b.csv",
+            "file": "examples/data/vehicle_scale_hetero_guest.csv",
             "head": 1,
             "partition": 16,
             "work_mode": 0,
-            "table_name": "hetero_vehicle_b",
-            "namespace": "hetero_guest_vehicle",
+            "table_name": "vehicle_scale_hetero_guest",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
-            "file": "examples/data/vehicle_scale_a.csv",
+            "file": "examples/data/vehicle_scale_hetero_host.csv",
             "head": 1,
             "partition": 16,
             "work_mode": 0,
-            "table_name": "hetero_vehicle_a",
-            "namespace": "hetero_host_vehicle",
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
             "role": "host_0"
         }
     ],
@@ -49,8 +49,8 @@
                                 "data": {
                                     "data": [
                                         {
-                                            "name": "hetero_vehicle_b",
-                                            "namespace": "hetero_guest_vehicle"
+                                            "name": "vehicle_scale_hetero_guest",
+                                            "namespace": "experiment"
                                         }
                                     ]
                                 }
@@ -61,8 +61,8 @@
                                 "data": {
                                     "data": [
                                         {
-                                            "name": "hetero_vehicle_a",
-                                            "namespace": "hetero_host_vehicle"
+                                            "name": "vehicle_scale_hetero_host",
+                                            "namespace": "experiment"
                                         }
                                     ]
                                 }

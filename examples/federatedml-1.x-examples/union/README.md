@@ -1,4 +1,4 @@
-## UnionConfiguration Usage Guide.
+## Union Configuration Usage Guide.
 
 This section introduces the dsl and conf for usage of different tasks.
 

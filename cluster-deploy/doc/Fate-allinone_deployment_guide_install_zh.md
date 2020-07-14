@@ -17,8 +17,8 @@
 
 | party  | 主机名        | IP地址      | 操作系统                | 安装软件           | 服务                                                         |
 | ------ | ------------- | ----------- | ----------------------- | ------------------ | ------------------------------------------------------------ |
-| PartyA | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate,eggroll,mysql | fate_flow，fateboard，clustermanager，nodemanger，rollsite，mysql |
-| PartyB | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate,eggroll,mysql | fate_flow，fateboard，clustermanager，nodemanger，rollsite，mysql |
+| PartyA | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate,eggroll,mysql | fate_flow，fateboard，clustermanager，nodemanager，rollsite，mysql |
+| PartyB | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate,eggroll,mysql | fate_flow，fateboard，clustermanager，nodemanager，rollsite，mysql |
 
 架构图：
 
@@ -33,7 +33,7 @@
 | fate     | fate_flow      | 9360;9380 | 联合学习任务流水线管理模块                                   |
 | fate     | fateboard      | 8080      | 联合学习过程可视化模块                                       |
 | eggroll  | clustermanager | 4670      | cluster manager管理集群                                      |
-| eggroll  | nodemanger     | 4671      | node manager管理每台机器资源                                 |
+| eggroll  | nodemanager    | 4671      | node manager管理每台机器资源                                 |
 | eggroll  | rollsite       | 9370      | 跨站点或者说跨party通讯组件，相当于以前版本的proxy+federation |
 | mysql    | mysql          | 3306      | 数据存储，clustermanager和fateflow依赖                       |
 
@@ -83,9 +83,9 @@ ubuntu系统执行：apt list --installed | grep selinux
 
 1）vim /etc/security/limits.conf
 
-\* soft nofile 65536
+\* soft nofile 65535
 
-\* hard nofile 65536
+\* hard nofile 65535
 
 2）vim /etc/security/limits.d/20-nproc.conf
 
@@ -255,8 +255,8 @@ Swap:        131071           0      131071
 
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate-cluster-install-1.4.1-release-c7-u18.tar.gz
-tar xzf fate-cluster-install-1.4.1-release-c7-u18.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate-cluster-install-1.4.2-release-c7-u18.tar.gz
+tar xzf fate-cluster-install-1.4.2-release-c7-u18.tar.gz
 ```
 
 ## 5.2 部署前检查
@@ -292,7 +292,7 @@ vi fate-cluster-install/allInone/conf/setup.conf
 | 配置项           | 配置项值                                      | 说明                                                         |
 | ---------------- | --------------------------------------------- | ------------------------------------------------------------ |
 | roles            | 默认："host" "guest"                          | 部署的角色，有HOST端、GUEST端                                |
-| version          | 默认：1.4.1                                   | Fate 版本号                                                  |
+| version          | 默认：1.4.2                                   | Fate 版本号                                                  |
 | pbase            | 默认： /data/projects                         | 项目根目录                                                   |
 | lbase            | 默认：/data/logs                              | 保持默认不要修改                                             |
 | ssh_user         | 默认：app                                     | ssh连接目标机器的用户，也是部署后文件的属主                  |
@@ -321,7 +321,7 @@ vi fate-cluster-install/allInone/conf/setup.conf
 #to install role
 roles=( "host" "guest" )
 
-version="1.4.1"
+version="1.4.2"
 #project base
 pbase="/data/projects"
 
@@ -377,7 +377,7 @@ basemodules=( "base" "java" "python" "eggroll" "fate" )
 #to install role
 roles=( "host" )
 
-version="1.4.1"
+version="1.4.2"
 #project base
 pbase="/data/projects"
 
@@ -439,7 +439,7 @@ nohup sh ./deploy.sh > logs/boot.log 2>&1 &
 部署日志输出在fate-cluster-install/allInone/logs目录下,实时查看是否有报错：
 
 ```
-tail -f ./logs/boot.log （这个有报错信息才会输出，部署结束，查看一下即可）
+tail -f ./logs/boot.log （部署结束，查看一下即可）
 tail -f ./logs/deploy-guest.log （实时打印GUEST端的部署情况）
 tail -f ./logs/deploy-mysql-guest.log  （实时打印GUEST端mysql的部署情况）
 tail -f ./logs/deploy-host.log    （实时打印HOST端的部署情况）
@@ -521,33 +521,40 @@ python run_toy_example.py 9999 10000 1
 6.2 最小化测试
 --------------
 
-### **6.2.1 快速模式：**
+### **6.2.1 上传预设数据：**
 
-在guest和host两方各任一egg节点中，根据需要在run_task.py中设置字段：guest_id，host_id，arbiter_id。
+分别在192.168.0.1和192.168.0.2上执行：
 
-该文件在/data/projects/fate/python/examples/min_test_task/目录下。
+```
+source /data/projects/fate/init_env.sh
+cd /data/projects/fate/python/examples/scripts/
+python upload_default_data.py -m 1
+```
 
-**在Host节点上运行：**
+更多细节信息，敬请参考[脚本README](../../examples/scripts/README.rst)
+
+### **6.2.2 快速模式：**
+
+请确保guest和host两方均已分别通过给定脚本上传了预设数据。
+
+快速模式下，最小化测试脚本将使用一个相对较小的数据集，即包含了569条数据的breast数据集。
+
+选定9999为guest方，在192.168.0.2上执行：
 
 ```
 source /data/projects/fate/init_env.sh
 cd /data/projects/fate/python/examples/min_test_task/
-sh run.sh host fast
+python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
 ```
 
-从测试结果中获取“host_table”和“host_namespace”的值，并将它们作为参数传递给下述guest方命令。
+其他一些可能有用的参数包括：
 
-**在Guest节点上运行：**
+1. -f: 使用的文件类型. "fast" 代表 breast数据集, "normal" 代表 default credit 数据集.
+2. --add_sbt: 如果被设置为1, 将在运行完lr以后，启动secureboost任务，设置为0则不启动secureboost任务，不设置此参数系统默认为1。
 
-```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/min_test_task/
-sh run.sh guest fast ${host_table} ${host_namespace} 
-```
+若数分钟后在结果中显示了“success”字样则表明该操作已经运行成功了。若出现“FAILED”或者程序卡住，则意味着测试失败。
 
-等待几分钟，看到结果显示“成功”字段，表明操作成功。在其他情况下，如果失败或卡住，则表示失败。
-
-### **6.2.2 正常模式**：
+### **6.2.3 正常模式**：
 
 只需在命令中将“fast”替换为“normal”，其余部分与快速模式相同。
 

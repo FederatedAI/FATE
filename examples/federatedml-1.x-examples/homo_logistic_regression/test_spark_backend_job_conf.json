@@ -14,38 +14,72 @@
         }
     },
     "role": {
-        "guest": [10000],
-        "host": [10000],
-        "arbiter": [10000]
+        "guest": [
+            10000
+        ],
+        "host": [
+            10000
+        ],
+        "arbiter": [
+            10000
+        ]
     },
     "role_parameters": {
         "guest": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "homo_breast_guest", "namespace": "homo_breast_guest"}]
+                    "train_data": [
+                        {
+                            "name": "breast_homo_guest",
+                            "namespace": "experiment"
+                        }
+                    ]
                 }
             },
-            "dataio_0":{
-                "with_label": [true],
-                "label_name": ["y"],
-                "label_type": ["int"],
-                "output_format": ["dense"]
+            "dataio_0": {
+                "with_label": [
+                    true
+                ],
+                "label_name": [
+                    "y"
+                ],
+                "label_type": [
+                    "int"
+                ],
+                "output_format": [
+                    "dense"
+                ]
             }
         },
         "host": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "homo_breast_host", "namespace": "homo_breast_host"}]
+                    "train_data": [
+                        {
+                            "name": "breast_homo_host",
+                            "namespace": "experiment"
+                        }
+                    ]
                 }
             },
-            "dataio_0":{
-               "with_label": [true],
-                "label_name": ["y"],
-                "label_type": ["int"],
-               "output_format": ["dense"]
+            "dataio_0": {
+                "with_label": [
+                    true
+                ],
+                "label_name": [
+                    "y"
+                ],
+                "label_type": [
+                    "int"
+                ],
+                "output_format": [
+                    "dense"
+                ]
             },
             "evaluation_0": {
-                "need_run": [true]
+                "need_run": [
+                    true
+                ]
             }
         }
     },
@@ -53,16 +87,16 @@
         "homo_lr_0": {
             "penalty": "L2",
             "optimizer": "sgd",
-            "eps": 1e-5,
+            "eps": 1e-05,
             "alpha": 0.01,
-            "max_iter": 10,
+            "max_iter": 3,
             "converge_func": "diff",
             "batch_size": 500,
             "learning_rate": 0.5,
             "decay": 1,
             "decay_sqrt": true,
             "init_param": {
-				"init_method": "zeros"
+                "init_method": "zeros"
             },
             "encrypt_param": {
                 "method": "Paillier"

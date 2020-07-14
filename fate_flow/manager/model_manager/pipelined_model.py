@@ -30,8 +30,8 @@ class PipelinedModel(object):
         """
         Support operations on FATE PipelinedModels
         TODO: add lock
-        :param model_id:
-        :param model_version:
+        :param model_id: the model id stored at the local party.
+        :param model_version: the model version.
         """
         self.model_id = model_id
         self.model_version = model_version
