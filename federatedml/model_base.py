@@ -15,6 +15,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
+import copy
+
 from arch.api.utils import log_utils
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.util.component_properties import ComponentProperties
@@ -38,6 +41,7 @@ class ModelBase(object):
         self.cv_fold = 0
         self.validation_freqs = None
         self.component_properties = ComponentProperties()
+        self._summary = dict()
 
     def _init_runtime_parameters(self, component_parameters):
         param_extractor = ParamExtract()
@@ -204,6 +208,24 @@ class ModelBase(object):
 
     def set_cv_fold(self, cv_fold):
         self.cv_fold = cv_fold
+
+    def summary(self):
+        return copy.deepcopy(self._summary)
+
+    def set_summary(self, new_summary):
+        if not isinstance(new_summary, dict):
+            raise ValueError(f"summary should be of dict type, received {type(new_summary)} instead.")
+        self._summary = copy.deepcopy(new_summary)
+
+    def add_summary(self, new_key, new_value, merge=False):
+        if merge:
+            if not isinstance(new_value, dict):
+                raise ValueError(f"To merge new value into model summary, "
+                                 f"value must be fo dic type, received {type(new_value)} instead.")
+            #@TODO: use pipeline utils to merge
+        else:
+            self._summary[new_key] = new_value
+        LOGGER.debug(f"{new_key}: {new_value} added to summary.")
 
     @staticmethod
     def extract_data(data: dict):
