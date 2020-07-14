@@ -81,9 +81,6 @@ class EggRollTable(Table):
     def collect(self, min_chunk_size=0, use_serialize=True, **kwargs) -> list:
         return self._table.get_all(min_chunk_size, use_serialize, **kwargs)
 
-    def delete(self, k, use_serialize=True):
-        return self._table.delete(k=k, use_serialize=use_serialize)
-
     def destroy(self):
         return self._table.destroy()
 

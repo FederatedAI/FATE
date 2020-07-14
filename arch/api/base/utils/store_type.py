@@ -31,3 +31,4 @@ class StoreTypes(object):
 class StoreEngine(object):
     MYSQL = 'MYSQL'
     EGGROLL = 'EGGROLL'
+    HDFS = 'HDFS'

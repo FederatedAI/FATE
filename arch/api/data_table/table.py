@@ -89,22 +89,6 @@ class Table(object):
         pass
 
     @abc.abstractmethod
-    def delete(self, k, use_serialize=True):
-        """
-        Returns the deleted value corresponding to the key.
-
-        Parameters
-        ----------
-          k : object
-            Key object. Will be serialized. Must be less than 512 bytes.
-        Returns
-        -------
-        object
-          Corresponding value of the deleted key. Returns None if key does not exist.
-        """
-        pass
-
-    @abc.abstractmethod
     def destroy(self):
         """
         Destroys this Table, freeing its associated storage resources.

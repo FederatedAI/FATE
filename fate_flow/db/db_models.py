@@ -263,3 +263,19 @@ class MachineLearningDataSchema(DataBaseModel):
     class Meta:
         db_table = "t_machine_learning_data_schema"
         primary_key = CompositeKey('f_table_name', 'namespace')
+
+
+
+class TableMeta(DataBaseModel):
+    f_table_name = CharField(max_length=500)
+    f_table_namespace = CharField(max_length=500)
+    f_create_time = BigIntegerField()
+    f_update_time = BigIntegerField(null=True)
+    f_records = IntegerField(null=True, default=0)
+    f_partitions = IntegerField(null=True, default=0)
+
+    class Meta:
+        db_table = "t_table_meta"
+        primary_key = CompositeKey('f_table_namespace', 'f_table_name')
+
+
