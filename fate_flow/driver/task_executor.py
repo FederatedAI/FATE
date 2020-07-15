@@ -107,7 +107,9 @@ class TaskExecutor(object):
 
             # init environment, process is shared globally
             RuntimeConfig.init_config(WORK_MODE=job_parameters['work_mode'],
-                                      BACKEND=job_parameters.get('backend', 0))
+                                      BACKEND=job_parameters.get('backend', 0),
+                                      STORE_ENGINE=job_parameters.get('store_engine', 0))
+            
             if args.processors_per_node and args.processors_per_node > 0 and RuntimeConfig.BACKEND == Backend.EGGROLL:
                 session_options = {"eggroll.session.processors.per.node": args.processors_per_node}
             else:
@@ -115,6 +117,7 @@ class TaskExecutor(object):
             session.init(job_id=job_utils.generate_session_id(task_id, role, party_id),
                          mode=RuntimeConfig.WORK_MODE,
                          backend=RuntimeConfig.BACKEND,
+                         store_engine=RuntimeConfig.STORE_ENGINE,
                          options=session_options)
             federation.init(job_id=task_id, runtime_conf=component_parameters)
 
@@ -184,13 +187,17 @@ class TaskExecutor(object):
 
                                 data_table = session.table(
                                     namespace=job_args['data'][search_data_name]['namespace'],
-                                    name=job_args['data'][search_data_name]['name'])
+                                    name=job_args['data'][search_data_name]['name'],
+                                    partition=job_parameters.get("partition", 1)
+                                    )
                             else:
                                 data_table = None
                         else:
                             data_table = Tracking(job_id=job_id, role=role, party_id=party_id,
                                                   component_name=search_component_name).get_output_data_table(
-                                data_name=search_data_name)
+                                data_name=search_data_name,
+                                partition=job_parameters.get("partition", 1)
+                                )
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
                             search_component_name, {})
                         # todo: If the same component has more than one identical input, save as is repeated

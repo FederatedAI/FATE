@@ -31,6 +31,7 @@ from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.settings import USE_AUTHENTICATION, FATE_BOARD_DASHBOARD_ENDPOINT
 from fate_flow.utils import detect_utils, job_utils, job_controller_utils
 from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_dsl_parser, get_job_log_directory
+from arch.api.utils import string_utils
 
 
 class JobController(object):
@@ -51,6 +52,12 @@ class JobController(object):
         job_parameters = job_runtime_conf['job_parameters']
         job_initiator = job_runtime_conf['initiator']
         job_type = job_parameters.get('job_type', '')
+        # add mq info
+        federation_info = {}
+        federation_info['union_name'] = string_utils.RandomString(4) 
+        federation_info['policy_id'] = string_utils.RandomString(10)
+        job_parameters['federation_info'] = federation_info
+        
         if job_type != 'predict':
             # generate job model info
             job_parameters['model_id'] = '#'.join([dtable_utils.all_party_key(job_runtime_conf['role']), 'model'])
@@ -130,6 +137,7 @@ class JobController(object):
                 kill_status = job_utils.kill_task_executor_process(task)
                 # session stop
                 job_utils.start_session_stop(task)
+                job_utils.federation_cleanup(job=job[0], task=task)
             except Exception as e:
                 schedule_logger(job_id).exception(e)
             finally:

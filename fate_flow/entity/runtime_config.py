@@ -24,6 +24,7 @@ from fate_flow.entity.constant_config import ProcessRole
 class RuntimeConfig(object):
     WORK_MODE = None
     BACKEND = None
+    STORE_ENGINE = None
     JOB_QUEUE = None
     USE_LOCAL_DATABASE = False
     HTTP_PORT = None
