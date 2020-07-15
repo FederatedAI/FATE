@@ -400,9 +400,9 @@ external network environment):
     tar xvf pip-packages-fate-*.tar.gz
     source /data/projects/fate/common/python/venv/bin/activate
     pip install setuptools-42.0.2-py2.py3-none-any.whl
-    pip install -r pip-packages-fate-1.4.1/requirements.txt -f ./pip-packages-fate-1.4.1 --no-index
+    pip install -r pip-packages-fate-1.4.2/requirements.txt -f ./pip-packages-fate-1.4.2 --no-index
     pip list | wc -l
-    #The result should be 158
+    #The result should be 161
 
 4.6 Deploy eggroll&fate
 ~~~~~~~~~~~~~~~~~~~~~~~
