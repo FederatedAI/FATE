@@ -89,22 +89,6 @@ class Table(object):
         pass
 
     @abc.abstractmethod
-    def delete(self, k, use_serialize=True):
-        """
-        Returns the deleted value corresponding to the key.
-
-        Parameters
-        ----------
-          k : object
-            Key object. Will be serialized. Must be less than 512 bytes.
-        Returns
-        -------
-        object
-          Corresponding value of the deleted key. Returns None if key does not exist.
-        """
-        pass
-
-    @abc.abstractmethod
     def count(self):
         """
         Returns the number of elements in the Table.
@@ -117,7 +101,7 @@ class Table(object):
         pass
 
     @abc.abstractmethod
-    def save_as(self, name, namespace, partition=None, use_serialize=True, **kwargs):
+    def save_as(self, name, namespace, partition=None, **kwargs):
         """
         Transforms a temporary table to a persistent table.
 
