@@ -9,7 +9,7 @@
 from collections import defaultdict
 
 from arch.api.utils import log_utils
-from federatedml.feature.OHE_with_alignment.OHE_alignment_base import OHEAlignmentBase
+from federatedml.feature.ohe_with_alignment.OHE_alignment_base import OHEAlignmentBase
 from federatedml.framework.homo.procedure import paillier_cipher
 from federatedml.util import consts
 

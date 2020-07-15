@@ -1,5 +1,5 @@
 {
-    "module_path":  "federatedml/feature/OHE_with_alignment",
+    "module_path":  "federatedml/feature/ohe_with_alignment",
     "default_runtime_conf": "onehot_encoder_with_alignment_param.json",
     "param_class" : "federatedml/param/onehot_encoder_with_alignment_param.py/OHEAlignmentParam",
     "role":

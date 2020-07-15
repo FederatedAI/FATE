@@ -11,7 +11,7 @@ from arch.api.utils import log_utils
 from federatedml.feature.one_hot_encoder import OneHotEncoder
 from federatedml.param.onehot_encoder_with_alignment_param import OHEAlignmentParam
 from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
-from federatedml.transfer_variable.transfer_class.OHE_alignment_transfer_variable import OHEAlignmentTransferVariable
+from federatedml.transfer_variable.transfer_class.ohe_alignment_transfer_variable import OHEAlignmentTransferVariable
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
@@ -29,12 +29,6 @@ class OHEAlignmentBase(OneHotEncoder):
         super(OHEAlignmentBase, self)._init_model(params)
         # self.re_encrypt_batches = params.re_encrypt_batches
         self.need_alignment = params.need_alignment
-
-        if params.encrypt_param.method == consts.PAILLIER:
-            self.cipher_operator = PaillierEncrypt()
-        else:
-            self.cipher_operator = FakeEncrypt()
-
         self.transfer_variable = OHEAlignmentTransferVariable()
 
     def init_schema(self, data_instance):
