@@ -259,6 +259,8 @@ class MachineLearningDataSchema(DataBaseModel):
     f_update_time = BigIntegerField(default=0)
     f_description = TextField(null=True, default='')
     f_content = TextField(default='')
+    f_data_store_engine = CharField(max_length=100, index=True)  # 'EGGROLL', 'MYSQL'
+    f_address = TextField(null=True)
 
     class Meta:
         db_table = "t_machine_learning_data_schema"

@@ -213,6 +213,10 @@ def component_output_data():
         total = output_data_table.count()
     if output_data:
         header = get_component_output_data_meta(output_data_table=output_data_table, have_data_label=have_data_label)
+        try:
+            output_data_table.close()
+        except Exception as e:
+            stat_logger.exception(e)
         return get_json_result(retcode=0, retmsg='success', data=output_data, meta={'header': header, 'total': total})
     else:
         return get_json_result(retcode=0, retmsg='no data', data=[])
@@ -254,6 +258,10 @@ def component_output_data_download():
                 f.seek(0, 0)
                 f.write('{}\n'.format(','.join(header)) + content)
         # tar
+        try:
+            output_data_table.close()
+        except Exception as e:
+            stat_logger.exception(e)
         memory_file = io.BytesIO()
         tar = tarfile.open(fileobj=memory_file, mode='w:gz')
         tar.add(output_data_file_path, os.path.relpath(output_data_file_path, output_tmp_dir))
@@ -317,7 +325,8 @@ def get_component_output_data_table(task_data):
     output_dsl = component.get_output()
     output_data_dsl = output_dsl.get('data', [])
     # The current version will only have one data output.
-    output_data_table = tracker.get_output_data_table(output_data_dsl[0] if output_data_dsl else 'component')
+    output_data_table = tracker.get_output_data_table(output_data_dsl[0] if output_data_dsl else 'component',
+                                                      init_session=True)
     return output_data_table
 
 
@@ -336,7 +345,7 @@ def get_component_output_data_line(src_key, src_value):
 
 def get_component_output_data_meta(output_data_table, have_data_label):
     # get meta
-    output_data_meta = output_data_table.get_metas()
+    output_data_meta = output_data_table.get_schema()
     schema = output_data_meta.get('schema', {})
     header = [schema.get('sid_name', 'sid')]
     if have_data_label:

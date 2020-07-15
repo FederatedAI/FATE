@@ -55,7 +55,7 @@ def write_to_db(conf, table_name, file_name):
         while True:
             lines = f.readlines(12400)
             if lines:
-                sql = 'INSERT INTO {}(id, features)  VALUES'.format(table_name)
+                sql = 'REPLACE INTO {}(id, features)  VALUES'.format(table_name)
                 for line in lines:
                     values = line.replace("\n", "").replace("\t", ",").split(",")
                     sql += '("{}", "{}"),'.format(values[0], list_to_str(values[1:]))

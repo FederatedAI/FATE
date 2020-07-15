@@ -18,7 +18,7 @@ import shutil
 
 from flask import Flask, request
 
-from arch.api import session
+from arch.api.data_table.table_manager import get_table
 from fate_flow.manager.data_manager import query_data_view
 from fate_flow.settings import stat_logger, USE_LOCAL_DATA, WORK_MODE
 from fate_flow.utils.api_utils import get_json_result
@@ -36,7 +36,6 @@ def internal_server_error(e):
 
 
 @manager.route('/<access_module>', methods=['post'])
-@session_utils.session_detect()
 def download_upload(access_module):
     job_id = generate_job_id()
     if access_module == "upload" and USE_LOCAL_DATA and not (request.json and request.json.get("use_local_data") == 0):
@@ -65,7 +64,7 @@ def download_upload(access_module):
         data['table_name'] = request_config["table_name"]
         data['namespace'] = request_config["namespace"]
         if WORK_MODE != 0:
-            data_table = session.get_data_table(name=request_config["table_name"], namespace=request_config["namespace"])
+            data_table = get_table(name=request_config["table_name"], namespace=request_config["namespace"])
             count = data_table.count()
             if count and int(request_config.get('drop', 2)) == 2:
                 return get_json_result(retcode=100,
@@ -76,6 +75,10 @@ def download_upload(access_module):
                                            count))
             elif count and int(request_config.get('drop', 2)) == 1:
                 data_table.destroy()
+            try:
+                data_table.close()
+            except:
+                pass
     job_dsl, job_runtime_conf = gen_data_access_job_config(request_config, access_module)
     job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = JobController.submit_job(
         {'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)
@@ -105,7 +108,6 @@ def get_upload_history():
     return get_upload_info(jobs_run_conf)
 
 
-@session_utils.session_detect()
 def get_upload_info(jobs_run_conf):
     data = []
     for job_id, job_run_conf in jobs_run_conf.items():
@@ -123,8 +125,13 @@ def get_upload_info(jobs_run_conf):
             'actual_count': data_views.f_table_count_actual
         }
         info["notes"] = job_run_conf["notes"]
-        info["meta"] = session.get_data_table_metas(table_name, namespace)
+        data_table = get_table(table_name=table_name, namespace=namespace)
+        info["meta"] = data_table.get_schema()
         data.append({job_id: info})
+        try:
+            data_table.close()
+        except:
+            pass
     return data
 
 

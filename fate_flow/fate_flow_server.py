@@ -44,7 +44,6 @@ from fate_flow.manager import queue_manager
 from fate_flow.settings import IP, GRPC_PORT, CLUSTER_STANDALONE_JOB_SERVER_PORT, _ONE_DAY_IN_SECONDS, \
     MAX_CONCURRENT_JOB_RUN, stat_logger, API_VERSION
 from fate_flow.utils import job_utils
-from fate_flow.utils import session_utils
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryServicer
@@ -91,7 +90,6 @@ if __name__ == '__main__':
     if args.standalone_node:
         RuntimeConfig.init_config(WORK_MODE=WorkMode.STANDALONE)
         RuntimeConfig.init_config(HTTP_PORT=CLUSTER_STANDALONE_JOB_SERVER_PORT)
-    session_utils.init_session_for_flow_server()
     RuntimeConfig.init_env()
     RuntimeConfig.set_process_role(ProcessRole.SERVER)
     queue_manager.init_job_queue()
@@ -128,6 +126,5 @@ if __name__ == '__main__':
         while True:
             time.sleep(_ONE_DAY_IN_SECONDS)
     except KeyboardInterrupt:
-        session_utils.clean_server_used_session()
         server.stop(0)
         sys.exit(0)

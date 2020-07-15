@@ -37,12 +37,13 @@ from arch.api.base.utils.store_type import StoreTypes
 from arch.api.data_table.table import Table
 from arch.api.utils.profile_util import log_elapsed
 from arch.api import WorkMode
+from fate_flow.settings import WORK_MODE
 
 
 # noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
 class MysqlTable(Table):
     def __init__(self,
-                 mode: typing.Union[int, WorkMode] = WorkMode.STANDALONE,
+                 mode: typing.Union[int, WorkMode] = WORK_MODE,
                  persistent_engine: str = StoreTypes.MYSQL,
                  namespace: str = None,
                  name: str = None,
@@ -110,6 +111,7 @@ class MysqlTable(Table):
         return data
 
     def destroy(self):
+        super().destroy()
         sql = 'drop table {}'.format(self._name)
         return self.execute(sql)
 

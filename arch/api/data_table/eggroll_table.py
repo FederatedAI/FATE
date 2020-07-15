@@ -37,19 +37,20 @@ from arch.api import WorkMode, Backend, session
 from arch.api.base.utils.store_type import StoreTypes
 from arch.api.data_table.table import Table
 from arch.api.utils.profile_util import log_elapsed
+from fate_flow.settings import WORK_MODE
 
 
 # noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
 class EggRollTable(Table):
     def __init__(self,
                  job_id: str = uuid.uuid1(),
-                 mode: typing.Union[int, WorkMode] = WorkMode.STANDALONE,
+                 mode: typing.Union[int, WorkMode] = WORK_MODE,
                  backend: typing.Union[int, Backend] = Backend.EGGROLL,
                  persistent_engine: str = StoreTypes.ROLLPAIR_LMDB,
                  namespace: str = None,
                  name: str = None,
                  partition: int = 1,
-                 init_session: bool = False,
+                 init_session: bool = True,
                  **kwargs):
         self._mode = mode
         self._name = name or str(uuid.uuid1())
@@ -86,6 +87,7 @@ class EggRollTable(Table):
         return self._table.delete(k=k, use_serialize=use_serialize)
 
     def destroy(self):
+        super().destroy()
         return self._table.destroy()
 
     @classmethod

@@ -105,18 +105,6 @@ class Table(object):
         pass
 
     @abc.abstractmethod
-    def destroy(self):
-        """
-        Destroys this Table, freeing its associated storage resources.
-
-        Returns
-        -------
-        None
-
-        """
-        pass
-
-    @abc.abstractmethod
     def count(self):
         """
         Returns the number of elements in the Table.
@@ -154,6 +142,11 @@ class Table(object):
     def close(self):
         pass
 
+    def destroy(self):
+        # destroy schema
+        self.destroy_schema()
+        # subclass method needs do: super().destroy()
+
     """
     meta utils
     """
@@ -165,14 +158,17 @@ class Table(object):
             schema_data = {}
             if schema:
                 schema = schema[0]
-                schema_data = pickle.loads(schema.f_content)
+                try:
+                    schema_data = pickle.loads(schema.f_content)
+                except:
+                    schema_data = {}
         return schema_data
 
     def save_schema(self, kv):
         # save metas to mysql
         with DB.connection_context():
             schema = MachineLearningDataSchema.select().where(MachineLearningDataSchema.f_table_name == self.name,
-                                                            MachineLearningDataSchema.f_namespace == self.namespace)
+                                                              MachineLearningDataSchema.f_namespace == self.namespace)
             is_insert = True
             if schema:
                 schema = schema[0]
@@ -195,3 +191,11 @@ class Table(object):
                 schema.save()
         return schema_data
 
+    def destroy_schema(self):
+        try:
+            with DB.connection_context():
+                delete = MachineLearningDataSchema.delete().where(MachineLearningDataSchema.f_table_name == self.name,
+                                                                  MachineLearningDataSchema.f_namespace == self.namespace)
+                delete.execute()
+        except:
+            pass

@@ -607,7 +607,6 @@ def query_job_info(job_id):
 
 
 def cleaning(signum, frame):
-    session_utils.clean_server_used_session()
     sys.exit(0)
 
 

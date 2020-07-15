@@ -29,5 +29,6 @@ class StoreTypes(object):
 
 
 class StoreEngine(object):
-    MYSQL = ['MYSQL']
-    EGGROLL = ['LMDB', 'IN_MEMORY']
+    MYSQL = 'MYSQL'
+    EGGROLL = 'EGGROLL'
+
