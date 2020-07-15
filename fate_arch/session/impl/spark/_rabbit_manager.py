@@ -3,204 +3,208 @@
 # SPDX-License-Identifier: Apache-2.0                  #
 ########################################################
 
-import requests, json, time, string, random
-from arch.api.utils import string_utils
+import requests
+
 from arch.api.utils import log_utils
+from arch.api.utils import string_utils
 
 LOGGER = log_utils.getLogger()
 
-cHttpTemplate = "http://{}/api/{}"
-cCommonHttpHeader = {'Content-Type': 'application/json'}
+C_HTTP_TEMPLATE = "http://{}/api/{}"
+C_COMMON_HTTP_HEADER = {'Content-Type': 'application/json'}
 
-# APIs are refered to https://rawcdn.githack.com/rabbitmq/rabbitmq-management/v3.8.3/priv/www/api/index.html
+"""
+APIs are refered to https://rawcdn.githack.com/rabbitmq/rabbitmq-management/v3.8.3/priv/www/api/index.html
+"""
+
 
 class RabbitManager:
     def __init__(self, user, password, endpoint):
         self.user = user
         self.password = password
         self.endpoint = endpoint
-    
+
     # return a requests.Response object in case someone need more info about the Response
-    def CreateUser(self, user, password):
-        url = cHttpTemplate.format(self.endpoint, "users/" + user)
+    def create_user(self, user, password):
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "users/" + user)
         body = {
-                "password":password,
-                "tags": ""
-               }
-        result = requests.put(url, headers=cCommonHttpHeader, json=body, auth=(self.user, self.password))
+            "password": password,
+            "tags": ""
+        }
+        result = requests.put(url, headers=C_COMMON_HTTP_HEADER, json=body, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
 
-    def DeleteUser(self, user):
-        url = cHttpTemplate.format(self.endpoint, "users/" + user)
+    def delete_user(self, user):
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "users/" + user)
         result = requests.delete(url, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
 
-    def CreateVhost(self, vhost):
-        url = cHttpTemplate.format(self.endpoint, "vhosts/" + vhost)
-        result = requests.put(url, headers=cCommonHttpHeader, auth=(self.user, self.password))
+    def create_vhost(self, vhost):
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "vhosts/" + vhost)
+        result = requests.put(url, headers=C_COMMON_HTTP_HEADER, auth=(self.user, self.password))
         LOGGER.debug(result)
-        self.AddUserToVhost(self.user, vhost)
+        self.add_user_to_vhost(self.user, vhost)
         return result
 
-    def DeleteVhost(self, vhost):
-        url = cHttpTemplate.format(self.endpoint, "vhosts/" + vhost)
+    def delete_vhost(self, vhost):
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "vhosts/" + vhost)
         result = requests.delete(url, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
-        
-    def GetVhosts(self):
-        url = cHttpTemplate.format(self.endpoint, "vhosts")
+
+    def get_vhosts(self):
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "vhosts")
         result = requests.get(url, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
 
-    def AddUserToVhost(self, user, vhost):
-        url = cHttpTemplate.format(self.endpoint, "{}/{}/{}".format("permissions", vhost, user))
+    def add_user_to_vhost(self, user, vhost):
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("permissions", vhost, user))
         body = {
-                "configure":".*",
-                "write":".*",
-                "read":".*"
-               }
+            "configure": ".*",
+            "write": ".*",
+            "read": ".*"
+        }
 
-        result = requests.put(url, headers=cCommonHttpHeader, json=body, auth=(self.user, self.password))
+        result = requests.put(url, headers=C_COMMON_HTTP_HEADER, json=body, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
 
-    def RemoveUserFromVhost(self, user, vhost):
-        url = cHttpTemplate.format(self.endpoint, "{}/{}/{}".format("permissions", vhost, user))
+    def remove_user_from_vhost(self, user, vhost):
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("permissions", vhost, user))
         result = requests.delete(url, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
-        
-    def GetExchanges(self):
-        url = cHttpTemplate.format(self.endpoint, "exchanges/federated")
+
+    def get_exchanges(self):
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "exchanges/federated")
         result = requests.get(url, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
-    
-    def CreateExchange(self, vhost, exchange_name): 
-        url = cHttpTemplate.format(self.endpoint, "{}/{}/{}".format("exchanges", vhost, exchange_name))
+
+    def create_exchange(self, vhost, exchange_name):
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("exchanges", vhost, exchange_name))
 
         body = {
-                "type": "direct",
-                "auto_delete": False,
-                "durable": True,
-                "internal": False,
-                "arguments": {}
-                }
+            "type": "direct",
+            "auto_delete": False,
+            "durable": True,
+            "internal": False,
+            "arguments": {}
+        }
 
-        result = requests.put(url, headers=cCommonHttpHeader, json=body, auth=(self.user, self.password))
+        result = requests.put(url, headers=C_COMMON_HTTP_HEADER, json=body, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
 
-    def DeleteExchange(self, vhost, exchange_name):
-        url = cHttpTemplate.format(self.endpoint, "{}/{}/{}".format("exchanges", vhost, exchange_name))
+    def delete_exchange(self, vhost, exchange_name):
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("exchanges", vhost, exchange_name))
         result = requests.delete(url, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
 
-    def CreateQueue(self, vhost, queue_name):
-        url = cHttpTemplate.format(self.endpoint, "{}/{}/{}".format("queues", vhost, queue_name))
+    def create_queue(self, vhost, queue_name):
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("queues", vhost, queue_name))
 
         body = {
-                "auto_delete": False,
-                "durable": True,
-                "arguments":{}
-               }
+            "auto_delete": False,
+            "durable": True,
+            "arguments": {}
+        }
 
-        result = requests.put(url, headers=cCommonHttpHeader, json=body, auth=(self.user, self.password))
+        result = requests.put(url, headers=C_COMMON_HTTP_HEADER, json=body, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
 
-    def DeleteQueue(self, vhost, queue_name):
-        url = cHttpTemplate.format(self.endpoint, "{}/{}/{}".format("queues", vhost, queue_name))
+    def delete_queue(self, vhost, queue_name):
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("queues", vhost, queue_name))
         result = requests.delete(url, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
-        
-    def BindExchangeToQueue(self, vhost, exchange_name, queue_name):
-        url = cHttpTemplate.format(self.endpoint, "{}/{}/e/{}/q/{}".format("bindings", 
-                                                                            vhost, 
-                                                                            exchange_name, 
-                                                                            queue_name))
+
+    def bind_exchange_to_queue(self, vhost, exchange_name, queue_name):
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/e/{}/q/{}".format("bindings",
+                                                                             vhost,
+                                                                             exchange_name,
+                                                                             queue_name))
 
         body = {
-                "routing_key": queue_name,
-                "arguments":{}
-               }
+            "routing_key": queue_name,
+            "arguments": {}
+        }
 
-        result = requests.post(url, headers=cCommonHttpHeader, json=body, auth=(self.user, self.password))
+        result = requests.post(url, headers=C_COMMON_HTTP_HEADER, json=body, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
 
-    def UnbindExchangeToQueue(self, vhost, exchange_name, queue_name):
-        url = cHttpTemplate.format(self.endpoint, "{}/{}/e/{}/q/{}/{}".format("bindings",
-                                                                              vhost, 
-                                                                              exchange_name,
-                                                                              queue_name,
-                                                                              queue_name))
+    def unbind_exchange_to_queue(self, vhost, exchange_name, queue_name):
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/e/{}/q/{}/{}".format("bindings",
+                                                                                vhost,
+                                                                                exchange_name,
+                                                                                queue_name,
+                                                                                queue_name))
 
         result = requests.delete(url, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
 
     def _set_federated_upstream(self, upstream_host, upstream_name, vhost):
-        url = cHttpTemplate.format(self.endpoint, "{}/{}/{}/{}".format("parameters", 
-                                                                       "federation-upstream",
-                                                                       vhost,
-                                                                       upstream_name))
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}/{}".format("parameters",
+                                                                         "federation-upstream",
+                                                                         vhost,
+                                                                         upstream_name))
         body = {
-                "value":
+            "value":
                 {
-                 "uri": upstream_host,
-                 "queue": "{}-{}".format("send", vhost)
+                    "uri": upstream_host,
+                    "queue": "{}-{}".format("send", vhost)
                 }
-               }
+        }
 
-        result = requests.put(url, headers=cCommonHttpHeader, json=body, auth=(self.user, self.password))
+        result = requests.put(url, headers=C_COMMON_HTTP_HEADER, json=body, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
 
     def _unset_federated_upstream(self, upstream_name, vhost):
-        url = cHttpTemplate.format(self.endpoint, "{}/{}/{}/{}".format("parameters",
-                                                                       "federation-upstream",
-                                                                       vhost,
-                                                                       upstream_name))
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}/{}".format("parameters",
+                                                                         "federation-upstream",
+                                                                         vhost,
+                                                                         upstream_name))
 
         result = requests.delete(url, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
 
-    def _set_federated_queue_policy(self, upstream_name, vhost,  policy_name):
-        url = cHttpTemplate.format(self.endpoint, "{}/{}/{}".format("policies",
-                                                                    vhost,
-                                                                    policy_name))
+    def _set_federated_queue_policy(self, upstream_name, vhost, policy_name):
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("policies",
+                                                                      vhost,
+                                                                      policy_name))
         body = {
-                "pattern": "^receive", 
-                "apply-to": "queues",
-                "definition":
-                    {
-                     "federation-upstream": upstream_name
-                    }
+            "pattern": "^receive",
+            "apply-to": "queues",
+            "definition":
+                {
+                    "federation-upstream": upstream_name
                 }
+        }
 
-        result = requests.put(url, headers=cCommonHttpHeader, json=body, auth=(self.user, self.password))
+        result = requests.put(url, headers=C_COMMON_HTTP_HEADER, json=body, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
 
     def _unset_federated_queue_policy(self, policy_name, vhost):
-        url = cHttpTemplate.format(self.endpoint, "{}/{}/{}".format("policies",
-                                                                    vhost,
-                                                                    policy_name))
-        
+        url = C_HTTP_TEMPLATE.format(self.endpoint, "{}/{}/{}".format("policies",
+                                                                      vhost,
+                                                                      policy_name))
+
         result = requests.delete(url, auth=(self.user, self.password))
         LOGGER.debug(result)
         return result
 
     # Create federate queue with upstream
-    def FederateQueue(self, upstream_host, vhost, union_name=""):
+    def federate_queue(self, upstream_host, vhost, union_name=""):
         import time
         time.sleep(5)
         # union name is used for both upstream name and policy name
@@ -212,31 +216,34 @@ class RabbitManager:
 
         result_set_policy = self._set_federated_queue_policy(union_name, vhost, union_name)
 
-        if(result_set_upstream.status_code != requests.codes.created):
+        if result_set_upstream.status_code != requests.codes.created:
             # should be loogged
             print("result_set_upstream fail.")
             print(result_set_upstream.text)
             # caller need to check None
             # return None 
-        elif(result_set_policy.status_code != requests.codes.created):
+        elif result_set_policy.status_code != requests.codes.created:
             print("result_set_policy fail.")
             print(result_set_policy.text)
-            #return None
-        #else:
+            # return None
+        # else:
         # return union_name for later operation
         return union_name
 
-
-    def DeFederateQueue(self, union_name, vhost):
+    def de_federate_queue(self, union_name, vhost):
         result = self._unset_federated_queue_policy(union_name, vhost)
         print(result.status_code)
-        
+
         result = self._unset_federated_upstream(union_name, vhost)
         print(result.status_code)
 
         return True
+
+
 '''
 if __name__ == "__main__":
+
+    import json, time, string, random
     # the below are some test cases
     rabbit_manager = RabbitManager("guest", "guest", "localhost:15672")
 

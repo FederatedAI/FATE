@@ -31,7 +31,6 @@ def init(session_id=None,
          mode: typing.Union[int, WorkMode] = WorkMode.STANDALONE,
          backend: typing.Union[int, Backend] = Backend.EGGROLL,
          options: dict = None):
-
     if isinstance(mode, int):
         mode = WorkMode(mode)
     if isinstance(backend, int):
@@ -39,7 +38,7 @@ def init(session_id=None,
 
     if session_id is None:
         session_id = str(uuid.uuid1())
-    return create()
+    return create(session_id, mode, backend, options)
 
 
 def create(session_id=None,
@@ -54,10 +53,23 @@ def create(session_id=None,
     global _DEFAULT_SESSION
 
     if backend.is_eggroll():
-        from fate_arch.session.impl.eggroll import Session
-        sess = Session(session_id, work_mode=mode, options=options)
+        if mode.is_cluster():
+            from fate_arch.session.impl.eggroll import Session
+            sess = Session(session_id, work_mode=mode, options=options)
+            _DEFAULT_SESSION = sess
+            return sess
+        else:
+            from fate_arch.session.impl.standalone import StandaloneSession
+            sess = StandaloneSession(session_id)
+            _DEFAULT_SESSION = sess
+            return sess
+    if backend.is_spark():
+        from fate_arch.session.impl.spark import Session
+        sess = Session(session_id)
         _DEFAULT_SESSION = sess
         return sess
+
+    raise NotImplementedError()
 
 
 def has_default():

@@ -32,10 +32,6 @@ class TableABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def destroy(self):
-        ...
-
-    @abc.abstractmethod
     def collect(self, **kwargs) -> list:
         ...
 
@@ -68,7 +64,7 @@ class TableABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def reduce(self, func, key_func=None):
+    def reduce(self, func):
         ...
 
     @abc.abstractmethod

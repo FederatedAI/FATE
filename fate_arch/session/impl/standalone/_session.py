@@ -135,7 +135,7 @@ class Table(TableABC):
 
     def __del__(self):
         if self._need_cleanup:
-            self.destroy()
+            self._destroy()
 
     def __str__(self):
         return f"need_cleanup: {self._need_cleanup}, " \
@@ -143,7 +143,7 @@ class Table(TableABC):
                f"name: {self._name}," \
                f"partitions: {self._partitions}"
 
-    def destroy(self):
+    def _destroy(self):
         for p in range(self._partitions):
             env = self._get_env_for_partition(p, write=True)
             db = env.open_db()
@@ -202,10 +202,7 @@ class Table(TableABC):
             raise RuntimeError(f"table is empty")
         return resp[0]
 
-    def reduce(self, func, key_func=None):
-        if key_func is not None:
-            raise Exception()
-
+    def reduce(self, func):
         # noinspection PyProtectedMember
         rs = get_session()._submit_unary(func, _do_reduce, self._partitions, self._name, self._namespace)
         rs = [r for r in filter(partial(is_not, None), rs)]
@@ -227,12 +224,6 @@ class Table(TableABC):
 
     def mapPartitions(self, func):
         return self._unary(func, _do_map_partitions)
-
-    #
-    # def mapPartitions2(self, func):
-    #     _intermediate_result = self._unary(func, do_map_partitions2)
-    #     return _intermediate_result._save_as(str(uuid.uuid1()), _intermediate_result._namespace,
-    #                                          partition=_intermediate_result._partitions)
 
     def glom(self):
         return self._unary(None, _do_glom)

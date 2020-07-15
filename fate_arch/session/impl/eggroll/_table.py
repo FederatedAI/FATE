@@ -38,9 +38,6 @@ class Table(TableABC):
     def collect(self, **kwargs) -> list:
         return self._rp.get_all()
 
-    def destroy(self):
-        return self._rp.destroy()
-
     @log_elapsed
     def count(self, **kwargs) -> int:
         return self._rp.count()
@@ -66,19 +63,8 @@ class Table(TableABC):
         return Table(self._rp.map_partitions(func))
 
     @log_elapsed
-    def reduce(self, func, key_func=None, **kwargs):
-        if key_func is None:
-            return self._rp.reduce(func)
-
-        it = self._rp.get_all()
-        ret = {}
-        for k, v in it:
-            agg_key = key_func(k)
-            if agg_key in ret:
-                ret[agg_key] = func(ret[agg_key], v)
-            else:
-                ret[agg_key] = v
-        return ret
+    def reduce(self, func, **kwargs):
+        return self._rp.reduce(func)
 
     @log_elapsed
     def join(self, other: 'Table', func, **kwargs):
