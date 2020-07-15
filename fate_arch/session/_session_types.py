@@ -66,10 +66,6 @@ class Party(object):
     def __eq__(self, other):
         return self.party_id == other.party_id and self.role == other.role
 
-    def to_pb(self):
-        from arch.api.proto import federation_pb2
-        return federation_pb2.Party(partyId=f"{self.party_id}", name=self.role)
-
 
 class _FederationParties(object):
     def __init__(self, party, parties):
