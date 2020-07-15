@@ -78,7 +78,7 @@
             }
         },
         "statistic_0": {
-            "statistics": ["stddev"],
+            "statistics": "summary",
             "column_indexes": -1,
             "column_names": []
         },
@@ -95,18 +95,18 @@
             ],
             "local_only": false,
             "iv_param": {
-                "metrics": "iv",
-                "filter_type": "threshold",
+                "metrics": ["iv", "iv", "iv"],
+                "filter_type": ["threshold", "top_k", "top_percentile"],
                 "take_high": true,
-                "threshold": 0.03,
-                "host_thresholds": [0.15],
+                "threshold": [0.03, 15, 0.7],
+                "host_thresholds": [[0.15], null, null],
                 "select_federated": true
             },
             "statistic_param": {
-                "metrics": "stddev",
+                "metrics": ["skewness", "skewness", "kurtosis", "median"],
                 "filter_type": "threshold",
-                "take_high": true,
-                "threshold": 0.03
+                "take_high": [true, false, true, true],
+                "threshold": [-1, 1.6, -0.5, 0]
             },
             "psi_param": {
                 "metrics": "psi",

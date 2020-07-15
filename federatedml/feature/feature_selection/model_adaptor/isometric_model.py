@@ -16,8 +16,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import numpy as np
 import copy
+
+import numpy as np
+
+from arch.api.utils import log_utils
+
+LOGGER = log_utils.getLogger()
 
 
 class SingleMetricInfo(object):
@@ -90,6 +95,29 @@ class SingleMetricInfo(object):
     def get_col_names(self):
         return copy.deepcopy(self.col_names)
 
+    def get_partial_values(self, select_col_names, party_id=None):
+        """
+        Return values selected by provided col_names.
+        Use party_id to indicate which party to get. If None, obtain from values,
+        otherwise, obtain from host_values
+        """
+        if party_id is None:
+            col_name_map = {name: idx for idx, name in enumerate(self.col_names)}
+            col_indices = [col_name_map[x] for x in select_col_names]
+            values = np.array(self.values)[col_indices]
+        else:
+            if party_id not in self.host_party_ids:
+                raise ValueError(f"party_id: {party_id} is not in host_party_ids:"
+                                 f" {self.host_party_ids}")
+            party_idx = self.host_party_ids.index(party_id)
+            col_name_map = {name: idx for idx, name in
+                            enumerate(self.host_col_names[party_idx])}
+            col_indices = [col_name_map[x] for x in select_col_names]
+            values = np.array(self.host_values[party_idx])[col_indices]
+        return list(values)
+
+
+
 
 
 class IsometricModel(object):
@@ -122,35 +150,17 @@ class IsometricModel(object):
         self._metric_names = metric_name
         self._metric_info = metric_info
 
-    # def set_model_pb(self, model_pb):
-    #     self_values = model_pb.self_values
-    #     self.feature_values = self._parse_result_pb(self_values)
-    #
-    #     for host_id, host_model_obj in dict(model_pb.host_values).items():
-    #         self.host_values[host_id] = self._parse_result_pb(host_model_obj)
-
     def add_metric_value(self, metric_name, metric_info):
         self._metric_names.append(metric_name)
         self._metric_info.append(metric_info)
-
-    # @staticmethod
-    # def _parse_result_pb(value_obj):
-    #     result = {}
-    #     for value_obj in list(value_obj.results):
-    #         value_name = value_obj.value_name
-    #         values = list(value_obj.values)
-    #         col_names = list(value_obj.col_names)
-    #         if len(values) != len(col_names):
-    #             raise ValueError(f"The length of values are not equal to the length"
-    #                              f" of col_names with value_name: {value_name}")
-    #         result[value_name] = SingleMetricValues(values, col_names)
-    #     return result
 
     @property
     def valid_value_name(self):
         return self._metric_names
 
     def get_metric_info(self, metric_name):
+        LOGGER.debug(f"valid_value_name: {self.valid_value_name}, "
+                     f"metric_name: {metric_name}")
         if metric_name not in self.valid_value_name:
             return None
         return self._metric_info[self._metric_names.index(metric_name)]

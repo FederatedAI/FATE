@@ -11,6 +11,7 @@ FEATURE_NUM = 20
 
 
 TAG_INTERVAL = (2019120799, 2019121299)
+VALUE_INTERVAL = (0, 10000)
 # SAVE_FILE_NAME = DATA_TYPE + "_" + str(SAMPLE_NUM) + "_" + str(FEATURE_NUM) + ".csv"
 
 
@@ -24,6 +25,23 @@ def generate_tag_1_data(ids):
         valid_set = [x for x in range(TAG_INTERVAL[0], TAG_INTERVAL[1])]
         features = np.random.choice(valid_set, FEATURE_NUM, replace=False)
         one_data += [":".join([x, "1.0"]) for x in features]
+        counter += 1
+        if counter % 10000 == 0:
+            print("generate data {}".format(counter))
+
+        yield one_data
+
+
+def generate_str_data(ids):
+    if len(ids) != SAMPLE_NUM:
+        raise ValueError("len ids should equal to sample number")
+    header = ['id', 'y'] + ['x' + str(i) for i in range(FEATURE_NUM)]
+    yield header
+    counter = 0
+    for sample_i in range(SAMPLE_NUM):
+        valid_set = ["test" + str(x) for x in range(0, FEATURE_NUM)]
+        features = np.random.choice(valid_set, FEATURE_NUM, replace=False)
+        one_data = [ids[sample_i], round(random.random())] + list(features)
         counter += 1
         if counter % 10000 == 0:
             print("generate data {}".format(counter))
@@ -181,6 +199,10 @@ if __name__ == "__main__":
 
     if DATA_TYPE == 'non_label':
         new_data = generate_non_label_data(ids)
+        save_file(SAVE_FILE_NAME, new_data, delimitor=',')
+
+    if DATA_TYPE == 'str':
+        new_data = generate_str_data(ids)
         save_file(SAVE_FILE_NAME, new_data, delimitor=',')
 
     print("finish generate data , save data in {}".format(SAVE_FILE_NAME))

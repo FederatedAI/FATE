@@ -35,12 +35,12 @@ message FeatureSelectionMeta {
 }
 
 message FilterMeta {
-    repeated string metrics = 1;
-    repeated string filter_type = 2;
-    repeated bool take_high = 3;
-    repeated double threshold = 4;
-    repeated bool select_federated = 5;
-    repeated string filter_out_names = 6;
+    string metrics = 1;
+    string filter_type = 2;
+    bool take_high = 3;
+    double threshold = 4;
+    bool select_federated = 5;
+    string filter_out_names = 6;
 }
 
 message UniqueValueMeta {

@@ -76,7 +76,7 @@ class DataStatistics(ModelBase):
     def __init__(self):
         super().__init__()
         self.model_param = StatisticsParam()
-        self.inner_param = StatisticInnerParam()
+        self.inner_param = None
         self.schema = None
         self.statistic_obj: MultivariateStatisticalSummary = None
         self._result_dict = {}
@@ -105,43 +105,54 @@ class DataStatistics(ModelBase):
         LOGGER.debug("In _init_params, schema is : {}".format(self.schema))
         header = get_header(data_instances)
         self.inner_param.set_header(header)
-
         if self.model_param.column_indexes == -1:
             self.inner_param.set_static_all()
         else:
             self.inner_param.add_static_indices(self.model_param.column_indexes)
             self.inner_param.add_static_names(self.model_param.column_names)
+        LOGGER.debug(f"column_indexes: {self.model_param.column_indexes}, inner_param"
+                     f" static_indices: {self.inner_param.static_indices}")
+
         return self
 
     def fit(self, data_instances):
         self._init_param(data_instances)
+        if consts.KURTOSIS in self.model_param.statistics:
+            stat_order = 4
+        elif consts.SKEWNESS in self.model_param.statistics:
+            stat_order = 3
+        else:
+            stat_order = 2
 
         self.statistic_obj = MultivariateStatisticalSummary(data_instances,
                                                             cols_index=self.inner_param.static_indices,
                                                             abnormal_list=self.model_param.abnormal_list,
-                                                            error=self.model_param.quantile_error)
+                                                            error=self.model_param.quantile_error,
+                                                            stat_order=stat_order,
+                                                            bias=self.model_param.bias)
         results = None
         for stat_name in self._numeric_statics:
             stat_res = self.statistic_obj.get_statics(stat_name)
+            LOGGER.debug(f"state_name: {stat_name}, stat_res: {stat_res}")
             self.feature_value_pb.append(self._convert_pb(stat_res, stat_name))
-            if results is None:
-                results = stat_res
-            else:
-                for k, v in results.items():
-                    results[k] = dict(**v, **stat_res[k])
+            # if results is None:
+            #     results = {k: {stat_name: v} for k, v in stat_res.items()}
+            # else:
+            #     for k, v in results.items():
+            #         results[k] = dict(**v, **{stat_name: stat_res[k]})
 
         for query_point in self._quantile_statics:
             q = float(query_point[:-1]) / 100
             res = self.statistic_obj.get_quantile_point(q)
             self.feature_value_pb.append(self._convert_pb(res, query_point))
 
-            if results is None:
-                results = res
-            else:
-                LOGGER(f"results: {results}, res: {res}")
-                for k, v in res.items():
-                    results[k][query_point] = v
-        return results
+            # if results is None:
+            #     results = res
+            # else:
+            #     LOGGER(f"results: {results}, res: {res}")
+            #     for k, v in res.items():
+            #         results[k][query_point] = v
+        return data_instances
 
     def _convert_pb(self, stat_res, stat_name):
         values = [stat_res[col_name] for col_name in self.inner_param.static_names]

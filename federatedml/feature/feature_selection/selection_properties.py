@@ -197,4 +197,7 @@ class CompletedSelectionResults(object):
         for pass_name_dict in self.__host_pass_filter_nums_list:
             sorted_list = sorted(pass_name_dict.items(), key=operator.itemgetter(1), reverse=True)
             result.append([x for x, _ in sorted_list])
+        LOGGER.debug(f"In get_host_sorted_col_names,"
+                     f" pass_counter: {self.__host_pass_filter_nums_list},"
+                     f"result: {result}")
         return result

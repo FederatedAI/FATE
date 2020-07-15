@@ -194,7 +194,7 @@ class CommonFilterParam(BaseParam):
         If it is "top_k", this is the k value.
         If it is top_percentile, this is the percentile threshold.
 
-    host_thresholds: List of float or None, default: None
+    host_thresholds: List of float or List of List of float or None, default: None
         Set threshold for different host. If None, use same threshold as guest. If provided, the order should map with
         the host id setting.
 

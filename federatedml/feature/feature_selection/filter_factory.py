@@ -16,17 +16,27 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import copy
+
 from arch.api.utils import log_utils
 from federatedml.feature.feature_selection.iso_model_filter import IsoModelFilter, FederatedIsoModelFilter
 from federatedml.feature.feature_selection.manually_filter import ManuallyFilter
 from federatedml.feature.feature_selection.percentage_value_filter import PercentageValueFilter
-from federatedml.feature.feature_selection.unique_value_filter import UniqueValueFilter
 from federatedml.param import feature_selection_param
 from federatedml.param.feature_selection_param import FeatureSelectionParam
 from federatedml.util import consts
-import copy
 
 LOGGER = log_utils.getLogger()
+
+
+def _obtain_single_param(input_param, idx):
+    this_param = copy.deepcopy(input_param)
+    for attr, value in input_param.__dict__.items():
+        if value is not None:
+            value = value[idx]
+        setattr(this_param, attr, value)
+    this_param.check()
+    return this_param
 
 
 def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUEST, model=None, idx=0):
@@ -136,19 +146,29 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
 
     elif filter_name == consts.IV_FILTER:
         iv_param = model_param.iv_param
+        this_param = _obtain_single_param(iv_param, idx)
+        # this_param = copy.deepcopy(iv_param)
+        # for attr, value in iv_param.__dict__.items():
+        #     if value is not None:
+        #         value = value[idx]
+        #     setattr(this_param, attr, value)
+        # this_param.check()
+
         iso_model = model.isometric_models.get(consts.BINNING_MODEL)
         if iso_model is None:
             raise ValueError("None of statistic model has provided when using iv filter")
-        return IsoModelFilter(iv_param, iso_model)
+        return FederatedIsoModelFilter(this_param, iso_model,
+                                       role=role, cpp=model.component_properties)
 
     elif filter_name == consts.STATISTIC_FILTER:
         statistic_param = model_param.statistic_param
-        this_param = copy.deepcopy(statistic_param)
-        for attr, value in statistic_param.__dict__.items():
-            if value is not None:
-                value = value[idx]
-            setattr(this_param, attr, value)
-        this_param.check()
+        this_param = _obtain_single_param(statistic_param, idx)
+        # this_param = copy.deepcopy(statistic_param)
+        # for attr, value in statistic_param.__dict__.items():
+        #     if value is not None:
+        #         value = value[idx]
+        #     setattr(this_param, attr, value)
+        # this_param.check()
         iso_model = model.isometric_models.get(consts.STATISTIC_MODEL)
         if iso_model is None:
             raise ValueError("None of statistic model has provided when using iv filter")
@@ -156,10 +176,12 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
 
     elif filter_name == consts.PSI_FILTER:
         psi_param = model_param.psi_param
+        this_param = _obtain_single_param(psi_param, idx)
+
         iso_model = model.isometric_models.get(consts.PSI)
         if iso_model is None:
             raise ValueError("None of statistic model has provided when using iv filter")
-        return IsoModelFilter(psi_param, iso_model)
+        return IsoModelFilter(this_param, iso_model)
 
     else:
         raise ValueError("filter method: {} does not exist".format(filter_name))

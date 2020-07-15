@@ -17,7 +17,6 @@
 import copy
 import functools
 import math
-import sys
 
 import numpy as np
 
@@ -27,27 +26,48 @@ from federatedml.feature.binning.quantile_summaries import QuantileSummaries
 from federatedml.feature.instance import Instance
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.statistic import data_overview
-from federatedml.util import consts
 from federatedml.statistic.feature_statistic import feature_statistic
+from federatedml.util import consts
+
 LOGGER = log_utils.getLogger()
 
 
 class SummaryStatistics(object):
-    def __init__(self, length, abnormal_list=None):
+    def __init__(self, length, abnormal_list=None, stat_order=2, bias=True):
         self.abnormal_list = abnormal_list
         self.sum = np.zeros(length)
         self.sum_square = np.zeros(length)
         self.max_value = -np.inf * np.ones(length)
         self.min_value = np.inf * np.ones(length)
         self.count = np.zeros(length)
+        self.length = length
+        self.stat_order = stat_order
+        self.bias = bias
+        m = 3
+        while m <= stat_order:
+            exp_sum_m = np.zeros(length)
+            setattr(self, f"exp_sum_{m}", exp_sum_m)
+            m += 1
 
     def add_rows(self, rows):
+        """
+        When getting E(x^n), the formula are:
+        .. math::
+
+            (i-1)/i * S_{i-1} + 1/i * x_i
+
+        where i is the current count, and S_i is the current expectation of x
+        """
         if self.abnormal_list is None:
             self.count += 1
             self.sum += rows
             self.sum_square += rows ** 2
             self.max_value = np.max([self.max_value, rows], axis=0)
             self.min_value = np.min([self.min_value, rows], axis=0)
+            for m in range(3, self.stat_order + 1):
+                exp_sum_m = getattr(self, f"exp_sum_{m}")
+                exp_sum_m = (self.count - 1) / self.count * exp_sum_m + rows ** m / self.count
+                setattr(self, f"exp_sum_{m}", exp_sum_m)
         else:
             for idx, value in enumerate(rows):
                 if value in self.abnormal_list:
@@ -57,13 +77,25 @@ class SummaryStatistics(object):
                 self.sum_square[idx] += value ** 2
                 self.max_value[idx] = np.max([self.max_value[idx], value])
                 self.min_value[idx] = np.min([self.min_value[idx], value])
+                for m in range(3, self.stat_order + 1):
+                    exp_sum_m = getattr(self, f"exp_sum_{m}")
+                    exp_sum_m[idx] = (self.count[idx] - 1) / self.count[idx] * \
+                                      exp_sum_m[idx] + rows[idx] ** m / self.count[idx]
+                    setattr(self, f"exp_sum_{m}", exp_sum_m)
 
     def merge(self, other):
-        self.count += other.count
+        if self.stat_order != other.stat_order:
+            raise AssertionError("Two merging summary should have same order.")
         self.sum += other.sum
         self.sum_square += other.sum_square
         self.max_value = np.max([self.max_value, other.max_value], axis=0)
         self.min_value = np.min([self.min_value, other.min_value], axis=0)
+        for m in range(3, self.stat_order + 1):
+            sum_m_1 = getattr(self, f"exp_sum_{m}")
+            sum_m_2 = getattr(other, f"exp_sum_{m}")
+            exp_sum = (sum_m_1 * self.count + sum_m_2 * other.count) / (self.count + other.count)
+            setattr(self, f"exp_sum_{m}", exp_sum)
+        self.count += other.count
         return self
 
     @property
@@ -95,6 +127,105 @@ class SummaryStatistics(object):
     def stddev(self):
         return np.sqrt(self.variance)
 
+    @property
+    def moment_3(self):
+        """
+        In mathematics, a moment is a specific quantitative measure of the shape of a function.
+        where the k-th central moment of a data sample is:
+        .. math::
+
+            m_k = \frac{1}{n} \sum_{i = 1}^n (x_i - \bar{x})^k
+
+        the 3rd central moment is often used to calculate the coefficient of skewness
+        """
+        if self.stat_order < 3:
+            raise ValueError("The third order of expectation sum has not been statistic.")
+        exp_sum_2 = self.sum_square / self.count
+        exp_sum_3 = getattr(self, "exp_sum_3")
+        mu = self.mean
+        return exp_sum_3 - 3 * mu * exp_sum_2 + 2 * mu ** 3
+
+    @property
+    def moment_4(self):
+        """
+        In mathematics, a moment is a specific quantitative measure of the shape of a function.
+        where the k-th central moment of a data sample is:
+        .. math::
+
+            m_k = \frac{1}{n} \ sum_{i = 1}^n (x_i - \bar{x})^k
+
+        the 4th central moment is often used to calculate the coefficient of kurtosis
+        """
+        if self.stat_order < 3:
+            raise ValueError("The third order of expectation sum has not been statistic.")
+        exp_sum_2 = self.sum_square / self.count
+        exp_sum_3 = getattr(self, "exp_sum_3")
+        exp_sum_4 = getattr(self, "exp_sum_4")
+        mu = self.mean
+        return exp_sum_4 - 4 * mu * exp_sum_3 + 6 * mu ** 2 * exp_sum_2 - 3 * mu ** 4
+
+    @property
+    def skewness(self):
+        """
+            The sample skewness is computed as the Fisher-Pearson coefficient
+        of skewness, i.e.
+        .. math::
+            g_1=\frac{m_3}{m_2^{3/2}}
+
+        where
+        .. math::
+            m_i=\frac{1}{N}\sum_{n=1}^N(x[n]-\bar{x})^i
+
+        If the bias is False, return the adjusted Fisher-Pearson standardized moment coefficient
+        i.e.
+
+        .. math::
+
+        G_1=\frac{k_3}{k_2^{3/2}}=
+            \frac{\sqrt{N(N-1)}}{N-2}\frac{m_3}{m_2^{3/2}}.
+
+        """
+        m2 = self.variance
+        m3 = self.moment_3
+        n = self.count
+
+        zero = (m2 == 0)
+        np.seterr(divide='ignore', invalid='ignore')
+        vals = np.where(zero, 0, m3 / m2 ** 1.5)
+
+        if not self.bias:
+            can_correct = (n > 2) & (m2 > 0)
+            if can_correct.any():
+                m2 = np.extract(can_correct, m2)
+                m3 = np.extract(can_correct, m3)
+                nval = np.sqrt((n - 1.0) * n) / (n - 2.0) * m3 / m2 ** 1.5
+                np.place(vals, can_correct, nval)
+        return vals
+
+    @property
+    def kurtosis(self):
+        """
+        Return the sample excess kurtosis which
+        .. math::
+            g = \frac{m_4}{m_2^2} - 3
+
+        If bias is False, the calculations are corrected for statistical bias.
+        """
+        m2 = self.variance
+        m4 = self.moment_4
+        n = self.count
+        zero = (m2 == 0)
+        np.seterr(divide='ignore', invalid='ignore')
+        result = np.where(zero, 0, m4 / m2 ** 2.0)
+        if not self.bias:
+            can_correct = (n > 3) & (m2 > 0)
+            if can_correct.any():
+                m2 = np.extract(can_correct, m2)
+                m4 = np.extract(can_correct, m4)
+                nval = 1.0 / (n - 2) / (n - 3) * ((n ** 2 - 1.0) * m4 / m2 ** 2.0 - 3 * (n - 1) ** 2.0)
+                np.place(result, can_correct, nval + 3.0)
+        return result - 3
+
 
 class MultivariateStatisticalSummary(object):
     """
@@ -102,7 +233,7 @@ class MultivariateStatisticalSummary(object):
     """
 
     def __init__(self, data_instances, cols_index=-1, abnormal_list=None,
-                 error=consts.DEFAULT_RELATIVE_ERROR):
+                 error=consts.DEFAULT_RELATIVE_ERROR, stat_order=2, bias=True):
         self.finish_fit_statics = False  # Use for static data
         # self.finish_fit_summaries = False   # Use for quantile data
         self.binning_obj: QuantileBinning = None
@@ -114,20 +245,23 @@ class MultivariateStatisticalSummary(object):
         self.data_instances = data_instances
         self.cols_index = None
         self.abnormal_list = abnormal_list
-        self.__init_cols(data_instances, cols_index)
+        self.__init_cols(data_instances, cols_index, stat_order, bias)
         self.label_summary = None
         self.error = error
 
-    def __init_cols(self, data_instances, cols_index):
+    def __init_cols(self, data_instances, cols_index, stat_order, bias):
         header = data_overview.get_header(data_instances)
         self.header = header
         if cols_index == -1:
             self.cols_index = [i for i in range(len(header))]
         else:
             self.cols_index = cols_index
+        LOGGER.debug(f"col_index: {cols_index}, self.col_index: {self.cols_index}")
         self.cols_dict = {header[indices]: indices for indices in self.cols_index}
         self.summary_statistics = SummaryStatistics(length=len(self.cols_index),
-                                                    abnormal_list=self.abnormal_list)
+                                                    abnormal_list=self.abnormal_list,
+                                                    stat_order=stat_order,
+                                                    bias=bias)
 
     def _static_sums(self):
         """
@@ -251,6 +385,11 @@ class MultivariateStatisticalSummary(object):
         medians = self.binning_obj.query_quantile_point(query_points=0.5)
         return medians
 
+    @property
+    def median(self):
+        median_dict = self.get_median()
+        return np.array([median_dict[self.header[idx]] for idx in self.cols_index])
+
     def get_quantile_point(self, quantile):
         """
         Return the specific quantile point value
@@ -313,21 +452,40 @@ class MultivariateStatisticalSummary(object):
 
         if hasattr(self.summary_statistics, data_type):
             result_row = getattr(self.summary_statistics, data_type)
+
         elif hasattr(self, data_type):
-            return getattr(self, data_type)
+            result_row = getattr(self, data_type)
         else:
             raise ValueError(f"Statistic data type: {data_type} cannot be recognized")
-
-        result = {self.header[x]: result_row[x] for x in self.cols_index}
+        LOGGER.debug(f"col_index: {self.cols_index}, result_row: {result_row},"
+                     f"header: {self.header}, data_type: {data_type}")
+        # result = {self.header[header_idx]: result_row[col_idx]
+        #           for col_idx, header_idx in enumerate(self.cols_index)}
+        result = {}
+        for col_idx, header_idx in enumerate(self.cols_index):
+            result[self.header[header_idx]] = result_row[col_idx]
         return result
 
     def get_missing_ratio(self):
-        return self.missing_ratio
+        return self.get_statics("missing_ratio")
 
     @property
     def missing_ratio(self):
         missing_static_obj = feature_statistic.FeatureStatistic()
-        return missing_static_obj.fit(self.data_instances)
+        all_missing_ratio = missing_static_obj.fit(self.data_instances)
+        return np.array([all_missing_ratio[self.header[idx]] for idx in self.cols_index])
+
+    @property
+    def missing_count(self):
+        missing_ratio = self.missing_ratio
+        missing_count = missing_ratio * self.data_instances.count()
+        return missing_count.astype(int)
+
+    @property
+    def skewness(self):
+        if hasattr(self, '_skewness'):
+            return getattr(self, "_skewness")
+        mean = self.summary_statistics.mean
 
     @staticmethod
     def get_label_static_dict(data_instances):

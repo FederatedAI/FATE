@@ -23,10 +23,6 @@ import re
 from federatedml.param.base_param import BaseParam
 from federatedml.util import consts
 
-VALUE_STAT = [consts.SUM, consts.COVARIANCE, consts.CORRELATION]
-SUMMARY_STAT = [consts.COUNT, consts.MEAN, consts.STANDARD_DEVIATION, consts.MEDIAN, consts.SUMMARY,
-                consts.DESCRIBE, consts.VARIANCE]
-
 
 class StatisticsParam(BaseParam):
     """
@@ -46,17 +42,22 @@ class StatisticsParam(BaseParam):
         Specify columns to be used for statistic computation by column order in header
         -1 indicates to compute statistics over all columns
 
+    bias: bool, default: True
+        If False, the calculations of skewness and kurtosis are corrected for statistical bias.
+
     need_run: bool, default True
         Indicate whether to run this modules
     """
 
     LEGAL_STAT = [consts.COUNT, consts.SUM, consts.MEAN, consts.STANDARD_DEVIATION,
-                  consts.MEDIAN, consts.MIN, consts.MAX, consts.VARIANCE, consts.COEFFICIENT_OF_VARIATION]
+                  consts.MEDIAN, consts.MIN, consts.MAX, consts.VARIANCE,
+                  consts.COEFFICIENT_OF_VARIATION, consts.MISSING_COUNT,
+                  consts.SKEWNESS, consts.KURTOSIS]
     LEGAL_QUANTILE = re.compile("^(100)|([1-9]?[0-9])%$")
 
     def __init__(self, statistics="summary", column_names=None,
                  column_indexes=-1, need_run=True, abnormal_list=None,
-                 quantile_error=consts.DEFAULT_RELATIVE_ERROR):
+                 quantile_error=consts.DEFAULT_RELATIVE_ERROR, bias=True):
         super().__init__()
         self.statistics = statistics
         self.column_names = column_names
@@ -64,6 +65,7 @@ class StatisticsParam(BaseParam):
         self.abnormal_list = abnormal_list
         self.need_run = need_run
         self.quantile_error = quantile_error
+        self.bias = bias
         if column_names is None:
             self.column_names = []
         if column_indexes is None:
@@ -74,7 +76,9 @@ class StatisticsParam(BaseParam):
     @staticmethod
     def extend_statistics(statistic_name):
         if statistic_name == "summary":
-            return [consts.COUNT, consts.MEAN, consts.STANDARD_DEVIATION, consts.MIN, "25%", "50%", "75%", consts.MAX]
+            return [consts.SUM, consts.MEAN, consts.STANDARD_DEVIATION,
+                    consts.MEDIAN, consts.MIN, consts.MAX,
+                    consts.MISSING_COUNT, consts.SKEWNESS, consts.KURTOSIS]
         if statistic_name == "describe":
             return [consts.COUNT, consts.MEAN, consts.STANDARD_DEVIATION, consts.MIN, consts.MAX]
 
@@ -123,4 +127,5 @@ class StatisticsParam(BaseParam):
             raise ValueError(f"abnormal_list should be list of int or string.")
 
         self.check_decimal_float(self.quantile_error, "Statistics's param quantile_error ")
+        self.check_boolean(self.bias, "Statistics's param bias ")
         return True

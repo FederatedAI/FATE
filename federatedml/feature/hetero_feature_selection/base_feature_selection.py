@@ -188,7 +188,10 @@ class BaseHeteroFeatureSelection(ModelBase):
                 raise ValueError("Should not load two same type isometric models"
                                  " in feature selection")
             adapter = adapter_factory(model_name)
-            self.isometric_models[model_name] = adapter.convert(model_meta, model_param)
+            this_iso_model = adapter.convert(model_meta, model_param)
+            # LOGGER.debug(f"model_name: {model_name},"
+            #              f" iso_model: {this_iso_model._metric_info[0].__dict__}")
+            self.isometric_models[model_name] = this_iso_model
 
         # for model_name, model_dict in iso_model.items():
 
@@ -253,14 +256,22 @@ class BaseHeteroFeatureSelection(ModelBase):
                                                 role=self.role, model=self, idx=idx)
         if method == consts.STATISTIC_FILTER:
             method = self.model_param.statistic_param.metrics[idx]
+        elif method == consts.IV_FILTER:
+            metric = self.model_param.iv_param.metrics[idx]
+            f_type = self.model_param.iv_param.filter_type[idx]
+            method = f"{metric}_{f_type}"
+        elif method == consts.PSI_FILTER:
+            metric = self.model_param.psi_param.metrics[idx]
+            f_type = self.model_param.psi_param.filter_type[idx]
+            method = f"{metric}_{f_type}"
         this_filter.set_selection_properties(self.curt_select_properties)
-        # this_filter.set_statics_obj(self.static_obj)
-        # this_filter.set_binning_obj(self.binning_model)
+
         this_filter.set_transfer_variable(self.transfer_variable)
         self.curt_select_properties = this_filter.fit(data_instances, suffix).selection_properties
         host_select_properties = getattr(this_filter, 'host_selection_properties', None)
-        LOGGER.debug("method: {}, host_select_properties: {}".format(
-            method, host_select_properties))
+        if host_select_properties is not None:
+            LOGGER.debug("method: {}, host_select_properties: {}".format(
+                method, host_select_properties[0].all_left_col_names))
 
         self.completed_selection_result.add_filter_results(filter_name=method,
                                                            select_properties=self.curt_select_properties,
@@ -282,8 +293,16 @@ class BaseHeteroFeatureSelection(ModelBase):
             LOGGER.warning("None of columns has been set to select")
         else:
             for filter_idx, method in enumerate(self.filter_methods):
-                if method == consts.STATISTIC_FILTER:
-                    for idx, _ in enumerate(self.model_param.statistic_param.metrics):
+                if method in [consts.STATISTIC_FILTER, consts.IV_FILTER, consts.PSI_FILTER]:
+                    if method == consts.STATISTIC_FILTER:
+                        metrics = self.model_param.statistic_param.metrics
+                    elif method == consts.IV_FILTER:
+                        metrics = self.model_param.iv_param.metrics
+                    elif method == consts.PSI_FILTER:
+                        metrics = self.model_param.psi_param.metrics
+                    else:
+                        raise ValueError(f"method: {method} is not supported")
+                    for idx, _ in enumerate(metrics):
                         self._filter(data_instances, method,
                                      suffix=(str(filter_idx), str(idx)), idx=idx)
                 else:

@@ -41,7 +41,7 @@ class IsoModelFilter(BaseFilterMethod):
 
     def _parse_filter_param(self, filter_param: CommonFilterParam):
         self.metrics = filter_param.metrics[0]
-
+        LOGGER.debug(f"In parse filter param, metrics: {filter_param.metrics}")
         if self.metrics not in self.iso_model.valid_value_name:
             raise ValueError(f"Metric {self.metrics} is not in this model's valid_value_name")
         self.filter_type = filter_param.filter_type[0]
@@ -51,6 +51,9 @@ class IsoModelFilter(BaseFilterMethod):
         self._validation_check()
 
     def get_meta_obj(self):
+        LOGGER.debug(f"metrics: {self.metrics}, filter_type: {self.filter_type},"
+                     f"take_high: {self.take_high}, threshold: {self.threshold},"
+                     f"select_federated: {self.select_federated}")
         result = feature_selection_meta_pb2.FilterMeta(
             metrics=self.metrics,
             filter_type=self.filter_type,
@@ -68,8 +71,12 @@ class IsoModelFilter(BaseFilterMethod):
     def fit(self, data_instances, suffix):
         m = self.metrics
         metric_info = self.iso_model.get_metric_info(m)
-        all_feature_values = np.array(metric_info.values)
-        col_names = [x for x in metric_info.col_names]
+        all_feature_values = metric_info.get_partial_values(
+                self.selection_properties.select_col_names)
+        col_names = [x for x in self.selection_properties.select_col_names]
+
+        # all_feature_values = np.array(metric_info.values)
+        # col_names = [x for x in metric_info.col_names]
 
         filter_type = self.filter_type
         take_high = self.take_high
@@ -84,8 +91,10 @@ class IsoModelFilter(BaseFilterMethod):
         for v_idx, v in enumerate(all_feature_values):
             col_name = col_names[v_idx]
             self.selection_properties.add_feature_value(col_name, v)
-            if idx in results:
+            if v_idx in results:
                 self.selection_properties.add_left_col_name(col_name)
+        self._keep_one_feature(pick_high=take_high)
+
         return self
 
     def _threshold_fit(self, values, threshold, take_high):
@@ -122,9 +131,9 @@ class IsoModelFilter(BaseFilterMethod):
 class FederatedIsoModelFilter(IsoModelFilter):
 
     def __init__(self, filter_param, iso_model: IsometricModel, role, cpp: ComponentProperties):
-        super(FederatedIsoModelFilter, self).__init__(filter_param, iso_model)
         self.role = role
         self.cpp = cpp
+        super(FederatedIsoModelFilter, self).__init__(filter_param, iso_model)
         self.sync_obj = None
 
     @property
@@ -133,7 +142,15 @@ class FederatedIsoModelFilter(IsoModelFilter):
 
     def _parse_filter_param(self, filter_param: CommonFilterParam):
         super()._parse_filter_param(filter_param)
-        self.host_threshold = filter_param.host_thresholds
+        if filter_param.host_thresholds is None:
+            self.host_threshold = None
+        else:
+            self.host_threshold = filter_param.host_thresholds[0]
+        if isinstance(self.host_threshold, float):
+            self.host_threshold = [self.host_threshold] * len(self.cpp.host_party_idlist)
+
+        if self.role == consts.GUEST:
+            self.host_selection_properties = []
 
     def fit(self, data_instances, suffix):
         self._sync_select_info(suffix)
@@ -141,63 +158,71 @@ class FederatedIsoModelFilter(IsoModelFilter):
             self._guest_fit(suffix)
         else:
             self._host_fit(suffix)
+        self._keep_one_feature(pick_high=self.take_high)
         return self
 
     def _guest_fit(self, suffix):
-        for idx, m in enumerate(self.metrics):
-            value_obj = self.iso_model.get_metric_info(m)
-            # all_feature_values = list(value_obj.values)
-            # col_names = [("guest", x) for x in value_obj.col_names]
-            # LOGGER.debug(f"{len(all_feature_values), len(col_names)}")
-            # assert len(all_feature_values) == len(col_names)
-            if self.select_federated:
-                all_feature_values, col_names = value_obj.union_result()
-                host_threshold = {}
-                for host_party_id in value_obj.host_party_ids:
-                    # host_id = self.cpp.host_party_idlist.index(int(host_party_id))
+        m = self.metrics
 
-                    if self.host_threshold is None:
-                        host_threshold[host_party_id] = self.threshold[idx]
-                    else:
-                        host_threshold[host_party_id] = self.host_threshold[host_party_id][idx]
-            else:
-                all_feature_values = value_obj.get_values()
-                col_names = value_obj.get_col_names()
-                host_threshold = None
+        # for idx, m in enumerate(self.metrics):
+        value_obj = self.iso_model.get_metric_info(m)
 
-            filter_type = self.filter_type[idx]
-            take_high = self.take_high[idx]
-            threshold = self.threshold[idx]
-
-            if filter_type == "threshold":
-                results = self._threshold_fit(all_feature_values, threshold,
-                                              take_high, host_threshold, col_names)
-            elif filter_type == "top_k":
-                results = self._top_k_fit(all_feature_values, threshold, take_high)
-            else:
-                results = self._percentile_fit(all_feature_values, threshold, take_high)
-
-            for v_idx, v in enumerate(all_feature_values):
-                LOGGER.debug(f"all_feature_values: {all_feature_values},"
-                             f"col_names: {col_names},"
-                             f"v_idx: {v_idx}")
-                col_name = col_names[v_idx]
-                if col_name[0] == consts.GUEST:
-                    if len(self.metrics) == 1:
-                        self.selection_properties.add_feature_value(col_name[1], v)
-                    if idx in results:
-                        self.selection_properties.add_left_col_name(col_name[1])
+        all_feature_values = value_obj.get_partial_values(self.selection_properties.select_col_names)
+        col_names = [("guest", x) for x in self.selection_properties.select_col_names]
+        if self.select_federated:
+            # all_feature_values, col_names = value_obj.union_result()
+            host_threshold = {}
+            for idx, host_party_id in enumerate(value_obj.host_party_ids):
+                # host_id = self.cpp.host_party_idlist.index(int(host_party_id))
+                host_property = self.host_selection_properties[idx]
+                all_feature_values.extend(value_obj.get_partial_values(
+                    host_property.select_col_names, host_party_id
+                ))
+                col_names.extend([(host_party_id, x) for x in host_property.select_col_names])
+                if self.host_threshold is None:
+                    host_threshold[host_party_id] = self.threshold
                 else:
-                    LOGGER.debug(f"host_selection_propertied: {self.host_selection_properties}")
-                    LOGGER.debug(f" col_name: {col_name}")
-                    host_idx = self.cpp.host_party_idlist.index(int(col_name[0]))
-                    LOGGER.debug(f"header: {self.host_selection_properties[host_idx].header}")
-                    host_prop = self.host_selection_properties[host_idx]
-                    if len(self.metrics) == 1:
-                        host_prop.add_feature_value(col_name[1], v)
+                    host_threshold[host_party_id] = self.host_threshold[idx]
+        else:
+            # all_feature_values = value_obj.get_values()
+            # col_names = value_obj.get_col_names()
+            host_threshold = None
 
-                    if idx in results:
-                        host_prop.add_left_col_name(col_name[1])
+        filter_type = self.filter_type
+        take_high = self.take_high
+        threshold = self.threshold
+
+        if filter_type == "threshold":
+            results = self._threshold_fit(all_feature_values, threshold,
+                                          take_high, host_threshold, col_names)
+        elif filter_type == "top_k":
+            results = self._top_k_fit(all_feature_values, threshold, take_high)
+        else:
+            results = self._percentile_fit(all_feature_values, threshold, take_high)
+
+        LOGGER.debug(f"filter_type: {filter_type}, results: {results}, "
+                     f"all_feature_values: {all_feature_values}")
+
+        for v_idx, v in enumerate(all_feature_values):
+            LOGGER.debug(f"all_feature_values: {all_feature_values},"
+                         f"col_names: {col_names},"
+                         f"v_idx: {v_idx}")
+            col_name = col_names[v_idx]
+            if col_name[0] == consts.GUEST:
+                self.selection_properties.add_feature_value(col_name[1], v)
+                if v_idx in results:
+                    self.selection_properties.add_left_col_name(col_name[1])
+            else:
+                LOGGER.debug(f"host_selection_propertied: {self.host_selection_properties}")
+                LOGGER.debug(f" col_name: {col_name}")
+                host_idx = self.cpp.host_party_idlist.index(int(col_name[0]))
+                LOGGER.debug(f"header: {self.host_selection_properties[host_idx].header}")
+                host_prop = self.host_selection_properties[host_idx]
+                # if len(self.metrics) == 1:
+                host_prop.add_feature_value(col_name[1], v)
+
+                if v_idx in results:
+                    host_prop.add_left_col_name(col_name[1])
 
         if self.select_federated:
             self.sync_obj.sync_select_results(self.host_selection_properties, suffix=suffix)
@@ -255,7 +280,8 @@ class FederatedIsoModelFilter(IsoModelFilter):
             self.host_selection_properties = self.sync_obj.sync_select_cols(suffix=suffix)
         else:
             encoded_names = []
-            for fid, col_name in enumerate(self.selection_properties.select_col_names):
+            for col_name in self.selection_properties.select_col_names:
+                fid = self.selection_properties.col_name_maps[col_name]
                 encoded_names.append(fate_operator.generate_anonymous(
                     fid=fid, role=self.role, party_id=self.party_id
                 ))
