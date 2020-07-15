@@ -88,15 +88,14 @@ class MysqlModelStorage(ModelStorageBase):
             self.get_connection(config=store_address)
             model = PipelinedModel(model_id=model_id, model_version=model_version)
             with DB.connection_context():
-                models_in_tables = MachineLearningModel.select().where(MachineLearningModel.f_model_id==model_id, MachineLearningModel.f_model_version==model_version)
+                models_in_tables = MachineLearningModel.select().where(MachineLearningModel.f_model_id == model_id,
+                                                                       MachineLearningModel.f_model_version == model_version).\
+                    order_by(MachineLearningModel.f_slice_index)
                 if not models_in_tables:
                     raise Exception("Restore model {} {} from mysql failed: {}".format(
                         model_id, model_version, "can not found model in table"))
                 f_content = ''
-                for slice_index in range(0, len(models_in_tables)):
-                    models_in_table = MachineLearningModel.select().where(MachineLearningModel.f_model_id == model_id,
-                                                                           MachineLearningModel.f_model_version == model_version,
-                                                                          MachineLearningModel.f_slice_index == slice_index)[0]
+                for models_in_table in models_in_tables:
                     if not f_content:
                         f_content = models_in_table.f_content
                     else:

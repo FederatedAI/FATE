@@ -376,7 +376,7 @@ def main():
     arg_parser.add_argument("-aid", "--arbiter_id", type=int, help="arbiter party id", required=True)
 
     arg_parser.add_argument("--add_sbt", help="test sbt or not", type=int,
-                            default=0, choices=[0, 1])
+                            default=1, choices=[0, 1])
 
     args = arg_parser.parse_args()
 
