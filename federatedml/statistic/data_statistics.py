@@ -135,23 +135,24 @@ class DataStatistics(ModelBase):
             stat_res = self.statistic_obj.get_statics(stat_name)
             LOGGER.debug(f"state_name: {stat_name}, stat_res: {stat_res}")
             self.feature_value_pb.append(self._convert_pb(stat_res, stat_name))
-            # if results is None:
-            #     results = {k: {stat_name: v} for k, v in stat_res.items()}
-            # else:
-            #     for k, v in results.items():
-            #         results[k] = dict(**v, **{stat_name: stat_res[k]})
+            if results is None:
+                results = {k: {stat_name: v} for k, v in stat_res.items()}
+            else:
+                for k, v in results.items():
+                    results[k] = dict(**v, **{stat_name: stat_res[k]})
 
         for query_point in self._quantile_statics:
             q = float(query_point[:-1]) / 100
             res = self.statistic_obj.get_quantile_point(q)
             self.feature_value_pb.append(self._convert_pb(res, query_point))
-
-            # if results is None:
-            #     results = res
-            # else:
-            #     LOGGER(f"results: {results}, res: {res}")
-            #     for k, v in res.items():
-            #         results[k][query_point] = v
+            if results is None:
+                results = res
+            else:
+                LOGGER(f"results: {results}, res: {res}")
+                for k, v in res.items():
+                    results[k][query_point] = v
+        for k, v in results.items():
+            self.add_summary(k, v)
         return data_instances
 
     def _convert_pb(self, stat_res, stat_name):
