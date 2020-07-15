@@ -39,4 +39,4 @@ def _save_as_hdfs(rdd: RDD, namespace, name):
     if fs.exists(path):
         raise FileExistsError(f"{namespace}/{name} exist")
 
-    rdd.map(_serialize).saveAsTextFile(path)
+    rdd.map(lambda x: _serialize(x[0], x[1])).saveAsTextFile(path)
