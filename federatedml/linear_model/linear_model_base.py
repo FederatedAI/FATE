@@ -166,3 +166,22 @@ class BaseLinearModel(ModelBase):
             return
         self.schema = data_instance.schema
         self.header = self.schema.get('header')
+
+    def get_weight_intercept_dict(self, header):
+        weight_dict = {}
+        for idx, header_name in enumerate(header):
+            coef_i = self.model_weights.coef_[idx]
+            weight_dict[header_name] = coef_i
+        intercept_ = self.model_weights.intercept_
+        return weight_dict, intercept_
+
+    def get_model_summary(self):
+        header = self.header
+        weight_dict, intercept_ = self.get_weight_intercept_dict(header)
+        best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
+
+        summary = {"coef": weight_dict,
+                   "intercept": intercept_,
+                   "is_converged": self.is_converged,
+                   "best_iteration": best_iteration}
+        return summary
