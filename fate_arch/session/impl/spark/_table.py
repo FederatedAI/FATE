@@ -25,8 +25,6 @@ from fate_arch.common.profile import log_elapsed
 from fate_arch.session._interface import TableABC
 from fate_arch.session.impl.spark import _util
 from fate_arch.session.impl.spark._kv_serdes import _load_from_hdfs, _save_as_hdfs
-from fate_arch.session.impl.spark._meta import _delete_table_meta
-from fate_arch.session.impl.spark._util import _generate_hdfs_path, _get_file_system, _get_path
 
 LOGGER = log_utils.getLogger()
 
@@ -123,17 +121,6 @@ def _from_hdfs(namespace, name, partitions: int = 1):
 def _from_rdd(rdd):
     rdd = _util.materialize(rdd)
     return Table(rdd=rdd)
-
-
-def _delete_file_from_hdfs(namespace, name):
-    sc = SparkContext.getOrCreate()
-    hdfs_path = _generate_hdfs_path(namespace=namespace, name=name)
-    path = _get_path(sc, hdfs_path)
-    fs = _get_file_system(sc)
-    if fs.exists(path):
-        fs.delete(path)
-
-    _delete_table_meta(namespace=namespace, name=name)
 
 
 def _map(rdd, func):
