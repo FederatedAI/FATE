@@ -1,13 +1,8 @@
+import typing
 from typing_extensions import Protocol
 
 
-class Rubbish(Protocol):
-    """
-    a collection collects all tables / objects in federation tagged by `tag`.
-    """
+class GC(Protocol):
 
-    def add_table(self, table):
-        ...
-
-    def add_obj(self, table, key):
+    def add_gc_func(self, tag: str, func: typing.Callable[[], typing.NoReturn]):
         ...

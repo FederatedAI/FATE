@@ -38,7 +38,7 @@ import pika
 # noinspection PyPackageRequirements
 from pyspark import SparkContext, RDD
 
-from fate_arch._interface import Rubbish
+from fate_arch._interface import GC
 from fate_arch.common.log import getLogger
 from fate_arch.session import Party
 from fate_arch.session._interface import FederationEngineABC
@@ -67,7 +67,7 @@ class FederationEngine(FederationEngineABC):
         self._queue_map = {}
         self._channels_map = {}
 
-    def get(self, name, tag, parties: typing.List[Party], rubbish: Rubbish) -> typing.List:
+    def get(self, name, tag, parties: typing.List[Party], gc: GC) -> typing.List:
         log_str = f"federation.get(name={name}, tag={tag}, parties={parties})"
         LOGGER.debug(f"[{log_str}]start to get obj")
 
@@ -85,7 +85,7 @@ class FederationEngine(FederationEngineABC):
         LOGGER.debug("finish get obj, name={}, tag={}, parties={}.".format(name, tag, parties))
         return rtn
 
-    def remote(self, obj, name: str, tag: str, parties: typing.List[Party], rubbish: Rubbish) -> typing.NoReturn:
+    def remote(self, obj, name: str, tag: str, parties: typing.List[Party], gc: GC) -> typing.NoReturn:
         LOGGER.debug("start to remote obj, name={}, tag={}, parties={}.".format(name, tag, parties))
         mq_names = self._get_mq_names(parties)
 
@@ -100,7 +100,6 @@ class FederationEngine(FederationEngineABC):
             channel_infos = self._get_channels(mq_names=mq_names)
             _send_obj(name=name, tag=tag, data=p_dumps(obj), channel_infos=channel_infos)
         LOGGER.debug("finish remote obj, name={}, tag={}, parties={}.".format(name, tag, parties))
-        return rubbish
 
     def cleanup(self):
         LOGGER.debug("federation start to cleanup...")

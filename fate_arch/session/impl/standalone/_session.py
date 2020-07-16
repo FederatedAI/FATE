@@ -32,7 +32,7 @@ import numpy as np
 from cachetools import LRUCache
 from cachetools import cached
 
-from fate_arch._interface import Rubbish
+from fate_arch._interface import GC
 from fate_arch.common import file_utils
 from fate_arch.common.log import getLogger
 from fate_arch.session._session_types import _FederationParties, Party
@@ -356,7 +356,7 @@ class StandaloneFederation(FederationEngineABC):
     def _get_status(self, _tagged_key):
         return self._federation_status_table._get(_tagged_key)
 
-    def remote(self, v, name: str, tag: str, parties: typing.List[Party], rubbish: Rubbish):
+    def remote(self, v, name: str, tag: str, parties: typing.List[Party], gc: GC):
         log_str = f"federation.remote(name={name}, tag={tag}, parties={parties})"
 
         assert v is not None, \
@@ -372,15 +372,13 @@ class StandaloneFederation(FederationEngineABC):
             if isinstance(v, Table):
                 # noinspection PyProtectedMember
                 self._put_status(_tagged_key, (v._name, v._namespace))
-                rubbish.add_obj(self._federation_status_table, _tagged_key)
             else:
                 self._put_object(_tagged_key, v)
                 self._put_status(_tagged_key, _tagged_key)
-                rubbish.add_obj(self._federation_status_table, _tagged_key)
             LOGGER.debug("[REMOTE] Sent {}".format(_tagged_key))
-        return rubbish
 
-    def get(self, name: str, tag: str, parties: typing.List[Party], rubbish: Rubbish) -> typing.List:
+    # noinspection PyProtectedMember
+    def get(self, name: str, tag: str, parties: typing.List[Party], gc: GC) -> typing.List:
         log_str = f"federation.get(name={name}, tag={tag}, party={parties})"
         LOGGER.debug(f"[{log_str}]")
         tasks = []
@@ -395,17 +393,16 @@ class StandaloneFederation(FederationEngineABC):
             LOGGER.debug(f"[GET] {self._party} getting {r} from {parties}")
 
             if isinstance(r, tuple):
-                table = get_session().load(name=r[0], namespace=r[1])
+                # noinspection PyTypeChecker
+                table: Table = get_session().load(name=r[0], namespace=r[1])
                 rtn.append(table)
-                rubbish.add_table(table)
-
+                gc.add_gc_func(tag, table._destroy)
             else:
                 obj = self._get_object(r)
                 if obj is None:
                     raise EnvironmentError(f"federation get None from {parties} with name {name}, tag {tag}")
                 rtn.append(obj)
-                rubbish.add_obj(self._federation_object_table, r)
-                rubbish.add_obj(self._federation_status_table, r)
+                gc.add_gc_func(tag, lambda: self._federation_object_table._delete(r))
         return rtn
 
 

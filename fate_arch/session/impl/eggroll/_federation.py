@@ -24,7 +24,7 @@ from enum import Enum
 from eggroll.core.meta_model import ErEndpoint
 from eggroll.roll_pair.roll_pair import RollPair, RollPairContext
 from eggroll.roll_site.roll_site import RollSiteContext
-from fate_arch._interface import Rubbish
+from fate_arch._interface import GC
 from fate_arch.common.log import getLogger
 from fate_arch.session._session_types import Party
 from fate_arch.session._split import is_split_head, split_get
@@ -45,17 +45,17 @@ class FederationEngine(FederationEngineABC):
         self.rsc = RollSiteContext(rs_session_id, rp_ctx=rp_ctx, options=options)
         LOGGER.debug(f"init roll site context done: {self.rsc.__dict__}")
 
-    def get(self, name: str, tag: str, parties: typing.List[Party], rubbish: Rubbish) -> typing.List:
+    def get(self, name: str, tag: str, parties: typing.List[Party], gc: GC) -> typing.List:
         parties = [(party.role, party.party_id) for party in parties]
-        raw_result = _get(name, tag, parties, self.rsc, rubbish)
+        raw_result = _get(name, tag, parties, self.rsc, gc)
         return [Table(v) if isinstance(v, RollPair) else v for v in raw_result]
 
-    def remote(self, v, name: str, tag: str, parties: typing.List[Party], rubbish: Rubbish) -> typing.NoReturn:
+    def remote(self, v, name: str, tag: str, parties: typing.List[Party], gc: GC) -> typing.NoReturn:
         if isinstance(v, Table):
             # noinspection PyProtectedMember
             v = v._as_federation_format()
         parties = [(party.role, party.party_id) for party in parties]
-        _remote(v, name, tag, parties, self.rsc, rubbish)
+        _remote(v, name, tag, parties, self.rsc, gc)
 
 
 def _remote(v,
@@ -63,7 +63,7 @@ def _remote(v,
             tag: str,
             parties: typing.List[typing.Tuple[str, str]],
             rsc: RollSiteContext,
-            rubbish: Rubbish) -> typing.NoReturn:
+            gc: GC) -> typing.NoReturn:
     log_str = f"federation.remote(name={name}, tag={tag}, parties={parties})"
     assert v is not None, \
         f"[{log_str}]remote `None`"
@@ -73,26 +73,21 @@ def _remote(v,
 
     t = _get_type(v)
     if t == _FederationValueType.ROLL_PAIR:
-        rubbish.add_table(v)
+        gc.add_gc_func(tag, v.destroy)
         _push_with_exception_handle(rsc, v, name, tag, parties)
         return
 
     if t == _FederationValueType.SPLIT_OBJECT:
         head, tails = v
-        rs = _push_with_exception_handle(rsc, head, name, tag, parties)
-        for obj_table in _remote_obj_store_table(parties, rs):
-            rubbish.add_table(obj_table)
+        _push_with_exception_handle(rsc, head, name, tag, parties)
 
         for k, tail in enumerate(tails):
-            rs = _push_with_exception_handle(rsc, tail, name, f"{tag}.__part_{k}", parties)
-            for obj_table in _remote_obj_store_table(parties, rs):
-                rubbish.add_table(obj_table)
+            _push_with_exception_handle(rsc, tail, name, f"{tag}.__part_{k}", parties)
+
         return
 
     if t == _FederationValueType.OBJECT:
-        rs = _push_with_exception_handle(rsc, v, name, tag, parties)
-        for obj_table in _remote_obj_store_table(parties, rs):
-            rubbish.add_table(obj_table)
+        _push_with_exception_handle(rsc, v, name, tag, parties)
         return
 
     raise NotImplementedError(f"t={t}")
@@ -102,14 +97,14 @@ def _get(name: str,
          tag: str,
          parties: typing.List[typing.Tuple[str, str]],
          rsc: RollSiteContext,
-         rubbish: Rubbish) -> typing.List:
+         gc: GC) -> typing.List:
     rs = rsc.load(name=name, tag=tag)
     future_map = dict(zip(rs.pull(parties=parties), parties))
     rtn = {}
     for future in concurrent.futures.as_completed(future_map):
         party = future_map[future]
         v = future.result()
-        rtn[party] = _get_value_post_process(v, name, tag, party, rsc, rubbish)
+        rtn[party] = _get_value_post_process(v, name, tag, party, rsc, gc)
     return [rtn[party] for party in parties]
 
 
@@ -176,7 +171,7 @@ def _get_tag_not_duplicate(name: str, tag: str, party: typing.Tuple[str, str]):
 
 
 def _get_value_post_process(v, name: str, tag: str, party: typing.Tuple[str, str], rsc: RollSiteContext,
-                            rubbish: Rubbish):
+                            gc: GC):
     log_str = f"federation.get(name={name}, tag={tag}, party={party})"
     assert v is not None, \
         f"[{log_str}]get None"
@@ -187,7 +182,7 @@ def _get_value_post_process(v, name: str, tag: str, party: typing.Tuple[str, str
     # got a roll pair
     if isinstance(v, RollPair):
         assert _count(v, log_str) > 0, f"[{log_str}]count is 0"
-        rubbish.add_table(v)
+        gc.add_gc_func(tag, v.destroy)
         return v
 
     # got large object in splits
@@ -204,31 +199,3 @@ def _get_value_post_process(v, name: str, tag: str, party: typing.Tuple[str, str
 
     # others
     return v
-
-
-# warning, temporary workaround， should be remote in near released version
-def _remote_obj_store_table(parties, rs):
-    from eggroll.roll_site.utils.roll_site_utils import create_store_name
-    from eggroll.core.transfer_model import ErRollSiteHeader
-    tables = []
-    for role_party_id in parties:
-        _role = role_party_id[0]
-        _party_id = str(role_party_id[1])
-
-        _options = {}
-        obj_type = 'object'
-        roll_site_header = ErRollSiteHeader(
-            roll_site_session_id=rs.roll_site_session_id,
-            name=rs.name,
-            tag=rs.tag,
-            src_role=rs.local_role,
-            src_party_id=rs.party_id,
-            dst_role=_role,
-            dst_party_id=_party_id,
-            data_type=obj_type,
-            options=_options)
-        _tagged_key = create_store_name(roll_site_header)
-        namespace = rs.roll_site_session_id
-        tables.append(rs.ctx.rp_ctx.load(namespace, _tagged_key))
-
-    return tables

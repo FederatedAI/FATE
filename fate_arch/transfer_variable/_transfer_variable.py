@@ -21,7 +21,7 @@ from fate_arch.session import Party
 from fate_arch.common.log import getLogger
 from fate_arch import session
 from fate_arch.transfer_variable._auth import _check_variable_auth_conf
-from fate_arch.transfer_variable._cleaner import Rubbish, Cleaner
+from fate_arch.transfer_variable._cleaner import IterationGC
 from fate_arch.transfer_variable._namespace import FederationTagNamespace
 
 LOGGER = getLogger()
@@ -63,11 +63,9 @@ class Variable(object):
         self._name = name
         self._src = src
         self._dst = dst
-        self._get_cleaner = Cleaner()
-        self._remote_cleaner = Cleaner()
+        self._get_gc = IterationGC()
+        self._remote_gc = IterationGC()
         self._auto_clean = True
-        self._preserve_num = 2
-        # LOGGER.debug(f"create variable with name={name}, src={src}, dst={dst}")
 
     # copy never create a new instance
     def __copy__(self):
@@ -78,7 +76,8 @@ class Variable(object):
         return self
 
     def set_preserve_num(self, n):
-        self._preserve_num = n
+        self._get_gc.set_capacity(n)
+        self._remote_gc.set_capacity(n)
         return self
 
     def disable_auto_clean(self):
@@ -86,8 +85,8 @@ class Variable(object):
         return self
 
     def clean(self):
-        self._get_cleaner.clean_all()
-        self._remote_cleaner.clean_all()
+        self._get_gc.clean()
+        self._remote_gc.clean()
 
     def remote_parties(self,
                        obj,
@@ -106,11 +105,8 @@ class Variable(object):
         if local not in self._src:
             raise RuntimeError(f"not allowed to remote object from {local} using {self._name}")
 
-        rubbish = Rubbish(self._name, tag)
-        session.default().federation.remote(v=obj, name=self._name, tag=tag, parties=parties, rubbish=rubbish)
-        self._remote_cleaner.push(rubbish)
-        if self._auto_clean:
-            self._remote_cleaner.keep_latest_n(self._preserve_num)
+        session.default().federation.remote(v=obj, name=self._name, tag=tag, parties=parties, gc=self._remote_gc)
+        self._remote_gc.gc()
 
     def get_parties(self,
                     parties: Union[typing.List[Party], Party],
@@ -129,14 +125,8 @@ class Variable(object):
         if local not in self._dst:
             raise RuntimeError(f"not allowed to get object to {local} using {self._name}")
 
-        if self._auto_clean:
-            if self._get_cleaner.is_latest_tag(tag):
-                self._get_cleaner.keep_latest_n(self._preserve_num)
-            else:
-                self._get_cleaner.keep_latest_n(self._preserve_num - 1)
-        rubbish = Rubbish(self._name, tag)
-        rtn, rubbish = session.default().federation.get(name=self._name, tag=tag, parties=parties, rubbish=rubbish)
-        self._get_cleaner.push(rubbish)
+        rtn = session.default().federation.get(name=self._name, tag=tag, parties=parties, gc=self._get_gc)
+        self._get_gc.gc()
 
         return rtn
 

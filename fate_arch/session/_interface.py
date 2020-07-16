@@ -20,7 +20,7 @@ import typing
 from abc import ABCMeta
 from collections import Iterable
 
-from fate_arch._interface import Rubbish
+from fate_arch._interface import GC
 from fate_arch.session._session_types import Party, _FederationParties
 
 
@@ -178,9 +178,9 @@ class SessionABC(metaclass=ABCMeta):
 class FederationEngineABC(metaclass=ABCMeta):
 
     @abc.abstractmethod
-    def get(self, name: str, tag: str, parties: typing.List[Party], rubbish: Rubbish) -> typing.List:
+    def get(self, name: str, tag: str, parties: typing.List[Party], gc: GC) -> typing.List:
         ...
 
     @abc.abstractmethod
-    def remote(self, v, name: str, tag: str, parties: typing.List[Party], rubbish: Rubbish) -> typing.NoReturn:
+    def remote(self, v, name: str, tag: str, parties: typing.List[Party], gc: GC) -> typing.NoReturn:
         ...

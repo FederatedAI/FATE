@@ -18,92 +18,46 @@
 from collections import deque
 from logging import getLogger
 
+import typing
+
+from fate_arch._interface import GC
+
 LOGGER = getLogger()
 
 
-class Rubbish(object):
-    """
-    a collection collects all tables / objects in federation tagged by `tag`.
-    """
+class IterationGC(GC):
+    def __init__(self, capacity=2):
+        self._ashcan: deque[typing.List] = deque()
+        self._last_tag: typing.Optional[str] = None
+        self._capacity = capacity
+        self._enable = True
 
-    def __init__(self, name, tag):
-        self._name = name
-        self._tag = tag
-        self._tables = []
-        self._kv = {}
-
-    @property
-    def tag(self):
-        return self._tag
-
-    def add_table(self, table):
-        self._tables.append(table)
-
-    # noinspection PyProtectedMember
-    def add_obj(self, table, key):
-        if (table._name, table._namespace) not in self._kv:
-            self._kv[(table._name, table._namespace)] = (table, [key])
+    def add_gc_func(self, tag: str, func: typing.Callable[[], typing.NoReturn]):
+        if self._last_tag == tag:
+            self._ashcan[-1].append(func)
         else:
-            self._kv[(table._name, table._namespace)][1].append(key)
+            self._ashcan.append([func])
+            self._last_tag = tag
 
-    def merge(self, rubbish: 'Rubbish'):
-        self._tables.extend(rubbish._tables)
-        for tk, (t, k) in rubbish._kv.items():
-            if tk in self._kv:
-                self._kv[tk][1].extend(k)
-            else:
-                self._kv[tk] = (t, k)
-        # # warm: this is necessary to prevent premature clean work invoked by `__del__` in `rubbish`
-        # rubbish.empty()
-        return self
+    def disable(self):
+        self._enable = False
 
-    def empty(self):
-        self._tables = []
-        self._kv = {}
+    def set_capacity(self, capacity):
+        self._capacity = capacity
 
-    # noinspection PyBroadException
+    def gc(self):
+        if len(self._ashcan) <= self._capacity:
+            return
+        self._save_gc_call(self._ashcan.pop())
+
     def clean(self):
-        if self._tables or self._kv:
-            LOGGER.debug(f"[CLEAN] {self._name} cleaning rubbishes tagged by {self._tag}")
-        for table in self._tables:
+        while self._ashcan:
+            self._save_gc_call(self._ashcan.pop())
+
+    @staticmethod
+    def _save_gc_call(funcs):
+        for func in funcs:
             try:
-                LOGGER.debug(f"[CLEAN] try destroy table {table}")
-                table.destroy()
-            except Exception:
-                pass
-
-        for _, (table, keys) in self._kv.items():
-            for key in keys:
-                try:
-                    LOGGER.debug(f"[CLEAN] try delete object with key={key} from table={table}")
-                    table._delete(key)
-                except Exception:
-                    pass
-
-
-class Cleaner(object):
-    def __init__(self):
-        self._ashcan: deque[Rubbish] = deque()
-
-    def push(self, rubbish):
-        """
-        append `rubbish`
-        :param rubbish: a rubbish instance
-        :return:
-        """
-        if self.is_latest_tag(rubbish.tag):
-            self._ashcan[-1].merge(rubbish)
-        else:
-            self._ashcan.append(rubbish)
-        return self
-
-    def is_latest_tag(self, tag):
-        return len(self._ashcan) > 0 and self._ashcan[-1].tag == tag
-
-    def keep_latest_n(self, n):
-        while len(self._ashcan) > n:
-            self._ashcan.popleft().clean()  # clean explicit
-
-    def clean_all(self):
-        while len(self._ashcan) > 0:
-            self._ashcan.popleft().clean()
+                func()
+            except Exception as e:
+                LOGGER.debug(f"[CLEAN]this could be ignore {e}")
