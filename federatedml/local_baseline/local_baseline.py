@@ -16,11 +16,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.utils import log_utils
-from arch.api import session
-
 import copy
 
+import numpy as np
+from sklearn.linear_model import LogisticRegression
+
+from arch.api import session
+from arch.api.utils import log_utils
 from federatedml.model_base import ModelBase
 from federatedml.param.local_baseline_param import LocalBaselineParam
 from federatedml.protobuf.generated import lr_model_meta_pb2
@@ -28,10 +30,6 @@ from federatedml.protobuf.generated import lr_model_param_pb2
 from federatedml.statistic import data_overview
 from federatedml.util import abnormal_detection
 from federatedml.util.io_check import assert_io_num_rows_equal
-
-from sklearn.linear_model import LogisticRegression
-
-import numpy as np
 
 LOGGER = log_utils.getLogger()
 session.init("baseline")
@@ -162,6 +160,43 @@ class LocalBaseline(ModelBase):
         }
         return result
 
+    def get_model_summary(self):
+        header = self.header
+        if header is None:
+            return {}
+        if not self.need_one_vs_rest:
+            param = self._get_model_param()
+            summary = {
+                'coef': param['weight'],
+                'intercept': param['intercept'],
+                'is_converged': param['is_converged'],
+                'iters': param['iters'],
+                'one_vs_rest': True
+            }
+        else:
+            model = self.model_fit
+            n_iter = model.n_iter_[0]
+            is_converged = n_iter < model.max_iter
+            classes = model.classes_
+            coef_all = model.coef_
+            intercept_all = model.intercept_
+            summary = {}
+
+            for i, label in enumerate(classes):
+                coef = coef_all[i,]
+                weight_dict = dict(zip(self.header, list(coef)))
+                intercept = intercept_all[i] if model.fit_intercept else intercept_all
+                single_summary = {
+                    'coef': weight_dict,
+                    'intercept': intercept,
+                    'is_converged': is_converged,
+                    'iters': n_iter
+                    }
+                single_key = f"{label}"
+                summary[single_key] = single_summary
+                summary["one_vs_rest"] = True
+        return summary
+
     @assert_io_num_rows_equal
     def predict(self, data_instances):
         if not self.need_run:
@@ -201,3 +236,4 @@ class LocalBaseline(ModelBase):
 
         self.model_fit = model.fit(X, y)
         self.need_one_vs_rest = len(self.model_fit.classes_) > 2
+        self.set_summary(self.get_model_summary())

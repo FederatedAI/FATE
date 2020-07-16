@@ -177,6 +177,8 @@ class BaseLinearModel(ModelBase):
 
     def get_model_summary(self):
         header = self.header
+        if header is None:
+            return {}
         weight_dict, intercept_ = self.get_weight_intercept_dict(header)
         best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
 
