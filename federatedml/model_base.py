@@ -183,6 +183,43 @@ class ModelBase(object):
                                    "sid_name": schema.get('sid_name')}
         return predict_data
 
+
+    def predict_score_to_output(self, data_instances, predict_score, classes=None, threshold=0.5):
+        """
+        get predict result output
+        :param data_instances: table, data used for prediction
+        :param predict_score: table, probability scores
+        :param classes: list or None, all classes/label names
+        :param threshold: float, predict threshold, used for binary label
+        :return:
+        """
+        # regression
+        if classes is None:
+            predict_result = data_instances.join(predict_score, lambda d, pred: [d.label, pred, pred, {"label": pred}])
+        # binary
+        elif isinstance(classes, list) and len(classes) == 2:
+            class_neg, class_pos = classes[0], classes[1]
+            pred_label = predict_score.mapValues(lambda x: class_pos if x > threshold else class_neg)
+            predict_result = data_instances.mapValues(lambda x: x.label)
+            predict_result = predict_result.join(predict_score, lambda x, y: (x, y))
+            class_neg_name, class_pos_name = str(class_neg), str(class_pos)
+            predict_result = predict_result.join(pred_label, lambda x, y: [x[0], y, x[1],
+                                                                           {class_neg_name: (1 - x[1]),
+                                                                            class_pos_name: x[1]}])
+
+        # multi-label: input = array of predicted score of all labels
+        elif isinstance(classes, list) and len(classes) > 2:
+            #pred_label = predict_score.mapValues(lambda x: classes[x.index(max(x))])
+            classes = [str(val) for val in classes]
+            predict_result = data_instances.mapValues(lambda x: x.label)
+            predict_result = predict_result.join(predict_score, lambda x, y: [x, int(classes[y.argmax()]),
+                                                                              y.max(), dict(zip(classes, list(y)))])
+        else:
+            raise ValueError(f"Model's classes type is {type(classes)}, classes must be None or list.")
+
+        return predict_result
+
+
     def callback_meta(self, metric_name, metric_namespace, metric_meta):
         if self.need_cv:
             metric_name = '.'.join([metric_name, str(self.cv_fold)])
