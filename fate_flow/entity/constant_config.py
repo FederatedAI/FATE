@@ -32,6 +32,17 @@ class Backend(IntEnum):
         return self.value == self.SPARK
 
 
+class StoreEngine(IntEnum):
+    EGGROLL = 0
+    HDFS = 1
+
+    def is_hdfs(self):
+        return self.value == self.HDFS
+
+    def is_eggroll(self):
+        return self.value == self.EGGROLL
+
+
 class JobStatus(object):
     WAITING = 'waiting'
     RUNNING = 'running'

@@ -19,12 +19,14 @@ import os
 from arch.api import Backend
 from arch.api.utils import file_utils, log_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.entity.constant_config import StoreEngine,
 from arch.api.utils.conf_utils import get_base_config
 import __main__
 
 
 WORK_MODE = get_base_config('work_mode', 0)
 BACKEND = Backend.EGGROLL
+STORE_ENGINE=StoreEngine.EGGROLL
 USE_LOCAL_DATABASE = True
 
 # upload data
@@ -112,3 +114,4 @@ ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH = True
 RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
 RuntimeConfig.init_config(HTTP_PORT=HTTP_PORT)
 RuntimeConfig.init_config(BACKEND=BACKEND)
+RuntimeConfig.init_config(STORE_ENGINE=STORE_ENGINE)

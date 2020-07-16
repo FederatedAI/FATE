@@ -143,10 +143,12 @@ def gen_data_access_job_config(config_data, access_module):
         "role_parameters": {}
     }
     initiator_role = "local"
-    initiator_party_id = 0
+    initiator_party_id = config_data.get('party_id', 0)
     job_runtime_conf["initiator"]["role"] = initiator_role
     job_runtime_conf["initiator"]["party_id"] = initiator_party_id
     job_runtime_conf["job_parameters"]["work_mode"] = int(config_data["work_mode"])
+    job_runtime_conf["job_parameters"]["store_engine"] = int(config_data.get("store_engine", 0))
+    job_runtime_conf["job_parameters"]["backend"] = int(config_data.get("backend", 0))
     job_runtime_conf["role"][initiator_role] = [initiator_party_id]
     job_dsl = {
         "components": {}
@@ -162,6 +164,7 @@ def gen_data_access_job_config(config_data, access_module):
                 "namespace": [config_data["namespace"]],
                 "table_name": [config_data["table_name"]],
                 "in_version": [config_data.get("in_version")],
+                "drop": [config_data.get("drop", 2)],
             }
         }
 

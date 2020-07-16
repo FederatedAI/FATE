@@ -32,6 +32,8 @@
 import typing
 import uuid
 from typing import Iterable
+from pyspark import SparkContext
+import pickle
 
 from arch.api import WorkMode
 from arch.api.base.utils.store_type import StoreEngine
@@ -79,7 +81,6 @@ class HDFSTable(Table):
 
         counter = 0
         for k, v in kv_list:
-            import pickle
             content = u"{}{}{}\n".format(k, HDFSTable.delimiter, pickle.dumps((v)).hex())
             out.write(bytearray(content, "utf-8"))
             counter = counter + 1
@@ -90,23 +91,20 @@ class HDFSTable(Table):
 
     
     def collect(self, min_chunk_size=0, use_serialize=True) -> list:
-        """
-        Returns an iterator of (key, value) 2-tuple from the Table.
-
-        Parameters
-        ---------
-        min_chunk_size : int
-          Minimum chunk size (key bytes + value bytes) returned if end of table is not hit.
-          0 indicates a default chunk size (partition_num * 1.75 MB)
-          negative number indicates no chunk limit, i.e. returning all records.
-          Default chunk size is recommended if there is no special needs from user.
-
-        Returns
-        -------
-        Iterator
-        """
-        # TODO: 
-        pass
+        sc = SparkContext.getOrCreate()
+        hdfs_path = HDFSTable.generate_hdfs_path(namespace=self._namespace, name=self._sname)
+        path = HDFSTable.get_path(sc, hdfs_path)
+        fs = HDFSTable.get_file_system(sc)
+        istream = fs.open(path)
+        reader = sc._gateway.jvm.java.io.BufferedReader(sc._jvm.java.io.InputStreamReader(istream))
+        while True:
+            line = reader.readLine()
+            if line is not None:
+                fields = line.strip().partition(HDFSTable.delimiter)
+                yield fields[0], pickle.loads(bytes.fromhex(fields[2]))
+            else:
+                break
+        istream.close()
 
     
     def destroy(self):
@@ -126,7 +124,6 @@ class HDFSTable(Table):
 
     
     def save_as(self, name, namespace, partition=None, **kwargs):
-        from pyspark import SparkContext
         sc = SparkContext.getOrCreate()
         src_path = HDFSTable.get_path(sc, HDFSTable.generate_hdfs_path(namespace=self._namespace, name=self._name))
         dst_path = HDFSTable.get_path(sc, HDFSTable.generate_hdfs_path(namespace=namespace, name=name))
@@ -156,7 +153,6 @@ class HDFSTable(Table):
 
     @classmethod
     def get_hadoop_fs(cls, namespace, name):
-        from pyspark import SparkContext
         sc = SparkContext.getOrCreate()
         hdfs_path = HDFSTable.generate_hdfs_path(namespace=namespace, name=name)
         path = HDFSTable.get_path(sc, hdfs_path)
