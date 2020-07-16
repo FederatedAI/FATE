@@ -40,7 +40,7 @@
       "module": "HomoNN",
       "input": {
         "data": {
-          "eval_data": [
+          "validate_data": [
             "dataio_0.train"
           ]
         },

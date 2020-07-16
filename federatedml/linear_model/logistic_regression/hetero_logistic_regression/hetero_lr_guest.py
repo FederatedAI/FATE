@@ -160,9 +160,6 @@ class HeteroLRGuest(HeteroLRBase):
         ----------
         data_instances: DTable of Instance, input data
 
-        result_name: str,
-            Showing the output type name
-
         Returns
         ----------
         DTable

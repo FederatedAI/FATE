@@ -198,9 +198,9 @@ class KFold(BaseCrossValidator):
             join_data_insts.schema['header'] = header
             return join_data_insts
 
-    def evaluate(self, eval_data, fold_name, model):
+    def evaluate(self, validate_data, fold_name, model):
 
-        if eval_data is None:
+        if validate_data is None:
             return
 
         eval_obj = Evaluation()
@@ -211,7 +211,7 @@ class KFold(BaseCrossValidator):
         eval_param.check_single_value_default_metric()
         eval_obj._init_model(eval_param)
         eval_obj.set_tracker(model.tracker)
-        eval_data = {fold_name: eval_data}
-        eval_obj.fit(eval_data)
+        validate_data = {fold_name: validate_data}
+        eval_obj.fit(validate_data)
         eval_obj.save_data()
 

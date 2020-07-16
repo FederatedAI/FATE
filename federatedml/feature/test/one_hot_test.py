@@ -29,16 +29,16 @@ import numpy as np
 
 class TestOneHotEncoder(unittest.TestCase):
     def setUp(self):
-        self.data_num = 100
+        self.data_num = 1000
         self.feature_num = 3
-        self.cols = [0, 1, 2]
+        self.cols = [0, 1, 2, 3]
         self.header = ['x' + str(i) for i in range(self.feature_num)]
         final_result = []
 
         for i in range(self.data_num):
             tmp = []
             for _ in range(self.feature_num):
-                tmp.append(np.random.choice([1, 2, 3]))
+                tmp.append(np.random.choice([1, 2, 3, 'test_str']))
             tmp = np.array(tmp)
             inst = Instance(inst_id=i, features=tmp, label=0)
             tmp_pair = (str(i), inst)
@@ -63,7 +63,7 @@ class TestOneHotEncoder(unittest.TestCase):
         local_result = result.collect()
         for k, v in local_result:
             new_features = v.features
-            self.assertTrue(len(new_features) == self.feature_num * 3)
+            self.assertTrue(len(new_features) == self.feature_num * len(self.cols))
 
 
 if __name__ == '__main__':
