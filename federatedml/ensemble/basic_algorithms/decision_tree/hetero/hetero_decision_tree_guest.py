@@ -411,7 +411,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 return (1, tree_[nodeid].fid, tree_[nodeid].bid, tree_[nodeid].sitename,
                         nodeid, tree_[nodeid].left_nodeid, tree_[nodeid].right_nodeid)
 
-    def assign_instances_to_new_node(self, dep):
+    def assign_instances_to_new_node(self, dep, reach_max_depth=False):
 
         LOGGER.info("redispatch node of depth {}".format(dep))
         dispatch_node_method = functools.partial(self.assign_a_instance,
@@ -436,6 +436,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
             self.sample_weights = leaf
         else:
             self.sample_weights = self.sample_weights.union(leaf)
+
+        if reach_max_depth:
+            return
 
         dispatch_guest_result = dispatch_guest_result.subtractByKey(leaf)
 
@@ -490,10 +493,12 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 cur_splitinfos = self.compute_best_splits(self.get_node_map(self.cur_to_split_nodes), dep, batch_idx, )
                 split_info.extend(cur_splitinfos)
 
-            reach_max_depth = True if dep + 1 == self.max_depth else False
-
-            self.update_tree(split_info, reach_max_depth)
+            self.update_tree(split_info, False)
             self.assign_instances_to_new_node(dep)
+
+        if self.cur_layer_nodes:
+            self.update_tree([], True)
+            self.assign_instances_to_new_node(self.max_depth, reach_max_depth=True)
 
         self.convert_bin_to_real()
         self.sync_tree()

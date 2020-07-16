@@ -263,7 +263,6 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
             reach_max_depth = True if dep + 1 == self.max_depth else False
 
             self.update_tree(split_info, reach_max_depth)
-
             self.assign_instances_to_new_node_with_node_plan(dep, tree_action, mode=consts.LAYERED_TREE)
 
         self.convert_bin_to_real()

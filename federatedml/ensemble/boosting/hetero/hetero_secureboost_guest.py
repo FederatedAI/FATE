@@ -15,6 +15,8 @@ from federatedml.util import consts
 from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
     HeteroSecureBoostTransferVariable
 
+from federatedml.statistic import data_overview
+
 from federatedml.util.io_check import assert_io_num_rows_equal
 
 from arch.api.utils import log_utils
@@ -38,6 +40,8 @@ class HeteroSecureBoostGuest(HeteroBoostingGuest):
         self.feature_importances_ = {}
         self.model_param = HeteroSecureBoostParam()
         self.complete_secure = False
+
+        self.data_alignment_map = {}
 
         self.predict_transfer_inst = HeteroSecureBoostTransferVariable()
 
@@ -275,10 +279,19 @@ class HeteroSecureBoostGuest(HeteroBoostingGuest):
     @assert_io_num_rows_equal
     def predict(self, data_inst):
 
-        processed_data = self.data_alignment(data_inst)
         LOGGER.info('running prediction')
-
         cache_dataset_key = self.predict_data_cache.get_data_key(data_inst)
+
+        if cache_dataset_key in self.data_alignment_map:
+            processed_data = self.data_alignment_map[cache_dataset_key]
+        else:
+            data_inst = self.data_alignment(data_inst)
+            header = [None] * len(self.feature_name_fid_mapping)
+            for idx, col in self.feature_name_fid_mapping.items():
+                header[idx] = col
+            processed_data = data_overview.header_alignment(data_inst, header)
+            self.data_alignment_map[cache_dataset_key] = processed_data
+
         last_round = self.predict_data_cache.predict_data_last_round(cache_dataset_key)
 
         self.sync_predict_round(last_round + 1)

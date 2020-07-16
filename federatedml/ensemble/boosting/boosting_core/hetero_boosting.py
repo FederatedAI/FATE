@@ -190,7 +190,6 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
                 self.validation_strategy.validate(self, epoch_idx, use_precomputed_train=True,
                                                   train_scores=self.score_to_predict_result(data_inst, self.y_hat))
 
-            LOGGER.debug('cur dataset key is {}'.format(self.predict_data_cache.get_data_key(data_inst)))
             should_stop = self.check_stop_condition(loss)
             self.sync_stop_flag(should_stop, epoch_idx)
             if should_stop:
