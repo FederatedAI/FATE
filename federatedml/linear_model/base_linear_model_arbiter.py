@@ -144,5 +144,4 @@ class HeteroBaseArbiter(BaseLinearModel):
             summary["best_iter_loss"] = self.loss_history[self.best_iteration]
 
         self.set_summary(summary)
-        LOGGER.debug(f"summary content is {summary}")
         LOGGER.debug("finish running linear model arbiter")
