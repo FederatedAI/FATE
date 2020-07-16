@@ -157,5 +157,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         LOGGER.info("Get prediction from Host")
 
         pred = pred_guest.join(pred_host, lambda g, h: g * h)
-        predict_result = data_instances.join(pred, lambda d, p: [d.label, p, p, {"label": p}])
+        # predict_result = data_instances.join(pred, lambda d, p: [d.label, p, p, {"label": p}])
+        predict_result = self.predict_score_to_output(data_instances=data_instances, predict_score=pred,
+                                                      classes=None)
         return predict_result

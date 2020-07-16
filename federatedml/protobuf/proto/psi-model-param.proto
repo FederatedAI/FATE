@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package com.webank.ai.fate.core.mlmodel.buffer;
+option java_outer_classname = "BoostTreeModelParamProto";
+
+message FeaturePsi{
+    string feature_name = 1;
+    repeated double psi = 2;
+    repeated string interval = 3;
+    repeated double expect_perc = 4;
+    repeated double actual_perc = 5;
+}
+
+message PsiSummary{
+    map<string, double> total_score = 1;
+    repeated FeaturePsi feature_psi = 2;
+    string model_name = 3;
+}

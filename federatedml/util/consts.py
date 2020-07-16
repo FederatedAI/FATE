@@ -178,6 +178,14 @@ COEFFICIENT_OF_VARIATION_VALUE_THRES = 'coefficient_of_variation_value_thres'
 OUTLIER_COLS = 'outlier_cols'
 MANUALLY_FILTER = 'manually'
 PERCENTAGE_VALUE = 'percentage_value'
+IV_FILTER = 'iv_filter'
+STATISTIC_FILTER = 'statistic_filter'
+PSI_FILTER = 'psi_filter'
+IV = 'iv'
+
+# Selection Pre-model
+STATISTIC_MODEL = 'statistic_model'
+BINNING_MODEL = 'binning_model'
 
 # imputer
 MIN = 'min'
@@ -206,3 +214,22 @@ SHA256 = 'sha256'
 INTERSECT_CACHE_TAG = 'Za'
 
 SHARE_INFO_COL_NAME = "share_info"
+
+# statistics
+COUNT = 'count'
+STANDARD_DEVIATION = 'stddev'
+SUMMARY = 'summary'
+DESCRIBE = 'describe'
+SUM = 'sum'
+COVARIANCE = 'cov'
+CORRELATION = 'corr'
+VARIANCE = 'variance'
+COEFFICIENT_OF_VARIATION = 'coefficient_of_variance'
+MISSING_COUNT = "missing_count"
+SKEWNESS = 'skewness'
+KURTOSIS = 'kurtosis'
+
+
+# adapter model name
+HOMO_SBT = 'homo_sbt'
+HETERO_SBT = 'hetero_sbt'

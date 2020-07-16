@@ -160,9 +160,6 @@ class HeteroLRGuest(HeteroLRBase):
         ----------
         data_instances: DTable of Instance, input data
 
-        result_name: str,
-            Showing the output type name
-
         Returns
         ----------
         DTable
@@ -186,11 +183,13 @@ class HeteroLRGuest(HeteroLRBase):
             pred_prob = pred_prob.join(host_prob, lambda g, h: g + h)
         pred_prob = pred_prob.mapValues(lambda p: activation.sigmoid(p))
         threshold = self.model_param.predict_param.threshold
-        pred_label = pred_prob.mapValues(lambda x: 1 if x > threshold else 0)
 
-        predict_result = data_instances.mapValues(lambda x: x.label)
-        predict_result = predict_result.join(pred_prob, lambda x, y: (x, y))
-        predict_result = predict_result.join(pred_label, lambda x, y: [x[0], y, x[1],
-                                                                       {"0": (1 - x[1]), "1": x[1]}])
+        # pred_label = pred_prob.mapValues(lambda x: 1 if x > threshold else 0)
+
+        # predict_result = data_instances.mapValues(lambda x: x.label)
+        # predict_result = predict_result.join(pred_prob, lambda x, y: (x, y))
+        # predict_result = predict_result.join(pred_label, lambda x, y: [x[0], y, x[1],
+        #                                                               {"0": (1 - x[1]), "1": x[1]}])
+        predict_result = self.predict_score_to_output(data_instances, pred_prob, classes=[0, 1], threshold=threshold)
 
         return predict_result

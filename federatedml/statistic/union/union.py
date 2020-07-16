@@ -14,13 +14,12 @@
 #  limitations under the License.
 #
 
-from arch.api.utils import log_utils
 from arch.api import session
-
+from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.feature.instance import Instance
-from federatedml.param.union_param import UnionParam
 from federatedml.model_base import ModelBase
+from federatedml.param.union_param import UnionParam
 from federatedml.statistic import data_overview
 from federatedml.util.schema_check import assert_schema_consistent
 
@@ -121,6 +120,7 @@ class Union(ModelBase):
             num_data = local_table.count()
             LOGGER.debug("table count: {}".format(num_data))
             metrics.append(Metric(key, num_data))
+            self.add_summary(key, num_data)
 
             if num_data == 0:
                 LOGGER.warning("Table {} is empty.".format(key))
@@ -175,6 +175,7 @@ class Union(ModelBase):
         else:
             num_data = combined_table.count()
         metrics.append(Metric("Total", num_data))
+        self.add_summary("Total", num_data)
 
         self.callback_metric(metric_name=self.metric_name,
                              metric_namespace=self.metric_namespace,

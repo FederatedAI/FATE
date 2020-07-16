@@ -152,5 +152,7 @@ class HeteroLinRGuest(HeteroLinRBase):
         for host_pred in host_preds:
             pred = pred.join(host_pred, lambda g, h: g + h)
 
-        predict_result = data_instances.join(pred, lambda d, pred: [d.label, pred, pred, {"label": pred}])
+        # predict_result = data_instances.join(pred, lambda d, pred: [d.label, pred, pred, {"label": pred}])
+        predict_result = self.predict_score_to_output(data_instances=data_instances, predict_score=pred,
+                                                      classes=None)
         return predict_result
