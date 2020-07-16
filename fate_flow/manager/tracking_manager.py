@@ -16,7 +16,7 @@
 from typing import List
 
 from arch.api.data_table.base import Table
-from arch.api.data_table.table_manager import get_table
+from arch.api.data_table.table_manager import get_table, create_table
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import DB, Job, Task, TrackingMetric, DataView
@@ -26,6 +26,7 @@ from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.model_manager import pipelined_model
 from fate_flow.settings import API_VERSION
 from fate_flow.utils import job_utils, api_utils, model_utils
+from fate_flow.utils.data_utils import create
 
 
 class Tracking(object):
@@ -195,6 +196,10 @@ class Tracking(object):
                                                                                          data_table.get_name(),
                                                                                          persistent_table_namespace,
                                                                                          persistent_table_name))
+            create(name=persistent_table_name,
+                   namespace=persistent_table_namespace,
+                   store_engine=data_table.get_storage_engine(),
+                   partitions=data_table.get_partitions())
             persistent_table = data_table.save_as(
                 namespace=persistent_table_namespace,
                 name=persistent_table_name)

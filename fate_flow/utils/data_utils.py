@@ -36,7 +36,7 @@ def dataset_to_list(src):
         return [src]
 
 
-def create(name, namespace, store_engine, address: dict, partitions=1):
+def create(name, namespace, store_engine, address='', partitions=1):
     with DB.connection_context():
         schema = MachineLearningDataSchema.select().where(MachineLearningDataSchema.f_table_name == name,
                                                           MachineLearningDataSchema.f_namespace == namespace)

@@ -50,11 +50,11 @@ class HDFSTable(Table):
     def __init__(self,
                  namespace: str = None,
                  name: str = None,
-                 partition: int = 1,
+                 partitions: int = 1,
                  **kwargs):
         self._name = name or str(uuid.uuid1())
         self._namespace = namespace or str(uuid.uuid1())
-        self._partitions = partition
+        self._partitions = partitions
     
     def get_name(self):
         return self._name

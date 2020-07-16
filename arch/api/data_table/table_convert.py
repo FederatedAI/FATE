@@ -42,14 +42,14 @@ MAX_NUM = 10000
 
 
 def convert(table, name='', namespace='', force=False, **kwargs):
-    partition = table.get_partitions()
+    partitions = table.get_partitions()
     mode = table._mode if table._mode else WorkMode.CLUSTER
     if RuntimeConfig.BACKEND == Backend.EGGROLL:
-        if table.get_storage_engine() not in Relationship.CompToStore.get(RuntimeConfig.BACKEND, []) or force:
-            _table = EggRollTable(mode=mode, namespace=namespace, name=name, partition=partition)
+        if table.get_storage_engine() not in Relationship.CompToStore.get(RuntimeConfig.BACKEND, []):
+            _table = EggRollTable(mode=mode, namespace=namespace, name=name, partitions=partitions)
             count = 0
             data = []
-            for line in _table.collect():
+            for line in table.collect():
                 data.append(line)
                 count += 1
                 if len(data) == MAX_NUM:
@@ -61,7 +61,6 @@ def convert(table, name='', namespace='', force=False, **kwargs):
             create(name=name, namespace=namespace, store_engine=StoreEngine.LMDB,
                    address={'name': name, 'namespace': namespace}, partitions=table.get_partitions())
             return _table
-
     return table
 
 

@@ -47,12 +47,12 @@ class MysqlTable(Table):
                  persistent_engine: str = StoreEngine.MYSQL,
                  namespace: str = None,
                  name: str = None,
-                 partition: int = 1,
+                 partitions: int = 1,
                  database_config: dict = None,
                  **kwargs):
         self._name = name or str(uuid.uuid1())
         self._namespace = namespace or str(uuid.uuid1())
-        self._partitions = partition
+        self._partitions = partitions
         self._storage_engine = persistent_engine
         self.database_config = database_config
         self._mode = mode

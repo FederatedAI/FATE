@@ -19,6 +19,7 @@ import shutil
 import time
 
 from arch.api import session
+from arch.api.data_table.table_manager import create_table
 
 from arch.api.utils import log_utils, file_utils, dtable_utils, version_control
 from fate_flow.entity.metric import Metric, MetricMeta
@@ -33,23 +34,10 @@ class Upload(object):
         self.MAX_PARTITION_NUM = 1024
         self.MAX_BYTES = 1024*1024*8
         self.parameters = {}
+        self.table = None
 
     def run(self, component_parameters=None, args=None):
         self.parameters = component_parameters["UploadParam"]
-
-        data_table = session.get_data_table(name=self.parameters["table_name"], namespace=self.parameters["namespace"])
-        if data_table:
-            count = data_table.count()
-            if count and int(self.parameters.get('drop', 2)) == 2:
-                LOGGER.error('The data table already exists, table data count:{}.'
-                                            'If you still want to continue uploading, please add the parameter -drop. '
-                                            '0 means not to delete and continue uploading, '
-                                            '1 means to upload again after deleting the table'.format(
-                                        count))
-                return
-            elif count and int(self.parameters.get('drop', 2)) == 1:
-                data_table.destroy()
-
         self.parameters["role"] = component_parameters["role"]
         self.parameters["local"] = component_parameters["local"]
         job_id = self.taskid.split("_")[0]
@@ -77,6 +65,7 @@ class Upload(object):
             raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITION_NUM))
 
         session.init(mode=self.parameters['work_mode'])
+        self.table = create_table(name=table_name, namespace=namespace, partition=self.parameters["partition"])
         data_table_count = self.save_data_table(table_name, namespace, head, self.parameters.get('in_version', False))
         LOGGER.info("------------load data finish!-----------------")
         # rm tmp file
@@ -117,30 +106,25 @@ class Upload(object):
                     job_info = {'f_progress': f_progress}
                     self.update_job_status(self.parameters["local"]['role'], self.parameters["local"]['party_id'],
                                            job_info)
-                    data_table = session.save_data(data, name=dst_table_name, namespace=dst_table_namespace,
-                                                   partition=self.parameters["partition"])
+                    self.table.put_all(data)
                 else:
+                    count_actual = self.table.count()
                     self.tracker.save_data_view(role=self.parameters["local"]['role'],
                                                 party_id=self.parameters["local"]['party_id'],
                                                 data_info={'f_table_name': dst_table_name,
                                                            'f_table_namespace': dst_table_namespace,
                                                            'f_partition': self.parameters["partition"],
-                                                           'f_table_count_actual': data_table.count(),
+                                                           'f_table_count_actual': count_actual,
                                                            'f_table_count_upload': count
                                                            })
                     self.callback_metric(metric_name='data_access',
                                          metric_namespace='upload',
-                                         metric_data=[Metric("count", data_table.count())])
-                    if in_version:
-                        version_log = "[AUTO] save data at %s." % datetime.datetime.now()
-                        version_control.save_version(name=dst_table_name, namespace=dst_table_namespace, version_log=version_log)
-                    return data_table.count()
+                                         metric_data=[Metric("count", count_actual)])
+                    return count_actual
 
     def save_data_header(self, header_source, dst_table_name, dst_table_namespace):
         header_source_item = header_source.split(',')
-        session.save_data_table_meta({'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]},
-                                     dst_table_name,
-                                     dst_table_namespace)
+        self.table.save_schema({'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]})
 
     def get_count(self, input_file):
         with open(input_file, 'r', encoding='utf-8') as fp:

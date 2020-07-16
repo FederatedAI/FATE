@@ -49,17 +49,17 @@ class EggRollTable(Table):
                  persistent_engine: str = StoreEngine.LMDB,
                  namespace: str = None,
                  name: str = None,
-                 partition: int = 1,
+                 partitions: int = 1,
                  init_session: bool = True,
                  **kwargs):
         self._mode = mode
         self._name = name or str(uuid.uuid1())
         self._namespace = namespace or str(uuid.uuid1())
-        self._partitions = partition
+        self._partitions = partitions
         self._strage_engine = persistent_engine
         if init_session:
             session.init(job_id=job_id, mode=mode, backend=backend, persistent_engine=persistent_engine, set_log_dir=False)
-        self._table = session.table(namespace=namespace, name=name, partition=partition, **kwargs)
+        self._table = session.table(namespace=namespace, name=name, partition=partitions, **kwargs)
 
     def get_name(self):
         return self._name
@@ -88,8 +88,8 @@ class EggRollTable(Table):
         return self._table.destroy()
 
     @classmethod
-    def dtable(cls, session_id, name, namespace, partition):
-        return EggRollTable(session_id=session_id, name=name, namespace=namespace, partition=partition)
+    def dtable(cls, session_id, name, namespace, partitions):
+        return EggRollTable(session_id=session_id, name=name, namespace=namespace, partitions=partitions)
 
     @log_elapsed
     def save_as(self, name, namespace, partition=None, **kwargs):

@@ -118,7 +118,6 @@ class TaskExecutor(object):
             session.init(job_id=job_utils.generate_session_id(task_id, role, party_id),
                          mode=RuntimeConfig.WORK_MODE,
                          backend=RuntimeConfig.BACKEND,
-                         store_engine=RuntimeConfig.STORE_ENGINE,
                          options=session_options)
             federation.init(job_id=task_id, runtime_conf=component_parameters)
 
