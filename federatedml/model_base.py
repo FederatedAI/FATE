@@ -22,6 +22,7 @@ from arch.api.utils import log_utils
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.util.component_properties import ComponentProperties
 from federatedml.util.param_extract import ParamExtract
+from federatedml.statistic.data_overview import header_alignment, check_legal_schema
 
 LOGGER = log_utils.getLogger()
 
@@ -102,7 +103,6 @@ class ModelBase(object):
             # LOGGER.debug("One data: {}".format(self.data_output.first()[1].features))
         LOGGER.debug("saved_result is : {}, data_output: {}".format(saved_result, self.data_output))
         self.check_consistency()
-
 
 
     def get_metrics_param(self):
@@ -310,6 +310,26 @@ class ModelBase(object):
         return data
 
     @staticmethod
+    def check_schema_content(schema):
+        """
+        check for repeated header & illegal/non-printable chars except for space
+        allow non-ascii chars
+        :param schema: dict
+        :return:
+        """
+        check_legal_schema(schema)
+
+    @staticmethod
+    def align_data_header(data_instances, pre_header):
+        """
+        align features of given data, raise error if value in given schema not found
+        :param data_instances: data table
+        :param pre_header: list, header of model
+        :return: dtable, aligned data
+        """
+        result_data = header_alignment(data_instances=data_instances, pre_header=pre_header)
+        return result_data
+      
     def pass_data(data):
         if isinstance(data, dict) and len(data) >= 1:
             data = list(data.values())[0]

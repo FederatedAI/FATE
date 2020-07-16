@@ -108,12 +108,6 @@ class ComponentProperties(object):
             if len(data_keys) > 0:
                 self.has_normal_input_data = True
 
-            # if 'train_data' in data_sets[data_key]:
-            #     self.has_train_data = True
-            # if 'eval_data' in data_sets[data_key]:
-            #     self.has_eval_data = True
-            # if 'data' in data_sets[data_key]:
-            #     self.has_normal_input_data = True
         LOGGER.debug("has_train_data: {}, has_eval_data: {}, has_normal_data: {}".format(
             self.has_train_data, self.has_eval_data, self.has_normal_input_data
         ))
@@ -133,11 +127,13 @@ class ComponentProperties(object):
 
             for data_type, d_table in data_dict.items():
                 if data_type == "train_data" and d_table is not None:
-                    train_data = d_table
-                    self.input_data_count = train_data.count()
+                    train_data = d_table[0]
+                    if train_data is not None:
+                        self.input_data_count = train_data.count()
                 elif data_type == 'eval_data' and d_table is not None:
-                    eval_data = d_table
-                    self.input_eval_data_count = eval_data.count()
+                    eval_data = d_table[0]
+                    if eval_data is not None:
+                        self.input_eval_data_count = eval_data.count()
                 else:
                     if d_table is not None:
                         data[".".join([data_key, data_type])] = d_table
@@ -147,7 +143,8 @@ class ComponentProperties(object):
             #     data[data_key] = data_sets[data_key]["data"]
 
         for data_key, data_table in data.items():
-            self.input_data_count += data_table.count()
+            if data_table is not None:
+                self.input_data_count += data_table.count()
 
         return train_data, eval_data, data
 

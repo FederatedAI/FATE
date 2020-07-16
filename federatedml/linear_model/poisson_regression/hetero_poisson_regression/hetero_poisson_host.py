@@ -126,6 +126,9 @@ class HeteroPoissonHost(HeteroPoissonBase):
         """
         self.transfer_variable.host_partial_prediction.disable_auto_clean()
         LOGGER.info("Start predict ...")
+
+        self._abnormal_detection(data_instances)
+        data_instances = self.align_data_header(data_instances, self.header)
         data_features = self.transform(data_instances)
         pred_host = self.compute_mu(data_features, self.model_weights.coef_, self.model_weights.intercept_)
         self.transfer_variable.host_partial_prediction.remote(pred_host, role=consts.GUEST, idx=0)

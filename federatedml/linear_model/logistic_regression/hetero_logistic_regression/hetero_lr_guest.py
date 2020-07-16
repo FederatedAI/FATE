@@ -166,6 +166,8 @@ class HeteroLRGuest(HeteroLRBase):
             include input data label, predict probably, label
         """
         LOGGER.info("Start predict is a one_vs_rest task: {}".format(self.need_one_vs_rest))
+        self._abnormal_detection(data_instances)
+        data_instances = self.align_data_header(data_instances, self.header)
         if self.need_one_vs_rest:
             predict_result = self.one_vs_rest_obj.predict(data_instances)
             return predict_result
