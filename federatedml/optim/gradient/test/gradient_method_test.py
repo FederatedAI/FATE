@@ -58,7 +58,7 @@ def go_fast(a):  # Function is compiled and runs in machine code
 class TestHomoLRGradient(unittest.TestCase):
     def setUp(self):
         home_dir = os.path.split(os.path.realpath(__file__))[0]
-        data_dir = home_dir + '/../../../../examples/data/breast.csv'
+        data_dir = home_dir + '/../../../../examples/data/breast_hetero_guest.csv'
         data_df = pd.read_csv(data_dir)
         self.X = np.array(data_df.iloc[:, 2:])
         self.Y = np.array(data_df.iloc[:, 1])
@@ -99,8 +99,6 @@ class TestHomoLRGradient(unittest.TestCase):
         #     grad_batch = np.c_[grad_batch, d]
         # grad = sum(grad_batch) / batch_size
         return 0
-
-
 
 
 if __name__ == '__main__':

@@ -44,29 +44,24 @@ def beaver_triplets(a_tensor, b_tensor, dot, q_field, he_key_pair, communicator:
     a = rand_tensor(q_field, a_tensor)
     b = rand_tensor(q_field, b_tensor)
 
-    c = dot(a, b)
-
-    # broadcast encrypted a and encrypted b
-    if communicator.party_idx == 0:
+    def _cross(self_index, other_index):
+        _c = dot(a, b)
         encrypted_a = encrypt_tensor(a, public_key)
-        encrypted_b = encrypt_tensor(b, public_key)
-        communicator.remote_encrypted_tensor(encrypted=encrypted_a, tag=f"{name}_a")
-        communicator.remote_encrypted_tensor(encrypted=encrypted_b, tag=f"{name}_b")
+        communicator.remote_encrypted_tensor(encrypted=encrypted_a, tag=f"{name}_a_{self_index}")
+        r = urand_tensor(q_field, _c)
+        _p, (ea,) = communicator.get_encrypted_tensors(tag=f"{name}_a_{other_index}")
+        eab = dot(ea, b)
+        eab += r
+        _c -= r
+        communicator.remote_encrypted_cross_tensor(encrypted=eab,
+                                                   parties=_p,
+                                                   tag=f"{name}_cross_a_{other_index}_b_{self_index}")
+        crosses = communicator.get_encrypted_cross_tensors(tag=f"{name}_cross_a_{self_index}_b_{other_index}")
+        for eab in crosses:
+            _c += decrypt_tensor(eab, private_key, [object])
 
-    # get encrypted a and b
-    if communicator.party_idx == 1:
-        r = urand_tensor(q_field, c)
-        _p, encrypted_a_list = communicator.get_encrypted_tensors(tag=f"{name}_a")
-        _, encrypted_b_list = communicator.get_encrypted_tensors(tag=f"{name}_b")
-        cross = dot(encrypted_a_list[0], b) + dot(a, encrypted_b_list[0])
-        cross += r
-        c -= r
-        communicator.remote_encrypted_cross_tensor(encrypted=cross, parties=_p, tag=name)
+        return _c
 
-    if communicator.party_idx == 0:
-        # get cross terms
-        crosses = communicator.get_encrypted_cross_tensors(tag=name)
-        for cross in crosses:
-            c += decrypt_tensor(cross, private_key, [object])
+    c = _cross(communicator.party_idx, 1 - communicator.party_idx)
 
     return a, b, c % q_field

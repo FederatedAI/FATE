@@ -333,8 +333,6 @@ def init_job_queue():
         job_queue = ListQueue()
         RuntimeConfig.init_config(JOB_QUEUE=job_queue)
     elif RuntimeConfig.WORK_MODE == WorkMode.CLUSTER:
-        # job_queue = RedisQueue(queue_name='fate_flow_job_queue', host=REDIS['host'], port=REDIS['port'],
-        #                        password=REDIS['password'], max_connections=REDIS['max_connections'])
         job_queue = MysqlQueue()
         RuntimeConfig.init_config(JOB_QUEUE=job_queue)
     else:

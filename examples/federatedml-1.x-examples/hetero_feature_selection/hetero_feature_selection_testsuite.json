@@ -1,33 +1,37 @@
 {
     "data": [
         {
-            "file": "examples/data/breast_b.csv",
+            "file": "examples/data/breast_hetero_guest.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "hetero_breast_b",
-            "namespace": "hetero_breast_guest",
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
             "role": "guest_0"
         },
         {
-            "file": "examples/data/breast_a.csv",
+            "file": "examples/data/breast_hetero_host.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "hetero_breast_a",
-            "namespace": "hetero_breast_host",
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
             "role": "host_0"
         },
         {
-            "file": "examples/data/breast_a.csv",
+            "file": "examples/data/breast_hetero_host.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "hetero_breast_a",
-            "namespace": "hetero_breast_host",
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
             "role": "host_1"
         }
     ],
     "tasks": {
         "selection": {
             "conf": "./test_hetero_feature_selection_job_conf.json",
+            "dsl": "./test_hetero_feature_selection_job_dsl.json"
+        },
+        "iv_top_k": {
+            "conf": "./test_hetero_iv_topk_selection_job_conf.json",
             "dsl": "./test_hetero_feature_selection_job_dsl.json"
         },
         "iv_selection": {
