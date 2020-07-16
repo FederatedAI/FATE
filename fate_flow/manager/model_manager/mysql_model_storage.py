@@ -15,7 +15,7 @@
 #
 import sys
 import datetime
-from peewee import Model, CharField, BigIntegerField, TextField, CompositeKey
+from peewee import Model, CharField, BigIntegerField, TextField, CompositeKey, IntegerField
 from playhouse.pool import PooledMySQLDatabase
 
 from fate_flow.manager.model_manager.pipelined_model import PipelinedModel
@@ -25,6 +25,8 @@ from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserial
 
 LOGGER = log_utils.getLogger()
 DB = PooledMySQLDatabase(None)
+
+SLICE_MAX_SIZE = 1024*1024*8
 
 
 class MysqlModelStorage(ModelStorageBase):
@@ -43,24 +45,32 @@ class MysqlModelStorage(ModelStorageBase):
         try:
             self.get_connection(config=store_address)
             DB.create_tables([MachineLearningModel])
-            model_in_table = MachineLearningModel()
             model = PipelinedModel(model_id=model_id, model_version=model_version)
+            LOGGER.info("start store model {} {}".format(model_id, model_version))
             with DB.connection_context():
                 with open(model.packaging_model(), "rb") as fr:
-                    LOGGER.info("start store model {} {}".format(model_id, model_version))
-                    model_in_table.f_create_time = current_timestamp()
-                    model_in_table.f_model_id = model_id
-                    model_in_table.f_model_version = model_version
-                    model_in_table.f_content = serialize_b64(fr.read())
-                    model_in_table.f_size = sys.getsizeof(model_in_table.f_content)
-                if force_update:
-                    model_in_table.save(only=[MachineLearningModel.f_content, MachineLearningModel.f_size, MachineLearningModel.f_update_time])
-                    LOGGER.info("update model {} {} content".format(model_id, model_version))
-                else:
-                    model_in_table.save(force_insert=True)
-                    LOGGER.info("insert model {} {} content".format(model_id, model_version))
-            LOGGER.info("Store model {} {} to mysql successfully".format(model_id,
-                                                                         model_version))
+                    slice_index = 0
+                    while True:
+                        content = fr.read(SLICE_MAX_SIZE)
+                        if content:
+                            model_in_table = MachineLearningModel()
+                            model_in_table.f_create_time = current_timestamp()
+                            model_in_table.f_model_id = model_id
+                            model_in_table.f_model_version = model_version
+                            model_in_table.f_content = serialize_b64(content)
+                            model_in_table.f_size = sys.getsizeof(model_in_table.f_content)
+                            model_in_table.f_slice_index = slice_index
+                            if force_update:
+                                model_in_table.save(only=[MachineLearningModel.f_content, MachineLearningModel.f_size,
+                                                          MachineLearningModel.f_update_time, MachineLearningModel.f_slice_index])
+                                LOGGER.info("update model {} {} slice index {} content".format(model_id, model_version, slice_index))
+                            else:
+                                model_in_table.save(force_insert=True)
+                            slice_index += 1
+                            LOGGER.info("insert model {} {} slice index {} content".format(model_id, model_version, slice_index))
+                        else:
+                            break
+                    LOGGER.info("Store model {} {} to mysql successfully".format(model_id,  model_version))
             self.close_connection()
         except Exception as e:
             LOGGER.exception(e)
@@ -78,12 +88,19 @@ class MysqlModelStorage(ModelStorageBase):
             self.get_connection(config=store_address)
             model = PipelinedModel(model_id=model_id, model_version=model_version)
             with DB.connection_context():
-                models_in_table = MachineLearningModel.select().where(MachineLearningModel.f_model_id==model_id, MachineLearningModel.f_model_version==model_version)
-                if not models_in_table:
+                models_in_tables = MachineLearningModel.select().where(MachineLearningModel.f_model_id == model_id,
+                                                                       MachineLearningModel.f_model_version == model_version).\
+                    order_by(MachineLearningModel.f_slice_index)
+                if not models_in_tables:
                     raise Exception("Restore model {} {} from mysql failed: {}".format(
                         model_id, model_version, "can not found model in table"))
-                model_in_table = models_in_table[0]
-                model_archive_data = deserialize_b64(model_in_table.f_content)
+                f_content = ''
+                for models_in_table in models_in_tables:
+                    if not f_content:
+                        f_content = models_in_table.f_content
+                    else:
+                        f_content += models_in_table.f_content
+                model_archive_data = deserialize_b64(f_content)
                 if not model_archive_data:
                     raise Exception("Restore model {} {} from mysql failed: {}".format(
                         model_id, model_version, "can not get model archive data"))
@@ -135,7 +152,8 @@ class MachineLearningModel(DataBaseModel):
     f_update_time = BigIntegerField(default=0)
     f_description = TextField(null=True, default='')
     f_content = TextField(default='')
+    f_slice_index = IntegerField(default=0, index=True)
 
     class Meta:
         db_table = "t_machine_learning_model"
-        primary_key = CompositeKey('f_model_id', 'f_model_version')
+        primary_key = CompositeKey('f_model_id', 'f_model_version', 'f_slice_index')

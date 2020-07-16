@@ -62,6 +62,8 @@ class TestJobOperation(unittest.TestCase):
         response = requests.post("/".join([self.server_url, 'job', '/data/view/query']), json={'party_id': 0})
         self.assertTrue(int(response.json()['retcode']) == 0)
 
+        print('waiting 10s...')
+        time.sleep(10)
         # clean job
         response = requests.post("/".join([self.server_url, 'job', '/clean']), json={'job_id': job_id})
         self.assertTrue(int(response.json()['retcode']) == 0)

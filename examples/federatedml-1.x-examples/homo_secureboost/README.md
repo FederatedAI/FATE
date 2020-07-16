@@ -16,8 +16,8 @@ This section introduces the dsl and conf relationships for usage.
     runtime_config: test_secureboost_train_multi_conf.json
    
 3. Regression:  
-    example-data: (1) guest: homo_student_guest.csv
-                  (2) host: homo_student_host.csv  
+    example-data: (1) guest: student_homo_guest.csv
+                  (2) host: student_homo_host.csv  
     dsl: test_secureboost_train_dsl.json  
     runtime_config: test_secureboost_train_regression_conf.json
     
@@ -29,8 +29,8 @@ This section introduces the dsl and conf relationships for usage.
     runtime_config: test_secureboost_train_binary_multi_host_conf.json
     
 5. Binary-Class With Missing Value  
-    example-data: (1) guest: ionosphere_scale_b.csv
-                  (2) host: ionosphere_scale_b.csv
+    example-data: (1) guest: ionosphere_scale_hetero_guest.csv
+                  (2) host: ionosphere_scale_hetero_guest.csv
     dsl: test_secureboost_train_dsl.json  
     runtime_config: test_secureboost_train_binary_with_missing_value_conf.json  
     
@@ -48,7 +48,7 @@ This section introduces the dsl and conf relationships for usage.
     runtime_config: test_secureboost_cross_validation_multi_conf.json  
     
 3. Regression:  
-    example-data: (1) guest: homo_student_guest.csv
-                  (2) host: homo_student_host.csv 
+    example-data: (1) guest: student_homo_guest.csv
+                  (2) host: student_homo_host.csv 
     dsl: test_secureboost_cross_validation_dsl.json  
     runtime_config: test_secureboost_cross_validation_regression_conf.json

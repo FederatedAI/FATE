@@ -4,5 +4,5 @@
     "partition": 16,
     "work_mode": 0,
     "table_name": "homo_breast_test",
-    "namespace": "homo_breast_test"
+    "namespace": "experiment"
 }
