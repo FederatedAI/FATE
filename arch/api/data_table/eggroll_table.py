@@ -35,7 +35,7 @@ from typing import Iterable
 
 from arch.api import WorkMode, Backend, session
 from arch.api.base.utils.store_type import StoreEngine
-from arch.api.data_table.table import Table
+from arch.api.data_table.base import Table, EggRollStorage
 from arch.api.utils.profile_util import log_elapsed
 from fate_flow.settings import WORK_MODE
 
@@ -74,7 +74,7 @@ class EggRollTable(Table):
         return self._strage_engine
 
     def get_address(self):
-        return {'name': self._name, 'namespace': self._namespace}
+        return EggRollStorage(namespace=self._namespace, name=self._name)
 
     def put_all(self, kv_list: Iterable, use_serialize=True, chunk_size=100000):
         return self._table.put_all(kv_list, use_serialize, chunk_size)

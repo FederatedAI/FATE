@@ -15,7 +15,7 @@
 #
 from typing import List
 
-from arch.api.data_table.table import Table
+from arch.api.data_table.base import Table
 from arch.api.data_table.table_manager import get_table
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from arch.api.utils.log_utils import schedule_logger

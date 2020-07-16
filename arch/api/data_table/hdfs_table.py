@@ -37,7 +37,7 @@ import pickle
 
 from arch.api import WorkMode
 from arch.api.base.utils.store_type import StoreEngine
-from arch.api.data_table.table import Table
+from arch.api.data_table.base import Table, HDFSStorage
 from arch.api.utils.profile_util import log_elapsed
 from fate_flow.db.db_models import DB, TableMeta
 from arch.api.utils import log_utils
@@ -69,7 +69,7 @@ class HDFSTable(Table):
         return StoreEngine.HDFS
 
     def get_address(self):
-        return {'name': self._name, 'namespace': self._namespace}
+        return HDFSStorage(HDFSTable.generate_hdfs_path(self._namespace, self._name))
 
     
     def put_all(self, kv_list: Iterable, use_serialize=True, chunk_size=100000):

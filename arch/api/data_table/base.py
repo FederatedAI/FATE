@@ -184,3 +184,30 @@ class Table(object):
                 delete.execute()
         except:
             pass
+
+
+class StorageABC(metaclass=abc.ABCMeta):
+    ...
+
+
+class HDFSStorage(StorageABC):
+    def __init__(self, path):
+        self.path = path
+
+
+class EggRollStorage(StorageABC):
+    def __init__(self, name, namespace):
+        self.name = name
+        self._namespace = namespace
+
+
+class MysqlAddress(StorageABC):
+    def __init__(self, user, passwd, host, port, db, name):
+        self.user = user
+        self.passwd = passwd
+        self.host = host
+        self.port = port
+        self.db = db
+        self.name = name
+
+

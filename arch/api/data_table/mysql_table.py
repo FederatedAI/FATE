@@ -34,7 +34,7 @@ import pymysql
 import typing
 
 from arch.api.base.utils.store_type import StoreEngine
-from arch.api.data_table.table import Table
+from arch.api.data_table.base import Table, MysqlAddress
 from arch.api.utils.profile_util import log_elapsed
 from arch.api import WorkMode
 from fate_flow.settings import WORK_MODE
@@ -48,13 +48,13 @@ class MysqlTable(Table):
                  namespace: str = None,
                  name: str = None,
                  partition: int = 1,
-                 address: dict = None,
+                 database_config: dict = None,
                  **kwargs):
         self._name = name or str(uuid.uuid1())
         self._namespace = namespace or str(uuid.uuid1())
         self._partitions = partition
-        self._strage_engine = persistent_engine
-        self.address = address
+        self._storage_engine = persistent_engine
+        self.database_config = database_config
         self._mode = mode
         '''
         database_config
@@ -62,15 +62,14 @@ class MysqlTable(Table):
             'user': 'root',
             'passwd': 'fate_dev',
             'host': '127.0.0.1',
-            'port': 3306,
-            'charset': 'utf8'
+            'port': 3306
         }
         '''
         try:
-            self.con = pymysql.connect(host=self.address.get('host'),
-                                       user=self.address.get('user'),
-                                       passwd=self.address.get('passwd'),
-                                       port=self.address.get('port'),
+            self.con = pymysql.connect(host=self.database_config.get('host'),
+                                       user=self.database_config.get('user'),
+                                       passwd=self.database_config.get('passwd'),
+                                       port=self.database_config.get('port'),
                                        db=namespace)
             self.cur = self.con.cursor()
         except:
@@ -99,10 +98,14 @@ class MysqlTable(Table):
         return self._partitions
 
     def get_storage_engine(self):
-        return self._strage_engine
+        return self._storage_engine
 
     def get_address(self):
-        return {'name': self._name, 'namespace': self._namespace}
+        return MysqlAddress(host=self.database_config.get('host'),
+                            user=self.database_config.get('user'),
+                            passwd=self.database_config.get('passwd'),
+                            port=self.database_config.get('port'),
+                            db=self._namespace, name=self._name)
 
     @log_elapsed
     def collect(self, min_chunk_size=0, use_serialize=True, **kwargs) -> list:

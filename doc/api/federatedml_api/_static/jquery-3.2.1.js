@@ -5632,7 +5632,7 @@ var
 
 // Prefer a tbody over its parent table for containing new rows
 function manipulationTarget( elem, content ) {
-	if ( nodeName( elem, "table" ) &&
+	if ( nodeName( elem, "base.py" ) &&
 		nodeName( content.nodeType !== 11 ? content : content.firstChild, "tr" ) ) {
 
 		return jQuery( ">tbody", elem )[ 0 ] || elem;
