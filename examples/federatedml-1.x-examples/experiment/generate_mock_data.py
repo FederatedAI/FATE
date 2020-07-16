@@ -1,22 +1,17 @@
 import random
 import sys
 
+import numpy as np
+
 SAMPLE_NUM = 10000
 
 # For sparse data, it means how many non-zero features in one sample.
 # The total possible feature num depends on your tag interval below.
 FEATURE_NUM = 20
 
-# Should be one of "tag_integer_value", "tag", "tag_float_value", "tag_1" or "label"
-# DATA_TYPE = "tag_integer_value"
 
-# TAG_INTERVAL = (1, 5000)
-# TAG_INTERVAL = (2019010101, 2019011101)
 TAG_INTERVAL = (2019120799, 2019121299)
 # SAVE_FILE_NAME = DATA_TYPE + "_" + str(SAMPLE_NUM) + "_" + str(FEATURE_NUM) + ".csv"
-
-VALUE_LENGTH = 4
-VALUE_INTERVAL = (1, 10)
 
 
 def generate_tag_1_data(ids):
@@ -26,12 +21,9 @@ def generate_tag_1_data(ids):
     counter = 0
     for sample_i in range(SAMPLE_NUM):
         one_data = [ids[sample_i]]
-        for feature_i in range(FEATURE_NUM):
-            tag = str(random.randint(TAG_INTERVAL[0], TAG_INTERVAL[1]))
-            value = '1.0'
-            tag_value = ":".join([tag, value])
-            one_data.append(tag_value)
-
+        valid_set = [x for x in range(TAG_INTERVAL[0], TAG_INTERVAL[1])]
+        features = np.random.choice(valid_set, FEATURE_NUM, replace=False)
+        one_data += [":".join([x, "1.0"]) for x in features]
         counter += 1
         if counter % 10000 == 0:
             print("generate data {}".format(counter))
@@ -46,16 +38,13 @@ def generate_tag_float_value_data(ids):
     counter = 0
     for sample_i in range(SAMPLE_NUM):
         one_data = [ids[sample_i]]
-        for feature_i in range(FEATURE_NUM):
-            tag = str(random.randint(TAG_INTERVAL[0], TAG_INTERVAL[1]))
-            value = str(round(100 * random.random(), 2))
-            tag_value = ":".join([tag, value])
-            one_data.append(tag_value)
-
+        valid_set = [x for x in range(TAG_INTERVAL[0], TAG_INTERVAL[1])]
+        tags = np.random.choice(valid_set, FEATURE_NUM, replace=False)
+        values = 100 * np.random.random(FEATURE_NUM)
+        one_data += [":".join([str(tags[i]), str(round(values[i], 2))]) for i in range(FEATURE_NUM)]
         counter += 1
         if counter % 10000 == 0:
             print("generate data {}".format(counter))
-
         yield one_data
 
 
@@ -64,16 +53,11 @@ def generate_tag_data(ids):
         raise ValueError("len ids should equal to sample number")
 
     counter = 0
-    v_str = "0123456789abcd"
     for sample_i in range(SAMPLE_NUM):
         one_data = [ids[sample_i]]
-        for feature_i in range(FEATURE_NUM):
-            tag = str(random.randint(TAG_INTERVAL[0], TAG_INTERVAL[1]))
-            value = ''
-            for i in range(VALUE_LENGTH):
-                value += v_str[int(random.random() * 14)]
-            tag_value = ":".join([tag, value])
-            one_data.append(tag_value)
+        valid_set = [x for x in range(TAG_INTERVAL[0], TAG_INTERVAL[1])]
+        tags = np.random.choice(valid_set, FEATURE_NUM, replace=False)
+        one_data += [str(tag) for tag in tags]
 
         counter += 1
         if counter % 10000 == 0:
@@ -84,8 +68,6 @@ def generate_tag_data(ids):
 
 def generate_tag_value_data(ids):
     if len(ids) != SAMPLE_NUM:
-        print(len(ids))
-        print(SAMPLE_NUM)
         raise ValueError("len ids should equal to sample number")
 
     counter = 0
@@ -106,18 +88,33 @@ def generate_tag_value_data(ids):
 
 def generate_label_data(ids):
     if len(ids) != SAMPLE_NUM:
-        print(len(ids))
-        print(SAMPLE_NUM)
         raise ValueError("len ids should equal to sample number")
 
-    header = ['id', 'y'] + ['x' + str(i) for i in range(2)]
+    header = ['id', 'y'] + ['x' + str(i) for i in range(FEATURE_NUM)]
     yield header
 
     counter = 0
     for sample_i in range(SAMPLE_NUM):
-        one_data = [ids[sample_i], round(random.random())]
-        for feature_i in range(2):
-            one_data.append(random.random())
+        one_data = [ids[sample_i], round(random.random())] + list(np.random.random(FEATURE_NUM))
+
+        counter += 1
+        if counter % 10000 == 0:
+            print("generate data {}".format(counter))
+
+        yield one_data
+
+
+def generate_non_label_data(ids):
+    if len(ids) != SAMPLE_NUM:
+        raise ValueError("len ids should equal to sample number")
+
+    header = ['id'] + ['x' + str(i) for i in range(FEATURE_NUM)]
+    yield header
+
+    counter = 0
+    for sample_i in range(SAMPLE_NUM):
+        one_data = [ids[sample_i]] + list(np.random.random(FEATURE_NUM))
+
         counter += 1
         if counter % 10000 == 0:
             print("generate data {}".format(counter))
@@ -180,6 +177,10 @@ if __name__ == "__main__":
 
     if DATA_TYPE == 'label':
         new_data = generate_label_data(ids)
+        save_file(SAVE_FILE_NAME, new_data, delimitor=',')
+
+    if DATA_TYPE == 'non_label':
+        new_data = generate_non_label_data(ids)
         save_file(SAVE_FILE_NAME, new_data, delimitor=',')
 
     print("finish generate data , save data in {}".format(SAVE_FILE_NAME))

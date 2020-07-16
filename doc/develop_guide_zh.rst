@@ -283,7 +283,7 @@ fate_flow_client 模块的运行规则是：
    在开始任务之前，您需要加载来自所有提供者的数据。为此，需要准备 `load_file` 配置，然后运行以下命令：
 
 .. code-block:: bash
-      
+
       python ${your_install_path}/fate_flow/fate_flow_client.py -f upload -c dsl_test/upload_data.json
 
 ..Note::

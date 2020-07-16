@@ -95,13 +95,28 @@ class ComponentProperties(object):
         data_sets = args.get("data")
         if data_sets is None:
             return self
-        for data_key in data_sets:
-            if 'train_data' in data_sets[data_key]:
+        for data_key, data_dicts in data_sets.items():
+            data_keys = list(data_dicts.keys())
+            if "train_data" in data_keys:
                 self.has_train_data = True
-            if 'eval_data' in data_sets[data_key]:
+                data_keys.remove("train_data")
+
+            if "eval_data" in data_keys:
                 self.has_eval_data = True
-            if 'data' in data_sets[data_key]:
+                data_keys.remove("eval_data")
+
+            if len(data_keys) > 0:
                 self.has_normal_input_data = True
+
+            # if 'train_data' in data_sets[data_key]:
+            #     self.has_train_data = True
+            # if 'eval_data' in data_sets[data_key]:
+            #     self.has_eval_data = True
+            # if 'data' in data_sets[data_key]:
+            #     self.has_normal_input_data = True
+        LOGGER.debug("has_train_data: {}, has_eval_data: {}, has_normal_data: {}".format(
+            self.has_train_data, self.has_eval_data, self.has_normal_input_data
+        ))
         return self
 
     def extract_input_data(self, args):
@@ -111,18 +126,30 @@ class ComponentProperties(object):
         data = {}
         if data_sets is None:
             return train_data, eval_data, data
-        for data_key in data_sets:
-            if data_sets[data_key].get("train_data", None):
-                train_data = data_sets[data_key]["train_data"]
-                self.input_data_count = train_data.count()
+        for data_key, data_dict in data_sets.items():
 
-            if data_sets[data_key].get("eval_data", None):
-                eval_data = data_sets[data_key]["eval_data"]
-                self.input_eval_data_count = eval_data.count()
+            for data_type, d_table in data_dict.items():
+                if data_type == "train_data" and d_table is not None:
+                    train_data = d_table
+                    self.input_data_count = train_data.count()
+                elif data_type == 'eval_data' and d_table is not None:
+                    eval_data = d_table
+                    self.input_eval_data_count = eval_data.count()
+                else:
+                    if d_table is not None:
+                        data[".".join([data_key, data_type])] = d_table
 
-            if data_sets[data_key].get("data", None):
-                # data = data_sets[data_key]["data"]
-                data[data_key] = data_sets[data_key]["data"]
+            # if data_sets[data_key].get("train_data", None):
+            #     train_data = data_sets[data_key]["train_data"]
+            #     self.input_data_count = train_data.count()
+            #
+            # if data_sets[data_key].get("eval_data", None):
+            #     eval_data = data_sets[data_key]["eval_data"]
+            #     self.input_eval_data_count = eval_data.count()
+            #
+            # if data_sets[data_key].get("data", None):
+            #     # data = data_sets[data_key]["data"]
+            #     data[data_key] = data_sets[data_key]["data"]
 
         for data_key, data_table in data.items():
             self.input_data_count += data_table.count()
@@ -231,9 +258,9 @@ class ComponentProperties(object):
 
         result_data = None
         for data, name in zip(previews_data, name_list):
-            LOGGER.debug("before mapValues, one data: {}".format(data.first()))
+            # LOGGER.debug("before mapValues, one data: {}".format(data.first()))
             data = data.mapValues(lambda value: value + [name])
-            LOGGER.debug("after mapValues, one data: {}".format(data.first()))
+            # LOGGER.debug("after mapValues, one data: {}".format(data.first()))
 
             if result_data is None:
                 result_data = data
@@ -241,6 +268,6 @@ class ComponentProperties(object):
                 LOGGER.debug(f"Before union, t1 count: {result_data.count()}, t2 count: {data.count()}")
                 result_data = result_data.union(data)
                 LOGGER.debug(f"After union, result count: {result_data.count()}")
-            LOGGER.debug("before out loop, one data: {}".format(result_data.first()))
+            # LOGGER.debug("before out loop, one data: {}".format(result_data.first()))
 
         return result_data

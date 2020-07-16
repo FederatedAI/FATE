@@ -64,16 +64,20 @@ ubuntu系统执行：apt list --installed | grep selinux
 
 如果已安装了selinux就执行：setenforce 0
 
-4.3 修改Linux最大打开文件数
+4.3 修改Linux系统参数
 ---------------------------
 
 **在目标服务器（192.168.0.1）root用户下执行：**
 
-vim /etc/security/limits.conf
+1）vim /etc/security/limits.conf
 
-\* soft nofile 65536
+\* soft nofile 65535
 
-\* hard nofile 65536
+\* hard nofile 65535
+
+2）vim /etc/security/limits.d/20-nproc.conf
+
+\* soft nproc unlimited
 
 4.4 关闭防火墙(可选)
 --------------
@@ -119,7 +123,7 @@ chown -R app:apps /data/projects
 
 ```
 #centos
-yum -y install gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpcdevel libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan lsof sysstat telnet psmisc
+yum -y install gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan lsof sysstat telnet psmisc
 #ubuntu
 apt-get install -y gcc g++ make openssl supervisor libgmp-dev  libmpfr-dev libmpc-dev libaio1 libaio-dev numactl autoconf automake libtool libffi-dev libssl1.0.0 libssl-dev  liblz4-1 liblz4-dev liblz4-1-dbg liblz4-tool  zlib1g zlib1g-dbg zlib1g-dev
 cd /usr/lib/x86_64-linux-gnu
@@ -142,10 +146,24 @@ fi
 ```
 cd /data/projects/install
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.0-rc4.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.1-release.tar.gz
 ```
 
-## 5.2 部署jdk
+## 5.2 操作系统参数检查
+
+**在目标服务器（192.168.0.1）app用户下执行**
+
+```
+#文件句柄数，不低于65535，如不满足需参考4.3章节重新设置
+ulimit -n
+65535
+
+#用户进程数，不低于64000，如不满足需参考4.3章节重新设置
+ulimit -u
+65535
+```
+
+## 5.3 部署jdk
 
 **在目标服务器（192.168.0.1）app用户下执行**:
 
@@ -160,17 +178,17 @@ mv jdk1.8.0_192 jdk-8u192
 ```
 
 
-5.3 部署eggroll
+5.4 部署eggroll
 --------
 
-### **5.3.1软件部署**
+### **5.4.1软件部署**
 
 ```
 #部署软件
 #在目标服务器（192.168.0.1）app用户下执行:
 cd /data/projects/install
-tar xf FATE_install_1.4.0-rc4.tar.gz
-cd FATE_install_1.4*
+tar xf FATE_install_*.tar.gz
+cd FATE_install_*
 tar xvf eggroll.tar.gz -C /data/projects/fate
 
 #设置环境变量文件
@@ -181,7 +199,7 @@ export PATH=\$PATH:\$JAVA_HOME/bin
 EOF
 ```
 
-### 5.5.2 eggroll系统配置文件修改
+### 5.4.2 eggroll系统配置文件修改
 
 - 对应party rollsite的IP、端口、本party的Party Id修改，rollsite的端口一般默认即可。
 
@@ -207,7 +225,7 @@ eggroll.rollsite.adapter.sendbuf.size=1048576
 EOF
 ```
 
-### 5.5.3 eggroll路由配置文件修改
+### 5.4.3 eggroll路由配置文件修改
 
 此配置文件rollsite使用，配置路由信息，可以参考如下例子手工配置，也可以使用以下指令完成：
 
@@ -246,14 +264,14 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
 EOF
 ```
 
-### 5.5.4 各party路由信息修改
+### 5.4.4 各party默认路由信息修改
 
 **需要连接exchange的各party的rollsite模块，app用户修改**
 
-修改/data/projects/fate/proxy/conf/route_table.json部分，路由信息指向部署好的exchange：
+修改/data/projects/fate/eggroll/conf/route_table.json部分，默认路由信息指向部署好的exchange，不需要配置对端fateflow信息，修改后需重启rollsite：
 
 ```
- "partyid": {
+ "default": {
             "default": [
                 {
                     "ip": "192.168.0.1",
@@ -263,7 +281,7 @@ EOF
         }
 ```
 
-## 5.6 启动服务
+## 5.5 启动服务
 
 **在目标服务器（192.168.0.1）app用户下执行**
 
@@ -274,7 +292,7 @@ cd /data/projects/fate/eggroll
 sh ./bin/eggroll.sh rollsite start
 ```
 
-## 5.7 验证和问题定位
+## 5.6 验证和问题定位
 
 1）跑一个双边toy测试，看是否可以测试通过，通过则表示配置无误，具体用例参考allinone部署文档。
 

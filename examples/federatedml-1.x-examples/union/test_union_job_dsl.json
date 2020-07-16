@@ -64,6 +64,26 @@
             "output": {
                 "data": ["data"]
             }
+        },
+        "hetero_lr_0": {
+            "module": "HeteroLR",
+            "input": {
+                "data": {
+                    "train_data": ["union_0.data"]
+                }
+            },
+            "output": {
+                "data": ["hetero_lr_data"],
+                "model": ["hetero_lr_model"]
+            }
+        },
+        "evaluation_0": {
+            "module": "Evaluation",
+            "input": {
+                "data": {
+                    "data": ["hetero_lr_0.hetero_lr_data"]
+                }
+            }
         }
     }
 }

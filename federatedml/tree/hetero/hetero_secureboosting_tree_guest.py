@@ -29,6 +29,8 @@ import functools
 from operator import itemgetter
 
 import numpy as np
+from federatedml.tree.tree_core.predict_cache import PredictDataCache
+from federatedml.util.io_check import assert_io_num_rows_equal
 from numpy import random
 
 from arch.api.utils import log_utils
@@ -55,6 +57,7 @@ from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import Feature
 from federatedml.secureprotol import IterativeAffineEncrypt
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
+from federatedml.statistic import data_overview
 from federatedml.transfer_variable.transfer_class.hetero_secure_boost_transfer_variable import \
     HeteroSecureBoostingTreeTransferVariable
 from federatedml.tree import BoostingTree
@@ -62,7 +65,6 @@ from federatedml.tree import HeteroDecisionTreeGuest
 from federatedml.util import consts
 from federatedml.util.classify_label_checker import ClassifyLabelChecker
 from federatedml.util.classify_label_checker import RegressionLabelChecker
-from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 
@@ -92,10 +94,13 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
         self.bin_split_points = None
         self.bin_sparse_points = None
         self.encrypted_mode_calculator = None
+        self.predict_data_cache = PredictDataCache()
+
         self.feature_importances_ = {}
         self.role = consts.GUEST
 
         self.transfer_variable = HeteroSecureBoostingTreeTransferVariable()
+        self.data_alignment_map = {}
 
     def set_loss(self, objective_param):
         loss_type = objective_param.objective
@@ -283,16 +288,23 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                                                idx=-1)
 
     def sync_stop_flag(self, stop_flag, num_round):
-        LOGGER.info("sync stop flag to host, boosting round is {}".format(num_round))
+        LOGGER.info("sync stop flag to host, boost round is {}".format(num_round))
 
         self.transfer_variable.stop_flag.remote(stop_flag,
                                                 role=consts.HOST,
                                                 idx=-1,
                                                 suffix=(num_round,))
 
+    def sync_predict_start_round(self, num_round):
+        LOGGER.info("sync predict start round {}".format(num_round))
+        self.transfer_variable.predict_start_round.remote(num_round,
+                                                          role=consts.HOST,
+                                                          idx=-1)
+
     def fit(self, data_inst, validate_data=None):
         LOGGER.info("begin to train secureboosting guest model")
         self.gen_feature_fid_mapping(data_inst.schema)
+        self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
         data_inst = self.data_alignment(data_inst)
         self.convert_feature_to_bin(data_inst)
         self.set_y()
@@ -307,11 +319,10 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                                       metric_type="LOSS",
                                       extra_metas={"unit_name": "iters"}))
 
-        self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
-
         for i in range(self.num_trees):
             self.compute_grad_and_hess()
             for tidx in range(self.tree_dim):
+                LOGGER.info("start to fit, boost round: {}, tree index: {}".format(i, tidx))
                 tree_inst = HeteroDecisionTreeGuest(self.tree_param)
 
                 tree_inst.set_inputinfo(self.data_bin, self.get_grad_and_hess(tidx), self.bin_split_points,
@@ -336,9 +347,8 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
 
             loss = self.compute_loss()
             self.history_loss.append(loss)
-            LOGGER.info("round {} loss is {}".format(i, loss))
+            LOGGER.debug("boost round {} loss is {}".format(i, loss))
 
-            LOGGER.debug("type of loss is {}".format(type(loss).__name__))
             self.callback_metric("loss",
                                  "train",
                                  [Metric(i, loss)])
@@ -352,11 +362,12 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
             if self.n_iter_no_change is True:
                 if self.check_convergence(loss):
                     self.sync_stop_flag(True, i)
+                    LOGGER.debug("check loss convergence on boost round {}".format(i))
                     break
                 else:
                     self.sync_stop_flag(False, i)
 
-        LOGGER.debug("history loss is {}".format(min(self.history_loss)))
+        LOGGER.debug("history loss is {}".format(self.history_loss))
         self.callback_meta("loss",
                            "train",
                            MetricMeta(name="train",
@@ -368,14 +379,26 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
 
         LOGGER.info("end to train secureboosting guest model")
 
-    def predict_f_value(self, data_inst):
-        LOGGER.info("predict tree f value, there are {} trees".format(len(self.trees_)))
-        tree_dim = self.tree_dim
+    def predict_f_value(self, data_inst, cache_dataset_key):
+        LOGGER.debug("predict tree f value, there are {} trees".format(len(self.trees_)))
         init_score = self.init_score
-        self.predict_F = data_inst.mapValues(lambda v: init_score)
+
+        last_round = self.predict_data_cache.predict_data_last_round(cache_dataset_key)
         rounds = len(self.trees_) // self.tree_dim
-        for i in range(rounds):
+        if last_round == -1:
+            self.predict_F = data_inst.mapValues(lambda v: init_score)
+        else:
+            LOGGER.debug("hit cache, cached round is {}".format(last_round))
+            if last_round >= rounds - 1:
+                LOGGER.debug("predict data cached, rounds is {}, total cached round is {}".format(rounds, last_round))
+
+            self.predict_F = self.predict_data_cache.predict_data_at(cache_dataset_key, min(rounds - 1, last_round))
+
+        self.sync_predict_start_round(last_round + 1)
+
+        for i in range(last_round + 1, rounds):
             for tidx in range(self.tree_dim):
+                LOGGER.info("start to predict, boost round: {}, tree index: {}".format(i, tidx))
                 tree_inst = HeteroDecisionTreeGuest(self.tree_param)
                 tree_inst.load_model(self.tree_meta, self.trees_[i * self.tree_dim + tidx])
                 # tree_inst.set_tree_model(self.trees_[i * self.tree_dim + tidx])
@@ -386,11 +409,23 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
                 predict_data = tree_inst.predict(data_inst)
                 self.update_f_value(new_f=predict_data, tidx=tidx, mode="predict")
 
+            self.predict_data_cache.add_data(cache_dataset_key, self.predict_F)
+
     @assert_io_num_rows_equal
     def predict(self, data_inst):
         LOGGER.info("start predict")
-        data_inst = self.data_alignment(data_inst)
-        self.predict_f_value(data_inst)
+        cache_dataset_key = self.predict_data_cache.get_data_key(data_inst)
+        if cache_dataset_key in self.data_alignment_map:
+            data_inst = self.data_alignment_map[cache_dataset_key]
+        else:
+            data_inst = self.data_alignment(data_inst)
+            header = [None] * len(self.feature_name_fid_mapping)
+            for idx, col in self.feature_name_fid_mapping.items():
+                header[idx] = col
+            data_inst = data_overview.header_alignment(data_inst, header)
+            self.data_alignment_map[cache_dataset_key] = data_inst
+
+        self.predict_f_value(data_inst, cache_dataset_key)
         if self.task_type == consts.CLASSIFICATION:
             loss_method = self.loss
             if self.num_classes == 2:
@@ -402,7 +437,7 @@ class HeteroSecureBoostingTreeGuest(BoostingTree):
             if self.objective_param.objective in ["lse", "lae", "huber", "log_cosh", "fair", "tweedie"]:
                 predicts = self.predict_F
             else:
-                raise NotImplementedError("objective {} not supprted yet".format(self.objective_param.objective))
+                raise NotImplementedError("objective {} not supported yet".format(self.objective_param.objective))
 
         if self.task_type == consts.CLASSIFICATION:
             classes_ = self.classes_

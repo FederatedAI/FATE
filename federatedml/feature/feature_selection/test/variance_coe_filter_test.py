@@ -57,7 +57,7 @@ class TestVarianceCoeFilter(unittest.TestCase):
             self.coe_list.append(np.std(col) / np.mean(col))
         return result
 
-    def test_unique_logic(self):
+    def test_filter_logic(self):
         data_table = self.gen_data(1000, 10, 48)
         select_param = FeatureSelectionParam()
         select_param.variance_coe_param.value_threshold = 0.1

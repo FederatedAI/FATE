@@ -27,7 +27,13 @@ https://fate.fedai.org
 
    FederatedML <federatedml/README>
 
+.. toctree::
+   :maxdepth: 3
+   :caption: FATE FLOW
 
+   FATE FLOW Guide <fate_flow/README>
+   CLI API <fate_flow/doc/fate_flow_cli>
+   REST API <fate_flow/doc/fate_flow_rest_api>
 
 .. toctree::
    :maxdepth: 3

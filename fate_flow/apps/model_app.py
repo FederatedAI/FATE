@@ -16,21 +16,17 @@
 import os
 import shutil
 
-from arch.api.utils.dtable_utils import get_table_info
-
-from arch.api.utils.version_control import version_history, save_version
 from flask import Flask, request, send_file
 
-from fate_flow.settings import stat_logger, API_VERSION, SERVING_PATH, SERVINGS_ZK_PATH, \
-    USE_CONFIGURATION_CENTER, ZOOKEEPER_HOSTS, SERVER_CONF_PATH, DEFAULT_MODEL_STORE_ADDRESS, TEMP_DIRECTORY
+from fate_flow.settings import stat_logger, API_VERSION, MODEL_STORE_ADDRESS, TEMP_DIRECTORY
 from fate_flow.driver.job_controller import JobController
 from fate_flow.manager.model_manager import publish_model
 from fate_flow.manager.model_manager import pipelined_model
 from fate_flow.utils.api_utils import get_json_result, federated_api
 from fate_flow.utils.job_utils import generate_job_id, runtime_conf_basic
-from fate_flow.utils.node_check_utils import check_nodes
-from fate_flow.utils.setting_utils import CenterConfig
+from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils.detect_utils import check_config
+from fate_flow.utils.model_utils import gen_party_model_id
 from fate_flow.entity.constant_config import ModelOperation
 
 manager = Flask(__name__)
@@ -52,6 +48,7 @@ def load_model():
     load_status = True
     load_status_info = {}
     load_status_msg = 'success'
+    load_status_info['detail'] = {}
     for role_name, role_partys in request_config.get("role").items():
         if role_name == 'arbiter':
             continue
@@ -68,6 +65,14 @@ def load_model():
                                          json_body=request_config,
                                          work_mode=request_config['job_parameters']['work_mode'])
                 load_status_info[role_name][_party_id] = response['retcode']
+                load_status_info['detail'][role_name] = {}
+                detail = {_party_id: {}}
+                detail[_party_id]['retcode'] = response['retcode']
+                detail[_party_id]['retmsg'] = response['retmsg']
+                load_status_info['detail'][role_name].update(detail)
+                if response['retcode']:
+                    load_status = False
+                    load_status_msg = 'failed'
             except Exception as e:
                 stat_logger.exception(e)
                 load_status = False
@@ -78,14 +83,11 @@ def load_model():
 
 
 @manager.route('/load/do', methods=['POST'])
-@check_nodes
 def do_load_model():
     request_data = request.json
-    request_data["servings"] = CenterConfig.get_settings(path=SERVING_PATH, servings_zk_path=SERVINGS_ZK_PATH,
-                                                         use_zk=USE_CONFIGURATION_CENTER, hosts=ZOOKEEPER_HOSTS,
-                                                         server_conf_path=SERVER_CONF_PATH)
-    load_status = publish_model.load_model(config_data=request_data)
-    return get_json_result(retcode=(0 if load_status else 101))
+    request_data["servings"] = ServiceUtils.get("servings", [])
+    retcode, retmsg = publish_model.load_model(config_data=request_data)
+    return get_json_result(retcode=retcode, retmsg=retmsg)
 
 
 @manager.route('/bind', methods=['POST'])
@@ -93,13 +95,12 @@ def bind_model_service():
     request_config = request.json
     if not request_config.get('servings'):
         # get my party all servings
-        request_config['servings'] = CenterConfig.get_settings(path=SERVING_PATH, servings_zk_path=SERVINGS_ZK_PATH,
-                                                               use_zk=USE_CONFIGURATION_CENTER, hosts=ZOOKEEPER_HOSTS,
-                                                               server_conf_path=SERVER_CONF_PATH)
-    if not request_config.get('service_id'):
+        request_config['servings'] = ServiceUtils.get("servings", [])
+    service_id = request_config.get('service_id')
+    if not service_id:
         return get_json_result(retcode=101, retmsg='no service id')
-    bind_status, service_id = publish_model.bind_model_service(config_data=request_config)
-    return get_json_result(retcode=(0 if bind_status else 101), retmsg='service id is {}'.format(service_id))
+    bind_status, retmsg = publish_model.bind_model_service(config_data=request_config)
+    return get_json_result(retcode=bind_status, retmsg='service id is {}'.format(service_id) if not retmsg else retmsg)
 
 
 @manager.route('/transfer', methods=['post'])
@@ -108,34 +109,15 @@ def transfer_model():
     return get_json_result(retcode=0, retmsg="success", data=model_data)
 
 
-@manager.route('/version/save', methods=['POST'])
-def save_table_version():
-    save_version(name=request.json.get('name'),
-                 namespace=request.json.get('namespace'),
-                 version_log=request.json.get('version_log'))
-    return get_json_result(retcode=0, retmsg='success')
-
-
-@manager.route('/table_info', methods=['POST'])
-def get_table():
-    table_name, namespace = get_table_info(config=request.json.get('config'), create=request.json.get('create'))
-    return get_json_result(retcode=0, retmsg='success', data={'table_name':table_name, 'namespace': namespace})
-
-
-@manager.route('/version_history', methods=['POST'])
-def query_model_version_history():
-    history = version_history(data_table_namespace=request.json.get("namespace"))
-    return get_json_result(data=history)
-
-
 @manager.route('/<model_operation>', methods=['post', 'get'])
 def operate_model(model_operation):
     request_config = request.json or request.form.to_dict()
     job_id = generate_job_id()
-    required_arguments = ["model_id", "model_version"]
     if model_operation not in [ModelOperation.STORE, ModelOperation.RESTORE, ModelOperation.EXPORT, ModelOperation.IMPORT]:
         raise Exception('Can not support this operating now: {}'.format(model_operation))
+    required_arguments = ["model_id", "model_version", "role", "party_id"]
     check_config(request_config, required_arguments=required_arguments)
+    request_config["model_id"] = gen_party_model_id(model_id=request_config["model_id"], role=request_config["role"], party_id=request_config["party_id"])
     if model_operation in [ModelOperation.EXPORT, ModelOperation.IMPORT]:
         if model_operation == ModelOperation.IMPORT:
             file = request.files.get('file')
@@ -174,11 +156,10 @@ def gen_model_operation_job_config(config_data: dict, model_operation: ModelOper
     if model_operation in [ModelOperation.STORE, ModelOperation.RESTORE]:
         component_name = "{}_0".format(model_operation)
         component_parameters = dict()
-        component_parameters.update(config_data)
-        for k, v in config_data.items():
-            component_parameters[k] = [v]
-        if "store_address" not in config_data:
-            component_parameters["store_address"] = [DEFAULT_MODEL_STORE_ADDRESS]
+        component_parameters["model_id"] = [config_data["model_id"]]
+        component_parameters["model_version"] = [config_data["model_version"]]
+        component_parameters["store_address"] = [MODEL_STORE_ADDRESS]
+        component_parameters["force_update"] = [config_data.get("force_update", False)]
         job_runtime_conf["role_parameters"][initiator_role] = {component_name: component_parameters}
         job_dsl["components"][component_name] = {
             "module": "Model{}".format(model_operation.capitalize())

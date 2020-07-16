@@ -1,5 +1,5 @@
 sudo: required
-language: generic
+language: bash
 
 cache:
   directories:
@@ -11,38 +11,18 @@ notifications:
 
 matrix:
   include:
-    - os: linux
-      dist: xenial
-      language: python
-      python: 3.6
+    - env: OS='centos:7'
 
-install:
-  - |
-    export PATH="/usr/lib/ccache:$PATH"
-    ccache -M 256M && ccache -s
-    sudo apt-get install libgmp-dev libmpfr-dev libmpfi-dev libmpc-dev texlive texlive-latex-extra latexmk
-    pip install Cython --verbose --disable-pip-version-check
-    python setup.py sdist
-    pip install dist/gmpy2-*.tar.gz
-    cat requirements.txt | xargs -n 1 pip install
-    pip install pytest pytest-cov coverage
-    pip install codecov
-    pip install nose
-    pip install sphinx
-before script:
-  - cur_dir=$(pwd)
-  - export PYTHONPATH=$PYTHONPATH:$cur_dir
 script:
-  - eggroll_git_url=`grep -A 3 '"eggroll"' .gitmodules | grep 'url' | awk -F '= ' '{print $2}'`
-  - eggroll_git_branch=`grep -A 3 '"eggroll"' .gitmodules | grep 'branch' | awk -F '= ' '{print $2}'`
-  - echo "[INFO] Git clone eggroll submodule source code from ${eggroll_git_url} branch ${eggroll_git_branch}"
-  - git clone ${eggroll_git_url} -b ${eggroll_git_branch} eggroll
-  - nohup python fate_flow/fate_flow_server.py > fate_flow_start.log &
-  - cat fate_flow_start.log
-  - fate_flow_proc=$(ps aux | grep fate_flow_server.py) 
+  - wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.4.2.tar.gz
+  - tar -xzf  standalone-fate-master-1.4.2.tar.gz 
+  - cd standalone-fate-master-1.4.2
+  - sed -i.bak "s/sh  service.sh/bash service.sh/g" init.sh
+  - source init.sh init
+  - ls -alh
   - bash ./federatedml/test/run_test.sh
-
 after_success:
+  - conda install -c conda-forge codecov --yes
   - cd ./federatedml/test && codecov
 
 

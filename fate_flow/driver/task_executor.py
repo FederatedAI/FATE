@@ -17,20 +17,19 @@ import argparse
 import importlib
 import os
 import traceback
-
 from arch.api import federation
 from arch.api import session, Backend
-from arch.api.utils import file_utils, log_utils
 from arch.api.base.utils.store_type import StoreTypes
+from arch.api.utils import file_utils, log_utils
 from arch.api.utils.core_utils import current_timestamp, get_lan_ip, timestamp_to_date
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import Task
+from fate_flow.entity.constant_config import TaskStatus, ProcessRole
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.tracking_manager import Tracking
 from fate_flow.settings import API_VERSION, SAVE_AS_TASK_INPUT_DATA_SWITCH, SAVE_AS_TASK_INPUT_DATA_IN_MEMORY
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
-from fate_flow.entity.constant_config import TaskStatus, ProcessRole
 
 
 class TaskExecutor(object):
@@ -68,9 +67,10 @@ class TaskExecutor(object):
             job_args = task_config['job_args']
             task_input_dsl = task_config['input']
             task_output_dsl = task_config['output']
-            parameters = TaskExecutor.get_parameters(job_id, component_name, role, party_id)
-            # parameters = task_config['parameters']
+            component_parameters = TaskExecutor.get_parameters(job_id, component_name, role, party_id)
+            task_parameters = task_config['task_parameters']
             module_name = task_config['module_name']
+            TaskExecutor.monkey_patch()
         except Exception as e:
             traceback.print_exc()
             schedule_logger().exception(e)
@@ -96,7 +96,7 @@ class TaskExecutor(object):
             task.f_start_time = current_timestamp()
             task.f_run_ip = get_lan_ip()
             task.f_run_pid = executor_pid
-            run_class_paths = parameters.get('CodePath').split('/')
+            run_class_paths = component_parameters.get('CodePath').split('/')
             run_class_package = '.'.join(run_class_paths[:-2]) + '.' + run_class_paths[-2].replace('.py', '')
             run_class_name = run_class_paths[-1]
             task.f_status = TaskStatus.RUNNING
@@ -116,19 +116,23 @@ class TaskExecutor(object):
                          mode=RuntimeConfig.WORK_MODE,
                          backend=RuntimeConfig.BACKEND,
                          options=session_options)
-            federation.init(job_id=task_id, runtime_conf=parameters)
+            federation.init(job_id=task_id, runtime_conf=component_parameters)
 
             schedule_logger().info('run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
-            schedule_logger().info(parameters)
+            schedule_logger().info(component_parameters)
             schedule_logger().info(task_input_dsl)
             task_run_args = TaskExecutor.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
                                                            task_id=task_id,
-                                                           job_parameters=job_parameters, job_args=job_args,
-                                                           input_dsl=task_input_dsl)
+                                                           job_args=job_args,
+                                                           job_parameters=job_parameters,
+                                                           task_parameters=task_parameters,
+                                                           input_dsl=task_input_dsl,
+                                                           if_save_as_task_input_data=job_parameters.get("save_as_task_input_data", SAVE_AS_TASK_INPUT_DATA_SWITCH)
+                                                           )
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
             run_object.set_tracker(tracker=tracker)
             run_object.set_taskid(taskid=task_id)
-            run_object.run(parameters, task_run_args)
+            run_object.run(component_parameters, task_run_args)
             output_data = run_object.save_data()
             tracker.save_output_data_table(output_data, task_output_dsl.get('data')[0] if task_output_dsl.get('data') else 'component')
             output_model = run_object.export_model()
@@ -162,9 +166,12 @@ class TaskExecutor(object):
         print('finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status if sync_success else TaskStatus.FAILED))
 
     @staticmethod
-    def get_task_run_args(job_id, role, party_id, task_id, job_parameters, job_args, input_dsl):
+    def get_task_run_args(job_id, role, party_id, task_id, job_args, job_parameters, task_parameters, input_dsl,
+                          if_save_as_task_input_data, filter_type=None, filter_attr=None):
         task_run_args = {}
         for input_type, input_detail in input_dsl.items():
+            if filter_type and input_type not in filter_type:
+                continue
             if input_type == 'data':
                 this_type_args = task_run_args[input_type] = task_run_args.get(input_type, {})
                 for data_type, data_list in input_detail.items():
@@ -187,7 +194,7 @@ class TaskExecutor(object):
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
                             search_component_name, {})
                         # todo: If the same component has more than one identical input, save as is repeated
-                        if SAVE_AS_TASK_INPUT_DATA_SWITCH:
+                        if if_save_as_task_input_data:
                             if data_table:
                                 schedule_logger().info("start save as task {} input data table {} {}".format(
                                     task_id,
@@ -200,7 +207,9 @@ class TaskExecutor(object):
                                     namespace=job_utils.generate_session_id(task_id=task_id,
                                                                             role=role,
                                                                             party_id=party_id),
-                                    name=data_table.get_name(), options=save_as_options)
+                                    name=data_table.get_name(),
+                                    partition=task_parameters['input_data_partition'] if task_parameters.get('input_data_partition', 0) > 0 else data_table.get_partitions(),
+                                    options=save_as_options)
                                 data_table.save_metas(origin_table_metas)
                                 data_table.schema = origin_table_schema
                                 schedule_logger().info("save as task {} input data table to {} {} done".format(
@@ -211,7 +220,10 @@ class TaskExecutor(object):
                                 schedule_logger().info("pass save as task {} input data table, because the table is none".format(task_id))
                         else:
                             schedule_logger().info("pass save as task {} input data table, because the switch is off".format(task_id))
-                        args_from_component[data_type] = data_table
+                        if not data_table or not filter_attr or not filter_attr.get("data", None):
+                            args_from_component[data_type] = data_table
+                        else:
+                            args_from_component[data_type] = dict([(a, getattr(data_table, "get_{}".format(a))()) for a in filter_attr["data"]])
             elif input_type in ['model', 'isometric_model']:
                 this_type_args = task_run_args[input_type] = task_run_args.get(input_type, {})
                 for dsl_model_key in input_detail:
@@ -273,6 +285,17 @@ class TaskExecutor(object):
                                           initiator_role, task_info, update=True)
         if update:
             raise Exception('job {} role {} party {} synchronize task status failed'.format(job_id, role, party_id))
+
+    @staticmethod
+    def monkey_patch():
+        package_name = "monkey_patch"
+        package_path = os.path.join(file_utils.get_project_base_directory(), "fate_flow", package_name)
+        for f in os.listdir(package_path):
+            if not os.path.isdir(f) or f == "__pycache__":
+                continue
+            patch_module = importlib.import_module("fate_flow." + package_name + '.' + f + '.monkey_patch')
+            patch_module.patch_all()
+
 
 if __name__ == '__main__':
     TaskExecutor.run_task()

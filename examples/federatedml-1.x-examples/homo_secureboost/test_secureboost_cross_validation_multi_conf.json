@@ -7,37 +7,79 @@
         "work_mode": 0
     },
     "role": {
-        "guest": [10000],
-        "host": [10000],
-        "arbiter": [10000]
+        "guest": [
+            10000
+        ],
+        "host": [
+            10000
+        ],
+        "arbiter": [
+            10000
+        ]
     },
     "role_parameters": {
         "guest": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "homo_vehicle_scale_guest", "namespace": "homo"}],
-                    "eval_data": [{"name": "homo_vehicle_scale_test", "namespace": "homo"}]
+                    "train_data": [
+                        {
+                            "name": "homo_vehicle_scale_guest",
+                            "namespace": "experiment"
+                        }
+                    ],
+                    "eval_data": [
+                        {
+                            "name": "homo_vehicle_scale_test",
+                            "namespace": "experiment"
+                        }
+                    ]
                 }
             },
-            "dataio_0":{
-                "with_label": [true],
-                "label_name": ["y"],
-                "label_type": ["int"],
-                "output_format": ["dense"]
+            "dataio_0": {
+                "with_label": [
+                    true
+                ],
+                "label_name": [
+                    "y"
+                ],
+                "label_type": [
+                    "int"
+                ],
+                "output_format": [
+                    "dense"
+                ]
             }
         },
         "host": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "homo_vehicle_scale_host", "namespace": "homo"}],
-                    "eval_data": [{"name": "homo_vehicle_scale_test", "namespace": "homo"}]
+                    "train_data": [
+                        {
+                            "name": "homo_vehicle_scale_host",
+                            "namespace": "experiment"
+                        }
+                    ],
+                    "eval_data": [
+                        {
+                            "name": "homo_vehicle_scale_test",
+                            "namespace": "experiment"
+                        }
+                    ]
                 }
             },
-            "dataio_0":{
-                "with_label": [true],
-                "label_name": ["y"],
-                "label_type": ["int"],
-                "output_format": ["dense"]
+            "dataio_0": {
+                "with_label": [
+                    true
+                ],
+                "label_name": [
+                    "y"
+                ],
+                "label_type": [
+                    "int"
+                ],
+                "output_format": [
+                    "dense"
+                ]
             }
         }
     },
@@ -65,7 +107,7 @@
                 "shuffle": false,
                 "random_seed": 103,
                 "need_cv": true
-             }
+            }
         }
     }
 }

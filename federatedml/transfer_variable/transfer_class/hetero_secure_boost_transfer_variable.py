@@ -32,3 +32,4 @@ class HeteroSecureBoostingTreeTransferVariable(BaseTransferVariables):
         super().__init__(flowid)
         self.stop_flag = self._create_variable(name='stop_flag', src=['guest'], dst=['host'])
         self.tree_dim = self._create_variable(name='tree_dim', src=['guest'], dst=['host'])
+        self.predict_start_round = self._create_variable(name='predict_start_round', src=['guest'], dst=['host'])

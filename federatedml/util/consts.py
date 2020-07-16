@@ -63,11 +63,15 @@ MEDIAN_ABSOLUTE_ERROR = "median_absolute_error"
 R2_SCORE = "r2_score"
 ROOT_MEAN_SQUARED_ERROR = "root_mean_squared_error"
 ROC = "roc"
+F1_SCORE = 'f1_score'
+CONFUSION_MAT = 'confusion_mat'
+PSI = 'psi'
+QUANTILE_PR = 'quantile_pr'
 
 # evaluation alias metric
 ALL_METRIC_NAME = [AUC, KS, LIFT, GAIN, PRECISION, RECALL, ACCURACY, EXPLAINED_VARIANCE, MEAN_ABSOLUTE_ERROR,
                    MEAN_SQUARED_ERROR, MEAN_SQUARED_LOG_ERROR, MEDIAN_ABSOLUTE_ERROR, R2_SCORE, ROOT_MEAN_SQUARED_ERROR,
-                   ROC]
+                   ROC, F1_SCORE, CONFUSION_MAT, PSI, QUANTILE_PR]
 ALIAS = {
     ('l1', 'mae', 'regression_l1'): MEAN_ABSOLUTE_ERROR,
     ('l2', 'mse', 'regression_l2', 'regression'): MEAN_SQUARED_ERROR,
@@ -91,7 +95,11 @@ ALL_BINARY_METRICS = [
     ACCURACY,
     PRECISION,
     RECALL,
-    ROC
+    ROC,
+    CONFUSION_MAT,
+    PSI,
+    F1_SCORE,
+    QUANTILE_PR
 ]
 
 ALL_REGRESSION_METRICS = [
@@ -154,6 +162,7 @@ DEFAULT_COMPRESS_THRESHOLD = 10000
 DEFAULT_HEAD_SIZE = 10000
 DEFAULT_RELATIVE_ERROR = 0.001
 ONE_HOT_LIMIT = 1024   # No more than 10 possible values
+PERCENTAGE_VALUE_LIMIT = 0.1
 
 QUANTILE = 'quantile'
 BUCKET = 'bucket'
@@ -163,10 +172,12 @@ OPTIMAL = 'optimal'
 UNIQUE_VALUE = 'unique_value'
 IV_VALUE_THRES = 'iv_value_thres'
 IV_PERCENTILE = 'iv_percentile'
+IV_TOP_K = 'iv_top_k'
 COEFFICIENT_OF_VARIATION_VALUE_THRES = 'coefficient_of_variation_value_thres'
 # COEFFICIENT_OF_VARIATION_PERCENTILE = 'coefficient_of_variation_percentile'
 OUTLIER_COLS = 'outlier_cols'
 MANUALLY_FILTER = 'manually'
+PERCENTAGE_VALUE = 'percentage_value'
 
 # imputer
 MIN = 'min'
@@ -193,3 +204,5 @@ IMEI = 'imei'
 MD5 = 'md5'
 SHA256 = 'sha256'
 INTERSECT_CACHE_TAG = 'Za'
+
+SHARE_INFO_COL_NAME = "share_info"

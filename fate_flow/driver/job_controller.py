@@ -13,6 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import threading
+import time
+
 from fate_flow.utils.authentication_utils import authentication_check
 from federatedml.protobuf.generated import pipeline_pb2
 from arch.api.utils import dtable_utils
@@ -24,8 +27,9 @@ from fate_flow.driver.task_scheduler import TaskScheduler
 from fate_flow.entity.constant_config import JobStatus, TaskStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.tracking_manager import Tracking
-from fate_flow.settings import BOARD_DASHBOARD_URL, USE_AUTHENTICATION
-from fate_flow.utils import detect_utils, job_utils
+from fate_flow.utils.service_utils import ServiceUtils
+from fate_flow.settings import USE_AUTHENTICATION, FATE_BOARD_DASHBOARD_ENDPOINT
+from fate_flow.utils import detect_utils, job_utils, job_controller_utils
 from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_dsl_parser, get_job_log_directory
 
 
@@ -100,7 +104,10 @@ class JobController(object):
 
         schedule_logger(job_id).info(
             'submit job successfully, job id is {}, model id is {}'.format(job.f_job_id, job_parameters['model_id']))
-        board_url = BOARD_DASHBOARD_URL.format(job_id, job_initiator['role'], job_initiator['party_id'])
+        board_url = "http://{}:{}{}".format(
+            ServiceUtils.get_item("fateboard", "host"),
+            ServiceUtils.get_item("fateboard", "port"),
+            FATE_BOARD_DASHBOARD_ENDPOINT).format(job_id, job_initiator['role'], job_initiator['party_id'])
         logs_directory = get_job_log_directory(job_id)
         return job_id, path_dict['job_dsl_path'], path_dict['job_runtime_conf_path'], logs_directory, \
                {'model_id': job_parameters['model_id'],'model_version': job_parameters['model_version']}, board_url
@@ -151,6 +158,20 @@ class JobController(object):
                                                          task_info.get('f_status', '')))
 
     @staticmethod
+    def query_task_input_args(job_id, task_id, role, party_id, job_args, job_parameters, input_dsl, filter_type=None, filter_attr=None):
+        task_run_args = TaskExecutor.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
+                                                       task_id=task_id,
+                                                       job_args=job_args,
+                                                       job_parameters=job_parameters,
+                                                       task_parameters={},
+                                                       input_dsl=input_dsl,
+                                                       if_save_as_task_input_data=False,
+                                                       filter_type=filter_type,
+                                                       filter_attr=filter_attr
+                                                       )
+        return task_run_args
+
+    @staticmethod
     def update_job_status(job_id, role, party_id, job_info, create=False):
         job_info['f_run_ip'] = RuntimeConfig.JOB_SERVER_HOST
         if create:
@@ -170,7 +191,6 @@ class JobController(object):
             job_tracker = Tracking(job_id=job_id, role=role, party_id=party_id,
                                    model_id=job_parameters["model_id"],
                                    model_version=job_parameters["model_version"])
-            job_tracker.job_quantity_constraint()
             if job_parameters.get("job_type", "") != "predict":
                 job_tracker.init_pipelined_model()
             roles = json_loads(job_info['f_roles'])
@@ -254,9 +274,13 @@ class JobController(object):
         schedule_logger(job_id).info('job {} on {} {} clean done'.format(job_id, role, party_id))
 
     @staticmethod
+    def check_job_run(job_id, role,party_id, job_info):
+        return job_controller_utils.job_quantity_constraint(job_id, role, party_id, job_info)
+
+    @staticmethod
     def cancel_job(job_id, role, party_id, job_initiator):
         schedule_logger(job_id).info('{} {} get cancel waiting job {} command'.format(role, party_id, job_id))
-        jobs = job_utils.query_job(job_id=job_id, is_initiator=1)
+        jobs = job_utils.query_job(job_id=job_id)
         if jobs:
             job = jobs[0]
             job_runtime_conf = json_loads(job.f_runtime_conf)
@@ -270,11 +294,17 @@ class JobController(object):
             schedule_logger(job_id).info('cancel waiting job successfully, job id is {}'.format(job.f_job_id))
             return True
         else:
-            jobs = job_utils.query_job(job_id=job_id)
-            if jobs:
-                raise Exception(
-                    'role {} party id {} cancel waiting job {} failed, not is initiator'.format(role, party_id, job_id))
             raise Exception('role {} party id {} cancel waiting job failed, no find jod {}'.format(role, party_id, job_id))
+
+
+class JobClean(threading.Thread):
+    def run(self):
+        time.sleep(5)
+        jobs = job_utils.query_job(status='running', is_initiator=1)
+        job_ids = set([job.f_job_id for job in jobs])
+        for job_id in job_ids:
+            schedule_logger(job_id).info('fate flow server start clean job')
+            TaskScheduler.stop(job_id, JobStatus.FAILED)
 
 
 

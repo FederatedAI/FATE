@@ -17,13 +17,10 @@
 import os
 
 from arch.api import Backend
-from arch.api.utils import file_utils, log_utils, core_utils
+from arch.api.utils import file_utils, log_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
-from arch.api.utils.core_utils import get_lan_ip
 from arch.api.utils.conf_utils import get_base_config
 import __main__
-
-from fate_flow.utils.setting_utils import CenterConfig
 
 
 WORK_MODE = get_base_config('work_mode', 0)
@@ -40,17 +37,30 @@ PRIVILEGE_COMMAND_WHITELIST = []
 # Node check switch
 CHECK_NODES_IDENTITY = False
 
-# zookeeper
-USE_CONFIGURATION_CENTER = False
-ZOOKEEPER_HOSTS = ['127.0.0.1:2181']
+# Registry
+SERVICES_SUPPORT_REGISTRY = ["servings", "fateflow"]
+FATE_SERVICES_REGISTERED_PATH = {
+    "fateflow": "/FATE-SERVICES/flow/online/transfer/providers",
+    "servings": "/FATE-SERVICES/serving/online/publishLoad/providers",
+}
 
+# FILE CONF
+SERVER_CONF_PATH = 'arch/conf/server_conf.json'
+
+# job maximum number  of the initiator
 MAX_CONCURRENT_JOB_RUN = 5
+
+# Limit the number of jobs on the host side
+LIMIT_ROLE = 'host'
 MAX_CONCURRENT_JOB_RUN_HOST = 5
+RE_ENTRY_QUEUE_TIME = 2*60
+RE_ENTRY_QUEUE_MAX = 60
+
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000 * 60  # ms
 JOB_DEFAULT_TIMEOUT = 7 * 24 * 60 * 60
 DATABASE = get_base_config("database", {})
-DEFAULT_MODEL_STORE_ADDRESS = get_base_config("default_model_store_address", {})
+MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
 
 '''
 Constants
@@ -67,13 +77,12 @@ HEADERS = {
     'Connection': 'close'
 }
 DETECT_TABLE = ("fate_flow_detect_table_namespace", "fate_flow_detect_table_name", 16)
-# fate-serving
-SERVINGS_ZK_PATH = '/FATE-SERVICES/serving/online/publishLoad/providers'
-FATE_FLOW_ZK_PATH = '/FATE-SERVICES/flow/online/transfer/providers'
-FATE_FLOW_MODEL_TRANSFER_PATH = '/v1/model/transfer'
-# fate-manager
-FATE_MANAGER_GET_NODE_INFO = '/node/info'
-FATE_MANAGER_NODE_CHECK = '/node/management/check'
+
+# endpoint
+FATE_FLOW_MODEL_TRANSFER_ENDPOINT = '/v1/model/transfer'
+FATE_MANAGER_GET_NODE_INFO_ENDPOINT = '/fate-manager/api/site/secretinfo'
+FATE_MANAGER_NODE_CHECK_ENDPOINT = '/fate-manager/api/site/checksite'
+FATE_BOARD_DASHBOARD_ENDPOINT = '/index.html#/dashboard?job_id={}&role={}&party_id={}'
 
 # logger
 log_utils.LoggerFactory.LEVEL = 10
@@ -82,7 +91,6 @@ log_utils.LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_d
 stat_logger = log_utils.getLogger("fate_flow_stat")
 detect_logger = log_utils.getLogger("fate_flow_detect")
 access_logger = log_utils.getLogger("fate_flow_access")
-audit_logger = log_utils.audit_logger()
 
 """
 Services 
@@ -95,27 +103,10 @@ GRPC_PORT = get_base_config("fate_flow", {}).get("grpc_port")
 # but not the port for FATE-Flow on standalone deploy mode.
 CLUSTER_STANDALONE_JOB_SERVER_PORT = 9381
 
-
-# services ip and port
-SERVER_CONF_PATH = 'arch/conf/server_conf.json'
-SERVING_PATH = '/servers/servings'
-server_conf = file_utils.load_json_conf(SERVER_CONF_PATH)
-PROXY_HOST = server_conf.get(SERVERS).get('proxy').get('host')
-PROXY_PORT = server_conf.get(SERVERS).get('proxy').get('port')
-BOARD_HOST = server_conf.get(SERVERS).get('fateboard').get('host')
-if BOARD_HOST == 'localhost':
-    BOARD_HOST = get_lan_ip()
-BOARD_PORT = server_conf.get(SERVERS).get('fateboard').get('port')
-MANAGER_HOST = server_conf.get(SERVERS).get('fatemanager', {}).get('host')
-MANAGER_PORT = server_conf.get(SERVERS).get('fatemanager', {}).get('port')
-SERVINGS = CenterConfig.get_settings(path=SERVING_PATH, servings_zk_path=SERVINGS_ZK_PATH,
-                                     use_zk=USE_CONFIGURATION_CENTER, hosts=ZOOKEEPER_HOSTS,
-                                     server_conf_path=SERVER_CONF_PATH)
-BOARD_DASHBOARD_URL = 'http://%s:%d/index.html#/dashboard?job_id={}&role={}&party_id={}' % (BOARD_HOST, BOARD_PORT)
-
 # switch
 SAVE_AS_TASK_INPUT_DATA_SWITCH = True
 SAVE_AS_TASK_INPUT_DATA_IN_MEMORY = True
+ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH = True
 
 # init
 RuntimeConfig.init_config(WORK_MODE=WORK_MODE)

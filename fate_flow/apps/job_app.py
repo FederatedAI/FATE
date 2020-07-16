@@ -22,7 +22,7 @@ from flask import Flask, request, send_file
 from arch.api.utils.core_utils import json_loads
 from fate_flow.driver.job_controller import JobController
 from fate_flow.driver.task_scheduler import TaskScheduler
-from fate_flow.manager.data_manager import query_data_view
+from fate_flow.manager import data_manager
 from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT
 from fate_flow.utils import job_utils, detect_utils
 from fate_flow.utils.api_utils import get_json_result, request_execute_server
@@ -61,13 +61,25 @@ def submit_job():
 
 
 @manager.route('/stop', methods=['POST'])
+def start_stop_job():
+    response = TaskScheduler.start_stop(request.json.get('job_id'), request.json.get('operate'))
+    return get_json_result(retcode=response.get('retcode'), retmsg=response.get('retmsg'))
+
+
+@manager.route('/stop/do', methods=['POST'])
 @job_utils.job_server_routing()
 def stop_job():
-    response = TaskScheduler.stop(job_id=request.json.get('job_id', ''), end_status=JobStatus.CANCELED)
-    if not response:
-        TaskScheduler.stop(job_id=request.json.get('job_id', ''), end_status=JobStatus.FAILED)
-        return get_json_result(retcode=0, retmsg='kill job success')
-    return get_json_result(retcode=0, retmsg='cancel job success')
+    job_id = request.json.get('job_id')
+    operate = request.json.get('operate')
+    if operate == 'kill':
+        TaskScheduler.stop(job_id=job_id, end_status=JobStatus.FAILED)
+    else:
+        response = TaskScheduler.stop(job_id=job_id, end_status=JobStatus.CANCELED)
+        operate = 'cancel'
+        if not response:
+            TaskScheduler.stop(job_id=job_id, end_status=JobStatus.FAILED)
+            operate = 'kill'
+    return get_json_result(retcode=0, retmsg='{} job success'.format(operate))
 
 
 @manager.route('/query', methods=['POST'])
@@ -137,7 +149,7 @@ def query_task():
 
 @manager.route('/data/view/query', methods=['POST'])
 def query_data_view():
-    data_views = job_utils.query_data_view(**request.json)
+    data_views = data_manager.query_data_view(**request.json)
     if not data_views:
         return get_json_result(retcode=101, retmsg='find data view failed')
     return get_json_result(retcode=0, retmsg='success', data=[data_view.to_json() for data_view in data_views])

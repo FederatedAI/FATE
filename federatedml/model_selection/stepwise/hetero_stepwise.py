@@ -16,7 +16,7 @@
 
 from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric, MetricMeta
-from federatedml.evaluation.evaluation import IC, IC_Approx
+from federatedml.evaluation.metrics.regression_metric import IC, IC_Approx
 from federatedml.model_selection.stepwise.step import Step
 from federatedml.statistic import data_overview
 from federatedml.transfer_variable.transfer_class.stepwise_transfer_variable import StepwiseTransferVariable

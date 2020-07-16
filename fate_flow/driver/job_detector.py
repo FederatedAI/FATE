@@ -60,7 +60,7 @@ class JobDetector(cron.Cron):
                                             src_party_id=my_party_id,
                                             dest_party_id=initiator_party_id,
                                             src_role=None,
-                                            json_body={'job_id': job_id},
+                                            json_body={'job_id': job_id, 'operate': 'kill'},
                                             work_mode=job_work_mode)
                     TaskScheduler.finish_job(job_id=job_id, job_runtime_conf=json_loads(jobs[0].f_runtime_conf), stop=True)
         except Exception as e:

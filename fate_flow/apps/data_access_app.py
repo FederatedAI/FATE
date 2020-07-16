@@ -40,16 +40,16 @@ def internal_server_error(e):
 @session_utils.session_detect()
 def download_upload(access_module):
     job_id = generate_job_id()
-    if access_module == "upload" and USE_LOCAL_DATA and not (request.json and request.json.get("module")):
-        file = request.files.get('file')
-        filename = os.path.join(get_job_directory(job_id), 'tmp', file.filename)
+    if access_module == "upload" and USE_LOCAL_DATA and not (request.json and request.json.get("use_local_data") == 0):
+        file = request.files['file']
+        filename = os.path.join(get_job_directory(job_id), 'fate_upload_tmp', file.filename)
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         try:
             file.save(filename)
         except Exception as e:
             shutil.rmtree(os.path.join(get_job_directory(job_id), 'tmp'))
             raise e
-        request_config = request.form.to_dict()
+        request_config = request.args.to_dict()
         request_config['file'] = filename
     else:
         request_config = request.json

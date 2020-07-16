@@ -1,7 +1,7 @@
 FATE Stand-alone Deployment Guide
 =================================
 
-The stand-alone version provides three deployment methods, which can be
+The stand-alone version provides 2 deployment methods, which can be
 selected according to your actual situation:
 
 -  Install FATE using Docker `Chinese
@@ -33,20 +33,46 @@ possibility of encountering problems.
 
    please follow the below step:
 
-::
+   ::
 
-   #Get code
-   FATE $ wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.4.0.tar.gz
-   FATE $tar -xzvf docker_standalone-fate-1.4.0.tar.gz
+      #Get code
+      wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.4.2.tar.gz
+      tar -xzvf docker_standalone-fate-1.4.2.tar.gz
 
-   #Execute the command
-   FATE $ cd docker_standalone-fate-1.4.0
-   FATE $ bash install_standalone_docker.sh
+      #Execute the command
+      cd docker_standalone-fate-1.4.2
+      bash install_standalone_docker.sh
 
-   #Validation results
-   FATE $ CONTAINER_ID=`docker ps -aqf "name=fate_python"`
-   FATE $ docker exec -t -i ${CONTAINER_ID} bash
-   FATE $ bash ./federatedml/test/run_test.sh
+
+4. Test
+
+   1. Unit Test
+
+   ::
+
+      CONTAINER_ID=`docker ps -aqf "name=fate_python"`
+      docker exec -t -i ${CONTAINER_ID} bash
+      bash ./federatedml/test/run_test.sh
+
+   If success,  the screen shows like blow:
+
+   ::
+
+      there are 0 failed test
+
+   2. Toy_example Test
+
+   ::
+
+      CONTAINER_ID=`docker ps -aqf "name=fate_python"`
+      docker exec -t -i ${CONTAINER_ID} bash
+      python ./examples/toy_example/run_toy_example.py 10000 10000 0
+
+   If success,  the screen shows like blow:
+
+   ::
+
+      success to calculate secure_sum, it is 2000.0
 
 There are a few algorithms under
 `examples <../examples/federatedml-1.x-examples>`__ folder, try them
@@ -54,6 +80,7 @@ out!
 
 You can also experience the fateboard access via a browser:
 Http://hostip:8080.
+
 
 2) Install FATE in Host
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -71,26 +98,46 @@ Http://hostip:8080.
 
    ::
 
-      wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.4.0.tar.gz
-      tar -xzvf  standalone-fate-master-1.4.0.tar.gz
+      wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.4.2.tar.gz
+      tar -xzvf  standalone-fate-master-1.4.2.tar.gz
 
 3. Enter FATE directory and execute the init.sh.
 
    ::
 
-      cd standalone-fate-master-1.4.0
+      cd standalone-fate-master-1.4.2
       source init.sh init
 
-4. Execution test.
+4. Test
+
+   1. Unit Test
 
    ::
 
-      cd standalone-fate-master-1.4.0
+      cd standalone-fate-master-1.4.2
       bash ./federatedml/test/run_test.sh
 
+   If success,  the screen shows like blow:
+
+   ::
+
+      there are 0 failed test
+
+   2. Toy_example Test
+
+   ::
+
+        cd standalone-fate-master-1.4.2
+        python ./examples/toy_example/run_toy_example.py 10000 10000 0
+
+   If success,  the screen shows like blow:
+
+   ::
+
+        success to calculate secure_sum, it is 2000.0
+
 There are a few algorithms under
-`examples <https://github.com/FederatedAI/FATE/tree/master/examples/federatedml-1.0-examples>`__
-folder, try them out!
+`examples <../examples/federatedml-1.x-examples>`__ folder, try them out!
 
 You can also experience the fateboard access via a browser:
 Http://hostip:8080.

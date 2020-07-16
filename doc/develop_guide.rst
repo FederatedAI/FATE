@@ -2,7 +2,7 @@ Developing guides
 =================
 [`中文`_]
 
-.. _中文: develop_guide.rst
+.. _中文: develop_guide_zh.rst
 
 Develop a runnable algorithm module of FATE
 -------------------------------------------

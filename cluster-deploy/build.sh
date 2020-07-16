@@ -26,8 +26,7 @@ else
 fi
 
 cd ${source_dir}
-version=`grep "FATE=" .env | awk -F '=' '{print $2}'`
-fateboard_version=`grep "FATEBOARD=" .env | awk -F '=' '{print $2}'`
+version=`grep "FATE=" fate.env | awk -F '=' '{print $2}'`
 package_dir_name="FATE_install_"${version}
 package_dir=${source_dir}/cluster-deploy/${package_dir_name}
 echo "[INFO] Build info"
@@ -48,8 +47,8 @@ cp -r arch/conf ${package_dir}/python/arch/
 cp -r arch/api ${package_dir}/python/arch/
 cp -r arch/transfer_variables ${package_dir}/python/arch/
 cp -r arch/standalone ${package_dir}/python/arch/
-cp .env requirements.txt RELEASE.md ${package_dir}/python/
-cp -r examples federatedml federatedrec fate_flow ${package_dir}/python/
+cp fate.env requirements.txt RELEASE.md ${package_dir}/python/
+cp -r examples federatedml fate_flow ${package_dir}/python/
 cp -r bin  ${package_dir}/
 echo "[INFO] Package fate done"
 
@@ -79,6 +78,8 @@ else
     git clone ${fateboard_git_url} -b ${fateboard_git_branch} --depth=1 fateboard
 fi
 cd ./fateboard
+fateboard_version=$(grep -E -m 1 -o "<version>(.*)</version>" ./pom.xml | tr -d '[\\-a-z<>//]' | awk -F "version" '{print $2}')
+echo "[INFO] fateboard version "${fateboard_version}
 mvn clean package -DskipTests
 mkdir -p ${package_dir}/fateboard/conf
 mkdir -p ${package_dir}/fateboard/ssh

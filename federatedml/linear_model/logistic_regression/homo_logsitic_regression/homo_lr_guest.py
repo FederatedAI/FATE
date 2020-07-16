@@ -63,10 +63,10 @@ class HomoLRGuest(HomoLRBase):
             if ((self.n_iter_ + 1) % self.aggregate_iters == 0) or self.n_iter_ == max_iter:
                 weight = self.aggregator.aggregate_then_get(model_weights, degree=degree,
                                                             suffix=self.n_iter_)
-                LOGGER.debug("Before aggregate: {}, degree: {} after aggregated: {}".format(
-                    model_weights.unboxed / degree,
-                    degree,
-                    weight.unboxed))
+                # LOGGER.debug("Before aggregate: {}, degree: {} after aggregated: {}".format(
+                #     model_weights.unboxed / degree,
+                #     degree,
+                #     weight.unboxed))
 
                 self.model_weights = LogisticRegressionWeights(weight.unboxed, self.fit_intercept)
                 loss = self._compute_loss(data_instances)
@@ -82,15 +82,15 @@ class HomoLRGuest(HomoLRBase):
             batch_num = 0
             for batch_data in batch_data_generator:
                 n = batch_data.count()
-                LOGGER.debug("In each batch, lr_weight: {}, batch_data count: {}".format(model_weights.unboxed, n))
+                # LOGGER.debug("In each batch, lr_weight: {}, batch_data count: {}".format(model_weights.unboxed, n))
                 f = functools.partial(self.gradient_operator.compute_gradient,
                                       coef=model_weights.coef_,
                                       intercept=model_weights.intercept_,
                                       fit_intercept=self.fit_intercept)
                 grad = batch_data.mapPartitions(f).reduce(fate_operator.reduce_add)
                 grad /= n
-                LOGGER.debug('iter: {}, batch_index: {}, grad: {}, n: {}'.format(
-                    self.n_iter_, batch_num, grad, n))
+                # LOGGER.debug('iter: {}, batch_index: {}, grad: {}, n: {}'.format(
+                #     self.n_iter_, batch_num, grad, n))
                 model_weights = self.optimizer.update_model(model_weights, grad, has_applied=False)
                 batch_num += 1
                 degree += n

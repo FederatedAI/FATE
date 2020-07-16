@@ -78,9 +78,11 @@ class Intersect(object):
         return self.schema
 
     def _get_value_from_data(self, intersect_ids, data_instances):
-        intersect_ids = intersect_ids.join(data_instances, lambda i, d: d)
-        intersect_ids.schema = data_instances.schema
-        LOGGER.info("get intersect data_instances!")
+        if intersect_ids is not None:
+            intersect_ids = intersect_ids.join(data_instances, lambda i, d: d)
+            intersect_ids.schema = data_instances.schema
+            LOGGER.info("get intersect data_instances!")
+
         return intersect_ids
 
     def get_common_intersection(self, intersect_ids_list: list):
