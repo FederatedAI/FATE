@@ -37,6 +37,7 @@ class HeteroBaseArbiter(BaseLinearModel):
         self.batch_generator = batch_generator.Arbiter()
         self.gradient_loss_operator = None
         self.converge_procedure = convergence.Arbiter()
+        self.best_iteration = -1
 
     def perform_subtasks(self, **training_info):
         """
@@ -130,12 +131,18 @@ class HeteroBaseArbiter(BaseLinearModel):
                 self.validation_strategy.validate(self, self.n_iter_)
                 if self.validation_strategy.need_stop():
                     LOGGER.debug('early stopping triggered')
+                    self.best_iteration = self.n_iter_
                     break
 
             self.n_iter_ += 1
             if self.is_converged:
                 break
+        summary = {"loss_history": self.loss_history,
+                   "best_iteration": self.best_iteration}
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
             self.load_model(self.validation_strategy.cur_best_model)
+            summary["best_iter_loss"] = self.loss_history[self.best_iteration]
+
+        self.set_summary(summary)
+        LOGGER.debug(f"summary content is {summary}")
         LOGGER.debug("finish running linear model arbiter")
-        #@TODO: record iter loss history
