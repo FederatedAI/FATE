@@ -33,7 +33,7 @@ import uuid
 import pymysql
 import typing
 
-from arch.api.base.utils.store_type import StoreTypes
+from arch.api.base.utils.store_type import StoreEngine
 from arch.api.data_table.table import Table
 from arch.api.utils.profile_util import log_elapsed
 from arch.api import WorkMode
@@ -44,7 +44,7 @@ from fate_flow.settings import WORK_MODE
 class MysqlTable(Table):
     def __init__(self,
                  mode: typing.Union[int, WorkMode] = WORK_MODE,
-                 persistent_engine: str = StoreTypes.MYSQL,
+                 persistent_engine: str = StoreEngine.MYSQL,
                  namespace: str = None,
                  name: str = None,
                  partition: int = 1,
@@ -102,7 +102,7 @@ class MysqlTable(Table):
         return self._strage_engine
 
     def get_address(self):
-        return self.database_config
+        return {'name': self._name, 'namespace': self._namespace}
 
     @log_elapsed
     def collect(self, min_chunk_size=0, use_serialize=True, **kwargs) -> list:

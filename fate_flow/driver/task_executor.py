@@ -20,6 +20,7 @@ import traceback
 from arch.api import federation
 from arch.api import session, Backend
 from arch.api.base.utils.store_type import StoreTypes
+from arch.api.data_table.table_manager import get_table
 from arch.api.utils import file_utils, log_utils
 from arch.api.utils.core_utils import current_timestamp, get_lan_ip, timestamp_to_date
 from arch.api.utils.log_utils import schedule_logger
@@ -181,10 +182,8 @@ class TaskExecutor(object):
                         if search_component_name == 'args':
                             if job_args.get('data', {}).get(search_data_name).get('namespace', '') and job_args.get(
                                     'data', {}).get(search_data_name).get('name', ''):
-
-                                data_table = session.table(
-                                    namespace=job_args['data'][search_data_name]['namespace'],
-                                    name=job_args['data'][search_data_name]['name'])
+                                data_table = get_table(namespace=job_args['data'][search_data_name]['namespace'],
+                                                       name=job_args['data'][search_data_name]['name'])
                             else:
                                 data_table = None
                         else:

@@ -15,7 +15,7 @@
 #
 from typing import List
 
-from arch.api.base.table import Table
+from arch.api.data_table.table import Table
 from arch.api.data_table.table_manager import get_table
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from arch.api.utils.log_utils import schedule_logger
@@ -25,7 +25,7 @@ from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.model_manager import pipelined_model
 from fate_flow.settings import API_VERSION
-from fate_flow.utils import job_utils, api_utils, model_utils, session_utils
+from fate_flow.utils import job_utils, api_utils, model_utils
 
 
 class Tracking(object):
@@ -201,7 +201,7 @@ class Tracking(object):
             persistent_table_metas = {}
             persistent_table_metas.update(data_table.get_metas())
             persistent_table_metas["schema"] = data_table.schema
-            table = get_table(name=persistent_table.get_name(), namespace=persistent_table.get_name())
+            table = get_table(name=persistent_table_namespace, namespace=persistent_table_name)
             table.save_schema(persistent_table_metas)
         self.save_data_view(self.role, self.party_id,
                             data_info={'f_table_name': persistent_table._name if data_table else '',
@@ -401,7 +401,10 @@ class Tracking(object):
                 task.save()
             return task
 
-    def save_data_view(self, role, party_id, data_info, mark=False):
+    def save_data_view(self, role='', party_id='', data_info=None, mark=False):
+        if not role and not party_id:
+            role = self.role
+            party_id = self.party_id
         with DB.connection_context():
             data_views = DataView.select().where(DataView.f_job_id == self.job_id,
                                                  DataView.f_component_name == self.component_name,

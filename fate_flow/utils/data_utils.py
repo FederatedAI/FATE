@@ -36,7 +36,7 @@ def dataset_to_list(src):
         return [src]
 
 
-def create(name, namespace, store_engine, address: dict):
+def create(name, namespace, store_engine, address: dict, partitions=1):
     with DB.connection_context():
         schema = MachineLearningDataSchema.select().where(MachineLearningDataSchema.f_table_name == name,
                                                           MachineLearningDataSchema.f_namespace == namespace)
@@ -58,6 +58,7 @@ def create(name, namespace, store_engine, address: dict):
             schema.f_namespace = namespace
             schema.f_data_store_engine = store_engine
             schema.f_address = json.dumps(address)
+            schema.f_partitions = partitions
         schema.f_update_time = current_timestamp()
         if is_insert:
             schema.save(force_insert=True)
@@ -73,7 +74,8 @@ def get_store_info(name, namespace):
             schema = schema[0]
             store_info = schema.f_data_store_engine
             address = schema.f_address
+            partitions = schema.f_partitions
         else:
             return None, None
-    return store_info, address
+    return store_info, address, partitions
 

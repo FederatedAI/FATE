@@ -260,6 +260,7 @@ class MachineLearningDataSchema(DataBaseModel):
     f_description = TextField(null=True, default='')
     f_content = TextField(default='')
     f_data_store_engine = CharField(max_length=100, index=True)  # 'EGGROLL', 'MYSQL'
+    f_partitions = IntegerField(null=True, default=1)
     f_address = TextField(null=True)
 
     class Meta:

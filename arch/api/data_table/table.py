@@ -21,8 +21,6 @@ from typing import Iterable
 
 import six
 
-
-# noinspection PyPep8Naming
 from arch.api.utils.core_utils import current_timestamp
 from fate_flow.db.db_models import DB, MachineLearningDataSchema
 
@@ -157,7 +155,10 @@ class Table(object):
             if schema:
                 schema = schema[0]
                 is_insert = False
-                schema_data = pickle.loads(schema.f_content)
+                if schema.f_content:
+                    schema_data = pickle.loads(schema.f_content)
+                else:
+                    schema_data = {}
                 schema_data.updata(kv)
                 schema.f_content = pickle.dumps(schema_data)
 
@@ -170,7 +171,7 @@ class Table(object):
                 schema.f_content = pickle.dumps(schema_data)
             schema.f_update_time = current_timestamp()
             if is_insert:
-                schema.save(force_insert=True)
+                schema.save(_insert=True)
             else:
                 schema.save()
         return schema_data

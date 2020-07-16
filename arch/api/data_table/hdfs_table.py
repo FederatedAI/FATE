@@ -110,6 +110,7 @@ class HDFSTable(Table):
 
     
     def destroy(self):
+        super().destroy()
         path, fs = HDFSTable.get_hadoop_fs(namespace=self._namespace, name=self._name)
         if(fs.exists(path)):
             fs.delete(path)
@@ -205,7 +206,7 @@ class HDFSTable(Table):
     def delete_table_meta(cls, namespace, name):
         try:
             with DB.connection_context():
-                TableMeta.delete().where(TableMeta.f_table_namespace == namespace, \
-                    TableMeta.f_table_name == name).execute()
+                TableMeta.delete().where(TableMeta.f_table_namespace == namespace,
+                                         TableMeta.f_table_name == name).execute()
         except Exception as e:
             LOGGER.error("delete_table_meta {}, {}, exception:{}.".format(namespace, name, e))

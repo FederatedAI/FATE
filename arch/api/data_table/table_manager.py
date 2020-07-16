@@ -33,7 +33,7 @@ import typing
 import uuid
 
 from arch.api import WorkMode, Backend
-from arch.api.base.utils.store_type import StoreTypes
+from arch.api.base.utils.store_type import StoreTypes, StoreEngine
 from arch.api.data_table.mysql_table import MysqlTable
 from arch.api.utils.conf_utils import get_base_config
 from arch.api.data_table.eggroll_table import EggRollTable
@@ -44,20 +44,19 @@ from fate_flow.utils.data_utils import get_store_info
 def get_table(job_id: str = uuid.uuid1(),
               mode: typing.Union[int, WorkMode] = WORK_MODE,
               backend: typing.Union[int, Backend] = Backend.EGGROLL,
-              persistent_engine: str = StoreTypes.ROLLPAIR_LMDB,
+              persistent_engine: str = StoreEngine.LMDB,
               namespace: str = None,
               name: str = None,
-              partition: int = 1,
               init_session: bool = False,
               **kwargs):
-    store_engine, address = get_store_info(name, namespace)
+    store_engine, address, partition = get_store_info(name, namespace)
     if store_engine == 'MYSQL':
         if address:
             database_config = json.loads(address)
         else:
             database_config = get_base_config("data_storage_config", {})
-        return MysqlTable(mode, StoreTypes.MYSQL, namespace, name, partition, database_config)
-
+        return MysqlTable(mode=mode, persistent_engine=StoreEngine.MYSQL, namespace=namespace, name=name,
+                          partition=partition, database_config=database_config)
     if store_engine == 'EGGROLL':
         return EggRollTable(job_id=job_id,  mode=mode, backend=backend, persistent_engine=persistent_engine,
                             namespace=namespace, name=name, partition=partition, init_session=init_session, **kwargs)
