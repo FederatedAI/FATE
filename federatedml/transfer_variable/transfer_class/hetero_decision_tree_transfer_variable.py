@@ -42,3 +42,6 @@ class HeteroDecisionTreeTransferVariable(BaseTransferVariables):
         self.predict_finish_tag = self._create_variable(name='predict_finish_tag', src=['guest'], dst=['host'])
         self.tree = self._create_variable(name='tree', src=['guest'], dst=['host'])
         self.tree_node_queue = self._create_variable(name='tree_node_queue', src=['guest'], dst=['host'])
+        self.host_cur_to_split_node_num = self._create_variable(name='host_cur_to_split_node_num', src=['host'], dst=['guest'])
+        self.host_leafs = self._create_variable(name='host_leafs', src=['host'], dst=['guest'])
+        self.sync_flag = self._create_variable(name='sync_flag', src=['guest'], dst=['host'])
