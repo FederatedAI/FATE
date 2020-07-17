@@ -135,8 +135,14 @@ class FederationRuntime(Federation):
             except Exception as e:
                 import os
                 import signal
+                import traceback
+                import logging
+                import sys
+                exc_info = sys.exc_info()
+                traceback.print_exception(*exc_info)
                 pid = os.getpid()
                 LOGGER.exception(f"remote fail, terminating process(pid={pid})")
+                logging.shutdown()
                 os.kill(pid, signal.SIGTERM)
                 raise e
 
