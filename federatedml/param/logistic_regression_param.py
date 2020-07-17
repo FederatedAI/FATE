@@ -94,6 +94,14 @@ class LogisticParam(BaseParam):
     use_first_metric_only: bool, default: False
         Indicate whether use the first metric only for early stopping judgement.
 
+    use_proximal: bool, default: False
+        Whether to turn on additional proximial term. 
+
+    mu: float, default 0.1
+        To scale the proximal term
+    
+
+
     """
 
     def __init__(self, penalty='L2',
@@ -105,7 +113,9 @@ class LogisticParam(BaseParam):
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  stepwise_param=StepwiseParam(),
                  metrics=None,
-                 use_first_metric_only=False
+                 use_first_metric_only=False, 
+                 use_proximal = False,
+                 mu = 0.1
                  ):
         super(LogisticParam, self).__init__()
         self.penalty = penalty
@@ -128,6 +138,8 @@ class LogisticParam(BaseParam):
         self.early_stopping_rounds = early_stopping_rounds
         self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
+        self.use_proximal = use_proximal
+        self.mu = mu
 
     def check(self):
         descr = "logistic_param's"
