@@ -57,6 +57,7 @@ class Backend(IntEnum):
 
 
 class RuntimeInstance(object):
+    EGGROLL_TABLE = None
     SESSION = None
     MODE: WorkMode = None
     FEDERATION: Federation = None

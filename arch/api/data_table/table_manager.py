@@ -48,7 +48,6 @@ def get_table(job_id: str = uuid.uuid1(),
               persistent_engine: str = StoreEngine.LMDB,
               namespace: str = None,
               name: str = None,
-              init_session: bool = False,
               **kwargs):
     store_engine, address, partitions = get_store_info(name, namespace)
     if store_engine == 'MYSQL':
@@ -60,7 +59,7 @@ def get_table(job_id: str = uuid.uuid1(),
                           partitions=partitions, database_config=database_config)
     if store_engine in Relationship.CompToStore.get(Backend.EGGROLL):
         return EggRollTable(job_id=job_id,  mode=mode, backend=backend, persistent_engine=persistent_engine,
-                            namespace=namespace, name=name, partitions=partitions, init_session=init_session, **kwargs)
+                            namespace=namespace, name=name, partitions=partitions, **kwargs)
     if store_engine in Relationship.CompToStore.get(Backend.SPARK):
         return HDFSTable(namespace, name, partitions)
 
@@ -70,13 +69,12 @@ def create_table(job_id: str = uuid.uuid1(),
                  store_engine: str = StoreEngine.LMDB,
                  namespace: str = None,
                  name: str = None,
-                 init_session: bool = False,
-                 partitions: int=1,
+                 partitions: int = 1,
                  **kwargs):
     if store_engine in Relationship.CompToStore.get(Backend.EGGROLL):
         create(name=name, namespace=namespace, store_engine=store_engine, partitions=partitions)
         return EggRollTable(job_id=job_id, mode=mode, persistent_engine=store_engine,
-                            namespace=namespace, name=name, partitions=partitions, init_session=init_session, **kwargs)
+                            namespace=namespace, name=name, partitions=partitions, **kwargs)
 
     if store_engine in Relationship.CompToStore.get(Backend.SPARK):
         create(name=name, namespace=namespace, store_engine=store_engine,partitions=partitions)

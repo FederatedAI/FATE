@@ -181,6 +181,9 @@ class Tracking(object):
                 view_data[k] = v
             return view_data
 
+    def get_output_data_info(self):
+        pass
+
     def save_output_data_table(self, data_table: Table, data_name: str = 'component'):
         """
         Save component output data, will run in the task executor process

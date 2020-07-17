@@ -33,12 +33,12 @@ import typing
 import uuid
 from typing import Iterable
 
-from arch.api import WorkMode, Backend, session
+from arch.api import WorkMode, Backend
 from arch.api.base.utils.store_type import StoreEngine
 from arch.api.data_table.base import Table, EggRollStorage
 from arch.api.utils.profile_util import log_elapsed
 from fate_flow.settings import WORK_MODE
-
+from arch.api.data_table import eggroll_session
 
 # noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
 class EggRollTable(Table):
@@ -50,16 +50,14 @@ class EggRollTable(Table):
                  namespace: str = None,
                  name: str = None,
                  partitions: int = 1,
-                 init_session: bool = True,
                  **kwargs):
         self._mode = mode
         self._name = name or str(uuid.uuid1())
         self._namespace = namespace or str(uuid.uuid1())
         self._partitions = partitions
         self._strage_engine = persistent_engine
-        if init_session:
-            session.init(job_id=job_id, mode=mode, backend=backend, persistent_engine=persistent_engine, set_log_dir=False)
-        self._table = session.table(namespace=namespace, name=name, partition=partitions, **kwargs)
+        self.session = eggroll_session.get_session(session_id=job_id, work_mode=mode)
+        self._table = self.session.table(namespace=namespace, name=name, partition=partitions, **kwargs)
 
     def get_name(self):
         return self._name
@@ -106,7 +104,7 @@ class EggRollTable(Table):
         return self.dtable(self._session_id, name, namespace, partition)
 
     def close(self):
-        session.stop()
+        self.session.stop()
 
     @log_elapsed
     def count(self, **kwargs):

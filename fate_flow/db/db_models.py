@@ -191,10 +191,11 @@ class DataView(DataBaseModel):
     f_size = BigIntegerField(default=0)
     f_description = TextField(null=True, default='')
     f_tag = CharField(max_length=50, null=True, index=True, default='')
+    f_index = IntegerField(default=0)
 
     class Meta:
         db_table = "t_data_view"
-        primary_key = CompositeKey('f_job_id', 'f_task_id', 'f_role', 'f_party_id')
+        primary_key = CompositeKey('f_job_id', 'f_task_id', 'f_role', 'f_party_id', 'f_index')
 
 
 class MachineLearningModelMeta(DataBaseModel):
