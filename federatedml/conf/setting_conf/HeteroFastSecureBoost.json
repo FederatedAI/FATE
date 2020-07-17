@@ -1,0 +1,16 @@
+{
+    "module_path":  "federatedml/ensemble/boosting/hetero",
+    "default_runtime_conf": "boosting_tree_param.json",
+    "param_class" : "federatedml/param/boosting_param.py/HeteroFastSecureBoostParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "hetero_fast_secureboost_guest.py/HeteroFastSecureBoostGuest"
+        },
+        "host":
+        {
+            "program": "hetero_fast_secureboost_host.py/HeteroFastSecureBoostHost"
+        }
+    }
+}
