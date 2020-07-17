@@ -5,10 +5,10 @@
 
 import requests
 
-from arch.api.utils import log_utils
-from arch.api.utils import string_utils
+from fate_arch.common import log
+from fate_arch.common import string_utils
 
-LOGGER = log_utils.getLogger()
+LOGGER = log.getLogger()
 
 C_HTTP_TEMPLATE = "http://{}/api/{}"
 C_COMMON_HTTP_HEADER = {'Content-Type': 'application/json'}
@@ -210,7 +210,7 @@ class RabbitManager:
         # union name is used for both upstream name and policy name
         # give a random string if not union_name was provided
         if union_name == "":
-            union_name = string_utils.RandomString()
+            union_name = string_utils.random_string()
 
         result_set_upstream = self._set_federated_upstream(upstream_host, union_name, vhost)
 

@@ -20,13 +20,13 @@ from itertools import chain
 # noinspection PyPackageRequirements
 from pyspark import rddsampler, RDD, SparkContext, util
 
-from arch.api.utils import log_utils
+from fate_arch.common import log
 from fate_arch.common.profile import log_elapsed
 from fate_arch.session._interface import TableABC
 from fate_arch.session.impl.spark import _util
 from fate_arch.session.impl.spark._kv_serdes import _load_from_hdfs, _save_as_hdfs
 
-LOGGER = log_utils.getLogger()
+LOGGER = log.getLogger()
 
 
 class Table(TableABC):

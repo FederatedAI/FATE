@@ -16,9 +16,9 @@
 
 
 import pika
-from arch.api.utils import log_utils
+from fate_arch.common import log
 
-LOGGER = log_utils.getLogger()
+LOGGER = log.getLogger()
 
 
 class MQChannel(object):

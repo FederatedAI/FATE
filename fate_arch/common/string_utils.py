@@ -18,11 +18,11 @@ import random
 import string
 
 
-def RandomString(stringLength=6):
+def random_string(string_length=6):
     letters = string.ascii_lowercase
-    return ''.join(random.choice(letters) for i in range(stringLength))
+    return ''.join(random.choice(letters) for _ in range(string_length))
 
 
-def RandomNumberString(stringLength=6):
+def random_number_string(string_length=6):
     letters = string.octdigits
-    return ''.join(random.choice(letters) for i in range(stringLength))
+    return ''.join(random.choice(letters) for _ in range(string_length))
