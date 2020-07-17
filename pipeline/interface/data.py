@@ -19,7 +19,7 @@ class Data(object):
     def __init__(self, data=None, train_data=None, validate_data=None, test_data=None):
         self.data = data
         self.train_data = train_data
-        self.validate_data = validate_data
+        self.eval_data = validate_data
         self.test_data = test_data
 
     """
