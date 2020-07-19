@@ -109,55 +109,16 @@ def transfer_model():
     return get_json_result(retcode=0, retmsg="success", data=model_data)
 
 
-# @manager.route('/<model_operation>', methods=['post', 'get'])
-# def operate_model(model_operation):
-#     request_config = request.json or request.form.to_dict()
-#     job_id = generate_job_id()
-#     required_arguments = ["model_id", "model_version"]
-#     if model_operation not in [ModelOperation.STORE, ModelOperation.RESTORE, ModelOperation.EXPORT, ModelOperation.IMPORT]:
-#         raise Exception('Can not support this operating now: {}'.format(model_operation))
-#     check_config(request_config, required_arguments=required_arguments)
-#     if model_operation in [ModelOperation.EXPORT, ModelOperation.IMPORT]:
-#         if model_operation == ModelOperation.IMPORT:
-#             file = request.files.get('file')
-#             file_path = os.path.join(TEMP_DIRECTORY, file.filename)
-#             try:
-#                 os.makedirs(os.path.dirname(file_path), exist_ok=True)
-#                 file.save(file_path)
-#             except Exception as e:
-#                 shutil.rmtree(file_path)
-#                 raise e
-#             request_config['file'] = file_path
-#             model = pipelined_model.PipelinedModel(model_id=request_config["model_id"], model_version=request_config["model_version"])
-#             model.unpack_model(file_path)
-#             return get_json_result()
-#         else:
-#             model = pipelined_model.PipelinedModel(model_id=request_config["model_id"], model_version=request_config["model_version"])
-#             archive_file_path = model.packaging_model()
-#             return send_file(archive_file_path, attachment_filename=os.path.basename(archive_file_path), as_attachment=True)
-#     else:
-#         data = {}
-#         job_dsl, job_runtime_conf = gen_model_operation_job_config(request_config, model_operation)
-#         job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = JobController.submit_job(
-#             {'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)
-#         data.update({'job_dsl_path': job_dsl_path, 'job_runtime_conf_path': job_runtime_conf_path,
-#                      'board_url': board_url, 'logs_directory': logs_directory})
-#         return get_json_result(job_id=job_id, data=data)
-
-
 @manager.route('/<model_operation>', methods=['post', 'get'])
 def operate_model(model_operation):
     request_config = request.json or request.form.to_dict()
     job_id = generate_job_id()
-    if model_operation not in [ModelOperation.EXPORT, ModelOperation.IMPORT]:
+    if model_operation not in [ModelOperation.STORE, ModelOperation.RESTORE, ModelOperation.EXPORT, ModelOperation.IMPORT]:
         raise Exception('Can not support this operating now: {}'.format(model_operation))
-    # required_arguments = ["model_id", "model_version", "role", "party_id"]
-    # TODO checkout meannings
-    # check_config(request_config, required_arguments=required_arguments)
-    # request_config["model_id"] = gen_party_model_id(model_id=request_config["model_id"], role=request_config["role"], party_id=request_config["party_id"])
-    print('from model_app 153, type is: ', request_config.get('type'))
-    print('from model_app 154, type of type is: ', type(request_config.get('type')))
-    if request_config.get('type') == 0:
+    required_arguments = ["model_id", "model_version", "role", "party_id"]
+    check_config(request_config, required_arguments=required_arguments)
+    request_config["model_id"] = gen_party_model_id(model_id=request_config["model_id"], role=request_config["role"], party_id=request_config["party_id"])
+    if model_operation in [ModelOperation.EXPORT, ModelOperation.IMPORT]:
         if model_operation == ModelOperation.IMPORT:
             file = request.files.get('file')
             file_path = os.path.join(TEMP_DIRECTORY, file.filename)
@@ -168,17 +129,14 @@ def operate_model(model_operation):
                 shutil.rmtree(file_path)
                 raise e
             request_config['file'] = file_path
-            model = pipelined_model.PipelinedModel(model_id=request_config["model_id"],
-                                                   model_version=request_config["model_version"])
+            model = pipelined_model.PipelinedModel(model_id=request_config["model_id"], model_version=request_config["model_version"])
             model.unpack_model(file_path)
             return get_json_result()
         else:
-            model = pipelined_model.PipelinedModel(model_id=request_config["model_id"],
-                                                   model_version=request_config["model_version"])
+            model = pipelined_model.PipelinedModel(model_id=request_config["model_id"], model_version=request_config["model_version"])
             archive_file_path = model.packaging_model()
-            return send_file(archive_file_path, attachment_filename=os.path.basename(archive_file_path),
-                             as_attachment=True)
-    elif request_config.get('type') == 1:
+            return send_file(archive_file_path, attachment_filename=os.path.basename(archive_file_path), as_attachment=True)
+    else:
         data = {}
         job_dsl, job_runtime_conf = gen_model_operation_job_config(request_config, model_operation)
         job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = JobController.submit_job(
