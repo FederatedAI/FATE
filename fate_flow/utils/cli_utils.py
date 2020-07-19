@@ -30,7 +30,7 @@ def prettify(response, verbose=True):
     return response
 
 
-def access_server(method, ctx, postfix, json, echo=True, **kwargs):
+def access_server(method, ctx, postfix, json=None, echo=True, **kwargs):
     try:
         url = "/".join([ctx.obj['server_url'], postfix])
         response = {}

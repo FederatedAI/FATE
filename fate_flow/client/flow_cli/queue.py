@@ -13,17 +13,27 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from setuptools import setup, find_packages
+import click
+from fate_flow.utils.cli_utils import preprocess, access_server
 
-setup(
-    name='flow-client',
-    version='0.1',
-    packages=find_packages(),
-    include_package_data=True,
-    install_requires=['Click', 'six', 'ruamel.yaml', 'cachetools',
-                      'python-dotenv', 'kazoo', 'requests', 'requests_toolbelt'],
-    entry_points='''
-        [console_scripts]
-        flow=fate_flow.client.flow:flow_cli
-    ''',
-)
+
+@click.group(short_help="Queue Operations")
+@click.pass_context
+def queue(ctx):
+    """
+    \b
+    Provides a queue operational command, which is 'clean'.
+    For more details, please check out the help text.
+    """
+    pass
+
+
+@queue.command(short_help="Clean Queue Command")
+@click.pass_context
+def clean(ctx):
+    """
+    - COMMAND DESCRIPTION:
+
+    Queue Clean Command
+    """
+    access_server('post', ctx, "job/clean/queue", json={})

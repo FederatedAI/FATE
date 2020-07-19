@@ -13,17 +13,3 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from setuptools import setup, find_packages
-
-setup(
-    name='flow-client',
-    version='0.1',
-    packages=find_packages(),
-    include_package_data=True,
-    install_requires=['Click', 'six', 'ruamel.yaml', 'cachetools',
-                      'python-dotenv', 'kazoo', 'requests', 'requests_toolbelt'],
-    entry_points='''
-        [console_scripts]
-        flow=fate_flow.client.flow:flow_cli
-    ''',
-)
