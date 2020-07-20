@@ -197,71 +197,91 @@ def component_output_model():
 @job_utils.job_server_routing()
 def component_output_data():
     request_data = request.json
-    output_data_table = get_component_output_data_table(task_data=request_data)
-    if not output_data_table:
+    output_data_tables = get_component_output_data_table(task_data=request_data)
+    if not output_data_tables:
         return get_json_result(retcode=0, retmsg='no data', data=[])
-    output_data = []
-    num = 100
-    have_data_label = False
-    if output_data_table:
-        for k, v in output_data_table.collect():
-            if num == 0:
-                break
-            data_line, have_data_label = get_component_output_data_line(src_key=k, src_value=v)
-            output_data.append(data_line)
-            num -= 1
-        total = output_data_table.count()
-    if output_data:
-        header = get_component_output_data_meta(output_data_table=output_data_table, have_data_label=have_data_label)
-        return get_json_result(retcode=0, retmsg='success', data=output_data, meta={'header': header, 'total': total})
-    else:
+    output_data_list = []
+    headers = []
+    totals = []
+    for output_data_table in output_data_tables:
+        output_data = []
+        num = 100
+        have_data_label = False
+
+        if output_data_table:
+            for k, v in output_data_table.collect():
+                if num == 0:
+                    break
+                data_line, have_data_label = get_component_output_data_line(src_key=k, src_value=v)
+                output_data.append(data_line)
+                num -= 1
+            total = output_data_table.count()
+            output_data_list.append(output_data)
+            totals.append(total)
+        if output_data:
+            header = get_component_output_data_meta(output_data_table=output_data_table, have_data_label=have_data_label)
+            headers.append(header)
+        else:
+            headers.append(None)
+    if len(output_data_list) == 1 and not output_data_list[0]:
         return get_json_result(retcode=0, retmsg='no data', data=[])
+    return get_json_result(retcode=0, retmsg='success', data=output_data_list, meta={'header': headers, 'total': totals})
 
 
 @manager.route('/component/output/data/download', methods=['get'])
 @job_utils.job_server_routing(307)
 def component_output_data_download():
     request_data = request.json
-    output_data_table = get_component_output_data_table(task_data=request_data)
+    output_data_tables = get_component_output_data_table(task_data=request_data)
     limit = request_data.get('limit', -1)
-    if not output_data_table:
+    if len(output_data_tables) == 1 and not output_data_tables[0]:
         return error_response(response_code=500, retmsg='no data')
     if limit == 0:
         return error_response(response_code=500, retmsg='limit is 0')
     output_data_count = 0
     have_data_label = False
+    output_data_file_list = []
+    output_data_meta_file_list = []
     output_tmp_dir = os.path.join(os.getcwd(), 'tmp/{}'.format(fate_uuid()))
     output_file_path = '{}/output_%s'.format(output_tmp_dir)
-    output_data_file_path = output_file_path % 'data.csv'
-    os.makedirs(os.path.dirname(output_data_file_path), exist_ok=True)
-    with open(output_data_file_path, 'w') as fw:
-        for k, v in output_data_table.collect():
-            data_line, have_data_label = get_component_output_data_line(src_key=k, src_value=v)
-            fw.write('{}\n'.format(','.join(map(lambda x: str(x), data_line))))
-            output_data_count += 1
-            if output_data_count == limit:
-                break
+    i = 0
+    for output_data_table in output_data_tables:
+        output_data_file_path = output_file_path % '{}_data.csv'.format(i)
+        os.makedirs(os.path.dirname(output_data_file_path), exist_ok=True)
+        with open(output_data_file_path, 'w') as fw:
+            for k, v in output_data_table.collect():
+                data_line, have_data_label = get_component_output_data_line(src_key=k, src_value=v)
+                fw.write('{}\n'.format(','.join(map(lambda x: str(x), data_line))))
+                output_data_count += 1
+                if output_data_count == limit:
+                    break
 
-    if output_data_count:
-        # get meta
-        header = get_component_output_data_meta(output_data_table=output_data_table, have_data_label=have_data_label)
-        output_data_meta_file_path = output_file_path % 'data_meta.json'
-        with open(output_data_meta_file_path, 'w') as fw:
-            json.dump({'header': header}, fw, indent=4)
-        if request_data.get('head', True):
-            with open(output_data_file_path, 'r+') as f:
-                content = f.read()
-                f.seek(0, 0)
-                f.write('{}\n'.format(','.join(header)) + content)
-        # tar
-        memory_file = io.BytesIO()
-        tar = tarfile.open(fileobj=memory_file, mode='w:gz')
-        tar.add(output_data_file_path, os.path.relpath(output_data_file_path, output_tmp_dir))
-        tar.add(output_data_meta_file_path, os.path.relpath(output_data_meta_file_path, output_tmp_dir))
-        tar.close()
-        memory_file.seek(0)
+        if output_data_count:
+            # get meta
+            output_data_file_list.append(output_data_file_path)
+            header = get_component_output_data_meta(output_data_table=output_data_table, have_data_label=have_data_label)
+            output_data_meta_file_path = output_file_path % 'data_{}_meta.json'.format(i)
+            output_data_meta_file_list.append(output_data_meta_file_path)
+            with open(output_data_meta_file_path, 'w') as fw:
+                json.dump({'header': header}, fw, indent=4)
+            if request_data.get('head', True):
+                with open(output_data_file_path, 'r+') as f:
+                    content = f.read()
+                    f.seek(0, 0)
+                    f.write('{}\n'.format(','.join(header)) + content)
+            i += 1
+    # tar
+    memory_file = io.BytesIO()
+    tar = tarfile.open(fileobj=memory_file, mode='w:gz')
+    for index in range(0, len(output_data_file_list)):
+        tar.add(output_data_file_list[index], os.path.relpath(output_data_file_list[index], output_tmp_dir))
+        tar.add(output_data_meta_file_list[index], os.path.relpath(output_data_meta_file_list[index], output_tmp_dir))
+    tar.close()
+    memory_file.seek(0)
+    output_data_file_list.extend(output_data_meta_file_list)
+    for path in output_data_file_list:
         try:
-            shutil.rmtree(os.path.dirname(output_data_file_path))
+            shutil.rmtree(os.path.dirname(path))
         except Exception as e:
             # warning
             stat_logger.warning(e)
@@ -326,9 +346,11 @@ def get_component_output_data_table(task_data):
         raise Exception('can not found component, please check if the parameters are correct')
     output_dsl = component.get_output()
     output_data_dsl = output_dsl.get('data', [])
-    # The current version will only have one data output.
-    output_data_table = tracker.get_output_data_table(output_data_dsl[0] if output_data_dsl else 'component')
-    return output_data_table
+    output_data_tables = []
+    for index in range(0, len(output_data_dsl)):
+        output_data_table = tracker.get_output_data_table(output_data_dsl[index] if output_data_dsl else 'component')
+        output_data_tables.append(output_data_table)
+    return output_data_tables
 
 
 def get_component_output_data_line(src_key, src_value):

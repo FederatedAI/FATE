@@ -162,6 +162,8 @@ class HeteroLRHost(HeteroLRBase):
     def predict(self, data_instances):
         self.transfer_variable.host_prob.disable_auto_clean()
         LOGGER.info("Start predict ...")
+        self._abnormal_detection(data_instances)
+        data_instances = self.align_data_header(data_instances, self.header)
         if self.need_one_vs_rest:
             self.one_vs_rest_obj.predict(data_instances)
             return
