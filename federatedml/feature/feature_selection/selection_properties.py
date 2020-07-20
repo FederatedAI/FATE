@@ -74,6 +74,7 @@ class SelectionProperties(object):
     def add_left_col_name(self, left_col_name):
         idx = self.col_name_maps.get(left_col_name)
         if idx is None:
+            LOGGER.debug(f"left_col_name: {left_col_name}, col_name_maps: {self.col_name_maps}")
             LOGGER.warning("Adding a col_name that is not exist in header")
             return
         if idx not in self.left_col_indexes:
@@ -196,4 +197,7 @@ class CompletedSelectionResults(object):
         for pass_name_dict in self.__host_pass_filter_nums_list:
             sorted_list = sorted(pass_name_dict.items(), key=operator.itemgetter(1), reverse=True)
             result.append([x for x, _ in sorted_list])
+        LOGGER.debug(f"In get_host_sorted_col_names,"
+                     f" pass_counter: {self.__host_pass_filter_nums_list},"
+                     f"result: {result}")
         return result

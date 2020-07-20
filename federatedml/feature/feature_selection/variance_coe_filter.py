@@ -61,7 +61,11 @@ class VarianceCoeFilter(BaseFilterMethod):
         self._keep_one_feature(pick_high=True)
         return self
 
-    def get_meta_obj(self, meta_dicts):
-        result = feature_selection_meta_pb2.VarianceOfCoeSelectionMeta(value_threshold=self.value_threshold)
-        meta_dicts['variance_coe_meta'] = result
-        return meta_dicts
+    # def get_meta_obj(self, meta_dicts):
+    #     result = feature_selection_meta_pb2.VarianceOfCoeSelectionMeta(value_threshold=self.value_threshold)
+    #     meta_dicts['variance_coe_meta'] = result
+    #     return meta_dicts
+
+    def get_meta_obj(self):
+        result = feature_selection_meta_pb2.FilterMeta()
+        return result

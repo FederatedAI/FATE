@@ -33,6 +33,7 @@ class Guest(object):
 
     def sync_select_cols(self, suffix=tuple()):
         host_select_col_names = self._host_select_cols_transfer.get(idx=-1, suffix=suffix)
+        LOGGER.debug(f"In sync_select_cols, host_names: {host_select_col_names}")
         host_selection_params = []
         for host_id, select_names in enumerate(host_select_col_names):
             host_selection_properties = SelectionProperties()

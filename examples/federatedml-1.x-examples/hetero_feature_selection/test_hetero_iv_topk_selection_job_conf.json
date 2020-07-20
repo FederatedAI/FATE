@@ -85,26 +85,6 @@
       "iv_top_k_param": {
         "k": 7,
         "local_only": false
-      },
-      "manually_param": {
-        "filter_out_indexes": [],
-        "filter_out_names": []
-      },
-      "unique_param": {
-        "eps": 1e-6
-      },
-      "iv_value_param": {
-        "value_threshold": 0.1
-      },
-      "iv_percentile_param": {
-        "percentile_threshold": 0.9
-      },
-      "variance_coe_param": {
-        "value_threshold": 0.3
-      },
-      "outlier_param": {
-        "percentile": 0.95,
-        "upper_threshold": 2.0
       }
     }
   }

@@ -142,6 +142,8 @@ class HeteroLinRGuest(HeteroLinRBase):
         """
         LOGGER.info("Start predict ...")
 
+        self._abnormal_detection(data_instances)
+        data_instances = self.align_data_header(data_instances, self.header)
         data_features = self.transform(data_instances)
         pred = self.compute_wx(data_features, self.model_weights.coef_, self.model_weights.intercept_)
         host_preds = self.transfer_variable.host_partial_prediction.get(idx=-1)
