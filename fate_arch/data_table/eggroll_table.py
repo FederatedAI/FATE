@@ -33,12 +33,13 @@ import typing
 import uuid
 from typing import Iterable
 
-from arch.api import WorkMode, Backend
-from arch.api.base.utils.store_type import StoreEngine
-from arch.api.data_table.base import Table, EggRollStorage
 from arch.api.utils.profile_util import log_elapsed
+
+from fate_arch.data_table.base import Table, EggRollStorage
+from fate_arch.data_table.store_type import StoreEngine
+from fate_arch.session import WorkMode, Backend
 from fate_flow.settings import WORK_MODE
-from arch.api.data_table import eggroll_session
+from fate_arch.data_table import eggroll_session
 
 # noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
 class EggRollTable(Table):
@@ -92,9 +93,8 @@ class EggRollTable(Table):
     @log_elapsed
     def save_as(self, name, namespace, partition=None, **kwargs):
 
-        from arch.api import RuntimeInstance
         options = kwargs.get("options", {})
-        store_type = options.get("store_type", RuntimeInstance.SESSION.get_persistent_engine())
+        store_type = options.get("store_type", StoreEngine.LMDB)
         options["store_type"] = store_type
 
         if partition is None:

@@ -28,15 +28,12 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+from fate_arch.data_table.eggroll_table import EggRollTable
+from fate_arch.data_table.store_type import Relationship, StoreEngine
+from fate_arch.session import Backend
 from fate_flow.entity.runtime_config import RuntimeConfig
-
-from arch.api import Backend
-
-
-from arch.api.base.utils.store_type import StoreEngine, Relationship
-from arch.api.data_table.eggroll_table import EggRollTable
 from arch.standalone import WorkMode
-from fate_flow.utils.data_utils import create
+from fate_flow.manager.table_manager import create
 
 MAX_NUM = 10000
 

@@ -13,15 +13,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import datetime
 import os
 import shutil
 import time
 
 from arch.api import session
-from arch.api.data_table.table_manager import create_table
 
-from arch.api.utils import log_utils, file_utils, dtable_utils, version_control
+from arch.api.utils import log_utils, file_utils, dtable_utils
+from fate_arch.data_table.table_manager import create_table
 from fate_flow.entity.metric import Metric, MetricMeta
 
 LOGGER = log_utils.getLogger()

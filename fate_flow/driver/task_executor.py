@@ -18,12 +18,11 @@ import importlib
 import os
 import traceback
 from arch.api import federation
-from arch.api import session, Backend
-from arch.api.base.utils.store_type import StoreTypes
-from arch.api.data_table.table_manager import get_table
 from arch.api.utils import file_utils, log_utils
 from arch.api.utils.core_utils import current_timestamp, get_lan_ip, timestamp_to_date
 from arch.api.utils.log_utils import schedule_logger
+from fate_arch.data_table.store_type import StoreTypes
+from fate_arch.session import Backend
 from fate_flow.db.db_models import Task
 from fate_flow.entity.constant_config import TaskStatus, ProcessRole
 from fate_flow.entity.runtime_config import RuntimeConfig

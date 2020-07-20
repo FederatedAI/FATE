@@ -32,14 +32,14 @@ import json
 import typing
 import uuid
 
-from arch.api import WorkMode, Backend
-from arch.api.base.utils.store_type import StoreTypes, StoreEngine, Relationship
-from arch.api.data_table.hdfs_table import HDFSTable
-from arch.api.data_table.mysql_table import MysqlTable
 from arch.api.utils.conf_utils import get_base_config
-from arch.api.data_table.eggroll_table import EggRollTable
+from fate_arch.data_table.eggroll_table import EggRollTable
+from fate_arch.data_table.hdfs_table import HDFSTable
+from fate_arch.data_table.mysql_table import MysqlTable
+from fate_arch.data_table.store_type import StoreEngine, Relationship
+from fate_arch.session import WorkMode, Backend
+from fate_flow.manager.table_manager import get_store_info, create
 from fate_flow.settings import WORK_MODE
-from fate_flow.utils.data_utils import get_store_info, create
 
 
 def get_table(job_id: str = uuid.uuid1(),

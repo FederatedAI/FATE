@@ -33,10 +33,12 @@ import uuid
 import pymysql
 import typing
 
-from arch.api.base.utils.store_type import StoreEngine
-from arch.api.data_table.base import Table, MysqlAddress
 from arch.api.utils.profile_util import log_elapsed
-from arch.api import WorkMode
+
+from fate_arch.data_table.base import Table, MysqlAddress
+from fate_arch.data_table.store_type import StoreEngine
+from fate_arch.session import WorkMode
+
 from fate_flow.settings import WORK_MODE
 
 

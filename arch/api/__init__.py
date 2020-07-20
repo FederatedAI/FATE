@@ -13,17 +13,4 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from enum import IntEnum
 
-from fate_arch.session import WorkMode, Backend
-
-
-class StoreEngine(IntEnum):
-    EGGROLL = 0
-    HDFS = 1
-
-    def is_hdfs(self):
-        return self.value == self.HDFS
-
-    def is_eggroll(self):
-        return self.value == self.EGGROLL

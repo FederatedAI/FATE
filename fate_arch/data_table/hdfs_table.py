@@ -29,16 +29,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import typing
 import uuid
 from typing import Iterable
 from pyspark import SparkContext
 import pickle
 
-from arch.api import WorkMode
-from arch.api.base.utils.store_type import StoreEngine
-from arch.api.data_table.base import Table, HDFSStorage
-from arch.api.utils.profile_util import log_elapsed
+from fate_arch.data_table.base import Table
 from fate_flow.db.db_models import DB, TableMeta
 from arch.api.utils import log_utils
 LOGGER = log_utils.getLogger()

@@ -15,8 +15,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.data_table.table_convert import convert
-from fate_flow.entity.metric import MetricMeta, Metric
+from fate_arch.data_table.table_convert import convert
+from fate_flow.entity.metric import MetricMeta
 
 from arch.api.utils import log_utils
 
