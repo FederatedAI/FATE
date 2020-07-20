@@ -214,21 +214,33 @@ class ModelBase(object):
 
     def set_summary(self, new_summary):
         """
-        model summary setter
-        :param new_summary: dict, summary to replace original summary
-        :return:
+        Model summary setter
+        Parameters
+        ----------
+        new_summary: dict, summary to replace the original one
+
+        Returns
+        -------
+
         """
+        
         if not isinstance(new_summary, dict):
             raise ValueError(f"summary should be of dict type, received {type(new_summary)} instead.")
         self._summary = copy.deepcopy(new_summary)
 
     def add_summary(self, new_key, new_value):
         """
-        add key:value pair to model summary
-        :param new_key: str
-        :param new_value: object
-        :return:
+        Add key:value pair to model summary
+        Parameters
+        ----------
+        new_key: str
+        new_value: object
+
+        Returns
+        -------
+
         """
+
         original_value = self._summary.get(new_key, None)
         if original_value is not None:
             LOGGER.warning(f"{new_key} already exists in model summary."
@@ -238,12 +250,18 @@ class ModelBase(object):
 
     def merge_summary(self, new_content, suffix=None, suffix_sep='_'):
         """
-        merge new content into model summary
-        :param new_content: dict, content to be added into model summary
-        :param suffix: string or None, suffix used to create new key if any key in new_content already exists in model summary
-        :param suffix_sep: string, default '_', suffix separator used to create new key
-        :return:
+        Merge new content into model summary
+        Parameters
+        ----------
+        new_content: dict, content to be merged into summary
+        suffix: str or None, suffix used to create new key if any key in new_content already exixts in model summary
+        suffix_sep: string, default '_', suffix separator used to create new key
+
+        Returns
+        -------
+
         """
+
         if not isinstance(new_content, dict):
             raise ValueError(f"To merge new content into model summary, "
                              f"value must be of dict type, received {type(new_content)} instead.")
