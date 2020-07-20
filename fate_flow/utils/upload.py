@@ -38,6 +38,20 @@ class Upload(object):
 
     def run(self, component_parameters=None, args=None):
         self.parameters = component_parameters["UploadParam"]
+
+        data_table = session.get_data_table(name=self.parameters["table_name"], namespace=self.parameters["namespace"])
+        if data_table:
+            count = data_table.count()
+            if count and int(self.parameters.get('drop', 2)) == 2:
+                LOGGER.error('The data table already exists, table data count:{}.'
+                                            'If you still want to continue uploading, please add the parameter -drop. '
+                                            '0 means not to delete and continue uploading, '
+                                            '1 means to upload again after deleting the table'.format(
+                                        count))
+                return
+            elif count and int(self.parameters.get('drop', 2)) == 1:
+                data_table.destroy()
+
         self.parameters["role"] = component_parameters["role"]
         self.parameters["local"] = component_parameters["local"]
         job_id = self.taskid.split("_")[0]

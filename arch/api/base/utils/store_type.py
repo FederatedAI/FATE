@@ -1,3 +1,4 @@
+
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -26,7 +27,6 @@ class StoreTypes(object):
     ROLLPAIR_MMAP = 'ROLL_PAIR_MMAP'
     ROLLPAIR_CACHE = 'ROLL_PAIR_CACHE'
     ROLLPAIR_QUEUE = 'ROLL_PAIR_QUEUE'
-
 
 class StoreEngine(object):
     MYSQL = 'MYSQL'

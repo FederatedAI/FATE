@@ -531,7 +531,7 @@ python run_toy_example.py 9999 10000 1
 python upload_default_data.py -m 1
 ```
 
-更多细节信息，敬请参考[脚本README](../examples/scripts/README.rst)
+更多细节信息，敬请参考[脚本README](../../examples/scripts/README.rst)
 
 ### **6.2.2 快速模式：**
 

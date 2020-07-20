@@ -45,8 +45,7 @@ EPS = 0.001
 
 
 def session_init(job_id, idx):
-    from arch.api import session
-    from arch.api import federation
+    from fate_arch import session
 
     role = "guest" if idx < 1 else "host"
     party_id = 9999 + idx if idx < 1 else 10000 + (idx - 1)
@@ -58,10 +57,9 @@ def session_init(job_id, idx):
             9999 + i for i in range(1)
         ]
     }
-    session.init(job_id)
-    federation.init(job_id, dict(local=dict(role=role, party_id=party_id),
-                                 role=role_parties))
-    return federation.local_party(), federation.all_parties()
+    sess = session.init(job_id)
+    sess.init_federation(job_id, dict(local=dict(role=role, party_id=party_id), role=role_parties))
+    return sess.parties.local_party(), sess.parties.all_parties()
 
 
 def submit(func, *args, **kwargs):

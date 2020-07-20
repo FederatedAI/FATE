@@ -17,7 +17,7 @@
 
 class UploadParam:
     def __init__(self, file="", head=1, partition=10,
-                 namespace="", table_name="", work_mode=0, in_version=False):
+                 namespace="", table_name="", work_mode=0, in_version=False, drop=2):
         self.file = file
         self.head = head
         self.partition = partition
@@ -25,6 +25,7 @@ class UploadParam:
         self.table_name = table_name
         self.work_mode = work_mode
         self.in_version = in_version
+        self.drop = drop
 
     def check(self):
         return True

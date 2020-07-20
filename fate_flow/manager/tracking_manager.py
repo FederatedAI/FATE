@@ -20,7 +20,7 @@ from arch.api.data_table.table_manager import get_table, create_table
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import DB, Job, Task, TrackingMetric, DataView
-from fate_flow.entity.constant_config import JobStatus, TaskStatus
+from fate_flow.entity.constant_config import JobStatus, TaskStatus, Backend
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.model_manager import pipelined_model
@@ -458,6 +458,8 @@ class Tracking(object):
                 return data_views[0]
 
     def clean_task(self, roles, party_ids):
+        if Backend.EGGROLL != RuntimeConfig.BACKEND:
+            return
         schedule_logger(self.job_id).info('clean task {} on {} {}'.format(self.task_id,
                                                                           self.role,
                                                                           self.party_id))
@@ -481,7 +483,7 @@ class Tracking(object):
                                                                                                          self.role,
                                                                                                          self.party_id))
                     '''
-                    
+
         except Exception as e:
             schedule_logger(self.job_id).exception(e)
         schedule_logger(self.job_id).info('clean task {} on {} {} done'.format(self.task_id,
