@@ -53,10 +53,10 @@ def convert(table, name='', namespace='', force=False, **kwargs):
                     _table.put_all(data)
                     count = 0
                     data = []
-            _table.save_schema(table.get_schema())
-            table.close()
             create(name=name, namespace=namespace, store_engine=StoreEngine.LMDB,
                    address={'name': name, 'namespace': namespace}, partitions=table.get_partitions())
+            _table.save_schema(table.get_schema(), count=table.count())
+            table.close()
             return _table
     return table
 

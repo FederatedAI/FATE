@@ -21,8 +21,9 @@ from typing import Iterable
 
 import six
 
-from arch.api.utils.core_utils import current_timestamp
+from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from fate_flow.db.db_models import DB, MachineLearningDataSchema
+from fate_flow.settings import stat_logger
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -133,57 +134,61 @@ class Table(object):
     meta utils
     """
 
-    def get_schema(self):
+    def get_schema(self, _type='schema'):
         with DB.connection_context():
-            schema = MachineLearningDataSchema.select().where(MachineLearningDataSchema.f_table_name == self.name,
-                                                              MachineLearningDataSchema.f_namespace == self.namespace)
+            schema = MachineLearningDataSchema.select().where(MachineLearningDataSchema.f_table_name == self._name,
+                                                              MachineLearningDataSchema.f_namespace == self._namespace)
             schema_data = {}
             if schema:
                 schema = schema[0]
                 try:
-                    schema_data = pickle.loads(schema.f_content)
+                    if _type == 'schema':
+                        schema_data = deserialize_b64(schema.f_schema)
+                    elif _type == 'data':
+                        schema_data = deserialize_b64(schema.f_part_of_data)
+                    elif _type == 'count':
+                        schema_data = schema.f_count
                 except:
-                    schema_data = {}
+                    schema_data = None
         return schema_data
 
-    def save_schema(self, kv):
+    def save_schema(self, schema_data=None, party_of_data=None, count=0):
         # save metas to mysql
+        if not schema_data:
+            schema_data = {}
+        if not party_of_data:
+            party_of_data = []
         with DB.connection_context():
-            schema = MachineLearningDataSchema.select().where(MachineLearningDataSchema.f_table_name == self.name,
-                                                              MachineLearningDataSchema.f_namespace == self.namespace)
-            is_insert = True
+            schema = MachineLearningDataSchema.select().where(MachineLearningDataSchema.f_table_name == self._name,
+                                                              MachineLearningDataSchema.f_namespace == self._namespace)
             if schema:
+                # save schema info
                 schema = schema[0]
-                is_insert = False
-                if schema.f_content:
-                    schema_data = pickle.loads(schema.f_content)
-                else:
-                    schema_data = {}
-                schema_data.updata(kv)
-                schema.f_content = pickle.dumps(schema_data)
-
+                if schema.f_schema:
+                    _schema_data = deserialize_b64(schema.f_schema)
+                _schema_data.updata(schema_data)
+                schema.f_schema = serialize_b64(_schema_data)
+                # save data
+                if party_of_data:
+                    _f_part_of_data = deserialize_b64(schema.f_part_of_data)
+                    if len(_f_part_of_data) < 200:
+                        _f_part_of_data.append(party_of_data[:(200 - len(_f_part_of_data))])
+                        schema.f_part_of_data = serialize_b64(party_of_data[:200])
+                # save count
+                if count:
+                    schema.f_count += count
             else:
-                schema_data = kv
-                schema = MachineLearningDataSchema()
-                schema.f_create_time = current_timestamp()
-                schema.f_table_name = self.name
-                schema.f_namespace = self.namespace
-                schema.f_content = pickle.dumps(schema_data)
+                raise Exception('please create table {} {} before useing'.format(self._namespace, self._namespace))
             schema.f_update_time = current_timestamp()
-            if is_insert:
-                schema.save(_insert=True)
-            else:
-                schema.save()
-        return schema_data
+            schema.save(_insert=True)
 
     def destroy_schema(self):
         try:
             with DB.connection_context():
-                delete = MachineLearningDataSchema.delete().where(MachineLearningDataSchema.f_table_name == self.name,
-                                                                  MachineLearningDataSchema.f_namespace == self.namespace)
-                delete.execute()
-        except:
-            pass
+                MachineLearningDataSchema.delete().where(MachineLearningDataSchema.f_table_name == self._name,
+                                                         MachineLearningDataSchema.f_namespace == self._namespace).execute()
+        except Exception as e:
+            stat_logger.error("delete_table_meta {}, {}, exception:{}.".format(self._namespace, self._name, e))
 
 
 class StorageABC(metaclass=abc.ABCMeta):
@@ -197,7 +202,7 @@ class HDFSStorage(StorageABC):
 
 class EggRollStorage(StorageABC):
     def __init__(self, name, namespace):
-        self.name = name
+        self._name = name
         self._namespace = namespace
 
 

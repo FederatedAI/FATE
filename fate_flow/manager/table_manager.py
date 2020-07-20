@@ -15,25 +15,17 @@
 #
 import json
 
-from arch.api.utils.core_utils import current_timestamp
+from arch.api.utils.core_utils import current_timestamp, serialize_b64
 from fate_flow.db.db_models import DB, MachineLearningDataSchema
 
 
-def create(name, namespace, store_engine, address='', partitions=1):
+def create(name, namespace, store_engine, address='', partitions=1, count=0):
     with DB.connection_context():
         schema = MachineLearningDataSchema.select().where(MachineLearningDataSchema.f_table_name == name,
                                                           MachineLearningDataSchema.f_namespace == namespace)
         is_insert = True
         if schema:
-            schema = schema[0]
-            is_insert = False
-            if schema.f_data_store_engine:
-                # schema.f_data_store_engine = ',{}'.format(store_engine)
-                raise Exception('table has been created as {} store engine'.format(schema.f_data_store_engine))
-            else:
-
-                schema.f_data_store_engine = store_engine
-                schema.f_address = json.dumps(address)
+            raise Exception('table {} {} has been created'.format(name, namespace))
         else:
             schema = MachineLearningDataSchema()
             schema.f_create_time = current_timestamp()
@@ -42,6 +34,9 @@ def create(name, namespace, store_engine, address='', partitions=1):
             schema.f_data_store_engine = store_engine
             schema.f_address = json.dumps(address)
             schema.f_partitions = partitions
+            schema.f_count = count
+            schema.f_schema = serialize_b64({})
+            schema.f_part_of_data = serialize_b64([])
         schema.f_update_time = current_timestamp()
         if is_insert:
             schema.save(force_insert=True)

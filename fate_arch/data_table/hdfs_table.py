@@ -34,11 +34,10 @@ from typing import Iterable
 from pyspark import SparkContext
 import pickle
 
-from fate_arch.data_table.base import Table
-from fate_flow.db.db_models import DB, TableMeta
+from fate_arch.data_table.base import Table, HDFSStorage
+from fate_arch.data_table.store_type import StoreEngine
 from arch.api.utils import log_utils
 LOGGER = log_utils.getLogger()
-
 
 
 # noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
@@ -67,7 +66,6 @@ class HDFSTable(Table):
     def get_address(self):
         return HDFSStorage(HDFSTable.generate_hdfs_path(self._namespace, self._name))
 
-    
     def put_all(self, kv_list: Iterable, use_serialize=True, chunk_size=100000):
         path, fs = HDFSTable.get_hadoop_fs(namespace=self._namespace, name=self._name)
         if(fs.exists(path)):
@@ -82,10 +80,8 @@ class HDFSTable(Table):
             counter = counter + 1
         out.flush()
         out.close()
-        
-        HDFSTable.update_table_meta(namespace=self._namespace, name=self._name, partitions=self._partitions, records=counter)
+        self.save_schema(count=counter)
 
-    
     def collect(self, min_chunk_size=0, use_serialize=True) -> list:
         sc = SparkContext.getOrCreate()
         hdfs_path = HDFSTable.generate_hdfs_path(namespace=self._namespace, name=self._sname)
@@ -102,33 +98,26 @@ class HDFSTable(Table):
                 break
         istream.close()
 
-    
     def destroy(self):
         super().destroy()
         path, fs = HDFSTable.get_hadoop_fs(namespace=self._namespace, name=self._name)
         if(fs.exists(path)):
             fs.delete(path)
-        HDFSTable.delete_table_meta(namespace=self._namespace, name=self._name)
-
     
     def count(self):
-        meta = HDFSTable.get_table_meta(namespace=self._namespace, name=self._name)
+        meta = self.get_schema(_type='count')
         if meta:
-            return meta.f_records
+            return meta.f_count
         else:
             return -1
 
-    
     def save_as(self, name, namespace, partition=None, **kwargs):
         sc = SparkContext.getOrCreate()
         src_path = HDFSTable.get_path(sc, HDFSTable.generate_hdfs_path(namespace=self._namespace, name=self._name))
         dst_path = HDFSTable.get_path(sc, HDFSTable.generate_hdfs_path(namespace=namespace, name=name))
         fs = HDFSTable.get_file_system(sc)
         fs.rename(src_path, dst_path)
-        records = self.count()
-        HDFSTable.update_table_meta(namespace=namespace, name=name, partitions=partition, records=records)
         return HDFSTable(namespace, name, partition)
-
 
     delimiter = '\t'
     
@@ -154,51 +143,3 @@ class HDFSTable(Table):
         path = HDFSTable.get_path(sc, hdfs_path)
         fs = HDFSTable.get_file_system(sc)
         return path, fs
-
-    @classmethod
-    def update_table_meta(cls, namespace, name, partitions, records):
-        try:
-            from arch.api.utils.core_utils import current_timestamp
-            with DB.connection_context():
-                metas = TableMeta.select().where(TableMeta.f_table_namespace == namespace,
-                                                    TableMeta.f_table_name == name)
-                is_insert = True
-                if metas:
-                    meta = metas[0]
-                    is_insert = False
-                else:
-                    meta = TableMeta()
-                    meta.f_table_namespace = namespace
-                    meta.f_table_name = name
-                    meta.f_create_time = current_timestamp()
-                    meta.f_records = 0
-                    
-                meta.f_records = meta.f_records + records
-                meta.f_partitions = partitions
-                meta.f_update_time = current_timestamp()
-                if is_insert:
-                    meta.save(force_insert=True)
-                else:
-                    meta.save()
-        except Exception as e:
-            LOGGER.error("update_table_meta exception:{}.".format(e))
-
-    @classmethod
-    def get_table_meta(cls, namespace, name):
-        try:
-            with DB.connection_context():
-                metas = TableMeta.select().where(TableMeta.f_table_namespace == namespace,
-                                                    TableMeta.f_table_name == name)
-                if metas:
-                    return metas[0]
-        except Exception as e:
-            LOGGER.error("update_table_meta exception:{}.".format(e))
-
-    @classmethod
-    def delete_table_meta(cls, namespace, name):
-        try:
-            with DB.connection_context():
-                TableMeta.delete().where(TableMeta.f_table_namespace == namespace,
-                                         TableMeta.f_table_name == name).execute()
-        except Exception as e:
-            LOGGER.error("delete_table_meta {}, {}, exception:{}.".format(namespace, name, e))
