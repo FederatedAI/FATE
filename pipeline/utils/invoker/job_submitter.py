@@ -20,15 +20,14 @@ import subprocess
 import tempfile
 import time
 
-import fate_flow
-
+from fate_flow.flowpy.client import FlowClient
 from pipeline.backend import config as conf
 from pipeline.backend.config import JobStatus
 from pipeline.backend.config import StatusCode
 
+
 # FATE_HOME = os.getcwd() + "/../../"
-FATE_HOME = os.path.dirname(fate_flow.__file__) + '/../'
-FATE_FLOW_CLIENT = FATE_HOME + "fate_flow/fate_flow_client.py"
+# FATE_FLOW_CLIENT = FATE_HOME + "fate_flow/fate_flow_client.py"
 
 
 class JobFunc:
@@ -44,7 +43,7 @@ class JobFunc:
 
 class JobInvoker(object):
     def __init__(self):
-        pass
+        self.client = FlowClient()
 
     @classmethod
     def _run_cmd(cls, cmd, output_while_running=False):
@@ -63,6 +62,7 @@ class JobInvoker(object):
                     print(line.strip())
 
     def submit_job(self, dsl=None, submit_conf=None):
+        dsl_path = None
         with tempfile.TemporaryDirectory() as job_dir:
             if dsl:
                 dsl_path = os.path.join(job_dir, "job_dsl.json")
@@ -75,16 +75,9 @@ class JobInvoker(object):
             with open(submit_path, "w") as fout:
                 fout.write(json.dumps(submit_conf))
 
-            cmd = ["python", FATE_FLOW_CLIENT,
-                   "-f", JobFunc.SUBMIT_JOB,
-                   "-c", submit_path]
-
-            if dsl:
-                cmd.extend(["-d", dsl_path])
-
-            result = self._run_cmd(cmd)
+            result = self.client.job.submit(conf_path=submit_path, dsl_path=dsl_path)
             try:
-                result = json.loads(result)
+                # result = json.loads(result)
                 if 'retcode' not in result or result["retcode"] != 0:
                     raise ValueError
 
@@ -99,23 +92,14 @@ class JobInvoker(object):
         return job_id, data
 
     def upload_data(self, submit_conf=None, drop=0):
-        if submit_conf:
-            file_path = submit_conf["file"]
-            submit_conf["file"] = os.path.join(FATE_HOME, file_path)
         with tempfile.TemporaryDirectory() as job_dir:
             submit_path = os.path.join(job_dir, "job_runtime_conf.json")
             with open(submit_path, "w") as fout:
                 fout.write(json.dumps(submit_conf))
 
-            cmd = ["python", FATE_FLOW_CLIENT,
-                   "-f", JobFunc.UPLOAD,
-                   "-c", submit_path,
-                   "-drop", str(drop)
-                   ]
-
-            result = self._run_cmd(cmd)
+            result = self.client.data.upload(conf_path=submit_path, verbose=1, drop=drop)
             try:
-                result = json.loads(result)
+                # result = json.loads(result)
                 if 'retcode' not in result or result["retcode"] != 0:
                     raise ValueError
 
@@ -130,6 +114,7 @@ class JobInvoker(object):
         return job_id, data
 
     def monitor_job_status(self, job_id, role, party_id):
+        party_id = str(party_id)
         while True:
             ret_code, ret_msg, data = self.query_job(job_id, role, party_id)
             status = data["f_status"]
@@ -150,15 +135,10 @@ class JobInvoker(object):
             time.sleep(conf.TIME_QUERY_FREQS)
 
     def query_job(self, job_id, role, party_id):
-        cmd = ["python", FATE_FLOW_CLIENT,
-               "-f", JobFunc.JOB_STATUS,
-               "-j", job_id,
-               "-r", role,
-               "-p", str(party_id)]
-
-        result = self._run_cmd(cmd)
+        party_id=str(party_id)
+        result = self.client.job.query(job_id=job_id, role=role, party_id=party_id)
         try:
-            result = json.loads(result)
+            # result = json.loads(result)
             if 'retcode' not in result:
                 raise ValueError("can not query_job")
 
@@ -171,16 +151,11 @@ class JobInvoker(object):
             raise ValueError("query job result is {}, can not parse useful info".format(result))
 
     def get_output_data_table(self, job_id, cpn_name, role, party_id):
-        job_invoker = JobInvoker()
-        cmd = ["python", FATE_FLOW_CLIENT,
-               "-f", JobFunc.COMPONENT_OUTPUT_DATA_TABLE,
-               "-j", job_id,
-               "-r", role,
-               "-p", str(party_id),
-               "-cpn", cpn_name]
-        result = job_invoker._run_cmd(cmd)
+        party_id=str(party_id)
+        result = self.client.component.output_data_table(job_id=job_id, role=role,
+                                                         party_id=party_id, component_name=cpn_name)
         try:
-            result = json.loads(result)
+            # result = json.loads(result)
             if 'retcode' not in result or result["retcode"] != 0:
                 raise ValueError
 
@@ -192,16 +167,11 @@ class JobInvoker(object):
         return data
 
     def query_task(self, job_id, cpn_name, role, party_id):
-        cmd = ["python", FATE_FLOW_CLIENT,
-               "-f", JobFunc.SUBMIT_JOB,
-               "-j", job_id,
-               "-cpn", cpn_name,
-               "-r", role,
-               "-p", party_id]
-
-        result = self._run_cmd(cmd)
+        party_id=str(party_id)
+        result = self.client.task.query(job_id=job_id, role=role,
+                                        party_id=party_id, component_name=cpn_name)
         try:
-            result = json.loads(result)
+            # result = json.loads(result)
             if 'retcode' not in result:
                 raise ValueError("can not query component {}' task status".format(cpn_name))
 
@@ -214,59 +184,47 @@ class JobInvoker(object):
             raise ValueError("query task result is {}, can not parse useful info".format(result))
 
     def get_output_data(self, job_id, cpn_name, role, party_id, limits=None):
+        party_id = str(party_id)
         with tempfile.TemporaryDirectory() as job_dir:
-            cmd = ["python", FATE_FLOW_CLIENT,
-                   "-f", JobFunc.COMPONENT_OUTPUT_DATA,
-                   "-j", job_id,
-                   "-cpn", cpn_name,
-                   "-r", role,
-                   "-p", str(party_id),
-                   "-o", job_dir]
-
-            result = self._run_cmd(cmd)
-            result = json.loads(result)
+            result = self.client.component.output_data(job_id=job_id, role=role, output_path=job_dir,
+                                                       party_id=party_id, component_name=cpn_name)
+            # result = json.loads(result)
             output_dir = result["directory"]
             # output_data_meta = os.path.join(output_dir, "output_data_meta.json")
-            output_data = os.path.join(output_dir, "output_data.csv")
-            # header = None
-            # with open(output_data_meta, "r") as fin:
-            #    header = json.loads(fin.read())["header"]
-            # data = [header]
-
-            data = []
-            with open(output_data, "r") as fin:
-                for line in fin:
-                    data.append(line.strip())
-
-            print(data[:10])
+            n = 0
+            for file in os.listdir(output_dir):
+                if file.endswith("csv"):
+                    n += 1
+            # single output data
+            if n == 1:
+                output_data = os.path.join(output_dir, f"output_0_data.csv")
+                data = JobInvoker.extract_output_data(output_data)
+            # multiple output data
+            else:
+                data = []
+                for i in range(n):
+                    output_data = os.path.join(output_dir, f"output_{i}_data.csv")
+                    data_i = JobInvoker.extract_output_data(output_data)
+                    data.append(data_i)
             return data
 
-    def get_output_data_table(self, job_id, cpn_name, role, party_id):
-        with tempfile.TemporaryDirectory() as job_dir:
-            cmd = ["python", FATE_FLOW_CLIENT,
-                   "-f", JobFunc.COMPONENT_OUTPUT_DATA_TABLE,
-                   "-j", job_id,
-                   "-cpn", cpn_name,
-                   "-r", role,
-                   "-p", str(party_id)]
+    @staticmethod
+    def extract_output_data(output_data):
+        data = []
+        with open(output_data, "r") as fin:
+            for line in fin:
+                data.append(line.strip())
 
-            result = self._run_cmd(cmd)
-            result = json.loads(result)
-            print("Component_data_table result: {}".format(result))
-            return result
+        print(f"{output_data}: {data[:10]}")
+        return data
 
     def get_model_param(self, job_id, cpn_name, role, party_id):
         result = None
+        party_id = str(party_id)
         try:
-            cmd = ["python", FATE_FLOW_CLIENT,
-                   "-f", JobFunc.COMPONENT_OUTPUT_MODEL,
-                   "-j", job_id,
-                   "-cpn", cpn_name,
-                   "-r", role,
-                   "-p", str(party_id)]
-
-            result = self._run_cmd(cmd)
-            result = json.loads(result)
+            result = self.client.component.output_model(job_id=job_id, role=role,
+                                                        party_id=party_id, component_name=cpn_name)
+            # result = json.loads(result)
             if "data" not in result:
                 print("job {}, component {} has no output model param".format(job_id, cpn_name))
                 return
@@ -276,16 +234,11 @@ class JobInvoker(object):
 
     def get_metric(self, job_id, cpn_name, role, party_id):
         result = None
+        party_id = str(party_id)
         try:
-            cmd = ["python", FATE_FLOW_CLIENT,
-                   "-f", JobFunc.COMPONENT_METRIC,
-                   "-j", job_id,
-                   "-cpn", cpn_name,
-                   "-r", role,
-                   "-p", str(party_id)]
-
-            result = self._run_cmd(cmd)
-            result = json.loads(result)
+            result = self.client.component.metric_all(job_id=job_id, role=role,
+                                                      party_id=party_id, component_name=cpn_name)
+            # result = json.loads(result)
             if "data" not in result:
                 print("job {}, component {} has no output metric".format(job_id, cpn_name))
                 return

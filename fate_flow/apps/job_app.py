@@ -90,6 +90,14 @@ def query_job():
     return get_json_result(retcode=0, retmsg='success', data=[job.to_json() for job in jobs])
 
 
+@manager.route('/list/job', methods=['POST'])
+def list_job():
+    jobs = job_utils.list_job(request.json.get('limit'))
+    if not jobs:
+        return get_json_result(retcode=101, retmsg='No job found')
+    return get_json_result(retcode=0, retmsg='success', data=[job.to_json() for job in jobs])
+
+
 @manager.route('/update', methods=['POST'])
 def update_job():
     job_info = request.json
@@ -144,6 +152,14 @@ def query_task():
     tasks = job_utils.query_task(**request.json)
     if not tasks:
         return get_json_result(retcode=101, retmsg='find task failed')
+    return get_json_result(retcode=0, retmsg='success', data=[task.to_json() for task in tasks])
+
+
+@manager.route('/list/task', methods=['POST'])
+def list_task():
+    tasks = job_utils.list_task(request.json.get('limit'))
+    if not tasks:
+        return get_json_result(retcode=101, retmsg='No task found')
     return get_json_result(retcode=0, retmsg='success', data=[task.to_json() for task in tasks])
 
 

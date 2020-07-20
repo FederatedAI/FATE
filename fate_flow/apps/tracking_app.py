@@ -324,6 +324,16 @@ def save_metric_meta(job_id, component_name, task_id, role, party_id):
     return get_json_result()
 
 
+@manager.route('/component/list', methods=['POST'])
+def component_list():
+    request_data = request.json
+    parser = job_utils.get_job_dsl_parser_by_job_id(job_id=request_data.get('job_id'))
+    if parser:
+        return get_json_result(data={'components': list(parser.get_dsl().get('components').keys())})
+    else:
+        return get_json_result(retcode=100, retmsg='No job matched, please make sure the job id is valid.')
+
+
 def get_component_output_data_table(task_data):
     check_request_parameters(task_data)
     tracker = Tracking(job_id=task_data['job_id'], component_name=task_data['component_name'],
