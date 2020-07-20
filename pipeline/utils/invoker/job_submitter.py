@@ -19,10 +19,11 @@ import os
 import subprocess
 import tempfile
 import time
+
+from fate_flow.flowpy.client import FlowClient
 from pipeline.backend import config as conf
 from pipeline.backend.config import JobStatus
 from pipeline.backend.config import StatusCode
-from fate_flow.flowpy.client import FlowClient
 
 
 # FATE_HOME = os.getcwd() + "/../../"
@@ -185,24 +186,37 @@ class JobInvoker(object):
     def get_output_data(self, job_id, cpn_name, role, party_id, limits=None):
         party_id = str(party_id)
         with tempfile.TemporaryDirectory() as job_dir:
-            result = self.client.component.output_data(job_id=job_id, role=role,
+            result = self.client.component.output_data(job_id=job_id, role=role, output_path=job_dir,
                                                        party_id=party_id, component_name=cpn_name)
             # result = json.loads(result)
             output_dir = result["directory"]
             # output_data_meta = os.path.join(output_dir, "output_data_meta.json")
-            output_data = os.path.join(output_dir, "output_data.csv")
-            # header = None
-            # with open(output_data_meta, "r") as fin:
-            #    header = json.loads(fin.read())["header"]
-            # data = [header]
-
-            data = []
-            with open(output_data, "r") as fin:
-                for line in fin:
-                    data.append(line.strip())
-
-            print(data[:10])
+            n = 0
+            for file in os.listdir(output_dir):
+                if file.endswith("csv"):
+                    n += 1
+            # single output data
+            if n == 1:
+                output_data = os.path.join(output_dir, f"output_0_data.csv")
+                data = JobInvoker.extract_output_data(output_data)
+            # multiple output data
+            else:
+                data = []
+                for i in range(n):
+                    output_data = os.path.join(output_dir, f"output_{i}_data.csv")
+                    data_i = JobInvoker.extract_output_data(output_data)
+                    data.append(data_i)
             return data
+
+    @staticmethod
+    def extract_output_data(output_data):
+        data = []
+        with open(output_data, "r") as fin:
+            for line in fin:
+                data.append(line.strip())
+
+        print(f"{output_data}: {data[:10]}")
+        return data
 
     def get_model_param(self, job_id, cpn_name, role, party_id):
         result = None
