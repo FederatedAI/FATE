@@ -51,9 +51,10 @@ COMPONENT_NAME = click.option("-cpn", "--component-name", type=click.STRING,
 COMPONENT_NAME_REQUIRED = click.option("-cpn", "--component-name", type=click.STRING, required=True,
                                        help="Component name")
 
-# TODO complete choices of status
-STATUS = click.option("-s", "--status", type=click.Choice(["success", "failed", "running", "waiting"]), metavar="TEXT",
-                      help="Job status. Users can choose one from 'success', 'failed', 'running', and 'waiting'.")
+STATUS = click.option("-s", "--status", type=click.Choice(["success", "failed", "running", "waiting",
+                                                           "timeout", "canceled", "partial", "deleted"]), metavar="TEXT",
+                      help="Job status. Users can choose one from 'success', 'failed', 'running', 'waiting', "
+                           "'timeout', 'canceled', 'partial' and 'deleted'.")
 
 OUTPUT_PATH = click.option("-o", "--output-path", type=click.Path(exists=False), required=True,
                            help="User specified output directory path")
