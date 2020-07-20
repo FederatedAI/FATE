@@ -15,6 +15,7 @@
 #
 
 import collections
+
 from sklearn.model_selection import train_test_split
 
 from arch.api.utils import log_utils
@@ -23,6 +24,7 @@ from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.model_base import ModelBase
 from federatedml.param.data_split_param import DataSplitParam
 from federatedml.util import data_io
+from federatedml.util.consts import FLOAT_ZERO
 
 LOGGER = log_utils.getLogger()
 ROUND_NUM = 3
@@ -136,7 +138,7 @@ class DataSplitter(ModelBase):
             else:
                 self.test_size = total_size - self.train_size
             self.validate_size = total_size - (self.test_size + self.train_size)
-        if self.train_size + self.test_size + self.validate_size != total_size:
+        if (self.train_size + self.test_size + self.validate_size) - total_size > FLOAT_ZERO:
             raise ValueError(f"train_size, test_size, validate_size should sum up to 1.0 or data count")
         return
 
@@ -180,11 +182,17 @@ class DataSplitter(ModelBase):
 
     def callback_count_info(self, id_train, id_validate, id_test, all_metas):
         """
-        callback data set count & ratio info for callback
-        :param id_train: list, id of data set
-        :param id_validate: list, id of data set
-        :param id_test: list, id of data set
-        :param all_metas: dict, all meta info
+        Tool to callback returned data count & ratio information
+        Parameters
+        ----------
+        id_train: list, id of data set
+        id_validate: list, id of data set
+        id_test: list, id of data set
+        all_metas: dict, all meta info
+
+        Returns
+        -------
+        None
         """
         metas = {}
 
@@ -220,11 +228,18 @@ class DataSplitter(ModelBase):
 
     def callback_label_info(self, y_train, y_validate, y_test, all_metas):
         """
-        callback data set y info for callback
-        :param y_train: list, y
-        :param y_validate: list, y
-        :param y_test: list, y
-        :param all_metas: dict, all meta info
+        Tool to callback returned data label information
+        Parameters
+        ----------
+        y_train: list, y
+        y_validate: list, y
+        y_test: list, y
+        all_metas: dict, all meta info
+
+        Returns
+        -------
+        None
+
         """
         metas = {}
         y_all = y_train + y_validate + y_test
