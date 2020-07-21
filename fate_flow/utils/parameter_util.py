@@ -19,6 +19,7 @@ import importlib
 import json
 import os
 import copy
+from fate_flow.utils.dsl_exception import *
 
 
 class ParameterUtil(object):
@@ -27,30 +28,53 @@ class ParameterUtil(object):
                            module_alias=None):
 
         _module_setting_path = os.path.join(setting_conf_prefix, module + ".json")
+        if not os.path.isfile(_module_setting_path):
+            raise ModuleNotExistError(component=module_alias, module=module)
+
+        # test
         _module_setting = None
         with open(_module_setting_path, "r") as fin:
             _module_setting = json.loads(fin.read())
-
-        if not _module_setting:
-            raise Exception("{} is not set in setting_conf ".format(module))
+        try:
+            fin = open(_module_setting_path, "r")
+            _module_setting = json.loads(fin.read())
+        except Exception as e:
+            raise ModuleConfigError(component=module_alias, module=module, other_info=e)
 
         param_class_path = _module_setting["param_class"]
         param_class = param_class_path.split("/", -1)[-1]
+
         param_module_path = ".".join(param_class_path.split("/", -1)[:-1]).replace(".py", "")
+        if not importlib.util.find_spec(param_module_path):
+            raise ParamClassNotExistError(component=module_alias, module=module, other_info="{} does not exist".format(param_module_path))
+
         param_module = importlib.import_module(param_module_path)
+
+        if getattr(param_module, param_class) is None:
+            raise ParamClassNotExistError(component=module_alias, module=module,
+                                          other_info="{} does not exist is {}".format(param_class, param_module))
+
         param_obj = getattr(param_module, param_class)()
         default_runtime_dict = ParameterUtil.change_object_to_dict(param_obj)
 
         default_runtime_conf_suf = _module_setting["default_runtime_conf"]
+        if not os.path.isfile(os.path.join(default_runtime_conf_prefix, default_runtime_conf_suf)):
+            raise DefaultRuntimeConfNotExistError(component=module_alias, module=module)
+
         try:
-            with open(os.path.join(default_runtime_conf_prefix, default_runtime_conf_suf), "r") as fin:
-                default_runtime_dict = ParameterUtil.merge_parameters(default_runtime_dict, json.loads(fin.read()), param_obj);
-        except:
-            raise Exception("default runtime conf should be a json file")
-        
+            fin = open(os.path.join(default_runtime_conf_prefix, default_runtime_conf_suf))
+            default_runtime_conf_buf = json.loads(fin.read())
+        except Exception as e:
+            raise DefaultRuntimeConfNotJsonError(component=module_alias, module=module, other_info=e)
+
+        if default_runtime_conf_buf is None:
+            raise DefaultRuntimeConfNotJsonError(component=module_alias, module=module)
+
+        default_runtime_dict = ParameterUtil.merge_parameters(default_runtime_dict, default_runtime_conf_buf,
+                                                              param_obj)
 
         if not submit_dict:
-            raise ValueError("submit conf does exist or format is wrong")
+            raise SubmitConfNotExistError()
 
         runtime_role_parameters = {}
 
@@ -78,16 +102,35 @@ class ParameterUtil(object):
 
                 if "algorithm_parameters" in submit_dict:
                     if module_alias in submit_dict["algorithm_parameters"]:
+                        role_param_obj = copy.deepcopy(param_obj)
                         common_parameters = submit_dict["algorithm_parameters"].get(module_alias)
-                        merge_dict = ParameterUtil.merge_parameters(runtime_dict[param_class], common_parameters, param_obj)
+                        merge_dict = ParameterUtil.merge_parameters(runtime_dict[param_class],
+                                                                    common_parameters,
+                                                                    role_param_obj)
                         runtime_dict[param_class] = merge_dict
-                
+
+                        try:
+                            role_param_obj.check()
+                        except Exception as e:
+                            raise ParameterCheckError(component=module_alias, module=module, other_info=e)
+
                 if "role_parameters" in submit_dict and role in submit_dict["role_parameters"]:
                     role_dict = submit_dict["role_parameters"][role]
                     if module_alias in role_dict:
+                        role_param_obj = copy.deepcopy(param_obj)
                         role_parameters = role_dict.get(module_alias)
-                        merge_dict = ParameterUtil.merge_parameters(runtime_dict[param_class], role_parameters, param_obj, idx)
+                        merge_dict = ParameterUtil.merge_parameters(runtime_dict[param_class],
+                                                                    role_parameters,
+                                                                    role_param_obj,
+                                                                    idx,
+                                                                    role,
+                                                                    role_num=len(partyid_list))
                         runtime_dict[param_class] = merge_dict
+
+                        try:
+                            role_param_obj.check()
+                        except Exception as e:
+                            raise ParameterCheckError(component=module_alias, module=module, other_info=e)
                 
                 runtime_dict['local'] = submit_dict.get('local', {})
                 my_local = {
@@ -102,7 +145,7 @@ class ParameterUtil(object):
         return runtime_role_parameters
 
     @staticmethod
-    def merge_parameters(runtime_dict, role_parameters, param_obj, idx=-1):
+    def merge_parameters(runtime_dict, role_parameters, param_obj, idx=-1, role=None, role_num=0):
         param_variables = param_obj.__dict__
         for key, val_list in role_parameters.items():
             if key not in param_variables:
@@ -111,11 +154,17 @@ class ParameterUtil(object):
             attr = getattr(param_obj, key)
             if type(attr).__name__ in dir(builtins) or not attr:
                 if idx != -1:
-                    if len(val_list) <= idx:
-                        continue
+                    if not isinstance(val_list, list):
+                        raise  RoleParameterNotListError(role=role, parameter=key)
+
+                    if len(val_list) != role_num:
+                        raise RoleParameterNotConsistencyError(role=role, parameter=key)
+
                     runtime_dict[key] = val_list[idx]
+                    setattr(param_obj, key, val_list[idx])
                 else:
                     runtime_dict[key] = val_list
+                    setattr(param_obj, key, val_list)
             else:
                 if key not in runtime_dict:
                     runtime_dict[key] = {}
@@ -133,10 +182,12 @@ class ParameterUtil(object):
             return {}
 
         args_input = {}
+        args_datakey = set()
 
         for role in roles:
             if not submit_dict["role_parameters"][role].get(module):
                 continue
+            partyid_list = submit_dict["role"][role]
 
             args_parameters = submit_dict["role_parameters"][role].get(module)
             args_input[role] = []
@@ -145,6 +196,12 @@ class ParameterUtil(object):
                 dataset = args_parameters.get("data")
                 for data_key in dataset:
                     datalist = dataset[data_key]
+
+                    if len(datalist) != len(partyid_list):
+                        raise RoleParameterNotConsistencyError(role=role, parameter=data_key)
+
+                    args_datakey.add(data_key)
+
                     for i in range(len(datalist)):
                         value = datalist[i];
                         if len(args_input[role]) <= i:
@@ -156,7 +213,7 @@ class ParameterUtil(object):
 
                         args_input[role][i][module]["data"][data_key] = value
 
-        return args_input
+        return args_input, args_datakey
   
     @staticmethod
     def change_object_to_dict(obj):
