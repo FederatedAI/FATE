@@ -22,6 +22,7 @@ from eggroll.roll_pair.roll_pair import RollPairContext
 from eggroll.utils import file_utils
 from fate_arch.common.log import getLogger
 from fate_arch.common.profile import log_elapsed
+from fate_arch.data_table.base import AddressABC, EggRollAddress
 from fate_arch.session._interface import SessionABC
 from fate_arch.session._session_types import _FederationParties, Party, WorkMode
 from fate_arch.session.impl.eggroll._federation import FederationEngine
@@ -74,10 +75,13 @@ class Session(SessionABC):
         return self._federation_parties
 
     @log_elapsed
-    def load(self, name, namespace, **kwargs) -> Table:
-        options = kwargs.get("option", {})
-        rp = self._rpc.load(namespace=namespace, name=name, options=options)
-        return Table(rp=rp)
+    def load(self, address: AddressABC, partitions, **kwargs) -> Table:
+        if isinstance(address, EggRollAddress):
+            options = kwargs.get("option", {})
+            options["total_partitions"] = partitions
+            rp = self._rpc.load(namespace=address.namespace, name=address.name, options=options)
+            return Table(rp=rp)
+        raise NotImplementedError(f"address type {type(address)} not supported with eggroll backend")
 
     @log_elapsed
     def parallelize(self, data, partition: int, include_key: bool, **kwargs) -> Table:

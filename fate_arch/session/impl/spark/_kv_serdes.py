@@ -21,13 +21,12 @@ def _partition_deserialize(it):
         yield _deserialize(m)
 
 
-def _load_from_hdfs(sc, namespace, name, partitions):
-    hdfs_path = _generate_hdfs_path(namespace=namespace, name=name)
+def _load_from_hdfs(sc, paths, partitions):
     fs = _get_file_system(sc)
-    path = _get_path(sc, hdfs_path)
+    path = _get_path(sc, paths)
 
     if not fs.exists(path):
-        raise FileNotFoundError(f"{namespace}/{name} not found")
+        raise FileNotFoundError(f"{paths} not found")
     return sc.textFile(path, partitions).mapPartitions(_partition_deserialize).repartition(partitions)
 
 

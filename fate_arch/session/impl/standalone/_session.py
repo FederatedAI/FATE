@@ -35,9 +35,10 @@ from cachetools import cached
 from fate_arch._interface import GC
 from fate_arch.common import file_utils
 from fate_arch.common.log import getLogger
+from fate_arch.data_table.base import AddressABC, EggRollAddress
+from fate_arch.session._interface import TableABC, SessionABC, FederationEngineABC
 from fate_arch.session._session_types import _FederationParties, Party
 from fate_arch.session.impl.standalone import _cloudpickle as f_pickle
-from fate_arch.session._interface import TableABC, SessionABC, FederationEngineABC
 
 LOGGER = getLogger()
 
@@ -64,8 +65,10 @@ class StandaloneSession(SessionABC):
         party, parties = self._parse_runtime_conf(runtime_conf)
         self._init_federation(federation_session_id, party, parties)
 
-    def load(self, name, namespace, **kwargs) -> TableABC:
-        return _load_table(name, namespace)
+    def load(self, address: AddressABC, partitions, kwargs) -> TableABC:
+        if isinstance(address, EggRollAddress):
+            return _load_table(address.name, address.namespace)
+        raise NotImplementedError(f"address type {type(address)} not supported with standalone backend")
 
     def parallelize(self, data: Iterable, partition: int, include_key: bool = False, **kwargs):
         if not include_key:
@@ -394,7 +397,7 @@ class StandaloneFederation(FederationEngineABC):
 
             if isinstance(r, tuple):
                 # noinspection PyTypeChecker
-                table: Table = get_session().load(name=r[0], namespace=r[1])
+                table: Table = _load_table(name=r[0], namespace=r[1])
                 rtn.append(table)
                 gc.add_gc_func(tag, table._destroy)
             else:

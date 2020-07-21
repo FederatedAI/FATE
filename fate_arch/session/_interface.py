@@ -21,6 +21,7 @@ from abc import ABCMeta
 from collections import Iterable
 
 from fate_arch._interface import GC
+from fate_arch.data_table.base import AddressABC
 from fate_arch.session._session_types import Party, _FederationParties
 
 
@@ -109,10 +110,7 @@ class SessionABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def load(self, name, namespace, **kwargs) -> TableABC:
-        """
-        load table with `name` and `namespace`
-        """
+    def load(self, address: AddressABC, partitions, kwargs) -> TableABC:
         ...
 
     @abc.abstractmethod

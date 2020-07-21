@@ -112,9 +112,9 @@ class Table(TableABC):
         return _from_rdd(_union(self._rdd, other._rdd, func))
 
 
-def _from_hdfs(namespace, name, partitions: int = 1):
+def _from_hdfs(paths: str, partitions):
     sc = SparkContext.getOrCreate()
-    rdd = _util.materialize(_load_from_hdfs(sc, namespace, name, partitions))
+    rdd = _util.materialize(_load_from_hdfs(sc, paths, partitions))
     return Table(rdd=rdd)
 
 
