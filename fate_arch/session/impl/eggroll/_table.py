@@ -19,6 +19,7 @@ import typing
 
 from eggroll.roll_pair.roll_pair import RollPair
 from fate_arch.common.profile import log_elapsed
+from fate_arch.data_table.base import AddressABC, EggRollAddress
 from fate_arch.session._interface import TableABC
 
 
@@ -31,8 +32,13 @@ class Table(TableABC):
         return self._rp
 
     @log_elapsed
-    def save(self, name, namespace, **kwargs):
-        self._rp.save_as(name=name, namespace=namespace)
+    def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
+        options = kwargs.get("options", {})
+        if isinstance(address, EggRollAddress):
+            self._rp.save_as(name=address.name, namespace=address.namespace, partitions=partitions, options=options)
+            schema.update(self.schema)
+        raise NotImplementedError(f"address type {type(address)} not supported with eggroll backend")
+
 
     @log_elapsed
     def collect(self, **kwargs) -> list:

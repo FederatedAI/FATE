@@ -65,9 +65,11 @@ class StandaloneSession(SessionABC):
         party, parties = self._parse_runtime_conf(runtime_conf)
         self._init_federation(federation_session_id, party, parties)
 
-    def load(self, address: AddressABC, partitions, kwargs) -> TableABC:
+    def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs) -> TableABC:
         if isinstance(address, EggRollAddress):
-            return _load_table(address.name, address.namespace)
+            table = _load_table(address.name, address.namespace)
+            table.schema = schema
+            return table
         raise NotImplementedError(f"address type {type(address)} not supported with standalone backend")
 
     def parallelize(self, data: Iterable, partition: int, include_key: bool = False, **kwargs):
@@ -158,8 +160,11 @@ class Table(TableABC):
         path = _get_storage_dir(self._namespace, self._name)
         shutil.rmtree(path, ignore_errors=True)
 
-    def save(self, name, namespace, **kwargs):
-        return self._save_as(name, namespace, need_cleanup=False)
+    def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
+        if isinstance(address, EggRollAddress):
+            self._save_as(name=address.name, namespace=address.namespace, partition=partitions, need_cleanup=False)
+            schema.update(self.schema)
+        raise NotImplementedError(f"address type {type(address)} not supported with standalone backend")
 
     def count(self):
         cnt = 0
@@ -368,7 +373,7 @@ class StandaloneFederation(FederationEngineABC):
 
         if isinstance(v, Table):
             # noinspection PyProtectedMember
-            v = v.save(name=str(uuid.uuid1()), namespace=v._namespace)
+            v = v._save_as(name=str(uuid.uuid1()), namespace=v._namespace)
 
         for party in parties:
             _tagged_key = self._federation_object_key(name, tag, self._party, party)

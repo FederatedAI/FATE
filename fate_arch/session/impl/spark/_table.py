@@ -22,6 +22,7 @@ from pyspark import rddsampler, RDD, SparkContext, util
 
 from fate_arch.common import log
 from fate_arch.common.profile import log_elapsed
+from fate_arch.data_table.base import AddressABC, HDFSAddress
 from fate_arch.session._interface import TableABC
 from fate_arch.session.impl.spark import _util
 from fate_arch.session.impl.spark._kv_serdes import _load_from_hdfs, _save_as_hdfs
@@ -93,8 +94,11 @@ class Table(TableABC):
         return self._rdd.count()
 
     @log_elapsed
-    def save(self, name, namespace, **kwargs):
-        _save_as_hdfs(self._rdd, namespace, name)
+    def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
+        if isinstance(address, HDFSAddress):
+            _save_as_hdfs(rdd=self._rdd, paths=address.path, partitions=partitions)
+            schema.update(self.schema)
+        raise NotImplementedError(f"address type {type(address)} not supported with spark backend")
 
     """binary transform
     """

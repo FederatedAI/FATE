@@ -29,7 +29,7 @@ from fate_arch.session._session_types import Party, _FederationParties
 class TableABC(metaclass=ABCMeta):
 
     @abc.abstractmethod
-    def save(self, name, namespace, **kwargs):
+    def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
         ...
 
     @abc.abstractmethod
@@ -110,7 +110,7 @@ class SessionABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def load(self, address: AddressABC, partitions, kwargs) -> TableABC:
+    def load(self, address: AddressABC, partitions, schema: dict, **kwargs) -> TableABC:
         ...
 
     @abc.abstractmethod

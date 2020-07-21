@@ -75,12 +75,14 @@ class Session(SessionABC):
         return self._federation_parties
 
     @log_elapsed
-    def load(self, address: AddressABC, partitions, **kwargs) -> Table:
+    def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs) -> Table:
         if isinstance(address, EggRollAddress):
             options = kwargs.get("option", {})
             options["total_partitions"] = partitions
             rp = self._rpc.load(namespace=address.namespace, name=address.name, options=options)
-            return Table(rp=rp)
+            table = Table(rp=rp)
+            table.schema = schema
+            return table
         raise NotImplementedError(f"address type {type(address)} not supported with eggroll backend")
 
     @log_elapsed

@@ -37,9 +37,11 @@ class Session(SessionABC):
     def __init__(self, session_id):
         self._session_id = session_id
 
-    def load(self, address: AddressABC, partitions, **kwargs):
+    def load(self, address: AddressABC, partitions, schema, **kwargs):
         if isinstance(address, HDFSAddress):
-            return _from_hdfs(paths=address.path, partitions=partitions)
+            table = _from_hdfs(paths=address.path, partitions=partitions)
+            table.schema = schema
+            return table
         raise NotImplementedError(f"address type {type(address)} not supported with spark backend")
 
     def _init_federation(self, federation_session_id: str,
