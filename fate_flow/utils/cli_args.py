@@ -36,7 +36,7 @@ JOBID_REQUIRED = click.option("-j", "--job-id", type=click.STRING, required=True
 ROLE = click.option("-r", "--role", type=click.Choice(["guest", "arbiter", "host"]), metavar="TEXT",
                     help="Role name. Users can choose one from 'guest', 'arbiter' and 'host'.")
 
-ROLE_REQUIRED = click.option("-r", "--role", type=click.Choice(["guest", "arbiter", "host"]), required=True,
+ROLE_REQUIRED = click.option("-r", "--role", type=click.Choice(["guest", "arbiter", "host"]), required=True, metavar="TEXT",
                              help="Role name. Users can choose one from 'guest', 'arbiter' and 'host'.")
 
 PARTYID = click.option("-p", "--party-id", type=click.STRING,
