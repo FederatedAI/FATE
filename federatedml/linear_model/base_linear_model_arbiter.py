@@ -138,6 +138,7 @@ class HeteroBaseArbiter(BaseLinearModel):
             if self.is_converged:
                 break
         summary = {"loss_history": self.loss_history,
+                   "is_converged": self.is_converged,
                    "best_iteration": self.best_iteration}
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
             self.load_model(self.validation_strategy.cur_best_model)
