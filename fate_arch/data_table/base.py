@@ -125,6 +125,9 @@ class Table(object):
     def close(self):
         pass
 
+    def get_cached_data(self):
+        return self.get_schema(_type='data')
+
     def destroy(self):
         # destroy schema
         self.destroy_schema()
@@ -171,9 +174,9 @@ class Table(object):
                 # save data
                 if party_of_data:
                     _f_part_of_data = deserialize_b64(schema.f_part_of_data)
-                    if len(_f_part_of_data) < 200:
-                        _f_part_of_data.append(party_of_data[:(200 - len(_f_part_of_data))])
-                        schema.f_part_of_data = serialize_b64(party_of_data[:200])
+                    if len(_f_part_of_data) < 100:
+                        _f_part_of_data.append(party_of_data[:(100 - len(_f_part_of_data))])
+                        schema.f_part_of_data = serialize_b64(party_of_data[:100])
                 # save count
                 if count:
                     schema.f_count += count

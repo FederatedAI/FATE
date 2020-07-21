@@ -50,6 +50,8 @@ def get_table(job_id: str = uuid.uuid1(),
               name: str = None,
               **kwargs):
     store_engine, address, partitions = get_store_info(name, namespace)
+    if not store_engine:
+        return None
     if store_engine == 'MYSQL':
         if address:
             database_config = json.loads(address)

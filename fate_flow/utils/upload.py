@@ -107,6 +107,7 @@ class Upload(object):
                 data_head = fin.readline()
                 count -= 1
                 self.save_data_header(data_head, dst_table_name, dst_table_namespace)
+            n = 0
             while True:
                 data = list()
                 lines = fin.readlines(self.MAX_BYTES)
@@ -120,6 +121,8 @@ class Upload(object):
                     self.update_job_status(self.parameters["local"]['role'], self.parameters["local"]['party_id'],
                                            job_info)
                     self.table.put_all(data)
+                    if n == 0:
+                        self.table.save_schema(party_of_data=data)
                 else:
                     count_actual = self.table.count()
                     self.tracker.save_data_view(role=self.parameters["local"]['role'],
@@ -134,6 +137,7 @@ class Upload(object):
                                          metric_namespace='upload',
                                          metric_data=[Metric("count", count_actual)])
                     return count_actual
+                n += 1
 
     def save_data_header(self, header_source, dst_table_name, dst_table_namespace):
         header_source_item = header_source.split(',')
