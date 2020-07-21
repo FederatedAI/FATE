@@ -50,11 +50,12 @@ LOGGER = getLogger()
 
 
 class MQ(object):
-    def __init__(self, host, port, union_name, policy_id):
+    def __init__(self, host, port, union_name, policy_id, mq_conf):
         self.host = host
         self.port = port
         self.union_name = union_name
         self.policy_id = policy_id
+        self.mq_conf = mq_conf
 
 
 class FederationEngine(FederationEngineABC):
@@ -145,7 +146,10 @@ class FederationEngine(FederationEngineABC):
                 # initial receive queue, the name is receive-${vhost}
                 self._rabbit_manager.create_queue(names["vhost"], names["receive"])
 
-                upstream_uri = f"amqp://{self._mq.union_name}:{self._mq.policy_id}@{self._mq.host}:{self._mq.port}"
+                host = self._mq.mq_conf.get(party_id).get("host")
+                port = self._mq.mq_conf.get(party_id).get("port")
+
+                upstream_uri = f"amqp://{self._mq.union_name}:{self._mq.policy_id}@{host}:{port}"
                 self._rabbit_manager.federate_queue(upstream_host=upstream_uri, vhost=names["vhost"],
                                                     union_name=names["union"])
 
@@ -153,6 +157,16 @@ class FederationEngine(FederationEngineABC):
             mq_names[party_id] = names
         LOGGER.debug("get_mq_names:{}".format(mq_names))
         return mq_names
+    
+    def _generate_mq_names(self, parties: Union[Party, list]):
+        if isinstance(parties, Party):
+            parties = [parties]
+        party_ids = [str(party.party_id) for party in parties]
+        for party_id in party_ids:
+            LOGGER.debug("generate_mq_names, party_id={}, self._mq_conf={}.".format(party_id, self._mq.mq_conf))
+            names = self._gen_names(party_id)
+            self._queue_map[party_id] = names
+        LOGGER.debug("generate_mq_names:{}".format(self._queue_map))
 
     def _get_channels(self, mq_names):
         LOGGER.debug("mq_names:{}.".format(mq_names))

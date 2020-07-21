@@ -610,4 +610,22 @@ def cleaning(signum, frame):
     sys.exit(0)
 
 
+def federation_cleanup(job, task):
+    from fate_flow.entity.constant_config import Backend, StoreEngine
+    from fate_arch.session import Party
 
+    runtime_conf = json_loads(job.f_runtime_conf)
+    job_parameters = runtime_conf['job_parameters']
+    backend = Backend(job_parameters.get('backend', 0))
+    store_engine = StoreEngine(job_parameters.get('store_engine', 0))
+
+    if backend.is_spark() and store_engine.is_hdfs():
+        runtime_conf['local'] = {'role': job.f_role, 'party_id': job.f_party_id}
+        parties = [Party(k, p) for k,v in runtime_conf['role'].items() for p in v ]
+        from fate_arch.session.impl.spark._session import Session
+        ssn = Session(session_id=task.f_task_id)
+        ssn.init_federation(federation_session_id=task.f_task_id, runtime_conf=runtime_conf)
+        ssn._get_federation().generate_mq_names(parties=parties)
+        ssn._get_federation().cleanup()
+
+        
