@@ -102,6 +102,7 @@ class HomoLRGuest(HomoLRBase):
     def predict(self, data_instances):
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)
+        data_instances = self.align_data_header(data_instances, self.header)
         predict_wx = self.compute_wx(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
 
         pred_table = self.classify(predict_wx, self.model_param.predict_param.threshold)
