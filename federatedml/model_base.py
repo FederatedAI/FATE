@@ -20,9 +20,10 @@ import copy
 
 from arch.api.utils import log_utils
 from federatedml.param.evaluation_param import EvaluateParam
+from federatedml.statistic.data_overview import header_alignment
+from federatedml.util import abnormal_detection
 from federatedml.util.component_properties import ComponentProperties
 from federatedml.util.param_extract import ParamExtract
-from federatedml.statistic.data_overview import header_alignment, check_legal_schema
 
 LOGGER = log_utils.getLogger()
 
@@ -317,7 +318,7 @@ class ModelBase(object):
         :param schema: dict
         :return:
         """
-        check_legal_schema(schema)
+        abnormal_detection.check_legal_schema(schema)
 
     @staticmethod
     def align_data_header(data_instances, pre_header):

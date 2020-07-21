@@ -86,37 +86,6 @@ def header_alignment(data_instances, pre_header):
     return data_instances
 
 
-def check_isprintable(string, type):
-    if not string.isprintable():
-        raise ValueError(f"Non-printable string {string} encountered in {type}."
-                         f"Please check schema of input data.")
-    return
-
-
-def check_legal_schema(schema):
-    # check for repeated header & illegal/non-printable chars except for space
-    # allow non-ascii chars
-    if schema is None:
-        return
-    header = schema.get("header", None)
-    if header is not None:
-        for col_name in header:
-            if not col_name.isprintable():
-                raise ValueError(f"non-printable char found in header column {col_name}, please check.")
-        header_set = set(header)
-        if len(header_set) != len(header):
-            raise ValueError(f"data header contains repeated values, please check.")
-
-    sid_name = schema.get("sid_name", None)
-    if sid_name is not None and not sid_name.isprintable():
-        raise ValueError(f"non-printable char found in sid_name {sid_name}, please check.")
-
-    label_name = schema.get("label_name", None)
-    if label_name is not None and not label_name.isprintable():
-        raise ValueError(f"non-printable char found in label_name {label_name}, please check.")
-    LOGGER.debug(f"schema check for illegal char passed.")
-
-
 def get_data_shape(data):
     one_feature = data.first()
     if one_feature is not None:
