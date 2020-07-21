@@ -16,7 +16,6 @@
 
 
 import abc
-import pickle
 from typing import Iterable
 
 import six

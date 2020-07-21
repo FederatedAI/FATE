@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
+import pickle
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -31,13 +32,14 @@
 #
 import uuid
 from typing import Iterable
-from pyspark import SparkContext
-import pickle
 
+from pyspark import SparkContext
+
+from fate_arch.common.log import getLogger
 from fate_arch.data_table.base import Table, HDFSAddress
 from fate_arch.data_table.store_type import StoreEngine
-from arch.api.utils import log_utils
-LOGGER = log_utils.getLogger()
+
+LOGGER = getLogger()
 
 
 # noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
@@ -50,7 +52,7 @@ class HDFSTable(Table):
         self._name = name or str(uuid.uuid1())
         self._namespace = namespace or str(uuid.uuid1())
         self._partitions = partitions
-    
+
     def get_name(self):
         return self._name
 
@@ -68,7 +70,7 @@ class HDFSTable(Table):
 
     def put_all(self, kv_list: Iterable, use_serialize=True, chunk_size=100000):
         path, fs = HDFSTable.get_hadoop_fs(namespace=self._namespace, name=self._name)
-        if(fs.exists(path)):
+        if (fs.exists(path)):
             out = fs.append(path)
         else:
             out = fs.create(path)
@@ -101,9 +103,9 @@ class HDFSTable(Table):
     def destroy(self):
         super().destroy()
         path, fs = HDFSTable.get_hadoop_fs(namespace=self._namespace, name=self._name)
-        if(fs.exists(path)):
+        if (fs.exists(path)):
             fs.delete(path)
-    
+
     def count(self):
         meta = self.get_schema(_type='count')
         if meta:
@@ -120,16 +122,16 @@ class HDFSTable(Table):
         return HDFSTable(namespace, name, partition)
 
     delimiter = '\t'
-    
+
     @classmethod
     def generate_hdfs_path(cls, namespace, name):
         return "/fate/{}/{}".format(namespace, name)
-    
+
     @classmethod
     def get_path(cls, sc, hdfs_path):
         path_class = sc._gateway.jvm.org.apache.hadoop.fs.Path
         return path_class(hdfs_path)
-    
+
     @classmethod
     def get_file_system(cls, sc):
         filesystem_class = sc._gateway.jvm.org.apache.hadoop.fs.FileSystem

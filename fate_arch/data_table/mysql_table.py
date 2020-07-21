@@ -29,16 +29,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import uuid
-import pymysql
 import typing
+import uuid
 
-from arch.api.utils.profile_util import log_elapsed
+import pymysql
 
+from fate_arch.common.profile import log_elapsed
 from fate_arch.data_table.base import Table, MysqlAddress
 from fate_arch.data_table.store_type import StoreEngine
 from fate_arch.session import WorkMode
-
 from fate_flow.settings import WORK_MODE
 
 
