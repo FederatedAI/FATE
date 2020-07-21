@@ -194,22 +194,24 @@ class Table(object):
             stat_logger.error("delete_table_meta {}, {}, exception:{}.".format(self._namespace, self._name, e))
 
 
-class StorageABC(metaclass=abc.ABCMeta):
+class AddressABC(metaclass=abc.ABCMeta):
     ...
 
 
-class HDFSStorage(StorageABC):
+class HDFSAddress(AddressABC):
     def __init__(self, path):
         self.path = path
 
 
-class EggRollStorage(StorageABC):
-    def __init__(self, name, namespace):
-        self._name = name
-        self._namespace = namespace
+class EggRollAddress(AddressABC):
+    def __init__(self, name, namespace, partitions, storage_type):
+        self.name = name
+        self.namespace = namespace
+        self.partitions = partitions
+        self.store_type = storage_type  # LMDB or IN_MEMORY
 
 
-class MysqlAddress(StorageABC):
+class MysqlAddress(AddressABC):
     def __init__(self, user, passwd, host, port, db, name):
         self.user = user
         self.passwd = passwd

@@ -35,7 +35,7 @@ from typing import Iterable
 
 from arch.api.utils.profile_util import log_elapsed
 
-from fate_arch.data_table.base import Table, EggRollStorage
+from fate_arch.data_table.base import Table, EggRollAddress, AddressABC
 from fate_arch.data_table.store_type import StoreEngine
 from fate_arch.session import WorkMode, Backend
 from fate_flow.settings import WORK_MODE
@@ -51,11 +51,10 @@ class EggRollTable(Table):
                  namespace: str = None,
                  name: str = None,
                  partitions: int = 1,
+                 address=AddressABC(),
                  **kwargs):
         self._mode = mode
-        self._name = name or str(uuid.uuid1())
-        self._namespace = namespace or str(uuid.uuid1())
-        self._partitions = partitions
+        self._address = address
         self._strage_engine = persistent_engine
         self._session_id = job_id
         self.session = eggroll_session.get_session(session_id=self._session_id, work_mode=mode)
@@ -74,7 +73,7 @@ class EggRollTable(Table):
         return self._strage_engine
 
     def get_address(self):
-        return EggRollStorage(namespace=self._namespace, name=self._name)
+        return self._address
 
     def put_all(self, kv_list: Iterable, use_serialize=True, chunk_size=100000):
         return self._table.put_all(kv_list, use_serialize, chunk_size)

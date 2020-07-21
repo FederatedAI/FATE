@@ -34,7 +34,7 @@ from typing import Iterable
 from pyspark import SparkContext
 import pickle
 
-from fate_arch.data_table.base import Table, HDFSStorage
+from fate_arch.data_table.base import Table, HDFSAddress
 from fate_arch.data_table.store_type import StoreEngine
 from arch.api.utils import log_utils
 LOGGER = log_utils.getLogger()
@@ -64,7 +64,7 @@ class HDFSTable(Table):
         return StoreEngine.HDFS
 
     def get_address(self):
-        return HDFSStorage(HDFSTable.generate_hdfs_path(self._namespace, self._name))
+        return HDFSAddress(HDFSTable.generate_hdfs_path(self._namespace, self._name))
 
     def put_all(self, kv_list: Iterable, use_serialize=True, chunk_size=100000):
         path, fs = HDFSTable.get_hadoop_fs(namespace=self._namespace, name=self._name)
