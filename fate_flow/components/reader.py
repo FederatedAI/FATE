@@ -15,6 +15,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import uuid
+
 from fate_arch.data_table.table_convert import convert
 from fate_flow.entity.metric import MetricMeta
 
@@ -32,11 +34,11 @@ class Reader(object):
 
     def run(self, component_parameters=None, args=None):
         data_table = args.get('data').get('args').get('data')[0]
-        persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(self.task_id), data_table.get_name()
+        persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(self.task_id), uuid.uuid1().hex
         table = convert(data_table, name=persistent_table_name, namespace=persistent_table_namespace, force=True)
         self.tracker.save_data_view(
-            data_info={'f_table_name':  table.get_name(),
-                       'f_table_namespace':  table.get_namespace(),
+            data_info={'f_table_name':  persistent_table_name,
+                       'f_table_namespace':  persistent_table_namespace,
                        'f_partition': table.get_partitions() if table else None,
                        'f_table_count_actual': table.count() if table else 0},
             mark=True)

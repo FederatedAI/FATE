@@ -43,7 +43,8 @@ def convert(table, name='', namespace='', force=False, **kwargs):
     mode = table._mode if table._mode else WorkMode.CLUSTER
     if RuntimeConfig.BACKEND == Backend.EGGROLL:
         if table.get_storage_engine() not in Relationship.CompToStore.get(RuntimeConfig.BACKEND, []):
-            _table = EggRollTable(mode=mode, namespace=namespace, name=name, partitions=partitions)
+            address = create(name=name, namespace=namespace, store_engine=StoreEngine.LMDB, partitions=partitions)
+            _table = EggRollTable(mode=mode, address=address, partitions=partitions)
             count = 0
             data = []
             for line in table.collect():
@@ -53,8 +54,7 @@ def convert(table, name='', namespace='', force=False, **kwargs):
                     _table.put_all(data)
                     count = 0
                     data = []
-            create(name=name, namespace=namespace, store_engine=StoreEngine.LMDB,
-                   address={'name': name, 'namespace': namespace}, partitions=table.get_partitions())
+
             _table.save_schema(table.get_schema(), count=table.count())
             table.close()
             return _table

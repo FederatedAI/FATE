@@ -194,19 +194,19 @@ class Tracking(object):
         """
         if data_table:
             persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(
-                self.task_id), str(uuid.uuid1())
+                self.task_id), uuid.uuid1().hex
             schedule_logger(self.job_id).info(
                 'persisting the component output temporary table to {} {}'.format(persistent_table_namespace,
                                                                                   persistent_table_name))
-            create(name=persistent_table_name,
-                   namespace=persistent_table_namespace,
-                   store_engine=data_table.get_storage_engine(),
-                   partitions=data_table.get_partitions())
+            address = create(name=persistent_table_name,
+                             namespace=persistent_table_namespace,
+                             store_engine=data_table.get_storage_engine(),
+                             partitions=data_table.get_partitions())
             schema = {}
-            data_table.save(name=persistent_table_name, namespace=persistent_table_namespace, schema=schema)
+            data_table.save(address, schema=schema, partitions=data_table.get_partitions())
             table = get_table(job_id=job_utils.generate_session_id(self.task_id, self.role, self.party_id),
-                              name=persistent_table_namespace,
-                              namespace=persistent_table_name)
+                              name=persistent_table_name,
+                              namespace=persistent_table_namespace)
             table.save_schema(schema)
         self.save_data_view(self.role, self.party_id,
                             data_info={'f_table_name': persistent_table_name if data_table else '',

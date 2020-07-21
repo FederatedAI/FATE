@@ -33,6 +33,7 @@ import typing
 import uuid
 
 from arch.api.utils.conf_utils import get_base_config
+from fate_arch.data_table.base import MysqlAddress, EggRollAddress
 from fate_arch.data_table.eggroll_table import EggRollTable
 from fate_arch.data_table.hdfs_table import HDFSTable
 from fate_arch.data_table.mysql_table import MysqlTable
@@ -53,17 +54,19 @@ def get_table(job_id: str = uuid.uuid1(),
     if not store_engine:
         return None
     if store_engine == 'MYSQL':
-        if address:
-            database_config = json.loads(address)
-        else:
+        if not address:
             database_config = get_base_config("data_storage_config", {})
-        return MysqlTable(mode=mode, persistent_engine=StoreEngine.MYSQL, namespace=namespace, name=name,
-                          partitions=partitions, database_config=database_config)
+            address = MysqlAddress(user=database_config.get('user'),
+                                   passwd=database_config.get('passwd'),
+                                   host=database_config.get('host'),
+                                   port=database_config.get('port'),
+                                   db=namespace, name=name)
+        return MysqlTable(mode=mode, persistent_engine=StoreEngine.MYSQL, address=address, partitions=partitions)
     if store_engine in Relationship.CompToStore.get(Backend.EGGROLL):
-        return EggRollTable(job_id=job_id,  mode=mode, backend=backend, persistent_engine=persistent_engine,
-                            namespace=namespace, name=name, partitions=partitions, **kwargs)
+        return EggRollTable(job_id=job_id,  mode=mode, persistent_engine=persistent_engine,
+                            partitions=partitions, address=address, **kwargs)
     if store_engine in Relationship.CompToStore.get(Backend.SPARK):
-        return HDFSTable(namespace, name, partitions)
+        return HDFSTable(address, partitions)
 
 
 def create_table(job_id: str = uuid.uuid1(),
@@ -74,10 +77,10 @@ def create_table(job_id: str = uuid.uuid1(),
                  partitions: int = 1,
                  **kwargs):
     if store_engine in Relationship.CompToStore.get(Backend.EGGROLL):
-        create(name=name, namespace=namespace, store_engine=store_engine, partitions=partitions)
+        address = create(name=name, namespace=namespace, store_engine=store_engine, partitions=partitions)
         return EggRollTable(job_id=job_id, mode=mode, persistent_engine=store_engine,
                             namespace=namespace, name=name, partitions=partitions, **kwargs)
 
     if store_engine in Relationship.CompToStore.get(Backend.SPARK):
-        create(name=name, namespace=namespace, store_engine=store_engine,partitions=partitions)
-        return HDFSTable(namespace=namespace, name=name, partitions=partitions, **kwargs)
+        address = create(name=name, namespace=namespace, store_engine=store_engine,partitions=partitions)
+        return HDFSTable(address=address, partitions=partitions, **kwargs)

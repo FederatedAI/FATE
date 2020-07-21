@@ -57,7 +57,7 @@ class MysqlModelStorage(ModelStorageBase):
                             model_in_table.f_create_time = current_timestamp()
                             model_in_table.f_model_id = model_id
                             model_in_table.f_model_version = model_version
-                            model_in_table.f_content = serialize_b64(content)
+                            model_in_table.f_content = serialize_b64(content, to_str=True)
                             model_in_table.f_size = sys.getsizeof(model_in_table.f_content)
                             model_in_table.f_slice_index = slice_index
                             if force_update:

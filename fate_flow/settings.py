@@ -63,7 +63,7 @@ DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000 * 60  # ms
 JOB_DEFAULT_TIMEOUT = 7 * 24 * 60 * 60
 DATABASE = get_base_config("database", {})
 MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
-
+HDFS_ADDRESS= ''
 '''
 Constants
 '''
