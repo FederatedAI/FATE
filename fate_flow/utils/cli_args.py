@@ -28,28 +28,28 @@ LIMIT = click.option("-l", "--limit", type=click.INT, default=10,
                      help="LIMIT flag constrains the number of records to return. (default: 10)")
 
 JOBID = click.option("-j", "--job-id", type=click.STRING,
-                     help="A valid job id")
+                     help="A valid job id.")
 
 JOBID_REQUIRED = click.option("-j", "--job-id", type=click.STRING, required=True,
-                              help="A valid job id")
+                              help="A valid job id.")
 
 ROLE = click.option("-r", "--role", type=click.Choice(["guest", "arbiter", "host"]), metavar="TEXT",
-                    help="Role name. You can choose one from 'guest', 'arbiter' and 'host'.")
+                    help="Role name. Users can choose one from 'guest', 'arbiter' and 'host'.")
 
 ROLE_REQUIRED = click.option("-r", "--role", type=click.Choice(["guest", "arbiter", "host"]), required=True,
-                             help="Role name. You can choose one from 'guest', 'arbiter' and 'host'.")
+                             help="Role name. Users can choose one from 'guest', 'arbiter' and 'host'.")
 
 PARTYID = click.option("-p", "--party-id", type=click.STRING,
-                       help="Party ID")
+                       help="A valid party id.")
 
 PARTYID_REQUIRED = click.option("-p", "--party-id", type=click.STRING, required=True,
-                                help="Party ID")
+                                help="A valid party id.")
 
 COMPONENT_NAME = click.option("-cpn", "--component-name", type=click.STRING,
-                              help="Component name")
+                              help="A valid component name.")
 
 COMPONENT_NAME_REQUIRED = click.option("-cpn", "--component-name", type=click.STRING, required=True,
-                                       help="Component name")
+                                       help="A valid component name.")
 
 STATUS = click.option("-s", "--status", type=click.Choice(["success", "failed", "running", "waiting",
                                                            "timeout", "canceled", "partial", "deleted"]), metavar="TEXT",
@@ -57,16 +57,16 @@ STATUS = click.option("-s", "--status", type=click.Choice(["success", "failed", 
                            "'timeout', 'canceled', 'partial' and 'deleted'.")
 
 OUTPUT_PATH = click.option("-o", "--output-path", type=click.Path(exists=False), required=True,
-                           help="User specified output directory path")
+                           help="User specified output directory path.")
 
 NAMESPACE = click.option("-n", "--namespace", type=click.STRING,
-                         help="Namespace")
+                         help="Namespace.")
 
 TABLE_NAME = click.option("-t", "--table-name", type=click.STRING,
-                          help="Table name")
+                          help="Table name.")
 
 NAMESPACE_REQUIRED = click.option("-n", "--namespace", type=click.STRING, required=True,
-                                  help="Namespace")
+                                  help="Namespace.")
 
 TABLE_NAME_REQUIRED = click.option("-t", "--table-name", type=click.STRING, required=True,
-                                   help="Table name")
+                                   help="Table name.")

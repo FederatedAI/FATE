@@ -36,7 +36,7 @@ def model(ctx):
     pass
 
 
-@model.command(short_help="Load Model Command")
+@model.command("load", short_help="Load Model Command")
 @cli_args.CONF_PATH
 @click.pass_context
 def load(ctx, **kwargs):
@@ -48,13 +48,12 @@ def load(ctx, **kwargs):
     \b
     - USAGE:
         flow model load -c fate_flow/examples/publish_load_model.json
-
     """
     config_data, dsl_data = preprocess(**kwargs)
     access_server('post', ctx, 'model/load', config_data)
 
 
-@model.command(short_help="Bind Model Command")
+@model.command("bind", short_help="Bind Model Command")
 @cli_args.CONF_PATH
 @click.pass_context
 def bind(ctx, **kwargs):
@@ -66,7 +65,6 @@ def bind(ctx, **kwargs):
     \b
     - USAGE:
         flow model bind -c fate_flow/examples/bind_model_service.json
-
     """
     config_data, dsl_data = preprocess(**kwargs)
     access_server('post', ctx, 'model/bind', config_data)
@@ -91,7 +89,6 @@ def imp(ctx, **kwargs):
     - USAGE:
         flow model import -c fate_flow/examples/import_model.json --force
         flow model import -c fate_flow/examples/restore_model.json --from-database
-
     """
     config_data, dsl_data = preprocess(**kwargs)
     try:
@@ -117,7 +114,7 @@ def imp(ctx, **kwargs):
         access_server('post', ctx, 'model/restore', config_data)
 
 
-@model.command(short_help="Export Model Command")
+@model.command("export", short_help="Export Model Command")
 @cli_args.CONF_PATH
 @click.option('--to-database', is_flag=True, default=False,
               help="If specified and there is a valid database environment, fate flow will export model to database "
@@ -133,7 +130,6 @@ def export(ctx, **kwargs):
     - USAGE:
         flow model export -c fate_flow/examples/export_model.json
         flow model export -c fate_flow/examplse/store_model.json --to-database
-
     """
     if not kwargs.get('to_database'):
         config_data, dsl_data = preprocess(**kwargs)
