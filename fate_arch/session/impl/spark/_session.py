@@ -53,7 +53,8 @@ class Session(SessionABC):
         if server_conf is None:
             _path = file_utils.get_project_base_directory() + "/arch/conf/server_conf.json"
             server_conf = file_utils.load_json_conf(_path)
-        rabbitmq_conf = server_conf.get("rabbitmq").get("self")
+        mq_conf = server_conf.get('rabbitmq')
+        rabbitmq_conf = mq_conf.get("self")
 
         host = rabbitmq_conf.get("host")
         port = rabbitmq_conf.get("port")
@@ -67,7 +68,7 @@ class Session(SessionABC):
 
         rabbit_manager = RabbitManager(base_user, base_password, f"{host}:{mng_port}")
         rabbit_manager.create_user(union_name, policy_id)
-        mq = MQ(host, port, union_name, policy_id)
+        mq = MQ(host, port, union_name, policy_id, mq_conf)
         party, parties = self._parse_runtime_conf(runtime_conf)
         return self._init_federation(federation_session_id, party, parties, rabbit_manager, mq)
 
