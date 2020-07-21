@@ -42,8 +42,9 @@ from fate_arch.data_table.store_type import StoreEngine
 LOGGER = getLogger()
 
 
-# noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
+# noinspection PyProtectedMember
 class HDFSTable(Table):
+
     def __init__(self,
                  namespace: str = None,
                  name: str = None,
@@ -68,23 +69,23 @@ class HDFSTable(Table):
     def get_address(self):
         return HDFSAddress(HDFSTable.generate_hdfs_path(self._namespace, self._name))
 
-    def put_all(self, kv_list: Iterable, use_serialize=True, chunk_size=100000):
+    def put_all(self, kv_list: Iterable, **kwargs):
         path, fs = HDFSTable.get_hadoop_fs(namespace=self._namespace, name=self._name)
-        if (fs.exists(path)):
+        if fs.exists(path):
             out = fs.append(path)
         else:
             out = fs.create(path)
 
         counter = 0
         for k, v in kv_list:
-            content = u"{}{}{}\n".format(k, HDFSTable.delimiter, pickle.dumps((v)).hex())
+            content = u"{}{}{}\n".format(k, HDFSTable.delimiter, pickle.dumps(v).hex())
             out.write(bytearray(content, "utf-8"))
             counter = counter + 1
         out.flush()
         out.close()
         self.save_schema(count=counter)
 
-    def collect(self, min_chunk_size=0, use_serialize=True) -> list:
+    def collect(self, **kwargs) -> list:
         sc = SparkContext.getOrCreate()
         hdfs_path = HDFSTable.generate_hdfs_path(namespace=self._namespace, name=self._sname)
         path = HDFSTable.get_path(sc, hdfs_path)
@@ -103,7 +104,7 @@ class HDFSTable(Table):
     def destroy(self):
         super().destroy()
         path, fs = HDFSTable.get_hadoop_fs(namespace=self._namespace, name=self._name)
-        if (fs.exists(path)):
+        if fs.exists(path):
             fs.delete(path)
 
     def count(self):
@@ -145,3 +146,6 @@ class HDFSTable(Table):
         path = HDFSTable.get_path(sc, hdfs_path)
         fs = HDFSTable.get_file_system(sc)
         return path, fs
+
+    def close(self):
+        pass

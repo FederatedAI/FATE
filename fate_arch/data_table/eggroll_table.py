@@ -59,12 +59,12 @@ class EggRollTable(Table):
     def get_address(self):
         return self._address
 
-    def put_all(self, kv_list: Iterable, use_serialize=True, chunk_size=100000):
-        return self._table.put_all(kv_list, use_serialize, chunk_size)
+    def put_all(self, kv_list: Iterable, **kwargs):
+        return self._table.put_all(kv_list)
 
     @log_elapsed
-    def collect(self, min_chunk_size=0, use_serialize=True, **kwargs) -> list:
-        return self._table.get_all(min_chunk_size, use_serialize, **kwargs)
+    def collect(self, **kwargs) -> list:
+        return self._table.get_all(**kwargs)
 
     def destroy(self):
         super().destroy()

@@ -109,7 +109,7 @@ class MysqlTable(Table):
                             db=self._namespace, name=self._name)
 
     @log_elapsed
-    def collect(self, min_chunk_size=0, use_serialize=True, **kwargs) -> list:
+    def collect(self, **kwargs) -> list:
         sql = 'select * from {}'.format(self._name)
         data = self.execute(sql)
         return data
