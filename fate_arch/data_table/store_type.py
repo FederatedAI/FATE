@@ -28,10 +28,12 @@ class StoreTypes(object):
     ROLLPAIR_CACHE = 'ROLL_PAIR_CACHE'
     ROLLPAIR_QUEUE = 'ROLL_PAIR_QUEUE'
 
+
 class StoreEngine(object):
     MYSQL = 'MYSQL'
     LMDB = 'LMDB'
     HDFS = 'HDFS'
+    IN_MEMORY = 'IN_MEMORY'
 
 
 class Relationship(object):

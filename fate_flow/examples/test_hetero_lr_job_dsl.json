@@ -1,11 +1,25 @@
 {
     "components" : {
+        "reader_0": {
+            "module": "Reader",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.train_data"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["reader"]
+            }
+         },
         "dataio_0": {
             "module": "DataIO",
             "input": {
                 "data": {
                     "data": [
-                        "args.train_data"
+                         "reader_0.train"
                     ]
                 }
             },

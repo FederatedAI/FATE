@@ -21,11 +21,14 @@ from arch.api import federation
 from arch.api.utils import file_utils, log_utils
 from arch.api.utils.core_utils import current_timestamp, get_lan_ip, timestamp_to_date
 from arch.api.utils.log_utils import schedule_logger
-from fate_arch.data_table.store_type import StoreTypes
+from fate_arch import session
+from fate_arch.data_table.store_type import StoreTypes, StoreEngine
+from fate_arch.data_table.table_manager import get_table
 from fate_arch.session import Backend
 from fate_flow.db.db_models import Task
 from fate_flow.entity.constant_config import TaskStatus, ProcessRole
 from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.manager.table_manager import create
 from fate_flow.manager.tracking_manager import Tracking
 from fate_flow.settings import API_VERSION, SAVE_AS_TASK_INPUT_DATA_SWITCH, SAVE_AS_TASK_INPUT_DATA_IN_MEMORY
 from fate_flow.utils import job_utils
@@ -114,7 +117,7 @@ class TaskExecutor(object):
                 session_options = {"eggroll.session.processors.per.node": args.processors_per_node}
             else:
                 session_options = {}
-            session.init(job_id=job_utils.generate_session_id(task_id, role, party_id),
+            session.init(session_id=job_utils.generate_session_id(task_id, role, party_id),
                          mode=RuntimeConfig.WORK_MODE,
                          backend=RuntimeConfig.BACKEND,
                          options=session_options)
@@ -183,12 +186,11 @@ class TaskExecutor(object):
                         if search_component_name == 'args':
                             if job_args.get('data', {}).get(search_data_name).get('namespace', '') and job_args.get(
                                     'data', {}).get(search_data_name).get('name', ''):
-
-                                data_table = session.table(
-                                    namespace=job_args['data'][search_data_name]['namespace'],
-                                    name=job_args['data'][search_data_name]['name'],
-                                    partition=job_parameters.get("partition", 1)
-                                    )
+                                data_table = get_table(job_id=job_utils.generate_session_id(task_id, role, party_id),
+                                                       namespace=job_args['data'][search_data_name]['namespace'],
+                                                       name=job_args['data'][search_data_name]['name'],
+                                                       partition=job_parameters.get("partition", 1)
+                                                       )
                             else:
                                 data_table = None
                         else:
@@ -206,22 +208,28 @@ class TaskExecutor(object):
                                     task_id,
                                     data_table.get_namespace(),
                                     data_table.get_name()))
-                                origin_table_metas = data_table.get_metas()
-                                origin_table_schema = data_table.schema
+                                origin_table_metas = data_table.get_schema()
+                                namespace = job_utils.generate_session_id(task_id=task_id, role=role, party_id=party_id)
+                                partitions = task_parameters['input_data_partition'] if task_parameters.get('input_data_partition', 0) > 0 else data_table.get_partitions()
+                                if RuntimeConfig.BACKEND == Backend.SPARK:
+                                    store_engine = StoreEngine.HDFS
+                                else:
+                                    store_engine = StoreEngine.IN_MEMORY if SAVE_AS_TASK_INPUT_DATA_IN_MEMORY \
+                                        else StoreEngine.LMDB
+                                create(name=data_table.get_name(), namespace=namespace, store_engine=store_engine
+                                       , partitions=partitions)
                                 save_as_options = {"store_type": StoreTypes.ROLLPAIR_IN_MEMORY} if SAVE_AS_TASK_INPUT_DATA_IN_MEMORY else {}
-                                data_table = data_table.save_as(
-                                    namespace=job_utils.generate_session_id(task_id=task_id,
-                                                                            role=role,
-                                                                            party_id=party_id),
-                                    name=data_table.get_name(),
-                                    partition=task_parameters['input_data_partition'] if task_parameters.get('input_data_partition', 0) > 0 else data_table.get_partitions(),
-                                    options=save_as_options)
-                                data_table.save_metas(origin_table_metas)
-                                data_table.schema = origin_table_schema
+                                data_table = data_table.save_as(namespace=namespace, name=data_table.get_name(),
+                                                                partition=partitions, options=save_as_options)
+                                data_table.save_schema(schema_data=origin_table_metas)
                                 schedule_logger().info("save as task {} input data table to {} {} done".format(
                                     task_id,
                                     data_table.get_namespace(),
                                     data_table.get_name()))
+                                data_table = session.default().load(name=data_table.get_namespace(),
+                                                                    namespace=data_table.get_namespace(),
+                                                                    schema=origin_table_metas,
+                                                                    partitions=partitions)
                             else:
                                 schedule_logger().info("pass save as task {} input data table, because the table is none".format(task_id))
                         else:

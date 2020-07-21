@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import uuid
 from typing import List
 
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
@@ -193,28 +194,24 @@ class Tracking(object):
         """
         if data_table:
             persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(
-                self.task_id), data_table.get_name()
+                self.task_id), str(uuid.uuid1())
             schedule_logger(self.job_id).info(
-                'persisting the component output temporary table: {} {} to {} {}'.format(data_table.get_namespace(),
-                                                                                         data_table.get_name(),
-                                                                                         persistent_table_namespace,
-                                                                                         persistent_table_name))
+                'persisting the component output temporary table to {} {}'.format(persistent_table_namespace,
+                                                                                  persistent_table_name))
             create(name=persistent_table_name,
                    namespace=persistent_table_namespace,
                    store_engine=data_table.get_storage_engine(),
                    partitions=data_table.get_partitions())
-            persistent_table = data_table.save_as(
-                namespace=persistent_table_namespace,
-                name=persistent_table_name)
-            persistent_table_metas = {}
-            persistent_table_metas.update(data_table.get_metas())
-            persistent_table_metas["schema"] = data_table.schema
-            table = get_table(name=persistent_table_namespace, namespace=persistent_table_name)
-            table.save_schema(persistent_table_metas)
+            schema = {}
+            data_table.save(name=persistent_table_name, namespace=persistent_table_namespace, schema=schema)
+            table = get_table(job_id=job_utils.generate_session_id(self.task_id, self.role, self.party_id),
+                              name=persistent_table_namespace,
+                              namespace=persistent_table_name)
+            table.save_schema(schema)
         self.save_data_view(self.role, self.party_id,
-                            data_info={'f_table_name': persistent_table._name if data_table else '',
-                                       'f_table_namespace': persistent_table._namespace if data_table else '',
-                                       'f_partition': persistent_table._partitions if data_table else None,
+                            data_info={'f_table_name': persistent_table_name if data_table else '',
+                                       'f_table_namespace': persistent_table_namespace if data_table else '',
+                                       'f_partition': table.get_partitions() if data_table else None,
                                        'f_table_count_actual': data_table.count() if data_table else 0},
                             mark=True)
 
@@ -227,7 +224,8 @@ class Tracking(object):
         data_view = self.query_data_view(self.role, self.party_id, mark=True)
 
         if data_view:
-            data_table = get_table(name=data_view.f_table_name,
+            data_table = get_table(job_id=job_utils.generate_session_id(self.task_id, self.role, self.party_id),
+                                   name=data_view.f_table_name,
                                    namespace=data_view.f_table_namespace,
                                    partition=data_view.f_partition,
                                    init_session=init_session)
@@ -409,7 +407,7 @@ class Tracking(object):
                 task.save()
             return task
 
-    def save_data_view(self, role='', party_id='', data_info=None, mark=False):
+    def save_data_view(self, role=None, party_id=None, data_info=None, mark=False):
         if not role and not party_id:
             role = self.role
             party_id = self.party_id

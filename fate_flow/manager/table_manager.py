@@ -25,13 +25,18 @@ def create(name, namespace, store_engine, address='', partitions=1, count=0):
                                                           MachineLearningDataSchema.f_namespace == namespace)
         is_insert = True
         if schema:
-            raise Exception('table {} {} has been created'.format(name, namespace))
+            if store_engine != schema.f_data_store_engine:
+                raise Exception('table {} {} has been created by store engine {} '.format(name, namespace, schema.f_data_store_engine))
+            else:
+                return
         else:
             schema = MachineLearningDataSchema()
             schema.f_create_time = current_timestamp()
             schema.f_table_name = name
             schema.f_namespace = namespace
             schema.f_data_store_engine = store_engine
+            if not address:
+                address = {'name': name, 'namespace': namespace}
             schema.f_address = json.dumps(address)
             schema.f_partitions = partitions
             schema.f_count = count
@@ -54,5 +59,5 @@ def get_store_info(name, namespace):
             address = schema.f_address
             partitions = schema.f_partitions
         else:
-            return None, None
+            return None, None, None
     return store_info, address, partitions

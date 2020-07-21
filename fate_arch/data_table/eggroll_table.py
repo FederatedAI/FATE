@@ -41,12 +41,12 @@ from fate_arch.session import WorkMode, Backend
 from fate_flow.settings import WORK_MODE
 from fate_arch.data_table import eggroll_session
 
+
 # noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
 class EggRollTable(Table):
     def __init__(self,
                  job_id: str = uuid.uuid1(),
                  mode: typing.Union[int, WorkMode] = WORK_MODE,
-                 backend: typing.Union[int, Backend] = Backend.EGGROLL,
                  persistent_engine: str = StoreEngine.LMDB,
                  namespace: str = None,
                  name: str = None,
@@ -57,7 +57,8 @@ class EggRollTable(Table):
         self._namespace = namespace or str(uuid.uuid1())
         self._partitions = partitions
         self._strage_engine = persistent_engine
-        self.session = eggroll_session.get_session(session_id=job_id, work_mode=mode)
+        self._session_id = job_id
+        self.session = eggroll_session.get_session(session_id=self._session_id, work_mode=mode)
         self._table = self.session.table(namespace=namespace, name=name, partition=partitions, **kwargs)
 
     def get_name(self):
@@ -100,7 +101,6 @@ class EggRollTable(Table):
         if partition is None:
             partition = self._partitions
         self._table.save_as(name=name, namespace=namespace, partition=partition, options=options)
-
         return self.dtable(self._session_id, name, namespace, partition)
 
     def close(self):

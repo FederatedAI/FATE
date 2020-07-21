@@ -65,18 +65,17 @@ def download_upload(access_module):
         data['namespace'] = request_config["namespace"]
         if WORK_MODE != 0:
             data_table = get_table(name=request_config["table_name"], namespace=request_config["namespace"])
-            count = data_table.count()
-            if count and int(request_config.get('drop', 2)) == 2:
+            if data_table and int(request_config.get('drop', 2)) == 2:
                 return get_json_result(retcode=100,
-                                       retmsg='The data table already exists, table data count:{}.'
-                                              'If you still want to continue uploading, please add the parameter -drop. '
+                                       retmsg='The data table already exists.'
+                                              'If you still want to continue uploading, please add the parameter -drop.'
                                               '0 means not to delete and continue uploading, '
-                                              '1 means to upload again after deleting the table'.format(
-                                           count))
-            elif count and int(request_config.get('drop', 2)) == 1:
+                                              '1 means to upload again after deleting the table')
+            elif data_table and int(request_config.get('drop', 2)) == 1:
                 data_table.destroy()
             try:
-                data_table.close()
+                if data_table:
+                    data_table.close()
             except:
                 pass
     job_dsl, job_runtime_conf = gen_data_access_job_config(request_config, access_module)
