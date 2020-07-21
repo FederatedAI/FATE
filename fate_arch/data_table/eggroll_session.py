@@ -15,7 +15,7 @@
 #
 import uuid
 
-from arch.api.utils.profile_util import log_elapsed
+# from arch.api.utils.profile_util import log_elapsed
 
 from arch.api import WorkMode
 from eggroll.core.session import session_init

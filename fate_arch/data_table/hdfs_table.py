@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
+import pickle
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -30,17 +31,19 @@
 #  limitations under the License.
 #
 from typing import Iterable
-from pyspark import SparkContext
-import pickle
 
+from pyspark import SparkContext
+
+from fate_arch.common.log import getLogger
 from fate_arch.data_table.base import Table, HDFSAddress
 from fate_arch.data_table.store_type import StoreEngine
-from arch.api.utils import log_utils
-LOGGER = log_utils.getLogger()
+
+LOGGER = getLogger()
 
 
-# noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
+# noinspection PyProtectedMember
 class HDFSTable(Table):
+
     def __init__(self,
                  address=None,
                  partitions: int = 1,
@@ -57,23 +60,23 @@ class HDFSTable(Table):
     def get_address(self):
         return self.address
 
-    def put_all(self, kv_list: Iterable, use_serialize=True, chunk_size=100000):
+    def put_all(self, kv_list: Iterable, **kwargs):
         path, fs = HDFSTable.get_hadoop_fs(address=self.address)
-        if(fs.exists(path)):
+        if fs.exists(path):
             out = fs.append(path)
         else:
             out = fs.create(path)
 
         counter = 0
         for k, v in kv_list:
-            content = u"{}{}{}\n".format(k, HDFSTable.delimiter, pickle.dumps((v)).hex())
+            content = u"{}{}{}\n".format(k, HDFSTable.delimiter, pickle.dumps(v).hex())
             out.write(bytearray(content, "utf-8"))
             counter = counter + 1
         out.flush()
         out.close()
         self.save_schema(count=counter)
 
-    def collect(self, min_chunk_size=0, use_serialize=True) -> list:
+    def collect(self, **kwargs) -> list:
         sc = SparkContext.getOrCreate()
         hdfs_path = HDFSTable.generate_hdfs_path(self.address)
         path = HDFSTable.get_path(sc, hdfs_path)
@@ -92,9 +95,9 @@ class HDFSTable(Table):
     def destroy(self):
         super().destroy()
         path, fs = HDFSTable.get_hadoop_fs(self.address)
-        if(fs.exists(path)):
+        if fs.exists(path):
             fs.delete(path)
-    
+
     def count(self):
         meta = self.get_schema(_type='count')
         if meta:
@@ -111,7 +114,7 @@ class HDFSTable(Table):
         return HDFSTable(address=address, partitions=partition)
 
     delimiter = '\t'
-    
+
     @classmethod
     def generate_hdfs_path(cls, address):
         return address.path
@@ -120,7 +123,7 @@ class HDFSTable(Table):
     def get_path(cls, sc, hdfs_path):
         path_class = sc._gateway.jvm.org.apache.hadoop.fs.Path
         return path_class(hdfs_path)
-    
+
     @classmethod
     def get_file_system(cls, sc):
         filesystem_class = sc._gateway.jvm.org.apache.hadoop.fs.FileSystem
@@ -134,3 +137,6 @@ class HDFSTable(Table):
         path = HDFSTable.get_path(sc, hdfs_path)
         fs = HDFSTable.get_file_system(sc)
         return path, fs
+
+    def close(self):
+        pass

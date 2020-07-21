@@ -14,32 +14,16 @@
 #  limitations under the License.
 #
 
-#
-#  Copyright 2019 The FATE Authors. All Rights Reserved.
-#
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
-#
 import typing
 import uuid
 from typing import Iterable
 
-from arch.api.utils.profile_util import log_elapsed
-
-from fate_arch.data_table.base import Table, EggRollAddress, AddressABC
-from fate_arch.data_table.store_type import StoreEngine
-from fate_arch.session import WorkMode, Backend
-from fate_flow.settings import WORK_MODE
+from fate_arch.common.profile import log_elapsed
 from fate_arch.data_table import eggroll_session
+from fate_arch.data_table.base import Table, AddressABC
+from fate_arch.data_table.store_type import StoreEngine
+from fate_arch.session import WorkMode
+from fate_flow.settings import WORK_MODE
 
 
 # noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
@@ -69,12 +53,12 @@ class EggRollTable(Table):
     def get_address(self):
         return self._address
 
-    def put_all(self, kv_list: Iterable, use_serialize=True, chunk_size=100000):
-        return self._table.put_all(kv_list, use_serialize, chunk_size)
+    def put_all(self, kv_list: Iterable, **kwargs):
+        return self._table.put_all(kv_list)
 
     @log_elapsed
-    def collect(self, min_chunk_size=0, use_serialize=True, **kwargs) -> list:
-        return self._table.get_all(min_chunk_size, use_serialize, **kwargs)
+    def collect(self, **kwargs) -> list:
+        return self._table.get_all(**kwargs)
 
     def destroy(self):
         super().destroy()
@@ -103,7 +87,3 @@ class EggRollTable(Table):
     @log_elapsed
     def count(self, **kwargs):
         return self._table.count()
-
-
-
-

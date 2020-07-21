@@ -21,6 +21,7 @@ from abc import ABCMeta
 from collections import Iterable
 
 from fate_arch._interface import GC
+from fate_arch.data_table.base import AddressABC
 from fate_arch.session._session_types import Party, _FederationParties
 
 
@@ -28,7 +29,7 @@ from fate_arch.session._session_types import Party, _FederationParties
 class TableABC(metaclass=ABCMeta):
 
     @abc.abstractmethod
-    def save(self, name, namespace, **kwargs):
+    def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
         ...
 
     @abc.abstractmethod
@@ -109,10 +110,7 @@ class SessionABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def load(self, name, namespace, **kwargs) -> TableABC:
-        """
-        load table with `name` and `namespace`
-        """
+    def load(self, address: AddressABC, partitions, schema: dict, **kwargs) -> TableABC:
         ...
 
     @abc.abstractmethod

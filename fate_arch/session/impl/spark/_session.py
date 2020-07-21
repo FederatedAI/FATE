@@ -21,6 +21,7 @@ from typing import Iterable
 from pyspark import SparkContext
 
 from fate_arch.common import file_utils
+from fate_arch.data_table.base import AddressABC, HDFSAddress
 from fate_arch.session._interface import SessionABC
 from fate_arch.session._session_types import _FederationParties, Party
 from fate_arch.session.impl.spark._federation import FederationEngine, MQ
@@ -36,8 +37,12 @@ class Session(SessionABC):
     def __init__(self, session_id):
         self._session_id = session_id
 
-    def load(self, name, namespace, **kwargs):
-        return _from_hdfs(namespace=namespace, name=name)
+    def load(self, address: AddressABC, partitions, schema, **kwargs):
+        if isinstance(address, HDFSAddress):
+            table = _from_hdfs(paths=address.path, partitions=partitions)
+            table.schema = schema
+            return table
+        raise NotImplementedError(f"address type {type(address)} not supported with spark backend")
 
     def _init_federation(self, federation_session_id: str,
                          party: Party,

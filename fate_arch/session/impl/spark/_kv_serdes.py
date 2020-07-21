@@ -21,22 +21,20 @@ def _partition_deserialize(it):
         yield _deserialize(m)
 
 
-def _load_from_hdfs(sc, namespace, name, partitions):
-    hdfs_path = _generate_hdfs_path(namespace=namespace, name=name)
+def _load_from_hdfs(sc, paths, partitions):
     fs = _get_file_system(sc)
-    path = _get_path(sc, hdfs_path)
+    path = _get_path(sc, paths)
 
     if not fs.exists(path):
-        raise FileNotFoundError(f"{namespace}/{name} not found")
+        raise FileNotFoundError(f"{paths} not found")
     return sc.textFile(path, partitions).mapPartitions(_partition_deserialize).repartition(partitions)
 
 
-def _save_as_hdfs(rdd: RDD, namespace, name):
+def _save_as_hdfs(rdd: RDD, paths: str, partitions):
     sc = rdd.context
-    hdfs_path = _generate_hdfs_path(namespace=namespace, name=name)
     fs = _get_file_system(sc)
-    path = _get_path(sc, hdfs_path)
+    path = _get_path(sc, paths)
     if fs.exists(path):
-        raise FileExistsError(f"{namespace}/{name} exist")
+        raise FileExistsError(f"{paths} exist")
 
-    rdd.map(lambda x: _serialize(x[0], x[1])).saveAsTextFile(path)
+    rdd.map(lambda x: _serialize(x[0], x[1])).repartition(partitions).saveAsTextFile(paths)

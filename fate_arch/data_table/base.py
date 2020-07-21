@@ -44,7 +44,7 @@ class Table(object):
         pass
 
     @abc.abstractmethod
-    def put_all(self, kv_list: Iterable, use_serialize=True, chunk_size=100000):
+    def put_all(self, kv_list: Iterable, **kwargs):
         """
         Puts (key, value) 2-tuple stream from the iterable items.
 
@@ -60,17 +60,9 @@ class Table(object):
         pass
 
     @abc.abstractmethod
-    def collect(self, min_chunk_size=0, use_serialize=True) -> list:
+    def collect(self, **kwargs) -> list:
         """
         Returns an iterator of (key, value) 2-tuple from the Table.
-
-        Parameters
-        ---------
-        min_chunk_size : int
-          Minimum chunk size (key bytes + value bytes) returned if end of table is not hit.
-          0 indicates a default chunk size (partition_num * 1.75 MB)
-          negative number indicates no chunk limit, i.e. returning all records.
-          Default chunk size is recommended if there is no special needs from user.
 
         Returns
         -------
