@@ -18,8 +18,8 @@ import shutil
 import time
 
 from arch.api.utils import log_utils, file_utils, dtable_utils
-from fate_arch.data_table.table_manager import create_table
 from fate_flow.entity.metric import Metric, MetricMeta
+from fate_flow.manager.table_manager.table_operation import create_table
 from fate_flow.utils.job_utils import generate_session_id
 
 LOGGER = log_utils.getLogger()

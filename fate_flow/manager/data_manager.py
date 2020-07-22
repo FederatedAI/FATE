@@ -15,7 +15,7 @@
 #
 import operator
 
-from fate_arch.data_table.table_manager import get_table
+from fate_flow.manager.table_manager.table_operation import get_table
 from fate_flow.settings import stat_logger
 from fate_flow.db.db_models import DB, DataView, TrackingMetric
 

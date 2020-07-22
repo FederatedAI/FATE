@@ -34,17 +34,17 @@ import uuid
 
 import pymysql
 
+from arch.api.utils.conf_utils import get_base_config
 from fate_arch.common.profile import log_elapsed
 from fate_arch.data_table.base import Table, MysqlAddress
 from fate_arch.data_table.store_type import StoreEngine
 from fate_arch.session import WorkMode
-from fate_flow.settings import WORK_MODE
 
 
 # noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
 class MysqlTable(Table):
     def __init__(self,
-                 mode: typing.Union[int, WorkMode] = WORK_MODE,
+                 mode: typing.Union[int, WorkMode] = get_base_config('work_mode', 0),
                  persistent_engine: str = StoreEngine.MYSQL,
                  partitions: int = 1,
                  name: str = None,

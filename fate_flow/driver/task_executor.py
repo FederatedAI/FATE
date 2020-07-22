@@ -24,14 +24,12 @@ from arch.api.utils import file_utils, log_utils
 from arch.api.utils.core_utils import current_timestamp, get_lan_ip, timestamp_to_date
 from arch.api.utils.log_utils import schedule_logger
 from fate_arch import session
-from fate_arch.data_table.base import HDFSAddress, EggRollAddress
 from fate_arch.data_table.store_type import StoreTypes, StoreEngine
-from fate_arch.data_table.table_manager import get_table
 from fate_arch.session import Backend
 from fate_flow.db.db_models import Task
 from fate_flow.entity.constant_config import TaskStatus, ProcessRole
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.manager.table_manager import create
+from fate_flow.manager.table_manager.table_operation import get_table, create
 from fate_flow.manager.tracking_manager import Tracking
 from fate_flow.settings import API_VERSION, SAVE_AS_TASK_INPUT_DATA_SWITCH, SAVE_AS_TASK_INPUT_DATA_IN_MEMORY
 from fate_flow.utils import job_utils, data_utils

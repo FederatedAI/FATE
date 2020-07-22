@@ -21,7 +21,7 @@ from fate_arch.data_table.hdfs_table import HDFSTable
 from fate_arch.data_table.store_type import Relationship, StoreEngine
 from fate_arch.session import Backend, WorkMode
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.manager.table_manager import create
+from fate_flow.manager.table_manager.table_operation import create
 
 logger = log_utils.getLogger()
 

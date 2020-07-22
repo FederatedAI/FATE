@@ -27,7 +27,7 @@ import __main__
 WORK_MODE = get_base_config('work_mode', 0)
 BACKEND = Backend.EGGROLL
 STORE_ENGINE=StoreEngine.EGGROLL
-USE_LOCAL_DATABASE = True
+USE_LOCAL_DATABASE = get_base_config('use_local_database', True)
 
 # upload data
 USE_LOCAL_DATA = True

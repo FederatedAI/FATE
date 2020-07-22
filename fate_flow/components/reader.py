@@ -17,7 +17,7 @@
 #
 import uuid
 
-from fate_arch.data_table.table_convert import convert
+from fate_flow.manager.table_manager.table_convert import convert
 from fate_flow.entity.metric import MetricMeta
 
 from arch.api.utils import log_utils

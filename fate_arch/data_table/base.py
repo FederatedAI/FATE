@@ -20,9 +20,9 @@ from typing import Iterable
 
 import six
 
+from arch.api.session import LOGGER
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
-from fate_flow.db.db_models import DB, MachineLearningDataSchema
-from fate_flow.settings import stat_logger
+from fate_arch.db.db_models import DB, MachineLearningDataSchema
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -182,7 +182,7 @@ class Table(object):
                 MachineLearningDataSchema.delete().where(MachineLearningDataSchema.f_table_name == self._name,
                                                          MachineLearningDataSchema.f_namespace == self._namespace).execute()
         except Exception as e:
-            stat_logger.error("delete_table_meta {}, {}, exception:{}.".format(self._namespace, self._name, e))
+            LOGGER.error("delete_table_meta {}, {}, exception:{}.".format(self._namespace, self._name, e))
 
 
 class AddressABC(metaclass=abc.ABCMeta):

@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_arch.data_table.table_manager import get_table
 from fate_flow.manager.data_manager import query_data_view, delete_table
+from fate_flow.manager.table_manager.table_operation import get_table
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.settings import stat_logger
 from arch.api.utils.dtable_utils import get_table_info

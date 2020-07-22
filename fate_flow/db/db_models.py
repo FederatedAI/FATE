@@ -253,21 +253,3 @@ class TrackingMetric(DataBaseModel):
     f_update_time = BigIntegerField(null=True)
 
 
-class MachineLearningDataSchema(DataBaseModel):
-    f_table_name = CharField(max_length=100, index=True)
-    f_namespace = CharField(max_length=100, index=True)
-    f_create_time = BigIntegerField(null=True)
-    f_update_time = BigIntegerField(null=True)
-    f_description = TextField(null=True, default='')
-    f_schema = TextField(default='')
-    f_data_store_engine = CharField(max_length=100, index=True)  # 'EGGROLL', 'MYSQL'
-    f_partitions = IntegerField(null=True, default=1)
-    f_address = TextField(null=True)
-    f_count = IntegerField(null=True, default=0)
-    f_part_of_data = TextField()
-
-    class Meta:
-        db_table = "t_machine_learning_data_schema"
-        primary_key = CompositeKey('f_table_name', 'namespace')
-
-

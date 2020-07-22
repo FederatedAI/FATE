@@ -18,13 +18,12 @@ from typing import List
 
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from arch.api.utils.log_utils import schedule_logger
-from fate_arch.data_table.table_manager import get_table
 from fate_flow.db.db_models import DB, Job, Task, TrackingMetric, DataView
 from fate_flow.entity.constant_config import JobStatus, TaskStatus, Backend
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.model_manager import pipelined_model
-from fate_flow.manager.table_manager import create
+from fate_flow.manager.table_manager.table_operation import get_table, create
 from fate_flow.settings import API_VERSION
 from fate_flow.utils import job_utils, api_utils, model_utils
 

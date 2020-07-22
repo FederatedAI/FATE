@@ -18,19 +18,19 @@ import typing
 import uuid
 from typing import Iterable
 
+from arch.api.utils.conf_utils import get_base_config
 from fate_arch.common.profile import log_elapsed
 from fate_arch.data_table import eggroll_session
 from fate_arch.data_table.base import Table, EggRollAddress
 from fate_arch.data_table.store_type import StoreEngine
 from fate_arch.session import WorkMode
-from fate_flow.settings import WORK_MODE
 
 
 # noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
 class EggRollTable(Table):
     def __init__(self,
                  job_id: str = uuid.uuid1(),
-                 mode: typing.Union[int, WorkMode] = WORK_MODE,
+                 mode: typing.Union[int, WorkMode] = get_base_config('work_mode', 0),
                  persistent_engine: str = StoreEngine.LMDB,
                  partitions: int = 1,
                  namespace: str = None,
@@ -43,7 +43,7 @@ class EggRollTable(Table):
         if not address:
             address = EggRollAddress(name=name, namespace=namespace, storage_type=persistent_engine)
         self._address = address
-        self._strage_engine = persistent_engine
+        self._storage_engine = persistent_engine
         self._session_id = job_id
         self._partitions = partitions
         self.session = eggroll_session.get_session(session_id=self._session_id, work_mode=mode)
@@ -60,7 +60,7 @@ class EggRollTable(Table):
         return self._namespace
 
     def get_storage_engine(self):
-        return self._strage_engine
+        return self._storage_engine
 
     def get_address(self):
         return self._address

@@ -36,7 +36,8 @@ from fate_flow.apps.tracking_app import manager as tracking_app_manager
 from fate_flow.apps.schedule_app import manager as schedule_app_manager
 from fate_flow.apps.permission_app import manager as permission_app_manager
 from fate_flow.apps.version_app import manager as version_app_manager
-from fate_flow.db.db_models import init_database_tables
+from fate_flow.db.db_models import init_database_tables as init_flow_db
+from fate_arch.db.db_models import init_database_tables as init_arch_db
 from fate_flow.driver import dag_scheduler, job_controller, job_detector
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.constant_config import WorkMode, ProcessRole
@@ -81,7 +82,9 @@ if __name__ == '__main__':
     # init
     signal.signal(signal.SIGTERM, job_utils.cleaning)
     signal.signal(signal.SIGCHLD, job_utils.wait_child_process)
-    init_database_tables()
+    # init db
+    init_flow_db()
+    init_arch_db()
     # init runtime config
     import argparse
     parser = argparse.ArgumentParser()
