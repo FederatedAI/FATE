@@ -14,9 +14,7 @@ import prettytable
 import sshtunnel
 import yaml
 
-from fate_flow.flowpy.client import FlowClient
-
-LOGGER: typing.Optional[loguru.Logger] = None
+LOGGER = loguru.logger
 
 
 def main():
@@ -289,6 +287,8 @@ class _RESTClient(_Client):
 
 class _FlowPYClient(_Client):
     def __init__(self, address: typing.Optional[str] = None):
+
+        from fate_flow.flowpy.client import FlowClient
         if address is not None:
             ip, port = _parse_address(address)
             self._client = FlowClient(ip=ip, port=port)

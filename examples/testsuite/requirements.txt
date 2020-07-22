@@ -1,0 +1,4 @@
+loguru
+prettytable
+sshtunnel
+pyyaml
