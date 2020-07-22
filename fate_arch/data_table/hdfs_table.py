@@ -30,7 +30,6 @@ import pickle
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import uuid
 from typing import Iterable
 
 from pyspark import SparkContext
@@ -46,13 +45,18 @@ LOGGER = getLogger()
 class HDFSTable(Table):
 
     def __init__(self,
-                 namespace: str = None,
-                 name: str = None,
+                 address=None,
                  partitions: int = 1,
+                 name: str = '',
+                 namespace: str = '',
                  **kwargs):
-        self._name = name or str(uuid.uuid1())
-        self._namespace = namespace or str(uuid.uuid1())
+        self.address = address
         self._partitions = partitions
+        self._name = name
+        self._namespace = namespace
+
+    def get_partitions(self):
+        return self._partitions
 
     def get_name(self):
         return self._name
@@ -60,17 +64,14 @@ class HDFSTable(Table):
     def get_namespace(self):
         return self._namespace
 
-    def get_partitions(self):
-        return self._partitions
-
     def get_storage_engine(self):
         return StoreEngine.HDFS
 
     def get_address(self):
-        return HDFSAddress(HDFSTable.generate_hdfs_path(self._namespace, self._name))
+        return self.address
 
     def put_all(self, kv_list: Iterable, **kwargs):
-        path, fs = HDFSTable.get_hadoop_fs(namespace=self._namespace, name=self._name)
+        path, fs = HDFSTable.get_hadoop_fs(address=self.address)
         if fs.exists(path):
             out = fs.append(path)
         else:
@@ -87,7 +88,7 @@ class HDFSTable(Table):
 
     def collect(self, **kwargs) -> list:
         sc = SparkContext.getOrCreate()
-        hdfs_path = HDFSTable.generate_hdfs_path(namespace=self._namespace, name=self._sname)
+        hdfs_path = HDFSTable.generate_hdfs_path(self.address)
         path = HDFSTable.get_path(sc, hdfs_path)
         fs = HDFSTable.get_file_system(sc)
         istream = fs.open(path)
@@ -103,7 +104,7 @@ class HDFSTable(Table):
 
     def destroy(self):
         super().destroy()
-        path, fs = HDFSTable.get_hadoop_fs(namespace=self._namespace, name=self._name)
+        path, fs = HDFSTable.get_hadoop_fs(self.address)
         if fs.exists(path):
             fs.delete(path)
 
@@ -114,20 +115,20 @@ class HDFSTable(Table):
         else:
             return -1
 
-    def save_as(self, name, namespace, partition=None, **kwargs):
+    def save_as(self, address, partition=None, name=None, namespace=None, **kwargs):
         sc = SparkContext.getOrCreate()
-        src_path = HDFSTable.get_path(sc, HDFSTable.generate_hdfs_path(namespace=self._namespace, name=self._name))
-        dst_path = HDFSTable.get_path(sc, HDFSTable.generate_hdfs_path(namespace=namespace, name=name))
+        src_path = HDFSTable.get_path(sc, HDFSTable.generate_hdfs_path(address))
+        dst_path = HDFSTable.get_path(sc, HDFSTable.generate_hdfs_path(address))
         fs = HDFSTable.get_file_system(sc)
         fs.rename(src_path, dst_path)
-        return HDFSTable(namespace, name, partition)
+        return HDFSTable(address=address, partitions=partition, name=name, namespace=namespace, **kwargs)
 
     delimiter = '\t'
 
     @classmethod
-    def generate_hdfs_path(cls, namespace, name):
-        return "/fate/{}/{}".format(namespace, name)
-
+    def generate_hdfs_path(cls, address):
+        return address.path
+    
     @classmethod
     def get_path(cls, sc, hdfs_path):
         path_class = sc._gateway.jvm.org.apache.hadoop.fs.Path
@@ -140,9 +141,9 @@ class HDFSTable(Table):
         return filesystem_class.get(hadoop_configuration)
 
     @classmethod
-    def get_hadoop_fs(cls, namespace, name):
+    def get_hadoop_fs(cls, address):
         sc = SparkContext.getOrCreate()
-        hdfs_path = HDFSTable.generate_hdfs_path(namespace=namespace, name=name)
+        hdfs_path = HDFSTable.generate_hdfs_path(address)
         path = HDFSTable.get_path(sc, hdfs_path)
         fs = HDFSTable.get_file_system(sc)
         return path, fs

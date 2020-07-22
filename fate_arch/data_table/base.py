@@ -37,11 +37,7 @@ class Table(object):
         pass
 
     @abc.abstractmethod
-    def get_storage_engine(self):
-        pass
-
-    @abc.abstractmethod
-    def get_address(self):
+    def get_name(self):
         pass
 
     @abc.abstractmethod
@@ -49,7 +45,11 @@ class Table(object):
         pass
 
     @abc.abstractmethod
-    def get_name(self):
+    def get_storage_engine(self):
+        pass
+
+    @abc.abstractmethod
+    def get_address(self):
         pass
 
     @abc.abstractmethod
@@ -162,13 +162,13 @@ class Table(object):
                 if schema.f_schema:
                     _schema_data = deserialize_b64(schema.f_schema)
                 _schema_data.updata(schema_data)
-                schema.f_schema = serialize_b64(_schema_data)
+                schema.f_schema = serialize_b64(_schema_data, to_str=True)
                 # save data
                 if party_of_data:
                     _f_part_of_data = deserialize_b64(schema.f_part_of_data)
                     if len(_f_part_of_data) < 100:
                         _f_part_of_data.append(party_of_data[:(100 - len(_f_part_of_data))])
-                        schema.f_part_of_data = serialize_b64(party_of_data[:100])
+                        schema.f_part_of_data = serialize_b64(party_of_data[:100], to_str=True)
                 # save count
                 if count:
                     schema.f_count += count
@@ -192,10 +192,9 @@ class HDFSAddress(AddressABC):
 
 
 class EggRollAddress(AddressABC):
-    def __init__(self, name, namespace, partitions, storage_type):
+    def __init__(self, name, namespace, storage_type):
         self.name = name
         self.namespace = namespace
-        self.partitions = partitions
         self.store_type = storage_type  # LMDB or IN_MEMORY
 
 

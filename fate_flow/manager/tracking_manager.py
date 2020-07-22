@@ -18,7 +18,6 @@ from typing import List
 
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from arch.api.utils.log_utils import schedule_logger
-from fate_arch.data_table.base import Table
 from fate_arch.data_table.table_manager import get_table
 from fate_flow.db.db_models import DB, Job, Task, TrackingMetric, DataView
 from fate_flow.entity.constant_config import JobStatus, TaskStatus, Backend
@@ -185,7 +184,7 @@ class Tracking(object):
     def get_output_data_info(self):
         pass
 
-    def save_output_data_table(self, data_table: Table, data_name: str = 'component'):
+    def save_output_data_table(self, data_table, data_name: str = 'component'):
         """
         Save component output data, will run in the task executor process
         :param data_table:
@@ -194,26 +193,27 @@ class Tracking(object):
         """
         if data_table:
             persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(
-                self.task_id), str(uuid.uuid1())
+                self.task_id), uuid.uuid1().hex
             schedule_logger(self.job_id).info(
                 'persisting the component output temporary table to {} {}'.format(persistent_table_namespace,
                                                                                   persistent_table_name))
-            create(name=persistent_table_name,
-                   namespace=persistent_table_namespace,
-                   store_engine=data_table.get_storage_engine(),
-                   partitions=data_table.get_partitions())
+            partitions = data_table.partitions
+            schedule_logger(self.job_id).info('output data table partitions is {}'.format(partitions))
+            address = create(name=persistent_table_name,
+                             namespace=persistent_table_namespace,
+                             store_engine=data_table.get_storage_engine(),
+                             partitions=partitions)
             schema = {}
-            data_table.save(name=persistent_table_name, namespace=persistent_table_namespace, schema=schema)
+            data_table.save(address, schema=schema, partitions=partitions)
             table = get_table(job_id=job_utils.generate_session_id(self.task_id, self.role, self.party_id),
-                              name=persistent_table_namespace,
-                              namespace=persistent_table_name)
+                              name=persistent_table_name,
+                              namespace=persistent_table_namespace)
             table.save_schema(schema)
-        self.save_data_view(self.role, self.party_id,
-                            data_info={'f_table_name': persistent_table_name if data_table else '',
-                                       'f_table_namespace': persistent_table_namespace if data_table else '',
-                                       'f_partition': table.get_partitions() if data_table else None,
-                                       'f_table_count_actual': data_table.count() if data_table else 0},
-                            mark=True)
+            self.save_data_view(self.role, self.party_id,
+                                data_info={'f_table_name': persistent_table_name,
+                                           'f_table_namespace': persistent_table_namespace,
+                                           'f_partition': partitions},
+                                mark=True)
 
     def get_output_data_table(self, data_name: str = 'component', partition=1, init_session=False):
         """

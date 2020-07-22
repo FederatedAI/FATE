@@ -20,7 +20,7 @@ from typing import Iterable
 
 from fate_arch.common.profile import log_elapsed
 from fate_arch.data_table import eggroll_session
-from fate_arch.data_table.base import Table, AddressABC
+from fate_arch.data_table.base import Table, EggRollAddress
 from fate_arch.data_table.store_type import StoreEngine
 from fate_arch.session import WorkMode
 from fate_flow.settings import WORK_MODE
@@ -32,26 +32,32 @@ class EggRollTable(Table):
                  job_id: str = uuid.uuid1(),
                  mode: typing.Union[int, WorkMode] = WORK_MODE,
                  persistent_engine: str = StoreEngine.LMDB,
+                 partitions: int = 1,
                  namespace: str = None,
                  name: str = None,
-                 partitions: int = 1,
-                 address=AddressABC(),
+                 address=None,
                  **kwargs):
+        self._name = name
+        self._namespace = namespace
         self._mode = mode
+        if not address:
+            address = EggRollAddress(name=name, namespace=namespace, storage_type=persistent_engine)
         self._address = address
         self._strage_engine = persistent_engine
         self._session_id = job_id
+        self._partitions = partitions
         self.session = eggroll_session.get_session(session_id=self._session_id, work_mode=mode)
-        self._table = self.session.table(namespace=namespace, name=name, partition=partitions, **kwargs)
+        self._table = self.session.table(namespace=address.namespace, name=address.name, partition=partitions,
+                                         **kwargs)
+
+    def get_partitions(self):
+        return self._table.get_partitions()
 
     def get_name(self):
         return self._name
 
     def get_namespace(self):
         return self._namespace
-
-    def get_partitions(self):
-        return self._table.get_partitions()
 
     def get_storage_engine(self):
         return self._strage_engine
@@ -71,11 +77,13 @@ class EggRollTable(Table):
         return self._table.destroy()
 
     @classmethod
-    def dtable(cls, session_id, name, namespace, partitions):
-        return EggRollTable(session_id=session_id, name=name, namespace=namespace, partitions=partitions)
+    def dtable(cls, session_id, name, namespace, partitions, store_type, mode):
+        address = EggRollAddress(name=name, namespace=namespace, storage_type=store_type)
+        return EggRollTable(job_id=session_id, mode=mode, address=address, partitions=partitions, name=name,
+                            namespace=namespace, store_type=store_type)
 
     @log_elapsed
-    def save_as(self, name, namespace, partition=None, **kwargs):
+    def save_as(self, name=None, namespace=None, partition=None, **kwargs):
 
         options = kwargs.get("options", {})
         store_type = options.get("store_type", StoreEngine.LMDB)
@@ -84,7 +92,7 @@ class EggRollTable(Table):
         if partition is None:
             partition = self._partitions
         self._table.save_as(name=name, namespace=namespace, partition=partition, options=options)
-        return self.dtable(self._session_id, name, namespace, partition)
+        return self.dtable(self._session_id, name, namespace, partition, store_type, self._mode)
 
     def close(self):
         self.session.stop()

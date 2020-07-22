@@ -38,7 +38,7 @@ class StoreEngine(object):
 
 class Relationship(object):
     CompToStore = {
-        Backend.EGGROLL: [StoreEngine.LMDB],
+        Backend.EGGROLL: [StoreEngine.LMDB, StoreEngine.IN_MEMORY],
         Backend.SPARK: [StoreEngine.HDFS]
     }
 

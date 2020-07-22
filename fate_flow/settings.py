@@ -63,7 +63,7 @@ DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000 * 60  # ms
 JOB_DEFAULT_TIMEOUT = 7 * 24 * 60 * 60
 DATABASE = get_base_config("database", {})
 MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
-
+HDFS_ADDRESS= ''
 '''
 Constants
 '''
@@ -93,6 +93,8 @@ log_utils.LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_d
 stat_logger = log_utils.getLogger("fate_flow_stat")
 detect_logger = log_utils.getLogger("fate_flow_detect")
 access_logger = log_utils.getLogger("fate_flow_access")
+data_manager_logger = log_utils.getLogger("fate_flow_data_manager")
+
 
 """
 Services 

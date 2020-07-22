@@ -17,11 +17,14 @@ import argparse
 import importlib
 import os
 import traceback
+import uuid
+
 from arch.api import federation
 from arch.api.utils import file_utils, log_utils
 from arch.api.utils.core_utils import current_timestamp, get_lan_ip, timestamp_to_date
 from arch.api.utils.log_utils import schedule_logger
 from fate_arch import session
+from fate_arch.data_table.base import HDFSAddress, EggRollAddress
 from fate_arch.data_table.store_type import StoreTypes, StoreEngine
 from fate_arch.data_table.table_manager import get_table
 from fate_arch.session import Backend
@@ -31,7 +34,7 @@ from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.table_manager import create
 from fate_flow.manager.tracking_manager import Tracking
 from fate_flow.settings import API_VERSION, SAVE_AS_TASK_INPUT_DATA_SWITCH, SAVE_AS_TASK_INPUT_DATA_IN_MEMORY
-from fate_flow.utils import job_utils
+from fate_flow.utils import job_utils, data_utils
 from fate_flow.utils.api_utils import federated_api
 
 
@@ -204,11 +207,10 @@ class TaskExecutor(object):
                         # todo: If the same component has more than one identical input, save as is repeated
                         if if_save_as_task_input_data:
                             if data_table:
-                                schedule_logger().info("start save as task {} input data table {} {}".format(
-                                    task_id,
-                                    data_table.get_namespace(),
-                                    data_table.get_name()))
+                                schedule_logger().info("start save as task {} input data table {}".format(
+                                    task_id, data_table.get_address()))
                                 origin_table_metas = data_table.get_schema()
+                                name = uuid.uuid1().hex
                                 namespace = job_utils.generate_session_id(task_id=task_id, role=role, party_id=party_id)
                                 partitions = task_parameters['input_data_partition'] if task_parameters.get('input_data_partition', 0) > 0 else data_table.get_partitions()
                                 if RuntimeConfig.BACKEND == Backend.SPARK:
@@ -216,20 +218,18 @@ class TaskExecutor(object):
                                 else:
                                     store_engine = StoreEngine.IN_MEMORY if SAVE_AS_TASK_INPUT_DATA_IN_MEMORY \
                                         else StoreEngine.LMDB
-                                create(name=data_table.get_name(), namespace=namespace, store_engine=store_engine
-                                       , partitions=partitions)
                                 save_as_options = {"store_type": StoreTypes.ROLLPAIR_IN_MEMORY} if SAVE_AS_TASK_INPUT_DATA_IN_MEMORY else {}
-                                data_table = data_table.save_as(namespace=namespace, name=data_table.get_name(),
-                                                                partition=partitions, options=save_as_options)
+                                address = create(name=name, namespace=namespace, store_engine=store_engine,
+                                                 partitions=partitions)
+                                data_table = data_table.save_as(address=address, partition=partitions, options=save_as_options,
+                                                                name=name, namespace=namespace)
                                 data_table.save_schema(schema_data=origin_table_metas)
-                                schedule_logger().info("save as task {} input data table to {} {} done".format(
-                                    task_id,
-                                    data_table.get_namespace(),
-                                    data_table.get_name()))
-                                data_table = session.default().load(name=data_table.get_namespace(),
-                                                                    namespace=data_table.get_namespace(),
+                                schedule_logger().info("save as task {} input data table to {} done".format(
+                                    task_id, data_table.get_address()))
+                                data_table = session.default().load(data_table.get_address(),
                                                                     schema=origin_table_metas,
                                                                     partitions=partitions)
+                                data_table.partitions = partitions
                             else:
                                 schedule_logger().info("pass save as task {} input data table, because the table is none".format(task_id))
                         else:

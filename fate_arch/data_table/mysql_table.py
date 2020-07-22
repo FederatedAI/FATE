@@ -46,16 +46,16 @@ class MysqlTable(Table):
     def __init__(self,
                  mode: typing.Union[int, WorkMode] = WORK_MODE,
                  persistent_engine: str = StoreEngine.MYSQL,
-                 namespace: str = None,
-                 name: str = None,
                  partitions: int = 1,
-                 database_config: dict = None,
+                 name: str = None,
+                 namespace: str = None,
+                 address=None,
                  **kwargs):
-        self._name = name or str(uuid.uuid1())
-        self._namespace = namespace or str(uuid.uuid1())
         self._partitions = partitions
         self._storage_engine = persistent_engine
-        self.database_config = database_config
+        self._address = address
+        self._name = name
+        self._namespace = namespace
         self._mode = mode
         '''
         database_config
@@ -67,11 +67,11 @@ class MysqlTable(Table):
         }
         '''
         try:
-            self.con = pymysql.connect(host=self.database_config.get('host'),
-                                       user=self.database_config.get('user'),
-                                       passwd=self.database_config.get('passwd'),
-                                       port=self.database_config.get('port'),
-                                       db=namespace)
+            self.con = pymysql.connect(host=self._address.host,
+                                       user=self._address.user,
+                                       passwd=self._address.passwd,
+                                       port=self._address.port,
+                                       db=self._address.db)
             self.cur = self.con.cursor()
         except:
             print("DataBase connect error,please check the db config.")
@@ -89,24 +89,20 @@ class MysqlTable(Table):
             result = self.cur.fetchall()
             return result
 
+    def get_partitions(self):
+        return self._partitions
+
     def get_name(self):
         return self._name
 
     def get_namespace(self):
         return self._namespace
 
-    def get_partitions(self):
-        return self._partitions
-
     def get_storage_engine(self):
         return self._storage_engine
 
     def get_address(self):
-        return MysqlAddress(host=self.database_config.get('host'),
-                            user=self.database_config.get('user'),
-                            passwd=self.database_config.get('passwd'),
-                            port=self.database_config.get('port'),
-                            db=self._namespace, name=self._name)
+        return self._address
 
     @log_elapsed
     def collect(self, **kwargs) -> list:

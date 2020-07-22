@@ -57,7 +57,7 @@ def init(job_id=None,
 
     Examples
     --------
-    >>> from arch.api import session, WorkMode, Backend
+    >>> from arch.api import session
     >>> session.init("a_job_id", WorkMode.Standalone, Backend.EGGROLL)
     """
     if kwargs:

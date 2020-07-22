@@ -13,37 +13,67 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import uuid
 
+from arch.api.utils import log_utils
 from fate_arch.data_table.eggroll_table import EggRollTable
+from fate_arch.data_table.hdfs_table import HDFSTable
 from fate_arch.data_table.store_type import Relationship, StoreEngine
 from fate_arch.session import Backend, WorkMode
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.table_manager import create
 
+logger = log_utils.getLogger()
+
 MAX_NUM = 10000
 
 
-def convert(table, name='', namespace='', force=False, **kwargs):
+def convert(table, name='', namespace='', job_id=uuid.uuid1().hex, force=False, **kwargs):
     partitions = table.get_partitions()
     mode = table._mode if table._mode else WorkMode.CLUSTER
     if RuntimeConfig.BACKEND == Backend.EGGROLL:
+        logger.info('backend is eggroll, storage engine is {}'.format(table.get_storage_engine()))
         if table.get_storage_engine() not in Relationship.CompToStore.get(RuntimeConfig.BACKEND, []):
-            _table = EggRollTable(mode=mode, namespace=namespace, name=name, partitions=partitions)
+            logger.info('convert {} table  to eggroll table'.format(table.get_storage_engine()))
+            address = create(name=name, namespace=namespace, store_engine=StoreEngine.LMDB, partitions=partitions)
+            logger.info('table info: name {}, namespace {}, store engine {}, partitions {}'.format(
+                name, namespace, StoreEngine.LMDB, partitions))
+            _table = EggRollTable(job_id=job_id, mode=mode, address=address, partitions=partitions, name=name, namespace=namespace)
+            logger.info('start convert')
+            copy_table(table, _table)
+            logger.info('convert success')
+            return _table
+    elif RuntimeConfig.BACKEND == Backend.SPARK:
+        logger.info('backend is spark, storage engine is {}'.format(table.get_storage_engine()))
+        if table.get_storage_engine() not in Relationship.CompToStore.get(RuntimeConfig.BACKEND, []):
+            logger.info('convert {} table to spark table'.format(table.get_storage_engine()))
+            address = create(name=name, namespace=namespace, store_engine=StoreEngine.HDFS, partitions=partitions)
+            logger.info('table info: name {}, namespace {}, store engine {}, partitions {}'.format(
+                name, namespace, StoreEngine.HDFS, partitions))
+            _table = HDFSTable(address=address, partitions=partitions, name=name, namespace=namespace)
+            logger.info('start convert')
+            copy_table(table, _table)
+            logger.info('convert success')
+            return _table
+    else:
+        return None
+
+
+def copy_table(src_table, dest_table):
+    count = 0
+    data = []
+    for line in src_table.collect():
+        data.append(line)
+        count += 1
+        if len(data) == MAX_NUM:
+            dest_table.put_all(data)
             count = 0
             data = []
-            for line in table.collect():
-                data.append(line)
-                count += 1
-                if len(data) == MAX_NUM:
-                    _table.put_all(data)
-                    count = 0
-                    data = []
-            create(name=name, namespace=namespace, store_engine=StoreEngine.LMDB,
-                   address={'name': name, 'namespace': namespace}, partitions=table.get_partitions())
-            _table.save_schema(table.get_schema(), count=table.count())
-            table.close()
-            return _table
-    return table
+    dest_table.save_schema(src_table.get_schema(), count=src_table.count())
+
+
+
+
 
 
 
