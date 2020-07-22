@@ -356,25 +356,33 @@ class _TestSuiteData(object):
 
     @classmethod
     def load(cls, config):
-        kwargs = {}
-        for k, v in cls.__init__.__annotations__.items():
-            if k == "role":
-                kwargs["role_str"] = v if v != "guest" else "guest_0"
-            kwargs[k] = config.get(k)
-        return _TestSuiteData(**kwargs)
+        return _TestSuiteData(
+            file=config.get("file"),
+            head=config.get("head"),
+            partition=config.get("partition"),
+            table_name=config.get("table_name"),
+            namespace=config.get("namespace"),
+            role_str=config.get("role") if config.get("role") != "guest" else "guest_0"
+        )
 
     def dumps(self, fp, **kwargs):
         json.dump(self.as_dict(**kwargs), fp)
 
     def as_dict(self, **kwargs):
-        d = {}
-        for k, v in self.__annotations__.items():
-            if k == "role":  # skip role
-                continue
-            d[k] = getattr(self, k)
+        d = dict(file=self.file,
+                 head=self.head,
+                 partition=self.partition,
+                 table_name=self.table_name,
+                 namespace=self.namespace)
         if kwargs:
             d.update(kwargs)
         return d
+
+    def __str__(self):
+        return pprint.pformat(self.__dict__)
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class _TestSuiteTask(object):
@@ -429,6 +437,12 @@ class _TestSuiteTask(object):
             raise Exception(f"no guest party provided")
         self.conf["initiator"] = {"party_id": local_party_id, "role": "guest"}
 
+    def __str__(self):
+        return pprint.pformat(self.__dict__)
+
+    def __repr__(self):
+        return self.__str__()
+
 
 class _TestSuite(object):
 
@@ -459,7 +473,7 @@ class _TestSuite(object):
         return self
 
     def __str__(self):
-        return f"{pprint.pformat(self.data)}\n{pprint.pformat(self.task)}"
+        return pprint.pformat(self.__dict__)
 
     def __repr__(self):
         return self.__str__()
