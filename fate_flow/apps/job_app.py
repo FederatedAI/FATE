@@ -195,10 +195,13 @@ def dsl_generator():
         cpn_str = data.get("cpn_str", "")
         if not cpn_str:
             raise Exception("Component list should not be empty.")
-        if (cpn_str.find("/") and cpn_str.find("\\")) != -1:
-            raise Exception("Component list string should not contain '/' or '\\'.")
-        cpn_str = cpn_str.replace(" ", "").replace("\n", "").strip(",[]")
-        cpn_list = cpn_str.split(",")
+        if isinstance(cpn_str, list):
+            cpn_list = cpn_str
+        else:
+            if (cpn_str.find("/") and cpn_str.find("\\")) != -1:
+                raise Exception("Component list string should not contain '/' or '\\'.")
+            cpn_str = cpn_str.replace(" ", "").replace("\n", "").strip(",[]")
+            cpn_list = cpn_str.split(",")
         train_dsl = json_loads(data.get("train_dsl"))
         parser = get_dsl_parser_by_version("v1")
         predict_dsl = parser.deploy_component(cpn_list, train_dsl)
