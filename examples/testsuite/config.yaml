@@ -1,0 +1,20 @@
+ssh_tunnel:  # ssh tunnel forwarder, request remote services through local port
+  - ssh_address:  ?? # ssh address to login
+    ssh_username: app  # ssh username
+    ssh_password: ??  # ssh password, optional, if `ssh_priv_key` provided
+    ssh_priv_key: "~/.ssh/id_rsa"  # ssh priv key path, optional, if `ssh_password` provided
+    services:  # flow services to bind
+      - address: 127.0.0.1:9380
+        parties: [9999]
+
+parties:
+  guest:
+    - 10000
+  host:
+    - 9999
+    - 10000
+  arbiter:
+    - 9999
+
+client: flowpy  # flowpy or rest
+work_mode: 0  # 0 or 1
