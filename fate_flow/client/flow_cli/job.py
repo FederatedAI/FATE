@@ -21,8 +21,8 @@ import requests
 from contextlib import closing
 
 from fate_flow.utils import detect_utils, cli_args
-from fate_flow.utils.cli_utils import (preprocess, download_from_request,
-                                       access_server, prettify)
+from fate_flow.utils.cli_utils import (preprocess, download_from_request, access_server,
+                                       prettify, check_output_path)
 
 
 @click.group(short_help="Job Operations")
@@ -288,14 +288,10 @@ def dsl_generator(ctx, **kwargs):
     with open(kwargs.get("train_dsl_path"), "r") as ft:
         train_dsl = ft.read()
 
-    output_path = kwargs.get("output_path")
-    if not os.path.isabs(output_path):
-        output_path = os.path.join(os.path.abspath(os.curdir), output_path)
-
     config_data = {
         "cpn_str": cpn_str,
         "train_dsl": train_dsl,
-        "output_path": output_path
+        "output_path": check_output_path(kwargs.get("output_path"))
     }
 
     access_server('post', ctx, 'job/dsl/generate', config_data)
