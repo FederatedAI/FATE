@@ -111,7 +111,45 @@ class ComponentProperties(object):
         LOGGER.debug("has_train_data: {}, has_eval_data: {}, has_normal_data: {}".format(
             self.has_train_data, self.has_eval_data, self.has_normal_input_data
         ))
+        self._abnormal_dsl_config_detect()
         return self
+
+    def _abnormal_dsl_config_detect(self):
+        class DSLConfigError(ValueError):
+            pass
+
+        if self.has_model:
+            if self.has_train_data:
+                raise DSLConfigError("train_data input and model input should not be "
+                                     "configured simultaneously")
+            if self.has_isometric_model:
+                raise DSLConfigError("model and isometric_model should not be "
+                                     "configured simultaneously")
+            if not self.has_eval_data and not self.has_normal_input_data:
+                raise DSLConfigError("When model has been set, either eval_data or "
+                                     "data should be provided")
+        if self.has_normal_input_data:
+            if self.has_train_data or self.has_eval_data:
+                raise DSLConfigError("When data input has been configured, train_data "
+                                     "and eval_data should not be configured.")
+
+        if self.need_cv or self.need_stepwise:
+            if not self.has_train_data:
+                raise DSLConfigError("Train_data should be configured in cross-validate "
+                                     "task or stepwise task")
+            if self.has_eval_data or self.has_normal_input_data:
+                raise DSLConfigError("In cross-validate task or stepwise task, eval_data "
+                                     "or data should not be configured")
+
+            if self.has_model or self.has_isometric_model:
+                raise DSLConfigError("In cross-validate task or stepwise task, model "
+                                     "or isometric_model should not be configured")
+
+        if not self.need_run:
+            if self.has_train_data or self.has_eval_data:
+                raise DSLConfigError("Need run is false. This is component support "
+                                     "data input only. Train_data and eval_data should not "
+                                     "be configured")
 
     def extract_input_data(self, args):
         data_sets = args.get("data")
