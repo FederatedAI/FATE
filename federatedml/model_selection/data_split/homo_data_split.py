@@ -51,7 +51,7 @@ class HomoDataSplitHost(DataSplitter):
             all_metas = self.callback_label_info(y_train, y_validate, y_test, all_metas)
             summary["data_split_label_info"] = all_metas
         self.callback(all_metas)
-        self.set_summary(summary)
+        self.set_summary(all_metas)
 
         return [train_data, validate_data, test_data]
 
@@ -87,6 +87,6 @@ class HomoDataSplitGuest(DataSplitter):
             all_metas = self.callback_label_info(y_train, y_validate, y_test, all_metas)
             summary["data_split_label_info"] = all_metas
         self.callback(all_metas)
-        self.set_summary(summary)
+        self.set_summary(all_metas)
 
         return [train_data, validate_data, test_data]

@@ -224,6 +224,9 @@ class DataSplitter(ModelBase):
         metric_name = f"{self.metric_name}_ratio_info"
         all_metas[metric_name] = metas
 
+        # stratified
+        all_metas["stratified"] = self.stratified
+
         return all_metas
 
     def callback_label_info(self, y_train, y_validate, y_test, all_metas):
