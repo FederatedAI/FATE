@@ -20,9 +20,9 @@ import copy
 
 from arch.api.utils import log_utils
 from federatedml.param.evaluation_param import EvaluateParam
+from federatedml.statistic.data_overview import header_alignment, check_legal_schema
 from federatedml.util.component_properties import ComponentProperties
 from federatedml.util.param_extract import ParamExtract
-from federatedml.statistic.data_overview import header_alignment, check_legal_schema
 
 LOGGER = log_utils.getLogger()
 
@@ -104,7 +104,6 @@ class ModelBase(object):
         LOGGER.debug("saved_result is : {}, data_output: {}".format(saved_result, self.data_output))
         self.check_consistency()
 
-
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary",
                              pos_label=1)
@@ -183,7 +182,6 @@ class ModelBase(object):
                                    "sid_name": schema.get('sid_name')}
         return predict_data
 
-
     def predict_score_to_output(self, data_instances, predict_score, classes=None, threshold=0.5):
         """
         get predict result output
@@ -209,7 +207,7 @@ class ModelBase(object):
 
         # multi-label: input = array of predicted score of all labels
         elif isinstance(classes, list) and len(classes) > 2:
-            #pred_label = predict_score.mapValues(lambda x: classes[x.index(max(x))])
+            # pred_label = predict_score.mapValues(lambda x: classes[x.index(max(x))])
             classes = [str(val) for val in classes]
             predict_result = data_instances.mapValues(lambda x: x.label)
             predict_result = predict_result.join(predict_score, lambda x, y: [x, int(classes[y.argmax()]),
@@ -218,7 +216,6 @@ class ModelBase(object):
             raise ValueError(f"Model's classes type is {type(classes)}, classes must be None or list.")
 
         return predict_result
-
 
     def callback_meta(self, metric_name, metric_namespace, metric_meta):
         if self.need_cv:
@@ -329,7 +326,8 @@ class ModelBase(object):
         """
         result_data = header_alignment(data_instances=data_instances, pre_header=pre_header)
         return result_data
-      
+
+    @staticmethod
     def pass_data(data):
         if isinstance(data, dict) and len(data) >= 1:
             data = list(data.values())[0]

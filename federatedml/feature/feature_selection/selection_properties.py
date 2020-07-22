@@ -178,6 +178,7 @@ class CompletedSelectionResults(object):
 
         left_cols_pb = feature_selection_param_pb2.LeftCols(original_cols=select_properties.last_left_col_names,
                                                             left_cols=select_properties.left_col_dicts)
+
         this_filter_result = {
             'feature_values': select_properties.feature_values,
             'host_feature_values': host_feature_values,

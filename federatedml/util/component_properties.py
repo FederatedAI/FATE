@@ -127,16 +127,26 @@ class ComponentProperties(object):
 
             for data_type, d_table in data_dict.items():
                 if data_type == "train_data" and d_table is not None:
-                    train_data = d_table[0]
+                    if isinstance(d_table, list):
+                        train_data = d_table[0]
+                    else:
+                        train_data = d_table
                     if train_data is not None:
                         self.input_data_count = train_data.count()
                 elif data_type == 'eval_data' and d_table is not None:
-                    eval_data = d_table[0]
+                    if isinstance(d_table, list):
+                        eval_data = d_table[0]
+                    else:
+                        eval_data = d_table
+                    # eval_data = d_table[0]
                     if eval_data is not None:
                         self.input_eval_data_count = eval_data.count()
                 else:
                     if d_table is not None:
-                        data[".".join([data_key, data_type])] = d_table
+                        if isinstance(d_table, list):
+                            data[".".join([data_key, data_type])] = d_table[0]
+                        else:
+                            data[".".join([data_key, data_type])] = d_table
 
             # if data_sets[data_key].get("data", None):
             #     # data = data_sets[data_key]["data"]
@@ -149,6 +159,7 @@ class ComponentProperties(object):
         return train_data, eval_data, data
 
     def extract_running_rules(self, args, model):
+
         train_data, eval_data, data = self.extract_input_data(args)
 
         running_funcs = RunningFuncs()

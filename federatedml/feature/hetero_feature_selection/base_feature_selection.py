@@ -276,6 +276,13 @@ class BaseHeteroFeatureSelection(ModelBase):
         self.completed_selection_result.add_filter_results(filter_name=method,
                                                            select_properties=self.curt_select_properties,
                                                            host_select_properties=host_select_properties)
+        last_col_nums = len(self.curt_select_properties.last_left_col_names)
+        left_col_names = self.curt_select_properties.left_col_names
+        self.add_summary(method, {
+            "last_col_nums": last_col_nums,
+            "left_col_nums": len(left_col_names),
+            "left_col_names": left_col_names
+        })
         LOGGER.debug("method: {}, selection_cols: {}, left_cols: {}".format(
             method, self.curt_select_properties.select_col_names, self.curt_select_properties.left_col_names))
         self.update_curt_select_param()

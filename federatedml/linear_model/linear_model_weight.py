@@ -24,6 +24,9 @@ from federatedml.framework.weights import ListWeights, TransferableWeights
 
 class LinearModelWeights(ListWeights):
     def __init__(self, l, fit_intercept):
+        if np.abs(np.max(np.array(l))) > 1e8:
+            raise RuntimeError("The model weights are overflow, please check if the "
+                               "input data has been normalized")
         super().__init__(l)
         self.fit_intercept = fit_intercept
 
