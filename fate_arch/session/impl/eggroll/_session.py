@@ -20,11 +20,13 @@ import typing
 from eggroll.core.session import session_init
 from eggroll.roll_pair.roll_pair import RollPairContext
 from eggroll.utils import file_utils
+from fate_arch._interface import AddressABC
+from fate_arch.common import WorkMode, Party
 from fate_arch.common.log import getLogger
 from fate_arch.common.profile import log_elapsed
-from fate_arch.data_table.base import AddressABC, EggRollAddress
 from fate_arch.session._interface import SessionABC
-from fate_arch.session._session_types import _FederationParties, Party, WorkMode
+from fate_arch.session._session_types import _FederationParties
+
 from fate_arch.session.impl.eggroll._federation import FederationEngine
 from fate_arch.session.impl.eggroll._table import Table
 
@@ -76,6 +78,8 @@ class Session(SessionABC):
 
     @log_elapsed
     def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs) -> Table:
+
+        from fate_arch.data_table.base import EggRollAddress
         if isinstance(address, EggRollAddress):
             options = kwargs.get("option", {})
             options["total_partitions"] = partitions

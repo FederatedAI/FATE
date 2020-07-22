@@ -20,11 +20,11 @@ import typing
 import uuid
 
 from fate_arch.session._interface import SessionABC, TableABC
-from fate_arch.session._session_types import WorkMode, Backend, Party
+from fate_arch.common import WorkMode, Backend
 
 _DEFAULT_SESSION = typing.Optional[SessionABC]
 
-__all__ = ['create', 'default', 'has_default', 'Party', 'is_table', 'TableABC', 'WorkMode', 'Backend']
+__all__ = ['create', 'default', 'has_default', 'is_table', 'TableABC']
 
 
 def init(session_id=None,

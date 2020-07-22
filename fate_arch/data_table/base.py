@@ -21,6 +21,7 @@ from typing import Iterable
 import six
 
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
+from fate_arch._interface import AddressABC
 from fate_flow.db.db_models import DB, MachineLearningDataSchema
 from fate_flow.settings import stat_logger
 
@@ -183,10 +184,6 @@ class Table(object):
                                                          MachineLearningDataSchema.f_namespace == self._namespace).execute()
         except Exception as e:
             stat_logger.error("delete_table_meta {}, {}, exception:{}.".format(self._namespace, self._name, e))
-
-
-class AddressABC(metaclass=abc.ABCMeta):
-    ...
 
 
 class HDFSAddress(AddressABC):

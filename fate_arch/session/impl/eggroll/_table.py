@@ -39,7 +39,6 @@ class Table(TableABC):
             schema.update(self.schema)
         raise NotImplementedError(f"address type {type(address)} not supported with eggroll backend")
 
-
     @log_elapsed
     def collect(self, **kwargs) -> list:
         return self._rp.get_all()

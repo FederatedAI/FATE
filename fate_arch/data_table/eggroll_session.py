@@ -17,7 +17,7 @@ import uuid
 
 # from arch.api.utils.profile_util import log_elapsed
 
-from arch.api import WorkMode
+from fate_arch.session import WorkMode
 from eggroll.core.session import session_init
 from eggroll.roll_pair.roll_pair import RollPairContext
 from eggroll.core.constants import SerdesTypes

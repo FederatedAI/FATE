@@ -32,12 +32,11 @@ import numpy as np
 from cachetools import LRUCache
 from cachetools import cached
 
-from fate_arch._interface import GC
-from fate_arch.common import file_utils
+from fate_arch._interface import GC, AddressABC
+from fate_arch.common import file_utils, Party
 from fate_arch.common.log import getLogger
-from fate_arch.data_table.base import AddressABC, EggRollAddress
 from fate_arch.session._interface import TableABC, SessionABC, FederationEngineABC
-from fate_arch.session._session_types import _FederationParties, Party
+from fate_arch.session._session_types import _FederationParties
 from fate_arch.session.impl.standalone import _cloudpickle as f_pickle
 
 LOGGER = getLogger()
@@ -66,6 +65,7 @@ class StandaloneSession(SessionABC):
         self._init_federation(federation_session_id, party, parties)
 
     def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs) -> TableABC:
+        from fate_arch.data_table.base import EggRollAddress
         if isinstance(address, EggRollAddress):
             table = _load_table(address.name, address.namespace)
             table.schema = schema
@@ -161,6 +161,7 @@ class Table(TableABC):
         shutil.rmtree(path, ignore_errors=True)
 
     def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
+        from fate_arch.data_table.base import EggRollAddress
         if isinstance(address, EggRollAddress):
             self._save_as(name=address.name, namespace=address.namespace, partition=partitions, need_cleanup=False)
             schema.update(self.schema)
