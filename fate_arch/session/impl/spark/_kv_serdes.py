@@ -2,7 +2,7 @@ import pickle
 
 from pyspark import RDD
 
-from fate_arch.session.impl.spark._util import _generate_hdfs_path, _get_file_system, _get_path
+from fate_arch.session.impl.spark._util import _get_file_system, _get_path
 
 _DELIMITER = '\t'
 

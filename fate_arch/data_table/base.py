@@ -23,6 +23,7 @@ import six
 from arch.api.session import LOGGER
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from fate_arch.db.db_models import DB, MachineLearningDataSchema
+from fate_arch._interface import AddressABC
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -183,10 +184,6 @@ class Table(object):
                                                          MachineLearningDataSchema.f_namespace == self._namespace).execute()
         except Exception as e:
             LOGGER.error("delete_table_meta {}, {}, exception:{}.".format(self._namespace, self._name, e))
-
-
-class AddressABC(metaclass=abc.ABCMeta):
-    ...
 
 
 class HDFSAddress(AddressABC):

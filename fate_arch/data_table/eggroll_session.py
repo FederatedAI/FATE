@@ -15,14 +15,11 @@
 #
 import uuid
 
-# from arch.api.utils.profile_util import log_elapsed
-
+from eggroll.core.constants import SerdesTypes
 from eggroll.core.session import session_init
 from eggroll.roll_pair.roll_pair import RollPairContext
-from eggroll.core.constants import SerdesTypes
-
+from fate_arch.common import WorkMode
 from fate_arch.common.profile import log_elapsed
-from fate_arch.session import WorkMode
 
 
 def get_session(session_id='', work_mode: int = 0, options: dict = None):

@@ -20,10 +20,10 @@ from typing import Iterable
 # noinspection PyPackageRequirements
 from pyspark import SparkContext
 
-from fate_arch.common import file_utils
-from fate_arch.data_table.base import AddressABC, HDFSAddress
+from fate_arch._interface import AddressABC
+from fate_arch.common import file_utils, Party
 from fate_arch.session._interface import SessionABC
-from fate_arch.session._session_types import _FederationParties, Party
+from fate_arch.session._session_types import _FederationParties
 from fate_arch.session.impl.spark._federation import FederationEngine, MQ
 from fate_arch.session.impl.spark._rabbit_manager import RabbitManager
 from fate_arch.session.impl.spark._table import _from_hdfs, _from_rdd
@@ -38,6 +38,7 @@ class Session(SessionABC):
         self._session_id = session_id
 
     def load(self, address: AddressABC, partitions, schema, **kwargs):
+        from fate_arch.data_table.base import HDFSAddress
         if isinstance(address, HDFSAddress):
             table = _from_hdfs(paths=address.path, partitions=partitions)
             table.schema = schema

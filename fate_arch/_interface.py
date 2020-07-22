@@ -1,5 +1,10 @@
+import abc
 import typing
 from typing_extensions import Protocol
+
+
+class AddressABC(metaclass=abc.ABCMeta):
+    ...
 
 
 class GC(Protocol):

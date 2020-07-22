@@ -25,11 +25,11 @@ from eggroll.core.meta_model import ErEndpoint
 from eggroll.roll_pair.roll_pair import RollPair, RollPairContext
 from eggroll.roll_site.roll_site import RollSiteContext
 from fate_arch._interface import GC
+from fate_arch.common import Party
 from fate_arch.common.log import getLogger
-from fate_arch.session._session_types import Party
+from fate_arch.session._interface import FederationEngineABC
 from fate_arch.session._split import is_split_head, split_get
 from fate_arch.session.impl.eggroll._table import Table
-from fate_arch.session._interface import FederationEngineABC
 
 LOGGER = getLogger()
 

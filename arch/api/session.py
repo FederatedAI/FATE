@@ -19,7 +19,8 @@ from typing import Iterable
 
 from fate_arch import session
 from fate_arch.common.log import getLogger
-from fate_arch.session import WorkMode, Backend, TableABC
+from fate_arch.common import WorkMode, Backend
+from fate_arch.session import TableABC
 
 LOGGER = getLogger()
 
