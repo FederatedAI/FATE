@@ -37,11 +37,20 @@ class Reader(object):
         persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(self.task_id), uuid.uuid1().hex
         table = convert(data_table, job_id=generate_session_id(self.task_id, self.tracker.role, self.tracker.party_id),
                         name=persistent_table_name, namespace=persistent_table_namespace, force=True)
+        if not table:
+            persistent_table_name = data_table.get_name()
+            persistent_table_namespace = data_table.get_namespace()
+        partitions = data_table.get_partitions()
+        count = data_table.count()
+        LOGGER.info('save data view:name {}, namespace {}, partitions {}, count {}'.format(persistent_table_name,
+                                                                                           persistent_table_namespace,
+                                                                                           partitions,
+                                                                                           count))
         self.tracker.save_data_view(
-            data_info={'f_table_name':  persistent_table_name if table else data_table.get_name(),
-                       'f_table_namespace':  persistent_table_namespace if table else data_table.get_namespace(),
-                       'f_partition': table.get_partitions() if table else data_table.get_partitions(),
-                       'f_table_count_actual': table.count() if table else data_table.get_partitions()},
+            data_info={'f_table_name':  persistent_table_name,
+                       'f_table_namespace':  persistent_table_namespace,
+                       'f_partition': partitions,
+                       'f_table_count_actual': count},
             mark=True)
         self.callback_metric(metric_name='reader_name',
                              metric_namespace='reader_namespace',
@@ -50,8 +59,6 @@ class Reader(object):
                                         "input_table_strage_engine": data_table.get_storage_engine(),
                                         "output_table_strage_engine": table.get_storage_engine()}
                              )
-        data_table.close()
-        table.close()
 
     def set_taskid(self, task_id):
         self.task_id = task_id

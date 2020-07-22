@@ -93,6 +93,8 @@ log_utils.LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_d
 stat_logger = log_utils.getLogger("fate_flow_stat")
 detect_logger = log_utils.getLogger("fate_flow_detect")
 access_logger = log_utils.getLogger("fate_flow_access")
+data_manager_logger = log_utils.getLogger("fate_flow_data_manager")
+
 
 """
 Services 
