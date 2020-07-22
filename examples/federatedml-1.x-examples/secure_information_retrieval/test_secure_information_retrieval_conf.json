@@ -16,8 +16,8 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "test_sir_guest",
-                            "namespace": "test_sir_data"
+                            "name": "breast_a",
+                            "namespace": "experiment"
                         }
                     ]
                 }
@@ -32,8 +32,8 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "test_sir_host",
-                            "namespace": "test_sir_data"
+                            "name": "breast_b",
+                            "namespace": "experiment"
                         }
                     ]
                 }
