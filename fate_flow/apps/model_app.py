@@ -19,7 +19,7 @@ import shutil
 from flask import Flask, request, send_file
 
 from fate_flow.settings import stat_logger, API_VERSION, MODEL_STORE_ADDRESS, TEMP_DIRECTORY
-from fate_flow.driver.job_controller import JobController
+from fate_flow.operation.job_controller import JobController
 from fate_flow.manager.model_manager import publish_model
 from fate_flow.manager.model_manager import pipelined_model
 from fate_flow.utils.api_utils import get_json_result, federated_api
@@ -27,7 +27,7 @@ from fate_flow.utils.job_utils import generate_job_id, runtime_conf_basic
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils.detect_utils import check_config
 from fate_flow.utils.model_utils import gen_party_model_id
-from fate_flow.entity.constant_config import ModelOperation
+from fate_flow.entity.constant import ModelOperation
 
 manager = Flask(__name__)
 

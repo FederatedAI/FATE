@@ -17,7 +17,7 @@
 import os
 
 from arch.api import Backend
-from arch.api.utils import file_utils, log_utils
+from arch.api.utils import file_utils, log_utils, core_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
 from arch.api.utils.conf_utils import get_base_config
 import __main__
@@ -110,5 +110,5 @@ ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH = True
 
 # init
 RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
-RuntimeConfig.init_config(HTTP_PORT=HTTP_PORT)
+RuntimeConfig.init_config(JOB_SERVER_HOST=core_utils.get_lan_ip(), HTTP_PORT=HTTP_PORT)
 RuntimeConfig.init_config(BACKEND=BACKEND)

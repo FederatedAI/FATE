@@ -15,7 +15,7 @@
 #
 from arch.api.utils.core_utils import get_lan_ip, json_loads
 from arch.api.utils.log_utils import schedule_logger
-from fate_flow.driver.task_scheduler import TaskScheduler
+from fate_flow.scheduler.task_scheduler import TaskScheduler
 from fate_flow.settings import detect_logger, API_VERSION
 from fate_flow.utils import cron, job_utils, api_utils
 

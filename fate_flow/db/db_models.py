@@ -17,6 +17,7 @@ import datetime
 import inspect
 import os
 import sys
+import json
 
 import __main__
 from peewee import Model, CharField, IntegerField, BigIntegerField, TextField, CompositeKey, BigAutoField
@@ -25,7 +26,7 @@ from playhouse.pool import PooledMySQLDatabase
 
 from arch.api.utils import log_utils
 from arch.api.utils.core_utils import current_timestamp
-from fate_flow.entity.constant_config import WorkMode
+from fate_flow.entity.constant import WorkMode
 from fate_flow.settings import DATABASE, WORK_MODE, stat_logger, USE_LOCAL_DATABASE
 from fate_flow.entity.runtime_config import RuntimeConfig
 
@@ -42,6 +43,15 @@ def singleton(cls, *args, **kw):
         return instances[key]
 
     return _singleton
+
+
+class JSONField(TextField):
+    def db_value(self, value):
+        return json.dumps(value)
+
+    def python_value(self, value):
+        if value is not None:
+            return json.loads(value)
 
 
 @singleton
@@ -93,7 +103,7 @@ class DataBaseModel(Model):
             self.f_update_date = datetime.datetime.now()
         if hasattr(self, "f_update_time"):
             self.f_update_time = current_timestamp()
-        super(DataBaseModel, self).save(*args, **kwargs)
+        return super(DataBaseModel, self).save(*args, **kwargs)
 
 
 def init_database_tables():
@@ -118,23 +128,27 @@ class Queue(DataBaseModel):
 
 
 class Job(DataBaseModel):
+    # multi-party common configuration
     f_job_id = CharField(max_length=25)
     f_name = CharField(max_length=500, null=True, default='')
     f_description = TextField(null=True, default='')
     f_tag = CharField(max_length=50, null=True, index=True, default='')
+    f_dsl = JSONField()
+    f_runtime_conf = JSONField()
+    f_train_runtime_conf = JSONField(null=True)
+    f_roles = JSONField()
+    f_work_mode = IntegerField()
+    f_initiator_role = CharField(max_length=50, index=True)
+    f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
+    f_status = CharField(max_length=50)
+    f_status_level = BigIntegerField()
+    # this party configuration
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
-    f_roles = TextField()
-    f_work_mode = IntegerField()
-    f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
+    f_party_status = CharField(max_length=50)
+    f_party_status_level = BigIntegerField()
     f_is_initiator = IntegerField(null=True, index=True, default=-1)
-    f_dsl = TextField()
-    f_runtime_conf = TextField()
-    f_train_runtime_conf = TextField(null=True)
     f_run_ip = CharField(max_length=100)
-    f_status = CharField(max_length=50)
-    f_current_steps = CharField(max_length=500, null=True)  # record component id in DSL
-    f_current_tasks = CharField(max_length=500, null=True)  # record task id
     f_progress = IntegerField(null=True, default=0)
     f_create_time = BigIntegerField()
     f_update_time = BigIntegerField(null=True)
@@ -147,16 +161,48 @@ class Job(DataBaseModel):
         primary_key = CompositeKey('f_job_id', 'f_role', 'f_party_id')
 
 
-class Task(DataBaseModel):
+class TaskSet(DataBaseModel):
+    # multi-party common configuration
     f_job_id = CharField(max_length=25)
-    f_component_name = TextField()
-    f_task_id = CharField(max_length=100)
+    f_task_set_id = BigIntegerField()
+    f_initiator_role = CharField(max_length=50, index=True)
+    f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
+    f_status = CharField(max_length=50)
+    f_status_level = BigIntegerField()
+    # this party configuration
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
-    f_operator = CharField(max_length=100, null=True)
+    f_party_status = CharField(max_length=50)
+    f_party_status_level = BigIntegerField()
+    f_create_time = BigIntegerField()
+    f_update_time = BigIntegerField(null=True)
+    f_start_time = BigIntegerField(null=True)
+    f_end_time = BigIntegerField(null=True)
+    f_elapsed = BigIntegerField(null=True)
+
+    class Meta:
+        db_table = "t_task_set"
+        primary_key = CompositeKey('f_job_id', 'f_task_set_id', 'f_role', 'f_party_id')
+
+
+class Task(DataBaseModel):
+    # multi-party common configuration
+    f_job_id = CharField(max_length=25)
+    f_task_set_id = BigIntegerField()
+    f_component_name = TextField()
+    f_task_id = CharField(max_length=100)
+    f_task_version = BigIntegerField()
+    f_initiator_role = CharField(max_length=50, index=True)
+    f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
+    f_status = CharField(max_length=50)
+    f_status_level = BigIntegerField()
+    # this party configuration
+    f_role = CharField(max_length=50, index=True)
+    f_party_id = CharField(max_length=10, index=True)
     f_run_ip = CharField(max_length=100, null=True)
     f_run_pid = IntegerField(null=True)
-    f_status = CharField(max_length=50)
+    f_party_status = CharField(max_length=50)
+    f_party_status_level = BigIntegerField()
     f_create_time = BigIntegerField()
     f_update_time = BigIntegerField(null=True)
     f_start_time = BigIntegerField(null=True)
@@ -165,7 +211,7 @@ class Task(DataBaseModel):
 
     class Meta:
         db_table = "t_task"
-        primary_key = CompositeKey('f_job_id', 'f_task_id', 'f_role', 'f_party_id')
+        primary_key = CompositeKey('f_task_id', 'f_task_version', 'f_role', 'f_party_id')
 
 
 class DataView(DataBaseModel):

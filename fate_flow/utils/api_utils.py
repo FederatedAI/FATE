@@ -21,7 +21,7 @@ from flask import jsonify
 from flask import Response
 
 from arch.api.utils.log_utils import audit_logger
-from fate_flow.entity.constant_config import WorkMode
+from fate_flow.entity.constant import WorkMode
 from fate_flow.settings import DEFAULT_GRPC_OVERALL_TIMEOUT, CHECK_NODES_IDENTITY,\
     FATE_MANAGER_GET_NODE_INFO_ENDPOINT, HEADERS, SERVER_CONF_PATH, SERVERS
 from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_proxy_data_channel
@@ -82,7 +82,7 @@ def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, 
 
 def local_api(method, endpoint, json_body, job_id=None):
     try:
-        url = "http://{}{}".format(RuntimeConfig.JOB_SERVER_HOST, endpoint)
+        url = "http://{}:{}{}".format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT, endpoint)
         audit_logger(job_id).info('local api request: {}'.format(url))
         action = getattr(requests, method.lower(), None)
         response = action(url=url, json=json_body, headers=HEADERS)

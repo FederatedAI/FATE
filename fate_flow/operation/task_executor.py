@@ -23,29 +23,29 @@ from arch.api.base.utils.store_type import StoreTypes
 from arch.api.utils import file_utils, log_utils
 from arch.api.utils.core_utils import current_timestamp, get_lan_ip, timestamp_to_date
 from arch.api.utils.log_utils import schedule_logger
-from fate_flow.db.db_models import Task
-from fate_flow.entity.constant_config import TaskStatus, ProcessRole
+from fate_flow.entity.constant import TaskStatus, ProcessRole
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.manager.tracking_manager import Tracking
+from fate_flow.manager.tracking_manager import Tracker
 from fate_flow.settings import API_VERSION, SAVE_AS_TASK_INPUT_DATA_SWITCH, SAVE_AS_TASK_INPUT_DATA_IN_MEMORY
 from fate_flow.utils import job_utils
-from fate_flow.utils.api_utils import federated_api
+from fate_flow.utils import api_utils
+from fate_flow.entity.constant import RetCode
 
 
 class TaskExecutor(object):
-    @staticmethod
-    def run_task():
-        task = Task()
-        task.f_create_time = current_timestamp()
+    @classmethod
+    def run_task(cls):
+        task_info = {}
         try:
             parser = argparse.ArgumentParser()
             parser.add_argument('-j', '--job_id', required=True, type=str, help="job id")
             parser.add_argument('-n', '--component_name', required=True, type=str,
                                 help="component name")
             parser.add_argument('-t', '--task_id', required=True, type=str, help="task id")
+            parser.add_argument('-v', '--task_version', required=True, type=str, help="task version")
             parser.add_argument('-r', '--role', required=True, type=str, help="role")
             parser.add_argument('-p', '--party_id', required=True, type=str, help="party id")
-            parser.add_argument('-c', '--config', required=True, type=str, help="task config")
+            parser.add_argument('-c', '--config', required=True, type=str, help="task parameters")
             parser.add_argument('--processors_per_node', help="processors_per_node", type=int)
             parser.add_argument('--job_server', help="job server", type=str)
             args = parser.parse_args()
@@ -53,28 +53,47 @@ class TaskExecutor(object):
             schedule_logger(args.job_id).info(args)
             # init function args
             if args.job_server:
-                RuntimeConfig.init_config(HTTP_PORT=args.job_server.split(':')[1])
+                RuntimeConfig.init_config(JOB_SERVER_HOST=args.job_server.split(':')[0], HTTP_PORT=args.job_server.split(':')[1])
                 RuntimeConfig.set_process_role(ProcessRole.EXECUTOR)
             job_id = args.job_id
             component_name = args.component_name
             task_id = args.task_id
+            task_version = args.task_version
             role = args.role
             party_id = int(args.party_id)
             executor_pid = os.getpid()
-            task_config = file_utils.load_json_conf(args.config)
-            job_parameters = task_config['job_parameters']
-            job_initiator = task_config['job_initiator']
-            job_args = task_config['job_args']
-            task_input_dsl = task_config['input']
-            task_output_dsl = task_config['output']
-            component_parameters = TaskExecutor.get_parameters(job_id, component_name, role, party_id)
-            task_parameters = task_config['task_parameters']
-            module_name = task_config['module_name']
+            task_info.update({
+                "job_id": job_id,
+                "component_name": component_name,
+                "task_id": task_id,
+                "task_version": task_version,
+                "run_ip": get_lan_ip(),
+                "run_pid": executor_pid,
+                "start_time": current_timestamp(),
+            })
+            job_conf = job_utils.get_job_conf(job_id)
+            job_dsl = job_conf["job_dsl_path"]
+            job_runtime_conf = job_conf["job_runtime_conf_path"]
+            job_parameters = job_runtime_conf['job_parameters']
+            job_initiator = job_runtime_conf['job_initiator']
+            job_args = job_runtime_conf['job_args']
+            dsl_parser = job_utils.get_job_dsl_parser(dsl=job_dsl,
+                                                      runtime_conf=job_runtime_conf,
+                                                      train_runtime_conf=job_conf["train_runtime_conf_path"],
+                                                      pipeline_dsl=job_conf["pipeline_dsl_path"]
+                                                      )
+            component = dsl_parser.get_component_info(component_name=component_name)
+            component_parameters = component.get_role_parameters()
+            party_component_parameters = component_parameters[role][component_parameters[role][0]['role'][role].index(party_id)]
+            module_name = component.get_module()
+            task_input_dsl = component.get_input()
+            task_output_dsl = component.get_output()
+            task_parameters = file_utils.load_json_conf(args.config)
             TaskExecutor.monkey_patch()
         except Exception as e:
             traceback.print_exc()
             schedule_logger().exception(e)
-            task.f_status = TaskStatus.FAILED
+            task_info["party_status"] = TaskStatus.FAILED
             return
         try:
             job_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, str(party_id))
@@ -82,28 +101,17 @@ class TaskExecutor(object):
             log_utils.LoggerFactory.set_directory(directory=task_log_dir, parent_log_dir=job_log_dir,
                                                   append_to_parent_log=True, force=True)
 
-            task.f_job_id = job_id
-            task.f_component_name = component_name
-            task.f_task_id = task_id
-            task.f_role = role
-            task.f_party_id = party_id
-            task.f_operator = 'python_operator'
-            tracker = Tracking(job_id=job_id, role=role, party_id=party_id, component_name=component_name,
-                               task_id=task_id,
-                               model_id=job_parameters['model_id'],
-                               model_version=job_parameters['model_version'],
-                               component_module_name=module_name)
-            task.f_start_time = current_timestamp()
-            task.f_run_ip = get_lan_ip()
-            task.f_run_pid = executor_pid
-            run_class_paths = component_parameters.get('CodePath').split('/')
+            tracker = Tracker(job_id=job_id, role=role, party_id=party_id, component_name=component_name,
+                              task_id=task_id,
+                              task_version=task_version,
+                              model_id=job_parameters['model_id'],
+                              model_version=job_parameters['model_version'],
+                              component_module_name=module_name)
+            run_class_paths = party_component_parameters.get('CodePath').split('/')
             run_class_package = '.'.join(run_class_paths[:-2]) + '.' + run_class_paths[-2].replace('.py', '')
             run_class_name = run_class_paths[-1]
-            task.f_status = TaskStatus.RUNNING
-            TaskExecutor.sync_task_status(job_id=job_id, component_name=component_name, task_id=task_id, role=role,
-                                          party_id=party_id, initiator_party_id=job_initiator.get('party_id', None),
-                                          initiator_role=job_initiator.get('role', None),
-                                          task_info=task.to_json())
+            task_info["party_status"] = TaskStatus.RUNNING
+            cls.report_task_to_server(task_info=task_info)
 
             # init environment, process is shared globally
             RuntimeConfig.init_config(WORK_MODE=job_parameters['work_mode'],
@@ -112,14 +120,14 @@ class TaskExecutor(object):
                 session_options = {"eggroll.session.processors.per.node": args.processors_per_node}
             else:
                 session_options = {}
-            session.init(job_id=job_utils.generate_session_id(task_id, role, party_id),
+            session.init(job_id=job_utils.generate_session_id(task_id, task_version, role, party_id),
                          mode=RuntimeConfig.WORK_MODE,
                          backend=RuntimeConfig.BACKEND,
                          options=session_options)
-            federation.init(job_id=task_id, runtime_conf=component_parameters)
+            federation.init(job_id=job_utils.generate_federated_id(task_id, task_version), runtime_conf=party_component_parameters)
 
             schedule_logger().info('run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
-            schedule_logger().info(component_parameters)
+            schedule_logger().info(party_component_parameters)
             schedule_logger().info(task_input_dsl)
             task_run_args = TaskExecutor.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
                                                            task_id=task_id,
@@ -131,8 +139,8 @@ class TaskExecutor(object):
                                                            )
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
             run_object.set_tracker(tracker=tracker)
-            run_object.set_taskid(taskid=task_id)
-            run_object.run(component_parameters, task_run_args)
+            run_object.set_taskid(taskid=job_utils.generate_federated_id(task_id, task_version))
+            run_object.run(party_component_parameters, task_run_args)
             output_data = run_object.save_data()
             if not isinstance(output_data, list):
                 output_data = [output_data]
@@ -141,32 +149,27 @@ class TaskExecutor(object):
             output_model = run_object.export_model()
             # There is only one model output at the current dsl version.
             tracker.save_output_model(output_model, task_output_dsl['model'][0] if task_output_dsl.get('model') else 'default')
-            task.f_status = TaskStatus.COMPLETE
+            task_info["party_status"] = TaskStatus.COMPLETE
         except Exception as e:
-            task.f_status = TaskStatus.FAILED
+            task_info["party_status"] = TaskStatus.FAILED
             schedule_logger().exception(e)
         finally:
-            sync_success = False
             try:
-                task.f_end_time = current_timestamp()
-                task.f_elapsed = task.f_end_time - task.f_start_time
-                task.f_update_time = current_timestamp()
-                TaskExecutor.sync_task_status(job_id=job_id, component_name=component_name, task_id=task_id, role=role,
-                                              party_id=party_id,
-                                              initiator_party_id=job_initiator.get('party_id', None),
-                                              initiator_role=job_initiator.get('role', None),
-                                              task_info=task.to_json())
-                sync_success = True
+                task_info["end_time"] = current_timestamp()
+                task_info["elapsed"] = task_info["end_time"] - task_info["start_time"]
+                task_info["update_time"] = current_timestamp()
+                cls.report_task_to_server(task_info=task_info)
             except Exception as e:
+                task_info["party_status"] = TaskStatus.FAILED
                 traceback.print_exc()
                 schedule_logger().exception(e)
-        schedule_logger().info('task {} {} {} start time: {}'.format(task_id, role, party_id, timestamp_to_date(task.f_start_time)))
-        schedule_logger().info('task {} {} {} end time: {}'.format(task_id, role, party_id, timestamp_to_date(task.f_end_time)))
-        schedule_logger().info('task {} {} {} takes {}s'.format(task_id, role, party_id, int(task.f_elapsed)/1000))
+        schedule_logger().info('task {} {} {} start time: {}'.format(task_id, role, party_id, timestamp_to_date(task_info["start_time"])))
+        schedule_logger().info('task {} {} {} end time: {}'.format(task_id, role, party_id, timestamp_to_date(task_info["end_time"])))
+        schedule_logger().info('task {} {} {} takes {}s'.format(task_id, role, party_id, int(task_info["elapsed"])/1000))
         schedule_logger().info(
-            'finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status if sync_success else TaskStatus.FAILED))
+            'finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, task_version, role, party_id, task_info["party_status"]))
 
-        print('finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id, task.f_status if sync_success else TaskStatus.FAILED))
+        print('finish {} {} {} {} {} {} task'.format(job_id, component_name, task_id, task_version, role, party_id, task_info["party_status"]))
 
     @staticmethod
     def get_task_run_args(job_id, role, party_id, task_id, job_args, job_parameters, task_parameters, input_dsl,
@@ -195,8 +198,8 @@ class TaskExecutor(object):
                             else:
                                 data_table = None
                         else:
-                            data_table = Tracking(job_id=job_id, role=role, party_id=party_id,
-                                                  component_name=search_component_name).get_output_data_table(
+                            data_table = Tracker(job_id=job_id, role=role, party_id=party_id,
+                                                 component_name=search_component_name).get_output_data_table(
                                 data_name=search_data_name)
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
                             search_component_name, {})
@@ -242,57 +245,58 @@ class TaskExecutor(object):
                         search_component_name, search_model_alias = dsl_model_key_items[1], dsl_model_key_items[2]
                     else:
                         raise Exception('get input {} failed'.format(input_type))
-                    models = Tracking(job_id=job_id, role=role, party_id=party_id, component_name=search_component_name,
-                                      model_id=job_parameters['model_id'],
-                                      model_version=job_parameters['model_version']).get_output_model(
+                    models = Tracker(job_id=job_id, role=role, party_id=party_id, component_name=search_component_name,
+                                     model_id=job_parameters['model_id'],
+                                     model_version=job_parameters['model_version']).get_output_model(
                         model_alias=search_model_alias)
                     this_type_args[search_component_name] = models
         return task_run_args
 
-    @staticmethod
-    def get_parameters(job_id, component_name, role, party_id):
-
-        job_conf_dict = job_utils.get_job_conf(job_id)
-        job_dsl_parser = job_utils.get_job_dsl_parser(dsl=job_conf_dict['job_dsl_path'],
-                                                      runtime_conf=job_conf_dict['job_runtime_conf_path'],
-                                                      train_runtime_conf=job_conf_dict['train_runtime_conf_path'])
-        if job_dsl_parser:
-            component = job_dsl_parser.get_component_info(component_name)
-            parameters = component.get_role_parameters()
-            role_index = parameters[role][0]['role'][role].index(party_id)
-            return parameters[role][role_index]
-
-    @staticmethod
-    def sync_task_status(job_id, component_name, task_id, role, party_id, initiator_party_id, initiator_role, task_info, update=False):
-        sync_success = True
-        for dest_party_id in {party_id, initiator_party_id}:
-            if party_id != initiator_party_id and dest_party_id == initiator_party_id:
-                # do not pass the process id to the initiator
-                task_info['f_run_ip'] = ''
-            response = federated_api(job_id=job_id,
-                                     method='POST',
-                                     endpoint='/{}/schedule/{}/{}/{}/{}/{}/status'.format(
-                                         API_VERSION,
-                                         job_id,
-                                         component_name,
-                                         task_id,
-                                         role,
-                                         party_id),
-                                     src_party_id=party_id,
-                                     dest_party_id=dest_party_id,
-                                     src_role=role,
-                                     json_body=task_info,
-                                     work_mode=RuntimeConfig.WORK_MODE)
-            if response['retcode']:
-                sync_success = False
-                schedule_logger().exception('job {} role {} party {} synchronize task status failed'.format(job_id, role, party_id))
-                break
-        if not sync_success and not update:
-            task_info['f_status'] = TaskStatus.FAILED
-            TaskExecutor.sync_task_status(job_id, component_name, task_id, role, party_id, initiator_party_id,
-                                          initiator_role, task_info, update=True)
-        if update:
-            raise Exception('job {} role {} party {} synchronize task status failed'.format(job_id, role, party_id))
+    @classmethod
+    def report_task_to_server(cls, task_info):
+        """
+        Report task info to FATEFlow Server
+        :param task_info:
+        :return:
+        """
+        try_times = 3
+        for t in range(try_times):
+            try:
+                response = api_utils.local_api(
+                                         job_id=task_info["f_job_id"],
+                                         method='POST',
+                                         endpoint='/{}/schedule/{}/{}/{}/{}/{}/{}/update'.format(
+                                             API_VERSION,
+                                             task_info["job_id"],
+                                             task_info["component_name"],
+                                             task_info["task_id"],
+                                             task_info["task_version"],
+                                             task_info["role"],
+                                             task_info["party_id"]
+                                         ),
+                                         json_body=task_info)
+                if response["retcode"] == 0:
+                    break
+            except Exception as e:
+                response = {
+                    "retcode": RetCode.HTTP_ERROR,
+                    "retmsg": "Federated error, {}".format(str(e))
+                }
+            if response["retcode"] != 0:
+                schedule_logger().warning("report task {} {} {} {} to server failed, try again: \n{}".format(
+                    task_info["task_id"],
+                    task_info["task_version"],
+                    task_info["role"],
+                    task_info["party_id"],
+                    response["retmsg"]
+                ))
+        else:
+            raise Exception("report task {} {} {} {} to server failed".format(
+                task_info["task_id"],
+                task_info["task_version"],
+                task_info["role"],
+                task_info["party_id"],
+            ))
 
     @staticmethod
     def monkey_patch():

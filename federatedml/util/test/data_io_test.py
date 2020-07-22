@@ -19,7 +19,7 @@ import time
 import random
 import string
 import unittest
-from fate_flow.manager.tracking_manager import Tracking
+from fate_flow.manager.tracking_manager import Tracker
 
 
 from federatedml.util.data_io import DataIO
@@ -64,7 +64,7 @@ class TestDenseFeatureReader(unittest.TestCase):
                          }
                        }
                      }
-        self.tracker = Tracking("jobid", "guest", 9999, "abc", "123")
+        self.tracker = Tracker("jobid", "guest", 9999, "abc", "123")
         
     def test_dense_output_format(self):
         reader = DataIO()
@@ -185,7 +185,7 @@ class TestSparseFeatureReader(unittest.TestCase):
                       }
                     }
         
-        self.tracker = Tracking("jobid", "guest", 9999, "abc", "123")
+        self.tracker = Tracker("jobid", "guest", 9999, "abc", "123")
     
     def test_sparse_output_format(self):
         reader = DataIO()
@@ -300,7 +300,7 @@ class TestSparseTagReader(unittest.TestCase):
                        }
                      }
         
-        self.tracker = Tracking("jobid", "guest", 9999, "abc", "123")
+        self.tracker = Tracker("jobid", "guest", 9999, "abc", "123")
 
     def test_tag_sparse_output_format(self):
         reader = DataIO()

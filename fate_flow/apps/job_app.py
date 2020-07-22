@@ -20,13 +20,13 @@ import tarfile
 from flask import Flask, request, send_file
 
 from arch.api.utils.core_utils import json_loads
-from fate_flow.driver.job_controller import JobController
-from fate_flow.driver.task_scheduler import TaskScheduler
+from fate_flow.scheduler.task_scheduler import TaskScheduler
+from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.manager import data_manager
 from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT
 from fate_flow.utils import job_utils, detect_utils
 from fate_flow.utils.api_utils import get_json_result, request_execute_server
-from fate_flow.entity.constant_config import WorkMode, JobStatus
+from fate_flow.entity.constant import WorkMode, JobStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 
 manager = Flask(__name__)
@@ -43,7 +43,7 @@ def submit_job():
     work_mode = request.json.get('job_runtime_conf', {}).get('job_parameters', {}).get('work_mode', None)
     detect_utils.check_config({'work_mode': work_mode}, required_arguments=[('work_mode', (WorkMode.CLUSTER, WorkMode.STANDALONE))])
     if work_mode == RuntimeConfig.WORK_MODE:
-        job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = JobController.submit_job(request.json)
+        job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(request.json)
         return get_json_result(retcode=0, retmsg='success',
                                job_id=job_id,
                                data={'job_dsl_path': job_dsl_path,
@@ -109,9 +109,9 @@ def job_config():
         job = jobs[0]
         response_data = dict()
         response_data['job_id'] = job.f_job_id
-        response_data['dsl'] = json_loads(job.f_dsl)
-        response_data['runtime_conf'] = json_loads(job.f_runtime_conf)
-        response_data['train_runtime_conf'] = json_loads(job.f_train_runtime_conf)
+        response_data['dsl'] = job.f_dsl
+        response_data['runtime_conf'] = job.f_runtime_conf
+        response_data['train_runtime_conf'] = job.f_train_runtime_conf
         response_data['model_info'] = {'model_id': response_data['runtime_conf']['job_parameters']['model_id'],
                                        'model_version': response_data['runtime_conf']['job_parameters'][
                                            'model_version']}

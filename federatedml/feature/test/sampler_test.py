@@ -19,7 +19,7 @@ import random
 import unittest
 
 from arch.api import session
-from fate_flow.manager.tracking_manager import Tracking
+from fate_flow.manager.tracking_manager import Tracker
 from federatedml.feature.instance import Instance
 from federatedml.feature.sampler import RandomSampler
 from federatedml.feature.sampler import StratifiedSampler
@@ -36,7 +36,7 @@ class TestRandomSampler(unittest.TestCase):
 
     def test_downsample(self):
         sampler = RandomSampler(fraction=0.3, method="downsample")
-        tracker = Tracking("jobid", "guest", 9999, "abc", "123")
+        tracker = Tracker("jobid", "guest", 9999, "abc", "123")
         sampler.set_tracker(tracker)
         sample_data, sample_ids = sampler.sample(self.table)
         
@@ -66,7 +66,7 @@ class TestRandomSampler(unittest.TestCase):
 
     def test_upsample(self):
         sampler = RandomSampler(fraction=3, method="upsample")
-        tracker = Tracking("jobid", "guest", 9999, "abc", "123")
+        tracker = Tracker("jobid", "guest", 9999, "abc", "123")
         sampler.set_tracker(tracker)
         sample_data, sample_ids = sampler.sample(self.table)
 
@@ -106,7 +106,7 @@ class TestStratifiedSampler(unittest.TestCase):
     def test_downsample(self):
         fractions = [(0, 0.3), (1, 0.4), (2, 0.5), (3, 0.8)]
         sampler = StratifiedSampler(fractions=fractions, method="downsample")
-        tracker = Tracking("jobid", "guest", 9999, "abc", "123")
+        tracker = Tracker("jobid", "guest", 9999, "abc", "123")
         sampler.set_tracker(tracker)
         sample_data, sample_ids = sampler.sample(self.table)
         count_label = [0 for i in range(4)]
@@ -136,7 +136,7 @@ class TestStratifiedSampler(unittest.TestCase):
     def test_upsample(self):
         fractions = [(0, 1.3), (1, 0.5), (2, 0.8), (3, 9)]
         sampler = StratifiedSampler(fractions=fractions, method="upsample")
-        tracker = Tracking("jobid", "guest", 9999, "abc", "123")
+        tracker = Tracker("jobid", "guest", 9999, "abc", "123")
         sampler.set_tracker(tracker)
         sample_data, sample_ids = sampler.sample(self.table)
         new_data = list(sample_data.collect())

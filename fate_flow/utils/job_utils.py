@@ -26,17 +26,17 @@ import typing
 import uuid
 
 import psutil
-from fate_flow.entity.constant_config import TaskStatus, WorkMode
+from fate_flow.entity.constant import JobStatus
 
 from arch.api.utils import file_utils
 from arch.api.utils.core_utils import current_timestamp
 from arch.api.utils.core_utils import json_loads, json_dumps
 from arch.api.utils.log_utils import schedule_logger
-from fate_flow.db.db_models import DB, Job, Task, DataView
-from fate_flow.driver.dsl_parser import DSLParser
+from fate_flow.db.db_models import DB, Job, TaskSet, Task
+from fate_flow.scheduler.dsl_parser import DSLParser
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.data_manager import query_data_view, delete_table, delete_metric_data
-from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE, MAX_CONCURRENT_JOB_RUN_HOST, LIMIT_ROLE
+from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE
 from fate_flow.utils import detect_utils
 from fate_flow.utils import api_utils
 from fate_flow.utils import session_utils
@@ -69,12 +69,17 @@ def generate_task_id(job_id, component_name):
     return '{}_{}'.format(job_id, component_name)
 
 
-def generate_session_id(task_id, role, party_id):
-    return '{}_{}_{}'.format(task_id, role, party_id)
+def generate_federated_id(task_id, task_version):
+    return "{}_{}".format(task_id, task_version)
 
 
-def generate_task_input_data_namespace(task_id, role, party_id):
+def generate_session_id(task_id, task_version, role, party_id):
+    return '{}_{}_{}'.format(task_id, task_version, role, party_id)
+
+
+def generate_task_input_data_namespace(task_id, task_version, role, party_id):
     return "input_data_{}".format(generate_session_id(task_id=task_id,
+                                                      task_version=task_version,
                                                       role=role,
                                                       party_id=party_id))
 
@@ -168,8 +173,8 @@ def get_job_dsl_parser_by_job_id(job_id):
         jobs = Job.select(Job.f_dsl, Job.f_runtime_conf, Job.f_train_runtime_conf).where(Job.f_job_id == job_id)
         if jobs:
             job = jobs[0]
-            job_dsl_parser = get_job_dsl_parser(dsl=json_loads(job.f_dsl), runtime_conf=json_loads(job.f_runtime_conf),
-                                                train_runtime_conf=json_loads(job.f_train_runtime_conf))
+            job_dsl_parser = get_job_dsl_parser(dsl=job.f_dsl, runtime_conf=job.f_runtime_conf,
+                                                train_runtime_conf=job.f_train_runtime_conf)
             return job_dsl_parser
         else:
             return None
@@ -198,7 +203,7 @@ def get_job_configuration(job_id, role, party_id, tasks=None):
             for task in tasks:
                 jobs = Job.select(Job.f_job_id, Job.f_runtime_conf, Job.f_description).where(Job.f_job_id == task.f_job_id)
                 job = jobs[0]
-                jobs_run_conf[job.f_job_id] = json_loads(job.f_runtime_conf)["role_parameters"]["local"]["upload_0"]
+                jobs_run_conf[job.f_job_id] = job.f_runtime_conf["role_parameters"]["local"]["upload_0"]
                 jobs_run_conf[job.f_job_id]["notes"] = job.f_description
             return jobs_run_conf
         else:
@@ -207,7 +212,7 @@ def get_job_configuration(job_id, role, party_id, tasks=None):
                                                                                              Job.f_party_id == party_id)
         if jobs:
             job = jobs[0]
-            return json_loads(job.f_dsl), json_loads(job.f_runtime_conf), json_loads(job.f_train_runtime_conf)
+            return job.f_dsl, job.f_runtime_conf, job.f_train_runtime_conf
         else:
             return {}, {}, {}
 
@@ -258,7 +263,7 @@ def success_task_count(job_id):
         job_component_status[task.f_component_name] = job_component_status.get(task.f_component_name, set())
         job_component_status[task.f_component_name].add(task.f_status)
     for component_name, role_status in job_component_status.items():
-        if len(role_status) == 1 and TaskStatus.COMPLETE in role_status:
+        if len(role_status) == 1 and JobStatus.COMPLETE in role_status:
             count += 1
     return count
 
@@ -402,7 +407,7 @@ def kill_task_executor_process(task: Task, only_child=False):
             return False
         for child in p.children(recursive=True):
             if check_job_process(child.pid) and is_task_executor_process(task=task, process=child):
-                child.kill()
+                child.stop_job()
         if not only_child:
             if check_job_process(p.pid) and is_task_executor_process(task=task, process=p):
                 p.kill()
@@ -496,7 +501,7 @@ def start_session_stop(task):
         '-j', '{}_{}_{}'.format(task.f_task_id, task.f_role, task.f_party_id),
         '-w', str(runtime_conf.get('job_parameters').get('work_mode')),
         '-b', str(runtime_conf.get('job_parameters').get('backend', 0)),
-        '-c', 'stop' if task.f_status == TaskStatus.COMPLETE else 'kill'
+        '-c', 'stop' if task.f_status == JobStatus.COMPLETE else 'kill'
     ]
     schedule_logger(task.f_job_id).info('start run subprocess to stop component {} session'
                                         .format(task.f_component_name))

@@ -100,7 +100,7 @@ class Upload(object):
                         data.append((values[0], self.list_to_str(values[1:])))
                     lines_count += len(data)
                     f_progress = lines_count/count*100//1
-                    job_info = {'f_progress': f_progress}
+                    job_info = {'progress': f_progress}
                     self.update_job_status(self.parameters["local"]['role'], self.parameters["local"]['party_id'],
                                            job_info)
                     data_table = session.save_data(data, name=dst_table_name, namespace=dst_table_namespace,
@@ -136,7 +136,7 @@ class Upload(object):
         return count
 
     def update_job_status(self, role, party_id, job_info):
-        self.tracker.save_job_info(role=role, party_id=party_id, job_info=job_info)
+        self.tracker.start_job(role=role, party_id=party_id, job_info=job_info)
 
     def list_to_str(self, input_list):
         return ','.join(list(map(str, input_list)))

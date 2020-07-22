@@ -39,11 +39,11 @@ def bytes_to_string(byte):
     return byte.decode(encoding="utf-8")
 
 
-def json_dumps(src, byte=False):
+def json_dumps(src, byte=False, indent=None):
     if byte:
-        return string_to_bytes(json.dumps(src))
+        return string_to_bytes(json.dumps(src, indent=indent))
     else:
-        return json.dumps(src)
+        return json.dumps(src, indent=indent)
 
 
 def json_loads(src):

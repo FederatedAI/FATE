@@ -21,7 +21,7 @@ from arch.api.utils.log_utils import schedule_logger
 from arch.api.utils.core_utils import fate_uuid
 from fate_flow.settings import stat_logger, DETECT_TABLE
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.entity.constant_config import ProcessRole
+from fate_flow.entity.constant import ProcessRole
 
 
 class SessionStop(object):

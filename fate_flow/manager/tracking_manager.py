@@ -15,20 +15,22 @@
 #
 from typing import List
 
-from arch.api import session, WorkMode
+from arch.api import session
 from arch.api.base.table import Table
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from arch.api.utils.log_utils import schedule_logger
-from fate_flow.db.db_models import DB, Job, Task, TrackingMetric, DataView
-from fate_flow.entity.constant_config import JobStatus, TaskStatus
+from fate_flow.db.db_models import DB, TrackingMetric, DataView
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.model_manager import pipelined_model
-from fate_flow.settings import API_VERSION, MAX_CONCURRENT_JOB_RUN_HOST
+from fate_flow.settings import API_VERSION
 from fate_flow.utils import job_utils, api_utils, model_utils, session_utils
 
 
-class Tracking(object):
+class Tracker(object):
+    """
+    Tracker for Job/TaskSet/Task/Metric
+    """
     METRIC_DATA_PARTITION = 48
     METRIC_LIST_PARTITION = 48
     JOB_VIEW_PARTITION = 8
@@ -36,20 +38,15 @@ class Tracking(object):
     def __init__(self, job_id: str, role: str, party_id: int,
                  model_id: str = None,
                  model_version: str = None,
+                 task_set_id: int = None,
                  component_name: str = None,
                  component_module_name: str = None,
-                 task_id: str = None):
+                 task_id: str = None,
+                 task_version: str = None
+                 ):
         self.job_id = job_id
         self.role = role
         self.party_id = party_id
-        self.component_name = component_name if component_name else 'pipeline'
-        self.module_name = component_module_name if component_module_name else 'Pipeline'
-        self.task_id = task_id if task_id else job_utils.generate_task_id(job_id=self.job_id,
-                                                                          component_name=self.component_name)
-        self.table_namespace = '_'.join(
-            ['fate_flow', 'tracking', 'data', self.job_id, self.role, str(self.party_id), self.component_name])
-        self.job_table_namespace = '_'.join(
-            ['fate_flow', 'tracking', 'data', self.job_id, self.role, str(self.party_id)])
         self.model_id = model_id
         self.party_model_id = model_utils.gen_party_model_id(model_id=model_id, role=role, party_id=party_id)
         self.model_version = model_version
@@ -57,6 +54,16 @@ class Tracking(object):
         if self.party_model_id and self.model_version:
             self.pipelined_model = pipelined_model.PipelinedModel(model_id=self.party_model_id,
                                                                   model_version=self.model_version)
+
+        self.task_set_id = task_set_id
+
+        self.component_name = component_name if component_name else 'pipeline'
+        self.module_name = component_module_name if component_module_name else 'Pipeline'
+        self.task_id = task_id
+        self.table_namespace = '_'.join(
+            ['fate_flow', 'tracking', 'data', self.job_id, self.role, str(self.party_id), self.component_name])
+        self.job_table_namespace = '_'.join(
+            ['fate_flow', 'tracking', 'data', self.job_id, self.role, str(self.party_id)])
 
     def log_job_metric_data(self, metric_namespace: str, metric_name: str, metrics: List[Metric]):
         self.save_metric_data_remote(metric_namespace=metric_namespace, metric_name=metric_name, metrics=metrics,
@@ -211,7 +218,7 @@ class Tracking(object):
             data_table_info = {}
         session.save_data(
             data_table_info.items(),
-            name=Tracking.output_table_name('data'),
+            name=Tracker.output_table_name('data'),
             namespace=self.table_namespace,
             partition=48)
         self.save_data_view(self.role, self.party_id,
@@ -228,7 +235,7 @@ class Tracking(object):
         :param data_name:
         :return:
         """
-        output_data_info_table = session.table(name=Tracking.output_table_name('data'),
+        output_data_info_table = session.table(name=Tracker.output_table_name('data'),
                                                namespace=self.table_namespace)
         data_table_info = output_data_info_table.get(data_name)
         if data_table_info:
@@ -324,93 +331,6 @@ class Tracking(object):
                 schedule_logger(self.job_id).exception(e)
             return metrics
 
-    def save_job_info(self, role, party_id, job_info, create=False):
-        with DB.connection_context():
-            schedule_logger(self.job_id).info('save {} {} job: {}'.format(role, party_id, job_info))
-            jobs = Job.select().where(Job.f_job_id == self.job_id, Job.f_role == role, Job.f_party_id == party_id)
-            is_insert = True
-            if jobs:
-                job = jobs[0]
-                is_insert = False
-                if job.f_status == JobStatus.TIMEOUT:
-                    return None
-            elif create:
-                job = Job()
-                job.f_create_time = current_timestamp()
-            else:
-                return None
-            job.f_job_id = self.job_id
-            job.f_role = role
-            job.f_party_id = party_id
-            if 'f_status' in job_info:
-                if job.f_status in [JobStatus.COMPLETE, JobStatus.FAILED]:
-                    # Termination status cannot be updated
-                    # TODO:
-                    return
-                if (job_info['f_status'] in [JobStatus.FAILED, JobStatus.TIMEOUT]) and (not job.f_end_time):
-                    if not job.f_start_time:
-                        return
-                    job_info['f_end_time'] = current_timestamp()
-                    job_info['f_elapsed'] = job_info['f_end_time'] - job.f_start_time
-                    job_info['f_update_time'] = current_timestamp()
-
-                if (job_info['f_status'] in [JobStatus.FAILED, JobStatus.TIMEOUT,
-                                             JobStatus.CANCELED, JobStatus.COMPLETE]):
-                    job_info['f_tag'] = 'job_end'
-                if job.f_status == JobStatus.CANCELED:
-                    job_info.pop('f_status')
-            update_fields = []
-            for k, v in job_info.items():
-                try:
-                    if k in ['f_job_id', 'f_role', 'f_party_id'] or v == getattr(Job, k).default:
-                        continue
-                    setattr(job, k, v)
-                    update_fields.append(getattr(Job, k))
-                except:
-                    pass
-
-            if is_insert:
-                job.save(force_insert=True)
-            else:
-                job.save(only=update_fields)
-
-    def save_task(self, role, party_id, task_info):
-        with DB.connection_context():
-            tasks = Task.select().where(Task.f_job_id == self.job_id,
-                                        Task.f_component_name == self.component_name,
-                                        Task.f_task_id == self.task_id,
-                                        Task.f_role == role,
-                                        Task.f_party_id == party_id)
-            is_insert = True
-            if tasks:
-                task = tasks[0]
-                is_insert = False
-            else:
-                task = Task()
-                task.f_create_time = current_timestamp()
-            task.f_job_id = self.job_id
-            task.f_component_name = self.component_name
-            task.f_task_id = self.task_id
-            task.f_role = role
-            task.f_party_id = party_id
-            if 'f_status' in task_info:
-                if task.f_status in [TaskStatus.COMPLETE, TaskStatus.FAILED]:
-                    # Termination status cannot be updated
-                    # TODO:
-                    pass
-            for k, v in task_info.items():
-                try:
-                    if k in ['f_job_id', 'f_component_name', 'f_task_id', 'f_role', 'f_party_id'] or v == getattr(Task,
-                                                                                                                  k).default:
-                        continue
-                except:
-                    pass
-                setattr(task, k, v)
-            if is_insert:
-                task.save(force_insert=True)
-            else:
-                task.save()
-            return task
 
     def save_data_view(self, role, party_id, data_info, mark=False):
         with DB.connection_context():

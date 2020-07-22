@@ -16,18 +16,17 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
-
-from fate_flow.entity.constant_config import JobStatus
-
 from arch.api.utils.log_utils import schedule_logger
-from fate_flow.driver.job_controller import TaskScheduler
+from fate_flow.scheduler.dag_scheduler import DAGScheduler
+from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.manager.queue_manager import BaseQueue
 from fate_flow.settings import RE_ENTRY_QUEUE_TIME, stat_logger
+from fate_flow.utils import job_utils
 
 
-class DAGScheduler(threading.Thread):
+class JobTrigger(threading.Thread):
     def __init__(self, queue: BaseQueue, concurrent_num: int = 1):
-        super(DAGScheduler, self).__init__()
+        super(JobTrigger, self).__init__()
         self.concurrent_num = concurrent_num
         self.queue = queue
         self.job_executor_pool = ThreadPoolExecutor(max_workers=concurrent_num)
@@ -56,22 +55,28 @@ class DAGScheduler(threading.Thread):
                         all_jobs.remove(future)
                         break
                 job_event = self.queue.get_event(end_status=5)
-                schedule_logger(job_event['job_id']).info('start check all role status')
-                status = TaskScheduler.check(job_event['job_id'], job_event['initiator_role'], job_event['initiator_party_id'])
-                schedule_logger(job_event['job_id']).info('check all role status success, status is {}'.format(status))
-                if not status:
-                    TaskScheduler.cancel_ready(job_event['job_id'], job_event['initiator_role'], job_event['initiator_party_id'])
-                    schedule_logger(job_event['job_id']).info('host is busy, job {} into waiting......'.format(job_event['job_id']))
-                    is_failed = self.queue.put_event(job_event, status=3, job_id=job_event['job_id'])
-                    schedule_logger(job_event['job_id']).info('job into queue_2 status is {}'.format('success' if not is_failed else 'failed'))
+                jobs = job_utils.query_job(job_id=job_event["job_id"], is_initiator=1, initiator_party_id=job_event["initiator_party_id"])
+                if not jobs:
+                    schedule_logger(job_event['job_id']).info('Job trigger can not found job by job id {}'.format(job_event["job_id"]))
+                    continue
+                job = jobs[0]
+                schedule_logger(job.f_job_id).info('start check all role status')
+                # status_code, response = FederatedScheduler.check_job(job=job)
+                status_code, response = 0, "xxx"
+                schedule_logger(job.f_job_id).info('check all role status success, status is {}'.format(status_code))
+                if status_code != 0:
+                    FederatedScheduler.cancel_ready(job=job)
+                    schedule_logger(job.f_job_id).info('host is busy, job {} into waiting......'.format(job.f_job_id))
+                    is_failed = self.queue.put_event(job_event, status=3, job_id=job.f_job_id)
+                    schedule_logger(job.f_job_id).info('job into queue_2 status is {}'.format('success' if not is_failed else 'failed'))
                     if is_failed:
                         schedule_logger(job_event['job_id']).info('start to cancel job')
-                        TaskScheduler.stop(job_id=job_event['job_id'], end_status=JobStatus.CANCELED)
+                        # TaskScheduler.stop(job_id=job_event['job_id'], end_status=JobStatus.CANCELED)
                 else:
                     self.queue.set_status(job_id=job_event['job_id'], status=0)
                     schedule_logger(job_event['job_id']).info('schedule job {}'.format(job_event))
-                    future = self.job_executor_pool.submit(DAGScheduler.handle_event, job_event)
-                    future.add_done_callback(DAGScheduler.get_result)
+                    future = self.job_executor_pool.submit(JobTrigger.handle_event, job_event)
+                    future.add_done_callback(JobTrigger.get_result)
                     all_jobs.append(future)
             except Exception as e:
                 schedule_logger().exception(e)
@@ -82,7 +87,7 @@ class DAGScheduler(threading.Thread):
     @staticmethod
     def handle_event(job_event):
         try:
-            return TaskScheduler.run_job(**job_event)
+            return DAGScheduler.start(**job_event)
         except Exception as e:
             schedule_logger(job_event.get('job_id')).exception(e)
             return False
@@ -103,7 +108,8 @@ def queue_put_events(queue):
             if is_failed:
                 schedule_logger(event['job_id']).info('start to cancel job')
                 try:
-                    TaskScheduler.stop(job_id=event['job_id'], end_status=JobStatus.CANCELED)
+                    #TaskScheduler.stop(job_id=event['job_id'], end_status=JobStatus.CANCELED)
+                    pass
                 except Exception as e:
                     schedule_logger(event['job_id']).info('cancel failed:{}'.format(e))
         time.sleep(RE_ENTRY_QUEUE_TIME)
@@ -115,17 +121,17 @@ def mediation_queue_put_events(queue):
     for i in range(n):
         event = queue.get_event(status=5)
         try:
-            TaskScheduler.cancel_ready(event['job_id'], event['initiator_role'], event['initiator_party_id'])
+            FederatedScheduler.cancel_ready(event['job_id'], event['initiator_role'], event['initiator_party_id'])
             is_failed = queue.put_event(event, job_id=event['job_id'], status=1)
             schedule_logger(event['job_id']).info('job into queue_1 status is {}'.format('success' if not is_failed else 'failed'))
             if is_failed:
                 schedule_logger(event['job_id']).info('start to cancel job')
-                TaskScheduler.stop(job_id=event['job_id'], end_status=JobStatus.CANCELED)
+                #TaskScheduler.stop(job_id=event['job_id'], end_status=JobStatus.CANCELED)
         except Exception as e:
             schedule_logger(event['job_id']).error(e)
             try:
                 schedule_logger(event['job_id']).info('start cancel job')
-                TaskScheduler.stop(job_id=event['job_id'], end_status=JobStatus.CANCELED)
+                #TaskScheduler.stop(job_id=event['job_id'], end_status=JobStatus.CANCELED)
             except:
                 schedule_logger(event['job_id']).info('cancel job failed')
 

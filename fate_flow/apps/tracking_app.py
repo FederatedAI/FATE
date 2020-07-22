@@ -27,7 +27,7 @@ from arch.api.utils.core_utils import fate_uuid
 from arch.api.utils.core_utils import json_loads
 from fate_flow.db.db_models import Job, DB
 from fate_flow.manager.data_manager import query_data_view, delete_metric_data
-from fate_flow.manager.tracking_manager import Tracking
+from fate_flow.manager.tracking_manager import Tracker
 from fate_flow.settings import stat_logger
 from fate_flow.utils import job_utils, data_utils
 from fate_flow.utils.api_utils import get_json_result, error_response
@@ -46,7 +46,7 @@ def internal_server_error(e):
 def job_view():
     request_data = request.json
     check_request_parameters(request_data)
-    job_tracker = Tracking(job_id=request_data['job_id'], role=request_data['role'], party_id=request_data['party_id'])
+    job_tracker = Tracker(job_id=request_data['job_id'], role=request_data['role'], party_id=request_data['party_id'])
     job_view_data = job_tracker.get_job_view()
     if job_view_data:
         job_metric_list = job_tracker.get_metric_list(job_level=True)
@@ -68,8 +68,8 @@ def job_view():
 def component_metric_all():
     request_data = request.json
     check_request_parameters(request_data)
-    tracker = Tracking(job_id=request_data['job_id'], component_name=request_data['component_name'],
-                       role=request_data['role'], party_id=request_data['party_id'])
+    tracker = Tracker(job_id=request_data['job_id'], component_name=request_data['component_name'],
+                      role=request_data['role'], party_id=request_data['party_id'])
     metrics = tracker.get_metric_list()
     all_metric_data = {}
     if metrics:
@@ -90,8 +90,8 @@ def component_metric_all():
 def component_metrics():
     request_data = request.json
     check_request_parameters(request_data)
-    tracker = Tracking(job_id=request_data['job_id'], component_name=request_data['component_name'],
-                       role=request_data['role'], party_id=request_data['party_id'])
+    tracker = Tracker(job_id=request_data['job_id'], component_name=request_data['component_name'],
+                      role=request_data['role'], party_id=request_data['party_id'])
     metrics = tracker.get_metric_list()
     if metrics:
         return get_json_result(retcode=0, retmsg='success', data=metrics)
@@ -103,8 +103,8 @@ def component_metrics():
 def component_metric_data():
     request_data = request.json
     check_request_parameters(request_data)
-    tracker = Tracking(job_id=request_data['job_id'], component_name=request_data['component_name'],
-                       role=request_data['role'], party_id=request_data['party_id'])
+    tracker = Tracker(job_id=request_data['job_id'], component_name=request_data['component_name'],
+                      role=request_data['role'], party_id=request_data['party_id'])
     metric_data, metric_meta = get_metric_all_data(tracker=tracker, metric_namespace=request_data['metric_namespace'],
                                                    metric_name=request_data['metric_name'])
     if metric_data or metric_meta:
@@ -168,9 +168,9 @@ def component_output_model():
                                                                                     party_id=request_data['party_id'])
     model_id = job_runtime_conf['job_parameters']['model_id']
     model_version = job_runtime_conf['job_parameters']['model_version']
-    tracker = Tracking(job_id=request_data['job_id'], component_name=request_data['component_name'],
-                       role=request_data['role'], party_id=request_data['party_id'], model_id=model_id,
-                       model_version=model_version)
+    tracker = Tracker(job_id=request_data['job_id'], component_name=request_data['component_name'],
+                      role=request_data['role'], party_id=request_data['party_id'], model_id=model_id,
+                      model_version=model_version)
     dag = job_utils.get_job_dsl_parser(dsl=job_dsl, runtime_conf=job_runtime_conf,
                                        train_runtime_conf=train_runtime_conf)
     component = dag.get_component_info(request_data['component_name'])
@@ -307,7 +307,7 @@ def component_output_data_table():
 @manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/metric_data/save', methods=['POST'])
 def save_metric_data(job_id, component_name, task_id, role, party_id):
     request_data = request.json
-    tracker = Tracking(job_id=job_id, component_name=component_name, task_id=task_id, role=role, party_id=party_id)
+    tracker = Tracker(job_id=job_id, component_name=component_name, task_id=task_id, role=role, party_id=party_id)
     metrics = [deserialize_b64(metric) for metric in request_data['metrics']]
     tracker.save_metric_data(metric_namespace=request_data['metric_namespace'], metric_name=request_data['metric_name'],
                              metrics=metrics, job_level=request_data['job_level'])
@@ -317,7 +317,7 @@ def save_metric_data(job_id, component_name, task_id, role, party_id):
 @manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/metric_meta/save', methods=['POST'])
 def save_metric_meta(job_id, component_name, task_id, role, party_id):
     request_data = request.json
-    tracker = Tracking(job_id=job_id, component_name=component_name, task_id=task_id, role=role, party_id=party_id)
+    tracker = Tracker(job_id=job_id, component_name=component_name, task_id=task_id, role=role, party_id=party_id)
     metric_meta = deserialize_b64(request_data['metric_meta'])
     tracker.save_metric_meta(metric_namespace=request_data['metric_namespace'], metric_name=request_data['metric_name'],
                              metric_meta=metric_meta, job_level=request_data['job_level'])
@@ -326,8 +326,8 @@ def save_metric_meta(job_id, component_name, task_id, role, party_id):
 
 def get_component_output_data_table(task_data):
     check_request_parameters(task_data)
-    tracker = Tracking(job_id=task_data['job_id'], component_name=task_data['component_name'],
-                       role=task_data['role'], party_id=task_data['party_id'])
+    tracker = Tracker(job_id=task_data['job_id'], component_name=task_data['component_name'],
+                      role=task_data['role'], party_id=task_data['party_id'])
     job_dsl_parser = job_utils.get_job_dsl_parser_by_job_id(job_id=task_data['job_id'])
     if not job_dsl_parser:
         raise Exception('can not get dag parser, please check if the parameters are correct')
@@ -374,7 +374,7 @@ def check_request_parameters(request_data):
                                                         Job.f_is_initiator == 1)
             if jobs:
                 job = jobs[0]
-                job_runtime_conf = json_loads(job.f_runtime_conf)
+                job_runtime_conf = job.f_runtime_conf
                 job_initiator = job_runtime_conf.get('initiator', {})
                 role = job_initiator.get('role', '')
                 party_id = job_initiator.get('party_id', 0)
