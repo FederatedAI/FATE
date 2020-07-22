@@ -17,10 +17,12 @@ import uuid
 
 # from arch.api.utils.profile_util import log_elapsed
 
-from arch.api import WorkMode
 from eggroll.core.session import session_init
 from eggroll.roll_pair.roll_pair import RollPairContext
 from eggroll.core.constants import SerdesTypes
+
+from fate_arch.common.profile import log_elapsed
+from fate_arch.session import WorkMode
 
 
 def get_session(session_id='', work_mode: int = 0, options: dict = None):
@@ -56,7 +58,6 @@ class Session(object):
 
     def _get_session_id(self):
         return self._session_id
-
 
     @log_elapsed
     def cleanup(self, name, namespace):

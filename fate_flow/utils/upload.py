@@ -17,11 +17,10 @@ import os
 import shutil
 import time
 
-from arch.api import session
-
 from arch.api.utils import log_utils, file_utils, dtable_utils
 from fate_arch.data_table.table_manager import create_table
 from fate_flow.entity.metric import Metric, MetricMeta
+from fate_flow.utils.job_utils import generate_session_id
 
 LOGGER = log_utils.getLogger()
 
@@ -37,20 +36,6 @@ class Upload(object):
 
     def run(self, component_parameters=None, args=None):
         self.parameters = component_parameters["UploadParam"]
-
-        data_table = session.get_data_table(name=self.parameters["table_name"], namespace=self.parameters["namespace"])
-        if data_table:
-            count = data_table.count()
-            if count and int(self.parameters.get('drop', 2)) == 2:
-                LOGGER.error('The data table already exists, table data count:{}.'
-                                            'If you still want to continue uploading, please add the parameter -drop. '
-                                            '0 means not to delete and continue uploading, '
-                                            '1 means to upload again after deleting the table'.format(
-                                        count))
-                return
-            elif count and int(self.parameters.get('drop', 2)) == 1:
-                data_table.destroy()
-
         self.parameters["role"] = component_parameters["role"]
         self.parameters["local"] = component_parameters["local"]
         job_id = self.taskid.split("_")[0]
@@ -76,9 +61,9 @@ class Upload(object):
         partition = self.parameters["partition"]
         if partition <= 0 or partition >= self.MAX_PARTITION_NUM:
             raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITION_NUM))
-
-        session.init(mode=self.parameters['work_mode'])
-        self.table = create_table(name=table_name, namespace=namespace, partition=self.parameters["partition"])
+        self.table = create_table(job_id=generate_session_id(self.taskid, self.tracker.role, self.tracker.party_id), name=table_name,
+                                  namespace=namespace, partition=self.parameters["partition"],
+                                  store_engine=self.parameters['store_engine'], mode=self.parameters['work_mode'])
         data_table_count = self.save_data_table(table_name, namespace, head, self.parameters.get('in_version', False))
         LOGGER.info("------------load data finish!-----------------")
         # rm tmp file

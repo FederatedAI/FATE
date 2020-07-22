@@ -221,7 +221,8 @@ class TaskExecutor(object):
                                 save_as_options = {"store_type": StoreTypes.ROLLPAIR_IN_MEMORY} if SAVE_AS_TASK_INPUT_DATA_IN_MEMORY else {}
                                 address = create(name=name, namespace=namespace, store_engine=store_engine,
                                                  partitions=partitions)
-                                data_table = data_table.save_as(address, partition=partitions, options=save_as_options)
+                                data_table = data_table.save_as(address=address, partition=partitions, options=save_as_options,
+                                                                name=name, namespace=namespace)
                                 data_table.save_schema(schema_data=origin_table_metas)
                                 schedule_logger().info("save as task {} input data table to {} done".format(
                                     task_id, data_table.get_address()))

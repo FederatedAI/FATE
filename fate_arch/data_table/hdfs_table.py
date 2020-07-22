@@ -47,12 +47,22 @@ class HDFSTable(Table):
     def __init__(self,
                  address=None,
                  partitions: int = 1,
+                 name: str = '',
+                 namespace: str = '',
                  **kwargs):
         self.address = address
         self._partitions = partitions
+        self._name = name
+        self._namespace = namespace
 
     def get_partitions(self):
         return self._partitions
+
+    def get_name(self):
+        return self._name
+
+    def get_namespace(self):
+        return self._namespace
 
     def get_storage_engine(self):
         return StoreEngine.HDFS
@@ -105,13 +115,13 @@ class HDFSTable(Table):
         else:
             return -1
 
-    def save_as(self, address, partition=None, **kwargs):
+    def save_as(self, address, partition=None, name=None, namespace=None, **kwargs):
         sc = SparkContext.getOrCreate()
         src_path = HDFSTable.get_path(sc, HDFSTable.generate_hdfs_path(address))
         dst_path = HDFSTable.get_path(sc, HDFSTable.generate_hdfs_path(address))
         fs = HDFSTable.get_file_system(sc)
         fs.rename(src_path, dst_path)
-        return HDFSTable(address=address, partitions=partition)
+        return HDFSTable(address=address, partitions=partition, name=name, namespace=namespace, **kwargs)
 
     delimiter = '\t'
 

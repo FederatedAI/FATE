@@ -36,6 +36,14 @@ class Table(object):
         pass
 
     @abc.abstractmethod
+    def get_name(self):
+        pass
+
+    @abc.abstractmethod
+    def get_namespace(self):
+        pass
+
+    @abc.abstractmethod
     def get_storage_engine(self):
         pass
 

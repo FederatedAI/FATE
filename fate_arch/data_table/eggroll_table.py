@@ -20,7 +20,7 @@ from typing import Iterable
 
 from fate_arch.common.profile import log_elapsed
 from fate_arch.data_table import eggroll_session
-from fate_arch.data_table.base import Table, AddressABC
+from fate_arch.data_table.base import Table, EggRollAddress
 from fate_arch.data_table.store_type import StoreEngine
 from fate_arch.session import WorkMode
 from fate_flow.settings import WORK_MODE
@@ -33,9 +33,15 @@ class EggRollTable(Table):
                  mode: typing.Union[int, WorkMode] = WORK_MODE,
                  persistent_engine: str = StoreEngine.LMDB,
                  partitions: int = 1,
+                 namespace: str = None,
+                 name: str = None,
                  address=None,
                  **kwargs):
+        self._name = name
+        self._namespace = namespace
         self._mode = mode
+        if not address:
+            address = EggRollAddress(name=name, namespace=namespace, storage_type=persistent_engine)
         self._address = address
         self._strage_engine = persistent_engine
         self._session_id = job_id
@@ -46,6 +52,12 @@ class EggRollTable(Table):
 
     def get_partitions(self):
         return self._table.get_partitions()
+
+    def get_name(self):
+        return self._name
+
+    def get_namespace(self):
+        return self._namespace
 
     def get_storage_engine(self):
         return self._strage_engine
@@ -67,10 +79,11 @@ class EggRollTable(Table):
     @classmethod
     def dtable(cls, session_id, name, namespace, partitions, store_type, mode):
         address = EggRollAddress(name=name, namespace=namespace, storage_type=store_type)
-        return EggRollTable(job_id=session_id, mode=mode, address=address, partitions=partitions, store_type=store_type)
+        return EggRollTable(job_id=session_id, mode=mode, address=address, partitions=partitions, name=name,
+                            namespace=namespace, store_type=store_type)
 
     @log_elapsed
-    def save_as(self, name, namespace, partition=None, **kwargs):
+    def save_as(self, name=None, namespace=None, partition=None, **kwargs):
 
         options = kwargs.get("options", {})
         store_type = options.get("store_type", StoreEngine.LMDB)

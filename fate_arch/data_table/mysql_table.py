@@ -47,12 +47,15 @@ class MysqlTable(Table):
                  mode: typing.Union[int, WorkMode] = WORK_MODE,
                  persistent_engine: str = StoreEngine.MYSQL,
                  partitions: int = 1,
+                 name: str = None,
+                 namespace: str = None,
                  address=None,
                  **kwargs):
         self._partitions = partitions
         self._storage_engine = persistent_engine
         self._address = address
-        self._name = address.name
+        self._name = name
+        self._namespace = namespace
         self._mode = mode
         '''
         database_config
@@ -88,6 +91,12 @@ class MysqlTable(Table):
 
     def get_partitions(self):
         return self._partitions
+
+    def get_name(self):
+        return self._name
+
+    def get_namespace(self):
+        return self._namespace
 
     def get_storage_engine(self):
         return self._storage_engine

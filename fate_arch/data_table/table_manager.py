@@ -47,12 +47,13 @@ def get_table(job_id: str = uuid.uuid1(),
                                    host=database_config.get('host'),
                                    port=database_config.get('port'),
                                    db=namespace, name=name)
-        return MysqlTable(mode=mode, persistent_engine=StoreEngine.MYSQL, address=address, partitions=partitions)
+        return MysqlTable(mode=mode, persistent_engine=StoreEngine.MYSQL, address=address, partitions=partitions,
+                          name=name, namespace=namespace)
     if store_engine in Relationship.CompToStore.get(Backend.EGGROLL):
-        return EggRollTable(job_id=job_id,  mode=mode, persistent_engine=persistent_engine,
-                            partitions=partitions, address=address, **kwargs)
+        return EggRollTable(job_id=job_id,  mode=mode, persistent_engine=persistent_engine, name=name,
+                            namespace=namespace, partitions=partitions, address=address, **kwargs)
     if store_engine in Relationship.CompToStore.get(Backend.SPARK):
-        return HDFSTable(address, partitions)
+        return HDFSTable(address=address, partitions=partitions, name=name, namespace=namespace)
 
 
 def create_table(job_id: str = uuid.uuid1(),
@@ -64,9 +65,9 @@ def create_table(job_id: str = uuid.uuid1(),
                  **kwargs):
     if store_engine in Relationship.CompToStore.get(Backend.EGGROLL):
         address = create(name=name, namespace=namespace, store_engine=store_engine, partitions=partitions)
-        return EggRollTable(job_id=job_id, mode=mode, persistent_engine=store_engine,
-                            namespace=namespace, name=name, partitions=partitions, **kwargs)
+        return EggRollTable(job_id=job_id, mode=mode, persistent_engine=store_engine, namespace=namespace, name=name,
+                            address=address, partitions=partitions, **kwargs)
 
     if store_engine in Relationship.CompToStore.get(Backend.SPARK):
-        address = create(name=name, namespace=namespace, store_engine=store_engine,partitions=partitions)
-        return HDFSTable(address=address, partitions=partitions, **kwargs)
+        address = create(name=name, namespace=namespace, store_engine=store_engine, partitions=partitions)
+        return HDFSTable(address=address, partitions=partitions, namespace=namespace, name=name, **kwargs)
