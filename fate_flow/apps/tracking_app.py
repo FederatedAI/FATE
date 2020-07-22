@@ -314,14 +314,17 @@ def save_component_summary():
     return get_json_result()
 
 
-@manager.route('/component/summary/query', methods=['POST'])
+@manager.route('/component/summary/download', methods=['POST'])
 def get_component_summary():
     request_data = request.json
     tracker = Tracking(job_id=request_data['job_id'], component_name=request_data['component_name'],
                        role=request_data['role'], party_id=request_data['party_id'])
     summary = tracker.get_component_summary()
     if summary:
-        return get_json_result(data=json_loads(summary))
+        with open(request_data.get('output_path'), 'w') as fout:
+            fout.write(json.dumps(json_loads(summary), indent=4))
+        return get_json_result(retmsg="New predict dsl file has been generated successfully. "
+                                      "File path is: {}.".format(request_data.get("output_path")))
     return get_json_result(retcode=100,
                            retmsg="No component summary found, please check if arguments are specified correctly.")
 

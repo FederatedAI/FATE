@@ -17,7 +17,8 @@ import os
 import click
 from contextlib import closing
 from fate_flow.utils import detect_utils, cli_args
-from fate_flow.utils.cli_utils import prettify, preprocess, download_from_request, access_server
+from fate_flow.utils.cli_utils import (prettify, preprocess, download_from_request,
+                                       access_server, check_output_path)
 
 
 @click.group(short_help="Component Operations")
@@ -222,3 +223,27 @@ def output_data_table(ctx, **kwargs):
     detect_utils.check_config(config=config_data,
                               required_arguments=['job_id', 'component_name', 'role', 'party_id'])
     access_server('post', ctx, 'tracking/component/output/data/table', config_data)
+
+
+@component.command("download-summary", short_help="Download Component Summary Command")
+@cli_args.JOBID_REQUIRED
+@cli_args.ROLE_REQUIRED
+@cli_args.PARTYID_REQUIRED
+@cli_args.COMPONENT_NAME_REQUIRED
+@cli_args.OUTPUT_PATH
+@click.pass_context
+def download_summary(ctx, **kwargs):
+    """
+    \b
+    - DESCRIPTION:
+        Download summary of a specified component and save it as a json file.
+
+    \b
+    - USAGE:
+        flow component download-summary -j $JOB_ID -r host -p 10000 -cpn hetero_feature_binning_0 -o ./examples/summary.json
+    """
+    config_data, dsl_data = preprocess(**kwargs)
+    detect_utils.check_config(config=config_data,
+                              required_arguments=['job_id', 'component_name', 'role', 'party_id', 'output_path'])
+    config_data['output_path'] = check_output_path(kwargs.get('output_path'))
+    access_server('post', ctx, 'tracking/component/summary/download', config_data)
