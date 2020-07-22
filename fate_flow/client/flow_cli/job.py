@@ -257,3 +257,55 @@ def view(ctx, **kwargs):
     """
     config_data, dsl_data = preprocess(**kwargs)
     access_server('post', ctx, 'job/data/view/query', config_data)
+
+
+@job.command("dsl", short_help="Generate Predict DSL Command")
+@click.option("--cpn-list", type=click.STRING,
+              help="User inputs a string to specify component list")
+@click.option("--cpn-path", type=click.Path(exists=True),
+              help="User specify a file path which records the component list.")
+@click.option("--train-dsl-path", type=click.Path(exists=True), required=True,
+              help="User specifies the train dsl file path.")
+@cli_args.OUTPUT_PATH
+@click.pass_context
+def dsl_generator(ctx, **kwargs):
+    """
+    \b
+    - DESCRIPTION:
+        A predict dsl generator.
+        Before using predict dsl generator, users should prepare:
+            1. name list of component which you are going to use in predict progress,
+            2. the train dsl file path you specified in train progress.
+        \b
+        Notice that users can choose to specify the component name list by using a text file,
+        or, by typing in terminal. We, however, strongly recommend users using prepared files
+        to specify the component list in order to avoid some unnecessary mistakes.
+
+    \b
+    - USAGE:
+        flow job dsl --cpn-path fate_flow/examples/component_list.txt --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/generated_predict_dsl.json
+        flow job dsl --cpn-list "dataio_0, hetero_feature_binning_0, hetero_feature_selection_0, evaluation_0" --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/generated_predict_dsl.json
+        flow job dsl --cpn-list [dataio_0,hetero_feature_binning_0,hetero_feature_selection_0,evaluation_0] --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/generated_predict_dsl.json
+    """
+    if kwargs.get("cpn_list"):
+        cpn_str = kwargs.get("cpn_list")
+    elif kwargs.get("cpn_path"):
+        with open(kwargs.get("cpn_path"), "r") as fp:
+            cpn_str = fp.read()
+    else:
+        cpn_str = ""
+
+    with open(kwargs.get("train_dsl_path"), "r") as ft:
+        train_dsl = ft.read()
+
+    output_path = kwargs.get("output_path")
+    if not os.path.isabs(output_path):
+        output_path = os.path.join(os.path.abspath(os.curdir), output_path)
+
+    config_data = {
+        "cpn_str": cpn_str,
+        "train_dsl": train_dsl,
+        "output_path": output_path
+    }
+
+    access_server('post', ctx, 'job/dsl/generate', config_data)
