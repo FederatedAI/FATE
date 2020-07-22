@@ -304,6 +304,28 @@ def save_metric_meta(job_id, component_name, task_id, role, party_id):
     return get_json_result()
 
 
+@manager.route('/component/summary/save', methods=['POST'])
+def save_component_summary():
+    request_data = request.json
+    tracker = Tracking(job_id=request_data['job_id'], component_name=request_data['component_name'],
+                       role=request_data['role'], party_id=request_data['party_id'])
+    summary_data = request_data['summary']
+    tracker.save_component_summary(summary_data)
+    return get_json_result()
+
+
+@manager.route('/component/summary/query', methods=['POST'])
+def get_component_summary():
+    request_data = request.json
+    tracker = Tracking(job_id=request_data['job_id'], component_name=request_data['component_name'],
+                       role=request_data['role'], party_id=request_data['party_id'])
+    summary = tracker.get_component_summary()
+    if summary:
+        return get_json_result(data=json_loads(summary))
+    return get_json_result(retcode=100,
+                           retmsg="No component summary found, please check if arguments are specified correctly.")
+
+
 @manager.route('/component/list', methods=['POST'])
 def component_list():
     request_data = request.json
