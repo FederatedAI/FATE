@@ -2,17 +2,21 @@ import abc
 import argparse
 import json
 import pprint
+import socket
 import sys
 import tempfile
 import time
+import traceback
 import typing
 from enum import Enum
 from pathlib import Path
 
 import loguru
 import prettytable
+import requests
 import sshtunnel
 import yaml
+from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
 LOGGER = loguru.logger
 
@@ -26,7 +30,7 @@ def main():
                         help="config file")
     parser.add_argument("-name", default=f'testsuite-{time.strftime("%Y%m%d%H%M%S", time.localtime())}')
     parser.add_argument("-work_mode", choices=[0, 1], type=int)
-    parser.add_argument("-client", choices=["flowpy"], type=str)
+    parser.add_argument("-client", choices=["flowpy", "rest"], type=str)
     parser.add_argument("-replace", type=str)
     args = parser.parse_args()
     _add_logger(args.name)
@@ -253,8 +257,7 @@ def _client_factory(client_type, address: typing.Optional[typing.Union[str, typi
     if client_type == "flowpy":
         return _FlowPYClient(address)
     if client_type == "rest":
-        raise NotImplementedError(f"{client_type}")
-        # return _RESTClient()
+        return _RESTClient(address)
     raise NotImplementedError(f"{client_type}")
 
 
@@ -275,14 +278,105 @@ class _Client(metaclass=abc.ABCMeta):
 
 class _RESTClient(_Client):
 
+    def __init__(self, address: typing.Optional[str] = None):
+        if address is None:
+            address = f"{socket.gethostbyname(socket.gethostname())}:9380"
+        self.address = address
+        self.version = "v1"
+        self._base = f"http://{self.address}/{self.version}/"
+        self._http = requests.Session()
+
+    @LOGGER.catch
+    def _post(self, url, **kwargs):
+        request_url = self._base + url
+        try:
+            response = self._http.request(method='post', url=request_url, **kwargs)
+        except Exception as e:
+            LOGGER.exception(e)
+            exc_type, exc_value, exc_traceback_obj = sys.exc_info()
+            response = {'retcode': 100, 'retmsg': str(e),
+                        'traceback': traceback.format_exception(exc_type, exc_value, exc_traceback_obj)}
+            if 'Connection refused' in str(e):
+                response['retmsg'] = 'Connection refused, Please check if the fate flow service is started'
+                del response['traceback']
+            return response
+
+        try:
+            if isinstance(response, requests.models.Response):
+                response = response.json()
+            else:
+                try:
+                    response = json.loads(response.content.decode('utf-8', 'ignore'), strict=False)
+                except (TypeError, ValueError):
+                    return response
+        except json.decoder.JSONDecodeError:
+            response = {'retcode': 100,
+                        'retmsg': "Internal server error. Nothing in response. You may check out the configuration in "
+                                  "'FATE/arch/conf/server_conf.json' and restart fate flow server."}
+        return response
+
     def upload_data(self, conf, verbose=0, drop=0):
-        ...
+        conf['drop'] = drop if drop else 2
+        conf['verbose'] = verbose
+        path = Path(conf.get('file'))
+        if not path.is_file():
+            path = Path("../../").joinpath(conf.get('file')).resolve()
+
+        if not path.exists():
+            raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
+                            f'please check the path: {path}')
+
+        with path.open("rb") as fp:
+            data = MultipartEncoder(
+                fields={'file': (path.name, fp, 'application/octet-stream')}
+            )
+            tag = [0]
+
+            def read_callback(monitor):
+                if conf.get('verbose') == 1:
+                    sys.stdout.write(
+                        "\r UPLOADING:{0}{1}".format("|" * (monitor.bytes_read * 100 // monitor.len),
+                                                     '%.2f%%' % (monitor.bytes_read * 100 // monitor.len)))
+                    sys.stdout.flush()
+                    if monitor.bytes_read / monitor.len == 1:
+                        tag[0] += 1
+                        if tag[0] == 2:
+                            sys.stdout.write('\n')
+
+            data = MultipartEncoderMonitor(data, read_callback)
+            response = self._post(url='data/upload', data=data, params=conf,
+                                  headers={'Content-Type': data.content_type})
+
+        if response['retcode'] != 0:
+            raise Exception(f"upload failed: {response}\n"
+                            f"conf: {pprint.pformat(conf)}")
+        return response["jobId"]
 
     def query_job(self, job_id, role):
-        ...
+        data = {"local": {}, "job_id": str(job_id)}
+        if role is not None:
+            data["local"]["role"] = role
+        while True:
+            ret = self._post(url='job/query', json=data)
+            if ret['retcode'] != 0:
+                raise Exception(f"query job {job_id} fail: {ret}")
+            status = ret['data'][0]["f_status"]
+            if status in ["success", "failed", "canceled"]:
+                return status
+            time.sleep(1)
 
     def submit_job(self, conf, dsl):
-        ...
+        post_data = {
+            'job_dsl': dsl,
+            'job_runtime_conf': conf
+        }
+        response = self._post(url='job/submit', json=post_data)
+
+        if response['retcode'] != 0:
+            raise Exception(f"job submit fail: {response}\n"
+                            f"conf:\n{pprint.pformat(conf)}\n"
+                            f"dsl:\n{pprint.pformat(dsl)}")
+        return response["jobId"], response["data"]["model_info"]
 
 
 class _FlowPYClient(_Client):
