@@ -103,7 +103,7 @@ class ModelBase(object):
             # LOGGER.debug("One data: {}".format(self.data_output.first()[1].features))
         LOGGER.debug("saved_result is : {}, data_output: {}".format(saved_result, self.data_output))
         self.check_consistency()
-        self.save_summary()
+        # self.save_summary()
 
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary",
@@ -242,7 +242,7 @@ class ModelBase(object):
                                      metrics=metric_data)
 
     def save_summary(self):
-        self.tracker.save_component_summary(summary=self.summary())
+        self.tracker.save_component_summary(summary_data=self.summary())
 
     def set_cv_fold(self, cv_fold):
         self.cv_fold = cv_fold

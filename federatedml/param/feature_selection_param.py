@@ -345,7 +345,8 @@ class FeatureSelectionParam(BaseParam):
         Specify which columns need to calculated. Each element in the list represent for a column name in header.
 
     filter_methods: list, ["manually", "iv_filter", "statistic_filter",
-                            "psi_filter", “sbt_filter", "percentage_value"],
+                            "psi_filter", “hetero_sbt_filter", "homo_sbt_filter",
+                             "percentage_value"],
                  default: ["manually"]
 
         The following methods will be deprecated in future version:
@@ -406,7 +407,7 @@ class FeatureSelectionParam(BaseParam):
                  iv_param=CommonFilterParam(metrics=consts.IV),
                  statistic_param=CommonFilterParam(metrics=consts.MEAN),
                  psi_param=CommonFilterParam(metrics=consts.PSI),
-                 sbt_param=CommonFilterParam(metrics=''),
+                 sbt_param=CommonFilterParam(metrics=consts.FEATURE_IMPORTANCE),
                  need_run=True
                  ):
         super(FeatureSelectionParam, self).__init__()
@@ -433,7 +434,7 @@ class FeatureSelectionParam(BaseParam):
         self.iv_param = copy.deepcopy(iv_param)
         self.statistic_param = copy.deepcopy(statistic_param)
         self.psi_param = copy.deepcopy(psi_param)
-        self.sbt
+        self.sbt_param = copy.deepcopy(sbt_param)
         self.need_run = need_run
 
     def check(self):
@@ -447,7 +448,8 @@ class FeatureSelectionParam(BaseParam):
                                                    consts.COEFFICIENT_OF_VARIATION_VALUE_THRES, consts.OUTLIER_COLS,
                                                    consts.MANUALLY_FILTER, consts.PERCENTAGE_VALUE,
                                                    consts.IV_FILTER, consts.STATISTIC_FILTER, consts.IV_TOP_K,
-                                                   consts.PSI_FILTER])
+                                                   consts.PSI_FILTER, consts.HETERO_SBT_FILTER,
+                                                   consts.HOMO_SBT_FILTER])
 
             self.filter_methods[idx] = method
 
@@ -478,3 +480,11 @@ class FeatureSelectionParam(BaseParam):
         for m in self.psi_param.metrics:
             if m != consts.PSI:
                 raise ValueError("For psi filter, metrics should be 'psi'")
+
+        self.sbt_param.check()
+        for th in self.sbt_param.take_high:
+            if not th:
+                raise ValueError("SBT filter should take higher feature_importance features")
+        for m in self.sbt_param.metrics:
+            if m != consts.FEATURE_IMPORTANCE:
+                raise ValueError("For SBT filter, metrics should be 'feature_importance'")

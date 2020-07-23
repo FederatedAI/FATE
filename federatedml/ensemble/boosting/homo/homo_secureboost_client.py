@@ -125,6 +125,7 @@ class HomoSecureBoostClient(HomoBoostingClient):
         model_param.classes_.extend(map(str, self.classes_))
         model_param.num_classes = self.num_classes
         model_param.best_iteration = -1
+        model_param.model_name = consts.HOMO_SBT
 
         feature_importance = list(self.feature_importance.items())
         feature_importance = sorted(feature_importance, key=itemgetter(1), reverse=True)
