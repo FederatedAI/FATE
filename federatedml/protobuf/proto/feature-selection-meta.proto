@@ -31,6 +31,16 @@ message FeatureSelectionMeta {
     bool need_run = 10;
     PercentageValueFilterMeta pencentage_value_meta = 11;
     IVTopKSelectionMeta iv_top_k_meta = 12;
+    repeated FilterMeta filter_metas = 13;
+}
+
+message FilterMeta {
+    string metrics = 1;
+    string filter_type = 2;
+    bool take_high = 3;
+    double threshold = 4;
+    bool select_federated = 5;
+    string filter_out_names = 6;
 }
 
 message UniqueValueMeta {

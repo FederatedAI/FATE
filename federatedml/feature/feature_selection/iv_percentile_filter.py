@@ -101,11 +101,15 @@ class Guest(IVPercentileFilter):
         thres_idx = int(math.floor(self.percentile_threshold * len(sorted_value) - consts.FLOAT_ZERO))
         return sorted_value[thres_idx]
 
-    def get_meta_obj(self, meta_dicts):
-        result = feature_selection_meta_pb2.IVPercentileSelectionMeta(percentile_threshold=self.percentile_threshold,
-                                                                      local_only=self.local_only)
-        meta_dicts['iv_percentile_meta'] = result
-        return meta_dicts
+    # def get_meta_obj(self, meta_dicts):
+    #     result = feature_selection_meta_pb2.IVPercentileSelectionMeta(percentile_threshold=self.percentile_threshold,
+    #                                                                   local_only=self.local_only)
+    #     meta_dicts['iv_percentile_meta'] = result
+    #     return meta_dicts
+
+    def get_meta_obj(self):
+        result = feature_selection_meta_pb2.FilterMeta()
+        return result
 
 
 class Host(IVPercentileFilter):
@@ -125,7 +129,11 @@ class Host(IVPercentileFilter):
                                           suffix=suffix)
         return self
 
-    def get_meta_obj(self, meta_dicts):
-        result = feature_selection_meta_pb2.IVPercentileSelectionMeta(local_only=self.local_only)
-        meta_dicts['iv_percentile_meta'] = result
-        return meta_dicts
+    # def get_meta_obj(self, meta_dicts):
+    #     result = feature_selection_meta_pb2.IVPercentileSelectionMeta(local_only=self.local_only)
+    #     meta_dicts['iv_percentile_meta'] = result
+    #     return meta_dicts
+
+    def get_meta_obj(self):
+        result = feature_selection_meta_pb2.FilterMeta()
+        return result

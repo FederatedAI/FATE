@@ -134,7 +134,10 @@ class TaskExecutor(object):
             run_object.set_taskid(taskid=task_id)
             run_object.run(component_parameters, task_run_args)
             output_data = run_object.save_data()
-            tracker.save_output_data_table(output_data, task_output_dsl.get('data')[0] if task_output_dsl.get('data') else 'component')
+            if not isinstance(output_data, list):
+                output_data = [output_data]
+            for index in range(0, len(output_data)):
+                tracker.save_output_data_table(output_data[index], task_output_dsl.get('data')[index] if task_output_dsl.get('data') else 'component')
             output_model = run_object.export_model()
             # There is only one model output at the current dsl version.
             tracker.save_output_model(output_model, task_output_dsl['model'][0] if task_output_dsl.get('model') else 'default')
@@ -175,6 +178,10 @@ class TaskExecutor(object):
             if input_type == 'data':
                 this_type_args = task_run_args[input_type] = task_run_args.get(input_type, {})
                 for data_type, data_list in input_detail.items():
+                    data_dict = {}
+                    for data_key in data_list:
+                        data_key_item = data_key.split('.')
+                        data_dict[data_key_item[0]] = {data_type: []}
                     for data_key in data_list:
                         data_key_item = data_key.split('.')
                         search_component_name, search_data_name = data_key_item[0], data_key_item[1]
@@ -221,7 +228,8 @@ class TaskExecutor(object):
                         else:
                             schedule_logger().info("pass save as task {} input data table, because the switch is off".format(task_id))
                         if not data_table or not filter_attr or not filter_attr.get("data", None):
-                            args_from_component[data_type] = data_table
+                            data_dict[search_component_name][data_type].append(data_table)
+                            args_from_component[data_type] = data_dict[search_component_name][data_type]
                         else:
                             args_from_component[data_type] = dict([(a, getattr(data_table, "get_{}".format(a))()) for a in filter_attr["data"]])
             elif input_type in ['model', 'isometric_model']:
