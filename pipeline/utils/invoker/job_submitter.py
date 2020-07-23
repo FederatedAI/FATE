@@ -246,3 +246,16 @@ class JobInvoker(object):
             return result["data"]
         except:
             print("Can not get output model, err msg is {}".format(result))
+
+    def get_summary(self, job_id, cpn_name, role, party_id):
+        result = None
+        party_id = str(party_id)
+        try:
+            result = self.client.component.get_summary(job_id=job_id, role=role,
+                                                       party_id=party_id, component_name=cpn_name)
+            if "data" not in result:
+                print("job {}, component {} has no output metric".format(job_id, cpn_name))
+                return
+            return result["data"]
+        except:
+            print("Can not get output model, err msg is {}".format(result))
