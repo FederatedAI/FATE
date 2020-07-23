@@ -39,8 +39,8 @@ class HeteroDataSplitHost(DataSplitter):
 
         train_data, validate_data, test_data = self.split_data(data_inst, id_train, id_validate, id_test)
 
-        all_metas = self.callback_count_info(id_train, id_validate, id_test, {})
-        summary = {"data_split_count_info": all_metas}
+        all_metas = {}
+        all_metas = self.callback_count_info(id_train, id_validate, id_test, all_metas)
         self.callback(all_metas)
         self.set_summary(all_metas)
 
@@ -75,13 +75,13 @@ class HeteroDataSplitGuest(DataSplitter):
 
         train_data, validate_data, test_data = self.split_data(data_inst, id_train, id_validate, id_test)
 
-        summary = {}
+        all_metas = {}
 
-        all_metas = self.callback_count_info(id_train, id_validate, id_test, {})
-        summary["data_split_count_info"] = all_metas
+        all_metas = self.callback_count_info(id_train, id_validate, id_test, all_metas)
+        # summary["data_split_count_info"] = all_metas
         if self.stratified:
             all_metas = self.callback_label_info(y_train, y_validate, y_test, all_metas)
-            summary["data_split_label_info"] = all_metas
+            #summary["data_split_label_info"] = all_metas
         self.callback(all_metas)
         self.set_summary(all_metas)
 
