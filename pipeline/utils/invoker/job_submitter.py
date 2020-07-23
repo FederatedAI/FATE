@@ -39,6 +39,7 @@ class JobFunc:
     TASK_STATUS = "query_task"
     COMPONENT_OUTPUT_DATA = "component_output_data"
     COMPONENT_OUTPUT_DATA_TABLE = "component_output_data_table"
+    DEPLOY_COMPONENT = "deo"
 
 
 class JobInvoker(object):
@@ -118,11 +119,11 @@ class JobInvoker(object):
         while True:
             ret_code, ret_msg, data = self.query_job(job_id, role, party_id)
             status = data["f_status"]
-            if status == JobStatus.SUCCESS:
+            if status == JobStatus.COMPLETE:
                 print("job is success!!!")
                 return StatusCode.SUCCESS
 
-            if status == JobStatus.FAIL:
+            if status == JobStatus.FAILED:
                 print("job is failed, please check out job {} by fate board or fate_flow cli".format(job_id))
                 return StatusCode.FAIL
 

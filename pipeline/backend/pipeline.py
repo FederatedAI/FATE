@@ -16,20 +16,20 @@
 import copy
 import pickle
 import pprint
-from collections import ChainMap
 from types import SimpleNamespace
 
 from pipeline.backend.config import Backend, WorkMode
-from pipeline.backend.config import VERSION
+from pipeline.backend.config import Role
 from pipeline.backend.config import StatusCode
+from pipeline.backend.config import VERSION
 from pipeline.backend.task_iinfo import TaskInfo
 from pipeline.component.component_base import Component
 from pipeline.component.input import Input
 from pipeline.interface.data import Data
 from pipeline.interface.model import Model
-# from pipeline.parser.dsl_parser import DSLParser
-from pipeline.utils.invoker.job_submitter import JobInvoker
+from pipeline.parser.dsl_parser import DSLParser
 from pipeline.utils import tools
+from pipeline.utils.invoker.job_submitter import JobInvoker
 
 
 class PipeLine(object):
@@ -43,7 +43,6 @@ class PipeLine(object):
         self._train_conf = {}
         self._upload_conf = []
         self._cur_state = None
-        print("init train_conf {}".format(self._train_conf))
         self._job_invoker = JobInvoker()
         self._train_job_id = None
         self._predict_job_id = None
@@ -66,27 +65,27 @@ class PipeLine(object):
 
         return initiator_conf
 
-    def get_train_job_id(self):
-        return self._train_job_id
-
-    def set_roles(self, guest=None, host=None, arbiter=None):
-        local_parameters = copy.deepcopy(locals())
-        for role in local_parameters:
-            print("locals:", local_parameters)
-            if role == 'self':
+    def set_roles(self, guest=None, host=None, arbiter=None, **kwargs):
+        local_parameters = locals()
+        support_roles = Role.support_roles()
+        for role, party_id in local_parameters.items():
+            if role == "self":
                 continue
+
+            if not local_parameters.get(role):
+                continue
+
+            if role not in support_roles:
+                raise ValueError("Current role not support {}, support role list {}".format(role, support_roles))
 
             party_id = local_parameters.get(role)
-            if party_id is None:
-                continue
-
             self._roles[role] = []
             if isinstance(party_id, int):
                 self._roles[role].append(party_id)
             elif isinstance(party_id, list):
                 self._roles[role].extend(party_id)
             else:
-                raise ValueError("role: {}'s party_id should be an integer of a list of integer".format(role))
+                raise ValueError("role: {}'s party_id should be an integer or a list of integer".format(role))
 
         return self
 
@@ -147,9 +146,9 @@ class PipeLine(object):
                 print("data dep ", attr, val)
                 print("add dep ", component.name, attr)
                 if isinstance(val, list):
-                    self._components_input[component.name]["data"][attr] = val
+                    self._components_input[component.name]["data"][attr.strip("_")] = val
                 else:
-                    self._components_input[component.name]["data"][attr] = [val]
+                    self._components_input[component.name]["data"][attr.strip("_")] = [val]
 
         if model is not None:
             if not isinstance(model, Model):
@@ -164,9 +163,9 @@ class PipeLine(object):
                     continue
 
                 if isinstance(val, list):
-                    self._components_input[component.name][attr] = val
+                    self._components_input[component.name][attr.strip("_")] = val
                 else:
-                    self._components_input[component.name][attr] = [val]
+                    self._components_input[component.name][attr.strip("_")] = [val]
 
     def add_upload_data(self, file, table_name, namespace, head=1, partition=16):
         data_conf = {"file": file,
@@ -226,12 +225,6 @@ class PipeLine(object):
 
         print("train_dsl : ", self._train_dsl)
 
-    def get_train_job_id(self):
-        return self._train_job_id
-
-    def get_predict_job_id(self):
-        return self._predict_job_id
-
     def _construct_train_conf(self):
         self._train_conf["initiator"] = self._get_initiator_conf()
         self._train_conf["role"] = self._roles
@@ -248,26 +241,33 @@ class PipeLine(object):
 
             if "role_parameters" in param_conf:
                 role_param_conf = param_conf["role_parameters"]
-                self._train_conf["role_parameters"] = tools.merge_dict(role_param_conf, self._train_conf["role_parameters"])
+                self._train_conf["role_parameters"] = tools.merge_dict(role_param_conf,
+                                                                       self._train_conf["role_parameters"])
 
         import pprint
         pprint.pprint(self._train_conf)
         return self._train_conf
+
+    def _get_job_parameters(self, job_type="train", backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, version=2):
+        job_parameters = {
+            "job_type": job_type,
+            "backend": backend.value,
+            "work_mode": work_mode.value,
+            "version": version
+        }
+
+        return job_parameters
 
     def _construct_upload_conf(self, data_conf, work_mode):
         upload_conf = copy.deepcopy(data_conf)
         upload_conf["work_mode"] = work_mode
         return upload_conf
 
-    def _get_job_parameters(self, job_type="train", backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, version=2):
-        job_parameters = {
-            "job_type": job_type,
-            "backend": backend,
-            "work_mode": work_mode,
-            "version": version
-        }
+    def get_train_job_id(self):
+        return self._train_job_id
 
-        return job_parameters
+    def get_predict_job_id(self):
+        return self._predict_job_id
 
     def _set_state(self, state):
         self._cur_state = state
@@ -280,8 +280,8 @@ class PipeLine(object):
         submit_conf = copy.deepcopy(conf)
         print("submit conf' type {}".format(submit_conf))
         submit_conf["job_parameters"] = {
-            "work_mode": work_mode,
-            "backend": backend,
+            "work_mode": work_mode.value,
+            "backend": backend.value,
             "version": VERSION
         }
 
@@ -327,12 +327,12 @@ class PipeLine(object):
                     continue
 
                 for _party_id in _input_dict[role]:
-                    _party_index = self._get_party_index(role, _party_id)
+                    _party_index = str(self._get_party_index(role, _party_id))
                     if _party_index not in data_source[role]:
                         data_source[role][_party_index] = {}
-                        data_source[role][_party_index]["source"] = {}
+                        data_source[role][_party_index]["args"] = {}
 
-                    data_source[role][_party_index]["source"][_input.name] = _input_dict[role][_party_id]
+                    data_source[role][_party_index]["args"][_input.name] = _input_dict[role][_party_id]
 
         if "role_parameters" not in submit_conf:
             submit_conf["role_parameters"] = data_source
@@ -341,10 +341,9 @@ class PipeLine(object):
             for role in all_roles:
                 if role not in submit_conf["role_parameters"]:
                     submit_conf[role] = data_source[role]
-                elif role not in data_source:
-                    pass
-                else:
-                    submit_conf["role_parameters"][role].update(data_source[role])
+                elif role in data_source:
+                    submit_conf["role_parameters"][role] = tools.merge_dict(data_source[role],
+                                                                            submit_conf["role_parameters"][role])
 
         import pprint
         pprint.pprint(submit_conf)
@@ -366,7 +365,7 @@ class PipeLine(object):
 
     def predict(self, backend=Backend.EGGROLL, work_mode=WorkMode.CLUSTER, feed_dict=None):
         if self._fit_status != StatusCode.SUCCESS:
-            print ("Pipeline should be fit successfully before predict!!!")
+            print("Pipeline should be fit successfully before predict!!!")
             return
 
         predict_conf = self._feed_data_and_job_parameters(self._train_conf,
@@ -398,19 +397,23 @@ class PipeLine(object):
         return pickle.loads(pipeline_bytes)
 
     def deploy_component(self, components):
+        if self._train_dsl is None:
+            raise ValueError("before deploy model, training should be finish!!!")
 
-        if not isinstance(components, list):
-            components = [components]
+        if not components:
+            deploy_cpns = list(self._components.keys())
+        else:
+            deploy_cpns = []
+            for cpn in components:
+                if isinstance(cpn, str):
+                    deploy_cpns.append(cpn)
+                elif isinstance(cpn, Component):
+                    deploy_cpns.append(cpn.name)
+                else:
+                    raise ValueError(
+                        "deploy component parameters is wrong, expect str or Component object, but {} find".format(cpn))
 
-        self._predict_dsl = DSLParser.deploy_component(components, self._train_dsl)
+        self._predict_dsl = DSLParser.deploy_component(deploy_cpns, self._train_dsl)
+        self._job_invoker.deploy_model(self._predict_dsl, self._train_job_id)
 
         return self
-
-    def deploy_end_component(self, components):
-        if not isinstance(components, list):
-            components = [components]
-
-        self._predict_dsl = DSLParser.deploy_end_component(components, self._train_dsl)
-
-        return self
-
