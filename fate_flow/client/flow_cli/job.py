@@ -253,7 +253,7 @@ def view(ctx, **kwargs):
 @click.option("--cpn-list", type=click.STRING,
               help="User inputs a string to specify component list")
 @click.option("--cpn-path", type=click.Path(exists=True),
-              help="User specify a file path which records the component list.")
+              help="User specifies a file path which records the component list.")
 @click.option("--train-dsl-path", type=click.Path(exists=True), required=True,
               help="User specifies the train dsl file path.")
 @cli_args.OUTPUT_PATH
