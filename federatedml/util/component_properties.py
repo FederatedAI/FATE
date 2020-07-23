@@ -145,12 +145,6 @@ class ComponentProperties(object):
                 raise DSLConfigError("In cross-validate task or stepwise task, model "
                                      "or isometric_model should not be configured")
 
-        if not self.need_run:
-            if self.has_train_data or self.has_eval_data:
-                raise DSLConfigError("Need run is false. This is component support "
-                                     "data input only. Train_data and eval_data should not "
-                                     "be configured")
-
     def extract_input_data(self, args):
         data_sets = args.get("data")
         train_data = None

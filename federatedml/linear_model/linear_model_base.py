@@ -190,7 +190,7 @@ class BaseLinearModel(ModelBase):
                         if np.abs(v) > consts.OVERFLOW_THRESHOLD:
                             return True
                 else:
-                    if np.abs(np.max(features)) > consts.OVERFLOW_THRESHOLD:
+                    if np.max(np.abs(features)) > consts.OVERFLOW_THRESHOLD:
                         return True
             return False
 
