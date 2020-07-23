@@ -3,7 +3,7 @@ import unittest
 import uuid
 
 from arch.api import session
-from federatedml.feature.ohe_with_alignment.OHE_alignment_arbiter import OHEAlignmentArbiter
+from federatedml.feature.homo_onehot.OHE_alignment_arbiter import OHEAlignmentArbiter
 
 
 class TestOHE_alignment(unittest.TestCase):

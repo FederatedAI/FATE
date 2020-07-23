@@ -64,6 +64,8 @@ class HeteroLRGuest(HeteroLRBase):
 
         LOGGER.info("Enter hetero_lr_guest fit")
         self._abnormal_detection(data_instances)
+        self.check_abnormal_values(data_instances)
+        self.check_abnormal_values(validate_data)
         self.header = self.get_header(data_instances)
 
         classes = self.one_vs_rest_obj.get_data_classes(data_instances)

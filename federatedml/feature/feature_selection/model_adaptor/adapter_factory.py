@@ -19,6 +19,7 @@
 from federatedml.feature.feature_selection.model_adaptor.statistic_adapter import StatisticAdapter
 from federatedml.feature.feature_selection.model_adaptor.binning_adapter import BinningAdapter
 from federatedml.feature.feature_selection.model_adaptor.psi_adapter import PSIAdapter
+from federatedml.feature.feature_selection.model_adaptor import tree_adapter
 from federatedml.util import consts
 
 
@@ -29,5 +30,9 @@ def adapter_factory(model_name):
         return BinningAdapter()
     elif model_name == consts.PSI:
         return PSIAdapter()
+    elif model_name == consts.HETERO_SBT:
+        return tree_adapter.HeteroSBTAdapter()
+    elif model_name == consts.HOMO_SBT:
+        return tree_adapter.HomoSBTAdapter()
     else:
         raise ValueError(f"Cannot recognize model_name: {model_name}")

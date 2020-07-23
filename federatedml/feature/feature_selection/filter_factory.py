@@ -147,31 +147,37 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
     elif filter_name == consts.IV_FILTER:
         iv_param = model_param.iv_param
         this_param = _obtain_single_param(iv_param, idx)
-        # this_param = copy.deepcopy(iv_param)
-        # for attr, value in iv_param.__dict__.items():
-        #     if value is not None:
-        #         value = value[idx]
-        #     setattr(this_param, attr, value)
-        # this_param.check()
 
         iso_model = model.isometric_models.get(consts.BINNING_MODEL)
         if iso_model is None:
-            raise ValueError("None of statistic model has provided when using iv filter")
+            raise ValueError("None of iv model has provided when using iv filter")
+        return FederatedIsoModelFilter(this_param, iso_model,
+                                       role=role, cpp=model.component_properties)
+
+    elif filter_name == consts.HETERO_SBT_FILTER:
+        sbt_param = model_param.sbt_param
+        this_param = _obtain_single_param(sbt_param, idx)
+        iso_model = model.isometric_models.get(consts.HETERO_SBT)
+        if iso_model is None:
+            raise ValueError("None of sbt model has provided when using sbt filter")
+        return FederatedIsoModelFilter(this_param, iso_model,
+                                       role=role, cpp=model.component_properties)
+
+    elif filter_name == consts.HOMO_SBT_FILTER:
+        sbt_param = model_param.sbt_param
+        this_param = _obtain_single_param(sbt_param, idx)
+        iso_model = model.isometric_models.get(consts.HOMO_SBT)
+        if iso_model is None:
+            raise ValueError("None of sbt model has provided when using sbt filter")
         return FederatedIsoModelFilter(this_param, iso_model,
                                        role=role, cpp=model.component_properties)
 
     elif filter_name == consts.STATISTIC_FILTER:
         statistic_param = model_param.statistic_param
         this_param = _obtain_single_param(statistic_param, idx)
-        # this_param = copy.deepcopy(statistic_param)
-        # for attr, value in statistic_param.__dict__.items():
-        #     if value is not None:
-        #         value = value[idx]
-        #     setattr(this_param, attr, value)
-        # this_param.check()
         iso_model = model.isometric_models.get(consts.STATISTIC_MODEL)
         if iso_model is None:
-            raise ValueError("None of statistic model has provided when using iv filter")
+            raise ValueError("None of statistic model has provided when using statistic filter")
         return IsoModelFilter(this_param, iso_model)
 
     elif filter_name == consts.PSI_FILTER:
@@ -180,7 +186,7 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
 
         iso_model = model.isometric_models.get(consts.PSI)
         if iso_model is None:
-            raise ValueError("None of statistic model has provided when using iv filter")
+            raise ValueError("None of psi model has provided when using psi filter")
         return IsoModelFilter(this_param, iso_model)
 
     else:
