@@ -19,11 +19,11 @@ import uuid
 from typing import Iterable
 
 from arch.api.utils.conf_utils import get_base_config
+from fate_arch.common import WorkMode
 from fate_arch.common.profile import log_elapsed
 from fate_arch.data_table import eggroll_session
 from fate_arch.data_table.base import Table, EggRollAddress
 from fate_arch.data_table.store_type import StoreEngine
-from fate_arch.session import WorkMode
 
 
 # noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming

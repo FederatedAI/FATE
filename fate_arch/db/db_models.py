@@ -68,6 +68,7 @@ class BaseDataBase(object):
         else:
             raise Exception('can not init database')
 
+
 DB = BaseDataBase().database_connection
 
 
@@ -119,6 +120,4 @@ class MachineLearningDataSchema(DataBaseModel):
 
     class Meta:
         db_table = "t_machine_learning_data_schema"
-        primary_key = CompositeKey('f_table_name', 'namespace')
-
-
+        primary_key = CompositeKey('f_table_name', 'f_namespace')
