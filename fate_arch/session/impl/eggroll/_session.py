@@ -26,6 +26,7 @@ from fate_arch.common.log import getLogger
 from fate_arch.common.profile import log_elapsed
 from fate_arch.session._interface import SessionABC
 from fate_arch.session._session_types import _FederationParties
+from fate_arch.session.impl._file import Path
 
 from fate_arch.session.impl.eggroll._federation import FederationEngine
 from fate_arch.session.impl.eggroll._table import Table
@@ -77,7 +78,7 @@ class Session(SessionABC):
         return self._federation_parties
 
     @log_elapsed
-    def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs) -> Table:
+    def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs) -> typing.Union[Table, Path]:
 
         from fate_arch.data_table.base import EggRollAddress
         if isinstance(address, EggRollAddress):
@@ -87,6 +88,11 @@ class Session(SessionABC):
             table = Table(rp=rp)
             table.schema = schema
             return table
+
+        from fate_arch.data_table.base import FileAddress
+        if isinstance(address, FileAddress):
+            return Path(address.path, address.path_type)
+
         raise NotImplementedError(f"address type {type(address)} not supported with eggroll backend")
 
     @log_elapsed

@@ -103,6 +103,10 @@ class TableABC(metaclass=ABCMeta):
         setattr(self, "_schema", value)
 
 
+class PathABC(metaclass=ABCMeta):
+    ...
+
+
 class SessionABC(metaclass=ABCMeta):
 
     @abc.abstractmethod
@@ -110,7 +114,7 @@ class SessionABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def load(self, address: AddressABC, partitions, schema: dict, **kwargs) -> TableABC:
+    def load(self, address: AddressABC, partitions, schema: dict, **kwargs) -> typing.Union[PathABC, TableABC]:
         ...
 
     @abc.abstractmethod

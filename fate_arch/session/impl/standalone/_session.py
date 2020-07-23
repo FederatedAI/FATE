@@ -64,12 +64,17 @@ class StandaloneSession(SessionABC):
         party, parties = self._parse_runtime_conf(runtime_conf)
         self._init_federation(federation_session_id, party, parties)
 
-    def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs) -> TableABC:
+    def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
         from fate_arch.data_table.base import EggRollAddress
         if isinstance(address, EggRollAddress):
             table = _load_table(address.name, address.namespace)
             table.schema = schema
             return table
+
+        from fate_arch.data_table.base import FileAddress
+        if isinstance(address, FileAddress):
+            from fate_arch.session.impl._file import Path as _Path
+            return _Path(address.path, address.path_type)
         raise NotImplementedError(f"address type {type(address)} not supported with standalone backend")
 
     def parallelize(self, data: Iterable, partition: int, include_key: bool = False, **kwargs):

@@ -43,6 +43,10 @@ class Session(SessionABC):
             table = _from_hdfs(paths=address.path, partitions=partitions)
             table.schema = schema
             return table
+        from fate_arch.data_table.base import FileAddress
+        if isinstance(address, FileAddress):
+            from fate_arch.session.impl._file import Path
+            return Path(address.path, address.path_type)
         raise NotImplementedError(f"address type {type(address)} not supported with spark backend")
 
     def _init_federation(self, federation_session_id: str,
