@@ -42,18 +42,6 @@ pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
 
                        })
 
-# predict
-
-pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
-             feed_dict={input_0:
-                           {"guest": {9999: guest_train_data},
-                            "host": {
-                              10000: host_train_data
-                             }
-                            }
-
-                       })
-
 print (pipeline.get_component("dataio_0").get_model_param())
 print (pipeline.get_component("homo_data_split_0").summary())
 
