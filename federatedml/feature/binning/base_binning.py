@@ -19,6 +19,7 @@
 import functools
 import math
 import random
+import bisect
 
 from arch.api.utils import log_utils
 from federatedml.feature.binning.bin_inner_param import BinInnerParam
@@ -326,14 +327,17 @@ class BaseBinning(object):
         data_bin_table = self.get_data_bin(data_instances, split_points)
         if label_table is None:
             label_table = data_instances.mapValues(lambda x: x.label)
-        event_count_table = label_table.mapValues(lambda x: (x, 1 - x))
-        data_bin_with_label = data_bin_table.join(event_count_table, lambda x, y: (x, y))
+        # event_count_table = label_table.mapValues(lambda x: (x, 1 - x))
+        data_bin_with_label = data_bin_table.join(label_table, lambda x, y: (x, y))
         f = functools.partial(self.add_label_in_partition,
                               split_points=split_points,
                               cols_dict=self.bin_inner_param.bin_cols_map)
 
         result_sum = data_bin_with_label.mapPartitions(f)
         result_counts = result_sum.reduce(self.aggregate_partition_label)
+        for col_name, bin_results in result_counts.items():
+            for b in bin_results:
+                b[1] = b[1] - b[0]
 
         self.cal_iv_woe(result_counts,
                         self.params.adjustment_factor)
@@ -397,12 +401,7 @@ class BaseBinning(object):
 
     @staticmethod
     def get_bin_num(value, split_points):
-        col_bin_num = len(split_points) - 1
-        for bin_num, split_point in enumerate(split_points):
-            if value <= split_point:
-                col_bin_num = bin_num
-                break
-        assert col_bin_num < len(split_points)
+        col_bin_num = bisect.bisect_left(split_points, value)
         return col_bin_num
 
     @staticmethod
@@ -472,7 +471,7 @@ class BaseBinning(object):
 
         Parameters
         ----------
-        result_counts: DTable.
+        result_counts: dict.
             It is like:
                 {'x1': [[event_count, non_event_count], [event_count, non_event_count] ... ],
                  'x2': [[event_count, non_event_count], [event_count, non_event_count] ... ],
@@ -504,7 +503,7 @@ class BaseBinning(object):
         ----------
         data_bin_with_table : DTable
             The input data, the DTable is like:
-            (id, {'x1': 1, 'x2': 5, 'x3': 2}, y, 1 - y)
+            (id, {'x1': 1, 'x2': 5, 'x3': 2}, y)
 
         split_points : dict
             Split points dict. Use to find out total bin num for each feature
@@ -515,8 +514,8 @@ class BaseBinning(object):
         Returns
         -------
         result_sum: the result DTable. It is like:
-            {'x1': [[event_count, non_event_count], [event_count, non_event_count] ... ],
-             'x2': [[event_count, non_event_count], [event_count, non_event_count] ... ],
+            {'x1': [[event_count, total_num], [event_count, total_num] ... ],
+             'x2': [[event_count, total_num], [event_count, total_num] ... ],
              ...
             }
 
@@ -524,10 +523,10 @@ class BaseBinning(object):
         result_sum = {}
         for _, datas in data_bin_with_table:
             bin_idx_dict = datas[0]
-            y_combo = datas[1]
+            y = datas[1]
 
-            y = y_combo[0]
-            inverse_y = y_combo[1]
+            # y = y_combo[0]
+            # inverse_y = y_combo[1]
             for col_name, bin_idx in bin_idx_dict.items():
                 result_sum.setdefault(col_name, [])
                 col_sum = result_sum[col_name]
@@ -535,7 +534,7 @@ class BaseBinning(object):
                     col_sum.append([0, 0])
                 label_sum = col_sum[bin_idx]
                 label_sum[0] = label_sum[0] + y
-                label_sum[1] = label_sum[1] + inverse_y
+                label_sum[1] = label_sum[1] + 1
                 col_sum[bin_idx] = label_sum
                 result_sum[col_name] = col_sum
 
@@ -577,8 +576,8 @@ class BaseBinning(object):
         ----------
         sum1 :  dict.
             It is like:
-                {'x1': [[event_count, non_event_count], [event_count, non_event_count] ... ],
-                 'x2': [[event_count, non_event_count], [event_count, non_event_count] ... ],
+                {'x1': [[event_count, total_num], [event_count, total_num] ... ],
+                 'x2': [[event_count, total_num], [event_count, total_num] ... ],
                  ...
                 }
 
@@ -608,7 +607,7 @@ class BaseBinning(object):
                     count_sum1.append(label_sum2)
                 else:
                     label_sum1 = count_sum1[idx]
-                    tmp = (label_sum1[0] + label_sum2[0], label_sum1[1] + label_sum2[1])
+                    tmp = [label_sum1[0] + label_sum2[0], label_sum1[1] + label_sum2[1]]
                     count_sum1[idx] = tmp
 
         return sum1

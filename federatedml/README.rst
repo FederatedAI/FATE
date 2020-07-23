@@ -12,7 +12,7 @@ FederatedML includes implementation of many common machine learning algorithms o
 
 3. Federated Machine Learning Algorithms: LR, GBDT, DNN, TransferLearning, which support Heterogeneous and Homogeneous styles.
 
-4. Model Evaluation: Binary|Multiclass|Regression Evaluation, Local vs Federated Comparison.
+4. Model Evaluation: Binary | Multiclass | Regression Evaluation, Local vs Federated Comparison.
 
 5. Secure Protocol: Provides multiple security protocols for secure multi-party computing and interaction between participants.
 
@@ -194,10 +194,27 @@ Alogorithm List
 Secure Protocol
 ---------------
 
+* `Encrypt`_
 
-.. toctree::
-   :maxdepth: 2
+   - `Paillier encryption`_
+   - `Affine Homomorphic Encryption`_
+   - `IterativeAffine Homomorphic Encryption`_
+   - `RSA encryption`_
+   - `Fake encryption`_
 
-   secureprotol/README
-   
+* `Encode`_
 
+* `Diffne Hellman Key Exchange`_
+
+* `SecretShare MPC Protocol(SPDZ)`_
+
+
+.. _Encrypt: secureprotol/README.rst#encrypt
+.. _Paillier encryption: secureprotol/README.rst#paillier-encryption
+.. _Affine Homomorphic Encryption: secureprotol/README.rst#affine-homomorphic-encryption
+.. _IterativeAffine Homomorphic Encryption: secureprotol/README.rst#iterativeaffine-homomorphic-encryption
+.. _RSA encryption: secureprotol/README.rst#rst-encryption
+.. _Fake encryption: secureprotol/README.rst#fake-encryption
+.. _Encode: secureprotol/README.rst#encode
+.. _Diffne Hellman Key Exchange: secureprotol/README.rst#diffne-hellman-key-exchange
+.. _SecretShare MPC Protocol(SPDZ): secureprotol/README.rst#secretshare-mpc-protocol-spdz

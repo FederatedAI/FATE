@@ -15,10 +15,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
+import copy
+
 from arch.api.utils import log_utils
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.util.component_properties import ComponentProperties
 from federatedml.util.param_extract import ParamExtract
+from federatedml.statistic.data_overview import header_alignment, check_legal_schema
 
 LOGGER = log_utils.getLogger()
 
@@ -38,6 +42,7 @@ class ModelBase(object):
         self.cv_fold = 0
         self.validation_freqs = None
         self.component_properties = ComponentProperties()
+        self._summary = dict()
 
     def _init_runtime_parameters(self, component_parameters):
         param_extractor = ParamExtract()
@@ -100,7 +105,6 @@ class ModelBase(object):
         self.check_consistency()
 
 
-
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary",
                              pos_label=1)
@@ -108,7 +112,7 @@ class ModelBase(object):
     def check_consistency(self):
         if not type(self.data_output) in ["DTable", "RDDTable"]:
             return
-        if self.component_properties.input_data_count + self.component_properties.input_validate_data_count != \
+        if self.component_properties.input_data_count + self.component_properties.input_eval_data_count != \
                 self.data_output.count():
             raise ValueError("Input data count does not match with output data count")
 
@@ -179,6 +183,43 @@ class ModelBase(object):
                                    "sid_name": schema.get('sid_name')}
         return predict_data
 
+
+    def predict_score_to_output(self, data_instances, predict_score, classes=None, threshold=0.5):
+        """
+        get predict result output
+        :param data_instances: table, data used for prediction
+        :param predict_score: table, probability scores
+        :param classes: list or None, all classes/label names
+        :param threshold: float, predict threshold, used for binary label
+        :return:
+        """
+        # regression
+        if classes is None:
+            predict_result = data_instances.join(predict_score, lambda d, pred: [d.label, pred, pred, {"label": pred}])
+        # binary
+        elif isinstance(classes, list) and len(classes) == 2:
+            class_neg, class_pos = classes[0], classes[1]
+            pred_label = predict_score.mapValues(lambda x: class_pos if x > threshold else class_neg)
+            predict_result = data_instances.mapValues(lambda x: x.label)
+            predict_result = predict_result.join(predict_score, lambda x, y: (x, y))
+            class_neg_name, class_pos_name = str(class_neg), str(class_pos)
+            predict_result = predict_result.join(pred_label, lambda x, y: [x[0], y, x[1],
+                                                                           {class_neg_name: (1 - x[1]),
+                                                                            class_pos_name: x[1]}])
+
+        # multi-label: input = array of predicted score of all labels
+        elif isinstance(classes, list) and len(classes) > 2:
+            #pred_label = predict_score.mapValues(lambda x: classes[x.index(max(x))])
+            classes = [str(val) for val in classes]
+            predict_result = data_instances.mapValues(lambda x: x.label)
+            predict_result = predict_result.join(predict_score, lambda x, y: [x, int(classes[y.argmax()]),
+                                                                              y.max(), dict(zip(classes, list(y)))])
+        else:
+            raise ValueError(f"Model's classes type is {type(classes)}, classes must be None or list.")
+
+        return predict_result
+
+
     def callback_meta(self, metric_name, metric_namespace, metric_meta):
         if self.need_cv:
             metric_name = '.'.join([metric_name, str(self.cv_fold)])
@@ -205,6 +246,60 @@ class ModelBase(object):
     def set_cv_fold(self, cv_fold):
         self.cv_fold = cv_fold
 
+    def summary(self):
+        return copy.deepcopy(self._summary)
+
+    def set_summary(self, new_summary):
+        """
+        model summary setter
+        :param new_summary: dict, summary to replace original summary
+        :return:
+        """
+        if not isinstance(new_summary, dict):
+            raise ValueError(f"summary should be of dict type, received {type(new_summary)} instead.")
+        self._summary = copy.deepcopy(new_summary)
+
+    def add_summary(self, new_key, new_value):
+        """
+        add key:value pair to model summary
+        :param new_key: str
+        :param new_value: object
+        :return:
+        """
+        original_value = self._summary.get(new_key, None)
+        if original_value is not None:
+            LOGGER.warning(f"{new_key} already exists in model summary."
+                           f"Corresponding value {original_value} will be replaced by {new_value}")
+        self._summary[new_key] = new_value
+        LOGGER.debug(f"{new_key}: {new_value} added to summary.")
+
+    def merge_summary(self, new_content, suffix=None, suffix_sep='_'):
+        """
+        merge new content into model summary
+        :param new_content: dict, content to be added into model summary
+        :param suffix: string or None, suffix used to create new key if any key in new_content already exists in model summary
+        :param suffix_sep: string, default '_', suffix separator used to create new key
+        :return:
+        """
+        if not isinstance(new_content, dict):
+            raise ValueError(f"To merge new content into model summary, "
+                             f"value must be of dict type, received {type(new_content)} instead.")
+        new_summary = self.summary()
+        keyset = new_summary.keys() | new_content.keys()
+        for key in keyset:
+            if key in new_summary and key in new_content:
+                if suffix is not None:
+                    new_key = f"{key}{suffix_sep}{suffix}"
+                else:
+                    new_key = key
+                new_value = new_content.get(key)
+                new_summary[new_key] = new_value
+            elif key in new_content:
+                new_summary[key] = new_content.get(key)
+            else:
+                pass
+        self.set_summary(new_summary)
+
     @staticmethod
     def extract_data(data: dict):
         LOGGER.debug("In extract_data, data input: {}".format(data))
@@ -212,4 +307,30 @@ class ModelBase(object):
             return data
         if len(data) == 1:
             return list(data.values())[0]
+        return data
+
+    @staticmethod
+    def check_schema_content(schema):
+        """
+        check for repeated header & illegal/non-printable chars except for space
+        allow non-ascii chars
+        :param schema: dict
+        :return:
+        """
+        check_legal_schema(schema)
+
+    @staticmethod
+    def align_data_header(data_instances, pre_header):
+        """
+        align features of given data, raise error if value in given schema not found
+        :param data_instances: data table
+        :param pre_header: list, header of model
+        :return: dtable, aligned data
+        """
+        result_data = header_alignment(data_instances=data_instances, pre_header=pre_header)
+        return result_data
+      
+    def pass_data(data):
+        if isinstance(data, dict) and len(data) >= 1:
+            data = list(data.values())[0]
         return data

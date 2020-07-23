@@ -66,13 +66,16 @@ class PipeLine(object):
 
         return initiator_conf
 
+    def get_train_job_id(self):
+        return self._train_job_id
+
     def set_roles(self, guest=None, host=None, arbiter=None):
         local_parameters = copy.deepcopy(locals())
         for role in local_parameters:
             print("locals:", local_parameters)
             if role == 'self':
                 continue
- 
+
             party_id = local_parameters.get(role)
             if party_id is None:
                 continue
