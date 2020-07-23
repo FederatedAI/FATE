@@ -342,7 +342,7 @@ def get_component_summary():
     summary = tracker.get_component_summary()
     if summary:
         with open(request_data.get('output_path'), 'w') as fout:
-            fout.write(json.dumps(json_loads(summary), indent=4))
+            fout.write(json.dumps(summary, indent=4))
         return get_json_result(retmsg="New predict dsl file has been generated successfully. "
                                       "File path is: {}.".format(request_data.get("output_path")))
     return get_json_result(retcode=100,
