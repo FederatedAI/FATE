@@ -15,6 +15,7 @@
 #
 import io
 import os
+import json
 import tarfile
 
 from flask import Flask, request, send_file
@@ -22,9 +23,11 @@ from flask import Flask, request, send_file
 from arch.api.utils.core_utils import json_loads
 from fate_flow.driver.job_controller import JobController
 from fate_flow.driver.task_scheduler import TaskScheduler
+from fate_flow.driver.dsl_parser import DSLParser
 from fate_flow.manager import data_manager
 from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT
 from fate_flow.utils import job_utils, detect_utils
+from fate_flow.utils.job_utils import get_dsl_parser_by_version
 from fate_flow.utils.api_utils import get_json_result, request_execute_server
 from fate_flow.entity.constant_config import WorkMode, JobStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -183,3 +186,29 @@ def clean_job():
 def clean_queue():
     TaskScheduler.clean_queue()
     return get_json_result(retcode=0, retmsg='success')
+
+
+@manager.route('/dsl/generate', methods=['POST'])
+def dsl_generator():
+    try:
+        data = request.json
+        cpn_str = data.get("cpn_str", "")
+        if not cpn_str:
+            raise Exception("Component list should not be empty.")
+        if isinstance(cpn_str, list):
+            cpn_list = cpn_str
+        else:
+            if (cpn_str.find("/") and cpn_str.find("\\")) != -1:
+                raise Exception("Component list string should not contain '/' or '\\'.")
+            cpn_str = cpn_str.replace(" ", "").replace("\n", "").strip(",[]")
+            cpn_list = cpn_str.split(",")
+        train_dsl = json_loads(data.get("train_dsl"))
+        parser = get_dsl_parser_by_version("v1")
+        predict_dsl = parser.deploy_component(cpn_list, train_dsl)
+        with open(data.get("output_path"), "w") as fout:
+            fout.write(json.dumps(predict_dsl, indent=4))
+    except Exception as e:
+        return get_json_result(retcode=100, retmsg=str(e))
+    else:
+        return get_json_result(retmsg="New predict dsl file has been generated successfully. "
+                                      "File path is: {}.".format(data.get("output_path")))

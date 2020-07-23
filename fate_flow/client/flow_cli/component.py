@@ -17,7 +17,8 @@ import os
 import click
 from contextlib import closing
 from fate_flow.utils import detect_utils, cli_args
-from fate_flow.utils.cli_utils import prettify, preprocess, download_from_request, access_server
+from fate_flow.utils.cli_utils import (prettify, preprocess, download_from_request,
+                                       access_server, check_output_path)
 
 
 @click.group(short_help="Component Operations")
@@ -31,26 +32,24 @@ def component(ctx):
     pass
 
 
-@component.command(short_help="List Components Command")
-# @click.argument('job_id', metavar="<JOB_ID>")
+@component.command("list", short_help="List Components Command")
 @cli_args.JOBID_REQUIRED
 @click.pass_context
 def list(ctx, **kwargs):
     """
-    - COMMAND DESCRIPTION:
+    \b
+    - DESCRIPTION:
+        List components of a specified job.
 
-    List components of a specified job.
-
+    \b
+    - USAGE:
+        flow component list -j $JOB_ID
     """
     config_data, dsl_data = preprocess(**kwargs)
     access_server('post', ctx, 'tracking/component/list', config_data)
 
 
-@component.command(short_help="Component Metrics Command")
-# @click.argument('job_id', metavar="<JOB_ID>")
-# @click.argument('role', metavar="<ROLE>")
-# @click.argument('party_id', metavar="<PARTY_ID>")
-# @click.argument('component_name', metavar="<COMPONENT_NAME>")
+@component.command("metrics", short_help="Component Metrics Command")
 @cli_args.JOBID_REQUIRED
 @cli_args.ROLE_REQUIRED
 @cli_args.PARTYID_REQUIRED
@@ -58,10 +57,13 @@ def list(ctx, **kwargs):
 @click.pass_context
 def metrics(ctx, **kwargs):
     """
-    - COMMAND DESCRIPTION:
+    \b
+    - DESCRIPTION:
+        Query the List of Metrics.
 
-    Query the List of Metrics.
-
+    \b
+    - USAGE:
+        flow component metrics -j $JOB_ID -r host -p 10000 -cpn hetero_feature_binning_0
     """
     config_data, dsl_data = preprocess(**kwargs)
     detect_utils.check_config(config=config_data,
@@ -69,11 +71,7 @@ def metrics(ctx, **kwargs):
     access_server('post', ctx, 'tracking/component/metrics', config_data)
 
 
-@component.command(short_help="Component Metric All Command")
-# @click.argument('job_id', metavar="<JOB_ID>")
-# @click.argument('role', metavar="<ROLE>")
-# @click.argument('party_id', metavar="<PARTY_ID>")
-# @click.argument('component_name', metavar="<COMPONENT_NAME>")
+@component.command("metric-all", short_help="Component Metric All Command")
 @cli_args.JOBID_REQUIRED
 @cli_args.ROLE_REQUIRED
 @cli_args.PARTYID_REQUIRED
@@ -81,17 +79,13 @@ def metrics(ctx, **kwargs):
 @click.pass_context
 def metric_all(ctx, **kwargs):
     """
-    - COMMAND DESCRIPTION:
-
-    Query All Metric Data.
-
-    - REQUIRED ARGUMENTS:
+    \b
+    - DESCRIPTION:
+        Query All Metric Data.
 
     \b
-    <JOB_ID> : A valid job id
-    <ROLE> : Role
-    <PARTY_ID> : Party ID
-    <COMPONENT_NAME> : Component Name
+    - USAGE:
+        flow component metric-all -j $JOB_ID -r host -p 10000 -cpn hetero_feature_binning_0
     """
     config_data, dsl_data = preprocess(**kwargs)
     detect_utils.check_config(config=config_data,
@@ -99,22 +93,23 @@ def metric_all(ctx, **kwargs):
     access_server('post', ctx, 'tracking/component/metric/all', config_data)
 
 
-@component.command(short_help="Delete Metric Command")
+@component.command("metric-delete", short_help="Delete Metric Command")
 @click.option('-d', '--date', type=click.STRING,
               help="An 8-digit valid date, format like 'YYYYMMDD'")
-# @click.option('-j', '--job_id', type=click.INT,
-#               help="Job ID")
 @cli_args.JOBID
 @click.pass_context
 def metric_delete(ctx, **kwargs):
     """
-    - COMMAND DESCRIPTION:
+    \b
+    - DESCRIPTION:
+        Delete specified metric.
+        If you input both two optional arguments, the 'date' argument will be detected in priority,
+        while the job id will be ignored.
 
     \b
-    Delete specified metric.
-    If you input both two optional arguments, the 'date' argument will be detected in priority,
-    while the job id will be ignored.
-
+    - USAGE:
+        flow component metric-delete -d 20200101
+        flow component metric-delete -j $JOB_ID
     """
     config_data, dsl_data = preprocess(**kwargs)
     if config_data.get('date'):
@@ -122,11 +117,7 @@ def metric_delete(ctx, **kwargs):
     access_server('post', ctx, 'tracking/component/metric/delete', config_data)
 
 
-@component.command(short_help="Component Parameters Command")
-# @click.argument('job_id', metavar="<JOB_ID>")
-# @click.argument('role', metavar="<ROLE>")
-# @click.argument('party_id', metavar="<PARTY_ID>")
-# @click.argument('component_name', metavar="<COMPONENT_NAME>")
+@component.command("parameters", short_help="Component Parameters Command")
 @cli_args.JOBID_REQUIRED
 @cli_args.ROLE_REQUIRED
 @cli_args.PARTYID_REQUIRED
@@ -134,10 +125,13 @@ def metric_delete(ctx, **kwargs):
 @click.pass_context
 def parameters(ctx, **kwargs):
     """
-    - COMMAND DESCRIPTION:
+    \b
+    - DESCRIPTION:
+        Query the parameters of a specified component.
 
-    Query the parameters of a specified component.
-
+    \b
+    - USAGE:
+        flow component parameters -j $JOB_ID -r host -p 10000 -cpn hetero_feature_binning_0
     """
     config_data, dsl_data = preprocess(**kwargs)
     detect_utils.check_config(config=config_data,
@@ -145,12 +139,7 @@ def parameters(ctx, **kwargs):
     access_server('post', ctx, 'tracking/component/parameters', config_data)
 
 
-@component.command(short_help="Component Output Data Command")
-# @click.argument('job_id', metavar="<JOB_ID>")
-# @click.argument('role', metavar="<ROLE>")
-# @click.argument('party_id', metavar="<PARTY_ID>")
-# @click.argument('component_name', metavar="<COMPONENT_NAME>")
-# @click.argument('output_path', type=click.Path(), metavar="<OUTPUT_PATH>")
+@component.command("output-data", short_help="Component Output Data Command")
 @cli_args.JOBID_REQUIRED
 @cli_args.ROLE_REQUIRED
 @cli_args.PARTYID_REQUIRED
@@ -160,10 +149,13 @@ def parameters(ctx, **kwargs):
 @click.pass_context
 def output_data(ctx, **kwargs):
     """
-    - COMMAND DESCRIPTION:
+    \b
+    - DESCRIPTION:
+        Download the Output Data of A Specified Component.
 
-    Download the Output Data of A Specified Component.
-
+    \b
+    - USAGE:
+        flow component output-data -j $JOB_ID -r host -p 10000 -cpn hetero_feature_binning_0 --output-path ./examples/
     """
     config_data, dsl_data = preprocess(**kwargs)
     detect_utils.check_config(config=config_data,
@@ -189,11 +181,7 @@ def output_data(ctx, **kwargs):
     prettify(response)
 
 
-@component.command(short_help="Component Output Model Command")
-# @click.argument('job_id', metavar="<JOB_ID>")
-# @click.argument('role', metavar="<ROLE>")
-# @click.argument('party_id', metavar="<PARTY_ID>")
-# @click.argument('component_name', metavar="<COMPONENT_NAME>")
+@component.command("output-model", short_help="Component Output Model Command")
 @cli_args.JOBID_REQUIRED
 @cli_args.ROLE_REQUIRED
 @cli_args.PARTYID_REQUIRED
@@ -201,10 +189,13 @@ def output_data(ctx, **kwargs):
 @click.pass_context
 def output_model(ctx, **kwargs):
     """
-    - COMMAND DESCRIPTION:
+    \b
+    - DESCRIPTION:
+        Query the Model of A Speicied Component.
 
-    Query the Model of A Speicied Component.
-
+    \b
+    - USAGE:
+        flow component output-model -j $JOB_ID -r host -p 10000 -cpn hetero_feature_binning_0
     """
     config_data, dsl_data = preprocess(**kwargs)
     detect_utils.check_config(config=config_data,
@@ -212,11 +203,7 @@ def output_model(ctx, **kwargs):
     access_server('post', ctx, 'tracking/component/output/model', config_data)
 
 
-@component.command(short_help="Component Output Data Table Command")
-# @click.argument('job_id', metavar="<JOB_ID>")
-# @click.argument('role', metavar="<ROLE>")
-# @click.argument('party_id', metavar="<PARTY_ID>")
-# @click.argument('component_name', metavar="<COMPONENT_NAME>")
+@component.command("output-data-table", short_help="Component Output Data Table Command")
 @cli_args.JOBID_REQUIRED
 @cli_args.ROLE_REQUIRED
 @cli_args.PARTYID_REQUIRED
@@ -224,12 +211,39 @@ def output_model(ctx, **kwargs):
 @click.pass_context
 def output_data_table(ctx, **kwargs):
     """
-    - COMMAND DESCRIPTION:
+    \b
+    - DESCRIPTION:
+        View Table Name and Namespace.
 
-    View Table Name and Namespace.
-
+    \b
+    - USAGE:
+        flow component output-data-table -j $JOB_ID -r host -p 10000 -cpn hetero_feature_binning_0
     """
     config_data, dsl_data = preprocess(**kwargs)
     detect_utils.check_config(config=config_data,
                               required_arguments=['job_id', 'component_name', 'role', 'party_id'])
     access_server('post', ctx, 'tracking/component/output/data/table', config_data)
+
+
+@component.command("download-summary", short_help="Download Component Summary Command")
+@cli_args.JOBID_REQUIRED
+@cli_args.ROLE_REQUIRED
+@cli_args.PARTYID_REQUIRED
+@cli_args.COMPONENT_NAME_REQUIRED
+@cli_args.OUTPUT_PATH
+@click.pass_context
+def download_summary(ctx, **kwargs):
+    """
+    \b
+    - DESCRIPTION:
+        Download summary of a specified component and save it as a json file.
+
+    \b
+    - USAGE:
+        flow component download-summary -j $JOB_ID -r host -p 10000 -cpn hetero_feature_binning_0 -o ./examples/summary.json
+    """
+    config_data, dsl_data = preprocess(**kwargs)
+    detect_utils.check_config(config=config_data,
+                              required_arguments=['job_id', 'component_name', 'role', 'party_id', 'output_path'])
+    config_data['output_path'] = check_output_path(kwargs.get('output_path'))
+    access_server('post', ctx, 'tracking/component/summary/download', config_data)

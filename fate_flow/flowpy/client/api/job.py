@@ -18,7 +18,7 @@ import json
 import time
 from contextlib import closing
 from fate_flow.flowpy.client.api.base import BaseFlowAPI
-from fate_flow.flowpy.utils import preprocess, check_config, download_from_request
+from fate_flow.flowpy.utils import preprocess, check_config, download_from_request, check_output_path
 
 
 class Job(BaseFlowAPI):
@@ -112,3 +112,32 @@ class Job(BaseFlowAPI):
             else:
                 response = response.json()
         return response
+
+    def generate_dsl(self, train_dsl_path, output_path, cpn_file_path=None, cpn_list: list = None):
+        kwargs = locals()
+        if not os.path.exists(kwargs.get("train_dsl_path")):
+            raise Exception("Train dsl file not exists.")
+
+        if kwargs.get("cpn_list"):
+            cpn_str = kwargs.get("cpn_list")
+        elif kwargs.get("cpn_file_path"):
+            with open(kwargs.get("cpn_file_path"), "r") as fp:
+                cpn_str = fp.read()
+        else:
+            cpn_str = ""
+
+        with open(kwargs.get("train_dsl_path"), "r") as ft:
+            train_dsl = ft.read()
+
+        config_data = {
+            "cpn_str": cpn_str,
+            "train_dsl": train_dsl,
+            "output_path": check_output_path(kwargs.get("output_path"))
+        }
+
+        res = self._post(url="job/dsl/generate", handle_result=True, json=config_data)
+        if res["retcode"] == 0:
+            with open(config_data["output_path"], "r") as fin:
+                res["data"] = json.loads(fin.read())
+        return res
+
