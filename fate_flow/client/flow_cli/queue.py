@@ -13,31 +13,27 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import click
+from fate_flow.utils.cli_utils import preprocess, access_server
 
 
-class Data(object):
-    def __init__(self, data=None, train_data=None, validate_data=None, test_data=None):
-        self.data = data
-        self.train_data = train_data
-        self.eval_data = validate_data
-        self.test_data = test_data
-
+@click.group(short_help="Queue Operations")
+@click.pass_context
+def queue(ctx):
     """
-    @property
-    def train_data(self):
-        return self._train_data
-
-    @property
-    def validate_data(self):
-        return self._validate_data
-
-    @property
-    def test_data(self):
-        return self._test_data
-
-    @property
-    def data(self):
-        return self._data
+    \b
+    Provides a queue operational command, which is 'clean'.
+    For more details, please check out the help text.
     """
+    pass
 
 
+@queue.command(short_help="Clean Queue Command")
+@click.pass_context
+def clean(ctx):
+    """
+    - COMMAND DESCRIPTION:
+
+    Queue Clean Command
+    """
+    access_server('post', ctx, "job/clean/queue", json={})

@@ -13,31 +13,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from setuptools import setup, find_packages
 
-
-class Data(object):
-    def __init__(self, data=None, train_data=None, validate_data=None, test_data=None):
-        self.data = data
-        self.train_data = train_data
-        self.eval_data = validate_data
-        self.test_data = test_data
-
-    """
-    @property
-    def train_data(self):
-        return self._train_data
-
-    @property
-    def validate_data(self):
-        return self._validate_data
-
-    @property
-    def test_data(self):
-        return self._test_data
-
-    @property
-    def data(self):
-        return self._data
-    """
-
-
+setup(
+    name='flow-client',
+    version='0.1',
+    packages=find_packages(),
+    include_package_data=True,
+    install_requires=['Click', 'six', 'ruamel.yaml', 'cachetools',
+                      'python-dotenv', 'kazoo', 'requests', 'requests_toolbelt'],
+    entry_points='''
+        [console_scripts]
+        flow=fate_flow.client.flow:flow_cli
+    ''',
+)
