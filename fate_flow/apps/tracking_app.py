@@ -341,10 +341,13 @@ def get_component_summary():
                        role=request_data['role'], party_id=request_data['party_id'])
     summary = tracker.get_component_summary()
     if summary:
-        with open(request_data.get('output_path'), 'w') as fout:
-            fout.write(json.dumps(json_loads(summary), indent=4))
-        return get_json_result(retmsg="New predict dsl file has been generated successfully. "
-                                      "File path is: {}.".format(request_data.get("output_path")))
+        if request_data.get('output_path'):
+            with open(request_data.get('output_path'), 'w') as fout:
+                fout.write(json.dumps(summary, indent=4))
+            return get_json_result(retmsg="New predict dsl file has been generated successfully. "
+                                          "File path is: {}.".format(request_data.get("output_path")))
+        else:
+            return get_json_result(data=summary)
     return get_json_result(retcode=100,
                            retmsg="No component summary found, please check if arguments are specified correctly.")
 

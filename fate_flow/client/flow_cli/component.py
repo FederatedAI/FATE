@@ -225,7 +225,7 @@ def output_data_table(ctx, **kwargs):
     access_server('post', ctx, 'tracking/component/output/data/table', config_data)
 
 
-@component.command("download-summary", short_help="Download Component Summary Command")
+@component.command("get-summary", short_help="Download Component Summary Command")
 @cli_args.JOBID_REQUIRED
 @cli_args.ROLE_REQUIRED
 @cli_args.PARTYID_REQUIRED
