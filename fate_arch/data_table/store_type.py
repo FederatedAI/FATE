@@ -14,7 +14,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_arch.session import Backend
+from fate_arch.common import Backend
 
 
 class StoreTypes(object):

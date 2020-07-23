@@ -20,10 +20,12 @@ from typing import Iterable
 
 import six
 
-from arch.api.session import LOGGER
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
-from fate_arch.db.db_models import DB, MachineLearningDataSchema
 from fate_arch._interface import AddressABC
+from fate_arch.common.log import getLogger
+from fate_arch.db.db_models import DB, MachineLearningDataSchema
+
+LOGGER = getLogger()
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -206,5 +208,3 @@ class MysqlAddress(AddressABC):
         self.port = port
         self.db = db
         self.name = name
-
-
