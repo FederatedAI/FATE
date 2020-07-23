@@ -30,7 +30,4 @@ class HeteroFeatureSelection(Component, FeatureSelectionParam):
         self.output = Output(self.name, has_model=False)
         self._module_name = "HeteroFeatureSelection"
 
-    def summary(self, data, metric_keyword):
-        # To be implemented
-        pass
 
