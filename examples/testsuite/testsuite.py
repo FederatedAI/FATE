@@ -32,6 +32,7 @@ def main():
     parser.add_argument("-work_mode", choices=[0, 1], type=int)
     parser.add_argument("-client", choices=["flowpy", "rest"], type=str)
     parser.add_argument("-replace", type=str)
+    parser.add_argument("-exclude", nargs="+", type=str)
     args = parser.parse_args()
     _add_logger(args.name)
     path = Path(args.path)
@@ -46,17 +47,28 @@ def main():
         hook = _replace_hook(json.loads(args.replace))
 
     with Clients(config_path=Path(args.config), drop=args.drop, **config_overwrite) as clients:
-        if path.is_file():
-            if path.name.endswith("testsuite.json"):
-                paths = [path]
-            else:
-                LOGGER.warning(f"{path} is file, but not end with `testsuite.json`, skip")
-                return
-        else:
-            paths = path.glob(f"**/*testsuite.json")
-        paths = [path.resolve() for path in paths]
+        paths = _find_testsuite_files(path)
+
+        # exclude
+        if args.exclude is not None:
+            exclude_paths = set()
+            for p in args.exclude:
+                exclude_paths.update(_find_testsuite_files(Path(p).resolve()))
+            paths = [p for p in paths if p not in exclude_paths]
         testsuites = {path.__str__(): _TestSuite.load(path, hook=hook) for path in paths}
         clients.run_testsuites(testsuites)
+
+
+def _find_testsuite_files(path):
+    if path.is_file():
+        if path.name.endswith("testsuite.json"):
+            paths = [path]
+        else:
+            LOGGER.warning(f"{path} is file, but not end with `testsuite.json`, skip")
+            paths = []
+    else:
+        paths = path.glob(f"**/*testsuite.json")
+    return [p.resolve() for p in paths]
 
 
 def _replace_hook(mapping: dict):
