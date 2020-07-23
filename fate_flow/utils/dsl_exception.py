@@ -70,6 +70,7 @@ class ModuleConfigError(ModuleException):
                                                                             self.other_info[0])
 
 
+# add
 class DataNotExistInSubmitConfError(BaseDSLException):
     def __str__(self):
         return "{} does not exist in submit conf's data, please check!".format(self.msg)
@@ -179,11 +180,20 @@ class RoleParameterNotConsistencyError(ParameterException):
         return "Role {} role parameter {} should be a list of same length with roles".format(self.role, self.parameter)
 
 
+# add
 class ParameterCheckError(ModuleException):
     def __str__(self):
         return "Component {}, module {}, does not pass component check, error msg is {}".format(self.component,
                                                                                                 self.module,
                                                                                                 self.other_info)
+
+
+# add
+class RedundantParameterError(ParameterCheckError):
+    def __str__(self):
+        return "Component {}, module {}, has redundant parameter {}".format(self.component,
+                                                                            self.module,
+                                                                            self.other_info)
 
 
 # add
@@ -230,6 +240,14 @@ class NamingIndexError(ModuleException):
 
 
 # add
+class NamingFormatError(ModuleException):
+    def __str__(self):
+        return "Component name {}'is not illegal, it should be consits of letter, digit, '-'  and '_'".format(self.component)
+
+
+# add
 class ComponentMultiMappingError(ModuleException):
     def __str__(self):
         return "Component prefix {} should be used for only one module, but another".format(self.component)
+
+
