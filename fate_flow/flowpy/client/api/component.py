@@ -94,7 +94,7 @@ class Component(BaseFlowAPI):
                      required_arguments=['job_id', 'component_name', 'role', 'party_id'])
         return self._post(url='tracking/component/output/data/table', json=config_data)
 
-    def download_summary(self, job_id, role, party_id, component_name, output_path):
+    def get_summary(self, job_id, role, party_id, component_name, output_path):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
         check_config(config=config_data,
