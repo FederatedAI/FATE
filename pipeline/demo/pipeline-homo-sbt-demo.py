@@ -1,18 +1,17 @@
-from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.input import Input
-from pipeline.component.homo_secureboost import HomoSecureBoost
-from pipeline.interface.data import Data
 from pipeline.backend.config import Backend
 from pipeline.backend.config import WorkMode
-
+from pipeline.backend.pipeline import PipeLine
+from pipeline.component.dataio import DataIO
+from pipeline.component.homo_secureboost import HomoSecureBoost
+from pipeline.component.input import Input
+from pipeline.interface.data import Data
 
 guest = 9999
 host = 10000
 arbiter = 10002
 
-guest_train_data = {"name": "homo_breast_guest", "namespace": "homo_breast_guest"}
-host_train_data = {"name": "homo_breast_host", "namespace": "homo_breast_host"}
+guest_train_data = {"name": "breast_homo_guest", "namespace": "experiment"}
+host_train_data = {"name": "breast_homo_host", "namespace": "experiment"}
 
 input_0 = Input(name="train_data")
 print ("get input_0's init name {}".format(input_0.name))

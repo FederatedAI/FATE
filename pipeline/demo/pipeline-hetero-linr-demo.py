@@ -1,21 +1,20 @@
-from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.input import Input
-from pipeline.component.intersection import Intersection
-from pipeline.component.hetero_linr import HeteroLinR
-from pipeline.interface.data import Data
 from pipeline.backend.config import Backend
 from pipeline.backend.config import WorkMode
-
+from pipeline.backend.pipeline import PipeLine
+from pipeline.component.dataio import DataIO
+from pipeline.component.hetero_linr import HeteroLinR
+from pipeline.component.input import Input
+from pipeline.component.intersection import Intersection
+from pipeline.interface.data import Data
 
 guest = 9999
 hosts = [10000, 10001]
 arbiter = 10002
 
-guest_train_data = {"name": "motor_mini_b", "namespace": "motor_mini"}
-host_train_data = [{"name": "motor_mini_a", "namespace": "motor_mini"},
-                   {"name": "motor_mini_a", "namespace": "motor_mini"},
-                   {"name": "motor_mini_a", "namespace": "motor_mini"}]
+guest_train_data = {"name": "motor_hetero_mini_guest", "namespace": "experiment"}
+host_train_data = [{"name": "motor_hetero_mini_host", "namespace": "experiment"},
+                   {"name": "motor_hetero_mini_host", "namespace": "experiment"},
+                   {"name": "motor_hetero_mini_host", "namespace": "experiment"}]
 
 input_0 = Input(name="train_data")
 print ("get input_0's init name {}".format(input_0.name))

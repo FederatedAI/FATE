@@ -1,20 +1,19 @@
-from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.input import Input
-from pipeline.component.intersection import Intersection
-from pipeline.component.hetero_lr import HeteroLR
-from pipeline.interface.data import Data
-from pipeline.interface.model import Model
 from pipeline.backend.config import Backend
 from pipeline.backend.config import WorkMode
-
+from pipeline.backend.pipeline import PipeLine
+from pipeline.component.dataio import DataIO
+from pipeline.component.hetero_lr import HeteroLR
+from pipeline.component.input import Input
+from pipeline.component.intersection import Intersection
+from pipeline.interface.data import Data
+from pipeline.interface.model import Model
 
 guest = 9999
 host = 10000
 arbiter = 10002
 
-guest_train_data = {"name": "breast_b", "namespace": "hetero"}
-host_train_data = {"name": "breast_a", "namespace": "hetero"}
+guest_train_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
+host_train_data = {"name": "breast_hetero_host", "namespace": "experiment"}
 
 input_0 = Input(name="train_data")
 input_1 = Input(name="validate_data")

@@ -39,12 +39,12 @@ class TaskInfo(object):
                 "Task {} is failed, jobid is {}, error_code is {}, error_msg is {}".format(name, self._jobid, et_code, ret_msg))
 
         data = data[0]
-        status = data.get("f_status", JobStatus.FAIL)
+        status = data.get("f_status", JobStatus.FAILED)
         if status == JobStatus.RUNNING:
             print("job {}, sub task {} is running".format(self._jobid, name))
             return
 
-        if status == JobStatus.FAIL:
+        if status == JobStatus.FAILED:
             raise ValueError(
                 "job {}, sub task {} is running".format(self._jobid, name))
 

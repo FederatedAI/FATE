@@ -1,19 +1,18 @@
-from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.input import Input
-from pipeline.component.intersection import Intersection
-from pipeline.component.hetero_poisson import HeteroPoisson
-from pipeline.interface.data import Data
 from pipeline.backend.config import Backend
 from pipeline.backend.config import WorkMode
-
+from pipeline.backend.pipeline import PipeLine
+from pipeline.component.dataio import DataIO
+from pipeline.component.hetero_poisson import HeteroPoisson
+from pipeline.component.input import Input
+from pipeline.component.intersection import Intersection
+from pipeline.interface.data import Data
 
 guest = 9999
 host = 10000
 arbiter = 10002
 
-guest_train_data = {"name": "dvisits_b", "namespace": "dvisits"}
-host_train_data = {"name": "dvisits_a", "namespace": "dvisits"}
+guest_train_data = {"name": "dvisits_hetero_guest", "namespace": "experiment"}
+host_train_data = {"name": "dvisits_hetero_host", "namespace": "experiment"}
 
 input_0 = Input(name="train_data")
 print ("get input_0's init name {}".format(input_0.name))
