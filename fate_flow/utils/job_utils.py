@@ -33,7 +33,7 @@ from arch.api.utils.core_utils import current_timestamp
 from arch.api.utils.core_utils import json_loads, json_dumps
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import DB, Job, Task, DataView
-from fate_flow.driver.dsl_parser import DSLParser
+from fate_flow.driver.dsl_parser import DSLParser, DSLParserV2
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.data_manager import query_data_view, delete_table, delete_metric_data
 from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE, MAX_CONCURRENT_JOB_RUN_HOST, LIMIT_ROLE
@@ -175,8 +175,9 @@ def get_job_dsl_parser_by_job_id(job_id):
             return None
 
 
-def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, train_runtime_conf=None, parser_version="v1"):
+def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, train_runtime_conf=None):
     # dsl_parser = DSLParser()
+    parser_version = str(runtime_conf.get('job_parameters', {}).get('version', '1'))
     dsl_parser = get_dsl_parser_by_version(parser_version)
     default_runtime_conf_path = os.path.join(file_utils.get_project_base_directory(),
                                              *['federatedml', 'conf', 'default_runtime_conf'])
@@ -192,12 +193,13 @@ def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, train_run
     return dsl_parser
 
 
-def get_dsl_parser_by_version(version="v1"):
-    if version not in ["v1"]:
-        raise Exception("{} version of dsl parser is not currently supported.".format(version))
+def get_dsl_parser_by_version(version: str = "1"):
     mapping = {
-        "v1": DSLParser()
+        "1": DSLParser(),
+        "2": DSLParserV2()
     }
+    if version not in mapping:
+        raise Exception("{} version of dsl parser is not currently supported.".format(version))
     return mapping[version]
 
 
