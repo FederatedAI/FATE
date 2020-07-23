@@ -15,8 +15,12 @@
         "guest": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "heart_nonscaled_noniid_guest", "namespace": "AIFEL_heart"}],
-                    "eval_data": [{"name": "heart_nonscaled_iid_valid", "namespace": "AIFEL_heart"}]
+                    "train_data": [{
+                      "name": "heart_nonscaled_hetero_guest",
+                      "namespace": "experiment"}],
+                    "eval_data": [{
+                      "name": "heart_nonscaled_hetero_test",
+                      "namespace": "experiment"}]
                 }
             },
 	        "dataio_0":{
@@ -61,8 +65,12 @@
         "host": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "heart_nonscaled_noniid_host", "namespace": "AIFEL_heart"}],
-                    "eval_data": [{"name": "heart_nonscaled_noniid_host", "namespace": "AIFEL_heart"}]
+                    "train_data": [
+                      {"name": "heart_nonscaled_hetero_host",
+                        "namespace": "experiment"}],
+                    "eval_data": [
+                      {"name": "heart_nonscaled_hetero_host",
+                        "namespace": "experiment"}]
                 }
             },
 	        "dataio_0":{
