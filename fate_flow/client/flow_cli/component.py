@@ -230,7 +230,8 @@ def output_data_table(ctx, **kwargs):
 @cli_args.ROLE_REQUIRED
 @cli_args.PARTYID_REQUIRED
 @cli_args.COMPONENT_NAME_REQUIRED
-@cli_args.OUTPUT_PATH
+@click.option("-o", "--output-path", type=click.Path(exists=False),
+              help="User specifies output directory path.")
 @click.pass_context
 def download_summary(ctx, **kwargs):
     """

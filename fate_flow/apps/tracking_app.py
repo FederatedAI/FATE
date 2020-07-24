@@ -18,6 +18,7 @@ import json
 import os
 import shutil
 import tarfile
+from datetime import datetime
 
 from flask import Flask, request, send_file
 from google.protobuf import json_format
@@ -342,10 +343,23 @@ def get_component_summary():
     summary = tracker.get_component_summary()
     if summary:
         if request_data.get('output_path'):
-            with open(request_data.get('output_path'), 'w') as fout:
-                fout.write(json.dumps(summary, indent=4))
-            return get_json_result(retmsg="New predict dsl file has been generated successfully. "
-                                          "File path is: {}.".format(request_data.get("output_path")))
+            abspath = os.path.abspath(request_data.get("output_path"))
+            if os.path.isdir(abspath):
+                fp = os.path.join(abspath, "summary_{}_{}.json".format(request_data['component_name'],
+                                                                       datetime.now().strftime('%Y%m%d%H%M%S')))
+                with open(fp, "w") as fout:
+                    fout.write(json.dumps(summary, indent=4))
+                return get_json_result(retmsg="{} summary has been stored successfully. "
+                                              "File path is: {}.".format(request_data['component_name'], fp))
+            elif os.path.isfile(abspath):
+                with open(request_data.get('output_path'), 'w') as fout:
+                    fout.write(json.dumps(summary, indent=4))
+                return get_json_result(retmsg="{} summary has been stored successfully. "
+                                              "File path is: {}.".format(request_data['component_name'],
+                                                                         request_data.get("output_path")))
+            else:
+                return get_json_result(retcode=100,
+                                       retmsg='Generating summary file failed. Output path is invalid.')
         else:
             return get_json_result(data=summary)
     return get_json_result(retcode=100,
