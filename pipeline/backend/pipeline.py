@@ -416,6 +416,7 @@ class PipeLine(object):
                     raise ValueError(
                         "deploy component parameters is wrong, expect str or Component object, but {} find".format(cpn))
 
-        self._predict_dsl = self._job_invoker.get_predict_dsl(train_dsl=self._train_dsl, cpn_list=deploy_cpns)
+        self._predict_dsl = self._job_invoker.get_predict_dsl(train_dsl=self._train_dsl, cpn_list=deploy_cpns,
+                                                              version=VERSION)
 
         return self

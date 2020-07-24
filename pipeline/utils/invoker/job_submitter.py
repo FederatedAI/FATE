@@ -260,14 +260,14 @@ class JobInvoker(object):
         except:
             print("Can not get output model, err msg is {}".format(result))
 
-    def get_predict_dsl(self, train_dsl, cpn_list):
+    def get_predict_dsl(self, train_dsl, cpn_list, version):
         result = None
         with tempfile.TemporaryDirectory() as job_dir:
             train_dsl_path = os.path.join(job_dir, "train_dsl.json")
             with open(train_dsl_path, "w") as fout:
                 fout.write(json.dumps(train_dsl))
 
-            result = self.client.job.generate_dsl(train_dsl_path=train_dsl_path, cpn_list=cpn_list)
+            result = self.client.job.generate_dsl(train_dsl_path=train_dsl_path, cpn_list=cpn_list, version=version)
 
         if result is None or 'retcode' not in result:
             raise ValueError("call flow generate dsl is failed, check if fate_flow server is start!")
