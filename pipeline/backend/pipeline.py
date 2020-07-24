@@ -252,7 +252,7 @@ class PipeLine(object):
             "job_type": job_type,
             "backend": backend.value,
             "work_mode": work_mode.value,
-            "version": version
+            "dsl_version": version
         }
 
         return job_parameters
@@ -281,7 +281,7 @@ class PipeLine(object):
         submit_conf["job_parameters"] = {
             "work_mode": work_mode.value,
             "backend": backend.value,
-            "version": VERSION
+            "dsl_version": VERSION
         }
 
         if job_type is not None:

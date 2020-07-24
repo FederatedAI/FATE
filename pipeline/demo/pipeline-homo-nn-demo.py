@@ -34,8 +34,6 @@ print("get input_0's name {}".format(input_0.name))
 pipeline.add_component(dataio_0, data=Data(data=input_0.data))
 pipeline.add_component(homo_nn_0, data=Data(train_data=dataio_0.output.data))
 
-pipeline.deploy_component([dataio_0, homo_nn_0])
-
 pipeline.compile()
 
 pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
@@ -53,7 +51,7 @@ print(pipeline.get_component("homo_nn_0").get_output_data())
 
 
 # predict
-
+pipeline.deploy_component([dataio_0, homo_nn_0])
 pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
                  feed_dict={input_0:
                                 {"guest":
