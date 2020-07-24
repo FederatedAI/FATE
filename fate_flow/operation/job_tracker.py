@@ -42,7 +42,7 @@ class Tracker(object):
                  component_name: str = None,
                  component_module_name: str = None,
                  task_id: str = None,
-                 task_version: str = None
+                 task_version: int = None
                  ):
         self.job_id = job_id
         self.role = role
@@ -60,6 +60,7 @@ class Tracker(object):
         self.component_name = component_name if component_name else 'pipeline'
         self.module_name = component_module_name if component_module_name else 'Pipeline'
         self.task_id = task_id
+        self.task_version = task_version
         self.table_namespace = '_'.join(
             ['fate_flow', 'tracking', 'data', self.job_id, self.role, str(self.party_id), self.component_name])
         self.job_table_namespace = '_'.join(
@@ -284,6 +285,7 @@ class Tracker(object):
                 tracking_metric.f_job_id = self.job_id
                 tracking_metric.f_component_name = self.component_name if not job_level else 'dag'
                 tracking_metric.f_task_id = self.task_id
+                tracking_metric.f_task_version = self.task_version
                 tracking_metric.f_role = self.role
                 tracking_metric.f_party_id = self.party_id
                 tracking_metric.f_metric_namespace = metric_namespace
@@ -300,7 +302,11 @@ class Tracker(object):
                 self.bulk_insert_model_data(TrackingMetric.model(table_index=self.get_table_index()),
                                             tracking_metric_data_source)
             except Exception as e:
-                schedule_logger(self.job_id).exception(e)
+                schedule_logger(self.job_id).exception("An exception where inserted metric {} of metric namespace: {} to database:\n{}".format(
+                    metric_name,
+                    metric_namespace,
+                    e
+                ))
 
     def bulk_insert_model_data(self, model, data_source):
         with DB.connection_context():

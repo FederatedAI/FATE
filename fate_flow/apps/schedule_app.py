@@ -17,7 +17,9 @@
 from flask import Flask, request
 
 from fate_flow.entity.constant import RetCode
-from fate_flow.operation.job_controller import JobController
+from fate_flow.controller.job_controller import JobController
+from fate_flow.controller.task_set_controller import TaskSetController
+from fate_flow.controller.task_controller import TaskController
 from fate_flow.operation.job_saver import JobSaver
 from fate_flow.settings import stat_logger
 from fate_flow.utils.api_utils import get_json_result
@@ -33,17 +35,11 @@ def internal_server_error(e):
     return get_json_result(retcode=RetCode.EXCEPTION_ERROR, retmsg=str(e))
 
 
+# Schedule API for job
 @manager.route('/<job_id>/<role>/<party_id>/create', methods=['POST'])
 @request_authority_certification
 def create_job(job_id, role, party_id):
     JobController.create_job(job_id=job_id, role=role, party_id=int(party_id), job_info=request.json)
-    return get_json_result(retcode=0, retmsg='success')
-
-
-@manager.route('/<job_id>/<role>/<party_id>/initialize', methods=['POST'])
-@request_authority_certification
-def initialize_job(job_id, role, party_id):
-    JobController.initialize_job(job_id=job_id, role=role, party_id=int(party_id))
     return get_json_result(retcode=0, retmsg='success')
 
 
@@ -59,6 +55,18 @@ def check_job(job_id, role, party_id):
 @manager.route('/<job_id>/<role>/<party_id>/start', methods=['POST'])
 def start_job(job_id, role, party_id):
     JobController.start_job(job_id=job_id, role=role, party_id=int(party_id))
+    return get_json_result(retcode=0, retmsg='success')
+
+
+@manager.route('/<job_id>/<role>/<party_id>/update', methods=['POST'])
+def update_job(job_id, role, party_id):
+    job_info = {
+        "job_id": job_id,
+        "role": role,
+        "party_id": party_id
+    }
+    job_info.update(request.json)
+    JobController.update_job(job_info=job_info)
     return get_json_result(retcode=0, retmsg='success')
 
 
@@ -91,30 +99,46 @@ def clean(job_id, role, party_id, roles, party_ids):
     return get_json_result(retcode=0, retmsg='success')
 
 
-@manager.route('/<job_id>/<task_set_id>/<role>/<party_id>/stop/<stop_status>', methods=['POST'])
-def stop_task_set(job_id, task_set_id, role, party_id, stop_status):
-    for task_set in JobSaver.query_task_set(job_id=job_id, task_set_id=task_set_id, role=role, party_id=party_id):
-        JobController.stop_task_set(task_set=task_set, stop_status=stop_status)
+# Schedule API for task set
+@manager.route('/<job_id>/<task_set_id>/<role>/<party_id>/update', methods=['POST'])
+def update_task_set(job_id, task_set_id, role, party_id):
+    task_set_info = {
+        "job_id": job_id,
+        "task_set_id": task_set_id,
+        "role": role,
+        "party_id": party_id
+    }
+    task_set_info.update(request.json)
+    TaskSetController.update_task_set(task_set_info=task_set_info)
     return get_json_result(retcode=0, retmsg='success')
 
 
+@manager.route('/<job_id>/<task_set_id>/<role>/<party_id>/stop/<stop_status>', methods=['POST'])
+def stop_task_set(job_id, task_set_id, role, party_id, stop_status):
+    for task_set in JobSaver.query_task_set(job_id=job_id, task_set_id=task_set_id, role=role, party_id=party_id):
+        TaskSetController.stop_task_set(task_set=task_set, stop_status=stop_status)
+    return get_json_result(retcode=0, retmsg='success')
+
+
+# Schedule API for task
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/start', methods=['POST'])
 @request_authority_certification
 def start_task(job_id, component_name, task_id, task_version, role, party_id):
-    JobController.start_task(job_id, component_name, task_id, task_version, role, party_id, request.json)
+    TaskController.start_task(job_id, component_name, task_id, task_version, role, party_id, request.json)
     return get_json_result(retcode=0, retmsg='success')
 
 
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/update', methods=['POST'])
 def update_task(job_id, component_name, task_id, task_version, role, party_id):
     task_info = {
+        "job_id": job_id,
         "task_id": task_id,
         "task_version": task_version,
         "role": role,
         "party_id": party_id,
     }
     task_info.update(request.json)
-    JobController.update_task(task_info=task_info)
+    TaskController.update_task(task_info=task_info)
     return get_json_result(retcode=0, retmsg='success')
 
 
@@ -122,13 +146,13 @@ def update_task(job_id, component_name, task_id, task_version, role, party_id):
 def stop_task(job_id, component_name, task_id, task_version, role, party_id, stop_status):
     tasks = job_utils.query_task(job_id=job_id, task_id=task_id, task_version=task_version, role=role, party_id=int(party_id))
     for task in tasks:
-        JobController.stop_task(task=task, stop_status=stop_status)
+        TaskController.stop_task(task=task, stop_status=stop_status)
     return get_json_result(retcode=0, retmsg='success')
 
 
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/input/args', methods=['POST'])
 def query_task_input_args(job_id, component_name, task_id, task_version, role, party_id):
-    task_input_args = JobController.query_task_input_args(job_id, task_id, role, party_id,
+    task_input_args = TaskController.query_task_input_args(job_id, task_id, role, party_id,
                                                           job_args=request.json.get('job_args', {}),
                                                           job_parameters=request.json.get('job_parameters', {}),
                                                           input_dsl=request.json.get('input', {}),

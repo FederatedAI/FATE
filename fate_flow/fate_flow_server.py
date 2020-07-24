@@ -37,7 +37,9 @@ from fate_flow.apps.schedule_app import manager as schedule_app_manager
 from fate_flow.apps.permission_app import manager as permission_app_manager
 from fate_flow.apps.version_app import manager as version_app_manager
 from fate_flow.db.db_models import init_database_tables
-from fate_flow.operation import job_trigger, job_controller, job_detector
+from fate_flow.operation import job_trigger, job_detector
+from fate_flow.controller import job_controller
+from fate_flow.scheduler import schedule_trigger
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.constant import WorkMode, ProcessRole
 from fate_flow.manager import queue_manager
@@ -105,6 +107,7 @@ if __name__ == '__main__':
     # start trigger
     trigger = job_trigger.JobTrigger(queue=RuntimeConfig.JOB_QUEUE, concurrent_num=MAX_CONCURRENT_JOB_RUN)
     trigger.start()
+    schedule_trigger.ScheduleTrigger(interval=1000).start()
     # start grpc server
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),
                          options=[(cygrpc.ChannelArgKey.max_send_message_length, -1),

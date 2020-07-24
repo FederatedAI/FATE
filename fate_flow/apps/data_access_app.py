@@ -23,9 +23,8 @@ from fate_flow.manager.data_manager import query_data_view
 from fate_flow.settings import stat_logger, USE_LOCAL_DATA, WORK_MODE
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils import detect_utils, job_utils, session_utils
-from fate_flow.operation.job_controller import JobController
+from fate_flow.controller.job_controller import JobController
 from fate_flow.utils.job_utils import get_job_configuration, generate_job_id, get_job_directory
-from fate_flow.entity.runtime_config import RuntimeConfig
 
 manager = Flask(__name__)
 

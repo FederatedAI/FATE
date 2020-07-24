@@ -98,6 +98,19 @@ class DataBaseModel(Model):
     def to_json(self):
         return self.__dict__['__data__']
 
+    def to_dict_info(self, only_primary_with: list = None):
+        model_info = self.__dict__["__data__"]
+        dict_info = {}
+        if not only_primary_with:
+            for k, v in model_info.items():
+                dict_info[k.lstrip("f_")] = v
+        else:
+            for k in self._meta.primary_key.field_names:
+                dict_info[k.lstrip("f_")] = model_info[k]
+            for k in only_primary_with:
+                dict_info[k] = model_info["f_%s" % k]
+        return dict_info
+
     def save(self, *args, **kwargs):
         if hasattr(self, "f_update_date"):
             self.f_update_date = datetime.datetime.now()
@@ -145,8 +158,6 @@ class Job(DataBaseModel):
     # this party configuration
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
-    f_party_status = CharField(max_length=50)
-    f_party_status_level = BigIntegerField()
     f_is_initiator = IntegerField(null=True, index=True, default=-1)
     f_run_ip = CharField(max_length=100)
     f_progress = IntegerField(null=True, default=0)
@@ -172,8 +183,6 @@ class TaskSet(DataBaseModel):
     # this party configuration
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
-    f_party_status = CharField(max_length=50)
-    f_party_status_level = BigIntegerField()
     f_create_time = BigIntegerField()
     f_update_time = BigIntegerField(null=True)
     f_start_time = BigIntegerField(null=True)
@@ -283,7 +292,8 @@ class TrackingMetric(DataBaseModel):
     f_id = BigAutoField(primary_key=True)
     f_job_id = CharField(max_length=25)
     f_component_name = TextField()
-    f_task_id = CharField(max_length=100)
+    f_task_id = CharField(max_length=100, null=True)
+    f_task_version = BigIntegerField(null=True)
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
     f_metric_namespace = CharField(max_length=180, index=True)

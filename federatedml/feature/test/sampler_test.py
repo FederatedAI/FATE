@@ -15,11 +15,10 @@
 #
 
 import numpy as np
-import random
 import unittest
 
 from arch.api import session
-from fate_flow.manager.tracking_manager import Tracker
+from fate_flow.operation.job_tracker import Tracker
 from federatedml.feature.instance import Instance
 from federatedml.feature.sampler import RandomSampler
 from federatedml.feature.sampler import StratifiedSampler

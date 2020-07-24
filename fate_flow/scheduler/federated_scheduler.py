@@ -28,18 +28,13 @@ class FederatedScheduler(object):
     The Scheduler sends commands to all,
     All report status to Scheduler
     """
+
+    # Job
     @classmethod
     def create_job(cls, job: Job):
-        job_info = {}
-        for k, v in job.to_json().items():
-            job_info[k.lstrip("f_")] = v
-        retcode, response = cls.job_command(job=job, command="create", command_body=job_info)
+        retcode, response = cls.job_command(job=job, command="create", command_body=job.to_dict_info())
         if retcode != 0:
             raise Exception("Create job failed: {}".format(json_dumps(response, indent=4)))
-
-    @classmethod
-    def initialize_job(cls, job):
-        return cls.job_command(job=job, command="initialize")
 
     @classmethod
     def check_job(cls, job):
@@ -53,6 +48,16 @@ class FederatedScheduler(object):
     @classmethod
     def start_job(cls, job):
         return cls.job_command(job=job, command="start")
+
+    @classmethod
+    def sync_job(cls, job, update_fields):
+        schedule_logger(job_id=job.f_job_id).info("Job {} is {}, sync to all party".format(job.f_job_id, job.f_status))
+        status_code, response = cls.job_command(job=job, command="update", command_body=job.to_dict_info(only_primary_with=update_fields))
+        if status_code == FederatedSchedulingStatusCode.SUCCESS:
+            schedule_logger(job_id=job.f_job_id).info("Sync job {} status {} to all party success".format(job.f_job_id, job.f_status))
+        else:
+            schedule_logger(job_id=job.f_job_id).info("Sync job {} status {} to all party failed: \n{}".format(job.f_job_id, job.f_status, response))
+        return status_code, response
 
     @classmethod
     def save_pipelined_model(cls, job):
@@ -107,9 +112,69 @@ class FederatedScheduler(object):
                     ))
         return cls.return_federated_response(federated_response=federated_response)
 
+    # TaskSet
+    @classmethod
+    def sync_task_set(cls, job, task_set, update_fields):
+        schedule_logger(job_id=task_set.f_job_id).info("Job {} task set {} is {}, sync to all party".format(task_set.f_job_id, task_set.f_task_set_id, task_set.f_status))
+        status_code, response = cls.task_set_command(job=job, task_set=task_set, command="update", command_body=task_set.to_dict_info(only_primary_with=update_fields))
+        if status_code == FederatedSchedulingStatusCode.SUCCESS:
+            schedule_logger(job_id=task_set.f_job_id).info("Sync job {} task set {} status {} to all party success".format(task_set.f_job_id, task_set.f_task_set_id, task_set.f_status))
+        else:
+            schedule_logger(job_id=task_set.f_job_id).info("Sync job {} task set {} status {} to all party failed: \n{}".format(task_set.f_job_id, task_set.f_task_set_id, task_set.f_status, response))
+        return status_code, response
+
+    @classmethod
+    def task_set_command(cls, job, task_set, command, command_body=None):
+        federated_response = {}
+        roles, job_initiator = job.f_runtime_conf["role"], job.f_runtime_conf['initiator']
+        for dest_role, dest_party_ids in roles.items():
+            federated_response[dest_role] = {}
+            for dest_party_id in dest_party_ids:
+                try:
+                    response = federated_api(job_id=job.f_job_id,
+                                             method='POST',
+                                             endpoint='/{}/schedule/{}/{}/{}/{}/{}'.format(
+                                                 API_VERSION,
+                                                 job.f_job_id,
+                                                 task_set.f_task_set_id,
+                                                 dest_role,
+                                                 dest_party_id,
+                                                 command
+                                             ),
+                                             src_party_id=job_initiator['party_id'],
+                                             dest_party_id=dest_party_id,
+                                             src_role=job_initiator['role'],
+                                             json_body=command_body if command_body else {},
+                                             work_mode=job.f_work_mode)
+                    federated_response[dest_role][dest_party_id] = response
+                except Exception as e:
+                    federated_response[dest_role][dest_party_id] = {
+                        "retcode": RetCode.FEDERATED_ERROR,
+                        "retmsg": "Federated schedule error, {}".format(str(e))
+                    }
+                if federated_response[dest_role][dest_party_id]["retcode"]:
+                    schedule_logger(job_id=job.f_job_id).error("An error occurred while {} the task set to role {} party {}: \n{}".format(
+                        command,
+                        dest_role,
+                        dest_party_id,
+                        federated_response[dest_role][dest_party_id]["retmsg"]
+                    ))
+        return cls.return_federated_response(federated_response=federated_response)
+
+    # Task
     @classmethod
     def start_task(cls, job, task, task_parameters):
         return cls.task_command(job=job, task=task, command="start", command_body=task_parameters)
+
+    @classmethod
+    def sync_task(cls, job, task, update_fields):
+        schedule_logger(job_id=task.f_job_id).info("Job {} task {} {} is {}, sync to all party".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_status))
+        status_code, response = cls.task_command(job=job, task=task, command="update", command_body=task.to_dict_info(only_primary_with=update_fields))
+        if status_code == FederatedSchedulingStatusCode.SUCCESS:
+            schedule_logger(job_id=task.f_job_id).info("Sync job {} task {} {} status {} to all party success".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_status))
+        else:
+            schedule_logger(job_id=task.f_job_id).info("Sync job {} task {} {} status {} to all party failed: \n{}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_status, response))
+        return status_code, response
 
     @classmethod
     def stop_task(cls, job, task, stop_status):
@@ -125,14 +190,14 @@ class FederatedScheduler(object):
                 try:
                     response = federated_api(job_id=task.f_job_id,
                                              method='POST',
-                                             endpoint='/{}/schedule/{}/{}{}//{}/{}/{}/{}'.format(
+                                             endpoint='/{}/schedule/{}/{}/{}/{}/{}/{}/{}'.format(
                                                  API_VERSION,
                                                  task.f_job_id,
                                                  task.f_component_name,
                                                  task.f_task_id,
                                                  task.f_task_version,
-                                                 task.f_role,
-                                                 task.f_party_id,
+                                                 dest_role,
+                                                 dest_party_id,
                                                  command
                                              ),
                                              src_party_id=job_initiator['party_id'],
@@ -178,7 +243,7 @@ class FederatedScheduler(object):
                                          src_party_id=task.f_party_id,
                                          dest_party_id=task.f_initiator_party_id,
                                          src_role=task.f_role,
-                                         json_body=task.to_json(),
+                                         json_body=task.to_dict_info(),
                                          work_mode=RuntimeConfig.WORK_MODE)
             except Exception as e:
                 response = {
@@ -198,6 +263,7 @@ class FederatedScheduler(object):
         else:
             return FederatedSchedulingStatusCode.SUCCESS
 
+    # Utils
     @classmethod
     def return_federated_response(cls, federated_response):
         retcode_set = set()

@@ -26,7 +26,7 @@ from fate_flow.scheduler.task_scheduler import TaskScheduler
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.entity.constant import JobStatus, TaskSetStatus, TaskStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.manager.tracking_manager import Tracker
+from fate_flow.operation.job_tracker import Tracker
 from fate_flow.settings import USE_AUTHENTICATION
 from fate_flow.utils import job_utils, job_controller_utils
 from fate_flow.utils.job_utils import save_job_conf, get_job_dsl_parser
@@ -34,12 +34,12 @@ import os
 from fate_flow.operation.job_saver import JobSaver
 from arch.api.utils.core_utils import json_dumps
 from fate_flow.entity.constant import Backend
-from arch.api.utils.core_utils import json_loads
+from fate_flow.controller.task_set_controller import TaskSetController
 
 
 class JobController(object):
-    @staticmethod
-    def create_job(job_id, role, party_id, job_info):
+    @classmethod
+    def create_job(cls, job_id, role, party_id, job_info):
         # parse job configuration
         dsl = job_info['dsl']
         runtime_conf = job_info['runtime_conf']
@@ -61,7 +61,6 @@ class JobController(object):
         else:
             is_initiator = 0
         job_info["status"] = JobStatus.WAITING
-        job_info["party_status"] = JobStatus.WAITING
         roles = job_info['roles']
         # this party configuration
         job_info["role"] = role
@@ -71,11 +70,11 @@ class JobController(object):
         job_info["progress"] = 0
         JobSaver.create_job(job_info=job_info)
 
-        job_tracker = Tracker(job_id=job_id, role=role, party_id=party_id,
-                              model_id=job_parameters["model_id"],
-                              model_version=job_parameters["model_version"])
+        tracker = Tracker(job_id=job_id, role=role, party_id=party_id,
+                          model_id=job_parameters["model_id"],
+                          model_version=job_parameters["model_version"])
         if job_parameters.get("job_type", "") != "predict":
-            job_tracker.init_pipelined_model()
+            tracker.init_pipelined_model()
         partner = {}
         show_role = {}
         for _role, _role_party in roles.items():
@@ -94,10 +93,10 @@ class JobController(object):
                         partner[_role] = partner.get(_role, [])
                         partner[_role].append(_party_id)
 
-        dag = get_job_dsl_parser(dsl=dsl,
+        dsl_parser = get_job_dsl_parser(dsl=dsl,
                                  runtime_conf=runtime_conf,
                                  train_runtime_conf=train_runtime_conf)
-        job_args = dag.get_args_input()
+        job_args = dsl_parser.get_args_input()
         dataset = {}
         for _role, _role_party_args in job_args.items():
             if is_initiator or _role == role:
@@ -109,33 +108,39 @@ class JobController(object):
                         for _data_type, _data_location in _role_party_args[_party_index]['args']['data'].items():
                             dataset[_role][_party_id][_data_type] = '{}.{}'.format(_data_location['namespace'],
                                                                                    _data_location['name'])
-        job_tracker.log_job_view({'partner': partner, 'dataset': dataset, 'roles': show_role})
+        tracker.log_job_view({'partner': partner, 'dataset': dataset, 'roles': show_role})
+        cls.initialize_job(job_id=job_id, role=role, party_id=party_id, initiator_role=job_initiator['role'], initiator_party_id=job_initiator['party_id'], dsl_parser=dsl_parser)
 
-    @staticmethod
-    def initialize_job(job_id, role, party_id):
+    @classmethod
+    def initialize_job(cls, job_id, role, party_id, initiator_role, initiator_party_id, dsl_parser):
         """
         Parse the DAG and create TaskSet/Task
         :param job_id:
         :param role:
         :param party_id:
+        :param initiator_role:
+        :param initiator_party_id:
+        :param dsl_parser:
         :return:
         """
-        dsl_parser = job_utils.get_job_dsl_parser_by_job_id(job_id=job_id)
         component_map, task_sets = dsl_parser.get_dsl_hierarchical_structure()
         for i in range(len(task_sets)):
             task_set_info = {}
             task_set_info["job_id"] = job_id
             task_set_info["task_set_id"] = i
+            task_set_info["initiator_role"] = initiator_role
+            task_set_info["initiator_party_id"] = initiator_party_id
             task_set_info["role"] = role
             task_set_info["party_id"] = party_id
             task_set_info["status"] = TaskSetStatus.WAITING
-            task_set_info["party_status"] = TaskSetStatus.WAITING
             for component_name in task_sets[i]:
                 task_info = {}
                 task_info.update(task_set_info)
                 task_info["component_name"] = component_name
-                task_info["version"] = 0
+                task_info["task_version"] = 0
                 task_info["task_id"] = job_utils.generate_task_id(job_id=job_id, component_name=component_name)
+                task_info["initiator_role"] = initiator_role
+                task_info["initiator_party_id"] = initiator_party_id
                 task_info["status"] = TaskStatus.WAITING
                 task_info["party_status"] = TaskStatus.WAITING
                 JobSaver.create_task(task_info=task_info)
@@ -148,94 +153,18 @@ class JobController(object):
             "role": role,
             "party_id": party_id,
             "status": JobStatus.RUNNING,
+            "party_status": JobStatus.RUNNING,
         }
         JobSaver.update_job(job_info=job_info)
 
     @classmethod
-    def start_task(cls, job_id, component_name, task_id, task_version, role, party_id, task_parameters):
-        schedule_logger(job_id).info(
-            'job {} {} {} {} task subprocess is ready'.format(job_id, component_name, role, party_id, task_parameters))
-        task_process_start_status = False
-        try:
-            task_info = {
-                "task_id": task_id,
-                "task_version": task_version,
-                "role": role,
-                "party_id": party_id,
-                "status": TaskStatus.START,
-                "party_status": TaskStatus.START,
-            }
-            cls.update_task(task_info=task_info)
-            task_dir = os.path.join(job_utils.get_job_directory(job_id=job_id), role, party_id, component_name, task_id, task_version)
-            os.makedirs(task_dir, exist_ok=True)
-            task_parameters_path = os.path.join(task_dir, 'task_parameters.json')
-            with open(task_parameters_path, 'w') as fw:
-                fw.write(json_dumps(task_parameters))
-
-            backend = task_parameters.get("backend", Backend.EGGROLL)
-            schedule_logger(job_id=job_id).info("use backend {}".format(Backend.EGGROLL))
-            backend = Backend(backend)
-
-            if backend.is_eggroll():
-                process_cmd = [
-                    'python3', sys.modules[TaskExecutor.__module__].__file__,
-                    '-j', job_id,
-                    '-n', component_name,
-                    '-t', task_id,
-                    '-v', task_version,
-                    '-r', role,
-                    '-p', party_id,
-                    '-c', task_parameters_path,
-                    '--processors_per_node', str(task_parameters.get("processors_per_node", 0)),
-                    '--job_server', '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT),
-                ]
-            elif backend.is_spark():
-                if "SPARK_HOME" not in os.environ:
-                    raise EnvironmentError("SPARK_HOME not found")
-                spark_home = os.environ["SPARK_HOME"]
-
-                # additional configs
-                spark_submit_config = task_parameters.get("spark_submit_config", dict())
-
-                deploy_mode = spark_submit_config.get("deploy-mode", "client")
-                if deploy_mode not in ["client"]:
-                    raise ValueError(f"deploy mode {deploy_mode} not supported")
-
-                spark_submit_cmd = os.path.join(spark_home, "bin/spark-submit")
-                process_cmd = [spark_submit_cmd, f'--name={task_id}#{role}']
-                for k, v in spark_submit_config.items():
-                    if k != "conf":
-                        process_cmd.append(f'--{k}={v}')
-                if "conf" in spark_submit_config:
-                    for ck, cv in spark_submit_config["conf"].items():
-                        process_cmd.append(f'--conf')
-                        process_cmd.append(f'{ck}={cv}')
-                process_cmd.extend([
-                    sys.modules[TaskExecutor.__module__].__file__,
-                    '-j', job_id,
-                    '-n', component_name,
-                    '-t', task_id,
-                    '-v', task_version,
-                    '-r', role,
-                    '-p', party_id,
-                    '-c', task_parameters_path,
-                    '--job_server', '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT),
-                ])
-            else:
-                raise ValueError(f"${backend} supported")
-
-            task_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, party_id, component_name)
-            schedule_logger(job_id).info(
-                'job {} {} {} {} task subprocess start'.format(job_id, component_name, role, party_id, task_config))
-            p = job_utils.run_subprocess(config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir)
-            if p:
-                task_process_start_status = True
-        except Exception as e:
-            schedule_logger(job_id).exception(e)
-        finally:
-            schedule_logger(job_id).info(
-                'job {} component {} on {} {} start task subprocess {}'.format(job_id, component_name, role, party_id,
-                                                                               'success' if task_process_start_status else 'failed'))
+    def update_job(cls, job_info):
+        """
+        Save to local database
+        :param job_info:
+        :return:
+        """
+        JobSaver.update_job(job_info=job_info)
 
     @classmethod
     def stop_job(cls, job_id, role, party_id, stop_status):
@@ -244,81 +173,11 @@ class JobController(object):
             job.f_status = stop_status
             task_sets = JobSaver.query_task_set(job_id=job_id, role=role, party_id=party_id)
             for task_set in task_sets:
-                cls.stop_task_set(task_set=task_set, stop_status=stop_status)
-            JobSaver.update_job_status(job=job)
+                TaskSetController.stop_task_set(task_set=task_set, stop_status=stop_status)
+            # Job status depends on the final operation result and initiator calculate
 
     @classmethod
-    def stop_task_set(cls, task_set, stop_status):
-        task_set.f_status = stop_status
-        tasks = job_utils.query_task(task_set_id=task_set.f_task_set_id, role=task_set.f_role, party_id=task_set.f_party_id)
-        for task in tasks:
-            cls.stop_task(task=task, stop_status=stop_status)
-        JobSaver.update_task_set_status(task_set=task_set)
-
-    @classmethod
-    def stop_task(cls, task, stop_status):
-        task.f_status = stop_status
-        JobController.kill_task(task=task)
-        task_info = {
-            "task_id": task.f_task_id,
-            "task_version": task.f_task_version,
-            "role": task.f_role,
-            "party_id": task.f_party_id,
-            "status": task.f_status
-        }
-        cls.update_task(task_info=task_info)
-
-    @classmethod
-    def update_task(cls, task_info):
-        """
-        Save to local database and then report to Initiator
-        :param task_info:
-        :return:
-        """
-        JobSaver.update_task(task_info=task_info)
-        tasks = job_utils.query_task(task_id=task_info["task_id"],
-                                     task_version=task_info["task_version"],
-                                     role=task_info["role"],
-                                     party_id=task_info["party_id"])
-        if len(tasks) == 1:
-            FederatedScheduler.report_task(task=tasks[0])
-        else:
-            raise Exception("Found {} {} {} task on {} {}, error".format(len(tasks), task_info["task_id"], task_info["task_version"], task_info["role"], task_info["party_id"]))
-
-    @staticmethod
-    def kill_task(task: Task):
-        kill_status = False
-        try:
-            # kill task executor
-            kill_status = job_utils.kill_task_executor_process(task)
-            # session stop
-            job_utils.start_session_stop(task)
-        except Exception as e:
-            schedule_logger(task.f_job_id).exception(e)
-        finally:
-            schedule_logger(task.f_job_id).info(
-                'Job {} component {} on {} {} process {} kill {}'.format(task.f_job_id, task.f_component_name,
-                                                                         task.f_role,
-                                                                         task.f_party_id,
-                                                                         task.f_run_pid,
-                                                                         'success' if kill_status else 'failed'))
-
-    @staticmethod
-    def query_task_input_args(job_id, task_id, role, party_id, job_args, job_parameters, input_dsl, filter_type=None, filter_attr=None):
-        task_run_args = TaskExecutor.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
-                                                       task_id=task_id,
-                                                       job_args=job_args,
-                                                       job_parameters=job_parameters,
-                                                       task_parameters={},
-                                                       input_dsl=input_dsl,
-                                                       if_save_as_task_input_data=False,
-                                                       filter_type=filter_type,
-                                                       filter_attr=filter_attr
-                                                       )
-        return task_run_args
-
-    @staticmethod
-    def save_pipeline(job_id, role, party_id):
+    def save_pipeline(cls, job_id, role, party_id):
         schedule_logger(job_id).info('job {} on {} {} start to save pipeline'.format(job_id, role, party_id))
         job_dsl, job_runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id, role=role,
                                                                                         party_id=party_id)
@@ -339,13 +198,13 @@ class JobController(object):
         pipeline.fate_version = RuntimeConfig.get_env("FATE")
         pipeline.model_id = model_id
         pipeline.model_version = model_version
-        job_tracker = Tracker(job_id=job_id, role=role, party_id=party_id, model_id=model_id,
+        tracker = Tracker(job_id=job_id, role=role, party_id=party_id, model_id=model_id,
                               model_version=model_version)
-        job_tracker.save_pipeline(pipelined_buffer_object=pipeline)
+        tracker.save_pipeline(pipelined_buffer_object=pipeline)
         schedule_logger(job_id).info('job {} on {} {} save pipeline successfully'.format(job_id, role, party_id))
 
-    @staticmethod
-    def clean_job(job_id, role, party_id, roles, party_ids):
+    @classmethod
+    def clean_job(cls, job_id, role, party_id, roles, party_ids):
         schedule_logger(job_id).info('job {} on {} {} start to clean'.format(job_id, role, party_id))
         tasks = job_utils.query_task(job_id=job_id, role=role, party_id=party_id)
         for task in tasks:
@@ -359,12 +218,12 @@ class JobController(object):
                 schedule_logger(job_id).exception(e)
         schedule_logger(job_id).info('job {} on {} {} clean done'.format(job_id, role, party_id))
 
-    @staticmethod
-    def check_job_run(job_id, role, party_id):
+    @classmethod
+    def check_job_run(cls, job_id, role, party_id):
         return job_controller_utils.job_quantity_constraint(job_id, role, party_id)
 
-    @staticmethod
-    def cancel_job(job_id, role, party_id, job_initiator):
+    @classmethod
+    def cancel_job(cls, job_id, role, party_id, job_initiator):
         schedule_logger(job_id).info('{} {} get cancel waiting job {} command'.format(role, party_id, job_id))
         jobs = job_utils.query_job(job_id=job_id)
         if jobs:

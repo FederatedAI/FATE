@@ -20,9 +20,9 @@ from fate_flow.db.db_models import Job
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.scheduler.task_scheduler import TaskScheduler
 from fate_flow.operation.job_saver import JobSaver
-from fate_flow.entity.constant import JobStatus, TaskSetStatus, EndStatus, InterruptStatus
+from fate_flow.entity.constant import JobStatus, TaskSetStatus, EndStatus, InterruptStatus, FederatedSchedulingStatusCode
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.manager.tracking_manager import Tracker
+from fate_flow.operation.job_tracker import Tracker
 from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT
 from fate_flow.utils import detect_utils, job_utils
 from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_log_directory
@@ -50,9 +50,9 @@ class DAGScheduler(object):
         else:
             detect_utils.check_config(job_parameters, ['model_id', 'model_version'])
             # get inference dsl from pipeline model as job dsl
-            job_tracker = Tracker(job_id=job_id, role=job_initiator['role'], party_id=job_initiator['party_id'],
+            tracker = Tracker(job_id=job_id, role=job_initiator['role'], party_id=job_initiator['party_id'],
                                   model_id=job_parameters['model_id'], model_version=job_parameters['model_version'])
-            pipeline_model = job_tracker.get_output_model('pipeline')
+            pipeline_model = tracker.get_output_model('pipeline')
             job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
             train_runtime_conf = json_loads(pipeline_model['Pipeline'].train_runtime_conf)
         path_dict = save_job_conf(job_id=job_id,
@@ -78,7 +78,6 @@ class DAGScheduler(object):
             raise Exception("initiator party id error {}".format(initiator_party_id))
 
         FederatedScheduler.create_job(job=job)
-        FederatedScheduler.initialize_job(job=job)
 
         # push into queue
         job_event = job_utils.job_event(job_id, initiator_role, initiator_party_id)
@@ -99,42 +98,67 @@ class DAGScheduler(object):
 
     @staticmethod
     def start(job_id, initiator_role, initiator_party_id):
-        jobs = job_utils.query_job(job_id=job_id, role=initiator_role, party_id=initiator_party_id)
-        job = jobs[0]
-        job.f_status = JobStatus.RUNNING
-        job.f_tag = 'end_waiting'
-        update_status = JobSaver.update_job(job_info=job.to_json())
+        schedule_logger(job_id=job_id).info("Try to start job {} on initiator {} {}".format(job_id, initiator_role, initiator_party_id))
+        job_info = {}
+        job_info["job_id"] = job_id
+        job_info["role"] = initiator_role
+        job_info["party_id"] = initiator_party_id
+        job_info["status"] = JobStatus.RUNNING
+        job_info["party_status"] = JobStatus.RUNNING
+        job_info["tag"] = 'end_waiting'
+        update_status = JobSaver.update_job(job_info=job_info)
         if update_status:
+            jobs = job_utils.query_job(job_id=job_id, role=initiator_role, party_id=initiator_party_id)
+            job = jobs[0]
             FederatedScheduler.start_job(job=job)
+            schedule_logger(job_id=job_id).info("Start job {} on initiator {} {}".format(job_id, initiator_role, initiator_party_id))
+        else:
+            schedule_logger(job_id=job_id).info("Job {} start on another scheduler".format(job_id))
 
     @classmethod
     def schedule(cls, job):
+        schedule_logger(job_id=job.f_job_id).info("Schedule job {}".format(job.f_job_id))
         task_sets = JobSaver.get_top_task_set(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
         if not task_sets:
             # Maybe for some reason the initialization failed
             return
         for task_set in task_sets:
             if task_set.f_status == TaskSetStatus.WAITING:
+                schedule_logger(job_id=task_set.f_job_id).info("Try to start job {} task set {} on {} {}".format(task_set.f_job_id, task_set.f_task_set_id, task_set.f_role, task_set.f_party_id))
                 task_set.f_status = TaskSetStatus.RUNNING
-                update_status = JobSaver.update_task_set(task_set_info=task_set.to_json())
+                update_status = JobSaver.update_task_set(task_set_info=task_set.to_dict_info(only_primary_with=["job_id", "status"]))
                 if not update_status:
                     # another scheduler
+                    schedule_logger(job_id=job.f_job_id).info("Job {} task set {} start on another scheduler".format(task_set.f_job_id, task_set.f_task_set_id))
                     return
+                schedule_logger(job_id=job.f_job_id).info("Start job {} task set {} on {} {}".format(task_set.f_job_id, task_set.f_task_set_id, task_set.f_role, task_set.f_party_id))
                 TaskScheduler.schedule(job=job, task_set=task_set)
                 break
             elif task_set.f_status == TaskSetStatus.RUNNING:
                 # TODO: Determine whether it has timed out
+                schedule_logger(job_id=job.f_job_id).info("Job {} task set {} is running".format(task_set.f_job_id, task_set.f_task_set_id))
                 break
             elif InterruptStatus.is_interrupt_status(task_set.f_status):
+                schedule_logger(job_id=job.f_job_id).info("Job {} task set {} is {}, job exit".format(task_set.f_job_id, task_set.f_task_set_id, task_set.f_status))
                 break
-        job_status = StatusEngine.vertical_convergence([task_set.f_status for task_set in task_sets])
-        if EndStatus.is_end_status(job_status):
-            cls.finish(job=job, stop_status=job_status)
+        new_job_status = StatusEngine.vertical_convergence([task_set.f_status for task_set in task_sets])
+        schedule_logger(job_id=job.f_job_id).info("Job {} status is {}".format(job.f_job_id, new_job_status))
+        if new_job_status != job.f_status:
+            job.f_status = new_job_status
+            FederatedScheduler.sync_job(job=job, update_fields=["status"])
+        if EndStatus.is_end_status(job.f_status):
+            cls.finish(job=job, end_status=job.f_status)
 
     @staticmethod
-    def finish(job, stop_status):
-        job.f_status = stop_status
-        FederatedScheduler.stop_job(job=job, stop_status=stop_status)
+    def finish(job, end_status):
+        schedule_logger(job_id=job.f_job_id).info("Finished job {}".format(job.f_job_id))
+        job.f_status = end_status
+        schedule_logger(job_id=job.f_job_id).info("Try to stop job {}".format(job.f_job_id))
+        federated_scheduling_status_code, federated_response = FederatedScheduler.stop_job(job=job, stop_status=end_status)
+        if federated_scheduling_status_code == FederatedSchedulingStatusCode.SUCCESS:
+            schedule_logger(job_id=job.f_job_id).info("Stop job {} success".format(job.f_job_id))
+        else:
+            schedule_logger(job_id=job.f_job_id).info("Stop job {} failed:\n{}".format(job.f_job_id, federated_response))
 
     @staticmethod
     def clean_queue():

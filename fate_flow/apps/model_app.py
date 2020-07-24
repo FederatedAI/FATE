@@ -19,7 +19,7 @@ import shutil
 from flask import Flask, request, send_file
 
 from fate_flow.settings import stat_logger, API_VERSION, MODEL_STORE_ADDRESS, TEMP_DIRECTORY
-from fate_flow.operation.job_controller import JobController
+from fate_flow.controller.job_controller import JobController
 from fate_flow.manager.model_manager import publish_model
 from fate_flow.manager.model_manager import pipelined_model
 from fate_flow.utils.api_utils import get_json_result, federated_api

@@ -1,4 +1,4 @@
-work_mode: 0
+work_mode: 1
 use_registry: false
 fate_flow:
   host: 0.0.0.0
@@ -16,8 +16,8 @@ zookeeper:
   hosts:
     - 127.0.0.1:2281
   use_acl: true
-  user: fate
-  password: fate
+  user: fate_dev
+  password: fate_dev
 model_store_address:
   storage: mysql
   name: model
