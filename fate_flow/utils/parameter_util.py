@@ -118,9 +118,9 @@ class BaseParameterUtil(object):
                             if role_id == "all" or str(idx) in role_id.split("|"):
                                 role_dict = role_parameters[role_id]
                                 if module_alias in role_dict:
-                                    role_parameters = role_dict.get(module_alias)
+                                    parameters = role_dict.get(module_alias)
                                     merge_dict = ParameterUtil.merge_parameters(runtime_dict[param_class],
-                                                                                role_parameters,
+                                                                                parameters,
                                                                                 role_param_obj,
                                                                                 role_id,
                                                                                 role,
