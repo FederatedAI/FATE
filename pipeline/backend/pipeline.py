@@ -27,7 +27,6 @@ from pipeline.component.component_base import Component
 from pipeline.component.input import Input
 from pipeline.interface.data import Data
 from pipeline.interface.model import Model
-from pipeline.parser.dsl_parser import DSLParser
 from pipeline.utils import tools
 from pipeline.utils.invoker.job_submitter import JobInvoker
 
@@ -375,7 +374,7 @@ class PipeLine(object):
                                                           job_type="predict",
                                                           model_info=self._model_info)
 
-        self._predict_job_id, _ = self._job_invoker.submit_job(submit_conf=predict_conf)
+        self._predict_job_id, _ = self._job_invoker.submit_job(dsl=self._predict_dsl, submit_conf=predict_conf)
         self._job_invoker.monitor_job_status(self._predict_job_id,
                                              self._initiator.role,
                                              self._initiator.party_id)
@@ -413,7 +412,6 @@ class PipeLine(object):
                     raise ValueError(
                         "deploy component parameters is wrong, expect str or Component object, but {} find".format(cpn))
 
-        self._predict_dsl = DSLParser.deploy_component(deploy_cpns, self._train_dsl)
-        self._job_invoker.deploy_model(self._predict_dsl, self._train_job_id)
+        self._predict_dsl = self._job_invoker.get_predict_dsl(train_dsl=self._train_dsl, cpn_list=deploy_cpns)
 
         return self
