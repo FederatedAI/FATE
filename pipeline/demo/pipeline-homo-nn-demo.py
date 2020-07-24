@@ -21,10 +21,10 @@ input_0 = Input(name="train_data")
 print("get input_0's init name {}".format(input_0.name))
 
 pipeline = PipeLine().set_initiator(role='guest', party_id=9999).set_roles(guest=9999, host=hosts, arbiter=arbiter)
-dataio_0 = DataIO(name="dataio_0")
+dataio_0 = DataIO(name="dataio_0", with_label=True)
 
 dataio_0.get_party_instance(role='guest', party_id=9999).algorithm_param(with_label=True, output_format="dense")
-dataio_0.get_party_instance(role='host', party_id=[10000, 10001]).algorithm_param(with_label=False)
+dataio_0.get_party_instance(role='host', party_id=[10000, 10001]).algorithm_param(with_label=True)
 
 homo_nn_0 = HomoNN(name="homo_nn_0", max_iter=10)
 homo_nn_0.add(Dense(units=1, input_shape=(10, )))

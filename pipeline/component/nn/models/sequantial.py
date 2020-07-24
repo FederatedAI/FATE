@@ -19,7 +19,6 @@ from collections import OrderedDict
 
 class Sequential(object):
     def __init__(self):
-        self.__layers = []
         self.__config_type = None
         self._model = None
 
@@ -41,18 +40,14 @@ class Sequential(object):
             self.__config_type = layer_type
 
         if self.__config_type == layer_type:
+            self._model.add(layer)
             self.__config_type = layer_type
-            self.__layers.append(layer)
         else:
             raise ValueError(
                 "pre add layer type is {}, not equals to current layer {}".format(self.__config_type, layer_type))
 
     def get_layer_type(self):
         return self.__config_type
-
-    def layers(self):
-        for layer in self.__layers:
-            yield layer
 
     def get_loss_config(self, loss):
         return self._model.get_loss_config(loss)
@@ -61,7 +56,7 @@ class Sequential(object):
         return self._model.get_optimizer_config(optimizer)
 
     def get_network_config(self):
-        if not self.__layers:
+        if not self.__config_type:
             raise ValueError("Empty layer find, can't get config")
 
         return self._model.get_network_config()

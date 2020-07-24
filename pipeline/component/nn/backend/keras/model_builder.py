@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 from tensorflow.keras.models import Sequential
+import json
 
 
 def build_model(model_type="sequential"):
@@ -45,9 +46,14 @@ class SequentialModel(object):
         if isinstance(optimizer, str):
             return optimizer
 
-        return optimizer.get_config()
+        opt_config = optimizer.get_config()
+        if "name" in opt_config:
+            opt_config["optimizer"] = opt_config["name"]
+            del opt_config["name"]
+
+        return opt_config
 
     def get_network_config(self):
-        return self._model.to_json()
+        return json.loads(self._model.to_json())
 
 

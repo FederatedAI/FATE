@@ -27,16 +27,22 @@ class HomoNN(Component):
                  early_stop="diff", encode_label=False,
                  predict_param=None, cv_param=None, **kwargs):
 
-        Component.__init__(self, **kwargs["explict_parameters"])
+        explicit_parameters = kwargs["explict_parameters"]
+        explicit_parameters["optimizer"] = None
+        explicit_parameters["loss"] = None
+        explicit_parameters["metrics"] = None
+        explicit_parameters["nn_define"] = None
+        explicit_parameters["config_type"] = "keras"
+        Component.__init__(self, **explicit_parameters)
 
-        self.output = Output(self.name, data_type='single')
-        self._module_name = "HomoNN"
-        self._model = Sequential()
         self.optimizer = None
         self.loss = None
         self.metrics = None
         self.nn_define = None
         self.config_type = "keras"
+        self.output = Output(self.name, data_type='single')
+        self._module_name = "HomoNN"
+        self._model = Sequential()
 
     def set_model(self, model):
         self._model = model
