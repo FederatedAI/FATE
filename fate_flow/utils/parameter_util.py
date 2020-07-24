@@ -342,11 +342,11 @@ class ParameterUtilV2(BaseParameterUtil):
     @staticmethod
     def get_input_parameters(submit_dict, module="args"):
         if "role_parameters" not in submit_dict:
-            return {}
+            return {}, {}
 
         roles = submit_dict["role_parameters"].keys()
         if not roles:
-            return {}
+            return {}, {}
 
         input_parameters = {}
         input_datakey = set()
