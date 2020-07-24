@@ -43,5 +43,5 @@ pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
                        })
 
 print (pipeline.get_component("dataio_0").get_model_param())
-print (pipeline.get_component("homo_data_split_0").summary())
+print (pipeline.get_component("homo_data_split_0").get_summary())
 

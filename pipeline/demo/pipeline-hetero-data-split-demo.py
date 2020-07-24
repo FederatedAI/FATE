@@ -52,7 +52,6 @@ pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
 
                        })
 
-print (pipeline.get_component("hetero_data_split_0").summary())
 print (pipeline.get_component("hetero_data_split_0").get_output_data_table())
 print ("\n summary content is: ")
 print (pipeline.get_component("hetero_data_split_0").get_summary())
