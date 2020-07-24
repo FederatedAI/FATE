@@ -177,7 +177,7 @@ def get_job_dsl_parser_by_job_id(job_id):
 
 def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, train_runtime_conf=None):
     # dsl_parser = DSLParser()
-    parser_version = str(runtime_conf.get('job_parameters', {}).get('version', '1'))
+    parser_version = str(runtime_conf.get('job_parameters', {}).get('dsl_version', '1'))
     dsl_parser = get_dsl_parser_by_version(parser_version)
     default_runtime_conf_path = os.path.join(file_utils.get_project_base_directory(),
                                              *['federatedml', 'conf', 'default_runtime_conf'])
@@ -193,11 +193,15 @@ def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, train_run
     return dsl_parser
 
 
-def get_dsl_parser_by_version(version: str = "1"):
-    mapping = {
+def get_parser_version_mapping():
+    return {
         "1": DSLParser(),
         "2": DSLParserV2()
     }
+
+
+def get_dsl_parser_by_version(version: str = "1"):
+    mapping = get_parser_version_mapping()
     if version not in mapping:
         raise Exception("{} version of dsl parser is not currently supported.".format(version))
     return mapping[version]

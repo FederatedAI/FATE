@@ -15,9 +15,9 @@
 #
 import os
 import json
-import time
 from contextlib import closing
 from fate_flow.flowpy.client.api.base import BaseFlowAPI
+from fate_flow.utils.job_utils import get_parser_version_mapping
 from fate_flow.flowpy.utils import preprocess, check_config, download_from_request, check_output_path
 
 
@@ -44,17 +44,7 @@ class Job(BaseFlowAPI):
             'job_runtime_conf': config_data
         }
 
-        response = self._post(url='job/submit', json=post_data)
-        try:
-            if response['retcode'] == 999:
-                print('use service.sh to start standalone node server....')
-                os.system('sh service.sh start --standalone_node')
-                time.sleep(5)
-                return self._post(url='job/submit', json=post_data)
-            else:
-                return response
-        except:
-            pass
+        return self._post(url='job/submit', json=post_data)
 
     def stop(self, job_id):
         job_id = str(job_id)
@@ -113,11 +103,13 @@ class Job(BaseFlowAPI):
                 response = response.json()
         return response
 
-    def generate_dsl(self, train_dsl_path, output_path, cpn_file_path=None, cpn_list: list = None):
+    def generate_dsl(self, train_dsl_path, version="1", cpn_file_path=None, cpn_list: list = None):
         kwargs = locals()
         if not os.path.exists(kwargs.get("train_dsl_path")):
             raise Exception("Train dsl file not exists.")
-
+        parser_mapping = get_parser_version_mapping()
+        if str(version) not in parser_mapping:
+            raise Exception("{} version of dsl parser is not currently supported.".format(version))
         if kwargs.get("cpn_list"):
             cpn_str = kwargs.get("cpn_list")
         elif kwargs.get("cpn_file_path"):
@@ -132,12 +124,11 @@ class Job(BaseFlowAPI):
         config_data = {
             "cpn_str": cpn_str,
             "train_dsl": train_dsl,
-            "output_path": check_output_path(kwargs.get("output_path"))
+            "version": str(version)
         }
 
         res = self._post(url="job/dsl/generate", handle_result=True, json=config_data)
-        if res["retcode"] == 0:
-            with open(config_data["output_path"], "r") as fin:
-                res["data"] = json.loads(fin.read())
+        if not res.get("data"):
+            res["data"] = {}
         return res
 

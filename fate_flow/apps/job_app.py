@@ -17,13 +17,13 @@ import io
 import os
 import json
 import tarfile
+from datetime import datetime
 
 from flask import Flask, request, send_file
 
 from arch.api.utils.core_utils import json_loads
 from fate_flow.driver.job_controller import JobController
 from fate_flow.driver.task_scheduler import TaskScheduler
-from fate_flow.driver.dsl_parser import DSLParser
 from fate_flow.manager import data_manager
 from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT
 from fate_flow.utils import job_utils, detect_utils
@@ -203,12 +203,25 @@ def dsl_generator():
             cpn_str = cpn_str.replace(" ", "").replace("\n", "").strip(",[]")
             cpn_list = cpn_str.split(",")
         train_dsl = json_loads(data.get("train_dsl"))
-        parser = get_dsl_parser_by_version("v1")
+        parser = get_dsl_parser_by_version(data.get("version", "1"))
         predict_dsl = parser.deploy_component(cpn_list, train_dsl)
-        with open(data.get("output_path"), "w") as fout:
-            fout.write(json.dumps(predict_dsl, indent=4))
+        if data.get("output_path"):
+            abspath = os.path.abspath(data.get("output_path"))
+            if os.path.isdir(abspath):
+                fp = os.path.join(abspath, "predict_dsl_{}.json".format(datetime.now().strftime('%Y%m%d%H%M%S')))
+                with open(fp, "w") as fout:
+                    fout.write(json.dumps(predict_dsl, indent=4))
+                return get_json_result(retmsg="New predict dsl file has been generated successfully. "
+                                              "File path is: {}.".format(fp))
+            elif os.path.isfile(abspath):
+                with open(data.get("output_path"), "w") as fout:
+                    fout.write(json.dumps(predict_dsl, indent=4))
+                return get_json_result(retmsg="New predict dsl file has been generated successfully. "
+                                              "File path is: {}.".format(data.get("output_path")))
+            else:
+                return get_json_result(retcode=100,
+                                       retmsg='Generating new predict dsl file failed. Output path is invalid.')
+        return get_json_result(data=predict_dsl)
     except Exception as e:
         return get_json_result(retcode=100, retmsg=str(e))
-    else:
-        return get_json_result(retmsg="New predict dsl file has been generated successfully. "
-                                      "File path is: {}.".format(data.get("output_path")))
+
