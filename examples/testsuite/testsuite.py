@@ -56,7 +56,10 @@ def main():
                 exclude_paths.update(_find_testsuite_files(Path(p).resolve()))
             paths = [p for p in paths if p not in exclude_paths]
         testsuites = {path.__str__(): _TestSuite.load(path, hook=hook) for path in paths}
-        clients.run_testsuites(testsuites)
+
+        summaries = clients.run_testsuites(testsuites, summaries_base=Path(args.name).resolve())
+        LOGGER.info(f"summaries:\n{summaries.pretty_summaries()}")
+        LOGGER.info(f"unsuccessful summaries:\n{summaries.pretty_summaries(include_success=False)}")
 
 
 def _find_testsuite_files(path):
@@ -82,17 +85,20 @@ def _replace_hook(mapping: dict):
 
 
 def _add_logger(name):
-    global LOGGER
+    path = Path(name)
+    if path.exists() and path.is_file():
+        raise Exception(f"{name} exist, and is a file")
+    if not path.exists():
+        path.mkdir()
     loguru.logger.remove()
     loguru.logger.add(sys.stderr, level="INFO", colorize=True)
-    loguru.logger.add(f"{name}-info.log", level="INFO")
-    loguru.logger.add(f"{name}-debug.log", level="DEBUG")
-    LOGGER = loguru.logger
+    loguru.logger.add(f"{path.joinpath('info.log')}", level="INFO")
+    loguru.logger.add(f"{path.joinpath('debug.log')}", level="DEBUG")
 
 
 class Clients(object):
     def __init__(self, config_path: Path, **kwargs):
-        with config_path.open() as f:
+        with config_path.open("r") as f:
             conf = yaml.load(f)
         if kwargs:
             conf.update(kwargs)
@@ -103,10 +109,12 @@ class Clients(object):
         parties_to_role_string = {}
         for role, parties in self._role_to_parties.items():
             for i, party in enumerate(parties):
-                parties_to_role_string[party] = f"{role.lower()}_{i}"
+                if party not in parties_to_role_string:
+                    parties_to_role_string[party] = set()
+                parties_to_role_string[party].add(f"{role.lower()}_{i}")
 
         tunnels = []
-        for ssh_conf in conf.get("ssh_tunnel"):
+        for ssh_conf in conf.get("ssh_tunnel", []):
             ssh_address = ssh_conf.get("ssh_address")
             ssh_host, ssh_port = _parse_address(ssh_address)
             ssh_username = ssh_conf.get("ssh_username")
@@ -117,7 +125,10 @@ class Clients(object):
             role_strings = []
             remote_bind_addresses = []
             for service in services:
-                role_strings.append([parties_to_role_string[party] for party in service.get("parties")])
+                role_string_set = set()
+                for party in service.get("parties"):
+                    role_string_set.update(parties_to_role_string[party])
+                role_strings.append(role_string_set)
                 remote_bind_addresses.append(_parse_address(service.get("address")))
 
             tunnel = sshtunnel.SSHTunnelForwarder(ssh_address_or_host=(ssh_host, ssh_port),
@@ -130,11 +141,16 @@ class Clients(object):
         self._client_type = conf.get("client", "flowpy").lower()
         self._drop = conf.get("drop", 0)
         self._work_mode = int(conf.get("work_mode", "0"))
-        self._tunnels: typing.List[typing.Tuple[sshtunnel.SSHTunnelForwarder, typing.List[typing.List[str]]]] = tunnels
+        self._tunnels: typing.List[
+            typing.Tuple[sshtunnel.SSHTunnelForwarder, typing.List[typing.MutableSet[str]]]] = tunnels
         self._clients: typing.MutableMapping[str, _Client] = {}
-        self._default_client = _client_factory(self._client_type)
+        for service in conf.get("local_services"):
+            client = _client_factory(self._client_type, service["address"])
+            for party in service["parties"]:
+                for role_str in parties_to_role_string[party]:
+                    self._clients[role_str] = client
 
-    def run_testsuite(self, testsuite: '_TestSuite'):
+    def run_testsuite(self, testsuite: '_TestSuite') -> '_Summary':
         num_data = len(testsuite.data)
         LOGGER.info(f"num of data to upload: {num_data}")
 
@@ -158,9 +174,9 @@ class Clients(object):
         num_task = len(testsuite.task)
         LOGGER.info(f"num of task to submit: {num_task}")
         deps_info = {}
-        summary = []
+        summary = _Summary(testsuite.path)
         for i, task in enumerate(testsuite.task):
-            task_summary = {"name": task.name}
+            task_summary = {"task": task}
             try:
                 start = time.time()
                 LOGGER.info(f"submitting {task.name} ({i + 1}/{num_task})")
@@ -188,25 +204,32 @@ class Clients(object):
             except Exception as e:
                 LOGGER.exception(f"task {task.name} error, {e}")
                 task_summary["status"] = "exception"
-            summary.append(task_summary)
-
-        #  testsuite summery
-        LOGGER.info(f"\n{_pretty_summary(summary)}")
+                if "job_id" not in task_summary:
+                    task_summary["job_id"] = _get_next_exception_id()
+            summary.add_task_summary(**task_summary)
         return summary
 
-    def run_testsuites(self, testsuites: typing.MutableMapping[str, '_TestSuite']):
+    def run_testsuites(self, testsuites: typing.MutableMapping[str, '_TestSuite'],
+                       summaries_base: typing.Optional[Path] = None):
+
         LOGGER.info("testsuites:\n" + "\n".join(testsuites) + "\n")
-        summary = {}
+        summaries = _Summaries()
         for name, testsuite in testsuites.items():
             LOGGER.info(f"running testsuite: {name}")
             try:
-                summary[name] = self.run_testsuite(testsuite)
+                summary = self.run_testsuite(testsuite)
+                LOGGER.info(f"\n{summary.pretty_summary()}")
+
+                if summaries_base is not None:
+                    summary.write(base=summaries_base)
+                summaries.add_summary(summary)
+
             except Exception as e:
                 LOGGER.exception(f"testsuite {name} raise exception: {e}")
-                summary[name] = None
-            LOGGER.info(f"testsuite {name} completed\n")
+                summaries.add_summary(_Summary(testsuite.path))
 
-        LOGGER.info(f"global summary:\n{_pretty_global_summary(summary)}")
+            LOGGER.info(f"testsuite {name} completed\n")
+        return summaries
 
     def __enter__(self):
         for tunnel, role_strings_list in self._tunnels:
@@ -225,7 +248,18 @@ class Clients(object):
                 LOGGER.exception(e)
 
     def _get_client(self, role_string: str):
-        return self._clients.get(role_string, self._default_client)
+        if role_string not in self._clients:
+            raise Exception(f"{role_string} not found in {self._clients}")
+        return self._clients.get(role_string)
+
+
+_exception_id = 0
+
+
+def _get_next_exception_id():
+    global _exception_id
+    _exception_id += 1
+    return f"exception_task_{_exception_id}"
 
 
 class _STATUS(Enum):
@@ -238,24 +272,55 @@ def _parse_address(address):
     return host, port
 
 
-def _pretty_summary(summary: typing.List[typing.MutableMapping[str, str]]):
-    table = prettytable.PrettyTable(field_names=["name", "job_id", "status"])
-    for job_summary in summary:
-        table.add_row([job_summary["name"], job_summary.get("job_id", "-"), job_summary["status"]])
-    return table.get_string()
+class _Summary(object):
+    def __init__(self, path: Path):
+        self.path = path
+        self.tasks = []
+
+    def add_task_summary(self, status, job_id, task):
+        self.tasks.append((status, job_id, task))
+
+    def pretty_summary(self):
+        table = prettytable.PrettyTable(field_names=["name", "job_id", "status"])
+        for status, job_id, task in self.tasks:
+            table.add_row([task.name, job_id, status])
+        return table.get_string()
+
+    def write(self, base: Path):
+        for status, job_id, task in self.tasks:
+            task_log_path = base.joinpath(status).joinpath(job_id)
+            task_log_path.mkdir(parents=True, exist_ok=True)
+            with task_log_path.joinpath("conf").open("w") as f:
+                json.dump(task.conf, f)
+            if task.dsl is not None:
+                with task_log_path.joinpath("dsl").open("w") as f:
+                    json.dump(task.dsl, f)
+        with base.joinpath("summary").open("a") as f:
+            f.write(f"testsuite: {self.path}\n")
+            f.write(self.pretty_summary())
+            f.write("\n")
 
 
-def _pretty_global_summary(summary: typing.MutableMapping[str, typing.List[typing.MutableMapping[str, str]]]):
-    table = prettytable.PrettyTable(field_names=["testsuite", "name", "job_id", "status"])
-    table.hrules = prettytable.ALL
-    table.align["testsuite"] = "l"
-    table.align["name"] = "l"
-    table.max_width["testsuite"] = 30
-    table.max_width["name"] = 20
-    for name, testsuite_summary in summary.items():
-        for job_summary in testsuite_summary:
-            table.add_row([name, job_summary["name"], job_summary.get("job_id", "-"), job_summary["status"]])
-    return table.get_string()
+class _Summaries(object):
+    def __init__(self):
+        self._summaries: typing.List[_Summary] = []
+
+    def add_summary(self, summary):
+        self._summaries.append(summary)
+
+    def pretty_summaries(self, include_success=True):
+        table = prettytable.PrettyTable(field_names=["testsuite", "name", "job_id", "status"])
+        table.hrules = prettytable.ALL
+        table.align["testsuite"] = "l"
+        table.align["name"] = "l"
+        table.max_width["testsuite"] = 30
+        table.max_width["name"] = 20
+        for summary in self._summaries:
+            for status, job_id, task in summary.tasks:
+                if not include_success and status == "success":
+                    continue
+                table.add_row([summary.path.__str__(), task.name, job_id, status])
+        return table.get_string()
 
 
 """
@@ -552,9 +617,10 @@ class _TestSuiteTask(object):
 
 class _TestSuite(object):
 
-    def __init__(self, data: typing.List[_TestSuiteData], task: typing.List[_TestSuiteTask]):
+    def __init__(self, data: typing.List[_TestSuiteData], task: typing.List[_TestSuiteTask], path: Path):
         self.data = data
         self.task = task
+        self.path = path
 
     @classmethod
     def load(cls, path: Path, hook):
@@ -563,7 +629,7 @@ class _TestSuite(object):
         data = [_TestSuiteData.load(d) for d in testsuite_config.get("data")]
         task = [_TestSuiteTask.load(name, config, path.parent, hook=hook) for name, config in
                 testsuite_config.get("tasks").items()]
-        return _TestSuite(data, task).reorder_task()
+        return _TestSuite(data, task, path).reorder_task()
 
     def reorder_task(self):
         inplace = []
