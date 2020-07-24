@@ -27,7 +27,7 @@ dataio_0.get_party_instance(role='guest', party_id=9999).algorithm_param(with_la
 dataio_0.get_party_instance(role='host', party_id=[10000, 10001]).algorithm_param(with_label=False)
 
 homo_nn_0 = HomoNN(name="homo_nn_0", max_iter=10)
-homo_nn_0.add(Dense(units=4, input_shape=(20, )))
+homo_nn_0.add(Dense(units=1, input_shape=(10, )))
 homo_nn_0.compile(optimizer=optimizers.SGD(lr=0.1), metrics=["AUC"], loss="binary_crossentropy")
 
 print("get input_0's name {}".format(input_0.name))
@@ -63,5 +63,5 @@ pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
                                  }
                             })
 
-with open("output.pkl", "wb") as fout:
-    fout.write(pipeline.dump())
+# with open("output.pkl", "wb") as fout:
+#     fout.write(pipeline.dump())
