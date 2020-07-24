@@ -302,6 +302,8 @@ class TaskExecutor(object):
     def monkey_patch():
         package_name = "monkey_patch"
         package_path = os.path.join(file_utils.get_project_base_directory(), "fate_flow", package_name)
+        if not os.path.exists(package_path):
+            return
         for f in os.listdir(package_path):
             if not os.path.isdir(f) or f == "__pycache__":
                 continue
