@@ -27,7 +27,7 @@ class HeteroDataSplit(Component, DataSplitParam):
         new_kwargs = self.erase_component_base_param(**kwargs)
 
         DataSplitParam.__init__(self, **new_kwargs)
-        self.output = Output(self.name, has_model=False)
+        self.output = Output(self.name, has_model=False, data_type="multi")
         self._module_name = "HeteroDataSplit"
 
 
