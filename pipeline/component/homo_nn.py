@@ -15,35 +15,43 @@
 #
 
 from pipeline.component.component_base import Component
+from pipeline.component.nn.models.sequantial import Sequential
 from pipeline.interface.output import Output
-from federatedml.param.homo_nn_param import HomoNNParam
+from pipeline.utils.tools import extract_explicit_parameter
 
 
-class HomoNN(Component, HomoNNParam):
-    def __init__(self, **kwargs):
-        Component.__init__(self, **kwargs)
+class HomoNN(Component):
+    @extract_explicit_parameter
+    def __init__(self, name=None, max_iter=100, batch_size=-1,
+                 secure_aggregate=True, aggregate_every_n_epoch=1,
+                 early_stop="diff", encode_label=False,
+                 predict_param=None, cv_param=None, **kwargs):
 
-        print (self.name)
-        new_kwargs = self.erase_component_base_param(**kwargs)
+        Component.__init__(self, **kwargs["explict_parameters"])
 
-        HomoNNParam.__init__(self, **new_kwargs)
-        self.output = Output(self.name)
+        self.output = Output(self.name, data_type='single')
         self._module_name = "HomoNN"
+        self._model = Sequential()
+        self.optimizer = None
+        self.loss = None
+        self.metrics = None
+        self.nn_define = None
+        self.config_type = "keras"
 
-    def summary(self, data, metric_keyword):
-        if data is None:
-            return
-        # meta info
-        metrics = {}
-        for namespace in data:
-            for name in data[namespace]:
-                metric_data = data[namespace][name]["meta"]
-                print(f"metric_data: {metric_data}")
-                for metric_name, metric_val in metric_data.items():
-                    if not metric_keyword or metric_name in metric_keyword:
-                        metrics[metric_name] = metric_val
+    def set_model(self, model):
+        self._model = model
 
-        for metric_name in metric_keyword:
-            if metric_name not in metrics:
-                metrics[metric_name] = None
-        return metrics
+    def add(self, layer):
+        self._model.add(layer)
+
+    def compile(self, optimizer, loss=None, metrics=None):
+        if metrics and not isinstance(metrics, list):
+            raise ValueError("metrics should be a list")
+
+        self.optimizer = self._model.get_optimizer_config(optimizer)
+        self.loss = self._model.get_loss_config(loss)
+        self.metrics = metrics
+        self.config_type = self._model.get_layer_type()
+        self.nn_define = self._model.get_network_config()
+
+
