@@ -289,7 +289,7 @@ class TaskExecutor(object):
                     break
             except Exception as e:
                 response = {
-                    "retcode": RetCode.REPORT_ERROR,
+                    "retcode": RetCode.CONNECTION_ERROR,
                     "retmsg": "Report error, {}".format(e)
                 }
             if response["retcode"] != 0:

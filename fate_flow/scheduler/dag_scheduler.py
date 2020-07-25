@@ -137,6 +137,7 @@ class DAGScheduler(object):
             elif task_set.f_status == TaskSetStatus.RUNNING:
                 # TODO: Determine whether it has timed out
                 schedule_logger(job_id=job.f_job_id).info("Job {} task set {} is running".format(task_set.f_job_id, task_set.f_task_set_id))
+                TaskScheduler.schedule(job=job, task_set=task_set)
                 break
             elif InterruptStatus.is_interrupt_status(task_set.f_status):
                 schedule_logger(job_id=job.f_job_id).info("Job {} task set {} is {}, job exit".format(task_set.f_job_id, task_set.f_task_set_id, task_set.f_status))

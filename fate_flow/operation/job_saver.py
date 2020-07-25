@@ -116,10 +116,10 @@ class JobSaver(object):
             update_filters = query_filters[:]
             if 'status' in entity_info and hasattr(entity_model, "f_status"):
                 update_filters.append(operator.attrgetter("f_status_level")(entity_model) < BaseJobStatus.get_level(entity_info["status"]))
-                entity_info["f_status_level"] = BaseJobStatus.get_level(entity_info["status"])
+                entity_info["status_level"] = BaseJobStatus.get_level(entity_info["status"])
             if "party_status" in entity_info and hasattr(entity_model, "f_party_status"):
                 update_filters.append(operator.attrgetter("f_party_status_level")(entity_model) < BaseJobStatus.get_level(entity_info["party_status"]))
-                entity_info["f_party_status_level"] = BaseJobStatus.get_level(entity_info["party_status"])
+                entity_info["party_status_level"] = BaseJobStatus.get_level(entity_info["party_status"])
                 if EndStatus.is_end_status(entity_info["party_status"]):
                     entity_info['end_time'] = current_timestamp()
                     if obj.f_start_time:

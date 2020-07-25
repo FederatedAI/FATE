@@ -19,14 +19,15 @@ import tarfile
 
 from flask import Flask, request, send_file
 
-from arch.api.utils.core_utils import json_loads
+from arch.api.utils.core_utils import json_loads, json_dumps
 from fate_flow.scheduler.task_scheduler import TaskScheduler
 from fate_flow.scheduler.dag_scheduler import DAGScheduler
+from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.manager import data_manager
 from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT
 from fate_flow.utils import job_utils, detect_utils
 from fate_flow.utils.api_utils import get_json_result, request_execute_server
-from fate_flow.entity.constant import WorkMode, JobStatus
+from fate_flow.entity.constant import WorkMode, JobStatus, FederatedSchedulingStatusCode, RetCode
 from fate_flow.entity.runtime_config import RuntimeConfig
 
 manager = Flask(__name__)
@@ -61,21 +62,17 @@ def submit_job():
 
 
 @manager.route('/stop', methods=['POST'])
-def start_stop_job():
-    job_id = request.json.get('job_id')
-    response = TaskScheduler.start_stop(job_id=job_id)
-    return get_json_result(retcode=response.get('retcode'), retmsg=response.get('retmsg'))
-
-
-@manager.route('/stop/do', methods=['POST'])
-@job_utils.job_server_routing()
 def stop_job():
     job_id = request.json.get('job_id')
-    response = TaskScheduler.stop(job_id=job_id, end_status=JobStatus.CANCELED)
-    if not response:
-        TaskScheduler.stop(job_id=request.json.get('job_id', ''), end_status=JobStatus.FAILED)
-        return get_json_result(retcode=0, retmsg='kill job success')
-    return get_json_result(retcode=0, retmsg='cancel job success')
+    jobs = job_utils.query_job(job_id=job_id)
+    if jobs:
+        status_code, response = FederatedScheduler.request_stop_job(job=jobs[0], stop_status=JobStatus.FAILED)
+        if status_code == FederatedSchedulingStatusCode.SUCCESS:
+            return get_json_result(retcode=RetCode.SUCCESS, retmsg="stop job success")
+        else:
+            return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="stop job failed:\n{}".format(json_dumps(response)))
+    else:
+        return get_json_result(retcode=RetCode.DATA_ERROR, retmsg="can not found job")
 
 
 @manager.route('/query', methods=['POST'])

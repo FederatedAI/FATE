@@ -139,7 +139,7 @@ class TaskController(object):
                                      role=task_info["role"],
                                      party_id=task_info["party_id"])
         if len(tasks) == 1:
-            FederatedScheduler.report_task(task=tasks[0])
+            FederatedScheduler.report_task_to_initiator(task=tasks[0])
         else:
             raise Exception("Found {} {} {} task on {} {}, error".format(len(tasks), task_info["task_id"], task_info["task_version"], task_info["role"], task_info["party_id"]))
 

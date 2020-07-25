@@ -33,7 +33,8 @@ from fate_flow.apps.model_app import manager as model_app_manager
 from fate_flow.apps.pipeline_app import manager as pipeline_app_manager
 from fate_flow.apps.table_app import manager as table_app_manager
 from fate_flow.apps.tracking_app import manager as tracking_app_manager
-from fate_flow.apps.schedule_app import manager as schedule_app_manager
+from fate_flow.federated_apps.control_app import manager as control_app_manager
+from fate_flow.federated_apps.initiator_app import manager as initiator_app_manager
 from fate_flow.apps.permission_app import manager as permission_app_manager
 from fate_flow.apps.version_app import manager as version_app_manager
 from fate_flow.db.db_models import init_database_tables
@@ -77,9 +78,10 @@ if __name__ == '__main__':
             '/{}/table'.format(API_VERSION): table_app_manager,
             '/{}/tracking'.format(API_VERSION): tracking_app_manager,
             '/{}/pipeline'.format(API_VERSION): pipeline_app_manager,
-            '/{}/schedule'.format(API_VERSION): schedule_app_manager,
             '/{}/permission'.format(API_VERSION): permission_app_manager,
-            '/{}/version'.format(API_VERSION): version_app_manager
+            '/{}/version'.format(API_VERSION): version_app_manager,
+            '/{}/control'.format(API_VERSION): control_app_manager,
+            '/{}/initiator'.format(API_VERSION): initiator_app_manager,
         }
     )
     # init

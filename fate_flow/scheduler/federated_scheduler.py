@@ -21,12 +21,13 @@ from arch.api.utils.log_utils import schedule_logger
 from fate_flow.entity.constant import RetCode, FederatedSchedulingStatusCode
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.db.db_models import Job, TaskSet, Task
+from fate_flow.utils import job_utils
 
 
 class FederatedScheduler(object):
     """
-    The Scheduler sends commands to all,
-    All report status to Scheduler
+    Send commands to party,
+    Report info to initiator
     """
 
     # Job
@@ -68,6 +69,10 @@ class FederatedScheduler(object):
         return cls.job_command(job=job, command="stop/{}".format(stop_status))
 
     @classmethod
+    def request_stop_job(cls, job, stop_status):
+        return cls.job_command(job=job, command="stop/{}".format(stop_status), dest_only_initiator=True)
+
+    @classmethod
     def cancel_job(cls, job):
         return cls.job_command(job=job, command="cancel")
 
@@ -76,17 +81,24 @@ class FederatedScheduler(object):
         return cls.job_command(job=job, command="clean")
 
     @classmethod
-    def job_command(cls, job, command, command_body=None):
+    def job_command(cls, job, command, command_body=None, dest_only_initiator=False):
         federated_response = {}
         roles, job_initiator = job.f_runtime_conf["role"], job.f_runtime_conf['initiator']
-        for dest_role, dest_party_ids in roles.items():
+        if not dest_only_initiator:
+            dest_partys = roles.items()
+            api_type = "control"
+        else:
+            dest_partys = [(job_initiator["role"], [job_initiator["party_id"]])]
+            api_type = "initiator"
+        for dest_role, dest_party_ids in dest_partys:
             federated_response[dest_role] = {}
             for dest_party_id in dest_party_ids:
                 try:
                     response = federated_api(job_id=job.f_job_id,
                                                   method='POST',
-                                                  endpoint='/{}/schedule/{}/{}/{}/{}'.format(
+                                                  endpoint='/{}/{}/{}/{}/{}/{}'.format(
                                                       API_VERSION,
+                                                      api_type,
                                                       job.f_job_id,
                                                       dest_role,
                                                       dest_party_id,
@@ -133,7 +145,7 @@ class FederatedScheduler(object):
                 try:
                     response = federated_api(job_id=job.f_job_id,
                                              method='POST',
-                                             endpoint='/{}/schedule/{}/{}/{}/{}/{}'.format(
+                                             endpoint='/{}/control/{}/{}/{}/{}/{}'.format(
                                                  API_VERSION,
                                                  job.f_job_id,
                                                  task_set.f_task_set_id,
@@ -169,6 +181,7 @@ class FederatedScheduler(object):
     @classmethod
     def sync_task(cls, job, task, update_fields):
         schedule_logger(job_id=task.f_job_id).info("Job {} task {} {} is {}, sync to all party".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_status))
+        print(task.to_dict_info(only_primary_with=update_fields))
         status_code, response = cls.task_command(job=job, task=task, command="update", command_body=task.to_dict_info(only_primary_with=update_fields))
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
             schedule_logger(job_id=task.f_job_id).info("Sync job {} task {} {} status {} to all party success".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_status))
@@ -184,13 +197,17 @@ class FederatedScheduler(object):
     def task_command(cls, job, task, command, command_body=None):
         federated_response = {}
         roles, job_initiator = job.f_runtime_conf["role"], job.f_runtime_conf['initiator']
-        for dest_role, dest_party_ids in roles.items():
+        dsl_parser = job_utils.get_job_dsl_parser(dsl=job.f_dsl, runtime_conf=job.f_runtime_conf, train_runtime_conf=job.f_train_runtime_conf)
+        component = dsl_parser.get_component_info(component_name=task.f_component_name)
+        component_parameters = component.get_role_parameters()
+        for dest_role, parameters_on_partys in component_parameters.items():
             federated_response[dest_role] = {}
-            for dest_party_id in dest_party_ids:
+            for parameters_on_party in parameters_on_partys:
+                dest_party_id = parameters_on_party.get('local', {}).get('party_id')
                 try:
                     response = federated_api(job_id=task.f_job_id,
                                              method='POST',
-                                             endpoint='/{}/schedule/{}/{}/{}/{}/{}/{}/{}'.format(
+                                             endpoint='/{}/control/{}/{}/{}/{}/{}/{}/{}'.format(
                                                  API_VERSION,
                                                  task.f_job_id,
                                                  task.f_component_name,
@@ -221,7 +238,7 @@ class FederatedScheduler(object):
         return cls.return_federated_response(federated_response=federated_response)
 
     @classmethod
-    def report_task(cls, task: Task):
+    def report_task_to_initiator(cls, task: Task):
         """
         :param task:
         :return:
@@ -232,7 +249,7 @@ class FederatedScheduler(object):
             try:
                 response = federated_api(job_id=task.f_job_id,
                                          method='POST',
-                                         endpoint='/{}/schedule/{}/{}/{}/{}/{}/{}/status'.format(
+                                         endpoint='/{}/control/{}/{}/{}/{}/{}/{}/status'.format(
                                              API_VERSION,
                                              task.f_job_id,
                                              task.f_component_name,

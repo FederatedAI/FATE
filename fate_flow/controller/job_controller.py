@@ -134,16 +134,20 @@ class JobController(object):
             task_set_info["party_id"] = party_id
             task_set_info["status"] = TaskSetStatus.WAITING
             for component_name in task_sets[i]:
-                task_info = {}
-                task_info.update(task_set_info)
-                task_info["component_name"] = component_name
-                task_info["task_version"] = 0
-                task_info["task_id"] = job_utils.generate_task_id(job_id=job_id, component_name=component_name)
-                task_info["initiator_role"] = initiator_role
-                task_info["initiator_party_id"] = initiator_party_id
-                task_info["status"] = TaskStatus.WAITING
-                task_info["party_status"] = TaskStatus.WAITING
-                JobSaver.create_task(task_info=task_info)
+                component = dsl_parser.get_component_info(component_name=component_name)
+                component_parameters = component.get_role_parameters()
+                for parameters_on_party in component_parameters.get(role, []):
+                    if parameters_on_party.get('local', {}).get('party_id') == party_id:
+                        task_info = {}
+                        task_info.update(task_set_info)
+                        task_info["component_name"] = component_name
+                        task_info["task_version"] = 0
+                        task_info["task_id"] = job_utils.generate_task_id(job_id=job_id, component_name=component_name)
+                        task_info["initiator_role"] = initiator_role
+                        task_info["initiator_party_id"] = initiator_party_id
+                        task_info["status"] = TaskStatus.WAITING
+                        task_info["party_status"] = TaskStatus.WAITING
+                        JobSaver.create_task(task_info=task_info)
             JobSaver.create_task_set(task_set_info=task_set_info)
 
     @classmethod
@@ -223,7 +227,7 @@ class JobController(object):
         return job_controller_utils.job_quantity_constraint(job_id, role, party_id)
 
     @classmethod
-    def cancel_job(cls, job_id, role, party_id, job_initiator):
+    def cancel_job(cls, job_id, role, party_id):
         schedule_logger(job_id).info('{} {} get cancel waiting job {} command'.format(role, party_id, job_id))
         jobs = job_utils.query_job(job_id=job_id)
         if jobs:

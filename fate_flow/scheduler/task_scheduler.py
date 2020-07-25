@@ -15,7 +15,7 @@
 #
 
 from fate_flow.db.db_models import TaskSet
-from fate_flow.entity.constant import TaskStatus, EndStatus, InterruptStatus, FederatedSchedulingStatusCode
+from fate_flow.entity.constant import TaskStatus, EndStatus, InterruptStatus, RetCode
 from fate_flow.settings import API_VERSION, ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
@@ -117,14 +117,10 @@ class TaskScheduler(object):
     def calculate_multi_party_task_status(cls, task):
         tasks = job_utils.query_task(task_id=task.f_task_id, task_version=task.f_task_version)
         print([task.f_party_status for task in tasks])
-        task.f_status = StatusEngine.horizontal_convergence([task.f_party_status for task in tasks])
-        print(task.f_status)
-        JobSaver.update_task_status(task=task)
-        print(task.f_status)
-        return task.f_status
+        new_task_status = StatusEngine.horizontal_convergence([task.f_party_status for task in tasks])
+        print(new_task_status)
+        return new_task_status
 
     @classmethod
     def finish(cls, task_set, end_status):
         schedule_logger(job_id=task_set.f_job_id).info("Finish job {} task set {}".format(task_set.f_job_id, task_set.f_task_set_id))
-        task_set.f_status = end_status
-        JobSaver.update_task_set_status(task_set=task_set)

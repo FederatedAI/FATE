@@ -394,9 +394,9 @@ def is_task_executor_process(task: Task, process: psutil.Process):
 
 def kill_task_executor_process(task: Task, only_child=False):
     try:
-        pid = int(task.f_run_pid)
-        if not pid:
+        if not task.f_run_pid:
             return False
+        pid = int(task.f_run_pid)
         schedule_logger(task.f_job_id).info("try to stop job {} task {} {} {} process pid:{}".format(
             task.f_job_id, task.f_task_id, task.f_role, task.f_party_id, pid))
         if not check_job_process(pid):

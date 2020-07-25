@@ -60,12 +60,13 @@ def start_job(job_id, role, party_id):
 
 @manager.route('/<job_id>/<role>/<party_id>/update', methods=['POST'])
 def update_job(job_id, role, party_id):
-    job_info = {
+    job_info = {}
+    job_info.update(request.json)
+    job_info.update({
         "job_id": job_id,
         "role": role,
         "party_id": party_id
-    }
-    job_info.update(request.json)
+    })
     JobController.update_job(job_info=job_info)
     return get_json_result(retcode=0, retmsg='success')
 
@@ -85,11 +86,11 @@ def stop_job(job_id, role, party_id, stop_status):
 
 @manager.route('/<job_id>/<role>/<party_id>/cancel', methods=['POST'])
 def cancel_job(job_id, role, party_id):
-    res = JobController.cancel_job(job_id=job_id, role=role, party_id=int(party_id),
-                                   job_initiator=request.json.get('job_initiator', {}))
-    if res:
+    status = JobController.cancel_job(job_id=job_id, role=role, party_id=int(party_id))
+    if status:
         return get_json_result(retcode=0, retmsg='cancel job success')
-    return get_json_result(retcode=101, retmsg='cancel job failed')
+    else:
+        return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg='cancel job failed')
 
 
 @manager.route('/<job_id>/<role>/<party_id>/<roles>/<party_ids>/clean', methods=['POST'])
@@ -102,13 +103,14 @@ def clean(job_id, role, party_id, roles, party_ids):
 # Schedule API for task set
 @manager.route('/<job_id>/<task_set_id>/<role>/<party_id>/update', methods=['POST'])
 def update_task_set(job_id, task_set_id, role, party_id):
-    task_set_info = {
+    task_set_info = {}
+    task_set_info.update(request.json)
+    task_set_info.update({
         "job_id": job_id,
         "task_set_id": task_set_id,
         "role": role,
         "party_id": party_id
-    }
-    task_set_info.update(request.json)
+    })
     TaskSetController.update_task_set(task_set_info=task_set_info)
     return get_json_result(retcode=0, retmsg='success')
 
@@ -130,14 +132,15 @@ def start_task(job_id, component_name, task_id, task_version, role, party_id):
 
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/update', methods=['POST'])
 def update_task(job_id, component_name, task_id, task_version, role, party_id):
-    task_info = {
+    task_info = {}
+    task_info.update(request.json)
+    task_info.update({
         "job_id": job_id,
         "task_id": task_id,
         "task_version": task_version,
         "role": role,
         "party_id": party_id,
-    }
-    task_info.update(request.json)
+    })
     TaskController.update_task(task_info=task_info)
     return get_json_result(retcode=0, retmsg='success')
 
