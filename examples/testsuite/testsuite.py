@@ -104,51 +104,14 @@ class Clients(object):
             conf.update(kwargs)
 
         LOGGER.debug(f"config: {pprint.pformat(conf)}")
-
-        self._role_to_parties = conf.get("parties")
-        parties_to_role_string = {}
-        for role, parties in self._role_to_parties.items():
-            for i, party in enumerate(parties):
-                if party not in parties_to_role_string:
-                    parties_to_role_string[party] = set()
-                parties_to_role_string[party].add(f"{role.lower()}_{i}")
-
-        tunnels = []
-        for ssh_conf in conf.get("ssh_tunnel", []):
-            ssh_address = ssh_conf.get("ssh_address")
-            ssh_host, ssh_port = _parse_address(ssh_address)
-            ssh_username = ssh_conf.get("ssh_username")
-            ssh_password = ssh_conf.get("ssh_password")
-            ssh_pkey = ssh_conf.get("ssh_priv_key")
-            services = ssh_conf.get("services")
-
-            role_strings = []
-            remote_bind_addresses = []
-            for service in services:
-                role_string_set = set()
-                for party in service.get("parties"):
-                    role_string_set.update(parties_to_role_string[party])
-                role_strings.append(role_string_set)
-                remote_bind_addresses.append(_parse_address(service.get("address")))
-
-            tunnel = sshtunnel.SSHTunnelForwarder(ssh_address_or_host=(ssh_host, ssh_port),
-                                                  ssh_username=ssh_username,
-                                                  ssh_password=ssh_password,
-                                                  ssh_pkey=ssh_pkey,
-                                                  remote_bind_addresses=remote_bind_addresses)
-            tunnels.append((tunnel, role_strings))
-
         self._client_type = conf.get("client", "flowpy").lower()
         self._drop = conf.get("drop", 0)
         self._work_mode = int(conf.get("work_mode", "0"))
-        self._tunnels: typing.List[
-            typing.Tuple[sshtunnel.SSHTunnelForwarder, typing.List[typing.MutableSet[str]]]] = tunnels
-        self._clients: typing.MutableMapping[str, _Client] = {}
-        for service in conf.get("local_services"):
-            client = _client_factory(self._client_type, service["address"])
-            for party in service["parties"]:
-                for role_str in parties_to_role_string[party]:
-                    self._clients[role_str] = client
+
+        self._role_to_parties = conf.get("parties")
+        parties_to_role_string = self._parties_to_role_string(self._role_to_parties)
+        self._tunnels = self._create_ssh_tunnels(conf.get("ssh_tunnel", []), parties_to_role_string)
+        self._clients = self._local_clients(conf, self._client_type, parties_to_role_string)
 
     def run_testsuite(self, testsuite: '_TestSuite') -> '_Summary':
         num_data = len(testsuite.data)
@@ -232,13 +195,7 @@ class Clients(object):
         return summaries
 
     def __enter__(self):
-        for tunnel, role_strings_list in self._tunnels:
-            tunnel.start()
-            for role_strings, address in zip(role_strings_list, tunnel.local_bind_addresses):
-                client = _client_factory(client_type=self._client_type, address=address)
-                for role_string in role_strings:
-                    self._clients[role_string] = client
-        return self
+        return self._open()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         for tunnel, _ in self._tunnels:
@@ -246,6 +203,65 @@ class Clients(object):
                 tunnel.stop()
             except Exception as e:
                 LOGGER.exception(e)
+
+    @staticmethod
+    def _create_ssh_tunnels(ssh_tunnel_conf, parties_to_role_string) -> \
+            typing.List[typing.Tuple[sshtunnel.SSHTunnelForwarder, typing.List[typing.MutableSet[str]]]]:
+
+        tunnels = []
+        for ssh_conf in ssh_tunnel_conf:
+            ssh_address = ssh_conf.get("ssh_address")
+            ssh_host, ssh_port = _parse_address(ssh_address)
+            ssh_username = ssh_conf.get("ssh_username")
+            ssh_password = ssh_conf.get("ssh_password")
+            ssh_pkey = ssh_conf.get("ssh_priv_key")
+            services = ssh_conf.get("services")
+
+            role_strings = []
+            remote_bind_addresses = []
+            for service in services:
+                role_string_set = set()
+                for party in service.get("parties"):
+                    role_string_set.update(parties_to_role_string[party])
+                role_strings.append(role_string_set)
+                remote_bind_addresses.append(_parse_address(service.get("address")))
+
+            tunnel = sshtunnel.SSHTunnelForwarder(ssh_address_or_host=(ssh_host, ssh_port),
+                                                  ssh_username=ssh_username,
+                                                  ssh_password=ssh_password,
+                                                  ssh_pkey=ssh_pkey,
+                                                  remote_bind_addresses=remote_bind_addresses)
+            tunnels.append((tunnel, role_strings))
+        return tunnels
+
+    @staticmethod
+    def _local_clients(conf, client_type, parties_to_role_string) -> typing.MutableMapping[str, '_Client']:
+        clients = {}
+        for service in conf.get("local_services"):
+            client = _client_factory(client_type, service["address"])
+            for party in service["parties"]:
+                for role_str in parties_to_role_string[party]:
+                    clients[role_str] = client
+        return clients
+
+    @staticmethod
+    def _parties_to_role_string(role_to_parties):
+        parties_to_role_string = {}
+        for role, parties in role_to_parties.items():
+            for i, party in enumerate(parties):
+                if party not in parties_to_role_string:
+                    parties_to_role_string[party] = set()
+                parties_to_role_string[party].add(f"{role.lower()}_{i}")
+        return parties_to_role_string
+
+    def _open(self):
+        for tunnel, role_strings_list in self._tunnels:
+            tunnel.start()
+            for role_strings, address in zip(role_strings_list, tunnel.local_bind_addresses):
+                client = _client_factory(client_type=self._client_type, address=address)
+                for role_string in role_strings:
+                    self._clients[role_string] = client
+        return self
 
     def _get_client(self, role_string: str):
         if role_string not in self._clients:
@@ -260,10 +276,6 @@ def _get_next_exception_id():
     global _exception_id
     _exception_id += 1
     return f"exception_task_{_exception_id}"
-
-
-class _STATUS(Enum):
-    ...
 
 
 def _parse_address(address):
