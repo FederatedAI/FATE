@@ -32,6 +32,7 @@ def main():
     parser.add_argument("-client", choices=["flowpy", "rest"], type=str)
     parser.add_argument("-replace", type=str)
     parser.add_argument("-exclude", nargs="+", type=str)
+    parser.add_argument("-skip_data", default=False, type=bool)
     args = parser.parse_args()
     _add_logger(args.name)
     path = Path(args.path)
@@ -56,7 +57,9 @@ def main():
             paths = [p for p in paths if p not in exclude_paths]
         testsuites = {path.__str__(): _TestSuite.load(path, hook=hook) for path in paths}
 
-        summaries = clients.run_testsuites(testsuites, summaries_base=Path(args.name).resolve())
+        summaries = clients.run_testsuites(testsuites,
+                                           summaries_base=Path(args.name).resolve(),
+                                           skip_data=args.skip_data)
         LOGGER.info(f"summaries:\n{summaries.pretty_summaries()}")
         LOGGER.info(f"unsuccessful summaries:\n{summaries.pretty_summaries(include_success=False)}")
 
@@ -120,31 +123,32 @@ class Clients(object):
         self._tunnels = self._create_ssh_tunnels(conf.get("ssh_tunnel", []), parties_to_role_string)
         self._clients = self._local_clients(conf, self._client_type, parties_to_role_string, self._data_base_dir)
 
-    def run_testsuite(self, testsuite: '_TestSuite') -> '_Summary':
+    def run_testsuite(self, testsuite: '_TestSuite', skip_data=False) -> '_Summary':
         num_data = len(testsuite.data)
         LOGGER.info(f"num of data to upload: {num_data}")
 
         # upload data, raise exception if any exception occurs or data upload job failed.
-        for i, data in enumerate(testsuite.data):
-            LOGGER.info(f"uploading ({i + 1}/{num_data})")
-            LOGGER.debug(f"uploading data: {data}")
-            client = self._get_client(data.role_str)
+        if not skip_data:
+            for i, data in enumerate(testsuite.data):
+                LOGGER.info(f"uploading ({i + 1}/{num_data})")
+                LOGGER.debug(f"uploading data: {data}")
+                client = self._get_client(data.role_str)
 
-            # submit job
-            job_id = client.upload_data(data.as_dict(work_mode=self._work_mode), drop=self._drop)
-            LOGGER.opt(colors=True).info(f"submitted, job id: <red>{job_id}</red>")
+                # submit job
+                job_id = client.upload_data(data.as_dict(work_mode=self._work_mode), drop=self._drop)
+                LOGGER.opt(colors=True).info(f"submitted, job id: <red>{job_id}</red>")
 
-            # check status
-            try:
-                data_upload_checker = client.query_job(job_id=job_id, role="local")
-                while True:
-                    progress = next(data_upload_checker)
-                    LOGGER.info(f"uploading, progress: {progress}/100")
-            except StopIteration as e:
-                status = e.value
-                LOGGER.opt(colors=True).info(f"uploaded, status: <green>{status}</green>")
-            if status != "success":
-                raise Exception(f"upload {i + 1}th data failed")
+                # check status
+                try:
+                    data_upload_checker = client.query_job(job_id=job_id, role="local")
+                    while True:
+                        progress = next(data_upload_checker)
+                        LOGGER.info(f"uploading, progress: {progress}/100")
+                except StopIteration as e:
+                    status = e.value
+                    LOGGER.opt(colors=True).info(f"uploaded, status: <green>{status}</green>")
+                if status != "success":
+                    raise Exception(f"upload {i + 1}th data failed")
 
         # submit jobs, jobs's exception will logged then ignored
         num_task = len(testsuite.task)
@@ -193,14 +197,15 @@ class Clients(object):
         return summary
 
     def run_testsuites(self, testsuites: typing.MutableMapping[str, '_TestSuite'],
-                       summaries_base: typing.Optional[Path] = None):
+                       summaries_base: typing.Optional[Path] = None,
+                       skip_data=False):
 
         LOGGER.info("testsuites:\n" + "\n".join(testsuites) + "\n")
         summaries = _Summaries()
         for name, testsuite in testsuites.items():
             LOGGER.info(f"running testsuite: {name}")
             try:
-                summary = self.run_testsuite(testsuite)
+                summary = self.run_testsuite(testsuite, skip_data)
                 LOGGER.info(f"\n{summary.pretty_summary()}")
 
                 if summaries_base is not None:
