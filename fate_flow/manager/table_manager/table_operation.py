@@ -90,6 +90,9 @@ def get_table(job_id: str = '',
         job_id = uuid.uuid1().hex
     data_manager_logger.info('start get table by name {} namespace {}'.format(name, namespace))
     store_engine, address, partitions = get_store_info(name, namespace)
+    if 'partition' in kwargs.keys():
+        partitions = kwargs.get('partition')
+        kwargs.pop('partition')
     if not store_engine:
         data_manager_logger.error('no find table')
         return None

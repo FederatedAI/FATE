@@ -33,7 +33,7 @@ class Reader(object):
         self.tracker = None
 
     def run(self, component_parameters=None, args=None):
-        data_table = args.get('data').get('args').get('data')[0]
+        data_table = args.get('data').get('args').get('data')
         persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(self.task_id), uuid.uuid1().hex
         table = convert(data_table, job_id=generate_session_id(self.task_id, self.tracker.role, self.tracker.party_id),
                         name=persistent_table_name, namespace=persistent_table_namespace, force=True)
@@ -54,14 +54,15 @@ class Reader(object):
             mark=True)
         self.callback_metric(metric_name='reader_name',
                              metric_namespace='reader_namespace',
-                             data_info={"count": table.count(),
+                             data_info={"count": count,
                                         "partitions": table.get_partitions(),
                                         "input_table_strage_engine": data_table.get_storage_engine(),
-                                        "output_table_strage_engine": table.get_storage_engine()}
+                                        "output_table_strage_engine": table.get_storage_engine() if table else
+                                        data_table.get_storage_engine()}
                              )
 
-    def set_taskid(self, task_id):
-        self.task_id = task_id
+    def set_taskid(self, taskid):
+        self.task_id = taskid
 
     def set_tracker(self, tracker):
         self.tracker = tracker

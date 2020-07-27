@@ -214,7 +214,7 @@ class Tracking(object):
                                            'f_partition': partitions},
                                 mark=True)
 
-    def get_output_data_table(self, data_name: str = 'component', partition=1, init_session=False):
+    def get_output_data_table(self, data_name: str = 'component', partition=1, init_session=False, session_id=''):
         """
         Get component output data table, will run in the task executor process
         :param data_name:
@@ -223,7 +223,9 @@ class Tracking(object):
         data_view = self.query_data_view(self.role, self.party_id, mark=True)
 
         if data_view:
-            data_table = get_table(job_id=job_utils.generate_session_id(self.task_id, self.role, self.party_id),
+            if init_session and not session_id:
+                session_id = job_utils.generate_session_id(self.task_id, self.role, self.party_id)
+            data_table = get_table(job_id=session_id,
                                    name=data_view.f_table_name,
                                    namespace=data_view.f_table_namespace,
                                    partition=data_view.f_partition,
