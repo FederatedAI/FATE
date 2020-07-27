@@ -22,7 +22,7 @@ import uuid
 from fate_arch.session._interface import SessionABC, TableABC
 from fate_arch.common import WorkMode, Backend
 
-_DEFAULT_SESSION = typing.Optional[SessionABC]
+_DEFAULT_SESSION: typing.Optional[SessionABC] = None
 
 __all__ = ['create', 'default', 'has_default', 'is_table', 'TableABC']
 
