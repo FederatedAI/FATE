@@ -496,15 +496,16 @@ def start_clean_queue(**kwargs):
 def start_session_stop(task):
     job_conf_dict = get_job_conf(task.f_job_id)
     runtime_conf = job_conf_dict['job_runtime_conf_path']
+    session_id = generate_session_id(task.f_task_id, task.f_task_version, task.f_role, task.f_party_id)
     process_cmd = [
         'python3', sys.modules[session_utils.SessionStop.__module__].__file__,
-        '-j', '{}_{}_{}'.format(task.f_task_id, task.f_role, task.f_party_id),
+        '-j', session_id,
         '-w', str(runtime_conf.get('job_parameters').get('work_mode')),
         '-b', str(runtime_conf.get('job_parameters').get('backend', 0)),
         '-c', 'stop' if task.f_status == JobStatus.COMPLETE else 'kill'
     ]
-    schedule_logger(task.f_job_id).info('start run subprocess to stop component {} session'
-                                        .format(task.f_component_name))
+    schedule_logger(task.f_job_id).info('start run subprocess to stop task {} {} session {}'
+                                        .format(task.f_task_id, task.f_task_version, session_id))
     task_dir = os.path.join(get_job_directory(job_id=task.f_job_id), task.f_role,
                             task.f_party_id, task.f_component_name, 'session_stop')
     os.makedirs(task_dir, exist_ok=True)

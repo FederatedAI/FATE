@@ -88,9 +88,6 @@ class TaskExecutor(object):
             job_args_on_party = job_args[role][party_index]["args"] if role in job_args else {}
             component = dsl_parser.get_component_info(component_name=component_name)
             component_parameters = component.get_role_parameters()
-            import json
-            print(json.dumps(component_parameters, indent=4))
-            #party_component_parameters = component_parameters[role][component_parameters[role][0]['role'][role].index(party_id)]
             component_parameters_on_party = component_parameters[role][party_index] if role in component_parameters else {}
             module_name = component.get_module()
             task_input_dsl = component.get_input()
@@ -275,7 +272,7 @@ class TaskExecutor(object):
                 response = api_utils.local_api(
                                          job_id=task_info["job_id"],
                                          method='POST',
-                                         endpoint='/{}/schedule/{}/{}/{}/{}/{}/{}/update'.format(
+                                         endpoint='/{}/control/{}/{}/{}/{}/{}/{}/update'.format(
                                              API_VERSION,
                                              task_info["job_id"],
                                              task_info["component_name"],

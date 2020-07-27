@@ -171,17 +171,14 @@ class JobController(object):
         JobSaver.update_job(job_info=job_info)
 
     @classmethod
-    def stop_job(cls, job_id, role, party_id, stop_status):
-        jobs = job_utils.query_job(job_id=job_id, role=role, party_id=party_id)
-        for job in jobs:
-            job.f_status = stop_status
-            task_sets = JobSaver.query_task_set(job_id=job_id, role=role, party_id=party_id)
-            for task_set in task_sets:
-                TaskSetController.stop_task_set(task_set=task_set, stop_status=stop_status)
-            # Job status depends on the final operation result and initiator calculate
+    def stop_job(cls, job, stop_status):
+        task_sets = JobSaver.query_task_set(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
+        for task_set in task_sets:
+            TaskSetController.stop_task_set(task_set=task_set, stop_status=stop_status)
+        # Job status depends on the final operation result and initiator calculate
 
     @classmethod
-    def save_pipeline(cls, job_id, role, party_id):
+    def save_pipelined_model(cls, job_id, role, party_id):
         schedule_logger(job_id).info('job {} on {} {} start to save pipeline'.format(job_id, role, party_id))
         job_dsl, job_runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id, role=role,
                                                                                         party_id=party_id)

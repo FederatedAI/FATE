@@ -130,7 +130,7 @@ class DAGScheduler(object):
                 if not update_status:
                     # another scheduler
                     schedule_logger(job_id=job.f_job_id).info("Job {} task set {} start on another scheduler".format(task_set.f_job_id, task_set.f_task_set_id))
-                    return
+                    break
                 schedule_logger(job_id=job.f_job_id).info("Start job {} task set {} on {} {}".format(task_set.f_job_id, task_set.f_task_set_id, task_set.f_role, task_set.f_party_id))
                 TaskScheduler.schedule(job=job, task_set=task_set)
                 break
@@ -142,6 +142,10 @@ class DAGScheduler(object):
             elif InterruptStatus.is_interrupt_status(task_set.f_status):
                 schedule_logger(job_id=job.f_job_id).info("Job {} task set {} is {}, job exit".format(task_set.f_job_id, task_set.f_task_set_id, task_set.f_status))
                 break
+            elif task_set.f_status == TaskSetStatus.COMPLETE:
+                continue
+            else:
+                raise Exception("Can not scheduling job {}".format(job.f_job_id))
         new_job_status = StatusEngine.vertical_convergence([task_set.f_status for task_set in task_sets])
         schedule_logger(job_id=job.f_job_id).info("Job {} status is {}".format(job.f_job_id, new_job_status))
         if new_job_status != job.f_status:
@@ -153,13 +157,10 @@ class DAGScheduler(object):
     @staticmethod
     def finish(job, end_status):
         schedule_logger(job_id=job.f_job_id).info("Finished job {}".format(job.f_job_id))
-        job.f_status = end_status
-        schedule_logger(job_id=job.f_job_id).info("Try to stop job {}".format(job.f_job_id))
-        federated_scheduling_status_code, federated_response = FederatedScheduler.stop_job(job=job, stop_status=end_status)
-        if federated_scheduling_status_code == FederatedSchedulingStatusCode.SUCCESS:
-            schedule_logger(job_id=job.f_job_id).info("Stop job {} success".format(job.f_job_id))
-        else:
-            schedule_logger(job_id=job.f_job_id).info("Stop job {} failed:\n{}".format(job.f_job_id, federated_response))
+        #FederatedScheduler.save_pipelined_model(job=job)
+        FederatedScheduler.stop_job(job=job, stop_status=end_status)
+        # TODO: clean
+        # FederatedScheduler.clean_job(job=job)
 
     @staticmethod
     def clean_queue():

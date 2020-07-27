@@ -49,8 +49,7 @@ class TaskSetController(object):
 
     @classmethod
     def stop_task_set(cls, task_set, stop_status):
-        task_set.f_status = stop_status
-        tasks = job_utils.query_task(task_set_id=task_set.f_task_set_id, role=task_set.f_role, party_id=task_set.f_party_id)
+        tasks = job_utils.query_task(job_id=task_set.f_job_id, task_set_id=task_set.f_task_set_id, role=task_set.f_role, party_id=task_set.f_party_id)
         for task in tasks:
             TaskController.stop_task(task=task, stop_status=stop_status)
         # TaskSet status depends on the final operation result and initiator calculate

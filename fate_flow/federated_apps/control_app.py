@@ -73,14 +73,16 @@ def update_job(job_id, role, party_id):
 
 @manager.route('/<job_id>/<role>/<party_id>/model', methods=['POST'])
 @request_authority_certification
-def save_pipeline(job_id, role, party_id):
-    JobController.save_pipeline(job_id=job_id, role=role, party_id=party_id)
+def save_pipelined_model(job_id, role, party_id):
+    JobController.save_pipelined_model(job_id=job_id, role=role, party_id=party_id)
     return get_json_result(retcode=0, retmsg='success')
 
 
 @manager.route('/<job_id>/<role>/<party_id>/stop/<stop_status>', methods=['POST'])
 def stop_job(job_id, role, party_id, stop_status):
-    JobController.stop_job(job_id=job_id, role=role, party_id=int(party_id), stop_status=stop_status)
+    jobs = job_utils.query_job(job_id=job_id, role=role, party_id=party_id)
+    for job in jobs:
+        JobController.stop_job(job=job, stop_status=stop_status)
     return get_json_result(retcode=0, retmsg='success')
 
 

@@ -174,11 +174,12 @@ class TaskController(object):
             schedule_logger(task.f_job_id).exception(e)
         finally:
             schedule_logger(task.f_job_id).info(
-                'Job {} component {} on {} {} process {} kill {}'.format(task.f_job_id, task.f_component_name,
-                                                                         task.f_role,
-                                                                         task.f_party_id,
-                                                                         task.f_run_pid,
-                                                                         'success' if kill_status else 'failed'))
+                'Job {} task {} {} on {} {} process {} kill {}'.format(task.f_job_id, task.f_task_id,
+                                                                       task.f_task_version,
+                                                                       task.f_role,
+                                                                       task.f_party_id,
+                                                                       task.f_run_pid,
+                                                                       'success' if kill_status else 'failed'))
 
     @classmethod
     def query_task_input_args(cls, job_id, task_id, role, party_id, job_args, job_parameters, input_dsl, filter_type=None, filter_attr=None):

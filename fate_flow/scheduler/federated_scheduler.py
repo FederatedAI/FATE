@@ -66,7 +66,14 @@ class FederatedScheduler(object):
 
     @classmethod
     def stop_job(cls, job, stop_status):
-        return cls.job_command(job=job, command="stop/{}".format(stop_status))
+        schedule_logger(job_id=job.f_job_id).info("Try to stop job {}".format(job.f_job_id))
+        job.f_status = stop_status
+        status_code, response = cls.job_command(job=job, command="stop/{}".format(stop_status))
+        if status_code == FederatedSchedulingStatusCode.SUCCESS:
+            schedule_logger(job_id=job.f_job_id).info("Stop job {} success".format(job.f_job_id))
+        else:
+            schedule_logger(job_id=job.f_job_id).info("Stop job {} failed:\n{}".format(job.f_job_id, response))
+        return status_code, response
 
     @classmethod
     def request_stop_job(cls, job, stop_status):
@@ -136,6 +143,17 @@ class FederatedScheduler(object):
         return status_code, response
 
     @classmethod
+    def stop_task_set(cls, job, task_set, stop_status):
+        schedule_logger(job_id=task_set.f_job_id).info("Try to stop job {} task set {}".format(task_set.f_job_id, task_set.f_task_set_id))
+        task_set.f_status = stop_status
+        status_code, response = cls.task_set_command(job=job, task_set=task_set, command="stop/{}".format(stop_status))
+        if status_code == FederatedSchedulingStatusCode.SUCCESS:
+            schedule_logger(job_id=job.f_job_id).info("Stop job {} task set {} success".format(task_set.f_job_id, task_set.f_task_set_id))
+        else:
+            schedule_logger(job_id=job.f_job_id).info("Stop job {} task set {} failed:\n{}".format(task_set.f_job_id, task_set.f_task_set_id, response))
+        return status_code, response
+
+    @classmethod
     def task_set_command(cls, job, task_set, command, command_body=None):
         federated_response = {}
         roles, job_initiator = job.f_runtime_conf["role"], job.f_runtime_conf['initiator']
@@ -181,7 +199,6 @@ class FederatedScheduler(object):
     @classmethod
     def sync_task(cls, job, task, update_fields):
         schedule_logger(job_id=task.f_job_id).info("Job {} task {} {} is {}, sync to all party".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_status))
-        print(task.to_dict_info(only_primary_with=update_fields))
         status_code, response = cls.task_command(job=job, task=task, command="update", command_body=task.to_dict_info(only_primary_with=update_fields))
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
             schedule_logger(job_id=task.f_job_id).info("Sync job {} task {} {} status {} to all party success".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_status))
@@ -191,7 +208,14 @@ class FederatedScheduler(object):
 
     @classmethod
     def stop_task(cls, job, task, stop_status):
-        return cls.task_command(job=job, task=task, command="stop/{}".format(stop_status))
+        schedule_logger(job_id=task.f_job_id).info("Try to stop job {} task {} {}".format(task.f_job_id, task.f_task_id, task.f_task_version))
+        task.f_status = stop_status
+        status_code, response = cls.task_command(job=job, task=task, command="stop/{}".format(stop_status))
+        if status_code == FederatedSchedulingStatusCode.SUCCESS:
+            schedule_logger(job_id=job.f_job_id).info("Stop job {} task {} {} success".format(task.f_job_id, task.f_task_id, task.f_task_version))
+        else:
+            schedule_logger(job_id=job.f_job_id).info("Stop job {} task {} {} failed:\n{}".format(task.f_job_id, task.f_task_id, task.f_task_version, response))
+        return status_code, response
 
     @classmethod
     def task_command(cls, job, task, command, command_body=None):
