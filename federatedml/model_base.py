@@ -336,3 +336,9 @@ class ModelBase(object):
         if isinstance(data, dict) and len(data) >= 1:
             data = list(data.values())[0]
         return data
+
+    @staticmethod
+    def obtain_data(data_list):
+        if isinstance(data_list, list):
+            return data_list[0]
+        return data_list
