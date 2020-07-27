@@ -8,7 +8,6 @@ import tempfile
 import time
 import traceback
 import typing
-from enum import Enum
 from pathlib import Path
 
 import loguru
@@ -107,11 +106,19 @@ class Clients(object):
         self._client_type = conf.get("client", "flowpy").lower()
         self._drop = conf.get("drop", 0)
         self._work_mode = int(conf.get("work_mode", "0"))
+        if conf.get("data_base_dir") is not None:
+            data_base_dir = Path(conf["data_base_dir"])
+            if not data_base_dir.is_absolute():
+                data_base_dir = config_path.parent.joinpath(data_base_dir)
+            data_base_dir = data_base_dir.resolve()
+        else:
+            data_base_dir = None
+        self._data_base_dir = data_base_dir
 
         self._role_to_parties = conf.get("parties")
         parties_to_role_string = self._parties_to_role_string(self._role_to_parties)
         self._tunnels = self._create_ssh_tunnels(conf.get("ssh_tunnel", []), parties_to_role_string)
-        self._clients = self._local_clients(conf, self._client_type, parties_to_role_string)
+        self._clients = self._local_clients(conf, self._client_type, parties_to_role_string, self._data_base_dir)
 
     def run_testsuite(self, testsuite: '_TestSuite') -> '_Summary':
         num_data = len(testsuite.data)
@@ -128,8 +135,14 @@ class Clients(object):
             LOGGER.opt(colors=True).info(f"submitted, job id: <red>{job_id}</red>")
 
             # check status
-            status = client.query_job(job_id=job_id, role="local")
-            LOGGER.opt(colors=True).info(f"uploaded, status: <green>{status}</green>")
+            try:
+                data_upload_checker = client.query_job(job_id=job_id, role="local")
+                while True:
+                    progress = next(data_upload_checker)
+                    LOGGER.info(f"uploading, progress: {progress}/100")
+            except StopIteration as e:
+                status = e.value
+                LOGGER.opt(colors=True).info(f"uploaded, status: <green>{status}</green>")
             if status != "success":
                 raise Exception(f"upload {i + 1}th data failed")
 
@@ -158,7 +171,14 @@ class Clients(object):
                 LOGGER.opt(colors=True).info(f"submitted, job_id: <red>{job_id}</red>")
 
                 # check status, block until job is completed
-                status = client.query_job(job_id=job_id, role="guest")
+                try:
+                    job_submit_checker = client.query_job(job_id=job_id, role="guest")
+                    while True:
+                        progress = next(job_submit_checker)
+                        LOGGER.info(f"running, progress: {progress}/100")
+                except StopIteration as e:
+                    status = e.value
+
                 task_summary["status"] = status
                 if status == "success":
                     deps_info[task.name] = model_info
@@ -235,10 +255,11 @@ class Clients(object):
         return tunnels
 
     @staticmethod
-    def _local_clients(conf, client_type, parties_to_role_string) -> typing.MutableMapping[str, '_Client']:
+    def _local_clients(conf, client_type, parties_to_role_string, data_base_dir) -> \
+            typing.MutableMapping[str, '_Client']:
         clients = {}
         for service in conf.get("local_services"):
-            client = _client_factory(client_type, service["address"])
+            client = _client_factory(client_type, service["address"], data_base_dir)
             for party in service["parties"]:
                 for role_str in parties_to_role_string[party]:
                     clients[role_str] = client
@@ -258,7 +279,8 @@ class Clients(object):
         for tunnel, role_strings_list in self._tunnels:
             tunnel.start()
             for role_strings, address in zip(role_strings_list, tunnel.local_bind_addresses):
-                client = _client_factory(client_type=self._client_type, address=address)
+                client = _client_factory(client_type=self._client_type, address=address,
+                                         data_base_dir=self._data_base_dir)
                 for role_string in role_strings:
                     self._clients[role_string] = client
         return self
@@ -340,13 +362,15 @@ client for submit job, upload data, query job
 """
 
 
-def _client_factory(client_type, address: typing.Optional[typing.Union[str, typing.Tuple[str, int]]] = None):
+def _client_factory(client_type,
+                    address: typing.Optional[typing.Union[str, typing.Tuple[str, int]]] = None,
+                    data_base_dir: typing.Optional[Path] = None):
     if isinstance(address, tuple):
         address = f"{address[0]}:{address[1]}"
     if client_type == "flowpy":
-        return _FlowPYClient(address)
+        return _FlowPYClient(address, data_base_dir)
     if client_type == "rest":
-        return _RESTClient(address)
+        return _RESTClient(address, data_base_dir)
     raise NotImplementedError(f"{client_type}")
 
 
@@ -367,16 +391,19 @@ class _Client(metaclass=abc.ABCMeta):
 
 class _RESTClient(_Client):
 
-    def __init__(self, address: typing.Optional[str] = None):
+    def __init__(self, address: typing.Optional[str] = None, data_base_dir: typing.Optional[Path] = None):
         if address is None:
             address = f"{socket.gethostbyname(socket.gethostname())}:9380"
         self.address = address
         self.version = "v1"
         self._base = f"http://{self.address}/{self.version}/"
         self._http = requests.Session()
+        self._data_base_dir = data_base_dir
+        if self._data_base_dir is None:
+            self._data_base_dir = Path(__file__).resolve().parent.parent.parent
 
     @LOGGER.catch
-    def _post(self, url, **kwargs):
+    def _post(self, url, **kwargs) -> dict:
         request_url = self._base + url
         try:
             response = self._http.request(method='post', url=request_url, **kwargs)
@@ -409,7 +436,7 @@ class _RESTClient(_Client):
         conf['verbose'] = verbose
         path = Path(conf.get('file'))
         if not path.is_file():
-            path = Path("../../").joinpath(conf.get('file')).resolve()
+            path = self._data_base_dir.joinpath(conf.get('file')).resolve()
 
         if not path.exists():
             raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
@@ -445,6 +472,8 @@ class _RESTClient(_Client):
         data = {"local": {}, "job_id": str(job_id)}
         if role is not None:
             data["local"]["role"] = role
+
+        pre_progress = -1
         while True:
             ret = self._post(url='job/query', json=data)
             if ret['retcode'] != 0:
@@ -452,7 +481,11 @@ class _RESTClient(_Client):
             status = ret['data'][0]["f_status"]
             if status in ["success", "failed", "canceled"]:
                 return status
-            time.sleep(1)
+            progress = ret['data'][0]["f_progress"]
+            if status == "running" and pre_progress != progress:
+                yield progress
+                pre_progress = progress
+            time.sleep(0.5)
 
     def submit_job(self, conf, dsl):
         post_data = {
@@ -469,7 +502,7 @@ class _RESTClient(_Client):
 
 
 class _FlowPYClient(_Client):
-    def __init__(self, address: typing.Optional[str] = None):
+    def __init__(self, address: typing.Optional[str] = None, data_base_dir: typing.Optional[Path] = None):
 
         from fate_flow.flowpy.client import FlowClient
         if address is not None:
@@ -478,7 +511,15 @@ class _FlowPYClient(_Client):
         else:
             self._client = FlowClient()
 
+        self._data_base_dir = data_base_dir
+        if self._data_base_dir is None:
+            self._data_base_dir = Path(__file__).resolve().parent.parent.parent
+
     def upload_data(self, conf, verbose=0, drop=0) -> str:
+        # change data base
+        if not Path(conf["file"]).is_file():
+            conf["file"] = self._data_base_dir.joinpath(conf["file"]).resolve()
+
         with tempfile.NamedTemporaryFile("w") as f:
             json.dump(conf, f)
             f.flush()
@@ -513,6 +554,7 @@ class _FlowPYClient(_Client):
         return ret["jobId"], ret["data"]["model_info"]
 
     def query_job(self, job_id, role):
+        pre_progress = -1
         while True:
             ret = self._client.job.query(job_id, role=role)
             if ret['retcode'] != 0:
@@ -520,7 +562,11 @@ class _FlowPYClient(_Client):
             status = ret['data'][0]["f_status"]
             if status in ["success", "failed", "canceled"]:
                 return status
-            time.sleep(1)
+            progress = ret['data'][0]["f_progress"]
+            if status == "running" and pre_progress != progress:
+                yield progress
+                pre_progress = progress
+            time.sleep(0.5)
 
 
 """

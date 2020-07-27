@@ -22,3 +22,4 @@ parties:
 
 client: flowpy  # flowpy or rest
 work_mode: 0  # 0 or 1
+data_base_dir: ../../  # optional, base dir of data file path in data conf.
