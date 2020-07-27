@@ -37,7 +37,7 @@ def create(name, namespace, store_engine, address=None, partitions=1, count=0):
                                                           MachineLearningDataSchema.f_namespace == namespace)
         is_insert = True
         if schema:
-            if store_engine != schema.f_data_store_engine:
+            if store_engine != schema[0].f_data_store_engine:
                 raise Exception('table {} {} has been created by store engine {} '.format(name, namespace, schema.f_data_store_engine))
             else:
                 return
@@ -79,13 +79,15 @@ def get_store_info(name, namespace):
     return store_info, address, partitions
 
 
-def get_table(job_id: str = uuid.uuid1().hex,
+def get_table(job_id: str = '',
               mode: typing.Union[int, WorkMode] = WORK_MODE,
               backend: typing.Union[int, Backend] = Backend.EGGROLL,
               persistent_engine: str = StoreEngine.LMDB,
               namespace: str = None,
               name: str = None,
               **kwargs):
+    if not job_id:
+        job_id = uuid.uuid1().hex
     data_manager_logger.info('start get table by name {} namespace {}'.format(name, namespace))
     store_engine, address, partitions = get_store_info(name, namespace)
     if not store_engine:
@@ -112,7 +114,7 @@ def get_table(job_id: str = uuid.uuid1().hex,
         return HDFSTable(address=address, partitions=partitions, name=name, namespace=namespace)
 
 
-def create_table(job_id: str = uuid.uuid1(),
+def create_table(job_id: str = uuid.uuid1().hex,
                  mode: typing.Union[int, WorkMode] = WORK_MODE,
                  store_engine: str = StoreEngine.LMDB,
                  namespace: str = None,

@@ -612,7 +612,7 @@ def cleaning(signum, frame):
 
 def federation_cleanup(job, task):
     from fate_flow.entity.constant_config import Backend, StoreEngine
-    from fate_arch.session import Party
+    from fate_arch.common import Party
 
     runtime_conf = json_loads(job.f_runtime_conf)
     job_parameters = runtime_conf['job_parameters']

@@ -33,7 +33,7 @@ class SessionStop(object):
         work_mode = int(args.work_mode)
         backend = int(args.backend)
         command = args.command
-        session.init(job_id=session_job_id, mode=work_mode, backend=backend, set_log_dir=False)
+        session.init(job_id=session_job_id, mode=work_mode, backend=backend)
         try:
             schedule_logger(fate_job_id).info('start {} session {}'.format(command, session.get_session_id()))
             if command == 'stop':
@@ -44,7 +44,7 @@ class SessionStop(object):
                 schedule_logger(fate_job_id).info('{} session {} failed, this command is not supported'.format(command, session.get_session_id()))
             schedule_logger(fate_job_id).info('{} session {} success'.format(command, session.get_session_id()))
         except Exception as e:
-            pass
+            schedule_logger().exception(e)
 
 
 if __name__ == '__main__':
