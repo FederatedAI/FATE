@@ -18,6 +18,7 @@ import shutil
 
 from flask import Flask, request
 
+from fate_arch.data_table.store_type import StoreEngine
 from fate_flow.manager.data_manager import query_data_view
 from fate_flow.manager.table_manager.table_operation import get_table
 from fate_flow.settings import stat_logger, USE_LOCAL_DATA, WORK_MODE
@@ -146,8 +147,6 @@ def gen_data_access_job_config(config_data, access_module):
     job_runtime_conf["initiator"]["role"] = initiator_role
     job_runtime_conf["initiator"]["party_id"] = initiator_party_id
     job_runtime_conf["job_parameters"]["work_mode"] = int(config_data["work_mode"])
-    job_runtime_conf["job_parameters"]["store_engine"] = int(config_data.get("store_engine", 0))
-    job_runtime_conf["job_parameters"]["backend"] = int(config_data.get("backend", 0))
     job_runtime_conf["role"][initiator_role] = [initiator_party_id]
     job_dsl = {
         "components": {}
@@ -163,7 +162,7 @@ def gen_data_access_job_config(config_data, access_module):
                 "namespace": [config_data["namespace"]],
                 "table_name": [config_data["table_name"]],
                 "in_version": [config_data.get("in_version")],
-                "drop": [config_data.get("drop", 2)],
+                "store_engine": [config_data.get("store_engine", StoreEngine.LMDB)]
             }
         }
 

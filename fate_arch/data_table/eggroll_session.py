@@ -44,12 +44,11 @@ class Session(object):
               name,
               namespace,
               partition,
-              create_if_missing,
               **kwargs):
         options = kwargs.get("option", {})
         if "use_serialize" in kwargs and not kwargs["use_serialize"]:
             options["serdes"] = SerdesTypes.EMPTY
-        options.update(dict(create_if_missing=create_if_missing, total_partitions=partition))
+        options.update(dict(total_partitions=partition))
         _table = self._rpc.load(namespace=namespace, name=name, options=options)
         return _table
 

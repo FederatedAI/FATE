@@ -25,7 +25,7 @@ class UploadParam:
         self.table_name = table_name
         self.work_mode = work_mode
         self.in_version = in_version
-        self.drop = store_engine
+        self.store_engine = store_engine
 
     def check(self):
         return True

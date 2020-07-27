@@ -36,6 +36,7 @@ class Upload(object):
 
     def run(self, component_parameters=None, args=None):
         self.parameters = component_parameters["UploadParam"]
+        LOGGER.info(self.parameters)
         self.parameters["role"] = component_parameters["role"]
         self.parameters["local"] = component_parameters["local"]
         job_id = self.taskid.split("_")[0]
@@ -62,7 +63,7 @@ class Upload(object):
         if partition <= 0 or partition >= self.MAX_PARTITION_NUM:
             raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITION_NUM))
         self.table = create_table(job_id=generate_session_id(self.taskid, self.tracker.role, self.tracker.party_id), name=table_name,
-                                  namespace=namespace, partition=self.parameters["partition"],
+                                  namespace=namespace, partitions=self.parameters["partition"],
                                   store_engine=self.parameters['store_engine'], mode=self.parameters['work_mode'])
         data_table_count = self.save_data_table(table_name, namespace, head, self.parameters.get('in_version', False))
         LOGGER.info("------------load data finish!-----------------")

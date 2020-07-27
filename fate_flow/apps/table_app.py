@@ -65,7 +65,7 @@ def dtable(table_func):
         else:
             table = get_table(name=table_name, namespace=namespace)
             if table:
-                table_key_count = table.local_count()
+                table_key_count = table.count()
                 table_partition = table.get_partitions()
                 try:
                     table.close()

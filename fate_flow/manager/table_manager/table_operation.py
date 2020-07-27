@@ -79,7 +79,7 @@ def get_store_info(name, namespace):
     return store_info, address, partitions
 
 
-def get_table(job_id: str = uuid.uuid1(),
+def get_table(job_id: str = uuid.uuid1().hex,
               mode: typing.Union[int, WorkMode] = WORK_MODE,
               backend: typing.Union[int, Backend] = Backend.EGGROLL,
               persistent_engine: str = StoreEngine.LMDB,

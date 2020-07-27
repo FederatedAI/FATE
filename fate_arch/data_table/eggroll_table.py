@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
 import typing
 import uuid
 from typing import Iterable
@@ -29,7 +28,7 @@ from fate_arch.data_table.store_type import StoreEngine
 # noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
 class EggRollTable(Table):
     def __init__(self,
-                 job_id: str = uuid.uuid1(),
+                 job_id: str = uuid.uuid1().hex,
                  mode: typing.Union[int, WorkMode] = get_base_config('work_mode', 0),
                  persistent_engine: str = StoreEngine.LMDB,
                  partitions: int = 1,

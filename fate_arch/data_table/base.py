@@ -163,7 +163,7 @@ class Table(object):
                 schema = schema[0]
                 if schema.f_schema:
                     _schema_data = deserialize_b64(schema.f_schema)
-                _schema_data.updata(schema_data)
+                _schema_data.update(schema_data)
                 schema.f_schema = serialize_b64(_schema_data, to_str=True)
                 # save data
                 if party_of_data:
@@ -177,7 +177,7 @@ class Table(object):
             else:
                 raise Exception('please create table {} {} before useing'.format(self._namespace, self._namespace))
             schema.f_update_time = current_timestamp()
-            schema.save(_insert=True)
+            schema.save()
 
     def destroy_schema(self):
         try:
