@@ -60,4 +60,8 @@ class HomoNN(Component):
         self.config_type = self._model.get_layer_type()
         self.nn_define = self._model.get_network_config()
 
+    def __getstate__(self):
+        state = dict(self.__dict__)
+        del state["_model"]
 
+        return state
