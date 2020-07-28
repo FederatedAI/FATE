@@ -12,3 +12,5 @@ scikit_image
 torchnet
 scipy
 cupy
+gevent
+gevent-websocket
