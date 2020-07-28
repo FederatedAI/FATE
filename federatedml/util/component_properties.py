@@ -202,7 +202,7 @@ class ComponentProperties(object):
 
             if len(data_dict) > 0:
                 for k, v in data_dict.items():
-                    data[".".join([cpn_name, k])] = v
+                    data[".".join([cpn_name, k])] = model.obtain_data(v)
 
         train_data = model_data.get('train_data')
         validate_data = None
@@ -217,9 +217,19 @@ class ComponentProperties(object):
         elif self.has_eval_data:
             test_data = model_data.get('eval_data')
 
-        self.has_train_data = True if train_data else False
-        self.has_validate_data = True if validate_data else False
+        # self.has_train_data = True if train_data else False
+        self.has_validate_data = True if (validate_data or self.has_eval_data) else False
         self.has_test_data = True if test_data else False
+
+        if self.has_train_data and type(train_data) in ["DTable", "RDDTable"]:
+            self.input_data_count = train_data.count()
+        elif self.has_normal_input_data:
+            for data_key, data_table in data.items():
+                if type(data_table) in ["DTable", "RDDTable"]:
+                    self.input_data_count = data_table.count()
+
+        if self.has_validate_data and type(validate_data) in ["DTable", "RDDTable"]:
+            self.input_eval_data_count = validate_data.count()
 
             # for data_type, d_table in data_dict.items():
             #     if data_type == "train_data" and d_table is not None:
@@ -248,7 +258,8 @@ class ComponentProperties(object):
         #     if data_table is not None:
         #         self.input_data_count += data_table.count()
         self._abnormal_dsl_config_detect()
-
+        LOGGER.debug(f"train_data: {train_data}, validate_data: {validate_data}, "
+                     f"test_data: {test_data}, data: {data}")
         return train_data, validate_data, test_data, data
 
     def extract_running_rules(self, args, model):

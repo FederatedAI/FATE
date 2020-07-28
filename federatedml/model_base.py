@@ -81,6 +81,7 @@ class ModelBase(object):
         self.component_properties.parse_dsl_args(args)
 
         running_funcs = self.component_properties.extract_running_rules(args, self)
+        LOGGER.debug(f"running_funcs: {running_funcs.todo_func_list}")
         saved_result = []
         for func, params, save_result, use_previews in running_funcs:
             # for func, params in zip(todo_func_list, todo_func_params):
