@@ -26,7 +26,7 @@ from typing import Union
 
 from typing_extensions import Protocol
 
-from fate_arch.session import Party
+from fate_arch.common import Party
 from fate_arch.transfer_variable import Variable
 
 

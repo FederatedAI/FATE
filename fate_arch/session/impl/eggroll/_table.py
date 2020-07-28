@@ -35,8 +35,9 @@ class Table(TableABC):
     def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
         options = kwargs.get("options", {})
         if isinstance(address, EggRollAddress):
-            self._rp.save_as(name=address.name, namespace=address.namespace, partitions=partitions, options=options)
+            self._rp.save_as(name=address.name, namespace=address.namespace, partition=partitions, options=options)
             schema.update(self.schema)
+            return
         raise NotImplementedError(f"address type {type(address)} not supported with eggroll backend")
 
     @log_elapsed

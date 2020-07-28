@@ -17,7 +17,7 @@
 import typing
 from typing import Union
 
-from fate_arch.session import Party
+from fate_arch.common import Party
 from fate_arch.common.log import getLogger
 from fate_arch import session
 from fate_arch.transfer_variable._auth import _check_variable_auth_conf
