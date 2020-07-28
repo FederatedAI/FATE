@@ -127,20 +127,22 @@ class TaskExecutor(object):
             schedule_logger().info('run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
             schedule_logger().info(component_parameters)
             schedule_logger().info(task_input_dsl)
+            output_storage_engine = []
             task_run_args = TaskExecutor.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
                                                            task_id=task_id,
                                                            job_args=job_args,
                                                            job_parameters=job_parameters,
                                                            task_parameters=task_parameters,
                                                            input_dsl=task_input_dsl,
-                                                           if_save_as_task_input_data=job_parameters.get("save_as_task_input_data", SAVE_AS_TASK_INPUT_DATA_SWITCH)
+                                                           if_save_as_task_input_data=job_parameters.get("save_as_task_input_data", SAVE_AS_TASK_INPUT_DATA_SWITCH),
+                                                           output_storage_engine=output_storage_engine
                                                            )
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
             run_object.set_tracker(tracker=tracker)
             run_object.set_taskid(taskid=task_id)
             run_object.run(component_parameters, task_run_args)
             output_data = run_object.save_data()
-            tracker.save_output_data_table(output_data, task_output_dsl.get('data')[0] if task_output_dsl.get('data') else 'component')
+            tracker.save_output_data_table(output_data, task_output_dsl.get('data')[0] if task_output_dsl.get('data') else 'component', output_storage_engine=output_storage_engine[0] if output_storage_engine else 'LMDB')
             output_model = run_object.export_model()
             # There is only one model output at the current dsl version.
             tracker.save_output_model(output_model, task_output_dsl['model'][0] if task_output_dsl.get('model') else 'default')
@@ -173,7 +175,7 @@ class TaskExecutor(object):
 
     @staticmethod
     def get_task_run_args(job_id, role, party_id, task_id, job_args, job_parameters, task_parameters, input_dsl,
-                          if_save_as_task_input_data, filter_type=None, filter_attr=None):
+                          if_save_as_task_input_data, filter_type=None, filter_attr=None, output_storage_engine=None):
         task_run_args = {}
         for input_type, input_detail in input_dsl.items():
             if filter_type and input_type not in filter_type:
@@ -201,6 +203,7 @@ class TaskExecutor(object):
                                 partition=job_parameters.get("partition", 1),
                                 session_id=session_id
                                 )
+                        output_storage_engine.append(data_table.get_storage_engine())
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
                             search_component_name, {})
                         # todo: If the same component has more than one identical input, save as is repeated
@@ -220,13 +223,10 @@ class TaskExecutor(object):
                                 save_as_options = {"store_type": StoreTypes.ROLLPAIR_IN_MEMORY} if SAVE_AS_TASK_INPUT_DATA_IN_MEMORY else {}
                                 address = create(name=name, namespace=namespace, store_engine=store_engine,
                                                  partitions=partitions)
-                                data_table = data_table.save_as(address=address, partition=partitions, options=save_as_options,
-                                                                name=name, namespace=namespace)
-                                data_table.save_schema(schema_data=origin_table_metas)
-                                schedule_logger().info("save as task {} input data table to {} done".format(
-                                    task_id, data_table.get_address()))
-                                data_table = session.default().load(data_table.get_address(),
-                                                                    schema=origin_table_metas,
+                                data_table.save_as(address=address, partition=partitions, options=save_as_options,
+                                                   name=name, namespace=namespace, schema_data=origin_table_metas)
+                                schedule_logger().info("save as task {} input data table to {} done".format(task_id, address))
+                                data_table = session.default().load(address, schema=origin_table_metas,
                                                                     partitions=partitions)
                                 data_table.partitions = partitions
                             else:

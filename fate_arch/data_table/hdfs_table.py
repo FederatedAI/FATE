@@ -100,7 +100,8 @@ class HDFSTable(Table):
         else:
             return -1
 
-    def save_as(self, address, partition=None, name=None, namespace=None, **kwargs):
+    def save_as(self, address, partition=None, name=None, namespace=None, schema_data=None, **kwargs):
+        super().save_as(name, namespace, partition=None, schema_data=schema_data)
         sc = SparkContext.getOrCreate()
         src_path = HDFSTable.get_path(sc, HDFSTable.generate_hdfs_path(address))
         dst_path = HDFSTable.get_path(sc, HDFSTable.generate_hdfs_path(address))

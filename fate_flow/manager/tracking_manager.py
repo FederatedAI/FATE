@@ -183,7 +183,7 @@ class Tracking(object):
     def get_output_data_info(self):
         pass
 
-    def save_output_data_table(self, data_table, data_name: str = 'component'):
+    def save_output_data_table(self, data_table, data_name: str = 'component', output_storage_engine=None):
         """
         Save component output data, will run in the task executor process
         :param data_table:
@@ -200,7 +200,7 @@ class Tracking(object):
             schedule_logger(self.job_id).info('output data table partitions is {}'.format(partitions))
             address = create(name=persistent_table_name,
                              namespace=persistent_table_namespace,
-                             store_engine=data_table.get_storage_engine(),
+                             store_engine=output_storage_engine,
                              partitions=partitions)
             schema = {}
             data_table.save(address, schema=schema, partitions=partitions)
@@ -223,7 +223,7 @@ class Tracking(object):
         data_view = self.query_data_view(self.role, self.party_id, mark=True)
 
         if data_view:
-            if init_session and not session_id:
+            if not init_session and not session_id:
                 session_id = job_utils.generate_session_id(self.task_id, self.role, self.party_id)
             data_table = get_table(job_id=session_id,
                                    name=data_view.f_table_name,

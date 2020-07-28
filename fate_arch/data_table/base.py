@@ -94,26 +94,9 @@ class Table(object):
         pass
 
     @abc.abstractmethod
-    def save_as(self, name, namespace, partition=None, **kwargs):
-        """
-        Transforms a temporary table to a persistent table.
-
-        Parameters
-        ----------
-        name : string
-          Table name of result Table.
-        namespace: string
-          Table namespace of result Table.
-        partition : int
-          Number of partition for the new persistent table.
-        use_serialize
-
-        Returns
-        -------
-        Table
-           Result persistent Table.
-        """
-        pass
+    def save_as(self, name, namespace, partition=None, schema_data=None, **kwargs):
+        if schema_data:
+            self.save_schema(name=name, namespace=namespace, schema_data=schema_data)
 
     @abc.abstractmethod
     def close(self):
@@ -149,15 +132,18 @@ class Table(object):
                     schema_data = None
         return schema_data
 
-    def save_schema(self, schema_data=None, party_of_data=None, count=0):
+    def save_schema(self, schema_data=None, name=None, namespace=None, party_of_data=None, count=0):
         # save metas to mysql
         if not schema_data:
             schema_data = {}
         if not party_of_data:
             party_of_data = []
+        if not name or not namespace:
+            name = self._name,
+            namespace = self._namespace
         with DB.connection_context():
-            schema = MachineLearningDataSchema.select().where(MachineLearningDataSchema.f_table_name == self._name,
-                                                              MachineLearningDataSchema.f_namespace == self._namespace)
+            schema = MachineLearningDataSchema.select().where(MachineLearningDataSchema.f_table_name == name,
+                                                              MachineLearningDataSchema.f_namespace == namespace)
             if schema:
                 # save schema info
                 schema = schema[0]
@@ -175,7 +161,7 @@ class Table(object):
                 if count:
                     schema.f_count += count
             else:
-                raise Exception('please create table {} {} before useing'.format(self._namespace, self._namespace))
+                raise Exception('please create table {} {} before useing'.format(name, namespace))
             schema.f_update_time = current_timestamp()
             schema.save()
 

@@ -219,8 +219,8 @@ class TaskScheduler(object):
         schedule_logger(job_id).info('job {} run component {}'.format(job_id, component_name))
         # todo: Use TaskParameter class instead of dictionary, as does JobParameter
         task_parameters = {}
-        extra_task_parameters = TaskScheduler.align_task_parameters(job_id, job_parameters, job_initiator, job_args, component, task_id)
-        task_parameters.update(extra_task_parameters)
+        # extra_task_parameters = TaskScheduler.align_task_parameters(job_id, job_parameters, job_initiator, job_args, component, task_id)
+        # task_parameters.update(extra_task_parameters)
         for role, partys_parameters in parameters.items():
             for party_index in range(len(partys_parameters)):
                 party_parameters = partys_parameters[party_index]

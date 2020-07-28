@@ -75,14 +75,9 @@ class EggRollTable(Table):
         super().destroy()
         return self._table.destroy()
 
-    @classmethod
-    def dtable(cls, session_id, name, namespace, partitions, store_type, mode):
-        address = EggRollAddress(name=name, namespace=namespace, storage_type=store_type)
-        return EggRollTable(job_id=session_id, mode=mode, address=address, partitions=partitions, name=name,
-                            namespace=namespace, store_type=store_type)
-
     @log_elapsed
-    def save_as(self, name=None, namespace=None, partition=None, **kwargs):
+    def save_as(self, name=None, namespace=None, partition=None, schema_data=None, **kwargs):
+        super().save_as(name, namespace, schema_data=schema_data)
 
         options = kwargs.get("options", {})
         store_type = options.get("store_type", StoreEngine.LMDB)
@@ -91,7 +86,6 @@ class EggRollTable(Table):
         if partition is None:
             partition = self._partitions
         self._table.save_as(name=name, namespace=namespace, partition=partition, options=options)
-        return self.dtable(self._session_id, name, namespace, partition, store_type, self._mode)
 
     def close(self):
         self.session.stop()
