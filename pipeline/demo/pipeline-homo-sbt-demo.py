@@ -52,7 +52,7 @@ pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
                        })
 
 print (pipeline.get_component("dataio_0").get_model_param())
-print (pipeline.get_component("homo_secureboost_0").summary())
+print (pipeline.get_component("homo_secureboost_0").get_summary())
 
 with open("output.pkl", "wb") as fout:
     fout.write(pipeline.dump())

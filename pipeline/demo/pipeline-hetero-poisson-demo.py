@@ -47,7 +47,7 @@ pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
 #print (pipeline.get_component("intersection_0").get_output_data())
 #print (pipeline.get_component("dataio_0").get_model_param())
 print (pipeline.get_component("hetero_poisson_0").get_model_param())
-print (pipeline.get_component("hetero_poisson_0").summary())
+print (pipeline.get_component("hetero_poisson_0").get_summary())
 # pipeline.get_component("intersection_0").summary("intersect_count", "intersect_rate")
 
 
@@ -63,5 +63,5 @@ pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
                                               }
                                          })
 
-with open("output.pkl", "wb") as fout:
-    fout.write(pipeline.dump())
+# with open("output.pkl", "wb") as fout:
+#    fout.write(pipeline.dump())

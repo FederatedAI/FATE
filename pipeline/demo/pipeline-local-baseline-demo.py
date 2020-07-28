@@ -72,7 +72,7 @@ print (pipeline.get_component("dataio_0").get_model_param())
 print (pipeline.get_component("hetero_lr_0").get_model_param())
 print ()
 print (pipeline.get_component("local_baseline_0").get_model_param())
-print (pipeline.get_component("local_baseline_0").summary())
+print (pipeline.get_component("local_baseline_0").get_summary())
 
 # pipeline.get_component("intersection_0").summary("intersect_count", "intersect_rate")
 
