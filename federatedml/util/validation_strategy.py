@@ -217,6 +217,8 @@ class ValidationStrategy(object):
         if self.role == consts.ARBITER:
             return None
 
+        LOGGER.debug('using precompute scores')
+
         return self.add_data_type(precompute_scores, data_type)
 
     def evaluate_data(self, model, epoch, data, data_type: str):

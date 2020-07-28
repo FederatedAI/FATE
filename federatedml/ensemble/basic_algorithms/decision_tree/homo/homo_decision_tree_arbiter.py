@@ -9,7 +9,7 @@ from federatedml.ensemble import SplitInfo
 
 from typing import List
 from arch.api.utils import log_utils
-from federatedml.tree import DecisionTreeArbiterAggregator
+from federatedml.ensemble import DecisionTreeArbiterAggregator
 
 
 LOGGER = log_utils.getLogger()
