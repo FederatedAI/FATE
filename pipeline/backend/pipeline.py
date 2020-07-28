@@ -157,7 +157,7 @@ class PipeLine(object):
             if not isinstance(model, Model):
                 raise ValueError("model input of component {} should be passed by model object".format(component.name))
 
-            attrs_dict = vars(data)
+            attrs_dict = vars(model)
             for attr, val in attrs_dict.items():
                 if not attr.endswith("model"):
                     continue
@@ -343,7 +343,7 @@ class PipeLine(object):
             all_roles = set(submit_conf["role_parameters"].keys()) | set(data_source.keys())
             for role in all_roles:
                 if role not in submit_conf["role_parameters"]:
-                    submit_conf[role] = data_source[role]
+                    submit_conf["role_parameters"][role] = data_source[role]
                 elif role in data_source:
                     submit_conf["role_parameters"][role] = tools.merge_dict(data_source[role],
                                                                             submit_conf["role_parameters"][role])
