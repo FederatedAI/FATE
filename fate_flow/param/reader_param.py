@@ -16,8 +16,8 @@
 
 
 class ReaderParam:
-    def __init__(self):
-        pass
+    def __init__(self, table=None):
+        self.table = table
 
     def check(self):
         return True
