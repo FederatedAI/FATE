@@ -199,9 +199,8 @@ class JobController(object):
         pipeline.fate_version = RuntimeConfig.get_env("FATE")
         pipeline.model_id = model_id
         pipeline.model_version = model_version
-        tracker = Tracker(job_id=job_id, role=role, party_id=party_id, model_id=model_id,
-                              model_version=model_version)
-        tracker.save_pipeline(pipelined_buffer_object=pipeline)
+        tracker = Tracker(job_id=job_id, role=role, party_id=party_id, model_id=model_id, model_version=model_version)
+        tracker.save_pipelined_model(pipelined_buffer_object=pipeline)
         schedule_logger(job_id).info('job {} on {} {} save pipeline successfully'.format(job_id, role, party_id))
 
     @classmethod

@@ -258,9 +258,6 @@ class Tracker(object):
                                                       component_module_name=self.module_name,
                                                       model_alias=model_alias,
                                                       model_buffers=model_buffers)
-            self.save_data_view(self.role, self.party_id,
-                                data_info={'f_party_model_id': self.party_model_id,
-                                           'f_model_version': self.model_version})
 
     def get_output_model(self, model_alias):
         model_buffers = self.pipelined_model.read_component_model(component_name=self.component_name,
@@ -271,7 +268,7 @@ class Tracker(object):
         model_buffers = self.pipelined_model.collect_models()
         return model_buffers
 
-    def save_pipeline(self, pipelined_buffer_object):
+    def save_pipelined_model(self, pipelined_buffer_object):
         self.save_output_model({'Pipeline': pipelined_buffer_object}, 'pipeline')
         self.pipelined_model.save_pipeline(pipelined_buffer_object=pipelined_buffer_object)
 
@@ -336,7 +333,6 @@ class Tracker(object):
             except Exception as e:
                 schedule_logger(self.job_id).exception(e)
             return metrics
-
 
     def save_data_view(self, role, party_id, data_info, mark=False):
         with DB.connection_context():
