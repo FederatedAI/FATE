@@ -51,6 +51,3 @@ pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
 print (pipeline.get_component("hetero_pearson_0").get_model_param())
 print (pipeline.get_component("hetero_pearson_0").get_summary())
 # pipeline.get_component("intersection_0").summary("intersect_count", "intersect_rate")
-
-with open("output.pkl", "wb") as fout:
-    fout.write(pipeline.dump())

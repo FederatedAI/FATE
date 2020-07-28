@@ -73,8 +73,3 @@ print (pipeline.get_component("hetero_lr_0").get_model_param())
 print ()
 print (pipeline.get_component("local_baseline_0").get_model_param())
 print (pipeline.get_component("local_baseline_0").get_summary())
-
-# pipeline.get_component("intersection_0").summary("intersect_count", "intersect_rate")
-
-with open("output.pkl", "wb") as fout:
-    fout.write(pipeline.dump())

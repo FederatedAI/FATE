@@ -79,6 +79,3 @@ print (pipeline.get_component("evaluation_0").summary())
 
 print (pipeline.get_component("feature_scale_0").get_model_param())
 print (pipeline.get_component("feature_scale_0").get_summary())
-
-with open("output.pkl", "wb") as fout:
-    fout.write(pipeline.dump())
