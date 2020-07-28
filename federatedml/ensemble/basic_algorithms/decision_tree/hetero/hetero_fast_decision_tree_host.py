@@ -117,7 +117,7 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
                 self.cur_layer_nodes[i].missing_dir = split_info[i].missing_dir
 
                 if self.feature_importance_type == 'split':
-                    self.update_feature_importance(split_info, )
+                    self.update_feature_importance(split_info[i], )
 
             self.tree_node.append(self.cur_layer_nodes[i])
 
