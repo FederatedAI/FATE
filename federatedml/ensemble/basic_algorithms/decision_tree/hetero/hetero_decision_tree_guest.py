@@ -432,6 +432,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         dispatch_guest_result = dispatch_guest_result.subtractByKey(dispatch_to_host_result)
         leaf = dispatch_guest_result.filter(lambda key, value: isinstance(value, tuple) is False)
+
         if self.sample_weights is None:
             self.sample_weights = leaf
         else:
@@ -452,7 +453,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 self.inst2node_idx = self.inst2node_idx.join(dispatch_node_host_result[idx],
                                                              lambda unleaf_state_nodeid1, unleaf_state_nodeid2:
                                                              unleaf_state_nodeid1 if len(
-                                                                 unleaf_state_nodeid1) == 2 else unleaf_state_nodeid2)
+                                                             unleaf_state_nodeid1) == 2 else unleaf_state_nodeid2)
 
         self.inst2node_idx = self.inst2node_idx.union(dispatch_guest_result)
 
@@ -498,6 +499,8 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         if self.cur_layer_nodes:
             self.update_tree([], True)
+            self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda data_inst, dispatch_info: (
+                data_inst, dispatch_info))
             self.assign_instances_to_new_node(self.max_depth, reach_max_depth=True)
 
         self.convert_bin_to_real()

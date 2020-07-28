@@ -186,8 +186,11 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
                                  "train",
                                  [Metric(epoch_idx, loss)])
 
+            LOGGER.debug('cached train predict is {}'.format(
+                         list(self.score_to_predict_result(data_inst, self.y_hat).collect())))
+
             if self.validation_strategy:
-                self.validation_strategy.validate(self, epoch_idx, use_precomputed_train=True,
+                self.validation_strategy.validate(self, epoch_idx, use_precomputed_train=False,
                                                   train_scores=self.score_to_predict_result(data_inst, self.y_hat))
 
             should_stop = self.check_stop_condition(loss)
@@ -315,7 +318,7 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
                     self.boosting_model_list.append(booster_param)
 
             if self.validation_strategy:
-                self.validation_strategy.validate(self, epoch_idx, use_precomputed_train=True, train_scores=None)
+                self.validation_strategy.validate(self, epoch_idx, use_precomputed_train=False, train_scores=None)
 
             should_stop = self.sync_stop_flag(epoch_idx)
             if should_stop:
