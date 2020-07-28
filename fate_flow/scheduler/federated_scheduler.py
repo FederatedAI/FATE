@@ -33,9 +33,9 @@ class FederatedScheduler(object):
     # Job
     @classmethod
     def create_job(cls, job: Job):
-        retcode, response = cls.job_command(job=job, command="create", command_body=job.to_dict_info())
-        if retcode != 0:
-            raise Exception("Create job failed: {}".format(json_dumps(response, indent=4)))
+        status_code, response = cls.job_command(job=job, command="create", command_body=job.to_dict_info())
+        if status_code != FederatedSchedulingStatusCode.SUCCESS:
+            raise Exception("Create job failed: {}".format(response))
 
     @classmethod
     def check_job(cls, job):
@@ -204,6 +204,8 @@ class FederatedScheduler(object):
         return cls.return_federated_response(federated_response=federated_response)
 
     # Task
+    REPORT_TO_INITIATOR_FIELDS = ["party_status", "start_time", "update_time", "end_time", "elapsed"]
+
     @classmethod
     def start_task(cls, job, task, task_parameters):
         return cls.task_command(job=job, task=task, command="start", command_body=task_parameters)
@@ -280,12 +282,10 @@ class FederatedScheduler(object):
         :return:
         """
         if task.f_role != task.f_initiator_role and task.f_party_id != task.f_initiator_party_id:
-            # report
-            task.f_run_ip = ""
             try:
                 response = federated_api(job_id=task.f_job_id,
                                          method='POST',
-                                         endpoint='/{}/control/{}/{}/{}/{}/{}/{}/status'.format(
+                                         endpoint='/{}/initiator/{}/{}/{}/{}/{}/{}/status'.format(
                                              API_VERSION,
                                              task.f_job_id,
                                              task.f_component_name,
@@ -296,7 +296,7 @@ class FederatedScheduler(object):
                                          src_party_id=task.f_party_id,
                                          dest_party_id=task.f_initiator_party_id,
                                          src_role=task.f_role,
-                                         json_body=task.to_dict_info(),
+                                         json_body=task.to_dict_info(only_primary_with=cls.REPORT_TO_INITIATOR_FIELDS),
                                          work_mode=RuntimeConfig.WORK_MODE)
             except Exception as e:
                 response = {

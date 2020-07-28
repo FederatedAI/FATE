@@ -100,8 +100,8 @@ if __name__ == '__main__':
     RuntimeConfig.init_env()
     RuntimeConfig.set_process_role(ProcessRole.SERVER)
     queue_manager.init_job_queue()
-    history_job_clean = job_controller.JobClean()
-    history_job_clean.start()
+    # history_job_clean = job_controller.JobClean()
+    # history_job_clean.start()
     PrivilegeAuth.init()
     ServiceUtils.register()
     # start job detector

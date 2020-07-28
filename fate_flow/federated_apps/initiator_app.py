@@ -23,6 +23,8 @@ from arch.api.utils.core_utils import json_loads, json_dumps
 from fate_flow.scheduler.task_scheduler import TaskScheduler
 from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
+from fate_flow.controller.task_controller import TaskController
+from fate_flow.operation.job_saver import JobSaver
 from fate_flow.manager import data_manager
 from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT
 from fate_flow.utils import job_utils, detect_utils
@@ -52,3 +54,18 @@ def stop_job(job_id, role, party_id, stop_status):
             return get_json_result(retcode=RetCode.FEDERATED_ERROR, retmsg=json_dumps(response))
     else:
         return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="can not found job")
+
+
+@manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/status', methods=['POST'])
+def update_task(job_id, component_name, task_id, task_version, role, party_id):
+    task_info = {}
+    task_info.update(request.json)
+    task_info.update({
+        "job_id": job_id,
+        "task_id": task_id,
+        "task_version": task_version,
+        "role": role,
+        "party_id": party_id,
+    })
+    JobSaver.update_task(task_info=task_info)
+    return get_json_result(retcode=0, retmsg='success')

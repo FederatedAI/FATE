@@ -15,7 +15,8 @@
 #
 from arch.api.utils.core_utils import get_lan_ip, json_loads
 from arch.api.utils.log_utils import schedule_logger
-from fate_flow.scheduler.task_scheduler import TaskScheduler
+from fate_flow.scheduler.federated_scheduler import FederatedScheduler
+from fate_flow.entity.constant import JobStatus
 from fate_flow.settings import detect_logger, API_VERSION
 from fate_flow.utils import cron, job_utils, api_utils
 
@@ -45,24 +46,7 @@ class JobDetector(cron.Cron):
             for job_id in stop_job_ids:
                 jobs = job_utils.query_job(job_id=job_id)
                 if jobs:
-                    initiator_party_id = jobs[0].f_initiator_party_id
-                    job_work_mode = jobs[0].f_work_mode
-                    if len(jobs) > 1:
-                        # i am initiator
-                        my_party_id = initiator_party_id
-                    else:
-                        my_party_id = jobs[0].f_party_id
-                        initiator_party_id = jobs[0].f_initiator_party_id
-                    api_utils.federated_api(job_id=job_id,
-                                            method='POST',
-                                            endpoint='/{}/job/stop'.format(
-                                                API_VERSION),
-                                            src_party_id=my_party_id,
-                                            dest_party_id=initiator_party_id,
-                                            src_role=None,
-                                            json_body={'job_id': job_id},
-                                            work_mode=job_work_mode)
-                    TaskScheduler.finish_job(job_id=job_id, job_runtime_conf=json_loads(jobs[0].f_runtime_conf), stop=True)
+                    status_code, response = FederatedScheduler.request_stop_job(job=jobs[0], stop_status=JobStatus.FAILED)
         except Exception as e:
             detect_logger.exception(e)
         finally:

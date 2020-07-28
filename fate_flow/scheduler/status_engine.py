@@ -31,6 +31,8 @@ class StatusEngine(object):
                     return BaseJobStatus.RUNNING
                 elif BaseJobStatus.WAITING in tmp_status_set:
                     return BaseJobStatus.WAITING
+                elif BaseJobStatus.START in tmp_status_set:
+                    return BaseJobStatus.START
                 else:
                     raise Exception("The list of vertically convergent status failed: {}".format(",".join(downstream_status_list)))
 
@@ -48,5 +50,7 @@ class StatusEngine(object):
                     return BaseJobStatus.RUNNING
                 elif BaseJobStatus.WAITING in tmp_status_set:
                     return BaseJobStatus.WAITING
+                elif BaseJobStatus.START in tmp_status_set:
+                    return BaseJobStatus.START
                 else:
                     raise Exception("The list of horizontal convergent status failed: {}".format(",".join(floor_status_list)))

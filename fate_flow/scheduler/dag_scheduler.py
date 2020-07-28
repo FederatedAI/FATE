@@ -20,9 +20,10 @@ from fate_flow.db.db_models import Job
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.scheduler.task_scheduler import TaskScheduler
 from fate_flow.operation.job_saver import JobSaver
-from fate_flow.entity.constant import JobStatus, TaskSetStatus, EndStatus, InterruptStatus, FederatedSchedulingStatusCode
+from fate_flow.entity.constant import JobStatus, TaskSetStatus, EndStatus, InterruptStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
+from fate_flow.controller.job_controller import JobController
 from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT
 from fate_flow.utils import detect_utils, job_utils
 from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_log_directory
@@ -78,6 +79,14 @@ class DAGScheduler(object):
             raise Exception("initiator party id error {}".format(initiator_party_id))
 
         FederatedScheduler.create_job(job=job)
+
+        # Save the state information of all participants in the initiator for scheduling
+        job_info = job.to_dict_info()
+        for role, party_ids in job_runtime_conf["role"].items():
+            for party_id in party_ids:
+                if role == job_initiator['role'] and party_id == job_initiator['party_id']:
+                    continue
+                JobController.create_job(job_id=job_id, role=role, party_id=party_id, job_info=job_info, init_tracker=False)
 
         # push into queue
         job_event = job_utils.job_event(job_id, initiator_role, initiator_party_id)

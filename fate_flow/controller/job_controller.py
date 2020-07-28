@@ -39,7 +39,7 @@ from fate_flow.controller.task_set_controller import TaskSetController
 
 class JobController(object):
     @classmethod
-    def create_job(cls, job_id, role, party_id, job_info):
+    def create_job(cls, job_id, role, party_id, job_info, init_tracker=True):
         # parse job configuration
         dsl = job_info['dsl']
         runtime_conf = job_info['runtime_conf']
@@ -66,10 +66,20 @@ class JobController(object):
         job_info["role"] = role
         job_info["party_id"] = party_id
         job_info["is_initiator"] = is_initiator
-        job_info["run_ip"] = RuntimeConfig.JOB_SERVER_HOST
         job_info["progress"] = 0
         JobSaver.create_job(job_info=job_info)
 
+        dsl_parser = get_job_dsl_parser(dsl=dsl,
+                                        runtime_conf=runtime_conf,
+                                        train_runtime_conf=train_runtime_conf)
+        cls.initialize_job(job_id=job_id, role=role, party_id=party_id, initiator_role=job_initiator['role'], initiator_party_id=job_initiator['party_id'], dsl_parser=dsl_parser)
+        if init_tracker:
+            cls.initialize_job_tracker(job_id=job_id, role=role, party_id=party_id, job_info=job_info, is_initiator=is_initiator, dsl_parser=dsl_parser)
+
+    @classmethod
+    def initialize_job_tracker(cls, job_id, role, party_id, job_info, is_initiator, dsl_parser):
+        job_parameters = job_info['runtime_conf']['job_parameters']
+        roles = job_info['roles']
         tracker = Tracker(job_id=job_id, role=role, party_id=party_id,
                           model_id=job_parameters["model_id"],
                           model_version=job_parameters["model_version"])
@@ -93,9 +103,6 @@ class JobController(object):
                         partner[_role] = partner.get(_role, [])
                         partner[_role].append(_party_id)
 
-        dsl_parser = get_job_dsl_parser(dsl=dsl,
-                                 runtime_conf=runtime_conf,
-                                 train_runtime_conf=train_runtime_conf)
         job_args = dsl_parser.get_args_input()
         dataset = {}
         for _role, _role_party_args in job_args.items():
@@ -109,7 +116,6 @@ class JobController(object):
                             dataset[_role][_party_id][_data_type] = '{}.{}'.format(_data_location['namespace'],
                                                                                    _data_location['name'])
         tracker.log_job_view({'partner': partner, 'dataset': dataset, 'roles': show_role})
-        cls.initialize_job(job_id=job_id, role=role, party_id=party_id, initiator_role=job_initiator['role'], initiator_party_id=job_initiator['party_id'], dsl_parser=dsl_parser)
 
     @classmethod
     def initialize_job(cls, job_id, role, party_id, initiator_role, initiator_party_id, dsl_parser):

@@ -33,6 +33,7 @@ from fate_flow.entity.constant import RetCode
 
 
 class TaskExecutor(object):
+    REPORT_TO_DRIVER_FIELDS = ["run_ip", "run_pid", "party_status", "start_time", "update_time", "end_time", "elapsed"]
     @classmethod
     def run_task(cls):
         task_info = {}
@@ -115,7 +116,7 @@ class TaskExecutor(object):
             run_class_package = '.'.join(run_class_paths[:-2]) + '.' + run_class_paths[-2].replace('.py', '')
             run_class_name = run_class_paths[-1]
             task_info["party_status"] = TaskStatus.RUNNING
-            cls.report_task_to_server(task_info=task_info)
+            cls.report_task_update_to_driver(task_info=task_info)
 
             # init environment, process is shared globally
             RuntimeConfig.init_config(WORK_MODE=job_parameters['work_mode'],
@@ -163,7 +164,7 @@ class TaskExecutor(object):
                 task_info["end_time"] = current_timestamp()
                 task_info["elapsed"] = task_info["end_time"] - task_info["start_time"]
                 task_info["update_time"] = current_timestamp()
-                cls.report_task_to_server(task_info=task_info)
+                cls.report_task_update_to_driver(task_info=task_info)
             except Exception as e:
                 task_info["party_status"] = TaskStatus.FAILED
                 traceback.print_exc()
@@ -260,9 +261,9 @@ class TaskExecutor(object):
         return task_run_args
 
     @classmethod
-    def report_task_to_server(cls, task_info):
+    def report_task_update_to_driver(cls, task_info):
         """
-        Report task info to FATEFlow Server
+        Report task update to FATEFlow Server
         :param task_info:
         :return:
         """
