@@ -17,6 +17,7 @@
 
 import typing
 
+from eggroll.core.constants import StoreTypes
 from eggroll.core.session import session_init
 from eggroll.roll_pair.roll_pair import RollPairContext
 from fate_arch._interface import AddressABC
@@ -47,6 +48,8 @@ class Session(SessionABC):
 
         self._federation_session: typing.Optional[FederationEngine] = None
         self._federation_parties: typing.Optional[_FederationParties] = None
+
+        self._default_storage_type = options.get("store_type", StoreTypes.ROLLPAIR_IN_MEMORY)
 
     def _init_federation(self, federation_session_id: str,
                          party: Party,
@@ -83,6 +86,7 @@ class Session(SessionABC):
         if isinstance(address, EggRollAddress):
             options = kwargs.get("option", {})
             options["total_partitions"] = partitions
+            options["store_type"] = address.store_type
             rp = self._rpc.load(namespace=address.namespace, name=address.name, options=options)
             table = Table(rp=rp)
             table.schema = schema

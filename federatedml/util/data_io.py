@@ -90,8 +90,8 @@ class DenseFeatureReader(object):
                 raise ValueError("input data's schema for fit and transform should be same")
 
     def generate_header(self, input_data, mode="fit"):
-        header = input_data.get_meta("header")
-        sid_name = input_data.get_meta("sid")
+        header = input_data.schema["header"]
+        sid_name = input_data.schema["sid"]
         LOGGER.debug("header is {}".format(header))
         LOGGER.debug("sid_name is {}".format(sid_name))
 

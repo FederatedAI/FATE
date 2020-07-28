@@ -228,7 +228,6 @@ class TaskExecutor(object):
                                 schedule_logger().info("save as task {} input data table to {} done".format(task_id, address))
                                 data_table = session.default().load(address, schema=origin_table_metas,
                                                                     partitions=partitions)
-                                data_table.partitions = partitions
                             else:
                                 schedule_logger().info("pass save as task {} input data table, because the table is none".format(task_id))
                         else:
