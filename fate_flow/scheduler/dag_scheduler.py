@@ -156,11 +156,11 @@ class DAGScheduler(object):
 
     @staticmethod
     def finish(job, end_status):
-        schedule_logger(job_id=job.f_job_id).info("Finished job {}".format(job.f_job_id))
+        schedule_logger(job_id=job.f_job_id).info("Job {} finished, do something...".format(job.f_job_id))
         FederatedScheduler.save_pipelined_model(job=job)
         FederatedScheduler.stop_job(job=job, stop_status=end_status)
-        # TODO: clean
-        # FederatedScheduler.clean_job(job=job)
+        FederatedScheduler.clean_job(job=job)
+        schedule_logger(job_id=job.f_job_id).info("Job {} finished, done".format(job.f_job_id))
 
     @staticmethod
     def clean_queue():

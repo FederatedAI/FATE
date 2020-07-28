@@ -62,7 +62,13 @@ class FederatedScheduler(object):
 
     @classmethod
     def save_pipelined_model(cls, job):
-        return cls.job_command(job=job, command="model")
+        schedule_logger(job_id=job.f_job_id).info("Try to save job {} pipelined model".format(job.f_job_id))
+        status_code, response = cls.job_command(job=job, command="model")
+        if status_code == FederatedSchedulingStatusCode.SUCCESS:
+            schedule_logger(job_id=job.f_job_id).info("Save job {} pipelined model success".format(job.f_job_id))
+        else:
+            schedule_logger(job_id=job.f_job_id).info("Save job {} pipelined model failed:\n{}".format(job.f_job_id, response))
+        return status_code, response
 
     @classmethod
     def stop_job(cls, job, stop_status):
@@ -85,7 +91,13 @@ class FederatedScheduler(object):
 
     @classmethod
     def clean_job(cls, job):
-        return cls.job_command(job=job, command="clean")
+        schedule_logger(job_id=job.f_job_id).info("Try to clean job {}".format(job.f_job_id))
+        status_code, response = cls.job_command(job=job, command="clean", command_body=job.f_runtime_conf["role"].copy())
+        if status_code == FederatedSchedulingStatusCode.SUCCESS:
+            schedule_logger(job_id=job.f_job_id).info("Clean job {} success".format(job.f_job_id))
+        else:
+            schedule_logger(job_id=job.f_job_id).info("Clean job {} failed:\n{}".format(job.f_job_id, response))
+        return status_code, response
 
     @classmethod
     def job_command(cls, job, command, command_body=None, dest_only_initiator=False):

@@ -24,7 +24,10 @@ class ScheduleTrigger(cron.Cron):
             schedule_logger().info("Start checking for scheduling events")
             running_jobs = job_utils.query_job(status="running", is_initiator=1)
             for job in running_jobs:
-                DAGScheduler.schedule(job)
+                try:
+                    DAGScheduler.schedule(job)
+                except Exception as e:
+                    schedule_logger(job_id=job.f_job_id).exception(e)
         except Exception as e:
             schedule_logger().exception(e)
         finally:

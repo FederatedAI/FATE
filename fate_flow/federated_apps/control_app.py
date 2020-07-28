@@ -35,7 +35,7 @@ def internal_server_error(e):
     return get_json_result(retcode=RetCode.EXCEPTION_ERROR, retmsg=str(e))
 
 
-# Schedule API for job
+# Control API for job
 @manager.route('/<job_id>/<role>/<party_id>/create', methods=['POST'])
 @request_authority_certification
 def create_job(job_id, role, party_id):
@@ -95,14 +95,14 @@ def cancel_job(job_id, role, party_id):
         return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg='cancel job failed')
 
 
-@manager.route('/<job_id>/<role>/<party_id>/<roles>/<party_ids>/clean', methods=['POST'])
+@manager.route('/<job_id>/<role>/<party_id>/clean', methods=['POST'])
 @request_authority_certification
-def clean(job_id, role, party_id, roles, party_ids):
-    JobController.clean_job(job_id=job_id, role=role, party_id=party_id, roles=roles, party_ids=party_ids)
+def clean(job_id, role, party_id):
+    JobController.clean_job(job_id=job_id, role=role, party_id=party_id, roles=request.json)
     return get_json_result(retcode=0, retmsg='success')
 
 
-# Schedule API for task set
+# Control API for task set
 @manager.route('/<job_id>/<task_set_id>/<role>/<party_id>/update', methods=['POST'])
 def update_task_set(job_id, task_set_id, role, party_id):
     task_set_info = {}
@@ -124,7 +124,7 @@ def stop_task_set(job_id, task_set_id, role, party_id, stop_status):
     return get_json_result(retcode=0, retmsg='success')
 
 
-# Schedule API for task
+# Control API for task
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/start', methods=['POST'])
 @request_authority_certification
 def start_task(job_id, component_name, task_id, task_version, role, party_id):

@@ -49,6 +49,12 @@ class TaskSetController(object):
 
     @classmethod
     def stop_task_set(cls, task_set, stop_status):
+        """
+        Stop all tasks in taskSet, including all task versions
+        :param task_set:
+        :param stop_status:
+        :return:
+        """
         tasks = job_utils.query_task(job_id=task_set.f_job_id, task_set_id=task_set.f_task_set_id, role=task_set.f_role, party_id=task_set.f_party_id)
         for task in tasks:
             TaskController.stop_task(task=task, stop_status=stop_status)

@@ -368,15 +368,16 @@ class Tracker(object):
             return data_view
 
     @session_utils.session_detect()
-    def clean_task(self, roles, party_ids):
+    def clean_task(self, roles):
         schedule_logger(self.job_id).info('clean task {} on {} {}'.format(self.task_id,
                                                                           self.role,
                                                                           self.party_id))
         try:
-            for role in roles.split(','):
-                for party_id in party_ids.split(','):
+            for role, party_ids in roles.items():
+                for party_id in party_ids:
                     # clean up temporary tables
                     namespace_clean = job_utils.generate_session_id(task_id=self.task_id,
+                                                                    task_version=self.task_version,
                                                                     role=role,
                                                                     party_id=party_id)
                     session.clean_tables(namespace=namespace_clean, regex_string='*')
@@ -384,7 +385,7 @@ class Tracker(object):
                                                                                                          self.role,
                                                                                                          self.party_id))
                     # clean up the last tables of the federation
-                    namespace_clean = self.task_id
+                    namespace_clean = job_utils.generate_federated_id(self.task_id, self.task_version)
                     session.clean_tables(namespace=namespace_clean, regex_string='*')
                     schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
                                                                                                          self.role,

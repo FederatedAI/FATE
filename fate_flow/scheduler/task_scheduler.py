@@ -50,10 +50,13 @@ class TaskScheduler(object):
             elif task.f_status == TaskStatus.RUNNING:
                 # TODO: check the concurrency is reached
                 continue
+            elif InterruptStatus.is_interrupt_status(task.f_status):
+                # The state is determined by the TaskSet as a whole
+                continue
             elif task.f_status == TaskStatus.COMPLETE:
                 FederatedScheduler.stop_task(job=job, task=task, stop_status=task.f_status)
             else:
-                raise Exception("Can not scheduling job {} task set {}".format(task_set.f_job_id, task_set.f_task_set_id))
+                raise Exception("Job {} task set {} with a {} status cannot be scheduled".format(task_set.f_job_id, task_set.f_task_set_id, task.f_status))
         new_task_set_status = StatusEngine.vertical_convergence([task.f_status for task in tasks])
         schedule_logger(job_id=task_set.f_job_id).info("Job {} task set {} status is {}".format(task_set.f_job_id, task_set.f_task_set_id, new_task_set_status))
         if new_task_set_status != task_set.f_status:

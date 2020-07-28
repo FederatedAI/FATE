@@ -11,8 +11,8 @@
     },
     "role": {
         "guest": [9999],
-        "host": [9999],
-        "arbiter": [9999]
+        "host": [10000],
+        "arbiter": [10000]
     },
     "role_parameters": {
         "guest": {
