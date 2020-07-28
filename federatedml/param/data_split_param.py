@@ -59,7 +59,7 @@ class DataSplitParam(BaseParam):
     """
 
     def __init__(self, random_state=None, test_size=None, train_size=None, validate_size=None, stratified=False,
-                 shuffle=True, split_points=True, need_run=True):
+                 shuffle=True, split_points=None, need_run=True):
         super(DataSplitParam, self).__init__()
         self.random_state = random_state
         self.test_size = test_size
