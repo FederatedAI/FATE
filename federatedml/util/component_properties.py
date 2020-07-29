@@ -166,9 +166,8 @@ class ComponentProperties(object):
                 raise DSLConfigError("model and isometric_model should not be "
                                      "configured simultaneously")
             if not self.has_test_data and not self.has_normal_input_data:
-                raise DSLConfigError("When model has been set, either eval_data or "
+                raise DSLConfigError("When model has been set, either test_data or "
                                      "data should be provided")
-
 
         if self.need_cv or self.need_stepwise:
             if not self.has_train_data:
@@ -218,8 +217,12 @@ class ComponentProperties(object):
             test_data = model_data.get('eval_data')
 
         # self.has_train_data = True if train_data else False
-        self.has_validate_data = True if (validate_data or self.has_eval_data) else False
-        self.has_test_data = True if test_data else False
+        # self.has_validate_data = True if (validate_data or self.has_eval_data) else False
+        if test_data is not None:
+            self.has_test_data = True
+        if validate_data or self.has_eval_data:
+            self.has_validate_data = True
+
 
         if self.has_train_data and type(train_data) in ["DTable", "RDDTable"]:
             self.input_data_count = train_data.count()
