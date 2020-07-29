@@ -45,24 +45,22 @@ Online Cluster for Inference(FATE-Serving)，please refer to: https://github.com
 
 **1) Modify Service Configuration**
 
-- Modify fate_flow/settings.py under deploy directory
+- Modify arch/conf/base_conf.yaml under deploy directory
 
-```python
-USE_CONFIGURATION_CENTER = True 
-ZOOKEEPER_HOSTS = ['192.168.1.1:2181','192.168.1.2:2181','192.168.1.3:2182'] 
-```
+  ```yaml
+  use_registry: true
+  zookeeper:
+    hosts:
+      - 192.168.1.1:2181
+      - 192.168.1.2:2181
+    use_acl: true
+    user: fate_dev
+    password: fate_dev
+  ```
 
-Fill in ``ZOOKEEPER_HOSTS`` with actual ip:port of ZooKeeper of online inference cluster
+Fill in ``hosts`` with actual ip:port of ZooKeeper of online inference cluster
 
-- If ZooKeeper uses ACL, modify fate_flow/utils/setting_utils.py; otherwise, skip the following step:
-
-```python
-USE_ACL = True
-ZK_USERNAME = 'fate'
-ZK_PASSWORD = 'fate'
-```
-
-Fill in ``ZK_USERNAME`` and ``ZK_PASSWORD`` with actual ZooKeeper user name and password of online inference cluster
+If zookeeper has ACL enabled, you need to set ``use_acl``to ``true`` and ``user``and ``password``to fill in the user name and password for the actual deployment of Zookeeper in the online reasoning cluster; otherwise, set `` use_acl``is ``false``
 
 **2) Running Service**
 

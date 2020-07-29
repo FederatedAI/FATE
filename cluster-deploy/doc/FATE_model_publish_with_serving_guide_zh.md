@@ -45,24 +45,22 @@
 
 **1) 修改服务配置**
 
-- 修改部署目录下fate_flow/settings.py
+- 修改部署目录下arch/conf/base_conf.yaml
 
-```python
-USE_CONFIGURATION_CENTER = True 
-ZOOKEEPER_HOSTS = ['192.168.1.1:2181','192.168.1.2:2181','192.168.1.3:2182'] 
-```
+  ```yaml
+  use_registry: true
+  zookeeper:
+    hosts:
+      - 192.168.1.1:2181
+      - 192.168.1.2:2181
+    use_acl: true
+    user: fate_dev
+    password: fate_dev
+  ```
 
-其中``ZOOKEEPER_HOSTS``填入在线推理集群实际部署Zookeeper的ip:port
+其中``hosts``填入在线推理集群实际部署Zookeeper的ip:port
 
-- 若zookeeper开启了ACL，则需要，否则略过此步骤。修改部署目录下fate_flow/utils/setting_utils.py
-
-```python
-USE_ACL = True
-ZK_USERNAME = 'fate'
-ZK_PASSWORD = 'fate'
-```
-
-其中``ZK_USERNAME``与``ZK_PASSWORD``填入在线推理集群实际部署Zookeeper的用户名与密码
+若zookeeper开启了ACL，则需要设置``use_acl``为``true``且``user``及``password``填入在线推理集群实际部署Zookeeper的用户名与密码；否则设置``use_acl``为``false``
 
 **2) 服务生效**
 
