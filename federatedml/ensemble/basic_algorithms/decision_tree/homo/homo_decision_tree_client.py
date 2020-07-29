@@ -115,6 +115,7 @@ class HomoDecisionTreeClient(DecisionTree):
 
     def get_local_histogram(self, cur_to_split: List[Node], g_h, table_with_assign,
                             split_points, sparse_point, valid_feature):
+
         LOGGER.info("start to get node histograms")
         node_map = self.get_node_map(nodes=cur_to_split)
         histograms = FeatureHistogram.calculate_histogram(
@@ -130,7 +131,7 @@ class HomoDecisionTreeClient(DecisionTree):
         return hist_bags
 
     def get_left_node_local_histogram(self, cur_nodes: List[Node], tree: List[Node], g_h, table_with_assign,
-                            split_points, sparse_point, valid_feature):
+                                      split_points, sparse_point, valid_feature):
 
         node_map = self.get_node_map(cur_nodes, left_node_only=True)
 
@@ -206,9 +207,7 @@ class HomoDecisionTreeClient(DecisionTree):
                               is_left_node=False)
 
             next_layer_node.append(left_node)
-            print('append left,cur tree has {} node'.format(len(self.tree_node)))
             next_layer_node.append(right_node)
-            print('append right,cur tree has {} node'.format(len(self.tree_node)))
             self.tree_node.append(cur_to_split[idx])
 
         return next_layer_node
@@ -378,7 +377,6 @@ class HomoDecisionTreeClient(DecisionTree):
 
         self.convert_bin_to_real()
         LOGGER.debug('fitting tree done')
-        LOGGER.debug('tree node num is {}'.format(len(self.tree_node)))
 
     def traverse_tree(self, data_inst: Instance, tree: List[Node], use_missing=True, zero_as_missing=True):
 

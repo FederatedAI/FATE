@@ -77,7 +77,6 @@ class HomoBoostingClient(Boosting, ABC):
 
         # fid mapping
         self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
-        LOGGER.debug('fuck is {}'.format(self.feature_name_fid_mapping))
 
         # set feature_num
         self.feature_num = self.bin_split_points.shape[0]
@@ -118,10 +117,7 @@ class HomoBoostingClient(Boosting, ABC):
             for class_idx in range(self.booster_dim):
 
                 # fit a booster
-                s_time = time.time()
                 model = self.fit_a_booster(epoch_idx, class_idx)
-                e_time = time.time()
-                total_time += e_time - s_time
 
                 booster_meta, booster_param = model.get_model()
 
@@ -133,8 +129,6 @@ class HomoBoostingClient(Boosting, ABC):
                 cur_sample_weights = model.get_sample_weights()
                 self.y_hat = self.get_new_predict_score(self.y_hat, cur_sample_weights, dim=class_idx)
 
-                LOGGER.debug('epoch total time is {} {}'.format(total_time, epoch_idx))
-
             local_loss = self.compute_loss(self.y, self.y_hat)
             self.aggregator.send_local_loss(local_loss, self.data_bin.count(), suffix=(epoch_idx,))
 
@@ -144,7 +138,6 @@ class HomoBoostingClient(Boosting, ABC):
             # check stop flag if n_iter_no_change is True
             if self.n_iter_no_change:
                 should_stop = self.aggregator.get_converge_status(suffix=(str(epoch_idx),))
-                LOGGER.debug('got stop flag {}'.format(should_stop))
                 if should_stop:
                     LOGGER.debug('stop triggered')
                     break
