@@ -15,12 +15,14 @@
 #
 import os
 import shutil
+from copy import deepcopy
 
 from flask import Flask, request, send_file
 
+from fate_flow.manager.model_manager.migrate_model import compare_roles
 from fate_flow.settings import stat_logger, API_VERSION, MODEL_STORE_ADDRESS, TEMP_DIRECTORY
 from fate_flow.driver.job_controller import JobController
-from fate_flow.manager.model_manager import publish_model
+from fate_flow.manager.model_manager import publish_model, migrate_model
 from fate_flow.manager.model_manager import pipelined_model
 from fate_flow.utils.api_utils import get_json_result, federated_api
 from fate_flow.utils.job_utils import generate_job_id, runtime_conf_basic
@@ -80,6 +82,85 @@ def load_model():
                 load_status_info[role_name][_party_id] = 100
     return get_json_result(job_id=_job_id, retcode=(0 if load_status else 101), retmsg=load_status_msg,
                            data=load_status_info)
+
+
+@manager.route('/migrate', methods=['POST'])
+def migrate_model():
+    request_config = request.json
+    _job_id = generate_job_id()
+    initiator_party_id = request_config['migrate_initiator']['party_id']
+    initiator_role = request_config['migrate_initiator']['role']
+    request_config["unify_model_version"] = _job_id
+    migrate_status = True
+    migrate_status_info = {}
+    migrate_status_msg = 'success'
+    migrate_status_info['detail'] = {}
+
+    require_arguments = ["migrate_initiator", "role", "migrate_role", "model_id", "model_version"]
+    check_config(request_config, require_arguments)
+
+    # TODO verify if the structure role data is valid, return
+    try:
+        if compare_roles(request_config.get("migrate_role"), request_config.get("role")):
+            return get_json_result(retcode=100,
+                                   retmsg="The config of previous roles is the same with that of migrate roles. "
+                                          "There is no need to migrate model. Migration process aborting.")
+    except Exception as e:
+        return get_json_result(retcode=100, retmsg=str(e))
+
+    local_template = {
+        "role": "",
+        "party_id": "",
+        "migrate_party_id": ""
+    }
+
+    res_dict = {}
+
+    for role_name, role_partys in request_config.get("migrate_role").items():
+        if role_name == 'arbiter':
+            continue
+        for offset, party_id in enumerate(role_partys):
+            local_res = deepcopy(local_template)
+            local_res["role"] = role_name
+            local_res["party_id"] = request_config.get("role").get(role_name)[offset]
+            local_res["migrate_party_id"] = party_id
+            res_dict[party_id] = local_res
+
+    for role_name, role_partys in request_config.get("migrate_role").items():
+        if role_name == 'arbiter':
+            continue
+        migrate_status_info[role_name] = migrate_status_info.get(role_name, {})
+        for party_id in role_partys:
+            request_config["local"] = res_dict.get(party_id)
+            try:
+                response = federated_api(job_id=_job_id,
+                                         method='POST',
+                                         endpoint='/{}/model/migrate/do'.format(API_VERSION),
+                                         src_party_id=initiator_party_id,
+                                         dest_party_id=initiator_party_id,
+                                         src_role=initiator_role,
+                                         json_body=request_config,
+                                         work_mode=1)
+                migrate_status_info[role_name][party_id] = response['retcode']
+                migrate_status_info['detail'][role_name] = {}
+                detail = {party_id: {}}
+                detail[party_id]['retcode'] = response['retcode']
+                detail[party_id]['retmsg'] = response['retmsg']
+                migrate_status_info['detail'][role_name].update(detail)
+            except Exception as e:
+                stat_logger.exception(e)
+                migrate_status = False
+                migrate_status_msg = 'failed'
+                migrate_status_info[role_name][party_id] = 100
+    return get_json_result(job_id=_job_id, retcode=(0 if migrate_status else 101),
+                           retmsg=migrate_status_msg, data=migrate_status_info)
+
+
+@manager.route('/migrate/do', methods=['POST'])
+def do_migrate_model():
+    request_data = request.json
+    retcode, retmsg, data = migrate_model.migration(config_data=request_data)
+    return get_json_result(retcode=retcode, retmsg=retmsg, data=data)
 
 
 @manager.route('/load/do', methods=['POST'])
