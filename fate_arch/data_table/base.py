@@ -155,7 +155,7 @@ class Table(object):
                 if party_of_data:
                     _f_part_of_data = deserialize_b64(schema.f_part_of_data)
                     if len(_f_part_of_data) < 100:
-                        _f_part_of_data.append(party_of_data[:(100 - len(_f_part_of_data))])
+                        _f_part_of_data.extend(party_of_data[:(100 - len(_f_part_of_data))])
                         schema.f_part_of_data = serialize_b64(party_of_data[:100], to_str=True)
                 # save count
                 if count:
@@ -207,7 +207,9 @@ class SimpleTable(Table):
         pass
 
     def collect(self, **kwargs):
-        return self.get_schema(_type='data')
+        data = self.get_schema(_type='data')
+        for k_v in data:
+            yield k_v
 
 
 class HDFSAddress(AddressABC):

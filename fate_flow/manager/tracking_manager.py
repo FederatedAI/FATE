@@ -208,7 +208,6 @@ class Tracking(object):
             table = get_table(job_id=job_utils.generate_session_id(self.task_id, self.role, self.party_id),
                               name=persistent_table_name,
                               namespace=persistent_table_namespace)
-            table.save_schema(schema)
             party_of_data = []
             count = 100
             for k, v in data_table.collect():
@@ -216,7 +215,7 @@ class Tracking(object):
                 count -= 1
                 if count == 0:
                     break
-            table.save_schema(party_of_data=party_of_data, count=data_table.count())
+            table.save_schema(schema=schema, party_of_data=party_of_data, count=data_table.count())
             self.save_data_view(self.role, self.party_id,
                                 data_info={'f_table_name': persistent_table_name,
                                            'f_table_namespace': persistent_table_namespace,
