@@ -20,13 +20,13 @@
 import numpy as np
 
 from arch.api.utils import log_utils
-from federatedml.linear_model.linear_model_weight import LinearModelWeights as LinearRegressionWeights
 from federatedml.linear_model.linear_model_base import BaseLinearModel
+from federatedml.linear_model.linear_model_weight import LinearModelWeights as LinearRegressionWeights
 from federatedml.optim.initialize import Initializer
+from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.param.linear_regression_param import LinearParam
 from federatedml.protobuf.generated import linr_model_param_pb2, linr_model_meta_pb2
 from federatedml.secureprotol import PaillierEncrypt
-from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.util.fate_operator import vec_dot
 
 LOGGER = log_utils.getLogger()
@@ -81,11 +81,13 @@ class BaseLinearRegression(BaseLinearModel):
             param_protobuf_obj = linr_model_param_pb2.LinRModelParam()
             return param_protobuf_obj
 
-        weight_dict = {}
+        """weight_dict = {}
         for idx, header_name in enumerate(header):
             coef_i = self.model_weights.coef_[idx]
             weight_dict[header_name] = coef_i
-        intercept_ = self.model_weights.intercept_
+        intercept_ = self.model_weights.intercept_"""
+
+        weight_dict, intercept_ = self.get_weight_intercept_dict(header)
 
         best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
         param_protobuf_obj = linr_model_param_pb2.LinRModelParam(iters=self.n_iter_,

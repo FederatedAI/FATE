@@ -112,6 +112,8 @@ class HeteroLinRHost(HeteroLinRBase):
             LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
             self.load_model(self.validation_strategy.cur_best_model)
+        self.set_summary(self.get_model_summary())
+        # LOGGER.debug(f"summary content is: {self.summary()}")
 
     @assert_io_num_rows_equal
     def predict(self, data_instances):
