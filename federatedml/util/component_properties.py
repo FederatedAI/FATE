@@ -111,7 +111,39 @@ class ComponentProperties(object):
         LOGGER.debug("has_train_data: {}, has_eval_data: {}, has_normal_data: {}".format(
             self.has_train_data, self.has_eval_data, self.has_normal_input_data
         ))
+        self._abnormal_dsl_config_detect()
         return self
+
+    def _abnormal_dsl_config_detect(self):
+        class DSLConfigError(ValueError):
+            pass
+
+        if self.has_model:
+            if self.has_train_data:
+                raise DSLConfigError("train_data input and model input should not be "
+                                     "configured simultaneously")
+            if self.has_isometric_model:
+                raise DSLConfigError("model and isometric_model should not be "
+                                     "configured simultaneously")
+            if not self.has_eval_data and not self.has_normal_input_data:
+                raise DSLConfigError("When model has been set, either eval_data or "
+                                     "data should be provided")
+        if self.has_normal_input_data:
+            if self.has_train_data or self.has_eval_data:
+                raise DSLConfigError("When data input has been configured, train_data "
+                                     "and eval_data should not be configured.")
+
+        if self.need_cv or self.need_stepwise:
+            if not self.has_train_data:
+                raise DSLConfigError("Train_data should be configured in cross-validate "
+                                     "task or stepwise task")
+            if self.has_eval_data or self.has_normal_input_data:
+                raise DSLConfigError("In cross-validate task or stepwise task, eval_data "
+                                     "or data should not be configured")
+
+            if self.has_model or self.has_isometric_model:
+                raise DSLConfigError("In cross-validate task or stepwise task, model "
+                                     "or isometric_model should not be configured")
 
     def extract_input_data(self, args):
         data_sets = args.get("data")
@@ -127,16 +159,26 @@ class ComponentProperties(object):
 
             for data_type, d_table in data_dict.items():
                 if data_type == "train_data" and d_table is not None:
-                    train_data = d_table[0]
+                    if isinstance(d_table, list):
+                        train_data = d_table[0]
+                    else:
+                        train_data = d_table
                     if train_data is not None:
                         self.input_data_count = train_data.count()
                 elif data_type == 'eval_data' and d_table is not None:
-                    eval_data = d_table[0]
+                    if isinstance(d_table, list):
+                        eval_data = d_table[0]
+                    else:
+                        eval_data = d_table
+                    # eval_data = d_table[0]
                     if eval_data is not None:
                         self.input_eval_data_count = eval_data.count()
                 else:
                     if d_table is not None:
-                        data[".".join([data_key, data_type])] = d_table
+                        if isinstance(d_table, list):
+                            data[".".join([data_key, data_type])] = d_table[0]
+                        else:
+                            data[".".join([data_key, data_type])] = d_table
 
             # if data_sets[data_key].get("data", None):
             #     # data = data_sets[data_key]["data"]
@@ -149,6 +191,7 @@ class ComponentProperties(object):
         return train_data, eval_data, data
 
     def extract_running_rules(self, args, model):
+
         train_data, eval_data, data = self.extract_input_data(args)
 
         running_funcs = RunningFuncs()

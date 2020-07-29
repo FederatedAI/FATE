@@ -91,7 +91,8 @@
             "filter_methods": [
                 "iv_filter",
                 "statistic_filter",
-                "psi_filter"
+                "psi_filter",
+                "hetero_sbt_filter"
             ],
             "local_only": false,
             "iv_param": {
@@ -106,12 +107,18 @@
                 "metrics": ["skewness", "skewness", "kurtosis", "median"],
                 "filter_type": "threshold",
                 "take_high": [true, false, true, true],
-                "threshold": [-1, 1.6, -0.5, 0]
+                "threshold": [-10, 10, -1.5, -1.5]
             },
             "psi_param": {
                 "metrics": "psi",
                 "filter_type": "threshold",
                 "take_high": false,
+                "threshold": -0.1
+            },
+            "sbt_param": {
+                "metrics": "feature_importance",
+                "filter_type": "threshold",
+                "take_high": true,
                 "threshold": 0.03
             }
         }

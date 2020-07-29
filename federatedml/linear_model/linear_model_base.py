@@ -16,8 +16,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import numpy as np
+
+from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
+from federatedml.feature.sparse_vector import SparseVector
 from federatedml.model_base import ModelBase
 from federatedml.model_selection import start_cross_validation
 from federatedml.model_selection.stepwise import start_stepwise
@@ -26,7 +30,10 @@ from federatedml.optim.initialize import Initializer
 from federatedml.optim.optimizer import optimizer_factory
 from federatedml.statistic import data_overview
 from federatedml.util import abnormal_detection
+from federatedml.util import consts
 from federatedml.util.validation_strategy import ValidationStrategy
+
+LOGGER = log_utils.getLogger()
 
 
 class BaseLinearModel(ModelBase):
@@ -131,7 +138,8 @@ class BaseLinearModel(ModelBase):
         ModelBase.check_schema_content(data_instances.schema)
 
     def init_validation_strategy(self, train_data=None, validate_data=None):
-        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs, self.early_stopping_rounds,
+        validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs,
+                                                 self.early_stopping_rounds,
                                                  self.use_first_metric_only)
         validation_strategy.set_train_data(train_data)
         validation_strategy.set_validate_data(validate_data)
@@ -167,3 +175,28 @@ class BaseLinearModel(ModelBase):
             return
         self.schema = data_instance.schema
         self.header = self.schema.get('header')
+
+    def check_abnormal_values(self, data_instances):
+
+        if data_instances is None:
+            return
+
+        def _check_overflow(data_iter):
+            for _, instant in data_iter:
+                features = instant.features
+                if isinstance(features, SparseVector):
+                    sparse_data = features.get_all_data()
+                    for k, v in sparse_data:
+                        if np.abs(v) > consts.OVERFLOW_THRESHOLD:
+                            return True
+                else:
+                    if np.max(np.abs(features)) > consts.OVERFLOW_THRESHOLD:
+                        return True
+            return False
+
+        check_status = data_instances.mapPartitions(_check_overflow)
+        is_overflow = check_status.reduce(lambda a, b: a or b)
+        if is_overflow:
+            raise OverflowError("The input data is too large for GLM, please have "
+                                "a check for input data")
+        LOGGER.info("Check for abnormal value passed")

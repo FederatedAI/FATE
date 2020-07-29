@@ -1,0 +1,16 @@
+{
+  "HomoLabelEncoderTransferVariable": {
+    "local_labels": {
+      "src": ["guest", "host"],
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "label_mapping": {
+      "src": "arbiter",
+      "dst": [
+        "host", "guest"
+      ]
+    }
+  }
+}

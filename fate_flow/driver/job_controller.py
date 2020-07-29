@@ -62,7 +62,8 @@ class JobController(object):
             job_tracker = Tracking(job_id=job_id, role=job_initiator['role'], party_id=job_initiator['party_id'],
                                    model_id=job_parameters['model_id'], model_version=job_parameters['model_version'])
             pipeline_model = job_tracker.get_output_model('pipeline')
-            job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
+            if not job_dsl:
+                job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
             train_runtime_conf = json_loads(pipeline_model['Pipeline'].train_runtime_conf)
         path_dict = save_job_conf(job_id=job_id,
                                   job_dsl=job_dsl,

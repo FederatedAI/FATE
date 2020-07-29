@@ -18,7 +18,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
   serialized_options=b'B\030BoostTreeModelParamProto',
-  serialized_pb=b'\n\x1f\x62oosting-tree-model-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xa4\x01\n\tNodeParam\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x10\n\x08sitename\x18\x02 \x01(\t\x12\x0b\n\x03\x66id\x18\x03 \x01(\x05\x12\x0b\n\x03\x62id\x18\x04 \x01(\x01\x12\x0e\n\x06weight\x18\x05 \x01(\x01\x12\x0f\n\x07is_leaf\x18\x06 \x01(\x08\x12\x13\n\x0bleft_nodeid\x18\x07 \x01(\x05\x12\x14\n\x0cright_nodeid\x18\x08 \x01(\x05\x12\x13\n\x0bmissing_dir\x18\t \x01(\x05\"\xac\x03\n\x16\x44\x65\x63isionTreeModelParam\x12@\n\x05tree_\x18\x01 \x03(\x0b\x32\x31.com.webank.ai.fate.core.mlmodel.buffer.NodeParam\x12i\n\x0esplit_maskdict\x18\x02 \x03(\x0b\x32Q.com.webank.ai.fate.core.mlmodel.buffer.DecisionTreeModelParam.SplitMaskdictEntry\x12t\n\x14missing_dir_maskdict\x18\x03 \x03(\x0b\x32V.com.webank.ai.fate.core.mlmodel.buffer.DecisionTreeModelParam.MissingDirMaskdictEntry\x1a\x34\n\x12SplitMaskdictEntry\x12\x0b\n\x03key\x18\x01 \x01(\x05\x12\r\n\x05value\x18\x02 \x01(\x01:\x02\x38\x01\x1a\x39\n\x17MissingDirMaskdictEntry\x12\x0b\n\x03key\x18\x01 \x01(\x05\x12\r\n\x05value\x18\x02 \x01(\x05:\x02\x38\x01\"J\n\x15\x46\x65\x61tureImportanceInfo\x12\x10\n\x08sitename\x18\x01 \x01(\t\x12\x0b\n\x03\x66id\x18\x02 \x01(\x05\x12\x12\n\nimportance\x18\x03 \x01(\x01\"\x86\x04\n\x16\x42oostingTreeModelParam\x12\x10\n\x08tree_num\x18\x01 \x01(\x05\x12N\n\x06trees_\x18\x02 \x03(\x0b\x32>.com.webank.ai.fate.core.mlmodel.buffer.DecisionTreeModelParam\x12\x12\n\ninit_score\x18\x03 \x03(\x01\x12\x0e\n\x06losses\x18\x04 \x03(\x01\x12\x10\n\x08tree_dim\x18\x05 \x01(\x05\x12\x13\n\x0bnum_classes\x18\x06 \x01(\x05\x12\x10\n\x08\x63lasses_\x18\x07 \x03(\t\x12Z\n\x13\x66\x65\x61ture_importances\x18\x08 \x03(\x0b\x32=.com.webank.ai.fate.core.mlmodel.buffer.FeatureImportanceInfo\x12{\n\x18\x66\x65\x61ture_name_fid_mapping\x18\t \x03(\x0b\x32Y.com.webank.ai.fate.core.mlmodel.buffer.BoostingTreeModelParam.FeatureNameFidMappingEntry\x12\x16\n\x0e\x62\x65st_iteration\x18\n \x01(\x05\x1a<\n\x1a\x46\x65\x61tureNameFidMappingEntry\x12\x0b\n\x03key\x18\x01 \x01(\x05\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x42\x1a\x42\x18\x42oostTreeModelParamProtob\x06proto3'
+  serialized_pb=b'\n\x1f\x62oosting-tree-model-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xa4\x01\n\tNodeParam\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x10\n\x08sitename\x18\x02 \x01(\t\x12\x0b\n\x03\x66id\x18\x03 \x01(\x05\x12\x0b\n\x03\x62id\x18\x04 \x01(\x01\x12\x0e\n\x06weight\x18\x05 \x01(\x01\x12\x0f\n\x07is_leaf\x18\x06 \x01(\x08\x12\x13\n\x0bleft_nodeid\x18\x07 \x01(\x05\x12\x14\n\x0cright_nodeid\x18\x08 \x01(\x05\x12\x13\n\x0bmissing_dir\x18\t \x01(\x05\"\xac\x03\n\x16\x44\x65\x63isionTreeModelParam\x12@\n\x05tree_\x18\x01 \x03(\x0b\x32\x31.com.webank.ai.fate.core.mlmodel.buffer.NodeParam\x12i\n\x0esplit_maskdict\x18\x02 \x03(\x0b\x32Q.com.webank.ai.fate.core.mlmodel.buffer.DecisionTreeModelParam.SplitMaskdictEntry\x12t\n\x14missing_dir_maskdict\x18\x03 \x03(\x0b\x32V.com.webank.ai.fate.core.mlmodel.buffer.DecisionTreeModelParam.MissingDirMaskdictEntry\x1a\x34\n\x12SplitMaskdictEntry\x12\x0b\n\x03key\x18\x01 \x01(\x05\x12\r\n\x05value\x18\x02 \x01(\x01:\x02\x38\x01\x1a\x39\n\x17MissingDirMaskdictEntry\x12\x0b\n\x03key\x18\x01 \x01(\x05\x12\r\n\x05value\x18\x02 \x01(\x05:\x02\x38\x01\"J\n\x15\x46\x65\x61tureImportanceInfo\x12\x10\n\x08sitename\x18\x01 \x01(\t\x12\x0b\n\x03\x66id\x18\x02 \x01(\x05\x12\x12\n\nimportance\x18\x03 \x01(\x01\"\x9a\x04\n\x16\x42oostingTreeModelParam\x12\x10\n\x08tree_num\x18\x01 \x01(\x05\x12N\n\x06trees_\x18\x02 \x03(\x0b\x32>.com.webank.ai.fate.core.mlmodel.buffer.DecisionTreeModelParam\x12\x12\n\ninit_score\x18\x03 \x03(\x01\x12\x0e\n\x06losses\x18\x04 \x03(\x01\x12\x10\n\x08tree_dim\x18\x05 \x01(\x05\x12\x13\n\x0bnum_classes\x18\x06 \x01(\x05\x12\x10\n\x08\x63lasses_\x18\x07 \x03(\t\x12Z\n\x13\x66\x65\x61ture_importances\x18\x08 \x03(\x0b\x32=.com.webank.ai.fate.core.mlmodel.buffer.FeatureImportanceInfo\x12{\n\x18\x66\x65\x61ture_name_fid_mapping\x18\t \x03(\x0b\x32Y.com.webank.ai.fate.core.mlmodel.buffer.BoostingTreeModelParam.FeatureNameFidMappingEntry\x12\x16\n\x0e\x62\x65st_iteration\x18\n \x01(\x05\x12\x12\n\nmodel_name\x18\x0b \x01(\t\x1a<\n\x1a\x46\x65\x61tureNameFidMappingEntry\x12\x0b\n\x03key\x18\x01 \x01(\x05\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x42\x1a\x42\x18\x42oostTreeModelParamProtob\x06proto3'
 )
 
 
@@ -308,8 +308,8 @@ _BOOSTINGTREEMODELPARAM_FEATURENAMEFIDMAPPINGENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1208,
-  serialized_end=1268,
+  serialized_start=1228,
+  serialized_end=1288,
 )
 
 _BOOSTINGTREEMODELPARAM = _descriptor.Descriptor(
@@ -389,6 +389,13 @@ _BOOSTINGTREEMODELPARAM = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='model_name', full_name='com.webank.ai.fate.core.mlmodel.buffer.BoostingTreeModelParam.model_name', index=10,
+      number=11, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -402,7 +409,7 @@ _BOOSTINGTREEMODELPARAM = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=750,
-  serialized_end=1268,
+  serialized_end=1288,
 )
 
 _DECISIONTREEMODELPARAM_SPLITMASKDICTENTRY.containing_type = _DECISIONTREEMODELPARAM

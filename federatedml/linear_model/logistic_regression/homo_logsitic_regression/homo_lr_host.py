@@ -59,6 +59,7 @@ class HomoLRHost(HomoLRBase):
         LOGGER.debug("Start data count: {}".format(data_instances.count()))
 
         self._abnormal_detection(data_instances)
+        self.check_abnormal_values(data_instances)
         self.init_schema(data_instances)
         # validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 

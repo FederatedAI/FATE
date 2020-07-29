@@ -132,7 +132,8 @@ class BaseHeteroFeatureBinning(ModelBase):
             adjustment_factor=self.model_param.adjustment_factor,
             local_only=self.model_param.local_only,
             need_run=self.need_run,
-            transform_param=transform_param
+            transform_param=transform_param,
+            skip_static=self.model_param.skip_static
         )
         return meta_protobuf_obj
 
@@ -156,23 +157,6 @@ class BaseHeteroFeatureBinning(ModelBase):
         # json_result = json_format.MessageToJson(result_obj)
         # LOGGER.debug("json_result: {}".format(json_result))
         return result_obj
-
-    # def _convert_pb(self, binning_obj):
-    #     values = []
-    #     col_names = []
-    #     for col_name, bin_res in binning_obj.bin_results.all_cols_results.items():
-    #         values.append(bin_res.iv)
-    #         col_names.append(col_name)
-    #
-    #     single_value = feature_binning_param_pb2.BinningSingleFeatureValue(
-    #         values=values,
-    #         col_names=col_names,
-    #         value_name="iv"
-    #     )
-    #     bin_result = feature_binning_param_pb2.BinningOnePartyResult(
-    #         results=[single_value]
-    #     )
-    #     return bin_result
 
     def load_model(self, model_dict):
         model_param = list(model_dict.get('model').values())[0].get(MODEL_PARAM_NAME)

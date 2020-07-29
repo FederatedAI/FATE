@@ -260,7 +260,7 @@ def component_output_data_download():
             # get meta
             output_data_file_list.append(output_data_file_path)
             header = get_component_output_data_meta(output_data_table=output_data_table, have_data_label=have_data_label)
-            output_data_meta_file_path = output_file_path % 'data_meta_{}.json'.format(i)
+            output_data_meta_file_path = output_file_path % 'data_{}_meta.json'.format(i)
             output_data_meta_file_list.append(output_data_meta_file_path)
             with open(output_data_meta_file_path, 'w') as fw:
                 json.dump({'header': header}, fw, indent=4)
@@ -322,6 +322,16 @@ def save_metric_meta(job_id, component_name, task_id, role, party_id):
     tracker.save_metric_meta(metric_namespace=request_data['metric_namespace'], metric_name=request_data['metric_name'],
                              metric_meta=metric_meta, job_level=request_data['job_level'])
     return get_json_result()
+
+
+@manager.route('/component/list', methods=['POST'])
+def component_list():
+    request_data = request.json
+    parser = job_utils.get_job_dsl_parser_by_job_id(job_id=request_data.get('job_id'))
+    if parser:
+        return get_json_result(data={'components': list(parser.get_dsl().get('components').keys())})
+    else:
+        return get_json_result(retcode=100, retmsg='No job matched, please make sure the job id is valid.')
 
 
 def get_component_output_data_table(task_data):
