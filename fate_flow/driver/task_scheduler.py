@@ -341,7 +341,7 @@ class TaskScheduler(object):
                     if response['retcode'] == 0:
                         for input_data in response.get('data', {}).get('data', {}).values():
                             for data_table_info in input_data.values():
-                                if data_table_info:
+                                if data_table_info and not isinstance(data_table_info, list):
                                     partitions = data_table_info['partitions']
                                     if extra_task_parameters['input_data_partition'] == 0 or partitions < extra_task_parameters['input_data_partition']:
                                         extra_task_parameters['input_data_partition'] = partitions
