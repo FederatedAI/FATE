@@ -21,6 +21,7 @@ from federatedml.model_base import ModelBase
 from federatedml.param.pearson_param import PearsonParam
 from federatedml.secureprotol.spdz import SPDZ
 from federatedml.secureprotol.spdz.tensor.fixedpoint_table import FixedPointTensor, table_dot
+from federatedml.util.fate_operator import generate_anonymous
 
 MODEL_META_NAME = "HeteroPearsonModelMeta"
 MODEL_PARAM_NAME = "HeteroPearsonModelParam"
@@ -163,7 +164,8 @@ class HeteroPearson(ModelBase):
             param_pb.names.append(name)
             anonymous = param_pb.anonymous_map.add()
             anonymous.name = name
-            anonymous.anonymous = f"{self.local_party.role}_{self.local_party.party_id}_{idx}"
+            anonymous.anonymous = generate_anonymous(fid=idx, party_id=self.local_party.party_id,
+                                                     role=self.local_party.role)
 
         # global
         for shape, party in zip(self.shapes, self.parties):
