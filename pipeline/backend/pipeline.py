@@ -145,8 +145,8 @@ class PipeLine(object):
                 print("data dep ", attr, val)
                 print("add dep ", component.name, attr)
                 data_key = attr.strip("_")
-                if data_key == "validate_data" or data_key == "test_data":
-                    data_key = "eval_data"
+                # if data_key == "validate_data" or data_key == "test_data":
+                #     data_key = "eval_data"
 
                 if isinstance(val, list):
                     self._components_input[component.name]["data"][data_key] = val
