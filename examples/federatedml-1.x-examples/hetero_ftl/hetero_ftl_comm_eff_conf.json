@@ -47,7 +47,7 @@
             "tol": 0.00001,
             "batch_size": -1,
             "local_iter": 5,
-            "communication_efficient": false,
+            "communication_efficient": true,
             "nn_define": {"class_name": "Sequential", "config": {"name": "sequential_1", "layers": [{"class_name": "Dense", "config": {"name": "dense_1", "trainable": true, "batch_input_shape": [null, 32], "dtype": "float32", "units": 16, "activation": "sigmoid", "use_bias": true, "kernel_initializer": {"class_name": "RandomNormal", "config": {"mean": 0.0, "stddev": 0.05, "seed": 100, "dtype": "float32"}}, "bias_initializer": {"class_name": "Constant", "config": {"value": 0, "dtype": "float32"}}, "kernel_regularizer": null, "bias_regularizer": null, "activity_regularizer": null, "kernel_constraint": null, "bias_constraint": null}}]}, "keras_version": "2.2.4-tf", "backend": "tensorflow"}
         },
         "evaluation_0": {
