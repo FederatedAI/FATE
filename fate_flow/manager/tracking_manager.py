@@ -184,7 +184,7 @@ class Tracking(object):
     def get_output_data_info(self):
         pass
 
-    def save_output_data_table(self, data_table, data_name: str = 'component', output_storage_engine=None):
+    def save_output_data_table(self, data_table, data_name: str = 'component', output_storage_engine=None, index=0):
         """
         Save component output data, will run in the task executor process
         :param data_table:
@@ -219,7 +219,8 @@ class Tracking(object):
             self.save_data_view(self.role, self.party_id,
                                 data_info={'f_table_name': persistent_table_name,
                                            'f_table_namespace': persistent_table_namespace,
-                                           'f_partition': partitions},
+                                           'f_partition': partitions,
+                                           'f_index': index},
                                 mark=True)
         else:
             schedule_logger(self.job_id).info('task id {} output data table is none'.format(self.task_id))
@@ -230,7 +231,8 @@ class Tracking(object):
         :param data_name:
         :return:
         """
-        data_view = self.query_data_view(self.role, self.party_id, mark=True)
+        data_views = self.query_data_view(self.role, self.party_id, mark=True)
+        data_view = data_views[0]
 
         if data_view:
             if not need_all:
@@ -468,8 +470,7 @@ class Tracking(object):
                                                  DataView.f_party_id == party_id)
             if mark and self.component_name == "upload_0":
                 return
-            if data_views:
-                return data_views[0]
+            return data_views
 
     def clean_task(self, roles, party_ids):
         if Backend.EGGROLL != RuntimeConfig.BACKEND:

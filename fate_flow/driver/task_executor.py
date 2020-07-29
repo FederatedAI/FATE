@@ -142,7 +142,9 @@ class TaskExecutor(object):
             run_object.set_taskid(taskid=task_id)
             run_object.run(component_parameters, task_run_args)
             output_data = run_object.save_data()
-            tracker.save_output_data_table(output_data, task_output_dsl.get('data')[0] if task_output_dsl.get('data') else 'component', output_storage_engine=output_storage_engine[0] if output_storage_engine else 'LMDB')
+            tracker.save_output_data_table(output_data, task_output_dsl.get('data')[0] if task_output_dsl.get('data') else 'component',
+                                           output_storage_engine=output_storage_engine[0] if output_storage_engine else 'LMDB',
+                                           index=0)
             output_model = run_object.export_model()
             # There is only one model output at the current dsl version.
             tracker.save_output_model(output_model, task_output_dsl['model'][0] if task_output_dsl.get('model') else 'default')
