@@ -31,6 +31,7 @@ def main():
     parser.add_argument("-work_mode", choices=[0, 1], type=int)
     parser.add_argument("-client", choices=["flowpy", "rest"], type=str)
     parser.add_argument("-replace", type=str)
+    parser.add_argument("--replace_config", type=str)
     parser.add_argument("-exclude", nargs="+", type=str)
     parser.add_argument("-skip_data", default=False, type=bool)
     args = parser.parse_args()
@@ -41,10 +42,20 @@ def main():
         config_overwrite["work_mode"] = args.work_mode
     if args.client is not None:
         config_overwrite["client"] = args.client
-
     hook = None
     if args.replace is not None:
         hook = _replace_hook(json.loads(args.replace))
+    elif args.replace_config:
+        replace_config_path = Path(args.replace_config).resolve()
+        if not replace_config_path.exists():
+            raise ValueError(f"{replace_config_path} not exists")
+
+        with replace_config_path.open("r") as f:
+            if args.replace_config.endswith(".yaml"):
+                s = yaml.load(f)
+            else:
+                s = json.load(f)
+        hook = _replace_hook(s)
 
     with Clients(config_path=Path(args.config), drop=args.drop, **config_overwrite) as clients:
         paths = _find_testsuite_files(path)
