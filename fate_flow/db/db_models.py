@@ -250,3 +250,18 @@ class TrackingMetric(DataBaseModel):
     f_type = IntegerField(index=True)  # 0 is data, 1 is meta
     f_create_time = BigIntegerField()
     f_update_time = BigIntegerField(null=True)
+
+
+class ComponentSummary(DataBaseModel):
+    f_id = BigIntegerField(primary_key=True)
+    f_job_id = CharField(max_length=25)
+    f_role = CharField(max_length=50, index=True)
+    f_party_id = CharField(max_length=10, index=True)
+    f_component_name = TextField()
+    f_summary = TextField()
+    f_create_time = BigIntegerField(default=0)
+    f_update_time = BigIntegerField(default=0)
+
+    class Meta:
+        db_table = "t_component_summary"
+        # primary_key = CompositeKey('f_job_id', 'f_role', 'f_party_id', 'f_component_name')

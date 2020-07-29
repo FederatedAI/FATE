@@ -84,6 +84,10 @@ def preprocess(**kwargs):
     return config_data, dsl_data
 
 
+def check_output_path(path):
+    if not os.path.isabs(path):
+        return os.path.join(os.path.abspath(os.curdir), path)
+    return path
 
 
 

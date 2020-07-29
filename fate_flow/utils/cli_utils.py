@@ -103,3 +103,9 @@ def start_cluster_standalone_job_server():
     click.echo('use service.sh to start standalone node server....')
     os.system('sh service.sh start --standalone_node')
     time.sleep(5)
+
+
+def check_output_path(path):
+    if not os.path.isabs(path):
+        return os.path.join(os.path.abspath(os.curdir), path)
+    return path

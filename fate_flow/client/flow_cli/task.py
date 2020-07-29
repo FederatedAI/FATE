@@ -30,27 +30,25 @@ def task(ctx):
     pass
 
 
-@task.command(short_help="List Task Command")
-# @click.option('-l', '--limit', default=10, metavar='[LIMIT]', help='Limit count, default is 10')
+@task.command("list", short_help="List Task Command")
 @cli_args.LIMIT
 @click.pass_context
 def list(ctx, **kwargs):
     """
-    - COMMAND DESCRIPTION:
+    \b
+    - DESCRIPTION:
+        List Task description
 
-    List Task description
-
+    \b
+    - USAGE:
+        flow task list
+        flow task list -l 25
     """
     config_data, dsl_data = preprocess(**kwargs)
     access_server('post', ctx, 'job/list/task', config_data)
 
 
-@task.command(short_help="Query Task Command")
-# @click.option('-j', '--job_id', metavar="[JOB_ID]", help="Job ID")
-# @click.option('-p', '--party_id', metavar="[PARTY_ID]", help="Party ID")
-# @click.option('-r', '--role', metavar="[ROLE]", help="Role")
-# @click.option('-cpn', '--component_name', metavar="[COMPONENT_NAME]", help="Component Name")
-# @click.option('-s', '--status', metavar="[STATUS]", help="Job Status")
+@task.command("query", short_help="Query Task Command")
 @cli_args.JOBID
 @cli_args.PARTYID
 @cli_args.ROLE
@@ -59,9 +57,14 @@ def list(ctx, **kwargs):
 @click.pass_context
 def query(ctx, **kwargs):
     """
-    - COMMAND DESCRIPTION:
+    \b
+    - DESCRIPTION:
+        Query Task Command.
 
-    Query Task Command.
+    \b
+    - USAGE:
+        flow task query -j $JOB_ID -p 9999 -r guest
+        flow task query -cpn hetero_feature_binning_0 -s success
     """
     config_data, dsl_data = preprocess(**kwargs)
     response = access_server('post', ctx, 'job/task/query', config_data, False)
