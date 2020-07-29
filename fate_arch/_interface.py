@@ -9,5 +9,5 @@ class AddressABC(metaclass=abc.ABCMeta):
 
 class GC(Protocol):
 
-    def add_gc_func(self, tag: str, func: typing.Callable[[], typing.NoReturn]):
+    def add_gc_action(self, tag: str, obj, method, args_dict):
         ...
