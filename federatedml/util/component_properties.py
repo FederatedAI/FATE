@@ -40,6 +40,10 @@ class RunningFuncs(object):
             yield func, params, save_result, use_previews
 
 
+class DSLConfigError(ValueError):
+    pass
+
+
 class ComponentProperties(object):
     def __init__(self):
         self.need_cv = False
@@ -49,6 +53,8 @@ class ComponentProperties(object):
         self.has_isometric_model = False
         self.has_train_data = False
         self.has_eval_data = False
+        self.has_validate_data = False
+        self.has_test_data = False
         self.has_normal_input_data = False
         self.role = None
         self.host_party_idlist = []
@@ -97,26 +103,60 @@ class ComponentProperties(object):
             return self
         for data_key, data_dicts in data_sets.items():
             data_keys = list(data_dicts.keys())
-            if "train_data" in data_keys:
-                self.has_train_data = True
-                data_keys.remove("train_data")
 
-            if "eval_data" in data_keys:
-                self.has_eval_data = True
-                data_keys.remove("eval_data")
+            for data_type in ["train_data", "eval_data", "validate_data", "test_data"]:
+                if data_type in data_keys:
+                    setattr(self, f"has_{data_type}", True)
+                    data_keys.remove(data_type)
+                LOGGER.debug(f"[Data Parser], has_{data_type}:"
+                             f" {getattr(self, f'has_{data_type}')}")
+            # if "train_data" in data_keys:
+            #     self.has_train_data = True
+            #     data_keys.remove("train_data")
+            #
+            # if "eval_data" in data_keys:
+            #     self.has_eval_data = True
+            #     data_keys.remove("eval_data")
+            #
+            # if "validate_data" in data_keys:
+            #     self.has_validate_data = True
+            #     data_keys.remove("validate_data")
+            #
+            # if "test_data" in data_keys:
+            #     self.has_test_data = True
+            #     data_keys.remove("test_data")
 
             if len(data_keys) > 0:
                 self.has_normal_input_data = True
 
-        LOGGER.debug("has_train_data: {}, has_eval_data: {}, has_normal_data: {}".format(
-            self.has_train_data, self.has_eval_data, self.has_normal_input_data
-        ))
-        self._abnormal_dsl_config_detect()
+        LOGGER.debug("[Data Parser], has_normal_data: {}".format(self.has_normal_input_data))
+        if self.has_eval_data:
+            if self.has_validate_data or self.has_test_data:
+                raise DSLConfigError("eval_data input should not be configured simultaneously"
+                                     " with validate_data or test_data")
+        # self._abnormal_dsl_config_detect()
         return self
 
     def _abnormal_dsl_config_detect(self):
-        class DSLConfigError(ValueError):
-            pass
+        if self.has_validate_data:
+            if not self.has_train_data:
+                raise DSLConfigError("validate_data should be configured simultaneously"
+                                     " with train_data")
+
+        if self.has_train_data:
+            if self.has_normal_input_data or self.has_test_data:
+                raise DSLConfigError("train_data input should not be configured simultaneously"
+                                     " with data or test_data")
+
+        if self.has_normal_input_data:
+            if self.has_train_data or self.has_validate_data or self.has_test_data:
+                raise DSLConfigError("When data input has been configured, train_data, "
+                                     "validate_data or test_data should not be configured.")
+
+        if self.has_test_data:
+            if not self.has_model:
+                raise DSLConfigError("When test_data input has been configured, model "
+                                     "input should be configured too.")
 
         if self.has_model:
             if self.has_train_data:
@@ -125,79 +165,114 @@ class ComponentProperties(object):
             if self.has_isometric_model:
                 raise DSLConfigError("model and isometric_model should not be "
                                      "configured simultaneously")
-            if not self.has_eval_data and not self.has_normal_input_data:
-                raise DSLConfigError("When model has been set, either eval_data or "
+            if not self.has_test_data and not self.has_normal_input_data:
+                raise DSLConfigError("When model has been set, either test_data or "
                                      "data should be provided")
-        if self.has_normal_input_data:
-            if self.has_train_data or self.has_eval_data:
-                raise DSLConfigError("When data input has been configured, train_data "
-                                     "and eval_data should not be configured.")
 
         if self.need_cv or self.need_stepwise:
             if not self.has_train_data:
                 raise DSLConfigError("Train_data should be configured in cross-validate "
                                      "task or stepwise task")
-            if self.has_eval_data or self.has_normal_input_data:
-                raise DSLConfigError("In cross-validate task or stepwise task, eval_data "
-                                     "or data should not be configured")
+            if self.has_validate_data or self.has_normal_input_data or \
+                    self.has_test_data:
+                raise DSLConfigError("Train_data should be set only in cross-validate "
+                                     "task or stepwise task")
 
             if self.has_model or self.has_isometric_model:
                 raise DSLConfigError("In cross-validate task or stepwise task, model "
                                      "or isometric_model should not be configured")
 
-    def extract_input_data(self, args):
+    def extract_input_data(self, args, model):
         data_sets = args.get("data")
-        train_data = None
-        eval_data = None
+        model_data = {}
         data = {}
+
         if data_sets is None:
-            return train_data, eval_data, data
+            return model_data, data
 
         LOGGER.debug(f"Input data_sets: {data_sets}")
 
-        for data_key, data_dict in data_sets.items():
+        for cpn_name, data_dict in data_sets.items():
+            for data_type in ["train_data", "eval_data", "validate_data", "test_data"]:
+                if data_type in data_dict:
+                    d_table = data_dict.get(data_type)
+                    model_data[data_type] = model.obtain_data(d_table)
+                    del data_dict[data_type]
 
-            for data_type, d_table in data_dict.items():
-                if data_type == "train_data" and d_table is not None:
-                    if isinstance(d_table, list):
-                        train_data = d_table[0]
-                    else:
-                        train_data = d_table
-                    if train_data is not None:
-                        self.input_data_count = train_data.count()
-                elif data_type == 'eval_data' and d_table is not None:
-                    if isinstance(d_table, list):
-                        eval_data = d_table[0]
-                    else:
-                        eval_data = d_table
-                    # eval_data = d_table[0]
-                    if eval_data is not None:
-                        self.input_eval_data_count = eval_data.count()
-                else:
-                    if d_table is not None:
-                        if isinstance(d_table, list):
-                            data[".".join([data_key, data_type])] = d_table[0]
-                        else:
-                            data[".".join([data_key, data_type])] = d_table
+            if len(data_dict) > 0:
+                for k, v in data_dict.items():
+                    data[".".join([cpn_name, k])] = model.obtain_data(v)
 
-            # if data_sets[data_key].get("data", None):
-            #     # data = data_sets[data_key]["data"]
-            #     data[data_key] = data_sets[data_key]["data"]
+        train_data = model_data.get('train_data')
+        validate_data = None
+        if self.has_train_data:
+            if self.has_eval_data:
+                validate_data = model_data.get('eval_data')
+            elif self.has_validate_data:
+                validate_data = model_data.get('validate_data')
+        test_data = None
+        if self.has_test_data:
+            test_data = model_data.get('test_data')
+        elif self.has_eval_data:
+            test_data = model_data.get('eval_data')
 
-        for data_key, data_table in data.items():
-            if data_table is not None:
-                self.input_data_count += data_table.count()
+        # self.has_train_data = True if train_data else False
+        # self.has_validate_data = True if (validate_data or self.has_eval_data) else False
+        if test_data is not None:
+            self.has_test_data = True
+        if validate_data or self.has_eval_data:
+            self.has_validate_data = True
 
-        return train_data, eval_data, data
+
+        if self.has_train_data and type(train_data) in ["DTable", "RDDTable"]:
+            self.input_data_count = train_data.count()
+        elif self.has_normal_input_data:
+            for data_key, data_table in data.items():
+                if type(data_table) in ["DTable", "RDDTable"]:
+                    self.input_data_count = data_table.count()
+
+        if self.has_validate_data and type(validate_data) in ["DTable", "RDDTable"]:
+            self.input_eval_data_count = validate_data.count()
+
+            # for data_type, d_table in data_dict.items():
+            #     if data_type == "train_data" and d_table is not None:
+            #         if isinstance(d_table, list):
+            #             train_data = d_table[0]
+            #         else:
+            #             train_data = d_table
+            #         if train_data is not None:
+            #             self.input_data_count = train_data.count()
+            #     elif data_type == 'eval_data' and d_table is not None:
+            #         if isinstance(d_table, list):
+            #             eval_data = d_table[0]
+            #         else:
+            #             eval_data = d_table
+            #         # eval_data = d_table[0]
+            #         if eval_data is not None:
+            #             self.input_eval_data_count = eval_data.count()
+            #     else:
+            #         if d_table is not None:
+            #             if isinstance(d_table, list):
+            #                 data[".".join([data_key, data_type])] = d_table[0]
+            #             else:
+            #                 data[".".join([data_key, data_type])] = d_table
+
+        # for data_key, data_table in data.items():
+        #     if data_table is not None:
+        #         self.input_data_count += data_table.count()
+        self._abnormal_dsl_config_detect()
+        LOGGER.debug(f"train_data: {train_data}, validate_data: {validate_data}, "
+                     f"test_data: {test_data}, data: {data}")
+        return train_data, validate_data, test_data, data
 
     def extract_running_rules(self, args, model):
 
-        train_data, eval_data, data = self.extract_input_data(args)
+        # train_data, eval_data, data = self.extract_input_data(args)
+        train_data, validate_data, test_data, data = self.extract_input_data(args, model)
 
         running_funcs = RunningFuncs()
-
         schema = None
-        for d in [train_data, eval_data]:
+        for d in [train_data, validate_data, test_data]:
             if d is not None:
                 schema = d.schema
                 break
@@ -215,22 +290,20 @@ class ComponentProperties(object):
             running_funcs.add_func(self.union_data, ["train"], use_previews=True, save_result=True)
             running_funcs.add_func(model.set_predict_data_schema, [schema],
                                    use_previews=True, save_result=True)
-            if eval_data:
-                LOGGER.warn("Validate data provided for Stepwise Module. It will not be used in model training.")
             return running_funcs
 
         if self.has_model or self.has_isometric_model:
             running_funcs.add_func(model.load_model, [args])
 
-        if self.has_train_data and self.has_eval_data:
+        if self.has_train_data and self.has_validate_data:
             # todo_func_list.extend([model.set_flowid, model.fit, model.set_flowid, model.predict])
             # todo_func_params.extend([['fit'], [train_data], ['validate'], [train_data, 'validate']])
             running_funcs.add_func(model.set_flowid, ['fit'])
-            running_funcs.add_func(model.fit, [train_data, eval_data])
+            running_funcs.add_func(model.fit, [train_data, validate_data])
             running_funcs.add_func(model.set_flowid, ['validate'])
             running_funcs.add_func(model.predict, [train_data], save_result=True)
             running_funcs.add_func(model.set_flowid, ['predict'])
-            running_funcs.add_func(model.predict, [eval_data], save_result=True)
+            running_funcs.add_func(model.predict, [validate_data], save_result=True)
             running_funcs.add_func(self.union_data, ["train", "validate"], use_previews=True, save_result=True)
             running_funcs.add_func(model.set_predict_data_schema, [schema],
                                    use_previews=True, save_result=True)
@@ -244,9 +317,9 @@ class ComponentProperties(object):
             running_funcs.add_func(model.set_predict_data_schema, [schema],
                                    use_previews=True, save_result=True)
 
-        elif self.has_eval_data:
+        elif self.has_test_data:
             running_funcs.add_func(model.set_flowid, ['predict'])
-            running_funcs.add_func(model.predict, [eval_data], save_result=True)
+            running_funcs.add_func(model.predict, [test_data], save_result=True)
             running_funcs.add_func(self.union_data, ["predict"], use_previews=True, save_result=True)
             running_funcs.add_func(model.set_predict_data_schema, [schema],
                                    use_previews=True, save_result=True)
@@ -261,10 +334,6 @@ class ComponentProperties(object):
             running_funcs.add_func(model.set_flowid, ['transform'])
             running_funcs.add_func(model.transform, [], use_previews=True, save_result=True)
 
-        # LOGGER.debug("func list: {}, param list: {}, save_results: {}, use_previews: {}".format(
-        #     running_funcs.todo_func_list, running_funcs.todo_func_params,
-        #     running_funcs.save_result, running_funcs.use_previews_result
-        # ))
         return running_funcs
 
     @staticmethod

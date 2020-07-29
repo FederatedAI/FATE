@@ -81,6 +81,7 @@ class ModelBase(object):
         self.component_properties.parse_dsl_args(args)
 
         running_funcs = self.component_properties.extract_running_rules(args, self)
+        LOGGER.debug(f"running_funcs: {running_funcs.todo_func_list}")
         saved_result = []
         for func, params, save_result, use_previews in running_funcs:
             # for func, params in zip(todo_func_list, todo_func_params):
@@ -354,3 +355,9 @@ class ModelBase(object):
         if isinstance(data, dict) and len(data) >= 1:
             data = list(data.values())[0]
         return data
+
+    @staticmethod
+    def obtain_data(data_list):
+        if isinstance(data_list, list):
+            return data_list[0]
+        return data_list
