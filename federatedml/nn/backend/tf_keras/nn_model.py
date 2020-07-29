@@ -29,7 +29,7 @@ from federatedml.framework.weights import OrderDictWeights, Weights
 from federatedml.nn.backend.tf_keras import losses
 from federatedml.nn.homo_nn.nn_model import NNModel, DataConverter
 
-Logger = log_utils.getLogger()
+LOGGER = log_utils.getLogger()
 
 
 def _zip_dir_as_bytes(path):
@@ -88,8 +88,7 @@ def _modify_model_input_shape(nn_struct, input_shape):
         return json.dumps(struct)
 
     if struct["config"]["layers"][0].get("config"):
-        struct["config"]["layers"][0]["config"] ["batch_input_shape"] = [None] + input_shape
-
+        struct["config"]["layers"][0]["config"]["batch_input_shape"] = [None] + input_shape
         return json.dumps(struct)
     else:
         return json.dump(struct)
@@ -126,7 +125,7 @@ class KerasNNModel(NNModel):
     def __init__(self, sess, model):
         self._sess: tf.Session = sess
         self._model: tf.keras.Sequential = model
-        self._trainable_weights = {v.name: v for v in self._model.trainable_weights}
+        self._trainable_weights = {self._trim_device_str(v.name): v for v in self._model.trainable_weights}
 
         self._initialize_variables()
 
@@ -153,15 +152,40 @@ class KerasNNModel(NNModel):
         self._model.layers[layer_idx].set_weights(weights)
 
     def get_input_gradients(self, X, y):
+        return self._get_gradients(X, y, self._model.input)
+
+    def get_trainable_gradients(self, X, y):
+        return self._get_gradients(X, y, self._trainable_weights)
+
+    def derivative_of_output_wrt_weights(self, X):
+        gradient = gradients(self._model.output, self._model.trainable_variables)
+        return self._sess.run(gradient, feed_dict={self._model.input: X})
+
+    def apply_gradients(self, grads):
+        update_ops = self._model.optimizer.apply_gradients(zip(grads, self._model.trainable_variables))
+        self._initialize_variables()
+        self._sess.run(update_ops)
+
+    def get_weight_gradients(self, X, y):
+        return self._get_gradients(X, y, self._model.trainable_variables)
+
+    def get_trainable_weights(self):
+        return self._sess.run(self._model.trainable_variables)
+
+    def _get_gradients(self, X, y, variable):
         from federatedml.nn.hetero_nn.backend.tf_keras import losses
 
         y_true = tf.placeholder(shape=self._model.output.shape,
                                 dtype=self._model.output.dtype)
 
         loss_fn = getattr(losses, self._model.loss_functions[0].fn.__name__)(y_true, self._model.output)
-        gradient = gradients(loss_fn, self._model.input)
+        gradient = gradients(loss_fn, variable)
         return self._sess.run(gradient, feed_dict={self._model.input: X,
                                                    y_true: y})
+
+    def set_learning_rate(self, learning_rate):
+        assign_op = tf.assign(self._model.optimizer.learning_rate, learning_rate)
+        self._sess.run(assign_op)
 
     def train(self, data: tf.keras.utils.Sequence, **kwargs):
         epochs = 1
