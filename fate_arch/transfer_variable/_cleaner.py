@@ -46,16 +46,19 @@ class IterationGC(GC):
         self._capacity = capacity
 
     def gc(self):
+        if not self._enable:
+            return
         if len(self._ashcan) <= self._capacity:
             return
-        self._save_gc_call(self._ashcan.pop())
+        self._safe_gc_call(self._ashcan.pop())
 
     def clean(self):
         while self._ashcan:
-            self._save_gc_call(self._ashcan.pop())
+            self._safe_gc_call(self._ashcan.pop())
 
     @staticmethod
-    def _save_gc_call(funcs):
+    def _safe_gc_call(funcs):
+        return
         for func in funcs:
             try:
                 func()

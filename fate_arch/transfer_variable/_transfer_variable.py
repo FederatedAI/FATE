@@ -65,7 +65,6 @@ class Variable(object):
         self._dst = dst
         self._get_gc = IterationGC()
         self._remote_gc = IterationGC()
-        self._auto_clean = True
 
     # copy never create a new instance
     def __copy__(self):
@@ -81,7 +80,8 @@ class Variable(object):
         return self
 
     def disable_auto_clean(self):
-        self._auto_clean = False
+        self._get_gc.disable()
+        self._remote_gc.disable()
         return self
 
     def clean(self):
