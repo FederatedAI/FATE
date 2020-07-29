@@ -219,7 +219,7 @@ class Task(DataBaseModel):
 
     class Meta:
         db_table = "t_task"
-        primary_key = CompositeKey('f_task_id', 'f_task_version', 'f_role', 'f_party_id')
+        primary_key = CompositeKey('f_job_id', 'f_task_id', 'f_task_version', 'f_role', 'f_party_id')
 
 
 class DataView(DataBaseModel):

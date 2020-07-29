@@ -40,7 +40,7 @@ def internal_server_error(e):
     stat_logger.exception(e)
     return get_json_result(retcode=100, retmsg=str(e))
 
-# API for apply do something
+# apply initiator for control operation
 
 
 @manager.route('/<job_id>/<role>/<party_id>/stop/<stop_status>', methods=['POST'])
@@ -56,8 +56,35 @@ def stop_job(job_id, role, party_id, stop_status):
         return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="can not found job")
 
 
+@manager.route('/<job_id>/<role>/<party_id>/status', methods=['POST'])
+def job_status(job_id, role, party_id):
+    job_info = {}
+    job_info.update(request.json)
+    job_info.update({
+        "job_id": job_id,
+        "role": role,
+        "party_id": party_id
+    })
+    JobSaver.update_job(job_info=job_info)
+    return get_json_result(retcode=0, retmsg='success')
+
+
+@manager.route('/<job_id>/<task_set_id>/<role>/<party_id>/status', methods=['POST'])
+def task_set_status(job_id, task_set_id, role, party_id):
+    task_set_info = {}
+    task_set_info.update(request.json)
+    task_set_info.update({
+        "job_id": job_id,
+        "task_set_id": task_set_id,
+        "role": role,
+        "party_id": party_id
+    })
+    JobSaver.update_task_set(task_set_info=task_set_info)
+    return get_json_result(retcode=0, retmsg='success')
+
+
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/status', methods=['POST'])
-def update_task(job_id, component_name, task_id, task_version, role, party_id):
+def task_status(job_id, component_name, task_id, task_version, role, party_id):
     task_info = {}
     task_info.update(request.json)
     task_info.update({

@@ -160,8 +160,22 @@ class DAGScheduler(object):
         if new_job_status != job.f_status:
             job.f_status = new_job_status
             FederatedScheduler.sync_job(job=job, update_fields=["status"])
+            cls.update_job_on_initiator(initiator_job_template=job, update_fields=["status"])
         if EndStatus.is_end_status(job.f_status):
             cls.finish(job=job, end_status=job.f_status)
+
+    @classmethod
+    def update_job_on_initiator(cls, initiator_job_template: Job, update_fields: list):
+        jobs = JobSaver.query_job(job_id=initiator_job_template.f_job_id)
+        if not jobs:
+            raise Exception("Failed to update job status on initiator")
+        job_info = initiator_job_template.to_dict_info(only_primary_with=update_fields)
+        for field in update_fields:
+            job_info[field] = getattr(initiator_job_template, "f_%s" % field)
+        for job in jobs:
+            job_info["role"] = job.f_role
+            job_info["party_id"] = job.f_party_id
+            JobSaver.update_job(job_info=job_info)
 
     @staticmethod
     def finish(job, end_status):

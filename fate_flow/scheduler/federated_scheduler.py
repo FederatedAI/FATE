@@ -316,6 +316,77 @@ class FederatedScheduler(object):
         else:
             return FederatedSchedulingStatusCode.SUCCESS
 
+    @classmethod
+    def to_initiator(cls, task: Task = None, task_set: TaskSet = None, job: Job = None):
+        if task:
+            if task.f_role != task.f_initiator_role and task.f_party_id != task.f_initiator_party_id:
+                return FederatedSchedulingStatusCode.SUCCESS
+            endpoint = "/{}/initiator/{}/{}/{}/{}/{}/{}/status".format(
+                API_VERSION,
+                task.f_job_id,
+                task.f_component_name,
+                task.f_task_id,
+                task.f_task_version,
+                task.f_role,
+                task.f_party_id)
+            job_id = task.f_job_id
+            src_party_id = task.f_party_id
+            dest_party_id = task.f_initiator_party_id
+            src_role = task.f_role
+            report_info = task.to_dict_info(only_primary_with=cls.REPORT_TO_INITIATOR_FIELDS)
+        elif task_set:
+            if task_set.f_role != task_set.f_initiator_role and task_set.f_party_id != task_set.f_initiator_party_id:
+                return FederatedSchedulingStatusCode.SUCCESS
+            endpoint = "/{}/initiator/{}/{}/{}/{}/status".format(
+                API_VERSION,
+                task_set.f_job_id,
+                task_set.f_task_set_id,
+                task_set.f_role,
+                task_set.f_party_id,
+                ),
+            job_id = task_set.f_job_id
+            src_party_id = task_set.f_party_id
+            dest_party_id = task_set.f_initiator_party_id
+            src_role = task_set.f_role
+            report_info = task_set.to_dict_info(only_primary_with=cls.REPORT_TO_INITIATOR_FIELDS)
+        elif job:
+            if job.f_is_initiator == 1:
+                return FederatedSchedulingStatusCode.SUCCESS
+            endpoint = "/{}/initiator/{}/{}/{}/status".format(
+                API_VERSION,
+                job.f_job_id,
+                job.f_role,
+                job.f_party_id
+            )
+            job_id = job.f_job_id
+            src_party_id = job.f_party_id
+            dest_party_id = job.f_initiator_party_id
+            src_role = job.f_role
+            report_info = job.to_dict_info(only_primary_with=cls.REPORT_TO_INITIATOR_FIELDS)
+        else:
+            raise Exception("Can not get info object")
+        try:
+            response = federated_api(job_id=task.f_job_id,
+                                     method='POST',
+                                     endpoint=endpoint,
+                                     src_party_id=src_party_id,
+                                     dest_party_id=dest_party_id,
+                                     src_role=src_role,
+                                     json_body=report_info,
+                                     work_mode=RuntimeConfig.WORK_MODE)
+        except Exception as e:
+            response = {
+                "retcode": RetCode.FEDERATED_ERROR,
+                "retmsg": "Federated error, {}".format(str(e))
+            }
+        if response["retcode"]:
+            schedule_logger(job_id=job_id).error("An error occurred while report the status to initiator:\n{}".format(
+                response["retmsg"]
+            ))
+            return FederatedSchedulingStatusCode.FAILED
+        else:
+            return FederatedSchedulingStatusCode.SUCCESS
+
     # Utils
     @classmethod
     def return_federated_response(cls, federated_response):

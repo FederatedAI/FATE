@@ -36,6 +36,7 @@ class TaskScheduler(object):
             if new_task_status != task.f_status:
                 task.f_status = new_task_status
                 FederatedScheduler.sync_task(job=job, task=task, update_fields=["status"])
+                cls.update_task_on_initiator(initiator_task_template=task, update_fields=["status"])
             if task.f_status == TaskStatus.WAITING:
                 # TODO: run task until the concurrency is reached
                 task.f_status = TaskStatus.RUNNING
@@ -62,6 +63,7 @@ class TaskScheduler(object):
         if new_task_set_status != task_set.f_status:
             task_set.f_status = new_task_set_status
             FederatedScheduler.sync_task_set(job=job, task_set=task_set, update_fields=["status"])
+            cls.update_task_set_on_initiator(initiator_task_set_template=task_set, update_fields=["status"])
         if EndStatus.is_end_status(task_set.f_status):
             cls.finish(job=job, task_set=task_set, end_status=task_set.f_status)
 
@@ -122,6 +124,32 @@ class TaskScheduler(object):
         tasks = job_utils.query_task(task_id=task.f_task_id, task_version=task.f_task_version)
         new_task_status = StatusEngine.horizontal_convergence([task.f_party_status for task in tasks])
         return new_task_status
+
+    @classmethod
+    def update_task_on_initiator(cls, initiator_task_template: Task, update_fields: list):
+        tasks = JobSaver.query_task(task_id=initiator_task_template.f_task_id, task_version=initiator_task_template.f_task_version)
+        if not tasks:
+            raise Exception("Failed to update task status on initiator")
+        task_info = initiator_task_template.to_dict_info(only_primary_with=update_fields)
+        for field in update_fields:
+            task_info[field] = getattr(initiator_task_template, "f_%s" % field)
+        for task in tasks:
+            task_info["role"] = task.f_role
+            task_info["party_id"] = task.f_party_id
+            JobSaver.update_task(task_info=task_info)
+
+    @classmethod
+    def update_task_set_on_initiator(cls, initiator_task_set_template: TaskSet, update_fields: list):
+        task_sets = JobSaver.query_task_set(job_id=initiator_task_set_template.f_job_id, task_set_id=initiator_task_set_template.f_task_set_id)
+        if not task_sets:
+            raise Exception("Failed to update task set status on initiator")
+        task_set_info = initiator_task_set_template.to_dict_info(only_primary_with=update_fields)
+        for field in update_fields:
+            task_set_info[field] = getattr(initiator_task_set_template, "f_%s" % field)
+        for task_set in task_sets:
+            task_set_info["role"] = task_set.f_role
+            task_set_info["party_id"] = task_set.f_party_id
+            JobSaver.update_task_set(task_set_info=task_set_info)
 
     @classmethod
     def finish(cls, job: Job, task_set: TaskSet, end_status):
