@@ -197,7 +197,7 @@ def component_output_model():
 @job_utils.job_server_routing()
 def component_output_data():
     request_data = request.json
-    output_data_table = get_component_output_data_table(task_data=request_data)
+    output_data_table = get_component_output_data_table(task_data=request_data, need_all=False)
     if not output_data_table:
         return get_json_result(retcode=0, retmsg='no data', data=[])
     output_data = []
@@ -312,7 +312,7 @@ def save_metric_meta(job_id, component_name, task_id, role, party_id):
     return get_json_result()
 
 
-def get_component_output_data_table(task_data):
+def get_component_output_data_table(task_data, need_all=True):
     check_request_parameters(task_data)
     tracker = Tracking(job_id=task_data['job_id'], component_name=task_data['component_name'],
                        role=task_data['role'], party_id=task_data['party_id'])
@@ -325,8 +325,7 @@ def get_component_output_data_table(task_data):
     output_dsl = component.get_output()
     output_data_dsl = output_dsl.get('data', [])
     # The current version will only have one data output.
-    output_data_table = tracker.get_output_data_table(output_data_dsl[0] if output_data_dsl else 'component',
-                                                      init_session=True)
+    output_data_table = tracker.get_output_data_table(init_session=True, need_all=need_all)
     return output_data_table
 
 
@@ -345,8 +344,7 @@ def get_component_output_data_line(src_key, src_value):
 
 def get_component_output_data_meta(output_data_table, have_data_label):
     # get meta
-    output_data_meta = output_data_table.get_schema()
-    schema = output_data_meta.get('schema', {})
+    schema = output_data_table.get_schema()
     header = [schema.get('sid_name', 'sid')]
     if have_data_label:
         header.append(schema.get('label_name'))
