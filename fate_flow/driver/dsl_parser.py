@@ -527,67 +527,35 @@ class BaseDSLParser(object):
                 if "input" in self.dsl["components"][name]:
                     if "input" not in self.predict_dsl["components"][name]:
                         self.predict_dsl["components"][name]["input"] = {}
+
                     if "data" in self.dsl["components"][name]["input"]:
                         self.predict_dsl["components"][name]["input"]["data"] = {}
-                        if "data" in self.dsl["components"][name]["input"]["data"]:
-                            data_set = self.dsl["components"][name]["input"]["data"].get("data")
-                            self.predict_dsl["components"][name]["input"]["data"]["data"] = []
-                            for input_data in data_set:
-                                if version == 1 and input_data.split(".")[0] == "args":
-                                    new_input_data = "args.eval_data"
-                                    self.predict_dsl["components"][name]["input"]["data"]["data"].append(new_input_data)
-                                elif version == 2 and input_data.split(".")[0] == "args":
-                                    self.predict_dsl["components"][name]["input"]["data"]["data"].append(input_data)
-                                else:
-                                    pre_name = input_data.split(".")[0]
-                                    data_suffix = input_data.split(".")[1]
-                                    if self.get_need_deploy_parameter(name=pre_name,
-                                                                      setting_conf_prefix=setting_conf_prefix,
-                                                                      deploy_cpns=deploy_cpns):
-                                        self.predict_dsl["components"][name]["input"]["data"]["data"].append(input_data)
+                        for data_key, data_value in self._gen_predict_data_mapping():
+                            if data_key in self.dsl["components"][name]["input"]["data"]:
+                                data_set = self.dsl["components"][name]["input"]["data"].get(data_key)
+                                self.predict_dsl["components"][name]["input"]["data"][data_value] = []
+                                for input_data in data_set:
+                                    if version == 1 and input_data.split(".")[0] == "args":
+                                        new_input_data = "args.eval_data"
+                                        self.predict_dsl["components"][name]["input"]["data"][data_value].append(
+                                            new_input_data)
+                                    elif version == 2 and input_data.split(".")[0] == "args":
+                                        self.predict_dsl["components"][name]["input"]["data"][data_value].append(
+                                            input_data)
                                     else:
-                                        self.predict_dsl["components"][name]["input"]["data"]["data"] = \
-                                            output_data_maps[
-                                                pre_name][data_suffix]
+                                        pre_name = input_data.split(".")[0]
+                                        data_suffix = input_data.split(".")[1]
+                                        if self.get_need_deploy_parameter(name=pre_name,
+                                                                          setting_conf_prefix=setting_conf_prefix,
+                                                                          deploy_cpns=deploy_cpns):
+                                            self.predict_dsl["components"][name]["input"]["data"][data_value].append(
+                                                input_data)
+                                        else:
+                                            self.predict_dsl["components"][name]["input"]["data"][data_value] = \
+                                                output_data_maps[
+                                                    pre_name][data_suffix]
 
-                        elif "train_data" in self.dsl["components"][name]["input"]["data"]:
-                            input_data = self.dsl["components"][name]["input"]["data"].get("train_data")[0]
-                            if version == 1 and input_data.split(".")[0] == "args":
-                                new_input_data = "args.eval_data"
-                                self.predict_dsl["components"][name]["input"]["data"]["eval_data"] = [new_input_data]
-                            elif version == 2 and input_data.split(".")[0] == "args":
-                                self.predict_dsl["components"][name]["input"]["data"]["eval_data"] = [input_data]
-                            else:
-                                pre_name = input_data.split(".")[0]
-                                data_suffix = input_data.split(".")[1]
-                                if self.get_need_deploy_parameter(name=pre_name,
-                                                                  setting_conf_prefix=setting_conf_prefix,
-                                                                  deploy_cpns=deploy_cpns):
-
-                                    self.predict_dsl["components"][name]["input"]["data"]["eval_data"] = [input_data]
-                                else:
-                                    self.predict_dsl["components"][name]["input"]["data"]["eval_data"] = \
-                                        output_data_maps[
-                                            pre_name][data_suffix]
-
-                        elif "eval_data" in self.dsl["components"][name]["input"]["data"]:
-                            input_data = self.dsl["components"][name]["input"]["data"].get("eval_data")[0]
-                            if version == 1 and input_data.split(".")[0] == "args":
-                                new_input_data = "args.eval_data"
-                                self.predict_dsl["components"][name]["input"]["data"]["eval_data"] = [new_input_data]
-                            elif version == 2 and input_data.split(".")[0] == "args":
-                                self.predict_dsl["components"][name]["input"]["data"]["eval_data"] = [input_data]
-                            else:
-                                pre_name = input_data.split(".")[0]
-                                data_suffix = input_data.split(".")[1]
-                                if self.get_need_deploy_parameter(name=pre_name,
-                                                                  setting_conf_prefix=setting_conf_prefix,
-                                                                  deploy_cpns=deploy_cpns):
-                                    self.predict_dsl["components"][name]["input"]["data"]["eval_data"] = [input_data]
-                                else:
-                                    self.predict_dsl["components"][name]["input"]["data"]["eval_data"] = \
-                                        output_data_maps[
-                                            pre_name].get(data_suffix)
+                                break
 
             else:
                 name = self.predict_components[i].get_name()
@@ -600,20 +568,22 @@ class BaseDSLParser(object):
                 if "output" in self.dsl["components"][name] and "data" in self.dsl["components"][name]["output"]:
                     output_data = self.dsl["components"][name]["output"].get("data")
 
-                if output_data is None:
+                if output_data is None or input_data is None:
                     continue
 
                 output_data_maps[name] = {}
                 output_data_str = output_data[0]
-                if "train_data" in input_data or "eval_data" in input_data:
+                if "train_data" in input_data or "eval_data" in input_data or "validate_data" in input_data:
                     if "train_data" in input_data:
                         up_input_data = input_data.get("train_data")[0]
-                    else:
+                    elif "eval_data" in input_data:
                         up_input_data = input_data.get("eval_data")[0]
+                    else:
+                        up_input_data = input_data.get("validate_data")[0]
                 elif "data" in input_data:
                     up_input_data = input_data.get("data")[0]
                 else:
-                    raise ValueError("Illegal input data")
+                    raise ValueError("train data or eval data or validate data or data should be set")
 
                 up_input_data_component_name = up_input_data.split(".", -1)[0]
                 if up_input_data_component_name == "args" or self.get_need_deploy_parameter(
@@ -662,6 +632,10 @@ class BaseDSLParser(object):
 
     def get_need_deploy_parameter(self, name, setting_conf_prefix=None, deploy_cpns=None):
         raise NotImplementedError
+
+    @staticmethod
+    def _gen_predict_data_mapping():
+        return None, None
 
 
 class DSLParser(BaseDSLParser):
@@ -778,6 +752,14 @@ class DSLParser(BaseDSLParser):
 
         return need_deploy
 
+    @staticmethod
+    def _gen_predict_data_mapping():
+        data_mapping = [("data", "data"), ("train_data", "test_data"),
+                        ("validate_data", "test_data"), ("test_data", "test_data")]
+
+        for data_key, data_value in data_mapping:
+            yield data_key, data_value
+
 
 class DSLParserV2(BaseDSLParser):
     def _check_component_valid_names(self):
@@ -820,7 +802,7 @@ class DSLParserV2(BaseDSLParser):
             self._init_component_setting(setting_conf_prefix, pipeline_runtime_conf, version=2)
 
         self.args_input, self.args_datakey = parameter_util.ParameterUtilV2.get_input_parameters(runtime_conf,
-                                                                                               module="args")
+                                                                                                 module="args")
 
         self.prepare_graph_dependency_info()
 
@@ -831,3 +813,11 @@ class DSLParserV2(BaseDSLParser):
             return name in deploy_cpns
 
         return False
+
+    @staticmethod
+    def _gen_predict_data_mapping():
+        data_mapping = [("data", "data"), ("train_data", "test_data"),
+                        ("validate_data", "test_data"), ("test_data", "test_data")]
+
+        for data_key, data_value in data_mapping:
+            yield data_key, data_value
