@@ -28,7 +28,7 @@ class HomoSBTAdapter(BaseAdapter):
             col_names=cols_names
         )
         result = isometric_model.IsometricModel()
-        result.add_metric_value(metric_name=consts.HOMO_SBT, metric_info=single_info)
+        result.add_metric_value(metric_name=consts.FEATURE_IMPORTANCE, metric_info=single_info)
 
         return result
 
@@ -79,5 +79,5 @@ class HeteroSBTAdapter(BaseAdapter):
             host_col_names=host_col_names
         )
         result = isometric_model.IsometricModel()
-        result.add_metric_value(metric_name=consts.HETERO_SBT, metric_info=single_info)
+        result.add_metric_value(metric_name=consts.FEATURE_IMPORTANCE, metric_info=single_info)
         return result

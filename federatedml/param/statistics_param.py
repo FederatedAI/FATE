@@ -32,8 +32,11 @@ class StatisticsParam(BaseParam):
     ----------
     statistics: list, string, default "summary"
         Specify the statistic types to be computed.
-        "summary" represents list: ["count", "mean", "stddev", "25%", "50%", "75%"]
-        "describe" represents list: ["count", "mean", "stddev"]
+        "summary" represents list: [consts.SUM, consts.MEAN, consts.STANDARD_DEVIATION,
+                    consts.MEDIAN, consts.MIN, consts.MAX,
+                    consts.MISSING_COUNT, consts.SKEWNESS, consts.KURTOSIS]
+        "describe" represents list: [consts.COUNT, consts.MEAN,
+                    consts.STANDARD_DEVIATION, consts.MIN, consts.MAX]
 
     column_names: list of string, default []
         Specify columns to be used for statistic computation by column names in header

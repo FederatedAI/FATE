@@ -73,6 +73,8 @@ class HomoNNServer(HomoNNBase):
         self.loss_scatter = loss_scatter.Server(self.transfer_variable.loss_scatter_trans_var)
         self.has_converged = has_converged.Server(self.transfer_variable.has_converged_trans_var)
 
+        self._summary = dict(loss_history=[], is_converged=False)
+
     def _init_model(self, param: HomoNNParam):
         super()._init_model(param=param)
         early_stop = self.model_param.early_stop
@@ -91,6 +93,8 @@ class HomoNNServer(HomoNNBase):
                              metric_namespace='train',
                              metric_data=[Metric(iter_num, loss)])
 
+        self._summary["loss_history"].append(loss)
+
     def _is_converged(self):
         loss = self.loss_scatter.weighted_loss_mean(suffix=self._suffix())
         Logger.info(f"loss at iter {self.aggregate_iteration_num}: {loss}")
@@ -100,6 +104,7 @@ class HomoNNServer(HomoNNBase):
         else:
             is_converged = self.converge_func(self.model)
         self.has_converged.remote_converge_status(is_converge=is_converged, suffix=self._suffix())
+        self._summary["is_converged"] = is_converged
         return is_converged
 
     def fit(self, data_inst):
@@ -113,6 +118,7 @@ class HomoNNServer(HomoNNBase):
             self.aggregate_iteration_num += 1
         else:
             Logger.warn(f"reach max iter: {self.aggregate_iteration_num}, not converged")
+        self.set_summary(self._summary)
 
     def save_model(self):
         return self.model
@@ -127,6 +133,7 @@ class HomoNNClient(HomoNNBase):
         self.has_converged = has_converged.Client(self.transfer_variable.has_converged_trans_var)
 
         self.nn_model = None
+        self._summary = dict(loss_history=[], is_converged=False)
 
     def _init_model(self, param: HomoNNParam):
         super()._init_model(param=param)
@@ -148,6 +155,8 @@ class HomoNNClient(HomoNNBase):
         loss = metrics["loss"]
         self.loss_scatter.send_loss(loss=(loss, epoch_degree), suffix=self._suffix())
         is_converged = self.has_converged.get_converge_status(suffix=self._suffix())
+        self._summary["is_converged"] = is_converged
+        self._summary["loss_history"].append(loss)
         return is_converged
 
     def __build_nn_model(self, input_shape):
@@ -195,6 +204,8 @@ class HomoNNClient(HomoNNBase):
         else:
             Logger.warn(f"reach max iter: {self.aggregate_iteration_num}, not converged")
 
+        self.set_summary(self._summary)
+
     def export_model(self):
         return _build_model_dict(meta=self._get_meta(), param=self._get_param())
 
@@ -231,6 +242,7 @@ class HomoNNClient(HomoNNBase):
                                   lambda d, pred: [d.label, pred[0].item(),
                                                    pred[1][pred[0]],
                                                    {str(v): pred[1][v] for v in range(len(pred[1]))}])
+
     def load_model(self, model_dict):
         model_dict = list(model_dict["model"].values())[0]
         model_obj = _extract_param(model_dict)

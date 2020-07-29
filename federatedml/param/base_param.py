@@ -98,6 +98,11 @@ class BaseParam(object):
             raise ValueError(descr + " {} not supported, should be positive numeric".format(param))
 
     @staticmethod
+    def check_nonnegative_number(param, descr):
+        if type(param).__name__ not in ["float", "int", "long"] or param < 0:
+            raise ValueError(descr + " {} not supported, should be non-negative numeric".format(param))
+
+    @staticmethod
     def check_decimal_float(param, descr):
         if type(param).__name__ not in ["float"] or param < 0 or param > 1:
             raise ValueError(descr + " {} not supported, should be a float number in range [0, 1]".format(param))

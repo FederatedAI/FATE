@@ -9,7 +9,7 @@ from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeHost
 from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
     HeteroSecureBoostTransferVariable
 
-from federatedml.tree.tree_core.predict_cache import PredictDataCache
+from federatedml.ensemble.boosting.boosting_core.predict_cache import PredictDataCache
 from federatedml.statistic import data_overview
 
 from arch.api.utils import log_utils
@@ -165,7 +165,7 @@ class HeteroSecureBoostHost(HeteroBoostingHost):
         model_param.tree_dim = self.booster_dim
         model_param.trees_.extend(self.boosting_model_list)
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
-
+        model_param.model_name = consts.HETERO_SBT
         model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
 
         param_name = "HeteroSecureBoostingTreeHostParam"

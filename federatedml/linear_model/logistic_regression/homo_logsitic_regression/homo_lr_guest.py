@@ -23,9 +23,11 @@ from federatedml.framework.homo.procedure import aggregator
 from federatedml.linear_model.linear_model_weight import LinearModelWeights as LogisticRegressionWeights
 from federatedml.linear_model.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.model_selection import MiniBatch
+from federatedml.optim import activation
 from federatedml.optim.gradient.homo_lr_gradient import LogisticGradient
 from federatedml.util import consts
 from federatedml.util import fate_operator
+from federatedml.util.fate_operator import vec_dot
 from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
@@ -45,6 +47,7 @@ class HomoLRGuest(HomoLRBase):
     def fit(self, data_instances, validate_data=None):
 
         self._abnormal_detection(data_instances)
+        self.check_abnormal_values(data_instances)
         self.init_schema(data_instances)
 
         validation_strategy = self.init_validation_strategy(data_instances, validate_data)
@@ -100,13 +103,21 @@ class HomoLRGuest(HomoLRBase):
 
     @assert_io_num_rows_equal
     def predict(self, data_instances):
+
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)
-        predict_wx = self.compute_wx(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
 
-        pred_table = self.classify(predict_wx, self.model_param.predict_param.threshold)
+        data_instances = self.align_data_header(data_instances, self.header)
+        # predict_wx = self.compute_wx(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
+        pred_prob = data_instances.mapValues(lambda v: activation.sigmoid(vec_dot(v.features, self.model_weights.coef_)
+                                                              + self.model_weights.intercept_))
 
-        predict_result = data_instances.mapValues(lambda x: x.label)
-        predict_result = pred_table.join(predict_result, lambda x, y: [y, x[1], x[0],
-                                                                       {"1": x[0], "0": 1 - x[0]}])
+        # pred_table = self.classify(predict_wx, self.model_param.predict_param.threshold)
+
+        # predict_result = data_instances.mapValues(lambda x: x.label)
+        # predict_result = pred_table.join(predict_result, lambda x, y: [y, x[1], x[0],
+        #                                                                {"1": x[0], "0": 1 - x[0]}])
+        predict_result = self.predict_score_to_output(data_instances, pred_prob, classes=[0, 1],
+                                                      threshold=self.model_param.predict_param.threshold)
+
         return predict_result
