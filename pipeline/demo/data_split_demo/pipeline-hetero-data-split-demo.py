@@ -1,9 +1,8 @@
-from pipeline.component.hetero_data_split import HeteroDataSplit
-
 from pipeline.backend.config import Backend
 from pipeline.backend.config import WorkMode
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
+from pipeline.component.hetero_data_split import HeteroDataSplit
 from pipeline.component.hetero_linr import HeteroLinR
 from pipeline.component.input import Input
 from pipeline.component.intersection import Intersection
@@ -55,13 +54,4 @@ pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
 print (pipeline.get_component("hetero_data_split_0").get_output_data_table())
 print ("\n summary content is: ")
 print (pipeline.get_component("hetero_data_split_0").get_summary())
-print (pipeline.get_component("hetero_data_split_0").get_output_data())
-#print (pipeline.get_component("hetero_linr_0").get_model_param())
-#print (pipeline.get_component("hetero_linr_0").get_output_data())
-
-
-
-
-
-
-
+# print (pipeline.get_component("hetero_data_split_0").get_output_data())

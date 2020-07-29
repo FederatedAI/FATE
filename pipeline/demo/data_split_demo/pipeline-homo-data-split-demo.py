@@ -1,9 +1,8 @@
-from pipeline.component.homo_data_split import HomoDataSplit
-
 from pipeline.backend.config import Backend
 from pipeline.backend.config import WorkMode
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
+from pipeline.component.homo_data_split import HomoDataSplit
 from pipeline.component.input import Input
 from pipeline.interface.data import Data
 

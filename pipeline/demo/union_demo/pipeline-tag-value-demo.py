@@ -20,7 +20,7 @@ input_1 = Input(name="train_data_1")
 pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=hosts, arbiter=arbiter)
 
 dataio_0 = DataIO(name="dataio_0", input_format="tag", with_label=False, tag_with_value=True,
-                  delimiter=",", output_format="dense")
+                  delimitor=",", output_format="dense")
 union_0 = Union(name="union_0", allow_missing=False, keep_duplicate=True)
 
 pipeline.add_component(union_0, data=Data(data=[input_0.data, input_1.data]))
