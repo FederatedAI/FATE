@@ -186,13 +186,19 @@ class ModelBase(object):
 
     def predict_score_to_output(self, data_instances, predict_score, classes=None, threshold=0.5):
         """
-        get predict result output
-        :param data_instances: table, data used for prediction
-        :param predict_score: table, probability scores
-        :param classes: list or None, all classes/label names
-        :param threshold: float, predict threshold, used for binary label
-        :return:
+        Get predict result output
+        Parameters
+        ----------
+        data_instances: table, data used for prediction
+        predict_score: table, probability scores
+        classes: list or None, all classes/label names
+        threshold: float, predict threshold, used for binary label
+
+        Returns
+        -------
+        Table, predict result
         """
+
         # regression
         if classes is None:
             predict_result = data_instances.join(predict_score, lambda d, pred: [d.label, pred, pred, {"label": pred}])
