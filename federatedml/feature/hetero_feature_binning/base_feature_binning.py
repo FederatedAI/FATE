@@ -31,6 +31,7 @@ from federatedml.transfer_variable.transfer_class.hetero_feature_binning_transfe
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
+from federatedml.util.schema_check import assert_schema_consistent
 
 LOGGER = log_utils.getLogger()
 
@@ -105,6 +106,7 @@ class BaseHeteroFeatureBinning(ModelBase):
         LOGGER.debug("After _setup_bin_inner_param, header: {}".format(self.header))
 
     @assert_io_num_rows_equal
+    @assert_schema_consistent
     def transform(self, data_instances):
         self._setup_bin_inner_param(data_instances, self.model_param)
         data_instances = self.binning_obj.transform(data_instances, self.transform_type)

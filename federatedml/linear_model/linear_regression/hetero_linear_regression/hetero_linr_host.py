@@ -22,7 +22,6 @@ from federatedml.linear_model.linear_regression.hetero_linear_regression.hetero_
 from federatedml.optim.gradient import hetero_linr_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import consts
-from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 
@@ -115,7 +114,6 @@ class HeteroLinRHost(HeteroLinRBase):
         self.set_summary(self.get_model_summary())
         # LOGGER.debug(f"summary content is: {self.summary()}")
 
-    @assert_io_num_rows_equal
     def predict(self, data_instances):
         """
         Prediction of linR
