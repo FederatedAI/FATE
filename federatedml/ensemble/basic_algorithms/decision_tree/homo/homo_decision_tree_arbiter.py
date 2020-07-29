@@ -59,8 +59,8 @@ class HomoDecisionTreeArbiter(DecisionTree):
     def federated_find_best_split(self, node_histograms, parallel_partitions=10) -> List[SplitInfo]:
 
         # node histograms [[HistogramBag,HistogramBag,...],[HistogramBag,HistogramBag,....],..]
-        LOGGER.debug('federated finding best splits,histograms from {} guest received'.format(len(node_histograms)))
-        LOGGER.debug('aggregating histograms .....')
+        LOGGER.debug('federated finding best splits,histograms from {} client received'.format(len(node_histograms)))
+        LOGGER.debug('aggregating histograms')
         acc_histogram = node_histograms
         best_splits = self.splitter.find_split(acc_histogram, self.valid_features, parallel_partitions,
                                                self.sitename, self.use_missing, self.zero_as_missing)
@@ -110,7 +110,7 @@ class HomoDecisionTreeArbiter(DecisionTree):
             if dep + 1 == self.max_depth:
                 break
 
-            LOGGER.debug('at dep {}'.format(dep))
+            LOGGER.debug('current dep is {}'.format(dep))
 
             split_info = []
             # get cur layer node num:
