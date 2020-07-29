@@ -20,6 +20,7 @@ import copy
 
 from arch.api.utils import log_utils
 from federatedml.param.evaluation_param import EvaluateParam
+from federatedml.statistic.data_overview import header_alignment, check_legal_schema
 from federatedml.util.component_properties import ComponentProperties
 from federatedml.util.param_extract import ParamExtract
 
@@ -102,8 +103,7 @@ class ModelBase(object):
             # LOGGER.debug("One data: {}".format(self.data_output.first()[1].features))
         LOGGER.debug("saved_result is : {}, data_output: {}".format(saved_result, self.data_output))
         self.check_consistency()
-
-
+        # self.save_summary()
 
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary",
@@ -183,6 +183,41 @@ class ModelBase(object):
                                    "sid_name": schema.get('sid_name')}
         return predict_data
 
+    def predict_score_to_output(self, data_instances, predict_score, classes=None, threshold=0.5):
+        """
+        get predict result output
+        :param data_instances: table, data used for prediction
+        :param predict_score: table, probability scores
+        :param classes: list or None, all classes/label names
+        :param threshold: float, predict threshold, used for binary label
+        :return:
+        """
+        # regression
+        if classes is None:
+            predict_result = data_instances.join(predict_score, lambda d, pred: [d.label, pred, pred, {"label": pred}])
+        # binary
+        elif isinstance(classes, list) and len(classes) == 2:
+            class_neg, class_pos = classes[0], classes[1]
+            pred_label = predict_score.mapValues(lambda x: class_pos if x > threshold else class_neg)
+            predict_result = data_instances.mapValues(lambda x: x.label)
+            predict_result = predict_result.join(predict_score, lambda x, y: (x, y))
+            class_neg_name, class_pos_name = str(class_neg), str(class_pos)
+            predict_result = predict_result.join(pred_label, lambda x, y: [x[0], y, x[1],
+                                                                           {class_neg_name: (1 - x[1]),
+                                                                            class_pos_name: x[1]}])
+
+        # multi-label: input = array of predicted score of all labels
+        elif isinstance(classes, list) and len(classes) > 2:
+            # pred_label = predict_score.mapValues(lambda x: classes[x.index(max(x))])
+            classes = [str(val) for val in classes]
+            predict_result = data_instances.mapValues(lambda x: x.label)
+            predict_result = predict_result.join(predict_score, lambda x, y: [x, int(classes[y.argmax()]),
+                                                                              y.max(), dict(zip(classes, list(y)))])
+        else:
+            raise ValueError(f"Model's classes type is {type(classes)}, classes must be None or list.")
+
+        return predict_result
+
     def callback_meta(self, metric_name, metric_namespace, metric_meta):
         if self.need_cv:
             metric_name = '.'.join([metric_name, str(self.cv_fold)])
@@ -205,6 +240,9 @@ class ModelBase(object):
         self.tracker.log_metric_data(metric_name=metric_name,
                                      metric_namespace=metric_namespace,
                                      metrics=metric_data)
+
+    def save_summary(self):
+        self.tracker.save_component_summary(summary_data=self.summary())
 
     def set_cv_fold(self, cv_fold):
         self.cv_fold = cv_fold
@@ -288,4 +326,31 @@ class ModelBase(object):
             return data
         if len(data) == 1:
             return list(data.values())[0]
+        return data
+
+    @staticmethod
+    def check_schema_content(schema):
+        """
+        check for repeated header & illegal/non-printable chars except for space
+        allow non-ascii chars
+        :param schema: dict
+        :return:
+        """
+        check_legal_schema(schema)
+
+    @staticmethod
+    def align_data_header(data_instances, pre_header):
+        """
+        align features of given data, raise error if value in given schema not found
+        :param data_instances: data table
+        :param pre_header: list, header of model
+        :return: dtable, aligned data
+        """
+        result_data = header_alignment(data_instances=data_instances, pre_header=pre_header)
+        return result_data
+
+    @staticmethod
+    def pass_data(data):
+        if isinstance(data, dict) and len(data) >= 1:
+            data = list(data.values())[0]
         return data

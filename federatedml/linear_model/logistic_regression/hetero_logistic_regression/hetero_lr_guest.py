@@ -64,6 +64,8 @@ class HeteroLRGuest(HeteroLRBase):
 
         LOGGER.info("Enter hetero_lr_guest fit")
         self._abnormal_detection(data_instances)
+        self.check_abnormal_values(data_instances)
+        self.check_abnormal_values(validate_data)
         self.header = self.get_header(data_instances)
 
         classes = self.one_vs_rest_obj.get_data_classes(data_instances)
@@ -160,15 +162,14 @@ class HeteroLRGuest(HeteroLRBase):
         ----------
         data_instances: DTable of Instance, input data
 
-        result_name: str,
-            Showing the output type name
-
         Returns
         ----------
         DTable
             include input data label, predict probably, label
         """
         LOGGER.info("Start predict is a one_vs_rest task: {}".format(self.need_one_vs_rest))
+        self._abnormal_detection(data_instances)
+        data_instances = self.align_data_header(data_instances, self.header)
         if self.need_one_vs_rest:
             predict_result = self.one_vs_rest_obj.predict(data_instances)
             return predict_result
@@ -184,11 +185,13 @@ class HeteroLRGuest(HeteroLRBase):
             pred_prob = pred_prob.join(host_prob, lambda g, h: g + h)
         pred_prob = pred_prob.mapValues(lambda p: activation.sigmoid(p))
         threshold = self.model_param.predict_param.threshold
-        pred_label = pred_prob.mapValues(lambda x: 1 if x > threshold else 0)
 
-        predict_result = data_instances.mapValues(lambda x: x.label)
-        predict_result = predict_result.join(pred_prob, lambda x, y: (x, y))
-        predict_result = predict_result.join(pred_label, lambda x, y: [x[0], y, x[1],
-                                                                       {"0": (1 - x[1]), "1": x[1]}])
+        # pred_label = pred_prob.mapValues(lambda x: 1 if x > threshold else 0)
+
+        # predict_result = data_instances.mapValues(lambda x: x.label)
+        # predict_result = predict_result.join(pred_prob, lambda x, y: (x, y))
+        # predict_result = predict_result.join(pred_label, lambda x, y: [x[0], y, x[1],
+        #                                                               {"0": (1 - x[1]), "1": x[1]}])
+        predict_result = self.predict_score_to_output(data_instances, pred_prob, classes=[0, 1], threshold=threshold)
 
         return predict_result

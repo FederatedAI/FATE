@@ -28,9 +28,9 @@ from federatedml.protobuf.generated import feature_binning_meta_pb2, feature_bin
 from federatedml.statistic.data_overview import get_header
 from federatedml.transfer_variable.transfer_class.hetero_feature_binning_transfer_variable import \
     HeteroFeatureBinningTransferVariable
-from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 
@@ -130,7 +130,8 @@ class BaseHeteroFeatureBinning(ModelBase):
             adjustment_factor=self.model_param.adjustment_factor,
             local_only=self.model_param.local_only,
             need_run=self.need_run,
-            transform_param=transform_param
+            transform_param=transform_param,
+            skip_static=self.model_param.skip_static
         )
         return meta_protobuf_obj
 
@@ -139,9 +140,18 @@ class BaseHeteroFeatureBinning(ModelBase):
         # binning_result_obj = self.bin_results.generated_pb()
         host_results = [x.bin_results.generated_pb() for x in self.host_results]
 
-        result_obj = feature_binning_param_pb2.FeatureBinningParam(binning_result=binning_result_obj,
-                                                                   host_results=host_results,
-                                                                   header=self.header)
+        # self_value = self._convert_pb(self.binning_obj)
+        # host_result = {}
+        # if self.role == consts.GUEST:
+        #     for idx, host_party_id in enumerate(self.component_properties.host_party_idlist):
+        #         host_binning = self.host_results[idx]
+        #         host_result[str(host_party_id)] = self._convert_pb(host_binning)
+
+        result_obj = feature_binning_param_pb2. \
+            FeatureBinningParam(binning_result=binning_result_obj,
+                                host_results=host_results,
+                                header=self.header,
+                                model_name=consts.BINNING_MODEL)
         # json_result = json_format.MessageToJson(result_obj)
         # LOGGER.debug("json_result: {}".format(json_result))
         return result_obj

@@ -25,8 +25,7 @@ from arch.api import session
 from arch.api.utils import log_utils
 from federatedml.model_base import ModelBase
 from federatedml.param.local_baseline_param import LocalBaselineParam
-from federatedml.protobuf.generated import lr_model_meta_pb2
-from federatedml.protobuf.generated import lr_model_param_pb2
+from federatedml.protobuf.generated import lr_model_meta_pb2, lr_model_param_pb2
 from federatedml.statistic import data_overview
 from federatedml.util import abnormal_detection
 from federatedml.util.io_check import assert_io_num_rows_equal
@@ -52,6 +51,7 @@ class LocalBaseline(ModelBase):
     def _init_model(self, params):
         self.model_name = params.model_name
         self.model_opts = params.model_opts
+        self.predict_param = params.predict_param
         self.model = None
         self.model_fit = None
         self.header = None
@@ -138,12 +138,14 @@ class LocalBaseline(ModelBase):
 
     def _get_meta(self):
         model = self.model_fit
+        predict_param = lr_model_meta_pb2.PredictMeta(**{"threshold": self.predict_param.threshold})
         result = {'penalty': model.penalty,
                   'tol': model.tol,
                   'fit_intercept': model.fit_intercept,
                   'optimizer': model.solver,
                   'need_one_vs_rest': self.need_one_vs_rest,
-                  'max_iter': model.max_iter
+                  'max_iter': model.max_iter,
+                  'predict_param': predict_param
                   }
         meta_protobuf_obj = lr_model_meta_pb2.LRModelMeta(**result)
 
@@ -203,18 +205,13 @@ class LocalBaseline(ModelBase):
             return
         model_fit = self.model_fit
         classes = [int(x) for x in model_fit.classes_]
-        pred_label = data_instances.mapValues(lambda v: model_fit.predict(v.features[None,:])[0])
-        pred_prob = data_instances.mapValues(lambda v: model_fit.predict_proba(v.features[None,:])[0])
+        if self.need_one_vs_rest:
+            pred_prob = data_instances.mapValues(lambda v: model_fit.predict_proba(v.features[None, :])[0])
 
-        predict_result = data_instances.mapValues(lambda x: x.label)
-        predict_result = predict_result.join(pred_prob, lambda x, y: (x, y))
-        if len(classes) > 2:
-            predict_result = predict_result.join(pred_label, lambda x, y: [x[0], int(y), x[1][classes.index(y)],
-                                                                           dict(zip(classes, list(x[1])))])
         else:
-            predict_result = predict_result.join(pred_label, lambda x, y: [x[0], int(y), x[1][1],
-                                                                           dict(zip(classes, list(x[1])))])
-
+            pred_prob = data_instances.mapValues(lambda v: model_fit.predict_proba(v.features[None, :])[0][1])
+        predict_result = self.predict_score_to_output(data_instances=data_instances, predict_score=pred_prob,
+                                                      classes=classes, threshold=self.predict_param.threshold)
         return predict_result
 
     def fit(self, data_instances, validate_data=None):

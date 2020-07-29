@@ -21,6 +21,7 @@ from federatedml.feature.instance import Instance
 from federatedml.model_base import ModelBase
 from federatedml.param.union_param import UnionParam
 from federatedml.statistic import data_overview
+from federatedml.util.schema_check import assert_schema_consistent
 
 LOGGER = log_utils.getLogger()
 
@@ -103,6 +104,7 @@ class Union(ModelBase):
         entry = table.first()
         self.is_data_instance = isinstance(entry[1], Instance)
 
+    @assert_schema_consistent
     def fit(self, data):
         LOGGER.debug(f"fit receives data is {data}")
         if not isinstance(data, dict):
@@ -130,6 +132,8 @@ class Union(ModelBase):
                 self.is_empty_feature = data_overview.is_empty_feature(local_table)
                 if self.is_empty_feature:
                     LOGGER.warning("Table {} has empty feature.".format(key))
+                else:
+                    self.check_schema_content(local_table.schema)
 
             if combined_table is None:
                 # first table to combine
@@ -187,4 +191,3 @@ class Union(ModelBase):
 
     def check_consistency(self):
         pass
-

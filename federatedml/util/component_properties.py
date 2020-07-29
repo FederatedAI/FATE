@@ -108,16 +108,42 @@ class ComponentProperties(object):
             if len(data_keys) > 0:
                 self.has_normal_input_data = True
 
-            # if 'train_data' in data_sets[data_key]:
-            #     self.has_train_data = True
-            # if 'eval_data' in data_sets[data_key]:
-            #     self.has_eval_data = True
-            # if 'data' in data_sets[data_key]:
-            #     self.has_normal_input_data = True
         LOGGER.debug("has_train_data: {}, has_eval_data: {}, has_normal_data: {}".format(
             self.has_train_data, self.has_eval_data, self.has_normal_input_data
         ))
+        self._abnormal_dsl_config_detect()
         return self
+
+    def _abnormal_dsl_config_detect(self):
+        class DSLConfigError(ValueError):
+            pass
+
+        if self.has_model:
+            if self.has_train_data:
+                raise DSLConfigError("train_data input and model input should not be "
+                                     "configured simultaneously")
+            if self.has_isometric_model:
+                raise DSLConfigError("model and isometric_model should not be "
+                                     "configured simultaneously")
+            if not self.has_eval_data and not self.has_normal_input_data:
+                raise DSLConfigError("When model has been set, either eval_data or "
+                                     "data should be provided")
+        if self.has_normal_input_data:
+            if self.has_train_data or self.has_eval_data:
+                raise DSLConfigError("When data input has been configured, train_data "
+                                     "and eval_data should not be configured.")
+
+        if self.need_cv or self.need_stepwise:
+            if not self.has_train_data:
+                raise DSLConfigError("Train_data should be configured in cross-validate "
+                                     "task or stepwise task")
+            if self.has_eval_data or self.has_normal_input_data:
+                raise DSLConfigError("In cross-validate task or stepwise task, eval_data "
+                                     "or data should not be configured")
+
+            if self.has_model or self.has_isometric_model:
+                raise DSLConfigError("In cross-validate task or stepwise task, model "
+                                     "or isometric_model should not be configured")
 
     def extract_input_data(self, args):
         data_sets = args.get("data")
@@ -126,37 +152,46 @@ class ComponentProperties(object):
         data = {}
         if data_sets is None:
             return train_data, eval_data, data
+
+        LOGGER.debug(f"Input data_sets: {data_sets}")
+
         for data_key, data_dict in data_sets.items():
 
             for data_type, d_table in data_dict.items():
                 if data_type == "train_data" and d_table is not None:
-                    train_data = d_table
-                    self.input_data_count = train_data.count()
+                    if isinstance(d_table, list):
+                        train_data = d_table[0]
+                    else:
+                        train_data = d_table
+                    if train_data is not None:
+                        self.input_data_count = train_data.count()
                 elif data_type == 'eval_data' and d_table is not None:
-                    eval_data = d_table
-                    self.input_eval_data_count = eval_data.count()
+                    if isinstance(d_table, list):
+                        eval_data = d_table[0]
+                    else:
+                        eval_data = d_table
+                    # eval_data = d_table[0]
+                    if eval_data is not None:
+                        self.input_eval_data_count = eval_data.count()
                 else:
                     if d_table is not None:
-                        data[".".join([data_key, data_type])] = d_table
+                        if isinstance(d_table, list):
+                            data[".".join([data_key, data_type])] = d_table[0]
+                        else:
+                            data[".".join([data_key, data_type])] = d_table
 
-            # if data_sets[data_key].get("train_data", None):
-            #     train_data = data_sets[data_key]["train_data"]
-            #     self.input_data_count = train_data.count()
-            #
-            # if data_sets[data_key].get("eval_data", None):
-            #     eval_data = data_sets[data_key]["eval_data"]
-            #     self.input_eval_data_count = eval_data.count()
-            #
             # if data_sets[data_key].get("data", None):
             #     # data = data_sets[data_key]["data"]
             #     data[data_key] = data_sets[data_key]["data"]
 
         for data_key, data_table in data.items():
-            self.input_data_count += data_table.count()
+            if data_table is not None:
+                self.input_data_count += data_table.count()
 
         return train_data, eval_data, data
 
     def extract_running_rules(self, args, model):
+
         train_data, eval_data, data = self.extract_input_data(args)
 
         running_funcs = RunningFuncs()
@@ -168,17 +203,11 @@ class ComponentProperties(object):
                 break
 
         if not self.need_run:
-            running_funcs.add_func(self.pass_data, [data], save_result=True)
-            # todo_func_list.append(self.pass_data)
-            # todo_func_params.append([data])
-            # use_previews_result.append(False)
+            running_funcs.add_func(model.pass_data, [data], save_result=True)
             return running_funcs
 
         if self.need_cv:
             running_funcs.add_func(model.cross_validation, [train_data])
-            # todo_func_list.append(model.cross_validation)
-            # todo_func_params.append([train_data])
-            # return todo_func_list, todo_func_params
             return running_funcs
 
         if self.need_stepwise:
@@ -191,8 +220,6 @@ class ComponentProperties(object):
             return running_funcs
 
         if self.has_model or self.has_isometric_model:
-            # todo_func_list.append(model.load_model)
-            # todo_func_params.append([args])
             running_funcs.add_func(model.load_model, [args])
 
         if self.has_train_data and self.has_eval_data:
@@ -239,12 +266,6 @@ class ComponentProperties(object):
         #     running_funcs.save_result, running_funcs.use_previews_result
         # ))
         return running_funcs
-
-    @staticmethod
-    def pass_data(data):
-        if isinstance(data, dict) and len(data) >= 1:
-            data = list(data.values())[0]
-        return data
 
     @staticmethod
     def union_data(previews_data, name_list):

@@ -36,16 +36,6 @@
             "dsl": "./test_intersect_job_dsl.json",
             "type": "train"
         },
-        "rsa_intersect_cache": {
-            "conf": "./test_intersect_job_rsa_using_cache.json",
-            "dsl": "./test_intersect_job_dsl.json",
-            "type": "train"
-        },
-        "rsa_intersect_cache_again": {
-            "conf": "./test_intersect_job_rsa_using_cache.json",
-            "dsl": "./test_intersect_job_dsl.json",
-            "type": "train"
-        },
         "rsa_intersect_multi_host": {
             "conf": "./test_intersect_job_rsa_multi_host_conf.json",
             "dsl": "./test_intersect_job_dsl.json",

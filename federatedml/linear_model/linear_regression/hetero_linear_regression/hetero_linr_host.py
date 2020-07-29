@@ -124,8 +124,11 @@ class HeteroLinRHost(HeteroLinRBase):
         data_instances:DTable of Instance, input data
         """
         self.transfer_variable.host_partial_prediction.disable_auto_clean()
+
         LOGGER.info("Start predict ...")
 
+        self._abnormal_detection(data_instances)
+        data_instances = self.align_data_header(data_instances, self.header)
         data_features = self.transform(data_instances)
 
         pred_host = self.compute_wx(data_features, self.model_weights.coef_, self.model_weights.intercept_)

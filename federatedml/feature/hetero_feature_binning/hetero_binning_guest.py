@@ -43,6 +43,9 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         self._setup_bin_inner_param(data_instances, self.model_param)
 
         self.binning_obj.fit_split_points(data_instances)
+        if self.model_param.skip_static:
+            self.transform(data_instances)
+            return self.data_output
 
         label_counts = data_overview.count_labels(data_instances)
         if label_counts > 2:
@@ -112,9 +115,13 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         LOGGER.info("Finish feature binning fit and transform")
         return self.data_output
 
+    # @staticmethod
+    # def encrypt(x, cipher):
+    #     return cipher.encrypt(x), cipher.encrypt(1 - x)
+    
     @staticmethod
     def encrypt(x, cipher):
-        return cipher.encrypt(x), cipher.encrypt(1 - x)
+        return cipher.encrypt(x)
 
     @staticmethod
     def __decrypt_bin_sum(encrypted_bin_sum, cipher):
