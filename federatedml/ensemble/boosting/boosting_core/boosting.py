@@ -93,6 +93,7 @@ class Boosting(ModelBase, ABC):
         self.history_loss = []  # list holds loss history
         self.validation_strategy = None
         self.metrics = None
+        self.is_converged = False
 
         # federation
         self.transfer_variable = None
@@ -302,6 +303,10 @@ class Boosting(ModelBase, ABC):
     def predict(self, data_inst):
         raise NotImplementedError()
 
+    @abc.abstractmethod
+    def generate_summary(self) -> dict:
+        raise NotImplementedError()
+
     """
     Training Procedure
     """
@@ -353,12 +358,14 @@ class Boosting(ModelBase, ABC):
     def check_stop_condition(self, loss):
 
         should_stop_a, should_stop_b = False, False
+
         if self.validation_strategy is not None:
             if self.validation_strategy.need_stop():
                 should_stop_a = True
 
         if self.n_iter_no_change and self.check_convergence(loss):
             should_stop_b = True
+            self.is_converged = True
 
         if should_stop_a or should_stop_b:
             LOGGER.debug('stop triggered, stop triggered by {}'.

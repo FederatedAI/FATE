@@ -567,6 +567,11 @@ class Evaluation(ModelBase):
                         LOGGER.debug('pr quantile called')
                         self.__save_pr_table(metric, metric_res, metric_name, metric_namespace)
 
+        if len(self.validate_metric) != 0:
+            self.set_summary(self.validate_metric)
+        else:
+            self.set_summary(self.train_metric)
+
         if return_single_val_metrics:
             if len(self.validate_metric) != 0:
                 LOGGER.debug("return validate metric")

@@ -119,6 +119,16 @@ class HeteroSecureBoostGuest(HeteroBoostingGuest):
         tree.set_host_party_idlist(self.component_properties.host_party_idlist)
         return tree
 
+    def generate_summary(self) -> dict:
+
+        summary = {'loss_history': self.history_loss, 'best_iteration': self.validation_strategy.best_iteration,
+                   'feature_importance': self.make_readable_feature_importance(self.feature_name_fid_mapping,
+                                                                               self.feature_importances_),
+                   'validation_metrics': self.validation_strategy.summary(),
+                   'is_converged': self.is_converged}
+
+        return summary
+
     @staticmethod
     def generate_leaf_pos_dict(x, tree_num):
         """
@@ -146,6 +156,24 @@ class HeteroSecureBoostGuest(HeteroBoostingGuest):
         else:
             cur_node_idx = rs[0]
             return cur_node_idx, reach_leaf
+
+    @staticmethod
+    def make_readable_feature_importance(fid_mapping, feature_importances):
+        """
+        replace feature id by real feature name
+        """
+        new_fi = {}
+        for id_ in feature_importances:
+
+            if type(id_) == tuple:
+                if 'guest' in id_[0]:
+                    new_fi[fid_mapping[id_[1]]] = feature_importances[id_]
+                else:
+                    new_fi[id_] = feature_importances[id_]
+            else:
+                new_fi[fid_mapping[id_]] = feature_importances[id_]
+
+        return new_fi
 
     @staticmethod
     def traverse_trees(node_pos, sample, trees: List[HeteroDecisionTreeGuest]):

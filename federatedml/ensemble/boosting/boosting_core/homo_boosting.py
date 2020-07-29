@@ -28,7 +28,6 @@ from federatedml.param.boosting_param import HomoSecureBoostParam
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 
-import time
 
 LOGGER = log_utils.getLogger()
 
@@ -142,6 +141,8 @@ class HomoBoostingClient(Boosting, ABC):
                     LOGGER.debug('stop triggered')
                     break
 
+        self.set_summary(self.generate_summary())
+
     def predict(self, data_inst):
 
         LOGGER.debug('start predict')
@@ -233,6 +234,8 @@ class HomoBoostingArbiter(Boosting, ABC):
                            MetricMeta(name="train",
                                       metric_type="LOSS",
                                       extra_metas={"Best": min(self.history_loss)}))
+
+        self.set_summary(self.generate_summary())
 
     def predict(self, data_inst=None):
 

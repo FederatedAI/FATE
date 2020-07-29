@@ -76,6 +76,14 @@ class HeteroSecureBoostHost(HeteroBoostingHost):
         tree.set_runtime_idx(self.component_properties.local_partyid)
         return tree
 
+    def generate_summary(self) -> dict:
+
+        summary = {'best_iteration': self.validation_strategy.best_iteration, 'is_converged': self.is_converged}
+
+        LOGGER.debug('summary is {}'.format(summary))
+
+        return summary
+
     @staticmethod
     def traverse_a_tree(tree: HeteroDecisionTreeHost, sample, cur_node_idx):
 

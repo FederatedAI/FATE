@@ -9,11 +9,13 @@ from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import Objectiv
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
-
+from federatedml.ensemble import HeteroSecureBoostGuest
 import numpy as np
 
 from arch.api.utils import log_utils
 LOGGER = log_utils.getLogger()
+
+make_readable_feature_importance = HeteroSecureBoostGuest.make_readable_feature_importance
 
 
 class HomoSecureBoostClient(HomoBoostingClient):
@@ -90,6 +92,14 @@ class HomoSecureBoostClient(HomoBoostingClient):
         self.update_feature_importance(new_tree.get_feature_importance())
 
         return new_tree
+
+    def generate_summary(self) -> dict:
+
+        summary = {'feature_importance': make_readable_feature_importance(self.feature_name_fid_mapping,
+                                                                          self.feature_importance),
+                   'validation_metrics': self.validation_strategy.summary()}
+
+        return summary
 
     def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
         tree_inst = HomoDecisionTreeClient(tree_param=self.tree_param, mode='predict')
