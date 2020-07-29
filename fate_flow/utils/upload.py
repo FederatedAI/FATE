@@ -108,7 +108,7 @@ class Upload(object):
                                            job_info)
                     self.table.put_all(data)
                     if n == 0:
-                        self.table.save_schema(party_of_data=data)
+                        self.table.save_schema(party_of_data=data, count=self.table.count())
                 else:
                     count_actual = self.table.count()
                     self.tracker.save_data_view(role=self.parameters["local"]['role'],

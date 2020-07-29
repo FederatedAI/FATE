@@ -102,9 +102,6 @@ class Table(object):
     def close(self):
         pass
 
-    def get_cached_data(self):
-        return self.get_schema(_type='data')
-
     def destroy(self):
         # destroy schema
         self.destroy_schema()
@@ -114,10 +111,13 @@ class Table(object):
     meta utils
     """
 
-    def get_schema(self, _type='schema'):
+    def get_schema(self, _type='schema', name=None, namespace=None):
+        if not name and not namespace:
+            name = self._name
+            namespace = self._namespace
         with DB.connection_context():
-            schema = MachineLearningDataSchema.select().where(MachineLearningDataSchema.f_table_name == self._name,
-                                                              MachineLearningDataSchema.f_namespace == self._namespace)
+            schema = MachineLearningDataSchema.select().where(MachineLearningDataSchema.f_table_name == name,
+                                                              MachineLearningDataSchema.f_namespace == namespace)
             schema_data = {}
             if schema:
                 schema = schema[0]
@@ -155,7 +155,7 @@ class Table(object):
                 if party_of_data:
                     _f_part_of_data = deserialize_b64(schema.f_part_of_data)
                     if len(_f_part_of_data) < 100:
-                        _f_part_of_data.append(party_of_data[:(100 - len(_f_part_of_data))])
+                        _f_part_of_data.extend(party_of_data[:(100 - len(_f_part_of_data))])
                         schema.f_part_of_data = serialize_b64(party_of_data[:100], to_str=True)
                 # save count
                 if count:
@@ -172,6 +172,44 @@ class Table(object):
                                                          MachineLearningDataSchema.f_namespace == self._namespace).execute()
         except Exception as e:
             LOGGER.error("delete_table_meta {}, {}, exception:{}.".format(self._namespace, self._name, e))
+
+
+class SimpleTable(Table):
+    def __init__(self, name, namespace, **kwargs):
+        self._name = name,
+        self._namespace = namespace
+
+    def get_partitions(self):
+        pass
+
+    def get_name(self):
+        pass
+
+    def get_namespace(self):
+        pass
+
+    def get_storage_engine(self):
+        pass
+
+    def get_address(self):
+        pass
+
+    def put_all(self, kv_list: Iterable, **kwargs):
+        pass
+
+    def count(self):
+        return self.get_schema(_type='count')
+
+    def save_as(self, name, namespace, partition=None, schema_data=None, **kwargs):
+        pass
+
+    def close(self):
+        pass
+
+    def collect(self, **kwargs):
+        data = self.get_schema(_type='data')
+        for k_v in data:
+            yield k_v
 
 
 class HDFSAddress(AddressABC):

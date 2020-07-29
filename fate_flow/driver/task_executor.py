@@ -199,8 +199,6 @@ class TaskExecutor(object):
                         else:
                             data_table = Tracking(job_id=job_id, role=role, party_id=party_id,
                                                   component_name=search_component_name).get_output_data_table(
-                                data_name=search_data_name,
-                                partition=job_parameters.get("partition", 1),
                                 session_id=session_id
                                 )
                         output_storage_engine.append(data_table.get_storage_engine())

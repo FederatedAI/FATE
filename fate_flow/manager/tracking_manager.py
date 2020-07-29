@@ -18,6 +18,7 @@ from typing import List
 
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from arch.api.utils.log_utils import schedule_logger
+from fate_arch.data_table.base import SimpleTable
 from fate_flow.db.db_models import DB, Job, Task, TrackingMetric, DataView
 from fate_flow.entity.constant_config import JobStatus, TaskStatus, Backend
 from fate_flow.entity.metric import Metric, MetricMeta
@@ -207,14 +208,23 @@ class Tracking(object):
             table = get_table(job_id=job_utils.generate_session_id(self.task_id, self.role, self.party_id),
                               name=persistent_table_name,
                               namespace=persistent_table_namespace)
-            table.save_schema(schema)
+            party_of_data = []
+            count = 100
+            for k, v in data_table.collect():
+                party_of_data.append((k, v))
+                count -= 1
+                if count == 0:
+                    break
+            table.save_schema(schema=schema, party_of_data=party_of_data, count=data_table.count())
             self.save_data_view(self.role, self.party_id,
                                 data_info={'f_table_name': persistent_table_name,
                                            'f_table_namespace': persistent_table_namespace,
                                            'f_partition': partitions},
                                 mark=True)
+        else:
+            schedule_logger(self.job_id).info('task id {} output data table is none'.format(self.task_id))
 
-    def get_output_data_table(self, data_name: str = 'component', partition=1, init_session=False, session_id=''):
+    def get_output_data_table(self, init_session=False, session_id='', need_all=True):
         """
         Get component output data table, will run in the task executor process
         :param data_name:
@@ -223,6 +233,9 @@ class Tracking(object):
         data_view = self.query_data_view(self.role, self.party_id, mark=True)
 
         if data_view:
+            if not need_all:
+                data_table = SimpleTable(name=data_view.f_table_name, namespace=data_view.f_table_namespace)
+                return data_table
             if not init_session and not session_id:
                 session_id = job_utils.generate_session_id(self.task_id, self.role, self.party_id)
             data_table = get_table(job_id=session_id,
@@ -230,6 +243,8 @@ class Tracking(object):
                                    namespace=data_view.f_table_namespace,
                                    partition=data_view.f_partition,
                                    init_session=init_session)
+            if not data_table:
+                return None
             data_table_meta = data_table.get_schema()
             if data_table_meta.get('schema', None):
                 data_table.schema = data_table_meta['schema']

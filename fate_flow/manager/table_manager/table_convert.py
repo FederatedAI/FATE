@@ -62,14 +62,16 @@ def convert(table, name='', namespace='', job_id=uuid.uuid1().hex, force=False, 
 def copy_table(src_table, dest_table):
     count = 0
     data = []
-    for line in src_table.collect():
-        data.append(line)
+    party_of_data = []
+    for k, v in src_table.collect():
+        data.append((k, v))
         count += 1
+        if count < 100:
+            party_of_data.append((k, v))
         if len(data) == MAX_NUM:
             dest_table.put_all(data)
-            count = 0
             data = []
-    dest_table.save_schema(src_table.get_schema(), count=src_table.count())
+    dest_table.save_schema(src_table.get_schema(), count=src_table.count(), party_of_data=party_of_data)
 
 
 

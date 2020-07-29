@@ -94,6 +94,12 @@ class MysqlTable(Table):
         data = self.execute(sql)
         return data
 
+    def save_as(self, name, namespace, partition=None, schema_data=None, **kwargs):
+        pass
+
+    def put_all(self, kv_list, **kwargs):
+        pass
+
     def destroy(self):
         super().destroy()
         sql = 'drop table {}'.format(self._name)
