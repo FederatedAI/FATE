@@ -37,7 +37,7 @@ def _get_transfer_conf():
         raise NameError(f"{path} not found, check fate_arch/conf/transfer_conf.yaml")
 
     with open(path) as f:
-        conf = yaml.load(f, yaml.FullLoader)
+        conf = yaml.load(f)
 
     transfer_conf_files = []
     for base_dir in conf.get('paths', []):
