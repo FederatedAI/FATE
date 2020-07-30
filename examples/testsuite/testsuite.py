@@ -19,8 +19,25 @@ from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
 LOGGER = loguru.logger
 
+_HEAD = """\
+
+
+    ████████╗███████╗███████╗████████╗███████╗██╗   ██╗██╗████████╗███████╗
+    ╚══██╔══╝██╔════╝██╔════╝╚══██╔══╝██╔════╝██║   ██║██║╚══██╔══╝██╔════╝
+       ██║   █████╗  ███████╗   ██║   ███████╗██║   ██║██║   ██║   █████╗  
+       ██║   ██╔══╝  ╚════██║   ██║   ╚════██║██║   ██║██║   ██║   ██╔══╝  
+       ██║   ███████╗███████║   ██║   ███████║╚██████╔╝██║   ██║   ███████╗
+       ╚═╝   ╚══════╝╚══════╝   ╚═╝   ╚══════╝ ╚═════╝ ╚═╝   ╚═╝   ╚══════╝
+
+"""
+
+
+def _show_head():
+    print(_HEAD)
+
 
 def main():
+    _show_head()
     parser = argparse.ArgumentParser("TESTSUITE RUNNER")
     parser.add_argument("path", help="path to search xxx_testsuite.json")
     parser.add_argument("-drop", default=1, type=int, choices=[0, 1],
@@ -35,6 +52,7 @@ def main():
     parser.add_argument("-exclude", nargs="+", type=str)
     parser.add_argument("-skip_data", default=False, type=bool)
     args = parser.parse_args()
+
     _add_logger(args.name)
     path = Path(args.path)
     config_overwrite = {}
@@ -67,12 +85,19 @@ def main():
                 exclude_paths.update(_find_testsuite_files(Path(p).resolve()))
             paths = [p for p in paths if p not in exclude_paths]
         testsuites = {path.__str__(): _TestSuite.load(path, hook=hook) for path in paths}
-
+        _list_testsuites(testsuites)
         summaries = clients.run_testsuites(testsuites,
                                            summaries_base=Path(args.name).resolve(),
                                            skip_data=args.skip_data)
-        LOGGER.info(f"summaries:\n{summaries.pretty_summaries()}")
-        LOGGER.info(f"unsuccessful summaries:\n{summaries.pretty_summaries(include_success=False)}")
+        with Path(args.name).joinpath("summaries").open("w") as f:
+            f.write(summaries.pretty_summaries())
+            f.write("\n")
+            f.write("unsuccessful:\n")
+            f.write(summaries.pretty_summaries(include_success=False))
+        print(f"summaries:\n{summaries.pretty_summaries()}")
+        print()
+        print(f"unsuccessful summaries:\n{summaries.pretty_summaries(include_success=False)}")
+        print(f"check {Path(args.name).resolve()} for more detailed information")
 
 
 def _find_testsuite_files(path):
@@ -98,15 +123,18 @@ def _replace_hook(mapping: dict):
 
 
 def _add_logger(name):
-    path = Path(name)
-    if path.exists() and path.is_file():
-        raise Exception(f"{name} exist, and is a file")
+    path = Path(name).joinpath("logs")
+    if path.exists() and not path.is_dir():
+        raise Exception(f"{name} exist, but is not a dir")
     if not path.exists():
-        path.mkdir()
+        path.mkdir(parents=True)
     loguru.logger.remove()
-    loguru.logger.add(sys.stderr, level="INFO", colorize=True)
-    loguru.logger.add(f"{path.joinpath('info.log')}", level="INFO")
-    loguru.logger.add(f"{path.joinpath('debug.log')}", level="DEBUG")
+    simple_log_format = '<green>[{time:HH:mm:ss}]</green><level>{message}</level>'
+    log_format = '<green>{time:YYYY-MM-DD HH:mm:ss}</green> | ' \
+                 '<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
+    loguru.logger.add(sys.stderr, level="INFO", colorize=True, format=simple_log_format)
+    loguru.logger.add(f"{path.joinpath('info.log')}", level="INFO", format=log_format)
+    loguru.logger.add(f"{path.joinpath('debug.log')}", level="DEBUG", format=log_format)
 
 
 class Clients(object):
@@ -136,41 +164,41 @@ class Clients(object):
 
     def run_testsuite(self, testsuite: '_TestSuite', skip_data=False) -> '_Summary':
         num_data = len(testsuite.data)
-        LOGGER.info(f"num of data to upload: {num_data}")
-
         # upload data, raise exception if any exception occurs or data upload job failed.
         if not skip_data:
             for i, data in enumerate(testsuite.data):
-                LOGGER.info(f"uploading ({i + 1}/{num_data})")
-                LOGGER.debug(f"uploading data: {data}")
+                print()
+                LOGGER.info(f"upload data(({i + 1}/{num_data})): role: {data.role_str}, file: {data.file}")
                 client = self._get_client(data.role_str)
 
                 # submit job
                 job_id = client.upload_data(data.as_dict(work_mode=self._work_mode), drop=self._drop)
-                LOGGER.opt(colors=True).info(f"submitted, job id: <red>{job_id}</red>")
+                LOGGER.opt(colors=True).info(f"job id: <green>{job_id}</green>")
 
                 # check status
                 try:
                     data_upload_checker = client.query_job(job_id=job_id, role="local")
                     while True:
-                        progress = next(data_upload_checker)
-                        LOGGER.info(f"uploading, progress: {progress}/100")
+                        next(data_upload_checker)
                 except StopIteration as e:
                     status = e.value
-                    LOGGER.opt(colors=True).info(f"uploaded, status: <green>{status}</green>")
+                    if status == "success":
+                        LOGGER.opt(colors=True).info(f"done: <green>{status}</green>")
+                    else:
+                        LOGGER.opt(colors=True).info(f"done: <red>{status}</red>")
                 if status != "success":
-                    raise Exception(f"upload {i + 1}th data failed")
+                    raise Exception(f"failed to upload {i + 1}th data: {status}")
 
         # submit jobs, jobs's exception will logged then ignored
         num_task = len(testsuite.task)
-        LOGGER.info(f"num of task to submit: {num_task}")
         deps_info = {}
         summary = _Summary(testsuite.path)
         for i, task in enumerate(testsuite.task):
             task_summary = {"task": task}
             try:
                 start = time.time()
-                LOGGER.info(f"submitting {task.name} ({i + 1}/{num_task})")
+                print()
+                LOGGER.info(f"submit job({i + 1}/{num_task}): {task.name}")
                 LOGGER.debug(f"submitting task:\n{task}")
                 client = self._get_client("guest_0")
 
@@ -183,22 +211,24 @@ class Clients(object):
                 # submit job
                 job_id, model_info = client.submit_job(task.conf, task.dsl)
                 task_summary["job_id"] = job_id
-                LOGGER.opt(colors=True).info(f"submitted, job_id: <red>{job_id}</red>")
+                LOGGER.opt(colors=True).info(f"job_id: <green>{job_id}</green>")
 
                 # check status, block until job is completed
                 try:
                     job_submit_checker = client.query_job(job_id=job_id, role="guest")
                     while True:
                         progress = next(job_submit_checker)
-                        LOGGER.info(f"running, progress: {progress}/100")
+                        LOGGER.info(_progress_bar(progress, 50))
                 except StopIteration as e:
                     status = e.value
 
                 task_summary["status"] = status
                 if status == "success":
                     deps_info[task.name] = model_info
-                LOGGER.opt(colors=True).info(f"job completed, status: <green>{status}</green>,"
-                                             f"takes {time.time() - start}s")
+                    LOGGER.opt(colors=True).info(f"done: <green>{status}</green>")
+                else:
+                    LOGGER.opt(colors=True).info(f"done: <red>{status}</red>")
+                LOGGER.info(f"takes {time.time() - start:.2f}s")
             except Exception as e:
                 LOGGER.exception(f"task {task.name} error, {e}")
                 task_summary["status"] = "exception"
@@ -210,14 +240,19 @@ class Clients(object):
     def run_testsuites(self, testsuites: typing.MutableMapping[str, '_TestSuite'],
                        summaries_base: typing.Optional[Path] = None,
                        skip_data=False):
-
-        LOGGER.info("testsuites:\n" + "\n".join(testsuites) + "\n")
+        num_testsuites = len(testsuites)
         summaries = _Summaries()
+        testsuite_index = 1
         for name, testsuite in testsuites.items():
-            LOGGER.info(f"running testsuite: {name}")
+            print()
+            LOGGER.info(f"testsuite({testsuite_index}/{num_testsuites}):\n"
+                        f"num_data={len(testsuite.data)}\n"
+                        f"num_jobs={len(testsuite.task)}\n"
+                        f"path={testsuite.path}")
             try:
                 summary = self.run_testsuite(testsuite, skip_data)
-                LOGGER.info(f"\n{summary.pretty_summary()}")
+                print()
+                print(summary.pretty_summary())
 
                 if summaries_base is not None:
                     summary.write(base=summaries_base)
@@ -226,8 +261,8 @@ class Clients(object):
             except Exception as e:
                 LOGGER.exception(f"testsuite {name} raise exception: {e}")
                 summaries.add_summary(_Summary(testsuite.path))
-
-            LOGGER.info(f"testsuite {name} completed\n")
+            LOGGER.info(f"testsuite done({testsuite_index}/{num_testsuites}): {name}\n")
+            testsuite_index += 1
         return summaries
 
     def __enter__(self):
@@ -310,6 +345,13 @@ class Clients(object):
 _exception_id = 0
 
 
+def _progress_bar(progress, max_size=50):
+    finished = int(progress / 100.0 * max_size)
+    unfinished = max_size - finished
+    bar = "█" * finished + "░" * unfinished + f" {progress}%"
+    return bar
+
+
 def _get_next_exception_id():
     global _exception_id
     _exception_id += 1
@@ -320,6 +362,18 @@ def _parse_address(address):
     host, port = address.split(":")
     port = int(port)
     return host, port
+
+
+def _list_testsuites(testsuites: typing.MutableMapping[str, '_TestSuite']):
+    table = prettytable.PrettyTable(field_names=["testsuite", "num_data", "num_jobs"])
+    table.hrules = prettytable.ALL
+    table.align["testsuite"] = "l"
+    table.max_width["testsuite"] = 40
+    for testsuite in testsuites.values():
+        table.add_row([testsuite.path, len(testsuite.data), len(testsuite.task)])
+    pretty_str = table.get_string()
+    print(pretty_str)
+    LOGGER.debug(f"testsuite_info:\n{pretty_str}")
 
 
 class _Summary(object):
@@ -341,10 +395,10 @@ class _Summary(object):
             task_log_path = base.joinpath(status).joinpath(job_id)
             task_log_path.mkdir(parents=True, exist_ok=True)
             with task_log_path.joinpath("conf").open("w") as f:
-                json.dump(task.conf, f)
+                json.dump(task.conf, f, indent=2)
             if task.dsl is not None:
                 with task_log_path.joinpath("dsl").open("w") as f:
-                    json.dump(task.dsl, f)
+                    json.dump(task.dsl, f, indent=2)
         with base.joinpath("summary").open("a") as f:
             f.write(f"testsuite: {self.path}\n")
             f.write(self.pretty_summary())
