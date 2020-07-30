@@ -56,6 +56,9 @@ class HeteroNNGuest(HeteroNNBase):
 
         self.input_shape = None
         self.validation_strategy = None
+        self._summary_buf = {"history_loss": [],
+                             "is_converged": False,
+                             "best_iteration": -1}
 
     def _init_model(self, hetero_nn_param):
         super(HeteroNNGuest, self)._init_model(hetero_nn_param)
@@ -116,6 +119,7 @@ class HeteroNNGuest(HeteroNNBase):
                     break
 
             is_converge = self.converge_func.is_converge(epoch_loss)
+            self._summary_buf["is_converged"] = is_converge
             self.transfer_variable.is_converge.remote(is_converge,
                                                       role=consts.HOST,
                                                       idx=0,
@@ -133,8 +137,11 @@ class HeteroNNGuest(HeteroNNBase):
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
             self.load_model(self.validation_strategy.cur_best_model)
 
+        self.set_summary(self._get_model_summary())
+
     @assert_io_num_rows_equal
     def predict(self, data_inst):
+        data_inst = self.align_data_header(data_inst, self._header)
         keys, test_x, test_y = self._load_data(data_inst)
         self.set_partition(data_inst)
 
@@ -142,26 +149,14 @@ class HeteroNNGuest(HeteroNNBase):
 
         predict_tb = session.parallelize(zip(keys, preds), include_key=True, partition=data_inst._partitions)
         if self.task_type == "regression":
-            result = data_inst.join(predict_tb,
-                                    lambda inst, predict: [inst.label, float(predict[0]), float(predict[0]),
-                                                           {"label": float(predict[0])}])
+            result = self.predict_score_to_output(data_inst, predict_tb)
         else:
             if self.num_label > 2:
-                result = data_inst.join(predict_tb,
-                                        lambda inst, predict: [inst.label,
-                                                               int(np.argmax(predict)),
-                                                               float(np.max(predict)),
-                                                               dict([(str(idx), float(predict[idx])) for idx in
-                                                                     range(predict.shape[0])])])
+                result = self.predict_score_to_output(data_inst, predict_tb, classes=list(range(self.num_label)))
 
             else:
                 threshold = self.predict_param.threshold
-                result = data_inst.join(predict_tb,
-                                        lambda inst, predict: [inst.label,
-                                                               1 if predict[0] > threshold else 0,
-                                                               float(predict[0]),
-                                                               {"0": 1 - float(predict[0]),
-                                                                "1": float(predict[0])}])
+                result = self.predict_score_to_output(data_inst, predict_tb, classes=[0, 1], threshold=threshold)
 
         return result
 
@@ -180,6 +175,12 @@ class HeteroNNGuest(HeteroNNBase):
         self._build_model()
         self._restore_model_meta(meta)
         self._restore_model_param(param)
+
+    def _get_model_summary(self):
+        self._summary_buf["best_iteration"] = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
+        self._summary_buf["history_loss"] = self.history_loss
+
+        return self._summary_buf
 
     def _get_model_meta(self):
         model_meta = HeteroNNMeta()
@@ -201,6 +202,7 @@ class HeteroNNGuest(HeteroNNBase):
         model_param.hetero_nn_model_param.CopyFrom(self.model.get_hetero_nn_model_param())
         model_param.num_label = self.num_label
         model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
+        model_param.header.extend(self._header)
 
         for loss in self.history_loss:
             model_param.history_loss.append(loss)
@@ -218,6 +220,7 @@ class HeteroNNGuest(HeteroNNBase):
             return EvaluateParam(eval_type="regression", metrics=self.metrics)
 
     def prepare_batch_data(self, batch_generator, data_inst):
+        self._header = data_inst.schema["header"]
         batch_generator.initialize_batch_generator(data_inst, self.batch_size)
         batch_data_generator = batch_generator.generate_batch_data()
 
