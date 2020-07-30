@@ -21,19 +21,40 @@ LOGGER = loguru.logger
 
 _HEAD = """\
 
+                    ███████╗ █████╗ ████████╗███████╗                      
+                    ██╔════╝██╔══██╗╚══██╔══╝██╔════╝                      
+                    █████╗  ███████║   ██║   █████╗                        
+                    ██╔══╝  ██╔══██║   ██║   ██╔══╝                        
+                    ██║     ██║  ██║   ██║   ███████╗                      
+                    ╚═╝     ╚═╝  ╚═╝   ╚═╝   ╚══════╝                      
+                                                                           
+████████╗███████╗███████╗████████╗    ███████╗██╗   ██╗██╗████████╗███████╗
+╚══██╔══╝██╔════╝██╔════╝╚══██╔══╝    ██╔════╝██║   ██║██║╚══██╔══╝██╔════╝
+   ██║   █████╗  ███████╗   ██║       ███████╗██║   ██║██║   ██║   █████╗  
+   ██║   ██╔══╝  ╚════██║   ██║       ╚════██║██║   ██║██║   ██║   ██╔══╝  
+   ██║   ███████╗███████║   ██║       ███████║╚██████╔╝██║   ██║   ███████╗
+   ╚═╝   ╚══════╝╚══════╝   ╚═╝       ╚══════╝ ╚═════╝ ╚═╝   ╚═╝   ╚══════╝
+                                                                    
+"""
 
-    ████████╗███████╗███████╗████████╗███████╗██╗   ██╗██╗████████╗███████╗
-    ╚══██╔══╝██╔════╝██╔════╝╚══██╔══╝██╔════╝██║   ██║██║╚══██╔══╝██╔════╝
-       ██║   █████╗  ███████╗   ██║   ███████╗██║   ██║██║   ██║   █████╗  
-       ██║   ██╔══╝  ╚════██║   ██║   ╚════██║██║   ██║██║   ██║   ██╔══╝  
-       ██║   ███████╗███████║   ██║   ███████║╚██████╔╝██║   ██║   ███████╗
-       ╚═╝   ╚══════╝╚══════╝   ╚═╝   ╚══════╝ ╚═════╝ ╚═╝   ╚═╝   ╚══════╝
+_TAIL = """\
 
+    ██╗  ██╗ █████╗ ██╗   ██╗███████╗    ███████╗██╗   ██╗███╗   ██╗
+    ██║  ██║██╔══██╗██║   ██║██╔════╝    ██╔════╝██║   ██║████╗  ██║
+    ███████║███████║██║   ██║█████╗      █████╗  ██║   ██║██╔██╗ ██║
+    ██╔══██║██╔══██║╚██╗ ██╔╝██╔══╝      ██╔══╝  ██║   ██║██║╚██╗██║
+    ██║  ██║██║  ██║ ╚████╔╝ ███████╗    ██║     ╚██████╔╝██║ ╚████║
+    ╚═╝  ╚═╝╚═╝  ╚═╝  ╚═══╝  ╚══════╝    ╚═╝      ╚═════╝ ╚═╝  ╚═══╝
+                                                   
 """
 
 
 def _show_head():
     print(_HEAD)
+
+
+def _show_tail():
+    print(_TAIL)
 
 
 def main():
@@ -89,15 +110,17 @@ def main():
         summaries = clients.run_testsuites(testsuites,
                                            summaries_base=Path(args.name).resolve(),
                                            skip_data=args.skip_data)
-        with Path(args.name).joinpath("summaries").open("w") as f:
-            f.write(summaries.pretty_summaries())
-            f.write("\n")
-            f.write("unsuccessful:\n")
-            f.write(summaries.pretty_summaries(include_success=False))
-        print(f"summaries:\n{summaries.pretty_summaries()}")
-        print()
-        print(f"unsuccessful summaries:\n{summaries.pretty_summaries(include_success=False)}")
-        print(f"check {Path(args.name).resolve()} for more detailed information")
+
+    with Path(args.name).joinpath("summaries").open("w") as f:
+        f.write(summaries.pretty_summaries())
+        f.write("\n")
+        f.write("unsuccessful:\n")
+        f.write(summaries.pretty_summaries(include_success=False))
+    print(f"summaries:\n{summaries.pretty_summaries()}")
+    print()
+    print(f"unsuccessful summaries:\n{summaries.pretty_summaries(include_success=False)}")
+    _show_tail()
+    print(f"LOG: {args.name}")
 
 
 def _find_testsuite_files(path):
