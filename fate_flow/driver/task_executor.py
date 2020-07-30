@@ -145,7 +145,8 @@ class TaskExecutor(object):
             if not isinstance(output_data, list):
                 output_data = [output_data]
             for index in range(0, len(output_data)):
-                tracker.save_output_data_table(output_data[index], task_output_dsl.get('data')[index] if task_output_dsl.get('data') else '{}'.format(index))
+                tracker.save_output_data_table(output_data[index], task_output_dsl.get('data')[index] if task_output_dsl.get('data') else '{}'.format(index),
+                                               output_storage_engine[index] if output_storage_engine else None)
             output_model = run_object.export_model()
             # There is only one model output at the current dsl version.
             tracker.save_output_model(output_model, task_output_dsl['model'][0] if task_output_dsl.get('model') else 'default')
@@ -204,11 +205,12 @@ class TaskExecutor(object):
                             else:
                                 data_table = None
                         else:
-                            schedule_logger()
                             data_table = Tracking(job_id=job_id, role=role, party_id=party_id,
                                                   component_name=search_component_name).get_output_data_table(
-                                data_name=search_data_name, session_id=session_id)[0]
-                        output_storage_engine.append(data_table.get_storage_engine())
+                                data_name=search_data_name, session_id=session_id)
+                            if data_table:
+                                data_table = data_table[0]
+                        output_storage_engine.append(data_table.get_storage_engine() if data_table else None)
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
                             search_component_name, {})
                         # todo: If the same component has more than one identical input, save as is repeated

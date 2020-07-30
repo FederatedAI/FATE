@@ -215,7 +215,7 @@ class Tracking(object):
                 count -= 1
                 if count == 0:
                     break
-            table.save_schema(schema=schema, party_of_data=party_of_data, count=data_table.count())
+            table.save_schema(schema, party_of_data=party_of_data, count=data_table.count())
             self.save_data_view(self.role, self.party_id,
                                 data_info={'f_table_name': persistent_table_name,
                                            'f_table_namespace': persistent_table_namespace,
@@ -238,7 +238,7 @@ class Tracking(object):
         if data_views:
             for data_view in data_views:
                 if not need_all:
-                    data_table = SimpleTable(name=data_view.f_table_name, namespace=data_view.f_table_namespace)
+                    data_table = SimpleTable(name=data_view.f_table_name, namespace=data_view.f_table_namespace, data_name=data_view.f_data_name)
                     data_tables.append(data_table)
                 else:
                     data_table = get_table(job_id=session_id,

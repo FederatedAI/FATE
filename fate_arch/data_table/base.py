@@ -175,15 +175,19 @@ class Table(object):
 
 
 class SimpleTable(Table):
-    def __init__(self, name, namespace, **kwargs):
+    def __init__(self, name, namespace, data_name, **kwargs):
         self._name = name,
         self._namespace = namespace
+        self.data_name = data_name
 
     def get_partitions(self):
         pass
 
     def get_name(self):
         pass
+
+    def get_data_name(self):
+        return self.data_name
 
     def get_namespace(self):
         pass

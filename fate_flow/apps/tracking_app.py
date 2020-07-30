@@ -203,6 +203,7 @@ def component_output_data():
     output_data_list = []
     headers = []
     totals = []
+    data_names = []
     for output_data_table in output_data_tables:
         output_data = []
         num = 100
@@ -217,6 +218,7 @@ def component_output_data():
                 num -= 1
             total = output_data_table.count()
             output_data_list.append(output_data)
+            data_names.append(output_data_table.get_data_name())
             totals.append(total)
         if output_data:
             header = get_component_output_data_meta(output_data_table=output_data_table, have_data_label=have_data_label, is_str=is_str)
@@ -230,7 +232,7 @@ def component_output_data():
             headers.append(None)
     if len(output_data_list) == 1 and not output_data_list[0]:
         return get_json_result(retcode=0, retmsg='no data', data=[])
-    return get_json_result(retcode=0, retmsg='success', data=output_data_list, meta={'header': headers, 'total': totals})
+    return get_json_result(retcode=0, retmsg='success', data=output_data_list, meta={'header': headers, 'total': totals, 'names':data_names})
 
 
 @manager.route('/component/output/data/download', methods=['get'])
