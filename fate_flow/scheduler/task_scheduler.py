@@ -33,7 +33,6 @@ class TaskScheduler(object):
         tasks = job_utils.query_task(job_id=job.f_job_id, task_set_id=task_set.f_task_set_id, role=task_set.f_role, party_id=task_set.f_party_id)
         for task in tasks:
             new_task_status = cls.calculate_multi_party_task_status(task=task)
-            schedule_logger(job_id=task.f_job_id).info("Job {} task {} {} is {}".format(task.f_job_id, task.f_task_id, task.f_task_version, new_task_status))
             if new_task_status != task.f_status:
                 task.f_status = new_task_status
                 FederatedScheduler.sync_task(job=job, task=task, update_fields=["status"])
@@ -41,7 +40,7 @@ class TaskScheduler(object):
 
             if task.f_status == TaskStatus.WAITING:
                 # TODO: run task until the concurrency is reached
-                task.f_status = TaskStatus.RUNNING
+                task.f_status = TaskStatus.START
                 schedule_logger(job_id=task.f_job_id).info("Try to start job {} task {} {} on {} {}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_role, task.f_party_id))
                 update_status = JobSaver.update_task(task_info=task.to_dict_info(only_primary_with=["job_id", "status"]))
                 if not update_status:
@@ -50,6 +49,8 @@ class TaskScheduler(object):
                     continue
                 schedule_logger(job_id=task.f_job_id).info("Start job {} task {} {} on {} {}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_role, task.f_party_id))
                 cls.start_task(job=job, task=task)
+            elif task.f_status == TaskStatus.START:
+                continue
             elif task.f_status == TaskStatus.RUNNING:
                 # TODO: check the concurrency is reached
                 continue
@@ -60,8 +61,10 @@ class TaskScheduler(object):
                 FederatedScheduler.stop_task(job=job, task=task, stop_status=task.f_status)
             else:
                 raise Exception("Job {} task set {} with a {} status cannot be scheduled".format(task_set.f_job_id, task_set.f_task_set_id, task.f_status))
-        new_task_set_status = cls.calculate_task_set_status(task_status=[task.f_status for task in tasks])
-        schedule_logger(job_id=task_set.f_job_id).info("Job {} task set {} status is {}".format(task_set.f_job_id, task_set.f_task_set_id, new_task_set_status))
+        # new_task_set_status = cls.calculate_task_set_status(task_status=[task.f_status for task in tasks])
+        tasks_status = [task.f_status for task in tasks]
+        new_task_set_status = StatusEngine.vertical_convergence(tasks_status, interrupt_break=False)
+        schedule_logger(job_id=task_set.f_job_id).info("Job {} task set {} status is {}, calculate by task status list: {}".format(task_set.f_job_id, task_set.f_task_set_id, new_task_set_status, tasks_status))
         if new_task_set_status != task_set.f_status:
             task_set.f_status = new_task_set_status
             FederatedScheduler.sync_task_set(job=job, task_set=task_set, update_fields=["status"])
@@ -145,7 +148,9 @@ class TaskScheduler(object):
     @classmethod
     def calculate_multi_party_task_status(cls, task):
         tasks = job_utils.query_task(task_id=task.f_task_id, task_version=task.f_task_version)
-        new_task_status = StatusEngine.horizontal_convergence([task.f_party_status for task in tasks])
+        tasks_party_status = [task.f_party_status for task in tasks]
+        new_task_status = StatusEngine.horizontal_convergence(tasks_party_status)
+        schedule_logger(job_id=task.f_job_id).info("Job {} task {} {} status is {}, calculate by task party status list: {}".format(task.f_job_id, task.f_task_id, task.f_task_version, new_task_status, tasks_party_status))
         return new_task_status
 
     @classmethod

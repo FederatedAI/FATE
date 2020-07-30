@@ -155,8 +155,9 @@ class DAGScheduler(object):
                 continue
             else:
                 raise Exception("Can not scheduling job {}".format(job.f_job_id))
-        new_job_status = cls.calculate_job_status(task_set_status=[task_set.f_status for task_set in task_sets])
-        schedule_logger(job_id=job.f_job_id).info("Job {} status is {}".format(job.f_job_id, new_job_status))
+        task_sets_status = [task_set.f_status for task_set in task_sets]
+        new_job_status = StatusEngine.vertical_convergence(task_sets_status, interrupt_break=True)
+        schedule_logger(job_id=job.f_job_id).info("Job {} status is {}, calculate by task set status list: {}".format(job.f_job_id, new_job_status, task_sets_status))
         if new_job_status != job.f_status:
             job.f_status = new_job_status
             FederatedScheduler.sync_job(job=job, update_fields=["status"])

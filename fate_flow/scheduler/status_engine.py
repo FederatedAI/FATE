@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_flow.entity.constant import StatusSet, InterruptStatus, EndStatus
+from fate_flow.entity.constant import StatusSet, InterruptStatus, EndStatus, OngoingStatus
 
 
 class StatusEngine(object):
@@ -23,18 +23,25 @@ class StatusEngine(object):
         if len(tmp_status_set) == 1:
             return tmp_status_set.pop()
         else:
-            for interrupt_status in InterruptStatus.status_list():
-                if interrupt_status in tmp_status_set:
-                    return interrupt_status
+            if interrupt_break:
+                for status in sorted(InterruptStatus.status_list(), key=lambda s: StatusSet.get_level(status=s), reverse=True):
+                    if status in tmp_status_set:
+                        return status
             else:
-                if StatusSet.RUNNING in tmp_status_set:
-                    return StatusSet.RUNNING
-                elif StatusSet.WAITING in tmp_status_set:
-                    return StatusSet.WAITING
-                elif StatusSet.START in tmp_status_set:
-                    return StatusSet.START
+                # Check to if all status are end status
+                for status in tmp_status_set:
+                    if not EndStatus.contains(status=status):
+                        break
                 else:
-                    raise Exception("The list of vertically convergent status failed: {}".format(",".join(downstream_status_list)))
+                    # All status are end status and there are more than two different status
+                    for status in sorted(InterruptStatus.status_list(), key=lambda s: StatusSet.get_level(status=s), reverse=True):
+                        if status in tmp_status_set:
+                            return status
+                    raise Exception("The list of vertically convergent status failed: {}".format(downstream_status_list))
+            for status in sorted(OngoingStatus.status_list(), key=lambda s: StatusSet.get_level(status=s), reverse=True):
+                if status in tmp_status_set:
+                    return status
+            raise Exception("The list of vertically convergent status failed: {}".format(downstream_status_list))
 
     @staticmethod
     def horizontal_convergence(floor_status_list):
@@ -42,15 +49,10 @@ class StatusEngine(object):
         if len(tmp_status_set) == 1:
             return tmp_status_set.pop()
         else:
-            for interrupt_status in InterruptStatus.status_list():
-                if interrupt_status in tmp_status_set:
-                    return interrupt_status
-            else:
-                if StatusSet.RUNNING in tmp_status_set:
-                    return StatusSet.RUNNING
-                elif StatusSet.WAITING in tmp_status_set:
-                    return StatusSet.WAITING
-                elif StatusSet.START in tmp_status_set:
-                    return StatusSet.START
-                else:
-                    raise Exception("The list of horizontal convergent status failed: {}".format(",".join(floor_status_list)))
+            for status in sorted(InterruptStatus.status_list(), key=lambda s: StatusSet.get_level(status=s), reverse=True):
+                if status in tmp_status_set:
+                    return status
+            for status in sorted(OngoingStatus.status_list(), key=lambda s: StatusSet.get_level(status=s), reverse=True):
+                if status in tmp_status_set:
+                    return status
+            raise Exception("The list of horizontal convergent status failed: {}".format(",".join(floor_status_list)))
