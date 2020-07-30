@@ -201,7 +201,12 @@ class ComponentProperties(object):
 
             if len(data_dict) > 0:
                 for k, v in data_dict.items():
-                    data[".".join([cpn_name, k])] = model.obtain_data(v)
+                    data_list = model.obtain_data(v)
+                    if isinstance(data_list, list):
+                        for i, data_i in enumerate(data_list):
+                            data[".".join([cpn_name, k, str(i)])] = data_i
+                    else:
+                        data[".".join([cpn_name, k])] = data_list
 
         train_data = model_data.get('train_data')
         validate_data = None

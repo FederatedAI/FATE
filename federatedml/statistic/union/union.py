@@ -191,3 +191,7 @@ class Union(ModelBase):
 
     def check_consistency(self):
         pass
+
+    def obtain_data(self, data_list):
+        return data_list
+
