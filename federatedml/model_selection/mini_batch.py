@@ -89,7 +89,7 @@ class MiniBatch:
         all_index_data = []
         for index_data in batch_data_sids:
             # LOGGER.debug('in generator, index_data is {}'.format(index_data))
-            index_table = session.parallelize(index_data, include_key=True, partition=data_insts._partitions)
+            index_table = session.parallelize(index_data, include_key=True, partition=data_insts.partitions)
             batch_data = index_table.join(data_insts, lambda x, y: y)
 
             # yield batch_data
