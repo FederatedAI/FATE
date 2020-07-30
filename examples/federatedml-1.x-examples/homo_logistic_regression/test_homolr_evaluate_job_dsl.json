@@ -48,7 +48,7 @@
             "module": "HomoLR",
             "input": {
                 "data": {
-                    "validate_data": [
+                    "eval_data": [
                         "dataio_1.validate_data"
                     ]
                 },
