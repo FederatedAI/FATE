@@ -37,9 +37,10 @@ class Reader(object):
     def run(self, component_parameters=None, args=None):
         self.parameters = component_parameters["ReaderParam"]
         job_id = generate_session_id(self.task_id, self.tracker.role, self.tracker.party_id)
+        data_name = [key for key in self.parameters.keys()][0]
         data_table = get_table(job_id=job_id,
-                               namespace=self.parameters['table']['namespace'],
-                               name=self.parameters['table']['name']
+                               namespace=self.parameters[data_name]['namespace'],
+                               name=self.parameters[data_name]['name']
                                )
         persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(self.task_id), uuid.uuid1().hex
         table = convert(data_table, job_id=generate_session_id(self.task_id, self.tracker.role, self.tracker.party_id),
@@ -57,7 +58,8 @@ class Reader(object):
             data_info={'f_table_name':  persistent_table_name,
                        'f_table_namespace':  persistent_table_namespace,
                        'f_partition': partitions,
-                       'f_table_count_actual': count},
+                       'f_table_count_actual': count,
+                       'f_data_name':data_name},
             mark=True)
         self.callback_metric(metric_name='reader_name',
                              metric_namespace='reader_namespace',

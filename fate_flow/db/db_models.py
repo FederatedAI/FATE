@@ -191,7 +191,7 @@ class DataView(DataBaseModel):
     f_size = BigIntegerField(default=0)
     f_description = TextField(null=True, default='')
     f_tag = CharField(max_length=50, null=True, index=True, default='')
-    f_data_name = CharField(max_length=30)
+    f_data_name = CharField(max_length=30, default='0')
 
     class Meta:
         db_table = "t_data_view"

@@ -225,12 +225,14 @@ class Tracking(object):
         else:
             schedule_logger(self.job_id).info('task id {} output data table is none'.format(self.task_id))
 
-    def get_output_data_table(self, init_session=False, need_all=True, data_name:  str = ''):
+    def get_output_data_table(self, init_session=False, need_all=True, session_id='', data_name:  str = ''):
         """
         Get component output data table, will run in the task executor process
         :param data_name:
         :return:
         """
+        if not init_session and not session_id:
+            session_id = job_utils.generate_session_id(self.task_id, self.role, self.party_id)
         data_views = self.query_data_view(self.role, self.party_id, mark=True, data_name=data_name)
         data_tables = []
         if data_views:
@@ -239,9 +241,6 @@ class Tracking(object):
                     data_table = SimpleTable(name=data_view.f_table_name, namespace=data_view.f_table_namespace)
                     data_tables.append(data_table)
                 else:
-                    session_id = ''
-                    if not init_session:
-                        session_id = job_utils.generate_session_id(self.task_id, self.role, self.party_id)
                     data_table = get_table(job_id=session_id,
                                            name=data_view.f_table_name,
                                            namespace=data_view.f_table_namespace,
@@ -259,9 +258,9 @@ class Tracking(object):
                                                       component_module_name=self.module_name,
                                                       model_alias=model_alias,
                                                       model_buffers=model_buffers)
-            self.save_data_view(self.role, self.party_id,
-                                data_info={'f_party_model_id': self.party_model_id,
-                                           'f_model_version': self.model_version})
+            # self.save_data_view(self.role, self.party_id,
+            #                     data_info={'f_party_model_id': self.party_model_id,
+            #                                'f_model_version': self.model_version})
 
     def get_output_model(self, model_alias):
         model_buffers = self.pipelined_model.read_component_model(component_name=self.component_name,
