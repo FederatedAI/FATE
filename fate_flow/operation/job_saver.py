@@ -18,7 +18,7 @@ import operator
 from arch.api.utils.core_utils import current_timestamp, json_loads
 from arch.api.utils import core_utils
 from fate_flow.db.db_models import DB, Job, TaskSet, Task
-from fate_flow.entity.constant import BaseJobStatus, JobStatus, TaskSetStatus, TaskStatus, EndStatus
+from fate_flow.entity.constant import StatusSet, JobStatus, TaskSetStatus, TaskStatus, EndStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 from arch.api.utils.log_utils import schedule_logger, sql_logger
 
@@ -50,7 +50,7 @@ class JobSaver(object):
     def update_job(cls, job_info):
         schedule_logger(job_id=job_info["job_id"]).info("Update job {}".format(job_info["job_id"]))
         job_info['run_ip'] = RuntimeConfig.JOB_SERVER_HOST
-        if EndStatus.is_end_status(job_info.get("status")):
+        if EndStatus.contains(job_info.get("status")):
             job_info['tag'] = 'job_end'
         return cls.update_job_family_entity(Job, job_info)
 
@@ -94,9 +94,9 @@ class JobSaver(object):
                 attr_name = 'f_%s' % k
                 if hasattr(entity_model, attr_name):
                     setattr(obj, attr_name, v)
-            obj.f_status_level = BaseJobStatus.get_level(obj.f_status)
+            obj.f_status_level = StatusSet.get_level(obj.f_status)
             if hasattr(entity_model, "f_party_status"):
-                obj.f_party_status_level = BaseJobStatus.get_level(obj.f_party_status)
+                obj.f_party_status_level = StatusSet.get_level(obj.f_party_status)
             rows = obj.save(force_insert=True)
             if rows != 1:
                 raise Exception("Create {} failed".format(entity_model))
@@ -115,12 +115,12 @@ class JobSaver(object):
                 raise Exception("Can not found the {}".format(entity_model.__class__.__name__))
             update_filters = query_filters[:]
             if 'status' in entity_info and hasattr(entity_model, "f_status"):
-                update_filters.append(operator.attrgetter("f_status_level")(entity_model) < BaseJobStatus.get_level(entity_info["status"]))
-                entity_info["status_level"] = BaseJobStatus.get_level(entity_info["status"])
+                update_filters.append(operator.attrgetter("f_status_level")(entity_model) < StatusSet.get_level(entity_info["status"]))
+                entity_info["status_level"] = StatusSet.get_level(entity_info["status"])
             if "party_status" in entity_info and hasattr(entity_model, "f_party_status"):
-                update_filters.append(operator.attrgetter("f_party_status_level")(entity_model) < BaseJobStatus.get_level(entity_info["party_status"]))
-                entity_info["party_status_level"] = BaseJobStatus.get_level(entity_info["party_status"])
-                if EndStatus.is_end_status(entity_info["party_status"]):
+                update_filters.append(operator.attrgetter("f_party_status_level")(entity_model) < StatusSet.get_level(entity_info["party_status"]))
+                entity_info["party_status_level"] = StatusSet.get_level(entity_info["party_status"])
+                if EndStatus.contains(entity_info["party_status"]):
                     entity_info['end_time'] = current_timestamp()
                     if obj.f_start_time:
                         entity_info['elapsed'] = entity_info['end_time'] - obj.f_start_time

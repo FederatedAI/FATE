@@ -15,7 +15,7 @@
 #
 
 from fate_flow.db.db_models import Job, TaskSet, Task
-from fate_flow.entity.constant import TaskStatus, EndStatus, InterruptStatus, RetCode, FederatedSchedulingStatusCode
+from fate_flow.entity.constant import TaskStatus, EndStatus, InterruptStatus, RetCode, FederatedSchedulingStatusCode, StatusSet, OngoingStatus
 from fate_flow.settings import API_VERSION, ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
@@ -29,6 +29,7 @@ class TaskScheduler(object):
     @classmethod
     def schedule(cls, job, task_set: TaskSet):
         schedule_logger(job_id=job.f_job_id).info("Schedule job {} task set {}".format(task_set.f_job_id, task_set.f_task_set_id))
+        # TODO: Query the latest version of each task
         tasks = job_utils.query_task(job_id=job.f_job_id, task_set_id=task_set.f_task_set_id, role=task_set.f_role, party_id=task_set.f_party_id)
         for task in tasks:
             new_task_status = cls.calculate_multi_party_task_status(task=task)
@@ -37,6 +38,7 @@ class TaskScheduler(object):
                 task.f_status = new_task_status
                 FederatedScheduler.sync_task(job=job, task=task, update_fields=["status"])
                 cls.update_task_on_initiator(initiator_task_template=task, update_fields=["status"])
+
             if task.f_status == TaskStatus.WAITING:
                 # TODO: run task until the concurrency is reached
                 task.f_status = TaskStatus.RUNNING
@@ -51,20 +53,20 @@ class TaskScheduler(object):
             elif task.f_status == TaskStatus.RUNNING:
                 # TODO: check the concurrency is reached
                 continue
-            elif InterruptStatus.is_interrupt_status(task.f_status):
+            elif InterruptStatus.contains(task.f_status):
                 # The state is determined by the TaskSet as a whole
                 continue
             elif task.f_status == TaskStatus.COMPLETE:
                 FederatedScheduler.stop_task(job=job, task=task, stop_status=task.f_status)
             else:
                 raise Exception("Job {} task set {} with a {} status cannot be scheduled".format(task_set.f_job_id, task_set.f_task_set_id, task.f_status))
-        new_task_set_status = StatusEngine.vertical_convergence([task.f_status for task in tasks])
+        new_task_set_status = cls.calculate_task_set_status(task_status=[task.f_status for task in tasks])
         schedule_logger(job_id=task_set.f_job_id).info("Job {} task set {} status is {}".format(task_set.f_job_id, task_set.f_task_set_id, new_task_set_status))
         if new_task_set_status != task_set.f_status:
             task_set.f_status = new_task_set_status
             FederatedScheduler.sync_task_set(job=job, task_set=task_set, update_fields=["status"])
             cls.update_task_set_on_initiator(initiator_task_set_template=task_set, update_fields=["status"])
-        if EndStatus.is_end_status(task_set.f_status):
+        if EndStatus.contains(task_set.f_status):
             cls.finish(job=job, task_set=task_set, end_status=task_set.f_status)
 
     @classmethod
@@ -118,6 +120,27 @@ class TaskScheduler(object):
                                                                                                            role,
                                                                                                            dest_party_id))
         return extra_task_parameters
+
+    @classmethod
+    def calculate_task_set_status(cls, task_status):
+        tmp_status_set = set(task_status)
+        if len(tmp_status_set) == 1:
+            return tmp_status_set.pop()
+        else:
+            for status in tmp_status_set:
+                if not EndStatus.contains(status=status):
+                    break
+            else:
+                # All tasks are end status and there are more than two different status
+                for status in sorted(InterruptStatus.status_list(), key=lambda s: StatusSet.get_level(status=s), reverse=True):
+                    if status in tmp_status_set:
+                        return status
+                raise Exception("calculate task set status failed: {}".format(task_status))
+            # Not all tasks are end status
+            for status in sorted(OngoingStatus.status_list(), key=lambda s: StatusSet.get_level(status=s), reverse=True):
+                if status in tmp_status_set:
+                    return status
+            raise Exception("calculate task set status failed: {}".format(task_status))
 
     @classmethod
     def calculate_multi_party_task_status(cls, task):

@@ -49,7 +49,17 @@ class FederatedSchedulingStatusCode(object):
     FAILED = 3
 
 
-class BaseJobStatus(object):
+class BaseStatus(object):
+    @classmethod
+    def status_list(cls):
+        return [k for k in cls.__dict__.keys() if not callable(getattr(cls, k)) and not k.startswith("__")]
+
+    @classmethod
+    def contains(cls, status):
+        return status in cls.status_list()
+
+
+class StatusSet(BaseStatus):
     WAITING = 'WAITING'
     START = 'START'
     RUNNING = "RUNNING"
@@ -58,66 +68,60 @@ class BaseJobStatus(object):
     FAILED = "FAILED"
     COMPLETE = "COMPLETE"
 
-    @staticmethod
-    def get_level(status):
-        return dict(zip(BaseJobStatus.__dict__.keys(), range(len(BaseJobStatus.__dict__.keys())))).get(status, None)
+    @classmethod
+    def get_level(cls, status):
+        return dict(zip(cls.status_list(), range(len(cls.status_list())))).get(status, None)
 
 
-class JobStatus(object):
-    WAITING = BaseJobStatus.WAITING
-    RUNNING = BaseJobStatus.RUNNING
-    CANCELED = BaseJobStatus.CANCELED
-    TIMEOUT = BaseJobStatus.TIMEOUT
-    FAILED = BaseJobStatus.FAILED
-    COMPLETE = BaseJobStatus.COMPLETE
+class JobStatus(BaseStatus):
+    WAITING = StatusSet.WAITING
+    RUNNING = StatusSet.RUNNING
+    CANCELED = StatusSet.CANCELED
+    TIMEOUT = StatusSet.TIMEOUT
+    FAILED = StatusSet.FAILED
+    COMPLETE = StatusSet.COMPLETE
 
 
-class TaskSetStatus(object):
-    WAITING = BaseJobStatus.WAITING
-    RUNNING = BaseJobStatus.RUNNING
-    CANCELED = BaseJobStatus.CANCELED
-    TIMEOUT = BaseJobStatus.TIMEOUT
-    FAILED = BaseJobStatus.FAILED
-    COMPLETE = BaseJobStatus.COMPLETE
+class TaskSetStatus(BaseStatus):
+    WAITING = StatusSet.WAITING
+    RUNNING = StatusSet.RUNNING
+    CANCELED = StatusSet.CANCELED
+    TIMEOUT = StatusSet.TIMEOUT
+    FAILED = StatusSet.FAILED
+    COMPLETE = StatusSet.COMPLETE
 
 
-class TaskStatus(object):
-    WAITING = BaseJobStatus.WAITING
-    START = BaseJobStatus.START
-    RUNNING = BaseJobStatus.RUNNING
-    CANCELED = BaseJobStatus.CANCELED
-    TIMEOUT = BaseJobStatus.TIMEOUT
-    FAILED = BaseJobStatus.FAILED
-    COMPLETE = BaseJobStatus.COMPLETE
+class TaskStatus(BaseStatus):
+    WAITING = StatusSet.WAITING
+    START = StatusSet.START
+    RUNNING = StatusSet.RUNNING
+    CANCELED = StatusSet.CANCELED
+    TIMEOUT = StatusSet.TIMEOUT
+    FAILED = StatusSet.FAILED
+    COMPLETE = StatusSet.COMPLETE
 
 
-class EndStatus(object):
-    CANCELED = BaseJobStatus.CANCELED
-    TIMEOUT = BaseJobStatus.TIMEOUT
-    FAILED = BaseJobStatus.FAILED
-    COMPLETE = BaseJobStatus.COMPLETE
+class OngoingStatus(BaseStatus):
+    WAITING = StatusSet.WAITING
+    START = StatusSet.START
+    RUNNING = StatusSet.RUNNING
+
+
+class InterruptStatus(BaseStatus):
+    CANCELED = StatusSet.CANCELED
+    TIMEOUT = StatusSet.TIMEOUT
+    FAILED = StatusSet.FAILED
+
+
+class EndStatus(BaseStatus):
+    CANCELED = StatusSet.CANCELED
+    TIMEOUT = StatusSet.TIMEOUT
+    FAILED = StatusSet.FAILED
+    COMPLETE = StatusSet.COMPLETE
 
     @staticmethod
     def is_end_status(status):
         return status in EndStatus.__dict__.keys()
-
-    @staticmethod
-    def status_list():
-        return EndStatus.__dict__.keys()
-
-
-class InterruptStatus(object):
-    CANCELED = BaseJobStatus.CANCELED
-    TIMEOUT = BaseJobStatus.TIMEOUT
-    FAILED = BaseJobStatus.FAILED
-
-    @staticmethod
-    def is_interrupt_status(status):
-        return status in InterruptStatus.__dict__.keys()
-
-    @staticmethod
-    def status_list():
-        return InterruptStatus.__dict__.keys()
 
 
 class ModelStorage(object):

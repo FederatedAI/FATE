@@ -20,7 +20,7 @@ from fate_flow.db.db_models import Job
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.scheduler.task_scheduler import TaskScheduler
 from fate_flow.operation.job_saver import JobSaver
-from fate_flow.entity.constant import JobStatus, TaskSetStatus, EndStatus, InterruptStatus
+from fate_flow.entity.constant import JobStatus, TaskSetStatus, EndStatus, InterruptStatus, StatusSet, OngoingStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.controller.job_controller import JobController
@@ -148,20 +148,20 @@ class DAGScheduler(object):
                 schedule_logger(job_id=job.f_job_id).info("Job {} task set {} is running".format(task_set.f_job_id, task_set.f_task_set_id))
                 TaskScheduler.schedule(job=job, task_set=task_set)
                 break
-            elif InterruptStatus.is_interrupt_status(task_set.f_status):
+            elif InterruptStatus.contains(task_set.f_status):
                 schedule_logger(job_id=job.f_job_id).info("Job {} task set {} is {}, job exit".format(task_set.f_job_id, task_set.f_task_set_id, task_set.f_status))
                 break
             elif task_set.f_status == TaskSetStatus.COMPLETE:
                 continue
             else:
                 raise Exception("Can not scheduling job {}".format(job.f_job_id))
-        new_job_status = StatusEngine.vertical_convergence([task_set.f_status for task_set in task_sets])
+        new_job_status = cls.calculate_job_status(task_set_status=[task_set.f_status for task_set in task_sets])
         schedule_logger(job_id=job.f_job_id).info("Job {} status is {}".format(job.f_job_id, new_job_status))
         if new_job_status != job.f_status:
             job.f_status = new_job_status
             FederatedScheduler.sync_job(job=job, update_fields=["status"])
             cls.update_job_on_initiator(initiator_job_template=job, update_fields=["status"])
-        if EndStatus.is_end_status(job.f_status):
+        if EndStatus.contains(job.f_status):
             cls.finish(job=job, end_status=job.f_status)
 
     @classmethod
@@ -177,13 +177,28 @@ class DAGScheduler(object):
             job_info["party_id"] = job.f_party_id
             JobSaver.update_job(job_info=job_info)
 
+    @classmethod
+    def calculate_job_status(cls, task_set_status):
+        tmp_status_set = set(task_set_status)
+        if len(tmp_status_set) == 1:
+            return tmp_status_set.pop()
+        else:
+            for status in sorted(InterruptStatus.status_list(), key=lambda s: StatusSet.get_level(status=s), reverse=True):
+                if status in tmp_status_set:
+                    return status
+            else:
+                for status in sorted(OngoingStatus.status_list(), key=lambda s: StatusSet.get_level(status=s), reverse=True):
+                    if status in tmp_status_set:
+                        return status
+                raise Exception("calculate job status failed: {}".format(task_set_status))
+
     @staticmethod
     def finish(job, end_status):
-        schedule_logger(job_id=job.f_job_id).info("Job {} finished, do something...".format(job.f_job_id))
+        schedule_logger(job_id=job.f_job_id).info("Job {} finished with {}, do something...".format(job.f_job_id, end_status))
         FederatedScheduler.save_pipelined_model(job=job)
         FederatedScheduler.stop_job(job=job, stop_status=end_status)
         FederatedScheduler.clean_job(job=job)
-        schedule_logger(job_id=job.f_job_id).info("Job {} finished, done".format(job.f_job_id))
+        schedule_logger(job_id=job.f_job_id).info("Job {} finished with {}, done".format(job.f_job_id, end_status))
 
     @staticmethod
     def clean_queue():

@@ -13,12 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_flow.entity.constant import BaseJobStatus, InterruptStatus, EndStatus
+from fate_flow.entity.constant import StatusSet, InterruptStatus, EndStatus
 
 
 class StatusEngine(object):
     @staticmethod
-    def vertical_convergence(downstream_status_list):
+    def vertical_convergence(downstream_status_list, interrupt_break=True):
         tmp_status_set = set(downstream_status_list)
         if len(tmp_status_set) == 1:
             return tmp_status_set.pop()
@@ -27,12 +27,12 @@ class StatusEngine(object):
                 if interrupt_status in tmp_status_set:
                     return interrupt_status
             else:
-                if BaseJobStatus.RUNNING in tmp_status_set:
-                    return BaseJobStatus.RUNNING
-                elif BaseJobStatus.WAITING in tmp_status_set:
-                    return BaseJobStatus.WAITING
-                elif BaseJobStatus.START in tmp_status_set:
-                    return BaseJobStatus.START
+                if StatusSet.RUNNING in tmp_status_set:
+                    return StatusSet.RUNNING
+                elif StatusSet.WAITING in tmp_status_set:
+                    return StatusSet.WAITING
+                elif StatusSet.START in tmp_status_set:
+                    return StatusSet.START
                 else:
                     raise Exception("The list of vertically convergent status failed: {}".format(",".join(downstream_status_list)))
 
@@ -46,11 +46,11 @@ class StatusEngine(object):
                 if interrupt_status in tmp_status_set:
                     return interrupt_status
             else:
-                if BaseJobStatus.RUNNING in tmp_status_set:
-                    return BaseJobStatus.RUNNING
-                elif BaseJobStatus.WAITING in tmp_status_set:
-                    return BaseJobStatus.WAITING
-                elif BaseJobStatus.START in tmp_status_set:
-                    return BaseJobStatus.START
+                if StatusSet.RUNNING in tmp_status_set:
+                    return StatusSet.RUNNING
+                elif StatusSet.WAITING in tmp_status_set:
+                    return StatusSet.WAITING
+                elif StatusSet.START in tmp_status_set:
+                    return StatusSet.START
                 else:
                     raise Exception("The list of horizontal convergent status failed: {}".format(",".join(floor_status_list)))
