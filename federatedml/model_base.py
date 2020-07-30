@@ -20,8 +20,8 @@ import copy
 
 from arch.api.utils import log_utils
 from federatedml.param.evaluation_param import EvaluateParam
+from federatedml.statistic.data_overview import header_alignment
 from federatedml.util import abnormal_detection
-from federatedml.statistic.data_overview import header_alignment, check_legal_schema
 from federatedml.util.component_properties import ComponentProperties
 from federatedml.util.param_extract import ParamExtract
 
