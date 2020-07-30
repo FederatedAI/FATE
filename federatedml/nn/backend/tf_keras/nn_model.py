@@ -125,7 +125,7 @@ class KerasNNModel(NNModel):
     def __init__(self, sess, model):
         self._sess: tf.Session = sess
         self._model: tf.keras.Sequential = model
-        self._trainable_weights = {self._trim_device_str(v.name): v for v in self._model.trainable_weights}
+        self._trainable_weights = {v.name: v for v in self._model.trainable_weights}
 
         self._initialize_variables()
 
