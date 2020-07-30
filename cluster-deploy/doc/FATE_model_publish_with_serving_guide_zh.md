@@ -74,11 +74,11 @@
 ```json
 {
     "initiator": {
-        "party_id": "10000",
+        "party_id": "9999",
         "role": "guest"
     },
     "role": {
-        "guest": ["10000"],
+        "guest": ["9999"],
         "host": ["10000"],
         "arbiter": ["10000"]
     },
