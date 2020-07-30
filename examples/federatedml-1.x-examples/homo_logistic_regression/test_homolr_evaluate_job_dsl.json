@@ -19,7 +19,7 @@
             "input": {
                 "data": {
                     "data": [
-                        "args.validate_data"
+                        "args.eval_data"
                     ]
                 },
                 "model": [
@@ -27,7 +27,7 @@
                 ]
             },
             "output": {
-                "data": ["validate_data"]
+                "data": ["eval_data"]
             }
         },
         "homo_lr_0": {
@@ -49,7 +49,7 @@
             "input": {
                 "data": {
                     "eval_data": [
-                        "dataio_1.validate_data"
+                        "dataio_1.eval_data"
                     ]
                 },
                 "model": [
