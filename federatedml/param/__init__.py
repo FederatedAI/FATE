@@ -20,9 +20,9 @@ from federatedml.param.logistic_regression_param import InitParam
 from federatedml.param.logistic_regression_param import LogisticParam
 from federatedml.param.linear_regression_param import LinearParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
-from federatedml.param.boosting_tree_param import ObjectiveParam
-from federatedml.param.boosting_tree_param import DecisionTreeParam
-from federatedml.param.boosting_tree_param import BoostingTreeParam
+from federatedml.param.tree_algo_param import ObjectiveParam
+from federatedml.param.tree_algo_param import DecisionTreeParam
+from federatedml.param.tree_algo_param import BoostingTreeParam
 from federatedml.param.predict_param import PredictParam
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.param.feature_binning_param import FeatureBinningParam
