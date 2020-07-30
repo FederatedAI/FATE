@@ -18,7 +18,7 @@ from arch.api.utils import file_utils
 from arch.api.utils.core_utils import get_lan_ip
 from fate_flow.settings import SERVERS, ROLE, API_VERSION
 from .flow_cli import (component, data, job, model,
-                       privilege, queue, task, table)
+                       privilege, queue, task, table, tag)
 
 server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -46,3 +46,4 @@ flow_cli.add_command(model.model)
 flow_cli.add_command(queue.queue)
 flow_cli.add_command(task.task)
 flow_cli.add_command(table.table)
+flow_cli.add_command(tag.tag)

@@ -15,8 +15,11 @@
 #
 import os
 import shutil
+import peewee
 from copy import deepcopy
 
+from fate_flow.db.db_models import MachineLearningModelMeta as MLModel
+from fate_flow.db.db_models import Tag, DB
 from flask import Flask, request, send_file
 
 from fate_flow.manager.model_manager.migrate_model import compare_roles
@@ -29,7 +32,7 @@ from fate_flow.utils.job_utils import generate_job_id, runtime_conf_basic
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils.detect_utils import check_config
 from fate_flow.utils.model_utils import gen_party_model_id
-from fate_flow.entity.constant_config import ModelOperation
+from fate_flow.entity.constant_config import ModelOperation, TagOperation
 
 manager = Flask(__name__)
 
@@ -225,6 +228,130 @@ def operate_model(model_operation):
         data.update({'job_dsl_path': job_dsl_path, 'job_runtime_conf_path': job_runtime_conf_path,
                      'board_url': board_url, 'logs_directory': logs_directory})
         return get_json_result(job_id=job_id, data=data)
+
+
+@manager.route('/model_tag/<operation>', methods=['POST'])
+def tag_model(operation):
+    if operation not in ['retrieve', 'create', 'remove']:
+        return get_json_result(100, "'{}' is not currently supported.".format(operation))
+
+    request_data = request.json
+
+    model = MLModel.get_or_none(MLModel.f_job_id == request_data.get("job_id"))
+    if not model:
+        raise Exception("Can not found model by job id: '{}'.".format(request_data.get("job_id")))
+
+    if operation == 'retrieve':
+        res = {'tags': []}
+        for tag in model.tags:
+            res['tags'].append({'name': tag.f_name, 'description': tag.f_desc})
+        return get_json_result(data=res)
+    elif operation == 'remove':
+        tag = Tag.get_or_none(Tag.f_name == request_data.get('tag_name'))
+        if not tag:
+            raise Exception("Can not found '{}' tag.".format(request_data.get('tag_name')))
+        if tag.f_name not in [t.f_name for t in model.tags]:
+            raise Exception("Model {} {} does not have tag '{}'.".format(model.f_model_id,
+                                                                         model.f_model_version,
+                                                                         tag.f_name))
+        model.tags.remove(tag)
+        return get_json_result(retmsg="'{}' tag has been removed from tag list of model {} {}.".format(request_data.get('tag_name'),
+                                                                                                       model.f_model_id,
+                                                                                                       model.f_model_version))
+    else:
+        with DB.connection_context():
+            tag = Tag.get_or_none(Tag.f_name == request_data.get('tag_name'))
+            if not tag:
+                tag = Tag()
+                tag.f_name = request_data.get('tag_name')
+                tag.save(force_insert=True)
+            else:
+                if tag.f_name in [tag.f_name for tag in model.tags]:
+                    raise Exception("Model {} {} already been tagged as tag '{}'.".format(model.f_model_id,
+                                                                                          model.f_model_version,
+                                                                                          tag.f_name))
+            tag.f_model.add(model)
+        return get_json_result(retmsg="Adding {} tag for model with job id: {} successfully.".format(request_data.get('tag_name'),
+                                                                                                     request_data.get('job_id')))
+
+
+@manager.route('/tag/<tag_operation>', methods=['POST'])
+def operate_tag(tag_operation):
+    request_data = request.json
+    if tag_operation not in [TagOperation.CREATE, TagOperation.RETRIEVE, TagOperation.UPDATE,
+                             TagOperation.DESTROY, TagOperation.LIST]:
+        raise Exception('The {} operation is not currently supported.'.format(tag_operation))
+
+    tag_name = request_data.get('tag_name')
+    tag_desc = request_data.get('tag_desc')
+
+    if tag_operation == TagOperation.CREATE:
+        if Tag.get_or_none(Tag.f_name == tag_name):
+            raise Exception("'{}' has already exists in database.".format(tag_name))
+        with DB.atomic():
+            Tag.create(f_name=tag_name, f_desc=tag_desc)
+        return get_json_result("'{}' tag has been created successfully.".format(tag_name))
+    elif tag_operation == TagOperation.LIST:
+        tags = Tag.select()
+        limit = request_data.get('limit')
+        res = {"tags": []}
+
+        if limit > len(tags):
+            count = len(tags)
+        else:
+            count = limit
+        for tag in tags[:count]:
+            res['tags'].append({'name': tag.f_name, 'description': tag.f_desc, 'model_count': len(tag.f_model)})
+        return get_json_result(data=res)
+
+    else:
+        if not (tag_operation == TagOperation.RETRIEVE and not request_data.get('with_model')):
+            try:
+                tag = Tag.get(Tag.f_name == tag_name)
+            except peewee.DoesNotExist:
+                raise Exception("Can not found '{}' tag.".format(tag_name))
+
+        if tag_operation == TagOperation.RETRIEVE:
+            if request_data.get('with_model', False):
+                res = {'models': []}
+                for model in tag.f_model:
+                    res['models'].append({
+                        "model_id": model.f_model_id,
+                        "model_version": model.f_model_version,
+                        "model_size": model.f_size
+                    })
+                return get_json_result(data=res)
+            else:
+                tags = Tag.filter(Tag.f_name.contains(tag_name))
+                if not tags:
+                    return get_json_result(100, retmsg="No tags found.")
+                res = {'tags': []}
+                for tag in tags:
+                    res['tags'].append({'name': tag.f_name, 'description': tag.f_desc})
+                return get_json_result(data=res)
+
+        elif tag_operation == TagOperation.UPDATE:
+            new_tag_name = request_data.get('new_tag_name', None)
+            new_tag_desc = request_data.get('new_tag_desc', None)
+            if not new_tag_name and not new_tag_desc:
+                return get_json_result(100, "Nothing to be updated.")
+            else:
+                with DB.connection_context():
+                    if request_data.get('new_tag_name'):
+                        if not Tag.get(Tag.f_name == new_tag_name):
+                            tag.f_name = new_tag_name
+                        else:
+                            return get_json_result(100, retmsg="'{}' tag already exists.".format(new_tag_name))
+
+                    if new_tag_desc:
+                        tag.f_desc = new_tag_desc
+                    tag.save()
+                return get_json_result(retmsg="Infomation of '{}' tag has been updated successfully.".format(tag_name))
+
+        else:
+            with DB.atomic():
+                Tag.delete_instance(tag)
+            return get_json_result(retmsg="'{}' tag has been deleted successfully.".format(tag_name))
 
 
 def gen_model_operation_job_config(config_data: dict, model_operation: ModelOperation):

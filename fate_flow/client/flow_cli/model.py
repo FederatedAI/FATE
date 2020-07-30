@@ -15,13 +15,11 @@
 #
 import os
 import re
-import json
 import click
 import requests
 from contextlib import closing
 from fate_flow.utils import cli_args
 from arch.api.utils import file_utils
-from fate_flow.utils.detect_utils import check_config
 from fate_flow.utils.cli_utils import preprocess, access_server
 
 
@@ -168,6 +166,52 @@ def migrate(ctx, **kwargs):
     """
     config_data, dsl_data = preprocess(**kwargs)
     access_server('post', ctx, 'model/migrate', config_data)
+
+
+@model.command("tag-model", short_help="Tag Model Command")
+@cli_args.JOBID_REQUIRED
+@cli_args.TAG_NAME_REQUIRED
+@click.option("--remove", is_flag=True, default=False,
+              help="If specified, the name of specified model will be "
+                   "removed from the model name list of specified tag")
+@click.pass_context
+def tag_model(ctx, **kwargs):
+    """
+    \b
+    - DESCRIPTION:
+        Tag Model Command.
+        By default, custom can execute this command to tag model. Or custom could
+        specify the 'remove' flag to remove the tag from model.
+
+    \b
+    - USAGE:
+        flow model tag-model -j $JOB_ID -t $TAG_NAME
+        flow model tag-model -j $JOB_ID -t $TAG_NAME --remove
+    """
+    config_data, dsl_data = preprocess(**kwargs)
+    if not config_data.pop('remove'):
+        access_server('post', ctx, 'model/model_tag/create', config_data)
+    else:
+        access_server('post', ctx, 'model/model_tag/remove', config_data)
+
+
+@model.command("tag-list", short_help="List Tags of Model Command")
+@cli_args.JOBID_REQUIRED
+@click.pass_context
+def list_tag(ctx, **kwargs):
+    """
+    \b
+    - DESCRIPTION:
+        List Tags of Model Command.
+        Custom can query the model by a valid job id, and get the tag list of the specified model.
+
+    \b
+    - USAGE:
+        flow model tag-list -j $JOB_ID
+    """
+    config_data, dsl_data = preprocess(**kwargs)
+    access_server('post', ctx, 'model/model_tag/retrieve', config_data)
+
 
 # @model.command(short_help="Store Model Command")
 # # @click.argument('conf_path', type=click.Path(exists=True), metavar='<CONF_PATH>')

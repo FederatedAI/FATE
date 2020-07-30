@@ -70,3 +70,10 @@ NAMESPACE_REQUIRED = click.option("-n", "--namespace", type=click.STRING, requir
 
 TABLE_NAME_REQUIRED = click.option("-t", "--table-name", type=click.STRING, required=True,
                                    help="Table name.")
+
+TAG_NAME_REQUIRED = click.option("-t", "--tag-name", type=click.STRING, required=True,
+                                 help="The name of tag.")
+
+TAG_DESCRIPTION = click.option("-d", "--tag-desc", type=click.STRING,
+                               help="The description of tag. Note that if there are some whitespaces in description, "
+                               "please make sure the description text is enclosed in double quotation marks.")

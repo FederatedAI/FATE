@@ -19,7 +19,8 @@ import os
 import sys
 
 import __main__
-from peewee import Model, CharField, IntegerField, BigIntegerField, TextField, CompositeKey, BigAutoField
+from peewee import (Model, CharField, IntegerField, BigIntegerField, TextField, CompositeKey,
+                    BigAutoField, ManyToManyField, DeferredThroughModel, ForeignKeyField)
 from playhouse.apsw_ext import APSWDatabase
 from playhouse.pool import PooledMySQLDatabase
 
@@ -205,14 +206,41 @@ class MachineLearningModelMeta(DataBaseModel):
     f_job_id = CharField(max_length=25)
     f_model_id = CharField(max_length=100, index=True)
     f_model_version = CharField(max_length=100, index=True)
+    f_loaded = IntegerField(default=0)
     f_size = BigIntegerField(default=0)
     f_create_time = BigIntegerField(default=0)
     f_update_time = BigIntegerField(default=0)
     f_description = TextField(null=True, default='')
-    f_tag = CharField(max_length=50, null=True, index=True, default='')
+    # f_tag = CharField(max_length=50, null=True, index=True, default='')
 
     class Meta:
         db_table = "t_machine_learning_model_meta"
+
+
+Model_Tag = DeferredThroughModel()
+
+
+class Tag(DataBaseModel):
+    f_id = BigAutoField(primary_key=True)
+    f_name = CharField(max_length=100, index=True, unique=True)
+    f_desc = TextField(null=True)
+    f_model = ManyToManyField(MachineLearningModelMeta, backref='tags', through_model=Model_Tag)
+    f_create_time = BigIntegerField(default=current_timestamp())
+    f_update_time = BigIntegerField(default=current_timestamp())
+
+    class Meta:
+        db_table = "t_tags"
+
+
+class ModelTag(DataBaseModel):
+    f_m_id = ForeignKeyField(MachineLearningModelMeta, db_column='f_m_id', on_delete='CASCADE')
+    f_t_id = ForeignKeyField(Tag, db_column='f_t_id', on_delete='CASCADE')
+
+    class Meta:
+        db_table = "t_model_tag"
+
+
+Model_Tag.set_model(ModelTag)
 
 
 class TrackingMetric(DataBaseModel):
@@ -264,4 +292,3 @@ class ComponentSummary(DataBaseModel):
 
     class Meta:
         db_table = "t_component_summary"
-        # primary_key = CompositeKey('f_job_id', 'f_role', 'f_party_id', 'f_component_name')
