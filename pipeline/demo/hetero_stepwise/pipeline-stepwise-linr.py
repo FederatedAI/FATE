@@ -26,7 +26,9 @@ dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_lab
 
 intersect_0 = Intersection(name="intersection_0")
 hetero_linr_0 = HeteroLinR(name="hetero_linr_0", early_stop="diff", max_iter=3,
-                       stepwise_param={"need_stepwise": True, "max_step": 2, "direction": "backward"})
+                       stepwise_param={"score_name": "AIC", "direction": "backward",
+                                       "need_stepwise": True, "max_step": 2, "nvmin": 2
+                                       })
 
 print ("get input_0's name {}".format(input_0.name))
 pipeline.add_component(dataio_0, data=Data(data=input_0.data))
