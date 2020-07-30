@@ -19,7 +19,7 @@ import os
 import sys
 
 import __main__
-from peewee import Model, CharField, IntegerField, BigIntegerField, TextField, CompositeKey, BigAutoField
+from peewee import Model, CharField, IntegerField, BigIntegerField, TextField, CompositeKey
 from playhouse.apsw_ext import APSWDatabase
 from playhouse.pool import PooledMySQLDatabase
 
@@ -105,6 +105,10 @@ def init_database_tables():
         DB.create_tables(table_objs)
 
 
+class LongTextField(TextField):
+    field_type = 'LONGTEXT'
+
+
 class MachineLearningDataSchema(DataBaseModel):
     f_table_name = CharField(max_length=100, index=True)
     f_namespace = CharField(max_length=100, index=True)
@@ -116,7 +120,7 @@ class MachineLearningDataSchema(DataBaseModel):
     f_partitions = IntegerField(null=True, default=1)
     f_address = TextField(null=True)
     f_count = IntegerField(null=True, default=0)
-    f_part_of_data = TextField()
+    f_part_of_data = LongTextField()
 
     class Meta:
         db_table = "t_machine_learning_data_schema"
