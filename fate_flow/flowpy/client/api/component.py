@@ -94,14 +94,12 @@ class Component(BaseFlowAPI):
                      required_arguments=['job_id', 'component_name', 'role', 'party_id'])
         return self._post(url='tracking/component/output/data/table', json=config_data)
 
-    def download_summary(self, job_id, role, party_id, component_name, output_path):
+    def get_summary(self, job_id, role, party_id, component_name):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
         check_config(config=config_data,
-                     required_arguments=['job_id', 'component_name', 'role', 'party_id', 'output_path'])
-        config_data['output_path'] = check_output_path(kwargs.get('output_path'))
+                     required_arguments=['job_id', 'component_name', 'role', 'party_id'])
         res = self._post(url='tracking/component/summary/download', handle_result=True, json=config_data)
-        if res["retcode"] == 0:
-            with open(config_data["output_path"], "r") as fin:
-                res["data"] = json.loads(fin.read())
+        if not res.get('data'):
+            res['data'] = {}
         return res

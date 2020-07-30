@@ -15,7 +15,6 @@
 #
 import os
 import json
-import time
 import click
 import requests
 from contextlib import closing
@@ -57,19 +56,7 @@ def submit(ctx, **kwargs):
         'job_dsl': dsl_data,
         'job_runtime_conf': config_data
     }
-
-    response = access_server('post', ctx, 'job/submit', post_data, False)
-
-    try:
-        if response.json()['retcode'] == 999:
-            click.echo('use service.sh to start standalone node server....')
-            os.system('sh service.sh start --standalone_node')
-            time.sleep(5)
-            access_server('post', ctx, 'job/submit', post_data)
-        else:
-            prettify(response.json())
-    except:
-        pass
+    access_server('post', ctx, 'job/submit', post_data)
 
 
 @job.command("list", short_help="List Job Command")
@@ -253,9 +240,11 @@ def view(ctx, **kwargs):
 @click.option("--cpn-list", type=click.STRING,
               help="User inputs a string to specify component list")
 @click.option("--cpn-path", type=click.Path(exists=True),
-              help="User specify a file path which records the component list.")
+              help="User specifies a file path which records the component list.")
 @click.option("--train-dsl-path", type=click.Path(exists=True), required=True,
               help="User specifies the train dsl file path.")
+@click.option("-v", "--version", type=click.Choice(["1", "2"]), default="1", metavar='TEXT',
+              help="User specifies the version of dsl parser. Choosing from 1 and 2. (Default: 1)")
 @cli_args.OUTPUT_PATH
 @click.pass_context
 def dsl_generator(ctx, **kwargs):
@@ -273,7 +262,7 @@ def dsl_generator(ctx, **kwargs):
 
     \b
     - USAGE:
-        flow job dsl --cpn-path fate_flow/examples/component_list.txt --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/generated_predict_dsl.json
+        flow job dsl --cpn-path fate_flow/examples/component_list.txt --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/generated_predict_dsl.json --version 2
         flow job dsl --cpn-list "dataio_0, hetero_feature_binning_0, hetero_feature_selection_0, evaluation_0" --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/generated_predict_dsl.json
         flow job dsl --cpn-list [dataio_0,hetero_feature_binning_0,hetero_feature_selection_0,evaluation_0] --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/generated_predict_dsl.json
     """
@@ -291,6 +280,7 @@ def dsl_generator(ctx, **kwargs):
     config_data = {
         "cpn_str": cpn_str,
         "train_dsl": train_dsl,
+        "version": kwargs.get("version"),
         "output_path": check_output_path(kwargs.get("output_path"))
     }
 

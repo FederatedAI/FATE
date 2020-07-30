@@ -22,7 +22,6 @@ from federatedml.linear_model.poisson_regression.hetero_poisson_regression.heter
 from federatedml.optim.gradient import hetero_poisson_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import consts
-from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 
@@ -115,8 +114,9 @@ class HeteroPoissonHost(HeteroPoissonBase):
 
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
             self.load_model(self.validation_strategy.cur_best_model)
+        self.set_summary(self.get_model_summary())
 
-    @assert_io_num_rows_equal
+
     def predict(self, data_instances):
         """
         Prediction of poisson

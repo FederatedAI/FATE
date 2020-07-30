@@ -115,12 +115,12 @@ class BaseParameterUtil(object):
                         role_idxs = role_parameters.keys()
                         for role_id in role_idxs:
                             role_param_obj = copy.deepcopy(param_obj)
-                            if role_id == "all" or idx in role_id.split("|"):
+                            if role_id == "all" or str(idx) in role_id.split("|"):
                                 role_dict = role_parameters[role_id]
                                 if module_alias in role_dict:
-                                    role_parameters = role_dict.get(module_alias)
+                                    parameters = role_dict.get(module_alias)
                                     merge_dict = ParameterUtil.merge_parameters(runtime_dict[param_class],
-                                                                                role_parameters,
+                                                                                parameters,
                                                                                 role_param_obj,
                                                                                 role_id,
                                                                                 role,
@@ -130,10 +130,10 @@ class BaseParameterUtil(object):
                                                                                 version=version)
 
                                     runtime_dict[param_class] = merge_dict
-                                try:
-                                    role_param_obj.check()
-                                except Exception as e:
-                                    raise ParameterCheckError(component=module_alias, module=module, other_info=e)
+                                    try:
+                                        role_param_obj.check()
+                                    except Exception as e:
+                                        raise ParameterCheckError(component=module_alias, module=module, other_info=e)
 
                     if version == 1:
                         role_dict = submit_dict["role_parameters"][role]
@@ -194,6 +194,7 @@ class BaseParameterUtil(object):
             else:
                 if key not in runtime_dict:
                     runtime_dict[key] = {}
+
                 runtime_dict[key] = ParameterUtil.merge_parameters(runtime_dict.get(key),
                                                                    val_list,
                                                                    attr,
@@ -203,6 +204,7 @@ class BaseParameterUtil(object):
                                                                    component=component,
                                                                    module=module,
                                                                    version=version)
+                setattr(param_obj, key, attr)
 
         return runtime_dict
 
@@ -342,11 +344,11 @@ class ParameterUtilV2(BaseParameterUtil):
     @staticmethod
     def get_input_parameters(submit_dict, module="args"):
         if "role_parameters" not in submit_dict:
-            return {}
+            return {}, {}
 
         roles = submit_dict["role_parameters"].keys()
         if not roles:
-            return {}
+            return {}, {}
 
         input_parameters = {}
         input_datakey = set()

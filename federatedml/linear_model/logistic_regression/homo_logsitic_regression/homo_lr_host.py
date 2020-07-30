@@ -21,8 +21,8 @@ import functools
 from arch.api.utils import log_utils
 from federatedml.framework.homo.procedure import aggregator
 from federatedml.framework.homo.procedure import paillier_cipher
-from federatedml.linear_model.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.linear_model.linear_model_weight import LinearModelWeights as LogisticRegressionWeights
+from federatedml.linear_model.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.model_selection import MiniBatch
 from federatedml.optim.gradient.homo_lr_gradient import LogisticGradient, TaylorLogisticGradient
 from federatedml.protobuf.generated import lr_model_param_pb2
@@ -142,6 +142,7 @@ class HomoLRHost(HomoLRBase):
         LOGGER.info(f'Start predict task')
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)
+        data_instances = self.align_data_header(data_instances, self.header)
         suffix = ('predict',)
         pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, suffix=suffix)
         if self.use_encrypt:

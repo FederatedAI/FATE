@@ -161,10 +161,7 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
             for class_idx in range(self.booster_dim):
 
                 # fit a booster
-                s_time = time.time()
                 model = self.fit_a_booster(epoch_idx, class_idx)
-                e_time = time.time()
-                total_time += e_time - s_time
 
                 booster_meta, booster_param = model.get_model()
 
@@ -175,8 +172,6 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
                 # update predict score
                 cur_sample_weights = model.get_sample_weights()
                 self.y_hat = self.get_new_predict_score(self.y_hat, cur_sample_weights, dim=class_idx)
-
-            LOGGER.debug('total time is {} {}'.format(total_time, epoch_idx))
 
             # compute loss
             loss = self.compute_loss(self.y_hat, self.y)
@@ -207,12 +202,13 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
 
     @assert_io_num_rows_equal
     def predict(self, data_inst):
+
         LOGGER.info('using default lazy prediction')
         return self.lazy_predict(data_inst)
 
     def lazy_predict(self, data_inst):
 
-        LOGGER.info("predicting, there are {} boosters".format(len(self.boosting_model_list)))
+        LOGGER.info('running guest lazy prediction')
         processed_data = self.data_alignment(data_inst)
         rounds = len(self.boosting_model_list) // self.booster_dim
 
@@ -241,7 +237,7 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
 
             self.predict_data_cache.add_data(cache_dataset_key, self.predict_y_hat)
 
-        LOGGER.debug('prediction finished')
+        LOGGER.debug('lazy prediction finished')
 
         return self.score_to_predict_result(data_inst, self.predict_y_hat)
 
@@ -327,7 +323,7 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
 
     def lazy_predict(self, data_inst):
 
-        LOGGER.info("predicting, there are {} trees".format(len(self.boosting_model_list)))
+        LOGGER.info('running guest lazy prediction')
         data_inst = self.data_alignment(data_inst)
         init_score = self.init_score
         self.predict_y_hat = data_inst.mapValues(lambda v: init_score)
@@ -342,7 +338,7 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
                                           idx, booster_idx)
                 model.predict(data_inst)
 
-        LOGGER.debug('prediction finished')
+        LOGGER.debug('lazy prediction finished')
 
     def predict(self, data_inst):
 

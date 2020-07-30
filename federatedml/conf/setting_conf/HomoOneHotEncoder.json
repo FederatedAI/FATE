@@ -1,0 +1,16 @@
+{
+    "module_path":  "federatedml/feature/homo_onehot",
+    "default_runtime_conf": "homo_onehot_encoder_param.json",
+    "param_class" : "federatedml/param/homo_onehot_encoder_param.py/HomoOneHotParam",
+    "role":
+    {
+        "guest|host":
+        {
+            "program": "OHE_alignment_base.py/HomoOneHotBase"
+        },
+        "arbiter":
+        {
+            "program": "homo_ohe_arbiter.py/HomoOneHotArbiter"
+        }
+    }
+}
