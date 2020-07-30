@@ -68,7 +68,7 @@ class HomoDecisionTreeArbiter(DecisionTree):
 
     def sync_best_splits(self, split_info, suffix):
         LOGGER.debug('sending best split points')
-        self.transfer_inst.best_split_points.remote(split_info,idx=-1, suffix=suffix)
+        self.transfer_inst.best_split_points.remote(split_info, idx=-1, suffix=suffix)
 
     def sync_local_histogram(self, suffix) -> List[HistogramBag]:
         LOGGER.debug('get local histograms')

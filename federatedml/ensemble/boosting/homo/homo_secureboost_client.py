@@ -74,6 +74,7 @@ class HomoSecureBoostClient(HomoBoostingClient):
         return grad_and_hess_subtree
 
     def update_feature_importance(self, tree_feature_importance):
+
         for fid in tree_feature_importance:
             if fid not in self.feature_importance:
                 self.feature_importance[fid] = 0
@@ -130,7 +131,7 @@ class HomoSecureBoostClient(HomoBoostingClient):
 
         func = functools.partial(self.predict_helper, tree_list=tree_list, init_score=self.init_score,
                                  zero_as_missing=self.zero_as_missing, use_missing=self.use_missing,
-                                 learning_rate=self.learning_rate, class_num=self.num_classes)
+                                 learning_rate=self.learning_rate, class_num=self.booster_dim)
         predict_rs = to_predict_data.mapValues(func)
 
         return self.score_to_predict_result(data_inst, predict_rs, )

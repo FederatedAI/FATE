@@ -210,6 +210,8 @@ class HomoDecisionTreeClient(DecisionTree):
             next_layer_node.append(right_node)
             self.tree_node.append(cur_to_split[idx])
 
+            self.update_feature_importance(split_info[idx], record_site_name=False)
+
         return next_layer_node
 
     def convert_bin_to_real(self):
@@ -361,9 +363,6 @@ class HomoDecisionTreeClient(DecisionTree):
 
             new_layer_node = self.update_tree(self.cur_layer_node, split_info)
             self.cur_layer_node = new_layer_node
-
-            for s in split_info:
-                self.update_feature_importance(s, record_site_name=False)
 
             self.inst2node_idx, leaf_val = self.assign_instances_to_new_node(table_with_assignment, self.tree_node)
 
