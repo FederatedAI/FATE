@@ -184,7 +184,7 @@ class Tracking(object):
     def get_output_data_info(self):
         pass
 
-    def save_output_data_table(self, data_table, data_name: str = 'component', output_storage_engine=None, index=0):
+    def save_output_data_table(self, data_table, data_name, output_storage_engine=None):
         """
         Save component output data, will run in the task executor process
         :param data_table:
@@ -220,39 +220,35 @@ class Tracking(object):
                                 data_info={'f_table_name': persistent_table_name,
                                            'f_table_namespace': persistent_table_namespace,
                                            'f_partition': partitions,
-                                           'f_index': index},
+                                           'f_data_name': data_name},
                                 mark=True)
         else:
             schedule_logger(self.job_id).info('task id {} output data table is none'.format(self.task_id))
 
-    def get_output_data_table(self, init_session=False, session_id='', need_all=True):
+    def get_output_data_table(self, init_session=False, need_all=True, data_name:  str = ''):
         """
         Get component output data table, will run in the task executor process
         :param data_name:
         :return:
         """
-        data_views = self.query_data_view(self.role, self.party_id, mark=True)
-        data_view = data_views[0]
-
-        if data_view:
-            if not need_all:
-                data_table = SimpleTable(name=data_view.f_table_name, namespace=data_view.f_table_namespace)
-                return data_table
-            if not init_session and not session_id:
-                session_id = job_utils.generate_session_id(self.task_id, self.role, self.party_id)
-            data_table = get_table(job_id=session_id,
-                                   name=data_view.f_table_name,
-                                   namespace=data_view.f_table_namespace,
-                                   partition=data_view.f_partition,
-                                   init_session=init_session)
-            if not data_table:
-                return None
-            data_table_meta = data_table.get_schema()
-            if data_table_meta.get('schema', None):
-                data_table.schema = data_table_meta['schema']
-            return data_table
-        else:
-            return None
+        data_views = self.query_data_view(self.role, self.party_id, mark=True, data_name=data_name)
+        data_tables = []
+        if data_views:
+            for data_view in data_views:
+                if not need_all:
+                    data_table = SimpleTable(name=data_view.f_table_name, namespace=data_view.f_table_namespace)
+                    data_tables.append(data_table)
+                else:
+                    session_id = ''
+                    if not init_session:
+                        session_id = job_utils.generate_session_id(self.task_id, self.role, self.party_id)
+                    data_table = get_table(job_id=session_id,
+                                           name=data_view.f_table_name,
+                                           namespace=data_view.f_table_namespace,
+                                           partition=data_view.f_partition,
+                                           init_session=init_session)
+                    data_tables.append(data_table)
+        return data_tables
 
     def init_pipelined_model(self):
         self.pipelined_model.create_pipelined_model()
@@ -461,13 +457,21 @@ class Tracking(object):
                 data_view.save()
             return data_view
 
-    def query_data_view(self, role, party_id, mark=False):
+    def query_data_view(self, role, party_id, mark=False, data_name=None):
         with DB.connection_context():
-            data_views = DataView.select().where(DataView.f_job_id == self.job_id,
-                                                 DataView.f_component_name == self.component_name,
-                                                 DataView.f_task_id == self.task_id,
-                                                 DataView.f_role == role,
-                                                 DataView.f_party_id == party_id)
+            if not data_name:
+                data_views = DataView.select().where(DataView.f_job_id == self.job_id,
+                                                     DataView.f_component_name == self.component_name,
+                                                     DataView.f_task_id == self.task_id,
+                                                     DataView.f_role == role,
+                                                     DataView.f_party_id == party_id)
+            else:
+                data_views = DataView.select().where(DataView.f_job_id == self.job_id,
+                                                     DataView.f_component_name == self.component_name,
+                                                     DataView.f_task_id == self.task_id,
+                                                     DataView.f_role == role,
+                                                     DataView.f_party_id == party_id,
+                                                     DataView.f_data_name == data_name)
             if mark and self.component_name == "upload_0":
                 return
             return data_views

@@ -208,7 +208,6 @@ def component_output_data():
         num = 100
         have_data_label = False
         is_str = False
-
         if output_data_table:
             for k, v in output_data_table.collect():
                 if num == 0:
@@ -227,6 +226,7 @@ def component_output_data():
             except Exception as e:
                 stat_logger.exception(e)
         else:
+            output_data_list.append(None)
             headers.append(None)
     if len(output_data_list) == 1 and not output_data_list[0]:
         return get_json_result(retcode=0, retmsg='no data', data=[])
@@ -308,8 +308,9 @@ def component_output_data_table():
     request_data = request.json
     data_views = query_data_view(**request_data)
     if data_views:
-        return get_json_result(retcode=0, retmsg='success', data={'table_name': data_views[0].f_table_name,
-                                                                  'table_namespace': data_views[0].f_table_namespace})
+        return get_json_result(retcode=0, retmsg='success', data=[{'table_name': data_views[index].f_table_name,
+                                                                  'table_namespace': data_views[index].f_table_namespace
+                                                                   } for index in range(0, len(data_views))])
     else:
         return get_json_result(retcode=100, retmsg='No found table, please check if the parameters are correct')
 
