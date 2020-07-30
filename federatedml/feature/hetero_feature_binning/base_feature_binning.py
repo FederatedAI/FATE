@@ -141,21 +141,12 @@ class BaseHeteroFeatureBinning(ModelBase):
         binning_result_obj = self.binning_obj.bin_results.generated_pb()
         # binning_result_obj = self.bin_results.generated_pb()
         host_results = [x.bin_results.generated_pb() for x in self.host_results]
-
-        # self_value = self._convert_pb(self.binning_obj)
-        # host_result = {}
-        # if self.role == consts.GUEST:
-        #     for idx, host_party_id in enumerate(self.component_properties.host_party_idlist):
-        #         host_binning = self.host_results[idx]
-        #         host_result[str(host_party_id)] = self._convert_pb(host_binning)
-
         result_obj = feature_binning_param_pb2. \
             FeatureBinningParam(binning_result=binning_result_obj,
                                 host_results=host_results,
                                 header=self.header,
                                 model_name=consts.BINNING_MODEL)
-        # json_result = json_format.MessageToJson(result_obj)
-        # LOGGER.debug("json_result: {}".format(json_result))
+
         return result_obj
 
     def load_model(self, model_dict):
