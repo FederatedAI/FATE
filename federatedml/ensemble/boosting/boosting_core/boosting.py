@@ -398,17 +398,9 @@ class Boosting(ModelBase, ABC):
                 raise NotImplementedError("objective {} not supprted yet".format(self.objective_param.objective))
 
         if self.task_type == consts.CLASSIFICATION:
-            classes_ = self.classes_
-            if self.num_classes == 2:
-                threshold = self.predict_param.threshold
-                predict_result = data_inst.join(predicts, lambda inst, pred: [inst.label,
-                                                                              classes_[1] if pred > threshold else
-                                                                              classes_[0], pred,
-                                                                              {"0": 1 - pred, "1": pred}])
-            else:
-                predict_result = data_inst.join(predicts, lambda inst, preds: [inst.label, classes_[np.argmax(preds)],
-                                                                               np.max(preds),
-                                                                               dict(zip(map(str, classes_), preds))])
+
+            predict_result = self.predict_score_to_output(data_inst, predict_score=predicts, classes=self.num_classes,
+                                                          threshold=self.predict_param.threshold)
 
         elif self.task_type == consts.REGRESSION:
             predict_result = data_inst.join(predicts, lambda inst, pred: [inst.label, float(pred), float(pred),
