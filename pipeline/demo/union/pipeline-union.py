@@ -43,7 +43,7 @@ hetero_lr_0 = HeteroLR(name="hetero_lr_0", max_iter=20, early_stop="weight_diff"
 print ("get input_0's name {}".format(input_0.name))
 print ("get input_1's name {}".format(input_1.name))
 pipeline.add_component(dataio_0, data=Data(data=input_0.data))
-pipeline.add_component(dataio_1, data=Data(data=input_1.data), model=Model(dataio_0.output.model_output))
+pipeline.add_component(dataio_1, data=Data(data=input_1.data), model=Model(dataio_0.output.model))
 pipeline.add_component(intersect_0, data=Data(data=dataio_0.output.data))
 pipeline.add_component(intersect_1, data=Data(data=dataio_1.output.data))
 pipeline.add_component(union_0, data=Data(data=[intersect_0.output.data, intersect_1.output.data]))

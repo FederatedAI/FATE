@@ -6,6 +6,8 @@ from pipeline.component.hetero_linr import HeteroLinR
 from pipeline.component.input import Input
 from pipeline.component.intersection import Intersection
 from pipeline.interface.data import Data
+from pipeline.interface.model import Model
+
 
 guest = 9999
 host = 10000
@@ -40,7 +42,7 @@ hetero_linr_0 = HeteroLinR(name="hetero_linr_0", early_stop="weight_diff", max_i
 
 print ("get input_0's name {}".format(input_0.name))
 pipeline.add_component(dataio_0, data=Data(data=input_0.data))
-pipeline.add_component(dataio_1, data=Data(data=input_1.data))
+pipeline.add_component(dataio_1, data=Data(data=input_1.data), model=Model(dataio_0.output.model))
 
 pipeline.add_component(intersect_0, data=Data(data=dataio_0.output.data))
 pipeline.add_component(intersect_1, data=Data(data=dataio_1.output.data))
