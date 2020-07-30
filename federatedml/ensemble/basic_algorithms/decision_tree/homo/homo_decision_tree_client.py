@@ -378,16 +378,16 @@ class HomoDecisionTreeClient(DecisionTree):
         self.convert_bin_to_real()
         LOGGER.debug('fitting tree done')
 
-    def traverse_tree(self, data_inst: Instance, tree: List[Node], use_missing=True, zero_as_missing=True):
+    def traverse_tree(self, data_inst: Instance, tree: List[Node], use_missing, zero_as_missing):
 
-        nid = 0# root node id
+        nid = 0 # root node id
         while True:
 
             if tree[nid].is_leaf:
                 return tree[nid].weight
 
             cur_node = tree[nid]
-            fid,bid = cur_node.fid,cur_node.bid
+            fid, bid = cur_node.fid,cur_node.bid
             missing_dir = cur_node.missing_dir
 
             if use_missing and zero_as_missing:

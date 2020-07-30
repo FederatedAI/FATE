@@ -12,6 +12,12 @@ from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import Feature
 from federatedml.ensemble import HeteroSecureBoostGuest
 import numpy as np
 
+from federatedml.util.io_check import assert_io_num_rows_equal
+
+import functools
+
+from typing import List
+
 from arch.api.utils import log_utils
 LOGGER = log_utils.getLogger()
 
@@ -92,6 +98,46 @@ class HomoSecureBoostClient(HomoBoostingClient):
         self.update_feature_importance(new_tree.get_feature_importance())
 
         return new_tree
+
+    @staticmethod
+    def predict_helper(data, tree_list: List[HomoDecisionTreeClient], init_score, zero_as_missing, use_missing
+                       ,learning_rate, class_num=1):
+
+        weight_list = []
+        for tree in tree_list:
+            weight = tree.traverse_tree(data, tree.tree_node, use_missing=use_missing, zero_as_missing=zero_as_missing)
+            weight_list.append(weight)
+
+        weights = np.array(weight_list)
+
+        if class_num > 1:
+            weights = weights.reshape((-1, class_num))
+
+        return np.sum(weights * learning_rate, axis=0) + init_score
+
+    def fast_homo_tree_predict(self, data_inst):
+
+        LOGGER.debug('running fast homo tree predict')
+        to_predict_data = self.data_alignment(data_inst)
+        tree_list = []
+        rounds = len(self.boosting_model_list) // self.booster_dim
+        for idx in range(0, rounds):
+            for booster_idx in range(self.booster_dim):
+                model = self.load_booster(self.booster_meta,
+                                          self.boosting_model_list[idx * self.booster_dim + booster_idx],
+                                          idx, booster_idx)
+                tree_list.append(model)
+
+        func = functools.partial(self.predict_helper, tree_list=tree_list, init_score=self.init_score,
+                                 zero_as_missing=self.zero_as_missing, use_missing=self.use_missing,
+                                 learning_rate=self.learning_rate, class_num=self.num_classes)
+        predict_rs = to_predict_data.mapValues(func)
+
+        return self.score_to_predict_result(data_inst, predict_rs, )
+
+    @assert_io_num_rows_equal
+    def predict(self, data_inst):
+        return self.fast_homo_tree_predict(data_inst)
 
     def generate_summary(self) -> dict:
 

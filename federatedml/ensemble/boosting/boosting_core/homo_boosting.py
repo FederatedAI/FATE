@@ -28,6 +28,8 @@ from federatedml.param.boosting_param import HomoSecureBoostParam
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 
+from federatedml.util.io_check import assert_io_num_rows_equal
+
 
 LOGGER = log_utils.getLogger()
 
@@ -143,9 +145,9 @@ class HomoBoostingClient(Boosting, ABC):
 
         self.set_summary(self.generate_summary())
 
-    def predict(self, data_inst):
+    def lazy_predict(self, data_inst):
 
-        LOGGER.debug('start predict')
+        LOGGER.debug('running lazy predict')
         to_predict_data = self.data_alignment(data_inst)
 
         init_score = self.init_score
@@ -163,6 +165,10 @@ class HomoBoostingClient(Boosting, ABC):
         LOGGER.debug('prediction finished')
 
         return self.score_to_predict_result(data_inst, self.predict_y_hat)
+
+    @assert_io_num_rows_equal
+    def predict(self, data_inst):
+        return self.lazy_predict(data_inst)
 
     @abc.abstractmethod
     def fit_a_booster(self, epoch_idx: int, booster_dim: int):
