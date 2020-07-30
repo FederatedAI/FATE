@@ -132,7 +132,7 @@ class FeatureBinningParam(BaseParam):
 
     Parameters
     ----------
-    method : str, 'quantile' or 'bucket', default: 'quantile'
+    method : str, 'quantile'， 'bucket' or 'optimal', default: 'quantile'
         Binning method.
 
     compress_thres: int, default: 10000

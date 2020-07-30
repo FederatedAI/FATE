@@ -19,7 +19,7 @@
             "input": {
                 "data": {
                     "data": [
-                        "args.validate_data"
+                        "args.eval_data"
                     ]
                 },
                 "model": [
@@ -62,7 +62,7 @@
             "input": {
                 "data": {
                     "train_data": ["intersection_0.train"],
-                    "validate_data": ["intersection_1.eval"]
+                    "eval_data": ["intersection_1.eval"]
                 }
             },
             "output": {

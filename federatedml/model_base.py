@@ -269,7 +269,7 @@ class ModelBase(object):
         -------
 
         """
-        
+
         if not isinstance(new_summary, dict):
             raise ValueError(f"summary should be of dict type, received {type(new_summary)} instead.")
         self._summary = copy.deepcopy(new_summary)
@@ -363,8 +363,7 @@ class ModelBase(object):
             data = list(data.values())[0]
         return data
 
-    @staticmethod
-    def obtain_data(data_list):
+    def obtain_data(self, data_list):
         if isinstance(data_list, list):
             return data_list[0]
         return data_list

@@ -110,21 +110,6 @@ class ComponentProperties(object):
                     data_keys.remove(data_type)
                 LOGGER.debug(f"[Data Parser], has_{data_type}:"
                              f" {getattr(self, f'has_{data_type}')}")
-            # if "train_data" in data_keys:
-            #     self.has_train_data = True
-            #     data_keys.remove("train_data")
-            #
-            # if "eval_data" in data_keys:
-            #     self.has_eval_data = True
-            #     data_keys.remove("eval_data")
-            #
-            # if "validate_data" in data_keys:
-            #     self.has_validate_data = True
-            #     data_keys.remove("validate_data")
-            #
-            # if "test_data" in data_keys:
-            #     self.has_test_data = True
-            #     data_keys.remove("test_data")
 
             if len(data_keys) > 0:
                 self.has_normal_input_data = True
@@ -201,7 +186,12 @@ class ComponentProperties(object):
 
             if len(data_dict) > 0:
                 for k, v in data_dict.items():
-                    data[".".join([cpn_name, k])] = model.obtain_data(v)
+                    data_list = model.obtain_data(v)
+                    if isinstance(data_list, list):
+                        for i, data_i in enumerate(data_list):
+                            data[".".join([cpn_name, k, str(i)])] = data_i
+                    else:
+                        data[".".join([cpn_name, k])] = data_list
 
         train_data = model_data.get('train_data')
         validate_data = None
@@ -220,9 +210,8 @@ class ComponentProperties(object):
         # self.has_validate_data = True if (validate_data or self.has_eval_data) else False
         if test_data is not None:
             self.has_test_data = True
-        if validate_data or self.has_eval_data:
+        if validate_data or (self.has_train_data and self.has_eval_data):
             self.has_validate_data = True
-
 
         if self.has_train_data and type(train_data) in ["DTable", "RDDTable"]:
             self.input_data_count = train_data.count()
@@ -234,32 +223,6 @@ class ComponentProperties(object):
         if self.has_validate_data and type(validate_data) in ["DTable", "RDDTable"]:
             self.input_eval_data_count = validate_data.count()
 
-            # for data_type, d_table in data_dict.items():
-            #     if data_type == "train_data" and d_table is not None:
-            #         if isinstance(d_table, list):
-            #             train_data = d_table[0]
-            #         else:
-            #             train_data = d_table
-            #         if train_data is not None:
-            #             self.input_data_count = train_data.count()
-            #     elif data_type == 'eval_data' and d_table is not None:
-            #         if isinstance(d_table, list):
-            #             eval_data = d_table[0]
-            #         else:
-            #             eval_data = d_table
-            #         # eval_data = d_table[0]
-            #         if eval_data is not None:
-            #             self.input_eval_data_count = eval_data.count()
-            #     else:
-            #         if d_table is not None:
-            #             if isinstance(d_table, list):
-            #                 data[".".join([data_key, data_type])] = d_table[0]
-            #             else:
-            #                 data[".".join([data_key, data_type])] = d_table
-
-        # for data_key, data_table in data.items():
-        #     if data_table is not None:
-        #         self.input_data_count += data_table.count()
         self._abnormal_dsl_config_detect()
         LOGGER.debug(f"train_data: {train_data}, validate_data: {validate_data}, "
                      f"test_data: {test_data}, data: {data}")
