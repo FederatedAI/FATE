@@ -42,6 +42,10 @@ class Table(TableABC):
     """unary transform
     """
 
+    @property
+    def partitions(self):
+        return self._rdd.getNumPartitions()
+
     @log_elapsed
     def map(self, func, **kwargs):
         return _from_rdd(_map(self._rdd, func))

@@ -143,6 +143,10 @@ class Table(TableABC):
         self._name = name
         self._partitions = partitions
 
+    @property
+    def partitions(self):
+        return self._partitions
+
     def __del__(self):
         if self._need_cleanup:
             self._destroy()
