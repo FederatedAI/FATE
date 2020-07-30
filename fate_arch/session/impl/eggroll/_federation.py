@@ -73,7 +73,7 @@ def _remote(v,
 
     t = _get_type(v)
     if t == _FederationValueType.ROLL_PAIR:
-        gc.add_gc_func(tag, v.destroy)
+        gc.add_gc_action(tag, v, 'destroy', {})
         _push_with_exception_handle(rsc, v, name, tag, parties)
         return
 
@@ -182,7 +182,7 @@ def _get_value_post_process(v, name: str, tag: str, party: typing.Tuple[str, str
     # got a roll pair
     if isinstance(v, RollPair):
         assert _count(v, log_str) > 0, f"[{log_str}]count is 0"
-        gc.add_gc_func(tag, v.destroy)
+        gc.add_gc_action(tag, v, 'destroy', {})
         return v
 
     # got large object in splits

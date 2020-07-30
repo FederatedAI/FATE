@@ -85,7 +85,7 @@ class EggRollTable(Table):
 
         if partition is None:
             partition = self._partitions
-        self._table.save_as(name=name, namespace=namespace, partition=partition, options=options)
+        self._table.save_as(name=name, namespace=namespace, partition=partition, options=options).disable_gc()
 
     def close(self):
         self.session.stop()
