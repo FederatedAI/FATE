@@ -130,7 +130,7 @@ class HomoBoostingClient(Boosting, ABC):
                 cur_sample_weights = model.get_sample_weights()
                 self.y_hat = self.get_new_predict_score(self.y_hat, cur_sample_weights, dim=class_idx)
 
-            local_loss = self.compute_loss(self.y, self.y_hat)
+            local_loss = self.compute_loss(self.y_hat, self.y)
             self.aggregator.send_local_loss(local_loss, self.data_bin.count(), suffix=(epoch_idx,))
 
             if self.validation_strategy:
@@ -160,7 +160,7 @@ class HomoBoostingClient(Boosting, ABC):
                                           self.boosting_model_list[idx * self.booster_dim + booster_idx],
                                           idx, booster_idx)
                 score = model.predict(to_predict_data)
-                self.predict_y_hat = self.get_new_predict_score(self.predict_y_hat, score, booster_idx)
+                self.predict_y_hat = self.get_new_predict_score(self.predict_y_hat, score, dim=booster_idx)
 
         LOGGER.debug('prediction finished')
 
@@ -168,7 +168,8 @@ class HomoBoostingClient(Boosting, ABC):
 
     @assert_io_num_rows_equal
     def predict(self, data_inst):
-        return self.lazy_predict(data_inst)
+        rs = self.lazy_predict(data_inst)
+        return rs
 
     @abc.abstractmethod
     def fit_a_booster(self, epoch_idx: int, booster_dim: int):
