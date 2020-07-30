@@ -28,6 +28,11 @@ from fate_arch.session._session_types import Party, _FederationParties
 # noinspection PyPep8Naming
 class TableABC(metaclass=ABCMeta):
 
+    @property
+    @abc.abstractmethod
+    def partitions(self):
+        ...
+
     @abc.abstractmethod
     def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
         ...

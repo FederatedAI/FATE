@@ -31,6 +31,10 @@ class Table(TableABC):
     def _as_federation_format(self):
         return self._rp
 
+    @property
+    def partitions(self):
+        return self._rp.get_partitions()
+
     @log_elapsed
     def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
         options = kwargs.get("options", {})
