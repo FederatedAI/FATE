@@ -2,6 +2,8 @@ import argparse
 
 import pymysql
 
+from fate_flow.manager.table_manager.table_operation import create, get_table
+
 database_config = {
     'user': 'root',
     'passwd': 'fate_dev',
@@ -46,13 +48,19 @@ def list_to_str(input_list):
     return ','.join(list(map(str, input_list)))
 
 
-def write_to_db(conf, table_name, file_name):
+def write_to_db(conf, table_name, file_name, namespace, partitions, head):
     db = MysqldbHelper(**conf)
+    address = create(name=table_name, namespace=namespace, store_engine='MYSQL', partitions=partitions)
+    table = get_table(name=table_name, namespace=namespace)
     create_table = 'create table {}(id varchar(50) NOT NULL, features LONGTEXT, PRIMARY KEY(id))'.format(table_name)
     db.execute(create_table.format(table_name))
     print('create table {}'.format(table_name))
     with open(file_name, 'r') as f:
         while True:
+            if head :
+                data_head = f.readline()
+                header_source_item = data_head.split(',')
+                table.save_schema({'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]})
             lines = f.readlines(12400)
             if lines:
                 sql = 'REPLACE INTO {}(id, features)  VALUES'.format(table_name)
@@ -71,10 +79,15 @@ if __name__ == "__main__":
     parser.add_argument('-n', '--namespace', required=True, type=str, help="namespace")
     parser.add_argument('-t', '--table_name', required=True, type=str, help="table_name")
     parser.add_argument('-f', '--file_name', required=True, type=str, help="file_name")
+    parser.add_argument('-f', '--partitions', required=True, type=int, help="partitions")
+    parser.add_argument('-f', '--head', required=True, type=int, help="head")
+
     args = parser.parse_args()
     namespace = args.namespace
     table_name = args.table_name
     file_name = args.file_name
+    partitions = args.partitions
+    head = args.head
     create_db(namespace)
     database_config['database'] = namespace
-    write_to_db(database_config, table_name, file_name)
+    write_to_db(database_config, table_name, file_name, namespace, partitions=partitions, head=head)
