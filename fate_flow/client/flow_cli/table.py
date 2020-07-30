@@ -29,36 +29,26 @@ def table(ctx):
     pass
 
 
-@table.command(short_help="Query Table Command")
-# @click.argument('namespace', metavar='<NAMESPACE>')
-# @click.argument('table_name', metavar='<TABLE_NAME>')
+@table.command("info", short_help="Query Table Command")
 @cli_args.NAMESPACE_REQUIRED
 @cli_args.TABLE_NAME_REQUIRED
 @click.pass_context
 def info(ctx, **kwargs):
     """
-    - COMMAND DESCRIPTION:
-
-    Query Table Information.
-
-    - REQUIRED ARGUMENTS:
+    \b
+    - DESCRIPTION:
+        Query Table Information.
 
     \b
-    <NAMESPACE> : Namespace
-    <TABLE_NAME> : Table Name
+    - USAGE:
+        flow table info -n $NAMESPACE -t $TABLE_NAME
     """
     config_data, dsl_data = preprocess(**kwargs)
     detect_utils.check_config(config=config_data, required_arguments=['namespace', 'table_name'])
     access_server('post', ctx, 'table/table_info', config_data)
 
 
-@table.command(short_help="Delete Table Command")
-# @click.option('-n', '--namespace', metavar='[NAMESPACE]', help='Namespace')
-# @click.option('-t', '--table_name', metavar='[TABLE_NAME]', help='Table Name')
-# @click.option('-j', '--job-id', metavar='[JOB_ID]', help='A valid job id')
-# @click.option('-r', '--role', metavar='[ROLE]', help='Role')
-# @click.option('-p', '--party-id', metavar='[PARTY_ID]', help='Party id')
-# @click.option('-cpn', '--component_name', metavar='[COMPONENT_NAME]', help='Component Name')
+@table.command("delete", short_help="Delete Table Command")
 @cli_args.NAMESPACE
 @cli_args.TABLE_NAME
 @cli_args.JOBID
@@ -68,10 +58,14 @@ def info(ctx, **kwargs):
 @click.pass_context
 def delete(ctx, **kwargs):
     """
-    - COMMAND DESCRIPTION:
+    \b
+    - DESCRIPTION:
+        Delete A Specified Table.
 
-    Delete A Specified Table.
+    \b
+    - USAGE:
+        flow table delete -n $NAMESPACE -t $TABLE_NAME
+        flow table delete -j $JOB_ID -r guest -p 9999
     """
-    # config_data, dsl_data = preprocess(**kwargs)
-    # access_server('post', ctx, 'table/delete', config_data)
-    click.echo(locals())
+    config_data, dsl_data = preprocess(**kwargs)
+    access_server('post', ctx, 'table/delete', config_data)

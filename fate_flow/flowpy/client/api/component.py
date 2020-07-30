@@ -14,9 +14,11 @@
 #  limitations under the License.
 #
 import os
+import json
 from contextlib import closing
 from fate_flow.flowpy.client.api.base import BaseFlowAPI
-from fate_flow.flowpy.utils import preprocess, check_config, download_from_request
+from fate_flow.flowpy.utils import (preprocess, check_config,
+                                    download_from_request, check_output_path)
 
 
 class Component(BaseFlowAPI):
@@ -91,3 +93,13 @@ class Component(BaseFlowAPI):
         check_config(config=config_data,
                      required_arguments=['job_id', 'component_name', 'role', 'party_id'])
         return self._post(url='tracking/component/output/data/table', json=config_data)
+
+    def get_summary(self, job_id, role, party_id, component_name):
+        kwargs = locals()
+        config_data, dsl_data = preprocess(**kwargs)
+        check_config(config=config_data,
+                     required_arguments=['job_id', 'component_name', 'role', 'party_id'])
+        res = self._post(url='tracking/component/summary/download', handle_result=True, json=config_data)
+        if not res.get('data'):
+            res['data'] = {}
+        return res
