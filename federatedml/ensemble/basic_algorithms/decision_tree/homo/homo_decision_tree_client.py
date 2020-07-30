@@ -312,9 +312,11 @@ class HomoDecisionTreeClient(DecisionTree):
         LOGGER.debug('assign samples to root node')
         self.inst2node_idx = self.assign_instance_to_root_node(self.data_bin, 0)
 
-        for dep in range(self.max_depth):
+        tree_height = self.max_depth + 1  # non-leaf node height + 1 layer leaf
 
-            if dep + 1 == self.max_depth:
+        for dep in range(tree_height):
+
+            if dep + 1 == tree_height:
 
                 for node in self.cur_layer_node:
                     node.is_leaf = True

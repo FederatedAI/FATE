@@ -105,9 +105,11 @@ class HomoDecisionTreeArbiter(DecisionTree):
             LOGGER.warning('an even max_split_nodes value is suggested when using histogram-subtraction, '
                            'max_split_nodes reset to {}'.format(self.max_split_nodes))
 
-        for dep in range(self.max_depth):
+        tree_height = self.max_depth + 1  # non-leaf node height + 1 layer leaf
 
-            if dep + 1 == self.max_depth:
+        for dep in range(tree_height):
+
+            if dep + 1 == tree_height:
                 break
 
             LOGGER.debug('current dep is {}'.format(dep))
