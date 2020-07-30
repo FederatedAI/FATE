@@ -14,16 +14,19 @@
 #  limitations under the License.
 #
 
+import random
+
+from sklearn.utils import resample
+
 from arch.api import session
 from arch.api.utils import log_utils
-from sklearn.utils import resample
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
-from federatedml.param.sample_param import SampleParam
-from federatedml.util import consts
-from federatedml.transfer_variable.transfer_class.sample_transfer_variable import SampleTransferVariable
 from federatedml.model_base import ModelBase
-import random
+from federatedml.param.sample_param import SampleParam
+from federatedml.transfer_variable.transfer_class.sample_transfer_variable import SampleTransferVariable
+from federatedml.util import consts
+from federatedml.util.schema_check import assert_schema_consistent
 
 LOGGER = log_utils.getLogger()
 
@@ -520,6 +523,7 @@ class Sampler(ModelBase):
 
             return sample_data_inst
 
+    @assert_schema_consistent
     def fit(self, data_inst):
         return self.run_sample(data_inst, self.task_type, self.role)
 

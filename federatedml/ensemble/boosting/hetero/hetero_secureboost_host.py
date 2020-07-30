@@ -9,7 +9,7 @@ from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeHost
 from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
     HeteroSecureBoostTransferVariable
 
-from federatedml.tree.tree_core.predict_cache import PredictDataCache
+from federatedml.ensemble.boosting.boosting_core.predict_cache import PredictDataCache
 from federatedml.statistic import data_overview
 
 from arch.api.utils import log_utils

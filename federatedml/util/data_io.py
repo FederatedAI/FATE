@@ -24,7 +24,6 @@
 import functools
 
 import numpy as np
-from federatedml.util.io_check import assert_io_num_rows_equal
 
 from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric
@@ -41,6 +40,7 @@ from federatedml.protobuf.generated.data_io_param_pb2 import OutlierParam
 from federatedml.statistic import data_overview
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 
@@ -905,7 +905,7 @@ def make_schema(header=None, sid_name=None, label_name=None):
 
     if label_name:
         schema["label_name"] = label_name
-
+    ModelBase.check_schema_content(schema)
     return schema
 
 

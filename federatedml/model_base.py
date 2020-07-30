@@ -20,8 +20,8 @@ import copy
 
 from arch.api.utils import log_utils
 from federatedml.param.evaluation_param import EvaluateParam
+from federatedml.statistic.data_overview import header_alignment
 from federatedml.util import abnormal_detection
-from federatedml.statistic.data_overview import header_alignment, check_legal_schema
 from federatedml.util.component_properties import ComponentProperties
 from federatedml.util.param_extract import ParamExtract
 
@@ -269,7 +269,7 @@ class ModelBase(object):
         -------
 
         """
-        
+
         if not isinstance(new_summary, dict):
             raise ValueError(f"summary should be of dict type, received {type(new_summary)} instead.")
         self._summary = copy.deepcopy(new_summary)
