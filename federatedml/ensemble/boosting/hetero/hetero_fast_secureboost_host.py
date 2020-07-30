@@ -11,6 +11,8 @@ from arch.api.utils import log_utils
 
 from federatedml.util import consts
 
+from federatedml.util.io_check import assert_io_num_rows_equal
+
 from typing import List
 
 import numpy as np
@@ -131,6 +133,7 @@ class HeteroFastSecureBoostHost(HeteroSecureBoostHost):
 
         return node_pos
 
+    # this func will be called by super class's predict()
     def boosting_fast_predict(self, data_inst, trees: List[HeteroFastDecisionTreeHost]):
 
         LOGGER.info('fast sbt running predict')

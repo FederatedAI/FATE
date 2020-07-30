@@ -22,8 +22,6 @@ from fate_flow.entity.metric import MetricMeta
 from federatedml.transfer_variable.transfer_class.hetero_boosting_transfer_variable import \
     HeteroBoostingTransferVariable
 
-from federatedml.ensemble.boosting.boosting_core.predict_cache import PredictDataCache
-
 from federatedml.util.io_check import assert_io_num_rows_equal
 
 import time
@@ -102,7 +100,6 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
 
     def __init__(self):
         super(HeteroBoostingGuest, self).__init__()
-        self.predict_data_cache = PredictDataCache()
 
     def _init_model(self, param):
         super(HeteroBoostingGuest, self)._init_model(param)

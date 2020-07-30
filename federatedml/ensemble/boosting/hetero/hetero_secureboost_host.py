@@ -9,8 +9,7 @@ from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeHost
 from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
     HeteroSecureBoostTransferVariable
 
-from federatedml.ensemble.boosting.boosting_core.predict_cache import PredictDataCache
-from federatedml.statistic import data_overview
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 from arch.api.utils import log_utils
 
@@ -36,9 +35,6 @@ class HeteroSecureBoostHost(HeteroBoostingHost):
         self.grad_and_hess = None
         self.model_param = HeteroSecureBoostParam()
         self.complete_secure = False
-
-        self.predict_data_cache = PredictDataCache()
-        self.data_alignment_map = {}
 
         self.predict_transfer_inst = HeteroSecureBoostTransferVariable()
 
@@ -129,21 +125,12 @@ class HeteroSecureBoostHost(HeteroBoostingHost):
 
             comm_round += 1
 
+    @assert_io_num_rows_equal
     def predict(self, data_inst):
-
 
         LOGGER.info('running prediction')
 
-        cache_dataset_key = self.predict_data_cache.get_data_key(data_inst)
-        if cache_dataset_key in self.data_alignment_map:
-            processed_data = self.data_alignment_map[cache_dataset_key]
-        else:
-            data_inst = self.data_alignment(data_inst)
-            header = [None] * len(self.feature_name_fid_mapping)
-            for idx, col in self.feature_name_fid_mapping.items():
-                header[idx] = col
-            processed_data = data_overview.header_alignment(data_inst, header)
-            self.data_alignment_map[cache_dataset_key] = processed_data
+        processed_data = self.data_and_header_alignment(data_inst)
 
         predict_start_round = self.sync_predict_start_round()
 

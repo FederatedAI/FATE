@@ -119,7 +119,7 @@ class HomoSecureBoostClient(HomoBoostingClient):
     def fast_homo_tree_predict(self, data_inst):
 
         LOGGER.debug('running fast homo tree predict')
-        to_predict_data = self.data_alignment(data_inst)
+        to_predict_data = self.data_and_header_alignment(data_inst)
         tree_list = []
         rounds = len(self.boosting_model_list) // self.booster_dim
         for idx in range(0, rounds):

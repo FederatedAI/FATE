@@ -27,6 +27,10 @@ from federatedml.loss import TweedieLoss
 
 from federatedml.param.evaluation_param import EvaluateParam
 
+from federatedml.ensemble.boosting.boosting_core.predict_cache import PredictDataCache
+
+from federatedml.statistic import data_overview
+
 from federatedml.optim.convergence import converge_func_factory
 
 from arch.api.utils import log_utils
@@ -94,6 +98,10 @@ class Boosting(ModelBase, ABC):
         self.validation_strategy = None
         self.metrics = None
         self.is_converged = False
+
+        # cache and header alignment
+        self.predict_data_cache = PredictDataCache()
+        self.data_alignment_map = {}
 
         # federation
         self.transfer_variable = None
@@ -410,6 +418,25 @@ class Boosting(ModelBase, ABC):
             raise NotImplementedError("task type {} not supported yet".format(self.task_type))
         return predict_result
 
+    def data_and_header_alignment(self, data_inst):
+
+        """
+        turn data into sparse and align header
+        """
+
+        cache_dataset_key = self.predict_data_cache.get_data_key(data_inst)
+
+        if cache_dataset_key in self.data_alignment_map:
+            processed_data = self.data_alignment_map[cache_dataset_key]
+        else:
+            data_inst_tmp = self.data_alignment(data_inst)
+            header = [None] * len(self.feature_name_fid_mapping)
+            for idx, col in self.feature_name_fid_mapping.items():
+                header[idx] = col
+            processed_data = data_overview.header_alignment(data_inst_tmp, header)
+            self.data_alignment_map[cache_dataset_key] = processed_data
+
+        return processed_data
     """
     Model IO
     """
