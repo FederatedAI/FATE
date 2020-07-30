@@ -360,16 +360,11 @@ class FTLGuest(FTL):
                                          partition=data_inst._partitions)
 
         threshold = self.predict_param.threshold
-        result = data_inst.join(predict_tb,
-                                lambda inst, predict: [inst.label,
-                                                       1 if predict[0] > threshold else 0,
-                                                       float(predict[0]),
-                                                       {"0": 1 - float(predict[0]),
-                                                        "1": float(predict[0])}])
+        predict_result = self.predict_score_to_output(data_inst, predict_tb, classes=2, threshold=threshold)
 
         LOGGER.debug('ftl guest prediction done')
 
-        return result
+        return predict_result
 
     def export_model(self):
         model_param = self.get_model_param()

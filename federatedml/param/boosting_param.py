@@ -512,6 +512,62 @@ class HeteroBoostingParam(BoostingParam):
 
 
 class HeteroSecureBoostParam(HeteroBoostingParam):
+    """
+        Define boosting tree parameters that used in federated ml.
+
+        Parameters
+        ----------
+        task_type : str, accepted 'classification', 'regression' only, default: 'classification'
+
+        tree_param : DecisionTreeParam Object, default: DecisionTreeParam()
+
+        objective_param : ObjectiveParam Object, default: ObjectiveParam()
+
+        learning_rate : float, accepted float, int or long only, the learning rate of secure boost. default: 0.3
+
+        num_trees : int, accepted int, float only, the max number of trees to build. default: 5
+
+        subsample_feature_rate : float, a float-number in [0, 1], default: 0.8
+
+        n_iter_no_change : bool,
+            when True and residual error less than tol, tree building process will stop. default: True
+
+        encrypt_param : EncodeParam Object, encrypt method use in secure boost, default: EncryptParam(), this parameter
+                        is only for hetero-secureboost
+
+        bin_num: int, positive integer greater than 1, bin number use in quantile. default: 32
+
+        encrypted_mode_calculator_param: EncryptedModeCalculatorParam object, the calculation mode use in secureboost,
+                                         default: EncryptedModeCalculatorParam(), only for hetero-secureboost
+
+        use_missing: bool, accepted True, False only, use missing value in training process or not. default: False
+
+        zero_as_missing: bool, accepted True, False only, regard 0 as missing value or not,
+                         will be use only if use_missing=True, default: False
+
+        validation_freqs: None or positive integer or container object in python. Do validation in training process or Not.
+                          if equals None, will not do validation in train process;
+                          if equals positive integer, will validate data every validation_freqs epochs passes;
+                          if container object in python, will validate data if epochs belong to this container.
+                            e.g. validation_freqs = [10, 15], will validate data when epoch equals to 10 and 15.
+                          Default: None
+                          The default value is None, 1 is suggested. You can set it to a number larger than 1 in order to
+                          speed up training by skipping validation rounds. When it is larger than 1, a number which is
+                          divisible by "num_trees" is recommended, otherwise, you will miss the validation scores
+                          of last training iteration.
+
+        early_stopping_rounds: should be a integer larger than 0，will stop training if one metric of one validation data
+                                doesn’t improve in last early_stopping_round rounds，
+                                need to set validation freqs and will check early_stopping every at every validation epoch,
+
+        metrics: list, default: []
+                 Specify which metrics to be used when performing evaluation during training process.
+                 If set as empty, default metrics will be used. For regression tasks, default metrics are
+                 ['root_mean_squared_error', 'mean_absolute_error']， For binary-classificatiin tasks, default metrics
+                 are ['auc', 'ks']. For multi-classification tasks, default metrics are ['accuracy', 'precision', 'recall']
+
+        use_first_metric_only: use only the first metric for early stopping
+        """
 
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
@@ -557,6 +613,23 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, early_stopping=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, k=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None):
+
+        """
+        work_mode：
+            mix:  alternate using guest/host features to build trees. For example, the first k trees use guest features,
+                  the second k trees use host features, and so on
+            layered: only support 2 party, when running layered mode, first 'host_depth' layer will use host features,
+                     and then next 'guest_depth' will only use guest features
+        k: every party will alternate build k trees until reach max tree num, this param is valid when work_mode is
+            mix
+        guest_depth: guest will build last guest_depth of a decision tree using guest features, is valid when work mode
+            is layered
+        host depth: host will build first host_depth of a decision tree using host features, is valid when work mode is
+            layered
+
+        other params are the same as HeteroSecureBoost
+
+        """
 
         super(HeteroFastSecureBoostParam, self).__init__(tree_param, task_type, objective_param, learning_rate,
                                                          boosting_round, subsample_feature_rate, n_iter_no_change, tol,
