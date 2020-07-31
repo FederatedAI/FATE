@@ -34,3 +34,12 @@ def merge_dict(dict1, dict2):
 
     return merge_ret
 
+
+def extract_explicit_parameter(func):
+    def wrapper(*args, **kwargs):
+        explict_kwargs = {"explict_parameters": kwargs}
+
+        return func(*args, **explict_kwargs)
+
+    return wrapper
+

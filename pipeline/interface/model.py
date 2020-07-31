@@ -20,11 +20,11 @@ class Model(object):
         self._model = model
         self._isometric_model = isometric_model
 
-    @property
-    def model(self):
-        return self._model
-
-    @property
-    def isometric_model(self):
-        return self._isometric_model
+    def __getattr__(self, model_key):
+        if model_key == "model":
+            return self.model
+        elif model_key == "isometric_model":
+            return self._isometric_model
+        else:
+            raise ValueError("model key {} not support".format(model_key))
 

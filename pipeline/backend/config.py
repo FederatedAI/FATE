@@ -14,31 +14,33 @@
 #  limitations under the License.
 #
 
-VERSION = 1
+from enum import Enum
+from fate_flow.entity.constant_config import Backend, WorkMode, JobStatus
+
+VERSION = 2
 TIME_QUERY_FREQS = 0.01
 
 
-class Backend(object):
-    EGGROLL = 0
-    SPARK = 1
+class Role(object):
+    LOCAL = "local"
+    GUEST = "guest"
+    HOST = "host"
+    ARBITER = "arbiter"
 
+    @classmethod
+    def support_roles(cls):
+        roles = set()
+        for role_key, role in cls.__dict__.items():
+            if role_key.startswith("__") and isinstance(role_key, str):
+                continue
 
-class WorkMode(object):
-    CLUSTER = 1
-    STANDALONE = 0
+            roles.add(role)
 
-
-class JobStatus(object):
-    SUCCESS = 'success'
-    RUNNING = 'running'
-    WAITING = 'waiting'
-    FAIL = 'failed'
-    Cancel = 'cancel'
+        return roles
 
 
 class StatusCode(object):
     SUCCESS = 0
     FAIL = 1
     Cancel = 2
-
 

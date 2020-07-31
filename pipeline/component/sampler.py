@@ -30,6 +30,4 @@ class FederatedSample(Component, SampleParam):
         self.output = Output(self.name)
         self._module_name = "FederatedSample"
 
-    def summary(self, data, metric_keyword):
-        return data
 

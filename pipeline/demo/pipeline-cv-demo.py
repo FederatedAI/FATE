@@ -1,12 +1,11 @@
-from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.input import Input
-from pipeline.component.intersection import Intersection
-from pipeline.component.hetero_lr import HeteroLR
-from pipeline.interface.data import Data
 from pipeline.backend.config import Backend
 from pipeline.backend.config import WorkMode
-
+from pipeline.backend.pipeline import PipeLine
+from pipeline.component.dataio import DataIO
+from pipeline.component.hetero_lr import HeteroLR
+from pipeline.component.input import Input
+from pipeline.component.intersection import Intersection
+from pipeline.interface.data import Data
 
 guest = 9999
 hosts = [10000, 10001]
@@ -54,10 +53,10 @@ pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
 # print (pipeline.get_component("intersection_0").get_output_data())
 # print (pipeline.get_component("dataio_0").get_model_param())
 # print (pipeline.get_component("hetero_lr_0").get_model_param())
-print (pipeline.get_component("hetero_lr_0").summary())
+print (pipeline.get_component("hetero_lr_0").get_summary())
 # pipeline.get_component("intersection_0").summary("intersect_count", "intersect_rate")
 
-with open("output.pkl", "wb") as fout:
-    fout.write(pipeline.dump())
+#with open("output.pkl", "wb") as fout:
+#    fout.write(pipeline.dump())
 
 
