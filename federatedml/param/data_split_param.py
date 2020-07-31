@@ -31,15 +31,15 @@ class DataSplitParam(BaseParam):
     random_state : None, int, default: None
         Specify the random state for shuffle.
 
-    test_size : None, float, int, default: None
+    test_size : None, float, int, default: 0.0
         Specify test data set size.
         float value specifies fraction of input data set, int value specifies exact number of data instances
 
-    train_size : None, float, int, default: None
+    train_size : None, float, int, default: 0.8
         Specify train data set size.
         float value specifies fraction of input data set, int value specifies exact number of data instances
 
-    validate_size : None, float, int, default: None
+    validate_size : None, float, int, default: 0.2
         Specify validate data set size.
         float value specifies fraction of input data set, int value specifies exact number of data instances
 
@@ -58,7 +58,7 @@ class DataSplitParam(BaseParam):
 
     """
 
-    def __init__(self, random_state=None, test_size=None, train_size=None, validate_size=None, stratified=False,
+    def __init__(self, random_state=None, test_size=0.0, train_size=0.8, validate_size=0.2, stratified=False,
                  shuffle=True, split_points=None, need_run=True):
         super(DataSplitParam, self).__init__()
         self.random_state = random_state
