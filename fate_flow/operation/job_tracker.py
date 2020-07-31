@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import uuid
 from typing import List
 
 from arch.api import session
@@ -20,11 +21,17 @@ from arch.api.base.table import Table
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import DB, TrackingMetric, DataView
+from fate_arch.data_table.base import SimpleTable
+from fate_flow.db.db_models import DB, Job, Task, TrackingMetric, DataView
+from fate_flow.entity.constant_config import JobStatus, TaskStatus, Backend
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.model_manager import pipelined_model
 from fate_flow.settings import API_VERSION
 from fate_flow.utils import job_utils, api_utils, model_utils, session_utils
+from fate_flow.manager.table_manager.table_operation import get_table, create
+from fate_flow.settings import API_VERSION
+from fate_flow.utils import job_utils, api_utils, model_utils
 
 
 class Tracker(object):
@@ -188,8 +195,10 @@ class Tracker(object):
                 view_data[k] = v
             return view_data
 
-    @session_utils.session_detect()
-    def save_output_data_table(self, data_table: Table, data_name: str = 'component'):
+    def get_output_data_info(self):
+        pass
+
+    def save_output_data_table(self, data_table, data_name, output_storage_engine=None):
         """
         Save component output data, will run in the task executor process
         :param data_table:
@@ -198,56 +207,61 @@ class Tracker(object):
         """
         if data_table:
             persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(
-                self.task_id), data_table.get_name()
+                self.task_id), uuid.uuid1().hex
             schedule_logger(self.job_id).info(
-                'persisting the component output temporary table: {} {} to {} {}'.format(data_table.get_namespace(),
-                                                                                         data_table.get_name(),
-                                                                                         persistent_table_namespace,
-                                                                                         persistent_table_name))
-            persistent_table = data_table.save_as(
-                namespace=persistent_table_namespace,
-                name=persistent_table_name)
-            persistent_table_metas = {}
-            persistent_table_metas.update(data_table.get_metas())
-            persistent_table_metas["schema"] = data_table.schema
-            session.save_data_table_meta(
-                persistent_table_metas,
-                data_table_namespace=persistent_table.get_namespace(), data_table_name=persistent_table.get_name())
-            data_table_info = {
-                data_name: {'name': persistent_table.get_name(), 'namespace': persistent_table.get_namespace()}}
+                'persisting the component output temporary table to {} {}'.format(persistent_table_namespace,
+                                                                                  persistent_table_name))
+            partitions = data_table.partitions
+            schedule_logger(self.job_id).info('output data table partitions is {}'.format(partitions))
+            address = create(name=persistent_table_name,
+                             namespace=persistent_table_namespace,
+                             store_engine=output_storage_engine,
+                             partitions=partitions)
+            schema = {}
+            data_table.save(address, schema=schema, partitions=partitions)
+            table = get_table(job_id=job_utils.generate_session_id(self.task_id, self.role, self.party_id),
+                              name=persistent_table_name,
+                              namespace=persistent_table_namespace)
+            party_of_data = []
+            count = 100
+            for k, v in data_table.collect():
+                party_of_data.append((k, v))
+                count -= 1
+                if count == 0:
+                    break
+            table.save_schema(schema, party_of_data=party_of_data, count=data_table.count(), partitions=partitions)
+            self.save_data_view(self.role, self.party_id,
+                                data_info={'f_table_name': persistent_table_name,
+                                           'f_table_namespace': persistent_table_namespace,
+                                           'f_partition': partitions,
+                                           'f_data_name': data_name},
+                                mark=True)
         else:
-            data_table_info = {}
-        session.save_data(
-            data_table_info.items(),
-            name=Tracker.output_table_name('data'),
-            namespace=self.table_namespace,
-            partition=48)
-        self.save_data_view(self.role, self.party_id,
-                            data_info={'f_table_name': persistent_table._name if data_table else '',
-                                       'f_table_namespace': persistent_table._namespace if data_table else '',
-                                       'f_partition': persistent_table._partitions if data_table else None,
-                                       'f_table_count_actual': data_table.count() if data_table else 0},
-                            mark=True)
+            schedule_logger(self.job_id).info('task id {} output data table is none'.format(self.task_id))
 
-    @session_utils.session_detect()
-    def get_output_data_table(self, data_name: str = 'component'):
+    def get_output_data_table(self, init_session=False, need_all=True, session_id='', data_name:  str = ''):
         """
         Get component output data table, will run in the task executor process
         :param data_name:
         :return:
         """
-        output_data_info_table = session.table(name=Tracker.output_table_name('data'),
-                                               namespace=self.table_namespace)
-        data_table_info = output_data_info_table.get(data_name)
-        if data_table_info:
-            data_table = session.table(name=data_table_info.get('name', ''),
-                                       namespace=data_table_info.get('namespace', ''))
-            data_table_meta = data_table.get_metas()
-            if data_table_meta.get('schema', None):
-                data_table.schema = data_table_meta['schema']
-            return data_table
-        else:
-            return None
+        if not init_session and not session_id:
+            session_id = job_utils.generate_session_id(self.task_id, self.role, self.party_id)
+        data_views = self.query_data_view(self.role, self.party_id, mark=True, data_name=data_name)
+        data_tables = []
+        if data_views:
+            for data_view in data_views:
+                if not need_all:
+                    data_table = SimpleTable(name=data_view.f_table_name, namespace=data_view.f_table_namespace, data_name=data_view.f_data_name)
+                    data_tables.append(data_table)
+                else:
+                    data_table = get_table(job_id=session_id,
+                                           name=data_view.f_table_name,
+                                           namespace=data_view.f_table_namespace,
+                                           partition=data_view.f_partition,
+                                           init_session=init_session)
+                    data_tables.append(data_table)
+        return data_tables
 
     def init_pipelined_model(self):
         self.pipelined_model.create_pipelined_model()
@@ -258,6 +272,9 @@ class Tracker(object):
                                                       component_module_name=self.module_name,
                                                       model_alias=model_alias,
                                                       model_buffers=model_buffers)
+            # self.save_data_view(self.role, self.party_id,
+            #                     data_info={'f_party_model_id': self.party_model_id,
+            #                                'f_model_version': self.model_version})
 
     def get_output_model(self, model_alias):
         model_buffers = self.pipelined_model.read_component_model(component_name=self.component_name,
@@ -335,6 +352,98 @@ class Tracker(object):
             return metrics
 
     def save_data_view(self, role, party_id, data_info, mark=False):
+    def save_job_info(self, role, party_id, job_info, create=False):
+        with DB.connection_context():
+            schedule_logger(self.job_id).info('save {} {} job: {}'.format(role, party_id, job_info))
+            jobs = Job.select().where(Job.f_job_id == self.job_id, Job.f_role == role, Job.f_party_id == party_id)
+            is_insert = True
+            if jobs:
+                job = jobs[0]
+                is_insert = False
+                if job.f_status == JobStatus.TIMEOUT:
+                    return None
+            elif create:
+                job = Job()
+                job.f_create_time = current_timestamp()
+            else:
+                return None
+            job.f_job_id = self.job_id
+            job.f_role = role
+            job.f_party_id = party_id
+            if 'f_status' in job_info:
+                if job.f_status in [JobStatus.COMPLETE, JobStatus.FAILED]:
+                    # Termination status cannot be updated
+                    # TODO:
+                    return
+                if (job_info['f_status'] in [JobStatus.FAILED, JobStatus.TIMEOUT]) and (not job.f_end_time):
+                    if not job.f_start_time:
+                        return
+                    job_info['f_end_time'] = current_timestamp()
+                    job_info['f_elapsed'] = job_info['f_end_time'] - job.f_start_time
+                    job_info['f_update_time'] = current_timestamp()
+
+                if (job_info['f_status'] in [JobStatus.FAILED, JobStatus.TIMEOUT,
+                                             JobStatus.CANCELED, JobStatus.COMPLETE]):
+                    job_info['f_tag'] = 'job_end'
+                if job.f_status == JobStatus.CANCELED:
+                    job_info.pop('f_status')
+            update_fields = []
+            for k, v in job_info.items():
+                try:
+                    if k in ['f_job_id', 'f_role', 'f_party_id'] or v == getattr(Job, k).default:
+                        continue
+                    setattr(job, k, v)
+                    update_fields.append(getattr(Job, k))
+                except:
+                    pass
+
+            if is_insert:
+                job.save(force_insert=True)
+            else:
+                job.save(only=update_fields)
+
+    def save_task(self, role, party_id, task_info):
+        with DB.connection_context():
+            tasks = Task.select().where(Task.f_job_id == self.job_id,
+                                        Task.f_component_name == self.component_name,
+                                        Task.f_task_id == self.task_id,
+                                        Task.f_role == role,
+                                        Task.f_party_id == party_id)
+            is_insert = True
+            if tasks:
+                task = tasks[0]
+                is_insert = False
+            else:
+                task = Task()
+                task.f_create_time = current_timestamp()
+            task.f_job_id = self.job_id
+            task.f_component_name = self.component_name
+            task.f_task_id = self.task_id
+            task.f_role = role
+            task.f_party_id = party_id
+            if 'f_status' in task_info:
+                if task.f_status in [TaskStatus.COMPLETE, TaskStatus.FAILED]:
+                    # Termination status cannot be updated
+                    # TODO:
+                    pass
+            for k, v in task_info.items():
+                try:
+                    if k in ['f_job_id', 'f_component_name', 'f_task_id', 'f_role', 'f_party_id'] or v == getattr(Task,
+                                                                                                                  k).default:
+                        continue
+                except:
+                    pass
+                setattr(task, k, v)
+            if is_insert:
+                task.save(force_insert=True)
+            else:
+                task.save()
+            return task
+
+    def save_data_view(self, role=None, party_id=None, data_info=None, mark=False):
+        if not role and not party_id:
+            role = self.role
+            party_id = self.party_id
         with DB.connection_context():
             data_views = DataView.select().where(DataView.f_job_id == self.job_id,
                                                  DataView.f_component_name == self.component_name,
@@ -367,6 +476,26 @@ class Tracker(object):
                 data_view.save()
             return data_view
 
+    def query_data_view(self, role, party_id, mark=False, data_name=None):
+        with DB.connection_context():
+            if not data_name:
+                data_views = DataView.select().where(DataView.f_job_id == self.job_id,
+                                                     DataView.f_component_name == self.component_name,
+                                                     DataView.f_task_id == self.task_id,
+                                                     DataView.f_role == role,
+                                                     DataView.f_party_id == party_id)
+            else:
+                data_views = DataView.select().where(DataView.f_job_id == self.job_id,
+                                                     DataView.f_component_name == self.component_name,
+                                                     DataView.f_task_id == self.task_id,
+                                                     DataView.f_role == role,
+                                                     DataView.f_party_id == party_id,
+                                                     DataView.f_data_name == data_name)
+            return data_views
+
+    def clean_task(self, roles, party_ids):
+        if Backend.EGGROLL != RuntimeConfig.BACKEND:
+            return
     @session_utils.session_detect()
     def clean_task(self, roles):
         schedule_logger(self.job_id).info('clean task {} on {} {}'.format(self.task_id,
@@ -390,7 +519,8 @@ class Tracker(object):
                     schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
                                                                                                          self.role,
                                                                                                          self.party_id))
-                    
+                    '''
+
         except Exception as e:
             schedule_logger(self.job_id).exception(e)
         schedule_logger(self.job_id).info('clean task {} on {} {} done'.format(self.task_id,

@@ -243,9 +243,9 @@ class ComponentProperties(object):
 
         result_data = None
         for data, name in zip(previews_data, name_list):
-            LOGGER.debug("before mapValues, one data: {}".format(data.first()))
+            # LOGGER.debug("before mapValues, one data: {}".format(data.first()))
             data = data.mapValues(lambda value: value + [name])
-            LOGGER.debug("after mapValues, one data: {}".format(data.first()))
+            # LOGGER.debug("after mapValues, one data: {}".format(data.first()))
 
             if result_data is None:
                 result_data = data
@@ -253,6 +253,6 @@ class ComponentProperties(object):
                 LOGGER.debug(f"Before union, t1 count: {result_data.count()}, t2 count: {data.count()}")
                 result_data = result_data.union(data)
                 LOGGER.debug(f"After union, result count: {result_data.count()}")
-            LOGGER.debug("before out loop, one data: {}".format(result_data.first()))
+            # LOGGER.debug("before out loop, one data: {}".format(result_data.first()))
 
         return result_data

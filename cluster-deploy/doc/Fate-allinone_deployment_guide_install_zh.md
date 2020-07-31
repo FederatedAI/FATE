@@ -76,16 +76,20 @@ ubuntu系统执行：apt list --installed | grep selinux
 
 如果已安装了selinux就执行：setenforce 0
 
-4.3 修改Linux最大打开文件数
+4.3 修改Linux系统参数
 ---------------------------
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
 
-vim /etc/security/limits.conf
+1）vim /etc/security/limits.conf
 
 \* soft nofile 65536
 
 \* hard nofile 65536
+
+2）vim /etc/security/limits.d/20-nproc.conf
+
+\* soft nproc unlimited
 
 4.4 关闭防火墙(可选)
 --------------
@@ -251,11 +255,28 @@ Swap:        131071           0      131071
 
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate-cluster-install-1.4.0-release-c7-u18.tar.gz
-tar xzf fate-cluster-install-1.4.0-release-c7-u18.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/fate-cluster-install-1.4.1-release-c7-u18.tar.gz
+tar xzf fate-cluster-install-1.4.1-release-c7-u18.tar.gz
 ```
 
-5.2 配置文件修改和示例
+## 5.2 部署前检查
+
+**在目标服务器（192.168.0.1 192.168.0.2 ）app用户下执行**
+
+把检查脚本fate-cluster-install/tools/check.sh从192.168.0.1拷贝到192.168.0.2
+
+```
+#在192.168.0.1和192.168.0.2服务器上分别执行检查脚本
+sh ./check.sh
+
+#确认app用户已配置sudo
+#虚拟内存，size不低于128G，如不满足需参考4.6章节重新设置
+#文件句柄数，不低于65535，如不满足需参考4.3章节重新设置
+#用户进程数，不低于64000，如不满足需参考4.3章节重新设置
+#确认部署前没有fate进程和端口冲突
+```
+
+5.3 配置文件修改和示例
 ----------------
 
 **在目标服务器（192.168.0.1）app用户下执行**
@@ -271,7 +292,7 @@ vi fate-cluster-install/allInone/conf/setup.conf
 | 配置项           | 配置项值                                      | 说明                                                         |
 | ---------------- | --------------------------------------------- | ------------------------------------------------------------ |
 | roles            | 默认："host" "guest"                          | 部署的角色，有HOST端、GUEST端                                |
-| version          | 默认：1.4.0                                   | Fate 版本号                                                  |
+| version          | 默认：1.4.1                                   | Fate 版本号                                                  |
 | pbase            | 默认： /data/projects                         | 项目根目录                                                   |
 | lbase            | 默认：/data/logs                              | 保持默认不要修改                                             |
 | ssh_user         | 默认：app                                     | ssh连接目标机器的用户，也是部署后文件的属主                  |
@@ -300,7 +321,7 @@ vi fate-cluster-install/allInone/conf/setup.conf
 #to install role
 roles=( "host" "guest" )
 
-version="1.4.0"
+version="1.4.1"
 #project base
 pbase="/data/projects"
 
@@ -356,7 +377,7 @@ basemodules=( "base" "java" "python" "eggroll" "fate" )
 #to install role
 roles=( "host" )
 
-version="1.4.0"
+version="1.4.1"
 #project base
 pbase="/data/projects"
 
@@ -405,7 +426,7 @@ dbmodules=( "mysql" )
 basemodules=( "base" "java" "python" "eggroll" "fate" )
 ```
 
-5.3 部署
+5.4 部署
 --------
 
 按照上述配置含义修改setup.conf文件对应的配置项后，然后在fate-cluster-install/allInone目录下执行部署脚本：
@@ -425,7 +446,7 @@ tail -f ./logs/deploy-host.log    （实时打印HOST端的部署情况）
 tail -f ./logs/deploy-mysql-host.log    （实时打印HOST端mysql的部署情况）
 ```
 
-## 5.4 问题定位
+## 5.5 问题定位
 
 1）eggroll日志
 
@@ -500,33 +521,38 @@ python run_toy_example.py 9999 10000 1
 6.2 最小化测试
 --------------
 
-### **6.2.1 快速模式：**
+### ** 6.2.1 上传预设数据 **
 
-在guest和host两方各任一egg节点中，根据需要在run_task.py中设置字段：guest_id，host_id，arbiter_id。
+您可以通过一个简单的脚本一键上传部分预设的数据。这个脚本被放置在：/data/projects/fate/python/examples/scripts/ 路径下。
 
-该文件在/data/projects/fate/python/examples/min_test_task/目录下。
-
-**在Host节点上运行：**
+您可以直接运行下列命令完成上传：
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/min_test_task/
-sh run.sh host fast
+python upload_default_data.py -m 1
 ```
 
-从测试结果中获取“host_table”和“host_namespace”的值，并将它们作为参数传递给下述guest方命令。
+更多细节信息，敬请参考[脚本README](../../examples/scripts/README.rst)
 
-**在Guest节点上运行：**
+### **6.2.2 快速模式：**
 
+请确保guest和host两方均已分别通过给定脚本上传了预设数据。
+
+然后可以进入/data/projects/fate/python/examples/min_test_task/目录，找到最小化测试脚本。
+
+快速模式下，最小化测试脚本将使用一个相对较小的数据集，即包含了569条数据的breast数据集。
+您只需要在guest端运行下列语句，即可启动最小化测试：
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/min_test_task/
-sh run.sh guest fast ${host_table} ${host_namespace} 
+   python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
 ```
 
-等待几分钟，看到结果显示“成功”字段，表明操作成功。在其他情况下，如果失败或卡住，则表示失败。
+其他一些可能有用的参数包括：
 
-### **6.2.2 正常模式**：
+1. -f: 使用的文件类型. "fast" 代表 breast数据集, "normal" 代表 default credit 数据集.
+2. --add_sbt: 如果被设置, 将在运行完lr以后，启动secureboost任务。
+
+若数分钟后在结果中显示了“success”字样则表明该操作已经运行成功了。若出现“FAILED”或者程序卡住，则意味着测试失败。
+
+### **6.2.3 正常模式**：
 
 只需在命令中将“fast”替换为“normal”，其余部分与快速模式相同。
 

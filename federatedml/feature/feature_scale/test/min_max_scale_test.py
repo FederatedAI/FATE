@@ -83,7 +83,7 @@ class TestMinMaxScaler(unittest.TestCase):
 
         scaler = MMS()
         scaler.fit(self.test_data)
-        self.assertListEqual(self.get_table_instance_feature(fit_instance),
+        self.assertListEqual(np.round(self.get_table_instance_feature(fit_instance),6).tolist(),
                              np.around(scaler.transform(self.test_data), 6).tolist())
         data_min = list(scaler.data_min_)
         data_max = list(scaler.data_max_)
@@ -390,8 +390,9 @@ class TestMinMaxScaler(unittest.TestCase):
             for j, cols in enumerate(line):
                 if j not in scale_column_idx:
                     sklearn_transform_data[i][j] = raw_data[i][j]
-
-        self.assertListEqual(self.get_table_instance_feature(fit_instance), sklearn_transform_data)
+        
+        fit_data = np.round(self.get_table_instance_feature(fit_instance),6).tolist()
+        self.assertListEqual(fit_data, sklearn_transform_data)
 
         for i, line in enumerate(sklearn_transform_data):
             for j, cols in enumerate(line):

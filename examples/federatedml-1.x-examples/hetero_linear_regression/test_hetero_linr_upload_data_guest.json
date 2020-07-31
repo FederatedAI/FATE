@@ -1,8 +1,8 @@
 {
-    "file": "examples/data/motor_mini_b.csv",
+    "file": "examples/data/motor_hetero_guest.csv",
     "head": 1,
     "partition": 16,
     "work_mode": 0,
-    "table_name": "motor_mini_b",
-    "namespace": "motor_mini"
+    "table_name": "motor_hetero_guest",
+    "namespace": "experiment"
 }

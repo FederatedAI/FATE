@@ -13,15 +13,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import datetime
 import os
 import shutil
 import time
 
-from arch.api import session
-
-from arch.api.utils import log_utils, file_utils, dtable_utils, version_control
+from arch.api.utils import log_utils, file_utils, dtable_utils
 from fate_flow.entity.metric import Metric, MetricMeta
+from fate_flow.manager.table_manager.table_operation import create_table
+from fate_flow.utils.job_utils import generate_session_id
 
 LOGGER = log_utils.getLogger()
 
@@ -33,9 +32,11 @@ class Upload(object):
         self.MAX_PARTITION_NUM = 1024
         self.MAX_BYTES = 1024*1024*8
         self.parameters = {}
+        self.table = None
 
     def run(self, component_parameters=None, args=None):
         self.parameters = component_parameters["UploadParam"]
+        LOGGER.info(self.parameters)
         self.parameters["role"] = component_parameters["role"]
         self.parameters["local"] = component_parameters["local"]
         job_id = self.taskid.split("_")[0]
@@ -61,8 +62,9 @@ class Upload(object):
         partition = self.parameters["partition"]
         if partition <= 0 or partition >= self.MAX_PARTITION_NUM:
             raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITION_NUM))
-
-        session.init(mode=self.parameters['work_mode'])
+        self.table = create_table(job_id=generate_session_id(self.taskid, self.tracker.role, self.tracker.party_id), name=table_name,
+                                  namespace=namespace, partitions=self.parameters["partition"],
+                                  store_engine=self.parameters['store_engine'], mode=self.parameters['work_mode'])
         data_table_count = self.save_data_table(table_name, namespace, head, self.parameters.get('in_version', False))
         LOGGER.info("------------load data finish!-----------------")
         # rm tmp file
@@ -91,6 +93,7 @@ class Upload(object):
                 data_head = fin.readline()
                 count -= 1
                 self.save_data_header(data_head, dst_table_name, dst_table_namespace)
+            n = 0
             while True:
                 data = list()
                 lines = fin.readlines(self.MAX_BYTES)
@@ -103,30 +106,29 @@ class Upload(object):
                     job_info = {'progress': f_progress}
                     self.update_job_status(self.parameters["local"]['role'], self.parameters["local"]['party_id'],
                                            job_info)
-                    data_table = session.save_data(data, name=dst_table_name, namespace=dst_table_namespace,
-                                                   partition=self.parameters["partition"])
+                    self.table.put_all(data)
+                    if n == 0:
+                        self.table.save_schema(party_of_data=data)
                 else:
+                    self.table.save_schema(count=self.table.count(), partitions=self.parameters["partition"])
+                    count_actual = self.table.count()
                     self.tracker.save_data_view(role=self.parameters["local"]['role'],
                                                 party_id=self.parameters["local"]['party_id'],
                                                 data_info={'f_table_name': dst_table_name,
                                                            'f_table_namespace': dst_table_namespace,
                                                            'f_partition': self.parameters["partition"],
-                                                           'f_table_count_actual': data_table.count(),
+                                                           'f_table_count_actual': count_actual,
                                                            'f_table_count_upload': count
                                                            })
                     self.callback_metric(metric_name='data_access',
                                          metric_namespace='upload',
-                                         metric_data=[Metric("count", data_table.count())])
-                    if in_version:
-                        version_log = "[AUTO] save data at %s." % datetime.datetime.now()
-                        version_control.save_version(name=dst_table_name, namespace=dst_table_namespace, version_log=version_log)
-                    return data_table.count()
+                                         metric_data=[Metric("count", count_actual)])
+                    return count_actual
+                n += 1
 
     def save_data_header(self, header_source, dst_table_name, dst_table_namespace):
         header_source_item = header_source.split(',')
-        session.save_data_table_meta({'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]},
-                                     dst_table_name,
-                                     dst_table_namespace)
+        self.table.save_schema({'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]})
 
     def get_count(self, input_file):
         with open(input_file, 'r', encoding='utf-8') as fp:

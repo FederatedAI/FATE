@@ -196,35 +196,42 @@ def component_output_model():
 @job_utils.job_server_routing()
 def component_output_data():
     request_data = request.json
-    output_data_tables = get_component_output_data_table(task_data=request_data)
+    output_data_tables = get_component_output_data_table(task_data=request_data, need_all=False)
     if not output_data_tables:
         return get_json_result(retcode=0, retmsg='no data', data=[])
     output_data_list = []
     headers = []
     totals = []
+    data_names = []
     for output_data_table in output_data_tables:
         output_data = []
         num = 100
         have_data_label = False
-
+        is_str = False
         if output_data_table:
             for k, v in output_data_table.collect():
                 if num == 0:
                     break
-                data_line, have_data_label = get_component_output_data_line(src_key=k, src_value=v)
+                data_line, have_data_label, is_str = get_component_output_data_line(src_key=k, src_value=v)
                 output_data.append(data_line)
                 num -= 1
             total = output_data_table.count()
             output_data_list.append(output_data)
+            data_names.append(output_data_table.get_data_name())
             totals.append(total)
         if output_data:
-            header = get_component_output_data_meta(output_data_table=output_data_table, have_data_label=have_data_label)
+            header = get_component_output_data_meta(output_data_table=output_data_table, have_data_label=have_data_label, is_str=is_str)
             headers.append(header)
+            try:
+                output_data_table.close()
+            except Exception as e:
+                stat_logger.exception(e)
         else:
+            output_data_list.append(None)
             headers.append(None)
     if len(output_data_list) == 1 and not output_data_list[0]:
         return get_json_result(retcode=0, retmsg='no data', data=[])
-    return get_json_result(retcode=0, retmsg='success', data=output_data_list, meta={'header': headers, 'total': totals})
+    return get_json_result(retcode=0, retmsg='success', data=output_data_list, meta={'header': headers, 'total': totals, 'names':data_names})
 
 
 @manager.route('/component/output/data/download', methods=['get'])
@@ -239,17 +246,19 @@ def component_output_data_download():
         return error_response(response_code=500, retmsg='limit is 0')
     output_data_count = 0
     have_data_label = False
+
     output_data_file_list = []
     output_data_meta_file_list = []
     output_tmp_dir = os.path.join(os.getcwd(), 'tmp/{}'.format(fate_uuid()))
     output_file_path = '{}/output_%s'.format(output_tmp_dir)
     i = 0
     for output_data_table in output_data_tables:
+        is_str = False
         output_data_file_path = output_file_path % '{}_data.csv'.format(i)
         os.makedirs(os.path.dirname(output_data_file_path), exist_ok=True)
         with open(output_data_file_path, 'w') as fw:
             for k, v in output_data_table.collect():
-                data_line, have_data_label = get_component_output_data_line(src_key=k, src_value=v)
+                data_line, have_data_label, is_str = get_component_output_data_line(src_key=k, src_value=v)
                 fw.write('{}\n'.format(','.join(map(lambda x: str(x), data_line))))
                 output_data_count += 1
                 if output_data_count == limit:
@@ -258,7 +267,7 @@ def component_output_data_download():
         if output_data_count:
             # get meta
             output_data_file_list.append(output_data_file_path)
-            header = get_component_output_data_meta(output_data_table=output_data_table, have_data_label=have_data_label)
+            header = get_component_output_data_meta(output_data_table=output_data_table, have_data_label=have_data_label, is_str=is_str)
             output_data_meta_file_path = output_file_path % 'data_{}_meta.json'.format(i)
             output_data_meta_file_list.append(output_data_meta_file_path)
             with open(output_data_meta_file_path, 'w') as fw:
@@ -269,6 +278,10 @@ def component_output_data_download():
                     f.seek(0, 0)
                     f.write('{}\n'.format(','.join(header)) + content)
             i += 1
+            try:
+                output_data_table.close()
+            except Exception as e:
+                stat_logger.exception(e)
     # tar
     memory_file = io.BytesIO()
     tar = tarfile.open(fileobj=memory_file, mode='w:gz')
@@ -296,8 +309,9 @@ def component_output_data_table():
     request_data = request.json
     data_views = query_data_view(**request_data)
     if data_views:
-        return get_json_result(retcode=0, retmsg='success', data={'table_name': data_views[0].f_table_name,
-                                                                  'table_namespace': data_views[0].f_table_namespace})
+        return get_json_result(retcode=0, retmsg='success', data=[{'table_name': data_views[index].f_table_name,
+                                                                  'table_namespace': data_views[index].f_table_namespace
+                                                                   } for index in range(0, len(data_views))])
     else:
         return get_json_result(retcode=100, retmsg='No found table, please check if the parameters are correct')
 
@@ -323,7 +337,7 @@ def save_metric_meta(job_id, component_name, task_id, role, party_id):
     return get_json_result()
 
 
-def get_component_output_data_table(task_data):
+def get_component_output_data_table(task_data, need_all=True):
     check_request_parameters(task_data)
     tracker = Tracker(job_id=task_data['job_id'], component_name=task_data['component_name'],
                       role=task_data['role'], party_id=task_data['party_id'])
@@ -333,36 +347,37 @@ def get_component_output_data_table(task_data):
     component = job_dsl_parser.get_component_info(task_data['component_name'])
     if not component:
         raise Exception('can not found component, please check if the parameters are correct')
-    output_dsl = component.get_output()
-    output_data_dsl = output_dsl.get('data', [])
-    output_data_tables = []
-    for index in range(0, len(output_data_dsl)):
-        output_data_table = tracker.get_output_data_table(output_data_dsl[index] if output_data_dsl else 'component')
-        output_data_tables.append(output_data_table)
+    output_data_tables = tracker.get_output_data_table(init_session=True, need_all=need_all)
     return output_data_tables
 
 
 def get_component_output_data_line(src_key, src_value):
     have_data_label = False
     data_line = [src_key]
+    is_str = False
     if isinstance(src_value, Instance):
         if src_value.label is not None:
             data_line.append(src_value.label)
             have_data_label = True
         data_line.extend(data_utils.dataset_to_list(src_value.features))
+    elif isinstance(src_value, str):
+        data_line.extend([value for value in src_value.split(',')])
+        is_str = True
     else:
         data_line.extend(data_utils.dataset_to_list(src_value))
-    return data_line, have_data_label
+    return data_line, have_data_label, is_str
 
 
-def get_component_output_data_meta(output_data_table, have_data_label):
+def get_component_output_data_meta(output_data_table, have_data_label, is_str=False):
     # get meta
-    output_data_meta = output_data_table.get_metas()
-    schema = output_data_meta.get('schema', {})
+    schema = output_data_table.get_schema()
     header = [schema.get('sid_name', 'sid')]
     if have_data_label:
         header.append(schema.get('label_name'))
-    header.extend(schema.get('header', []))
+    if is_str:
+        header.extend([feature for feature in schema.get('header').split(',')])
+    else:
+        header.extend(schema.get('header', []))
     return header
 
 

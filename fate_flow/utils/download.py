@@ -15,10 +15,10 @@
 #
 import os
 
-from arch.api import session
-
 from arch.api.utils import log_utils, dtable_utils
 from fate_flow.entity.metric import Metric, MetricMeta
+from fate_flow.manager.table_manager.table_operation import get_table
+from fate_flow.utils.job_utils import generate_session_id
 
 LOGGER = log_utils.getLogger()
 
@@ -36,9 +36,9 @@ class Download(object):
         table_name, namespace = dtable_utils.get_table_info(config=self.parameters,
                                                             create=False)
         job_id = self.taskid.split("_")[0]
-        session.init(job_id, self.parameters["work_mode"])
         with open(os.path.abspath(self.parameters["output_path"]), "w") as fout:
-            data_table = session.get_data_table(name=table_name, namespace=namespace)
+            data_table = get_table(job_id=generate_session_id(self.taskid, self.tracker.role, self.tracker.party_id,),
+                                   namespace=namespace, name=table_name)
             count = data_table.count()
             LOGGER.info('===== begin to export data =====')
             lines = 0

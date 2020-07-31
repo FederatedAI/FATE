@@ -18,14 +18,14 @@
         "guest": {
             "args": {
                 "data": {
-                    "eval_data": [{"name": "breast_b", "namespace": "fate_flow_test_breast"}]
+                    "eval_data": [{"name": "breast_hetero_guest", "namespace": "fate_flow_test_breast_hetero"}]
                 }
             }
         },
         "host": {
             "args": {
                 "data": {
-                    "eval_data": [{"name": "breast_a", "namespace": "fate_flow_test_breast"}]
+                    "eval_data": [{"name": "breast_hetero_host", "namespace": "fate_flow_test_breast_hetero"}]
                 }
             }
         }

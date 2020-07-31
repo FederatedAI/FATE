@@ -17,19 +17,28 @@ import argparse
 import importlib
 import os
 import traceback
+import uuid
+
 from arch.api import federation
-from arch.api import session, Backend
-from arch.api.base.utils.store_type import StoreTypes
 from arch.api.utils import file_utils, log_utils
 from arch.api.utils.core_utils import current_timestamp, get_lan_ip, timestamp_to_date
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.entity.constant import TaskStatus, ProcessRole
+from fate_arch import session
+from fate_arch.data_table.store_type import StoreTypes, StoreEngine
+from fate_arch.session import Backend
+from fate_flow.db.db_models import Task
+from fate_flow.entity.constant_config import TaskStatus, ProcessRole
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
+from fate_flow.manager.table_manager.table_operation import get_table, create
+from fate_flow.manager.tracking_manager import Tracking
 from fate_flow.settings import API_VERSION, SAVE_AS_TASK_INPUT_DATA_SWITCH, SAVE_AS_TASK_INPUT_DATA_IN_MEMORY
 from fate_flow.utils import job_utils
 from fate_flow.utils import api_utils
 from fate_flow.entity.constant import RetCode
+from fate_flow.utils import job_utils, data_utils
+from fate_flow.utils.api_utils import federated_api
 
 
 class TaskExecutor(object):
@@ -120,12 +129,14 @@ class TaskExecutor(object):
 
             # init environment, process is shared globally
             RuntimeConfig.init_config(WORK_MODE=job_parameters['work_mode'],
-                                      BACKEND=job_parameters.get('backend', 0))
+                                      BACKEND=job_parameters.get('backend', 0),
+                                      STORE_ENGINE=job_parameters.get('store_engine', 0))
+
             if args.processors_per_node and args.processors_per_node > 0 and RuntimeConfig.BACKEND == Backend.EGGROLL:
                 session_options = {"eggroll.session.processors.per.node": args.processors_per_node}
             else:
                 session_options = {}
-            session.init(job_id=job_utils.generate_session_id(task_id, task_version, role, party_id),
+            session.init(session_id=job_utils.generate_session_id(task_id, role, party_id),
                          mode=RuntimeConfig.WORK_MODE,
                          backend=RuntimeConfig.BACKEND,
                          options=session_options)
@@ -134,6 +145,7 @@ class TaskExecutor(object):
             schedule_logger().info('run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
             schedule_logger().info(component_parameters_on_party)
             schedule_logger().info(task_input_dsl)
+            output_storage_engine = []
             task_run_args = TaskExecutor.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
                                                            task_id=task_id,
                                                            task_version=task_version,
@@ -141,7 +153,8 @@ class TaskExecutor(object):
                                                            job_parameters=job_parameters,
                                                            task_parameters=task_parameters,
                                                            input_dsl=task_input_dsl,
-                                                           if_save_as_task_input_data=job_parameters.get("save_as_task_input_data", SAVE_AS_TASK_INPUT_DATA_SWITCH)
+                                                           if_save_as_task_input_data=job_parameters.get("save_as_task_input_data", SAVE_AS_TASK_INPUT_DATA_SWITCH),
+                                                           output_storage_engine=output_storage_engine
                                                            )
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
             run_object.set_tracker(tracker=tracker)
@@ -151,7 +164,8 @@ class TaskExecutor(object):
             if not isinstance(output_data, list):
                 output_data = [output_data]
             for index in range(0, len(output_data)):
-                tracker.save_output_data_table(output_data[index], task_output_dsl.get('data')[index] if task_output_dsl.get('data') else 'component')
+                tracker.save_output_data_table(output_data[index], task_output_dsl.get('data')[index] if task_output_dsl.get('data') else '{}'.format(index),
+                                               output_storage_engine[index] if output_storage_engine else None)
             output_model = run_object.export_model()
             # There is only one model output at the current dsl version.
             tracker.save_output_model(output_model, task_output_dsl['model'][0] if task_output_dsl.get('model') else 'default')
@@ -180,6 +194,8 @@ class TaskExecutor(object):
     @staticmethod
     def get_task_run_args(job_id, role, party_id, task_id, task_version, job_args, job_parameters, task_parameters, input_dsl,
                           if_save_as_task_input_data, filter_type=None, filter_attr=None):
+    def get_task_run_args(job_id, role, party_id, task_id, job_args, job_parameters, task_parameters, input_dsl,
+                          if_save_as_task_input_data, filter_type=None, filter_attr=None, output_storage_engine=None):
         task_run_args = {}
         for input_type, input_detail in input_dsl.items():
             if filter_type and input_type not in filter_type:
@@ -194,16 +210,25 @@ class TaskExecutor(object):
                     for data_key in data_list:
                         data_key_item = data_key.split('.')
                         search_component_name, search_data_name = data_key_item[0], data_key_item[1]
+                        session_id = job_utils.generate_session_id(task_id, role, party_id)
                         if search_component_name == 'args':
                             if job_args.get('data', {}).get(search_data_name).get('namespace', '') and job_args.get(
                                     'data', {}).get(search_data_name).get('name', ''):
-
-                                data_table = session.table(
+                                data_table = get_table(
+                                    job_id=session_id,
                                     namespace=job_args['data'][search_data_name]['namespace'],
                                     name=job_args['data'][search_data_name]['name'])
                             else:
                                 data_table = None
                         else:
+                            data_table = Tracking(job_id=job_id, role=role, party_id=party_id,
+                                                  component_name=search_component_name).get_output_data_table(
+                                data_name=search_data_name, session_id=session_id)
+                            if data_table:
+                                data_table = data_table[0]
+                            else:
+                                data_table = None
+                        output_storage_engine.append(data_table.get_storage_engine() if data_table else None)
                             data_table = Tracker(job_id=job_id, role=role, party_id=party_id,
                                                  component_name=search_component_name).get_output_data_table(
                                 data_name=search_data_name)
@@ -212,13 +237,25 @@ class TaskExecutor(object):
                         # todo: If the same component has more than one identical input, save as is repeated
                         if if_save_as_task_input_data:
                             if data_table:
-                                schedule_logger().info("start save as task {} input data table {} {}".format(
-                                    task_id,
-                                    data_table.get_namespace(),
-                                    data_table.get_name()))
-                                origin_table_metas = data_table.get_metas()
-                                origin_table_schema = data_table.schema
+                                schedule_logger().info("start save as task {} input data table {}".format(
+                                    task_id, data_table.get_address()))
+                                origin_table_metas = data_table.get_schema()
+                                name = uuid.uuid1().hex
+                                namespace = job_utils.generate_session_id(task_id=task_id, role=role, party_id=party_id)
+                                partitions = task_parameters['input_data_partition'] if task_parameters.get('input_data_partition', 0) > 0 else data_table.get_partitions()
+                                if RuntimeConfig.BACKEND == Backend.SPARK:
+                                    store_engine = StoreEngine.HDFS
+                                else:
+                                    store_engine = StoreEngine.IN_MEMORY if SAVE_AS_TASK_INPUT_DATA_IN_MEMORY \
+                                        else StoreEngine.LMDB
                                 save_as_options = {"store_type": StoreTypes.ROLLPAIR_IN_MEMORY} if SAVE_AS_TASK_INPUT_DATA_IN_MEMORY else {}
+                                address = create(name=name, namespace=namespace, store_engine=store_engine,
+                                                 partitions=partitions)
+                                data_table.save_as(address=address, partition=partitions, options=save_as_options,
+                                                   name=name, namespace=namespace, schema_data=origin_table_metas)
+                                schedule_logger().info("save as task {} input data table to {} done".format(task_id, address))
+                                data_table = session.default().load(address, schema=origin_table_metas,
+                                                                    partitions=partitions)
                                 # TODO: data table name concat random string
                                 data_table = data_table.save_as(
                                     namespace=job_utils.generate_session_id(task_id=task_id,
@@ -309,11 +346,13 @@ class TaskExecutor(object):
     @staticmethod
     def monkey_patch():
         package_name = "monkey_patch"
-        package_path = os.path.join(file_utils.get_project_base_directory(), package_name)
+        package_path = os.path.join(file_utils.get_project_base_directory(), "fate_flow", package_name)
+        if not os.path.exists(package_path):
+            return
         for f in os.listdir(package_path):
             if not os.path.isdir(f) or f == "__pycache__":
                 continue
-            patch_module = importlib.import_module(package_name + '.' + f + '.monkey_patch')
+            patch_module = importlib.import_module("fate_flow." + package_name + '.' + f + '.monkey_patch')
             patch_module.patch_all()
 
 

@@ -48,6 +48,7 @@ def load_model():
     load_status = True
     load_status_info = {}
     load_status_msg = 'success'
+    load_status_info['detail'] = {}
     for role_name, role_partys in request_config.get("role").items():
         if role_name == 'arbiter':
             continue
@@ -64,6 +65,14 @@ def load_model():
                                          json_body=request_config,
                                          work_mode=request_config['job_parameters']['work_mode'])
                 load_status_info[role_name][_party_id] = response['retcode']
+                load_status_info['detail'][role_name] = {}
+                detail = {_party_id: {}}
+                detail[_party_id]['retcode'] = response['retcode']
+                detail[_party_id]['retmsg'] = response['retmsg']
+                load_status_info['detail'][role_name].update(detail)
+                if response['retcode']:
+                    load_status = False
+                    load_status_msg = 'failed'
             except Exception as e:
                 stat_logger.exception(e)
                 load_status = False
@@ -77,8 +86,8 @@ def load_model():
 def do_load_model():
     request_data = request.json
     request_data["servings"] = ServiceUtils.get("servings", [])
-    load_status = publish_model.load_model(config_data=request_data)
-    return get_json_result(retcode=(0 if load_status else 101))
+    retcode, retmsg = publish_model.load_model(config_data=request_data)
+    return get_json_result(retcode=retcode, retmsg=retmsg)
 
 
 @manager.route('/bind', methods=['POST'])
@@ -87,10 +96,11 @@ def bind_model_service():
     if not request_config.get('servings'):
         # get my party all servings
         request_config['servings'] = ServiceUtils.get("servings", [])
-    if not request_config.get('service_id'):
+    service_id = request_config.get('service_id')
+    if not service_id:
         return get_json_result(retcode=101, retmsg='no service id')
-    bind_status, service_id = publish_model.bind_model_service(config_data=request_config)
-    return get_json_result(retcode=(0 if bind_status else 101), retmsg='service id is {}'.format(service_id))
+    bind_status, retmsg = publish_model.bind_model_service(config_data=request_config)
+    return get_json_result(retcode=bind_status, retmsg='service id is {}'.format(service_id) if not retmsg else retmsg)
 
 
 @manager.route('/transfer', methods=['post'])

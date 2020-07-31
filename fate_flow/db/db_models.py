@@ -76,7 +76,10 @@ class BaseDataBase(object):
             raise Exception('can not init database')
 
 
-if __main__.__file__.endswith('fate_flow_server.py') or __main__.__file__.endswith('task_executor.py'):
+MAIN_FILE_PATH = os.path.realpath(__main__.__file__)
+if MAIN_FILE_PATH.endswith('fate_flow_server.py') or \
+        MAIN_FILE_PATH.endswith('task_executor.py') or \
+        MAIN_FILE_PATH.find("/unittest/__main__.py"):
     DB = BaseDataBase().database_connection
 else:
     # Initialize the database only when the server is started.
@@ -242,10 +245,11 @@ class DataView(DataBaseModel):
     f_size = BigIntegerField(default=0)
     f_description = TextField(null=True, default='')
     f_tag = CharField(max_length=50, null=True, index=True, default='')
+    f_data_name = CharField(max_length=30, default='0')
 
     class Meta:
         db_table = "t_data_view"
-        primary_key = CompositeKey('f_job_id', 'f_task_id', 'f_role', 'f_party_id')
+        primary_key = CompositeKey('f_job_id', 'f_task_id', 'f_role', 'f_party_id', 'f_data_name')
 
 
 class MachineLearningModelMeta(DataBaseModel):
@@ -302,3 +306,5 @@ class TrackingMetric(DataBaseModel):
     f_type = IntegerField(index=True)  # 0 is data, 1 is meta
     f_create_time = BigIntegerField()
     f_update_time = BigIntegerField(null=True)
+
+

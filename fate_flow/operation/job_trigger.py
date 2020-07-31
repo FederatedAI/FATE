@@ -16,12 +16,16 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
+
+from fate_flow.entity.constant_config import JobStatus, WorkMode
+
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.manager.queue_manager import BaseQueue
 from fate_flow.settings import RE_ENTRY_QUEUE_TIME, stat_logger
 from fate_flow.utils import job_utils
+from fate_flow.settings import RE_ENTRY_QUEUE_TIME, stat_logger, WORK_MODE
 
 
 class JobTrigger(threading.Thread):
@@ -38,18 +42,17 @@ class JobTrigger(threading.Thread):
             return False
         all_jobs = []
 
-        # get Mediation queue job
-        t = threading.Thread(target=mediation_queue_put_events, args=[self.queue])
-        t.start()
+        if WORK_MODE == WorkMode.CLUSTER:
+            # get Mediation queue job
+            t = threading.Thread(target=mediation_queue_put_events, args=[self.queue])
+            t.start()
 
-        t = threading.Thread(target=queue_put_events, args=[self.queue])
-        t.start()
+            t = threading.Thread(target=queue_put_events, args=[self.queue])
+            t.start()
 
         schedule_logger().info('start get event from queue')
         while True:
             try:
-                if not t.is_alive():
-                    t.start()
                 if len(all_jobs) == self.concurrent_num:
                     for future in as_completed(all_jobs):
                         all_jobs.remove(future)

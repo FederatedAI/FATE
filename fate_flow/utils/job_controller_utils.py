@@ -1,7 +1,7 @@
 import time
 from threading import Lock
 
-from arch.standalone import WorkMode
+from fate_arch.common import WorkMode
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_saver import JobSaver
 from fate_flow.settings import LIMIT_ROLE, MAX_CONCURRENT_JOB_RUN_HOST

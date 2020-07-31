@@ -90,8 +90,8 @@ class DenseFeatureReader(object):
                 raise ValueError("input data's schema for fit and transform should be same")
 
     def generate_header(self, input_data, mode="fit"):
-        header = input_data.get_meta("header")
-        sid_name = input_data.get_meta("sid")
+        header = input_data.schema["header"]
+        sid_name = input_data.schema["sid"]
         LOGGER.debug("header is {}".format(header))
         LOGGER.debug("sid_name is {}".format(sid_name))
 
@@ -558,6 +558,11 @@ class SparseTagReader(object):
         self.header = None
         self.sid_name = "sid"
         self.label_name = self.label_name = data_io_param.label_name
+        self.missing_fill = data_io_param.missing_fill
+        self.missing_fill_method = data_io_param.missing_fill_method
+        self.default_value = data_io_param.default_value
+        self.missing_impute_rate = None
+        self.missing_impute = None
 
     @staticmethod
     def agg_tag(kvs, delimitor=' ', with_label=True, tag_with_value=False, tag_value_delimitor=":"):
@@ -596,6 +601,68 @@ class SparseTagReader(object):
         set_schema(data_instance, schema)
         return data_instance
 
+    @staticmethod
+    def change_tag_to_str(value, tags_dict=None, delimitor=",", with_label=False, tag_value_delimitor=":"):
+        vals = value.split(delimitor, -1)
+        ret = [''] * len(tags_dict)
+        if with_label:
+            vals = vals[1:]
+
+        for i in range(len(vals)):
+            tag, value = vals[i].split(tag_value_delimitor, -1)
+            idx = tags_dict.get(tag, None)
+            if idx is not None:
+                ret[idx] = value
+
+        return ret
+
+    @staticmethod
+    def change_str_to_tag(value, tags_dict=None, delimitor=",", tag_value_delimitor=":"):
+        ret = [None] * len(tags_dict)
+        tags = sorted(list(tags_dict.keys()))
+        for i in range(len(value)):
+            tag, val = tags[i], value[i]
+            ret[i] = tag_value_delimitor.join([tag, val])
+
+        return delimitor.join(ret)
+
+    def fill_missing_value(self, input_data, tags_dict, mode="fit"):
+        str_trans_method = functools.partial(self.change_tag_to_str,
+                                             tags_dict=tags_dict,
+                                             delimitor=self.delimitor,
+                                             with_label=self.with_label,
+                                             tag_value_delimitor=self.tag_value_delimitor)
+
+        input_data = input_data.mapValues(str_trans_method)
+        schema = make_schema(self.header, self.sid_name, self.label_name)
+        set_schema(input_data, schema)
+
+        from federatedml.feature.imputer import Imputer
+        imputer_processor = Imputer()
+        if mode == "fit":
+            data, self.default_value = imputer_processor.fit(input_data,
+                                                             replace_method=self.missing_fill_method,
+                                                             replace_value=self.default_value)
+            LOGGER.debug("self.default_value is {}".format(self.default_value))
+        else:
+            data = imputer_processor.transform(input_data,
+                                               transform_value=self.default_value)
+        if self.missing_impute is None:
+            self.missing_impute = imputer_processor.get_missing_value_list()
+
+        LOGGER.debug("self.missing_impute is {}".format(self.missing_impute))
+
+        self.missing_impute_rate = imputer_processor.get_impute_rate(mode)
+
+        str_trans_tag_method = functools.partial(self.change_str_to_tag,
+                                                 tags_dict=tags_dict,
+                                                 delimitor=self.delimitor,
+                                                 tag_value_delimitor=self.tag_value_delimitor)
+
+        data = data.mapValues(str_trans_tag_method)
+
+        return data
+
     def fit(self, input_data):
         tag_aggregator = functools.partial(SparseTagReader.agg_tag,
                                            delimitor=self.delimitor,
@@ -613,13 +680,21 @@ class SparseTagReader(object):
 
         self.generate_header(tags)
 
+        if self.tag_with_value and self.missing_fill:
+            input_data = self.fill_missing_value(input_data, tags_dict, mode="fit")
+
         data_instance = self.gen_data_instance(input_data, tags_dict)
+
         return data_instance
 
     def transform(self, input_data):
         tags_dict = dict(zip(self.header, range(len(self.header))))
 
+        if self.tag_with_value and self.missing_fill:
+            input_data = self.fill_missing_value(input_data, tags_dict, mode="transform")
+
         data_instance = self.gen_data_instance(input_data, tags_dict)
+
         return data_instance
 
     def gen_data_instance(self, input_data, tags_dict):
@@ -718,8 +793,13 @@ class SparseTagReader(object):
                                                        label_name=self.label_name,
                                                        model_name="Reader")
 
-        missing_imputer_meta, missing_imputer_param = save_missing_imputer_model(missing_fill=False,
-                                                                                 model_name="Imputer")
+        missing_imputer_meta, missing_imputer_param = save_missing_imputer_model(self.missing_fill,
+                                                                                 self.missing_fill_method,
+                                                                                 self.missing_impute,
+                                                                                 self.default_value,
+                                                                                 self.missing_impute_rate,
+                                                                                 self.header,
+                                                                                 "Imputer")
 
         dataio_meta.imputer_meta.CopyFrom(missing_imputer_meta)
         dataio_param.imputer_param.CopyFrom(missing_imputer_param)
@@ -740,6 +820,12 @@ class SparseTagReader(object):
             "SparseTagReader",
             model_meta,
             model_param)
+
+        self.missing_fill, self.missing_fill_method, \
+        self.missing_impute, self.default_value = load_missing_imputer_model(self.header,
+                                                           "Imputer",
+                                                           model_meta.imputer_meta,
+                                                           model_param.imputer_param)
 
 
 class DataIO(ModelBase):

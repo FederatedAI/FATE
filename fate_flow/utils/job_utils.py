@@ -27,6 +27,7 @@ import uuid
 
 import psutil
 from fate_flow.entity.constant import JobStatus
+from fate_flow.entity.constant_config import TaskStatus
 
 from arch.api.utils import file_utils
 from arch.api.utils.core_utils import current_timestamp
@@ -34,6 +35,8 @@ from arch.api.utils.core_utils import json_loads, json_dumps
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import DB, Job, TaskSet, Task
 from fate_flow.scheduler.dsl_parser import DSLParser
+from fate_flow.db.db_models import DB, Job, Task
+from fate_flow.driver.dsl_parser import DSLParser
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.data_manager import query_data_view, delete_table, delete_metric_data
 from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE
@@ -613,8 +616,25 @@ def query_job_info(job_id):
 
 
 def cleaning(signum, frame):
-    session_utils.clean_server_used_session()
     sys.exit(0)
 
+
+def federation_cleanup(job, task):
+    from fate_flow.entity.constant_config import Backend, StoreEngine
+    from fate_arch.common import Party
+
+    runtime_conf = json_loads(job.f_runtime_conf)
+    job_parameters = runtime_conf['job_parameters']
+    backend = Backend(job_parameters.get('backend', 0))
+    store_engine = StoreEngine(job_parameters.get('store_engine', 0))
+
+    if backend.is_spark() and store_engine.is_hdfs():
+        runtime_conf['local'] = {'role': job.f_role, 'party_id': job.f_party_id}
+        parties = [Party(k, p) for k,v in runtime_conf['role'].items() for p in v ]
+        from fate_arch.session.impl.spark._session import Session
+        ssn = Session(session_id=task.f_task_id)
+        ssn.init_federation(federation_session_id=task.f_task_id, runtime_conf=runtime_conf)
+        ssn._get_federation().generate_mq_names(parties=parties)
+        ssn._get_federation().cleanup()
 
 

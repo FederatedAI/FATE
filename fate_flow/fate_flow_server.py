@@ -37,6 +37,9 @@ from fate_flow.federated_apps.control_app import manager as control_app_manager
 from fate_flow.federated_apps.initiator_app import manager as initiator_app_manager
 from fate_flow.apps.permission_app import manager as permission_app_manager
 from fate_flow.apps.version_app import manager as version_app_manager
+from fate_flow.db.db_models import init_database_tables as init_flow_db
+from fate_arch.db.db_models import init_database_tables as init_arch_db
+from fate_flow.driver import dag_scheduler, job_controller, job_detector
 from fate_flow.db.db_models import init_database_tables
 from fate_flow.operation import job_trigger, job_detector
 from fate_flow.controller import job_controller
@@ -47,7 +50,6 @@ from fate_flow.manager import queue_manager
 from fate_flow.settings import IP, GRPC_PORT, CLUSTER_STANDALONE_JOB_SERVER_PORT, _ONE_DAY_IN_SECONDS, \
     MAX_CONCURRENT_JOB_RUN, stat_logger, API_VERSION
 from fate_flow.utils import job_utils
-from fate_flow.utils import session_utils
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryServicer
@@ -87,7 +89,9 @@ if __name__ == '__main__':
     # init
     signal.signal(signal.SIGTERM, job_utils.cleaning)
     signal.signal(signal.SIGCHLD, job_utils.wait_child_process)
-    init_database_tables()
+    # init db
+    init_flow_db()
+    init_arch_db()
     # init runtime config
     import argparse
     parser = argparse.ArgumentParser()
@@ -96,7 +100,6 @@ if __name__ == '__main__':
     if args.standalone_node:
         RuntimeConfig.init_config(WORK_MODE=WorkMode.STANDALONE)
         RuntimeConfig.init_config(JOB_SERVER_HOST=core_utils.get_lan_ip(), HTTP_PORT=CLUSTER_STANDALONE_JOB_SERVER_PORT)
-    session_utils.init_session_for_flow_server()
     RuntimeConfig.init_env()
     RuntimeConfig.set_process_role(ProcessRole.SERVER)
     queue_manager.init_job_queue()
@@ -133,6 +136,5 @@ if __name__ == '__main__':
         while True:
             time.sleep(_ONE_DAY_IN_SECONDS)
     except KeyboardInterrupt:
-        session_utils.clean_server_used_session()
         server.stop(0)
         sys.exit(0)

@@ -14,9 +14,9 @@ matrix:
     - env: OS='centos:7'
 
 script:
-  - wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.4.0.tar.gz
-  - tar -xzf  standalone-fate-master-1.4.0.tar.gz 
-  - cd standalone-fate-master-1.4.0
+  - wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.4.2.tar.gz
+  - tar -xzf  standalone-fate-master-1.4.2.tar.gz 
+  - cd standalone-fate-master-1.4.2
   - sed -i.bak "s/sh  service.sh/bash service.sh/g" init.sh
   - source init.sh init
   - ls -alh
