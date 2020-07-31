@@ -11,10 +11,10 @@ guest = 9999
 hosts = [10000, 10001]
 arbiter = 10002
 
-guest_train_data = {"name": "breast_b", "namespace": "hetero"}
-host_train_data = [{"name": "breast_a", "namespace": "hetero"},
-                   {"name": "breast_a", "namespace": "hetero"},
-                   { "name": "breast_a", "namespace": "hetero"}]
+guest_train_data = {"name": "hetero_breast_guest", "namespace": "experiment"}
+host_train_data = [{"name": "hetero_breast_host", "namespace": "experiment"},
+                   {"name": "hetero_breast_host", "namespace": "experiment"},
+                   { "name": "hetero_breast_host", "namespace": "experiment"}]
 
 input_0 = Input(name="train_data")
 print ("get input_0's init name {}".format(input_0.name))
@@ -27,7 +27,7 @@ dataio_0.get_party_instance(role='host', party_id=10000).algorithm_param(with_la
 
 intersect_0 = Intersection(name="intersection_0")
 
-hetero_lr_0 = HeteroLR(name="hetero_lr_0", early_stop="weight_diff",
+hetero_lr_0 = HeteroLR(name="hetero_lr_0", early_stop="weight_diff", max_iter=30,
                        cv_param={"n_splits": 3, "shuffle": False, "need_cv": True})
 
 print ("get input_0's name {}".format(input_0.name))
