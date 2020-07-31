@@ -27,7 +27,7 @@ dataio_0.get_party_instance(role='host', party_id=10000).algorithm_param(with_la
 
 intersect_0 = Intersection(name="intersection_0")
 
-hetero_lr_0 = HeteroLR(name="hetero_lr_0", early_stop="weight_diff",
+hetero_lr_0 = HeteroLR(name="hetero_lr_0", early_stop="weight_diff", max_iter=30,
                        cv_param={"n_splits": 3, "shuffle": False, "need_cv": True})
 
 print ("get input_0's name {}".format(input_0.name))

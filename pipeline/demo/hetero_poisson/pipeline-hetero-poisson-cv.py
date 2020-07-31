@@ -26,8 +26,13 @@ dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_l
 dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
 
 intersect_0 = Intersection(name="intersection_0")
-hetero_poisson_0 = HeteroPoisson(name="hetero_poisson_0", early_stop="weight_diff", max_iter=20,
-                                 alpha=100, batch_size=-1, learning_rate=0.01)
+hetero_poisson_0 = HeteroPoisson(name="hetero_poisson_0", early_stop="weight_diff", max_iter=10,
+                                 alpha=100, batch_size=-1, learning_rate=0.01,
+                                 cv_param={
+                                     "n_splits": 5, "shuffle": False,
+                                     "random_seed": 103, "need_cv": True,
+                                     "evaluate_param": {"eval_type": "regression"}
+                                 })
 
 evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)
 
@@ -52,16 +57,3 @@ print (pipeline.get_component("hetero_poisson_0").get_summary())
 print (pipeline.get_component("evaluation_0").get_summary())
 
 
-
-# predict
-
-pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
-                              feed_dict={input_0:
-                                             {"guest":
-                                                  {9999: guest_train_data},
-                                              "host": {10000: host_train_data}
-                                              }
-                                         })
-
-with open("output.pkl", "wb") as fout:
-    fout.write(pipeline.dump())

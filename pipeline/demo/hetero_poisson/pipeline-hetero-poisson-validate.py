@@ -37,8 +37,9 @@ dataio_1.get_party_instance(role='host', party_id=host).algorithm_param(with_lab
 intersect_0 = Intersection(name="intersection_0")
 intersect_1 = Intersection(name="intersection_1")
 
-hetero_poisson_0 = HeteroPoisson(name="hetero_poisson_0", early_stop="weight_diff", max_iter=20, learning_rate=0.15,
-                           validation_freqs=1, early_stopping_rounds=3)
+hetero_poisson_0 = HeteroPoisson(name="hetero_poisson_0", early_stop="weight_diff", max_iter=20,
+                                 alpha=100, batch_size=-1, learning_rate=0.01,
+                                 validation_freqs=1, early_stopping_rounds=3)
 
 print ("get input_0's name {}".format(input_0.name))
 pipeline.add_component(dataio_0, data=Data(data=input_0.data))
