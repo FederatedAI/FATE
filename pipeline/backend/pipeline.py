@@ -22,7 +22,7 @@ from pipeline.backend.config import Backend, WorkMode
 from pipeline.backend.config import Role
 from pipeline.backend.config import StatusCode
 from pipeline.backend.config import VERSION
-from pipeline.backend.task_iinfo import TaskInfo
+from pipeline.backend.task_info import TaskInfo
 from pipeline.component.component_base import Component
 from pipeline.component.input import Input
 from pipeline.interface.data import Data
