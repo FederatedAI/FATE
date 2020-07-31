@@ -20,7 +20,7 @@ import requests
 from contextlib import closing
 from fate_flow.utils import cli_args
 from arch.api.utils import file_utils
-from fate_flow.utils.cli_utils import preprocess, access_server
+from fate_flow.utils.cli_utils import preprocess, access_server, prettify
 
 
 @click.group(short_help="Model Operations")
@@ -104,10 +104,10 @@ def imp(ctx, **kwargs):
             file_path = os.path.join(file_utils.get_project_base_directory(), file_path)
         if os.path.exists(file_path):
             files = {'file': open(file_path, 'rb')}
+            access_server('post', ctx, 'model/import', data=config_data, files=files)
         else:
-            raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
-                            'please check the path: {}'.format(file_path))
-        access_server('post', ctx, 'model/import', data=config_data, files=files)
+            prettify({'retcode':100, 'retmsg': 'The file is obtained from the fate flow client machine, but it does not exist, '
+                      'please check the path: {}'.format(file_path)})
     else:
         access_server('post', ctx, 'model/restore', config_data)
 
@@ -145,7 +145,7 @@ def export(ctx, **kwargs):
                             'retmsg': 'download successfully, please check {}'.format(archive_file_path)}
             else:
                 response = response.json()
-        click.echo(response.json() if isinstance(response, requests.models.Response) else response)
+        prettify(response.json() if isinstance(response, requests.models.Response) else response)
     else:
         config_data, dsl_data = preprocess(**kwargs)
         access_server('post', ctx, 'model/store', config_data)
