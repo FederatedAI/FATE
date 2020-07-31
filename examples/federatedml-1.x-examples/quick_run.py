@@ -182,11 +182,10 @@ def job_status_checker(jobid):
     for component_stats in check_data:
         status = component_stats['f_status']
         task_status.append(status)
-
     if any([s == FAIL for s in task_status]):
         return FAIL
 
-    if any([s == RUNNING for s in task_status]):
+    if any([s in [RUNNING, 'waiting'] for s in task_status]):
         return RUNNING
 
     return SUCCESS
