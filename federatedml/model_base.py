@@ -24,6 +24,8 @@ from federatedml.statistic.data_overview import header_alignment, check_legal_sc
 from federatedml.util.component_properties import ComponentProperties
 from federatedml.util.param_extract import ParamExtract
 
+import numpy as np
+
 LOGGER = log_utils.getLogger()
 
 
@@ -234,7 +236,7 @@ class ModelBase(object):
                                      metric_namespace=metric_namespace,
                                      metric_meta=metric_meta)
 
-    def callback_metric(self, metric_name, metric_namespace, metic_data):
+    def callback_metric(self, metric_name, metric_namespace, metric_data):
         if self.need_cv:
             metric_name = '.'.join([metric_name, str(self.cv_fold)])
 
