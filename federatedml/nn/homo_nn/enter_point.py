@@ -134,6 +134,7 @@ class HomoNNClient(HomoNNBase):
 
         self.nn_model = None
         self._summary = dict(loss_history=[], is_converged=False)
+        self._header = []
 
     def _init_model(self, param: HomoNNParam):
         super()._init_model(param=param)
@@ -173,6 +174,7 @@ class HomoNNClient(HomoNNBase):
                                            metrics=self.metrics)
 
     def fit(self, data_inst, *args):
+        self._header = data_inst.schema["header"]
         data = self.data_converter.convert(data_inst, batch_size=self.batch_size, encode_label=self.encode_label)
         if self.config_type == "pytorch":
             self.__build_pytorch_model(self.nn_define)
@@ -220,11 +222,12 @@ class HomoNNClient(HomoNNBase):
         from federatedml.protobuf.generated import nn_model_param_pb2
         param_pb = nn_model_param_pb2.NNModelParam()
         param_pb.saved_model_bytes = self.nn_model.export_model()
+        param_pb.header.extend(self._header)
         return param_pb
 
     @assert_io_num_rows_equal
     def predict(self, data_inst):
-
+        self.align_data_header(data_instances=data_inst, pre_header=self._header)
         data = self.data_converter.convert(data_inst, batch_size=self.batch_size, encode_label=self.encode_label)
         predict = self.nn_model.predict(data)
         num_output_units = predict.shape[1]
@@ -245,6 +248,7 @@ class HomoNNClient(HomoNNBase):
         self._init_model(self.model_param)
         self.aggregate_iteration_num = meta_obj.aggregate_iter
         self.nn_model = restore_nn_model(self.config_type, model_obj.saved_model_bytes)
+        self._header = list(model_obj.header)
 
 
 # server: Arbiter, clients: Guest and Hosts
