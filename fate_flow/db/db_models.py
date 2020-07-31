@@ -206,7 +206,7 @@ class MachineLearningModelMeta(DataBaseModel):
     f_job_id = CharField(max_length=25)
     f_model_id = CharField(max_length=100, index=True)
     f_model_version = CharField(max_length=100, index=True)
-    f_loaded = IntegerField(default=0)
+    f_loaded_times = IntegerField(default=0)
     f_size = BigIntegerField(default=0)
     f_create_time = BigIntegerField(default=0)
     f_update_time = BigIntegerField(default=0)
@@ -292,3 +292,18 @@ class ComponentSummary(DataBaseModel):
 
     class Meta:
         db_table = "t_component_summary"
+
+
+class ModelOperationLog(DataBaseModel):
+    f_operation_type = CharField(max_length=20, null=False, index=True)
+    f_operation_status = CharField(max_length=20, null=True, index=True)
+    f_initiator_role = CharField(max_length=50, index=True, null=True)
+    f_initiator_party_id = CharField(max_length=10, index=True, null=True)
+    f_request_ip = CharField(max_length=20, null=True)
+    f_model_id = CharField(max_length=100, index=True)
+    f_model_version = CharField(max_length=100, index=True)
+    f_create_time = BigIntegerField(default=current_timestamp())
+    f_update_time = BigIntegerField(default=current_timestamp())
+
+    class Meta:
+        db_table = "t_model_operation_log"
