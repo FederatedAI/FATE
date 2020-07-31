@@ -15,19 +15,21 @@
 #
 import os
 import shutil
+import traceback
+
 import peewee
 from copy import deepcopy
 
 from fate_flow.db.db_models import MachineLearningModelMeta as MLModel
-from fate_flow.db.db_models import Tag, DB
-from flask import Flask, request, send_file
+from fate_flow.db.db_models import Tag, DB, ModelOperationLog as OperLog
+from flask import Flask, request, send_file, Response
 
 from fate_flow.manager.model_manager.migrate_model import compare_roles
 from fate_flow.settings import stat_logger, API_VERSION, MODEL_STORE_ADDRESS, TEMP_DIRECTORY
 from fate_flow.driver.job_controller import JobController
 from fate_flow.manager.model_manager import publish_model, migrate_model
 from fate_flow.manager.model_manager import pipelined_model
-from fate_flow.utils.api_utils import get_json_result, federated_api
+from fate_flow.utils.api_utils import get_json_result, federated_api, error_response
 from fate_flow.utils.job_utils import generate_job_id, runtime_conf_basic
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils.detect_utils import check_config
@@ -171,6 +173,20 @@ def do_load_model():
     request_data = request.json
     request_data["servings"] = ServiceUtils.get("servings", [])
     retcode, retmsg = publish_model.load_model(config_data=request_data)
+    try:
+        if not retcode:
+            with DB.atomic():
+                model = MLModel.get_or_none(MLModel.f_role == request_data.get("initiator").get("role"),
+                                            MLModel.f_party_id == request_data.get("initiator").get("party_id"),
+                                            MLModel.f_model_id == request_data.get("job_parameters").get("model_id"),
+                                            MLModel.f_model_version == request_data.get("job_parameters").get("model_version"))
+                if model:
+                    count = model.f_loaded_times
+                    model.f_loaded_times = count + 1
+                    model.save(force_insert=True)
+    except Exception as modify_err:
+        stat_logger.error(modify_err)
+    operation_record(request_data, "load", "success" if not retcode else "failed")
     return get_json_result(retcode=retcode, retmsg=retmsg)
 
 
@@ -184,6 +200,7 @@ def bind_model_service():
     if not service_id:
         return get_json_result(retcode=101, retmsg='no service id')
     bind_status, retmsg = publish_model.bind_model_service(config_data=request_config)
+    operation_record(request_config, "bind", "success" if not bind_status else "failed")
     return get_json_result(retcode=bind_status, retmsg='service id is {}'.format(service_id) if not retmsg else retmsg)
 
 
@@ -204,22 +221,43 @@ def operate_model(model_operation):
     request_config["model_id"] = gen_party_model_id(model_id=request_config["model_id"], role=request_config["role"], party_id=request_config["party_id"])
     if model_operation in [ModelOperation.EXPORT, ModelOperation.IMPORT]:
         if model_operation == ModelOperation.IMPORT:
-            file = request.files.get('file')
-            file_path = os.path.join(TEMP_DIRECTORY, file.filename)
             try:
-                os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                file.save(file_path)
-            except Exception as e:
-                shutil.rmtree(file_path)
-                raise e
-            request_config['file'] = file_path
-            model = pipelined_model.PipelinedModel(model_id=request_config["model_id"], model_version=request_config["model_version"])
-            model.unpack_model(file_path)
-            return get_json_result()
+                file = request.files.get('file')
+                file_path = os.path.join(TEMP_DIRECTORY, file.filename)
+                if not os.path.exists(file_path):
+                    raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
+                                    'please check the path: {}'.format(file_path))
+                try:
+                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                    file.save(file_path)
+                except Exception as e:
+                    shutil.rmtree(file_path)
+                    raise e
+                request_config['file'] = file_path
+                model = pipelined_model.PipelinedModel(model_id=request_config["model_id"], model_version=request_config["model_version"])
+                model.unpack_model(file_path)
+                operation_record(request_config, "import", "success")
+                return get_json_result()
+            except Exception:
+                operation_record(request_config, "import", "failed")
+                raise
         else:
-            model = pipelined_model.PipelinedModel(model_id=request_config["model_id"], model_version=request_config["model_version"])
-            archive_file_path = model.packaging_model()
-            return send_file(archive_file_path, attachment_filename=os.path.basename(archive_file_path), as_attachment=True)
+            try:
+                model = pipelined_model.PipelinedModel(model_id=request_config["model_id"], model_version=request_config["model_version"])
+                if model.exists():
+                    archive_file_path = model.packaging_model()
+                    operation_record(request_config, "export", "success")
+                    return send_file(archive_file_path, attachment_filename=os.path.basename(archive_file_path), as_attachment=True)
+                else:
+                    operation_record(request_config, "export", "failed")
+                    res = error_response(response_code=500,
+                                         retmsg="Model {} {} is not exist.".format(request_config.get("model_id"),
+                                                                                    request_config.get("model_version")))
+                    return res
+            except Exception:
+                operation_record(request_config, "export", "failed")
+                raise
+
     else:
         data = {}
         job_dsl, job_runtime_conf = gen_model_operation_job_config(request_config, model_operation)
@@ -227,6 +265,7 @@ def operate_model(model_operation):
             {'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)
         data.update({'job_dsl_path': job_dsl_path, 'job_runtime_conf_path': job_runtime_conf_path,
                      'board_url': board_url, 'logs_directory': logs_directory})
+        operation_record(data=job_runtime_conf, oper_type=model_operation, oper_status='')
         return get_json_result(job_id=job_id, data=data)
 
 
@@ -375,3 +414,20 @@ def gen_model_operation_job_config(config_data: dict, model_operation: ModelOper
     else:
         raise Exception("Can not support this model operation: {}".format(model_operation))
     return job_dsl, job_runtime_conf
+
+
+def operation_record(data: dict, oper_type, oper_status):
+    try:
+        if oper_type == 'migrate':
+            # TODO migrate operation record
+            pass
+        else:
+            OperLog.create(f_operation_type=oper_type,
+                           f_operation_status=oper_status,
+                           f_initiator_role=data.get("role") if data.get("role") else data.get("initiator").get("role"),
+                           f_initiator_party_id=data.get("party_id") if data.get("party_id") else data.get("initiator").get("party_id"),
+                           f_request_ip=request.remote_addr,
+                           f_model_id=data.get("model_id") if data.get("model_id") else data.get("job_parameters").get("model_id"),
+                           f_model_version=data.get("model_version") if data.get("model_version") else data.get("job_parameters").get("model_version"))
+    except Exception:
+        stat_logger.error(traceback.format_exc())
