@@ -171,7 +171,8 @@ class ModelBase(object):
     def set_tracker(self, tracker):
         self.tracker = tracker
 
-    def set_predict_data_schema(self, predict_datas, schemas):
+    @staticmethod
+    def set_predict_data_schema(predict_datas, schemas):
         if predict_datas is None:
             return predict_datas
         if isinstance(predict_datas, list):
@@ -185,7 +186,8 @@ class ModelBase(object):
                                    "sid_name": schema.get('sid_name')}
         return predict_data
 
-    def predict_score_to_output(self, data_instances, predict_score, classes=None, threshold=0.5):
+    @staticmethod
+    def predict_score_to_output(data_instances, predict_score, classes=None, threshold=0.5):
         """
         Get predict result output
         Parameters
@@ -219,8 +221,9 @@ class ModelBase(object):
             # pred_label = predict_score.mapValues(lambda x: classes[x.index(max(x))])
             classes = [str(val) for val in classes]
             predict_result = data_instances.mapValues(lambda x: x.label)
-            predict_result = predict_result.join(predict_score, lambda x, y: [x, int(classes[y.argmax()]),
-                                                                              y.max(), dict(zip(classes, list(y)))])
+            predict_result = predict_result.join(
+                predict_score,
+                lambda x, y: [x, int(classes[y.argmax()]), float(y.max()), dict(zip(classes, y.tolist()))])
         else:
             raise ValueError(f"Model's classes type is {type(classes)}, classes must be None or list.")
 
