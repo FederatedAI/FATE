@@ -36,6 +36,11 @@ class HeteroNN(Component):
         explicit_parameters["config_type"] = "keras"
         Component.__init__(self, **explicit_parameters)
 
+        if "name" in explicit_parameters:
+            del explicit_parameters["name"]
+        for param_key, param_value in explicit_parameters.items():
+            setattr(self, param_key, param_value)
+
         self.output = Output(self.name, data_type='single')
         self._module_name = "HeteroNN"
         self.optimizer = None
