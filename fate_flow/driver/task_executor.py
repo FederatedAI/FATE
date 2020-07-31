@@ -210,6 +210,8 @@ class TaskExecutor(object):
                                 data_name=search_data_name, session_id=session_id)
                             if data_table:
                                 data_table = data_table[0]
+                            else:
+                                data_table = None
                         output_storage_engine.append(data_table.get_storage_engine() if data_table else None)
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
                             search_component_name, {})

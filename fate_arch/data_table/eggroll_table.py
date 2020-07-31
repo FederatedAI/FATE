@@ -77,7 +77,7 @@ class EggRollTable(Table):
 
     @log_elapsed
     def save_as(self, name=None, namespace=None, partition=None, schema_data=None, **kwargs):
-        super().save_as(name, namespace, schema_data=schema_data)
+        super().save_as(name, namespace, schema_data=schema_data, partition=partition)
 
         options = kwargs.get("options", {})
         store_type = options.get("store_type", StoreEngine.LMDB)

@@ -96,7 +96,7 @@ class Table(object):
     @abc.abstractmethod
     def save_as(self, name, namespace, partition=None, schema_data=None, **kwargs):
         if schema_data:
-            self.save_schema(name=name, namespace=namespace, schema_data=schema_data)
+            self.save_schema(name=name, namespace=namespace, schema_data=schema_data, partitions=partition)
 
     @abc.abstractmethod
     def close(self):
@@ -128,11 +128,13 @@ class Table(object):
                         schema_data = deserialize_b64(schema.f_part_of_data)
                     elif _type == 'count':
                         schema_data = schema.f_count
+                    elif _type == 'partitions':
+                        schema_data = schema.f_partitions
                 except:
                     schema_data = None
         return schema_data
 
-    def save_schema(self, schema_data=None, name=None, namespace=None, party_of_data=None, count=0):
+    def save_schema(self, schema_data=None, name=None, namespace=None, party_of_data=None, count=0, partitions=1):
         # save metas to mysql
         if not schema_data:
             schema_data = {}
@@ -159,7 +161,9 @@ class Table(object):
                         schema.f_part_of_data = serialize_b64(party_of_data[:100], to_str=True)
                 # save count
                 if count:
-                    schema.f_count += count
+                    schema.f_count = count
+                if partitions:
+                    schema.f_partitions = partitions
             else:
                 raise Exception('please create table {} {} before useing'.format(name, namespace))
             schema.f_update_time = current_timestamp()
@@ -181,7 +185,7 @@ class SimpleTable(Table):
         self.data_name = data_name
 
     def get_partitions(self):
-        pass
+        return self.get_schema(_type='partitions')
 
     def get_name(self):
         pass

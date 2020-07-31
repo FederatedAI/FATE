@@ -108,8 +108,9 @@ class Upload(object):
                                            job_info)
                     self.table.put_all(data)
                     if n == 0:
-                        self.table.save_schema(party_of_data=data, count=self.table.count())
+                        self.table.save_schema(party_of_data=data)
                 else:
+                    self.table.save_schema(count=self.table.count(), partitions=self.parameters["partition"])
                     count_actual = self.table.count()
                     self.tracker.save_data_view(role=self.parameters["local"]['role'],
                                                 party_id=self.parameters["local"]['party_id'],

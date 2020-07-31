@@ -215,7 +215,7 @@ class Tracking(object):
                 count -= 1
                 if count == 0:
                     break
-            table.save_schema(schema, party_of_data=party_of_data, count=data_table.count())
+            table.save_schema(schema, party_of_data=party_of_data, count=data_table.count(), partitions=partitions)
             self.save_data_view(self.role, self.party_id,
                                 data_info={'f_table_name': persistent_table_name,
                                            'f_table_namespace': persistent_table_namespace,
@@ -471,8 +471,6 @@ class Tracking(object):
                                                      DataView.f_role == role,
                                                      DataView.f_party_id == party_id,
                                                      DataView.f_data_name == data_name)
-            if mark and self.component_name == "upload_0":
-                return
             return data_views
 
     def clean_task(self, roles, party_ids):

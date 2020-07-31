@@ -65,8 +65,8 @@ class Reader(object):
                              metric_namespace='reader_namespace',
                              data_info={"count": count,
                                         "partitions": partitions,
-                                        "input_table_strage_engine": data_table.get_storage_engine(),
-                                        "output_table_strage_engine": table.get_storage_engine() if table else
+                                        "input_table_storage_engine": data_table.get_storage_engine(),
+                                        "output_table_storage_engine": table.get_storage_engine() if table else
                                         data_table.get_storage_engine()}
                              )
 

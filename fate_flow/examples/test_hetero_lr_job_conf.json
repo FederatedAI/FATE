@@ -16,7 +16,7 @@
     "role_parameters": {
         "guest": {
             "reader_0": {
-                "train": [{"name": "breast_hetero_guest", "namespace": "fate_flow_test_breast_hetero"}]
+                "table": [{"name": "breast_hetero_guest", "namespace": "fate_flow_test_breast_hetero"}]
             },
             "dataio_0":{
                 "with_label": [true],

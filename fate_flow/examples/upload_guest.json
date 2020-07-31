@@ -4,7 +4,6 @@
   "partition": 4,
   "work_mode": 1,
   "drop": 2,
-  "store_engine": 1,
   "backend": 1,
   "in_version": true,
   "namespace": "fate_flow_test_breast_hetero",

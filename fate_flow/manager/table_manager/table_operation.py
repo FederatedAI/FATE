@@ -17,7 +17,7 @@ import typing
 import uuid
 
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
-from fate_arch.data_table.base import EggRollAddress, HDFSAddress
+from fate_arch.data_table.base import EggRollAddress, HDFSAddress, SimpleTable
 from fate_arch.db.db_models import DB, MachineLearningDataSchema
 from fate_flow.utils import data_utils
 
@@ -85,9 +85,12 @@ def get_table(job_id: str = '',
               persistent_engine: str = StoreEngine.LMDB,
               namespace: str = None,
               name: str = None,
+              simple: bool = False,
               **kwargs):
     if not job_id:
         job_id = uuid.uuid1().hex
+    if simple:
+        return SimpleTable(name=name, namespace=namespace, data_name='')
     data_manager_logger.info('start get table by name {} namespace {}'.format(name, namespace))
     store_engine, address, partitions = get_store_info(name, namespace)
     if 'partition' in kwargs.keys():

@@ -63,7 +63,7 @@ def dtable(table_func):
             table_key_count = 0
             table_partition = None
         else:
-            table = get_table(name=table_name, namespace=namespace)
+            table = get_table(name=table_name, namespace=namespace, simple=True)
             if table:
                 table_key_count = table.count()
                 table_partition = table.get_partitions()
