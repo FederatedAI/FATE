@@ -7,6 +7,10 @@ from federatedml.util import consts
 
 from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
 
+from federatedml.util.io_check import assert_io_num_rows_equal
+
+from federatedml.statistic import data_overview
+
 import numpy as np
 
 LOGGER = log_utils.getLogger()
@@ -194,6 +198,7 @@ class FTLHost(FTL):
 
             LOGGER.debug('fitting epoch {} done'.format(epoch_idx))
 
+    @assert_io_num_rows_equal
     def predict(self, data_inst):
 
         LOGGER.debug('host start to predict')
@@ -201,10 +206,13 @@ class FTLHost(FTL):
         self.transfer_variable.predict_host_u.disable_auto_clean()
 
         data_loader_key = self.get_dataset_key(data_inst)
+
+        data_inst_ = data_overview.header_alignment(data_inst, self.store_header)
+
         if data_loader_key in self.cache_dataloader:
             data_loader = self.cache_dataloader[data_loader_key]
         else:
-            data_loader, _, _, _ = self.prepare_data(self.init_intersect_obj(), data_inst, guest_side=False)
+            data_loader, _, _, _ = self.prepare_data(self.init_intersect_obj(), data_inst_, guest_side=False)
             self.cache_dataloader[data_loader_key] = data_loader
 
         ub_batches = []

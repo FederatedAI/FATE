@@ -15,7 +15,9 @@ import numpy as np
 
 from federatedml.util import consts
 
-from sklearn.metrics import roc_auc_score
+from federatedml.util.io_check import assert_io_num_rows_equal
+
+from federatedml.statistic import data_overview
 
 LOGGER = log_utils.getLogger()
 
@@ -339,15 +341,19 @@ class FTLGuest(FTL):
 
         LOGGER.debug('fitting ftl model done')
 
+    @assert_io_num_rows_equal
     def predict(self, data_inst):
 
         LOGGER.debug('guest start to predict')
 
         data_loader_key = self.get_dataset_key(data_inst)
+
+        data_inst_ = data_overview.header_alignment(data_inst, self.store_header)
+
         if data_loader_key in self.cache_dataloader:
             data_loader = self.cache_dataloader[data_loader_key]
         else:
-            data_loader, _, _, _ = self.prepare_data(self.init_intersect_obj(), data_inst, guest_side=True)
+            data_loader, _, _, _ = self.prepare_data(self.init_intersect_obj(), data_inst_, guest_side=True)
             self.cache_dataloader[data_loader_key] = data_loader
 
         LOGGER.debug('try to get predict u from host, suffix is {}'.format((0, 'host_u')))
@@ -360,7 +366,7 @@ class FTLGuest(FTL):
                                          partition=data_inst._partitions)
 
         threshold = self.predict_param.threshold
-        predict_result = self.predict_score_to_output(data_inst, predict_tb, classes=2, threshold=threshold)
+        predict_result = self.predict_score_to_output(data_inst_, predict_tb, classes=2, threshold=threshold)
 
         LOGGER.debug('ftl guest prediction done')
 

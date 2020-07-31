@@ -13,10 +13,6 @@ import numpy as np
 
 import functools
 
-from federatedml.util.io_check import assert_io_num_rows_equal
-
-from federatedml.statistic import data_overview
-
 LOGGER = log_utils.getLogger()
 
 

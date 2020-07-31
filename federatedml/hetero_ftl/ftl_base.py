@@ -62,6 +62,7 @@ class FTL(ModelBase):
         self.partitions = 10
         self.batch_size = None
         self.epochs = None
+        self.store_header = None  # header of input data table
 
         self.cache_dataloader = {}
 
@@ -193,6 +194,9 @@ class FTL(ModelBase):
         overlap_samples = intersect_obj.run(data_inst)  # find intersect ids
         non_overlap_samples = data_inst.subtractByKey(overlap_samples)
 
+        self.store_header = data_inst.schema['header']
+        LOGGER.debug('data inst header is {}'.format(self.store_header))
+
         if overlap_samples.count() == 0:
             raise ValueError('no intersect samples')
 
@@ -309,6 +313,7 @@ class FTL(ModelBase):
         model_param = FTLModelParam()
         model_bytes = self.nn.export_model()
         model_param.model_bytes = model_bytes
+        model_param.header.extend(list(self.store_header))
 
         return model_param
 
@@ -328,7 +333,10 @@ class FTL(ModelBase):
         self.initialize_nn((input_dim, ))
 
     def set_model_param(self, model_param):
+
         self.nn.restore_model(model_param.model_bytes)
+        self.store_header = list(model_param.header)
+        LOGGER.debug('stored header load, is {}'.format(self.store_header))
 
 
 
