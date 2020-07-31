@@ -291,6 +291,6 @@ class JobInvoker(object):
         if result is None or 'retcode' not in result:
             raise ValueError("call flow generate dsl is failed, check if fate_flow server is start!")
         elif result["retcode"] != 0:
-            raise ValueError("can not generate predict dsl, error msg is {}".format(result["retcode"]))
+            raise ValueError("can not generate predict dsl, error msg is {}".format(result["retmsg"]))
         else:
             return result["data"]
