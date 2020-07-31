@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_flow.entity.constant import StatusSet, InterruptStatus, EndStatus, OngoingStatus
+from fate_flow.entity.constant import StatusSet, OngoingStatus, InterruptStatus, EndStatus
 
 
 class StatusEngine(object):
@@ -38,6 +38,9 @@ class StatusEngine(object):
                         if status in tmp_status_set:
                             return status
                     raise Exception("The list of vertically convergent status failed: {}".format(downstream_status_list))
+            # All ongoing status or ongoing status + complete status
+            if StatusSet.COMPLETE in tmp_status_set:
+                return StatusSet.RUNNING
             for status in sorted(OngoingStatus.status_list(), key=lambda s: StatusSet.get_level(status=s), reverse=True):
                 if status in tmp_status_set:
                     return status
@@ -52,6 +55,9 @@ class StatusEngine(object):
             for status in sorted(InterruptStatus.status_list(), key=lambda s: StatusSet.get_level(status=s), reverse=True):
                 if status in tmp_status_set:
                     return status
+            # All ongoing status or ongoing status + complete status
+            if StatusSet.COMPLETE in tmp_status_set:
+                return StatusSet.RUNNING
             for status in sorted(OngoingStatus.status_list(), key=lambda s: StatusSet.get_level(status=s), reverse=True):
                 if status in tmp_status_set:
                     return status
