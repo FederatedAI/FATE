@@ -46,8 +46,8 @@ TASK = 'train'
 # TASK = 'predict'
 
 # Put your data to /examples/data folder and indicate the data names here
-GUEST_DATA_SET = 'breast_b.csv'
-HOST_DATA_SET = 'breast_a.csv'
+GUEST_DATA_SET = 'breast_hetero_guest.csv'
+HOST_DATA_SET = 'breast_hetero_host.csv'
 # GUEST_DATA_SET = 'default_credit_homo_guest.csv'
 # HOST_DATA_SET = 'default_credit_homo_host.csv'
 
@@ -223,7 +223,7 @@ def generate_data_info(role):
         table_name = '_'.join(table_name_list[:-1])
     else:
         table_name = data_name
-    table_name_space = '{}_{}'.format(table_name, role)
+    table_name_space = "experiment"
     return table_name, table_name_space
 
 
