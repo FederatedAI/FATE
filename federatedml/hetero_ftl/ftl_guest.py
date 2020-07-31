@@ -341,7 +341,7 @@ class FTLGuest(FTL):
 
         LOGGER.debug('fitting ftl model done')
 
-    @assert_io_num_rows_equal
+
     def predict(self, data_inst):
 
         LOGGER.debug('guest start to predict')
@@ -361,12 +361,14 @@ class FTLGuest(FTL):
 
         predict_score = np.matmul(host_predicts, self.phi.transpose())
         predicts = self.sigmoid(predict_score)  # convert to predict scores
+        predicts = list(map(float, predicts))
 
         predict_tb = session.parallelize(zip(data_loader.get_overlap_keys(), predicts,), include_key=True,
                                          partition=data_inst._partitions)
 
         threshold = self.predict_param.threshold
-        predict_result = self.predict_score_to_output(data_inst_, predict_tb, classes=2, threshold=threshold)
+        predict_result = self.predict_score_to_output(data_inst_, predict_tb, classes=[0, 1], threshold=threshold)
+
 
         LOGGER.debug('ftl guest prediction done')
 

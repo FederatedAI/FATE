@@ -194,7 +194,8 @@ class ModelBase(object):
         """
         # regression
         if classes is None:
-            predict_result = data_instances.join(predict_score, lambda d, pred: [d.label, pred, pred, {"label": pred}])
+            predict_result = data_instances.join(predict_score, lambda d, pred: [d.label, pred,
+                                                                                 pred, {"label": pred}])
         # binary
         elif isinstance(classes, list) and len(classes) == 2:
             class_neg, class_pos = classes[0], classes[1]

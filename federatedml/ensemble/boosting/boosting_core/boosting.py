@@ -407,7 +407,7 @@ class Boosting(ModelBase, ABC):
 
         if self.task_type == consts.CLASSIFICATION:
 
-            predict_result = self.predict_score_to_output(data_inst, predict_score=predicts, classes=self.num_classes,
+            predict_result = self.predict_score_to_output(data_inst, predict_score=predicts, classes=self.classes_,
                                                           threshold=self.predict_param.threshold)
 
         elif self.task_type == consts.REGRESSION:

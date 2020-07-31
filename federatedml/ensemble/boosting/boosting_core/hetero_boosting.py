@@ -133,6 +133,8 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
 
         self.classes_, self.num_classes, self.booster_dim = self.check_label()
 
+        LOGGER.debug('self class index is {}'.format(self.classes_))
+
         self.loss = self.get_loss_function()
 
         self.sync_booster_dim()
