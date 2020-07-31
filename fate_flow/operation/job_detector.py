@@ -32,12 +32,13 @@ class JobDetector(cron.Cron):
                     process_exist = job_utils.check_job_process(int(task.f_run_pid))
                     if not process_exist:
                         detect_logger.info(
-                            'job {} component {} on {} {} task {} {} process does not exist'.format(task.f_job_id,
-                                                                                                    task.f_component_name,
-                                                                                                    task.f_role,
-                                                                                                    task.f_party_id,
-                                                                                                    task.f_task_id,
-                                                                                                    task.f_run_pid))
+                            'Job {} task {} {} on {} {} process {} does not exist'.format(
+                                task.f_job_id,
+                                task.f_task_id,
+                                task.f_task_version,
+                                task.f_role,
+                                task.f_party_id,
+                                task.f_run_pid))
                         stop_job_ids.add(task.f_job_id)
                 except Exception as e:
                     detect_logger.exception(e)
