@@ -30,17 +30,4 @@ class Evaluation(Component, EvaluateParam):
         self.output = Output(self.name, has_model=False)
         self._module_name = "Evaluation"
 
-    def summary(self, data, metric_keyword):
-        metrics = {}
-        for namespace in data:
-            for name in data[namespace]:
-                metric_data = data[namespace][name]["data"]
-                for metric_name, metric_val in metric_data:
-                    if not metric_keyword or metric_name in metric_keyword:
-                        metrics[metric_name] = metric_val
 
-        for metric_name in metric_keyword:
-            if metric_name not in metrics:
-                metrics[metric_name] = None
-
-        return metrics

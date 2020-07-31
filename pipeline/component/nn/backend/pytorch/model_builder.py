@@ -13,4 +13,19 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import torch
+import torch.nn as nn
+
+
+def build_model(model_type="sequential"):
+    if model_type != "sequential":
+        raise ValueError("Only support sequential model now")
+
+    return SequentialModel()
+
+
+class SequentialModel(object):
+    def __init__(self):
+        self._model = nn.Sequential()
+
 

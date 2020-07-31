@@ -19,8 +19,10 @@ import os
 import subprocess
 import tempfile
 import time
+from datetime import timedelta
 
 from fate_flow.flowpy.client import FlowClient
+
 from pipeline.backend import config as conf
 from pipeline.backend.config import JobStatus
 from pipeline.backend.config import StatusCode
@@ -39,6 +41,7 @@ class JobFunc:
     TASK_STATUS = "query_task"
     COMPONENT_OUTPUT_DATA = "component_output_data"
     COMPONENT_OUTPUT_DATA_TABLE = "component_output_data_table"
+    DEPLOY_COMPONENT = "deo"
 
 
 class JobInvoker(object):
@@ -115,27 +118,46 @@ class JobInvoker(object):
 
     def monitor_job_status(self, job_id, role, party_id):
         party_id = str(party_id)
+        start_time = time.time()
+        pre_cpn = None
         while True:
             ret_code, ret_msg, data = self.query_job(job_id, role, party_id)
             status = data["f_status"]
-            if status == JobStatus.SUCCESS:
+            if status == JobStatus.COMPLETE:
                 print("job is success!!!")
                 return StatusCode.SUCCESS
 
-            if status == JobStatus.FAIL:
+            if status == JobStatus.FAILED:
                 print("job is failed, please check out job {} by fate board or fate_flow cli".format(job_id))
                 return StatusCode.FAIL
 
             if status == JobStatus.WAITING:
-                print("job {} is still waiting")
+                elapse_seconds = timedelta(seconds=int(time.time() - start_time))
+                print("job {} is still waiting, time elapse: {}".format(job_id, elapse_seconds), end="\r", flush=True)
 
             if status == JobStatus.RUNNING:
-                print("job {} now is running component {}".format(job_id, data["f_current_tasks"]))
+                elapse_seconds = timedelta(seconds=int(time.time() - start_time))
+                if data["f_current_tasks"] is None:
+                    cpn = None
+                else:
+                    cur_task = json.loads(data["f_current_tasks"])
+                    if len(cur_task) > 1:
+                        cpn = ["_".join(cpn.split("_", -1)[1:]) for cpn in cur_task]
+                    else:
+                        cpn = "_".join(cur_task[0].split("_", -1)[1:])
+
+                    if cpn != pre_cpn:
+                        print("\n")
+                        pre_cpn = cpn
+
+                print("job {} now is running component {}, time elpase: {}".format(job_id, cpn,
+                                                                                   elapse_seconds), end="\r",
+                      flush=True)
 
             time.sleep(conf.TIME_QUERY_FREQS)
 
     def query_job(self, job_id, role, party_id):
-        party_id=str(party_id)
+        party_id = str(party_id)
         result = self.client.job.query(job_id=job_id, role=role, party_id=party_id)
         try:
             # result = json.loads(result)
@@ -144,18 +166,16 @@ class JobInvoker(object):
 
             ret_code = result["retcode"]
             ret_msg = result["retmsg"]
-            print(f"query job result is {result}")
             data = result["data"][0]
             return ret_code, ret_msg, data
         except ValueError:
             raise ValueError("query job result is {}, can not parse useful info".format(result))
 
     def get_output_data_table(self, job_id, cpn_name, role, party_id):
-        party_id=str(party_id)
+        party_id = str(party_id)
         result = self.client.component.output_data_table(job_id=job_id, role=role,
                                                          party_id=party_id, component_name=cpn_name)
         try:
-            # result = json.loads(result)
             if 'retcode' not in result or result["retcode"] != 0:
                 raise ValueError
 
@@ -167,7 +187,7 @@ class JobInvoker(object):
         return data
 
     def query_task(self, job_id, cpn_name, role, party_id):
-        party_id=str(party_id)
+        party_id = str(party_id)
         result = self.client.task.query(job_id=job_id, role=role,
                                         party_id=party_id, component_name=cpn_name)
         try:
@@ -245,3 +265,32 @@ class JobInvoker(object):
             return result["data"]
         except:
             print("Can not get output model, err msg is {}".format(result))
+
+    def get_summary(self, job_id, cpn_name, role, party_id):
+        result = None
+        party_id = str(party_id)
+        try:
+            result = self.client.component.get_summary(job_id=job_id, role=role,
+                                                       party_id=party_id, component_name=cpn_name)
+            if "data" not in result:
+                print("job {}, component {} has no output metric".format(job_id, cpn_name))
+                return
+            return result["data"]
+        except:
+            print("Can not get output model, err msg is {}".format(result))
+
+    def get_predict_dsl(self, train_dsl, cpn_list, version):
+        result = None
+        with tempfile.TemporaryDirectory() as job_dir:
+            train_dsl_path = os.path.join(job_dir, "train_dsl.json")
+            with open(train_dsl_path, "w") as fout:
+                fout.write(json.dumps(train_dsl))
+
+            result = self.client.job.generate_dsl(train_dsl_path=train_dsl_path, cpn_list=cpn_list, version=version)
+
+        if result is None or 'retcode' not in result:
+            raise ValueError("call flow generate dsl is failed, check if fate_flow server is start!")
+        elif result["retcode"] != 0:
+            raise ValueError("can not generate predict dsl, error msg is {}".format(result["retmsg"]))
+        else:
+            return result["data"]

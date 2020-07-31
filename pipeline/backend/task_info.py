@@ -51,25 +51,12 @@ class TaskInfo(object):
     def get_output_data(self, limits=None):
         return self._job_client.get_output_data(self._jobid, self._component.name, self._role, self._party_id, limits)
 
-    def get_output_data_table(self):
-        return self._job_client.get_output_data_table(self._jobid, self._component.name, self._role, self._party_id)
-
     def get_model_param(self):
         return self._job_client.get_model_param(self._jobid, self._component.name, self._role, self._party_id)
 
-    def summary(self, *args):
-        data = self._job_client.get_metric(self._jobid, self._component.name,  self._role, self._party_id)
-
-        if not data:
-            return
-
-        if not args:
-            args = set()
-        else:
-            args = set(args)
-        return self._component.summary(data, set(args))
-
-    def get_data_table(self):
+    def get_output_data_table(self):
         return self._job_client.get_output_data_table(self._jobid, self._component.name, self._role, self._party_id)
 
+    def get_summary(self):
+        return self._job_client.get_summary(self._jobid, self._component.name, self._role, self._party_id)
 

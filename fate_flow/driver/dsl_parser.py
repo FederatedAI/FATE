@@ -573,13 +573,13 @@ class BaseDSLParser(object):
 
                 output_data_maps[name] = {}
                 output_data_str = output_data[0]
-                if "train_data" in input_data or "eval_data" in input_data or "validate_data" in input_data:
+                if "train_data" in input_data or "eval_data" in input_data or "test_data" in input_data:
                     if "train_data" in input_data:
                         up_input_data = input_data.get("train_data")[0]
                     elif "eval_data" in input_data:
                         up_input_data = input_data.get("eval_data")[0]
                     else:
-                        up_input_data = input_data.get("validate_data")[0]
+                        up_input_data = input_data.get("test_data")[0]
                 elif "data" in input_data:
                     up_input_data = input_data.get("data")[0]
                 else:

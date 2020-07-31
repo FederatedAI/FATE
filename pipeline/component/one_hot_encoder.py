@@ -30,5 +30,4 @@ class OneHotEncoder(Component, OneHotEncoderParam):
         self.output = Output(self.name, has_model=False)
         self._module_name = "OneHotEncoder"
 
-    def summary(self, data, metric_keyword):
-        return data
+

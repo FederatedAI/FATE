@@ -219,18 +219,29 @@ class Component(object):
                 pass
 
             role_param_conf[role] = {}
-            role_all_party_conf = {}
             if None in self.__party_instance[role]["party"]:
                 role_all_party_conf = self.__party_instance[role]["party"][None].get_algorithm_param()
-                role_param_conf[role]["all"] = role_all_party_conf
+                if "all" not in role_param_conf:
+                    role_param_conf[role]["all"] = {}
+                    role_param_conf[role]["all"][self._component_name] = role_all_party_conf
 
+            valid_partyids = roles.get(role)
             for party_id in self.__party_instance[role]["party"]:
                 if not party_id:
                     continue
 
+                if isinstance(party_id, int):
+                    party_key = str(valid_partyids.index(party_id))
+                else:
+                    party_list = list(map(int, party_id.split("|", -1)))
+                    party_key = "|".join(map(str, [valid_partyids.index(party) for party in party_list]))
+
                 party_inst = self.__party_instance[role]["party"][party_id]
 
-                role_param_conf[role][party_id] = party_inst.get_algorithm_param()
+                if party_key not in role_param_conf:
+                    role_param_conf[role][party_key] = {}
+
+                role_param_conf[role][party_key][self._component_name] = party_inst.get_algorithm_param()
 
         print ("role_param_conf {}".format(role_param_conf))
         return role_param_conf
@@ -246,9 +257,7 @@ class Component(object):
     def get_config(self, *args, **kwargs):
         """need to implement"""
 
-        roles = None
-        if VERSION == 1:
-            roles = kwargs["roles"]
+        roles = kwargs["roles"]
 
         algorithm_param_conf = self.get_algorithm_param_conf()
         role_param_conf = self.get_role_param_conf(roles)
