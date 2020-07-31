@@ -13,7 +13,6 @@ arbiter = 10002
 
 guest_train_data = {"name": "hetero_breast_guest", "namespace": "experiment"}
 host_train_data = [{"name": "hetero_breast_host", "namespace": "experiment"},
-                   {"name": "hetero_breast_host", "namespace": "experiment"},
                    {"name": "hetero_breast_host", "namespace": "experiment"}]
 
 input_0 = Input(name="train_data")
@@ -52,7 +51,6 @@ pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
 print(pipeline.get_component("intersection_0").get_output_data())
 print(pipeline.get_component("dataio_0").get_model_param())
 print(pipeline.get_component("hetero_lr_0").get_model_param())
-# pipeline.get_component("intersection_0").summary("intersect_count", "intersect_rate")
 
 
 # predict
@@ -68,5 +66,5 @@ pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
                                  }
                             })
 
-with open("output.pkl", "wb") as fout:
-    fout.write(pipeline.dump())
+#with open("output.pkl", "wb") as fout:
+#    fout.write(pipeline.dump())
