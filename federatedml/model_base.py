@@ -212,8 +212,8 @@ class ModelBase(object):
             # pred_label = predict_score.mapValues(lambda x: classes[x.index(max(x))])
             classes = [str(val) for val in classes]
             predict_result = data_instances.mapValues(lambda x: x.label)
-            predict_result = predict_result.join(predict_score, lambda x, y: [x, int(classes[y.argmax()]),
-                                                                              y.max(), dict(zip(classes, list(y)))])
+            predict_result = predict_result.join(predict_score, lambda x, y: [x, int(classes[np.argmax(y)]),
+                                                                              np.max(y), dict(zip(classes, list(y)))])
         else:
             raise ValueError(f"Model's classes type is {type(classes)}, classes must be None or list.")
 
@@ -234,7 +234,7 @@ class ModelBase(object):
                                      metric_namespace=metric_namespace,
                                      metric_meta=metric_meta)
 
-    def callback_metric(self, metric_name, metric_namespace, metric_data):
+    def callback_metric(self, metric_name, metric_namespace, metic_data):
         if self.need_cv:
             metric_name = '.'.join([metric_name, str(self.cv_fold)])
 
