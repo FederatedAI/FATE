@@ -24,6 +24,7 @@ from federatedml.statistic.data_overview import get_header
 from federatedml.statistic.statics import MultivariateStatisticalSummary
 from federatedml.protobuf.generated import statistic_meta_pb2, statistic_param_pb2
 from federatedml.util import consts
+from federatedml.util import abnormal_detection
 
 LOGGER = log_utils.getLogger()
 
@@ -117,6 +118,7 @@ class DataStatistics(ModelBase):
 
     def fit(self, data_instances):
         self._init_param(data_instances)
+        self._abnormal_detection(data_instances)
         if consts.KURTOSIS in self.model_param.statistics:
             stat_order = 4
         elif consts.SKEWNESS in self.model_param.statistics:
@@ -153,6 +155,7 @@ class DataStatistics(ModelBase):
                     results[k][query_point] = v
         for k, v in results.items():
             self.add_summary(k, v)
+        LOGGER.debug(f"Before finish, summary is: {self.summary()}")
         return data_instances
 
     def _convert_pb(self, stat_res, stat_name):
@@ -192,3 +195,11 @@ class DataStatistics(ModelBase):
             self_values=all_result,
             model_name=consts.STATISTIC_MODEL
         )
+
+    def _abnormal_detection(self, data_instances):
+        """
+        Make sure input data_instances is valid.
+        """
+        abnormal_detection.empty_table_detection(data_instances)
+        abnormal_detection.empty_feature_detection(data_instances)
+        self.check_schema_content(data_instances.schema)

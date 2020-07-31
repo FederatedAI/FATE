@@ -59,6 +59,7 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
             LOGGER.info("This is a local only binning fit")
             self.binning_obj.cal_local_iv(data_instances, label_table=label_table)
             self.transform(data_instances)
+            self.set_summary(self.binning_obj.bin_results.summary())
             return self.data_output
 
         cipher = PaillierEncrypt()
@@ -73,11 +74,11 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         LOGGER.info("Sent encrypted_label_table to host")
 
         self.binning_obj.cal_local_iv(data_instances, label_table=label_table)
-        all_iv = [(col_name, x.iv) for col_name, x in
-                  self.binning_obj.bin_results.all_cols_results.items()]
 
         encrypted_bin_infos = self.transfer_variable.encrypted_bin_sum.get(idx=-1)
         # LOGGER.debug("encrypted_bin_sums: {}".format(encrypted_bin_sums))
+
+        total_summary = self.binning_obj.bin_results.summary()
 
         LOGGER.info("Get encrypted_bin_sum from host")
         for host_idx, encrypted_bin_info in enumerate(encrypted_bin_infos):
@@ -110,17 +111,34 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
                 host_binning_obj = BaseBinning()
                 host_binning_obj.cal_iv_woe(result_counts, self.model_param.adjustment_factor)
             host_binning_obj.set_role_party(role=consts.HOST, party_id=host_party_id)
-
+            total_summary = self._merge_summary(total_summary,
+                                                host_binning_obj.bin_results.summary())
             self.host_results.append(host_binning_obj)
 
         self.set_schema(data_instances)
         self.transform(data_instances)
         LOGGER.info("Finish feature binning fit and transform")
+        self.set_summary(total_summary)
+        LOGGER.debug(f"Summary is: {self.summary()}")
         return self.data_output
 
     # @staticmethod
     # def encrypt(x, cipher):
     #     return cipher.encrypt(x), cipher.encrypt(1 - x)
+    @staticmethod
+    def _merge_summary(summary_1, summary_2):
+        import operator
+        all_ivs = summary_1['iv'].extends(summary_2['iv'])
+        all_ivs = sorted(all_ivs.items(), key=operator.itemgetter(1), reverse=True)
+
+        all_woes = summary_1['woe']
+        all_woes.update(summary_2['woe'])
+
+        all_monotonic = summary_1['monotonic']
+        all_monotonic.update(summary_2['monotonic'])
+        return {"iv": all_ivs,
+                "woe": all_woes,
+                "monotonic": all_monotonic}
     
     @staticmethod
     def encrypt(x, cipher):

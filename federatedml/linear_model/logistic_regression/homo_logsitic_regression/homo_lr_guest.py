@@ -100,6 +100,8 @@ class HomoLRGuest(HomoLRBase):
 
             validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
+        self.set_summary(self.get_model_summary())
+
 
     @assert_io_num_rows_equal
     def predict(self, data_instances):

@@ -77,6 +77,8 @@ class HeteroLRGuest(HeteroLRBase):
         else:
             self.need_one_vs_rest = False
             self.fit_binary(data_instances, validate_data)
+        self.set_summary(self.get_model_summary())
+
 
     def fit_binary(self, data_instances, validate_data=None):
         LOGGER.info("Enter hetero_lr_guest fit")
