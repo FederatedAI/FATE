@@ -235,6 +235,7 @@ class BaseHeteroFeatureSelection(ModelBase):
         """
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
+        self.check_schema_content(data_instances.schema)
 
     def set_schema(self, data_instance, header=None):
         if header is None:
