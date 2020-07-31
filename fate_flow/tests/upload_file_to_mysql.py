@@ -8,13 +8,12 @@ database_config = {
     'user': 'root',
     'passwd': 'fate_dev',
     'host': '127.0.0.1',
-    'port': 3306,
-    'charset': 'utf8'
+    'port': 3306
 }
 
 
 class MysqldbHelper(object):
-    def __init__(self, host='', user='', passwd='', port='',  database='', charset=''):
+    def __init__(self, host='', user='', passwd='', port='',  database=''):
         self.host = host
         self.user = user
         self.password = passwd
@@ -22,8 +21,8 @@ class MysqldbHelper(object):
         self.port = port
         self.con = None
         self.cur = None
-        self.charset = charset
         try:
+            print(host, user, passwd, port, database)
             self.con = pymysql.connect(host=self.host, user=self.user, passwd=self.password, port=self.port, db=self.database)
             self.cur = self.con.cursor()
         except:
@@ -55,23 +54,35 @@ def write_to_db(conf, table_name, file_name, namespace, partitions, head):
     create_table = 'create table {}(id varchar(50) NOT NULL, features LONGTEXT, PRIMARY KEY(id))'.format(table_name)
     db.execute(create_table.format(table_name))
     print('create table {}'.format(table_name))
+
     with open(file_name, 'r') as f:
+        if head:
+            data_head = f.readline()
+            header_source_item = data_head.split(',')
+            table.save_schema(schema_data={'header': ','.join(header_source_item[1:]).strip(),
+                                           'sid': header_source_item[0]})
+        n = 0
+        count = 0
         while True:
-            if head :
-                data_head = f.readline()
-                header_source_item = data_head.split(',')
-                table.save_schema({'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]})
+            data = list()
             lines = f.readlines(12400)
+
             if lines:
                 sql = 'REPLACE INTO {}(id, features)  VALUES'.format(table_name)
                 for line in lines:
+                    count += 1
                     values = line.replace("\n", "").replace("\t", ",").split(",")
+                    data.append((values[0], list_to_str(values[1:])))
                     sql += '("{}", "{}"),'.format(values[0], list_to_str(values[1:]))
                 sql = ','.join(sql.split(',')[:-1]) + ';'
+                if n == 0:
+                    table.save_schema(party_of_data=data, partitions=partitions)
+                n +=1
                 db.execute(sql)
                 db.con.commit()
             else:
                 break
+        table.save_schema(count=count)
 
 
 if __name__ == "__main__":
@@ -79,8 +90,8 @@ if __name__ == "__main__":
     parser.add_argument('-n', '--namespace', required=True, type=str, help="namespace")
     parser.add_argument('-t', '--table_name', required=True, type=str, help="table_name")
     parser.add_argument('-f', '--file_name', required=True, type=str, help="file_name")
-    parser.add_argument('-f', '--partitions', required=True, type=int, help="partitions")
-    parser.add_argument('-f', '--head', required=True, type=int, help="head")
+    parser.add_argument('-p', '--partitions', required=True, type=int, help="partitions")
+    parser.add_argument('-head', '--head', required=True, type=int, help="head")
 
     args = parser.parse_args()
     namespace = args.namespace

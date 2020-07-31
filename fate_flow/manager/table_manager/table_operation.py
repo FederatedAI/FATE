@@ -101,8 +101,9 @@ def get_table(job_id: str = '',
         return None
     data_manager_logger.info('table store engine is {}'.format(store_engine))
     if store_engine == 'MYSQL':
+        data_manager_logger.info(address)
         if not address:
-            database_config = get_base_config("data_storage_config", {})
+            database_config = get_base_config("data_storage_address", {})
             address = MysqlAddress(user=database_config.get('user'),
                                    passwd=database_config.get('passwd'),
                                    host=database_config.get('host'),
