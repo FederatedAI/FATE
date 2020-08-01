@@ -13,6 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from typing import List
+
+from fate_flow.entity.metric import Metric, MetricMeta
+
+
 class JobTrackerClient(object):
     def __init__(self, job_id: str, role: str, party_id: int,
                  model_id: str = None,
@@ -27,26 +32,27 @@ class JobTrackerClient(object):
         self.role = role
         self.party_id = party_id
         self.model_id = model_id
-        self.party_model_id = model_utils.gen_party_model_id(model_id=model_id, role=role, party_id=party_id)
         self.model_version = model_version
-        self.pipelined_model = None
-        if self.party_model_id and self.model_version:
-            self.pipelined_model = pipelined_model.PipelinedModel(model_id=self.party_model_id,
-                                                                  model_version=self.model_version)
-
         self.task_set_id = task_set_id
-
         self.component_name = component_name if component_name else 'pipeline'
         self.module_name = component_module_name if component_module_name else 'Pipeline'
         self.task_id = task_id
         self.task_version = task_version
-        self.table_namespace = '_'.join(
-            ['fate_flow', 'tracking', 'data', self.job_id, self.role, str(self.party_id), self.component_name])
-        self.job_table_namespace = '_'.join()
 
     def log_job_metric_data(self, metric_namespace: str, metric_name: str, metrics: List[Metric]):
-        pass
+        raise NotImplementedError()
 
     def log_metric_data(self, metric_namespace: str, metric_name: str, metrics: List[Metric]):
-        pass
+        raise NotImplementedError()
 
+    def set_job_metric_meta(self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta):
+        raise NotImplementedError()
+
+    def set_metric_meta(self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta):
+        raise NotImplementedError()
+
+    def log_output_data_info(self, data_name: str, table_namespace: str, table_name: str):
+        raise NotImplementedError()
+
+    def get_output_data_info(self, data_name=None):
+        raise NotImplementedError()

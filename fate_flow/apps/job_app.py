@@ -29,6 +29,7 @@ from fate_flow.utils import job_utils, detect_utils
 from fate_flow.utils.api_utils import get_json_result, request_execute_server
 from fate_flow.entity.constant import WorkMode, JobStatus, FederatedSchedulingStatusCode, RetCode
 from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.operation.job_tracker import Tracker
 
 manager = Flask(__name__)
 
@@ -142,10 +143,10 @@ def query_task():
 
 @manager.route('/data/view/query', methods=['POST'])
 def query_data_view():
-    data_views = data_manager.query_data_view(**request.json)
-    if not data_views:
+    output_data_infos = Tracker.query_output_data_infos(**request.json)
+    if not output_data_infos:
         return get_json_result(retcode=101, retmsg='find data view failed')
-    return get_json_result(retcode=0, retmsg='success', data=[data_view.to_json() for data_view in data_views])
+    return get_json_result(retcode=0, retmsg='success', data=[output_data_info.to_json() for output_data_info in output_data_infos])
 
 
 @manager.route('/clean', methods=['POST'])

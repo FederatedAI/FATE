@@ -14,19 +14,19 @@
 #  limitations under the License.
 #
 import uuid
+import operator
 from typing import List
 
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from arch.api.utils.log_utils import schedule_logger
 from fate_arch.data_table.base import SimpleTable
-from fate_flow.db.db_models import DB, TrackingMetric, DataView
+from fate_flow.db.db_models import DB, TrackingMetric, TrackingOutputDataInfo
 from fate_flow.entity.constant import Backend
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.model_manager import pipelined_model
 from fate_flow.manager.table_manager.table_operation import get_table, create
-from fate_flow.settings import API_VERSION
-from fate_flow.utils import job_utils, api_utils, model_utils
+from fate_flow.utils import job_utils, model_utils
 
 
 class Tracker(object):
@@ -63,42 +63,6 @@ class Tracker(object):
         self.module_name = component_module_name if component_module_name else 'Pipeline'
         self.task_id = task_id
         self.task_version = task_version
-        self.table_namespace = '_'.join(
-            ['fate_flow', 'tracking', 'data', self.job_id, self.role, str(self.party_id), self.component_name])
-        self.job_table_namespace = '_'.join(
-            ['fate_flow', 'tracking', 'data', self.job_id, self.role, str(self.party_id)])
-
-    def log_job_metric_data(self, metric_namespace: str, metric_name: str, metrics: List[Metric]):
-        self.save_metric_data_remote(metric_namespace=metric_namespace, metric_name=metric_name, metrics=metrics,
-                                     job_level=True)
-
-    def log_metric_data(self, metric_namespace: str, metric_name: str, metrics: List[Metric]):
-        self.save_metric_data_remote(metric_namespace=metric_namespace, metric_name=metric_name, metrics=metrics,
-                                     job_level=False)
-
-    def save_metric_data_remote(self, metric_namespace: str, metric_name: str, metrics: List[Metric], job_level=False):
-        # TODO: In the next version will be moved to tracking api module on arch/api package
-        schedule_logger(self.job_id).info(
-            'request save job {} component {} on {} {} {} {} metric data'.format(self.job_id, self.component_name,
-                                                                                 self.role,
-                                                                                 self.party_id, metric_namespace,
-                                                                                 metric_name))
-        request_body = dict()
-        request_body['metric_namespace'] = metric_namespace
-        request_body['metric_name'] = metric_name
-        request_body['metrics'] = [serialize_b64(metric, to_str=True) for metric in metrics]
-        request_body['job_level'] = job_level
-        response = api_utils.local_api(job_id=self.job_id,
-                                       method='POST',
-                                       endpoint='/{}/tracking/{}/{}/{}/{}/{}/metric_data/save'.format(
-                                           API_VERSION,
-                                           self.job_id,
-                                           self.component_name,
-                                           self.task_id,
-                                           self.role,
-                                           self.party_id),
-                                       json_body=request_body)
-        return response['retcode'] == 0
 
     def save_metric_data(self, metric_namespace: str, metric_name: str, metrics: List[Metric], job_level=False):
         schedule_logger(self.job_id).info(
@@ -107,7 +71,7 @@ class Tracker(object):
         kv = []
         for metric in metrics:
             kv.append((metric.key, metric.value))
-        self.insert_data_to_db(metric_namespace, metric_name, 1, kv, job_level)
+        self.insert_metrics_into_db(metric_namespace, metric_name, 1, kv, job_level)
 
     def get_job_metric_data(self, metric_namespace: str, metric_name: str):
         return self.read_metric_data(metric_namespace=metric_namespace, metric_name=metric_name, job_level=True)
@@ -118,51 +82,21 @@ class Tracker(object):
     def read_metric_data(self, metric_namespace: str, metric_name: str, job_level=False):
         with DB.connection_context():
             metrics = []
-            for k, v in self.read_data_from_db(metric_namespace, metric_name, 1, job_level):
+            for k, v in self.read_metrics_from_db(metric_namespace, metric_name, 1, job_level):
                 metrics.append(Metric(key=k, value=v))
             return metrics
-
-    def set_metric_meta(self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta,
-                        job_level: bool = False):
-        self.save_metric_meta_remote(metric_namespace=metric_namespace, metric_name=metric_name,
-                                     metric_meta=metric_meta, job_level=job_level)
-
-    def save_metric_meta_remote(self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta,
-                                job_level: bool = False):
-        # TODO: In the next version will be moved to tracking api module on arch/api package
-        schedule_logger(self.job_id).info(
-            'request save job {} component {} on {} {} {} {} metric meta'.format(self.job_id, self.component_name,
-                                                                                 self.role,
-                                                                                 self.party_id, metric_namespace,
-                                                                                 metric_name))
-        request_body = dict()
-        request_body['metric_namespace'] = metric_namespace
-        request_body['metric_name'] = metric_name
-        request_body['metric_meta'] = serialize_b64(metric_meta, to_str=True)
-        request_body['job_level'] = job_level
-        response = api_utils.local_api(job_id=self.job_id,
-                                       method='POST',
-                                       endpoint='/{}/tracking/{}/{}/{}/{}/{}/metric_meta/save'.format(
-                                           API_VERSION,
-                                           self.job_id,
-                                           self.component_name,
-                                           self.task_id,
-                                           self.role,
-                                           self.party_id),
-                                       json_body=request_body)
-        return response['retcode'] == 0
 
     def save_metric_meta(self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta,
                          job_level: bool = False):
         schedule_logger(self.job_id).info(
             'save job {} component {} on {} {} {} {} metric meta'.format(self.job_id, self.component_name, self.role,
                                                                          self.party_id, metric_namespace, metric_name))
-        self.insert_data_to_db(metric_namespace, metric_name, 0, metric_meta.to_dict().items(), job_level)
+        self.insert_metrics_into_db(metric_namespace, metric_name, 0, metric_meta.to_dict().items(), job_level)
 
     def get_metric_meta(self, metric_namespace: str, metric_name: str, job_level: bool = False):
         with DB.connection_context():
             kv = dict()
-            for k, v in self.read_data_from_db(metric_namespace, metric_name, 0, job_level):
+            for k, v in self.read_metrics_from_db(metric_namespace, metric_name, 0, job_level):
                 kv[k] = v
             return MetricMeta(name=kv.get('name'), metric_type=kv.get('metric_type'), extra_metas=kv)
 
@@ -172,7 +106,7 @@ class Tracker(object):
             query_sql = 'select distinct f_metric_namespace, f_metric_name from t_tracking_metric_{} where ' \
                         'f_job_id = "{}" and f_component_name = "{}" and f_role = "{}" and f_party_id = "{}" ' \
                         'and f_task_id = "{}"'.format(
-                self.get_table_index(), self.job_id, self.component_name if not job_level else 'dag', self.role,
+                self.get_dynamic_tracking_table_index(self.job_id), self.job_id, self.component_name if not job_level else 'dag', self.role,
                 self.party_id, self.task_id)
             cursor = DB.execute_sql(query_sql)
             for row in cursor.fetchall():
@@ -181,25 +115,16 @@ class Tracker(object):
             return metrics
 
     def log_job_view(self, view_data: dict):
-        self.insert_data_to_db('job', 'job_view', 2, view_data.items(), job_level=True)
+        self.insert_metrics_into_db('job', 'job_view', 2, view_data.items(), job_level=True)
 
     def get_job_view(self):
         with DB.connection_context():
             view_data = {}
-            for k, v in self.read_data_from_db('job', 'job_view', 2, job_level=True):
+            for k, v in self.read_metrics_from_db('job', 'job_view', 2, job_level=True):
                 view_data[k] = v
             return view_data
 
-    def get_output_data_info(self):
-        pass
-
-    def save_output_data_table(self, data_table, data_name, output_storage_engine=None):
-        """
-        Save component output data, will run in the task executor process
-        :param data_table:
-        :param data_name:
-        :return:
-        """
+    def save_output_data(self, data_table, output_storage_engine=None):
         if data_table:
             persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(
                 self.task_id), uuid.uuid1().hex
@@ -225,16 +150,12 @@ class Tracker(object):
                 if count == 0:
                     break
             table.save_schema(schema, party_of_data=party_of_data, count=data_table.count(), partitions=partitions)
-            self.save_data_view(self.role, self.party_id,
-                                data_info={'f_table_name': persistent_table_name,
-                                           'f_table_namespace': persistent_table_namespace,
-                                           'f_partition': partitions,
-                                           'f_data_name': data_name},
-                                mark=True)
+            return persistent_table_namespace, persistent_table_name
         else:
             schedule_logger(self.job_id).info('task id {} output data table is none'.format(self.task_id))
+            return None, None
 
-    def get_output_data_table(self, init_session=False, need_all=True, session_id='', data_name:  str = ''):
+    def get_output_data_table(self, output_data_infos, init_session=False, need_all=True, session_id=''):
         """
         Get component output data table, will run in the task executor process
         :param data_name:
@@ -242,19 +163,17 @@ class Tracker(object):
         """
         if not init_session and not session_id:
             session_id = job_utils.generate_session_id(self.task_id, self.task_version, self.role, self.party_id)
-        data_views = self.query_data_view(self.role, self.party_id, mark=True, data_name=data_name)
         data_tables = []
-        if data_views:
-            for data_view in data_views:
-                schedule_logger(self.job_id).info("Get task {} {} output table {} {}".format(data_view.f_task_id, data_view.f_task_version, data_view.f_table_namespace, data_view.f_table_name))
+        if output_data_infos:
+            for output_data_info in output_data_infos:
+                schedule_logger(self.job_id).info("Get task {} {} output table {} {}".format(output_data_info.f_task_id, output_data_info.f_task_version, output_data_info.f_table_namespace, output_data_info.f_table_name))
                 if not need_all:
-                    data_table = SimpleTable(name=data_view.f_table_name, namespace=data_view.f_table_namespace, data_name=data_view.f_data_name)
+                    data_table = SimpleTable(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace, data_name=output_data_info.f_data_name)
                     data_tables.append(data_table)
                 else:
                     data_table = get_table(job_id=session_id,
-                                           name=data_view.f_table_name,
-                                           namespace=data_view.f_table_namespace,
-                                           partition=data_view.f_partition,
+                                           name=output_data_info.f_table_name,
+                                           namespace=output_data_info.f_table_namespace,
                                            init_session=init_session)
                     data_tables.append(data_table)
         return data_tables
@@ -288,10 +207,10 @@ class Tracker(object):
     def get_component_define(self):
         return self.pipelined_model.get_component_define(component_name=self.component_name)
 
-    def insert_data_to_db(self, metric_namespace: str, metric_name: str, data_type: int, kv, job_level=False):
+    def insert_metrics_into_db(self, metric_namespace: str, metric_name: str, data_type: int, kv, job_level=False):
         with DB.connection_context():
             try:
-                tracking_metric = TrackingMetric.model(table_index=self.job_id)
+                tracking_metric = self.get_dynamic_db_model(TrackingMetric, self.job_id)
                 tracking_metric.f_job_id = self.job_id
                 tracking_metric.f_component_name = self.component_name if not job_level else 'dag'
                 tracking_metric.f_task_id = self.task_id
@@ -309,8 +228,8 @@ class Tracker(object):
                     db_source['f_value'] = serialize_b64(v)
                     db_source['f_create_time'] = current_timestamp()
                     tracking_metric_data_source.append(db_source)
-                self.bulk_insert_model_data(TrackingMetric.model(table_index=self.get_table_index()),
-                                            tracking_metric_data_source)
+                self.bulk_insert_into_db(self.get_dynamic_db_model(TrackingMetric, self.job_id),
+                                         tracking_metric_data_source)
             except Exception as e:
                 schedule_logger(self.job_id).exception("An exception where inserted metric {} of metric namespace: {} to database:\n{}".format(
                     metric_name,
@@ -318,7 +237,35 @@ class Tracker(object):
                     e
                 ))
 
-    def bulk_insert_model_data(self, model, data_source):
+    def log_output_data_info(self, data_name: str, table_namespace: str, table_name: str):
+        self.insert_output_data_info_into_db(data_name=data_name, table_namespace=table_namespace, table_name=table_name)
+
+    def insert_output_data_info_into_db(self, data_name: str, table_namespace: str, table_name: str):
+        with DB.connection_context():
+            try:
+                #tracking_output_data_info = TrackingOutputDataInfo.model(table_index=self.get_dynamic_tracking_table_index())
+                tracking_output_data_info = self.get_dynamic_db_model(TrackingOutputDataInfo, self.job_id)
+                tracking_output_data_info.f_job_id = self.job_id
+                tracking_output_data_info.f_component_name = self.component_name
+                tracking_output_data_info.f_task_id = self.task_id
+                tracking_output_data_info.f_task_version = self.task_version
+                tracking_output_data_info.f_data_name = data_name
+                tracking_output_data_info.f_role = self.role
+                tracking_output_data_info.f_party_id = self.party_id
+                tracking_output_data_info.f_table_namespace = table_namespace
+                tracking_output_data_info.f_table_name = table_name
+                tracking_output_data_info.f_create_time = current_timestamp()
+                self.bulk_insert_into_db(self.get_dynamic_db_model(TrackingOutputDataInfo, self.job_id),
+                                         [tracking_output_data_info.to_json()])
+            except Exception as e:
+                schedule_logger(self.job_id).exception("An exception where inserted output data info {} {} {} to database:\n{}".format(
+                    data_name,
+                    table_namespace,
+                    table_name,
+                    e
+                ))
+
+    def bulk_insert_into_db(self, model, data_source):
         with DB.connection_context():
             try:
                 DB.create_tables([model])
@@ -331,14 +278,14 @@ class Tracker(object):
                 schedule_logger(self.job_id).exception(e)
                 return 0
 
-    def read_data_from_db(self, metric_namespace: str, metric_name: str, data_type, job_level=False):
+    def read_metrics_from_db(self, metric_namespace: str, metric_name: str, data_type, job_level=False):
         with DB.connection_context():
             metrics = []
             try:
                 query_sql = 'select f_key, f_value from t_tracking_metric_{} where ' \
                             'f_job_id = "{}" and f_component_name = "{}" and f_role = "{}" and f_party_id = "{}"' \
                             'and f_task_id = "{}" and f_metric_namespace = "{}" and f_metric_name= "{}" and f_type="{}" order by f_id'.format(
-                    self.get_table_index(), self.job_id, self.component_name if not job_level else 'dag', self.role,
+                    self.get_dynamic_tracking_table_index(self.job_id), self.job_id, self.component_name if not job_level else 'dag', self.role,
                     self.party_id, self.task_id, metric_namespace, metric_name, data_type)
                 cursor = DB.execute_sql(query_sql)
                 for row in cursor.fetchall():
@@ -347,63 +294,52 @@ class Tracker(object):
                 schedule_logger(self.job_id).exception(e)
             return metrics
 
-    def save_data_view(self, role=None, party_id=None, data_info=None, mark=False):
-        if not role and not party_id:
-            role = self.role
-            party_id = self.party_id
-        with DB.connection_context():
-            data_views = DataView.select().where(DataView.f_job_id == self.job_id,
-                                                 DataView.f_component_name == self.component_name,
-                                                 DataView.f_task_id == self.task_id,
-                                                 DataView.f_role == role,
-                                                 DataView.f_party_id == party_id)
-            is_insert = True
-            if mark and self.component_name == "upload_0":
-                return
-            if data_views:
-                data_view = data_views[0]
-                is_insert = False
-            else:
-                data_view = DataView()
-                data_view.f_create_time = current_timestamp()
-            data_view.f_job_id = self.job_id
-            data_view.f_component_name = self.component_name
-            data_view.f_task_id = self.task_id
-            data_view.f_task_version = self.task_version
-            data_view.f_role = role
-            data_view.f_party_id = party_id
-            data_view.f_update_time = current_timestamp()
-            for k, v in data_info.items():
-                if k in ['f_job_id', 'f_component_name', 'f_task_id', 'f_role', 'f_party_id'] or v == getattr(
-                        DataView, k).default:
-                    continue
-                setattr(data_view, k, v)
-            if is_insert:
-                data_view.save(force_insert=True)
-            else:
-                data_view.save()
-            return data_view
+    def get_output_data_info(self, data_name=None):
+        return self.read_output_data_info_from_db(data_name=data_name)
 
-    def query_data_view(self, role, party_id, mark=False, data_name=None):
+    def read_output_data_info_from_db(self, data_name=None):
+        filter_dict = {}
+        filter_dict["job_id"] = self.job_id
+        filter_dict["component_name"] = self.component_name
+        filter_dict["role"] = self.role
+        filter_dict["party_id"] = self.party_id
+        if data_name:
+            filter_dict["data_name"] = data_name
+        return self.query_output_data_infos(**filter_dict)
+
+    @classmethod
+    def query_output_data_infos(cls, **kwargs):
         with DB.connection_context():
-            if not data_name:
-                data_views_tmp = DataView.select().where(DataView.f_job_id == self.job_id,
-                                                         DataView.f_component_name == self.component_name,
-                                                         DataView.f_role == role,
-                                                         DataView.f_party_id == party_id)
+            tracking_output_data_info_model = cls.get_dynamic_db_model(TrackingOutputDataInfo, kwargs.get("job_id"))
+            filters = []
+            for f_n, f_v in kwargs.items():
+                attr_name = 'f_%s' % f_n
+                if hasattr(tracking_output_data_info_model, attr_name):
+                    filters.append(operator.attrgetter('f_%s' % f_n)(tracking_output_data_info_model) == f_v)
+            if filters:
+                output_data_infos_tmp = tracking_output_data_info_model.select().where(*filters)
             else:
-                data_views_tmp = DataView.select().where(DataView.f_job_id == self.job_id,
-                                                         DataView.f_component_name == self.component_name,
-                                                         DataView.f_role == role,
-                                                         DataView.f_party_id == party_id,
-                                                         DataView.f_data_name == data_name)
-            data_views_group = {}
-            for data_view in data_views_tmp:
-                if data_view.f_task_id not in data_views_group:
-                    data_views_group[data_view.f_task_id] = data_view
-                elif data_view.f_task_version > data_views_group[data_view.f_task_id].f_task_version:
-                    data_views_group[data_view.f_task_id] = data_view
-            return data_views_group.values()
+                output_data_infos_tmp = tracking_output_data_info_model.select()
+            """
+            if data_name:
+                output_data_infos_tmp = db_model.select().where(db_model.f_job_id == self.job_id,
+                                                                db_model.f_component_name == self.component_name,
+                                                                db_model.f_role == self.role,
+                                                                db_model.f_party_id == self.party_id,
+                                                                db_model.f_data_name == data_name)
+            else:
+                output_data_infos_tmp = db_model.select().where(db_model.f_job_id == self.job_id,
+                                                                db_model.f_component_name == self.component_name,
+                                                                db_model.f_role == self.role,
+                                                                db_model.f_party_id == self.party_id)
+            """
+            output_data_infos_group = {}
+            for output_data_info in output_data_infos_tmp:
+                if output_data_info.f_task_id not in output_data_infos_group:
+                    output_data_infos_group[output_data_info.f_task_id] = output_data_info
+                elif output_data_info.f_task_version > output_data_infos_group[output_data_info.f_task_id].f_task_version:
+                    output_data_infos_group[output_data_info.f_task_id] = output_data_info
+            return output_data_infos_group.values()
 
     def clean_task(self, roles):
         schedule_logger(self.job_id).info('clean task {} on {} {}'.format(self.task_id,
@@ -439,23 +375,15 @@ class Tracker(object):
                                                                                self.role,
                                                                                self.party_id))
 
-    def get_table_namespace(self, job_level: bool = False):
-        return self.table_namespace if not job_level else self.job_table_namespace
+    @classmethod
+    def get_dynamic_db_model(cls, base, job_id):
+        print(job_id)
+        print(cls.get_dynamic_tracking_table_index(job_id=job_id))
+        return type(base.model(table_index=cls.get_dynamic_tracking_table_index(job_id=job_id)))
 
-    def get_table_index(self):
-        return self.job_id[:8]
-
-    @staticmethod
-    def metric_table_name(metric_namespace: str, metric_name: str):
-        return '_'.join(['metric', metric_namespace, metric_name])
-
-    @staticmethod
-    def metric_list_table_name():
-        return '_'.join(['metric', 'list'])
-
-    @staticmethod
-    def output_table_name(output_type: str):
-        return '_'.join(['output', output_type])
+    @classmethod
+    def get_dynamic_tracking_table_index(cls, job_id):
+        return job_id[:8]
 
     @staticmethod
     def job_view_table_name():

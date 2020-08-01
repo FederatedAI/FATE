@@ -17,7 +17,7 @@
     "role_parameters": {
         "guest": {
             "reader_0": {
-                "table": [{"name": "breast_hetero_guest", "namespace": "fate_flow_test_breast_hetero"}]
+                "table": [{"name": "breast_hetero_guest", "namespace": "fate_flow_jarvis_test_breast_hetero"}]
             },
             "dataio_0":{
                 "with_label": [true],
@@ -28,7 +28,7 @@
         },
         "host": {
             "reader_0": {
-                "table": [{"name": "breast_hetero_host", "namespace": "fate_flow_test_breast_hetero"}]
+                "table": [{"name": "breast_hetero_host", "namespace": "fate_flow_jarvis_test_breast_hetero"}]
             },
              "dataio_0":{
                 "with_label": [false],

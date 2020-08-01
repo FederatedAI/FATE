@@ -33,7 +33,7 @@ class FederatedScheduler(object):
     # Job
     @classmethod
     def create_job(cls, job: Job):
-        status_code, response = cls.job_command(job=job, command="create", command_body=job.to_dict_info())
+        status_code, response = cls.job_command(job=job, command="create", command_body=job.to_human_model_dict())
         if status_code != FederatedSchedulingStatusCode.SUCCESS:
             raise Exception("Create job failed: {}".format(response))
 
@@ -53,7 +53,7 @@ class FederatedScheduler(object):
     @classmethod
     def sync_job(cls, job, update_fields):
         schedule_logger(job_id=job.f_job_id).info("Job {} is {}, sync to all party".format(job.f_job_id, job.f_status))
-        status_code, response = cls.job_command(job=job, command="update", command_body=job.to_dict_info(only_primary_with=update_fields))
+        status_code, response = cls.job_command(job=job, command="update", command_body=job.to_human_model_dict(only_primary_with=update_fields))
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
             schedule_logger(job_id=job.f_job_id).info("Sync job {} status {} to all party success".format(job.f_job_id, job.f_status))
         else:
@@ -105,7 +105,7 @@ class FederatedScheduler(object):
         roles, job_initiator = job.f_runtime_conf["role"], job.f_runtime_conf['initiator']
         if not dest_only_initiator:
             dest_partys = roles.items()
-            api_type = "control"
+            api_type = "controller"
         else:
             dest_partys = [(job_initiator["role"], [job_initiator["party_id"]])]
             api_type = "initiator"
@@ -147,7 +147,7 @@ class FederatedScheduler(object):
     @classmethod
     def sync_task_set(cls, job, task_set, update_fields):
         schedule_logger(job_id=task_set.f_job_id).info("Job {} task set {} is {}, sync to all party".format(task_set.f_job_id, task_set.f_task_set_id, task_set.f_status))
-        status_code, response = cls.task_set_command(job=job, task_set=task_set, command="update", command_body=task_set.to_dict_info(only_primary_with=update_fields))
+        status_code, response = cls.task_set_command(job=job, task_set=task_set, command="update", command_body=task_set.to_human_model_dict(only_primary_with=update_fields))
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
             schedule_logger(job_id=task_set.f_job_id).info("Sync job {} task set {} status {} to all party success".format(task_set.f_job_id, task_set.f_task_set_id, task_set.f_status))
         else:
@@ -175,7 +175,7 @@ class FederatedScheduler(object):
                 try:
                     response = federated_api(job_id=job.f_job_id,
                                              method='POST',
-                                             endpoint='/{}/control/{}/{}/{}/{}/{}'.format(
+                                             endpoint='/{}/controller/{}/{}/{}/{}/{}'.format(
                                                  API_VERSION,
                                                  job.f_job_id,
                                                  task_set.f_task_set_id,
@@ -213,7 +213,7 @@ class FederatedScheduler(object):
     @classmethod
     def sync_task(cls, job, task, update_fields):
         schedule_logger(job_id=task.f_job_id).info("Job {} task {} {} is {}, sync to all party".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_status))
-        status_code, response = cls.task_command(job=job, task=task, command="update", command_body=task.to_dict_info(only_primary_with=update_fields))
+        status_code, response = cls.task_command(job=job, task=task, command="update", command_body=task.to_human_model_dict(only_primary_with=update_fields))
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
             schedule_logger(job_id=task.f_job_id).info("Sync job {} task {} {} status {} to all party success".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_status))
         else:
@@ -245,7 +245,7 @@ class FederatedScheduler(object):
                 try:
                     response = federated_api(job_id=task.f_job_id,
                                              method='POST',
-                                             endpoint='/{}/control/{}/{}/{}/{}/{}/{}/{}'.format(
+                                             endpoint='/{}/controller/{}/{}/{}/{}/{}/{}/{}'.format(
                                                  API_VERSION,
                                                  task.f_job_id,
                                                  task.f_component_name,
@@ -296,7 +296,7 @@ class FederatedScheduler(object):
                                          src_party_id=task.f_party_id,
                                          dest_party_id=task.f_initiator_party_id,
                                          src_role=task.f_role,
-                                         json_body=task.to_dict_info(only_primary_with=cls.REPORT_TO_INITIATOR_FIELDS),
+                                         json_body=task.to_human_model_dict(only_primary_with=cls.REPORT_TO_INITIATOR_FIELDS),
                                          work_mode=RuntimeConfig.WORK_MODE)
             except Exception as e:
                 response = {
@@ -333,7 +333,7 @@ class FederatedScheduler(object):
             src_party_id = task.f_party_id
             dest_party_id = task.f_initiator_party_id
             src_role = task.f_role
-            report_info = task.to_dict_info(only_primary_with=cls.REPORT_TO_INITIATOR_FIELDS)
+            report_info = task.to_human_model_dict(only_primary_with=cls.REPORT_TO_INITIATOR_FIELDS)
         elif task_set:
             if task_set.f_role != task_set.f_initiator_role and task_set.f_party_id != task_set.f_initiator_party_id:
                 return FederatedSchedulingStatusCode.SUCCESS
@@ -348,7 +348,7 @@ class FederatedScheduler(object):
             src_party_id = task_set.f_party_id
             dest_party_id = task_set.f_initiator_party_id
             src_role = task_set.f_role
-            report_info = task_set.to_dict_info(only_primary_with=cls.REPORT_TO_INITIATOR_FIELDS)
+            report_info = task_set.to_human_model_dict(only_primary_with=cls.REPORT_TO_INITIATOR_FIELDS)
         elif job:
             if job.f_is_initiator == 1:
                 return FederatedSchedulingStatusCode.SUCCESS
@@ -362,7 +362,7 @@ class FederatedScheduler(object):
             src_party_id = job.f_party_id
             dest_party_id = job.f_initiator_party_id
             src_role = job.f_role
-            report_info = job.to_dict_info(only_primary_with=cls.REPORT_TO_INITIATOR_FIELDS)
+            report_info = job.to_human_model_dict(only_primary_with=cls.REPORT_TO_INITIATOR_FIELDS)
         else:
             raise Exception("Can not get info object")
         try:

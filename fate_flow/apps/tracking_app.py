@@ -306,35 +306,13 @@ def component_output_data_download():
 @manager.route('/component/output/data/table', methods=['post'])
 @job_utils.job_server_routing()
 def component_output_data_table():
-    request_data = request.json
-    data_views = query_data_view(**request_data)
-    if data_views:
-        return get_json_result(retcode=0, retmsg='success', data=[{'table_name': data_views[index].f_table_name,
-                                                                  'table_namespace': data_views[index].f_table_namespace
-                                                                   } for index in range(0, len(data_views))])
+    output_data_infos = Tracker.query_output_data_infos(**request.json)
+    if output_data_infos:
+        return get_json_result(retcode=0, retmsg='success', data=[{'table_name': output_data_info.f_table_name,
+                                                                  'table_namespace': output_data_info.f_table_namespace
+                                                                   } for output_data_info in output_data_infos])
     else:
         return get_json_result(retcode=100, retmsg='No found table, please check if the parameters are correct')
-
-
-# api using by task executor
-@manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/metric_data/save', methods=['POST'])
-def save_metric_data(job_id, component_name, task_id, role, party_id):
-    request_data = request.json
-    tracker = Tracker(job_id=job_id, component_name=component_name, task_id=task_id, role=role, party_id=party_id)
-    metrics = [deserialize_b64(metric) for metric in request_data['metrics']]
-    tracker.save_metric_data(metric_namespace=request_data['metric_namespace'], metric_name=request_data['metric_name'],
-                             metrics=metrics, job_level=request_data['job_level'])
-    return get_json_result()
-
-
-@manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/metric_meta/save', methods=['POST'])
-def save_metric_meta(job_id, component_name, task_id, role, party_id):
-    request_data = request.json
-    tracker = Tracker(job_id=job_id, component_name=component_name, task_id=task_id, role=role, party_id=party_id)
-    metric_meta = deserialize_b64(request_data['metric_meta'])
-    tracker.save_metric_meta(metric_namespace=request_data['metric_namespace'], metric_name=request_data['metric_name'],
-                             metric_meta=metric_meta, job_level=request_data['job_level'])
-    return get_json_result()
 
 
 def get_component_output_data_table(task_data, need_all=True):
@@ -347,7 +325,8 @@ def get_component_output_data_table(task_data, need_all=True):
     component = job_dsl_parser.get_component_info(task_data['component_name'])
     if not component:
         raise Exception('can not found component, please check if the parameters are correct')
-    output_data_tables = tracker.get_output_data_table(init_session=True, need_all=need_all)
+    output_data_table_infos = tracker.get_output_data_info()
+    output_data_tables = tracker.get_output_data_table(output_data_infos=output_data_table_infos, init_session=True, need_all=need_all)
     return output_data_tables
 
 

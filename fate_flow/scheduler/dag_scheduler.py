@@ -81,7 +81,7 @@ class DAGScheduler(object):
         FederatedScheduler.create_job(job=job)
 
         # Save the state information of all participants in the initiator for scheduling
-        job_info = job.to_dict_info()
+        job_info = job.to_human_model_dict()
         for role, party_ids in job_runtime_conf["role"].items():
             for party_id in party_ids:
                 if role == job_initiator['role'] and party_id == job_initiator['party_id']:
@@ -135,7 +135,7 @@ class DAGScheduler(object):
             if task_set.f_status == TaskSetStatus.WAITING:
                 schedule_logger(job_id=task_set.f_job_id).info("Try to start job {} task set {} on {} {}".format(task_set.f_job_id, task_set.f_task_set_id, task_set.f_role, task_set.f_party_id))
                 task_set.f_status = TaskSetStatus.RUNNING
-                update_status = JobSaver.update_task_set(task_set_info=task_set.to_dict_info(only_primary_with=["job_id", "status"]))
+                update_status = JobSaver.update_task_set(task_set_info=task_set.to_human_model_dict(only_primary_with=["job_id", "status"]))
                 if not update_status:
                     # another scheduler
                     schedule_logger(job_id=job.f_job_id).info("Job {} task set {} start on another scheduler".format(task_set.f_job_id, task_set.f_task_set_id))
@@ -170,7 +170,7 @@ class DAGScheduler(object):
         jobs = JobSaver.query_job(job_id=initiator_job_template.f_job_id)
         if not jobs:
             raise Exception("Failed to update job status on initiator")
-        job_info = initiator_job_template.to_dict_info(only_primary_with=update_fields)
+        job_info = initiator_job_template.to_human_model_dict(only_primary_with=update_fields)
         for field in update_fields:
             job_info[field] = getattr(initiator_job_template, "f_%s" % field)
         for job in jobs:

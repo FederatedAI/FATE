@@ -13,18 +13,22 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from arch.api.utils import log_utils
+from fate_flow.api.client.controller import api_client
 from fate_flow.settings import API_VERSION
 from fate_flow.utils import api_utils
-from fate_flow.api.client.controller import api_client
+
+LOGGER = log_utils.getLogger()
 
 
 class ControllerRemoteClient(api_client.ControllerClient):
     @classmethod
     def update_job(cls, job_info):
+        LOGGER.info("Request update job {} on {} {}".format(job_info["job_id"], job_info["role"], job_info["party_id"]))
         response = api_utils.local_api(
             job_id=job_info["job_id"],
             method='POST',
-            endpoint='/{}/control/{}/{}/{}/update'.format(
+            endpoint='/{}/controller/{}/{}/{}/update'.format(
                 API_VERSION,
                 job_info["job_id"],
                 job_info["role"],
@@ -35,10 +39,13 @@ class ControllerRemoteClient(api_client.ControllerClient):
 
     @classmethod
     def update_task_set(cls, task_set_info):
+        LOGGER.info(
+            "Request update job {} task set {} on {} {}".format(task_set_info["job_id"], task_set_info["task_set_id"],
+                                                                task_set_info["role"], task_set_info["party_id"]))
         response = api_utils.local_api(
             job_id=task_set_info["job_id"],
             method='POST',
-            endpoint='/{}/control/{}/{}/{}/{}/update'.format(
+            endpoint='/{}/controller/{}/{}/{}/{}/update'.format(
                 API_VERSION,
                 task_set_info["job_id"],
                 task_set_info["task_set_id"],
@@ -50,10 +57,13 @@ class ControllerRemoteClient(api_client.ControllerClient):
 
     @classmethod
     def update_task(cls, task_info):
+        LOGGER.info("Request update job {} task {} {} on {} {}".format(task_info["job_id"], task_info["task_id"],
+                                                                       task_info["task_version"], task_info["role"],
+                                                                       task_info["party_id"]))
         response = api_utils.local_api(
             job_id=task_info["job_id"],
             method='POST',
-            endpoint='/{}/control/{}/{}/{}/{}/{}/{}/update'.format(
+            endpoint='/{}/controller/{}/{}/{}/{}/{}/{}/update'.format(
                 API_VERSION,
                 task_info["job_id"],
                 task_info["component_name"],

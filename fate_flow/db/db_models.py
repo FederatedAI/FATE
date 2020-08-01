@@ -101,18 +101,18 @@ class DataBaseModel(Model):
     def to_json(self):
         return self.__dict__['__data__']
 
-    def to_dict_info(self, only_primary_with: list = None):
-        model_info = self.__dict__["__data__"]
-        dict_info = {}
+    def to_human_model_dict(self, only_primary_with: list = None):
+        model_dict = self.__dict__["__data__"]
+        human_model_dict = {}
         if not only_primary_with:
-            for k, v in model_info.items():
-                dict_info[k.lstrip("f_")] = v
+            for k, v in model_dict.items():
+                human_model_dict[k.lstrip("f_")] = v
         else:
             for k in self._meta.primary_key.field_names:
-                dict_info[k.lstrip("f_")] = model_info[k]
+                human_model_dict[k.lstrip("f_")] = model_dict[k]
             for k in only_primary_with:
-                dict_info[k] = model_info["f_%s" % k]
-        return dict_info
+                human_model_dict[k] = model_dict["f_%s" % k]
+        return human_model_dict
 
     def save(self, *args, **kwargs):
         if hasattr(self, "f_update_date"):
@@ -225,34 +225,6 @@ class Task(DataBaseModel):
         primary_key = CompositeKey('f_job_id', 'f_task_id', 'f_task_version', 'f_role', 'f_party_id')
 
 
-class DataView(DataBaseModel):
-    f_job_id = CharField(max_length=25)
-    f_role = CharField(max_length=50, index=True)
-    f_party_id = CharField(max_length=10, index=True)
-    f_table_name = CharField(max_length=500, null=True)
-    f_table_namespace = CharField(max_length=500, null=True)
-    f_component_name = TextField()
-    f_create_time = BigIntegerField()
-    f_update_time = BigIntegerField(null=True)
-    f_table_count_upload = IntegerField(null=True)
-    f_table_count_actual = IntegerField(null=True)
-    f_partition = IntegerField(null=True)
-    f_task_id = CharField(max_length=100)
-    f_task_version = BigIntegerField()
-    f_type = CharField(max_length=50, null=True)
-    f_ttl = IntegerField(default=0)
-    f_party_model_id = CharField(max_length=100, null=True)
-    f_model_version = CharField(max_length=100, null=True)
-    f_size = BigIntegerField(default=0)
-    f_description = TextField(null=True, default='')
-    f_tag = CharField(max_length=50, null=True, index=True, default='')
-    f_data_name = CharField(max_length=30, default='0')
-
-    class Meta:
-        db_table = "t_data_view"
-        primary_key = CompositeKey('f_job_id', 'f_task_id', 'f_task_version', 'f_role', 'f_party_id', 'f_data_name')
-
-
 class TrackingMetric(DataBaseModel):
     _mapper = {}
 
@@ -291,3 +263,48 @@ class TrackingMetric(DataBaseModel):
     f_update_time = BigIntegerField(null=True)
 
 
+class TrackingOutputDataInfo(DataBaseModel):
+    _mapper = {}
+
+    @classmethod
+    def model(cls, table_index=None, date=None):
+        if not table_index:
+            table_index = date.strftime(
+                '%Y%m%d') if date else datetime.datetime.now().strftime(
+                '%Y%m%d')
+        class_name = 'TrackingOutputDataInfo_%s' % table_index
+
+        ModelClass = TrackingOutputDataInfo._mapper.get(class_name, None)
+        if ModelClass is None:
+            class Meta:
+                db_table = '%s_%s' % ('t_tracking_output_data_info', table_index)
+                primary_key = CompositeKey('f_job_id', 'f_task_id', 'f_task_version', 'f_data_name', 'f_role', 'f_party_id')
+
+            attrs = {'__module__': cls.__module__, 'Meta': Meta}
+            ModelClass = type("%s_%s" % (cls.__name__, table_index), (cls,),
+                              attrs)
+            TrackingOutputDataInfo._mapper[class_name] = ModelClass
+        return ModelClass()
+
+    # multi-party common configuration
+    f_job_id = CharField(max_length=25)
+    f_component_name = TextField()
+    f_task_id = CharField(max_length=100, null=True)
+    f_task_version = BigIntegerField(null=True)
+    f_data_name = CharField(max_length=30)
+    # this party configuration
+    f_role = CharField(max_length=50, index=True)
+    f_party_id = CharField(max_length=10, index=True)
+    f_table_name = CharField(max_length=500, null=True)
+    f_table_namespace = CharField(max_length=500, null=True)
+    f_create_time = BigIntegerField()
+    f_update_time = BigIntegerField(null=True)
+    f_description = TextField(null=True, default='')
+
+
+def fill_db_model_object(model_object, human_model_dict):
+    for k, v in human_model_dict.items():
+        attr_name = 'f_%s' % k
+        if hasattr(model_object.__class__, attr_name):
+            setattr(model_object, attr_name, v)
+    return model_object

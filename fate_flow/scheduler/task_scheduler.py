@@ -42,7 +42,7 @@ class TaskScheduler(object):
                 # TODO: run task until the concurrency is reached
                 task.f_status = TaskStatus.START
                 schedule_logger(job_id=task.f_job_id).info("Try to start job {} task {} {} on {} {}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_role, task.f_party_id))
-                update_status = JobSaver.update_task(task_info=task.to_dict_info(only_primary_with=["job_id", "status"]))
+                update_status = JobSaver.update_task(task_info=task.to_human_model_dict(only_primary_with=["job_id", "status"]))
                 if not update_status:
                     # Another scheduler scheduling the task
                     schedule_logger(job_id=task.f_job_id).info("Job {} task {} {} start on another scheduler".format(task.f_job_id, task.f_task_id, task.f_task_version))
@@ -158,7 +158,7 @@ class TaskScheduler(object):
         tasks = JobSaver.query_task(task_id=initiator_task_template.f_task_id, task_version=initiator_task_template.f_task_version)
         if not tasks:
             raise Exception("Failed to update task status on initiator")
-        task_info = initiator_task_template.to_dict_info(only_primary_with=update_fields)
+        task_info = initiator_task_template.to_human_model_dict(only_primary_with=update_fields)
         for field in update_fields:
             task_info[field] = getattr(initiator_task_template, "f_%s" % field)
         for task in tasks:
@@ -171,7 +171,7 @@ class TaskScheduler(object):
         task_sets = JobSaver.query_task_set(job_id=initiator_task_set_template.f_job_id, task_set_id=initiator_task_set_template.f_task_set_id)
         if not task_sets:
             raise Exception("Failed to update task set status on initiator")
-        task_set_info = initiator_task_set_template.to_dict_info(only_primary_with=update_fields)
+        task_set_info = initiator_task_set_template.to_human_model_dict(only_primary_with=update_fields)
         for field in update_fields:
             task_set_info[field] = getattr(initiator_task_set_template, "f_%s" % field)
         for task_set in task_sets:

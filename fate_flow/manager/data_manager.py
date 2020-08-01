@@ -17,7 +17,7 @@ import operator
 
 from fate_flow.manager.table_manager.table_operation import get_table
 from fate_flow.settings import stat_logger
-from fate_flow.db.db_models import DB, DataView, TrackingMetric
+from fate_flow.db.db_models import DB, TrackingMetric
 
 
 def query_data_view(**kwargs):

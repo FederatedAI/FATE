@@ -42,6 +42,7 @@ class StoreEngine(IntEnum):
     def is_eggroll(self):
         return self.value == self.EGGROLL
 
+
 class RetCode(IntEnum):
     SUCCESS = 0
     EXCEPTION_ERROR = 100

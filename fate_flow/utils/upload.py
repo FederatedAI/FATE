@@ -112,6 +112,7 @@ class Upload(object):
                 else:
                     self.table.save_schema(count=self.table.count(), partitions=self.parameters["partition"])
                     count_actual = self.table.count()
+                    """
                     self.tracker.save_data_view(role=self.parameters["local"]['role'],
                                                 party_id=self.parameters["local"]['party_id'],
                                                 data_info={'f_table_name': dst_table_name,
@@ -120,9 +121,13 @@ class Upload(object):
                                                            'f_table_count_actual': count_actual,
                                                            'f_table_count_upload': count
                                                            })
-                    self.callback_metric(metric_name='data_access',
-                                         metric_namespace='upload',
-                                         metric_data=[Metric("count", count_actual)])
+                    """
+                    self.tracker.log_metric_data(metric_namespace="upload",
+                                                 metric_name="data_access",
+                                                 metrics=[Metric("count", count_actual)])
+                    self.tracker.set_metric_meta(metric_namespace="upload",
+                                                 metric_name="data_access",
+                                                 metric_meta=MetricMeta(name='upload', metric_type='UPLOAD'))
                     return count_actual
                 n += 1
 
@@ -151,12 +156,3 @@ class Upload(object):
 
     def export_model(self):
         return None
-
-    def callback_metric(self, metric_name, metric_namespace, metric_data):
-        self.tracker.log_metric_data(metric_name=metric_name,
-                                     metric_namespace=metric_namespace,
-                                     metrics=metric_data)
-        self.tracker.set_metric_meta(metric_namespace,
-                                     metric_name,
-                                     MetricMeta(name='upload',
-                                                metric_type='UPLOAD'))

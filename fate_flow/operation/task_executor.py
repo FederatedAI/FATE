@@ -29,16 +29,17 @@ from fate_arch.session import Backend
 from fate_flow.entity.constant import TaskStatus, ProcessRole
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
-from fate_flow.manager.table_manager.table_operation import get_table, create
-from fate_flow.settings import API_VERSION, SAVE_AS_TASK_INPUT_DATA_SWITCH, SAVE_AS_TASK_INPUT_DATA_IN_MEMORY
-from fate_flow.utils import api_utils
-from fate_flow.entity.constant import RetCode
+from fate_flow.manager.table_manager.table_operation import create
+from fate_flow.settings import SAVE_AS_TASK_INPUT_DATA_SWITCH, SAVE_AS_TASK_INPUT_DATA_IN_MEMORY
 from fate_flow.utils import job_utils
 from fate_flow.api.client.controller.remote_client import ControllerRemoteClient
+from fate_flow.api.client.tracker.remote_client import JobTrackerRemoteClient
+from fate_flow.db.db_models import TrackingOutputDataInfo, fill_db_model_object
 
 
 class TaskExecutor(object):
     REPORT_TO_DRIVER_FIELDS = ["run_ip", "run_pid", "party_status", "start_time", "update_time", "end_time", "elapsed"]
+
     @classmethod
     def run_task(cls):
         task_info = {}
@@ -117,6 +118,12 @@ class TaskExecutor(object):
                               model_id=job_parameters['model_id'],
                               model_version=job_parameters['model_version'],
                               component_module_name=module_name)
+            tracker_remote_client = JobTrackerRemoteClient(job_id=job_id, role=role, party_id=party_id, component_name=component_name,
+                                                           task_id=task_id,
+                                                           task_version=task_version,
+                                                           model_id=job_parameters['model_id'],
+                                                           model_version=job_parameters['model_version'],
+                                                           component_module_name=module_name)
             run_class_paths = component_parameters_on_party.get('CodePath').split('/')
             run_class_package = '.'.join(run_class_paths[:-2]) + '.' + run_class_paths[-2].replace('.py', '')
             run_class_name = run_class_paths[-1]
@@ -153,16 +160,20 @@ class TaskExecutor(object):
                                                            output_storage_engine=output_storage_engine
                                                            )
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
-            run_object.set_tracker(tracker=tracker)
+            run_object.set_tracker(tracker=tracker_remote_client)
             run_object.set_taskid(taskid=job_utils.generate_federated_id(task_id, task_version))
             run_object.run(component_parameters_on_party, task_run_args)
             output_data = run_object.save_data()
-            print(output_data)
             if not isinstance(output_data, list):
                 output_data = [output_data]
             for index in range(0, len(output_data)):
-                tracker.save_output_data_table(output_data[index], task_output_dsl.get('data')[index] if task_output_dsl.get('data') else '{}'.format(index),
-                                               output_storage_engine[index] if output_storage_engine else None)
+                data_name = task_output_dsl.get('data')[index] if task_output_dsl.get('data') else '{}'.format(index)
+                persistent_table_namespace, persistent_table_name = tracker.save_output_data(data_table=output_data[index],
+                                                                                             output_storage_engine=output_storage_engine[index] if output_storage_engine else None)
+                if persistent_table_namespace and persistent_table_namespace:
+                    tracker.log_output_data_info(data_name=data_name,
+                                                 table_namespace=persistent_table_namespace,
+                                                 table_name=persistent_table_name)
             output_model = run_object.export_model()
             # There is only one model output at the current dsl version.
             tracker.save_output_model(output_model, task_output_dsl['model'][0] if task_output_dsl.get('model') else 'default')
@@ -206,9 +217,18 @@ class TaskExecutor(object):
                         data_key_item = data_key.split('.')
                         search_component_name, search_data_name = data_key_item[0], data_key_item[1]
                         session_id = job_utils.generate_session_id(task_id, task_version, role, party_id)
-                        data_table = Tracker(job_id=job_id, role=role, party_id=party_id, component_name=search_component_name).get_output_data_table(data_name=search_data_name, session_id=session_id)
-                        if data_table:
-                            data_table = data_table[0]
+                        tracker_remote_client = JobTrackerRemoteClient(job_id=job_id, role=role, party_id=party_id, component_name=search_component_name)
+                        data_table_infos_json = tracker_remote_client.get_output_data_info(data_name=search_data_name)
+                        if data_table_infos_json:
+                            tracker = Tracker(job_id=job_id, role=role, party_id=party_id, component_name=search_component_name)
+                            data_table_infos = []
+                            for data_table_info_json in data_table_infos_json:
+                                data_table_infos.append(fill_db_model_object(TrackingOutputDataInfo.model(table_index=tracker.get_dynamic_tracking_table_index()), data_table_info_json))
+                            data_table = tracker.get_output_data_table(output_data_infos=data_table_infos, session_id=session_id)
+                            if data_table:
+                                data_table = data_table[0]
+                            else:
+                                data_table = None
                         else:
                             data_table = None
                         output_storage_engine.append(data_table.get_storage_engine() if data_table else None)

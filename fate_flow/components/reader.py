@@ -54,21 +54,17 @@ class Reader(object):
                                                                                            persistent_table_namespace,
                                                                                            partitions,
                                                                                            count))
-        self.tracker.save_data_view(
-            data_info={'f_table_name':  persistent_table_name,
-                       'f_table_namespace':  persistent_table_namespace,
-                       'f_partition': partitions,
-                       'f_table_count_actual': count,
-                       'f_data_name':data_name},
-            mark=True)
-        self.callback_metric(metric_name='reader_name',
-                             metric_namespace='reader_namespace',
-                             data_info={"count": count,
-                                        "partitions": partitions,
-                                        "input_table_storage_engine": data_table.get_storage_engine(),
-                                        "output_table_storage_engine": table.get_storage_engine() if table else
-                                        data_table.get_storage_engine()}
-                             )
+        self.tracker.log_output_data_info(data_name=data_name,
+                                          table_namespace=persistent_table_namespace,
+                                          table_name=persistent_table_name)
+        data_info = {"count": count,
+                     "partitions": partitions,
+                     "input_table_storage_engine": data_table.get_storage_engine(),
+                     "output_table_storage_engine": table.get_storage_engine() if table else
+                     data_table.get_storage_engine()}
+        self.tracker.set_metric_meta(metric_namespace="reader_namespace",
+                                     metric_name="reader_name",
+                                     metric_meta=MetricMeta(name='reader', metric_type='data_info', extra_metas=data_info))
 
     def set_taskid(self, taskid):
         self.task_id = taskid
@@ -81,11 +77,3 @@ class Reader(object):
 
     def export_model(self):
         return None
-
-    def callback_metric(self, metric_name, metric_namespace, data_info):
-        self.tracker.set_metric_meta(metric_namespace,
-                                     metric_name,
-                                     MetricMeta(name='reader',
-                                                metric_type='data_info',
-                                                extra_metas=data_info))
-
