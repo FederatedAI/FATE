@@ -223,7 +223,7 @@ class TaskExecutor(object):
                             tracker = Tracker(job_id=job_id, role=role, party_id=party_id, component_name=search_component_name)
                             data_table_infos = []
                             for data_table_info_json in data_table_infos_json:
-                                data_table_infos.append(fill_db_model_object(TrackingOutputDataInfo.model(table_index=tracker.get_dynamic_tracking_table_index()), data_table_info_json))
+                                data_table_infos.append(fill_db_model_object(Tracker.get_dynamic_db_model(TrackingOutputDataInfo, job_id)(), data_table_info_json))
                             data_table = tracker.get_output_data_table(output_data_infos=data_table_infos, session_id=session_id)
                             if data_table:
                                 data_table = data_table[0]

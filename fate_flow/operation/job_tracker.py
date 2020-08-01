@@ -210,7 +210,7 @@ class Tracker(object):
     def insert_metrics_into_db(self, metric_namespace: str, metric_name: str, data_type: int, kv, job_level=False):
         with DB.connection_context():
             try:
-                tracking_metric = self.get_dynamic_db_model(TrackingMetric, self.job_id)
+                tracking_metric = self.get_dynamic_db_model(TrackingMetric, self.job_id)()
                 tracking_metric.f_job_id = self.job_id
                 tracking_metric.f_component_name = self.component_name if not job_level else 'dag'
                 tracking_metric.f_task_id = self.task_id
@@ -243,8 +243,7 @@ class Tracker(object):
     def insert_output_data_info_into_db(self, data_name: str, table_namespace: str, table_name: str):
         with DB.connection_context():
             try:
-                #tracking_output_data_info = TrackingOutputDataInfo.model(table_index=self.get_dynamic_tracking_table_index())
-                tracking_output_data_info = self.get_dynamic_db_model(TrackingOutputDataInfo, self.job_id)
+                tracking_output_data_info = self.get_dynamic_db_model(TrackingOutputDataInfo, self.job_id)()
                 tracking_output_data_info.f_job_id = self.job_id
                 tracking_output_data_info.f_component_name = self.component_name
                 tracking_output_data_info.f_task_id = self.task_id
@@ -320,19 +319,6 @@ class Tracker(object):
                 output_data_infos_tmp = tracking_output_data_info_model.select().where(*filters)
             else:
                 output_data_infos_tmp = tracking_output_data_info_model.select()
-            """
-            if data_name:
-                output_data_infos_tmp = db_model.select().where(db_model.f_job_id == self.job_id,
-                                                                db_model.f_component_name == self.component_name,
-                                                                db_model.f_role == self.role,
-                                                                db_model.f_party_id == self.party_id,
-                                                                db_model.f_data_name == data_name)
-            else:
-                output_data_infos_tmp = db_model.select().where(db_model.f_job_id == self.job_id,
-                                                                db_model.f_component_name == self.component_name,
-                                                                db_model.f_role == self.role,
-                                                                db_model.f_party_id == self.party_id)
-            """
             output_data_infos_group = {}
             for output_data_info in output_data_infos_tmp:
                 if output_data_info.f_task_id not in output_data_infos_group:
@@ -377,8 +363,6 @@ class Tracker(object):
 
     @classmethod
     def get_dynamic_db_model(cls, base, job_id):
-        print(job_id)
-        print(cls.get_dynamic_tracking_table_index(job_id=job_id))
         return type(base.model(table_index=cls.get_dynamic_tracking_table_index(job_id=job_id)))
 
     @classmethod
