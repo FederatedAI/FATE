@@ -36,14 +36,14 @@ class Reader(object):
 
     def run(self, component_parameters=None, args=None):
         self.parameters = component_parameters["ReaderParam"]
-        job_id = generate_session_id(self.task_id, self.tracker.role, self.tracker.party_id)
+        job_id = generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id)
         data_name = [key for key in self.parameters.keys()][0]
         data_table = get_table(job_id=job_id,
                                namespace=self.parameters[data_name]['namespace'],
                                name=self.parameters[data_name]['name']
                                )
         persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(self.task_id), uuid.uuid1().hex
-        table = convert(data_table, job_id=generate_session_id(self.task_id, self.tracker.role, self.tracker.party_id),
+        table = convert(data_table, job_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id),
                         name=persistent_table_name, namespace=persistent_table_namespace, force=True)
         if not table:
             persistent_table_name = data_table.get_name()

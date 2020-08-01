@@ -227,3 +227,11 @@ def audit_logger(job_id='', log_type='audit'):
         return LoggerFactory.schedule_logger_dict[key]
     return LoggerFactory.get_schedule_logger(job_id=job_id, log_type=log_type)
 
+
+def sql_logger(job_id='', log_type='sql'):
+    key = job_id + log_type
+    if key in LoggerFactory.schedule_logger_dict.keys():
+        return LoggerFactory.schedule_logger_dict[key]
+    return LoggerFactory.get_schedule_logger(job_id=job_id, log_type=log_type)
+
+

@@ -24,7 +24,7 @@ from fate_flow.manager.table_manager.table_operation import get_table
 from fate_flow.settings import stat_logger, USE_LOCAL_DATA, WORK_MODE
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils import detect_utils, job_utils
-from fate_flow.controller.job_controller import JobController
+from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.utils.job_utils import get_job_configuration, generate_job_id, get_job_directory
 
 manager = Flask(__name__)
@@ -80,7 +80,7 @@ def download_upload(access_module):
             except:
                 pass
     job_dsl, job_runtime_conf = gen_data_access_job_config(request_config, access_module)
-    job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = JobController.submit_job(
+    job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(
         {'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)
     data.update({'job_dsl_path': job_dsl_path, 'job_runtime_conf_path': job_runtime_conf_path,
                  'board_url': board_url, 'logs_directory': logs_directory})

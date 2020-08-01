@@ -21,6 +21,7 @@ from arch.api.utils import log_utils, file_utils, dtable_utils
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.manager.table_manager.table_operation import create_table
 from fate_flow.utils.job_utils import generate_session_id
+from fate_flow.api.client.controller.remote_client import ControllerRemoteClient
 
 LOGGER = log_utils.getLogger()
 
@@ -62,10 +63,10 @@ class Upload(object):
         partition = self.parameters["partition"]
         if partition <= 0 or partition >= self.MAX_PARTITION_NUM:
             raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITION_NUM))
-        self.table = create_table(job_id=generate_session_id(self.taskid, self.tracker.role, self.tracker.party_id), name=table_name,
+        self.table = create_table(job_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id), name=table_name,
                                   namespace=namespace, partitions=self.parameters["partition"],
                                   store_engine=self.parameters['store_engine'], mode=self.parameters['work_mode'])
-        data_table_count = self.save_data_table(table_name, namespace, head, self.parameters.get('in_version', False))
+        data_table_count = self.save_data_table(job_id, table_name, namespace, head, self.parameters.get('in_version', False))
         LOGGER.info("------------load data finish!-----------------")
         # rm tmp file
         try:
@@ -84,7 +85,7 @@ class Upload(object):
     def set_tracker(self, tracker):
         self.tracker = tracker
 
-    def save_data_table(self, dst_table_name, dst_table_namespace, head=True, in_version=False):
+    def save_data_table(self, job_id, dst_table_name, dst_table_namespace, head=True, in_version=False):
         input_file = self.parameters["file"]
         count = self.get_count(input_file)
         with open(input_file, 'r') as fin:
@@ -102,10 +103,9 @@ class Upload(object):
                         values = line.replace("\n", "").replace("\t", ",").split(",")
                         data.append((values[0], self.list_to_str(values[1:])))
                     lines_count += len(data)
-                    f_progress = lines_count/count*100//1
-                    job_info = {'progress': f_progress}
-                    self.update_job_status(self.parameters["local"]['role'], self.parameters["local"]['party_id'],
-                                           job_info)
+                    save_progress = lines_count/count*100//1
+                    job_info = {'progress': save_progress, "job_id": job_id, "role": self.parameters["local"]['role'], "party_id": self.parameters["local"]['party_id']}
+                    ControllerRemoteClient.update_job(job_info=job_info)
                     self.table.put_all(data)
                     if n == 0:
                         self.table.save_schema(party_of_data=data)
@@ -136,9 +136,6 @@ class Upload(object):
             for line in fp:
                 count += 1
         return count
-
-    def update_job_status(self, role, party_id, job_info):
-        self.tracker.start_job(role=role, party_id=party_id, job_info=job_info)
 
     def list_to_str(self, input_list):
         return ','.join(list(map(str, input_list)))

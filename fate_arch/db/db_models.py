@@ -26,7 +26,7 @@ from playhouse.pool import PooledMySQLDatabase
 from arch.api.utils import log_utils
 from arch.api.utils.conf_utils import get_base_config
 from arch.api.utils.core_utils import current_timestamp
-from fate_flow.entity.constant_config import WorkMode
+from fate_flow.entity.constant import WorkMode
 from fate_flow.entity.runtime_config import RuntimeConfig
 
 DATABASE = get_base_config("database", {})

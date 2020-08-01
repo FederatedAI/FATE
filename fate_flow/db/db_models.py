@@ -238,6 +238,7 @@ class DataView(DataBaseModel):
     f_table_count_actual = IntegerField(null=True)
     f_partition = IntegerField(null=True)
     f_task_id = CharField(max_length=100)
+    f_task_version = BigIntegerField()
     f_type = CharField(max_length=50, null=True)
     f_ttl = IntegerField(default=0)
     f_party_model_id = CharField(max_length=100, null=True)
@@ -249,25 +250,7 @@ class DataView(DataBaseModel):
 
     class Meta:
         db_table = "t_data_view"
-        primary_key = CompositeKey('f_job_id', 'f_task_id', 'f_role', 'f_party_id', 'f_data_name')
-
-
-class MachineLearningModelMeta(DataBaseModel):
-    f_id = BigIntegerField(primary_key=True)
-    f_role = CharField(max_length=50, index=True)
-    f_party_id = CharField(max_length=10, index=True)
-    f_roles = TextField()
-    f_job_id = CharField(max_length=25)
-    f_model_id = CharField(max_length=100, index=True)
-    f_model_version = CharField(max_length=100, index=True)
-    f_size = BigIntegerField(default=0)
-    f_create_time = BigIntegerField(default=0)
-    f_update_time = BigIntegerField(default=0)
-    f_description = TextField(null=True, default='')
-    f_tag = CharField(max_length=50, null=True, index=True, default='')
-
-    class Meta:
-        db_table = "t_machine_learning_model_meta"
+        primary_key = CompositeKey('f_job_id', 'f_task_id', 'f_task_version', 'f_role', 'f_party_id', 'f_data_name')
 
 
 class TrackingMetric(DataBaseModel):

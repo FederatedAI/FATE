@@ -21,6 +21,7 @@ from fate_flow.db.db_models import DB, Job, TaskSet, Task
 from fate_flow.entity.constant import StatusSet, JobStatus, TaskSetStatus, TaskStatus, EndStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 from arch.api.utils.log_utils import schedule_logger, sql_logger
+import peewee
 
 
 class JobSaver(object):
@@ -97,9 +98,17 @@ class JobSaver(object):
             obj.f_status_level = StatusSet.get_level(obj.f_status)
             if hasattr(entity_model, "f_party_status"):
                 obj.f_party_status_level = StatusSet.get_level(obj.f_party_status)
-            rows = obj.save(force_insert=True)
-            if rows != 1:
-                raise Exception("Create {} failed".format(entity_model))
+            try:
+                rows = obj.save(force_insert=True)
+                if rows != 1:
+                    raise Exception("Create {} failed".format(entity_model))
+            except peewee.IntegrityError as e:
+                if e.args[0] == 1062:
+                    sql_logger(job_id=entity_info.get("job_id", "fate_flow")).warning(e)
+                else:
+                    raise Exception("Create {} failed:\n{}".format(entity_model, e))
+            except Exception as e:
+                raise Exception("Create {} failed:\n{}".format(entity_model, e))
 
     @classmethod
     def update_job_family_entity(cls, entity_model, entity_info):

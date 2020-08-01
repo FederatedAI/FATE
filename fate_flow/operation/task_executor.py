@@ -23,22 +23,18 @@ from arch.api import federation
 from arch.api.utils import file_utils, log_utils
 from arch.api.utils.core_utils import current_timestamp, get_lan_ip, timestamp_to_date
 from arch.api.utils.log_utils import schedule_logger
-from fate_flow.entity.constant import TaskStatus, ProcessRole
 from fate_arch import session
 from fate_arch.data_table.store_type import StoreTypes, StoreEngine
 from fate_arch.session import Backend
-from fate_flow.db.db_models import Task
-from fate_flow.entity.constant_config import TaskStatus, ProcessRole
+from fate_flow.entity.constant import TaskStatus, ProcessRole
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.manager.table_manager.table_operation import get_table, create
-from fate_flow.manager.tracking_manager import Tracking
 from fate_flow.settings import API_VERSION, SAVE_AS_TASK_INPUT_DATA_SWITCH, SAVE_AS_TASK_INPUT_DATA_IN_MEMORY
-from fate_flow.utils import job_utils
 from fate_flow.utils import api_utils
 from fate_flow.entity.constant import RetCode
-from fate_flow.utils import job_utils, data_utils
-from fate_flow.utils.api_utils import federated_api
+from fate_flow.utils import job_utils
+from fate_flow.api.client.controller.remote_client import ControllerRemoteClient
 
 
 class TaskExecutor(object):
@@ -136,17 +132,17 @@ class TaskExecutor(object):
                 session_options = {"eggroll.session.processors.per.node": args.processors_per_node}
             else:
                 session_options = {}
-            session.init(session_id=job_utils.generate_session_id(task_id, role, party_id),
+            session.init(session_id=job_utils.generate_session_id(task_id, task_version, role, party_id),
                          mode=RuntimeConfig.WORK_MODE,
                          backend=RuntimeConfig.BACKEND,
                          options=session_options)
             federation.init(job_id=job_utils.generate_federated_id(task_id, task_version), runtime_conf=component_parameters_on_party)
 
-            schedule_logger().info('run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
-            schedule_logger().info(component_parameters_on_party)
-            schedule_logger().info(task_input_dsl)
+            schedule_logger().info('Run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
+            schedule_logger().info("Component parameters on party {}".format(component_parameters_on_party))
+            schedule_logger().info("Task input dsl {}".format(task_input_dsl))
             output_storage_engine = []
-            task_run_args = TaskExecutor.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
+            task_run_args = cls.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
                                                            task_id=task_id,
                                                            task_version=task_version,
                                                            job_args=job_args_on_party,
@@ -161,6 +157,7 @@ class TaskExecutor(object):
             run_object.set_taskid(taskid=job_utils.generate_federated_id(task_id, task_version))
             run_object.run(component_parameters_on_party, task_run_args)
             output_data = run_object.save_data()
+            print(output_data)
             if not isinstance(output_data, list):
                 output_data = [output_data]
             for index in range(0, len(output_data)):
@@ -191,10 +188,8 @@ class TaskExecutor(object):
 
         print('Finish {} {} {} {} {} {} task {}'.format(job_id, component_name, task_id, task_version, role, party_id, task_info["party_status"]))
 
-    @staticmethod
-    def get_task_run_args(job_id, role, party_id, task_id, task_version, job_args, job_parameters, task_parameters, input_dsl,
-                          if_save_as_task_input_data, filter_type=None, filter_attr=None):
-    def get_task_run_args(job_id, role, party_id, task_id, job_args, job_parameters, task_parameters, input_dsl,
+    @classmethod
+    def get_task_run_args(cls, job_id, role, party_id, task_id, task_version, job_args, job_parameters, task_parameters, input_dsl,
                           if_save_as_task_input_data, filter_type=None, filter_attr=None, output_storage_engine=None):
         task_run_args = {}
         for input_type, input_detail in input_dsl.items():
@@ -210,28 +205,13 @@ class TaskExecutor(object):
                     for data_key in data_list:
                         data_key_item = data_key.split('.')
                         search_component_name, search_data_name = data_key_item[0], data_key_item[1]
-                        session_id = job_utils.generate_session_id(task_id, role, party_id)
-                        if search_component_name == 'args':
-                            if job_args.get('data', {}).get(search_data_name).get('namespace', '') and job_args.get(
-                                    'data', {}).get(search_data_name).get('name', ''):
-                                data_table = get_table(
-                                    job_id=session_id,
-                                    namespace=job_args['data'][search_data_name]['namespace'],
-                                    name=job_args['data'][search_data_name]['name'])
-                            else:
-                                data_table = None
+                        session_id = job_utils.generate_session_id(task_id, task_version, role, party_id)
+                        data_table = Tracker(job_id=job_id, role=role, party_id=party_id, component_name=search_component_name).get_output_data_table(data_name=search_data_name, session_id=session_id)
+                        if data_table:
+                            data_table = data_table[0]
                         else:
-                            data_table = Tracking(job_id=job_id, role=role, party_id=party_id,
-                                                  component_name=search_component_name).get_output_data_table(
-                                data_name=search_data_name, session_id=session_id)
-                            if data_table:
-                                data_table = data_table[0]
-                            else:
-                                data_table = None
+                            data_table = None
                         output_storage_engine.append(data_table.get_storage_engine() if data_table else None)
-                            data_table = Tracker(job_id=job_id, role=role, party_id=party_id,
-                                                 component_name=search_component_name).get_output_data_table(
-                                data_name=search_data_name)
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
                             search_component_name, {})
                         # todo: If the same component has more than one identical input, save as is repeated
@@ -239,9 +219,9 @@ class TaskExecutor(object):
                             if data_table:
                                 schedule_logger().info("start save as task {} input data table {}".format(
                                     task_id, data_table.get_address()))
-                                origin_table_metas = data_table.get_schema()
+                                origin_table_schema = data_table.get_schema()
                                 name = uuid.uuid1().hex
-                                namespace = job_utils.generate_session_id(task_id=task_id, role=role, party_id=party_id)
+                                namespace = job_utils.generate_session_id(task_id=task_id, task_version=task_version, role=role, party_id=party_id)
                                 partitions = task_parameters['input_data_partition'] if task_parameters.get('input_data_partition', 0) > 0 else data_table.get_partitions()
                                 if RuntimeConfig.BACKEND == Backend.SPARK:
                                     store_engine = StoreEngine.HDFS
@@ -252,25 +232,10 @@ class TaskExecutor(object):
                                 address = create(name=name, namespace=namespace, store_engine=store_engine,
                                                  partitions=partitions)
                                 data_table.save_as(address=address, partition=partitions, options=save_as_options,
-                                                   name=name, namespace=namespace, schema_data=origin_table_metas)
+                                                   name=name, namespace=namespace, schema_data=origin_table_schema)
                                 schedule_logger().info("save as task {} input data table to {} done".format(task_id, address))
-                                data_table = session.default().load(address, schema=origin_table_metas,
+                                data_table = session.default().load(address, schema=origin_table_schema,
                                                                     partitions=partitions)
-                                # TODO: data table name concat random string
-                                data_table = data_table.save_as(
-                                    namespace=job_utils.generate_session_id(task_id=task_id,
-                                                                            task_version=task_version,
-                                                                            role=role,
-                                                                            party_id=party_id),
-                                    name=data_table.get_name(),
-                                    partition=task_parameters['input_data_partition'] if task_parameters.get('input_data_partition', 0) > 0 else data_table.get_partitions(),
-                                    options=save_as_options)
-                                data_table.save_metas(origin_table_metas)
-                                data_table.schema = origin_table_schema
-                                schedule_logger().info("save as task {} input data table to {} {} done".format(
-                                    task_id,
-                                    data_table.get_namespace(),
-                                    data_table.get_name()))
                             else:
                                 schedule_logger().info("pass save as task {} input data table, because the table is none".format(task_id))
                         else:
@@ -304,47 +269,16 @@ class TaskExecutor(object):
         :param task_info:
         :return:
         """
-        try_times = 3
-        for t in range(try_times):
-            try:
-                response = api_utils.local_api(
-                                         job_id=task_info["job_id"],
-                                         method='POST',
-                                         endpoint='/{}/control/{}/{}/{}/{}/{}/{}/update'.format(
-                                             API_VERSION,
-                                             task_info["job_id"],
-                                             task_info["component_name"],
-                                             task_info["task_id"],
-                                             task_info["task_version"],
-                                             task_info["role"],
-                                             task_info["party_id"]
-                                         ),
-                                         json_body=task_info)
-                if response["retcode"] == 0:
-                    break
-            except Exception as e:
-                response = {
-                    "retcode": RetCode.CONNECTION_ERROR,
-                    "retmsg": "Report error, {}".format(e)
-                }
-            if response["retcode"] != 0:
-                schedule_logger().warning("report task {} {} {} {} to server failed, try again: \n{}".format(
-                    task_info["task_id"],
-                    task_info["task_version"],
-                    task_info["role"],
-                    task_info["party_id"],
-                    response["retmsg"]
-                ))
-        else:
-            raise Exception("report task {} {} {} {} to server failed".format(
-                task_info["task_id"],
-                task_info["task_version"],
-                task_info["role"],
-                task_info["party_id"],
-            ))
+        schedule_logger().info("Report task {} {} {} {} to driver".format(
+            task_info["task_id"],
+            task_info["task_version"],
+            task_info["role"],
+            task_info["party_id"],
+        ))
+        ControllerRemoteClient.update_task(task_info=task_info)
 
-    @staticmethod
-    def monkey_patch():
+    @classmethod
+    def monkey_patch(cls):
         package_name = "monkey_patch"
         package_path = os.path.join(file_utils.get_project_base_directory(), "fate_flow", package_name)
         if not os.path.exists(package_path):

@@ -16,19 +16,14 @@
 import uuid
 from typing import List
 
-from arch.api import session
-from arch.api.base.table import Table
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from arch.api.utils.log_utils import schedule_logger
-from fate_flow.db.db_models import DB, TrackingMetric, DataView
 from fate_arch.data_table.base import SimpleTable
-from fate_flow.db.db_models import DB, Job, Task, TrackingMetric, DataView
-from fate_flow.entity.constant_config import JobStatus, TaskStatus, Backend
+from fate_flow.db.db_models import DB, TrackingMetric, DataView
+from fate_flow.entity.constant import Backend
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.model_manager import pipelined_model
-from fate_flow.settings import API_VERSION
-from fate_flow.utils import job_utils, api_utils, model_utils, session_utils
 from fate_flow.manager.table_manager.table_operation import get_table, create
 from fate_flow.settings import API_VERSION
 from fate_flow.utils import job_utils, api_utils, model_utils
@@ -219,7 +214,7 @@ class Tracker(object):
                              partitions=partitions)
             schema = {}
             data_table.save(address, schema=schema, partitions=partitions)
-            table = get_table(job_id=job_utils.generate_session_id(self.task_id, self.role, self.party_id),
+            table = get_table(job_id=job_utils.generate_session_id(self.task_id, self.task_version, self.role, self.party_id),
                               name=persistent_table_name,
                               namespace=persistent_table_namespace)
             party_of_data = []
@@ -246,11 +241,12 @@ class Tracker(object):
         :return:
         """
         if not init_session and not session_id:
-            session_id = job_utils.generate_session_id(self.task_id, self.role, self.party_id)
+            session_id = job_utils.generate_session_id(self.task_id, self.task_version, self.role, self.party_id)
         data_views = self.query_data_view(self.role, self.party_id, mark=True, data_name=data_name)
         data_tables = []
         if data_views:
             for data_view in data_views:
+                schedule_logger(self.job_id).info("Get task {} {} output table {} {}".format(data_view.f_task_id, data_view.f_task_version, data_view.f_table_namespace, data_view.f_table_name))
                 if not need_all:
                     data_table = SimpleTable(name=data_view.f_table_name, namespace=data_view.f_table_namespace, data_name=data_view.f_data_name)
                     data_tables.append(data_table)
@@ -351,95 +347,6 @@ class Tracker(object):
                 schedule_logger(self.job_id).exception(e)
             return metrics
 
-    def save_data_view(self, role, party_id, data_info, mark=False):
-    def save_job_info(self, role, party_id, job_info, create=False):
-        with DB.connection_context():
-            schedule_logger(self.job_id).info('save {} {} job: {}'.format(role, party_id, job_info))
-            jobs = Job.select().where(Job.f_job_id == self.job_id, Job.f_role == role, Job.f_party_id == party_id)
-            is_insert = True
-            if jobs:
-                job = jobs[0]
-                is_insert = False
-                if job.f_status == JobStatus.TIMEOUT:
-                    return None
-            elif create:
-                job = Job()
-                job.f_create_time = current_timestamp()
-            else:
-                return None
-            job.f_job_id = self.job_id
-            job.f_role = role
-            job.f_party_id = party_id
-            if 'f_status' in job_info:
-                if job.f_status in [JobStatus.COMPLETE, JobStatus.FAILED]:
-                    # Termination status cannot be updated
-                    # TODO:
-                    return
-                if (job_info['f_status'] in [JobStatus.FAILED, JobStatus.TIMEOUT]) and (not job.f_end_time):
-                    if not job.f_start_time:
-                        return
-                    job_info['f_end_time'] = current_timestamp()
-                    job_info['f_elapsed'] = job_info['f_end_time'] - job.f_start_time
-                    job_info['f_update_time'] = current_timestamp()
-
-                if (job_info['f_status'] in [JobStatus.FAILED, JobStatus.TIMEOUT,
-                                             JobStatus.CANCELED, JobStatus.COMPLETE]):
-                    job_info['f_tag'] = 'job_end'
-                if job.f_status == JobStatus.CANCELED:
-                    job_info.pop('f_status')
-            update_fields = []
-            for k, v in job_info.items():
-                try:
-                    if k in ['f_job_id', 'f_role', 'f_party_id'] or v == getattr(Job, k).default:
-                        continue
-                    setattr(job, k, v)
-                    update_fields.append(getattr(Job, k))
-                except:
-                    pass
-
-            if is_insert:
-                job.save(force_insert=True)
-            else:
-                job.save(only=update_fields)
-
-    def save_task(self, role, party_id, task_info):
-        with DB.connection_context():
-            tasks = Task.select().where(Task.f_job_id == self.job_id,
-                                        Task.f_component_name == self.component_name,
-                                        Task.f_task_id == self.task_id,
-                                        Task.f_role == role,
-                                        Task.f_party_id == party_id)
-            is_insert = True
-            if tasks:
-                task = tasks[0]
-                is_insert = False
-            else:
-                task = Task()
-                task.f_create_time = current_timestamp()
-            task.f_job_id = self.job_id
-            task.f_component_name = self.component_name
-            task.f_task_id = self.task_id
-            task.f_role = role
-            task.f_party_id = party_id
-            if 'f_status' in task_info:
-                if task.f_status in [TaskStatus.COMPLETE, TaskStatus.FAILED]:
-                    # Termination status cannot be updated
-                    # TODO:
-                    pass
-            for k, v in task_info.items():
-                try:
-                    if k in ['f_job_id', 'f_component_name', 'f_task_id', 'f_role', 'f_party_id'] or v == getattr(Task,
-                                                                                                                  k).default:
-                        continue
-                except:
-                    pass
-                setattr(task, k, v)
-            if is_insert:
-                task.save(force_insert=True)
-            else:
-                task.save()
-            return task
-
     def save_data_view(self, role=None, party_id=None, data_info=None, mark=False):
         if not role and not party_id:
             role = self.role
@@ -462,6 +369,7 @@ class Tracker(object):
             data_view.f_job_id = self.job_id
             data_view.f_component_name = self.component_name
             data_view.f_task_id = self.task_id
+            data_view.f_task_version = self.task_version
             data_view.f_role = role
             data_view.f_party_id = party_id
             data_view.f_update_time = current_timestamp()
@@ -479,32 +387,36 @@ class Tracker(object):
     def query_data_view(self, role, party_id, mark=False, data_name=None):
         with DB.connection_context():
             if not data_name:
-                data_views = DataView.select().where(DataView.f_job_id == self.job_id,
-                                                     DataView.f_component_name == self.component_name,
-                                                     DataView.f_task_id == self.task_id,
-                                                     DataView.f_role == role,
-                                                     DataView.f_party_id == party_id)
+                data_views_tmp = DataView.select().where(DataView.f_job_id == self.job_id,
+                                                         DataView.f_component_name == self.component_name,
+                                                         DataView.f_role == role,
+                                                         DataView.f_party_id == party_id)
             else:
-                data_views = DataView.select().where(DataView.f_job_id == self.job_id,
-                                                     DataView.f_component_name == self.component_name,
-                                                     DataView.f_task_id == self.task_id,
-                                                     DataView.f_role == role,
-                                                     DataView.f_party_id == party_id,
-                                                     DataView.f_data_name == data_name)
-            return data_views
+                data_views_tmp = DataView.select().where(DataView.f_job_id == self.job_id,
+                                                         DataView.f_component_name == self.component_name,
+                                                         DataView.f_role == role,
+                                                         DataView.f_party_id == party_id,
+                                                         DataView.f_data_name == data_name)
+            data_views_group = {}
+            for data_view in data_views_tmp:
+                if data_view.f_task_id not in data_views_group:
+                    data_views_group[data_view.f_task_id] = data_view
+                elif data_view.f_task_version > data_views_group[data_view.f_task_id].f_task_version:
+                    data_views_group[data_view.f_task_id] = data_view
+            return data_views_group.values()
 
-    def clean_task(self, roles, party_ids):
-        if Backend.EGGROLL != RuntimeConfig.BACKEND:
-            return
-    @session_utils.session_detect()
     def clean_task(self, roles):
         schedule_logger(self.job_id).info('clean task {} on {} {}'.format(self.task_id,
                                                                           self.role,
                                                                           self.party_id))
+        if Backend.EGGROLL != RuntimeConfig.BACKEND:
+            return
         try:
             for role, party_ids in roles.items():
                 for party_id in party_ids:
                     # clean up temporary tables
+                    pass
+                    '''
                     namespace_clean = job_utils.generate_session_id(task_id=self.task_id,
                                                                     task_version=self.task_version,
                                                                     role=role,

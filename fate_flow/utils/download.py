@@ -37,7 +37,7 @@ class Download(object):
                                                             create=False)
         job_id = self.taskid.split("_")[0]
         with open(os.path.abspath(self.parameters["output_path"]), "w") as fout:
-            data_table = get_table(job_id=generate_session_id(self.taskid, self.tracker.role, self.tracker.party_id,),
+            data_table = get_table(job_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id,),
                                    namespace=namespace, name=table_name)
             count = data_table.count()
             LOGGER.info('===== begin to export data =====')

@@ -58,40 +58,48 @@ def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, src_rol
 
 
 def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, json_body,
-               overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
+               overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT, try_times=3):
     json_body['src_role'] = src_role
     if CHECK_NODES_IDENTITY:
         get_node_identity(json_body, src_party_id)
     _packet = wrap_grpc_packet(json_body, method, endpoint, src_party_id, dest_party_id, job_id,
                                overall_timeout=overall_timeout)
-    try:
-        channel, stub = get_proxy_data_channel()
-        _return = stub.unaryCall(_packet)
-        audit_logger(job_id).info("grpc api response: {}".format(_return))
-        channel.close()
-        json_body = json.loads(_return.body.value)
-        return json_body
-    except Exception as e:
+    exception = None
+    for t in range(try_times):
+        try:
+            channel, stub = get_proxy_data_channel()
+            _return = stub.unaryCall(_packet)
+            audit_logger(job_id).info("grpc api response: {}".format(_return))
+            channel.close()
+            response = json.loads(_return.body.value)
+            return response
+        except Exception as e:
+            exception = e
+    else:
         tips = ''
-        if 'Error received from peer' in str(e):
+        if 'Error received from peer' in str(exception):
             tips = 'Please check if the fate flow server of the other party is started. '
-        if 'failed to connect to all addresses' in str(e):
+        if 'failed to connect to all addresses' in str(exception):
             tips = 'Please check whether the rollsite service(port: 9370) is started. '
-        raise Exception('{}rpc request error: {}'.format(tips,e))
+        raise Exception('{}rpc request error: {}'.format(tips, exception))
 
 
-def local_api(method, endpoint, json_body, job_id=None):
-    try:
-        url = "http://{}:{}{}".format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT, endpoint)
-        audit_logger(job_id).info('local api request: {}'.format(url))
-        action = getattr(requests, method.lower(), None)
-        response = action(url=url, json=json_body, headers=HEADERS)
-        audit_logger(job_id).info(response.text)
-        response_json_body = response.json()
-        audit_logger(job_id).info('local api response: {} {}'.format(endpoint, response_json_body))
-        return response_json_body
-    except Exception as e:
-        raise Exception('local request error: {}'.format(e))
+def local_api(method, endpoint, json_body, job_id=None, try_times=3):
+    exception = None
+    for t in range(try_times):
+        try:
+            url = "http://{}:{}{}".format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT, endpoint)
+            audit_logger(job_id).info('local api request: {}'.format(url))
+            action = getattr(requests, method.lower(), None)
+            http_response = action(url=url, json=json_body, headers=HEADERS)
+            audit_logger(job_id).info(http_response.text)
+            response = http_response.json()
+            audit_logger(job_id).info('local api response: {} {}'.format(endpoint, response))
+            return response
+        except Exception as e:
+            exception = e
+    else:
+        raise Exception('local request error: {}'.format(exception))
 
 
 def request_execute_server(request, execute_host):

@@ -39,10 +39,7 @@ from fate_flow.apps.permission_app import manager as permission_app_manager
 from fate_flow.apps.version_app import manager as version_app_manager
 from fate_flow.db.db_models import init_database_tables as init_flow_db
 from fate_arch.db.db_models import init_database_tables as init_arch_db
-from fate_flow.driver import dag_scheduler, job_controller, job_detector
-from fate_flow.db.db_models import init_database_tables
 from fate_flow.operation import job_trigger, job_detector
-from fate_flow.controller import job_controller
 from fate_flow.scheduler import schedule_trigger
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.constant import WorkMode, ProcessRole
