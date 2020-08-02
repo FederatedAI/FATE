@@ -25,6 +25,8 @@ from federatedml.util import abnormal_detection
 from federatedml.util.component_properties import ComponentProperties
 from federatedml.util.param_extract import ParamExtract
 
+import numpy as np
+
 LOGGER = log_utils.getLogger()
 
 
@@ -204,7 +206,8 @@ class ModelBase(object):
 
         # regression
         if classes is None:
-            predict_result = data_instances.join(predict_score, lambda d, pred: [d.label, pred, pred, {"label": pred}])
+            predict_result = data_instances.join(predict_score, lambda d, pred: [d.label, pred,
+                                                                                 pred, {"label": pred}])
         # binary
         elif isinstance(classes, list) and len(classes) == 2:
             class_neg, class_pos = classes[0], classes[1]
@@ -221,9 +224,8 @@ class ModelBase(object):
             # pred_label = predict_score.mapValues(lambda x: classes[x.index(max(x))])
             classes = [str(val) for val in classes]
             predict_result = data_instances.mapValues(lambda x: x.label)
-            predict_result = predict_result.join(
-                predict_score,
-                lambda x, y: [x, int(classes[y.argmax()]), float(y.max()), dict(zip(classes, y.tolist()))])
+            predict_result = predict_result.join(predict_score, lambda x, y: [x, int(classes[np.argmax(y)]),
+                                                                              float(np.max(y)), dict(zip(classes, list(y)))])
         else:
             raise ValueError(f"Model's classes type is {type(classes)}, classes must be None or list.")
 

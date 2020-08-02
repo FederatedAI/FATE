@@ -9,11 +9,19 @@ from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import Objectiv
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
-
+from federatedml.ensemble import HeteroSecureBoostGuest
 import numpy as np
+
+from federatedml.util.io_check import assert_io_num_rows_equal
+
+import functools
+
+from typing import List
 
 from arch.api.utils import log_utils
 LOGGER = log_utils.getLogger()
+
+make_readable_feature_importance = HeteroSecureBoostGuest.make_readable_feature_importance
 
 
 class HomoSecureBoostClient(HomoBoostingClient):
@@ -66,6 +74,7 @@ class HomoSecureBoostClient(HomoBoostingClient):
         return grad_and_hess_subtree
 
     def update_feature_importance(self, tree_feature_importance):
+
         for fid in tree_feature_importance:
             if fid not in self.feature_importance:
                 self.feature_importance[fid] = 0
@@ -91,9 +100,57 @@ class HomoSecureBoostClient(HomoBoostingClient):
 
         return new_tree
 
+    @staticmethod
+    def predict_helper(data, tree_list: List[HomoDecisionTreeClient], init_score, zero_as_missing, use_missing
+                       ,learning_rate, class_num=1):
+
+        weight_list = []
+        for tree in tree_list:
+            weight = tree.traverse_tree(data, tree.tree_node, use_missing=use_missing, zero_as_missing=zero_as_missing)
+            weight_list.append(weight)
+
+        weights = np.array(weight_list)
+
+        if class_num > 1:
+            weights = weights.reshape((-1, class_num))
+
+        return np.sum(weights * learning_rate, axis=0) + init_score
+
+    def fast_homo_tree_predict(self, data_inst):
+
+        LOGGER.debug('running fast homo tree predict')
+        to_predict_data = self.data_and_header_alignment(data_inst)
+        tree_list = []
+        rounds = len(self.boosting_model_list) // self.booster_dim
+        for idx in range(0, rounds):
+            for booster_idx in range(self.booster_dim):
+                model = self.load_booster(self.booster_meta,
+                                          self.boosting_model_list[idx * self.booster_dim + booster_idx],
+                                          idx, booster_idx)
+                tree_list.append(model)
+
+        func = functools.partial(self.predict_helper, tree_list=tree_list, init_score=self.init_score,
+                                 zero_as_missing=self.zero_as_missing, use_missing=self.use_missing,
+                                 learning_rate=self.learning_rate, class_num=self.booster_dim)
+        predict_rs = to_predict_data.mapValues(func)
+
+        return self.score_to_predict_result(data_inst, predict_rs, )
+
+    @assert_io_num_rows_equal
+    def predict(self, data_inst):
+        return self.fast_homo_tree_predict(data_inst)
+
+    def generate_summary(self) -> dict:
+
+        summary = {'feature_importance': make_readable_feature_importance(self.feature_name_fid_mapping,
+                                                                          self.feature_importance),
+                   'validation_metrics': self.validation_strategy.summary()}
+
+        return summary
+
     def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
         tree_inst = HomoDecisionTreeClient(tree_param=self.tree_param, mode='predict')
-        tree_inst.load_model(model_meta=self.booster_meta, model_param=self.boosting_model_list[epoch_idx])
+        tree_inst.load_model(model_meta=self.booster_meta, model_param=model_param)
         return tree_inst
 
     def set_model_param(self, model_param):

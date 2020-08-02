@@ -75,6 +75,7 @@ class Splitter(object):
         self.min_leaf_node = min_leaf_node
 
     def find_split_single_histogram_guest(self, histogram, valid_features, sitename, use_missing, zero_as_missing):
+
         best_fid = None
         best_gain = self.min_impurity_split - consts.FLOAT_ZERO
         best_bid = None

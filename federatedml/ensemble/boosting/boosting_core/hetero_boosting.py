@@ -22,8 +22,6 @@ from fate_flow.entity.metric import MetricMeta
 from federatedml.transfer_variable.transfer_class.hetero_boosting_transfer_variable import \
     HeteroBoostingTransferVariable
 
-from federatedml.ensemble.boosting.boosting_core.predict_cache import PredictDataCache
-
 from federatedml.util.io_check import assert_io_num_rows_equal
 
 import time
@@ -102,7 +100,6 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
 
     def __init__(self):
         super(HeteroBoostingGuest, self).__init__()
-        self.predict_data_cache = PredictDataCache()
 
     def _init_model(self, param):
         super(HeteroBoostingGuest, self)._init_model(param)
@@ -136,6 +133,8 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
 
         self.classes_, self.num_classes, self.booster_dim = self.check_label()
 
+        LOGGER.debug('self class index is {}'.format(self.classes_))
+
         self.loss = self.get_loss_function()
 
         self.sync_booster_dim()
@@ -151,8 +150,6 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
                                       extra_metas={"unit_name": "iters"}))
 
         self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
-
-        total_time = 0
 
         for epoch_idx in range(self.boosting_round):
 
@@ -185,9 +182,18 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
                 self.validation_strategy.validate(self, epoch_idx, use_precomputed_train=True,
                                                   train_scores=self.score_to_predict_result(data_inst, self.y_hat))
 
-            should_stop = self.check_stop_condition(loss)
-            self.sync_stop_flag(should_stop, epoch_idx)
-            if should_stop:
+            should_stop_a, should_stop_b = False, False
+            if self.validation_strategy is not None:
+                if self.validation_strategy.need_stop():
+                    should_stop_a = True
+
+            if self.n_iter_no_change and self.check_convergence(loss):
+                should_stop_b = True
+                self.is_converged = True
+
+            self.sync_stop_flag(self.is_converged, epoch_idx)
+
+            if should_stop_a or should_stop_b:
                 break
 
         self.callback_meta("loss",
@@ -199,6 +205,9 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
             LOGGER.debug('best model exported')
             self.load_model(self.validation_strategy.cur_best_model)
+
+        # get summary
+        self.set_summary(self.generate_summary())
 
     @assert_io_num_rows_equal
     def predict(self, data_inst):
@@ -313,13 +322,21 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
             if self.validation_strategy:
                 self.validation_strategy.validate(self, epoch_idx, use_precomputed_train=True, train_scores=None)
 
-            should_stop = self.sync_stop_flag(epoch_idx)
-            if should_stop:
+            should_stop_a = False
+            if self.validation_strategy is not None:
+                if self.validation_strategy.need_stop():
+                    should_stop_a = True
+
+            should_stop_b = self.sync_stop_flag(epoch_idx)
+            self.is_converged = should_stop_b
+            if should_stop_a or should_stop_b:
                 break
 
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
             LOGGER.debug('best model exported')
             self.load_model(self.validation_strategy.cur_best_model)
+
+        self.set_summary(self.generate_summary())
 
     def lazy_predict(self, data_inst):
 

@@ -69,6 +69,7 @@ class ValidationStrategy(object):
         self.use_first_metric_only = use_first_metric_only
         self.first_metric = None
         self.best_iteration = -1
+        self._evaluation_summary = {}
 
         if early_stopping_rounds is not None:
             if early_stopping_rounds <= 0:
@@ -167,6 +168,17 @@ class ValidationStrategy(object):
         else:
             return None
 
+    def summary(self):
+        return self._evaluation_summary
+
+    def update_metric_summary(self, metric_dict):
+        if len(self._evaluation_summary) == 0:
+            self._evaluation_summary = {metric_name: [] for metric_name in metric_dict}
+
+        for metric_name in metric_dict:
+            epoch_metric = metric_dict[metric_name]
+            self._evaluation_summary[metric_name].append(epoch_metric)
+
     def evaluate(self, predicts, model, epoch):
 
         evaluate_param: EvaluateParam = model.get_metrics_param()
@@ -197,6 +209,8 @@ class ValidationStrategy(object):
         data_set_name = self.make_data_set_name(model.need_cv, model.flowid,  epoch)
         eval_data = {data_set_name: predicts}
         eval_result_dict = eval_obj.fit(eval_data, return_result=True)
+        epoch_summary = eval_obj.summary()
+        self.update_metric_summary(epoch_summary)
         eval_obj.save_data()
         LOGGER.debug("end to eval")
 
@@ -221,7 +235,7 @@ class ValidationStrategy(object):
 
         return self.add_data_type(precompute_scores, data_type)
 
-    def evaluate_data(self, model, epoch, data, data_type: str):
+    def get_predict_result(self, model, epoch, data, data_type: str):
 
         if not data:
             return
@@ -272,12 +286,12 @@ class ValidationStrategy(object):
             return
 
         if not use_precomputed_train:  # call model.predict()
-            train_predicts = self.evaluate_data(model, epoch, self.train_data, "train")
+            train_predicts = self.get_predict_result(model, epoch, self.train_data, "train")
         else:  # use precomputed scores
             train_predicts = self.handle_precompute_scores(train_scores, 'train')
 
         if not use_precomputed_validate:  # call model.predict()
-            validate_predicts = self.evaluate_data(model, epoch, self.validate_data, "validate")
+            validate_predicts = self.get_predict_result(model, epoch, self.validate_data, "validate")
         else:  # use precomputed scores
             validate_predicts = self.handle_precompute_scores(validate_scores, 'validate')
 
@@ -287,6 +301,7 @@ class ValidationStrategy(object):
             if validate_predicts:
                 predicts = predicts.union(validate_predicts)
 
+            # running evaluation
             eval_result_dict = self.evaluate(predicts, model, epoch)
             LOGGER.debug('showing eval_result_dict here')
             LOGGER.debug(eval_result_dict)

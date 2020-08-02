@@ -15,8 +15,6 @@ from federatedml.util import consts
 from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
     HeteroSecureBoostTransferVariable
 
-from federatedml.statistic import data_overview
-
 from federatedml.util.io_check import assert_io_num_rows_equal
 
 from arch.api.utils import log_utils
@@ -119,6 +117,16 @@ class HeteroSecureBoostGuest(HeteroBoostingGuest):
         tree.set_host_party_idlist(self.component_properties.host_party_idlist)
         return tree
 
+    def generate_summary(self) -> dict:
+
+        summary = {'loss_history': self.history_loss, 'best_iteration': self.validation_strategy.best_iteration,
+                   'feature_importance': self.make_readable_feature_importance(self.feature_name_fid_mapping,
+                                                                               self.feature_importances_),
+                   'validation_metrics': self.validation_strategy.summary(),
+                   'is_converged': self.is_converged}
+
+        return summary
+
     @staticmethod
     def generate_leaf_pos_dict(x, tree_num):
         """
@@ -146,6 +154,24 @@ class HeteroSecureBoostGuest(HeteroBoostingGuest):
         else:
             cur_node_idx = rs[0]
             return cur_node_idx, reach_leaf
+
+    @staticmethod
+    def make_readable_feature_importance(fid_mapping, feature_importances):
+        """
+        replace feature id by real feature name
+        """
+        new_fi = {}
+        for id_ in feature_importances:
+
+            if type(id_) == tuple:
+                if 'guest' in id_[0]:
+                    new_fi[fid_mapping[id_[1]]] = feature_importances[id_]
+                else:
+                    new_fi[id_] = feature_importances[id_]
+            else:
+                new_fi[fid_mapping[id_]] = feature_importances[id_]
+
+        return new_fi
 
     @staticmethod
     def traverse_trees(node_pos, sample, trees: List[HeteroDecisionTreeGuest]):
@@ -282,15 +308,7 @@ class HeteroSecureBoostGuest(HeteroBoostingGuest):
         LOGGER.info('running prediction')
         cache_dataset_key = self.predict_data_cache.get_data_key(data_inst)
 
-        if cache_dataset_key in self.data_alignment_map:
-            processed_data = self.data_alignment_map[cache_dataset_key]
-        else:
-            data_inst = self.data_alignment(data_inst)
-            header = [None] * len(self.feature_name_fid_mapping)
-            for idx, col in self.feature_name_fid_mapping.items():
-                header[idx] = col
-            processed_data = data_overview.header_alignment(data_inst, header)
-            self.data_alignment_map[cache_dataset_key] = processed_data
+        processed_data = self.data_and_header_alignment(data_inst)
 
         last_round = self.predict_data_cache.predict_data_last_round(cache_dataset_key)
 

@@ -4,12 +4,14 @@ from federatedml.ensemble.boosting.hetero.hetero_secureboost_host import HeteroS
 from federatedml.param.boosting_param import HeteroFastSecureBoostParam
 from federatedml.ensemble.basic_algorithms import HeteroFastDecisionTreeHost
 from federatedml.ensemble.boosting.hetero import hetero_fast_secureboost_plan as plan
-
+from federatedml.ensemble import HeteroSecureBoostGuest
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
 
 from arch.api.utils import log_utils
 
 from federatedml.util import consts
+
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 from typing import List
 
@@ -18,6 +20,8 @@ import numpy as np
 import functools
 
 LOGGER = log_utils.getLogger()
+
+make_readable_feature_importance = HeteroSecureBoostGuest.make_readable_feature_importance
 
 
 class HeteroFastSecureBoostHost(HeteroSecureBoostHost):
@@ -105,6 +109,12 @@ class HeteroFastSecureBoostHost(HeteroSecureBoostHost):
 
         return tree
 
+    def generate_summary(self) -> dict:
+        summary = super(HeteroFastSecureBoostHost, self).generate_summary()
+        summary['feature_importance'] = make_readable_feature_importance(self.feature_name_fid_mapping,
+                                                                         self.feature_importances_)
+        return summary
+
     @staticmethod
     def traverse_host_local_trees(node_pos, sample, trees: List[HeteroFastDecisionTreeHost]):
 
@@ -123,6 +133,7 @@ class HeteroFastSecureBoostHost(HeteroSecureBoostHost):
 
         return node_pos
 
+    # this func will be called by super class's predict()
     def boosting_fast_predict(self, data_inst, trees: List[HeteroFastDecisionTreeHost]):
 
         LOGGER.info('fast sbt running predict')
