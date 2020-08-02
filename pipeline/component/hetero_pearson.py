@@ -30,5 +30,4 @@ class HeteroPearson(Component, PearsonParam):
         self.output = Output(self.name)
         self._module_name = "HeteroPearson"
 
-    def summary(self, data, metric_keyword):
-        return
+

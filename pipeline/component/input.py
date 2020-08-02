@@ -35,14 +35,10 @@ class Input(Component):
                 data = feed_dict[role][party_id]
 
                 data_conf[role][party_id] = {}
-                data_conf[role][party_id]["source"] = {self.name: data}
+                data_conf[role][party_id]["args"] = {self.name: data}
 
     @property
     def data(self):
-        print ("here ", self.name)
-        if VERSION == 2:
-            return ".".join([self.name, "data"])
-        else:
-            return ".".join(["args", self.name])
+        return ".".join(["args", self.name])
 
 

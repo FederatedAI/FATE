@@ -28,12 +28,16 @@ def queue(ctx):
     pass
 
 
-@queue.command(short_help="Clean Queue Command")
+@queue.command("clean", short_help="Clean Queue Command")
 @click.pass_context
 def clean(ctx):
     """
-    - COMMAND DESCRIPTION:
+    \b
+    - DESCRIPTION:
+        Queue Clean Command
 
-    Queue Clean Command
+    \b
+    - USAGE:
+        flow queue clean
     """
     access_server('post', ctx, "job/clean/queue", json={})

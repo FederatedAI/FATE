@@ -25,7 +25,6 @@ from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils import detect_utils, job_utils, session_utils
 from fate_flow.driver.job_controller import JobController
 from fate_flow.utils.job_utils import get_job_configuration, generate_job_id, get_job_directory
-from fate_flow.entity.runtime_config import RuntimeConfig
 
 manager = Flask(__name__)
 
@@ -147,7 +146,7 @@ def gen_data_access_job_config(config_data, access_module):
     }
 
     if access_module == 'upload':
-        job_runtime_conf["role_parameters"][initiator_role] = {
+        parameters = {
             "upload_0": {
                 "work_mode": [int(config_data["work_mode"])],
                 "head": [int(config_data["head"])],
@@ -158,13 +157,18 @@ def gen_data_access_job_config(config_data, access_module):
                 "in_version": [config_data.get("in_version")],
             }
         }
-
+        if int(config_data.get('dsl_version', 1)) == 2:
+            job_runtime_conf['algorithm_parameters'] = parameters
+            job_runtime_conf['job_parameters']['dsl_version'] = 2
+        else:
+            job_runtime_conf["role_parameters"][initiator_role] = parameters
+            job_runtime_conf['job_parameters']['dsl_version'] = 1
         job_dsl["components"]["upload_0"] = {
             "module": "Upload"
         }
 
     if access_module == 'download':
-        job_runtime_conf["role_parameters"][initiator_role] = {
+        parameters = {
             "download_0": {
                 "work_mode": [config_data["work_mode"]],
                 "delimitor": [config_data.get("delimitor", ",")],
@@ -173,7 +177,12 @@ def gen_data_access_job_config(config_data, access_module):
                 "table_name": [config_data["table_name"]]
             }
         }
-
+        if int(config_data.get('dsl_version', 1)) == 2:
+            job_runtime_conf['algorithm_parameters'] = parameters
+            job_runtime_conf['job_parameters']['dsl_version'] = 2
+        else:
+            job_runtime_conf["role_parameters"][initiator_role] = parameters
+            job_runtime_conf['job_parameters']['dsl_version'] = 1
         job_dsl["components"]["download_0"] = {
             "module": "Download"
         }

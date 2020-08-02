@@ -19,7 +19,7 @@ from arch.api import session, WorkMode
 from arch.api.base.table import Table
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from arch.api.utils.log_utils import schedule_logger
-from fate_flow.db.db_models import DB, Job, Task, TrackingMetric, DataView
+from fate_flow.db.db_models import DB, Job, Task, TrackingMetric, DataView, ComponentSummary
 from fate_flow.entity.constant_config import JobStatus, TaskStatus
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -495,3 +495,41 @@ class Tracking(object):
     @staticmethod
     def job_view_table_name():
         return '_'.join(['job', 'view'])
+
+    def save_component_summary(self, summary_data: dict):
+        with DB.connection_context():
+            component_summary = ComponentSummary.select().where(ComponentSummary.f_job_id == self.job_id,
+                                                                ComponentSummary.f_role == self.role,
+                                                                ComponentSummary.f_party_id == self.party_id,
+                                                                ComponentSummary.f_component_name == self.component_name)
+            is_insert = True
+            if component_summary:
+                cpn_summary = component_summary[0]
+                is_insert = False
+            else:
+                cpn_summary = ComponentSummary()
+                cpn_summary.f_create_time = current_timestamp()
+            cpn_summary.f_job_id = self.job_id
+            cpn_summary.f_role = self.role
+            cpn_summary.f_party_id = self.party_id
+            cpn_summary.f_component_name = self.component_name
+            cpn_summary.f_update_time = current_timestamp()
+            cpn_summary.f_summary = serialize_b64(summary_data, to_str=True)
+
+            if is_insert:
+                cpn_summary.save(force_insert=True)
+            else:
+                cpn_summary.save()
+            return cpn_summary
+
+    def get_component_summary(self):
+        with DB.connection_context():
+            component_summary = ComponentSummary.select().where(ComponentSummary.f_job_id == self.job_id,
+                                                                ComponentSummary.f_role == self.role,
+                                                                ComponentSummary.f_party_id == self.party_id,
+                                                                ComponentSummary.f_component_name == self.component_name)
+            if component_summary:
+                cpn_summary = component_summary[0]
+                return deserialize_b64(cpn_summary.f_summary)
+            else:
+                return ""

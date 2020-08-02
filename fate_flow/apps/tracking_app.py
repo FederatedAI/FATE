@@ -18,6 +18,7 @@ import json
 import os
 import shutil
 import tarfile
+from datetime import datetime
 
 from flask import Flask, request, send_file
 from google.protobuf import json_format
@@ -322,6 +323,47 @@ def save_metric_meta(job_id, component_name, task_id, role, party_id):
     tracker.save_metric_meta(metric_namespace=request_data['metric_namespace'], metric_name=request_data['metric_name'],
                              metric_meta=metric_meta, job_level=request_data['job_level'])
     return get_json_result()
+
+
+@manager.route('/component/summary/save', methods=['POST'])
+def save_component_summary():
+    request_data = request.json
+    tracker = Tracking(job_id=request_data['job_id'], component_name=request_data['component_name'],
+                       role=request_data['role'], party_id=request_data['party_id'])
+    summary_data = request_data['summary']
+    tracker.save_component_summary(summary_data)
+    return get_json_result()
+
+
+@manager.route('/component/summary/download', methods=['POST'])
+def get_component_summary():
+    request_data = request.json
+    tracker = Tracking(job_id=request_data['job_id'], component_name=request_data['component_name'],
+                       role=request_data['role'], party_id=request_data['party_id'])
+    summary = tracker.get_component_summary()
+    if summary:
+        if request_data.get('output_path'):
+            abspath = os.path.abspath(request_data.get("output_path"))
+            if os.path.isdir(abspath):
+                fp = os.path.join(abspath, "summary_{}_{}.json".format(request_data['component_name'],
+                                                                       datetime.now().strftime('%Y%m%d%H%M%S')))
+                with open(fp, "w") as fout:
+                    fout.write(json.dumps(summary, indent=4))
+                return get_json_result(retmsg="{} summary has been stored successfully. "
+                                              "File path is: {}.".format(request_data['component_name'], fp))
+            elif os.path.isfile(abspath):
+                with open(request_data.get('output_path'), 'w') as fout:
+                    fout.write(json.dumps(summary, indent=4))
+                return get_json_result(retmsg="{} summary has been stored successfully. "
+                                              "File path is: {}.".format(request_data['component_name'],
+                                                                         request_data.get("output_path")))
+            else:
+                return get_json_result(retcode=100,
+                                       retmsg='Generating summary file failed. Output path is invalid.')
+        else:
+            return get_json_result(data=summary)
+    return get_json_result(retcode=100,
+                           retmsg="No component summary found, please check if arguments are specified correctly.")
 
 
 @manager.route('/component/list', methods=['POST'])

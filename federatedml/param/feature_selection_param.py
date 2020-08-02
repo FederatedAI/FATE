@@ -406,7 +406,8 @@ class FeatureSelectionParam(BaseParam):
                  percentage_value_param=PercentageValueParam(),
                  iv_param=CommonFilterParam(metrics=consts.IV),
                  statistic_param=CommonFilterParam(metrics=consts.MEAN),
-                 psi_param=CommonFilterParam(metrics=consts.PSI),
+                 psi_param=CommonFilterParam(metrics=consts.PSI,
+                                             take_high=False),
                  sbt_param=CommonFilterParam(metrics=consts.FEATURE_IMPORTANCE),
                  need_run=True
                  ):

@@ -35,8 +35,7 @@ def data(ctx):
     pass
 
 
-@data.command(short_help="Upload Table Command")
-# @click.argument('conf_path', type=click.Path(exists=True), metavar='<CONF_PATH>')
+@data.command("upload", short_help="Upload Table Command")
 @cli_args.CONF_PATH
 @click.option('--verbose', is_flag=True, default=False,
               help="If specified, verbose mode will be turn on. "
@@ -47,15 +46,14 @@ def data(ctx):
 @click.pass_context
 def upload(ctx, **kwargs):
     """
-    - COMMAND DESCRIPTION:
-
-    Upload Data Table.
-
-    - REQUIRED ARGUMENTS:
+    \b
+    - DESCRIPTION:
+        Upload Data Table.
 
     \b
-    <CONF_PATH> : Configuration file path
-
+    - Usage:
+        flow data upload -c fate_flow/examples/upload_guest.json
+        flow data upload -c fate_flow/examples/upload_host.json --verbose --drop
     """
     kwargs['drop'] = 1 if kwargs['drop'] else 2
     kwargs['verbose'] = int(kwargs['verbose'])
@@ -99,46 +97,45 @@ def upload(ctx, **kwargs):
         click.echo(traceback.format_exc())
 
 
-@data.command(short_help="Download Table Command")
-# @click.argument('conf_path', type=click.Path(exists=True), metavar='<CONF_PATH>')
+@data.command("download", short_help="Download Table Command")
 @cli_args.CONF_PATH
 @click.pass_context
 def download(ctx, **kwargs):
     """
-    - COMMAND DESCRIPTION:
-
-    Download Data Table.
-
-    - REQUIRED ARGUMENTS:
+    \b
+    - DESCRIPTION:
+        Download Data Table.
 
     \b
-    <CONF_PATH> : Configuration file path
+    - Usage:
+        flow data download -c fate_flow/examples/download_host.json
     """
-    click.echo(locals())
-    # config_data, dsl_data = preprocess(**kwargs)
-    # response = access_server('post', ctx, "data/download", config_data, False)
-    # try:
-    #     if response.json()['retcode'] == 999:
-    #         start_cluster_standalone_job_server()
-    #         access_server('post', ctx, "data/download", config_data)
-    #     else:
-    #         prettify(response.json())
-    # except:
-    #     click.echo(traceback.format_exc())
+    config_data, dsl_data = preprocess(**kwargs)
+    response = access_server('post', ctx, "data/download", config_data, False)
+    try:
+        if response.json()['retcode'] == 999:
+            start_cluster_standalone_job_server()
+            access_server('post', ctx, "data/download", config_data)
+        else:
+            prettify(response.json())
+    except:
+        click.echo(traceback.format_exc())
 
 
-@data.command(short_help="Upload History Command")
-# @click.option('-l', '--limit', metavar="[LIMIT]", default=10, help="Limit count, defaults is 10")
-# @click.option('-j', '--job_id', metavar="[JOB_ID]", help="Job ID")
+@data.command("upload-history", short_help="Upload History Command")
 @cli_args.LIMIT
 @cli_args.JOBID
 @click.pass_context
 def upload_history(ctx, **kwargs):
     """
-    - COMMAND DESCRIPTION:
+    \b
+    - DESCRIPTION:
+        Query Upload Table History.
 
     \b
-    Query Upload Table History.
+    - USAGE:
+        flow data upload-history -l 20
+        flow data upload-history --job-id $JOB_ID
     """
     config_data, dsl_data = preprocess(**kwargs)
     response = access_server('post', ctx, "data/upload/history", config_data, False)

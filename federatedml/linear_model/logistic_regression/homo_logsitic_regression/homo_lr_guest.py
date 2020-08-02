@@ -106,6 +106,8 @@ class HomoLRGuest(HomoLRBase):
 
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)
+
+        data_instances = self.align_data_header(data_instances, self.header)
         # predict_wx = self.compute_wx(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
         pred_prob = data_instances.mapValues(lambda v: activation.sigmoid(vec_dot(v.features, self.model_weights.coef_)
                                                               + self.model_weights.intercept_))

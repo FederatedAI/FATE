@@ -15,14 +15,13 @@
 #
 import os
 import json
-import time
 import click
 import requests
 from contextlib import closing
 
 from fate_flow.utils import detect_utils, cli_args
-from fate_flow.utils.cli_utils import (preprocess, download_from_request,
-                                       access_server, prettify)
+from fate_flow.utils.cli_utils import (preprocess, download_from_request, access_server,
+                                       prettify, check_output_path)
 
 
 @click.group(short_help="Job Operations")
@@ -36,7 +35,7 @@ def job(ctx):
     pass
 
 
-@job.command(short_help="Submit Job Command")
+@job.command("submit", short_help="Submit Job Command")
 @cli_args.CONF_PATH
 @cli_args.DSL_PATH
 @click.pass_context
@@ -51,29 +50,16 @@ def submit(ctx, **kwargs):
     \b
     - USAGE:
         flow job submit -c fate_flow/examples/test_hetero_lr_job_conf.json -d fate_flow/examples/test_hetero_lr_job_dsl.json
-
     """
     config_data, dsl_data = preprocess(**kwargs)
     post_data = {
         'job_dsl': dsl_data,
         'job_runtime_conf': config_data
     }
-
-    response = access_server('post', ctx, 'job/submit', post_data, False)
-
-    try:
-        if response.json()['retcode'] == 999:
-            click.echo('use service.sh to start standalone node server....')
-            os.system('sh service.sh start --standalone_node')
-            time.sleep(5)
-            access_server('post', ctx, 'job/submit', post_data)
-        else:
-            prettify(response.json())
-    except:
-        pass
+    access_server('post', ctx, 'job/submit', post_data)
 
 
-@job.command(short_help="List Job Command")
+@job.command("list", short_help="List Job Command")
 @cli_args.LIMIT
 @click.pass_context
 def list(ctx, **kwargs):
@@ -86,13 +72,12 @@ def list(ctx, **kwargs):
     - USAGE:
         flow job list
         flow job list -l 30
-
     """
     config_data, dsl_data = preprocess(**kwargs)
     access_server('post', ctx, 'job/list/job', config_data)
 
 
-@job.command(short_help="Query Job Command")
+@job.command("query", short_help="Query Job Command")
 @cli_args.JOBID
 @cli_args.ROLE
 @cli_args.PARTYID
@@ -101,17 +86,15 @@ def list(ctx, **kwargs):
 @click.pass_context
 def query(ctx, **kwargs):
     """
-    - DESCRIPTION:
-
     \b
-    Query job information by filters.
-    Used to be 'query_job'.
+    - DESCRIPTION:
+        Query job information by filters.
+        Used to be 'query_job'.
 
     \b
     - USAGE:
         flow job query -r guest -p 9999 -s success
         flow job query -j $JOB_ID -cpn hetero_feature_binning_0
-
     """
     config_data, dsl_data = preprocess(**kwargs)
     response = access_server('post', ctx, "job/query", config_data, False)
@@ -124,7 +107,7 @@ def query(ctx, **kwargs):
     prettify(response.json() if isinstance(response, requests.models.Response) else response)
 
 
-@job.command(short_help="Clean Job Command")
+@job.command("clean", short_help="Clean Job Command")
 @cli_args.JOBID
 @cli_args.ROLE
 @cli_args.PARTYID
@@ -141,14 +124,13 @@ def clean(ctx, **kwargs):
     - USAGE:
         flow job clean -r guest -p 9999
         flow job clean -j $JOB_ID -cpn hetero_feature_binning_0
-
     """
     config_data, dsl_data = preprocess(**kwargs)
     detect_utils.check_config(config=config_data, required_arguments=['job_id'])
     access_server('post', ctx, "job/clean", config_data)
 
 
-@job.command(short_help="Stop Job Command")
+@job.command("stop", short_help="Stop Job Command")
 @cli_args.JOBID_REQUIRED
 @click.pass_context
 def stop(ctx, **kwargs):
@@ -160,14 +142,13 @@ def stop(ctx, **kwargs):
     \b
     - USAGE:
         flow job stop -j $JOB_ID
-
     """
     config_data, dsl_data = preprocess(**kwargs)
     detect_utils.check_config(config=config_data, required_arguments=['job_id'])
     access_server('post', ctx, "job/stop", config_data)
 
 
-@job.command(short_help="Config Job Command")
+@job.command("config", short_help="Config Job Command")
 @cli_args.JOBID_REQUIRED
 @cli_args.ROLE_REQUIRED
 @cli_args.PARTYID_REQUIRED
@@ -175,7 +156,6 @@ def stop(ctx, **kwargs):
 @click.pass_context
 def config(ctx, **kwargs):
     """
-
     \b
     - DESCRIPTION:
         Download Configurations of A Specified Job.
@@ -183,7 +163,6 @@ def config(ctx, **kwargs):
     \b
     - USAGE:
         flow job config -j $JOB_ID -r host -p 10000 --output-path ./examples/
-
     """
     config_data, dsl_data = preprocess(**kwargs)
     detect_utils.check_config(config=config_data, required_arguments=['job_id', 'role', 'party_id', 'output_path'])
@@ -204,7 +183,7 @@ def config(ctx, **kwargs):
     prettify(response.json() if isinstance(response, requests.models.Response) else response)
 
 
-@job.command(short_help="Log Job Command")
+@job.command("log", short_help="Log Job Command")
 @cli_args.JOBID_REQUIRED
 @cli_args.OUTPUT_PATH
 @click.pass_context
@@ -217,7 +196,6 @@ def log(ctx, **kwargs):
     \b
     - USAGE:
         flow job log -j JOB_ID --output-path ./examples/
-
     """
     config_data, dsl_data = preprocess(**kwargs)
     detect_utils.check_config(config=config_data, required_arguments=['job_id', 'output_path'])
@@ -235,7 +213,7 @@ def log(ctx, **kwargs):
     prettify(response.json() if isinstance(response, requests.models.Response) else response)
 
 
-@job.command(short_help="Query Job Data View Command")
+@job.command("view", short_help="Query Job Data View Command")
 @cli_args.JOBID
 @cli_args.ROLE
 @cli_args.PARTYID
@@ -253,7 +231,57 @@ def view(ctx, **kwargs):
     - USAGE:
         flow job view -r guest -p 9999
         flow job view -j $JOB_ID -cpn hetero_feature_binning_0
-
     """
     config_data, dsl_data = preprocess(**kwargs)
     access_server('post', ctx, 'job/data/view/query', config_data)
+
+
+@job.command("dsl", short_help="Generate Predict DSL Command")
+@click.option("--cpn-list", type=click.STRING,
+              help="User inputs a string to specify component list")
+@click.option("--cpn-path", type=click.Path(exists=True),
+              help="User specifies a file path which records the component list.")
+@click.option("--train-dsl-path", type=click.Path(exists=True), required=True,
+              help="User specifies the train dsl file path.")
+@click.option("-v", "--version", type=click.Choice(["1", "2"]), default="1", metavar='TEXT',
+              help="User specifies the version of dsl parser. Choosing from 1 and 2. (Default: 1)")
+@cli_args.OUTPUT_PATH
+@click.pass_context
+def dsl_generator(ctx, **kwargs):
+    """
+    \b
+    - DESCRIPTION:
+        A predict dsl generator.
+        Before using predict dsl generator, users should prepare:
+            1. name list of component which you are going to use in predict progress,
+            2. the train dsl file path you specified in train progress.
+        \b
+        Notice that users can choose to specify the component name list by using a text file,
+        or, by typing in terminal. We, however, strongly recommend users using prepared files
+        to specify the component list in order to avoid some unnecessary mistakes.
+
+    \b
+    - USAGE:
+        flow job dsl --cpn-path fate_flow/examples/component_list.txt --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/generated_predict_dsl.json --version 2
+        flow job dsl --cpn-list "dataio_0, hetero_feature_binning_0, hetero_feature_selection_0, evaluation_0" --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/generated_predict_dsl.json
+        flow job dsl --cpn-list [dataio_0,hetero_feature_binning_0,hetero_feature_selection_0,evaluation_0] --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/generated_predict_dsl.json
+    """
+    if kwargs.get("cpn_list"):
+        cpn_str = kwargs.get("cpn_list")
+    elif kwargs.get("cpn_path"):
+        with open(kwargs.get("cpn_path"), "r") as fp:
+            cpn_str = fp.read()
+    else:
+        cpn_str = ""
+
+    with open(kwargs.get("train_dsl_path"), "r") as ft:
+        train_dsl = ft.read()
+
+    config_data = {
+        "cpn_str": cpn_str,
+        "train_dsl": train_dsl,
+        "version": kwargs.get("version"),
+        "output_path": check_output_path(kwargs.get("output_path"))
+    }
+
+    access_server('post', ctx, 'job/dsl/generate', config_data)

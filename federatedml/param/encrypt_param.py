@@ -31,7 +31,7 @@ class EncryptParam(BaseParam):
     ----------
     method : str, default: 'Paillier'
         If method is 'Paillier', Paillier encryption will be used for federated ml.
-        To use non-encryption version in HomoLR, just set this parameter to be any other str.
+        To use non-encryption version in HomoLR, set this to None.
         For detail of Paillier encryption, please check out the paper mentioned in README file.
 
     key_length : int, default: 1024

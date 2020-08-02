@@ -20,7 +20,8 @@ import copy
 
 from arch.api.utils import log_utils
 from federatedml.param.evaluation_param import EvaluateParam
-from federatedml.statistic.data_overview import header_alignment, check_legal_schema
+from federatedml.statistic.data_overview import header_alignment
+from federatedml.util import abnormal_detection
 from federatedml.util.component_properties import ComponentProperties
 from federatedml.util.param_extract import ParamExtract
 
@@ -83,6 +84,7 @@ class ModelBase(object):
         self.component_properties.parse_dsl_args(args)
 
         running_funcs = self.component_properties.extract_running_rules(args, self)
+        LOGGER.debug(f"running_funcs: {running_funcs.todo_func_list}")
         saved_result = []
         for func, params, save_result, use_previews in running_funcs:
             # for func, params in zip(todo_func_list, todo_func_params):
@@ -171,7 +173,8 @@ class ModelBase(object):
     def set_tracker(self, tracker):
         self.tracker = tracker
 
-    def set_predict_data_schema(self, predict_datas, schemas):
+    @staticmethod
+    def set_predict_data_schema(predict_datas, schemas):
         if predict_datas is None:
             return predict_datas
         if isinstance(predict_datas, list):
@@ -185,15 +188,22 @@ class ModelBase(object):
                                    "sid_name": schema.get('sid_name')}
         return predict_data
 
-    def predict_score_to_output(self, data_instances, predict_score, classes=None, threshold=0.5):
+    @staticmethod
+    def predict_score_to_output(data_instances, predict_score, classes=None, threshold=0.5):
         """
-        get predict result output
-        :param data_instances: table, data used for prediction
-        :param predict_score: table, probability scores
-        :param classes: list or None, all classes/label names
-        :param threshold: float, predict threshold, used for binary label
-        :return:
+        Get predict result output
+        Parameters
+        ----------
+        data_instances: table, data used for prediction
+        predict_score: table, probability scores
+        classes: list or None, all classes/label names
+        threshold: float, predict threshold, used for binary label
+
+        Returns
+        -------
+        Table, predict result
         """
+
         # regression
         if classes is None:
             predict_result = data_instances.join(predict_score, lambda d, pred: [d.label, pred,
@@ -215,7 +225,7 @@ class ModelBase(object):
             classes = [str(val) for val in classes]
             predict_result = data_instances.mapValues(lambda x: x.label)
             predict_result = predict_result.join(predict_score, lambda x, y: [x, int(classes[np.argmax(y)]),
-                                                                              np.max(y), dict(zip(classes, list(y)))])
+                                                                              float(np.max(y)), dict(zip(classes, list(y)))])
         else:
             raise ValueError(f"Model's classes type is {type(classes)}, classes must be None or list.")
 
@@ -255,21 +265,33 @@ class ModelBase(object):
 
     def set_summary(self, new_summary):
         """
-        model summary setter
-        :param new_summary: dict, summary to replace original summary
-        :return:
+        Model summary setter
+        Parameters
+        ----------
+        new_summary: dict, summary to replace the original one
+
+        Returns
+        -------
+
         """
+
         if not isinstance(new_summary, dict):
             raise ValueError(f"summary should be of dict type, received {type(new_summary)} instead.")
         self._summary = copy.deepcopy(new_summary)
 
     def add_summary(self, new_key, new_value):
         """
-        add key:value pair to model summary
-        :param new_key: str
-        :param new_value: object
-        :return:
+        Add key:value pair to model summary
+        Parameters
+        ----------
+        new_key: str
+        new_value: object
+
+        Returns
+        -------
+
         """
+
         original_value = self._summary.get(new_key, None)
         if original_value is not None:
             LOGGER.warning(f"{new_key} already exists in model summary."
@@ -279,12 +301,18 @@ class ModelBase(object):
 
     def merge_summary(self, new_content, suffix=None, suffix_sep='_'):
         """
-        merge new content into model summary
-        :param new_content: dict, content to be added into model summary
-        :param suffix: string or None, suffix used to create new key if any key in new_content already exists in model summary
-        :param suffix_sep: string, default '_', suffix separator used to create new key
-        :return:
+        Merge new content into model summary
+        Parameters
+        ----------
+        new_content: dict, content to be merged into summary
+        suffix: str or None, suffix used to create new key if any key in new_content already exixts in model summary
+        suffix_sep: string, default '_', suffix separator used to create new key
+
+        Returns
+        -------
+
         """
+
         if not isinstance(new_content, dict):
             raise ValueError(f"To merge new content into model summary, "
                              f"value must be of dict type, received {type(new_content)} instead.")
@@ -321,7 +349,7 @@ class ModelBase(object):
         :param schema: dict
         :return:
         """
-        check_legal_schema(schema)
+        abnormal_detection.check_legal_schema(schema)
 
     @staticmethod
     def align_data_header(data_instances, pre_header):
@@ -339,3 +367,8 @@ class ModelBase(object):
         if isinstance(data, dict) and len(data) >= 1:
             data = list(data.values())[0]
         return data
+
+    def obtain_data(self, data_list):
+        if isinstance(data_list, list):
+            return data_list[0]
+        return data_list

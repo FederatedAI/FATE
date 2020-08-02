@@ -1,0 +1,9 @@
+{
+  "random_state": null,
+  "test_size": 0.0,
+  "train_size": 0.8,
+  "validate_size": 0.2,
+  "stratified": false,
+  "shuffle": true,
+  "split_points": null
+}
