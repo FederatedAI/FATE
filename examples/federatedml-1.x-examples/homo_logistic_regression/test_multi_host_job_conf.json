@@ -64,10 +64,10 @@
         "homo_lr_0": {
             "penalty": "L2",
             "optimizer": "sgd",
-            "eps": 0.0001,
+            "tol": 0.0001,
             "alpha": 0.01,
             "max_iter": 3,
-            "converge_func": "diff",
+            "early_stop": "diff",
             "batch_size": 500,
             "learning_rate": 0.15,
             "decay": 1,
