@@ -278,9 +278,7 @@ class Tracker(object):
     def insert_output_data_info_into_db(self, data_name: str, table_namespace: str, table_name: str):
         with DB.connection_context():
             try:
-                print(self.job_id)
                 tracking_output_data_info = self.get_dynamic_db_model(TrackingOutputDataInfo, self.job_id)()
-                print(type(tracking_output_data_info).__name__)
                 tracking_output_data_info.f_job_id = self.job_id
                 tracking_output_data_info.f_component_name = self.component_name
                 tracking_output_data_info.f_task_id = self.task_id
@@ -305,7 +303,6 @@ class Tracker(object):
         with DB.connection_context():
             try:
                 DB.create_tables([model])
-                print(model.__name__)
                 batch_size = 50 if RuntimeConfig.USE_LOCAL_DATABASE else 1000
                 for i in range(0, len(data_source), batch_size):
                     with DB.atomic():
