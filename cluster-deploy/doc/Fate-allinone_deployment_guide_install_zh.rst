@@ -483,7 +483,7 @@ ssh app@192.168.0.2
 
 ::
 
-    tail -f ./logs/boot.log （部署结束，查看一下即可）
+    tail -f ./logs/deploy.log （部署结束，查看一下即可）
     tail -f ./logs/deploy-guest.log （实时打印GUEST端的部署情况）
     tail -f ./logs/deploy-mysql-guest.log  （实时打印GUEST端mysql的部署情况）
     tail -f ./logs/deploy-host.log    （实时打印HOST端的部署情况）
