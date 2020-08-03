@@ -95,6 +95,18 @@
       "dst": [
         "host"
       ]
+    },
+    "host_cur_to_split_node_num": {
+      "src": ["host"],
+      "dst": ["guest"]
+    },
+    "host_leafs": {
+      "src": ["host"],
+      "dst": ["guest"]
+    },
+    "sync_flag": {
+      "src": ["guest"],
+      "dst": ["host"]
     }
   }
 }

@@ -38,7 +38,6 @@ def get_features_shape(data_instances):
     else:
         return None
 
-
 def header_alignment(data_instances, pre_header):
     header = data_instances.schema["header"]
     if len((set(header) & set(pre_header))) != len(pre_header):
@@ -52,7 +51,7 @@ def header_alignment(data_instances, pre_header):
             "header in prediction stage is super-set training stage, predict size is {}, training header size is {}".format(
                 len(header), len(pre_header)))
     else:
-        LOGGER.warning("header in prediction stage will be shuffle to match the header of training stage")
+        LOGGER.warning("header in prediction stage will be shuffled to match the header of training stage")
 
     header_idx_mapping = dict(zip(pre_header, [i for i in range(len(pre_header))]))
     header_correct = {}
@@ -61,6 +60,7 @@ def header_alignment(data_instances, pre_header):
         if col not in header_idx_mapping:
             continue
         header_correct[i] = header_idx_mapping[col]
+
 
     def align_header(inst, header_pos=None):
         if type(inst.features).__name__ == consts.SPARSE_VECTOR:
@@ -84,6 +84,37 @@ def header_alignment(data_instances, pre_header):
     data_instances = data_instances.mapValues(lambda inst: align_header(inst, header_pos=header_correct))
 
     return data_instances
+
+
+def check_isprintable(string, type):
+    if not string.isprintable():
+        raise ValueError(f"Non-printable string {string} encountered in {type}."
+                         f"Please check schema of input data.")
+    return
+
+
+def check_legal_schema(schema):
+    # check for repeated header & illegal/non-printable chars except for space
+    # allow non-ascii chars
+    if schema is None:
+        return
+    header = schema.get("header", None)
+    if header is not None:
+        for col_name in header:
+            if not col_name.isprintable():
+                raise ValueError(f"non-printable char found in header column {col_name}, please check.")
+        header_set = set(header)
+        if len(header_set) != len(header):
+            raise ValueError(f"data header contains repeated values, please check.")
+
+    sid_name = schema.get("sid_name", None)
+    if sid_name is not None and not sid_name.isprintable():
+        raise ValueError(f"non-printable char found in sid_name {sid_name}, please check.")
+
+    label_name = schema.get("label_name", None)
+    if label_name is not None and not label_name.isprintable():
+        raise ValueError(f"non-printable char found in label_name {label_name}, please check.")
+    LOGGER.debug(f"schema check for illegal char passed.")
 
 
 def get_data_shape(data):

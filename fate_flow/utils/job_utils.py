@@ -32,6 +32,8 @@ from arch.api.utils import file_utils
 from arch.api.utils.core_utils import current_timestamp
 from arch.api.utils.core_utils import json_loads, json_dumps
 from arch.api.utils.log_utils import schedule_logger
+from fate_flow.db.db_models import DB, Job, Task, DataView
+from fate_flow.driver.dsl_parser import DSLParser, DSLParserV2
 from fate_flow.scheduler.dsl_parser import DSLParser
 from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -181,7 +183,9 @@ def get_job_dsl_parser_by_job_id(job_id):
 
 
 def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, train_runtime_conf=None):
-    dsl_parser = DSLParser()
+    # dsl_parser = DSLParser()
+    parser_version = str(runtime_conf.get('job_parameters', {}).get('dsl_version', '1'))
+    dsl_parser = get_dsl_parser_by_version(parser_version)
     default_runtime_conf_path = os.path.join(file_utils.get_project_base_directory(),
                                              *['federatedml', 'conf', 'default_runtime_conf'])
     setting_conf_path = os.path.join(file_utils.get_project_base_directory(), *['federatedml', 'conf', 'setting_conf'])
@@ -194,6 +198,20 @@ def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, train_run
                    setting_conf_prefix=setting_conf_path,
                    mode=job_type)
     return dsl_parser
+
+
+def get_parser_version_mapping():
+    return {
+        "1": DSLParser(),
+        "2": DSLParserV2()
+    }
+
+
+def get_dsl_parser_by_version(version: str = "1"):
+    mapping = get_parser_version_mapping()
+    if version not in mapping:
+        raise Exception("{} version of dsl parser is not currently supported.".format(version))
+    return mapping[version]
 
 
 def get_job_configuration(job_id, role, party_id, tasks=None):
@@ -232,6 +250,12 @@ def query_job(**kwargs):
             return []
 
 
+def list_job(limit):
+    with DB.connection_context():
+        jobs = Job.select().order_by(Job.f_create_time.desc()).limit(limit)
+        return [job for job in jobs]
+
+
 def job_queue_size():
     return RuntimeConfig.JOB_QUEUE.qsize()
 
@@ -252,6 +276,12 @@ def query_task(**kwargs):
             tasks = Task.select().where(*filters)
         else:
             tasks = Task.select()
+        return [task for task in tasks]
+
+
+def list_task(limit):
+    with DB.connection_context():
+        tasks = Task.select().order_by(Task.f_create_time.desc()).limit(limit)
         return [task for task in tasks]
 
 

@@ -71,7 +71,11 @@ class ManuallyFilter(BaseFilterMethod):
         self.filter_out_names = all_filter_out_names
         return self
 
-    def get_meta_obj(self, meta_dicts):
-        result = feature_selection_meta_pb2.ManuallyFilterMeta(filter_out_names=self.filter_out_names)
-        meta_dicts['manually_meta'] = result
-        return meta_dicts
+    # def get_meta_obj(self, meta_dicts):
+    #     result = feature_selection_meta_pb2.ManuallyFilterMeta(filter_out_names=self.filter_out_names)
+    #     meta_dicts['manually_meta'] = result
+    #     return meta_dicts
+
+    def get_meta_obj(self):
+        result = feature_selection_meta_pb2.FilterMeta()
+        return result

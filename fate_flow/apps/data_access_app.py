@@ -153,7 +153,7 @@ def gen_data_access_job_config(config_data, access_module):
     }
 
     if access_module == 'upload':
-        job_runtime_conf["role_parameters"][initiator_role] = {
+        parameters = {
             "upload_0": {
                 "work_mode": [int(config_data["work_mode"])],
                 "head": [int(config_data["head"])],
@@ -165,13 +165,18 @@ def gen_data_access_job_config(config_data, access_module):
                 "store_engine": [config_data.get("store_engine", StoreEngine.LMDB)]
             }
         }
-
+        if int(config_data.get('dsl_version', 1)) == 2:
+            job_runtime_conf['algorithm_parameters'] = parameters
+            job_runtime_conf['job_parameters']['dsl_version'] = 2
+        else:
+            job_runtime_conf["role_parameters"][initiator_role] = parameters
+            job_runtime_conf['job_parameters']['dsl_version'] = 1
         job_dsl["components"]["upload_0"] = {
             "module": "Upload"
         }
 
     if access_module == 'download':
-        job_runtime_conf["role_parameters"][initiator_role] = {
+        parameters = {
             "download_0": {
                 "work_mode": [config_data["work_mode"]],
                 "delimitor": [config_data.get("delimitor", ",")],
@@ -180,7 +185,12 @@ def gen_data_access_job_config(config_data, access_module):
                 "table_name": [config_data["table_name"]]
             }
         }
-
+        if int(config_data.get('dsl_version', 1)) == 2:
+            job_runtime_conf['algorithm_parameters'] = parameters
+            job_runtime_conf['job_parameters']['dsl_version'] = 2
+        else:
+            job_runtime_conf["role_parameters"][initiator_role] = parameters
+            job_runtime_conf['job_parameters']['dsl_version'] = 1
         job_dsl["components"]["download_0"] = {
             "module": "Download"
         }

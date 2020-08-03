@@ -1,0 +1,20 @@
+{
+  "HeteroSecureBoostTransferVariable": {
+    "predict_stop_flag": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "guest_predict_data": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "host_predict_data": {
+      "src": "host",
+      "dst": ["guest"]
+    }
+  }
+}

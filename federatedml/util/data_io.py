@@ -309,7 +309,7 @@ class DenseFeatureReader(object):
                 data.append(np.nan)
                 non_zero += 1
 
-            if data_type in ['float', 'float64', "double"]:
+            elif data_type in ['float', 'float64', "double"]:
                 if np.fabs(float(features[i])) < consts.FLOAT_ZERO:
                     continue
 

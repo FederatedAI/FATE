@@ -83,7 +83,6 @@ class QuantileBinning(BaseBinning):
         percentile_rate.append(1.0)
         is_sparse = data_overview.is_sparse_data(data_instances)
         # LOGGER.debug("in _fit_split_point, cols_map: {}".format(self.bin_inner_param.bin_cols_map))
-
         # self._fit_split_point_deprecate(data_instances, is_sparse, percentile_rate)
         self._fit_split_point(data_instances, is_sparse, percentile_rate)
 
@@ -139,6 +138,7 @@ class QuantileBinning(BaseBinning):
             self.summary_dict = summary_dict
         else:
             summary_dict = self.summary_dict
+
         for col_name, summary in summary_dict.items():
             split_point = []
             for percen_rate in percentile_rate:
@@ -282,27 +282,21 @@ class QuantileBinning(BaseBinning):
             new_dict[col_name] = summary1
         return new_dict
 
-    def query_quantile_point(self, data_instances, cols, query_points):
+    def query_quantile_point(self, query_points, col_names=None):
         # self.cols = cols
         # self._init_cols(data_instances)
-
-        is_sparse = data_overview.is_sparse_data(data_instances)
+        
         if self.summary_dict is None:
-            f = functools.partial(self.approxi_quantile,
-                                  cols_dict=self.bin_inner_param.bin_cols_map,
-                                  params=self.params,
-                                  header=self.header,
-                                  abnormal_list=self.abnormal_list,
-                                  is_sparse=is_sparse)
-            summary_dict = data_instances.mapPartitions(f)
-            summary_dict = summary_dict.reduce(self.merge_summary_dict)
-            self.summary_dict = summary_dict
-        else:
-            summary_dict = self.summary_dict
+            raise RuntimeError("Bin object should be fit before query quantile points")
+
+        if col_names is None:
+            col_names = self.bin_inner_param.bin_names
+
+        summary_dict = self.summary_dict
 
         if isinstance(query_points, (int, float)):
             query_dict = {}
-            for col_name in cols:
+            for col_name in col_names:
                 query_dict[col_name] = query_points
         elif isinstance(query_points, dict):
             query_dict = query_points
