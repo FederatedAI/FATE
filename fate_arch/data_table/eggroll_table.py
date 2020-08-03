@@ -13,15 +13,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
 import typing
 import uuid
 from typing import Iterable
 
 from arch.api.utils.conf_utils import get_base_config
+from eggroll.core.session import session_init
+from eggroll.roll_pair.roll_pair import RollPairContext
+from fate_arch.abc import TableABC
 from fate_arch.common import WorkMode
 from fate_arch.common.profile import log_elapsed
-from fate_arch.data_table import eggroll_session
-from fate_arch.abc import TableABC
 from fate_arch.data_table.address import EggRollAddress
 from fate_arch.data_table.store_type import StoreEngine
 
@@ -46,7 +48,7 @@ class EggRollTable(TableABC):
         self._storage_engine = persistent_engine
         self._session_id = job_id
         self._partitions = partitions
-        self.session = eggroll_session.get_session(session_id=self._session_id, work_mode=mode)
+        self.session = _get_session(session_id=self._session_id, work_mode=mode)
         self._table = self.session.table(namespace=address.namespace, name=address.name, partition=partitions,
                                          **kwargs)
 
@@ -94,3 +96,47 @@ class EggRollTable(TableABC):
     @log_elapsed
     def count(self, **kwargs):
         return self._table.count()
+
+
+def _get_session(session_id='', work_mode: int = 0, options: dict = None):
+    if not session_id:
+        session_id = str(uuid.uuid1())
+    return _Session(session_id=session_id, work_mode=work_mode, options=options)
+
+
+class _Session(object):
+    def __init__(self, session_id, work_mode, options: dict = None):
+        if options is None:
+            options = {}
+        if work_mode == WorkMode.STANDALONE:
+            options['eggroll.session.deploy.mode'] = "standalone"
+        elif work_mode == WorkMode.CLUSTER:
+            options['eggroll.session.deploy.mode'] = "cluster"
+        self._rp_session = session_init(session_id=session_id, options=options)
+        self._rpc = RollPairContext(session=self._rp_session)
+        self._session_id = self._rp_session.get_session_id()
+
+    def table(self,
+              name,
+              namespace,
+              partition,
+              **kwargs):
+        options = kwargs.get("option", {})
+        options.update(dict(total_partitions=partition))
+        _table = self._rpc.load(namespace=namespace, name=name, options=options)
+        return _table
+
+    def _get_session_id(self):
+        return self._session_id
+
+    @log_elapsed
+    def cleanup(self, name, namespace):
+        self._rpc.cleanup(name=name, namespace=namespace)
+
+    @log_elapsed
+    def stop(self):
+        return self._rp_session.stop()
+
+    @log_elapsed
+    def kill(self):
+        return self._rp_session.kill()
