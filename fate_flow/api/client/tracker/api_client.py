@@ -56,3 +56,6 @@ class JobTrackerClient(object):
 
     def get_output_data_info(self, data_name=None):
         raise NotImplementedError()
+
+    def log_component_summary(self, summary_data: dict):
+        raise NotImplementedError()

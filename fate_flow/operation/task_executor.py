@@ -30,7 +30,7 @@ from fate_flow.entity.constant import TaskStatus, ProcessRole
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.manager.table_manager.table_operation import create
-from fate_flow.settings import SAVE_AS_TASK_INPUT_DATA_SWITCH, SAVE_AS_TASK_INPUT_DATA_IN_MEMORY
+from fate_flow.settings import SAVE_AS_TASK_INPUT_DATA_IN_MEMORY
 from fate_flow.utils import job_utils
 from fate_flow.api.client.controller.remote_client import ControllerRemoteClient
 from fate_flow.api.client.tracker.remote_client import JobTrackerRemoteClient
@@ -156,9 +156,9 @@ class TaskExecutor(object):
                                                            job_parameters=job_parameters,
                                                            task_parameters=task_parameters,
                                                            input_dsl=task_input_dsl,
-                                                           if_save_as_task_input_data=job_parameters.get("save_as_task_input_data", SAVE_AS_TASK_INPUT_DATA_SWITCH),
                                                            output_storage_engine=output_storage_engine
                                                            )
+            print(task_run_args)
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
             run_object.set_tracker(tracker=tracker_remote_client)
             run_object.set_taskid(taskid=job_utils.generate_federated_id(task_id, task_version))
@@ -200,8 +200,7 @@ class TaskExecutor(object):
         print('Finish {} {} {} {} {} {} task {}'.format(job_id, component_name, task_id, task_version, role, party_id, task_info["party_status"]))
 
     @classmethod
-    def get_task_run_args(cls, job_id, role, party_id, task_id, task_version, job_args, job_parameters, task_parameters, input_dsl,
-                          if_save_as_task_input_data, filter_type=None, filter_attr=None, output_storage_engine=None):
+    def get_task_run_args(cls, job_id, role, party_id, task_id, task_version, job_args, job_parameters, task_parameters, input_dsl, filter_type=None, filter_attr=None, output_storage_engine=None):
         task_run_args = {}
         for input_type, input_detail in input_dsl.items():
             if filter_type and input_type not in filter_type:
@@ -234,32 +233,28 @@ class TaskExecutor(object):
                         output_storage_engine.append(data_table.get_storage_engine() if data_table else None)
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
                             search_component_name, {})
-                        # todo: If the same component has more than one identical input, save as is repeated
-                        if if_save_as_task_input_data:
-                            if data_table:
-                                schedule_logger().info("start save as task {} input data table {}".format(
-                                    task_id, data_table.get_address()))
-                                origin_table_schema = data_table.get_schema()
-                                name = uuid.uuid1().hex
-                                namespace = job_utils.generate_session_id(task_id=task_id, task_version=task_version, role=role, party_id=party_id)
-                                partitions = task_parameters['input_data_partition'] if task_parameters.get('input_data_partition', 0) > 0 else data_table.get_partitions()
-                                if RuntimeConfig.BACKEND == Backend.SPARK:
-                                    store_engine = StoreEngine.HDFS
-                                else:
-                                    store_engine = StoreEngine.IN_MEMORY if SAVE_AS_TASK_INPUT_DATA_IN_MEMORY \
-                                        else StoreEngine.LMDB
-                                save_as_options = {"store_type": StoreTypes.ROLLPAIR_IN_MEMORY} if SAVE_AS_TASK_INPUT_DATA_IN_MEMORY else {}
-                                address = create(name=name, namespace=namespace, store_engine=store_engine,
-                                                 partitions=partitions)
-                                data_table.save_as(address=address, partition=partitions, options=save_as_options,
-                                                   name=name, namespace=namespace, schema_data=origin_table_schema)
-                                schedule_logger().info("save as task {} input data table to {} done".format(task_id, address))
-                                data_table = session.default().load(address, schema=origin_table_schema,
-                                                                    partitions=partitions)
+                        if data_table:
+                            schedule_logger().info("start save as task {} input data table {}".format(
+                                task_id, data_table.get_address()))
+                            origin_table_schema = data_table.get_schema()
+                            name = uuid.uuid1().hex
+                            namespace = job_utils.generate_session_id(task_id=task_id, task_version=task_version, role=role, party_id=party_id)
+                            partitions = task_parameters['input_data_partition'] if task_parameters.get('input_data_partition', 0) > 0 else data_table.get_partitions()
+                            if RuntimeConfig.BACKEND == Backend.SPARK:
+                                store_engine = StoreEngine.HDFS
                             else:
-                                schedule_logger().info("pass save as task {} input data table, because the table is none".format(task_id))
+                                store_engine = StoreEngine.IN_MEMORY if SAVE_AS_TASK_INPUT_DATA_IN_MEMORY \
+                                    else StoreEngine.LMDB
+                            save_as_options = {"store_type": StoreTypes.ROLLPAIR_IN_MEMORY} if SAVE_AS_TASK_INPUT_DATA_IN_MEMORY else {}
+                            address = create(name=name, namespace=namespace, store_engine=store_engine,
+                                             partitions=partitions)
+                            data_table.save_as(address=address, partition=partitions, options=save_as_options,
+                                               name=name, namespace=namespace, schema_data=origin_table_schema)
+                            schedule_logger().info("save as task {} input data table to {} done".format(task_id, address))
+                            data_table = session.default().load(address, schema=origin_table_schema,
+                                                                partitions=partitions)
                         else:
-                            schedule_logger().info("pass save as task {} input data table, because the switch is off".format(task_id))
+                            schedule_logger().info("pass save as task {} input data table, because the table is none".format(task_id))
                         if not data_table or not filter_attr or not filter_attr.get("data", None):
                             data_dict[search_component_name][data_type].append(data_table)
                             args_from_component[data_type] = data_dict[search_component_name][data_type]

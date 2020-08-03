@@ -143,3 +143,24 @@ class JobTrackerRemoteClient(api_client.JobTrackerClient):
             return response["data"]
         else:
             return None
+
+    def log_component_summary(self, summary_data: dict):
+        LOGGER.info("Request save job {} task {} {} on {} {} component summary".format(self.job_id,
+                                                                                       self.task_id,
+                                                                                       self.task_version,
+                                                                                       self.role,
+                                                                                       self.party_id))
+        request_body = dict()
+        request_body["summary"] = summary_data
+        response = api_utils.local_api(job_id=self.job_id,
+                                       method='POST',
+                                       endpoint='/{}/tracker/{}/{}/{}/{}/{}/{}/summary/save'.format(
+                                           API_VERSION,
+                                           self.job_id,
+                                           self.component_name,
+                                           self.task_id,
+                                           self.task_version,
+                                           self.role,
+                                           self.party_id),
+                                       json_body=request_body)
+        return response['retcode'] == RetCode.SUCCESS

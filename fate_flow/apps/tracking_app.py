@@ -316,43 +316,11 @@ def component_output_data_table():
         return get_json_result(retcode=100, retmsg='No found table, please check if the parameters are correct')
 
 
-def get_component_output_data_table(task_data, need_all=True):
-# api using by task executor
-@manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/metric_data/save', methods=['POST'])
-def save_metric_data(job_id, component_name, task_id, role, party_id):
-    request_data = request.json
-    tracker = Tracking(job_id=job_id, component_name=component_name, task_id=task_id, role=role, party_id=party_id)
-    metrics = [deserialize_b64(metric) for metric in request_data['metrics']]
-    tracker.save_metric_data(metric_namespace=request_data['metric_namespace'], metric_name=request_data['metric_name'],
-                             metrics=metrics, job_level=request_data['job_level'])
-    return get_json_result()
-
-
-@manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/metric_meta/save', methods=['POST'])
-def save_metric_meta(job_id, component_name, task_id, role, party_id):
-    request_data = request.json
-    tracker = Tracking(job_id=job_id, component_name=component_name, task_id=task_id, role=role, party_id=party_id)
-    metric_meta = deserialize_b64(request_data['metric_meta'])
-    tracker.save_metric_meta(metric_namespace=request_data['metric_namespace'], metric_name=request_data['metric_name'],
-                             metric_meta=metric_meta, job_level=request_data['job_level'])
-    return get_json_result()
-
-
-@manager.route('/component/summary/save', methods=['POST'])
-def save_component_summary():
-    request_data = request.json
-    tracker = Tracking(job_id=request_data['job_id'], component_name=request_data['component_name'],
-                       role=request_data['role'], party_id=request_data['party_id'])
-    summary_data = request_data['summary']
-    tracker.save_component_summary(summary_data)
-    return get_json_result()
-
-
 @manager.route('/component/summary/download', methods=['POST'])
 def get_component_summary():
     request_data = request.json
-    tracker = Tracking(job_id=request_data['job_id'], component_name=request_data['component_name'],
-                       role=request_data['role'], party_id=request_data['party_id'])
+    tracker = Tracker(job_id=request_data['job_id'], component_name=request_data['component_name'],
+                      role=request_data['role'], party_id=request_data['party_id'])
     summary = tracker.get_component_summary()
     if summary:
         if request_data.get('output_path'):
@@ -389,7 +357,7 @@ def component_list():
         return get_json_result(retcode=100, retmsg='No job matched, please make sure the job id is valid.')
 
 
-def get_component_output_data_table(task_data):
+def get_component_output_data_table(task_data, need_all=True):
     check_request_parameters(task_data)
     tracker = Tracker(job_id=task_data['job_id'], component_name=task_data['component_name'],
                       role=task_data['role'], party_id=task_data['party_id'])

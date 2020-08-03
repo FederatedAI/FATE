@@ -77,3 +77,14 @@ def read_output_data_info(job_id, component_name, task_version, task_id, role, p
     for output_data_info in output_data_infos:
         response_data.append(output_data_info.to_human_model_dict())
     return get_json_result(data=response_data)
+
+
+@manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/summary/save',
+               methods=['POST'])
+def save_component_summary(job_id, component_name, task_version, task_id, role, party_id):
+    request_data = request.json
+    tracker = Tracker(job_id=job_id, component_name=component_name, task_id=task_id, task_version=task_version,
+                      role=role, party_id=party_id)
+    summary_data = request_data['summary']
+    tracker.save_component_summary(summary_data)
+    return get_json_result()
