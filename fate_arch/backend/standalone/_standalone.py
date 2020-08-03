@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
 import asyncio
 import hashlib
-import itertools
 import pickle as c_pickle
 import shutil
 import typing
@@ -32,110 +32,16 @@ import numpy as np
 from cachetools import LRUCache
 from cachetools import cached
 
-from fate_arch._interface import GC, AddressABC
+from fate_arch.abc import GarbageCollectionABC
+from fate_arch.backend.standalone import _cloudpickle as f_pickle
 from fate_arch.common import file_utils, Party
 from fate_arch.common.log import getLogger
-from fate_arch.session._interface import TableABC, SessionABC, FederationEngineABC
-from fate_arch.session._session_types import _FederationParties
-from fate_arch.session.impl.standalone import _cloudpickle as f_pickle
 
 LOGGER = getLogger()
 
 
-class StandaloneSession(SessionABC):
-
-    def __init__(self, session_id):
-        self._session_id = session_id
-        self._pool = Executor()
-        _set_session(self)
-
-        self._federation_session: typing.Optional[StandaloneFederation] = None
-        self._federation_parties: typing.Optional[_FederationParties] = None
-
-    def _init_federation(self, federation_session_id: str,
-                         party: Party,
-                         parties: typing.MutableMapping[str, typing.List[Party]]):
-        if self._federation_session is not None:
-            raise RuntimeError("federation session already initialized")
-        self._federation_session = StandaloneFederation(federation_session_id, party)
-        self._federation_parties = _FederationParties(party, parties)
-
-    def init_federation(self, federation_session_id: str, runtime_conf: dict, **kwargs):
-        party, parties = self._parse_runtime_conf(runtime_conf)
-        self._init_federation(federation_session_id, party, parties)
-
-    def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
-        from fate_arch.data_table.base import EggRollAddress
-        if isinstance(address, EggRollAddress):
-            table = _load_table(address.name, address.namespace)
-            table.schema = schema
-            return table
-
-        from fate_arch.data_table.base import FileAddress
-        if isinstance(address, FileAddress):
-            from fate_arch.session.impl._file import Path as _Path
-            return _Path(address.path, address.path_type)
-        raise NotImplementedError(f"address type {type(address)} not supported with standalone backend")
-
-    def parallelize(self, data: Iterable, partition: int, include_key: bool = False, **kwargs):
-        if not include_key:
-            data = enumerate(data)
-        table = _create_table(name=str(uuid.uuid1()), namespace=self._session_id, partitions=partition)
-        # noinspection PyProtectedMember
-        table._put_all(data)
-        return table
-
-    def cleanup(self, name, namespace):
-        data_path = _get_data_dir()
-        if not data_path.is_dir():
-            raise EnvironmentError(f"illegal data dir: {data_path}")
-
-        namespace_dir = data_path.joinpath(namespace)
-        if not namespace_dir.is_dir():
-            raise EnvironmentError(f"namespace dir {namespace_dir} does not exist")
-
-        for table in namespace_dir.glob(name):
-            shutil.rmtree(table)
-
-    def stop(self):
-        _set_session(None)
-
-    def kill(self):
-        _set_session(None)
-
-    def _get_federation(self):
-        return self._federation_session
-
-    def _get_session_id(self):
-        return self._session_id
-
-    def _get_federation_parties(self):
-        raise self._federation_parties
-
-    def _submit_unary(self, func, _do_func, partitions, name, namespace):
-        task_info = _TaskInfo(self._session_id,
-                              function_id=str(uuid.uuid1()),
-                              function_bytes=f_pickle.dumps(func))
-        futures = []
-        for p in range(partitions):
-            futures.append(self._pool.submit(_do_func, _UnaryProcess(task_info, _Operand(namespace, name, p))))
-        results = [r.result() for r in futures]
-        return results
-
-    def _submit_binary(self, func, do_func, partitions, name, namespace, other_name, other_namespace):
-        task_info = _TaskInfo(self._session_id,
-                              function_id=str(uuid.uuid1()),
-                              function_bytes=f_pickle.dumps(func))
-        futures = []
-        for p in range(partitions):
-            left = _Operand(namespace, name, p)
-            right = _Operand(other_namespace, other_name, p)
-            futures.append(self._pool.submit(do_func, _BinaryProcess(task_info, left, right)))
-        results = [r.result() for r in futures]
-        return results
-
-
-class Table(TableABC):
+# noinspection PyPep8Naming
+class Table(object):
 
     def __init__(self, namespace, name, partitions=1, need_cleanup=True):
         self._need_cleanup = need_cleanup
@@ -147,9 +53,17 @@ class Table(TableABC):
     def partitions(self):
         return self._partitions
 
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def namespace(self):
+        return self._namespace
+
     def __del__(self):
         if self._need_cleanup:
-            self._destroy()
+            self.destroy()
 
     def __str__(self):
         return f"need_cleanup: {self._need_cleanup}, " \
@@ -157,7 +71,7 @@ class Table(TableABC):
                f"name: {self._name}," \
                f"partitions: {self._partitions}"
 
-    def _destroy(self):
+    def destroy(self):
         for p in range(self._partitions):
             env = self._get_env_for_partition(p, write=True)
             db = env.open_db()
@@ -165,16 +79,9 @@ class Table(TableABC):
                 txn.drop(db)
 
         table_key = f"{self._namespace}.{self._name}"
-        _get_meta_table()._delete(table_key)
+        _get_meta_table().delete(table_key)
         path = _get_storage_dir(self._namespace, self._name)
         shutil.rmtree(path, ignore_errors=True)
-
-    def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
-        from fate_arch.data_table.base import EggRollAddress
-        if isinstance(address, EggRollAddress):
-            self._save_as(name=address.name, namespace=address.namespace, partition=partitions, need_cleanup=False)
-            schema.update(self.schema)
-        raise NotImplementedError(f"address type {type(address)} not supported with standalone backend")
 
     def count(self):
         cnt = 0
@@ -183,6 +90,7 @@ class Table(TableABC):
             cnt += env.stat()['entries']
         return cnt
 
+    # noinspection PyUnusedLocal
     def collect(self, **kwargs):
         iterators = []
         for p in range(self._partitions):
@@ -208,17 +116,6 @@ class Table(TableABC):
             else:
                 _, _, _, it = heappop(entries)
                 it.close()
-
-    def take(self, n=1, **kwargs):
-        if n <= 0:
-            raise ValueError(f"{n} <= 0")
-        return list(itertools.islice(self.collect(), n))
-
-    def first(self, **kwargs):
-        resp = self.take(1, **kwargs)
-        if len(resp) < 1:
-            raise RuntimeError(f"table is empty")
-        return resp[0]
 
     def reduce(self, func):
         # noinspection PyProtectedMember
@@ -276,9 +173,9 @@ class Table(TableABC):
         left, right = self, other
         if left._partitions != right._partitions:
             if other.count() > self.count():
-                left = left._save_as(str(uuid.uuid1()), session_id, partition=right._partitions)
+                left = left.save_as(str(uuid.uuid1()), session_id, partition=right._partitions)
             else:
-                right = other._save_as(str(uuid.uuid1()), session_id, partition=left._partitions)
+                right = other.save_as(str(uuid.uuid1()), session_id, partition=left._partitions)
 
         # noinspection PyProtectedMember
         results = session._submit_binary(func, do_func,
@@ -287,25 +184,25 @@ class Table(TableABC):
         # noinspection PyProtectedMember
         return _create_table(result.name, result.namespace, left._partitions)
 
-    def _save_as(self, name, namespace, partition=None, need_cleanup=True):
+    def save_as(self, name, namespace, partition=None, need_cleanup=True):
         if partition is None:
             partition = self._partitions
         # noinspection PyProtectedMember
         dup = _create_table(name, namespace, partition, need_cleanup)
-        dup._put_all(self.collect())
+        dup.put_all(self.collect())
         return dup
 
     def _get_env_for_partition(self, p: int, write=False):
         return _get_env(self._namespace, self._name, str(p), write=write)
 
-    def _put(self, k, v):
+    def put(self, k, v):
         k_bytes, v_bytes = _kv_to_bytes(k=k, v=v)
         p = _hash_key_to_partition(k_bytes, self._partitions)
         env = self._get_env_for_partition(p, write=True)
         with env.begin(write=True) as txn:
             return txn.put(k_bytes, v_bytes)
 
-    def _put_all(self, kv_list: Iterable):
+    def put_all(self, kv_list: Iterable):
         txn_map = {}
         is_success = True
         for p in range(self._partitions):
@@ -324,7 +221,7 @@ class Table(TableABC):
         for p, (env, txn) in txn_map.items():
             txn.commit() if is_success else txn.abort()
 
-    def _get(self, k):
+    def get(self, k):
         k_bytes = _k_to_bytes(k=k)
         p = _hash_key_to_partition(k_bytes, self._partitions)
         env = self._get_env_for_partition(p)
@@ -332,7 +229,7 @@ class Table(TableABC):
             old_value_bytes = txn.get(k_bytes)
             return None if old_value_bytes is None else c_pickle.loads(old_value_bytes)
 
-    def _delete(self, k):
+    def delete(self, k):
         k_bytes = _k_to_bytes(k=k)
         p = _hash_key_to_partition(k_bytes, self._partitions)
         env = self._get_env_for_partition(p, write=True)
@@ -343,7 +240,67 @@ class Table(TableABC):
             return None
 
 
-class StandaloneFederation(FederationEngineABC):
+# noinspection PyMethodMayBeStatic
+class Session(object):
+
+    def __init__(self, session_id):
+        self.session_id = session_id
+        self._pool = Executor()
+        _set_session(self)
+
+    def load(self, name, namespace):
+        return _load_table(name, namespace)
+
+    # noinspection PyUnusedLocal
+    def parallelize(self, data: Iterable, partition: int, include_key: bool = False, **kwargs):
+        if not include_key:
+            data = enumerate(data)
+        table = _create_table(name=str(uuid.uuid1()), namespace=self.session_id, partitions=partition)
+        table.put_all(data)
+        return table
+
+    def cleanup(self, name, namespace):
+        data_path = _get_data_dir()
+        if not data_path.is_dir():
+            raise EnvironmentError(f"illegal data dir: {data_path}")
+
+        namespace_dir = data_path.joinpath(namespace)
+        if not namespace_dir.is_dir():
+            raise EnvironmentError(f"namespace dir {namespace_dir} does not exist")
+
+        for table in namespace_dir.glob(name):
+            shutil.rmtree(table)
+
+    def stop(self):
+        _set_session(None)
+
+    def kill(self):
+        _set_session(None)
+
+    def _submit_unary(self, func, _do_func, partitions, name, namespace):
+        task_info = _TaskInfo(self.session_id,
+                              function_id=str(uuid.uuid1()),
+                              function_bytes=f_pickle.dumps(func))
+        futures = []
+        for p in range(partitions):
+            futures.append(self._pool.submit(_do_func, _UnaryProcess(task_info, _Operand(namespace, name, p))))
+        results = [r.result() for r in futures]
+        return results
+
+    def _submit_binary(self, func, do_func, partitions, name, namespace, other_name, other_namespace):
+        task_info = _TaskInfo(self.session_id,
+                              function_id=str(uuid.uuid1()),
+                              function_bytes=f_pickle.dumps(func))
+        futures = []
+        for p in range(partitions):
+            left = _Operand(namespace, name, p)
+            right = _Operand(other_namespace, other_name, p)
+            futures.append(self._pool.submit(do_func, _BinaryProcess(task_info, left, right)))
+        results = [r.result() for r in futures]
+        return results
+
+
+class Federation(object):
 
     def _federation_object_key(self, name, tag, s_party, d_party):
         return f"{self._session_id}-{name}-{tag}-{s_party.role}-{s_party.party_id}-{d_party.role}-{d_party.party_id}"
@@ -360,21 +317,22 @@ class StandaloneFederation(FederationEngineABC):
 
     # noinspection PyProtectedMember
     def _put_status(self, _tagged_key, value):
-        self._federation_status_table._put(_tagged_key, value)
+        self._federation_status_table.put(_tagged_key, value)
 
     # noinspection PyProtectedMember
     def _put_object(self, _tagged_key, value):
-        self._federation_object_table._put(_tagged_key, value)
+        self._federation_object_table.put(_tagged_key, value)
 
     # noinspection PyProtectedMember
     def _get_object(self, _tagged_key):
-        return self._federation_object_table._get(_tagged_key)
+        return self._federation_object_table.get(_tagged_key)
 
     # noinspection PyProtectedMember
     def _get_status(self, _tagged_key):
-        return self._federation_status_table._get(_tagged_key)
+        return self._federation_status_table.get(_tagged_key)
 
-    def remote(self, v, name: str, tag: str, parties: typing.List[Party], gc: GC):
+    # noinspection PyUnusedLocal
+    def remote(self, v, name: str, tag: str, parties: typing.List[Party], gc: GarbageCollectionABC):
         log_str = f"federation.remote(name={name}, tag={tag}, parties={parties})"
 
         assert v is not None, \
@@ -383,7 +341,7 @@ class StandaloneFederation(FederationEngineABC):
 
         if isinstance(v, Table):
             # noinspection PyProtectedMember
-            v = v._save_as(name=str(uuid.uuid1()), namespace=v._namespace)
+            v = v.save_as(name=str(uuid.uuid1()), namespace=v._namespace)
 
         for party in parties:
             _tagged_key = self._federation_object_key(name, tag, self._party, party)
@@ -396,7 +354,7 @@ class StandaloneFederation(FederationEngineABC):
             LOGGER.debug("[REMOTE] Sent {}".format(_tagged_key))
 
     # noinspection PyProtectedMember
-    def get(self, name: str, tag: str, parties: typing.List[Party], gc: GC) -> typing.List:
+    def get(self, name: str, tag: str, parties: typing.List[Party], gc: GarbageCollectionABC) -> typing.List:
         log_str = f"federation.get(name={name}, tag={tag}, party={parties})"
         LOGGER.debug(f"[{log_str}]")
         tasks = []
@@ -414,17 +372,17 @@ class StandaloneFederation(FederationEngineABC):
                 # noinspection PyTypeChecker
                 table: Table = _load_table(name=r[0], namespace=r[1])
                 rtn.append(table)
-                gc.add_gc_func(tag, table._destroy)
+                gc.add_gc_action(tag, table, '_destroy', {})
             else:
                 obj = self._get_object(r)
                 if obj is None:
                     raise EnvironmentError(f"federation get None from {parties} with name {name}, tag {tag}")
                 rtn.append(obj)
-                gc.add_gc_func(tag, lambda: self._federation_object_table._delete(r))
+                gc.add_gc_action(tag, self._federation_object_table, '_delete', {'k': r})
         return rtn
 
 
-__SESSION: typing.Optional['StandaloneSession'] = None
+__SESSION: typing.Optional['Session'] = None
 
 
 def _set_session(session):
@@ -449,12 +407,12 @@ def _get_meta_table():
 
 # noinspection PyProtectedMember
 def _get_from_meta_table(key):
-    return _get_meta_table()._get(key)
+    return _get_meta_table().get(key)
 
 
 # noinspection PyProtectedMember
 def _put_to_meta_table(key, value):
-    _get_meta_table()._put(key, value)
+    _get_meta_table().put(key, value)
 
 
 _data_dir = Path(file_utils.get_project_base_directory()).joinpath('data').absolute()

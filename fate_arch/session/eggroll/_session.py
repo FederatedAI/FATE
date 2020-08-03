@@ -20,21 +20,20 @@ import typing
 from eggroll.core.constants import StoreTypes
 from eggroll.core.session import session_init
 from eggroll.roll_pair.roll_pair import RollPairContext
-from fate_arch._interface import AddressABC
+from fate_arch.abc import AddressABC, CSessionABC
 from fate_arch.common import WorkMode, Party
 from fate_arch.common import file_utils
 from fate_arch.common.log import getLogger
 from fate_arch.common.profile import log_elapsed
-from fate_arch.session._interface import SessionABC
-from fate_arch.session._session_types import _FederationParties
-from fate_arch.session.impl._file import Path
-from fate_arch.session.impl.eggroll._federation import FederationEngine
-from fate_arch.session.impl.eggroll._table import Table
+from fate_arch.session._file import Path
+from fate_arch.session._parties_util import _FederationParties
+from fate_arch.session.eggroll._federation import FederationEngine
+from fate_arch.session.eggroll._table import Table
 
 LOGGER = getLogger()
 
 
-class Session(SessionABC):
+class Session(CSessionABC):
     def __init__(self, session_id, work_mode, options: dict = None):
         if options is None:
             options = {}
@@ -82,7 +81,7 @@ class Session(SessionABC):
     @log_elapsed
     def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs) -> typing.Union[Table, Path]:
 
-        from fate_arch.data_table.base import EggRollAddress
+        from fate_arch.data_table.address import EggRollAddress
         if isinstance(address, EggRollAddress):
             options = kwargs.get("option", {})
             options["total_partitions"] = partitions
@@ -95,7 +94,7 @@ class Session(SessionABC):
             table.schema = schema
             return table
 
-        from fate_arch.data_table.base import FileAddress
+        from fate_arch.data_table.address import FileAddress
         if isinstance(address, FileAddress):
             return Path(address.path, address.path_type)
 

@@ -21,12 +21,13 @@ from arch.api.utils.conf_utils import get_base_config
 from fate_arch.common import WorkMode
 from fate_arch.common.profile import log_elapsed
 from fate_arch.data_table import eggroll_session
-from fate_arch.data_table.base import Table, EggRollAddress
+from fate_arch.abc import TableABC
+from fate_arch.data_table.address import EggRollAddress
 from fate_arch.data_table.store_type import StoreEngine
 
 
 # noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
-class EggRollTable(Table):
+class EggRollTable(TableABC):
     def __init__(self,
                  job_id: str = uuid.uuid1().hex,
                  mode: typing.Union[int, WorkMode] = get_base_config('work_mode', 0),

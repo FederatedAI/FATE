@@ -23,13 +23,12 @@ import pika
 # noinspection PyPackageRequirements
 from pyspark import SparkContext, RDD
 
-from fate_arch._interface import GC
+from fate_arch.abc import FederationABC, GarbageCollectionABC
+from fate_arch.backend.spark import MQChannel
+from fate_arch.backend.spark import RabbitManager
+from fate_arch.backend.spark import get_storage_level
 from fate_arch.common import Party
 from fate_arch.common.log import getLogger
-from fate_arch.session._interface import FederationEngineABC
-from fate_arch.session.impl.spark._mq_channel import MQChannel
-from fate_arch.session.impl.spark._rabbit_manager import RabbitManager
-from fate_arch.session.impl.spark._util import get_storage_level
 
 LOGGER = getLogger()
 
@@ -43,7 +42,7 @@ class MQ(object):
         self.mq_conf = mq_conf
 
 
-class FederationEngine(FederationEngineABC):
+class FederationEngine(FederationABC):
     def __init__(self, session_id, party: Party, mq: MQ, rabbit_manager: RabbitManager):
         self._session_id = session_id
         self._party = party
@@ -53,7 +52,7 @@ class FederationEngine(FederationEngineABC):
         self._queue_map = {}
         self._channels_map = {}
 
-    def get(self, name, tag, parties: typing.List[Party], gc: GC) -> typing.List:
+    def get(self, name, tag, parties: typing.List[Party], gc: GarbageCollectionABC) -> typing.List:
         log_str = f"federation.get(name={name}, tag={tag}, parties={parties})"
         LOGGER.debug(f"[{log_str}]start to get obj")
 
@@ -71,7 +70,8 @@ class FederationEngine(FederationEngineABC):
         LOGGER.debug("finish get obj, name={}, tag={}, parties={}.".format(name, tag, parties))
         return rtn
 
-    def remote(self, obj, name: str, tag: str, parties: typing.List[Party], gc: GC) -> typing.NoReturn:
+    def remote(self, obj, name: str, tag: str, parties: typing.List[Party],
+               gc: GarbageCollectionABC) -> typing.NoReturn:
         LOGGER.debug("start to remote obj, name={}, tag={}, parties={}.".format(name, tag, parties))
         mq_names = self._get_mq_names(parties)
 

@@ -17,17 +17,17 @@ import typing
 import uuid
 
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
-from fate_arch.data_table.base import EggRollAddress, HDFSAddress, SimpleTable
+from fate_arch.data_table.address import EggRollAddress, HDFSAddress, MysqlAddress
+from fate_arch.data_table.simple_table import SimpleTable
 from fate_arch.db.db_models import DB, MachineLearningDataSchema
 from fate_flow.utils import data_utils
 
 from arch.api.utils.conf_utils import get_base_config
-from fate_arch.data_table.base import MysqlAddress
 from fate_arch.data_table.eggroll_table import EggRollTable
 from fate_arch.data_table.hdfs_table import HDFSTable
 from fate_arch.data_table.mysql_table import MysqlTable
 from fate_arch.data_table.store_type import StoreEngine, Relationship
-from fate_arch.session import WorkMode, Backend
+from fate_arch.common import WorkMode, Backend
 from fate_flow.settings import WORK_MODE, data_manager_logger
 
 

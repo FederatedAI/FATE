@@ -47,25 +47,3 @@ def _get_file_system(sc):
 def _get_path(sc, hdfs_path):
     path_class = sc._gateway.jvm.org.apache.hadoop.fs.Path
     return path_class(hdfs_path)
-
- #
- # def write2hdfs(cls, namespace, name, kv_list: Iterable, create_if_missing: bool = True):
- #        hdfs_path = _generate_hdfs_path(namespace=namespace, name=name)
- #        path = _get_path(sc, hdfs_path)
- #        fs = _get_file_system(sc)
- #        if fs.exists(path):
- #            out = fs.append(path)
- #        elif create_if_missing:
- #            out = fs.create(path)
- #        else:
- #            raise AssertionError("hdfs path {} not exists.".format(hdfs_path))
- #
- #        counter = 0
- #        for k, v in kv_list:
- #            content = u"{}{}{}\n".format(k, cls.delimiter, pickle.dumps((v)).hex())
- #            out.write(bytearray(content, "utf-8"))
- #            counter = counter + 1
- #        out.flush()
- #        out.close()
- #
- #        cls.update_table_meta(namespace=namespace, name=name, records=counter)

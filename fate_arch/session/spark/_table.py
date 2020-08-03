@@ -20,17 +20,16 @@ from itertools import chain
 # noinspection PyPackageRequirements
 from pyspark import rddsampler, RDD, SparkContext, util
 
+from fate_arch.backend.spark import save_as_hdfs, load_from_hdfs, materialize
 from fate_arch.common import log
 from fate_arch.common.profile import log_elapsed
-from fate_arch.data_table.base import AddressABC, HDFSAddress
-from fate_arch.session._interface import TableABC
-from fate_arch.session.impl.spark import _util
-from fate_arch.session.impl.spark._kv_serdes import _load_from_hdfs, _save_as_hdfs
+from fate_arch.abc import AddressABC
+from fate_arch.abc import CTableABC
 
 LOGGER = log.getLogger()
 
 
-class Table(TableABC):
+class Table(CTableABC):
 
     def __init__(self, rdd: RDD):
         self._rdd = rdd
@@ -99,8 +98,9 @@ class Table(TableABC):
 
     @log_elapsed
     def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
+        from fate_arch.data_table.address import HDFSAddress
         if isinstance(address, HDFSAddress):
-            _save_as_hdfs(rdd=self._rdd, paths=address.path, partitions=partitions)
+            save_as_hdfs(rdd=self._rdd, paths=address.path, partitions=partitions)
             schema.update(self.schema)
         raise NotImplementedError(f"address type {type(address)} not supported with spark backend")
 
@@ -122,12 +122,12 @@ class Table(TableABC):
 
 def _from_hdfs(paths: str, partitions):
     sc = SparkContext.getOrCreate()
-    rdd = _util.materialize(_load_from_hdfs(sc, paths, partitions))
+    rdd = materialize(load_from_hdfs(sc, paths, partitions))
     return Table(rdd=rdd)
 
 
 def _from_rdd(rdd):
-    rdd = _util.materialize(rdd)
+    rdd = materialize(rdd)
     return Table(rdd=rdd)
 
 

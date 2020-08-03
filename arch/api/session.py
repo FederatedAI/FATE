@@ -20,7 +20,7 @@ from typing import Iterable
 from fate_arch import session
 from fate_arch.common.log import getLogger
 from fate_arch.common import WorkMode, Backend
-from fate_arch.session import TableABC
+from fate_arch.abc import CTableABC
 
 LOGGER = getLogger()
 
@@ -68,7 +68,7 @@ def init(job_id=None,
     return session.init(job_id, mode, backend, options)
 
 
-def table(name, namespace, **kwargs) -> TableABC:
+def table(name, namespace, **kwargs) -> CTableABC:
     """
     Loads an existing Table.
 
@@ -92,7 +92,7 @@ def table(name, namespace, **kwargs) -> TableABC:
     return session.default().load(name=name, namespace=namespace, **kwargs)
 
 
-def parallelize(data: Iterable, partition, include_key=False, **kwargs) -> TableABC:
+def parallelize(data: Iterable, partition, include_key=False, **kwargs) -> CTableABC:
     """
     Transforms an existing iterable data into a Table.
 

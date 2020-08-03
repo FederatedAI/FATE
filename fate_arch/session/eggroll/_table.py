@@ -18,12 +18,11 @@
 import typing
 
 from eggroll.roll_pair.roll_pair import RollPair
+from fate_arch.abc import AddressABC, CTableABC
 from fate_arch.common.profile import log_elapsed
-from fate_arch.data_table.base import AddressABC, EggRollAddress
-from fate_arch.session._interface import TableABC
 
 
-class Table(TableABC):
+class Table(CTableABC):
 
     def __init__(self, rp: RollPair):
         self._rp = rp
@@ -38,6 +37,7 @@ class Table(TableABC):
     @log_elapsed
     def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
         options = kwargs.get("options", {})
+        from fate_arch.data_table.address import EggRollAddress
         if isinstance(address, EggRollAddress):
             self._rp.save_as(name=address.name, namespace=address.namespace, partition=partitions, options=options)
             schema.update(self.schema)
