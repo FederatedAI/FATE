@@ -30,6 +30,7 @@ from federatedml.statistic import data_overview
 from federatedml.transfer_variable.transfer_class.stepwise_transfer_variable import StepwiseTransferVariable
 from federatedml.util import consts
 from federatedml.util import fate_operator
+from federatedml.util.data_io import set_schema
 
 LOGGER = log_utils.getLogger()
 
@@ -389,6 +390,8 @@ class HeteroStepwise(object):
         best_mask = np.zeros(len(d_header), dtype=bool)
         np.put(best_mask, best_feature, 1)
         new_data = data_instances.mapValues(lambda v: Step.slice_data_instance(v, best_mask))
+        new_schema = data_instances.schema
+        set_schema(new_data, new_schema)
         pred_result = model.predict(new_data)
         return pred_result
 
