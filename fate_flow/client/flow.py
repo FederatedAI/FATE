@@ -20,7 +20,7 @@ from fate_flow.settings import SERVERS, ROLE, API_VERSION
 from .flow_cli import (component, data, job, model,
                        privilege, queue, task, table, tag)
 
-server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
+server_conf = file_utils.load_json_conf("conf/server_conf.json")
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 

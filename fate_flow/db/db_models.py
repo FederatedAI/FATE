@@ -349,7 +349,7 @@ Model_Tag.set_model(ModelTag)
 
 
 class ComponentSummary(DataBaseModel):
-    f_id = BigIntegerField(primary_key=True)
+    f_id = BigAutoField(primary_key=True)
     f_job_id = CharField(max_length=25)
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
