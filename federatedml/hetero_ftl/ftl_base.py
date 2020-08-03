@@ -226,7 +226,7 @@ class FTL(ModelBase):
         self.nn: NNModel = self.nn_builder(loss=loss, nn_define=self.nn_define, optimizer=self.optimizer, metrics=None,
                                            input_shape=input_shape)
 
-        np.random.seed(114514)
+        np.random.seed(100)
         if self.role == consts.HOST:
             np_weight_w = np.random.normal(size=(634, self.nn._model.output_shape[1]))
             np_weight_w = np.random.normal(size=(self.nn._model.input_shape[1], self.nn._model.output_shape[1]))

@@ -1,27 +1,21 @@
 from operator import itemgetter
 import numpy as np
-
+from arch.api.utils import log_utils
+from typing import List
+import functools
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import ObjectiveMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
-
 from federatedml.ensemble.boosting.boosting_core import HeteroBoostingGuest
 from federatedml.param.boosting_param import HeteroSecureBoostParam
 from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeGuest
 from federatedml.util import consts
-
 from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
     HeteroSecureBoostTransferVariable
-
 from federatedml.util.io_check import assert_io_num_rows_equal
-
-from arch.api.utils import log_utils
-
-from typing import List
-
-import functools
+from federatedml.util.fate_operator import generate_anonymous
 
 LOGGER = log_utils.getLogger()
 
@@ -167,7 +161,9 @@ class HeteroSecureBoostGuest(HeteroBoostingGuest):
                 if 'guest' in id_[0]:
                     new_fi[fid_mapping[id_[1]]] = feature_importances[id_]
                 else:
-                    new_fi[id_] = feature_importances[id_]
+                    role_name, party_id = id_[0].split(':')
+                    new_id = generate_anonymous(id_[1], party_id=party_id, role=role_name)
+                    new_fi[new_id] = feature_importances[id_]
             else:
                 new_fi[fid_mapping[id_]] = feature_importances[id_]
 
