@@ -19,14 +19,14 @@ import typing
 import pymysql
 
 from arch.api.utils.conf_utils import get_base_config
+from fate_arch.abc import TableABC
 from fate_arch.common.profile import log_elapsed
-from fate_arch.data_table.base import Table
 from fate_arch.data_table.store_type import StoreEngine
 from fate_arch.common import WorkMode
 
 
 # noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
-class MysqlTable(Table):
+class MysqlTable(TableABC):
     def __init__(self,
                  mode: typing.Union[int, WorkMode] = get_base_config('work_mode', 0),
                  persistent_engine: str = StoreEngine.MYSQL,
@@ -58,7 +58,9 @@ class MysqlTable(Table):
                                        db=self._address.db)
             self.cur = self.con.cursor()
         except:
-            raise Exception("DataBase connect error,please check the db config:host {}, user {}, passwd {}, port {}, db {}".format(self._address.host, self._address.user, self._address.passwd, self._address.port, self._address.db))
+            raise Exception(
+                "DataBase connect error,please check the db config:host {}, user {}, passwd {}, port {}, db {}".format(
+                    self._address.host, self._address.user, self._address.passwd, self._address.port, self._address.db))
 
     def execute(self, sql, select=True):
         self.cur.execute(sql)

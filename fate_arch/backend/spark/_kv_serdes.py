@@ -2,7 +2,7 @@ import pickle
 
 from pyspark import RDD
 
-from fate_arch.session.impl.spark._util import _get_file_system, _get_path
+from fate_arch.backend.spark._util import _get_file_system, _get_path
 
 _DELIMITER = '\t'
 
@@ -21,7 +21,7 @@ def _partition_deserialize(it):
         yield _deserialize(m)
 
 
-def _load_from_hdfs(sc, paths, partitions):
+def load_from_hdfs(sc, paths, partitions):
     fs = _get_file_system(sc)
     path = _get_path(sc, paths)
 
@@ -30,7 +30,7 @@ def _load_from_hdfs(sc, paths, partitions):
     return sc.textFile(path, partitions).mapPartitions(_partition_deserialize).repartition(partitions)
 
 
-def _save_as_hdfs(rdd: RDD, paths: str, partitions):
+def save_as_hdfs(rdd: RDD, paths: str, partitions):
     sc = rdd.context
     fs = _get_file_system(sc)
     path = _get_path(sc, paths)

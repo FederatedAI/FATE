@@ -14,6 +14,6 @@
 #  limitations under the License.
 #
 
-from fate_arch.session.impl.standalone._session import StandaloneSession
+from fate_arch.session.standalone import Session
 
-__all__ = ["StandaloneSession"]
+__all__ = ["Session"]

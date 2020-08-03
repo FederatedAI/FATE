@@ -14,19 +14,23 @@
 #  limitations under the License.
 #
 
+"""
+distributed computing
+"""
 
 import abc
 import typing
 from abc import ABCMeta
 from collections import Iterable
 
-from fate_arch._interface import GC
-from fate_arch.data_table.base import AddressABC
-from fate_arch.session._session_types import Party, _FederationParties
+from fate_arch.abc._address import AddressABC
+from fate_arch.abc._federation import FederationABC
+from fate_arch.abc._path import PathABC
+from fate_arch.common import Party
 
 
 # noinspection PyPep8Naming
-class TableABC(metaclass=ABCMeta):
+class CTableABC(metaclass=ABCMeta):
 
     @property
     @abc.abstractmethod
@@ -38,7 +42,7 @@ class TableABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def collect(self, **kwargs) -> list:
+    def collect(self, **kwargs) -> typing.Generator:
         ...
 
     @abc.abstractmethod
@@ -54,7 +58,7 @@ class TableABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def map(self, func) -> 'TableABC':
+    def map(self, func) -> 'CTableABC':
         ...
 
     @abc.abstractmethod
@@ -108,22 +112,18 @@ class TableABC(metaclass=ABCMeta):
         setattr(self, "_schema", value)
 
 
-class PathABC(metaclass=ABCMeta):
-    ...
-
-
-class SessionABC(metaclass=ABCMeta):
+class CSessionABC(metaclass=ABCMeta):
 
     @abc.abstractmethod
     def init_federation(self, federation_session_id: str, runtime_conf: dict, **kwargs):
         ...
 
     @abc.abstractmethod
-    def load(self, address: AddressABC, partitions, schema: dict, **kwargs) -> typing.Union[PathABC, TableABC]:
+    def load(self, address: AddressABC, partitions, schema: dict, **kwargs) -> typing.Union[PathABC, CTableABC]:
         ...
 
     @abc.abstractmethod
-    def parallelize(self, data: Iterable, partition: int, include_key: bool, **kwargs) -> TableABC:
+    def parallelize(self, data: Iterable, partition: int, include_key: bool, **kwargs) -> CTableABC:
         """
         create table from iterable data
         """
@@ -164,11 +164,11 @@ class SessionABC(metaclass=ABCMeta):
         return self._get_session_id()
 
     @property
-    def parties(self) -> '_FederationParties':
+    def parties(self):
         return self._get_federation_parties()
 
     @property
-    def federation(self) -> 'FederationEngineABC':
+    def federation(self) -> 'FederationABC':
         return self._get_federation()
 
     @staticmethod
@@ -180,14 +180,3 @@ class SessionABC(metaclass=ABCMeta):
         for role, pid_list in runtime_conf.get("role", {}).items():
             parties[role] = [Party(role, pid) for pid in pid_list]
         return party, parties
-
-
-class FederationEngineABC(metaclass=ABCMeta):
-
-    @abc.abstractmethod
-    def get(self, name: str, tag: str, parties: typing.List[Party], gc: GC) -> typing.List:
-        ...
-
-    @abc.abstractmethod
-    def remote(self, v, name: str, tag: str, parties: typing.List[Party], gc: GC) -> typing.NoReturn:
-        ...

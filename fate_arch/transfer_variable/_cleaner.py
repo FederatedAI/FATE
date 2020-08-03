@@ -19,13 +19,13 @@ from collections import deque
 
 import typing
 
-from fate_arch._interface import GC
+from fate_arch.abc import GarbageCollectionABC
 from fate_arch.common.log import getLogger
 
 LOGGER = getLogger()
 
 
-class IterationGC(GC):
+class IterationGC(GarbageCollectionABC):
     def __init__(self, capacity=2):
         self._ashcan: deque[typing.List[typing.Tuple[typing.Any, str, dict]]] = deque()
         self._last_tag: typing.Optional[str] = None

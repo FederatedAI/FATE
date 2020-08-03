@@ -21,7 +21,6 @@ from typing import Iterable
 import six
 
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
-from fate_arch._interface import AddressABC
 from fate_arch.common.log import getLogger
 from fate_arch.db.db_models import DB, MachineLearningDataSchema
 
@@ -29,7 +28,7 @@ LOGGER = getLogger()
 
 
 @six.add_metaclass(abc.ABCMeta)
-class Table(object):
+class TableABC(object):
     """
     table for distributed storage
     """
@@ -176,73 +175,3 @@ class Table(object):
                                                          MachineLearningDataSchema.f_namespace == self._namespace).execute()
         except Exception as e:
             LOGGER.error("delete_table_meta {}, {}, exception:{}.".format(self._namespace, self._name, e))
-
-
-class SimpleTable(Table):
-    def __init__(self, name, namespace, data_name, **kwargs):
-        self._name = name,
-        self._namespace = namespace
-        self.data_name = data_name
-
-    def get_partitions(self):
-        return self.get_schema(_type='partitions')
-
-    def get_name(self):
-        pass
-
-    def get_data_name(self):
-        return self.data_name
-
-    def get_namespace(self):
-        pass
-
-    def get_storage_engine(self):
-        pass
-
-    def get_address(self):
-        pass
-
-    def put_all(self, kv_list: Iterable, **kwargs):
-        pass
-
-    def count(self):
-        return self.get_schema(_type='count')
-
-    def save_as(self, name, namespace, partition=None, schema_data=None, **kwargs):
-        pass
-
-    def close(self):
-        pass
-
-    def collect(self, **kwargs):
-        data = self.get_schema(_type='data')
-        for k_v in data:
-            yield k_v
-
-
-class HDFSAddress(AddressABC):
-    def __init__(self, path):
-        self.path = path
-
-
-class EggRollAddress(AddressABC):
-    def __init__(self, name, namespace, storage_type):
-        self.name = name
-        self.namespace = namespace
-        self.store_type = storage_type  # LMDB or IN_MEMORY
-
-
-class MysqlAddress(AddressABC):
-    def __init__(self, user, passwd, host, port, db, name):
-        self.user = user
-        self.passwd = passwd
-        self.host = host
-        self.port = port
-        self.db = db
-        self.name = name
-
-
-class FileAddress(AddressABC):
-    def __init__(self, path, path_type):
-        self.path = path
-        self.path_type = path_type

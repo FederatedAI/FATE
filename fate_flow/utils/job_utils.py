@@ -622,7 +622,7 @@ def federation_cleanup(job, task):
     if backend.is_spark() and store_engine.is_hdfs():
         runtime_conf['local'] = {'role': job.f_role, 'party_id': job.f_party_id}
         parties = [Party(k, p) for k,v in runtime_conf['role'].items() for p in v ]
-        from fate_arch.session.impl.spark._session import Session
+        from fate_arch.session.spark import Session
         ssn = Session(session_id=task.f_task_id)
         ssn.init_federation(federation_session_id=task.f_task_id, runtime_conf=runtime_conf)
         ssn._get_federation().generate_mq_names(parties=parties)

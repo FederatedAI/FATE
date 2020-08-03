@@ -1,5 +1,5 @@
 #
-#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#  Copyright 2019 The Eggroll Authors. All Rights Reserved.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -14,6 +14,6 @@
 #  limitations under the License.
 #
 
-from fate_arch.session.impl.eggroll._session import Session
+from fate_arch.backend.standalone._standalone import Session, Table, Federation
 
-__all__ = ["Session"]
+__all__ = ["Session", "Table", "Federation"]

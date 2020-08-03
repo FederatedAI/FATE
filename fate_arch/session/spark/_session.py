@@ -20,16 +20,16 @@ from typing import Iterable
 # noinspection PyPackageRequirements
 from pyspark import SparkContext
 
-from fate_arch._interface import AddressABC
+from fate_arch.abc import AddressABC
+from fate_arch.abc import CSessionABC
+from fate_arch.backend.spark import RabbitManager
 from fate_arch.common import file_utils, Party
-from fate_arch.session._interface import SessionABC
-from fate_arch.session._session_types import _FederationParties
-from fate_arch.session.impl.spark._federation import FederationEngine, MQ
-from fate_arch.session.impl.spark._rabbit_manager import RabbitManager
-from fate_arch.session.impl.spark._table import _from_hdfs, _from_rdd
+from fate_arch.session._parties_util import _FederationParties
+from fate_arch.session.spark._federation import FederationEngine, MQ
+from fate_arch.session.spark._table import _from_hdfs, _from_rdd
 
 
-class Session(SessionABC):
+class Session(CSessionABC):
     """
     manage RDDTable
     """
@@ -38,14 +38,14 @@ class Session(SessionABC):
         self._session_id = session_id
 
     def load(self, address: AddressABC, partitions, schema, **kwargs):
-        from fate_arch.data_table.base import HDFSAddress
+        from fate_arch.data_table.address import HDFSAddress
         if isinstance(address, HDFSAddress):
             table = _from_hdfs(paths=address.path, partitions=partitions)
             table.schema = schema
             return table
-        from fate_arch.data_table.base import FileAddress
+        from fate_arch.data_table.address import FileAddress
         if isinstance(address, FileAddress):
-            from fate_arch.session.impl._file import Path
+            from fate_arch.session._file import Path
             return Path(address.path, address.path_type)
         raise NotImplementedError(f"address type {type(address)} not supported with spark backend")
 

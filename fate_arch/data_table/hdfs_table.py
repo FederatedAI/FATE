@@ -19,15 +19,15 @@ from typing import Iterable
 
 from pyspark import SparkContext
 
+from fate_arch.abc import TableABC
 from fate_arch.common.log import getLogger
-from fate_arch.data_table.base import Table
 from fate_arch.data_table.store_type import StoreEngine
 
 LOGGER = getLogger()
 
 
 # noinspection PyProtectedMember
-class HDFSTable(Table):
+class HDFSTable(TableABC):
 
     def __init__(self,
                  address=None,

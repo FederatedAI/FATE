@@ -24,17 +24,17 @@ from enum import Enum
 from eggroll.core.meta_model import ErEndpoint
 from eggroll.roll_pair.roll_pair import RollPair, RollPairContext
 from eggroll.roll_site.roll_site import RollSiteContext
-from fate_arch._interface import GC
+from fate_arch.abc import GarbageCollectionABC
+from fate_arch.abc import FederationABC
 from fate_arch.common import Party
 from fate_arch.common.log import getLogger
-from fate_arch.session._interface import FederationEngineABC
 from fate_arch.session._split import is_split_head, split_get
-from fate_arch.session.impl.eggroll._table import Table
+from fate_arch.session.eggroll._table import Table
 
 LOGGER = getLogger()
 
 
-class FederationEngine(FederationEngineABC):
+class FederationEngine(FederationABC):
 
     def __init__(self, rp_ctx: RollPairContext, rs_session_id: str, party: Party, host: str, port: int):
         options = {
@@ -45,12 +45,12 @@ class FederationEngine(FederationEngineABC):
         self.rsc = RollSiteContext(rs_session_id, rp_ctx=rp_ctx, options=options)
         LOGGER.debug(f"init roll site context done: {self.rsc.__dict__}")
 
-    def get(self, name: str, tag: str, parties: typing.List[Party], gc: GC) -> typing.List:
+    def get(self, name: str, tag: str, parties: typing.List[Party], gc: GarbageCollectionABC) -> typing.List:
         parties = [(party.role, party.party_id) for party in parties]
         raw_result = _get(name, tag, parties, self.rsc, gc)
         return [Table(v) if isinstance(v, RollPair) else v for v in raw_result]
 
-    def remote(self, v, name: str, tag: str, parties: typing.List[Party], gc: GC) -> typing.NoReturn:
+    def remote(self, v, name: str, tag: str, parties: typing.List[Party], gc: GarbageCollectionABC) -> typing.NoReturn:
         if isinstance(v, Table):
             # noinspection PyProtectedMember
             v = v._as_federation_format()
@@ -63,7 +63,7 @@ def _remote(v,
             tag: str,
             parties: typing.List[typing.Tuple[str, str]],
             rsc: RollSiteContext,
-            gc: GC) -> typing.NoReturn:
+            gc: GarbageCollectionABC) -> typing.NoReturn:
     log_str = f"federation.remote(name={name}, tag={tag}, parties={parties})"
     assert v is not None, \
         f"[{log_str}]remote `None`"
@@ -97,7 +97,7 @@ def _get(name: str,
          tag: str,
          parties: typing.List[typing.Tuple[str, str]],
          rsc: RollSiteContext,
-         gc: GC) -> typing.List:
+         gc: GarbageCollectionABC) -> typing.List:
     rs = rsc.load(name=name, tag=tag)
     future_map = dict(zip(rs.pull(parties=parties), parties))
     rtn = {}
@@ -171,7 +171,7 @@ def _get_tag_not_duplicate(name: str, tag: str, party: typing.Tuple[str, str]):
 
 
 def _get_value_post_process(v, name: str, tag: str, party: typing.Tuple[str, str], rsc: RollSiteContext,
-                            gc: GC):
+                            gc: GarbageCollectionABC):
     log_str = f"federation.get(name={name}, tag={tag}, party={party})"
     assert v is not None, \
         f"[{log_str}]get None"

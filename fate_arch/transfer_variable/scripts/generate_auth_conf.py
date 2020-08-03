@@ -64,7 +64,6 @@ def _write(cls, base: Path):
 
 def _search_transfer_variables_class(path):
     module_name = path.name
-    ret = []
     try:
         module_name = path.absolute().relative_to(project_base).with_suffix("").__str__().replace("/", ".")
         module = importlib.import_module(module_name)

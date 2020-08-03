@@ -23,7 +23,7 @@ import yaml
 
 _transfer_auth: typing.Optional[typing.MutableMapping] = None
 
-_TRANSFER_CONF_PATH = "../conf/transfer_conf.yaml"
+_TRANSFER_CONF_PATH = "../../conf/transfer_conf.yaml"
 
 
 def _get_transfer_conf():
@@ -32,7 +32,7 @@ def _get_transfer_conf():
         return _transfer_auth
 
     _transfer_auth = {}
-    path = Path(__file__).parent.joinpath(_TRANSFER_CONF_PATH).absolute()
+    path = Path(__file__).parent.joinpath(_TRANSFER_CONF_PATH).resolve()
     if not path.is_file():
         raise NameError(f"{path} not found, check fate_arch/conf/transfer_conf.yaml")
 
