@@ -90,7 +90,7 @@ def load_model():
 
 
 @manager.route('/migrate', methods=['POST'])
-def migrate_model():
+def migrate_model_process():
     request_config = request.json
     _job_id = generate_job_id()
     initiator_party_id = request_config['migrate_initiator']['party_id']
@@ -142,7 +142,7 @@ def migrate_model():
                                          method='POST',
                                          endpoint='/{}/model/migrate/do'.format(API_VERSION),
                                          src_party_id=initiator_party_id,
-                                         dest_party_id=initiator_party_id,
+                                         dest_party_id=party_id,
                                          src_role=initiator_role,
                                          json_body=request_config,
                                          work_mode=1)
