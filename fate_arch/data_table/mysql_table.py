@@ -58,7 +58,7 @@ class MysqlTable(Table):
                                        db=self._address.db)
             self.cur = self.con.cursor()
         except:
-            print("DataBase connect error,please check the db config.")
+            raise Exception("DataBase connect error,please check the db config:host {}, user {}, passwd {}, port {}, db {}".format(self._address.host, self._address.user, self._address.passwd, self._address.port, self._address.db))
 
     def execute(self, sql, select=True):
         self.cur.execute(sql)
@@ -107,8 +107,7 @@ class MysqlTable(Table):
 
     @log_elapsed
     def count(self, **kwargs):
-        sql = 'select count(*) from {}'.format(self._name)
-        return self.execute(sql)
+        return self.get_schema(_type='count')
 
     def close(self):
         self.con.close()
