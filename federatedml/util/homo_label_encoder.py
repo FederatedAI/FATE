@@ -13,10 +13,10 @@ class HomoLabelEncoderClient(object):
         self.transvar = HomoLabelEncoderTransferVariable()
 
     def label_alignment(self, class_set):
+
         LOGGER.info('start homo label alignments')
         self.transvar.local_labels.remote(class_set, role=consts.ARBITER, suffix=('label_align',))
         new_label_mapping = self.transvar.label_mapping.get(idx=0, suffix=('label_mapping',))
-        LOGGER.debug('num_classes is {}'.format(len(new_label_mapping)))
         new_classes = [new_label_mapping[k] for k in new_label_mapping]
         return new_classes, new_label_mapping
 

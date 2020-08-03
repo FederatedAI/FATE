@@ -22,8 +22,6 @@ from fate_flow.entity.metric import MetricMeta
 from federatedml.transfer_variable.transfer_class.hetero_boosting_transfer_variable import \
     HeteroBoostingTransferVariable
 
-from federatedml.ensemble.boosting.boosting_core.predict_cache import PredictDataCache
-
 from federatedml.util.io_check import assert_io_num_rows_equal
 
 import time
@@ -102,7 +100,6 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
 
     def __init__(self):
         super(HeteroBoostingGuest, self).__init__()
-        self.predict_data_cache = PredictDataCache()
 
     def _init_model(self, param):
         super(HeteroBoostingGuest, self)._init_model(param)
@@ -136,6 +133,8 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
 
         self.classes_, self.num_classes, self.booster_dim = self.check_label()
 
+        LOGGER.debug('self class index is {}'.format(self.classes_))
+
         self.loss = self.get_loss_function()
 
         self.sync_booster_dim()
@@ -152,8 +151,6 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
 
         self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
 
-        total_time = 0
-
         for epoch_idx in range(self.boosting_round):
 
             LOGGER.debug('cur epoch idx is {}'.format(epoch_idx))
@@ -161,10 +158,7 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
             for class_idx in range(self.booster_dim):
 
                 # fit a booster
-                s_time = time.time()
                 model = self.fit_a_booster(epoch_idx, class_idx)
-                e_time = time.time()
-                total_time += e_time - s_time
 
                 booster_meta, booster_param = model.get_model()
 
@@ -175,8 +169,6 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
                 # update predict score
                 cur_sample_weights = model.get_sample_weights()
                 self.y_hat = self.get_new_predict_score(self.y_hat, cur_sample_weights, dim=class_idx)
-
-            LOGGER.debug('total time is {} {}'.format(total_time, epoch_idx))
 
             # compute loss
             loss = self.compute_loss(self.y_hat, self.y)
@@ -190,9 +182,18 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
                 self.validation_strategy.validate(self, epoch_idx, use_precomputed_train=True,
                                                   train_scores=self.score_to_predict_result(data_inst, self.y_hat))
 
-            should_stop = self.check_stop_condition(loss)
-            self.sync_stop_flag(should_stop, epoch_idx)
-            if should_stop:
+            should_stop_a, should_stop_b = False, False
+            if self.validation_strategy is not None:
+                if self.validation_strategy.need_stop():
+                    should_stop_a = True
+
+            if self.n_iter_no_change and self.check_convergence(loss):
+                should_stop_b = True
+                self.is_converged = True
+
+            self.sync_stop_flag(self.is_converged, epoch_idx)
+
+            if should_stop_a or should_stop_b:
                 break
 
         self.callback_meta("loss",
@@ -205,14 +206,18 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
             LOGGER.debug('best model exported')
             self.load_model(self.validation_strategy.cur_best_model)
 
+        # get summary
+        self.set_summary(self.generate_summary())
+
     @assert_io_num_rows_equal
     def predict(self, data_inst):
+
         LOGGER.info('using default lazy prediction')
         return self.lazy_predict(data_inst)
 
     def lazy_predict(self, data_inst):
 
-        LOGGER.info("predicting, there are {} boosters".format(len(self.boosting_model_list)))
+        LOGGER.info('running guest lazy prediction')
         processed_data = self.data_alignment(data_inst)
         rounds = len(self.boosting_model_list) // self.booster_dim
 
@@ -241,7 +246,7 @@ class HeteroBoostingGuest(HeteroBoosting, ABC):
 
             self.predict_data_cache.add_data(cache_dataset_key, self.predict_y_hat)
 
-        LOGGER.debug('prediction finished')
+        LOGGER.debug('lazy prediction finished')
 
         return self.score_to_predict_result(data_inst, self.predict_y_hat)
 
@@ -317,17 +322,25 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
             if self.validation_strategy:
                 self.validation_strategy.validate(self, epoch_idx, use_precomputed_train=True, train_scores=None)
 
-            should_stop = self.sync_stop_flag(epoch_idx)
-            if should_stop:
+            should_stop_a = False
+            if self.validation_strategy is not None:
+                if self.validation_strategy.need_stop():
+                    should_stop_a = True
+
+            should_stop_b = self.sync_stop_flag(epoch_idx)
+            self.is_converged = should_stop_b
+            if should_stop_a or should_stop_b:
                 break
 
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
             LOGGER.debug('best model exported')
             self.load_model(self.validation_strategy.cur_best_model)
 
+        self.set_summary(self.generate_summary())
+
     def lazy_predict(self, data_inst):
 
-        LOGGER.info("predicting, there are {} trees".format(len(self.boosting_model_list)))
+        LOGGER.info('running guest lazy prediction')
         data_inst = self.data_alignment(data_inst)
         init_score = self.init_score
         self.predict_y_hat = data_inst.mapValues(lambda v: init_score)
@@ -342,7 +355,7 @@ class HeteroBoostingHost(HeteroBoosting, ABC):
                                           idx, booster_idx)
                 model.predict(data_inst)
 
-        LOGGER.debug('prediction finished')
+        LOGGER.debug('lazy prediction finished')
 
     def predict(self, data_inst):
 

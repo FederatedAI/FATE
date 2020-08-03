@@ -33,6 +33,7 @@ class HeteroNNBase(ModelBase):
 
         self.epochs = None
         self.batch_size = None
+        self._header = []
 
         self.predict_param = None
         self.hetero_nn_param = None
@@ -111,6 +112,7 @@ class HeteroNNBase(ModelBase):
 
     def _restore_model_param(self, param):
         self.model.set_hetero_nn_model_param(param.hetero_nn_model_param)
+        self._header = list(param.header)
 
     def set_partition(self, data_inst):
         self.partition = data_inst._partitions

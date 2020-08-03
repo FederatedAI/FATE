@@ -1,0 +1,16 @@
+{
+    "module_path":  "federatedml/hetero_ftl",
+    "param_class" : "federatedml/param/ftl_param.py/FTLParam",
+    "default_runtime_conf": "ftl_param.json",
+    "role":
+    {
+        "guest":
+        {
+            "program": "ftl_guest.py/FTLGuest"
+        },
+        "host":
+        {
+            "program": "ftl_host.py/FTLHost"
+        }
+    }
+}

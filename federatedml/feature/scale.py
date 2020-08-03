@@ -22,6 +22,7 @@ from federatedml.model_base import ModelBase
 from federatedml.param.scale_param import ScaleParam
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
+from federatedml.util.schema_check import assert_schema_consistent
 
 LOGGER = log_utils.getLogger()
 
@@ -82,6 +83,7 @@ class Scale(ModelBase):
         return fit_data
 
     @assert_io_num_rows_equal
+    @assert_schema_consistent
     def transform(self, data, fit_config=None):
         """
         Transform input data using scale with fit results

@@ -481,12 +481,6 @@ class MultivariateStatisticalSummary(object):
         missing_count = missing_ratio * self.data_instances.count()
         return missing_count.astype(int)
 
-    @property
-    def skewness(self):
-        if hasattr(self, '_skewness'):
-            return getattr(self, "_skewness")
-        mean = self.summary_statistics.mean
-
     @staticmethod
     def get_label_static_dict(data_instances):
         result_dict = {}

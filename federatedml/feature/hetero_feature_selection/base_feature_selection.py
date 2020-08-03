@@ -22,8 +22,8 @@ from google.protobuf import json_format
 
 from arch.api.utils import log_utils
 from federatedml.feature.feature_selection import filter_factory
+from federatedml.feature.feature_selection.model_adaptor.adapter_factory import adapter_factory
 from federatedml.feature.feature_selection.selection_properties import SelectionProperties, CompletedSelectionResults
-from federatedml.feature.feature_selection.model_adaptor.isometric_model import IsometricModel
 from federatedml.model_base import ModelBase
 from federatedml.param.feature_selection_param import FeatureSelectionParam
 from federatedml.protobuf.generated import feature_selection_param_pb2, feature_selection_meta_pb2
@@ -31,9 +31,9 @@ from federatedml.statistic.data_overview import get_header
 from federatedml.transfer_variable.transfer_class.hetero_feature_selection_transfer_variable import \
     HeteroFeatureSelectionTransferVariable
 from federatedml.util import abnormal_detection
-from federatedml.util.io_check import assert_io_num_rows_equal
-from federatedml.feature.feature_selection.model_adaptor.adapter_factory import adapter_factory
 from federatedml.util import consts
+from federatedml.util.io_check import assert_io_num_rows_equal
+from federatedml.util.schema_check import assert_schema_consistent
 
 LOGGER = log_utils.getLogger()
 
@@ -276,6 +276,13 @@ class BaseHeteroFeatureSelection(ModelBase):
         self.completed_selection_result.add_filter_results(filter_name=method,
                                                            select_properties=self.curt_select_properties,
                                                            host_select_properties=host_select_properties)
+        last_col_nums = len(self.curt_select_properties.last_left_col_names)
+        left_col_names = self.curt_select_properties.left_col_names
+        self.add_summary(method, {
+            "last_col_nums": last_col_nums,
+            "left_col_nums": len(left_col_names),
+            "left_col_names": left_col_names
+        })
         LOGGER.debug("method: {}, selection_cols: {}, left_cols: {}".format(
             method, self.curt_select_properties.select_col_names, self.curt_select_properties.left_col_names))
         self.update_curt_select_param()
@@ -313,6 +320,7 @@ class BaseHeteroFeatureSelection(ModelBase):
         return new_data
 
     @assert_io_num_rows_equal
+    @assert_schema_consistent
     def transform(self, data_instances):
         self._abnormal_detection(data_instances)
         self._init_select_params(data_instances)
