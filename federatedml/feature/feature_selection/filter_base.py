@@ -21,7 +21,6 @@ import random
 
 from arch.api.utils import log_utils
 from federatedml.feature.feature_selection.selection_properties import SelectionProperties
-
 LOGGER = log_utils.getLogger()
 
 
@@ -29,16 +28,6 @@ class BaseFilterMethod(object):
     """
     Use for filter columns
 
-    Attributes
-    ----------
-    cols: list of int
-        Col index to do selection
-
-    left_cols: dict,
-        k is col_index, value is bool that indicate whether it is left or not.
-
-    feature_values: dict
-        k is col_name, v is the value that used to judge whether left or not.
     """
 
     def __init__(self, filter_param):
@@ -72,6 +61,7 @@ class BaseFilterMethod(object):
         raise NotImplementedError("Should not call this function directly")
 
     def set_selection_properties(self, selection_properties):
+        LOGGER.debug(f"In set_selection_properties, header: {selection_properties.header}")
         self.selection_properties = selection_properties
 
     def _keep_one_feature(self, pick_high=True):
@@ -115,5 +105,12 @@ class BaseFilterMethod(object):
         # Re-write if needed
         pass
 
-    def get_meta_obj(self, meta_dicts):
+    def set_component_properties(self, cpp):
+        # Re-write if needed
+        pass
+
+    def set_iso_model(self, model):
+        pass
+
+    def get_meta_obj(self):
         raise NotImplementedError("Should not call this function directly")

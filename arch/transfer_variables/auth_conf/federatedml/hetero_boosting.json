@@ -1,0 +1,20 @@
+{
+  "HeteroBoostingTransferVariable": {
+    "booster_dim": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "stop_flag": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "predict_start_round": {
+      "src": "guest",
+      "dst": ["host"]
+    }
+  }
+}

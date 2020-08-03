@@ -122,6 +122,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
                 break
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
             self.load_model(self.validation_strategy.cur_best_model)
+        self.set_summary(self.get_model_summary())
 
     @assert_io_num_rows_equal
     def predict(self, data_instances):
@@ -138,6 +139,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         """
         LOGGER.info("Start predict ...")
 
+        self._abnormal_detection(data_instances)
         header = data_instances.schema.get("header")
         self.exposure_index = self.get_exposure_index(header, self.exposure_colname)
         exposure_index = self.exposure_index
@@ -147,6 +149,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
 
         data_instances = data_instances.mapValues(lambda v: HeteroPoissonBase.load_instance(v, exposure_index))
 
+        data_instances = self.align_data_header(data_instances, self.header)
         data_features = self.transform(data_instances)
 
         pred_guest = self.compute_mu(data_features, self.model_weights.coef_, self.model_weights.intercept_, exposure)
@@ -155,5 +158,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         LOGGER.info("Get prediction from Host")
 
         pred = pred_guest.join(pred_host, lambda g, h: g * h)
-        predict_result = data_instances.join(pred, lambda d, p: [d.label, p, p, {"label": p}])
+        # predict_result = data_instances.join(pred, lambda d, p: [d.label, p, p, {"label": p}])
+        predict_result = self.predict_score_to_output(data_instances=data_instances, predict_score=pred,
+                                                      classes=None)
         return predict_result

@@ -125,6 +125,7 @@ class HeteroLinRGuest(HeteroLinRBase):
                 break
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
             self.load_model(self.validation_strategy.cur_best_model)
+        self.set_summary(self.get_model_summary())
 
     @assert_io_num_rows_equal
     def predict(self, data_instances):
@@ -142,6 +143,8 @@ class HeteroLinRGuest(HeteroLinRBase):
         """
         LOGGER.info("Start predict ...")
 
+        self._abnormal_detection(data_instances)
+        data_instances = self.align_data_header(data_instances, self.header)
         data_features = self.transform(data_instances)
         pred = self.compute_wx(data_features, self.model_weights.coef_, self.model_weights.intercept_)
         host_preds = self.transfer_variable.host_partial_prediction.get(idx=-1)
@@ -150,5 +153,7 @@ class HeteroLinRGuest(HeteroLinRBase):
         for host_pred in host_preds:
             pred = pred.join(host_pred, lambda g, h: g + h)
 
-        predict_result = data_instances.join(pred, lambda d, pred: [d.label, pred, pred, {"label": pred}])
+        # predict_result = data_instances.join(pred, lambda d, pred: [d.label, pred, pred, {"label": pred}])
+        predict_result = self.predict_score_to_output(data_instances=data_instances, predict_score=pred,
+                                                      classes=None)
         return predict_result

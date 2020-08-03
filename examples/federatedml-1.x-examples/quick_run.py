@@ -310,14 +310,14 @@ def predict_task():
     guest_table_name, guest_namespace = generate_data_info(GUEST)
     host_table_name, host_namespace = generate_data_info(HOST)
 
-    predict_conf['role_parameters']['guest']['args']['data']['eval_data'] = [
+    predict_conf['role_parameters']['guest']['args']['data']['validate_data'] = [
         {
             'name': guest_table_name,
             'namespace': guest_namespace
         }
     ]
 
-    predict_conf['role_parameters']['host']['args']['data']['eval_data'] = [
+    predict_conf['role_parameters']['host']['args']['data']['validate_data'] = [
         {
             'name': host_table_name,
             'namespace': host_namespace

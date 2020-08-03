@@ -14,6 +14,14 @@
 #  limitations under the License.
 #
 
+import itertools
+import uuid
+
+import numpy as np
+from google.protobuf.json_format import MessageToDict
+from sklearn import metrics
+from sklearn.linear_model import LogisticRegression, LinearRegression
+
 from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.evaluation.metrics.regression_metric import IC, IC_Approx
@@ -21,13 +29,7 @@ from federatedml.model_selection.stepwise.step import Step
 from federatedml.statistic import data_overview
 from federatedml.transfer_variable.transfer_class.stepwise_transfer_variable import StepwiseTransferVariable
 from federatedml.util import consts
-
-import itertools
-import numpy as np
-from sklearn import metrics
-from sklearn.linear_model import LogisticRegression, LinearRegression
-from google.protobuf.json_format import MessageToDict
-import uuid
+from federatedml.util import fate_operator
 
 LOGGER = log_utils.getLogger()
 
@@ -286,6 +288,26 @@ class HeteroStepwise(object):
             to_enter = []
         return to_enter
 
+    def update_summary_client(self, model, host_mask, guest_mask, unilateral_features, host_anonym, guest_anonym):
+        step_summary = {}
+        if self.role == consts.GUEST:
+            guest_features = [unilateral_features[i] for i in np.where(guest_mask == 1)[0]]
+            host_features = [host_anonym[i] for i in np.where(host_mask == 1)[0]]
+        elif self.role == consts.HOST:
+            guest_features = [guest_anonym[i] for i in np.where(guest_mask == 1)[0]]
+            host_features = [unilateral_features[i] for i in np.where(host_mask == 1)[0]]
+        else:
+            raise ValueError(f"upload summary on client only applies to host or guest.")
+        step_summary["guest_features"] = guest_features
+        step_summary["host_features"] = host_features
+        model.add_summary(f"step_{self.n_step}", step_summary)
+
+    def update_summary_arbiter(self, model, loss, ic_val):
+        step_summary = {}
+        step_summary["loss"] = loss
+        step_summary["ic_val"] = ic_val
+        model.add_summary(f"step_{self.n_step}", step_summary)
+
     def record_step_best(self, step_best, host_mask, guest_mask, data_instances, model):
         metas = {"host_mask": host_mask.tolist(), "guest_mask": guest_mask.tolist(),
                  "score_name": self.score_name}
@@ -293,10 +315,14 @@ class HeteroStepwise(object):
         metas["direction"] = self.direction
         metas["n_count"] = int(self.n_count)
 
-        host_party_id = model.component_properties.host_party_idlist[0]
-        guest_party_id = model.component_properties.guest_partyid
-        metas["host_features_anonym"] = [f"host_{host_party_id}_{i}" for i in range(len(host_mask))]
-        metas["guest_features_anonym"] = [f"guest_{guest_party_id}_{i}" for i in range(len(guest_mask))]
+        #host_party_id = model.component_properties.host_party_idlist[0]
+        #guest_party_id = model.component_properties.guest_partyid
+        #host_anonym = [f"host_{host_party_id}_{i}" for i in range(len(host_mask))]
+        host_anonym = [fate_operator.generate_anonymous(fid=i, model=model) for i in range(len(host_mask))]
+        #guest_anonym = [f"guest_{guest_party_id}_{i}" for i in range(len(guest_mask))]
+        guest_anonym = [fate_operator.generate_anonymous(fid=i, model=model) for i in range(len(guest_mask))]
+        metas["host_features_anonym"] = host_anonym
+        metas["guest_features_anonym"] = guest_anonym
 
         model_info = self.models_trained[step_best]
         loss = model_info.get_loss()
@@ -320,7 +346,9 @@ class HeteroStepwise(object):
             metas["header"] = param_dict.get("header", [])
             if self.n_step == 0 and self.direction == "forward":
                 metas["intercept"] = self.intercept
-
+            self.update_summary_client(model, host_mask, guest_mask, all_features, host_anonym, guest_anonym)
+        else:
+            self.update_summary_arbiter(model, loss, ic_val)
         metric_name = f"stepwise_{self.n_step}"
         metric = [Metric(metric_name, float(self.n_step))]
         model.callback_metric(metric_name=metric_name, metric_namespace=self.metric_namespace, metric_data=metric)

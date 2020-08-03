@@ -45,9 +45,19 @@ message FeatureBinningResult {
     string party_id = 3;
 }
 
+message BinningSingleFeatureValue {
+    repeated double values = 1;
+    repeated string col_names = 2;
+    string value_name = 3;
+}
+
+//message BinningOnePartyResult {
+//    repeated BinningSingleFeatureValue results = 1;
+//}
 
 message FeatureBinningParam {
     FeatureBinningResult binning_result = 1;
     repeated FeatureBinningResult host_results = 2;
     repeated string header = 3;
+    string model_name = 4;
 }

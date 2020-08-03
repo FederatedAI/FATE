@@ -110,11 +110,8 @@
         "hetero_feature_selection_0": {
             "select_cols": -1,
             "filter_methods": [
-                "unique_value",
                 "iv_value_thres",
-                "coefficient_of_variation_value_thres",
-                "iv_percentile",
-                "outlier_cols"
+                "iv_percentile"
             ],
             "local_only": false,
             "unique_param": {

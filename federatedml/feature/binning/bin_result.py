@@ -110,7 +110,7 @@ class BinColResults(object):
 
 class BinResults(object):
     def __init__(self):
-        self.all_cols_results = {}
+        self.all_cols_results = {}   # {col_name: BinColResult}
         self.role = ''
         self.party_id = ''
 

@@ -15,10 +15,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
+import copy
+
 from arch.api.utils import log_utils
 from federatedml.param.evaluation_param import EvaluateParam
+from federatedml.statistic.data_overview import header_alignment
+from federatedml.util import abnormal_detection
 from federatedml.util.component_properties import ComponentProperties
 from federatedml.util.param_extract import ParamExtract
+
+import numpy as np
 
 LOGGER = log_utils.getLogger()
 
@@ -38,6 +45,7 @@ class ModelBase(object):
         self.cv_fold = 0
         self.validation_freqs = None
         self.component_properties = ComponentProperties()
+        self._summary = dict()
 
     def _init_runtime_parameters(self, component_parameters):
         param_extractor = ParamExtract()
@@ -76,6 +84,7 @@ class ModelBase(object):
         self.component_properties.parse_dsl_args(args)
 
         running_funcs = self.component_properties.extract_running_rules(args, self)
+        LOGGER.debug(f"running_funcs: {running_funcs.todo_func_list}")
         saved_result = []
         for func, params, save_result, use_previews in running_funcs:
             # for func, params in zip(todo_func_list, todo_func_params):
@@ -98,8 +107,7 @@ class ModelBase(object):
             # LOGGER.debug("One data: {}".format(self.data_output.first()[1].features))
         LOGGER.debug("saved_result is : {}, data_output: {}".format(saved_result, self.data_output))
         self.check_consistency()
-
-
+        # self.save_summary()
 
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary",
@@ -165,7 +173,8 @@ class ModelBase(object):
     def set_tracker(self, tracker):
         self.tracker = tracker
 
-    def set_predict_data_schema(self, predict_datas, schemas):
+    @staticmethod
+    def set_predict_data_schema(predict_datas, schemas):
         if predict_datas is None:
             return predict_datas
         if isinstance(predict_datas, list):
@@ -178,6 +187,49 @@ class ModelBase(object):
             predict_data.schema = {"header": ["label", "predict_result", "predict_score", "predict_detail", "type"],
                                    "sid_name": schema.get('sid_name')}
         return predict_data
+
+    @staticmethod
+    def predict_score_to_output(data_instances, predict_score, classes=None, threshold=0.5):
+        """
+        Get predict result output
+        Parameters
+        ----------
+        data_instances: table, data used for prediction
+        predict_score: table, probability scores
+        classes: list or None, all classes/label names
+        threshold: float, predict threshold, used for binary label
+
+        Returns
+        -------
+        Table, predict result
+        """
+
+        # regression
+        if classes is None:
+            predict_result = data_instances.join(predict_score, lambda d, pred: [d.label, pred,
+                                                                                 pred, {"label": pred}])
+        # binary
+        elif isinstance(classes, list) and len(classes) == 2:
+            class_neg, class_pos = classes[0], classes[1]
+            pred_label = predict_score.mapValues(lambda x: class_pos if x > threshold else class_neg)
+            predict_result = data_instances.mapValues(lambda x: x.label)
+            predict_result = predict_result.join(predict_score, lambda x, y: (x, y))
+            class_neg_name, class_pos_name = str(class_neg), str(class_pos)
+            predict_result = predict_result.join(pred_label, lambda x, y: [x[0], y, x[1],
+                                                                           {class_neg_name: (1 - x[1]),
+                                                                            class_pos_name: x[1]}])
+
+        # multi-label: input = array of predicted score of all labels
+        elif isinstance(classes, list) and len(classes) > 2:
+            # pred_label = predict_score.mapValues(lambda x: classes[x.index(max(x))])
+            classes = [str(val) for val in classes]
+            predict_result = data_instances.mapValues(lambda x: x.label)
+            predict_result = predict_result.join(predict_score, lambda x, y: [x, int(classes[np.argmax(y)]),
+                                                                              float(np.max(y)), dict(zip(classes, list(y)))])
+        else:
+            raise ValueError(f"Model's classes type is {type(classes)}, classes must be None or list.")
+
+        return predict_result
 
     def callback_meta(self, metric_name, metric_namespace, metric_meta):
         if self.need_cv:
@@ -202,8 +254,83 @@ class ModelBase(object):
                                      metric_namespace=metric_namespace,
                                      metrics=metric_data)
 
+    def save_summary(self):
+        self.tracker.save_component_summary(summary_data=self.summary())
+
     def set_cv_fold(self, cv_fold):
         self.cv_fold = cv_fold
+
+    def summary(self):
+        return copy.deepcopy(self._summary)
+
+    def set_summary(self, new_summary):
+        """
+        Model summary setter
+        Parameters
+        ----------
+        new_summary: dict, summary to replace the original one
+
+        Returns
+        -------
+
+        """
+
+        if not isinstance(new_summary, dict):
+            raise ValueError(f"summary should be of dict type, received {type(new_summary)} instead.")
+        self._summary = copy.deepcopy(new_summary)
+
+    def add_summary(self, new_key, new_value):
+        """
+        Add key:value pair to model summary
+        Parameters
+        ----------
+        new_key: str
+        new_value: object
+
+        Returns
+        -------
+
+        """
+
+        original_value = self._summary.get(new_key, None)
+        if original_value is not None:
+            LOGGER.warning(f"{new_key} already exists in model summary."
+                           f"Corresponding value {original_value} will be replaced by {new_value}")
+        self._summary[new_key] = new_value
+        LOGGER.debug(f"{new_key}: {new_value} added to summary.")
+
+    def merge_summary(self, new_content, suffix=None, suffix_sep='_'):
+        """
+        Merge new content into model summary
+        Parameters
+        ----------
+        new_content: dict, content to be merged into summary
+        suffix: str or None, suffix used to create new key if any key in new_content already exixts in model summary
+        suffix_sep: string, default '_', suffix separator used to create new key
+
+        Returns
+        -------
+
+        """
+
+        if not isinstance(new_content, dict):
+            raise ValueError(f"To merge new content into model summary, "
+                             f"value must be of dict type, received {type(new_content)} instead.")
+        new_summary = self.summary()
+        keyset = new_summary.keys() | new_content.keys()
+        for key in keyset:
+            if key in new_summary and key in new_content:
+                if suffix is not None:
+                    new_key = f"{key}{suffix_sep}{suffix}"
+                else:
+                    new_key = key
+                new_value = new_content.get(key)
+                new_summary[new_key] = new_value
+            elif key in new_content:
+                new_summary[key] = new_content.get(key)
+            else:
+                pass
+        self.set_summary(new_summary)
 
     @staticmethod
     def extract_data(data: dict):
@@ -213,3 +340,35 @@ class ModelBase(object):
         if len(data) == 1:
             return list(data.values())[0]
         return data
+
+    @staticmethod
+    def check_schema_content(schema):
+        """
+        check for repeated header & illegal/non-printable chars except for space
+        allow non-ascii chars
+        :param schema: dict
+        :return:
+        """
+        abnormal_detection.check_legal_schema(schema)
+
+    @staticmethod
+    def align_data_header(data_instances, pre_header):
+        """
+        align features of given data, raise error if value in given schema not found
+        :param data_instances: data table
+        :param pre_header: list, header of model
+        :return: dtable, aligned data
+        """
+        result_data = header_alignment(data_instances=data_instances, pre_header=pre_header)
+        return result_data
+
+    @staticmethod
+    def pass_data(data):
+        if isinstance(data, dict) and len(data) >= 1:
+            data = list(data.values())[0]
+        return data
+
+    def obtain_data(self, data_list):
+        if isinstance(data_list, list):
+            return data_list[0]
+        return data_list

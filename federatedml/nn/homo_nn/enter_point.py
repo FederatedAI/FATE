@@ -73,6 +73,8 @@ class HomoNNServer(HomoNNBase):
         self.loss_scatter = loss_scatter.Server(self.transfer_variable.loss_scatter_trans_var)
         self.has_converged = has_converged.Server(self.transfer_variable.has_converged_trans_var)
 
+        self._summary = dict(loss_history=[], is_converged=False)
+
     def _init_model(self, param: HomoNNParam):
         super()._init_model(param=param)
         early_stop = self.model_param.early_stop
@@ -91,6 +93,8 @@ class HomoNNServer(HomoNNBase):
                              metric_namespace='train',
                              metric_data=[Metric(iter_num, loss)])
 
+        self._summary["loss_history"].append(loss)
+
     def _is_converged(self):
         loss = self.loss_scatter.weighted_loss_mean(suffix=self._suffix())
         Logger.info(f"loss at iter {self.aggregate_iteration_num}: {loss}")
@@ -100,6 +104,7 @@ class HomoNNServer(HomoNNBase):
         else:
             is_converged = self.converge_func(self.model)
         self.has_converged.remote_converge_status(is_converge=is_converged, suffix=self._suffix())
+        self._summary["is_converged"] = is_converged
         return is_converged
 
     def fit(self, data_inst):
@@ -113,6 +118,7 @@ class HomoNNServer(HomoNNBase):
             self.aggregate_iteration_num += 1
         else:
             Logger.warn(f"reach max iter: {self.aggregate_iteration_num}, not converged")
+        self.set_summary(self._summary)
 
     def save_model(self):
         return self.model
@@ -127,6 +133,8 @@ class HomoNNClient(HomoNNBase):
         self.has_converged = has_converged.Client(self.transfer_variable.has_converged_trans_var)
 
         self.nn_model = None
+        self._summary = dict(loss_history=[], is_converged=False)
+        self._header = []
 
     def _init_model(self, param: HomoNNParam):
         super()._init_model(param=param)
@@ -148,6 +156,8 @@ class HomoNNClient(HomoNNBase):
         loss = metrics["loss"]
         self.loss_scatter.send_loss(loss=(loss, epoch_degree), suffix=self._suffix())
         is_converged = self.has_converged.get_converge_status(suffix=self._suffix())
+        self._summary["is_converged"] = is_converged
+        self._summary["loss_history"].append(loss)
         return is_converged
 
     def __build_nn_model(self, input_shape):
@@ -164,6 +174,7 @@ class HomoNNClient(HomoNNBase):
                                            metrics=self.metrics)
 
     def fit(self, data_inst, *args):
+        self._header = data_inst.schema["header"]
         data = self.data_converter.convert(data_inst, batch_size=self.batch_size, encode_label=self.encode_label)
         if self.config_type == "pytorch":
             self.__build_pytorch_model(self.nn_define)
@@ -195,6 +206,8 @@ class HomoNNClient(HomoNNBase):
         else:
             Logger.warn(f"reach max iter: {self.aggregate_iteration_num}, not converged")
 
+        self.set_summary(self._summary)
+
     def export_model(self):
         return _build_model_dict(meta=self._get_meta(), param=self._get_param())
 
@@ -209,28 +222,24 @@ class HomoNNClient(HomoNNBase):
         from federatedml.protobuf.generated import nn_model_param_pb2
         param_pb = nn_model_param_pb2.NNModelParam()
         param_pb.saved_model_bytes = self.nn_model.export_model()
+        param_pb.header.extend(self._header)
         return param_pb
 
     @assert_io_num_rows_equal
     def predict(self, data_inst):
-
+        self.align_data_header(data_instances=data_inst, pre_header=self._header)
         data = self.data_converter.convert(data_inst, batch_size=self.batch_size, encode_label=self.encode_label)
         predict = self.nn_model.predict(data)
         num_output_units = predict.shape[1]
-        threshold = self.param.predict_param.threshold
-
         if num_output_units == 1:
-            kv = [(x[0], (0 if x[1][0] <= threshold else 1, x[1][0].item())) for x in zip(data.get_keys(), predict)]
-            pred_tbl = session.parallelize(kv, include_key=True, partition=data_inst.get_partitions())
-            return data_inst.join(pred_tbl,
-                                  lambda d, pred: [d.label, pred[0], pred[1], {"0": 1 - pred[1], "1": pred[1]}])
+            kv = zip(data.get_keys(), map(lambda x: x.tolist()[0], predict))
         else:
-            kv = [(x[0], (x[1].argmax(), [float(e) for e in x[1]])) for x in zip(data.get_keys(), predict)]
-            pred_tbl = session.parallelize(kv, include_key=True, partition=data_inst.get_partitions())
-            return data_inst.join(pred_tbl,
-                                  lambda d, pred: [d.label, pred[0].item(),
-                                                   pred[1][pred[0]],
-                                                   {str(v): pred[1][v] for v in range(len(pred[1]))}])
+            kv = zip(data.get_keys(), predict)
+        pred_tbl = session.parallelize(kv, include_key=True, partition=data_inst.get_partitions())
+        classes = [0, 1] if num_output_units == 1 else [i for i in range(num_output_units)]
+        return self.predict_score_to_output(data_inst, pred_tbl, classes=classes,
+                                            threshold=self.param.predict_param.threshold)
+
     def load_model(self, model_dict):
         model_dict = list(model_dict["model"].values())[0]
         model_obj = _extract_param(model_dict)
@@ -239,6 +248,7 @@ class HomoNNClient(HomoNNBase):
         self._init_model(self.model_param)
         self.aggregate_iteration_num = meta_obj.aggregate_iter
         self.nn_model = restore_nn_model(self.config_type, model_obj.saved_model_bytes)
+        self._header = list(model_obj.header)
 
 
 # server: Arbiter, clients: Guest and Hosts

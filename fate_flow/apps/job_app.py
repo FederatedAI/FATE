@@ -15,7 +15,9 @@
 #
 import io
 import os
+import json
 import tarfile
+from datetime import datetime
 
 from flask import Flask, request, send_file
 
@@ -25,6 +27,7 @@ from fate_flow.driver.task_scheduler import TaskScheduler
 from fate_flow.manager import data_manager
 from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT
 from fate_flow.utils import job_utils, detect_utils
+from fate_flow.utils.job_utils import get_dsl_parser_by_version
 from fate_flow.utils.api_utils import get_json_result, request_execute_server
 from fate_flow.entity.constant_config import WorkMode, JobStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -90,6 +93,14 @@ def query_job():
     return get_json_result(retcode=0, retmsg='success', data=[job.to_json() for job in jobs])
 
 
+@manager.route('/list/job', methods=['POST'])
+def list_job():
+    jobs = job_utils.list_job(request.json.get('limit'))
+    if not jobs:
+        return get_json_result(retcode=101, retmsg='No job found')
+    return get_json_result(retcode=0, retmsg='success', data=[job.to_json() for job in jobs])
+
+
 @manager.route('/update', methods=['POST'])
 def update_job():
     job_info = request.json
@@ -147,6 +158,14 @@ def query_task():
     return get_json_result(retcode=0, retmsg='success', data=[task.to_json() for task in tasks])
 
 
+@manager.route('/list/task', methods=['POST'])
+def list_task():
+    tasks = job_utils.list_task(request.json.get('limit'))
+    if not tasks:
+        return get_json_result(retcode=101, retmsg='No task found')
+    return get_json_result(retcode=0, retmsg='success', data=[task.to_json() for task in tasks])
+
+
 @manager.route('/data/view/query', methods=['POST'])
 def query_data_view():
     data_views = data_manager.query_data_view(**request.json)
@@ -167,3 +186,42 @@ def clean_job():
 def clean_queue():
     TaskScheduler.clean_queue()
     return get_json_result(retcode=0, retmsg='success')
+
+
+@manager.route('/dsl/generate', methods=['POST'])
+def dsl_generator():
+    try:
+        data = request.json
+        cpn_str = data.get("cpn_str", "")
+        if not cpn_str:
+            raise Exception("Component list should not be empty.")
+        if isinstance(cpn_str, list):
+            cpn_list = cpn_str
+        else:
+            if (cpn_str.find("/") and cpn_str.find("\\")) != -1:
+                raise Exception("Component list string should not contain '/' or '\\'.")
+            cpn_str = cpn_str.replace(" ", "").replace("\n", "").strip(",[]")
+            cpn_list = cpn_str.split(",")
+        train_dsl = json_loads(data.get("train_dsl"))
+        parser = get_dsl_parser_by_version(data.get("version", "1"))
+        predict_dsl = parser.deploy_component(cpn_list, train_dsl)
+        if data.get("output_path"):
+            abspath = os.path.abspath(data.get("output_path"))
+            if os.path.isdir(abspath):
+                fp = os.path.join(abspath, "predict_dsl_{}.json".format(datetime.now().strftime('%Y%m%d%H%M%S')))
+                with open(fp, "w") as fout:
+                    fout.write(json.dumps(predict_dsl, indent=4))
+                return get_json_result(retmsg="New predict dsl file has been generated successfully. "
+                                              "File path is: {}.".format(fp))
+            elif os.path.isfile(abspath):
+                with open(data.get("output_path"), "w") as fout:
+                    fout.write(json.dumps(predict_dsl, indent=4))
+                return get_json_result(retmsg="New predict dsl file has been generated successfully. "
+                                              "File path is: {}.".format(data.get("output_path")))
+            else:
+                return get_json_result(retcode=100,
+                                       retmsg='Generating new predict dsl file failed. Output path is invalid.')
+        return get_json_result(data=predict_dsl)
+    except Exception as e:
+        return get_json_result(retcode=100, retmsg=str(e))
+

@@ -39,5 +39,6 @@ message BoostingTreeModelMeta {
     double tol = 8;
     bool use_missing = 9;
     bool zero_as_missing = 10;
+    string work_mode = 11;
 }
 
