@@ -13,20 +13,31 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import uuid
 from typing import Iterable
 
 from fate_arch.abc import TableABC
-from fate_arch.backend.standalone import Table as RawTable
+from fate_arch.backend.standalone import Session
 from fate_arch.data_table.address import EggRollAddress
+from fate_arch.data_table.store_type import StoreEngine
 
 
 class StandaloneTable(TableABC):
 
-    def __init__(self, table: RawTable,
-                 address, persistent_engine):
-        self._table = table
+    def __init__(self, job_id: str = uuid.uuid1().hex,
+                 persistent_engine: str = StoreEngine.LMDB,
+                 partitions: int = 1,
+                 namespace: str = None,
+                 name: str = None,
+                 address=None):
         if not address:
-            address = EggRollAddress(name=table.name, namespace=table.namespace, storage_type=persistent_engine)
+            address = EggRollAddress(name=name, namespace=namespace, storage_type=persistent_engine)
+        self._address = address
+        self._storage_engine = persistent_engine
+        self._session_id = job_id
+        self._partitions = partitions
+        self._session = Session(session_id=self._session_id)
+        self._table = self._session.create_table(namespace=address.namespace, name=address.name, partitions=partitions)
         self._address = address
         self._storage_engine = persistent_engine
 
@@ -37,7 +48,7 @@ class StandaloneTable(TableABC):
         return self._table.collect(**kwargs)
 
     def close(self):
-        pass
+        return self._session.stop()
 
     def save_as(self, name, namespace, partition=None, schema_data=None, **kwargs):
         return self._table.save_as(name=name, namespace=namespace, partition=partition, need_cleanup=False)

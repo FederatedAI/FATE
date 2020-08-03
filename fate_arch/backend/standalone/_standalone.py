@@ -43,11 +43,12 @@ LOGGER = getLogger()
 # noinspection PyPep8Naming
 class Table(object):
 
-    def __init__(self, namespace, name, partitions=1, need_cleanup=True):
+    def __init__(self, session: 'Session', namespace: str, name: str, partitions, need_cleanup=True):
         self._need_cleanup = need_cleanup
         self._namespace = namespace
         self._name = name
         self._partitions = partitions
+        self._session = session
 
     @property
     def partitions(self):
@@ -119,7 +120,7 @@ class Table(object):
 
     def reduce(self, func):
         # noinspection PyProtectedMember
-        rs = get_session()._submit_unary(func, _do_reduce, self._partitions, self._name, self._namespace)
+        rs = self._session._submit_unary(func, _do_reduce, self._partitions, self._name, self._namespace)
         rs = [r for r in filter(partial(is_not, None), rs)]
         if len(rs) <= 0:
             return None
@@ -160,16 +161,17 @@ class Table(object):
         return self._binary(other, func, _do_union)
 
     def _unary(self, func, do_func):
-        session = get_session()
         # noinspection PyProtectedMember
-        results = session._submit_unary(func, do_func, self._partitions, self._name, self._namespace)
+        results = self._session._submit_unary(func, do_func, self._partitions, self._name, self._namespace)
         result = results[0]
         # noinspection PyProtectedMember
-        return _create_table(result.name, result.namespace, self._partitions)
+        return _create_table(session=self._session,
+                             name=result.name,
+                             namespace=result.namespace,
+                             partitions=self._partitions)
 
     def _binary(self, other: 'Table', func, do_func):
-        session = get_session()
-        session_id = session.session_id
+        session_id = self._session.session_id
         left, right = self, other
         if left._partitions != right._partitions:
             if other.count() > self.count():
@@ -178,11 +180,15 @@ class Table(object):
                 right = other.save_as(str(uuid.uuid1()), session_id, partition=left._partitions)
 
         # noinspection PyProtectedMember
-        results = session._submit_binary(func, do_func,
-                                         left._partitions, left._name, left._namespace, right._name, right._namespace)
+        results = self._session._submit_binary(func, do_func,
+                                               left._partitions, left._name, left._namespace, right._name,
+                                               right._namespace)
         result: _Operand = results[0]
         # noinspection PyProtectedMember
-        return _create_table(result.name, result.namespace, left._partitions)
+        return _create_table(session=self._session,
+                             name=result.name,
+                             namespace=result.namespace,
+                             partitions=left._partitions)
 
     def save_as(self, name, namespace, partition=None, need_cleanup=True):
         if partition is None:
@@ -246,16 +252,18 @@ class Session(object):
     def __init__(self, session_id):
         self.session_id = session_id
         self._pool = Executor()
-        _set_session(self)
 
     def load(self, name, namespace):
-        return _load_table(name, namespace)
+        return _load_table(session=self, name=name, namespace=namespace)
+
+    def create_table(self, name, namespace, partitions):
+        return _create_table(session=self, name=name, namespace=namespace, partitions=partitions)
 
     # noinspection PyUnusedLocal
     def parallelize(self, data: Iterable, partition: int, include_key: bool = False, **kwargs):
         if not include_key:
             data = enumerate(data)
-        table = _create_table(name=str(uuid.uuid1()), namespace=self.session_id, partitions=partition)
+        table = _create_table(session=self, name=str(uuid.uuid1()), namespace=self.session_id, partitions=partition)
         table.put_all(data)
         return table
 
@@ -272,10 +280,10 @@ class Session(object):
             shutil.rmtree(table)
 
     def stop(self):
-        _set_session(None)
+        self._pool.shutdown()
 
     def kill(self):
-        _set_session(None)
+        self._pool.shutdown()
 
     def _submit_unary(self, func, _do_func, partitions, name, namespace):
         task_info = _TaskInfo(self.session_id,
@@ -305,15 +313,24 @@ class Federation(object):
     def _federation_object_key(self, name, tag, s_party, d_party):
         return f"{self._session_id}-{name}-{tag}-{s_party.role}-{s_party.party_id}-{d_party.role}-{d_party.party_id}"
 
-    def __init__(self, session_id, party: Party):
+    def __init__(self, session, session_id, party: Party):
         self._session_id = session_id
         self._party: Party = party
         self._loop = asyncio.get_event_loop()
+        self._session = session
 
-        self._federation_status_table = \
-            _create_table("__federation_status__", self._session_id, 10, need_cleanup=False, error_if_exist=False)
-        self._federation_object_table = \
-            _create_table("__federation_object__", self._session_id, 10, need_cleanup=False, error_if_exist=False)
+        self._federation_status_table = _create_table(session=session,
+                                                      name="__federation_status__",
+                                                      namespace=self._session_id,
+                                                      partitions=10,
+                                                      need_cleanup=False,
+                                                      error_if_exist=False)
+        self._federation_object_table = _create_table(session=session,
+                                                      name="__federation_object__",
+                                                      namespace=self._session_id,
+                                                      partitions=10,
+                                                      need_cleanup=False,
+                                                      error_if_exist=False)
 
     # noinspection PyProtectedMember
     def _put_status(self, _tagged_key, value):
@@ -370,7 +387,7 @@ class Federation(object):
 
             if isinstance(r, tuple):
                 # noinspection PyTypeChecker
-                table: Table = _load_table(name=r[0], namespace=r[1])
+                table: Table = _load_table(session=self._session, name=r[0], namespace=r[1])
                 rtn.append(table)
                 gc.add_gc_action(tag, table, '_destroy', {})
             else:
@@ -382,26 +399,15 @@ class Federation(object):
         return rtn
 
 
-__SESSION: typing.Optional['Session'] = None
-
-
-def _set_session(session):
-    global __SESSION
-    __SESSION = session
-
-
-def get_session():
-    global __SESSION
-    return __SESSION
-
-
 _meta_table: typing.Optional[Table] = None
+
+_SESSION = Session(uuid.uuid1().hex)
 
 
 def _get_meta_table():
     global _meta_table
     if _meta_table is None:
-        _meta_table = Table(namespace='__META__', name='fragments', partitions=10, need_cleanup=False)
+        _meta_table = Table(_SESSION, namespace='__META__', name='fragments', partitions=10, need_cleanup=False)
     return _meta_table
 
 
@@ -435,7 +441,7 @@ async def _check_status_and_get_value(get_func, key):
     return value
 
 
-def _create_table(name, namespace, partitions, need_cleanup=True, error_if_exist=False):
+def _create_table(session, name, namespace, partitions, need_cleanup=True, error_if_exist=False):
     _table_key = ".".join([namespace, name])
     if _get_from_meta_table(_table_key) is not None:
         if error_if_exist:
@@ -445,15 +451,15 @@ def _create_table(name, namespace, partitions, need_cleanup=True, error_if_exist
     else:
         _put_to_meta_table(_table_key, partitions)
 
-    return Table(namespace, name, partitions, need_cleanup=need_cleanup)
+    return Table(session=session, namespace=namespace, name=name, partitions=partitions, need_cleanup=need_cleanup)
 
 
-def _load_table(name, namespace):
+def _load_table(session, name, namespace):
     _table_key = ".".join([namespace, name])
     partitions = _get_from_meta_table(_table_key)
     if partitions is None:
         raise RuntimeError(f"table not exist: name={name}, namespace={namespace}")
-    return Table(namespace, name, partitions, need_cleanup=False)
+    return Table(session=session, namespace=namespace, name=name, partitions=partitions, need_cleanup=False)
 
 
 class _TaskInfo:
