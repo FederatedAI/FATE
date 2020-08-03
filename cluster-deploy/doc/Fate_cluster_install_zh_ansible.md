@@ -249,8 +249,8 @@ ls -ld /data/projects/snmp
 
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible-nfate_1.4.2_release-1.0.0.tar.gz
-tar xzf ansible-nfate_1.4.2_release-1.0.0.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible-nfate_1.4.2_release-1.0.4.tar.gz
+tar xzf ansible-nfate_1.4.2_release-1.0.4.tar.gz
 ```
 
 5.3 配置文件修改和示例
