@@ -187,19 +187,18 @@ class Tracker(object):
         """
         if not init_session and not session_id:
             session_id = job_utils.generate_session_id(self.task_id, self.task_version, self.role, self.party_id)
-        data_tables = []
+        data_tables = {}
         if output_data_infos:
             for output_data_info in output_data_infos:
                 schedule_logger(self.job_id).info("Get task {} {} output table {} {}".format(output_data_info.f_task_id, output_data_info.f_task_version, output_data_info.f_table_namespace, output_data_info.f_table_name))
                 if not need_all:
                     data_table = SimpleTable(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace, data_name=output_data_info.f_data_name)
-                    data_tables.append(data_table)
                 else:
                     data_table = get_table(job_id=session_id,
                                            name=output_data_info.f_table_name,
                                            namespace=output_data_info.f_table_namespace,
                                            init_session=init_session)
-                    data_tables.append(data_table)
+                data_tables[output_data_info.f_data_name] = data_table
         return data_tables
 
     def init_pipelined_model(self):
@@ -359,6 +358,7 @@ class Tracker(object):
             else:
                 output_data_infos_tmp = tracking_output_data_info_model.select()
             output_data_infos_group = {}
+            # Only the latest version of the task output data is retrieved
             for output_data_info in output_data_infos_tmp:
                 if output_data_info.f_task_id not in output_data_infos_group:
                     output_data_infos_group[output_data_info.f_task_id] = output_data_info

@@ -128,7 +128,6 @@ def job_config():
 
 
 @manager.route('/log', methods=['get'])
-@job_utils.job_server_routing(307)
 def job_log():
     job_id = request.json.get('job_id', '')
     memory_file = io.BytesIO()
@@ -169,14 +168,12 @@ def query_data_view():
 
 
 @manager.route('/clean', methods=['POST'])
-@job_utils.job_server_routing()
 def clean_job():
     job_utils.start_clean_job(**request.json)
     return get_json_result(retcode=0, retmsg='success')
 
 
 @manager.route('/clean/queue', methods=['POST'])
-@job_utils.job_server_routing()
 def clean_queue():
     TaskScheduler.clean_queue()
     return get_json_result(retcode=0, retmsg='success')
