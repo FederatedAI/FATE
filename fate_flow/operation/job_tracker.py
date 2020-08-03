@@ -100,20 +100,6 @@ class Tracker(object):
                 kv[k] = v
             return MetricMeta(name=kv.get('name'), metric_type=kv.get('metric_type'), extra_metas=kv)
 
-    def get_metric_list(self, job_level: bool = False):
-        with DB.connection_context():
-            metrics = dict()
-            query_sql = 'select distinct f_metric_namespace, f_metric_name from t_tracking_metric_{} where ' \
-                        'f_job_id = "{}" and f_component_name = "{}" and f_role = "{}" and f_party_id = "{}" ' \
-                        'and f_task_id = "{}"'.format(
-                self.get_dynamic_tracking_table_index(self.job_id), self.job_id, self.component_name if not job_level else 'dag', self.role,
-                self.party_id, self.task_id)
-            cursor = DB.execute_sql(query_sql)
-            for row in cursor.fetchall():
-                metrics[row[0]] = metrics.get(row[0], [])
-                metrics[row[0]].append(row[1])
-            return metrics
-
     def log_job_view(self, view_data: dict):
         self.insert_metrics_into_db('job', 'job_view', 2, view_data.items(), job_level=True)
 
@@ -316,16 +302,34 @@ class Tracker(object):
         with DB.connection_context():
             metrics = []
             try:
-                query_sql = 'select f_key, f_value from t_tracking_metric_{} where ' \
-                            'f_job_id = "{}" and f_component_name = "{}" and f_role = "{}" and f_party_id = "{}"' \
-                            'and f_task_id = "{}" and f_metric_namespace = "{}" and f_metric_name= "{}" and f_type="{}" order by f_id'.format(
-                    self.get_dynamic_tracking_table_index(self.job_id), self.job_id, self.component_name if not job_level else 'dag', self.role,
-                    self.party_id, self.task_id, metric_namespace, metric_name, data_type)
-                cursor = DB.execute_sql(query_sql)
-                for row in cursor.fetchall():
-                    yield deserialize_b64(row[0]), deserialize_b64(row[1])
+                tracking_metric_model = self.get_dynamic_db_model(TrackingMetric, self.job_id)
+                tracking_metrics = tracking_metric_model.select(tracking_metric_model.f_key, tracking_metric_model.f_value).where(
+                    tracking_metric_model.f_job_id==self.job_id,
+                    tracking_metric_model.f_component_name==self.component_name if not job_level else 'dag',
+                    tracking_metric_model.f_role==self.role,
+                    tracking_metric_model.f_party_id==self.party_id,
+                    tracking_metric_model.f_metric_namespace==metric_namespace,
+                    tracking_metric_model.f_metric_name==metric_name,
+                    tracking_metric_model.f_type==data_type
+                )
+                for tracking_metric in tracking_metrics:
+                    yield deserialize_b64(tracking_metric.f_key), deserialize_b64(tracking_metric.f_value)
             except Exception as e:
                 schedule_logger(self.job_id).exception(e)
+            return metrics
+
+    def get_metric_list(self, job_level: bool = False):
+        with DB.connection_context():
+            metrics = dict()
+            tracking_metric_model = self.get_dynamic_db_model(TrackingMetric, self.job_id)
+            tracking_metrics = tracking_metric_model.select(tracking_metric_model.f_metric_namespace, tracking_metric_model.f_metric_name).where(
+                                    tracking_metric_model.f_job_id==self.job_id,
+                                    tracking_metric_model.f_component_name==self.component_name if not job_level else 'dag',
+                                    tracking_metric_model.f_role==self.role,
+                                    tracking_metric_model.f_party_id==self.party_id).distinct()
+            for tracking_metric in tracking_metrics:
+                metrics[tracking_metric.f_metric_namespace] = metrics.get(tracking_metric.f_metric_namespace, [])
+                metrics[tracking_metric.f_metric_namespace].append(tracking_metric.f_metric_name)
             return metrics
 
     def get_output_data_info(self, data_name=None):
