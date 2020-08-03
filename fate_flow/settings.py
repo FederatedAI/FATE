@@ -47,7 +47,7 @@ FATE_SERVICES_REGISTERED_PATH = {
 }
 
 # FILE CONF
-SERVER_CONF_PATH = 'arch/conf/server_conf.json'
+SERVER_CONF_PATH = 'conf/server_conf.json'
 
 # job maximum number  of the initiator
 MAX_CONCURRENT_JOB_RUN = 5

@@ -19,7 +19,7 @@ from typing import List
 
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from arch.api.utils.log_utils import schedule_logger
-from fate_arch.data_table.base import SimpleTable
+from fate_arch.data_table.simple_table import SimpleTable
 from fate_flow.db.db_models import DB, TrackingMetric, TrackingOutputDataInfo
 from fate_flow.entity.constant import Backend
 from fate_flow.entity.metric import Metric, MetricMeta

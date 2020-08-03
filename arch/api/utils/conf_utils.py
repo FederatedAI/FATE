@@ -20,5 +20,5 @@ from arch.api.utils import file_utils
 
 # TODO: add config cache
 def get_base_config(key, default=None):
-    base_config = file_utils.load_yaml_conf(os.path.join(file_utils.get_project_base_directory(), "arch/conf/base_conf.yaml")) or dict()
+    base_config = file_utils.load_yaml_conf(os.path.join(file_utils.get_project_base_directory(), "conf/base_conf.yaml")) or dict()
     return base_config.get(key, default)

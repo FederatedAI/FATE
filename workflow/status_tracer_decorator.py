@@ -27,7 +27,7 @@ import traceback
 LOGGER = log_utils.getLogger()
 
 
-server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
+server_conf = file_utils.load_json_conf("conf/server_conf.json")
 SERVERS = "servers"
 ROLE = "manager"
 IP = server_conf.get(SERVERS).get(ROLE).get("host")

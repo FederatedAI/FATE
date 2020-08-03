@@ -61,7 +61,7 @@ class Session(CSessionABC):
 
     def init_federation(self, federation_session_id: str, runtime_conf: dict, server_conf: typing.Optional[str] = None):
         if server_conf is None:
-            _path = file_utils.get_project_base_directory() + "/arch/conf/server_conf.json"
+            _path = file_utils.get_project_base_directory() + "/conf/server_conf.json"
             server_conf = file_utils.load_json_conf(_path)
         host = server_conf.get('servers').get('proxy').get("host")
         port = server_conf.get('servers').get('proxy').get("port")
