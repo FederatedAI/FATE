@@ -33,11 +33,11 @@ from fate_flow.apps.model_app import manager as model_app_manager
 from fate_flow.apps.pipeline_app import manager as pipeline_app_manager
 from fate_flow.apps.table_app import manager as table_app_manager
 from fate_flow.apps.tracking_app import manager as tracking_app_manager
-from fate_flow.federated_apps.controller_app import manager as controller_app_manager
-from fate_flow.federated_apps.initiator_app import manager as initiator_app_manager
-from fate_flow.federated_apps.tracker_app import manager as tracker_app_manager
 from fate_flow.apps.permission_app import manager as permission_app_manager
 from fate_flow.apps.version_app import manager as version_app_manager
+from fate_flow.scheduling_apps.controller_app import manager as controller_app_manager
+from fate_flow.scheduling_apps.initiator_app import manager as initiator_app_manager
+from fate_flow.scheduling_apps.tracker_app import manager as tracker_app_manager
 from fate_flow.db.db_models import init_database_tables as init_flow_db
 from fate_arch.db.db_models import init_database_tables as init_arch_db
 from fate_flow.operation import job_trigger, job_detector
