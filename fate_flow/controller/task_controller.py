@@ -189,7 +189,6 @@ class TaskController(object):
                                                        job_parameters=job_parameters,
                                                        task_parameters={},
                                                        input_dsl=input_dsl,
-                                                       if_save_as_task_input_data=False,
                                                        filter_type=filter_type,
                                                        filter_attr=filter_attr
                                                        )

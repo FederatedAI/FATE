@@ -124,6 +124,44 @@ class Tracker(object):
                 view_data[k] = v
             return view_data
 
+    def save_component_summary(self, summary_data: dict):
+        with DB.connection_context():
+            component_summary = ComponentSummary.select().where(ComponentSummary.f_job_id == self.job_id,
+                                                                ComponentSummary.f_role == self.role,
+                                                                ComponentSummary.f_party_id == self.party_id,
+                                                                ComponentSummary.f_component_name == self.component_name)
+            is_insert = True
+            if component_summary:
+                cpn_summary = component_summary[0]
+                is_insert = False
+            else:
+                cpn_summary = ComponentSummary()
+                cpn_summary.f_create_time = current_timestamp()
+            cpn_summary.f_job_id = self.job_id
+            cpn_summary.f_role = self.role
+            cpn_summary.f_party_id = self.party_id
+            cpn_summary.f_component_name = self.component_name
+            cpn_summary.f_update_time = current_timestamp()
+            cpn_summary.f_summary = serialize_b64(summary_data, to_str=True)
+
+            if is_insert:
+                cpn_summary.save(force_insert=True)
+            else:
+                cpn_summary.save()
+            return cpn_summary
+
+    def get_component_summary(self):
+        with DB.connection_context():
+            component_summary = ComponentSummary.select().where(ComponentSummary.f_job_id == self.job_id,
+                                                                ComponentSummary.f_role == self.role,
+                                                                ComponentSummary.f_party_id == self.party_id,
+                                                                ComponentSummary.f_component_name == self.component_name)
+            if component_summary:
+                cpn_summary = component_summary[0]
+                return deserialize_b64(cpn_summary.f_summary)
+            else:
+                return ""
+
     def save_output_data(self, data_table, output_storage_engine=None):
         if data_table:
             persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(
@@ -187,9 +225,6 @@ class Tracker(object):
                                                       component_module_name=self.module_name,
                                                       model_alias=model_alias,
                                                       model_buffers=model_buffers)
-            # self.save_data_view(self.role, self.party_id,
-            #                     data_info={'f_party_model_id': self.party_model_id,
-            #                                'f_model_version': self.model_version})
 
     def get_output_model(self, model_alias):
         model_buffers = self.pipelined_model.read_component_model(component_name=self.component_name,

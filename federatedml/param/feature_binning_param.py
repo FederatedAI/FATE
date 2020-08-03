@@ -132,7 +132,7 @@ class FeatureBinningParam(BaseParam):
 
     Parameters
     ----------
-    method : str, 'quantile' or 'bucket', default: 'quantile'
+    method : str, 'quantile'， 'bucket' or 'optimal', default: 'quantile'
         Binning method.
 
     compress_thres: int, default: 10000
@@ -181,6 +181,10 @@ class FeatureBinningParam(BaseParam):
     need_run: bool, default True
         Indicate if this module needed to be run
 
+    skip_static: bool, default False
+        If true, binning will not calculate iv, woe etc. In this case, optimal-binning
+        will not be supported.
+
     """
 
     def __init__(self, method=consts.QUANTILE,
@@ -190,7 +194,7 @@ class FeatureBinningParam(BaseParam):
                  bin_num=consts.G_BIN_NUM, bin_indexes=-1, bin_names=None, adjustment_factor=0.5,
                  transform_param=TransformParam(), optimal_binning_param=OptimalBinningParam(),
                  local_only=False, category_indexes=None, category_names=None,
-                 need_run=True):
+                 need_run=True, skip_static=False):
         super(FeatureBinningParam, self).__init__()
         self.method = method
         self.compress_thres = compress_thres
@@ -206,6 +210,7 @@ class FeatureBinningParam(BaseParam):
         self.transform_param = copy.deepcopy(transform_param)
         self.optimal_binning_param = copy.deepcopy(optimal_binning_param)
         self.need_run = need_run
+        self.skip_static = skip_static
 
     def check(self):
         descr = "hetero binning param's"
@@ -222,5 +227,7 @@ class FeatureBinningParam(BaseParam):
         self.check_defined_type(self.category_indexes, descr, ['list', "NoneType"])
         self.check_defined_type(self.category_names, descr, ['list', "NoneType"])
         self.check_open_unit_interval(self.adjustment_factor, descr)
+        if self.skip_static and self.method == consts.OPTIMAL:
+            raise ValueError("When skip_static, optimal binning is not supported.")
         self.transform_param.check()
         self.optimal_binning_param.check()

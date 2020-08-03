@@ -143,8 +143,6 @@ class ModelStorage(object):
 class ModelOperation(object):
     EXPORT = "export"
     IMPORT = "import"
-    STORE = "store"
-    RESTORE = "restore"
     LOAD = "load"
     BIND = "bind"
 
@@ -152,3 +150,11 @@ class ModelOperation(object):
 class ProcessRole(object):
     SERVER = "server"
     EXECUTOR = "executor"
+
+
+class TagOperation(object):
+    CREATE = "create"
+    RETRIEVE = "retrieve"
+    UPDATE = "update"
+    DESTROY = "destroy"
+    LIST = "list"

@@ -38,7 +38,6 @@ def get_features_shape(data_instances):
     else:
         return None
 
-
 def header_alignment(data_instances, pre_header):
     header = data_instances.schema["header"]
     if len((set(header) & set(pre_header))) != len(pre_header):
@@ -52,7 +51,7 @@ def header_alignment(data_instances, pre_header):
             "header in prediction stage is super-set training stage, predict size is {}, training header size is {}".format(
                 len(header), len(pre_header)))
     else:
-        LOGGER.warning("header in prediction stage will be shuffle to match the header of training stage")
+        LOGGER.warning("header in prediction stage will be shuffled to match the header of training stage")
 
     header_idx_mapping = dict(zip(pre_header, [i for i in range(len(pre_header))]))
     header_correct = {}
@@ -61,6 +60,7 @@ def header_alignment(data_instances, pre_header):
         if col not in header_idx_mapping:
             continue
         header_correct[i] = header_idx_mapping[col]
+
 
     def align_header(inst, header_pos=None):
         if type(inst.features).__name__ == consts.SPARSE_VECTOR:

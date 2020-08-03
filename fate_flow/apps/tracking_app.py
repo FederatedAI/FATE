@@ -18,6 +18,7 @@ import json
 import os
 import shutil
 import tarfile
+from datetime import datetime
 
 from flask import Flask, request, send_file
 from google.protobuf import json_format
@@ -313,6 +314,47 @@ def component_output_data_table():
                                                                    } for output_data_info in output_data_infos])
     else:
         return get_json_result(retcode=100, retmsg='No found table, please check if the parameters are correct')
+
+
+@manager.route('/component/summary/download', methods=['POST'])
+def get_component_summary():
+    request_data = request.json
+    tracker = Tracker(job_id=request_data['job_id'], component_name=request_data['component_name'],
+                      role=request_data['role'], party_id=request_data['party_id'])
+    summary = tracker.get_component_summary()
+    if summary:
+        if request_data.get('output_path'):
+            abspath = os.path.abspath(request_data.get("output_path"))
+            if os.path.isdir(abspath):
+                fp = os.path.join(abspath, "summary_{}_{}.json".format(request_data['component_name'],
+                                                                       datetime.now().strftime('%Y%m%d%H%M%S')))
+                with open(fp, "w") as fout:
+                    fout.write(json.dumps(summary, indent=4))
+                return get_json_result(retmsg="{} summary has been stored successfully. "
+                                              "File path is: {}.".format(request_data['component_name'], fp))
+            elif os.path.isfile(abspath):
+                with open(request_data.get('output_path'), 'w') as fout:
+                    fout.write(json.dumps(summary, indent=4))
+                return get_json_result(retmsg="{} summary has been stored successfully. "
+                                              "File path is: {}.".format(request_data['component_name'],
+                                                                         request_data.get("output_path")))
+            else:
+                return get_json_result(retcode=100,
+                                       retmsg='Generating summary file failed. Output path is invalid.')
+        else:
+            return get_json_result(data=summary)
+    return get_json_result(retcode=100,
+                           retmsg="No component summary found, please check if arguments are specified correctly.")
+
+
+@manager.route('/component/list', methods=['POST'])
+def component_list():
+    request_data = request.json
+    parser = job_utils.get_job_dsl_parser_by_job_id(job_id=request_data.get('job_id'))
+    if parser:
+        return get_json_result(data={'components': list(parser.get_dsl().get('components').keys())})
+    else:
+        return get_json_result(retcode=100, retmsg='No job matched, please make sure the job id is valid.')
 
 
 def get_component_output_data_table(task_data, need_all=True):

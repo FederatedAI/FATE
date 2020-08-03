@@ -35,6 +35,7 @@ L1_PENALTY = 'L1'
 L2_PENALTY = 'L2'
 
 FLOAT_ZERO = 1e-6
+OVERFLOW_THRESHOLD = 1e8
 
 PARAM_MAXDEPTH = 5
 MAX_CLASSNUM = 1000
@@ -66,6 +67,7 @@ ROC = "roc"
 F1_SCORE = 'f1_score'
 CONFUSION_MAT = 'confusion_mat'
 PSI = 'psi'
+FEATURE_IMPORTANCE = 'feature_importance'
 QUANTILE_PR = 'quantile_pr'
 
 # evaluation alias metric
@@ -152,6 +154,10 @@ CONST = 'const'
 # decision tree
 MAX_SPLIT_NODES = 2 ** 16
 MAX_FEDERATED_NODES = 2 ** 10
+NORMAL_TREE = 'normal'
+COMPLETE_SECURE_TREE = 'complete_secure'
+MIX_TREE = 'mix'
+LAYERED_TREE = 'layered'
 
 TRAIN_EVALUATE = 'train_evaluate'
 VALIDATE_EVALUATE = 'validate_evaluate'
@@ -178,6 +184,16 @@ COEFFICIENT_OF_VARIATION_VALUE_THRES = 'coefficient_of_variation_value_thres'
 OUTLIER_COLS = 'outlier_cols'
 MANUALLY_FILTER = 'manually'
 PERCENTAGE_VALUE = 'percentage_value'
+IV_FILTER = 'iv_filter'
+STATISTIC_FILTER = 'statistic_filter'
+PSI_FILTER = 'psi_filter'
+HETERO_SBT_FILTER = 'hetero_sbt_filter'
+HOMO_SBT_FILTER = 'homo_sbt_filter'
+IV = 'iv'
+
+# Selection Pre-model
+STATISTIC_MODEL = 'statistic_model'
+BINNING_MODEL = 'binning_model'
 
 # imputer
 MIN = 'min'
@@ -206,3 +222,22 @@ SHA256 = 'sha256'
 INTERSECT_CACHE_TAG = 'Za'
 
 SHARE_INFO_COL_NAME = "share_info"
+
+# statistics
+COUNT = 'count'
+STANDARD_DEVIATION = 'stddev'
+SUMMARY = 'summary'
+DESCRIBE = 'describe'
+SUM = 'sum'
+COVARIANCE = 'cov'
+CORRELATION = 'corr'
+VARIANCE = 'variance'
+COEFFICIENT_OF_VARIATION = 'coefficient_of_variance'
+MISSING_COUNT = "missing_count"
+SKEWNESS = 'skewness'
+KURTOSIS = 'kurtosis'
+
+
+# adapter model name
+HOMO_SBT = 'homo_sbt'
+HETERO_SBT = 'hetero_sbt'
