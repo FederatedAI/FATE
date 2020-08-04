@@ -67,7 +67,7 @@ class BaseStatus(object):
 
     @classmethod
     def contains(cls, status):
-        return status in cls.status_list()
+        return status.upper() in cls.status_list()
 
 
 class StatusSet(BaseStatus):

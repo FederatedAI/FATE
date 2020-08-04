@@ -154,7 +154,7 @@ class DAGScheduler(object):
             elif task_set.f_status == TaskSetStatus.COMPLETE:
                 continue
             else:
-                raise Exception("Can not scheduling job {}".format(job.f_job_id))
+                raise Exception("Job {} task set {} with a {} status cannot be scheduled".format(task_set.f_job_id, task_set.f_task_set_id, task_set.f_status))
         task_sets_status = [task_set.f_status for task_set in task_sets]
         new_job_status = StatusEngine.vertical_convergence(task_sets_status, interrupt_break=True)
         schedule_logger(job_id=job.f_job_id).info("Job {} status is {}, calculate by task set status list: {}".format(job.f_job_id, new_job_status, task_sets_status))
