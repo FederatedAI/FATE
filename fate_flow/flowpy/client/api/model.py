@@ -85,3 +85,24 @@ class Model(BaseFlowAPI):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
         return self._post(url='model/restore', json=config_data)
+
+    def migrate(self, conf_path):
+        if not os.path.exists(conf_path):
+            raise FileNotFoundError('Invalid conf path, file not exists.')
+        kwargs = locals()
+        config_data, dsl_data = preprocess(**kwargs)
+        return self._post(url='model/migrate', json=config_data)
+
+    def tag_model(self, job_id, tag_name, remove=False):
+        kwargs = locals()
+        config_data, dsl_data = preprocess(**kwargs)
+        if not config_data.pop('remove'):
+            return self._post(url='model/model_tag/create', json=config_data)
+        else:
+            return self._post(url='model/model_tag/remove', json=config_data)
+
+    def tag_list(self, job_id):
+        kwargs = locals()
+        config_data, dsl_data = preprocess(**kwargs)
+        return self._post(url='model/model_tag/retrieve', json=config_data)
+
