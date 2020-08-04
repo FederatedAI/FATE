@@ -161,9 +161,8 @@ class HeteroSecureBoostGuest(HeteroBoostingGuest):
                 if 'guest' in id_[0]:
                     new_fi[fid_mapping[id_[1]]] = feature_importances[id_]
                 else:
-                    role_name, party_id = id_[0].split(':')
-                    new_id = generate_anonymous(id_[1], party_id=party_id, role=role_name)
-                    new_fi[new_id] = feature_importances[id_]
+                    role, party_id = id_[0].split(':')
+                    new_fi[generate_anonymous(role=role, fid=id_[1], party_id=party_id)] = feature_importances[id_]
             else:
                 new_fi[fid_mapping[id_]] = feature_importances[id_]
 

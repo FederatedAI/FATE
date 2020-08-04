@@ -31,17 +31,16 @@ class FTLParam(BaseParam):
 
     def __init__(self, learning_rate=0.01, alpha=1, tol=0.000001,
                  n_iter_no_change=False, validation_freqs=None, optimizer='Adam', nn_define={}, epochs=1
-                 , intersect_param=IntersectParam(consts.RSA), config_type='keras', batch_size=64,
+                 , intersect_param=IntersectParam(consts.RSA), config_type='keras', batch_size=-1,
                  encrypte_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(mode="confusion_opt"),
                  predict_param=PredictParam(), mode='plain', communication_efficient=False,
                  local_round=5,):
 
         """
-
         Args:
             learning_rate: float, learning rate
-            alpha: float, a loss coefficient define in paper, it define the importance of alignment loss
+            alpha: float, a loss coefficient defined in paper, it defines the importance of alignment loss
             tol:  float, loss tolerance
             n_iter_no_change: bool, check loss convergence or not
             validation_freqs: None or positive integer or container object in python. Do validation in training process or Not.
