@@ -223,9 +223,9 @@ class TaskExecutor(object):
                             data_table_infos = []
                             for data_table_info_json in data_table_infos_json:
                                 data_table_infos.append(fill_db_model_object(Tracker.get_dynamic_db_model(TrackingOutputDataInfo, job_id)(), data_table_info_json))
-                            data_table = tracker.get_output_data_table(output_data_infos=data_table_infos, session_id=session_id)
-                            if data_table:
-                                data_table = data_table[0]
+                            data_tables = tracker.get_output_data_table(output_data_infos=data_table_infos, session_id=session_id)
+                            if data_tables:
+                                data_table = data_tables.get(search_data_name, None)
                             else:
                                 data_table = None
                         else:

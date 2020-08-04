@@ -159,7 +159,6 @@ def component_parameters():
 
 
 @manager.route('/component/output/model', methods=['post'])
-@job_utils.job_server_routing()
 def component_output_model():
     request_data = request.json
     check_request_parameters(request_data)
@@ -194,7 +193,6 @@ def component_output_model():
 
 
 @manager.route('/component/output/data', methods=['post'])
-@job_utils.job_server_routing()
 def component_output_data():
     request_data = request.json
     output_data_tables = get_component_output_data_table(task_data=request_data, need_all=False)
@@ -204,7 +202,7 @@ def component_output_data():
     headers = []
     totals = []
     data_names = []
-    for output_data_table in output_data_tables:
+    for output_data_table in output_data_tables.values():
         output_data = []
         num = 100
         have_data_label = False
@@ -236,12 +234,11 @@ def component_output_data():
 
 
 @manager.route('/component/output/data/download', methods=['get'])
-@job_utils.job_server_routing(307)
 def component_output_data_download():
     request_data = request.json
     output_data_tables = get_component_output_data_table(task_data=request_data)
     limit = request_data.get('limit', -1)
-    if len(output_data_tables) == 1 and not output_data_tables[0]:
+    if not output_data_tables:
         return error_response(response_code=500, retmsg='no data')
     if limit == 0:
         return error_response(response_code=500, retmsg='limit is 0')
@@ -251,11 +248,9 @@ def component_output_data_download():
     output_data_file_list = []
     output_data_meta_file_list = []
     output_tmp_dir = os.path.join(os.getcwd(), 'tmp/{}'.format(fate_uuid()))
-    output_file_path = '{}/output_%s'.format(output_tmp_dir)
-    i = 0
-    for output_data_table in output_data_tables:
+    for data_name, output_data_table in output_data_tables.items():
         is_str = False
-        output_data_file_path = output_file_path % '{}_data.csv'.format(i)
+        output_data_file_path = "{}/{}.csv".format(output_tmp_dir, data_name)
         os.makedirs(os.path.dirname(output_data_file_path), exist_ok=True)
         with open(output_data_file_path, 'w') as fw:
             for k, v in output_data_table.collect():
@@ -269,7 +264,7 @@ def component_output_data_download():
             # get meta
             output_data_file_list.append(output_data_file_path)
             header = get_component_output_data_meta(output_data_table=output_data_table, have_data_label=have_data_label, is_str=is_str)
-            output_data_meta_file_path = output_file_path % 'data_{}_meta.json'.format(i)
+            output_data_meta_file_path = "{}/{}.meta".format(output_tmp_dir, data_name)
             output_data_meta_file_list.append(output_data_meta_file_path)
             with open(output_data_meta_file_path, 'w') as fw:
                 json.dump({'header': header}, fw, indent=4)
@@ -278,7 +273,6 @@ def component_output_data_download():
                     content = f.read()
                     f.seek(0, 0)
                     f.write('{}\n'.format(','.join(header)) + content)
-            i += 1
             try:
                 output_data_table.close()
             except Exception as e:
@@ -305,12 +299,12 @@ def component_output_data_download():
 
 
 @manager.route('/component/output/data/table', methods=['post'])
-@job_utils.job_server_routing()
 def component_output_data_table():
     output_data_infos = Tracker.query_output_data_infos(**request.json)
     if output_data_infos:
         return get_json_result(retcode=0, retmsg='success', data=[{'table_name': output_data_info.f_table_name,
-                                                                  'table_namespace': output_data_info.f_table_namespace
+                                                                  'table_namespace': output_data_info.f_table_namespace,
+                                                                   "data_name": output_data_info.f_data_name
                                                                    } for output_data_info in output_data_infos])
     else:
         return get_json_result(retcode=100, retmsg='No found table, please check if the parameters are correct')
