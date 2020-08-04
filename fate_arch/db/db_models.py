@@ -15,6 +15,7 @@
 #
 import datetime
 import inspect
+import json
 import os
 import sys
 
@@ -47,6 +48,15 @@ def singleton(cls, *args, **kw):
     return _singleton
 
 
+class JSONField(TextField):
+    def db_value(self, value):
+        return json.dumps(value)
+
+    def python_value(self, value):
+        if value is not None:
+            return json.loads(value)
+
+
 @singleton
 class BaseDataBase(object):
     def __init__(self):
@@ -56,14 +66,14 @@ class BaseDataBase(object):
             if USE_LOCAL_DATABASE:
                 self.database_connection = APSWDatabase('fate_flow_sqlite.db')
                 RuntimeConfig.init_config(USE_LOCAL_DATABASE=True)
-                stat_logger.info('init sqlite database on standalone mode successfully')
+                # stat_logger.info('init sqlite database on standalone mode successfully')
             else:
                 self.database_connection = PooledMySQLDatabase(db_name, **database_config)
-                stat_logger.info('init mysql database on standalone mode successfully')
+                # stat_logger.info('init mysql database on standalone mode successfully')
                 RuntimeConfig.init_config(USE_LOCAL_DATABASE=False)
         elif WORK_MODE == WorkMode.CLUSTER:
             self.database_connection = PooledMySQLDatabase(db_name, **database_config)
-            stat_logger.info('init mysql database on cluster mode successfully')
+            # stat_logger.info('init mysql database on cluster mode successfully')
             RuntimeConfig.init_config(USE_LOCAL_DATABASE=False)
         else:
             raise Exception('can not init database')
@@ -118,7 +128,7 @@ class MachineLearningDataSchema(DataBaseModel):
     f_schema = TextField(default='')
     f_data_store_engine = CharField(max_length=100, index=True)  # 'EGGROLL', 'MYSQL'
     f_partitions = IntegerField(null=True, default=1)
-    f_address = TextField(null=True)
+    f_address = JSONField()
     f_count = IntegerField(null=True, default=0)
     f_part_of_data = LongTextField()
 

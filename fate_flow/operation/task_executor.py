@@ -29,7 +29,7 @@ from fate_arch.session import Backend
 from fate_flow.entity.constant import TaskStatus, ProcessRole
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
-from fate_flow.manager.table_manager.table_operation import create
+from fate_flow.manager.table_manager.table_operation import create, get_table
 from fate_flow.settings import SAVE_AS_TASK_INPUT_DATA_IN_MEMORY
 from fate_flow.utils import job_utils
 from fate_flow.api.client.controller.remote_client import ControllerRemoteClient
@@ -216,20 +216,25 @@ class TaskExecutor(object):
                         data_key_item = data_key.split('.')
                         search_component_name, search_data_name = data_key_item[0], data_key_item[1]
                         session_id = job_utils.generate_session_id(task_id, task_version, role, party_id)
-                        tracker_remote_client = JobTrackerRemoteClient(job_id=job_id, role=role, party_id=party_id, component_name=search_component_name)
-                        data_table_infos_json = tracker_remote_client.get_output_data_info(data_name=search_data_name)
-                        if data_table_infos_json:
-                            tracker = Tracker(job_id=job_id, role=role, party_id=party_id, component_name=search_component_name)
-                            data_table_infos = []
-                            for data_table_info_json in data_table_infos_json:
-                                data_table_infos.append(fill_db_model_object(Tracker.get_dynamic_db_model(TrackingOutputDataInfo, job_id)(), data_table_info_json))
-                            data_tables = tracker.get_output_data_table(output_data_infos=data_table_infos, session_id=session_id)
-                            if data_tables:
-                                data_table = data_tables.get(search_data_name, None)
-                            else:
-                                data_table = None
+                        data_table = None
+                        if search_component_name == 'args':
+                            if job_args.get('data', {}).get(search_data_name).get('namespace', '') and job_args.get(
+                                    'data', {}).get(search_data_name).get('name', ''):
+                                data_table = get_table(
+                                    job_id=session_id,
+                                    namespace=job_args['data'][search_data_name]['namespace'],
+                                    name=job_args['data'][search_data_name]['name'])
                         else:
-                            data_table = None
+                            tracker_remote_client = JobTrackerRemoteClient(job_id=job_id, role=role, party_id=party_id, component_name=search_component_name)
+                            data_table_infos_json = tracker_remote_client.get_output_data_info(data_name=search_data_name)
+                            if data_table_infos_json:
+                                tracker = Tracker(job_id=job_id, role=role, party_id=party_id, component_name=search_component_name)
+                                data_table_infos = []
+                                for data_table_info_json in data_table_infos_json:
+                                    data_table_infos.append(fill_db_model_object(Tracker.get_dynamic_db_model(TrackingOutputDataInfo, job_id)(), data_table_info_json))
+                                data_tables = tracker.get_output_data_table(output_data_infos=data_table_infos, session_id=session_id)
+                                if data_tables:
+                                    data_table = data_tables.get(search_data_name, None)
                         output_storage_engine.append(data_table.get_storage_engine() if data_table else None)
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
                             search_component_name, {})
