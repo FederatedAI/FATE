@@ -52,7 +52,7 @@ def create(name, namespace, store_engine, address=None, partitions=1, count=0):
                     address = EggRollAddress(name=name, namespace=namespace, storage_type=store_engine)
                 elif store_engine in Relationship.CompToStore.get(Backend.SPARK):
                     address = HDFSAddress(path=data_utils.generate_hdfs_address())
-            schema.f_address = serialize_b64(address, to_str=True)
+            schema.f_address = address.__dict__ if address else {}
             schema.f_partitions = partitions
             schema.f_count = count
             schema.f_schema = serialize_b64({}, to_str=True)
@@ -72,7 +72,8 @@ def get_store_info(name, namespace):
         if schema:
             schema = schema[0]
             store_info = schema.f_data_store_engine
-            address = deserialize_b64(schema.f_address)
+            address_dict = schema.f_address
+            address = get_address(store_engine=store_info, address_dict=address_dict)
             partitions = schema.f_partitions
         else:
             return None, None, None
@@ -152,3 +153,13 @@ def create_table(job_id: str = uuid.uuid1().hex,
         return HDFSTable(address=address, partitions=partitions, namespace=namespace, name=name, **kwargs)
     else:
         raise Exception('does not support the creation of this type of table :{}'.format(store_engine))
+
+
+def get_address(store_engine, address_dict):
+    if store_engine in Relationship.CompToStore.get(Backend.EGGROLL):
+        address = EggRollAddress(**address_dict)
+    elif store_engine in Relationship.CompToStore.get(Backend.SPARK):
+        address = HDFSAddress(*address_dict)
+    else:
+        address = {}
+    return address
