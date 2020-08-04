@@ -66,7 +66,7 @@ class Upload(object):
         self.table = create_table(job_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id), name=table_name,
                                   namespace=namespace, partitions=self.parameters["partition"],
                                   store_engine=self.parameters['store_engine'], mode=self.parameters['work_mode'])
-        data_table_count = self.save_data_table(job_id, table_name, namespace, head, self.parameters.get('in_version', False))
+        data_table_count = self.save_data_table(job_id, table_name, namespace, head)
         LOGGER.info("------------load data finish!-----------------")
         # rm tmp file
         try:
@@ -85,7 +85,7 @@ class Upload(object):
     def set_tracker(self, tracker):
         self.tracker = tracker
 
-    def save_data_table(self, job_id, dst_table_name, dst_table_namespace, head=True, in_version=False):
+    def save_data_table(self, job_id, dst_table_name, dst_table_namespace, head=True):
         input_file = self.parameters["file"]
         count = self.get_count(input_file)
         with open(input_file, 'r') as fin:
