@@ -37,7 +37,8 @@ class FlowClient(BaseFlowClient):
     table = api.Table()
     task = api.Task()
     model = api.Model()
-    priviledge = api.Priviledge()
+    tag = api.Tag()
+    # priviledge = api.Priviledge()
 
     def __init__(self, ip=default_ip, port=default_port, version=default_version):
         super().__init__(ip, port, version)
