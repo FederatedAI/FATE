@@ -17,12 +17,12 @@
 import typing
 from typing import Union
 
+from fate_arch import session
 from fate_arch.common import Party
 from fate_arch.common.log import getLogger
-from fate_arch import session
-from fate_arch.transfer_variable._auth import _check_variable_auth_conf
-from fate_arch.transfer_variable._cleaner import IterationGC
-from fate_arch.transfer_variable._namespace import FederationTagNamespace
+from fate_arch.federation.transfer_variable._auth import _check_variable_auth_conf
+from fate_arch.federation.transfer_variable._cleaner import IterationGC
+from fate_arch.federation.transfer_variable._namespace import FederationTagNamespace
 
 LOGGER = getLogger()
 

@@ -96,7 +96,7 @@ def main():
     #     return
 
     # noinspection PyProtectedMember
-    # Variable._disable_auth_check()
+    Variable._disable_auth_check()
 
     for file_path in files:
         for cls in _search_transfer_variables_class(file_path):
@@ -105,5 +105,4 @@ def main():
 
 
 if __name__ == '__main__':
-    Variable._disable_auth_check()
     main()

@@ -14,5 +14,6 @@
 #  limitations under the License.
 #
 
-from fate_arch.transfer_variable._transfer_variable import BaseTransferVariables, Variable
-from fate_arch.transfer_variable._enhance_variable import *
+from fate_arch.computing.eggroll._table import Table
+
+__all__ = ['Table']
