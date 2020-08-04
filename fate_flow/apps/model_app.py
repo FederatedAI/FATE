@@ -165,6 +165,7 @@ def migrate_model_process():
 def do_migrate_model():
     request_data = request.json
     retcode, retmsg, data = migrate_model.migration(config_data=request_data)
+    operation_record(request_data, "migrate", "success" if not retcode else "failed")
     return get_json_result(retcode=retcode, retmsg=retmsg, data=data)
 
 
