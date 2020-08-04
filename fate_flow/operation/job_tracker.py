@@ -59,8 +59,8 @@ class Tracker(object):
 
         self.task_set_id = task_set_id
 
-        self.component_name = component_name if component_name else 'pipeline'
-        self.module_name = component_module_name if component_module_name else 'Pipeline'
+        self.component_name = component_name if component_name else self.job_virtual_component_name()
+        self.module_name = component_module_name if component_module_name else self.job_virtual_component_module_name()
         self.task_id = task_id
         self.task_version = task_version
 
@@ -232,7 +232,7 @@ class Tracker(object):
             try:
                 tracking_metric = self.get_dynamic_db_model(TrackingMetric, self.job_id)()
                 tracking_metric.f_job_id = self.job_id
-                tracking_metric.f_component_name = self.component_name if not job_level else 'dag'
+                tracking_metric.f_component_name = (self.component_name if not job_level else self.job_virtual_component_name())
                 tracking_metric.f_task_id = self.task_id
                 tracking_metric.f_task_version = self.task_version
                 tracking_metric.f_role = self.role
@@ -304,7 +304,7 @@ class Tracker(object):
                 tracking_metric_model = self.get_dynamic_db_model(TrackingMetric, self.job_id)
                 tracking_metrics = tracking_metric_model.select(tracking_metric_model.f_key, tracking_metric_model.f_value).where(
                     tracking_metric_model.f_job_id==self.job_id,
-                    tracking_metric_model.f_component_name==self.component_name if not job_level else 'dag',
+                    tracking_metric_model.f_component_name==(self.component_name if not job_level else self.job_virtual_component_name()),
                     tracking_metric_model.f_role==self.role,
                     tracking_metric_model.f_party_id==self.party_id,
                     tracking_metric_model.f_metric_namespace==metric_namespace,
@@ -315,6 +315,7 @@ class Tracker(object):
                     yield deserialize_b64(tracking_metric.f_key), deserialize_b64(tracking_metric.f_value)
             except Exception as e:
                 schedule_logger(self.job_id).exception(e)
+                raise e
             return metrics
 
     def get_metric_list(self, job_level: bool = False):
@@ -323,7 +324,7 @@ class Tracker(object):
             tracking_metric_model = self.get_dynamic_db_model(TrackingMetric, self.job_id)
             tracking_metrics = tracking_metric_model.select(tracking_metric_model.f_metric_namespace, tracking_metric_model.f_metric_name).where(
                                     tracking_metric_model.f_job_id==self.job_id,
-                                    tracking_metric_model.f_component_name==self.component_name if not job_level else 'dag',
+                                    tracking_metric_model.f_component_name==(self.component_name if not job_level else self.job_virtual_component_name()),
                                     tracking_metric_model.f_role==self.role,
                                     tracking_metric_model.f_party_id==self.party_id).distinct()
             for tracking_metric in tracking_metrics:
@@ -411,3 +412,12 @@ class Tracker(object):
     @staticmethod
     def job_view_table_name():
         return '_'.join(['job', 'view'])
+
+    @classmethod
+    def job_virtual_component_name(cls):
+        return "pipeline"
+
+    @classmethod
+    def job_virtual_component_module_name(cls):
+        return "Pipeline"
+
