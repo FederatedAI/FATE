@@ -309,14 +309,14 @@ vi /data/projects/ansible-nfate-1.*/var_files/prod/fate_host
 host:
     partyid: 10000 ---host端partyid，根据实际规划修改
     rollsite:
-      enable: True ---true为需要部署此模块，False则否
+      enable: True
       ips: ---IP列表，目前rollsite只支持部署到一台服务器
       - 192.168.0.1  
-      port: 9370 ---服务端口
+      port: 9370
       pool_size: 600 ---线程池大小
       max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如8G
       default_rules: ---本party指向exchange或者其他party的IP，端口路由配置
-      - name: default ---默认路由表，目前支持一个默认路由。如果有exchange，则指向exchange，如无，则指向对端party。
+      - name: default
         ip: 192.168.0.3 ---exchange或者对端party rollsite IP
         port: 9370 ---exchange或者对端party rollsite 端口，一般默认9370
       rules: ---本party自身路由配置
@@ -327,21 +327,21 @@ host:
         ip: 192.168.0.1
         port: 9360
     clustermanager:
-      enable: True ---true为需要部署此模块，False则否
+      enable: True
       ips:
       - 192.168.0.1 ---只支持部署一台主机
-      port: 4670 ---端口
-    nodemanager: ---可以多节点，在ips中加配置
-      enable: True ---true为需要部署此模块，False则否
+      port: 4670
+    nodemanager:
+      enable: True
       ips: ---支持部署多台
       - 192.168.0.1
       - 192.168.0.x
-      port: 4671 ---端口
+      port: 4671
     eggroll: 
-      dbname: "eggroll_meta" ---eggroll使用的数据库名，默认即可
-      egg: 2 ---egg并发数可以根据附录公式计算修改
+      dbname: "eggroll_meta"
+      egg: 2
     fate_flow:
-      enable: True ---true为需要部署此模块，False则否
+      enable: True
       type: install  ---install是新安装；update则是升级，从低版本升级到当前版本；
       ips:
       - 192.168.0.1  ---只支持部署一台主机
@@ -349,21 +349,21 @@ host:
       httpPort: 9380
       dbname: "fate_flow"
     fateboard:
-      enable: True ---true为需要部署此模块，False则否
+      enable: True
       type: install ---install是新安装；update则是升级，从低版本升级到当前版本；
       ips:
       - 192.168.0.1  ---只支持部署一台主机
       port: 8080
       dbname: "fate_flow"
     mysql:
-      enable: True ---true为需要部署此模块，False则否
+      enable: True
       ips:
       - 192.168.0.1  ---只支持部署一台主机
       port: 3306
       dbuser: "fate"
       dbpasswd: "fate_deV2999"
     zk:
-      enable: False ---true为需要部署此模块，False则否
+      enable: False
       lists:
       - ip: 192.168.0.1
         port: 2181
@@ -382,14 +382,14 @@ vi /data/projects/ansible-nfate-1.*/var_files/prod/fate_guest
 guest:
     partyid: 9999 ---根据实际规划修改
     rollsite:
-      enable: True ---true为需要部署此模块，False则否
+      enable: True
       ips: ---IP列表，目前rollsite只支持部署到一台服务器
       - 192.168.0.2
-      port: 9370 ---服务端口
+      port: 9370
       pool_size: 600 ---线程池大小
       max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如8G
       default_rules:  ---本party指向exchange或者其他party的IP，端口路由配置
-      - name: default ---默认路由表，目前支持一个默认路由。如果有exchange，则指向exchange，如无，则指向对端party。
+      - name: default
         ip: 192.168.0.3 ---exchange或者对端party rollsite IP
         port: 9370 ---exchange或者对端party rollsite 端口，一般默认9370
       rules:  ---本party自身路由配置
@@ -400,21 +400,21 @@ guest:
         ip: 192.168.0.2
         port: 9360
     clustermanager:
-      enable: True ---true为需要部署此模块，False则否
+      enable: True
       ips:   ---只支持部署一台主机
       - 192.168.0.2
       port: 4670
-    nodemanager:  ---可以多节点，在ips中加配置
-      enable: True ---true为需要部署此模块，False则否
+    nodemanager:
+      enable: True
       ips:  ---支持部署多台主机
       - 192.168.0.2
       - 192.168.0.x
       port: 4671
-    eggroll: ---egg并发数可以根据附录公式计算修改
+    eggroll:
       dbname: "eggroll_meta"
       egg: 2
     fate_flow:
-      enable: True ---true为需要部署此模块，False则否
+      enable: True 
       type: install ---install是新安装；update则是升级，从低版本升级到当前版本；
       ips:  ---只支持部署一台主机
       - 192.168.0.2
@@ -422,21 +422,21 @@ guest:
       httpPort: 9380
       dbname: "fate_flow"
     fateboard:
-      enable: True ---true为需要部署此模块，False则否
+      enable: True
       type: install ---install是新安装；update则是升级，从低版本升级到当前版本；
       ips:  ---只支持部署一台主机
       - 192.168.0.2
       port: 8080
       dbname: "fate_flow"
     mysql:
-      enable: True ---true为需要部署此模块，False则否
+      enable: True
       ips:  ---只支持部署一台主机
       - 192.168.0.2
       port: 3306
       dbuser: "fate"
       dbpasswd: "fate_deV2999"
     zk:
-      enable: Fasle ---true为需要部署此模块，False则否
+      enable: Fasle
       lists:
       - ip: 192.168.0.2
         port: 2181
