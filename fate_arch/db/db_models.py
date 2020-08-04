@@ -26,6 +26,7 @@ from playhouse.pool import PooledMySQLDatabase
 from arch.api.utils import log_utils
 from arch.api.utils.conf_utils import get_base_config
 from arch.api.utils.core_utils import current_timestamp
+from fate_flow.db.db_models import JSONField
 from fate_flow.entity.constant import WorkMode
 from fate_flow.entity.runtime_config import RuntimeConfig
 
@@ -56,14 +57,14 @@ class BaseDataBase(object):
             if USE_LOCAL_DATABASE:
                 self.database_connection = APSWDatabase('fate_flow_sqlite.db')
                 RuntimeConfig.init_config(USE_LOCAL_DATABASE=True)
-                stat_logger.info('init sqlite database on standalone mode successfully')
+                # stat_logger.info('init sqlite database on standalone mode successfully')
             else:
                 self.database_connection = PooledMySQLDatabase(db_name, **database_config)
-                stat_logger.info('init mysql database on standalone mode successfully')
+                # stat_logger.info('init mysql database on standalone mode successfully')
                 RuntimeConfig.init_config(USE_LOCAL_DATABASE=False)
         elif WORK_MODE == WorkMode.CLUSTER:
             self.database_connection = PooledMySQLDatabase(db_name, **database_config)
-            stat_logger.info('init mysql database on cluster mode successfully')
+            # stat_logger.info('init mysql database on cluster mode successfully')
             RuntimeConfig.init_config(USE_LOCAL_DATABASE=False)
         else:
             raise Exception('can not init database')
@@ -118,7 +119,7 @@ class MachineLearningDataSchema(DataBaseModel):
     f_schema = TextField(default='')
     f_data_store_engine = CharField(max_length=100, index=True)  # 'EGGROLL', 'MYSQL'
     f_partitions = IntegerField(null=True, default=1)
-    f_address = TextField(null=True)
+    f_address = JSONField()
     f_count = IntegerField(null=True, default=0)
     f_part_of_data = LongTextField()
 

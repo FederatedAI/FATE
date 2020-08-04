@@ -140,8 +140,8 @@ class TableABC(object):
         if not party_of_data:
             party_of_data = []
         if not name or not namespace:
-            name = self._name,
-            namespace = self._namespace
+            name = self.get_name(),
+            namespace = self.get_namespace()
         with DB.connection_context():
             schema = MachineLearningDataSchema.select().where(MachineLearningDataSchema.f_table_name == name,
                                                               MachineLearningDataSchema.f_namespace == namespace)
