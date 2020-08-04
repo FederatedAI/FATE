@@ -89,15 +89,6 @@ def imp(ctx, **kwargs):
         flow model import -c fate_flow/examples/restore_model.json --from-database
     """
     config_data, dsl_data = preprocess(**kwargs)
-    # try:
-    #     required_arguments = ["model_id", "model_version", "initiator", "roles"]
-    #     check_config(config_data, required_arguments)
-    # except Exception as e:
-    #     click.echo(json.dumps({'retcode': 100, 'retmsg': str(e)}, indent=4))
-    # else:
-    #     config_data["initiator"] = json.dumps(config_data["initiator"])
-    #     config_data["roles"] = json.dumps(config_data["roles"])
-
     if not kwargs.pop('from_database'):
         file_path = config_data["file"]
         if not os.path.isabs(file_path):
@@ -211,33 +202,3 @@ def list_tag(ctx, **kwargs):
     """
     config_data, dsl_data = preprocess(**kwargs)
     access_server('post', ctx, 'model/model_tag/retrieve', config_data)
-
-
-# @model.command(short_help="Store Model Command")
-# # @click.argument('conf_path', type=click.Path(exists=True), metavar='<CONF_PATH>')
-# @cli_args.CONF_PATH
-# @click.pass_context
-# def store(ctx, **kwargs):
-#     """
-#     - COMMAND DESCRIPTION:
-#
-#     Store Model Command
-#
-#     """
-#     config_data, dsl_data = preprocess(**kwargs)
-#     access_server('post', ctx, 'model/store', config_data)
-#
-#
-# @model.command(short_help="Restore Model Command")
-# # @click.argument('conf_path', type=click.Path(exists=True), metavar='<CONF_PATH>')
-# @cli_args.CONF_PATH
-# @click.pass_context
-# def restore(ctx, **kwargs):
-#     """
-#     - COMMAND DESCRIPTION:
-#
-#     Restore Model Command
-#
-#     """
-#     config_data, dsl_data = preprocess(**kwargs)
-#     access_server('post', ctx, 'model/restore', config_data)

@@ -1,3 +1,18 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
 import os
 import base64
 import shutil
@@ -102,78 +117,3 @@ def migration(config_data: dict):
             model.model_version, model.model_path), {"model_id": model.model_id,
                                                      "model_version": model.model_version,
                                                      "path": model.model_path}
-
-
-# def compare_initiator(request_conf_initiator: dict, run_time_conf_initiator: dict):
-#     # TODO get local role and party id
-#     if not list(request_conf_initiator.keys()) == ['role', 'party_id']:
-#         raise Exception("Initiator dict should contain both of 'role' and 'party_id'.")
-#     request_conf_initiator['party_id'] = str(request_conf_initiator['party_id'])
-#     run_time_conf_initiator['party_id'] = str(run_time_conf_initiator['party_id'])
-#     return request_conf_initiator == run_time_conf_initiator
-
-
-# def import_model(config: dict, model: pipelined_model.PipelinedModel):
-#     # model = pipelined_model.PipelinedModel(model_id=config["model_id"],
-#     #                                        model_version=config["model_version"])
-#     # if config['force']:
-#     #     model.force = True
-#     # model.unpack_model(config["file"])
-#     # raise Exception("abort")
-#     pre_model_path = os.sep.join(model.model_path.split("/")[:-1])
-#
-#     model_data = model.collect_models(in_bytes=True)
-#     if "pipeline.pipeline:Pipeline" in model_data:
-#         buffer_object_bytes = base64.b64decode(model_data["pipeline.pipeline:Pipeline"].encode())
-#         pipeline = pipeline_pb2.Pipeline()
-#         pipeline.ParseFromString(buffer_object_bytes)
-#         train_runtime_conf = json_loads(pipeline.train_runtime_conf)
-#
-#         try:
-#             initiator_compare_res = compare_local_initiator(config["initiator"], train_runtime_conf["initiator"])
-#             if not initiator_compare_res:
-#                 train_runtime_conf["initiator"] = config["initiator"]
-#             roles_compare_res = compare_roles(config["roles"], train_runtime_conf["role"])
-#         except Exception as e:
-#             return 100, str(e), {}
-#         else:
-#             train_runtime_conf["role"] = config["roles"]
-#             model.model_id = dtable_utils.gen_party_namespace(train_runtime_conf["role"], "model",
-#                                                               train_runtime_conf["initiator"]["role"],
-#                                                               train_runtime_conf["initiator"]["party_id"])
-#             train_runtime_conf["job_parameters"]["model_id"] = dtable_utils.all_party_key(
-#                 train_runtime_conf["role"]) + "#model"
-#             train_runtime_conf["job_parameters"]["model_version"] = model.model_version
-#
-#             model_path = model.set_model_path()
-#             if os.path.exists(model_path):
-#                 if initiator_compare_res and roles_compare_res:
-#                     return 0, "Importing model successfully.", {}
-#                 else:
-#                     if not config["force"]:
-#                         return 100, "Model {} {} local cache already existed.".format(model.model_id,model.model_version), {}
-#                     else:
-#                         os.rename(model_path, model_path + '_backup_{}'.format(datetime.now().strftime('%Y%m%d%H%M')))
-#             else:
-#                 # TODO exception catch
-#                 try:
-#                     os.rename(pre_model_path, os.sep.join(model.model_path.split('/')[:-1]))
-#                 except OSError:
-#                     shutil.move(pre_model_path + '/{}'.format(model.model_version), model.model_path)
-#                     shutil.rmtree(pre_model_path)
-#                     # os.remove(pre_model_path)
-#                 pipeline.train_runtime_conf = json_dumps(train_runtime_conf, byte=True)
-#                 pipeline.model_id = bytes(train_runtime_conf["job_parameters"]["model_id"], "utf-8")
-#                 pipeline.model_version = bytes(train_runtime_conf["job_parameters"]["model_version"], "utf-8")
-#                 model.save_pipeline(pipeline)
-#                 shutil.copyfile(os.path.join(model.model_path, "pipeline.pb"),
-#                                 os.path.join(model.model_path, "variables", "data", "pipeline", "pipeline", "Pipeline"))
-#                 # TODO complete data
-#                 return 0, "Importing model successfully. Model migration has been detected. " \
-#                           "The configuration of model has been modified automatically. " \
-#                           "New model id is: {}, model version is: {}. " \
-#                           "Extracted files of model can be found at '{}'.".format(train_runtime_conf["job_parameters"]["model_id"],
-#                                                                                   model.model_version, model.model_path), {"model_id": model.model_id,
-#                                                                                                                            "model_version": model.model_version,
-#                                                                                                                            "path": model.model_path}
-#     return 100, "Can not find pipeline file in model file. Please check if the model is valid."

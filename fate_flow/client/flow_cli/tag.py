@@ -51,7 +51,8 @@ def create_tag(ctx, **kwargs):
 @tag.command("query", short_help="Retrieve Tag Command")
 @cli_args.TAG_NAME_REQUIRED
 @click.option("--with-model", is_flag=True, default=False,
-              help="If speci")
+              help="If specified, the information of models which have the "
+                   "tag custom queried would be displayed.")
 @click.pass_context
 def query_tag(ctx, **kwargs):
     """
@@ -110,7 +111,7 @@ def delete_tag(ctx, **kwargs):
 @tag.command("list", short_help="List Tag Command")
 @cli_args.LIMIT
 @click.pass_context
-def delete_tag(ctx, **kwargs):
+def list_tag(ctx, **kwargs):
     """
     \b
     - DESCRIPTION:
