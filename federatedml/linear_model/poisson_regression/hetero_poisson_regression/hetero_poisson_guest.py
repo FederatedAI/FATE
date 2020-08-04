@@ -24,7 +24,6 @@ from federatedml.linear_model.poisson_regression.hetero_poisson_regression.heter
 from federatedml.optim.gradient import hetero_poisson_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import consts
-from federatedml.util.data_io import set_schema
 from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
@@ -142,19 +141,12 @@ class HeteroPoissonGuest(HeteroPoissonBase):
 
         self._abnormal_detection(data_instances)
         header = data_instances.schema.get("header")
-        schema = data_instances.schema
         self.exposure_index = self.get_exposure_index(header, self.exposure_colname)
         exposure_index = self.exposure_index
 
         # OK
         exposure = data_instances.mapValues(lambda v: HeteroPoissonBase.load_exposure(v, exposure_index))
 
-        data_instances = data_instances.mapValues(lambda v: HeteroPoissonBase.load_instance(v, exposure_index))
-
-        if exposure_index > -1:
-            header.pop(exposure_index)
-            schema["header"] = header
-        set_schema(data_instances, schema)
         data_instances = self.align_data_header(data_instances, self.header)
         data_features = self.transform(data_instances)
 
