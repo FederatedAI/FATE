@@ -39,7 +39,9 @@ class Session(CSessionABC):
                          parties: typing.MutableMapping[str, typing.List[Party]]):
         if self._federation_session is not None:
             raise RuntimeError("federation session already initialized")
-        self._federation_session = Federation(federation_session_id, party)
+        self._federation_session = Federation(raw_session=self,
+                                              federation_session_id=federation_session_id,
+                                              party=party)
         self._federation_parties = _FederationParties(party, parties)
 
     def init_federation(self, federation_session_id: str, runtime_conf: dict, **kwargs):

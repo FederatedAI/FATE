@@ -37,7 +37,8 @@ def create(name, namespace, store_engine, address=None, partitions=1, count=0):
         is_insert = True
         if schema:
             if store_engine != schema[0].f_data_store_engine:
-                raise Exception('table {} {} has been created by store engine {} '.format(name, namespace, schema.f_data_store_engine))
+                raise Exception('table {} {} has been created by store engine {} '.format(name, namespace,
+                                                                                          schema.f_data_store_engine))
             else:
                 return
         else:
@@ -108,16 +109,19 @@ def get_table(job_id: str = '',
                                    host=database_config.get('host'),
                                    port=database_config.get('port'),
                                    db=namespace, name=name)
-        data_manager_logger.info('get mysql table mode {} store_engine {} partition {}'.format(mode, store_engine, partitions))
+        data_manager_logger.info(
+            'get mysql table mode {} store_engine {} partition {}'.format(mode, store_engine, partitions))
         return MysqlTable(mode=mode, persistent_engine=StoreEngine.MYSQL, address=address, partitions=partitions,
                           name=name, namespace=namespace)
     if store_engine in Relationship.CompToStore.get(Backend.EGGROLL):
-        data_manager_logger.info('get eggroll table mode {} store_engine {} partition {}'.format(mode, store_engine, partitions))
+        data_manager_logger.info(
+            'get eggroll table mode {} store_engine {} partition {}'.format(mode, store_engine, partitions))
         from fate_arch.data_table.eggroll_table import EggRollTable
-        return EggRollTable(job_id=job_id,  mode=mode, persistent_engine=persistent_engine, name=name,
+        return EggRollTable(job_id=job_id, mode=mode, persistent_engine=persistent_engine, name=name,
                             namespace=namespace, partitions=partitions, address=address, **kwargs)
     if store_engine in Relationship.CompToStore.get(Backend.SPARK):
-        data_manager_logger.info('get spark table store_engine {} partition {} path {}'.format(store_engine, partitions, address.path))
+        data_manager_logger.info(
+            'get spark table store_engine {} partition {} path {}'.format(store_engine, partitions, address.path))
         return HDFSTable(address=address, partitions=partitions, name=name, namespace=namespace)
 
 
@@ -132,9 +136,15 @@ def create_table(job_id: str = uuid.uuid1().hex,
     if store_engine in Relationship.CompToStore.get(Backend.EGGROLL):
         address = create(name=name, namespace=namespace, store_engine=store_engine, partitions=partitions)
         data_manager_logger.info('create success')
-        from fate_arch.data_table.eggroll_table import EggRollTable
-        return EggRollTable(job_id=job_id, mode=mode, persistent_engine=store_engine, namespace=namespace, name=name,
-                            address=address, partitions=partitions, **kwargs)
+        if mode == WorkMode.CLUSTER:
+            from fate_arch.data_table.eggroll_table import EggRollTable
+            return EggRollTable(job_id=job_id, mode=mode, persistent_engine=store_engine, namespace=namespace,
+                                name=name,
+                                address=address, partitions=partitions, **kwargs)
+        else:
+            from fate_arch.data_table.standalone_table import StandaloneTable
+            return StandaloneTable(job_id, persistent_engine=store_engine, namespace=namespace, name=name,
+                                   address=address, partitions=partitions)
 
     if store_engine in Relationship.CompToStore.get(Backend.SPARK):
         data_manager_logger.info('create success')
