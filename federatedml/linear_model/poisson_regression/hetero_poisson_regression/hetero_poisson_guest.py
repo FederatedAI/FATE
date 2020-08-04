@@ -151,6 +151,9 @@ class HeteroPoissonGuest(HeteroPoissonBase):
 
         data_instances = data_instances.mapValues(lambda v: HeteroPoissonBase.load_instance(v, exposure_index))
 
+        if exposure_index > -1:
+            header.pop(exposure_index)
+            schema["header"] = header
         set_schema(data_instances, schema)
         data_instances = self.align_data_header(data_instances, self.header)
         data_features = self.transform(data_instances)
