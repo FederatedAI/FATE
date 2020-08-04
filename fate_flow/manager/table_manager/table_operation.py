@@ -49,7 +49,7 @@ def create(name, namespace, store_engine, address=None, partitions=1, count=0):
             schema.f_data_store_engine = store_engine
             if not address:
                 if store_engine in Relationship.CompToStore.get(Backend.EGGROLL):
-                    address = EggRollAddress(name=name, namespace=namespace, storage_type=store_engine)
+                    address = EggRollAddress(name=name, namespace=namespace, store_type=store_engine)
                 elif store_engine in Relationship.CompToStore.get(Backend.SPARK):
                     address = HDFSAddress(path=data_utils.generate_hdfs_address())
             schema.f_address = address.__dict__ if address else {}
