@@ -23,7 +23,6 @@ from fate_arch.db.db_models import DB, MachineLearningDataSchema
 from fate_flow.utils import data_utils
 
 from arch.api.utils.conf_utils import get_base_config
-from fate_arch.data_table.eggroll_table import EggRollTable
 from fate_arch.data_table.hdfs_table import HDFSTable
 from fate_arch.data_table.mysql_table import MysqlTable
 from fate_arch.data_table.store_type import StoreEngine, Relationship
@@ -114,6 +113,7 @@ def get_table(job_id: str = '',
                           name=name, namespace=namespace)
     if store_engine in Relationship.CompToStore.get(Backend.EGGROLL):
         data_manager_logger.info('get eggroll table mode {} store_engine {} partition {}'.format(mode, store_engine, partitions))
+        from fate_arch.data_table.eggroll_table import EggRollTable
         return EggRollTable(job_id=job_id,  mode=mode, persistent_engine=persistent_engine, name=name,
                             namespace=namespace, partitions=partitions, address=address, **kwargs)
     if store_engine in Relationship.CompToStore.get(Backend.SPARK):
@@ -132,6 +132,7 @@ def create_table(job_id: str = uuid.uuid1().hex,
     if store_engine in Relationship.CompToStore.get(Backend.EGGROLL):
         address = create(name=name, namespace=namespace, store_engine=store_engine, partitions=partitions)
         data_manager_logger.info('create success')
+        from fate_arch.data_table.eggroll_table import EggRollTable
         return EggRollTable(job_id=job_id, mode=mode, persistent_engine=store_engine, namespace=namespace, name=name,
                             address=address, partitions=partitions, **kwargs)
 
