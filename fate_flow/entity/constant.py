@@ -63,11 +63,11 @@ class FederatedSchedulingStatusCode(object):
 class BaseStatus(object):
     @classmethod
     def status_list(cls):
-        return [k for k in cls.__dict__.keys() if not callable(getattr(cls, k)) and not k.startswith("__")]
+        return [cls.__dict__[k] for k in cls.__dict__.keys() if not callable(getattr(cls, k)) and not k.startswith("__")]
 
     @classmethod
     def contains(cls, status):
-        return status.upper() in cls.status_list()
+        return status in cls.status_list()
 
 
 class StatusSet(BaseStatus):
@@ -81,7 +81,7 @@ class StatusSet(BaseStatus):
 
     @classmethod
     def get_level(cls, status):
-        return dict(zip(cls.status_list(), range(len(cls.status_list())))).get(status.upper(), None)
+        return dict(zip(cls.status_list(), range(len(cls.status_list())))).get(status, None)
 
 
 class JobStatus(BaseStatus):
