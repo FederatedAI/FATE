@@ -27,6 +27,7 @@ from playhouse.pool import PooledMySQLDatabase
 
 from arch.api.utils import log_utils
 from arch.api.utils.core_utils import current_timestamp
+from fate_arch.db.db_models import JSONField
 from fate_flow.entity.constant import WorkMode
 from fate_flow.settings import DATABASE, WORK_MODE, stat_logger, USE_LOCAL_DATABASE
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -45,14 +46,6 @@ def singleton(cls, *args, **kw):
 
     return _singleton
 
-
-class JSONField(TextField):
-    def db_value(self, value):
-        return json.dumps(value)
-
-    def python_value(self, value):
-        if value is not None:
-            return json.loads(value)
 
 
 @singleton

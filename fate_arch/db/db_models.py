@@ -15,6 +15,7 @@
 #
 import datetime
 import inspect
+import json
 import os
 import sys
 
@@ -26,7 +27,6 @@ from playhouse.pool import PooledMySQLDatabase
 from arch.api.utils import log_utils
 from arch.api.utils.conf_utils import get_base_config
 from arch.api.utils.core_utils import current_timestamp
-from fate_flow.db.db_models import JSONField
 from fate_flow.entity.constant import WorkMode
 from fate_flow.entity.runtime_config import RuntimeConfig
 
@@ -46,6 +46,15 @@ def singleton(cls, *args, **kw):
         return instances[key]
 
     return _singleton
+
+
+class JSONField(TextField):
+    def db_value(self, value):
+        return json.dumps(value)
+
+    def python_value(self, value):
+        if value is not None:
+            return json.loads(value)
 
 
 @singleton
