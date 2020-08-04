@@ -436,7 +436,7 @@ guest:
       dbuser: "fate"
       dbpasswd: "fate_deV2999"
     zk:
-      enable: Fasle
+      enable: False
       lists:
       - ip: 192.168.0.2
         port: 2181
