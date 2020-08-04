@@ -60,7 +60,7 @@ class TaskScheduler(object):
             elif task.f_status == TaskStatus.COMPLETE:
                 FederatedScheduler.stop_task(job=job, task=task, stop_status=task.f_status)
             else:
-                raise Exception("Job {} task set {} with a {} status cannot be scheduled".format(task_set.f_job_id, task_set.f_task_set_id, task.f_status))
+                raise Exception("Job {} task {} {} with a {} status cannot be scheduled".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_status))
         # new_task_set_status = cls.calculate_task_set_status(task_status=[task.f_status for task in tasks])
         tasks_status = [task.f_status for task in tasks]
         new_task_set_status = StatusEngine.vertical_convergence(tasks_status, interrupt_break=False)

@@ -105,4 +105,5 @@ def main():
 
 
 if __name__ == '__main__':
+    Variable._disable_auth_check()
     main()

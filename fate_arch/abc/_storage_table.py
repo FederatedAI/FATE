@@ -140,7 +140,7 @@ class TableABC(object):
         if not party_of_data:
             party_of_data = []
         if not name or not namespace:
-            name = self.get_name(),
+            name = self.get_name()
             namespace = self.get_namespace()
         with DB.connection_context():
             schema = MachineLearningDataSchema.select().where(MachineLearningDataSchema.f_table_name == name,
@@ -171,7 +171,10 @@ class TableABC(object):
     def destroy_schema(self):
         try:
             with DB.connection_context():
-                MachineLearningDataSchema.delete().where(MachineLearningDataSchema.f_table_name == self._name,
-                                                         MachineLearningDataSchema.f_namespace == self._namespace).execute()
+                MachineLearningDataSchema \
+                    .delete() \
+                    .where(MachineLearningDataSchema.f_table_name == self.get_name(),
+                           MachineLearningDataSchema.f_namespace == self.get_namespace()) \
+                    .execute()
         except Exception as e:
-            LOGGER.error("delete_table_meta {}, {}, exception:{}.".format(self._namespace, self._name, e))
+            LOGGER.error("delete_table_meta {}, {}, exception:{}.".format(self.get_namespace(), self.get_name(), e))

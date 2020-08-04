@@ -67,21 +67,21 @@ class BaseStatus(object):
 
     @classmethod
     def contains(cls, status):
-        return status in cls.status_list()
+        return status.upper() in cls.status_list()
 
 
 class StatusSet(BaseStatus):
-    WAITING = 'WAITING'
-    START = 'START'
-    RUNNING = "RUNNING"
-    CANCELED = "CANCELED"
-    TIMEOUT = "TIMEOUT"
-    FAILED = "FAILED"
-    COMPLETE = "COMPLETE"
+    WAITING = 'waiting'
+    START = 'start'
+    RUNNING = "running"
+    CANCELED = "canceled"
+    TIMEOUT = "timeout"
+    FAILED = "failed"
+    COMPLETE = "complete"
 
     @classmethod
     def get_level(cls, status):
-        return dict(zip(cls.status_list(), range(len(cls.status_list())))).get(status, None)
+        return dict(zip(cls.status_list(), range(len(cls.status_list())))).get(status.upper(), None)
 
 
 class JobStatus(BaseStatus):
