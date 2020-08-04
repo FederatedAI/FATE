@@ -8,14 +8,14 @@
     },
     "role": {
         "guest": [10000],
-        "host": [10000, 114514]
+        "host": [10000]
     },
     "role_parameters": {
         "guest": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "breast_b", "namespace": "hetero"}],
-                    "eval_data": [{"name": "breast_b", "namespace": "hetero"}]
+                    "train_data": [{"name": "student_hetero_guest", "namespace": "experiment"}],
+                    "eval_data": [{"name": "student_hetero_guest", "namespace": "experiment"}]
                 }
             },
             "dataio_0":{
@@ -28,33 +28,29 @@
         "host": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "breast_a", "namespace": "hetero"}, {"name": "breast_a", "namespace": "hetero"}],
-                    "eval_data": [{"name": "breast_a", "namespace": "hetero"}, {"name": "breast_a", "namespace": "hetero"}]
+                    "train_data": [{"name": "student_hetero_host", "namespace": "experiment"}],
+                    "eval_data": [{"name": "student_hetero_host", "namespace": "experiment"}]
                 }
             },
              "dataio_0":{
-                "with_label": [false, false],
-                "output_format": ["dense", "dense"]
+                "with_label": [false],
+                "output_format": ["dense"]
             }
         }
     },
     "algorithm_parameters": {
         "fast_secureboost_0": {
-            "task_type": "classification",
+            "task_type": "regression",
             "learning_rate": 0.1,
-            "num_trees": 2,
-            "boosting_round": 3,
+            "num_trees": 4,
             "subsample_feature_rate": 1,
             "n_iter_no_change": false,
-            "work_mode": "layered",
+            "work_mode": "mix",
             "k": 1,
-            "guest_depth": 2,
-            "host_depth": 3,
             "tol": 0.0001,
             "bin_num": 50,
-            "metrics": ["Recall", "ks", "auc", "roc"],
             "objective_param": {
-                "objective": "cross_entropy"
+                "objective": "lse"
             },
             "encrypt_param": {
                 "method": "iterativeAffine"
@@ -75,7 +71,7 @@
             "validation_freqs": 1
         },
         "evaluation_0": {
-            "eval_type": "binary"
+            "eval_type": "regression"
         }
     }
 }

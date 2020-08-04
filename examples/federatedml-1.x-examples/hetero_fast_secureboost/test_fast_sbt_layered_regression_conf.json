@@ -14,8 +14,8 @@
         "guest": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "vehicle_scale_b", "namespace": "hetero"}],
-                    "eval_data": [{"name": "vehicle_scale_b", "namespace": "hetero"}]
+                    "train_data": [{"name": "student_hetero_guest", "namespace": "experiment"}],
+                    "eval_data": [{"name": "student_hetero_guest", "namespace": "experiment"}]
                 }
             },
             "dataio_0":{
@@ -28,8 +28,8 @@
         "host": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "vehicle_scale_a", "namespace": "hetero"}],
-                    "eval_data": [{"name": "vehicle_scale_a", "namespace": "hetero"}]
+                    "train_data": [{"name": "student_hetero_host", "namespace": "experiment"}],
+                    "eval_data": [{"name": "student_hetero_host", "namespace": "experiment"}]
                 }
             },
              "dataio_0":{
@@ -40,20 +40,18 @@
     },
     "algorithm_parameters": {
         "fast_secureboost_0": {
-            "task_type": "classification",
+            "task_type": "regression",
             "learning_rate": 0.1,
-            "num_trees": 5,
-            "boosting_round": 10,
+            "num_trees": 4,
             "subsample_feature_rate": 1,
             "n_iter_no_change": false,
-            "work_mode": "mix",
-            "k": 1,
+            "work_mode": "layered",
             "guest_depth": 2,
             "host_depth": 3,
             "tol": 0.0001,
             "bin_num": 50,
             "objective_param": {
-                "objective": "cross_entropy"
+                "objective": "lse"
             },
             "encrypt_param": {
                 "method": "iterativeAffine"
@@ -68,13 +66,13 @@
                 "random_seed": 103,
                 "need_cv": false,
                 "evaluate_param": {
-                    "eval_type": "multi"
+                    "eval_type": "binary"
                 }
             },
             "validation_freqs": 1
         },
         "evaluation_0": {
-            "eval_type": "multi"
+            "eval_type": "regression"
         }
     }
 }
