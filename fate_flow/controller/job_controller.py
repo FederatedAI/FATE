@@ -251,7 +251,7 @@ class JobController(object):
 class JobClean(threading.Thread):
     def run(self):
         time.sleep(5)
-        jobs = job_utils.query_job(status='running', is_initiator=1)
+        jobs = job_utils.query_job(status=JobStatus.RUNNING, is_initiator=1)
         job_ids = set([job.f_job_id for job in jobs])
         for job_id in job_ids:
             schedule_logger(job_id).info('fate flow server start clean job')

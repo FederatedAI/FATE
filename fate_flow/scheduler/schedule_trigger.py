@@ -16,13 +16,14 @@
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.utils import cron, job_utils
+from fate_flow.entity.constant import JobStatus
 
 
 class ScheduleTrigger(cron.Cron):
     def run_do(self):
         try:
             schedule_logger().info("Start checking for scheduling events")
-            running_jobs = job_utils.query_job(status="running", is_initiator=1)
+            running_jobs = job_utils.query_job(status=JobStatus.RUNNING, is_initiator=1)
             for job in running_jobs:
                 try:
                     DAGScheduler.schedule(job)
