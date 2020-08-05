@@ -24,7 +24,7 @@
                             "namespace": "experiment"
                         }
                     ],
-                    "validate_data": [
+                    "eval_data": [
                         {
                             "name": "breast_hetero_guest",
                             "namespace": "experiment"
@@ -70,7 +70,7 @@
                             "namespace": "experiment"
                         }
                     ],
-                    "validate_data": [
+                    "eval_data": [
                         {
                             "name": "breast_hetero_host",
                             "namespace": "experiment"
