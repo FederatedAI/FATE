@@ -14,8 +14,8 @@
         "guest": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "nus_wide_guest", "namespace": "hetero"}],
-                    "eval_data": [{"name": "nus_wide_guest_val", "namespace": "hetero"}]
+                    "train_data": [{"name": "nus_wide_guest", "namespace": "experiment"}],
+                    "eval_data": [{"name": "nus_wide_guest_val", "namespace": "experiment"}]
                 }
             },
             "dataio_0":{
@@ -28,8 +28,8 @@
         "host": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "nus_wide_host", "namespace": "hetero"}],
-                    "eval_data": [{"name": "nus_wide_host_val", "namespace": "hetero"}]
+                    "train_data": [{"name": "nus_wide_host", "namespace": "experiment"}],
+                    "eval_data": [{"name": "nus_wide_host_val", "namespace": "experiment"}]
                 }
             },
             "dataio_0":{
@@ -42,7 +42,10 @@
         "ftl_0": {
             "epochs": 10,
             "learning_rate": 0.01,
-            "mode": "plain",
+            "optimizer": {
+                "optimizer": "Adam",
+                "learning_rate": 0.01
+            },
             "alpha": 1,
             "tol": 0.00001,
             "batch_size": -1,

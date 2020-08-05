@@ -360,9 +360,15 @@ class HeteroSecureBoostGuest(HeteroBoostingGuest):
         feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
         feature_importance_param = []
         for (sitename, fid), _importance in feature_importances:
+            if consts.GUEST in sitename:
+                fullname = self.feature_name_fid_mapping[fid]
+            else:
+                role_name, party_id = sitename.split(':')
+                fullname = generate_anonymous(fid=fid, party_id=party_id, role=role_name)
             feature_importance_param.append(FeatureImportanceInfo(sitename=sitename,
                                                                   fid=fid,
-                                                                  importance=_importance))
+                                                                  importance=_importance,
+                                                                  fullname=fullname))
         model_param.feature_importances.extend(feature_importance_param)
 
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
