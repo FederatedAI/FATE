@@ -150,14 +150,14 @@ class TaskExecutor(object):
             schedule_logger().info("Task input dsl {}".format(task_input_dsl))
             output_storage_engine = []
             task_run_args = cls.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
-                                                           task_id=task_id,
-                                                           task_version=task_version,
-                                                           job_args=job_args_on_party,
-                                                           job_parameters=job_parameters,
-                                                           task_parameters=task_parameters,
-                                                           input_dsl=task_input_dsl,
-                                                           output_storage_engine=output_storage_engine
-                                                           )
+                                                  task_id=task_id,
+                                                  task_version=task_version,
+                                                  job_args=job_args_on_party,
+                                                  job_parameters=job_parameters,
+                                                  task_parameters=task_parameters,
+                                                  input_dsl=task_input_dsl,
+                                                  output_storage_engine=output_storage_engine
+                                                  )
             print(task_run_args)
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
             run_object.set_tracker(tracker=tracker_remote_client)
@@ -169,8 +169,8 @@ class TaskExecutor(object):
             for index in range(0, len(output_data)):
                 data_name = task_output_dsl.get('data')[index] if task_output_dsl.get('data') else '{}'.format(index)
                 persistent_table_namespace, persistent_table_name = tracker.save_output_data(data_table=output_data[index],
-                                                                                             output_storage_engine=output_storage_engine[index] if output_storage_engine else None)
-                if persistent_table_namespace and persistent_table_namespace:
+                                                                                             output_storage_engine=output_storage_engine[0] if output_storage_engine else None)
+                if persistent_table_namespace and persistent_table_name:
                     tracker.log_output_data_info(data_name=data_name,
                                                  table_namespace=persistent_table_namespace,
                                                  table_name=persistent_table_name)
