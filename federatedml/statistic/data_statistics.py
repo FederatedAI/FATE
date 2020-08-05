@@ -148,7 +148,7 @@ class DataStatistics(ModelBase):
             if results is None:
                 results = res
             else:
-                LOGGER(f"results: {results}, res: {res}")
+                LOGGER.debug(f"results: {results}, res: {res}")
                 for k, v in res.items():
                     results[k][query_point] = v
         for k, v in results.items():

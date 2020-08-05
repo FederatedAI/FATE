@@ -21,6 +21,7 @@ from pipeline.utils.tools import extract_explicit_parameter
 
 
 class HeteroNN(Component):
+
     @extract_explicit_parameter
     def __init__(self, task_type="classification", epochs=None, batch_size=-1, early_stop="diff",
                  tol=1e-5, encrypt_param=None, predict_param=None, cv_param=None,

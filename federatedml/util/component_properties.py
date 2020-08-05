@@ -203,13 +203,14 @@ class ComponentProperties(object):
         test_data = None
         if self.has_test_data:
             test_data = model_data.get('test_data')
-        elif self.has_eval_data:
+            self.has_test_data = True
+        elif self.has_eval_data and not self.has_train_data:
             test_data = model_data.get('eval_data')
+            self.has_test_data = True
 
         # self.has_train_data = True if train_data else False
         # self.has_validate_data = True if (validate_data or self.has_eval_data) else False
-        if test_data is not None:
-            self.has_test_data = True
+
         if validate_data or (self.has_train_data and self.has_eval_data):
             self.has_validate_data = True
 
