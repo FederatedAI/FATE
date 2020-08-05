@@ -84,11 +84,11 @@ class Session(CSessionABC):
         if isinstance(address, EggRollAddress):
             options = kwargs.get("option", {})
             options["total_partitions"] = partitions
-            options["store_type"] = address.store_type
+            options["store_type"] = address.storage_type
             options["create_if_missing"] = False
             rp = self._rpc.load(namespace=address.namespace, name=address.name, options=options)
             if rp is None or rp.get_partitions() == 0:
-                raise RuntimeError(f"no exists: {address.name}, {address.namespace}, {address.store_type}")
+                raise RuntimeError(f"no exists: {address.name}, {address.namespace}, {address.storage_type}")
             table = Table(rp=rp)
             table.schema = schema
             return table
