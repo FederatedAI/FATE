@@ -120,6 +120,7 @@ class JobInvoker(object):
         party_id = str(party_id)
         start_time = time.time()
         pre_cpn = None
+        print ("Job id is {}".format(job_id))
         while True:
             ret_code, ret_msg, data = self.query_job(job_id, role, party_id)
             status = data["f_status"]
@@ -133,25 +134,29 @@ class JobInvoker(object):
 
             if status == JobStatus.WAITING:
                 elapse_seconds = timedelta(seconds=int(time.time() - start_time))
-                print("job {} is still waiting, time elapse: {}".format(job_id, elapse_seconds), end="\r", flush=True)
+                print("job is still waiting, time elapse: {}".format(elapse_seconds), end="\r", flush=True)
 
             if status == JobStatus.RUNNING:
+                ret_code, _, data = self.query_task(job_id=job_id, role=role, party_id=party_id,
+                                                    status=JobStatus.RUNNING)
+                if ret_code != 0 or len(data) == 0:
+                    time.sleep(conf.TIME_QUERY_FREQS)
+                    continue
+
                 elapse_seconds = timedelta(seconds=int(time.time() - start_time))
-                if data["f_current_tasks"] is None:
-                    cpn = None
+                if len(data) == 1:
+                    cpn = data[0]["f_component_name"]
                 else:
-                    cur_task = json.loads(data["f_current_tasks"])
-                    if len(cur_task) > 1:
-                        cpn = ["_".join(cpn.split("_", -1)[1:]) for cpn in cur_task]
-                    else:
-                        cpn = "_".join(cur_task[0].split("_", -1)[1:])
+                    cpn = []
+                    for cpn_data in data:
+                        cpn.append(cpn_data["f_component_name"])
 
-                    if cpn != pre_cpn:
-                        print("\n")
-                        pre_cpn = cpn
+                if cpn != pre_cpn:
+                    print("\n", end="\r")
+                    pre_cpn = cpn
 
-                print("job {} now is running component {}, time elpase: {}".format(job_id, cpn,
-                                                                                   elapse_seconds), end="\r",
+                print("Running component {}, time elpase: {}".format(cpn,
+                                                                     elapse_seconds), end="\r",
                       flush=True)
 
             time.sleep(conf.TIME_QUERY_FREQS)
@@ -186,10 +191,10 @@ class JobInvoker(object):
             raise ValueError("job submit failed, err msg: {}".format(result))
         return data
 
-    def query_task(self, job_id, cpn_name, role, party_id):
+    def query_task(self, job_id, role, party_id, status=None):
         party_id = str(party_id)
         result = self.client.task.query(job_id=job_id, role=role,
-                                        party_id=party_id, component_name=cpn_name)
+                                        party_id=party_id, status=status)
         try:
             # result = json.loads(result)
             if 'retcode' not in result:
@@ -198,7 +203,10 @@ class JobInvoker(object):
             ret_code = result["retcode"]
             ret_msg = result["retmsg"]
 
-            data = result["data"]
+            if ret_code != 0:
+                data = None
+            else:
+                data = result["data"]
             return ret_code, ret_msg, data
         except ValueError:
             raise ValueError("query task result is {}, can not parse useful info".format(result))
