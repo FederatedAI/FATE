@@ -256,8 +256,8 @@ class TaskExecutor(object):
                             data_table.save_as(address=address, partition=partitions, options=save_as_options,
                                                name=name, namespace=namespace, schema_data=origin_table_schema)
                             schedule_logger().info("save as task {} input data table to {} done".format(task_id, address))
-                            data_table = session.default().load(address, schema=origin_table_schema,
-                                                                partitions=partitions)
+                            data_table = session.default().computing.load(address, schema=origin_table_schema,
+                                                                          partitions=partitions)
                         else:
                             schedule_logger().info("pass save as task {} input data table, because the table is none".format(task_id))
                         if not data_table or not filter_attr or not filter_attr.get("data", None):

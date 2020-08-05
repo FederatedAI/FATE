@@ -15,6 +15,7 @@
 #
 
 from fate_arch import session
+from fate_arch.federation import FederationType
 
 
 def init(job_id: str, runtime_conf, *args, **kwargs):
@@ -56,4 +57,6 @@ def init(job_id: str, runtime_conf, *args, **kwargs):
     >>> federation.init('job_id', runtime_conf)
 
     """
-    session.default().init_federation(job_id, runtime_conf)
+    session.default().init_federation(federation_type=FederationType.EGGROLL,
+                                      federation_session_id=job_id,
+                                      runtime_conf=runtime_conf)
