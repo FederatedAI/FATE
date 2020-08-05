@@ -42,7 +42,7 @@ class MQ(object):
         self.mq_conf = mq_conf
 
 
-class FederationEngine(FederationABC):
+class Federation(FederationABC):
     def __init__(self, session_id, party: Party, mq: MQ, rabbit_manager: RabbitManager):
         self._session_id = session_id
         self._party = party

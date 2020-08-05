@@ -24,8 +24,9 @@ from fate_arch.abc import AddressABC
 from fate_arch.abc import CSessionABC
 from fate_arch.common import file_utils, Party
 from fate_arch.computing.spark import from_hdfs, from_rdd
-from fate_arch.federation.spark import FederationEngine, MQ, RabbitManager
-from fate_arch.session._parties_util import _FederationParties
+from fate_arch.federation.spark import Federation, MQ, RabbitManager
+from fate_arch.session._parties import Parties
+from fate_arch.session._runtime_conf_parser import _parse_runtime_conf
 
 
 class Session(CSessionABC):
@@ -51,10 +52,10 @@ class Session(CSessionABC):
                          party: Party,
                          parties: typing.MutableMapping[str, typing.List[Party]],
                          rabbit_manager: RabbitManager, mq: MQ):
-        if self._federation_session is not None:
+        if self._federation is not None:
             raise RuntimeError("federation session already initialized")
-        self._federation_session = FederationEngine(federation_session_id, party, mq, rabbit_manager)
-        self._federation_parties = _FederationParties(party, parties)
+        self._federation = Federation(federation_session_id, party, mq, rabbit_manager)
+        self._parties = Parties(party, parties)
 
     def init_federation(self, federation_session_id: str, runtime_conf: dict, server_conf: typing.Optional[str] = None,
                         **kwargs):
@@ -77,7 +78,7 @@ class Session(CSessionABC):
         rabbit_manager = RabbitManager(base_user, base_password, f"{host}:{mng_port}")
         rabbit_manager.create_user(union_name, policy_id)
         mq = MQ(host, port, union_name, policy_id, mq_conf)
-        party, parties = self._parse_runtime_conf(runtime_conf)
+        party, parties = _parse_runtime_conf(runtime_conf)
         return self._init_federation(federation_session_id, party, parties, rabbit_manager, mq)
 
     def parallelize(self, data: Iterable, partition: int, include_key: bool, **kwargs):
@@ -85,14 +86,17 @@ class Session(CSessionABC):
         rdd = SparkContext.getOrCreate().parallelize(_iter, partition)
         return from_rdd(rdd)
 
-    def _get_session_id(self):
+    @property
+    def session_id(self):
         return self._session_id
 
-    def _get_federation(self):
-        return self._federation_session
+    @property
+    def federation(self):
+        return self._federation
 
-    def _get_federation_parties(self):
-        return self._federation_parties
+    @property
+    def parties(self):
+        return self._parties
 
     def cleanup(self, name, namespace):
         pass

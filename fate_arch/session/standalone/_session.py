@@ -21,7 +21,8 @@ from fate_arch.common import Party
 from fate_arch.common.log import getLogger
 from fate_arch.computing.standalone import Table
 from fate_arch.federation.standalone import Federation
-from fate_arch.session._parties_util import _FederationParties
+from fate_arch.session._parties import Parties
+from fate_arch.session._runtime_conf_parser import _parse_runtime_conf
 from fate_arch.standalone import Session as RawSession
 
 LOGGER = getLogger()
@@ -31,21 +32,21 @@ class Session(CSessionABC):
 
     def __init__(self, session: RawSession):
         self._session = session
-        self._federation_session: typing.Optional[Federation] = None
-        self._federation_parties: typing.Optional[_FederationParties] = None
+        self._federation: typing.Optional[Federation] = None
+        self._parties: typing.Optional[Parties] = None
 
     def _init_federation(self, federation_session_id: str,
                          party: Party,
                          parties: typing.MutableMapping[str, typing.List[Party]]):
-        if self._federation_session is not None:
+        if self._federation is not None:
             raise RuntimeError("federation session already initialized")
-        self._federation_session = Federation(raw_session=self,
-                                              federation_session_id=federation_session_id,
-                                              party=party)
-        self._federation_parties = _FederationParties(party, parties)
+        self._federation = Federation(raw_session=self,
+                                      federation_session_id=federation_session_id,
+                                      party=party)
+        self._parties = Parties(party, parties)
 
     def init_federation(self, federation_session_id: str, runtime_conf: dict, **kwargs):
-        party, parties = self._parse_runtime_conf(runtime_conf)
+        party, parties = _parse_runtime_conf(runtime_conf)
         self._init_federation(federation_session_id, party, parties)
 
     def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
@@ -73,11 +74,14 @@ class Session(CSessionABC):
     def kill(self):
         return self._session.kill()
 
-    def _get_federation(self):
-        return self._federation_session
+    @property
+    def federation(self):
+        return self._federation
 
-    def _get_session_id(self):
+    @property
+    def session_id(self):
         return self._session.session_id
 
-    def _get_federation_parties(self):
-        raise self._federation_parties
+    @property
+    def parties(self):
+        raise self._parties

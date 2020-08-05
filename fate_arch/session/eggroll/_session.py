@@ -21,13 +21,14 @@ from eggroll.core.constants import StoreTypes
 from eggroll.core.session import session_init
 from eggroll.roll_pair.roll_pair import RollPairContext
 from fate_arch.abc import AddressABC, CSessionABC
-from fate_arch.common import WorkMode, Party
+from fate_arch.common import WorkMode
 from fate_arch.common import file_utils
 from fate_arch.common.log import getLogger
 from fate_arch.common.profile import log_elapsed
-from fate_arch.session._parties_util import _FederationParties
-from fate_arch.federation.eggroll import FederationEngine
 from fate_arch.computing.eggroll import Table
+from fate_arch.federation.eggroll import Federation
+from fate_arch.session._parties import Parties
+from fate_arch.session._runtime_conf_parser import _parse_runtime_conf
 
 LOGGER = getLogger()
 
@@ -44,19 +45,10 @@ class Session(CSessionABC):
         self._rpc = RollPairContext(session=self._rp_session)
         self._session_id = self._rp_session.get_session_id()
 
-        self._federation_session: typing.Optional[FederationEngine] = None
-        self._federation_parties: typing.Optional[_FederationParties] = None
+        self._federation: typing.Optional[Federation] = None
+        self._parties: typing.Optional[Parties] = None
 
         self._default_storage_type = options.get("store_type", StoreTypes.ROLLPAIR_IN_MEMORY)
-
-    def _init_federation(self, federation_session_id: str,
-                         party: Party,
-                         parties: typing.MutableMapping[str, typing.List[Party]],
-                         host: str, port: int):
-        if self._federation_session is not None:
-            raise RuntimeError("federation session already initialized")
-        self._federation_session = FederationEngine(self._rpc, federation_session_id, party, host, int(port))
-        self._federation_parties = _FederationParties(party, parties)
 
     def init_federation(self, federation_session_id: str, runtime_conf: dict, server_conf: typing.Optional[str] = None):
         if server_conf is None:
@@ -65,17 +57,24 @@ class Session(CSessionABC):
         host = server_conf.get('servers').get('proxy').get("host")
         port = server_conf.get('servers').get('proxy').get("port")
 
-        party, parties = self._parse_runtime_conf(runtime_conf)
-        self._init_federation(federation_session_id, party, parties, host, int(port))
+        party, parties = _parse_runtime_conf(runtime_conf)
 
-    def _get_session_id(self):
+        if self._federation is not None:
+            raise RuntimeError("federation session already initialized")
+        self._federation = Federation(self._rpc, federation_session_id, party, host, int(port))
+        self._parties = Parties(party, parties)
+
+    @property
+    def session_id(self):
         return self._session_id
 
-    def _get_federation(self):
-        return self._federation_session
+    @property
+    def federation(self):
+        return self._federation
 
-    def _get_federation_parties(self):
-        return self._federation_parties
+    @property
+    def parties(self):
+        return self._parties
 
     @log_elapsed
     def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs):

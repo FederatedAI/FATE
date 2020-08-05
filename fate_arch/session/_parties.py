@@ -20,7 +20,7 @@ import typing
 from fate_arch.common import Party
 
 
-class _FederationParties(object):
+class Parties(object):
     def __init__(self, party, parties):
         self._party = party
         self._parties = parties
@@ -40,4 +40,4 @@ class _FederationParties(object):
         return self._parties[role][idx]
 
 
-__all__ = ["_FederationParties"]
+__all__ = ["Parties"]

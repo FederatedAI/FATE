@@ -26,7 +26,6 @@ from collections import Iterable
 from fate_arch.abc._address import AddressABC
 from fate_arch.abc._federation import FederationABC
 from fate_arch.abc._path import PathABC
-from fate_arch.common import Party
 
 
 # noinspection PyPep8Naming
@@ -147,36 +146,17 @@ class CSessionABC(metaclass=ABCMeta):
     def kill(self):
         pass
 
-    @abc.abstractmethod
-    def _get_federation(self):
-        ...
-
-    @abc.abstractmethod
-    def _get_session_id(self):
-        ...
-
-    @abc.abstractmethod
-    def _get_federation_parties(self):
-        ...
-
     @property
+    @abc.abstractmethod
     def session_id(self) -> str:
-        return self._get_session_id()
+        ...
 
     @property
+    @abc.abstractmethod
     def parties(self):
-        return self._get_federation_parties()
+        ...
 
     @property
+    @abc.abstractmethod
     def federation(self) -> 'FederationABC':
-        return self._get_federation()
-
-    @staticmethod
-    def _parse_runtime_conf(runtime_conf):
-        role = runtime_conf.get("local").get("role")
-        party_id = str(runtime_conf.get("local").get("party_id"))
-        party = Party(role, party_id)
-        parties = {}
-        for role, pid_list in runtime_conf.get("role", {}).items():
-            parties[role] = [Party(role, pid) for pid in pid_list]
-        return party, parties
+        ...

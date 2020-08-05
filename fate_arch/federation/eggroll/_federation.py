@@ -34,7 +34,7 @@ from fate_arch.computing.eggroll import Table
 LOGGER = getLogger()
 
 
-class FederationEngine(FederationABC):
+class Federation(FederationABC):
 
     def __init__(self, rp_ctx: RollPairContext, rs_session_id: str, party: Party, host: str, port: int):
         options = {
