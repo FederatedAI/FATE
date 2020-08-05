@@ -1,0 +1,106 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+import os
+import json
+import click
+from ruamel import yaml
+from fate_flow.client.flow_cli.utils.cli_utils import prettify, get_lan_ip
+from fate_flow.client.flow_cli.commands import (component, data, job, model,
+                                                queue, task, table, tag)
+
+
+CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+
+
+@click.group(short_help="Fate Flow Client", context_settings=CONTEXT_SETTINGS)
+@click.pass_context
+def flow_cli(ctx):
+    """
+    Fate Flow Client
+    """
+    ctx.ensure_object(dict)
+    with open(os.path.join(os.path.dirname(__file__), os.pardir, "settings.yaml"), "r") as fin:
+        config = yaml.safe_load(fin)
+    if config.get("server_conf_path"):
+        is_server_conf_exist = os.path.exists(config.get("server_conf_path"))
+    else:
+        is_server_conf_exist = False
+
+    if is_server_conf_exist:
+        with open(config.get("server_conf_path")) as server_conf_fp:
+            server_conf = json.load(server_conf_fp)
+        ip = server_conf.get(config.get("server")).get(config.get("role")).get("host")
+        if ip in ["localhost", "127.0.0.1"]:
+            ip = get_lan_ip()
+        ctx.obj["http_port"] = server_conf.get(config.get("server")).get(config.get("role")).get("http.port")
+        ctx.obj["server_url"] = "http://{}:{}/{}".format(ip, ctx.obj["http_port"], config.get("api_version"))
+    else:
+        ip = config.get("ip")
+        if ip in ["localhost", "127.0.0.1"]:
+            ip = get_lan_ip()
+        ctx.obj["http_port"] = int(config.get("port"))
+        ctx.obj["server_url"] = "http://{}:{}/{}".format(ip, ctx.obj["http_port"], config.get("api_version"))
+
+    ctx.obj["init"] = is_server_conf_exist or (config.get("ip") and config.get("port"))
+
+
+@flow_cli.command("init", short_help="Flow CLI Init Command")
+@click.option("-c", "--server-conf-path", type=click.Path(exists=True),
+              help="Server configuration file absolute path.")
+@click.option("--ip", type=click.STRING, help="Fate flow server ip address.")
+@click.option("--port", type=click.INT, help="Fate flow server port.")
+def initialization(**kwargs):
+    """
+    \b
+    - DESCRIPTION:
+        Flow CLI Init Command. Custom can choose to provide an absolute path of server conf file,
+        or provide ip address and http port of a valid fate flow server. Notice that, if custom
+        provides both, the server conf would be loaded in priority. In this case, ip address and
+        http port would be ignored.
+
+    \b
+    - USAGE:
+        flow init -c /data/projects/FATE/conf/server_conf.json
+        flow init --ip 10.1.2.3 --port 9380
+    """
+    with open(os.path.join(os.path.dirname(__file__), os.pardir, "settings.yaml"), "r") as fin:
+        config = yaml.safe_load(fin)
+    if kwargs.get("server_conf_path"):
+        config["server_conf_path"] = kwargs.get("server_conf_path")
+    if kwargs.get("ip"):
+        config["ip"] = kwargs.get("ip")
+    if kwargs.get("port"):
+        config["port"] = kwargs.get("port")
+    with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "w") as fout:
+        yaml.safe_dump(config, fout)
+
+    prettify(
+        {
+            "retcode": 0,
+            "retmsg": "Fate Flow CLI has been initialized successfully"
+        }
+    )
+
+
+flow_cli.add_command(component.component)
+flow_cli.add_command(data.data)
+flow_cli.add_command(job.job)
+flow_cli.add_command(model.model)
+# flow_cli.add_command(privilege.privilege)
+flow_cli.add_command(queue.queue)
+flow_cli.add_command(task.task)
+flow_cli.add_command(table.table)
+flow_cli.add_command(tag.tag)

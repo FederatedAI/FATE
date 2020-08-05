@@ -34,12 +34,12 @@ def query_data_view(**kwargs):
         return [data_view for data_view in data_views]
 
 
-def delete_table(data_views):
+def delete_table(output_data_table_infos):
     data = []
     status = False
-    for data_view in data_views:
-        table_name = data_view.f_table_name
-        namespace = data_view.f_table_namespace
+    for output_data_table_info in output_data_table_infos:
+        table_name = output_data_table_info.f_table_name
+        namespace = output_data_table_info.f_table_namespace
         table_info = {'table_name': table_name, 'namespace': namespace}
         if table_name and namespace and table_info not in data:
             table = get_table(name=table_name, namespace=namespace)

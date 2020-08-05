@@ -17,10 +17,10 @@ import os
 import re
 import click
 import requests
+from fate_flow.client.flow_cli.utils import cli_args
 from contextlib import closing
-from fate_flow.utils import cli_args
-from arch.api.utils import file_utils
-from fate_flow.utils.cli_utils import preprocess, access_server, prettify
+from fate_flow.client.flow_cli.utils.cli_utils import (preprocess, access_server,
+                                                       prettify, get_project_base_directory)
 
 
 @click.group(short_help="Model Operations")
@@ -92,7 +92,7 @@ def imp(ctx, **kwargs):
     if not kwargs.pop('from_database'):
         file_path = config_data["file"]
         if not os.path.isabs(file_path):
-            file_path = os.path.join(file_utils.get_project_base_directory(), file_path)
+            file_path = os.path.join(get_project_base_directory(), file_path)
         if os.path.exists(file_path):
             files = {'file': open(file_path, 'rb')}
             access_server('post', ctx, 'model/import', data=config_data, files=files)

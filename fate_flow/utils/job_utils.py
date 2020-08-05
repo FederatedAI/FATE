@@ -32,6 +32,7 @@ from arch.api.utils import file_utils
 from arch.api.utils.core_utils import current_timestamp
 from arch.api.utils.core_utils import json_loads, json_dumps
 from arch.api.utils.log_utils import schedule_logger
+from fate_flow.operation.job_tracker import Tracker
 from fate_flow.scheduler.dsl_parser import DSLParser, DSLParserV2
 from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -463,9 +464,11 @@ def start_clean_job(**kwargs):
                 # clean data table
                 stat_logger.info('start delete {} {} {} {} data table'.format(task.f_job_id, task.f_role,
                                                                               task.f_party_id, task.f_component_name))
-                data_views = query_data_view(**task_info)
-                if data_views:
-                    delete_table(data_views)
+                tracker = Tracker(job_id=task.f_job_id, role=task.f_role, party_id=task.f_party_id,
+                                  component_name=task.f_component_name)
+                output_data_table_infos = tracker.get_output_data_info()
+                if output_data_table_infos:
+                    delete_table(output_data_table_infos)
                     stat_logger.info('delete {} {} {} {} data table success'.format(task.f_job_id, task.f_role,
                                                                                     task.f_party_id,
                                                                                     task.f_component_name))
@@ -490,36 +493,27 @@ def start_clean_job(**kwargs):
         raise Exception('no found task')
 
 
-def start_clean_queue(**kwargs):
-    tasks = query_task(**kwargs)
-    if tasks:
-        for task in tasks:
-            task_info = get_task_info(task.f_job_id, task.f_role, task.f_party_id, task.f_component_name)
+def start_clean_queue():
+    schedule_logger().info('get clean queue command')
+    jobs = JobSaver.query_job(is_initiator=1, status=JobStatus.WAITING)
+    if jobs:
+        for job in jobs:
+            schedule_logger(job.f_job_id).info(
+                'start send {} job {} command success'.format(JobStatus.CANCELED, job.f_job_id))
+            job_info = {'f_job_id': job.f_job_id, 'f_status': JobStatus.CANCELED}
+            JobSaver.update_job(job_info=job_info)
+            job_runtime_conf = json_loads(job.f_runtime_conf)
+            event = job_event(job.f_job_id,
+                              job_runtime_conf['initiator']['role'],
+                              job_runtime_conf['initiator']['party_id'])
             try:
-                # clean session
-                stat_logger.info('start {} {} {} {} session stop'.format(task.f_job_id, task.f_role,
-                                                                         task.f_party_id, task.f_component_name))
-                start_session_stop(task)
-            except:
-                pass
-            try:
-                # clean data table
-                stat_logger.info('start delete {} {} {} {} data table'.format(task.f_job_id, task.f_role,
-                                                                              task.f_party_id, task.f_component_name))
-                data_views = query_data_view(**task_info)
-                if data_views:
-                    delete_table(data_views)
-            except:
-                pass
-            try:
-                # clean metric data
-                stat_logger.info('start delete {} {} {} {} metric data'.format(task.f_job_id, task.f_role,
-                                                                               task.f_party_id, task.f_component_name))
-                delete_metric_data(task_info)
-            except:
-                pass
+                RuntimeConfig.JOB_QUEUE.del_event(event)
+                schedule_logger(job.f_job_id).info(
+                    'send {} job {} command success'.format(JobStatus.CANCELED, job.f_job_id))
+            except Exception as e:
+                schedule_logger(job.f_job_id).error(e)
     else:
-        raise Exception('no found task')
+        raise Exception('There are no jobs in the queue')
 
 
 def start_session_stop(task):

@@ -200,33 +200,3 @@ class DAGScheduler(object):
         FederatedScheduler.stop_job(job=job, stop_status=end_status)
         FederatedScheduler.clean_job(job=job)
         schedule_logger(job_id=job.f_job_id).info("Job {} finished with {}, done".format(job.f_job_id, end_status))
-
-    @staticmethod
-    def clean_queue():
-        schedule_logger().info('get clean queue command')
-        jobs = job_utils.query_job(is_initiator=1, status=JobStatus.WAITING)
-        if jobs:
-            for job in jobs:
-                schedule_logger(job.f_job_id).info(
-                    'start send {} job {} command success'.format(JobStatus.CANCELED, job.f_job_id))
-                job_info = {'f_job_id': job.f_job_id, 'f_status': JobStatus.CANCELED}
-                roles = json_loads(job.f_roles)
-                job_work_mode = job.f_work_mode
-                initiator_party_id = job.f_party_id
-
-                TaskScheduler.sync_job_status(job_id=job.f_job_id, roles=roles, initiator_party_id=initiator_party_id,
-                                              initiator_role=job.f_role,
-                                              work_mode=job_work_mode,
-                                              job_info=job_info)
-                job_runtime_conf = job.f_runtime_conf
-                event = job_utils.job_event(job.f_job_id,
-                                            job_runtime_conf['initiator']['role'],
-                                            job_runtime_conf['initiator']['party_id'])
-                try:
-                    RuntimeConfig.JOB_QUEUE.del_event(event)
-                    schedule_logger(job.f_job_id).info(
-                        'send {} job {} command success'.format(JobStatus.CANCELED, job.f_job_id))
-                except Exception as e:
-                    schedule_logger(job.f_job_id).error(e)
-        else:
-            raise Exception('There are no jobs in the queue')
