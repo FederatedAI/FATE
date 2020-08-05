@@ -17,7 +17,7 @@
 import itertools
 
 from fate_arch.abc import AddressABC, CTableABC
-from fate_arch.backend.standalone import Table as RawTable
+from fate_arch.standalone import Table as RawTable
 
 
 class Table(CTableABC):

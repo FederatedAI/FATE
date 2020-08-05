@@ -17,12 +17,12 @@ import typing
 from collections import Iterable
 
 from fate_arch.abc import AddressABC, CSessionABC
-from fate_arch.backend.standalone import Session as RawSession
 from fate_arch.common import Party
 from fate_arch.common.log import getLogger
-from fate_arch.session._parties_util import _FederationParties
-from fate_arch.federation.standalone import Federation
 from fate_arch.computing.standalone import Table
+from fate_arch.federation.standalone import Federation
+from fate_arch.session._parties_util import _FederationParties
+from fate_arch.standalone import Session as RawSession
 
 LOGGER = getLogger()
 

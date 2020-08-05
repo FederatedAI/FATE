@@ -15,27 +15,16 @@
 #
 
 
-RDD_ATTR_NAME = "_rdd"
-
-
 # noinspection PyUnresolvedReferences
-def get_storage_level():
-    from pyspark import StorageLevel
-    return StorageLevel.MEMORY_AND_DISK
-
-
 def materialize(rdd):
     rdd = rdd.persist(get_storage_level())
     rdd.count()
     return rdd
 
 
-def get_partitions(namespace, name) -> int:
-    pass
-
-
-def _generate_hdfs_path(namespace, name):
-    return "/fate/{}/{}".format(namespace, name)
+# noinspection PyUnresolvedReferences
+def get_storage_level():
+    return StorageLevel.MEMORY_AND_DISK
 
 
 def _get_file_system(sc):

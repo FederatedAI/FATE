@@ -15,5 +15,7 @@
 #
 
 from fate_arch.computing.spark._table import Table, from_hdfs, from_rdd
+from fate_arch.computing.spark._util import get_storage_level, materialize
 
-__all__ = ['Table', 'from_hdfs', 'from_rdd']
+__all__ = ['Table', 'from_hdfs', 'from_rdd',
+           'get_storage_level', 'materialize']

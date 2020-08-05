@@ -14,6 +14,6 @@
 #  limitations under the License.
 #
 
-from fate_arch.backend.standalone._standalone import Session, Table, Federation
+from fate_arch.standalone._standalone import Session, Table, Federation
 
 __all__ = ["Session", "Table", "Federation"]
