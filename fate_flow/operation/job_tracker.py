@@ -363,7 +363,7 @@ class Tracker(object):
             for output_data_info in output_data_infos_tmp:
                 group_key = cls.get_output_data_group_key(output_data_info.f_task_id, output_data_info.f_data_name)
                 if group_key not in output_data_infos_group:
-                    output_data_infos_group[output_data_info.f_data_name] = output_data_info
+                    output_data_infos_group[group_key] = output_data_info
                 elif output_data_info.f_task_version > output_data_infos_group[group_key].f_task_version:
                     output_data_infos_group[group_key] = output_data_info
             return output_data_infos_group.values()

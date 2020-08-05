@@ -112,16 +112,10 @@ class Upload(object):
                 else:
                     self.table.save_schema(count=self.table.count(), partitions=self.parameters["partition"])
                     count_actual = self.table.count()
-                    """
-                    self.tracker.save_data_view(role=self.parameters["local"]['role'],
-                                                party_id=self.parameters["local"]['party_id'],
-                                                data_info={'f_table_name': dst_table_name,
-                                                           'f_table_namespace': dst_table_namespace,
-                                                           'f_partition': self.parameters["partition"],
-                                                           'f_table_count_actual': count_actual,
-                                                           'f_table_count_upload': count
-                                                           })
-                    """
+                    self.tracker.log_output_data_info(data_name='upload',
+                                                      table_namespace=dst_table_namespace,
+                                                      table_name=dst_table_name)
+
                     self.tracker.log_metric_data(metric_namespace="upload",
                                                  metric_name="data_access",
                                                  metrics=[Metric("count", count_actual)])

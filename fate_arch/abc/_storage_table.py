@@ -112,12 +112,12 @@ class TableABC(object):
 
     def get_schema(self, _type='schema', name=None, namespace=None):
         if not name and not namespace:
-            name = self._name
-            namespace = self._namespace
+            name = self.get_name()
+            namespace = self.get_namespace()
         with DB.connection_context():
             schema = MachineLearningDataSchema.select().where(MachineLearningDataSchema.f_table_name == name,
                                                               MachineLearningDataSchema.f_namespace == namespace)
-            schema_data = {}
+            schema_data = None
             if schema:
                 schema = schema[0]
                 try:
