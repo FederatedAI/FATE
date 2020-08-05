@@ -67,7 +67,7 @@
             "dsl": "./test_fast_sbt_dsl.json"
         },
         "mix_train_multi_host": {
-            "conf": "./test_fast_sbt_multi_host_conf.json",
+            "conf": "./test_fast_sbt_mix_multi_host_conf.json",
             "dsl": "./test_fast_sbt_dsl.json"
         },
         "layered_train_binary": {
