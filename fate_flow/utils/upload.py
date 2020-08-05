@@ -112,6 +112,10 @@ class Upload(object):
                 else:
                     self.table.save_meta(count=self.table.count(), partitions=self.parameters["partition"])
                     count_actual = self.table.count()
+                    self.tracker.log_output_data_info(data_name='upload',
+                                                      table_namespace=dst_table_namespace,
+                                                      table_name=dst_table_name)
+
                     self.tracker.log_metric_data(metric_namespace="upload",
                                                  metric_name="data_access",
                                                  metrics=[Metric("count", count_actual)])

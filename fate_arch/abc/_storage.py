@@ -113,8 +113,8 @@ class TableABC(object):
 
     def get_meta(self, _type=StorageTableMetaType.SCHEMA, name=None, namespace=None):
         if not name and not namespace:
-            name = self._name
-            namespace = self._namespace
+            name = self.get_name()
+            namespace = self.get_namespace()
         with DB.connection_context():
             table_metas = StorageTableMeta.select().where(StorageTableMeta.f_name == name,
                                                           StorageTableMeta.f_namespace == namespace)

@@ -1,0 +1,103 @@
+/*
+ * Copyright 2019 The FATE Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+import "fate-meta.proto";
+
+package com.webank.ai.fate.api.networking.proxy;
+
+// metadata of event
+message Model {
+    string name = 1;
+    string dataKey = 2;
+}
+
+// metadata of task
+message Task {
+    string taskId = 1;
+    Model model = 2;
+}
+
+message Topic {
+    string name = 1;
+    string partyId = 2;
+    string role = 3;
+    com.webank.ai.fate.api.core.Endpoint callback = 4;  // implication of pub/sub model, necessary for http-based senario
+}
+
+// task admin command
+message Command {
+    string name = 1;
+}
+
+message Conf {
+    int64 overallTimeout = 1;           // total timeout, in ms
+    int64 completionWaitTimeout = 2;    // timeout for waiting for complete, in ms
+    int64 packetIntervalTimeout = 3;    // timeout for packet interval, in ms
+    int32 maxRetries = 4;
+}
+
+// metadata used for network data transfer
+message Metadata {
+    Task task = 1;                      // task description
+    Topic src = 2;                      // source topic
+    Topic dst = 3;                      // destincation topic
+    Command command = 4;                // task managing command (if any)
+    string operator = 5;                // model operator
+    int64 seq = 6;                      // stream seq (reserved)
+    int64 ack = 7;                      // stream ack (reserved)
+    Conf conf = 8;                      // operation config
+}
+
+// includes key and value field, supporting sequential and random data transfer
+message Data {
+    string key = 1;     // compatible with list / dict
+    bytes value = 2;    // actual value
+}
+
+// data streaming packet
+message Packet {
+    Metadata header = 1;    // packet header
+    Data body = 2;          // packet body
+}
+
+// returned by service heartbeat to decide next operation
+enum Operation {
+    START = 0;
+    RUN = 1;
+    STOP = 2;
+    KILL = 3;
+    GET_DATA = 4;
+    PUT_DATA = 5;
+}
+
+// response of heartbeat
+message HeartbeatResponse {
+    Metadata header = 1;
+    Operation operation = 2;
+}
+
+// data transfer service
+service DataTransferService {
+    rpc push (stream Packet) returns (Metadata);
+    rpc pull (Metadata) returns (stream Packet);
+    rpc unaryCall (Packet) returns (Packet);
+}
+
+service RouteService {
+    rpc query (Topic) returns (com.webank.ai.fate.api.core.Endpoint);
+}

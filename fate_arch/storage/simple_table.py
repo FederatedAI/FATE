@@ -13,13 +13,13 @@ class SimpleTable(TableABC):
         return self.get_meta(_type='partitions')
 
     def get_name(self):
-        pass
+        return self._name
 
     def get_data_name(self):
         return self.data_name
 
     def get_namespace(self):
-        pass
+        return self._namespace
 
     def get_storage_engine(self):
         pass

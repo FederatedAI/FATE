@@ -19,7 +19,7 @@ import shutil
 from flask import Flask, request
 
 from fate_arch.storage.constant import StorageEngine
-from fate_flow.manager.data_manager import query_data_view
+from fate_flow.entity.constant import StatusSet
 from fate_flow.manager.table_manager.table_operation import get_table
 from fate_flow.settings import stat_logger, USE_LOCAL_DATA, WORK_MODE
 from fate_flow.utils.api_utils import get_json_result
@@ -70,7 +70,7 @@ def download_upload(access_module):
                 return get_json_result(retcode=100,
                                        retmsg='The data table already exists.'
                                               'If you still want to continue uploading, please add the parameter -drop.'
-                                              '0 means not to delete and continue uploading, '
+                                              ' 0 means not to delete and continue uploading, '
                                               '1 means to upload again after deleting the table')
             elif data_table and int(request_config.get('drop', 2)) == 1:
                 data_table.destroy()
@@ -96,9 +96,9 @@ def upload_history():
 def get_upload_history():
     request_data = request.json
     if request_data.get('job_id'):
-        tasks = job_utils.query_task(component_name='upload_0', status='success', job_id=request_data.get('job_id'))
+        tasks = job_utils.query_task(component_name='upload_0', status=StatusSet.COMPLETE, job_id=request_data.get('job_id'))
     else:
-        tasks = job_utils.query_task(component_name='upload_0', status='success')
+        tasks = job_utils.query_task(component_name='upload_0', status=StatusSet.COMPLETE)
     limit= request_data.get('limit')
     if not limit:
         tasks = tasks[-1::-1]
@@ -110,28 +110,23 @@ def get_upload_history():
 
 def get_upload_info(jobs_run_conf):
     data = []
+
     for job_id, job_run_conf in jobs_run_conf.items():
-        data_views = query_data_view(job_id=job_id, component_name='upload_0')[0]
         info = {}
         table_name = job_run_conf["table_name"][0]
         namespace = job_run_conf["namespace"][0]
-
-        partition = job_run_conf["partition"][0]
-        info["upload_info"] = {
-            "table_name": table_name,
-            "namespace": namespace,
-            "partition": partition,
-            'upload_count': data_views.f_table_count_upload,
-            'actual_count': data_views.f_table_count_actual
-        }
-        info["notes"] = job_run_conf["notes"]
-        data_table = get_table(table_name=table_name, namespace=namespace)
-        info["schema"] = data_table.get_meta(_type="schema")
-        data.append({job_id: info})
-        try:
-            data_table.close()
-        except:
-            pass
+        table = get_table(name=table_name, namespace=namespace, simple=True)
+        if table:
+            partition = job_run_conf["partition"][0]
+            info["upload_info"] = {
+                "table_name": table_name,
+                "namespace": namespace,
+                "partition": partition,
+                'upload_count': table.count()
+            }
+            info["notes"] = job_run_conf["notes"]
+            info["schema"] = table.get_meta(_type="schema")
+            data.append({job_id: info})
     return data
 
 
