@@ -25,10 +25,9 @@ from fate_arch.common import WorkMode, Party
 from fate_arch.common import file_utils
 from fate_arch.common.log import getLogger
 from fate_arch.common.profile import log_elapsed
-from fate_arch.session._file import Path
 from fate_arch.session._parties_util import _FederationParties
-from fate_arch.session.eggroll._federation import FederationEngine
-from fate_arch.session.eggroll._table import Table
+from fate_arch.federation.eggroll import FederationEngine
+from fate_arch.computing.eggroll import Table
 
 LOGGER = getLogger()
 
@@ -79,24 +78,24 @@ class Session(CSessionABC):
         return self._federation_parties
 
     @log_elapsed
-    def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs) -> typing.Union[Table, Path]:
+    def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
 
         from fate_arch.data_table.address import EggRollAddress
         if isinstance(address, EggRollAddress):
             options = kwargs.get("option", {})
             options["total_partitions"] = partitions
-            options["store_type"] = address.store_type
+            options["store_type"] = address.storage_type
             options["create_if_missing"] = False
             rp = self._rpc.load(namespace=address.namespace, name=address.name, options=options)
             if rp is None or rp.get_partitions() == 0:
-                raise RuntimeError(f"no exists: {address.name}, {address.namespace}, {address.store_type}")
+                raise RuntimeError(f"no exists: {address.name}, {address.namespace}, {address.storage_type}")
             table = Table(rp=rp)
             table.schema = schema
             return table
 
         from fate_arch.data_table.address import FileAddress
         if isinstance(address, FileAddress):
-            return Path(address.path, address.path_type)
+            return address
 
         raise NotImplementedError(f"address type {type(address)} not supported with eggroll backend")
 

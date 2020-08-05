@@ -14,4 +14,6 @@
 #  limitations under the License.
 #
 
-from fate_arch.federation._split import  segment_transfer_enabled
+from fate_arch.computing.standalone._table import Table
+
+__all__ = ['Table']

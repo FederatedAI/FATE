@@ -21,8 +21,8 @@ from fate_arch.backend.standalone import Session as RawSession
 from fate_arch.common import Party
 from fate_arch.common.log import getLogger
 from fate_arch.session._parties_util import _FederationParties
-from fate_arch.session.standalone._federation import Federation
-from fate_arch.session.standalone._table import Table
+from fate_arch.federation.standalone import Federation
+from fate_arch.computing.standalone import Table
 
 LOGGER = getLogger()
 
@@ -57,8 +57,7 @@ class Session(CSessionABC):
 
         from fate_arch.data_table.address import FileAddress
         if isinstance(address, FileAddress):
-            from fate_arch.session._file import Path as _Path
-            return _Path(address.path, address.path_type)
+            return address
         raise NotImplementedError(f"address type {type(address)} not supported with standalone backend")
 
     def parallelize(self, data: Iterable, partition: int, include_key: bool = False, **kwargs):

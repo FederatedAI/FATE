@@ -28,8 +28,8 @@ from fate_arch.abc import GarbageCollectionABC
 from fate_arch.abc import FederationABC
 from fate_arch.common import Party
 from fate_arch.common.log import getLogger
-from fate_arch.session._split import is_split_head, split_get
-from fate_arch.session.eggroll._table import Table
+from fate_arch.federation._split import is_split_head, split_get
+from fate_arch.computing.eggroll import Table
 
 LOGGER = getLogger()
 
@@ -134,7 +134,6 @@ def _get_type(v):
 
 
 def _push_with_exception_handle(rsc, v, name, tag, parties):
-
     def _remote_exception_re_raise(f, p):
         try:
             f.result()
