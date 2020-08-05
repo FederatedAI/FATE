@@ -3,7 +3,7 @@ import typing
 from fate_arch.abc import CSessionABC, FederationABC
 from fate_arch.common.file_utils import load_json_conf
 from fate_arch.computing import ComputingType
-from fate_arch.data_table import StorageType
+from fate_arch.storage import StorageType
 from fate_arch.federation import FederationType
 from fate_arch.session._parties import Parties
 
