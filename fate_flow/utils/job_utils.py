@@ -75,7 +75,7 @@ def generate_federated_id(task_id, task_version):
 
 
 def generate_session_id(task_id, task_version, role, party_id):
-    return '{}_{}_{}'.format(task_id, task_version, role, party_id)
+    return '{}_{}_{}_{}'.format(task_id, task_version, role, party_id)
 
 
 def generate_task_input_data_namespace(task_id, task_version, role, party_id):

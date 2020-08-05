@@ -32,26 +32,19 @@ def internal_server_error(e):
 @manager.route('/delete', methods=['post'])
 def table_delete():
     request_data = request.json
-    data_views = query_data_view(**request_data)
     table_name = request_data.get('table_name')
     namespace = request_data.get('namespace')
-    status = False
-    data = []
-    if table_name and namespace:
-        table = get_table(name=table_name, namespace=namespace)
+    table = get_table(name=table_name, namespace=namespace)
+    if table:
         table.destroy()
-        data.append({'table_name': table_name,
-                     'namespace': namespace})
+        data = {'table_name': table_name, 'namespace': namespace}
         try:
             table.close()
         except Exception as e:
             stat_logger.exception(e)
-        status = True
-    elif data_views:
-        status, data = delete_table(data_views)
     else:
         return get_json_result(retcode=101, retmsg='no find table')
-    return get_json_result(retcode=(0 if status else 101), retmsg=('success' if status else 'failed'), data=data)
+    return get_json_result(data=data)
 
 
 @manager.route('/<table_func>', methods=['post'])
