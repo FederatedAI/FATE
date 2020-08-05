@@ -49,7 +49,7 @@ def list_to_str(input_list):
 
 def write_to_db(conf, table_name, file_name, namespace, partitions, head):
     db = MysqldbHelper(**conf)
-    address = create(name=table_name, namespace=namespace, store_engine='MYSQL', partitions=partitions)
+    address = create(name=table_name, namespace=namespace, storage_engine='MYSQL', partitions=partitions)
     table = get_table(name=table_name, namespace=namespace)
     create_table = 'create table {}(id varchar(50) NOT NULL, features LONGTEXT, PRIMARY KEY(id))'.format(table_name)
     db.execute(create_table.format(table_name))
@@ -59,7 +59,7 @@ def write_to_db(conf, table_name, file_name, namespace, partitions, head):
         if head:
             data_head = f.readline()
             header_source_item = data_head.split(',')
-            table.save_schema(schema_data={'header': ','.join(header_source_item[1:]).strip(),
+            table.save_meta(schema={'header': ','.join(header_source_item[1:]).strip(),
                                            'sid': header_source_item[0]})
         n = 0
         count = 0
@@ -76,13 +76,13 @@ def write_to_db(conf, table_name, file_name, namespace, partitions, head):
                     sql += '("{}", "{}"),'.format(values[0], list_to_str(values[1:]))
                 sql = ','.join(sql.split(',')[:-1]) + ';'
                 if n == 0:
-                    table.save_schema(party_of_data=data, partitions=partitions)
+                    table.save_meta(party_of_data=data, partitions=partitions)
                 n +=1
                 db.execute(sql)
                 db.con.commit()
             else:
                 break
-        table.save_schema(count=count)
+        table.save_meta(count=count)
 
 
 if __name__ == "__main__":

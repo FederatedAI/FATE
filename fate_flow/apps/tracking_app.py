@@ -219,7 +219,7 @@ def component_output_data():
             data_names.append(output_data_table.get_data_name())
             totals.append(total)
         if output_data:
-            header = get_component_output_data_meta(output_data_table=output_data_table, have_data_label=have_data_label, is_str=is_str)
+            header = get_component_output_data_schema(output_data_table=output_data_table, have_data_label=have_data_label, is_str=is_str)
             headers.append(header)
             try:
                 output_data_table.close()
@@ -263,12 +263,12 @@ def component_output_data_download():
         if output_data_count:
             # get meta
             output_data_file_list.append(output_data_file_path)
-            header = get_component_output_data_meta(output_data_table=output_data_table, have_data_label=have_data_label, is_str=is_str)
+            header = get_component_output_data_schema(output_data_table=output_data_table, have_data_label=have_data_label, is_str=is_str)
             output_data_meta_file_path = "{}/{}.meta".format(output_tmp_dir, data_name)
             output_data_meta_file_list.append(output_data_meta_file_path)
             with open(output_data_meta_file_path, 'w') as fw:
                 json.dump({'header': header}, fw, indent=4)
-            if request_data.get('head', True):
+            if request_data.get('head', True) and header:
                 with open(output_data_file_path, 'r+') as f:
                     content = f.read()
                     f.seek(0, 0)
@@ -383,9 +383,11 @@ def get_component_output_data_line(src_key, src_value):
     return data_line, have_data_label, is_str
 
 
-def get_component_output_data_meta(output_data_table, have_data_label, is_str=False):
-    # get meta
-    schema = output_data_table.get_schema()
+def get_component_output_data_schema(output_data_table, have_data_label, is_str=False):
+    # get schema
+    schema = output_data_table.get_meta(_type="schema")
+    if not schema:
+         return None
     header = [schema.get('sid_name', 'sid')]
     if have_data_label:
         header.append(schema.get('label_name'))

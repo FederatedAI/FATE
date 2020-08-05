@@ -19,7 +19,7 @@ from typing import List
 
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from arch.api.utils.log_utils import schedule_logger
-from fate_arch.data_table.simple_table import SimpleTable
+from fate_arch.storage.simple_table import SimpleTable
 from fate_flow.db.db_models import DB, TrackingMetric, TrackingOutputDataInfo, ComponentSummary
 from fate_flow.entity.constant import Backend
 from fate_flow.entity.metric import Metric, MetricMeta
@@ -59,8 +59,8 @@ class Tracker(object):
 
         self.task_set_id = task_set_id
 
-        self.component_name = component_name if component_name else 'pipeline'
-        self.module_name = component_module_name if component_module_name else 'Pipeline'
+        self.component_name = component_name if component_name else self.job_virtual_component_name()
+        self.module_name = component_module_name if component_module_name else self.job_virtual_component_module_name()
         self.task_id = task_id
         self.task_version = task_version
 
@@ -159,7 +159,7 @@ class Tracker(object):
             schedule_logger(self.job_id).info('output data table partitions is {}'.format(partitions))
             address = create(name=persistent_table_name,
                              namespace=persistent_table_namespace,
-                             store_engine=output_storage_engine,
+                             storage_engine=output_storage_engine,
                              partitions=partitions)
             schema = {}
             data_table.save(address, schema=schema, partitions=partitions)
@@ -173,7 +173,7 @@ class Tracker(object):
                 count -= 1
                 if count == 0:
                     break
-            table.save_schema(schema, party_of_data=party_of_data, count=data_table.count(), partitions=partitions)
+            table.save_meta(schema=schema, party_of_data=party_of_data, count=data_table.count(), partitions=partitions)
             return persistent_table_namespace, persistent_table_name
         else:
             schedule_logger(self.job_id).info('task id {} output data table is none'.format(self.task_id))
@@ -232,7 +232,7 @@ class Tracker(object):
             try:
                 tracking_metric = self.get_dynamic_db_model(TrackingMetric, self.job_id)()
                 tracking_metric.f_job_id = self.job_id
-                tracking_metric.f_component_name = self.component_name if not job_level else 'dag'
+                tracking_metric.f_component_name = (self.component_name if not job_level else self.job_virtual_component_name())
                 tracking_metric.f_task_id = self.task_id
                 tracking_metric.f_task_version = self.task_version
                 tracking_metric.f_role = self.role
@@ -304,7 +304,7 @@ class Tracker(object):
                 tracking_metric_model = self.get_dynamic_db_model(TrackingMetric, self.job_id)
                 tracking_metrics = tracking_metric_model.select(tracking_metric_model.f_key, tracking_metric_model.f_value).where(
                     tracking_metric_model.f_job_id==self.job_id,
-                    tracking_metric_model.f_component_name==self.component_name if not job_level else 'dag',
+                    tracking_metric_model.f_component_name==(self.component_name if not job_level else self.job_virtual_component_name()),
                     tracking_metric_model.f_role==self.role,
                     tracking_metric_model.f_party_id==self.party_id,
                     tracking_metric_model.f_metric_namespace==metric_namespace,
@@ -315,6 +315,7 @@ class Tracker(object):
                     yield deserialize_b64(tracking_metric.f_key), deserialize_b64(tracking_metric.f_value)
             except Exception as e:
                 schedule_logger(self.job_id).exception(e)
+                raise e
             return metrics
 
     def get_metric_list(self, job_level: bool = False):
@@ -323,7 +324,7 @@ class Tracker(object):
             tracking_metric_model = self.get_dynamic_db_model(TrackingMetric, self.job_id)
             tracking_metrics = tracking_metric_model.select(tracking_metric_model.f_metric_namespace, tracking_metric_model.f_metric_name).where(
                                     tracking_metric_model.f_job_id==self.job_id,
-                                    tracking_metric_model.f_component_name==self.component_name if not job_level else 'dag',
+                                    tracking_metric_model.f_component_name==(self.component_name if not job_level else self.job_virtual_component_name()),
                                     tracking_metric_model.f_role==self.role,
                                     tracking_metric_model.f_party_id==self.party_id).distinct()
             for tracking_metric in tracking_metrics:
@@ -360,11 +361,16 @@ class Tracker(object):
             output_data_infos_group = {}
             # Only the latest version of the task output data is retrieved
             for output_data_info in output_data_infos_tmp:
-                if output_data_info.f_task_id not in output_data_infos_group:
-                    output_data_infos_group[output_data_info.f_task_id] = output_data_info
-                elif output_data_info.f_task_version > output_data_infos_group[output_data_info.f_task_id].f_task_version:
-                    output_data_infos_group[output_data_info.f_task_id] = output_data_info
+                group_key = cls.get_output_data_group_key(output_data_info.f_task_id, output_data_info.f_data_name)
+                if group_key not in output_data_infos_group:
+                    output_data_infos_group[group_key] = output_data_info
+                elif output_data_info.f_task_version > output_data_infos_group[group_key].f_task_version:
+                    output_data_infos_group[group_key] = output_data_info
             return output_data_infos_group.values()
+
+    @classmethod
+    def get_output_data_group_key(cls, task_id, data_name):
+        return task_id + data_name
 
     def clean_task(self, roles):
         schedule_logger(self.job_id).info('clean task {} on {} {}'.format(self.task_id,
@@ -411,3 +417,12 @@ class Tracker(object):
     @staticmethod
     def job_view_table_name():
         return '_'.join(['job', 'view'])
+
+    @classmethod
+    def job_virtual_component_name(cls):
+        return "pipeline"
+
+    @classmethod
+    def job_virtual_component_module_name(cls):
+        return "Pipeline"
+
