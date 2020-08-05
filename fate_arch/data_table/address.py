@@ -7,10 +7,10 @@ class HDFSAddress(AddressABC):
 
 
 class EggRollAddress(AddressABC):
-    def __init__(self, name, namespace, store_type):
+    def __init__(self, name, namespace, storage_type):
         self.name = name
         self.namespace = namespace
-        self.store_type = store_type  # LMDB or IN_MEMORY
+        self.storage_type = storage_type  # LMDB or IN_MEMORY
 
 
 class MysqlAddress(AddressABC):
