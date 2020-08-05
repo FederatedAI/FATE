@@ -16,11 +16,8 @@
 import click
 import os
 import sys
-import traceback
-from fate_flow.utils import cli_args
-from arch.api.utils import file_utils
-from fate_flow.utils.cli_utils import (preprocess, access_server, prettify,
-                                       start_cluster_standalone_job_server)
+from fate_flow.client.flow_cli.utils import cli_args
+from fate_flow.client.flow_cli.utils.cli_utils import preprocess, access_server, check_abs_path
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
 
@@ -59,9 +56,7 @@ def upload(ctx, **kwargs):
     kwargs['verbose'] = int(kwargs['verbose'])
     config_data, dsl_data = preprocess(**kwargs)
     if config_data.get('use_local_data', 1):
-        file_name = config_data.get('file')
-        if not os.path.isabs(file_name):
-            file_name = os.path.join(file_utils.get_project_base_directory(), file_name)
+        file_name = check_abs_path(config_data.get('file'))
         if os.path.exists(file_name):
             with open(file_name, 'rb') as fp:
                 data = MultipartEncoder(
@@ -79,22 +74,13 @@ def upload(ctx, **kwargs):
                                 sys.stdout.write('\n')
 
                 data = MultipartEncoderMonitor(data, read_callback)
-                response = access_server('post', ctx, 'data/upload', json=None, echo=False, data=data,
-                                         params=config_data,
-                                         headers={'Content-Type': data.content_type})
+                access_server('post', ctx, 'data/upload', json=None, data=data,
+                              params=config_data, headers={'Content-Type': data.content_type})
         else:
             raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
                             'please check the path: {}'.format(file_name))
     else:
-        response = access_server('post', ctx, 'data/upload', config_data, False)
-    try:
-        if response.json()['retcode'] == 999:
-            start_cluster_standalone_job_server()
-            access_server('post', ctx, "data/upload", config_data)
-        else:
-            prettify(response.json())
-    except:
-        click.echo(traceback.format_exc())
+        access_server('post', ctx, 'data/upload', config_data)
 
 
 @data.command("download", short_help="Download Table Command")
@@ -111,15 +97,7 @@ def download(ctx, **kwargs):
         flow data download -c fate_flow/examples/download_host.json
     """
     config_data, dsl_data = preprocess(**kwargs)
-    response = access_server('post', ctx, "data/download", config_data, False)
-    try:
-        if response.json()['retcode'] == 999:
-            start_cluster_standalone_job_server()
-            access_server('post', ctx, "data/download", config_data)
-        else:
-            prettify(response.json())
-    except:
-        click.echo(traceback.format_exc())
+    access_server('post', ctx, "data/download", config_data)
 
 
 @data.command("upload-history", short_help="Upload History Command")
@@ -138,21 +116,12 @@ def upload_history(ctx, **kwargs):
         flow data upload-history --job-id $JOB_ID
     """
     config_data, dsl_data = preprocess(**kwargs)
-    response = access_server('post', ctx, "data/upload/history", config_data, False)
-
-    try:
-        if response.json()['retcode'] == 999:
-            start_cluster_standalone_job_server()
-            access_server('post', ctx, "data/upload/history", config_data)
-        else:
-            prettify(response.json())
-    except:
-        click.echo(traceback.format_exc())
+    access_server('post', ctx, "data/upload/history", config_data)
 
 
 # @data.command(short_help="")
 @click.pass_context
-def download_history():
+def download_history(ctx):
     """
 
     """

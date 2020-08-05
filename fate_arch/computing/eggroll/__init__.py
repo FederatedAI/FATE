@@ -15,5 +15,6 @@
 #
 
 from fate_arch.computing.eggroll._table import Table
+from fate_arch.computing.eggroll._csession import CSession
 
-__all__ = ['Table']
+__all__ = ['Table', 'CSession']

@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
-from fate_arch.session.standalone._session import Session
+import sys
+import os
 
-__all__ = ["Session"]
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))

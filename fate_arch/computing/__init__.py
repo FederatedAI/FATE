@@ -1,0 +1,1 @@
+from fate_arch.computing._type import ComputingType

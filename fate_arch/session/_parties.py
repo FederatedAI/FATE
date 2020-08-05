@@ -20,7 +20,18 @@ import typing
 from fate_arch.common import Party
 
 
-class _FederationParties(object):
+class Parties(object):
+
+    @staticmethod
+    def from_runtime_conf(conf: dict):
+        role = conf.get("local").get("role")
+        party_id = str(conf.get("local").get("party_id"))
+        party = Party(role, party_id)
+        parties = {}
+        for role, pid_list in conf.get("role", {}).items():
+            parties[role] = [Party(role, pid) for pid in pid_list]
+        return Parties(party, parties)
+
     def __init__(self, party, parties):
         self._party = party
         self._parties = parties
@@ -40,4 +51,4 @@ class _FederationParties(object):
         return self._parties[role][idx]
 
 
-__all__ = ["_FederationParties"]
+__all__ = ["Parties"]

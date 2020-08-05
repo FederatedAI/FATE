@@ -19,13 +19,12 @@ import os
 import traceback
 import uuid
 
-from arch.api import federation
 from arch.api.utils import file_utils, log_utils
 from arch.api.utils.core_utils import current_timestamp, get_lan_ip, timestamp_to_date
 from arch.api.utils.log_utils import schedule_logger
 from fate_arch import session
 from fate_arch.storage.constant import StorageTypes, StorageEngine
-from fate_arch.session import Backend
+from fate_arch.common import Backend
 from fate_flow.entity.constant import TaskStatus, ProcessRole
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
@@ -143,7 +142,9 @@ class TaskExecutor(object):
                          mode=RuntimeConfig.WORK_MODE,
                          backend=RuntimeConfig.BACKEND,
                          options=session_options)
-            federation.init(job_id=job_utils.generate_federated_id(task_id, task_version), runtime_conf=component_parameters_on_party)
+            session.default().init_federation(
+                federation_session_id=job_utils.generate_federated_id(task_id, task_version),
+                runtime_conf=component_parameters_on_party)
 
             schedule_logger().info('Run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
             schedule_logger().info("Component parameters on party {}".format(component_parameters_on_party))
@@ -257,8 +258,8 @@ class TaskExecutor(object):
                             data_table.save_as(address=address, partition=partitions, options=save_as_options,
                                                name=name, namespace=namespace, schema_data=origin_table_schema)
                             schedule_logger().info("save as task {} input data table to {} done".format(task_id, address))
-                            data_table = session.default().load(address, schema=origin_table_schema,
-                                                                partitions=partitions)
+                            data_table = session.default().computing.load(address, schema=origin_table_schema,
+                                                                          partitions=partitions)
                         else:
                             schedule_logger().info("pass save as task {} input data table, because the table is none".format(task_id))
                         if not data_table or not filter_attr or not filter_attr.get("data", None):

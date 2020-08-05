@@ -15,24 +15,19 @@
 #
 
 
-import typing
-
 from eggroll.core.constants import StoreTypes
 from eggroll.core.session import session_init
 from eggroll.roll_pair.roll_pair import RollPairContext
 from fate_arch.abc import AddressABC, CSessionABC
-from fate_arch.common import WorkMode, Party
-from fate_arch.common import file_utils
+from fate_arch.common import WorkMode
 from fate_arch.common.log import getLogger
 from fate_arch.common.profile import log_elapsed
-from fate_arch.session._parties_util import _FederationParties
-from fate_arch.federation.eggroll import FederationEngine
 from fate_arch.computing.eggroll import Table
 
 LOGGER = getLogger()
 
 
-class Session(CSessionABC):
+class CSession(CSessionABC):
     def __init__(self, session_id, work_mode, options: dict = None):
         if options is None:
             options = {}
@@ -43,39 +38,14 @@ class Session(CSessionABC):
         self._rp_session = session_init(session_id=session_id, options=options)
         self._rpc = RollPairContext(session=self._rp_session)
         self._session_id = self._rp_session.get_session_id()
-
-        self._federation_session: typing.Optional[FederationEngine] = None
-        self._federation_parties: typing.Optional[_FederationParties] = None
-
         self._default_storage_type = options.get("store_type", StoreTypes.ROLLPAIR_IN_MEMORY)
 
-    def _init_federation(self, federation_session_id: str,
-                         party: Party,
-                         parties: typing.MutableMapping[str, typing.List[Party]],
-                         host: str, port: int):
-        if self._federation_session is not None:
-            raise RuntimeError("federation session already initialized")
-        self._federation_session = FederationEngine(self._rpc, federation_session_id, party, host, int(port))
-        self._federation_parties = _FederationParties(party, parties)
+    def get_rpc(self):
+        return self._rpc
 
-    def init_federation(self, federation_session_id: str, runtime_conf: dict, server_conf: typing.Optional[str] = None):
-        if server_conf is None:
-            _path = file_utils.get_project_base_directory() + "/conf/server_conf.json"
-            server_conf = file_utils.load_json_conf(_path)
-        host = server_conf.get('servers').get('proxy').get("host")
-        port = server_conf.get('servers').get('proxy').get("port")
-
-        party, parties = self._parse_runtime_conf(runtime_conf)
-        self._init_federation(federation_session_id, party, parties, host, int(port))
-
-    def _get_session_id(self):
+    @property
+    def session_id(self):
         return self._session_id
-
-    def _get_federation(self):
-        return self._federation_session
-
-    def _get_federation_parties(self):
-        return self._federation_parties
 
     @log_elapsed
     def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs):

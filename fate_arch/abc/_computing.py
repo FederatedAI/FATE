@@ -26,7 +26,6 @@ from collections import Iterable
 from fate_arch.abc._address import AddressABC
 from fate_arch.abc._federation import FederationABC
 from fate_arch.abc._path import PathABC
-from fate_arch.common import Party
 
 
 # noinspection PyPep8Naming
@@ -115,10 +114,6 @@ class CTableABC(metaclass=ABCMeta):
 class CSessionABC(metaclass=ABCMeta):
 
     @abc.abstractmethod
-    def init_federation(self, federation_session_id: str, runtime_conf: dict, **kwargs):
-        ...
-
-    @abc.abstractmethod
     def load(self, address: AddressABC, partitions, schema: dict, **kwargs) -> typing.Union[PathABC, CTableABC]:
         ...
 
@@ -147,36 +142,7 @@ class CSessionABC(metaclass=ABCMeta):
     def kill(self):
         pass
 
-    @abc.abstractmethod
-    def _get_federation(self):
-        ...
-
-    @abc.abstractmethod
-    def _get_session_id(self):
-        ...
-
-    @abc.abstractmethod
-    def _get_federation_parties(self):
-        ...
-
     @property
+    @abc.abstractmethod
     def session_id(self) -> str:
-        return self._get_session_id()
-
-    @property
-    def parties(self):
-        return self._get_federation_parties()
-
-    @property
-    def federation(self) -> 'FederationABC':
-        return self._get_federation()
-
-    @staticmethod
-    def _parse_runtime_conf(runtime_conf):
-        role = runtime_conf.get("local").get("role")
-        party_id = str(runtime_conf.get("local").get("party_id"))
-        party = Party(role, party_id)
-        parties = {}
-        for role, pid_list in runtime_conf.get("role", {}).items():
-            parties[role] = [Party(role, pid) for pid in pid_list]
-        return party, parties
+        ...

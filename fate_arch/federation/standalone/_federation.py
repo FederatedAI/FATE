@@ -9,8 +9,8 @@ from fate_arch.standalone import Federation as RawFederation, Table as RawTable
 
 class Federation(FederationABC):
 
-    def __init__(self, raw_session, federation_session_id, party):
-        self._federation = RawFederation(raw_session, federation_session_id, party)
+    def __init__(self, standalone_session, federation_session_id, party):
+        self._federation = RawFederation(standalone_session, federation_session_id, party)
 
     def remote(self, v, name: str, tag: str, parties: typing.List[Party], gc: GarbageCollectionABC):
         if isinstance(v, Table):

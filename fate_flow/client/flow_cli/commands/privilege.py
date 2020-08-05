@@ -15,7 +15,7 @@
 #
 import click
 from fate_flow.utils import detect_utils
-from fate_flow.utils.cli_utils import preprocess, access_server
+from fate_flow.client.flow_cli.utils.cli_utils import preprocess, access_server
 
 
 @click.group(short_help="Privilege Operations")
