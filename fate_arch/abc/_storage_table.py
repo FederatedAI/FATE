@@ -118,21 +118,21 @@ class TableABC(object):
         with DB.connection_context():
             table_metas = StorageTableMeta.select().where(StorageTableMeta.f_name == name,
                                                           StorageTableMeta.f_namespace == namespace)
-            table_meta = {}
+            meta = None
             if table_metas:
-                table_metas = table_metas[0]
+                table_meta = table_metas[0]
                 try:
                     if _type == StorageTableMetaType.SCHEMA:
-                        table_meta = deserialize_b64(table_metas.f_schema)
+                        meta = deserialize_b64(table_meta.f_schema)
                     elif _type == StorageTableMetaType.PART_OF_DATA:
-                        table_meta = deserialize_b64(table_metas.f_part_of_data)
+                        meta = deserialize_b64(table_meta.f_part_of_data)
                     elif _type == StorageTableMetaType.COUNT:
-                        table_meta = table_metas.f_count
+                        meta = table_meta.f_count
                     elif _type == StorageTableMetaType.PARTITIONS:
-                        table_meta = table_metas.f_partitions
+                        meta = table_meta.f_partitions
                 except:
-                    table_meta = None
-        return table_meta
+                    meta = None
+        return meta
 
     def save_meta(self, schema=None, name=None, namespace=None, party_of_data=None, count=0, partitions=1):
         # save metas to mysql
