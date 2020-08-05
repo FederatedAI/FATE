@@ -42,7 +42,10 @@
         "ftl_0": {
             "epochs": 10,
             "learning_rate": 0.01,
-            "mode": "encrypted",
+            "optimizer": {
+                "optimizer": "Adam",
+                "learning_rate": 0.01
+            },
             "alpha": 1,
             "tol": 0.00001,
             "batch_size": -1,

@@ -70,7 +70,6 @@ class FTL(ModelBase):
 
     def _init_model(self, param: FTLParam):
 
-        self.learning_rate = param.learning_rate
         self.nn_define = param.nn_define
         self.alpha = param.alpha
         self.tol = param.tol
@@ -84,6 +83,8 @@ class FTL(ModelBase):
         self.mode = param.mode
         self.comm_eff = param.communication_efficient
         self.local_round = param.local_round
+        assert 'learning_rate' in self.optimizer['kwargs'], 'optimizer setting must contain learning_rate'
+        self.learning_rate = self.optimizer['kwargs']['learning_rate']
 
         if not self.comm_eff:
             self.local_round = 1
