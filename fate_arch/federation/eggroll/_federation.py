@@ -24,23 +24,35 @@ from enum import Enum
 from eggroll.core.meta_model import ErEndpoint
 from eggroll.roll_pair.roll_pair import RollPair, RollPairContext
 from eggroll.roll_site.roll_site import RollSiteContext
-from fate_arch.abc import GarbageCollectionABC
 from fate_arch.abc import FederationABC
+from fate_arch.abc import GarbageCollectionABC
 from fate_arch.common import Party
 from fate_arch.common.log import getLogger
-from fate_arch.federation._split import is_split_head, split_get
 from fate_arch.computing.eggroll import Table
+from fate_arch.federation._split import is_split_head, split_get
 
 LOGGER = getLogger()
 
 
+class Proxy(object):
+    def __init__(self, host: str, port: int):
+        self.host = host
+        self.port = port
+
+    @staticmethod
+    def from_conf(conf):
+        host = conf.get('servers').get('proxy').get("host")
+        port = conf.get('servers').get('proxy').get("port")
+        return Proxy(host, int(port))
+
+
 class Federation(FederationABC):
 
-    def __init__(self, rp_ctx: RollPairContext, rs_session_id: str, party: Party, host: str, port: int):
+    def __init__(self, rp_ctx: RollPairContext, rs_session_id: str, party: Party, proxy: Proxy):
         options = {
             'self_role': party.role,
             'self_party_id': party.party_id,
-            'proxy_endpoint': ErEndpoint(host, port)
+            'proxy_endpoint': ErEndpoint(proxy.host, proxy.port)
         }
         self.rsc = RollSiteContext(rs_session_id, rp_ctx=rp_ctx, options=options)
         LOGGER.debug(f"init roll site context done: {self.rsc.__dict__}")

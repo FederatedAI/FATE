@@ -15,25 +15,19 @@
 #
 
 
-import typing
-
 from eggroll.core.constants import StoreTypes
 from eggroll.core.session import session_init
 from eggroll.roll_pair.roll_pair import RollPairContext
 from fate_arch.abc import AddressABC, CSessionABC
 from fate_arch.common import WorkMode
-from fate_arch.common import file_utils
 from fate_arch.common.log import getLogger
 from fate_arch.common.profile import log_elapsed
 from fate_arch.computing.eggroll import Table
-from fate_arch.federation.eggroll import Federation
-from fate_arch.session._parties import Parties
-from fate_arch.session._runtime_conf_parser import _parse_runtime_conf
 
 LOGGER = getLogger()
 
 
-class Session(CSessionABC):
+class CSession(CSessionABC):
     def __init__(self, session_id, work_mode, options: dict = None):
         if options is None:
             options = {}
@@ -44,37 +38,14 @@ class Session(CSessionABC):
         self._rp_session = session_init(session_id=session_id, options=options)
         self._rpc = RollPairContext(session=self._rp_session)
         self._session_id = self._rp_session.get_session_id()
-
-        self._federation: typing.Optional[Federation] = None
-        self._parties: typing.Optional[Parties] = None
-
         self._default_storage_type = options.get("store_type", StoreTypes.ROLLPAIR_IN_MEMORY)
 
-    def init_federation(self, federation_session_id: str, runtime_conf: dict, server_conf: typing.Optional[str] = None):
-        if server_conf is None:
-            _path = file_utils.get_project_base_directory() + "/conf/server_conf.json"
-            server_conf = file_utils.load_json_conf(_path)
-        host = server_conf.get('servers').get('proxy').get("host")
-        port = server_conf.get('servers').get('proxy').get("port")
-
-        party, parties = _parse_runtime_conf(runtime_conf)
-
-        if self._federation is not None:
-            raise RuntimeError("federation session already initialized")
-        self._federation = Federation(self._rpc, federation_session_id, party, host, int(port))
-        self._parties = Parties(party, parties)
+    def get_rpc(self):
+        return self._rpc
 
     @property
     def session_id(self):
         return self._session_id
-
-    @property
-    def federation(self):
-        return self._federation
-
-    @property
-    def parties(self):
-        return self._parties
 
     @log_elapsed
     def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs):

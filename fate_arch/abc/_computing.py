@@ -114,10 +114,6 @@ class CTableABC(metaclass=ABCMeta):
 class CSessionABC(metaclass=ABCMeta):
 
     @abc.abstractmethod
-    def init_federation(self, federation_session_id: str, runtime_conf: dict, **kwargs):
-        ...
-
-    @abc.abstractmethod
     def load(self, address: AddressABC, partitions, schema: dict, **kwargs) -> typing.Union[PathABC, CTableABC]:
         ...
 
@@ -149,14 +145,4 @@ class CSessionABC(metaclass=ABCMeta):
     @property
     @abc.abstractmethod
     def session_id(self) -> str:
-        ...
-
-    @property
-    @abc.abstractmethod
-    def parties(self):
-        ...
-
-    @property
-    @abc.abstractmethod
-    def federation(self) -> 'FederationABC':
         ...

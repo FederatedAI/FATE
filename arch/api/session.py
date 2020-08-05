@@ -87,9 +87,9 @@ def table(name, namespace, **kwargs) -> CTableABC:
     Examples
     --------
     >>> from arch.api import session
-    >>> a = session.table('foo', 'bar')
+    >>> a = session.default().computing.load('foo', 'bar')
     """
-    return session.default().load(name=name, namespace=namespace, **kwargs)
+    return session.default().computing.load(name=name, namespace=namespace, **kwargs)
 
 
 def parallelize(data: Iterable, partition, include_key=False, **kwargs) -> CTableABC:
@@ -113,9 +113,9 @@ def parallelize(data: Iterable, partition, include_key=False, **kwargs) -> CTabl
     Examples
     --------
     >>> from arch.api import session
-    >>> table = session.parallelize(range(10), 2)
+    >>> table = session.default().computing.parallelize(range(10), 2)
     """
-    return session.default().parallelize(data=data, partition=partition, include_key=include_key, **kwargs)
+    return session.default().computing.parallelize(data=data, partition=partition, include_key=include_key, **kwargs)
 
 
 def cleanup(name, namespace, *args, **kwargs):
@@ -136,11 +136,11 @@ def cleanup(name, namespace, *args, **kwargs):
     Examples
     --------
     >>> from arch.api import session
-    >>> session.cleanup('foo*', 'bar', persistent=True)
+    >>> session.default()..computing.cleanup('foo*', 'bar', persistent=True)
     """
     if len(args) > 0 or len(kwargs) > 0:
         LOGGER.warning(f"some args removed, please check! {args}, {kwargs}")
-    return session.default().cleanup(name=name, namespace=namespace)
+    return session.default().computing.cleanup(name=name, namespace=namespace)
 
 
 def get_session_id():
@@ -154,10 +154,8 @@ def get_session_id():
 
     Examples
     --------
-    >>> from arch.api import session
-    >>> session.get_session_id()
     """
-    return session.default().session_id
+    return session.default().computing.session_id
 
 
 def get_data_table(name, namespace):
@@ -182,11 +180,11 @@ def get_data_table(name, namespace):
     >>> session.get_data_table(name, namespace)
     """
     LOGGER.warning(f"don't use this, use table directly")
-    return session.default().load(name=name, namespace=namespace)
+    return session.default().computing.load(name=name, namespace=namespace)
 
 
 def clean_tables(namespace, regex_string='*'):
-    session.default().cleanup(namespace=namespace, name=regex_string)
+    session.default().computing.cleanup(namespace=namespace, name=regex_string)
 
 
 def stop():
@@ -198,11 +196,11 @@ def stop():
     >>> from arch.api import session
     >>> session.stop()
     """
-    session.default().stop()
+    session.default().computing.stop()
 
 
 def kill():
-    session.default().kill()
+    session.default().computing.kill()
 
 
 def exit():

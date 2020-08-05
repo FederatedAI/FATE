@@ -13,41 +13,23 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import typing
 from collections import Iterable
 
 from fate_arch.abc import AddressABC, CSessionABC
-from fate_arch.common import Party
 from fate_arch.common.log import getLogger
 from fate_arch.computing.standalone import Table
-from fate_arch.federation.standalone import Federation
-from fate_arch.session._parties import Parties
-from fate_arch.session._runtime_conf_parser import _parse_runtime_conf
-from fate_arch.standalone import Session as RawSession
+from fate_arch.standalone import Session
 
 LOGGER = getLogger()
 
 
-class Session(CSessionABC):
+class CSession(CSessionABC):
 
-    def __init__(self, session: RawSession):
-        self._session = session
-        self._federation: typing.Optional[Federation] = None
-        self._parties: typing.Optional[Parties] = None
+    def __init__(self, session_id: str):
+        self._session = Session(session_id)
 
-    def _init_federation(self, federation_session_id: str,
-                         party: Party,
-                         parties: typing.MutableMapping[str, typing.List[Party]]):
-        if self._federation is not None:
-            raise RuntimeError("federation session already initialized")
-        self._federation = Federation(raw_session=self,
-                                      federation_session_id=federation_session_id,
-                                      party=party)
-        self._parties = Parties(party, parties)
-
-    def init_federation(self, federation_session_id: str, runtime_conf: dict, **kwargs):
-        party, parties = _parse_runtime_conf(runtime_conf)
-        self._init_federation(federation_session_id, party, parties)
+    def get_standalone_session(self):
+        return self._session
 
     def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
         from fate_arch.data_table.address import EggRollAddress
@@ -75,13 +57,5 @@ class Session(CSessionABC):
         return self._session.kill()
 
     @property
-    def federation(self):
-        return self._federation
-
-    @property
     def session_id(self):
         return self._session.session_id
-
-    @property
-    def parties(self):
-        raise self._parties

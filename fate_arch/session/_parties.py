@@ -21,6 +21,17 @@ from fate_arch.common import Party
 
 
 class Parties(object):
+
+    @staticmethod
+    def from_runtime_conf(conf: dict):
+        role = conf.get("local").get("role")
+        party_id = str(conf.get("local").get("party_id"))
+        party = Party(role, party_id)
+        parties = {}
+        for role, pid_list in conf.get("role", {}).items():
+            parties[role] = [Party(role, pid) for pid in pid_list]
+        return Parties(party, parties)
+
     def __init__(self, party, parties):
         self._party = party
         self._parties = parties

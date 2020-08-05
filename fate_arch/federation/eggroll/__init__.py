@@ -14,6 +14,6 @@
 #  limitations under the License.
 #
 
-from fate_arch.federation.eggroll._federation import Federation
+from fate_arch.federation.eggroll._federation import Federation, Proxy
 
-__all__ = ['Federation']
+__all__ = ['Federation', 'Proxy']
