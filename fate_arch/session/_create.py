@@ -3,7 +3,7 @@ import uuid
 
 from fate_arch.common import WorkMode, Backend
 from fate_arch.computing import ComputingType
-from fate_arch.session._session import Session, set_default
+from fate_arch.session._session import Session
 
 
 def init(session_id=None,
@@ -39,6 +39,5 @@ def create(session_id=None,
     if options is None:
         options = {}
     session.init_computing(computing_type=computing_type, computing_session_id=session_id, options=options)
-
-    set_default(session)
+    session.start()
     return session
