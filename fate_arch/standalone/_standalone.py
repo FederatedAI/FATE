@@ -33,9 +33,9 @@ from cachetools import LRUCache
 from cachetools import cached
 
 from fate_arch.abc import GarbageCollectionABC
-from fate_arch.backend.standalone import _cloudpickle as f_pickle
 from fate_arch.common import file_utils, Party
 from fate_arch.common.log import getLogger
+from fate_arch.standalone import _cloudpickle as f_pickle
 
 LOGGER = getLogger()
 

@@ -22,11 +22,10 @@ from pyspark import SparkContext
 
 from fate_arch.abc import AddressABC
 from fate_arch.abc import CSessionABC
-from fate_arch.backend.spark import RabbitManager
 from fate_arch.common import file_utils, Party
-from fate_arch.session._parties_util import _FederationParties
-from fate_arch.federation.spark import FederationEngine, MQ
 from fate_arch.computing.spark import from_hdfs, from_rdd
+from fate_arch.federation.spark import FederationEngine, MQ, RabbitManager
+from fate_arch.session._parties_util import _FederationParties
 
 
 class Session(CSessionABC):
@@ -45,8 +44,7 @@ class Session(CSessionABC):
             return table
         from fate_arch.data_table.address import FileAddress
         if isinstance(address, FileAddress):
-            from fate_arch.session._file import Path
-            return Path(address.path, address.path_type)
+            return address
         raise NotImplementedError(f"address type {type(address)} not supported with spark backend")
 
     def _init_federation(self, federation_session_id: str,
