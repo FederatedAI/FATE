@@ -51,7 +51,7 @@ from typing import Union
 from typing_extensions import Protocol
 
 from fate_arch.session import Party
-from fate_arch.transfer_variable import Variable
+from fate_arch.federation.transfer_variable import Variable
 """
 
 PROTOCOL = """\

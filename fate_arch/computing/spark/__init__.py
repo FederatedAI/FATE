@@ -14,4 +14,6 @@
 #  limitations under the License.
 #
 
-from fate_arch.federation._split import  segment_transfer_enabled
+from fate_arch.computing.spark._table import Table, from_hdfs, from_rdd
+
+__all__ = ['Table', 'from_hdfs', 'from_rdd']

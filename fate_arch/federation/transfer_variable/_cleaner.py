@@ -15,9 +15,8 @@
 #
 
 
-from collections import deque
-
 import typing
+from collections import deque
 
 from fate_arch.abc import GarbageCollectionABC
 from fate_arch.common.log import getLogger
