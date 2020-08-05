@@ -268,7 +268,7 @@ def component_output_data_download():
             output_data_meta_file_list.append(output_data_meta_file_path)
             with open(output_data_meta_file_path, 'w') as fw:
                 json.dump({'header': header}, fw, indent=4)
-            if request_data.get('head', True):
+            if request_data.get('head', True) and header:
                 with open(output_data_file_path, 'r+') as f:
                     content = f.read()
                     f.seek(0, 0)
@@ -386,6 +386,8 @@ def get_component_output_data_line(src_key, src_value):
 def get_component_output_data_meta(output_data_table, have_data_label, is_str=False):
     # get meta
     schema = output_data_table.get_schema()
+    if not schema:
+         return None
     header = [schema.get('sid_name', 'sid')]
     if have_data_label:
         header.append(schema.get('label_name'))
