@@ -57,6 +57,5 @@ def init(job_id: str, runtime_conf, *args, **kwargs):
     >>> federation.init('job_id', runtime_conf)
 
     """
-    session.default().init_federation(federation_type=FederationType.EGGROLL,
-                                      federation_session_id=job_id,
+    session.default().init_federation(federation_session_id=job_id,
                                       runtime_conf=runtime_conf)

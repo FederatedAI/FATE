@@ -11,6 +11,7 @@ from fate_arch.session._parties import Parties
 class Session(object):
     def __init__(self):
         self._computing_session: typing.Optional[CSessionABC] = None
+        self._computing_type: typing.Optional[ComputingType] = None
         self._federation_session: typing.Optional[FederationABC] = None
         self._parties: typing.Optional[Parties] = None
         self._storage_session = None
@@ -29,25 +30,28 @@ class Session(object):
             self._computing_session = CSession(session_id=computing_session_id,
                                                work_mode=work_mode,
                                                options=options)
+            self._computing_type = ComputingType.EGGROLL
             return self
 
         if computing_type == ComputingType.SPARK:
             from fate_arch.computing.spark import CSession
             self._computing_session = CSession(session_id=computing_session_id)
+            self._computing_type = ComputingType.SPARK
             return self
 
         if computing_type == ComputingType.STANDALONE:
             from fate_arch.computing.standalone import CSession
             self._computing_session = CSession(session_id=computing_session_id)
+            self._computing_type = ComputingType.STANDALONE
             return self
 
         raise RuntimeError(f"{computing_type} not supported")
 
     def init_federation(self,
-                        federation_type: FederationType,
                         federation_session_id: str,
                         runtime_conf: dict,
-                        server_conf: dict = None):
+                        server_conf: dict = None,
+                        federation_type: typing.Optional[FederationType] = None):
         self._parties = Parties.from_runtime_conf(runtime_conf)
         party = self._parties.local_party
         if server_conf is None:
@@ -55,6 +59,19 @@ class Session(object):
 
         if self.is_federation_valid:
             raise RuntimeError("federation session already valid")
+
+        if federation_type is None:
+            if self._computing_type is None:
+                raise RuntimeError("can't infer federation_type since session not valid")
+
+            if self._computing_type == ComputingType.EGGROLL:
+                federation_type = FederationType.EGGROLL
+            elif self._computing_type == ComputingType.SPARK:
+                federation_type = FederationType.MQ
+            elif self._computing_type == ComputingType.STANDALONE:
+                federation_type = FederationType.STANDALONE
+            else:
+                raise RuntimeError(f"can't infer federation_type with computing type {self._computing_type}")
 
         if federation_type == FederationType.EGGROLL:
             from fate_arch.computing.eggroll import CSession
