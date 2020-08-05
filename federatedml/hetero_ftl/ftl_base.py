@@ -13,7 +13,7 @@ from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.util import consts
 from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
 from federatedml.protobuf.generated.ftl_model_param_pb2 import FTLModelParam
-from federatedml.protobuf.generated.ftl_model_meta_pb2 import FTLModelMeta, PredictParam, FTLOptimizerParam
+from federatedml.protobuf.generated.ftl_model_meta_pb2 import FTLModelMeta, FTLPredictParam, FTLOptimizerParam
 from federatedml.util.validation_strategy import ValidationStrategy
 
 from arch.api.utils import log_utils
@@ -309,7 +309,7 @@ class FTL(ModelBase):
         model_meta.tol = self.tol
         model_meta.input_dim = self.x_shape[0]
 
-        predict_param = PredictParam()
+        predict_param = FTLPredictParam()
 
         optimizer_param = FTLOptimizerParam()
         optimizer_param.optimizer = self.optimizer.optimizer
