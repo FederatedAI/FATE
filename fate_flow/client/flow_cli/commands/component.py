@@ -16,9 +16,9 @@
 import os
 import click
 from contextlib import closing
-from fate_flow.utils import detect_utils, cli_args
-from fate_flow.utils.cli_utils import (prettify, preprocess, download_from_request,
-                                       access_server, check_output_path)
+from fate_flow.client.flow_cli.utils import cli_args
+from fate_flow.client.flow_cli.utils.cli_utils import (prettify, preprocess, download_from_request,
+                                                       access_server, check_abs_path)
 
 
 @click.group(short_help="Component Operations")
@@ -66,8 +66,6 @@ def metrics(ctx, **kwargs):
         flow component metrics -j $JOB_ID -r host -p 10000 -cpn hetero_feature_binning_0
     """
     config_data, dsl_data = preprocess(**kwargs)
-    detect_utils.check_config(config=config_data,
-                              required_arguments=['job_id', 'component_name', 'role', 'party_id'])
     access_server('post', ctx, 'tracking/component/metrics', config_data)
 
 
@@ -88,8 +86,6 @@ def metric_all(ctx, **kwargs):
         flow component metric-all -j $JOB_ID -r host -p 10000 -cpn hetero_feature_binning_0
     """
     config_data, dsl_data = preprocess(**kwargs)
-    detect_utils.check_config(config=config_data,
-                              required_arguments=['job_id', 'component_name', 'role', 'party_id'])
     access_server('post', ctx, 'tracking/component/metric/all', config_data)
 
 
@@ -134,8 +130,6 @@ def parameters(ctx, **kwargs):
         flow component parameters -j $JOB_ID -r host -p 10000 -cpn hetero_feature_binning_0
     """
     config_data, dsl_data = preprocess(**kwargs)
-    detect_utils.check_config(config=config_data,
-                              required_arguments=['job_id', 'component_name', 'role', 'party_id'])
     access_server('post', ctx, 'tracking/component/parameters', config_data)
 
 
@@ -158,8 +152,6 @@ def output_data(ctx, **kwargs):
         flow component output-data -j $JOB_ID -r host -p 10000 -cpn hetero_feature_binning_0 --output-path ./examples/
     """
     config_data, dsl_data = preprocess(**kwargs)
-    detect_utils.check_config(config=config_data,
-                              required_arguments=['job_id', 'component_name', 'role', 'party_id', 'output_path'])
     tar_file_name = 'job_{}_{}_{}_{}_output_data.tar.gz'.format(config_data['job_id'],
                                                                 config_data['component_name'],
                                                                 config_data['role'],
@@ -198,8 +190,6 @@ def output_model(ctx, **kwargs):
         flow component output-model -j $JOB_ID -r host -p 10000 -cpn hetero_feature_binning_0
     """
     config_data, dsl_data = preprocess(**kwargs)
-    detect_utils.check_config(config=config_data,
-                              required_arguments=['job_id', 'component_name', 'role', 'party_id'])
     access_server('post', ctx, 'tracking/component/output/model', config_data)
 
 
@@ -220,8 +210,6 @@ def output_data_table(ctx, **kwargs):
         flow component output-data-table -j $JOB_ID -r host -p 10000 -cpn hetero_feature_binning_0
     """
     config_data, dsl_data = preprocess(**kwargs)
-    detect_utils.check_config(config=config_data,
-                              required_arguments=['job_id', 'component_name', 'role', 'party_id'])
     access_server('post', ctx, 'tracking/component/output/data/table', config_data)
 
 
@@ -244,7 +232,5 @@ def download_summary(ctx, **kwargs):
         flow component download-summary -j $JOB_ID -r host -p 10000 -cpn hetero_feature_binning_0 -o ./examples/summary.json
     """
     config_data, dsl_data = preprocess(**kwargs)
-    detect_utils.check_config(config=config_data,
-                              required_arguments=['job_id', 'component_name', 'role', 'party_id', 'output_path'])
-    config_data['output_path'] = check_output_path(kwargs.get('output_path'))
+    config_data['output_path'] = check_abs_path(kwargs.get('output_path'))
     access_server('post', ctx, 'tracking/component/summary/download', config_data)

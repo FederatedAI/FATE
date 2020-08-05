@@ -19,9 +19,9 @@ import click
 import requests
 from contextlib import closing
 
-from fate_flow.utils import detect_utils, cli_args
-from fate_flow.utils.cli_utils import (preprocess, download_from_request, access_server,
-                                       prettify, check_output_path)
+from fate_flow.client.flow_cli.utils import cli_args
+from fate_flow.client.flow_cli.utils.cli_utils import (preprocess, download_from_request, access_server,
+                                                       prettify, check_abs_path)
 
 
 @click.group(short_help="Job Operations")
@@ -108,7 +108,7 @@ def query(ctx, **kwargs):
 
 
 @job.command("clean", short_help="Clean Job Command")
-@cli_args.JOBID
+@cli_args.JOBID_REQUIRED
 @cli_args.ROLE
 @cli_args.PARTYID
 @cli_args.COMPONENT_NAME
@@ -122,11 +122,9 @@ def clean(ctx, **kwargs):
 
     \b
     - USAGE:
-        flow job clean -r guest -p 9999
         flow job clean -j $JOB_ID -cpn hetero_feature_binning_0
     """
     config_data, dsl_data = preprocess(**kwargs)
-    detect_utils.check_config(config=config_data, required_arguments=['job_id'])
     access_server('post', ctx, "job/clean", config_data)
 
 
@@ -144,7 +142,6 @@ def stop(ctx, **kwargs):
         flow job stop -j $JOB_ID
     """
     config_data, dsl_data = preprocess(**kwargs)
-    detect_utils.check_config(config=config_data, required_arguments=['job_id'])
     access_server('post', ctx, "job/stop", config_data)
 
 
@@ -165,7 +162,6 @@ def config(ctx, **kwargs):
         flow job config -j $JOB_ID -r host -p 10000 --output-path ./examples/
     """
     config_data, dsl_data = preprocess(**kwargs)
-    detect_utils.check_config(config=config_data, required_arguments=['job_id', 'role', 'party_id', 'output_path'])
     response = access_server('post', ctx, 'job/config', config_data, False).json()
     if response['retcode'] == 0:
         job_id = response['data']['job_id']
@@ -198,7 +194,6 @@ def log(ctx, **kwargs):
         flow job log -j JOB_ID --output-path ./examples/
     """
     config_data, dsl_data = preprocess(**kwargs)
-    detect_utils.check_config(config=config_data, required_arguments=['job_id', 'output_path'])
     job_id = config_data['job_id']
     tar_file_name = 'job_{}_log.tar.gz'.format(job_id)
     extract_dir = os.path.join(config_data['output_path'], 'job_{}_log'.format(job_id))
@@ -281,7 +276,7 @@ def dsl_generator(ctx, **kwargs):
         "cpn_str": cpn_str,
         "train_dsl": train_dsl,
         "version": kwargs.get("version"),
-        "output_path": check_output_path(kwargs.get("output_path"))
+        "output_path": check_abs_path(kwargs.get("output_path"))
     }
 
     access_server('post', ctx, 'job/dsl/generate', config_data)
