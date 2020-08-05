@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+package com.webank.ai.fate.api.mlmodel.manager;
+option java_outer_classname = "ModelServiceProto";
+
+message Party{
+    repeated string partyId = 1;
+}
+
+message LocalInfo{
+    string role = 1;
+    string partyId = 2;
+}
+
+message ModelInfo{
+    string tableName = 1;
+    string namespace = 2;
+}
+
+message RoleModelInfo{
+    map<string, ModelInfo> roleModelInfo = 1;
+}
+
+message UnloadRequest{
+    string tableName = 1;
+    string namespace = 2;
+}
+message UnloadResponse{
+    string statusCode = 1;
+    string message = 2;
+}
+
+message UnbindRequest{
+    string serviceId = 1;
+    string tableName = 2;
+    string namespace = 3;
+}
+message UnbindResponse{
+    string statusCode = 1;
+    string message = 2;
+}
+
+message QueryModelRequest{
+    string serviceId = 1;
+    string tableName = 2;
+    string namespace = 3;
+    int32    beginIndex = 4;
+    int32    endIndex = 5;
+    int32    queryType = 6;
+
+}
+message ModelBindInfo{
+
+}
+
+message ModelInfoEx{
+    string tableName = 1;
+    string namespace = 2;
+    string serviceId = 3;
+    string content = 4;
+    int32    index = 5;
+
+}
+
+
+
+message QueryModelResponse{
+    string retcode = 1;
+    string message = 2;
+    repeated  ModelInfoEx modelInfos = 3;
+}
+
+
+message PublishRequest{
+    LocalInfo local = 1;
+    map<string, Party> role = 2;
+    map<string, RoleModelInfo> model = 3;
+    string serviceId = 4;
+    string tableName = 5;
+    string namespace = 6;
+    string loadType = 7;
+    string filePath = 8;
+}
+
+message PublishResponse{
+    int32 statusCode = 1;
+    string message = 2;
+    string error = 3;
+    bytes data = 4;
+}
+
+
+
+
+service ModelService{
+    rpc publishLoad(PublishRequest) returns (PublishResponse);
+    rpc publishBind(PublishRequest) returns (PublishResponse);
+    rpc publishOnline(PublishRequest) returns (PublishResponse);
+    rpc queryModel(QueryModelRequest)  returns (QueryModelResponse);
+    rpc unload(UnloadRequest) returns (UnloadResponse);
+    rpc unbind(UnbindRequest) returns (UnbindResponse);
+}
