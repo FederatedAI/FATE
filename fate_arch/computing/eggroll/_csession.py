@@ -61,6 +61,7 @@ class CSession(CSessionABC):
                 raise RuntimeError(f"no exists: {address.name}, {address.namespace}, {address.storage_type}")
 
             if address.storage_type != StoreTypes.ROLLPAIR_IN_MEMORY:
+                # TODO: Generate a name and namespace using a random string
                 rp = rp.save_as(name=address.name, namespace=address.namespace, partition=partitions,
                                 options={'store_type': StoreTypes.ROLLPAIR_IN_MEMORY})
 

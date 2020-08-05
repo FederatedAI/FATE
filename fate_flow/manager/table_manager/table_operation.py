@@ -63,7 +63,7 @@ def create(name, namespace, storage_engine, address=None, partitions=1, count=0)
             meta.save(force_insert=True)
         else:
             meta.save()
-        return address
+        return get_address(engine=meta.f_engine, address_dict=meta.f_address)
 
 
 def get_storage_info(name, namespace):
@@ -162,5 +162,5 @@ def get_address(engine, address_dict):
     elif engine in Relationship.CompToStore.get(Backend.SPARK):
         address = HDFSAddress(*address_dict)
     else:
-        address = {}
+        address = None
     return address
