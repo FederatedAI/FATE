@@ -28,10 +28,6 @@ class HeteroKmenasArbiter(BaseKmeansModel):
         super(HeteroKmenasArbiter, self).__init__()
         self.model_param = KmeansParam()
 
-    def centroid_assign(self, dist_sum):
-        new_centroid = dist_sum.mapValues(lambda x: x.index(max(x)))
-        return new_centroid
-
     def fit(self, data_instances=None):
         LOGGER.info("Enter hetero linear model arbiter fit")
         tol_sum = inf

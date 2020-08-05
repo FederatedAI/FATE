@@ -21,5 +21,7 @@ option java_outer_classname = "KmeansModelParamProto";
 
 message KmeansModelParam {
     int32 iters = 1;
+    int32 is_converged = 2;
+    int32 k = 3;
 }
 

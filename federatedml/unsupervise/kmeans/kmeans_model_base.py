@@ -59,8 +59,6 @@ class BaseKmeansModel(ModelBase):
         if header is None:
             param_protobuf_obj = hetero_kmeans_param_pb2.KmeansModelParam()
             return param_protobuf_obj
-
-        weight_dict = {}
         param_protobuf_obj = hetero_kmeans_param_pb2.KmeansModelParam(iters=self.n_iter_)
         return param_protobuf_obj
 
@@ -72,6 +70,10 @@ class BaseKmeansModel(ModelBase):
             self.model_param_name: param_obj
         }
         return result
+
+    def centroid_assign(self, dist_sum):
+        new_centroid = dist_sum.mapValues(lambda x: x.index(max(x)))
+        return new_centroid
 
     def _abnormal_detection(self, data_instances):
         """

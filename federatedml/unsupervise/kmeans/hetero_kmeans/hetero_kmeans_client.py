@@ -90,6 +90,17 @@ class HeteroKmeansClient(BaseKmeansModel):
             if tol_tag == 1:
                 break
 
+    def predict(self, data_instances):
+        LOGGER.info("Start predict ...")
+        dist_list = self.educl_dist(data_instances.features, self.centroid_list)
+        dist_list_host = self.transfer_variable.host_dist_list.get(idx=-1)
+        LOGGER.info("Get distance from Host")
+        for host_pred in dist_list_host:
+            dist_list = dist_list.join(host_pred, lambda g, h: g + h)
+        sample_class = self.centroid_assign(dist_list)
+        #xiugai
+        predict_result = data_instances.join(sample_class, lambda d, pred: [d.label, pred, pred, {"label": pred}])
+        return predict_result
 
 class HeteroKmeansGuest(HeteroKmeansClient):
     def __init__(self):
