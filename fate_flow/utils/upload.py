@@ -30,7 +30,7 @@ class Upload(object):
     def __init__(self):
         self.taskid = ''
         self.tracker = None
-        self.MAX_PARTITION_NUM = 1024
+        self.MAX_PARTITIONS = 1024
         self.MAX_BYTES = 1024*1024*8
         self.parameters = {}
         self.table = None
@@ -60,12 +60,12 @@ class Upload(object):
             head = True
         else:
             raise Exception("'head' in conf.json should be 0 or 1")
-        partition = self.parameters["partition"]
-        if partition <= 0 or partition >= self.MAX_PARTITION_NUM:
-            raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITION_NUM))
+        partitions = self.parameters["partition"]
+        if partitions <= 0 or partitions >= self.MAX_PARTITIONS:
+            raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITIONS))
         self.table = create_table(job_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id), name=table_name,
                                   namespace=namespace, partitions=self.parameters["partition"],
-                                  store_engine=self.parameters['store_engine'], mode=self.parameters['work_mode'])
+                                  engine=self.parameters['storage_engine'], mode=self.parameters['work_mode'])
         data_table_count = self.save_data_table(job_id, table_name, namespace, head)
         LOGGER.info("------------load data finish!-----------------")
         # rm tmp file

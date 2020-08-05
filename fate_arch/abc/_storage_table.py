@@ -22,7 +22,8 @@ import six
 
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from fate_arch.common.log import getLogger
-from fate_arch.db.db_models import DB, StoreTableMeta
+from fate_arch.db.db_models import DB, StorageTableMeta
+from fate_arch.storage.constant import StorageTableMetaType
 
 LOGGER = getLogger()
 
@@ -110,24 +111,24 @@ class TableABC(object):
     meta utils
     """
 
-    def get_meta(self, _type='schema', name=None, namespace=None):
+    def get_meta(self, _type=StorageTableMetaType.SCHEMA, name=None, namespace=None):
         if not name and not namespace:
             name = self._name
             namespace = self._namespace
         with DB.connection_context():
-            table_metas = StoreTableMeta.select().where(StoreTableMeta.f_table_name == name,
-                                                   StoreTableMeta.f_namespace == namespace)
+            table_metas = StorageTableMeta.select().where(StorageTableMeta.f_name == name,
+                                                          StorageTableMeta.f_namespace == namespace)
             table_meta = {}
             if table_metas:
                 table_metas = table_metas[0]
                 try:
-                    if _type == 'schema':
+                    if _type == StorageTableMetaType.SCHEMA:
                         table_meta = deserialize_b64(table_metas.f_schema)
-                    elif _type == 'part_of_data':
+                    elif _type == StorageTableMetaType.PART_OF_DATA:
                         table_meta = deserialize_b64(table_metas.f_part_of_data)
-                    elif _type == 'count':
+                    elif _type == StorageTableMetaType.COUNT:
                         table_meta = table_metas.f_count
-                    elif _type == 'partitions':
+                    elif _type == StorageTableMetaType.PARTITIONS:
                         table_meta = table_metas.f_partitions
                 except:
                     table_meta = None
@@ -143,8 +144,8 @@ class TableABC(object):
             name = self.get_name()
             namespace = self.get_namespace()
         with DB.connection_context():
-            table_metas = StoreTableMeta.select().where(StoreTableMeta.f_table_name == name,
-                                                   StoreTableMeta.f_namespace == namespace)
+            table_metas = StorageTableMeta.select().where(StorageTableMeta.f_name == name,
+                                                          StorageTableMeta.f_namespace == namespace)
             if table_metas:
                 # save schema info
                 table_meta = table_metas[0]
@@ -171,10 +172,10 @@ class TableABC(object):
     def destroy_meta(self):
         try:
             with DB.connection_context():
-                StoreTableMeta \
+                StorageTableMeta \
                     .delete() \
-                    .where(StoreTableMeta.f_table_name == self.get_name(),
-                           StoreTableMeta.f_namespace == self.get_namespace()) \
+                    .where(StorageTableMeta.f_name == self.get_name(),
+                           StorageTableMeta.f_namespace == self.get_namespace()) \
                     .execute()
         except Exception as e:
             LOGGER.error("delete_table_meta {}, {}, exception:{}.".format(self.get_namespace(), self.get_name(), e))

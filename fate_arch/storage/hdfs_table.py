@@ -21,7 +21,7 @@ from pyspark import SparkContext
 
 from fate_arch.abc import TableABC
 from fate_arch.common.log import getLogger
-from fate_arch.data_table.store_type import StoreEngine
+from fate_arch.storage.constant import StorageEngine
 
 LOGGER = getLogger()
 
@@ -50,7 +50,7 @@ class HDFSTable(TableABC):
         return self._namespace
 
     def get_storage_engine(self):
-        return StoreEngine.HDFS
+        return StorageEngine.HDFS
 
     def get_address(self):
         return self.address

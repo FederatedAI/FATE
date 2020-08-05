@@ -119,19 +119,19 @@ class LongTextField(TextField):
     field_type = 'LONGTEXT'
 
 
-class StoreTableMeta(DataBaseModel):
-    f_table_name = CharField(max_length=100, index=True)
+class StorageTableMeta(DataBaseModel):
+    f_name = CharField(max_length=100, index=True)
     f_namespace = CharField(max_length=100, index=True)
     f_create_time = BigIntegerField(null=True)
     f_update_time = BigIntegerField(null=True)
     f_description = TextField(null=True, default='')
     f_schema = TextField(default='')
-    f_data_store_engine = CharField(max_length=100, index=True)  # 'EGGROLL', 'MYSQL'
+    f_engine = CharField(max_length=100, index=True)  # 'EGGROLL', 'MYSQL'
     f_partitions = IntegerField(null=True, default=1)
     f_address = JSONField()
     f_count = IntegerField(null=True, default=0)
     f_part_of_data = LongTextField()
 
     class Meta:
-        db_table = "t_store_table_meta"
-        primary_key = CompositeKey('f_table_name', 'f_namespace')
+        db_table = "t_storage_table_meta"
+        primary_key = CompositeKey('f_name', 'f_namespace')
