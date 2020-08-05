@@ -99,7 +99,7 @@ class Table(CTableABC):
 
     @log_elapsed
     def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
-        from fate_arch.data_table.address import HDFSAddress
+        from fate_arch.storage.address import HDFSAddress
         if isinstance(address, HDFSAddress):
             save_as_hdfs(rdd=self._rdd, paths=address.path, partitions=partitions)
             schema.update(self.schema)

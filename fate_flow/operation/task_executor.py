@@ -24,7 +24,7 @@ from arch.api.utils import file_utils, log_utils
 from arch.api.utils.core_utils import current_timestamp, get_lan_ip, timestamp_to_date
 from arch.api.utils.log_utils import schedule_logger
 from fate_arch import session
-from fate_arch.data_table.store_type import StoreTypes, StoreEngine
+from fate_arch.storage.constant import StorageTypes, StorageEngine
 from fate_arch.session import Backend
 from fate_flow.entity.constant import TaskStatus, ProcessRole
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -241,18 +241,19 @@ class TaskExecutor(object):
                         if data_table:
                             schedule_logger().info("start save as task {} input data table {}".format(
                                 task_id, data_table.get_address()))
-                            origin_table_schema = data_table.get_schema()
+                            origin_table_schema = data_table.get_meta(_type="schema")
                             name = uuid.uuid1().hex
                             namespace = job_utils.generate_session_id(task_id=task_id, task_version=task_version, role=role, party_id=party_id)
                             partitions = task_parameters['input_data_partition'] if task_parameters.get('input_data_partition', 0) > 0 else data_table.get_partitions()
                             if RuntimeConfig.BACKEND == Backend.SPARK:
-                                store_engine = StoreEngine.HDFS
+                                storage_engine = StorageEngine.HDFS
                             else:
-                                store_engine = StoreEngine.IN_MEMORY if SAVE_AS_TASK_INPUT_DATA_IN_MEMORY \
-                                    else StoreEngine.LMDB
-                            save_as_options = {"store_type": StoreTypes.ROLLPAIR_IN_MEMORY} if SAVE_AS_TASK_INPUT_DATA_IN_MEMORY else {}
-                            address = create(name=name, namespace=namespace, store_engine=store_engine,
+                                storage_engine = StorageEngine.IN_MEMORY if SAVE_AS_TASK_INPUT_DATA_IN_MEMORY \
+                                    else StorageEngine.LMDB
+                            # TODO: The computing engine transforms the tables
+                            address = create(name=name, namespace=namespace, storage_engine=storage_engine,
                                              partitions=partitions)
+                            save_as_options = {"store_type": StorageTypes.ROLLPAIR_IN_MEMORY} if SAVE_AS_TASK_INPUT_DATA_IN_MEMORY else {}
                             data_table.save_as(address=address, partition=partitions, options=save_as_options,
                                                name=name, namespace=namespace, schema_data=origin_table_schema)
                             schedule_logger().info("save as task {} input data table to {} done".format(task_id, address))

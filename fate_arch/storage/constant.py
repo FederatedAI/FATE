@@ -17,7 +17,7 @@
 from fate_arch.common import Backend
 
 
-class StoreTypes(object):
+class StorageTypes(object):
     ROLLPAIR_IN_MEMORY = 'IN_MEMORY'
     ROLLPAIR_LMDB = 'LMDB'
     ROLLPAIR_LEVELDB = 'LEVEL_DB'
@@ -29,7 +29,7 @@ class StoreTypes(object):
     ROLLPAIR_QUEUE = 'ROLL_PAIR_QUEUE'
 
 
-class StoreEngine(object):
+class StorageEngine(object):
     MYSQL = 'MYSQL'
     LMDB = 'LMDB'
     HDFS = 'HDFS'
@@ -38,7 +38,14 @@ class StoreEngine(object):
 
 class Relationship(object):
     CompToStore = {
-        Backend.EGGROLL: [StoreEngine.LMDB, StoreEngine.IN_MEMORY],
-        Backend.SPARK: [StoreEngine.HDFS]
+        Backend.EGGROLL: [StorageEngine.LMDB, StorageEngine.IN_MEMORY],
+        Backend.SPARK: [StorageEngine.HDFS]
     }
+
+
+class StorageTableMetaType(object):
+    SCHEMA = "schema"
+    PART_OF_DATA = "part_of_data"
+    COUNT = "count"
+    PARTITIONS = "partitions"
 

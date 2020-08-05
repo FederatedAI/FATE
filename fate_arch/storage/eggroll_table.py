@@ -24,8 +24,8 @@ from eggroll.roll_pair.roll_pair import RollPairContext
 from fate_arch.abc import TableABC
 from fate_arch.common import WorkMode
 from fate_arch.common.profile import log_elapsed
-from fate_arch.data_table.address import EggRollAddress
-from fate_arch.data_table.store_type import StoreEngine
+from fate_arch.storage.address import EggRollAddress
+from fate_arch.storage.constant import StorageEngine
 
 
 # noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
@@ -33,7 +33,7 @@ class EggRollTable(TableABC):
     def __init__(self,
                  job_id: str = uuid.uuid1().hex,
                  mode: typing.Union[int, WorkMode] = get_base_config('work_mode', 0),
-                 persistent_engine: str = StoreEngine.LMDB,
+                 persistent_engine: str = StorageEngine.LMDB,
                  partitions: int = 1,
                  namespace: str = None,
                  name: str = None,
@@ -79,11 +79,11 @@ class EggRollTable(TableABC):
         return self._table.destroy()
 
     @log_elapsed
-    def save_as(self, name=None, namespace=None, partition=None, schema_data=None, **kwargs):
-        super().save_as(name, namespace, schema_data=schema_data, partition=partition)
+    def save_as(self, name=None, namespace=None, partition=None, schema=None, **kwargs):
+        super().save_as(name, namespace, schema=schema, partition=partition)
 
         options = kwargs.get("options", {})
-        store_type = options.get("store_type", StoreEngine.LMDB)
+        store_type = options.get("store_type", StorageEngine.LMDB)
         options["store_type"] = store_type
 
         if partition is None:

@@ -32,13 +32,13 @@ class CSession(CSessionABC):
         return self._session
 
     def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
-        from fate_arch.data_table.address import EggRollAddress
+        from fate_arch.storage.address import EggRollAddress
         if isinstance(address, EggRollAddress):
             table = Table(self._session.load(address.name, address.namespace))
             table.schema = schema
             return table
 
-        from fate_arch.data_table.address import FileAddress
+        from fate_arch.storage.address import FileAddress
         if isinstance(address, FileAddress):
             return address
         raise NotImplementedError(f"address type {type(address)} not supported with standalone backend")

@@ -4,8 +4,8 @@ import json
 import sys
 import uuid
 
-from arch.api.proto import inference_service_pb2
-from arch.api.proto import inference_service_pb2_grpc
+from fate_arch.protobuf.python import inference_service_pb2
+from fate_arch.protobuf.python import inference_service_pb2_grpc
 import threading
 
 

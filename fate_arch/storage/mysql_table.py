@@ -21,7 +21,7 @@ import pymysql
 from arch.api.utils.conf_utils import get_base_config
 from fate_arch.abc import TableABC
 from fate_arch.common.profile import log_elapsed
-from fate_arch.data_table.store_type import StoreEngine
+from fate_arch.storage.constant import StorageEngine
 from fate_arch.common import WorkMode
 
 
@@ -29,7 +29,7 @@ from fate_arch.common import WorkMode
 class MysqlTable(TableABC):
     def __init__(self,
                  mode: typing.Union[int, WorkMode] = get_base_config('work_mode', 0),
-                 persistent_engine: str = StoreEngine.MYSQL,
+                 persistent_engine: str = StorageEngine.MYSQL,
                  partitions: int = 1,
                  name: str = None,
                  namespace: str = None,
@@ -96,7 +96,7 @@ class MysqlTable(TableABC):
         data = self.execute(sql)
         return data
 
-    def save_as(self, name, namespace, partition=None, schema_data=None, **kwargs):
+    def save_as(self, name, namespace, partition=None, schema=None, **kwargs):
         pass
 
     def put_all(self, kv_list, **kwargs):
@@ -109,7 +109,7 @@ class MysqlTable(TableABC):
 
     @log_elapsed
     def count(self, **kwargs):
-        return self.get_schema(_type='count')
+        return self.get_meta(_type='count')
 
     def close(self):
         self.con.close()

@@ -21,7 +21,7 @@ import base64
 from ruamel import yaml
 
 from arch.api.utils import file_utils
-from arch.api.proto import default_empty_fill_pb2
+from fate_arch.protobuf.python import default_empty_fill_pb2
 from fate_flow.settings import stat_logger, TEMP_DIRECTORY
 
 

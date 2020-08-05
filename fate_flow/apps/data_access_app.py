@@ -18,7 +18,7 @@ import shutil
 
 from flask import Flask, request
 
-from fate_arch.data_table.store_type import StoreEngine
+from fate_arch.storage.constant import StorageEngine
 from fate_flow.manager.data_manager import query_data_view
 from fate_flow.manager.table_manager.table_operation import get_table
 from fate_flow.settings import stat_logger, USE_LOCAL_DATA, WORK_MODE
@@ -126,7 +126,7 @@ def get_upload_info(jobs_run_conf):
         }
         info["notes"] = job_run_conf["notes"]
         data_table = get_table(table_name=table_name, namespace=namespace)
-        info["meta"] = data_table.get_schema()
+        info["schema"] = data_table.get_meta(_type="schema")
         data.append({job_id: info})
         try:
             data_table.close()
@@ -161,8 +161,7 @@ def gen_data_access_job_config(config_data, access_module):
                 "file": [config_data["file"]],
                 "namespace": [config_data["namespace"]],
                 "table_name": [config_data["table_name"]],
-                "in_version": [config_data.get("in_version")],
-                "store_engine": [config_data.get("store_engine", StoreEngine.LMDB)]
+                "storage_engine": [config_data.get("storage_engine", StorageEngine.LMDB)]
             }
         }
         if int(config_data.get('dsl_version', 1)) == 2:

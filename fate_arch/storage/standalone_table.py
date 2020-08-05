@@ -18,14 +18,14 @@ from typing import Iterable
 
 from fate_arch.abc import TableABC
 from fate_arch.standalone import Session
-from fate_arch.data_table.address import EggRollAddress
-from fate_arch.data_table.store_type import StoreEngine
+from fate_arch.storage.address import EggRollAddress
+from fate_arch.storage.constant import StorageEngine
 
 
 class StandaloneTable(TableABC):
 
     def __init__(self, job_id: str = uuid.uuid1().hex,
-                 persistent_engine: str = StoreEngine.LMDB,
+                 persistent_engine: str = StorageEngine.LMDB,
                  partitions: int = 1,
                  namespace: str = None,
                  name: str = None,
@@ -50,7 +50,7 @@ class StandaloneTable(TableABC):
     def close(self):
         return self._session.stop()
 
-    def save_as(self, name, namespace, partition=None, schema_data=None, **kwargs):
+    def save_as(self, name, namespace, partition=None, schema=None, **kwargs):
         return self._table.save_as(name=name, namespace=namespace, partition=partition, need_cleanup=False)
 
     def put_all(self, kv_list: Iterable, **kwargs):
