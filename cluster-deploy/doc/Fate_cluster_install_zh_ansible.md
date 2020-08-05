@@ -23,8 +23,9 @@
 架构图：
 
 <div style="text-align:center", align=center>
-<img src="./images/arch_zh.png" />
+<img src="../images/arch_zh.png" />
 </div>
+
 
 
 # 3.组件说明
@@ -92,7 +93,7 @@ ubuntu系统执行：apt list --installed | grep selinux
 
 \* soft nproc unlimited
 
-4.4 关闭防火墙(可选)
+4.4 关闭防火墙
 --------------
 
 **在目标服务器（192.168.0.1 192.168.0.2 ）root用户下执行**
@@ -222,7 +223,7 @@ ulimit -n
 ulimit -u
 65535
 
-#检查进程是否有fate进程残留,如有则需要停掉
+#检查进程是否有fate进程残留,如有则需要停止服务
 ps -ef| grep -i fate
 
 netstat -tlnp | grep 4670
@@ -235,8 +236,10 @@ netstat -tlnp | grep 3306
 #检查部署目录，如有需先进行mv
 ls -ld /data/projects/fate
 ls -ld /data/projects/data
-ls -ld /data/projects/common
 ls -ld /data/projects/snmp
+
+#检查supervisord配置文件,如有则需要mv或者删除掉
+ls -lrt /data/projects/common/supervisord/supervisord.d/fate-*.conf
 
 ```
 
@@ -249,8 +252,8 @@ ls -ld /data/projects/snmp
 
 ```
 cd /data/projects/
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible-nfate_1.4.2_release-1.0.4.tar.gz
-tar xzf ansible-nfate_1.4.2_release-1.0.4.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.4.2_release_1.0.5.tar.gz
+tar xzf ansible_nfate_1.4.2_release_1.0.5.tar.gz
 ```
 
 5.3 配置文件修改和示例
@@ -592,7 +595,7 @@ python run_toy_example.py 9999 10000 1
 
 ### **6.2.1 上传预设数据：**
 
-分别在192.168.0.1和192.168.0.3上执行：
+分别在192.168.0.1和192.168.0.2上执行：
 
 ```
 source /data/projects/fate/init_env.sh
@@ -608,7 +611,7 @@ python upload_default_data.py -m 1
 
 快速模式下，最小化测试脚本将使用一个相对较小的数据集，即包含了569条数据的breast数据集。
 
-选定9999为guest方，在192.168.0.3上执行：
+选定9999为guest方，在192.168.0.2上执行：
 
 ```
 source /data/projects/fate/init_env.sh
@@ -630,7 +633,7 @@ python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
 6.3 Fateboard testing
 ----------------------
 
-Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以通过访问 http://192.168.0.1:8080 和 http://192.168.0.2:8080 来查看任务信息，如果有防火墙需开通。
+Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以通过访问 http://192.168.0.1:8080 和 http://192.168.0.2:8080 来查看任务信息，如果本地办公电脑和服务器之间有防火墙则需开通。
 
 7.系统运维
 ================
