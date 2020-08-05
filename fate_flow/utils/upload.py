@@ -123,7 +123,7 @@ class Upload(object):
 
     def save_data_header(self, header_source):
         header_source_item = header_source.split(',')
-        self.table.save_meta({'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]})
+        self.table.save_meta(schema={'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]})
 
     def get_count(self, input_file):
         with open(input_file, 'r', encoding='utf-8') as fp:
