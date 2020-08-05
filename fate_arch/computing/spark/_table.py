@@ -20,7 +20,8 @@ from itertools import chain
 # noinspection PyPackageRequirements
 from pyspark import rddsampler, RDD, SparkContext, util
 
-from fate_arch.backend.spark import save_as_hdfs, load_from_hdfs, materialize
+from fate_arch.computing.spark._util import materialize
+from fate_arch.computing.spark._kv_serdes import save_as_hdfs, load_from_hdfs
 from fate_arch.common import log
 from fate_arch.common.profile import log_elapsed
 from fate_arch.abc import AddressABC

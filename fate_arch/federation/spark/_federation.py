@@ -24,11 +24,11 @@ import pika
 from pyspark import SparkContext, RDD
 
 from fate_arch.abc import FederationABC, GarbageCollectionABC
-from fate_arch.backend.spark import MQChannel
-from fate_arch.backend.spark import RabbitManager
-from fate_arch.backend.spark import get_storage_level
 from fate_arch.common import Party
 from fate_arch.common.log import getLogger
+from fate_arch.computing.spark import get_storage_level
+from fate_arch.federation.spark._mq_channel import MQChannel
+from fate_arch.federation.spark._rabbit_manager import RabbitManager
 
 LOGGER = getLogger()
 
@@ -253,8 +253,8 @@ def _receive(channel_info, name, tag):
                     LOGGER.debug("end coalesce: federation get union partition %d, count: %d" % (
                         obj.getNumPartitions(), obj.count()))
                 else:
-                    obj = sc.parallelize(data_iter, properties.headers["partitions"]).persist(
-                        get_storage_level())
+                    obj = sc.parallelize(data_iter, properties.headers["partitions"]) \
+                        .persist(get_storage_level())
                 if count == properties.headers["total_size"]:
                     channel_info.basic_ack(delivery_tag=method.delivery_tag)
                     break

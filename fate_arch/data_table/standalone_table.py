@@ -17,7 +17,7 @@ import uuid
 from typing import Iterable
 
 from fate_arch.abc import TableABC
-from fate_arch.backend.standalone import Session
+from fate_arch.standalone import Session
 from fate_arch.data_table.address import EggRollAddress
 from fate_arch.data_table.store_type import StoreEngine
 
