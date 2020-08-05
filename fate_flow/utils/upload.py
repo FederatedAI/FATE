@@ -93,7 +93,7 @@ class Upload(object):
             if head is True:
                 data_head = fin.readline()
                 count -= 1
-                self.save_data_header(data_head, dst_table_name, dst_table_namespace)
+                self.save_data_header(data_head)
             n = 0
             while True:
                 data = list()
@@ -108,20 +108,10 @@ class Upload(object):
                     ControllerRemoteClient.update_job(job_info=job_info)
                     self.table.put_all(data)
                     if n == 0:
-                        self.table.save_schema(party_of_data=data)
+                        self.table.save_meta(party_of_data=data)
                 else:
-                    self.table.save_schema(count=self.table.count(), partitions=self.parameters["partition"])
+                    self.table.save_meta(count=self.table.count(), partitions=self.parameters["partition"])
                     count_actual = self.table.count()
-                    """
-                    self.tracker.save_data_view(role=self.parameters["local"]['role'],
-                                                party_id=self.parameters["local"]['party_id'],
-                                                data_info={'f_table_name': dst_table_name,
-                                                           'f_table_namespace': dst_table_namespace,
-                                                           'f_partition': self.parameters["partition"],
-                                                           'f_table_count_actual': count_actual,
-                                                           'f_table_count_upload': count
-                                                           })
-                    """
                     self.tracker.log_metric_data(metric_namespace="upload",
                                                  metric_name="data_access",
                                                  metrics=[Metric("count", count_actual)])
@@ -131,9 +121,9 @@ class Upload(object):
                     return count_actual
                 n += 1
 
-    def save_data_header(self, header_source, dst_table_name, dst_table_namespace):
+    def save_data_header(self, header_source):
         header_source_item = header_source.split(',')
-        self.table.save_schema({'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]})
+        self.table.save_meta({'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]})
 
     def get_count(self, input_file):
         with open(input_file, 'r', encoding='utf-8') as fp:

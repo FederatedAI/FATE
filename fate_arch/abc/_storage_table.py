@@ -22,7 +22,7 @@ import six
 
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from fate_arch.common.log import getLogger
-from fate_arch.db.db_models import DB, MachineLearningDataSchema
+from fate_arch.db.db_models import DB, StoreTableMeta
 
 LOGGER = getLogger()
 
@@ -93,9 +93,9 @@ class TableABC(object):
         pass
 
     @abc.abstractmethod
-    def save_as(self, name, namespace, partition=None, schema_data=None, **kwargs):
-        if schema_data:
-            self.save_schema(name=name, namespace=namespace, schema_data=schema_data, partitions=partition)
+    def save_as(self, name, namespace, partition=None, schema=None, **kwargs):
+        if schema:
+            self.save_meta(name=name, namespace=namespace, schema=schema, partitions=partition)
 
     @abc.abstractmethod
     def close(self):
@@ -103,78 +103,78 @@ class TableABC(object):
 
     def destroy(self):
         # destroy schema
-        self.destroy_schema()
+        self.destroy_meta()
         # subclass method needs do: super().destroy()
 
     """
     meta utils
     """
 
-    def get_schema(self, _type='schema', name=None, namespace=None):
+    def get_meta(self, _type='schema', name=None, namespace=None):
         if not name and not namespace:
             name = self._name
             namespace = self._namespace
         with DB.connection_context():
-            schema = MachineLearningDataSchema.select().where(MachineLearningDataSchema.f_table_name == name,
-                                                              MachineLearningDataSchema.f_namespace == namespace)
-            schema_data = {}
-            if schema:
-                schema = schema[0]
+            table_metas = StoreTableMeta.select().where(StoreTableMeta.f_table_name == name,
+                                                   StoreTableMeta.f_namespace == namespace)
+            table_meta = {}
+            if table_metas:
+                table_metas = table_metas[0]
                 try:
                     if _type == 'schema':
-                        schema_data = deserialize_b64(schema.f_schema)
-                    elif _type == 'data':
-                        schema_data = deserialize_b64(schema.f_part_of_data)
+                        table_meta = deserialize_b64(table_metas.f_schema)
+                    elif _type == 'part_of_data':
+                        table_meta = deserialize_b64(table_metas.f_part_of_data)
                     elif _type == 'count':
-                        schema_data = schema.f_count
+                        table_meta = table_metas.f_count
                     elif _type == 'partitions':
-                        schema_data = schema.f_partitions
+                        table_meta = table_metas.f_partitions
                 except:
-                    schema_data = None
-        return schema_data
+                    table_meta = None
+        return table_meta
 
-    def save_schema(self, schema_data=None, name=None, namespace=None, party_of_data=None, count=0, partitions=1):
+    def save_meta(self, schema=None, name=None, namespace=None, party_of_data=None, count=0, partitions=1):
         # save metas to mysql
-        if not schema_data:
-            schema_data = {}
+        if not schema:
+            schema = {}
         if not party_of_data:
             party_of_data = []
         if not name or not namespace:
             name = self.get_name()
             namespace = self.get_namespace()
         with DB.connection_context():
-            schema = MachineLearningDataSchema.select().where(MachineLearningDataSchema.f_table_name == name,
-                                                              MachineLearningDataSchema.f_namespace == namespace)
-            if schema:
+            table_metas = StoreTableMeta.select().where(StoreTableMeta.f_table_name == name,
+                                                   StoreTableMeta.f_namespace == namespace)
+            if table_metas:
                 # save schema info
-                schema = schema[0]
-                if schema.f_schema:
-                    _schema_data = deserialize_b64(schema.f_schema)
-                _schema_data.update(schema_data)
-                schema.f_schema = serialize_b64(_schema_data, to_str=True)
+                table_meta = table_metas[0]
+                if table_meta.f_schema:
+                    _schema_data = deserialize_b64(table_meta.f_schema)
+                _schema_data.update(schema)
+                table_meta.f_schema = serialize_b64(_schema_data, to_str=True)
                 # save data
                 if party_of_data:
-                    _f_part_of_data = deserialize_b64(schema.f_part_of_data)
+                    _f_part_of_data = deserialize_b64(table_meta.f_part_of_data)
                     if len(_f_part_of_data) < 100:
                         _f_part_of_data.extend(party_of_data[:(100 - len(_f_part_of_data))])
-                        schema.f_part_of_data = serialize_b64(party_of_data[:100], to_str=True)
+                        table_meta.f_part_of_data = serialize_b64(party_of_data[:100], to_str=True)
                 # save count
                 if count:
-                    schema.f_count = count
+                    table_meta.f_count = count
                 if partitions:
-                    schema.f_partitions = partitions
+                    table_meta.f_partitions = partitions
             else:
                 raise Exception('please create table {} {} before useing'.format(name, namespace))
-            schema.f_update_time = current_timestamp()
-            schema.save()
+            table_meta.f_update_time = current_timestamp()
+            table_meta.save()
 
-    def destroy_schema(self):
+    def destroy_meta(self):
         try:
             with DB.connection_context():
-                MachineLearningDataSchema \
+                StoreTableMeta \
                     .delete() \
-                    .where(MachineLearningDataSchema.f_table_name == self.get_name(),
-                           MachineLearningDataSchema.f_namespace == self.get_namespace()) \
+                    .where(StoreTableMeta.f_table_name == self.get_name(),
+                           StoreTableMeta.f_namespace == self.get_namespace()) \
                     .execute()
         except Exception as e:
             LOGGER.error("delete_table_meta {}, {}, exception:{}.".format(self.get_namespace(), self.get_name(), e))

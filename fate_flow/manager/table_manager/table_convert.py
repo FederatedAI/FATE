@@ -73,7 +73,7 @@ def copy_table(src_table, dest_table):
             data = []
     if data:
         dest_table.put_all(data)
-    dest_table.save_schema(src_table.get_schema(), count=src_table.count(), party_of_data=party_of_data)
+    dest_table.save_meta(schema=src_table.get_meta(_type="schema"), count=src_table.count(), party_of_data=party_of_data)
 
 
 

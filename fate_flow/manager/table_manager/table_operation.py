@@ -19,7 +19,7 @@ import uuid
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from fate_arch.data_table.address import EggRollAddress, HDFSAddress, MysqlAddress
 from fate_arch.data_table.simple_table import SimpleTable
-from fate_arch.db.db_models import DB, MachineLearningDataSchema
+from fate_arch.db.db_models import DB, StoreTableMeta
 from fate_flow.utils import data_utils
 
 from arch.api.utils.conf_utils import get_base_config
@@ -32,8 +32,8 @@ from fate_flow.settings import WORK_MODE, data_manager_logger
 
 def create(name, namespace, store_engine, address=None, partitions=1, count=0):
     with DB.connection_context():
-        schema = MachineLearningDataSchema.select().where(MachineLearningDataSchema.f_table_name == name,
-                                                          MachineLearningDataSchema.f_namespace == namespace)
+        schema = StoreTableMeta.select().where(StoreTableMeta.f_table_name == name,
+                                               StoreTableMeta.f_namespace == namespace)
         is_insert = True
         if schema:
             if store_engine != schema[0].f_data_store_engine:
@@ -42,7 +42,7 @@ def create(name, namespace, store_engine, address=None, partitions=1, count=0):
             else:
                 return
         else:
-            schema = MachineLearningDataSchema()
+            schema = StoreTableMeta()
             schema.f_create_time = current_timestamp()
             schema.f_table_name = name
             schema.f_namespace = namespace
@@ -67,8 +67,8 @@ def create(name, namespace, store_engine, address=None, partitions=1, count=0):
 
 def get_store_info(name, namespace):
     with DB.connection_context():
-        schema = MachineLearningDataSchema.select().where(MachineLearningDataSchema.f_table_name == name,
-                                                          MachineLearningDataSchema.f_namespace == namespace)
+        schema = StoreTableMeta.select().where(StoreTableMeta.f_table_name == name,
+                                               StoreTableMeta.f_namespace == namespace)
         if schema:
             schema = schema[0]
             store_info = schema.f_data_store_engine

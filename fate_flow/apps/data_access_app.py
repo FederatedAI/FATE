@@ -126,7 +126,7 @@ def get_upload_info(jobs_run_conf):
         }
         info["notes"] = job_run_conf["notes"]
         data_table = get_table(table_name=table_name, namespace=namespace)
-        info["meta"] = data_table.get_schema()
+        info["schema"] = data_table.get_meta(_type="schema")
         data.append({job_id: info})
         try:
             data_table.close()

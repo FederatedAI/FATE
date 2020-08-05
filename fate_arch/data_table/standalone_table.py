@@ -50,7 +50,7 @@ class StandaloneTable(TableABC):
     def close(self):
         return self._session.stop()
 
-    def save_as(self, name, namespace, partition=None, schema_data=None, **kwargs):
+    def save_as(self, name, namespace, partition=None, schema=None, **kwargs):
         return self._table.save_as(name=name, namespace=namespace, partition=partition, need_cleanup=False)
 
     def put_all(self, kv_list: Iterable, **kwargs):

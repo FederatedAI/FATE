@@ -241,7 +241,7 @@ class TaskExecutor(object):
                         if data_table:
                             schedule_logger().info("start save as task {} input data table {}".format(
                                 task_id, data_table.get_address()))
-                            origin_table_schema = data_table.get_schema()
+                            origin_table_schema = data_table.get_meta(_type="schema")
                             name = uuid.uuid1().hex
                             namespace = job_utils.generate_session_id(task_id=task_id, task_version=task_version, role=role, party_id=party_id)
                             partitions = task_parameters['input_data_partition'] if task_parameters.get('input_data_partition', 0) > 0 else data_table.get_partitions()

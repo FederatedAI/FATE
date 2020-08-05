@@ -79,8 +79,8 @@ class EggRollTable(TableABC):
         return self._table.destroy()
 
     @log_elapsed
-    def save_as(self, name=None, namespace=None, partition=None, schema_data=None, **kwargs):
-        super().save_as(name, namespace, schema_data=schema_data, partition=partition)
+    def save_as(self, name=None, namespace=None, partition=None, schema=None, **kwargs):
+        super().save_as(name, namespace, schema=schema, partition=partition)
 
         options = kwargs.get("options", {})
         store_type = options.get("store_type", StoreEngine.LMDB)

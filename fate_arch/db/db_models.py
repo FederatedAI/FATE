@@ -119,7 +119,7 @@ class LongTextField(TextField):
     field_type = 'LONGTEXT'
 
 
-class MachineLearningDataSchema(DataBaseModel):
+class StoreTableMeta(DataBaseModel):
     f_table_name = CharField(max_length=100, index=True)
     f_namespace = CharField(max_length=100, index=True)
     f_create_time = BigIntegerField(null=True)
@@ -133,5 +133,5 @@ class MachineLearningDataSchema(DataBaseModel):
     f_part_of_data = LongTextField()
 
     class Meta:
-        db_table = "t_machine_learning_data_schema"
+        db_table = "t_store_table_meta"
         primary_key = CompositeKey('f_table_name', 'f_namespace')

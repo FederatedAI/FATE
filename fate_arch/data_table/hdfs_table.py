@@ -69,7 +69,7 @@ class HDFSTable(TableABC):
             counter = counter + 1
         out.flush()
         out.close()
-        self.save_schema(count=counter)
+        self.save_meta(count=counter)
 
     def collect(self, **kwargs) -> list:
         sc = SparkContext.getOrCreate()
@@ -94,14 +94,14 @@ class HDFSTable(TableABC):
             fs.delete(path)
 
     def count(self):
-        meta = self.get_schema(_type='count')
+        meta = self.get_meta(_type='count')
         if meta:
             return meta.f_count
         else:
             return -1
 
-    def save_as(self, address, partition=None, name=None, namespace=None, schema_data=None, **kwargs):
-        super().save_as(name, namespace, partition=partition, schema_data=schema_data)
+    def save_as(self, address, partition=None, name=None, namespace=None, schema=None, **kwargs):
+        super().save_as(name, namespace, partition=partition, schema=schema)
         sc = SparkContext.getOrCreate()
         src_path = HDFSTable.get_path(sc, HDFSTable.generate_hdfs_path(address))
         dst_path = HDFSTable.get_path(sc, HDFSTable.generate_hdfs_path(address))
