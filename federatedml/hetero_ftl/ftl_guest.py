@@ -261,6 +261,7 @@ class FTLGuest(FTL):
 
         data_loader, self.x_shape, self.data_num, self.overlap_num = self.prepare_data(self.init_intersect_obj(),
                                                                                        data_inst, guest_side=True)
+        self.input_dim = self.x_shape[0]
 
         # cache data_loader for faster validation
         self.cache_dataloader[self.get_dataset_key(data_inst)] = data_loader
