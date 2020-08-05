@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -14,18 +16,25 @@
 #  limitations under the License.
 #
 
+BASEDIR=$(dirname "$0")
+cd "$BASEDIR" || exit
 
-class UploadParam:
-    def __init__(self, file="", head=1, partition=10,
-                 namespace="", table_name="", work_mode=0, storage_engine='LMDB'):
-        self.file = file
-        self.head = head
-        self.partition = partition
-        self.namespace = namespace
-        self.table_name = table_name
-        self.work_mode = work_mode
-        self.storage_engine = storage_engine
+PROTO_DIR="proto"
+TARGER_DIR="python"
 
-    def check(self):
-        return True
+generate() {
+  python -m grpc_tools.protoc -I./$PROTO_DIR --python_out=./$TARGER_DIR "$1"
+}
 
+generate_all() {
+  for proto in "$PROTO_DIR"/*.proto; do
+    echo "protoc: $proto"
+    generate "$proto"
+  done
+}
+
+if [ $# -gt 0 ]; then
+  generate "$1"
+else
+  generate_all
+fi

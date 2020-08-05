@@ -10,7 +10,7 @@ class SimpleTable(TableABC):
         self.data_name = data_name
 
     def get_partitions(self):
-        return self.get_schema(_type='partitions')
+        return self.get_meta(_type='partitions')
 
     def get_name(self):
         return self._name
@@ -31,15 +31,15 @@ class SimpleTable(TableABC):
         pass
 
     def count(self):
-        return self.get_schema(_type='count')
+        return self.get_meta(_type='count')
 
-    def save_as(self, name, namespace, partition=None, schema_data=None, **kwargs):
+    def save_as(self, name, namespace, partition=None, schema=None, **kwargs):
         pass
 
     def close(self):
         pass
 
     def collect(self, **kwargs):
-        data = self.get_schema(_type='data')
-        for k_v in data:
+        part_of_data = self.get_meta(_type='part_of_data')
+        for k_v in part_of_data:
             yield k_v

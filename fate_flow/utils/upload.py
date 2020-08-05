@@ -30,7 +30,7 @@ class Upload(object):
     def __init__(self):
         self.taskid = ''
         self.tracker = None
-        self.MAX_PARTITION_NUM = 1024
+        self.MAX_PARTITIONS = 1024
         self.MAX_BYTES = 1024*1024*8
         self.parameters = {}
         self.table = None
@@ -60,13 +60,13 @@ class Upload(object):
             head = True
         else:
             raise Exception("'head' in conf.json should be 0 or 1")
-        partition = self.parameters["partition"]
-        if partition <= 0 or partition >= self.MAX_PARTITION_NUM:
-            raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITION_NUM))
+        partitions = self.parameters["partition"]
+        if partitions <= 0 or partitions >= self.MAX_PARTITIONS:
+            raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITIONS))
         self.table = create_table(job_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id), name=table_name,
                                   namespace=namespace, partitions=self.parameters["partition"],
-                                  store_engine=self.parameters['store_engine'], mode=self.parameters['work_mode'])
-        data_table_count = self.save_data_table(job_id, table_name, namespace, head, self.parameters.get('in_version', False))
+                                  engine=self.parameters['storage_engine'], mode=self.parameters['work_mode'])
+        data_table_count = self.save_data_table(job_id, table_name, namespace, head)
         LOGGER.info("------------load data finish!-----------------")
         # rm tmp file
         try:
@@ -85,7 +85,7 @@ class Upload(object):
     def set_tracker(self, tracker):
         self.tracker = tracker
 
-    def save_data_table(self, job_id, dst_table_name, dst_table_namespace, head=True, in_version=False):
+    def save_data_table(self, job_id, dst_table_name, dst_table_namespace, head=True):
         input_file = self.parameters["file"]
         count = self.get_count(input_file)
         with open(input_file, 'r') as fin:
@@ -93,7 +93,7 @@ class Upload(object):
             if head is True:
                 data_head = fin.readline()
                 count -= 1
-                self.save_data_header(data_head, dst_table_name, dst_table_namespace)
+                self.save_data_header(data_head)
             n = 0
             while True:
                 data = list()
@@ -108,9 +108,9 @@ class Upload(object):
                     ControllerRemoteClient.update_job(job_info=job_info)
                     self.table.put_all(data)
                     if n == 0:
-                        self.table.save_schema(party_of_data=data)
+                        self.table.save_meta(party_of_data=data)
                 else:
-                    self.table.save_schema(count=self.table.count(), partitions=self.parameters["partition"])
+                    self.table.save_meta(count=self.table.count(), partitions=self.parameters["partition"])
                     count_actual = self.table.count()
                     self.tracker.log_output_data_info(data_name='upload',
                                                       table_namespace=dst_table_namespace,
@@ -125,9 +125,9 @@ class Upload(object):
                     return count_actual
                 n += 1
 
-    def save_data_header(self, header_source, dst_table_name, dst_table_namespace):
+    def save_data_header(self, header_source):
         header_source_item = header_source.split(',')
-        self.table.save_schema({'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]})
+        self.table.save_meta(schema={'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]})
 
     def get_count(self, input_file):
         with open(input_file, 'r', encoding='utf-8') as fp:

@@ -37,7 +37,7 @@ class Table(CTableABC):
     @log_elapsed
     def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
         options = kwargs.get("options", {})
-        from fate_arch.data_table.address import EggRollAddress
+        from fate_arch.storage.address import EggRollAddress
         if isinstance(address, EggRollAddress):
             self._rp.save_as(name=address.name, namespace=address.namespace, partition=partitions, options=options)
             schema.update(self.schema)
