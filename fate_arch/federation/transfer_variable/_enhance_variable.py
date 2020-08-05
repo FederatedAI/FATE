@@ -17,8 +17,8 @@
 #  limitations under the License.
 #
 
-from fate_arch.transfer_variable import BaseTransferVariables
-from fate_arch.transfer_variable._generated_enhance_variable import *
+from fate_arch.federation.transfer_variable import BaseTransferVariables
+from fate_arch.federation.transfer_variable._generated_enhance_variable import *
 
 
 class EnhanceTransferVariables(BaseTransferVariables):

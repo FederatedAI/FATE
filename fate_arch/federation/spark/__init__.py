@@ -14,4 +14,6 @@
 #  limitations under the License.
 #
 
-from fate_arch.federation._split import  segment_transfer_enabled
+from fate_arch.federation.spark._federation import FederationEngine, MQ
+
+__all__ = ['FederationEngine', 'MQ']

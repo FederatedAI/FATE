@@ -47,31 +47,31 @@ class Table(CTableABC):
 
     @log_elapsed
     def map(self, func, **kwargs):
-        return _from_rdd(_map(self._rdd, func))
+        return from_rdd(_map(self._rdd, func))
 
     @log_elapsed
     def mapValues(self, func, **kwargs):
-        return _from_rdd(_map_value(self._rdd, func))
+        return from_rdd(_map_value(self._rdd, func))
 
     @log_elapsed
     def mapPartitions(self, func, **kwargs):
-        return _from_rdd(self._rdd.mapPartitions(func))
+        return from_rdd(self._rdd.mapPartitions(func))
 
     @log_elapsed
     def glom(self, **kwargs):
-        return _from_rdd(_glom(self._rdd))
+        return from_rdd(_glom(self._rdd))
 
     @log_elapsed
     def sample(self, fraction, seed=None, **kwargs):
-        return _from_rdd(_sample(self._rdd, fraction, seed))
+        return from_rdd(_sample(self._rdd, fraction, seed))
 
     @log_elapsed
     def filter(self, func, **kwargs):
-        return _from_rdd(_filter(self._rdd, func))
+        return from_rdd(_filter(self._rdd, func))
 
     @log_elapsed
     def flatMap(self, func, **kwargs):
-        return _from_rdd(_flat_map(self._rdd, func))
+        return from_rdd(_flat_map(self._rdd, func))
 
     """action
     """
@@ -109,24 +109,24 @@ class Table(CTableABC):
 
     @log_elapsed
     def join(self, other: 'Table', func=None, **kwargs):
-        return _from_rdd(_join(self._rdd, other._rdd, func=func))
+        return from_rdd(_join(self._rdd, other._rdd, func=func))
 
     @log_elapsed
     def subtractByKey(self, other: 'Table', **kwargs):
-        return _from_rdd(_subtract_by_key(self._rdd, other._rdd))
+        return from_rdd(_subtract_by_key(self._rdd, other._rdd))
 
     @log_elapsed
     def union(self, other: 'Table', func=lambda v1, v2: v1, **kwargs):
-        return _from_rdd(_union(self._rdd, other._rdd, func))
+        return from_rdd(_union(self._rdd, other._rdd, func))
 
 
-def _from_hdfs(paths: str, partitions):
+def from_hdfs(paths: str, partitions):
     sc = SparkContext.getOrCreate()
     rdd = materialize(load_from_hdfs(sc, paths, partitions))
     return Table(rdd=rdd)
 
 
-def _from_rdd(rdd):
+def from_rdd(rdd):
     rdd = materialize(rdd)
     return Table(rdd=rdd)
 

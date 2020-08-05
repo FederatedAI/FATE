@@ -25,8 +25,8 @@ from fate_arch.abc import CSessionABC
 from fate_arch.backend.spark import RabbitManager
 from fate_arch.common import file_utils, Party
 from fate_arch.session._parties_util import _FederationParties
-from fate_arch.session.spark._federation import FederationEngine, MQ
-from fate_arch.session.spark._table import _from_hdfs, _from_rdd
+from fate_arch.federation.spark import FederationEngine, MQ
+from fate_arch.computing.spark import from_hdfs, from_rdd
 
 
 class Session(CSessionABC):
@@ -40,7 +40,7 @@ class Session(CSessionABC):
     def load(self, address: AddressABC, partitions, schema, **kwargs):
         from fate_arch.data_table.address import HDFSAddress
         if isinstance(address, HDFSAddress):
-            table = _from_hdfs(paths=address.path, partitions=partitions)
+            table = from_hdfs(paths=address.path, partitions=partitions)
             table.schema = schema
             return table
         from fate_arch.data_table.address import FileAddress
@@ -85,7 +85,7 @@ class Session(CSessionABC):
     def parallelize(self, data: Iterable, partition: int, include_key: bool, **kwargs):
         _iter = data if include_key else enumerate(data)
         rdd = SparkContext.getOrCreate().parallelize(_iter, partition)
-        return _from_rdd(rdd)
+        return from_rdd(rdd)
 
     def _get_session_id(self):
         return self._session_id

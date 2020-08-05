@@ -14,4 +14,5 @@
 #  limitations under the License.
 #
 
-from fate_arch.federation._split import  segment_transfer_enabled
+from fate_arch.federation.transfer_variable._transfer_variable import BaseTransferVariables, Variable
+from fate_arch.federation.transfer_variable._enhance_variable import *
