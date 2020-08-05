@@ -377,7 +377,7 @@ class FTLGuest(FTL):
     def export_model(self):
         model_param = self.get_model_param()
         model_param.phi_a.extend(self.phi.tolist()[0])
-        return {"FTLHostMeta": model_param, "FTLHostParam": self.get_model_param()}
+        return {"FTLGuestMeta": self.get_model_meta(), "FTLHostParam": model_param}
 
     def load_model(self, model_dict):
         model_param = None
