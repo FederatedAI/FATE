@@ -251,6 +251,7 @@ ls -lrt /data/projects/common/supervisord/supervisord.d/fate-*.conf
 进入执行节点的/data/projects/目录，执行：
 
 ```
+#注意：URL链接有换行，拷贝的时候注意整理成一行
 cd /data/projects/
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/ansible_nfate_1.4.2_release_1.0.5.tar.gz
 tar xzf ansible_nfate_1.4.2_release_1.0.5.tar.gz
