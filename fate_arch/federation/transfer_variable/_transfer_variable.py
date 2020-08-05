@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
+import hashlib
 import typing
 from typing import Union
 
@@ -65,6 +65,14 @@ class Variable(object):
         self._dst = dst
         self._get_gc = IterationGC()
         self._remote_gc = IterationGC()
+        self._use_short_name = True
+        self._short_name = self._get_short_name(self._name)
+
+    @staticmethod
+    def _get_short_name(name):
+        fix_size = hashlib.blake2b(name.encode('utf-8'), digest_size=10).hexdigest()
+        _, right = name.split('$', 1)
+        return f"hash_${fix_size}_${right}"
 
     # copy never create a new instance
     def __copy__(self):
@@ -105,7 +113,8 @@ class Variable(object):
         if local not in self._src:
             raise RuntimeError(f"not allowed to remote object from {local} using {self._name}")
 
-        session.default().federation.remote(v=obj, name=self._name, tag=tag, parties=parties, gc=self._remote_gc)
+        name = self._short_name if self._use_short_name else self._name
+        session.default().federation.remote(v=obj, name=name, tag=tag, parties=parties, gc=self._remote_gc)
         self._remote_gc.gc()
 
     def get_parties(self,
@@ -125,7 +134,8 @@ class Variable(object):
         if local not in self._dst:
             raise RuntimeError(f"not allowed to get object to {local} using {self._name}")
 
-        rtn = session.default().federation.get(name=self._name, tag=tag, parties=parties, gc=self._get_gc)
+        name = self._short_name if self._use_short_name else self._name
+        rtn = session.default().federation.get(name=name, tag=tag, parties=parties, gc=self._get_gc)
         self._get_gc.gc()
 
         return rtn

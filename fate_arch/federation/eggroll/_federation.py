@@ -134,7 +134,7 @@ def _get_type(v):
 
 
 def _push_with_exception_handle(rsc, v, name, tag, parties):
-    def _remote_exception_re_raise(p, f):
+    def _remote_exception_re_raise(f, p):
         try:
             f.result()
             LOGGER.debug(f"[name={name}, tag={tag}, party={p}]remote done")
