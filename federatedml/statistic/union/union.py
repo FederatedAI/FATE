@@ -118,6 +118,7 @@ class Union(ModelBase):
                 LOGGER.warning("Table {} is empty.".format(key))
                 if combined_table is None:
                     combined_table = local_table
+                    combined_schema = local_table.schema
                 empty_count += 1
                 continue
 
