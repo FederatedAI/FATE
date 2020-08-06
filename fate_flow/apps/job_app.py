@@ -22,10 +22,10 @@ from datetime import datetime
 from flask import Flask, request, send_file
 
 from arch.api.utils.core_utils import json_loads, json_dumps
+from fate_flow.operation.job_saver import JobSaver
 from fate_flow.scheduler.task_scheduler import TaskScheduler
 from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
-from fate_flow.manager import data_manager
 from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT
 from fate_flow.utils import job_utils, detect_utils
 from fate_flow.utils.job_utils import get_dsl_parser_by_version
@@ -102,10 +102,8 @@ def update_job():
     if not jobs:
         return get_json_result(retcode=101, retmsg='find job failed')
     else:
-        job = jobs[0]
-        TaskScheduler.sync_job_status(job_id=job.f_job_id, roles={job.f_role: [job.f_party_id]},
-                                      work_mode=job.f_work_mode, initiator_party_id=job.f_party_id,
-                                      initiator_role=job.f_role, job_info={'f_description': job_info.get('notes', '')})
+        JobSaver.update_job(job_info={'description': job_info.get('notes', ''), 'job_id': job_info['job_id'], 'role': job_info['role'],
+                                      'party_id': job_info['party_id']})
         return get_json_result(retcode=0, retmsg='success')
 
 
@@ -175,7 +173,7 @@ def clean_job():
 
 @manager.route('/clean/queue', methods=['POST'])
 def clean_queue():
-    TaskScheduler.clean_queue()
+    job_utils.start_clean_queue()
     return get_json_result(retcode=0, retmsg='success')
 
 

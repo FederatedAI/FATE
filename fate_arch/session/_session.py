@@ -7,6 +7,28 @@ from fate_arch.storage import StorageType
 from fate_arch.federation import FederationType
 from fate_arch.session._parties import Parties
 
+_DEFAULT_SESSION: typing.Optional['Session'] = None
+
+
+def has_default():
+    return _DEFAULT_SESSION is not None
+
+
+def default() -> 'Session':
+    if _DEFAULT_SESSION is None:
+        raise RuntimeError(f"session not init")
+    return _DEFAULT_SESSION
+
+
+def set_default(session):
+    global _DEFAULT_SESSION
+    _DEFAULT_SESSION = session
+
+
+def exit_session():
+    global _DEFAULT_SESSION
+    _DEFAULT_SESSION = None
+
 
 class Session(object):
     def __init__(self):
@@ -15,6 +37,24 @@ class Session(object):
         self._federation_session: typing.Optional[FederationABC] = None
         self._parties: typing.Optional[Parties] = None
         self._storage_session = None
+
+        self._previous_session = None
+
+    def start(self):
+        self._previous_session = default()
+        set_default(self)
+        return self
+
+    def stop(self):
+        set_default(self._previous_session)
+        self._previous_session = None
+        return self
+
+    def __enter__(self):
+        return self.start()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return self.stop()
 
     def init_computing(self,
                        computing_type: ComputingType,

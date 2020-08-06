@@ -42,6 +42,9 @@ class Reader(object):
                                namespace=self.parameters[data_name]['namespace'],
                                name=self.parameters[data_name]['name']
                                )
+        if not data_table:
+            raise Exception('no find table: namespace {}, name {}'.format(self.parameters[data_name]['namespace'],
+                                                                          self.parameters[data_name]['name']))
         persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(self.task_id), uuid.uuid1().hex
         table = convert(data_table, job_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id),
                         name=persistent_table_name, namespace=persistent_table_namespace, force=True)

@@ -39,6 +39,7 @@ class Table(CTableABC):
         options = kwargs.get("options", {})
         from fate_arch.storage.address import EggRollAddress
         if isinstance(address, EggRollAddress):
+            options["store_type"] = address.storage_type
             self._rp.save_as(name=address.name, namespace=address.namespace, partition=partitions, options=options)
             schema.update(self.schema)
             return

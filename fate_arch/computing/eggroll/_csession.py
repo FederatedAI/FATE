@@ -59,6 +59,12 @@ class CSession(CSessionABC):
             rp = self._rpc.load(namespace=address.namespace, name=address.name, options=options)
             if rp is None or rp.get_partitions() == 0:
                 raise RuntimeError(f"no exists: {address.name}, {address.namespace}, {address.storage_type}")
+
+            if address.storage_type != StoreTypes.ROLLPAIR_IN_MEMORY:
+                # TODO: Generate a name and namespace using a random string
+                rp = rp.save_as(name=address.name, namespace=address.namespace, partition=partitions,
+                                options={'store_type': StoreTypes.ROLLPAIR_IN_MEMORY})
+
             table = Table(rp=rp)
             table.schema = schema
             return table

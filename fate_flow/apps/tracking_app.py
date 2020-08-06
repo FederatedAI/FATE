@@ -23,10 +23,9 @@ from datetime import datetime
 from flask import Flask, request, send_file
 from google.protobuf import json_format
 
-from arch.api.utils.core_utils import deserialize_b64
 from arch.api.utils.core_utils import fate_uuid
 from fate_flow.db.db_models import Job, DB
-from fate_flow.manager.data_manager import query_data_view, delete_metric_data
+from fate_flow.manager.data_manager import delete_metric_data
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.settings import stat_logger
 from fate_flow.utils import job_utils, data_utils
