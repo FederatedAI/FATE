@@ -20,35 +20,42 @@ import typing
 from fate_arch.common import Party
 
 
-class Parties(object):
+class PartiesInfo(object):
 
     @staticmethod
-    def from_runtime_conf(conf: dict):
-        role = conf.get("local").get("role")
-        party_id = str(conf.get("local").get("party_id"))
-        party = Party(role, party_id)
-        parties = {}
-        for role, pid_list in conf.get("role", {}).items():
-            parties[role] = [Party(role, pid) for pid in pid_list]
-        return Parties(party, parties)
+    def from_conf(conf: typing.MutableMapping[str, dict]):
+        try:
+            local = Party(role=conf["local"]['role'], party_id=conf['local']['party_id'])
+            role_to_parties = {}
+            for role, party_id_list in conf.get("role", {}).items():
+                role_to_parties[role] = [Party(role=role, party_id=party_id) for party_id in party_id_list]
+        except Exception as e:
+            raise RuntimeError(
+                "conf parse error, a correct configuration could be:\n"
+                "{\n"
+                "  'local': {'role': 'guest', 'party_id': 10000},\n"
+                "  'role': {'guest': [10000], 'host': [9999, 9998]}, 'arbiter': [9997]}\n"
+                "}"
+            ) from e
+        return PartiesInfo(local, role_to_parties)
 
-    def __init__(self, party, parties):
-        self._party = party
-        self._parties = parties
+    def __init__(self, local: Party, role_to_parties: typing.MutableMapping[str, typing.List[Party]]):
+        self._local = local
+        self._role_to_parties = role_to_parties
 
     @property
     def local_party(self) -> Party:
-        return self._party
+        return self._local
 
     @property
     def all_parties(self):
-        return [party for parties in self._parties.values for party in parties]
+        return [party for parties in self._role_to_parties.values() for party in parties]
 
     def roles_to_parties(self, roles: typing.Iterable) -> list:
-        return [party for role in roles for party in self._parties[role]]
+        return [party for role in roles for party in self._role_to_parties[role]]
 
     def role_to_party(self, role, idx) -> Party:
-        return self._parties[role][idx]
+        return self._role_to_parties[role][idx]
 
 
-__all__ = ["Parties"]
+__all__ = ["PartiesInfo"]

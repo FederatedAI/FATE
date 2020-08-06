@@ -98,6 +98,7 @@ class TaskExecutor(object):
             module_name = component.get_module()
             task_input_dsl = component.get_input()
             task_output_dsl = component.get_output()
+            component_parameters_on_party['output_data_name'] = task_output_dsl.get('data')
             task_parameters = file_utils.load_json_conf(args.config)
             TaskExecutor.monkey_patch()
         except Exception as e:

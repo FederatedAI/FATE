@@ -37,14 +37,14 @@ class Reader(object):
     def run(self, component_parameters=None, args=None):
         self.parameters = component_parameters["ReaderParam"]
         job_id = generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id)
-        data_name = [key for key in self.parameters.keys()][0]
+        table_key = [key for key in self.parameters.keys()][0]
         data_table = get_table(job_id=job_id,
-                               namespace=self.parameters[data_name]['namespace'],
-                               name=self.parameters[data_name]['name']
+                               namespace=self.parameters[table_key]['namespace'],
+                               name=self.parameters[table_key]['name']
                                )
         if not data_table:
-            raise Exception('no find table: namespace {}, name {}'.format(self.parameters[data_name]['namespace'],
-                                                                          self.parameters[data_name]['name']))
+            raise Exception('no find table: namespace {}, name {}'.format(self.parameters[table_key]['namespace'],
+                                                                          self.parameters[table_key]['name']))
         persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(self.task_id), uuid.uuid1().hex
         table = convert(data_table, job_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id),
                         name=persistent_table_name, namespace=persistent_table_namespace, force=True)
@@ -57,7 +57,7 @@ class Reader(object):
                                                                                            persistent_table_namespace,
                                                                                            partitions,
                                                                                            count))
-        self.tracker.log_output_data_info(data_name=data_name,
+        self.tracker.log_output_data_info(data_name=component_parameters.get('output_data_name')[0] if component_parameters.get('output_data_name') else table_key,
                                           table_namespace=persistent_table_namespace,
                                           table_name=persistent_table_name)
         data_info = {"count": count,

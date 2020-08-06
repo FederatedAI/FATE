@@ -5,7 +5,7 @@ from fate_arch.common.file_utils import load_json_conf
 from fate_arch.computing import ComputingType
 from fate_arch.storage import StorageType
 from fate_arch.federation import FederationType
-from fate_arch.session._parties import Parties
+from fate_arch.session._parties import PartiesInfo
 
 _DEFAULT_SESSION: typing.Optional['Session'] = None
 
@@ -35,7 +35,7 @@ class Session(object):
         self._computing_session: typing.Optional[CSessionABC] = None
         self._computing_type: typing.Optional[ComputingType] = None
         self._federation_session: typing.Optional[FederationABC] = None
-        self._parties: typing.Optional[Parties] = None
+        self._parties_info: typing.Optional[PartiesInfo] = None
         self._storage_session = None
 
         self._previous_session = None
@@ -57,8 +57,8 @@ class Session(object):
         return self.stop()
 
     def init_computing(self,
-                       computing_type: ComputingType,
                        computing_session_id: str,
+                       computing_type: ComputingType = ComputingType.EGGROLL,
                        **kwargs):
         if self.is_computing_valid:
             raise RuntimeError(f"computing session already valid")
@@ -89,11 +89,18 @@ class Session(object):
 
     def init_federation(self,
                         federation_session_id: str,
-                        runtime_conf: dict,
-                        server_conf: dict = None,
+                        *,
+                        runtime_conf: typing.Optional[dict] = None,
+                        parties_info: typing.Optional[PartiesInfo] = None,
+                        server_conf: typing.Optional[dict] = None,
                         federation_type: typing.Optional[FederationType] = None):
-        self._parties = Parties.from_runtime_conf(runtime_conf)
-        party = self._parties.local_party
+
+        if parties_info is None:
+            if runtime_conf is None:
+                raise RuntimeError(f"`party_info` and `runtime_conf` are both `None`")
+            parties_info = PartiesInfo.from_conf(runtime_conf)
+        self._parties_info = parties_info
+
         if server_conf is None:
             server_conf = load_json_conf("conf/server_conf.json")
 
@@ -124,7 +131,7 @@ class Session(object):
             proxy = Proxy.from_conf(server_conf)
             self._federation_session = Federation(rp_ctx=self._computing_session.get_rpc(),
                                                   rs_session_id=federation_session_id,
-                                                  party=party,
+                                                  party=parties_info.local_party,
                                                   proxy=proxy)
             return self
 
@@ -136,7 +143,7 @@ class Session(object):
                 raise RuntimeError(f"require computing with type {ComputingType.SPARK} valid")
 
             self._federation_session = Federation.from_conf(federation_session_id=federation_session_id,
-                                                            party=party,
+                                                            party=parties_info.local_party,
                                                             runtime_conf=runtime_conf,
                                                             server_conf=server_conf)
             return self
@@ -151,7 +158,7 @@ class Session(object):
             self._federation_session = \
                 Federation(standalone_session=self._computing_session.get_standalone_session(),
                            federation_session_id=federation_session_id,
-                           party=party)
+                           party=parties_info.local_party)
             return self
 
         raise RuntimeError(f"{federation_type} not supported")
@@ -173,7 +180,7 @@ class Session(object):
 
     @property
     def parties(self):
-        return self._parties
+        return self._parties_info
 
     @property
     def is_computing_valid(self):
