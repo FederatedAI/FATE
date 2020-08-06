@@ -51,7 +51,14 @@ pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
 
                        })
 
+
+print ("linr output data table is: ")
+print (pipeline.get_component("hetero_linr_0").get_output_data_table())
+print ("\ndata_split output data table is: ")
 print (pipeline.get_component("hetero_data_split_0").get_output_data_table())
+print ("\ndata_split output data is: ")
+print (pipeline.get_component("hetero_data_split_0").get_output_data(limits=10))
+print ("\nlinr output data is: ")
+print (pipeline.get_component("hetero_linr_0").get_output_data(limits=10))
 print ("\n summary content is: ")
 print (pipeline.get_component("hetero_data_split_0").get_summary())
-# print (pipeline.get_component("hetero_data_split_0").get_output_data())
