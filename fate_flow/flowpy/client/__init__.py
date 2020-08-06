@@ -19,7 +19,7 @@ from arch.api.utils import file_utils
 from arch.api.utils.core_utils import get_lan_ip
 from fate_flow.settings import SERVERS, ROLE, API_VERSION
 
-server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
+server_conf = file_utils.load_json_conf("conf/server_conf.json")
 
 
 default_ip = server_conf.get(SERVERS).get(ROLE).get('host')
