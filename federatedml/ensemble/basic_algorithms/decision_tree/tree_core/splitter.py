@@ -25,14 +25,15 @@
 # 
 # =============================================================================
 
-from arch.api import session
-from arch.api.utils import log_utils
 import warnings
+
+from arch.api.utils.splitable import segment_transfer_enabled
+from fate_arch import session
+from fate_arch.common import log
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.criterion import XgboostCriterion
 from federatedml.util import consts
-from arch.api.utils.splitable import segment_transfer_enabled
 
-LOGGER = log_utils.getLogger()
+LOGGER = log.getLogger()
 
 
 class SplitInfo(object):
@@ -154,7 +155,7 @@ class Splitter(object):
     def find_split(self, histograms, valid_features, partitions=1, sitename=consts.GUEST,
                    use_missing=False, zero_as_missing=False):
         LOGGER.info("splitter find split of raw data")
-        histogram_table = session.parallelize(histograms, include_key=False, partition=partitions)
+        histogram_table = session.default().computing.parallelize(histograms, include_key=False, partition=partitions)
         splitinfo_table = histogram_table.mapValues(lambda sub_hist:
                                                     self.find_split_single_histogram_guest(sub_hist,
                                                                                            valid_features,
