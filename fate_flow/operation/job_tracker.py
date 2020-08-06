@@ -303,13 +303,13 @@ class Tracker(object):
             try:
                 tracking_metric_model = self.get_dynamic_db_model(TrackingMetric, self.job_id)
                 tracking_metrics = tracking_metric_model.select(tracking_metric_model.f_key, tracking_metric_model.f_value).where(
-                    tracking_metric_model.f_job_id==self.job_id,
-                    tracking_metric_model.f_component_name==(self.component_name if not job_level else self.job_virtual_component_name()),
-                    tracking_metric_model.f_role==self.role,
-                    tracking_metric_model.f_party_id==self.party_id,
-                    tracking_metric_model.f_metric_namespace==metric_namespace,
-                    tracking_metric_model.f_metric_name==metric_name,
-                    tracking_metric_model.f_type==data_type
+                    tracking_metric_model.f_job_id == self.job_id,
+                    tracking_metric_model.f_component_name == (self.component_name if not job_level else self.job_virtual_component_name()),
+                    tracking_metric_model.f_role == self.role,
+                    tracking_metric_model.f_party_id == self.party_id,
+                    tracking_metric_model.f_metric_namespace == metric_namespace,
+                    tracking_metric_model.f_metric_name == metric_name,
+                    tracking_metric_model.f_type == data_type
                 )
                 for tracking_metric in tracking_metrics:
                     yield deserialize_b64(tracking_metric.f_key), deserialize_b64(tracking_metric.f_value)
@@ -420,7 +420,7 @@ class Tracker(object):
 
     @classmethod
     def job_virtual_component_name(cls):
-        return "pipeline"
+        return "dag"
 
     @classmethod
     def job_virtual_component_module_name(cls):

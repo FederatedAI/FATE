@@ -32,13 +32,12 @@ from arch.api.utils import file_utils
 from arch.api.utils.core_utils import current_timestamp
 from arch.api.utils.core_utils import json_loads, json_dumps
 from arch.api.utils.log_utils import schedule_logger
-from fate_flow.operation.job_tracker import Tracker
 from fate_flow.scheduler.dsl_parser import DSLParser, DSLParserV2
 from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.manager.data_manager import query_data_view, delete_table, delete_metric_data
+from fate_flow.manager.data_manager import delete_metric_data
 from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE
-from fate_flow.utils import detect_utils
+from fate_flow.utils import detect_utils, table_utils
 from fate_flow.utils import api_utils
 from fate_flow.utils import session_utils
 from flask import request, redirect, url_for
@@ -462,16 +461,8 @@ def start_clean_job(**kwargs):
                 pass
             try:
                 # clean data table
-                stat_logger.info('start delete {} {} {} {} data table'.format(task.f_job_id, task.f_role,
-                                                                              task.f_party_id, task.f_component_name))
-                tracker = Tracker(job_id=task.f_job_id, role=task.f_role, party_id=task.f_party_id,
-                                  component_name=task.f_component_name)
-                output_data_table_infos = tracker.get_output_data_info()
-                if output_data_table_infos:
-                    delete_table(output_data_table_infos)
-                    stat_logger.info('delete {} {} {} {} data table success'.format(task.f_job_id, task.f_role,
-                                                                                    task.f_party_id,
-                                                                                    task.f_component_name))
+                table_utils.clean_table(job_id=task.f_job_id, role=task.f_role, party_id=task.f_party_id,
+                                        component_name=task.f_component_name)
             except Exception as e:
                 stat_logger.info('delete {} {} {} {} data table failed'.format(task.f_job_id, task.f_role,
                                                                                task.f_party_id, task.f_component_name))

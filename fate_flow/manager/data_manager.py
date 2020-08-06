@@ -34,7 +34,7 @@ def query_data_view(**kwargs):
         return [data_view for data_view in data_views]
 
 
-def delete_table(output_data_table_infos):
+def delete_tables_by_table_infos(output_data_table_infos):
     data = []
     status = False
     for output_data_table_info in output_data_table_infos:
