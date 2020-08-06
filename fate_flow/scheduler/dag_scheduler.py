@@ -32,8 +32,8 @@ from fate_flow.scheduler.status_engine import StatusEngine
 
 
 class DAGScheduler(object):
-    @staticmethod
-    def submit(job_data, job_id=None):
+    @classmethod
+    def submit(cls, job_data, job_id=None):
         if not job_id:
             job_id = generate_job_id()
         schedule_logger(job_id).info('submit job, job_id {}, body {}'.format(job_id, job_data))
@@ -105,8 +105,8 @@ class DAGScheduler(object):
         return job_id, path_dict['job_dsl_path'], path_dict['job_runtime_conf_path'], logs_directory, \
                {'model_id': job_parameters['model_id'], 'model_version': job_parameters['model_version']}, board_url
 
-    @staticmethod
-    def start(job_id, initiator_role, initiator_party_id):
+    @classmethod
+    def start(cls, job_id, initiator_role, initiator_party_id):
         schedule_logger(job_id=job_id).info("Try to start job {} on initiator {} {}".format(job_id, initiator_role, initiator_party_id))
         job_info = {}
         job_info["job_id"] = job_id
@@ -160,19 +160,21 @@ class DAGScheduler(object):
         schedule_logger(job_id=job.f_job_id).info("Job {} status is {}, calculate by task set status list: {}".format(job.f_job_id, new_job_status, task_sets_status))
         if new_job_status != job.f_status:
             job.f_status = new_job_status
+            if EndStatus.contains(job.f_status):
+                FederatedScheduler.save_pipelined_model(job=job)
             FederatedScheduler.sync_job(job=job, update_fields=["status"])
-            cls.update_job_on_initiator(initiator_job_template=job, update_fields=["status"])
+            cls.update_job_on_initiator(initiator_job=job, update_fields=["status"])
         if EndStatus.contains(job.f_status):
             cls.finish(job=job, end_status=job.f_status)
 
     @classmethod
-    def update_job_on_initiator(cls, initiator_job_template: Job, update_fields: list):
-        jobs = JobSaver.query_job(job_id=initiator_job_template.f_job_id)
+    def update_job_on_initiator(cls, initiator_job: Job, update_fields: list):
+        jobs = JobSaver.query_job(job_id=initiator_job.f_job_id)
         if not jobs:
             raise Exception("Failed to update job status on initiator")
-        job_info = initiator_job_template.to_human_model_dict(only_primary_with=update_fields)
+        job_info = initiator_job.to_human_model_dict(only_primary_with=update_fields)
         for field in update_fields:
-            job_info[field] = getattr(initiator_job_template, "f_%s" % field)
+            job_info[field] = getattr(initiator_job, "f_%s" % field)
         for job in jobs:
             job_info["role"] = job.f_role
             job_info["party_id"] = job.f_party_id
@@ -193,10 +195,9 @@ class DAGScheduler(object):
                         return status
                 raise Exception("calculate job status failed: {}".format(task_set_status))
 
-    @staticmethod
-    def finish(job, end_status):
+    @classmethod
+    def finish(cls, job, end_status):
         schedule_logger(job_id=job.f_job_id).info("Job {} finished with {}, do something...".format(job.f_job_id, end_status))
-        FederatedScheduler.save_pipelined_model(job=job)
         FederatedScheduler.stop_job(job=job, stop_status=end_status)
         FederatedScheduler.clean_job(job=job)
         schedule_logger(job_id=job.f_job_id).info("Job {} finished with {}, done".format(job.f_job_id, end_status))
