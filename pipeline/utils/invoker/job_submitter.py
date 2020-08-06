@@ -220,14 +220,14 @@ class JobInvoker(object):
             # single data table
             if n == 1:
                 single_data = all_data[0]
-                data_name = single_data["data_name"]
-                del single_data[data_name]
+                # data_name = single_data["data_name"]
+                del single_data["data_name"]
                 data = single_data
             # multiple data table
             elif n > 1:
                 for single_data in all_data:
                     data_name = single_data["data_name"]
-                    del single_data[data_name]
+                    del single_data["data_name"]
                     data[data_name] = single_data
             # no data table obtained
             else:
