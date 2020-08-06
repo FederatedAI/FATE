@@ -20,8 +20,8 @@ import sys
 import json
 
 import __main__
-from peewee import (Model, CharField, IntegerField, BigIntegerField, TextField, CompositeKey,
-                    BigAutoField, ManyToManyField, DeferredThroughModel, ForeignKeyField)
+from peewee import (Model, CharField, IntegerField, BigIntegerField,
+                    TextField, CompositeKey, BigAutoField)
 from playhouse.apsw_ext import APSWDatabase
 from playhouse.pool import PooledMySQLDatabase
 
@@ -315,30 +315,24 @@ class MachineLearningModelMeta(DataBaseModel):
         db_table = "t_machine_learning_model_meta"
 
 
-Model_Tag = DeferredThroughModel()
+class ModelTag(DataBaseModel):
+    f_id = BigAutoField(primary_key=True)
+    f_m_id = BigIntegerField(null=False)
+    f_t_id = BigIntegerField(null=False)
+
+    class Meta:
+        db_table = "t_model_tag"
 
 
 class Tag(DataBaseModel):
     f_id = BigAutoField(primary_key=True)
     f_name = CharField(max_length=100, index=True, unique=True)
     f_desc = TextField(null=True)
-    f_model = ManyToManyField(MachineLearningModelMeta, backref='tags', through_model=Model_Tag)
     f_create_time = BigIntegerField(default=current_timestamp())
     f_update_time = BigIntegerField(default=current_timestamp())
 
     class Meta:
         db_table = "t_tags"
-
-
-class ModelTag(DataBaseModel):
-    f_m_id = ForeignKeyField(MachineLearningModelMeta, db_column='f_m_id', on_delete='CASCADE')
-    f_t_id = ForeignKeyField(Tag, db_column='f_t_id', on_delete='CASCADE')
-
-    class Meta:
-        db_table = "t_model_tag"
-
-
-Model_Tag.set_model(ModelTag)
 
 
 class ComponentSummary(DataBaseModel):
