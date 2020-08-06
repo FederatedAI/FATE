@@ -41,7 +41,8 @@ class Session(object):
         self._previous_session = None
 
     def start(self):
-        self._previous_session = default()
+        if has_default():
+            self._previous_session = default()
         set_default(self)
         return self
 
