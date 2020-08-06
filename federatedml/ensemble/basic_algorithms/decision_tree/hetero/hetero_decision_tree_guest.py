@@ -245,7 +245,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         splitinfo_guest_host_table = session.parallelize(merge_infos,
                                                          include_key=False,
-                                                         partition=self.data_bin._partitions)
+                                                         partition=self.data_bin.partitions)
 
         best_splitinfo_table = splitinfo_guest_host_table.mapValues(self.find_best_split_guest_and_host)
         best_splitinfos = [best_splitinfo[1] for best_splitinfo in best_splitinfo_table.collect()]
@@ -269,7 +269,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
                 encrypted_splitinfo_host_table = session.parallelize(zip(self.cur_to_split_nodes, batch_splitinfo_host),
                                                                      include_key=False,
-                                                                     partition=self.data_bin._partitions)
+                                                                     partition=self.data_bin.partitions)
 
                 splitinfos = encrypted_splitinfo_host_table.mapValues(self.find_host_split).collect()
 
@@ -299,7 +299,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         acc_histograms = self.get_local_histograms(node_map, ret='tensor')
         best_split_info_guest = self.splitter.find_split(acc_histograms, self.valid_features,
-                                                         self.data_bin._partitions, self.sitename,
+                                                         self.data_bin.partitions, self.sitename,
                                                          self.use_missing, self.zero_as_missing)
         LOGGER.debug('computing local splits done')
 
