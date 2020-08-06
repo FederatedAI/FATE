@@ -1,19 +1,15 @@
-import numpy as np
-
+import copy
 import sys
 
+import numpy as np
+import pandas as pd
+from sklearn.metrics import accuracy_score
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
-from sklearn.metrics import accuracy_score
 
-from arch.api import session
+from fate_arch import session
 from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
-
-import copy
-
-import pandas as pd
-
 
 ROUND_NUM = 6
 
@@ -38,7 +34,7 @@ def sort_score_and_label(labels: np.ndarray, pred_scores: np.ndarray):
 def map_ndarray_to_dtable(arr, partitions=10):
 
     instances = [Instance(features=SparseVector(indices=[0], data=[arr[i]])) for i in arr]
-    dt = session.parallelize(instances, partition=partitions)
+    dt = session.default().computing.parallelize(instances, partition=partitions)
     dt.schema['header'] = ['scores']
 
     return dt
