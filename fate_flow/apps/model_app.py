@@ -21,7 +21,7 @@ import peewee
 from copy import deepcopy
 
 from fate_flow.db.db_models import MachineLearningModelMeta as MLModel
-from fate_flow.db.db_models import Tag, DB, ModelOperationLog as OperLog
+from fate_flow.db.db_models import Tag, DB, ModelTag, ModelOperationLog as OperLog
 from flask import Flask, request, send_file
 
 from fate_flow.manager.model_manager.migrate_model import compare_roles
@@ -283,18 +283,23 @@ def tag_model(operation):
 
     if operation == 'retrieve':
         res = {'tags': []}
-        for tag in model.tags:
+        tags = (Tag.select().join(ModelTag, on=ModelTag.f_t_id == Tag.f_id).where(ModelTag.f_m_id == model.f_id))
+        for tag in tags:
             res['tags'].append({'name': tag.f_name, 'description': tag.f_desc})
+        res['count'] = tags.count()
         return get_json_result(data=res)
     elif operation == 'remove':
         tag = Tag.get_or_none(Tag.f_name == request_data.get('tag_name'))
         if not tag:
             raise Exception("Can not found '{}' tag.".format(request_data.get('tag_name')))
-        if tag.f_name not in [t.f_name for t in model.tags]:
+        tags = (Tag.select().join(ModelTag, on=ModelTag.f_t_id == Tag.f_id).where(ModelTag.f_m_id == model.f_id))
+        if tag.f_name not in [t.f_name for t in tags]:
             raise Exception("Model {} {} does not have tag '{}'.".format(model.f_model_id,
                                                                          model.f_model_version,
                                                                          tag.f_name))
-        model.tags.remove(tag)
+        # model.tags.remove(tag)
+        delete_query = ModelTag.delete().where(ModelTag.f_m_id == model.f_id, ModelTag.f_t_id == tag.f_id)
+        delete_query.execute()
         return get_json_result(retmsg="'{}' tag has been removed from tag list of model {} {}.".format(request_data.get('tag_name'),
                                                                                                        model.f_model_id,
                                                                                                        model.f_model_version))
@@ -306,11 +311,13 @@ def tag_model(operation):
                 tag.f_name = request_data.get('tag_name')
                 tag.save(force_insert=True)
             else:
-                if tag.f_name in [tag.f_name for tag in model.tags]:
+                tags = (Tag.select().join(ModelTag, on=ModelTag.f_t_id == Tag.f_id).where(ModelTag.f_m_id == model.f_id))
+                if tag.f_name in [t.f_name for t in tags]:
                     raise Exception("Model {} {} already been tagged as tag '{}'.".format(model.f_model_id,
                                                                                           model.f_model_version,
                                                                                           tag.f_name))
-            tag.f_model.add(model)
+            # tag.f_model.add(model)
+            ModelTag.create(f_t_id=tag.f_id, f_m_id=model.f_id)
         return get_json_result(retmsg="Adding {} tag for model with job id: {} successfully.".format(request_data.get('tag_name'),
                                                                                                      request_data.get('job_id')))
 
@@ -326,11 +333,16 @@ def operate_tag(tag_operation):
     tag_desc = request_data.get('tag_desc')
 
     if tag_operation == TagOperation.CREATE:
-        if Tag.get_or_none(Tag.f_name == tag_name):
+        # if Tag.get_or_none(Tag.f_name == tag_name):
+        #     raise
+        try:
+            with DB.atomic():
+                Tag.create(f_name=tag_name, f_desc=tag_desc)
+        except peewee.IntegrityError:
             raise Exception("'{}' has already exists in database.".format(tag_name))
-        with DB.atomic():
-            Tag.create(f_name=tag_name, f_desc=tag_desc)
-        return get_json_result("'{}' tag has been created successfully.".format(tag_name))
+        else:
+            return get_json_result("'{}' tag has been created successfully.".format(tag_name))
+
     elif tag_operation == TagOperation.LIST:
         tags = Tag.select()
         limit = request_data.get('limit')
@@ -341,7 +353,9 @@ def operate_tag(tag_operation):
         else:
             count = limit
         for tag in tags[:count]:
-            res['tags'].append({'name': tag.f_name, 'description': tag.f_desc, 'model_count': len(tag.f_model)})
+            # res['tags'].append({'name': tag.f_name, 'description': tag.f_desc, 'model_count': len(tag.f_model)})
+            res['tags'].append({'name': tag.f_name, 'description': tag.f_desc,
+                                'model_count': ModelTag.filter(ModelTag.f_t_id == tag.f_id).count()})
         return get_json_result(data=res)
 
     else:
@@ -354,12 +368,15 @@ def operate_tag(tag_operation):
         if tag_operation == TagOperation.RETRIEVE:
             if request_data.get('with_model', False):
                 res = {'models': []}
-                for model in tag.f_model:
-                    res['models'].append({
+                models = (MLModel.select().join(ModelTag, on=ModelTag.f_m_id == MLModel.f_id).where(ModelTag.f_t_id == tag.f_id))
+                # for model in tag.f_model:
+                for model in models:
+                        res["models"].append({
                         "model_id": model.f_model_id,
                         "model_version": model.f_model_version,
                         "model_size": model.f_size
                     })
+                res["count"] = models.count()
                 return get_json_result(data=res)
             else:
                 tags = Tag.filter(Tag.f_name.contains(tag_name))
@@ -390,6 +407,8 @@ def operate_tag(tag_operation):
 
         else:
             with DB.atomic():
+                delete_query = ModelTag.delete().where(ModelTag.f_t_id == tag.f_id)
+                delete_query.execute()
                 Tag.delete_instance(tag)
             return get_json_result(retmsg="'{}' tag has been deleted successfully.".format(tag_name))
 
