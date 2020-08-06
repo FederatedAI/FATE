@@ -32,7 +32,7 @@ def flow_cli(ctx):
     Fate Flow Client
     """
     ctx.ensure_object(dict)
-    with open(os.path.join(os.path.dirname(__file__), os.pardir, "settings.yaml"), "r") as fin:
+    with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "r") as fin:
         config = yaml.safe_load(fin)
     if config.get("server_conf_path"):
         is_server_conf_exist = os.path.exists(config.get("server_conf_path"))
@@ -48,11 +48,12 @@ def flow_cli(ctx):
         ctx.obj["http_port"] = server_conf.get(config.get("server")).get(config.get("role")).get("http.port")
         ctx.obj["server_url"] = "http://{}:{}/{}".format(ip, ctx.obj["http_port"], config.get("api_version"))
     else:
-        ip = config.get("ip")
-        if ip in ["localhost", "127.0.0.1"]:
-            ip = get_lan_ip()
-        ctx.obj["http_port"] = int(config.get("port"))
-        ctx.obj["server_url"] = "http://{}:{}/{}".format(ip, ctx.obj["http_port"], config.get("api_version"))
+        if config.get("ip") and config.get("port"):
+            ip = config.get("ip")
+            if ip in ["localhost", "127.0.0.1"]:
+                ip = get_lan_ip()
+            ctx.obj["http_port"] = int(config.get("port"))
+            ctx.obj["server_url"] = "http://{}:{}/{}".format(ip, ctx.obj["http_port"], config.get("api_version"))
 
     ctx.obj["init"] = is_server_conf_exist or (config.get("ip") and config.get("port"))
 
@@ -76,7 +77,7 @@ def initialization(**kwargs):
         flow init -c /data/projects/FATE/conf/server_conf.json
         flow init --ip 10.1.2.3 --port 9380
     """
-    with open(os.path.join(os.path.dirname(__file__), os.pardir, "settings.yaml"), "r") as fin:
+    with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "r") as fin:
         config = yaml.safe_load(fin)
     if kwargs.get("server_conf_path"):
         config["server_conf_path"] = kwargs.get("server_conf_path")
