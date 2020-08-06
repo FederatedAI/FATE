@@ -131,7 +131,7 @@ class Session(object):
             proxy = Proxy.from_conf(server_conf)
             self._federation_session = Federation(rp_ctx=self._computing_session.get_rpc(),
                                                   rs_session_id=federation_session_id,
-                                                  party=party_info.local_party,
+                                                  party=parties_info.local_party,
                                                   proxy=proxy)
             return self
 
@@ -143,7 +143,7 @@ class Session(object):
                 raise RuntimeError(f"require computing with type {ComputingType.SPARK} valid")
 
             self._federation_session = Federation.from_conf(federation_session_id=federation_session_id,
-                                                            party=party_info.local_party,
+                                                            party=parties_info.local_party,
                                                             runtime_conf=runtime_conf,
                                                             server_conf=server_conf)
             return self
@@ -158,7 +158,7 @@ class Session(object):
             self._federation_session = \
                 Federation(standalone_session=self._computing_session.get_standalone_session(),
                            federation_session_id=federation_session_id,
-                           party=party_info.local_party)
+                           party=parties_info.local_party)
             return self
 
         raise RuntimeError(f"{federation_type} not supported")
