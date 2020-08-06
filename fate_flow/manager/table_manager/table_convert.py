@@ -16,10 +16,10 @@
 import uuid
 
 from arch.api.utils import log_utils
+from fate_arch.common import WorkMode, Backend
 from fate_arch.storage.eggroll_table import EggRollTable
 from fate_arch.storage.hdfs_table import HDFSTable
 from fate_arch.storage.constant import Relationship, StorageEngine
-from fate_arch.session import Backend, WorkMode
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.table_manager.table_operation import create
 

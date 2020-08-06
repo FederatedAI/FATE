@@ -21,6 +21,7 @@ from datetime import datetime
 
 from flask import Flask, request, send_file
 
+import fate_flow.utils.clean_utils
 from arch.api.utils.core_utils import json_loads, json_dumps
 from fate_flow.operation.job_saver import JobSaver
 from fate_flow.scheduler.task_scheduler import TaskScheduler
@@ -171,7 +172,7 @@ def query_component_output_data_info():
 
 @manager.route('/clean', methods=['POST'])
 def clean_job():
-    job_utils.start_clean_job(**request.json)
+    fate_flow.utils.clean_utils.start_clean_job(**request.json)
     return get_json_result(retcode=0, retmsg='success')
 
 
