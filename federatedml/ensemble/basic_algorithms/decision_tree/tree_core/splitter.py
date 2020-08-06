@@ -27,9 +27,9 @@
 
 import warnings
 
-from arch.api.utils.splitable import segment_transfer_enabled
 from fate_arch import session
 from fate_arch.common import log
+from fate_arch.federation import segment_transfer_enabled
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.criterion import XgboostCriterion
 from federatedml.util import consts
 

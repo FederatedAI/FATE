@@ -17,35 +17,9 @@
 
 import pickle
 
-Pickle = pickle
+import typing
 
 __FATE_BIG_OBJ_MAX_PART_SIZE = "__fate_big_obj_max_part_size"
-__SUFFIX = "_part_"
-
-
-def get_slice(obj, index):
-    _max_size = getattr(obj, __FATE_BIG_OBJ_MAX_PART_SIZE)
-    return slice(index * _max_size, (index + 1) * _max_size)
-
-
-def is_splitable_obj(obj):
-    return hasattr(obj, __FATE_BIG_OBJ_MAX_PART_SIZE)
-
-
-def num_split_parts(obj, bytes_size):
-    return (bytes_size - 1) // getattr(obj, __FATE_BIG_OBJ_MAX_PART_SIZE) + 1
-
-
-def _attr_injected_meta_class(**attrs):
-    class _AttrInjected(type):
-
-        def __call__(cls, *args, **kwargs):
-            instance = type.__call__(cls, *args, **kwargs)
-            for k, v in attrs.items():
-                setattr(instance, k, v)
-            return instance
-
-    return _AttrInjected
 
 
 def segment_transfer_enabled(max_part_size=None):
@@ -60,28 +34,42 @@ def segment_transfer_enabled(max_part_size=None):
     return _attr_injected_meta_class(**{__FATE_BIG_OBJ_MAX_PART_SIZE: max_part_size})
 
 
-def maybe_split_object(obj):
-    if not is_splitable_obj(obj):
-        return obj, ()
+def _is_splitable_obj(obj):
+    return hasattr(obj, __FATE_BIG_OBJ_MAX_PART_SIZE)
 
-    obj_bytes = Pickle.dumps(obj, protocol=4)
+
+def _attr_injected_meta_class(**attrs):
+    class _AttrInjected(type):
+
+        def __call__(cls, *args, **kwargs):
+            instance = type.__call__(cls, *args, **kwargs)
+            for k, v in attrs.items():
+                setattr(instance, k, v)
+            return instance
+
+    return _AttrInjected
+
+
+def _get_splits(obj) -> typing.Tuple[typing.Any, typing.Iterable]:
+    obj_bytes = pickle.dumps(obj, protocol=4)
     byte_size = len(obj_bytes)
-    num_slice = num_split_parts(obj, byte_size)
+    num_slice = (byte_size - 1) // getattr(obj, __FATE_BIG_OBJ_MAX_PART_SIZE) + 1
     if num_slice <= 1:
         return obj, ()
     else:
         head = _SplitHead(num_slice)
-        kv = [(i, obj_bytes[get_slice(obj, i)]) for i in range(num_slice)]
+        _max_size = getattr(obj, __FATE_BIG_OBJ_MAX_PART_SIZE)
+        kv = [(i, obj_bytes[slice(i * _max_size, (i + 1) * _max_size)]) for i in range(num_slice)]
         return head, kv
 
 
-def is_split_head(obj):
+def _is_split_head(obj):
     return isinstance(obj, _SplitHead)
 
 
-def split_get(splits):
+def _split_get(splits):
     obj_bytes = b''.join(splits)
-    obj = Pickle.loads(obj_bytes)
+    obj = pickle.loads(obj_bytes)
     return obj
 
 
