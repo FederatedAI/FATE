@@ -26,6 +26,6 @@ setup(
                       'ruamel.yaml', 'cachetools', 'python-dotenv', 'kazoo'],
     entry_points='''
         [console_scripts]
-        flow=fate_flow.client.flow_cli.flow:flow_cli
+        flow=fate_flow.client.flow:flow_cli
     ''',
 )
