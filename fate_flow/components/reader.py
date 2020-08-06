@@ -57,7 +57,7 @@ class Reader(object):
                                                                                            persistent_table_namespace,
                                                                                            partitions,
                                                                                            count))
-        self.tracker.log_output_data_info(data_name=self.parameters.get('output_data_name')[0] if self.parameters.get('output_data_name') else table_key,
+        self.tracker.log_output_data_info(data_name=component_parameters.get('output_data_name')[0] if component_parameters.get('output_data_name') else table_key,
                                           table_namespace=persistent_table_namespace,
                                           table_name=persistent_table_name)
         data_info = {"count": count,
