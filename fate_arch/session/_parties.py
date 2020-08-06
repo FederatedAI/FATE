@@ -59,5 +59,3 @@ class PartiesInfo(object):
 
 
 __all__ = ["PartiesInfo"]
-
-PartiesInfo.from_conf({})
