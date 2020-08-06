@@ -145,18 +145,17 @@ class BaseDSLParser(object):
         components_output = self._find_outputs()
 
         for name in self.component_name_index.keys():
-            if components_details.get(name).get("input") is None:
-                continue
-
             idx = self.component_name_index.get(name)
             upstream_input = components_details.get(name).get("input")
             downstream_output = components_details.get(name).get("output", {})
 
-            if not isinstance(upstream_input, dict):
-                raise ComponentInputTypeError(component=name)
-
-            self.components[idx].set_input(upstream_input)
             self.components[idx].set_output(downstream_output)
+            if upstream_input is None:
+                continue
+            elif not isinstance(upstream_input, dict):
+                raise ComponentInputTypeError(component=name)
+            else:
+                self.components[idx].set_input(upstream_input)
 
             input_model_keyword = ["model", "isometric_model"]
             if mode == "train":
@@ -498,9 +497,23 @@ class BaseDSLParser(object):
         output_data_maps = {}
         for i in range(len(self.predict_components)):
             name = self.predict_components[i].get_name()
+            module = self.predict_components[i].get_module()
+
+            if module == "Reader":
+                if version != 2:
+                    raise ValueError("Reader component can only be set in dsl_version 2")
+                if self.get_need_deploy_parameter(name=name,
+                                                  setting_conf_prefix=setting_conf_prefix,
+                                                  deploy_cpns=deploy_cpns):
+                    raise ValueError(
+                        "Reader component should not be include in predict process, it should be just as an input placeholder")
+
+                continue
+
             if self.get_need_deploy_parameter(name=name,
                                               setting_conf_prefix=setting_conf_prefix,
                                               deploy_cpns=deploy_cpns):
+
                 self.predict_dsl["components"][name] = {"module": self.predict_components[i].get_module()}
 
                 """replace output model to pippline"""
@@ -540,6 +553,10 @@ class BaseDSLParser(object):
                                         self.predict_dsl["components"][name]["input"]["data"][data_value].append(
                                             new_input_data)
                                     elif version == 2 and input_data.split(".")[0] == "args":
+                                        self.predict_dsl["components"][name]["input"]["data"][data_value].append(
+                                            input_data)
+                                    elif version == 2 and self.dsl["components"][input_data.split(".")[0]].get(
+                                            "module") == "Reader":
                                         self.predict_dsl["components"][name]["input"]["data"][data_value].append(
                                             input_data)
                                     else:

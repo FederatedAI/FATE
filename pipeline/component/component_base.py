@@ -44,6 +44,9 @@ class Component(object):
         self._component_name = self.__class__.__name__.lower() + "_" + str(idx)
         print("enter set name func", self._component_name)
 
+    def reset_name(self, name):
+        self._component_name = name
+
     def get_party_instance(self, role="all", party_id=None):
         if role not in ["all", "guest", "host", "arbiter"]:
             raise ValueError("Role should be one of guest/host/arbiter, if not set, default is all")

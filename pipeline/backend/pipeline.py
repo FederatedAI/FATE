@@ -18,6 +18,8 @@ import pickle
 import pprint
 from types import SimpleNamespace
 
+from pipeline.component.reader import Reader
+
 from pipeline.backend.config import Backend, WorkMode
 from pipeline.backend.config import Role
 from pipeline.backend.config import StatusCode
@@ -48,12 +50,25 @@ class PipeLine(object):
         self._fit_status = None
         self._train_board_url = None
         self._model_info = None
-        # self._dsl_parser = DSLParser()
+        self._train_components = {}
+        self._stage = "fit"
+        self._data_to_feed_in_prediction = None
 
     def set_initiator(self, role, party_id):
         self._initiator = SimpleNamespace(role=role, party_id=party_id)
 
         return self
+
+    def get_predict_meta(self):
+        if not self._fit_status:
+            raise ValueError("To get predict meta, please fit successfully")
+
+        return {"predict_dsl": self._predict_dsl,
+                "train_conf": self._train_conf,
+                "initiator": self._initiator,
+                "model_info": self._model_info,
+                "train_components": self._components
+                }
 
     def _get_initiator_conf(self):
         if self._initiator is None:
@@ -120,6 +135,13 @@ class PipeLine(object):
         return self
 
     def add_component(self, component, data=None, model=None):
+        if isinstance(component, PipeLine):
+            if self.model:
+                raise ValueError("pipeline should not have model as input!")
+
+            pipeline_components = component.get_all_components()
+            pipeline_train_dsl = component.get_train_dsl()
+
         if not isinstance(component, Component):
             raise ValueError(
                 "To add a component to pipeline, component {} should be a Component object".format(component))
@@ -279,28 +301,36 @@ class PipeLine(object):
         self._construct_train_dsl()
         self._train_conf = self._construct_train_conf()
 
-    def _feed_data_and_job_parameters(self, conf, feed_dict, backend, work_mode, job_type=None, model_info=None):
-        submit_conf = copy.deepcopy(conf)
-        print("submit conf' type {}".format(submit_conf))
-        submit_conf["job_parameters"] = {
-            "work_mode": work_mode.value,
-            "backend": backend.value,
-            "dsl_version": VERSION
-        }
+    def _feed_input_dsl(self, predict_dsl, feed_dict):
+        for input_placeholder, reader in feed_dict.items():
+            component_dsl = {"module": reader.module,
+                             "output": {"data": reader.output.data_output}}
+            predict_dsl["components"][input_placeholder] = component_dsl
 
-        if job_type is not None:
-            submit_conf["job_parameters"]["job_type"] = job_type
+    def _feed_input_data(self, submit_conf, feed_dict, job_type=None):
+        data_source = {}
 
-        if model_info is not None:
-            submit_conf["job_parameters"]["model_id"] = model_info.model_id
-            submit_conf["job_parameters"]["model_version"] = model_info.model_version
+        # {"reader_0": Reader}
+        if isinstance(list(feed_dict.keys())[0], str):
+            for input_placeholder, reader in feed_dict.items():
+                reader.reset_name(input_placeholder)
+                param_conf = reader.get_config(version=VERSION, roles=self._roles)
 
-        if not isinstance(feed_dict, dict):
+                if "algorithm_parameters" in param_conf:
+                    algorithm_param_conf = param_conf["algorithm_parameters"]
+                    if "algorithm_parameters" not in self._train_conf:
+                        self._train_conf["algorithm_parameters"] = {}
+                    self._train_conf["algorithm_parameters"].update(algorithm_param_conf)
+
+                if "role_parameters" in param_conf:
+                    role_param_conf = param_conf["role_parameters"]
+                    self._train_conf["role_parameters"] = tools.merge_dict(role_param_conf,
+                                                                           self._train_conf["role_parameters"])
+
             return submit_conf
 
-        data_source = {}
+        # {Input: {} }
         for _input, _input_dict in feed_dict.items():
-            print("\n\n\n", _input, _input_dict)
             if not isinstance(_input, Input):
                 raise ValueError("key of feed_dict should an input object of the name of an input object")
 
@@ -348,11 +378,37 @@ class PipeLine(object):
                     submit_conf["role_parameters"][role] = tools.merge_dict(data_source[role],
                                                                             submit_conf["role_parameters"][role])
 
+        return submit_conf
+
+    def _feed_data_and_job_parameters(self, conf, feed_dict, backend, work_mode, job_type=None, model_info=None):
+        submit_conf = copy.deepcopy(conf)
+        print("submit conf' type {}".format(submit_conf))
+        submit_conf["job_parameters"] = {
+            "work_mode": work_mode.value,
+            "backend": backend.value,
+            "dsl_version": VERSION
+        }
+
+        if job_type is not None:
+            submit_conf["job_parameters"]["job_type"] = job_type
+
+        if model_info is not None:
+            submit_conf["job_parameters"]["model_id"] = model_info.model_id
+            submit_conf["job_parameters"]["model_version"] = model_info.model_version
+
+        if not isinstance(feed_dict, dict):
+            return submit_conf
+
+        submit_conf = self._feed_input_data(submit_conf, feed_dict, job_type)
+
         import pprint
         pprint.pprint(submit_conf)
         return submit_conf
 
     def fit(self, backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, feed_dict=None):
+        if self._stage == "predict":
+            raise ValueError("The pipeline is construct for predicting, can not use fit interface")
+
         print("_train_conf {}".format(self._train_conf))
         self._set_state("fit")
         training_conf = self._feed_data_and_job_parameters(self._train_conf, feed_dict, backend, work_mode)
@@ -371,14 +427,20 @@ class PipeLine(object):
             print("Pipeline should be fit successfully before predict!!!")
             return
 
+        if self._data_to_feed_in_prediction:
+            feed_dict = self._data_to_feed_in_prediction
+
         predict_conf = self._feed_data_and_job_parameters(self._train_conf,
                                                           feed_dict,
                                                           backend,
                                                           work_mode,
                                                           job_type="predict",
                                                           model_info=self._model_info)
+        predict_dsl = copy.deepcopy(self._predict_dsl)
+        if self._data_to_feed_in_prediction:
+            self._feed_input_dsl(predict_dsl, feed_dict)
 
-        self._predict_job_id, _ = self._job_invoker.submit_job(dsl=self._predict_dsl, submit_conf=predict_conf)
+        self._predict_job_id, _ = self._job_invoker.submit_job(dsl=predict_dsl, submit_conf=predict_conf)
         self._job_invoker.monitor_job_status(self._predict_job_id,
                                              self._initiator.role,
                                              self._initiator.party_id)
@@ -392,12 +454,23 @@ class PipeLine(object):
                                                  "local",
                                                  0)
 
-    def dump(self):
-        return pickle.dumps(self)
+    def dump(self, file_path=None):
+        pkl = pickle.dumps(self)
+
+        if file_path is not None:
+            with open(file_path, "w") as fout:
+                fout.write(pkl)
+
+        return pickle
 
     @classmethod
     def load(cls, pipeline_bytes):
         return pickle.loads(pipeline_bytes)
+
+    @classmethod
+    def load_model_from_file(cls, file):
+        with open(file, "w") as fin:
+            return pickle.loads(fin.read())
 
     def deploy_component(self, components):
         if self._train_dsl is None:
@@ -416,7 +489,86 @@ class PipeLine(object):
                     raise ValueError(
                         "deploy component parameters is wrong, expect str or Component object, but {} find".format(cpn))
 
+                if deploy_cpns[-1] not in self._components:
+                    raise ValueError("Component {} does not exist in pipeline".format(deploy_cpns[-1]))
+
+                if isinstance(self._components.get(deploy_cpns[-1]), Reader):
+                    raise ValueError("Reader should not be include in predict pipeline")
+
         self._predict_dsl = self._job_invoker.get_predict_dsl(train_dsl=self._train_dsl, cpn_list=deploy_cpns,
                                                               version=VERSION)
 
         return self
+
+    def init_predict_config(self, config):
+        if isinstance(config, PipeLine):
+            config = config.get_predict_meta()
+
+        self._stage = "predict"
+        self._model_info = config["model_info"]
+        self._predict_dsl = config["predict_dsl"]
+        self._train_conf = config["train_conf"]
+        self._initiator = config["initiator"]
+        self._train_components = config["train_components"]
+
+    def get_component_input_msg(self):
+        # if self._stage != "predict":
+        #     raise ValueError("In fitting stage, reader should be add as a component")
+
+        if VERSION != 2:
+            raise ValueError("In DSL Version 1，only need to config data from args, no need special component")
+
+        need_input = {}
+        for cpn_name, config in self._predict_dsl["components"].items():
+            if "input" not in config:
+                continue
+
+            if "data" not in config["input"]:
+                continue
+
+            data_config = config["input"]["data"]
+            for data_type, dataset_list in data_config.items():
+                for data_set in dataset_list:
+                    input_cpn = data_set.split(".", -1)[0]
+                    input_inst = self._components[input_cpn]
+                    if isinstance(input_inst, Reader):
+                        if cpn_name not in need_input:
+                            need_input[cpn_name] = {}
+
+                        need_input[cpn_name][data_type] = []
+                        need_input[cpn_name][data_type].append(input_cpn)
+
+        return need_input
+
+    def get_input_reader_placeholder(self):
+        input_info = self.get_component_input_msg()
+        input_placeholder = set()
+        for cpn_name, data_dict in input_info.items():
+            for data_type, dataset_list in data_dict.items():
+                for dataset in dataset_list:
+                    input_placeholder.add(dataset)
+
+        return input_placeholder
+
+    def set_inputs(self, data_dict):
+        if not isinstance(data_dict, dict):
+            raise ValueError(
+                "inputs for predicting should be a dict, key is input_placeholder name, value is a reader object")
+
+        unfilled_placeholder = self.get_input_reader_placeholder() - set(data_dict.keys())
+        if unfilled_placeholder:
+            raise ValueError("input placeholder {} should be fill".format(unfilled_placeholder))
+
+        self._data_to_feed_in_prediction = data_dict
+
+    def __getattr__(self, attr):
+        if attr in self._components:
+            return self._components[attr]
+
+        return self.__getattribute__(attr)
+
+    def __getitem__(self, item):
+        if item not in self._components:
+            raise ValueError("Pipeline does not has component }{}".format(item))
+
+        return self._components[item]
