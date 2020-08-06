@@ -34,20 +34,25 @@ dataio_1.get_party_instance(role='guest', party_id=guest).algorithm_param(with_l
                                                                          label_type="float", output_format="dense")
 dataio_1.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
 
-intersect_0 = Intersection(name="intersection_0")
+intersection_0 = Intersection(name="intersection_0")
 intersect_1 = Intersection(name="intersection_1")
 
-hetero_linr_0 = HeteroLinR(name="hetero_linr_0", early_stop="weight_diff", max_iter=20, learning_rate=0.15,
-                           validation_freqs=1, early_stopping_rounds=3)
+hetero_linr_0 = HeteroLinR(name="hetero_linr_0", penalty="L2", optimizer="sgd", tol=0.001,
+                           alpha=0.01, max_iter=20, early_stop="weight_diff", batch_size=-1,
+                           learning_rate=0.15, decay=0.0, decay_sqrt=False,
+                           init_param={"init_method": "zeros"},
+                           encrypted_mode_calculator_param={"mode": "fast"},
+                           validation_freqs=1, early_stopping_rounds=5,
+                           metrics=["mean_absolute_error", "root_mean_squared_error"],
+                           use_first_metric_only=False)
 
-print ("get input_0's name {}".format(input_0.name))
 pipeline.add_component(dataio_0, data=Data(data=input_0.data))
 pipeline.add_component(dataio_1, data=Data(data=input_1.data), model=Model(dataio_0.output.model))
 
-pipeline.add_component(intersect_0, data=Data(data=dataio_0.output.data))
+pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
 pipeline.add_component(intersect_1, data=Data(data=dataio_1.output.data))
 
-pipeline.add_component(hetero_linr_0, data=Data(train_data=intersect_0.output.data,
+pipeline.add_component(hetero_linr_0, data=Data(train_data=intersection_0.output.data,
                                                 validate_data=intersect_1.output.data))
 
 pipeline.compile()

@@ -26,7 +26,7 @@ dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_l
                                                                           label_type="int", label_name="y")
 dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
 
-intersect_0 = Intersection(name="intersection_0", intersect_method="rsa", sync_intersect_ids=True,
+intersection_0 = Intersection(name="intersection_0", intersect_method="rsa", sync_intersect_ids=True,
                            only_output_key=False)
 hetero_lr_0 = HeteroLR(name="hetero_lr_0", penalty="L2", optimizer= "nesterov_momentum_sgd",
                        tol=0.0001, alpha=0.0001, max_iter=30, batch_size=-1,
@@ -48,9 +48,9 @@ evaluation_1.get_party_instance(role='host', party_id=host).algorithm_param(need
 
 print ("get input_0's name {}".format(input_0.name))
 pipeline.add_component(dataio_0, data=Data(data=input_0.data))
-pipeline.add_component(intersect_0, data=Data(data=dataio_0.output.data))
-pipeline.add_component(hetero_lr_0, data=Data(train_data=intersect_0.output.data))
-pipeline.add_component(local_baseline_0, data=Data(train_data=intersect_0.output.data))
+pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
+pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data))
+pipeline.add_component(local_baseline_0, data=Data(train_data=intersection_0.output.data))
 pipeline.add_component(evaluation_0, data=Data(data=hetero_lr_0.output.data))
 pipeline.add_component(evaluation_1, data=Data(data=local_baseline_0.output.data))
 

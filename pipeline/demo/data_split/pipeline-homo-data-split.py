@@ -8,24 +8,22 @@ from pipeline.interface.data import Data
 
 guest = 9999
 host = 10000
-arbiter = 10002
 
 guest_train_data = {"name": "breast_homo_guest", "namespace": "experiment"}
 host_train_data = {"name": "breast_homo_host", "namespace": "experiment"}
 
 input_0 = Input(name="train_data")
-print ("get input_0's init name {}".format(input_0.name))
 
-pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host, arbiter=arbiter)
+pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
 
 dataio_0 = DataIO(name="dataio_0")
 
-dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense")
+dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense",
+                                                                          label_name="y", label_type="int")
 dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=True)
 
-homo_data_split_0 = HomoDataSplit(name="homo_data_split_0", stratified=True, test_size=0.2, validate_size=0.1)
+homo_data_split_0 = HomoDataSplit(name="homo_data_split_0", stratified=True, test_size=0.3, validate_size=0.2)
 
-print ("get input_0's name {}".format(input_0.name))
 pipeline.add_component(dataio_0, data=Data(data=input_0.data))
 pipeline.add_component(homo_data_split_0, data=Data(data=dataio_0.output.data))
 
