@@ -24,7 +24,7 @@ from arch.api.utils.log_utils import audit_logger
 from fate_flow.entity.constant_config import WorkMode
 from fate_flow.settings import DEFAULT_GRPC_OVERALL_TIMEOUT, CHECK_NODES_IDENTITY,\
     FATE_MANAGER_GET_NODE_INFO_ENDPOINT, HEADERS, SERVER_CONF_PATH, SERVERS
-from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_proxy_data_channel
+from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_proxy_data_channel, forward_grpc_packet
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.entity.runtime_config import RuntimeConfig
 
@@ -124,3 +124,15 @@ def get_node_identity(json_body, src_party_id):
         json_body['_src_role'] = response.json().get('data').get('role')
     except Exception as e:
         raise Exception('get appkey and secret failed: {}'.format(str(e)))
+
+
+def forward_api(job_id, method, endpoint, src_party_id, dest_party_id, json_body, role,
+                overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
+    _packet = forward_grpc_packet(json_body, method, endpoint, src_party_id, dest_party_id, job_id=job_id, role=role,
+                                  overall_timeout=overall_timeout)
+
+    channel, stub = get_proxy_data_channel()
+    _return = stub.unaryCall(_packet)
+    channel.close()
+    json_body = json.loads(_return.body.value)
+    return json_body
