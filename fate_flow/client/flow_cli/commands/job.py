@@ -15,6 +15,8 @@
 #
 import os
 import json
+from datetime import datetime
+
 import click
 import requests
 from contextlib import closing
@@ -149,7 +151,7 @@ def stop(ctx, **kwargs):
 @cli_args.JOBID_REQUIRED
 @cli_args.ROLE_REQUIRED
 @cli_args.PARTYID_REQUIRED
-@cli_args.OUTPUT_PATH
+@cli_args.OUTPUT_PATH_REQUIRED
 @click.pass_context
 def config(ctx, **kwargs):
     """
@@ -181,7 +183,7 @@ def config(ctx, **kwargs):
 
 @job.command("log", short_help="Log Job Command")
 @cli_args.JOBID_REQUIRED
-@cli_args.OUTPUT_PATH
+@cli_args.OUTPUT_PATH_REQUIRED
 @click.pass_context
 def log(ctx, **kwargs):
     """
@@ -257,9 +259,9 @@ def dsl_generator(ctx, **kwargs):
 
     \b
     - USAGE:
-        flow job dsl --cpn-path fate_flow/examples/component_list.txt --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/generated_predict_dsl.json --version 2
-        flow job dsl --cpn-list "dataio_0, hetero_feature_binning_0, hetero_feature_selection_0, evaluation_0" --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/generated_predict_dsl.json
-        flow job dsl --cpn-list [dataio_0,hetero_feature_binning_0,hetero_feature_selection_0,evaluation_0] --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/generated_predict_dsl.json
+        flow job dsl --cpn-path fate_flow/examples/component_list.txt --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/ --version 2
+        flow job dsl --cpn-list "dataio_0, hetero_feature_binning_0, hetero_feature_selection_0, evaluation_0" --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/
+        flow job dsl --cpn-list [dataio_0,hetero_feature_binning_0,hetero_feature_selection_0,evaluation_0] --train-dsl-path fate_flow/examples/test_hetero_lr_job_dsl.json -o fate_flow/examples/
     """
     if kwargs.get("cpn_list"):
         cpn_str = kwargs.get("cpn_list")
@@ -276,7 +278,30 @@ def dsl_generator(ctx, **kwargs):
         "cpn_str": cpn_str,
         "train_dsl": train_dsl,
         "version": kwargs.get("version"),
-        "output_path": check_abs_path(kwargs.get("output_path"))
     }
 
-    access_server('post', ctx, 'job/dsl/generate', config_data)
+    if kwargs.get("output_path"):
+        if not os.path.isdir(kwargs.get("output_path")):
+            response = {
+                "retcode": 100,
+                "retmsg": "Please input a valid directory path."
+            }
+        else:
+            dsl_filename = "predict_dsl_{}.json".format(datetime.now().strftime('%Y%m%d%H%M%S'))
+            output_path = os.path.join(check_abs_path(kwargs.get("output_path")), dsl_filename)
+            config_data["filename"] = dsl_filename
+
+            with closing(access_server('post', ctx, 'job/dsl/generate', config_data, False, stream=True)) as response:
+                if response.status_code == 200:
+                    with open(output_path, "wb") as fw:
+                        for chunk in response.iter_content(1024):
+                            if chunk:
+                                fw.write(chunk)
+                    response = {'retcode': 0,
+                                'retmsg': "New predict dsl file has been generated successfully. "
+                                          "File path is: {}".format(output_path)}
+                else:
+                    response = response.json()
+        prettify(response.json() if isinstance(response, requests.models.Response) else response)
+    else:
+        access_server('post', ctx, 'job/dsl/generate', config_data)
