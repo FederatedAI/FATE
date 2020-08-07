@@ -155,7 +155,7 @@ class HeteroSecureBoostHost(HeteroBoostingHost):
 
         anonymous_name_mapping = {}
         party_id = self.component_properties.local_partyid
-        for name, fid in self.feature_name_fid_mapping.items():
+        for fid, name in self.feature_name_fid_mapping.items():
             anonymous_name_mapping = {generate_anonymous(fid, role=consts.HOST, party_id=party_id,):
                                                 name}
 

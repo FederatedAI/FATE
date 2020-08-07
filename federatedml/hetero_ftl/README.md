@@ -1,15 +1,16 @@
 ### Introduction
 
-This  folder contains code for implementing algorithm presented in [Secure Federated Transfer Learning](https://arxiv.org/abs/1812.03337). 
+Now, hetero federated transfer learning is refactorized based on fate-1.5. And additional test datasets are offered.
 
-Now, hetero federated transfer learning is refactorized based on fate-1.5.
+This folder contains code for implementing algorithm presented in [Secure Federated Transfer Learning](https://arxiv.org/abs/1812.03337). 
 
-Our FTL algorithm is trying to solve problem where two participants - host and guest - have only partial overlaps in the sample space and may or may not have overlaps in the feature space. This is illustrated in Figure 1. Our objective is to predict labels for host as accurately as possible.
+Our FTL algorithm is trying to solve problem where two participants - host and guest - have only partial overlaps in the 
+sample space and may or may not have overlaps in the feature space. This is illustrated in Figure 1. Our objective is 
+to predict labels for host as accurately as possible.
 
 <div style="text-align:center", align=center>
 <img src="./images/samples.png" alt="samples" width="500" height="250" /><br/>
 Figure 1： Federated Transfer Learning in the sample and feature space for two-party problem</div>
-
 
 Our solution employs an architecture of two layers: local layer and federation layer. 
 
@@ -19,12 +20,33 @@ Our solution employs an architecture of two layers: local layer and federation l
 Figure 2: Architecture of Federated Transfer Learning </div>
 
 
-In the Local layer, both guest and host exploit a local model for extracting features from input data and outputting extracted features in the form of numerical vectors. The local model can be CNN for processing images, RNN for processing text, autoencoder for processing general numerical vectors and many others. Currently we only used autoencoder in this algorithm. We will add other models in the future.
+In the Local layer, both guest and host exploit a local model for extracting features from input data and outputting 
+extracted features in the form of numerical vectors. The local model can be CNN for processing images, RNN for 
+processing text, dense layer for processing general numerical vectors and many others. Currently users can define their
+own local layers(including nn structure, optimizer, learning rate) in the algorithm conf.
 
-The federation layer is for the two sides exchanging intermediate computing components and collaboratively train the federated model as presented in the algorithm. 
+The federation layer is for the two sides exchanging intermediate computing components and collaboratively train the 
+federated model by minimizing target loss and alignment loss.
 
-We support two versions of the encrypted FTL algorithm. In the first version, we preserve data/model privacy between host and guest by delegating the work of decrypting to a third party called arbiter and assume it is trustworthy. In the second version, we get rid of the arbiter and still guarantee data/model privacy. For detail on how this can be achieved, please refer to [Secure Federated Transfer Learning](https://arxiv.org/abs/1812.03337).
+In current version, we get rid of the arbiter and still guarantee data/model privacy. For detail on how this can be 
+achieved, please refer to [Secure Federated Transfer Learning](https://arxiv.org/abs/1812.03337).
+
+We support two mode of the FTL algorithms: plain mode and encrypted mode. In plain mode, data are computed and transferred in 
+plaintext, while in encrypted mode intermediate results will be encrypted using Paillier.
+
+What is more, in the latest Hetero FTL, we add an option: communication efficient mode. Once communication efficient 
+mode is enabled, for every epoch, intermediate components  are preserved and are used to conduct several local updates, 
+thus communication cost is saved.
+
+#### Features
+* Support plain/encrypted mode
+* Support local layer define / optimizer define
+* Support communication-efficient mode
+
+#### Applications
+
+Now Hetero FTL supports binary classification.
 
 ### Quick Start
 
-You can refer to *examples/hetero_ftl/README.md* to quickly start running FLT algorithm in standalone mode. You can refer to *examples/hetero_ftl/HOWTORUN.md* for more detailed information on how to run FTL algorithm.
+Now you can start hetero-ftl like other algorithms in FATE. Please refer to the "examples" folder.
