@@ -138,7 +138,7 @@ def parameters(ctx, **kwargs):
 @cli_args.ROLE_REQUIRED
 @cli_args.PARTYID_REQUIRED
 @cli_args.COMPONENT_NAME_REQUIRED
-@cli_args.OUTPUT_PATH
+@cli_args.OUTPUT_PATH_REQUIRED
 @click.option('-l', '--limit', metavar="[LIMIT]", default=10, help='limit count, defaults is 10')
 @click.pass_context
 def output_data(ctx, **kwargs):

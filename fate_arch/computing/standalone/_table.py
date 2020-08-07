@@ -37,6 +37,7 @@ class Table(CTableABC):
             self._table.save_as(name=address.name, namespace=address.namespace, partition=partitions,
                                 need_cleanup=False)
             schema.update(self.schema)
+            return
         raise NotImplementedError(f"address type {type(address)} not supported with standalone backend")
 
     def count(self) -> int:
@@ -56,35 +57,49 @@ class Table(CTableABC):
             raise RuntimeError(f"table is empty")
         return resp[0]
 
-    def reduce(self, func):
-        return self._table.reduce(func)
+    def reduce(self, func, key_func=None, **kwargs):
+        if key_func is None:
+            return self._table.reduce(func)
+
+        it = self._table.collect()
+        ret = {}
+        for k, v in it:
+            agg_key = key_func(k)
+            if agg_key in ret:
+                ret[agg_key] = func(ret[agg_key], v)
+            else:
+                ret[agg_key] = v
+        return ret
 
     def map(self, func):
-        return self._table.map(func)
+        return Table(self._table.map(func))
 
     def mapValues(self, func):
-        return self._table.mapValues(func)
+        return Table(self._table.mapValues(func))
 
     def flatMap(self, func):
-        return self._table.flatMap(func)
+        return Table(self._table.flatMap(func))
 
     def mapPartitions(self, func):
-        return self._table.mapPartitions(func)
+        return Table(self._table.mapPartitions(func))
+
+    def mapPartitions2(self, func):
+        return Table(self._table.mapPartitions2(func))
 
     def glom(self):
-        return self._table.glom()
+        return Table(self._table.glom())
 
     def sample(self, fraction, seed=None):
-        return self._table.sample(fraction, seed)
+        return Table(self._table.sample(fraction, seed))
 
     def filter(self, func):
-        return self._table.filter(func)
+        return Table(self._table.filter(func))
 
     def join(self, other: 'Table', func):
-        return self._table.join(other, func)
+        return Table(self._table.join(other._table, func))
 
     def subtractByKey(self, other: 'Table'):
-        return self._table.subtractByKey(other)
+        return Table(self._table.subtractByKey(other._table))
 
     def union(self, other: 'Table', func=lambda v1, v2: v1):
-        return self._table.union(other, func)
+        return Table(self._table.union(other._table, func))

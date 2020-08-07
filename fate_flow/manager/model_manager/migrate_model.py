@@ -32,7 +32,6 @@ def gen_model_file_path(model_id, model_version):
 
 
 def compare_roles(request_conf_roles: dict, run_time_conf_roles: dict):
-    # TODO return help text
     if request_conf_roles.keys() == run_time_conf_roles.keys():
         varify_format = True
         varify_equality = True

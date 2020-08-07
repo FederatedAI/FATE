@@ -118,9 +118,14 @@ def get_table(job_id: str = '',
     if storage_engine in Relationship.CompToStore.get(Backend.EGGROLL):
         data_manager_logger.info(
             'get eggroll table mode {} store_engine {} partition {}'.format(mode, storage_engine, partitions))
-        from fate_arch.storage.eggroll_table import EggRollTable
-        return EggRollTable(job_id=job_id, mode=mode, persistent_engine=persistent_engine, name=name,
-                            namespace=namespace, partitions=partitions, address=address, **kwargs)
+        if mode == WorkMode.CLUSTER:
+            from fate_arch.storage.eggroll_table import EggRollTable
+            return EggRollTable(job_id=job_id, mode=mode, persistent_engine=persistent_engine, name=name,
+                                namespace=namespace, partitions=partitions, address=address, **kwargs)
+        else:
+            from fate_arch.storage.standalone_table import StandaloneTable
+            return StandaloneTable(job_id, persistent_engine=persistent_engine, namespace=namespace, name=name,
+                                   address=address, partitions=partitions)
     if storage_engine in Relationship.CompToStore.get(Backend.SPARK):
         data_manager_logger.info(
             'get spark table store_engine {} partition {} path {}'.format(storage_engine, partitions, address.path))

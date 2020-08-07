@@ -56,7 +56,10 @@ STATUS = click.option("-s", "--status", type=click.Choice(["complete", "failed",
                       help="Job status. Users can choose one from 'success', 'failed', 'running', 'waiting', "
                            "'timeout', 'canceled', 'partial' and 'deleted'.")
 
-OUTPUT_PATH = click.option("-o", "--output-path", type=click.Path(exists=False), required=True,
+OUTPUT_PATH_REQUIRED = click.option("-o", "--output-path", type=click.Path(exists=False), required=True,
+                                    help="User specifies output directory path.")
+
+OUTPUT_PATH = click.option("-o", "--output-path", type=click.Path(exists=False),
                            help="User specifies output directory path.")
 
 NAMESPACE = click.option("-n", "--namespace", type=click.STRING,

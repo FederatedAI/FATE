@@ -17,19 +17,18 @@ import io
 import os
 import json
 import tarfile
-from datetime import datetime
 
 from flask import Flask, request, send_file
 
+import fate_flow.utils.clean_utils
 from arch.api.utils.core_utils import json_loads, json_dumps
 from fate_flow.operation.job_saver import JobSaver
-from fate_flow.scheduler.task_scheduler import TaskScheduler
 from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
-from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT
+from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT, TEMP_DIRECTORY
 from fate_flow.utils import job_utils, detect_utils
 from fate_flow.utils.job_utils import get_dsl_parser_by_version
-from fate_flow.utils.api_utils import get_json_result, request_execute_server
+from fate_flow.utils.api_utils import get_json_result, request_execute_server, error_response
 from fate_flow.entity.constant import WorkMode, JobStatus, FederatedSchedulingStatusCode, RetCode
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
@@ -171,7 +170,7 @@ def query_component_output_data_info():
 
 @manager.route('/clean', methods=['POST'])
 def clean_job():
-    job_utils.start_clean_job(**request.json)
+    fate_flow.utils.clean_utils.start_clean_job(**request.json)
     return get_json_result(retcode=0, retmsg='success')
 
 
@@ -183,9 +182,9 @@ def clean_queue():
 
 @manager.route('/dsl/generate', methods=['POST'])
 def dsl_generator():
+    data = request.json
+    cpn_str = data.get("cpn_str", "")
     try:
-        data = request.json
-        cpn_str = data.get("cpn_str", "")
         if not cpn_str:
             raise Exception("Component list should not be empty.")
         if isinstance(cpn_str, list):
@@ -198,23 +197,15 @@ def dsl_generator():
         train_dsl = json_loads(data.get("train_dsl"))
         parser = get_dsl_parser_by_version(data.get("version", "1"))
         predict_dsl = parser.deploy_component(cpn_list, train_dsl)
-        if data.get("output_path"):
-            abspath = os.path.abspath(data.get("output_path"))
-            if os.path.isdir(abspath):
-                fp = os.path.join(abspath, "predict_dsl_{}.json".format(datetime.now().strftime('%Y%m%d%H%M%S')))
-                with open(fp, "w") as fout:
-                    fout.write(json.dumps(predict_dsl, indent=4))
-                return get_json_result(retmsg="New predict dsl file has been generated successfully. "
-                                              "File path is: {}.".format(fp))
-            elif os.path.isfile(abspath):
-                with open(data.get("output_path"), "w") as fout:
-                    fout.write(json.dumps(predict_dsl, indent=4))
-                return get_json_result(retmsg="New predict dsl file has been generated successfully. "
-                                              "File path is: {}.".format(data.get("output_path")))
-            else:
-                return get_json_result(retcode=100,
-                                       retmsg='Generating new predict dsl file failed. Output path is invalid.')
-        return get_json_result(data=predict_dsl)
     except Exception as e:
-        return get_json_result(retcode=100, retmsg=str(e))
+        stat_logger.exception(e)
+        return error_response(500, "DSL generating failed. For more details, please checkout fate_flow_stat.log.")
+    else:
+        if data.get("filename"):
+            temp_filepath = os.path.join(TEMP_DIRECTORY, data.get("filename"))
+            with open(temp_filepath, "w") as fout:
+                fout.write(json.dumps(predict_dsl, indent=4))
+            return send_file(open(temp_filepath, 'rb'), as_attachment=True, attachment_filename=data.get("filename"))
+        return get_json_result(data=predict_dsl)
+
 

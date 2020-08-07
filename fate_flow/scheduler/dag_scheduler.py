@@ -16,6 +16,7 @@
 from arch.api.utils import dtable_utils
 from arch.api.utils.core_utils import json_loads
 from arch.api.utils.log_utils import schedule_logger
+from fate_arch.common import WorkMode
 from fate_flow.db.db_models import Job
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.scheduler.task_scheduler import TaskScheduler
@@ -54,7 +55,8 @@ class DAGScheduler(object):
             tracker = Tracker(job_id=job_id, role=job_initiator['role'], party_id=job_initiator['party_id'],
                                   model_id=job_parameters['model_id'], model_version=job_parameters['model_version'])
             pipeline_model = tracker.get_output_model('pipeline')
-            job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
+            if not job_dsl:
+                job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
             train_runtime_conf = json_loads(pipeline_model['Pipeline'].train_runtime_conf)
         path_dict = save_job_conf(job_id=job_id,
                                   job_dsl=job_dsl,
@@ -80,13 +82,15 @@ class DAGScheduler(object):
 
         FederatedScheduler.create_job(job=job)
 
-        # Save the state information of all participants in the initiator for scheduling
-        job_info = job.to_human_model_dict()
-        for role, party_ids in job_runtime_conf["role"].items():
-            for party_id in party_ids:
-                if role == job_initiator['role'] and party_id == job_initiator['party_id']:
-                    continue
-                JobController.create_job(job_id=job_id, role=role, party_id=party_id, job_info=job_info, init_tracker=False)
+        if job_parameters['work_mode'] == WorkMode.CLUSTER:
+            # Save the state information of all participants in the initiator for scheduling
+            schedule_logger('wzh_test').info('this is a test')
+            job_info = job.to_human_model_dict()
+            for role, party_ids in job_runtime_conf["role"].items():
+                for party_id in party_ids:
+                    if role == job_initiator['role'] and party_id == job_initiator['party_id']:
+                        continue
+                    JobController.create_job(job_id=job_id, role=role, party_id=party_id, job_info=job_info, init_tracker=False)
 
         # push into queue
         job_event = job_utils.job_event(job_id, initiator_role, initiator_party_id)

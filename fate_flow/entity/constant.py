@@ -148,6 +148,8 @@ class ModelStorage(object):
 
 
 class ModelOperation(object):
+    STORE = "store"
+    RESTORE = "restore"
     EXPORT = "export"
     IMPORT = "import"
     LOAD = "load"
