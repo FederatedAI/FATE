@@ -40,5 +40,6 @@ message BoostingTreeModelParam {
     int32 best_iteration = 10;
     repeated string tree_plan = 11;
     string model_name = 12;
+    map<string, string> anonymous_name_mapping = 13;
 }
 
