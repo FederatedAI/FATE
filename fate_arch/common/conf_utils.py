@@ -14,15 +14,11 @@
 #  limitations under the License.
 #
 
-import random
-import string
+import os
+from fate_arch.common import file_utils
 
 
-def RandomString(stringLength=6):
-    letters = string.ascii_lowercase
-    return ''.join(random.choice(letters) for i in range(stringLength))
-
-
-def RandomNumberString(stringLength=6):
-    letters = string.octdigits
-    return ''.join(random.choice(letters) for i in range(stringLength))
+# TODO: add config cache
+def get_base_config(key, default=None):
+    base_config = file_utils.load_yaml_conf(os.path.join(file_utils.get_project_base_directory(), "conf/base_conf.yaml")) or dict()
+    return base_config.get(key, default)
