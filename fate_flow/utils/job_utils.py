@@ -35,9 +35,8 @@ from arch.api.utils.log_utils import schedule_logger
 from fate_flow.scheduler.dsl_parser import DSLParser, DSLParserV2
 from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.manager.data_manager import delete_metric_data
 from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE
-from fate_flow.utils import detect_utils, table_utils
+from fate_flow.utils import detect_utils
 from fate_flow.utils import api_utils
 from fate_flow.utils import session_utils
 from flask import request, redirect, url_for
@@ -443,45 +442,6 @@ def kill_task_executor_process(task: Task, only_child=False):
         return True
     except Exception as e:
         raise e
-
-
-def start_clean_job(**kwargs):
-    tasks = query_task(**kwargs)
-    if tasks:
-        for task in tasks:
-            task_info = get_task_info(task.f_job_id, task.f_role, task.f_party_id, task.f_component_name)
-            try:
-                # clean session
-                stat_logger.info('start {} {} {} {} session stop'.format(task.f_job_id, task.f_role,
-                                                                         task.f_party_id, task.f_component_name))
-                start_session_stop(task)
-                stat_logger.info('stop {} {} {} {} session success'.format(task.f_job_id, task.f_role,
-                                                                           task.f_party_id, task.f_component_name))
-            except Exception as e:
-                pass
-            try:
-                # clean data table
-                table_utils.clean_table(job_id=task.f_job_id, role=task.f_role, party_id=task.f_party_id,
-                                        component_name=task.f_component_name)
-            except Exception as e:
-                stat_logger.info('delete {} {} {} {} data table failed'.format(task.f_job_id, task.f_role,
-                                                                               task.f_party_id, task.f_component_name))
-                stat_logger.exception(e)
-            try:
-                # clean metric data
-                stat_logger.info('start delete {} {} {} {} metric data'.format(task.f_job_id, task.f_role,
-                                                                               task.f_party_id, task.f_component_name))
-                delete_metric_data(task_info)
-                stat_logger.info('delete {} {} {} {} metric data success'.format(task.f_job_id, task.f_role,
-                                                                                 task.f_party_id,
-                                                                                 task.f_component_name))
-            except Exception as e:
-                stat_logger.info('delete {} {} {} {} metric data failed'.format(task.f_job_id, task.f_role,
-                                                                                task.f_party_id,
-                                                                                task.f_component_name))
-                stat_logger.exception(e)
-    else:
-        raise Exception('no found task')
 
 
 def start_clean_queue():

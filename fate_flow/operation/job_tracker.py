@@ -324,7 +324,7 @@ class Tracker(object):
             tracking_metric_model = self.get_dynamic_db_model(TrackingMetric, self.job_id)
             tracking_metrics = tracking_metric_model.select(tracking_metric_model.f_metric_namespace, tracking_metric_model.f_metric_name).where(
                                     tracking_metric_model.f_job_id==self.job_id,
-                                    tracking_metric_model.f_component_name==(self.component_name if not job_level else self.job_virtual_component_name()),
+                                    tracking_metric_model.f_component_name==(self.component_name if not job_level else 'dag'),
                                     tracking_metric_model.f_role==self.role,
                                     tracking_metric_model.f_party_id==self.party_id).distinct()
             for tracking_metric in tracking_metrics:
@@ -420,7 +420,7 @@ class Tracker(object):
 
     @classmethod
     def job_virtual_component_name(cls):
-        return "dag"
+        return "pipeline"
 
     @classmethod
     def job_virtual_component_module_name(cls):
