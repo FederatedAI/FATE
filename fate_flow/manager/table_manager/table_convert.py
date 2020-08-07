@@ -16,7 +16,6 @@
 import uuid
 
 from arch.api.utils import log_utils
-from fate_arch.storage.eggroll_table import EggRollTable
 from fate_arch.storage.hdfs_table import HDFSTable
 from fate_arch.storage.constant import Relationship, StorageEngine
 from fate_arch.common import Backend, WorkMode
@@ -28,9 +27,8 @@ logger = log_utils.getLogger()
 MAX_NUM = 10000
 
 
-def convert(table, name='', namespace='', job_id=uuid.uuid1().hex, force=False, **kwargs):
+def convert(table, name='', namespace='', job_id=uuid.uuid1().hex, mode=1, force=False, **kwargs):
     partitions = table.get_partitions()
-    mode = table._mode if table._mode else WorkMode.CLUSTER
     if RuntimeConfig.BACKEND == Backend.EGGROLL:
         logger.info('backend is eggroll, storage engine is {}'.format(table.get_storage_engine()))
         if table.get_storage_engine() not in Relationship.CompToStore.get(RuntimeConfig.BACKEND, []):
@@ -38,7 +36,13 @@ def convert(table, name='', namespace='', job_id=uuid.uuid1().hex, force=False, 
             address = create(name=name, namespace=namespace, storage_engine=StorageEngine.LMDB, partitions=partitions)
             logger.info('table info: name {}, namespace {}, store engine {}, partitions {}'.format(
                 name, namespace, StorageEngine.LMDB, partitions))
-            _table = EggRollTable(job_id=job_id, mode=mode, address=address, partitions=partitions, name=name, namespace=namespace)
+            if mode == WorkMode.CLUSTER:
+                from fate_arch.storage.eggroll_table import EggRollTable
+                _table = EggRollTable(job_id=job_id, mode=mode, address=address, partitions=partitions, name=name, namespace=namespace)
+            else:
+                from fate_arch.storage.standalone_table import StandaloneTable
+                _table = StandaloneTable(job_id, persistent_engine=StorageEngine.LMDB, namespace=namespace, name=name,
+                                         address=address, partitions=partitions)
             logger.info('start convert')
             copy_table(table, _table)
             logger.info('convert success')

@@ -28,9 +28,6 @@ from fate_arch.storage.constant import StorageEngine
 
 
 # noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
-from fate_arch.storage.standalone_table import StandaloneTable
-
-
 class EggRollTable(TableABC):
     def __init__(self,
                  job_id: str = uuid.uuid1().hex,
@@ -50,15 +47,9 @@ class EggRollTable(TableABC):
         self._storage_engine = persistent_engine
         self._session_id = job_id
         self._partitions = partitions
-        if mode == WorkMode.STANDALONE:
-            table = StandaloneTable(job_id=job_id, persistent_engine=persistent_engine, partitions=partitions,
-                                    namespace=namespace, name=name, address=address)
-            self.session = table._session
-            self._table = table
-        elif mode == WorkMode.CLUSTER:
-            self.session = _get_session(session_id=self._session_id)
-            self._table = self.session.table(namespace=address.namespace, name=address.name, partition=partitions,
-                                             **kwargs)
+        self.session = _get_session(session_id=self._session_id)
+        self._table = self.session.table(namespace=address.namespace, name=address.name, partition=partitions,
+                                         **kwargs)
 
     def get_partitions(self):
         return self._table.get_partitions()
