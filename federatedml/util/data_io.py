@@ -24,11 +24,8 @@
 import functools
 
 import numpy as np
-from federatedml.util.io_check import assert_io_num_rows_equal
 
 from arch.api.utils import log_utils
-from fate_flow.entity.metric import Metric
-from fate_flow.entity.metric import MetricMeta
 from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.model_base import ModelBase
@@ -41,6 +38,7 @@ from federatedml.protobuf.generated.data_io_param_pb2 import OutlierParam
 from federatedml.statistic import data_overview
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 
@@ -70,24 +68,7 @@ class DenseFeatureReader(object):
         self.label_idx = None
         self.header = None
         self.sid_name = None
-        self.tracker = None
         self.exclusive_data_type_fid_map = {}
-
-    def set_tracker(self, tracker):
-        self.tracker = tracker
-
-    def check_header_eq(self, header_fit, header_transform, sid_name_fit, sid_name_transform):
-        if sid_name_fit != sid_name_transform:
-            raise ValueError("input data's schema for fit and transform should be same")
-
-        if header_fit is None or header_transform is None:
-            if header_fit != header_transform:
-                raise ValueError("input data's schema for fit and transform should be same")
-            return
-
-        for i in range(len(header_fit)):
-            if header_fit[i] != header_transform[i]:
-                raise ValueError("input data's schema for fit and transform should be same")
 
     def generate_header(self, input_data, mode="fit"):
         header = input_data.get_meta("header")
@@ -107,22 +88,19 @@ class DenseFeatureReader(object):
                 self.label_idx = header.split(self.delimitor, -1).index(self.label_name)
 
                 header_gen = header.split(self.delimitor, -1)[: self.label_idx] + \
-                             header.split(self.delimitor, -1)[self.label_idx + 1:]
+                             header.split(self.delimitor, -1)[self.label_idx + 1:] or None
             elif header:
                 header_list = header.split(self.delimitor, -1)
                 if self.label_name in header_list:
                     self.label_idx = header_list.index(self.label_name)
 
                     header_gen = header.split(self.delimitor, -1)[: self.label_idx] + \
-                                 header.split(self.delimitor, -1)[self.label_idx + 1:]
+                                 header.split(self.delimitor, -1)[self.label_idx + 1:] or None
                 else:
                     self.label_idx = None
                     header_gen = header.split(self.delimitor, -1)
         elif header:
             header_gen = header.split(self.delimitor, -1)
-
-        if mode == "transform":
-            self.check_header_eq(self.header, header_gen, self.sid_name, sid_name)
 
         self.header = header_gen
         self.sid_name = sid_name
@@ -143,6 +121,10 @@ class DenseFeatureReader(object):
         abnormal_detection.empty_table_detection(input_data)
 
         input_data_labels = None
+
+        fit_header = None
+        if mode == "transform":
+            fit_header = self.header
 
         self.generate_header(input_data, mode=mode)
 
@@ -165,6 +147,8 @@ class DenseFeatureReader(object):
             data_instance = self.fit(input_data, input_data_features, input_data_labels)
         else:
             data_instance = self.transform(input_data_features, input_data_labels)
+            # data_instance = ModelBase.align_data_header(data_instance, fit_header)
+            data_instance = data_overview.header_alignment(data_instance, fit_header)
 
         return data_instance
 
@@ -328,6 +312,27 @@ class DenseFeatureReader(object):
                 data.append(features[i])
 
         return SparseVector(indices, data, column_shape)
+
+    def get_summary(self):
+        if not self.missing_fill or self.outlier_replace:
+            return {}
+
+        summary_buf = {}
+        if self.missing_fill:
+            missing_summary = dict()
+            missing_summary["missing_value"] = list(self.missing_impute)
+            missing_summary["missing_impute_value"] = dict(zip(self.header, self.default_value))
+            missing_summary["missing_impute_rate"] = dict(zip(self.header, self.missing_impute_rate))
+            summary_buf["missing_fill_info"] = missing_summary
+
+        if self.outlier_replace:
+            outlier_replace_summary = dict()
+            outlier_replace_summary["outlier_value"] = list(self.outlier_impute)
+            outlier_replace_summary["outlier_replace_value"] = dict(zip(self.header, self.outlier_replace_value))
+            outlier_replace_summary["outlier_replace_rate"] = dict(zip(self.header, self.outlier_replace_rate))
+            summary_buf["outlier_replace_rate"] = summary_buf
+
+        return summary_buf
 
     def save_model(self):
         dataio_meta, dataio_param = save_data_io_model(input_format="dense",
@@ -712,6 +717,17 @@ class SparseTagReader(object):
 
         return data_instance
 
+    def get_summary(self):
+        if not self.missing_fill:
+            return {}
+
+        missing_summary = dict()
+        missing_summary["missing_value"] = list(self.missing_impute)
+        missing_summary["missing_impute_value"] = dict(zip(self.header, self.default_value))
+        missing_summary["missing_impute_rate"] = dict(zip(self.header, self.missing_impute_rate))
+        summary_buf = {"missing_fill_info": missing_summary}
+        return summary_buf
+
     @staticmethod
     def to_instance(param_list, value):
         delimitor = param_list[0]
@@ -839,7 +855,6 @@ class DataIO(ModelBase):
         print("model_param is {}".format(model_param))
         if model_param.input_format == "dense":
             self.reader = DenseFeatureReader(self.model_param)
-            self.reader.set_tracker(self.tracker)
         elif model_param.input_format == "sparse":
             self.reader = SparseFeatureReader(self.model_param)
         elif model_param.input_format == "tag":
@@ -859,7 +874,6 @@ class DataIO(ModelBase):
 
         if input_model_meta.input_format == "dense":
             self.reader = DenseFeatureReader(self.model_param)
-            self.reader.set_tracker(self.tracker)
         elif input_model_meta.input_format == "sparse":
             self.reader = SparseFeatureReader(self.model_param)
         elif input_model_meta.input_format == "tag":
@@ -868,7 +882,13 @@ class DataIO(ModelBase):
         self.reader.load_model(input_model_meta, input_model_param)
 
     def fit(self, data_inst):
-        return self.reader.read_data(data_inst, "fit")
+        data_inst = self.reader.read_data(data_inst, "fit")
+        if isinstance(self.reader, (DenseFeatureReader, SparseTagReader)):
+            summary_buf = self.reader.get_summary()
+            if summary_buf:
+                self.set_summary(summary_buf)
+
+        return data_inst
 
     def transform(self, data_inst):
         return self.reader.read_data(data_inst, "transform")
@@ -877,22 +897,6 @@ class DataIO(ModelBase):
         model_dict = self.reader.save_model()
         model_dict["DataIOMeta"].need_run = self.need_run
         return model_dict
-        # return self.reader.save_model()
-
-    """
-    def run(self, component_parameters, args=None):
-        self._init_runtime_parameters(component_parameters)
-
-        stage = None
-        if "model" in args:
-            self._load_model(args["model"])
-            stage = "transform"
-
-        if args["data"] is None:
-            return
-
-        self._run_data(stage)
-    """
 
 
 def make_schema(header=None, sid_name=None, label_name=None):
@@ -905,7 +909,7 @@ def make_schema(header=None, sid_name=None, label_name=None):
 
     if label_name:
         schema["label_name"] = label_name
-
+    ModelBase.check_schema_content(schema)
     return schema
 
 
@@ -999,8 +1003,7 @@ def save_missing_imputer_model(missing_fill=False,
             model_meta.strategy = str(missing_replace_method)
 
         if missing_impute is not None:
-            if missing_impute is not None:
-                model_meta.missing_value.extend(map(str, missing_impute))
+            model_meta.missing_value.extend(map(str, missing_impute))
 
         if missing_fill_value is not None:
             feature_value_dict = dict(zip(header, map(str, missing_fill_value)))
@@ -1102,30 +1105,3 @@ def load_outlier_model(header=None,
     return outlier_replace, outlier_replace_method, outlier_value, outlier_replace_value
 
 
-def callback(keyword="missing_impute",
-             value_list=None,
-             tracker=None):
-    # tracker = Tracking("abc", "123")
-    metric_type = None
-    """
-    if keyword.endswith("ratio"):
-        metric_list = []
-        for i in range(len(value_list)):
-            metric_list.append(Metric(i, value_list[i]))
-
-        tracker.log_metric_data(keyword, "DATAIO", metric_list)
-
-        metric_type = "DATAIO_TABLE"
-    """
-    metric_list = []
-    for i in range(len(value_list)):
-        metric_list.append(Metric(value_list[i], i))
-
-    tracker.log_metric_data(keyword, "DATAIO", metric_list)
-
-    metric_type = "DATAIO_TEXT"
-
-    tracker.set_metric_meta(keyword,
-                            "DATAIO",
-                            MetricMeta(name=keyword,
-                                       metric_type=metric_type))

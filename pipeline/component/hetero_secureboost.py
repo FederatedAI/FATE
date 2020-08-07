@@ -16,34 +16,18 @@
 
 from pipeline.component.component_base import Component
 from pipeline.interface.output import Output
-from federatedml.param.boosting_tree_param import BoostingTreeParam
+from federatedml.param.boosting_param import HeteroSecureBoostParam
 
 
-class HeteroSecureBoost(Component, BoostingTreeParam):
+class HeteroSecureBoost(Component, HeteroSecureBoostParam):
     def __init__(self, **kwargs):
         Component.__init__(self, **kwargs)
 
-        print (self.name)
+        print(self.name)
         new_kwargs = self.erase_component_base_param(**kwargs)
 
-        BoostingTreeParam.__init__(self, **new_kwargs)
+        HeteroSecureBoostParam.__init__(self, **new_kwargs)
         self.output = Output(self.name)
         self._module_name = "HeteroSecureBoost"
 
-    def summary(self, data, metric_keyword):
-        if data is None:
-            return
-        # meta info
-        metrics = {}
-        for namespace in data:
-            for name in data[namespace]:
-                metric_data = data[namespace][name]["meta"]
-                print(f"metric_data: {metric_data}")
-                for metric_name, metric_val in metric_data.items():
-                    if not metric_keyword or metric_name in metric_keyword:
-                        metrics[metric_name] = metric_val
 
-        for metric_name in metric_keyword:
-            if metric_name not in metrics:
-                metrics[metric_name] = None
-        return metrics

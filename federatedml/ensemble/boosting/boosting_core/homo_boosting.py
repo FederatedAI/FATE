@@ -28,7 +28,8 @@ from federatedml.param.boosting_param import HomoSecureBoostParam
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 
-import time
+from federatedml.util.io_check import assert_io_num_rows_equal
+
 
 LOGGER = log_utils.getLogger()
 
@@ -77,7 +78,6 @@ class HomoBoostingClient(Boosting, ABC):
 
         # fid mapping
         self.feature_name_fid_mapping = self.gen_feature_fid_mapping(data_inst.schema)
-        LOGGER.debug('fuck is {}'.format(self.feature_name_fid_mapping))
 
         # set feature_num
         self.feature_num = self.bin_split_points.shape[0]
@@ -118,10 +118,7 @@ class HomoBoostingClient(Boosting, ABC):
             for class_idx in range(self.booster_dim):
 
                 # fit a booster
-                s_time = time.time()
                 model = self.fit_a_booster(epoch_idx, class_idx)
-                e_time = time.time()
-                total_time += e_time - s_time
 
                 booster_meta, booster_param = model.get_model()
 
@@ -133,9 +130,7 @@ class HomoBoostingClient(Boosting, ABC):
                 cur_sample_weights = model.get_sample_weights()
                 self.y_hat = self.get_new_predict_score(self.y_hat, cur_sample_weights, dim=class_idx)
 
-                LOGGER.debug('epoch total time is {} {}'.format(total_time, epoch_idx))
-
-            local_loss = self.compute_loss(self.y, self.y_hat)
+            local_loss = self.compute_loss(self.y_hat, self.y)
             self.aggregator.send_local_loss(local_loss, self.data_bin.count(), suffix=(epoch_idx,))
 
             if self.validation_strategy:
@@ -144,14 +139,15 @@ class HomoBoostingClient(Boosting, ABC):
             # check stop flag if n_iter_no_change is True
             if self.n_iter_no_change:
                 should_stop = self.aggregator.get_converge_status(suffix=(str(epoch_idx),))
-                LOGGER.debug('got stop flag {}'.format(should_stop))
                 if should_stop:
                     LOGGER.debug('stop triggered')
                     break
 
-    def predict(self, data_inst):
+        self.set_summary(self.generate_summary())
 
-        LOGGER.debug('start predict')
+    def lazy_predict(self, data_inst):
+
+        LOGGER.debug('running lazy predict')
         to_predict_data = self.data_alignment(data_inst)
 
         init_score = self.init_score
@@ -164,11 +160,16 @@ class HomoBoostingClient(Boosting, ABC):
                                           self.boosting_model_list[idx * self.booster_dim + booster_idx],
                                           idx, booster_idx)
                 score = model.predict(to_predict_data)
-                self.predict_y_hat = self.get_new_predict_score(self.predict_y_hat, score, booster_idx)
+                self.predict_y_hat = self.get_new_predict_score(self.predict_y_hat, score, dim=booster_idx)
 
         LOGGER.debug('prediction finished')
 
         return self.score_to_predict_result(data_inst, self.predict_y_hat)
+
+    @assert_io_num_rows_equal
+    def predict(self, data_inst):
+        rs = self.lazy_predict(data_inst)
+        return rs
 
     @abc.abstractmethod
     def fit_a_booster(self, epoch_idx: int, booster_dim: int):
@@ -240,6 +241,8 @@ class HomoBoostingArbiter(Boosting, ABC):
                            MetricMeta(name="train",
                                       metric_type="LOSS",
                                       extra_metas={"Best": min(self.history_loss)}))
+
+        self.set_summary(self.generate_summary())
 
     def predict(self, data_inst=None):
 

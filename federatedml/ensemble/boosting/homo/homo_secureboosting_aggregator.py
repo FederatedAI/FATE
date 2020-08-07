@@ -3,7 +3,7 @@ from typing import List, Dict
 from arch.api.utils import log_utils
 from federatedml.framework.homo.blocks import secure_sum_aggregator, loss_scatter, has_converged
 from federatedml.framework.weights import DictWeights
-from federatedml.tree import HistogramBag, FeatureHistogramWeights
+from federatedml.ensemble import HistogramBag, FeatureHistogramWeights
 
 LOGGER = log_utils.getLogger()
 

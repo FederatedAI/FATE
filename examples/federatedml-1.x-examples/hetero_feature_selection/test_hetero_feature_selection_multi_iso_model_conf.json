@@ -69,11 +69,15 @@
             "head_size": 10000,
             "error": 0.001,
             "bin_num": 10,
-            "cols": -1,
+            "bin_indexes": -1,
+            "bin_names": null,
+            "category_indexes": null,
+            "category_names": null,
             "adjustment_factor": 0.5,
             "local_only": false,
             "transform_param": {
                 "transform_cols": -1,
+                "transform_names": null,
                 "transform_type": "bin_num"
             }
         },
@@ -91,9 +95,9 @@
             "filter_methods": [
                 "iv_filter",
                 "statistic_filter",
-                "psi_filter"
+                "psi_filter",
+                "hetero_sbt_filter"
             ],
-            "local_only": false,
             "iv_param": {
                 "metrics": ["iv", "iv", "iv"],
                 "filter_type": ["threshold", "top_k", "top_percentile"],
@@ -106,12 +110,18 @@
                 "metrics": ["skewness", "skewness", "kurtosis", "median"],
                 "filter_type": "threshold",
                 "take_high": [true, false, true, true],
-                "threshold": [-1, 1.6, -0.5, 0]
+                "threshold": [-10, 10, -1.5, -1.5]
             },
             "psi_param": {
                 "metrics": "psi",
                 "filter_type": "threshold",
                 "take_high": false,
+                "threshold": -0.1
+            },
+            "sbt_param": {
+                "metrics": "feature_importance",
+                "filter_type": "threshold",
+                "take_high": true,
                 "threshold": 0.03
             }
         }

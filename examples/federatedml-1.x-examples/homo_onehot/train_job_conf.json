@@ -1,0 +1,100 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "job_parameters": {
+        "work_mode": 0
+    },
+    "role": {
+        "guest": [9999],
+        "host": [9998],
+        "arbiter": [10000]
+    },
+    "role_parameters": {
+        "guest": {
+            "args": {
+                "data": {
+                    "train_data": [{
+                      "name": "heart_nonscaled_hetero_guest",
+                      "namespace": "experiment"}],
+                    "eval_data": [{
+                      "name": "heart_nonscaled_hetero_test",
+                      "namespace": "experiment"}]
+                }
+            },
+	        "dataio_0":{
+    	        "with_label": [true],
+        	    "label_name": ["target"],
+            	"label_type": ["int"],
+            	"output_format": ["dense"]
+        	},
+        	"dataio_1":{
+    	        "with_label": [true],
+        	    "label_name": ["target"],
+            	"label_type": ["int"],
+            	"output_format": ["dense"]
+        	}
+        },
+        "host": {
+            "args": {
+                "data": {
+                    "train_data": [
+                      {"name": "heart_nonscaled_hetero_host",
+                        "namespace": "experiment"}],
+                    "eval_data": [
+                      {"name": "heart_nonscaled_hetero_host",
+                        "namespace": "experiment"}]
+                }
+            },
+	        "dataio_0":{
+    	        "with_label": [true],
+        	    "label_name": ["target"],
+            	"label_type": ["int"],
+            	"output_format": ["dense"]
+        	}, 
+        	"dataio_1":{
+    	        "need_run": [false]
+        	},
+            "evaluation_0": {
+              "need_run": [false]
+            }
+        }
+    },
+    "algorithm_parameters": {		
+      	"homo_onehot_0":{
+      		"transform_col_indexes": [1,2,5,6,8,10,11,12],
+      		"transform_col_names": [],
+      		"need_alignment": true
+      	},      		
+      	"homo_onehot_1":{
+      		"transform_col_indexes": [1,2,5,6,8,10,11,12],
+      		"transform_col_names": [],
+      		"need_alignment": true
+      	},
+        "homo_lr_0": {
+            "penalty": "L2",
+            "optimizer": "sgd",
+            "tol": 1e-05,
+            "alpha": 0.01,
+            "max_iter": 3,
+            "early_stop": "diff",
+            "batch_size": 500,
+            "learning_rate": 0.15,
+            "decay": 1,
+            "decay_sqrt": true,
+            "init_param": {
+                "init_method": "zeros"
+            },
+            "encrypt_param": {
+                "method": "Paillier"
+            },
+            "cv_param": {
+                "n_splits": 4,
+                "shuffle": true,
+                "random_seed": 33,
+                "need_cv": false
+            }
+        }
+    }
+}

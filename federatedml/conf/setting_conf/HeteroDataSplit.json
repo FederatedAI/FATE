@@ -1,0 +1,16 @@
+{
+    "module_path":  "federatedml/model_selection/data_split",
+    "default_runtime_conf": "data_split_param.json",
+    "param_class" : "federatedml/param/data_split_param.py/DataSplitParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "hetero_data_split.py/HeteroDataSplitGuest"
+        },
+        "host":
+        {
+            "program": "hetero_data_split.py/HeteroDataSplitHost"
+        }
+    }
+}

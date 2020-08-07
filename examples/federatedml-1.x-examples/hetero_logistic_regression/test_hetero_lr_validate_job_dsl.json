@@ -19,7 +19,7 @@
             "input": {
                 "data": {
                     "data": [
-                        "args.validate_data"
+                        "args.eval_data"
                     ]
                 },
                 "model": [
@@ -27,7 +27,7 @@
                 ]
             },
             "output": {
-                "data": ["validate_data"],
+                "data": ["eval_data"],
                 "model": ["dataio"]
             }
          },
@@ -49,12 +49,12 @@
              "input": {
                  "data": {
                      "data": [
-                         "dataio_1.validate_data"
+                         "dataio_1.eval_data"
                      ]
                  }
              },
              "output": {
-                 "data": ["validate_data"]
+                 "data": ["eval_data"]
              }
          },
         "hetero_lr_0": {
@@ -62,8 +62,23 @@
             "input": {
                 "data": {
                     "train_data": ["intersection_0.train"],
-                    "validate_data": ["intersection_1.validate_data"]
+                    "eval_data": ["intersection_1.eval_data"]
                 }
+            },
+            "output": {
+                "data": ["hetero_lr_data"],
+                "model": ["hetero_lr_model"]
+            }
+        },
+        "hetero_lr_1": {
+            "module": "HeteroLR",
+            "input": {
+                "data": {
+                    "eval_data": ["intersection_1.eval_data"]
+                },
+                "model": [
+                    "hetero_lr_0.hetero_lr_model"
+                ]
             },
             "output": {
                 "data": ["hetero_lr_data"],

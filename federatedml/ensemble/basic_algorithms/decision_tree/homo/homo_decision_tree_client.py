@@ -115,6 +115,7 @@ class HomoDecisionTreeClient(DecisionTree):
 
     def get_local_histogram(self, cur_to_split: List[Node], g_h, table_with_assign,
                             split_points, sparse_point, valid_feature):
+
         LOGGER.info("start to get node histograms")
         node_map = self.get_node_map(nodes=cur_to_split)
         histograms = FeatureHistogram.calculate_histogram(
@@ -130,7 +131,7 @@ class HomoDecisionTreeClient(DecisionTree):
         return hist_bags
 
     def get_left_node_local_histogram(self, cur_nodes: List[Node], tree: List[Node], g_h, table_with_assign,
-                            split_points, sparse_point, valid_feature):
+                                      split_points, sparse_point, valid_feature):
 
         node_map = self.get_node_map(cur_nodes, left_node_only=True)
 
@@ -206,10 +207,10 @@ class HomoDecisionTreeClient(DecisionTree):
                               is_left_node=False)
 
             next_layer_node.append(left_node)
-            print('append left,cur tree has {} node'.format(len(self.tree_node)))
             next_layer_node.append(right_node)
-            print('append right,cur tree has {} node'.format(len(self.tree_node)))
             self.tree_node.append(cur_to_split[idx])
+
+            self.update_feature_importance(split_info[idx], record_site_name=False)
 
         return next_layer_node
 
@@ -311,9 +312,11 @@ class HomoDecisionTreeClient(DecisionTree):
         LOGGER.debug('assign samples to root node')
         self.inst2node_idx = self.assign_instance_to_root_node(self.data_bin, 0)
 
-        for dep in range(self.max_depth):
+        tree_height = self.max_depth + 1  # non-leaf node height + 1 layer leaf
 
-            if dep + 1 == self.max_depth:
+        for dep in range(tree_height):
+
+            if dep + 1 == tree_height:
 
                 for node in self.cur_layer_node:
                     node.is_leaf = True
@@ -363,9 +366,6 @@ class HomoDecisionTreeClient(DecisionTree):
             new_layer_node = self.update_tree(self.cur_layer_node, split_info)
             self.cur_layer_node = new_layer_node
 
-            for s in split_info:
-                self.update_feature_importance(s, record_site_name=False)
-
             self.inst2node_idx, leaf_val = self.assign_instances_to_new_node(table_with_assignment, self.tree_node)
 
             # record leaf val
@@ -378,18 +378,17 @@ class HomoDecisionTreeClient(DecisionTree):
 
         self.convert_bin_to_real()
         LOGGER.debug('fitting tree done')
-        LOGGER.debug('tree node num is {}'.format(len(self.tree_node)))
 
-    def traverse_tree(self, data_inst: Instance, tree: List[Node], use_missing=True, zero_as_missing=True):
+    def traverse_tree(self, data_inst: Instance, tree: List[Node], use_missing, zero_as_missing):
 
-        nid = 0# root node id
+        nid = 0 # root node id
         while True:
 
             if tree[nid].is_leaf:
                 return tree[nid].weight
 
             cur_node = tree[nid]
-            fid,bid = cur_node.fid,cur_node.bid
+            fid, bid = cur_node.fid,cur_node.bid
             missing_dir = cur_node.missing_dir
 
             if use_missing and zero_as_missing:

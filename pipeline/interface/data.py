@@ -13,31 +13,28 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from pipeline.backend.config import VERSION
 
 
 class Data(object):
     def __init__(self, data=None, train_data=None, validate_data=None, test_data=None):
-        self.data = data
-        self.train_data = train_data
-        self.validate_data = validate_data
-        self.test_data = test_data
+        self._data = data
+        self._train_data = train_data
+        self._validate_data = validate_data
+        self._test_data = test_data
 
-    """
-    @property
-    def train_data(self):
-        return self._train_data
+    def __getattr__(self, data_key):
+        if data_key == "train_data":
+            return self._train_data
 
-    @property
-    def validate_data(self):
-        return self._validate_data
+        elif data_key == "validate_data":
+            return self._validate_data
 
-    @property
-    def test_data(self):
-        return self._test_data
+        elif data_key == "test_data":
+            return self._test_data
 
-    @property
-    def data(self):
-        return self._data
-    """
+        elif data_key == "data":
+            return self._data
 
-
+        else:
+            raise ValueError("data key {} not support".format(data_key))

@@ -27,6 +27,10 @@ from federatedml.loss import TweedieLoss
 
 from federatedml.param.evaluation_param import EvaluateParam
 
+from federatedml.ensemble.boosting.boosting_core.predict_cache import PredictDataCache
+
+from federatedml.statistic import data_overview
+
 from federatedml.optim.convergence import converge_func_factory
 
 from arch.api.utils import log_utils
@@ -93,6 +97,11 @@ class Boosting(ModelBase, ABC):
         self.history_loss = []  # list holds loss history
         self.validation_strategy = None
         self.metrics = None
+        self.is_converged = False
+
+        # cache and header alignment
+        self.predict_data_cache = PredictDataCache()
+        self.data_alignment_map = {}
 
         # federation
         self.transfer_variable = None
@@ -101,7 +110,7 @@ class Boosting(ModelBase, ABC):
         self.task_type = boosting_param.task_type
         self.objective_param = boosting_param.objective_param
         self.learning_rate = boosting_param.learning_rate
-        self.boosting_round = boosting_param.boosting_round
+        self.boosting_round = boosting_param.num_trees
         self.n_iter_no_change = boosting_param.n_iter_no_change
         self.tol = boosting_param.tol
         self.bin_num = boosting_param.bin_num
@@ -302,6 +311,10 @@ class Boosting(ModelBase, ABC):
     def predict(self, data_inst):
         raise NotImplementedError()
 
+    @abc.abstractmethod
+    def generate_summary(self) -> dict:
+        raise NotImplementedError()
+
     """
     Training Procedure
     """
@@ -353,12 +366,14 @@ class Boosting(ModelBase, ABC):
     def check_stop_condition(self, loss):
 
         should_stop_a, should_stop_b = False, False
+
         if self.validation_strategy is not None:
             if self.validation_strategy.need_stop():
                 should_stop_a = True
 
         if self.n_iter_no_change and self.check_convergence(loss):
             should_stop_b = True
+            self.is_converged = True
 
         if should_stop_a or should_stop_b:
             LOGGER.debug('stop triggered, stop triggered by {}'.
@@ -391,17 +406,9 @@ class Boosting(ModelBase, ABC):
                 raise NotImplementedError("objective {} not supprted yet".format(self.objective_param.objective))
 
         if self.task_type == consts.CLASSIFICATION:
-            classes_ = self.classes_
-            if self.num_classes == 2:
-                threshold = self.predict_param.threshold
-                predict_result = data_inst.join(predicts, lambda inst, pred: [inst.label,
-                                                                              classes_[1] if pred > threshold else
-                                                                              classes_[0], pred,
-                                                                              {"0": 1 - pred, "1": pred}])
-            else:
-                predict_result = data_inst.join(predicts, lambda inst, preds: [inst.label, classes_[np.argmax(preds)],
-                                                                               np.max(preds),
-                                                                               dict(zip(map(str, classes_), preds))])
+
+            predict_result = self.predict_score_to_output(data_inst, predict_score=predicts, classes=self.classes_,
+                                                          threshold=self.predict_param.threshold)
 
         elif self.task_type == consts.REGRESSION:
             predict_result = data_inst.join(predicts, lambda inst, pred: [inst.label, float(pred), float(pred),
@@ -411,6 +418,25 @@ class Boosting(ModelBase, ABC):
             raise NotImplementedError("task type {} not supported yet".format(self.task_type))
         return predict_result
 
+    def data_and_header_alignment(self, data_inst):
+
+        """
+        turn data into sparse and align header
+        """
+
+        cache_dataset_key = self.predict_data_cache.get_data_key(data_inst)
+
+        if cache_dataset_key in self.data_alignment_map:
+            processed_data = self.data_alignment_map[cache_dataset_key]
+        else:
+            data_inst_tmp = self.data_alignment(data_inst)
+            header = [None] * len(self.feature_name_fid_mapping)
+            for idx, col in self.feature_name_fid_mapping.items():
+                header[idx] = col
+            processed_data = data_overview.header_alignment(data_inst_tmp, header)
+            self.data_alignment_map[cache_dataset_key] = processed_data
+
+        return processed_data
     """
     Model IO
     """
@@ -456,6 +482,7 @@ class Boosting(ModelBase, ABC):
 
         self.set_model_meta(model_meta)
         self.set_model_param(model_param)
+        self.loss = self.get_loss_function()
 
 
 

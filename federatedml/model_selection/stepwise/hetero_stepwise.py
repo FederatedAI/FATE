@@ -14,6 +14,14 @@
 #  limitations under the License.
 #
 
+import itertools
+import uuid
+
+import numpy as np
+from google.protobuf.json_format import MessageToDict
+from sklearn import metrics
+from sklearn.linear_model import LogisticRegression, LinearRegression
+
 from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.evaluation.metrics.regression_metric import IC, IC_Approx
@@ -21,13 +29,7 @@ from federatedml.model_selection.stepwise.step import Step
 from federatedml.statistic import data_overview
 from federatedml.transfer_variable.transfer_class.stepwise_transfer_variable import StepwiseTransferVariable
 from federatedml.util import consts
-
-import itertools
-import numpy as np
-from sklearn import metrics
-from sklearn.linear_model import LogisticRegression, LinearRegression
-from google.protobuf.json_format import MessageToDict
-import uuid
+from federatedml.util import fate_operator
 
 LOGGER = log_utils.getLogger()
 
@@ -313,10 +315,12 @@ class HeteroStepwise(object):
         metas["direction"] = self.direction
         metas["n_count"] = int(self.n_count)
 
-        host_party_id = model.component_properties.host_party_idlist[0]
-        guest_party_id = model.component_properties.guest_partyid
-        host_anonym = [f"host_{host_party_id}_{i}" for i in range(len(host_mask))]
-        guest_anonym = [f"guest_{guest_party_id}_{i}" for i in range(len(guest_mask))]
+        #host_party_id = model.component_properties.host_party_idlist[0]
+        #guest_party_id = model.component_properties.guest_partyid
+        #host_anonym = [f"host_{host_party_id}_{i}" for i in range(len(host_mask))]
+        host_anonym = [fate_operator.generate_anonymous(fid=i, model=model) for i in range(len(host_mask))]
+        #guest_anonym = [f"guest_{guest_party_id}_{i}" for i in range(len(guest_mask))]
+        guest_anonym = [fate_operator.generate_anonymous(fid=i, model=model) for i in range(len(guest_mask))]
         metas["host_features_anonym"] = host_anonym
         metas["guest_features_anonym"] = guest_anonym
 
@@ -380,12 +384,7 @@ class HeteroStepwise(object):
     def predict(data_instances, model):
         if data_instances is None:
             return
-        d_header = data_instances.schema.get("header")
-        best_feature = [d_header.index(x) for x in model.header]
-        best_mask = np.zeros(len(d_header), dtype=bool)
-        np.put(best_mask, best_feature, 1)
-        new_data = data_instances.mapValues(lambda v: Step.slice_data_instance(v, best_mask))
-        pred_result = model.predict(new_data)
+        pred_result = model.predict(data_instances)
         return pred_result
 
     def get_IC_computer(self, model):

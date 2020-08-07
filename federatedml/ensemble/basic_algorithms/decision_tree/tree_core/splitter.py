@@ -52,6 +52,7 @@ class SplitInfo(object):
 
 
 class Splitter(object):
+
     def __init__(self, criterion_method, criterion_params=[0, 1], min_impurity_split=1e-2, min_sample_split=2,
                  min_leaf_node=1):
         LOGGER.info("splitter init!")
@@ -74,6 +75,7 @@ class Splitter(object):
         self.min_leaf_node = min_leaf_node
 
     def find_split_single_histogram_guest(self, histogram, valid_features, sitename, use_missing, zero_as_missing):
+
         best_fid = None
         best_gain = self.min_impurity_split - consts.FLOAT_ZERO
         best_bid = None
@@ -134,7 +136,6 @@ class Splitter(object):
                     if node_cnt_l >= self.min_leaf_node and node_cnt_r >= self.min_leaf_node:
                         gain = self.criterion.split_gain([sum_grad, sum_hess],
                                                          [sum_grad_l, sum_hess_l], [sum_grad_r, sum_hess_r])
-
 
                         if gain > self.min_impurity_split and gain > best_gain:
                             best_gain = gain

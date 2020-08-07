@@ -28,7 +28,7 @@
     "tasks": {
         "selection": {
             "conf": "./test_hetero_feature_selection_job_conf.json",
-            "dsl": "./test_hetero_feature_statistic_selection_job_dsl.json"
+            "dsl": "./test_hetero_feature_selection_job_dsl.json"
         },
         "iv_top_k": {
             "conf": "./test_hetero_iv_topk_selection_job_conf.json",
@@ -65,6 +65,10 @@
         "manually_left_filter":{
             "conf": "test_hetero_feature_selection_manually_left_job_conf.json",
             "dsl": "test_hetero_feature_selection_job_dsl.json"
+        },
+        "multi_iso_filter": {
+            "conf": "test_hetero_feature_selection_multi_iso_model_conf.json",
+            "dsl": "test_hetero_feature_multi_iso_model_selection_job_dsl.json"
         }
     }
 }

@@ -25,17 +25,17 @@ from pipeline.backend.config import WorkMode
 from pipeline.backend.pipeline import PipeLine
 
 
-class TestHomoStatistics(unittest.TestCase):
+class TestUpload(unittest.TestCase):
     def setUp(self):
         self.job_id = str(uuid.uuid1())
         session.init(self.job_id)
         self.file = "examples/data/breast_homo_guest.csv"
-        self.table_name = "homo_breast_guest"
+        self.table_name = "breast_homo_guest"
         self.data_count = 227
 
     def test_upload(self):
         upload_pipeline = PipeLine()
-        upload_pipeline.add_upload_data(file="examples/data/breast_homo_guest.csv",
+        upload_pipeline.add_upload_data(file=self.file,
                                         table_name=self.table_name, namespace=self.job_id)
         upload_pipeline.upload()
 

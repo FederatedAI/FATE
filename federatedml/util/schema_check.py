@@ -27,7 +27,7 @@ def check_schema(input_schema, output_schema):
     output_header = output_schema.get("header", None)
     if input_header is not None and output_header is None:
         raise EnvironmentError(
-            f"{output_header} is None while input data has header.")
+            f"output header is None while input data has header.")
 
 
 def assert_schema_consistent(func):

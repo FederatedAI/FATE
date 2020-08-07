@@ -111,6 +111,7 @@ class HeteroFastSecureBoostGuest(HeteroSecureBoostGuest):
     def merge_leaf_pos(pos1, pos2):
         return pos1 + pos2
 
+    # this func will be called by super class's predict()
     def boosting_fast_predict(self, data_inst, trees: List[HeteroFastDecisionTreeGuest], predict_cache=None):
 
         LOGGER.info('fast sbt running predict')
@@ -160,6 +161,7 @@ class HeteroFastSecureBoostGuest(HeteroSecureBoostGuest):
             tree.use_guest_feat_only_predict_mode()
 
         return tree
+
 
     def get_model_meta(self):
 

@@ -73,6 +73,8 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         LOGGER.info("Sent encrypted_label_table to host")
 
         self.binning_obj.cal_local_iv(data_instances, label_table=label_table)
+        all_iv = [(col_name, x.iv) for col_name, x in
+                  self.binning_obj.bin_results.all_cols_results.items()]
 
         encrypted_bin_infos = self.transfer_variable.encrypted_bin_sum.get(idx=-1)
         # LOGGER.debug("encrypted_bin_sums: {}".format(encrypted_bin_sums))
@@ -108,6 +110,7 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
                 host_binning_obj = BaseBinning()
                 host_binning_obj.cal_iv_woe(result_counts, self.model_param.adjustment_factor)
             host_binning_obj.set_role_party(role=consts.HOST, party_id=host_party_id)
+
             self.host_results.append(host_binning_obj)
 
         self.set_schema(data_instances)

@@ -49,6 +49,11 @@ class HomoSecureBoostArbiter(HomoBoostingArbiter):
 
         return new_tree
 
+    def generate_summary(self) -> dict:
+
+        summary = {'loss_history':self.history_loss}
+        return summary
+
     # homo tree arbiter doesnt save model
     def get_cur_model(self):
         return None

@@ -1,0 +1,86 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/student_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "student_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/student_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "student_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "tasks": {
+        "mix_train_binary": {
+            "conf": "./test_fast_sbt_mix_conf.json",
+            "dsl": "./test_fast_sbt_dsl.json"
+        },
+        "train_binary_predict": {
+            "conf": "./test_predict_conf.json",
+            "deps": "mix_train_binary"
+        },
+        "mix_train_multi": {
+            "conf": "./test_fast_sbt_mix_multiclass_conf.json",
+            "dsl": "./test_fast_sbt_dsl.json"
+        },
+        "mix_train_regression": {
+            "conf": "./test_fast_sbt_mix_regression_conf.json",
+            "dsl": "./test_fast_sbt_dsl.json"
+        },
+        "mix_train_multi_host": {
+            "conf": "./test_fast_sbt_mix_multi_host_conf.json",
+            "dsl": "./test_fast_sbt_dsl.json"
+        },
+        "layered_train_binary": {
+            "conf": "./test_fast_sbt_layered_conf.json",
+            "dsl": "./test_fast_sbt_dsl.json"
+        },
+        "layered_train_multi": {
+            "conf": "./test_fast_sbt_layered_multiclass_conf.json",
+            "dsl": "./test_fast_sbt_dsl.json"
+        },
+        "layered_train_regression": {
+            "conf": "./test_fast_sbt_layered_regression_conf.json",
+            "dsl": "./test_fast_sbt_dsl.json"
+        }
+    }
+}

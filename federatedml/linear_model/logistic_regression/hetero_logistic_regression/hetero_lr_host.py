@@ -93,7 +93,8 @@ class HeteroLRHost(HeteroLRBase):
 
     def fit_binary(self, data_instances, validate_data):
         self._abnormal_detection(data_instances)
-
+        self.check_abnormal_values(data_instances)
+        self.check_abnormal_values(validate_data)
         self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
         LOGGER.debug(f"MODEL_STEP Start fin_binary, data count: {data_instances.count()}")
 
