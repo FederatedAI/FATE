@@ -25,8 +25,8 @@ from fate_flow.db.db_models import Tag, DB, ModelTag, ModelOperationLog as OperL
 from flask import Flask, request, send_file
 
 from fate_flow.manager.model_manager.migrate_model import compare_roles
+from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.settings import stat_logger, API_VERSION, MODEL_STORE_ADDRESS, TEMP_DIRECTORY
-from fate_flow.controller.job_controller import JobController
 from fate_flow.manager.model_manager import publish_model, migrate_model
 from fate_flow.manager.model_manager import pipelined_model
 from fate_flow.utils.api_utils import get_json_result, federated_api, error_response
@@ -104,7 +104,6 @@ def migrate_model_process():
     require_arguments = ["migrate_initiator", "role", "migrate_role", "model_id", "model_version"]
     check_config(request_config, require_arguments)
 
-    # TODO verify if the structure role data is valid, return
     try:
         if compare_roles(request_config.get("migrate_role"), request_config.get("role")):
             return get_json_result(retcode=100,
@@ -262,7 +261,7 @@ def operate_model(model_operation):
     else:
         data = {}
         job_dsl, job_runtime_conf = gen_model_operation_job_config(request_config, model_operation)
-        job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = JobController.submit_job(
+        job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(
             {'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)
         data.update({'job_dsl_path': job_dsl_path, 'job_runtime_conf_path': job_runtime_conf_path,
                      'board_url': board_url, 'logs_directory': logs_directory})
@@ -439,8 +438,13 @@ def gen_model_operation_job_config(config_data: dict, model_operation: ModelOper
 def operation_record(data: dict, oper_type, oper_status):
     try:
         if oper_type == 'migrate':
-            # TODO migrate operation record
-            pass
+            OperLog.create(f_operation_type=oper_type,
+                           f_operation_status=oper_status,
+                           f_initiator_role=data.get("migrate_initiator", {}).get("role"),
+                           f_initiator_party_id=data.get("migrate_initiator", {}).get("party_id"),
+                           f_request_ip=request.remote_addr,
+                           f_model_id=data.get("model_id"),
+                           f_model_version=data.get("model_version"))
         else:
             OperLog.create(f_operation_type=oper_type,
                            f_operation_status=oper_status,
