@@ -18,7 +18,7 @@ class ClientImportLoader(Loader):
 
     @staticmethod
     def exec_module(module):
-        session = importlib.import_module("fate_arch.compatible_hook._session")
+        session = importlib.import_module("compatible_hook._session")
         module.session = session
 
 
