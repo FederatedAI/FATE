@@ -14,4 +14,10 @@
 #  limitations under the License.
 #
 
-from fate_arch.federation._split import  segment_transfer_enabled
+"""
+import hook, hack some import expression by MetaPathFinder
+
+This would be remove once all related compatibility code fixed.
+"""
+
+import compatible_hook
