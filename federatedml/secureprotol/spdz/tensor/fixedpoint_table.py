@@ -17,7 +17,8 @@ import operator
 
 import numpy as np
 
-from fate_arch.session import is_table, Party
+from fate_arch.common import Party
+from fate_arch.session import is_table
 from federatedml.secureprotol.spdz.beaver_triples import beaver_triplets
 from federatedml.secureprotol.spdz.tensor.base import TensorBase
 from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy

@@ -114,7 +114,7 @@ class HeteroPearson(ModelBase):
         n, normed = self._standardized(data)
         self.local_corr = table_dot(normed, normed)
         self.local_corr /= n
-        self._summary["local_corr"] = self.local_corr
+        self._summary["local_corr"] = self.local_corr.tolist()
         self._summary["num_local_features"] = n
 
         if self.model_param.cross_parties:
@@ -131,7 +131,7 @@ class HeteroPearson(ModelBase):
                 self.shapes.append(m2)
 
                 self.corr = spdz.dot(x, y, "corr").get() / n
-                self._summary["corr"] = self.corr
+                self._summary["corr"] = self.corr.tolist()
                 self._summary["num_remote_features"] = m2 if self.local_party.role == "guest" else m1
         else:
             self.shapes.append(self.local_corr.shape[0])
