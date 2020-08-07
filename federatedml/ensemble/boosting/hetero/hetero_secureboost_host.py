@@ -162,6 +162,10 @@ class HeteroSecureBoostHost(HeteroBoostingHost):
         model_param.anonymous_name_mapping.update(anonymous_name_mapping)
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
         model_param.model_name = consts.HETERO_SBT
+
+        model_param.anonymous_name_mapping.update(anonymous_name_mapping)
+        model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
+        model_param.model_name = consts.HETERO_SBT
         model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
 
         param_name = "HeteroSecureBoostingTreeHostParam"
