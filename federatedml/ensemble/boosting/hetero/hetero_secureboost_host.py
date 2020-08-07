@@ -153,13 +153,14 @@ class HeteroSecureBoostHost(HeteroBoostingHost):
         model_param.tree_dim = self.booster_dim
         model_param.trees_.extend(self.boosting_model_list)
 
-        anonymous_name_real_name_mapping = {}
+        anonymous_name_mapping = {}
         party_id = self.component_properties.local_partyid
         for name, fid in self.feature_name_fid_mapping.items():
-            anonymous_name_real_name_mapping = {generate_anonymous(fid, role=consts.HOST, party_id=party_id,):
+            anonymous_name_mapping = {generate_anonymous(fid, role=consts.HOST, party_id=party_id,):
                                                 name}
 
-        model_param.feature_name_fid_mapping.update(anonymous_name_real_name_mapping)
+        model_param.anonymous_name_mapping.update(anonymous_name_mapping)
+        model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
         model_param.model_name = consts.HETERO_SBT
         model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
 
