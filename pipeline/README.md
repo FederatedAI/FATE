@@ -18,11 +18,11 @@ A FATE job includes a sequence of tasks. FATE pipeline provides easy-to-use tool
 FATE is written in a modular style. Modules are designed to have input and output data and model. 
 Therefore two modules are connected when output of one module is set to be input of another module. 
 By tracing how one data set is processed through FATE modules in a task, we can see that a FATE job is in fact formed by a sequence of tasks. 
-For example, in the mini demo above, guest's data is first read in by `Reader`, then loaded into `DataIO`. 
+For example, in the [mini demo](./pipeline-mini-demo.py) above, guest's data is first read in by `Reader`, then loaded into `DataIO`. 
 Overlapping ids between guest and host is then found by running data through `Intersection`. Finally, `HeteroLR` model is run on the data. 
 Each of the listed modules run a small task with the data, and together they accomplish a model training job.
 
-Going beyond the given mini demo, a job may include multiple data sets and models. For more pipeline examples, please refer to [demos](./demo/).
+Beyond the given mini demo, a job may include multiple data sets and models. For more pipeline examples, please refer to [demos](./demo/).
 
 
 ## Interface of Pipeline
@@ -33,43 +33,117 @@ Components can be set
 
 ### Data 
 In most cases, data set(s) should be set as `data`. 
+For instance, in the mini demo, data output of `dataio_0` is set as data input to `intersection_0`.
+
+```python
+pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
+```
+
 For data sets used in different stages (e.g., train & validate) within a single component, 
 keywords `train_data`, `validate_data`, and `test_data` are used to distinguish data sets.
+Also from mini demo, result from `intersection_0` and `intersection_1` are set as train and validate data input to training component, respectively.
+
+```python
+pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data, validate_data=intersection_1.output.data))
+```
     
 ### Model
 "Model" defines model input and output of components. There are two types of `Model`: `isometric_model` and `model`.
 When the current component is of the same class as the previous component, if receiving `model`,
 the current model will replicate all model parameters from the previous model.
 
+Check below for a case from mini demo, where `model` from `dataio_0` is passed to `dataio_1`.
+
+```python
+pipeline.add_component(dataio_1, data=Data(data=input_1.data), model=Model(dataio_0.output.model_output))
+```
+
 When a model from previous component is used but the current component is of different class from the previous component, `isometric_model` is used.
 For instance, `HeteroFeatureSelection` uses `isometric_model` from `HeteroFeatureBinning` to select most important features. 
 
-### Output
-"Output" encapsulates all output result of a component, including both `Data` and `Model` output.
 
+### Output
+"Output" encapsulates all output result of a component, including both `Data` and `Model` output. 
+Output from a component can be accessed directly like this:
+
+```python
+output_all = dataio_0.output
+output_data = dataio_0.output.data
+output_model = dataio_0.output.model_output
+```
 
 ## Build Pipeline
 
-Below is a general guide to build a pipeline. Please refer to demo `pipeline-mini-demo.py` for an explained demo.
+Below is a general guide to build a pipeline. Please refer to [mini demo](pipeline-mini-demo.py) for an explained demo.
 
 Once initialized a pipeline, job participants and initiator should be specified.
+Below is an example of initial setup of a pipeline:
+
+```python
+pipeline = PipeLine()
+pipeline.set_initiator(role='guest', party_id=10000)
+pipeline.set_roles(guest=10000, host=9999, arbiter=10002)
+```
+
+Reader is required to use data source before any other component. 
+Add Reader to pipeline
+
+```python
+
+```
 
 To include a component in a pipeline, a component instance should be first initiated and then added into the pipeline using `add_component`. 
-Components 
+To add a `DataIO` component to the previously created pipeline, try this
+
+```python
+dataio_0 = DataIO(name="dataio_0")
+pipeline.add_component(dataio_0, data=Data(data=input_0.data))
+```
 
 A pipeline job should start with Reader component. In most cases, DataIO follows Reader to load data into DataInstance format,
 which can then be used for data engineering and model training. 
 Some components (such as `Union` and `Intersection`) can run directly on non-DataInstance tables.
 
 All pipeline components can be configured individually for different roles by setting `get_party_instance`. 
+For instance, `DataIO` component from above can be configured specifically for guest like this:
+
+```python
+guest_component_instance = dataio_0.get_party_instance(role='guest', party_id=10000)
+guest_component_instance.algorithm_param(with_label=True, output_format="dense")
+```
+
+## Run A Pipeline
+
+Having added all components, the pipeline design needs to be first compiled before running the job. 
+After compiling, the pipeline can then be fit(run train job) with appropriate `Backend` and `WorkMode`.
+
+```python
+pipeline.compile()
+pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
+             feed_dict=)
+```
 
 ## Predict with Pipeline
 
+Once pipeline completes fit, its result model can be used to predict on new data set. 
+```python
+pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
+                 feed_dict=)
+```
+
 ## Query on Tasks
+
+FATE Pipeline also provides API to query component information, including data, model, and metrics.
+All query API have matching name to [PyFlow SDK](), while Pipeline retrieves and returns query result to user. 
+Retrieved results can then be conveniently transformed. 
+
+```python
+summary = pipeline.get_component("hetero_lr_0").get_summary()
+```
 
 ## Deployment 
 
 ## Pipeline vs. Commandline 
 
-In the past versions, user interacts with FATE with commandline, often with manual-configured conf and dsl file in json format.
-Manual configuration can be tedious and error-prone. Pipeline forms task configure files automatically once 
+In the past versions, user interacts with FATE using commandline, often with manual-configured conf and dsl json files.
+Manual configuration can be tedious and error-prone. Pipeline forms task configure files automatically once compiled.

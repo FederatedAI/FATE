@@ -9,8 +9,8 @@ from pipeline.interface.data import Data
 from pipeline.interface.model import Model
 
 # define party ids
-guest = 9999
-host = 10000
+guest = 10000
+host = 9999
 arbiter = host
 
 guest_train_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
@@ -30,16 +30,19 @@ pipeline.set_roles(guest=guest, host=host, arbiter=arbiter)
 dataio_0 = DataIO(name="dataio_0") # start component numbering at 0
 dataio_1 = DataIO(name="dataio_1")
 
-# configure DataIO for different roles
-dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense")
+# get DataIO party instance of guest
+dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
+# configure DataIO for guest
+dataio_0_guest_party_instance.algorithm_param(with_label=True, output_format="dense")
+# get and configure DataIO party instance of host
 dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
 
 #dataio_1.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense")
 #dataio_1.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
 
 # define Intersection components
-intersect_0 = Intersection(name="intersection_0")
-intersect_1 = Intersection(name="intersection_1")
+intersection_0 = Intersection(name="intersection_0")
+intersection_1 = Intersection(name="intersection_1")
 
 # define HeteroLR component
 hetero_lr_0 = HeteroLR(name="hetero_lr_0", early_stop="weight_diff", max_iter=10,
@@ -50,10 +53,10 @@ pipeline.add_component(dataio_0, data=Data(data=input_0.data))
 # set dataio_1 to replicate model from dataio_0
 pipeline.add_component(dataio_1, data=Data(data=input_1.data), model=Model(dataio_0.output.model_output))
 # set data input sources of intersection components
-pipeline.add_component(intersect_0, data=Data(data=dataio_0.output.data))
-pipeline.add_component(intersect_1, data=Data(data=dataio_1.output.data))
+pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
+pipeline.add_component(intersection_1, data=Data(data=dataio_1.output.data))
 # set train & validate data of hetero_lr_0 component
-pipeline.add_component(hetero_lr_0, data=Data(train_data=intersect_0.output.data, validate_data=intersect_1.output.data))
+pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data, validate_data=intersection_1.output.data))
 
 # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
 pipeline.compile()
