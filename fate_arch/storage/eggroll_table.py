@@ -19,8 +19,7 @@ import uuid
 from typing import Iterable
 
 from arch.api.utils.conf_utils import get_base_config
-from eggroll.core.session import session_init
-from eggroll.roll_pair.roll_pair import RollPairContext
+
 from fate_arch.abc import TableABC
 from fate_arch.common import WorkMode
 from fate_arch.common.profile import log_elapsed
@@ -29,6 +28,9 @@ from fate_arch.storage.constant import StorageEngine
 
 
 # noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
+from fate_arch.storage.standalone_table import StandaloneTable
+
+
 class EggRollTable(TableABC):
     def __init__(self,
                  job_id: str = uuid.uuid1().hex,
@@ -48,9 +50,15 @@ class EggRollTable(TableABC):
         self._storage_engine = persistent_engine
         self._session_id = job_id
         self._partitions = partitions
-        self.session = _get_session(session_id=self._session_id, work_mode=mode)
-        self._table = self.session.table(namespace=address.namespace, name=address.name, partition=partitions,
-                                         **kwargs)
+        if mode == WorkMode.STANDALONE:
+            table = StandaloneTable(job_id=job_id, persistent_engine=persistent_engine, partitions=partitions,
+                                    namespace=namespace, name=name, address=address)
+            self.session = table._session
+            self._table = table
+        elif mode == WorkMode.CLUSTER:
+            self.session = _get_session(session_id=self._session_id)
+            self._table = self.session.table(namespace=address.namespace, name=address.name, partition=partitions,
+                                             **kwargs)
 
     def get_partitions(self):
         return self._table.get_partitions()
@@ -98,20 +106,19 @@ class EggRollTable(TableABC):
         return self._table.count()
 
 
-def _get_session(session_id='', work_mode: int = 0, options: dict = None):
+def _get_session(session_id='', options: dict = None):
     if not session_id:
         session_id = str(uuid.uuid1())
-    return _Session(session_id=session_id, work_mode=work_mode, options=options)
+    return _Session(session_id=session_id, options=options)
 
 
 class _Session(object):
-    def __init__(self, session_id, work_mode, options: dict = None):
+    def __init__(self, session_id, options: dict = None):
         if options is None:
             options = {}
-        if work_mode == WorkMode.STANDALONE:
-            options['eggroll.session.deploy.mode'] = "standalone"
-        elif work_mode == WorkMode.CLUSTER:
-            options['eggroll.session.deploy.mode'] = "cluster"
+        from eggroll.core.session import session_init
+        from eggroll.roll_pair.roll_pair import RollPairContext
+        options['eggroll.session.deploy.mode'] = "cluster"
         self._rp_session = session_init(session_id=session_id, options=options)
         self._rpc = RollPairContext(session=self._rp_session)
         self._session_id = self._rp_session.get_session_id()
