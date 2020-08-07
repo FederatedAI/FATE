@@ -63,6 +63,7 @@ class Table(object):
         return self._namespace
 
     def __del__(self):
+        return
         if self._need_cleanup:
             self.destroy()
 
@@ -141,6 +142,13 @@ class Table(object):
     def mapPartitions(self, func):
         return self._unary(func, _do_map_partitions)
 
+    def mapPartitions2(self, func):
+        un_shuffled = self._unary(func, _do_map_partitions2)
+        return un_shuffled.save_as(name=str(uuid.uuid1()),
+                                   namespace=un_shuffled.namespace,
+                                   partition=self._partitions,
+                                   need_cleanup=True)
+
     def glom(self):
         return self._unary(None, _do_glom)
 
@@ -194,7 +202,7 @@ class Table(object):
         if partition is None:
             partition = self._partitions
         # noinspection PyProtectedMember
-        dup = _create_table(name, namespace, partition, need_cleanup)
+        dup = _create_table(self._session, name, namespace, partition, need_cleanup)
         dup.put_all(self.collect())
         return dup
 
@@ -441,7 +449,10 @@ async def _check_status_and_get_value(get_func, key):
     return value
 
 
-def _create_table(session, name, namespace, partitions, need_cleanup=True, error_if_exist=False):
+def _create_table(session: 'Session', name: str, namespace: str, partitions: int, need_cleanup=True,
+                  error_if_exist=False):
+    if isinstance(namespace, int):
+        raise ValueError(f"{namespace} {name}")
     _table_key = ".".join([namespace, name])
     if _get_from_meta_table(_table_key) is not None:
         if error_if_exist:
