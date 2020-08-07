@@ -52,8 +52,8 @@ class TaskController(object):
                 "task_version": task_version,
                 "role": role,
                 "party_id": party_id,
-                "status": TaskStatus.START,
-                "party_status": TaskStatus.START,
+                "status": TaskStatus.RUNNING,
+                "party_status": TaskStatus.RUNNING,
             }
             cls.update_task(task_info=task_info)
             task_dir = os.path.join(job_utils.get_job_directory(job_id=job_id), role, party_id, component_name, task_id, task_version)

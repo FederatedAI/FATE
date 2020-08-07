@@ -15,7 +15,7 @@
 #
 
 from fate_flow.db.db_models import Job, TaskSet, Task
-from fate_flow.entity.constant import TaskStatus, EndStatus, InterruptStatus, RetCode, FederatedSchedulingStatusCode, StatusSet, OngoingStatus
+from fate_flow.entity.constant import TaskStatus, EndStatus, InterruptStatus, StatusSet, OngoingStatus, SchedulingStatusCode
 from fate_flow.settings import API_VERSION, ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
@@ -27,58 +27,68 @@ from arch.api.utils.log_utils import schedule_logger
 
 class TaskScheduler(object):
     @classmethod
-    def schedule(cls, job, task_set: TaskSet):
-        schedule_logger(job_id=job.f_job_id).info("Schedule job {} task set {}".format(task_set.f_job_id, task_set.f_task_set_id))
-        # TODO: Query the latest version of each task
-        tasks = job_utils.query_task(job_id=job.f_job_id, task_set_id=task_set.f_task_set_id, role=task_set.f_role, party_id=task_set.f_party_id)
-        for task in tasks:
-            new_task_status = cls.calculate_multi_party_task_status(task=task)
+    def schedule(cls, job, dsl_parser):
+        schedule_logger(job_id=job.f_job_id).info("Scheduling job {} tasks".format(job.f_job_id))
+        tasks_group = JobSaver.get_top_tasks(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
+        waiting_tasks = []
+        for task_id, task in tasks_group.items():
+            # update task status
+            tasks = job_utils.query_task(task_id=task.f_task_id, task_version=task.f_task_version)
+            tasks_party_status = [task.f_party_status for task in tasks]
+            new_task_status = cls.calculate_multi_party_task_status(tasks_party_status=tasks_party_status)
+            schedule_logger(job_id=task.f_job_id).info("Job {} task {} {} status is {}, calculate by task party status list: {}".format(task.f_job_id, task.f_task_id, task.f_task_version, new_task_status, tasks_party_status))
             if new_task_status != task.f_status:
                 task.f_status = new_task_status
                 FederatedScheduler.sync_task(job=job, task=task, update_fields=["status"])
-                cls.update_task_on_initiator(initiator_task_template=task, update_fields=["status"])
+                #cls.update_task_on_initiator(initiator_task_template=task, update_fields=["status"])
 
             if task.f_status == TaskStatus.WAITING:
+                waiting_tasks.append(task)
                 # TODO: run task until the concurrency is reached
-                task.f_status = TaskStatus.START
-                schedule_logger(job_id=task.f_job_id).info("Try to start job {} task {} {} on {} {}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_role, task.f_party_id))
-                update_status = JobSaver.update_task(task_info=task.to_human_model_dict(only_primary_with=["job_id", "status"]))
-                if not update_status:
-                    # Another scheduler scheduling the task
-                    schedule_logger(job_id=task.f_job_id).info("Job {} task {} {} start on another scheduler".format(task.f_job_id, task.f_task_id, task.f_task_version))
-                    continue
-                schedule_logger(job_id=task.f_job_id).info("Start job {} task {} {} on {} {}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_role, task.f_party_id))
-                cls.start_task(job=job, task=task)
-            elif task.f_status == TaskStatus.START:
-                continue
-            elif task.f_status == TaskStatus.RUNNING:
-                # TODO: check the concurrency is reached
-                continue
-            elif InterruptStatus.contains(task.f_status):
-                # The state is determined by the TaskSet as a whole
-                continue
-            elif task.f_status == TaskStatus.COMPLETE:
+            elif EndStatus.contains(task.f_status):
                 FederatedScheduler.stop_task(job=job, task=task, stop_status=task.f_status)
+
+        scheduling_status_code = SchedulingStatusCode.NO_NEXT
+        for waiting_task in waiting_tasks:
+            # component = dsl_parser.get_component_info(component_name=waiting_task.f_component_name)
+            # for component_name in component.get_upstream():
+            for component in dsl_parser.get_upstream_dependent_components(component_name=waiting_task.f_component_name):
+                dependent_task = tasks_group[job_utils.generate_task_id(job_id=job.f_job_id, component_name=component.get_name())]
+                if dependent_task.f_task_status != TaskStatus.COMPLETE:
+                    # can not start task
+                    break
             else:
-                raise Exception("Job {} task {} {} with a {} status cannot be scheduled".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_status))
-        # new_task_set_status = cls.calculate_task_set_status(task_status=[task.f_status for task in tasks])
-        tasks_status = [task.f_status for task in tasks]
-        new_task_set_status = StatusEngine.vertical_convergence(tasks_status, interrupt_break=False)
-        schedule_logger(job_id=task_set.f_job_id).info("Job {} task set {} status is {}, calculate by task status list: {}".format(task_set.f_job_id, task_set.f_task_set_id, new_task_set_status, tasks_status))
-        if new_task_set_status != task_set.f_status:
-            task_set.f_status = new_task_set_status
-            FederatedScheduler.sync_task_set(job=job, task_set=task_set, update_fields=["status"])
-            cls.update_task_set_on_initiator(initiator_task_set_template=task_set, update_fields=["status"])
-        if EndStatus.contains(task_set.f_status):
-            cls.finish(job=job, task_set=task_set, end_status=task_set.f_status)
+                # can start task
+                scheduling_status_code = SchedulingStatusCode.HAVE_NEXT
+                status_code = cls.start_task(job=job, task=waiting_task)
+                print(waiting_task.f_task_status)
+                tasks_group[waiting_task.f_task_id] = waiting_task
+                if status_code == SchedulingStatusCode.NO_RESOURCE:
+                    # Wait for the next round of scheduling
+                    break
+        schedule_logger(job_id=job.f_job_id).info("Finish scheduling job {} tasks".format(job.f_job_id))
+        return scheduling_status_code, tasks_group.values()
 
     @classmethod
     def start_task(cls, job, task):
+        task.f_status = TaskStatus.RUNNING
+        schedule_logger(job_id=task.f_job_id).info("Try to start job {} task {} {} on {} {}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_role, task.f_party_id))
+        # TODO: apply for job resource
+        update_status = JobSaver.update_task(task_info=task.to_human_model_dict(only_primary_with=["job_id", "status"]))
+        if not update_status:
+            # Another scheduler scheduling the task
+            schedule_logger(job_id=task.f_job_id).info("Job {} task {} {} start on another scheduler".format(task.f_job_id, task.f_task_id, task.f_task_version))
+            # Reducing status
+            task.f_status = TaskStatus.WAITING
+            return SchedulingStatusCode.PASS
+        schedule_logger(job_id=task.f_job_id).info("Start job {} task {} {} on {} {}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_role, task.f_party_id))
         task_parameters = {}
         #extra_task_parameters = TaskScheduler.align_task_parameters(job_id, job_parameters, job_initiator, job_args, component, task_id)
         #task_parameters.update(extra_task_parameters)
         task_parameters.update(job.f_runtime_conf["job_parameters"])
         FederatedScheduler.start_task(job=job, task=task, task_parameters=task_parameters)
+        #cls.update_task_on_initiator(initiator_task_template=task, update_fields=["status"])
+        return SchedulingStatusCode.SUCCESS
 
     @staticmethod
     def align_task_parameters(job_id, job_parameters, job_initiator, job_args, component, task_id):
@@ -146,12 +156,27 @@ class TaskScheduler(object):
             raise Exception("calculate task set status failed: {}".format(task_status))
 
     @classmethod
-    def calculate_multi_party_task_status(cls, task):
-        tasks = job_utils.query_task(task_id=task.f_task_id, task_version=task.f_task_version)
-        tasks_party_status = [task.f_party_status for task in tasks]
-        new_task_status = StatusEngine.horizontal_convergence(tasks_party_status)
-        schedule_logger(job_id=task.f_job_id).info("Job {} task {} {} status is {}, calculate by task party status list: {}".format(task.f_job_id, task.f_task_id, task.f_task_version, new_task_status, tasks_party_status))
-        return new_task_status
+    def calculate_multi_party_task_status(cls, tasks_party_status):
+        # 1. all waiting
+        # 2. have interrupt
+        # 3. have running
+        # 4. waiting + complete
+        # 5. all the same end status
+        tmp_status_set = set(tasks_party_status)
+        if len(tmp_status_set) == 1:
+            # 1 and 5
+            return tmp_status_set.pop()
+        else:
+            # 2
+            for status in sorted(EndStatus.status_list(), key=lambda s: StatusSet.get_level(status=s), reverse=True):
+                if status == TaskStatus.COMPLETE:
+                    continue
+                if status in tmp_status_set:
+                    return status
+            # 3
+            if TaskStatus.RUNNING in tmp_status_set or TaskStatus.COMPLETE in tmp_status_set:
+                return StatusSet.RUNNING
+            raise Exception("Calculate task status failed: {}".format(tasks_party_status))
 
     @classmethod
     def update_task_on_initiator(cls, initiator_task_template: Task, update_fields: list):

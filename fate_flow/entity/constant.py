@@ -54,10 +54,19 @@ class RetCode(IntEnum):
     SERVER_ERROR = 500
 
 
+class SchedulingStatusCode(object):
+    SUCCESS = 0
+    NO_RESOURCE = 1
+    PASS = 1
+    NO_NEXT = 2
+    HAVE_NEXT = 3
+    FAILED = 4
+
+
 class FederatedSchedulingStatusCode(object):
     SUCCESS = 0
     PARTIAL = 1
-    FAILED = 3
+    FAILED = 2
 
 
 class BaseStatus(object):
@@ -104,7 +113,6 @@ class TaskSetStatus(BaseStatus):
 
 class TaskStatus(BaseStatus):
     WAITING = StatusSet.WAITING
-    START = StatusSet.START
     RUNNING = StatusSet.RUNNING
     CANCELED = StatusSet.CANCELED
     TIMEOUT = StatusSet.TIMEOUT
@@ -114,7 +122,6 @@ class TaskStatus(BaseStatus):
 
 class OngoingStatus(BaseStatus):
     WAITING = StatusSet.WAITING
-    START = StatusSet.START
     RUNNING = StatusSet.RUNNING
 
 

@@ -20,6 +20,8 @@ import sys
 from fate_flow.utils.authentication_utils import authentication_check
 from federatedml.protobuf.generated import pipeline_pb2
 from arch.api.utils.log_utils import schedule_logger
+from arch.api.utils.core_utils import current_timestamp
+from fate_flow.scheduler.dsl_parser import Component
 from fate_flow.db.db_models import Task
 from fate_flow.operation.task_executor import TaskExecutor
 from fate_flow.scheduler.task_scheduler import TaskScheduler
@@ -72,7 +74,17 @@ class JobController(object):
         dsl_parser = get_job_dsl_parser(dsl=dsl,
                                         runtime_conf=runtime_conf,
                                         train_runtime_conf=train_runtime_conf)
-        cls.initialize_job(job_id=job_id, role=role, party_id=party_id, initiator_role=job_initiator['role'], initiator_party_id=job_initiator['party_id'], dsl_parser=dsl_parser)
+        base_task_info = {}
+        base_task_info["job_id"] = job_id
+        base_task_info["initiator_role"] = job_initiator['role']
+        base_task_info["initiator_party_id"] = job_initiator['party_id']
+        base_task_info["status"] = TaskStatus.WAITING
+        base_task_info["role"] = role
+        base_task_info["party_id"] = party_id
+        base_task_info["party_status"] = TaskStatus.WAITING
+
+        #cls.initialize_job(job_id=job_id, role=role, party_id=party_id, initiator_role=job_initiator['role'], initiator_party_id=job_initiator['party_id'], dsl_parser=dsl_parser)
+        cls.initialize_tasks(base_task_info=base_task_info, dsl_parser=dsl_parser, components=dsl_parser.get_next_components(None))
         if init_tracker:
             cls.initialize_job_tracker(job_id=job_id, role=role, party_id=party_id, job_info=job_info, is_initiator=is_initiator, dsl_parser=dsl_parser)
 
@@ -116,6 +128,20 @@ class JobController(object):
                             dataset[_role][_party_id][_data_type] = '{}.{}'.format(_data_location['namespace'],
                                                                                    _data_location['name'])
         tracker.log_job_view({'partner': partner, 'dataset': dataset, 'roles': show_role})
+
+    @classmethod
+    def initialize_tasks(cls, base_task_info, dsl_parser, components: []):
+        for component in components:
+            component_parameters = component.get_role_parameters()
+            for parameters_on_party in component_parameters.get(base_task_info["role"], []):
+                if parameters_on_party.get('local', {}).get('party_id') == base_task_info["party_id"]:
+                    task_info = {}
+                    task_info.update(base_task_info)
+                    task_info["component_name"] = component.get_name()
+                    task_info["task_id"] = job_utils.generate_task_id(job_id=base_task_info["job_id"], component_name=component.get_name())
+                    task_info["task_version"] = 0
+                    JobSaver.create_task(task_info=task_info)
+            cls.initialize_tasks(base_task_info=base_task_info, dsl_parser=dsl_parser, components=dsl_parser.get_next_components(component.get_name()))
 
     @classmethod
     def initialize_job(cls, job_id, role, party_id, initiator_role, initiator_party_id, dsl_parser):
@@ -164,6 +190,7 @@ class JobController(object):
             "party_id": party_id,
             "status": JobStatus.RUNNING,
             "party_status": JobStatus.RUNNING,
+            "start_time": current_timestamp()
         }
         JobSaver.update_job(job_info=job_info)
 
