@@ -26,6 +26,7 @@ import os
 from fate_flow.operation.job_saver import JobSaver
 from arch.api.utils.core_utils import json_dumps
 from fate_flow.entity.constant import Backend
+from fate_flow.manager.resource_manager import ResourceManager
 
 
 class TaskController(object):
@@ -137,7 +138,7 @@ class TaskController(object):
         try:
             update_status = JobSaver.update_task(task_info=task_info)
             if update_status and EndStatus.contains(task_info.get("status")):
-                cls.resource_for_task(task_info=task_info, operation_type="return")
+                ResourceManager.return_resource_to_job(task_info=task_info)
             tasks = job_utils.query_task(task_id=task_info["task_id"],
                                          task_version=task_info["task_version"],
                                          role=task_info["role"],
@@ -147,18 +148,6 @@ class TaskController(object):
             schedule_logger(job_id=task_info["job_id"]).exception(e)
         finally:
             return update_status
-
-    @classmethod
-    def resource_for_task(cls, task_info, operation_type):
-        dsl, runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=task_info["job_id"], role=task_info["role"], party_id=task_info["party_id"])
-        processors_per_task = runtime_conf["job_parameters"]["processors_per_task"]
-        schedule_logger(job_id=task_info["job_id"]).info("Try {} job {} resource to task {} {}".format(operation_type, task_info["job_id"], task_info["task_id"], task_info["task_version"]))
-        update_status = JobSaver.update_job_resource(job_id=task_info["job_id"], role=task_info["role"], party_id=task_info["party_id"], volume=(processors_per_task if operation_type == "apply" else -processors_per_task))
-        if update_status:
-            schedule_logger(job_id=task_info["job_id"]).info("Successfully {} job {} resource to task {} {}".format(operation_type, task_info["job_id"], task_info["task_id"], task_info["task_version"]))
-        else:
-            schedule_logger(job_id=task_info["job_id"]).info("Failed {} job {} resource to task {} {}".format(operation_type, task_info["job_id"], task_info["task_id"], task_info["task_version"]))
-        return update_status
 
     @classmethod
     def stop_task(cls, task, stop_status):

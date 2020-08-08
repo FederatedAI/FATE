@@ -242,23 +242,6 @@ class TaskExecutor(object):
                             search_component_name, {})
                         if data_table:
                             partitions = task_parameters['input_data_partition'] if task_parameters.get('input_data_partition', 0) > 0 else data_table.get_partitions()
-                            """
-                            schedule_logger().info("start save as task {} input data table {}".format(
-                                task_id, data_table.get_address()))
-                            origin_table_schema = data_table.get_meta(_type="schema")
-                            name = uuid.uuid1().hex
-                            namespace = job_utils.generate_session_id(task_id=task_id, task_version=task_version, role=role, party_id=party_id)
-                            if RuntimeConfig.BACKEND == Backend.SPARK:
-                                storage_engine = StorageEngine.HDFS
-                            else:
-                                storage_engine = StorageEngine.LMDB
-                            address = create(name=data_table.get_name(), namespace=data_table.get_namespace(), storage_engine=storage_engine,
-                                             partitions=partitions)
-                            save_as_options = {"store_type": StorageTypes.ROLLPAIR_IN_MEMORY}
-                            data_table.save_as(address=address, partition=partitions, options=save_as_options,
-                                               name=name, namespace=namespace, schema_data=origin_table_schema)
-                            schedule_logger().info("save as task {} input data table to {} done".format(task_id, address))
-                            """
                             data_table = session.default().computing.load(data_table.get_address(), schema=data_table.get_meta(_type="schema"),
                                                                           partitions=partitions)
                         else:
