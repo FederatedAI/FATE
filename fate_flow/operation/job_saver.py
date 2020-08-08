@@ -148,6 +148,17 @@ class JobSaver(object):
             return operate.execute() > 0
 
     @classmethod
+    def update_job_resource(cls, job_id, role, party_id, volume: int):
+        update_filters = [Job.f_job_id == job_id, Job.f_role == role, Job.f_party_id == party_id]
+        if volume > 0:
+            update_filters.append(Job.f_remaining_resources >= volume)
+            operate = Job.update({Job.f_remaining_resources: Job.f_remaining_resources-volume}).where(*update_filters)
+        else:
+            operate = Job.update({Job.f_remaining_resources: Job.f_remaining_resources-volume}).where(*update_filters)
+        sql_logger(job_id=job_id).info(operate)
+        return operate.execute() > 0
+
+    @classmethod
     def get_job_configuration(cls, job_id, role, party_id, tasks=None):
         with DB.connection_context():
             if tasks:

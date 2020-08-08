@@ -19,7 +19,7 @@ from arch.api.utils.log_utils import schedule_logger
 from fate_flow.db.db_models import Task
 from fate_flow.operation.task_executor import TaskExecutor
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
-from fate_flow.entity.constant import JobStatus, TaskSetStatus, TaskStatus
+from fate_flow.entity.constant import JobStatus, TaskSetStatus, TaskStatus, EndStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.utils import job_utils, job_controller_utils
 import os
@@ -133,15 +133,32 @@ class TaskController(object):
         :param task_info:
         :return:
         """
-        JobSaver.update_task(task_info=task_info)
-        tasks = job_utils.query_task(task_id=task_info["task_id"],
-                                     task_version=task_info["task_version"],
-                                     role=task_info["role"],
-                                     party_id=task_info["party_id"])
-        if len(tasks) == 1:
+        update_status = False
+        try:
+            update_status = JobSaver.update_task(task_info=task_info)
+            if update_status and EndStatus.contains(task_info.get("status")):
+                cls.resource_for_task(task_info=task_info, operation_type="return")
+            tasks = job_utils.query_task(task_id=task_info["task_id"],
+                                         task_version=task_info["task_version"],
+                                         role=task_info["role"],
+                                         party_id=task_info["party_id"])
             FederatedScheduler.report_task_to_initiator(task=tasks[0])
+        except Exception as e:
+            schedule_logger(job_id=task_info["job_id"]).exception(e)
+        finally:
+            return update_status
+
+    @classmethod
+    def resource_for_task(cls, task_info, operation_type):
+        dsl, runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=task_info["job_id"], role=task_info["role"], party_id=task_info["party_id"])
+        processors_per_task = runtime_conf["job_parameters"]["processors_per_task"]
+        schedule_logger(job_id=task_info["job_id"]).info("Try {} job {} resource to task {} {}".format(operation_type, task_info["job_id"], task_info["task_id"], task_info["task_version"]))
+        update_status = JobSaver.update_job_resource(job_id=task_info["job_id"], role=task_info["role"], party_id=task_info["party_id"], volume=(processors_per_task if operation_type == "apply" else -processors_per_task))
+        if update_status:
+            schedule_logger(job_id=task_info["job_id"]).info("Successfully {} job {} resource to task {} {}".format(operation_type, task_info["job_id"], task_info["task_id"], task_info["task_version"]))
         else:
-            raise Exception("Found {} {} {} task on {} {}, error".format(len(tasks), task_info["task_id"], task_info["task_version"], task_info["role"], task_info["party_id"]))
+            schedule_logger(job_id=task_info["job_id"]).info("Failed {} job {} resource to task {} {}".format(operation_type, task_info["job_id"], task_info["task_id"], task_info["task_version"]))
+        return update_status
 
     @classmethod
     def stop_task(cls, task, stop_status):

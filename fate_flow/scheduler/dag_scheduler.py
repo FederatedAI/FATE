@@ -25,11 +25,10 @@ from fate_flow.entity.constant import JobStatus, TaskStatus, EndStatus, Interrup
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.controller.job_controller import JobController
-from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT
+from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT, DEFAULT_TASK_PARALLELISM, DEFAULT_PROCESSORS_PER_TASK
 from fate_flow.utils import detect_utils, job_utils
 from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_log_directory
 from fate_flow.utils.service_utils import ServiceUtils
-from fate_flow.scheduler.status_engine import StatusEngine
 
 
 class DAGScheduler(object):
@@ -40,6 +39,11 @@ class DAGScheduler(object):
         schedule_logger(job_id).info('submit job, job_id {}, body {}'.format(job_id, job_data))
         job_dsl = job_data.get('job_dsl', {})
         job_runtime_conf = job_data.get('job_runtime_conf', {})
+
+        # set default parameters
+        job_runtime_conf["job_parameters"]["task_parallelism"] = job_runtime_conf["job_parameters"].get("task_parallelism", DEFAULT_TASK_PARALLELISM)
+        job_runtime_conf["job_parameters"]["processors_per_task"] = job_runtime_conf["job_parameters"].get("processors_per_task", DEFAULT_PROCESSORS_PER_TASK)
+
         job_utils.check_pipeline_job_runtime_conf(job_runtime_conf)
         job_parameters = job_runtime_conf['job_parameters']
         job_initiator = job_runtime_conf['initiator']
@@ -120,7 +124,7 @@ class DAGScheduler(object):
         job_info["party_status"] = JobStatus.RUNNING
         job_info["tag"] = 'end_waiting'
         # TODO: Apply for resources
-        job_info["resources"] = 2
+        job_info["resources"] = 40
         job_info["remaining_resources"] = job_info["resources"]
         update_status = JobSaver.update_job(job_info=job_info)
         if update_status:

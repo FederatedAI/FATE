@@ -15,14 +15,14 @@
 #
 
 from fate_flow.db.db_models import Job, TaskSet, Task
-from fate_flow.entity.constant import TaskStatus, EndStatus, InterruptStatus, StatusSet, OngoingStatus, SchedulingStatusCode
+from fate_flow.entity.constant import TaskStatus, EndStatus, StatusSet, SchedulingStatusCode
 from fate_flow.settings import API_VERSION, ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.operation.job_saver import JobSaver
-from fate_flow.scheduler.status_engine import StatusEngine
 from arch.api.utils.log_utils import schedule_logger
+from fate_flow.controller.task_controller import TaskController
 
 
 class TaskScheduler(object):
@@ -37,15 +37,15 @@ class TaskScheduler(object):
             tasks_party_status = [task.f_party_status for task in tasks]
             new_task_status = cls.calculate_multi_party_task_status(tasks_party_status=tasks_party_status)
             schedule_logger(job_id=task.f_job_id).info("Job {} task {} {} status is {}, calculate by task party status list: {}".format(task.f_job_id, task.f_task_id, task.f_task_version, new_task_status, tasks_party_status))
+            task_status_have_update = False
             if new_task_status != task.f_status:
+                task_status_have_update = True
                 task.f_status = new_task_status
                 FederatedScheduler.sync_task(job=job, task=task, update_fields=["status"])
-                #cls.update_task_on_initiator(initiator_task_template=task, update_fields=["status"])
 
             if task.f_status == TaskStatus.WAITING:
                 waiting_tasks.append(task)
-                # TODO: run task until the concurrency is reached
-            elif EndStatus.contains(task.f_status):
+            elif task_status_have_update and EndStatus.contains(task.f_status):
                 FederatedScheduler.stop_task(job=job, task=task, stop_status=task.f_status)
 
         scheduling_status_code = SchedulingStatusCode.NO_NEXT
@@ -54,14 +54,13 @@ class TaskScheduler(object):
             # for component_name in component.get_upstream():
             for component in dsl_parser.get_upstream_dependent_components(component_name=waiting_task.f_component_name):
                 dependent_task = tasks_group[job_utils.generate_task_id(job_id=job.f_job_id, component_name=component.get_name())]
-                if dependent_task.f_task_status != TaskStatus.COMPLETE:
+                if dependent_task.f_status != TaskStatus.COMPLETE:
                     # can not start task
                     break
             else:
                 # can start task
                 scheduling_status_code = SchedulingStatusCode.HAVE_NEXT
                 status_code = cls.start_task(job=job, task=waiting_task)
-                print(waiting_task.f_task_status)
                 tasks_group[waiting_task.f_task_id] = waiting_task
                 if status_code == SchedulingStatusCode.NO_RESOURCE:
                     # Wait for the next round of scheduling
@@ -71,15 +70,19 @@ class TaskScheduler(object):
 
     @classmethod
     def start_task(cls, job, task):
-        task.f_status = TaskStatus.RUNNING
         schedule_logger(job_id=task.f_job_id).info("Try to start job {} task {} {} on {} {}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_role, task.f_party_id))
         # TODO: apply for job resource
-        update_status = JobSaver.update_task(task_info=task.to_human_model_dict(only_primary_with=["job_id", "status"]))
+        apply_status = TaskController.resource_for_task(task_info=task.to_human_model_dict(only_primary_with=["status"]), operation_type="apply")
+        if not apply_status:
+            return SchedulingStatusCode.NO_RESOURCE
+        task.f_status = TaskStatus.RUNNING
+        update_status = JobSaver.update_task(task_info=task.to_human_model_dict(only_primary_with=["status"]))
         if not update_status:
             # Another scheduler scheduling the task
             schedule_logger(job_id=task.f_job_id).info("Job {} task {} {} start on another scheduler".format(task.f_job_id, task.f_task_id, task.f_task_version))
-            # Reducing status
+            # Rollback
             task.f_status = TaskStatus.WAITING
+            TaskController.resource_for_task(task_info=task.to_human_model_dict(only_primary_with=["status"]), operation_type="return")
             return SchedulingStatusCode.PASS
         schedule_logger(job_id=task.f_job_id).info("Start job {} task {} {} on {} {}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_role, task.f_party_id))
         task_parameters = {}
@@ -87,7 +90,6 @@ class TaskScheduler(object):
         #task_parameters.update(extra_task_parameters)
         task_parameters.update(job.f_runtime_conf["job_parameters"])
         FederatedScheduler.start_task(job=job, task=task, task_parameters=task_parameters)
-        #cls.update_task_on_initiator(initiator_task_template=task, update_fields=["status"])
         return SchedulingStatusCode.SUCCESS
 
     @staticmethod
@@ -133,27 +135,6 @@ class TaskScheduler(object):
                                                                                                            role,
                                                                                                            dest_party_id))
         return extra_task_parameters
-
-    @classmethod
-    def calculate_task_set_status(cls, task_status):
-        tmp_status_set = set(task_status)
-        if len(tmp_status_set) == 1:
-            return tmp_status_set.pop()
-        else:
-            for status in tmp_status_set:
-                if not EndStatus.contains(status=status):
-                    break
-            else:
-                # All tasks are end status and there are more than two different status
-                for status in sorted(InterruptStatus.status_list(), key=lambda s: StatusSet.get_level(status=s), reverse=True):
-                    if status in tmp_status_set:
-                        return status
-                raise Exception("calculate task set status failed: {}".format(task_status))
-            # Not all tasks are end status
-            for status in sorted(OngoingStatus.status_list(), key=lambda s: StatusSet.get_level(status=s), reverse=True):
-                if status in tmp_status_set:
-                    return status
-            raise Exception("calculate task set status failed: {}".format(task_status))
 
     @classmethod
     def calculate_multi_party_task_status(cls, tasks_party_status):

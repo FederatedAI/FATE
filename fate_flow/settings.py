@@ -51,6 +51,8 @@ SERVER_CONF_PATH = 'conf/server_conf.json'
 
 # job maximum number  of the initiator
 MAX_CONCURRENT_JOB_RUN = 5
+DEFAULT_TASK_PARALLELISM = 2
+DEFAULT_PROCESSORS_PER_TASK = 10
 
 # Limit the number of jobs on the host side
 LIMIT_ROLE = 'host'
