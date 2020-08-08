@@ -33,7 +33,7 @@ def create(session_id=None,
     if backend.is_eggroll():
         computing_type = ComputingType.EGGROLL if mode.is_cluster() else ComputingType.STANDALONE
     elif backend.is_spark():
-        computing_type = ComputingType.EGGROLL
+        computing_type = ComputingType.SPARK
     else:
         raise NotImplementedError()
     if options is None:
