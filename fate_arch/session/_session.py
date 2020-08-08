@@ -164,7 +164,7 @@ class Session(object):
 
         raise RuntimeError(f"{federation_type} not supported")
 
-    def init_storage(self, storage_type: StorageType = FederationType.EGGROLL):
+    def init_storage(self, storage_type: StorageType = StorageType.EGGROLL):
         pass
 
     @property
