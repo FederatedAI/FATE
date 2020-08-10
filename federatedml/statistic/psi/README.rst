@@ -1,52 +1,35 @@
-
 Population Stability Index (PSI)
-=============================================
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Introduction
-------------
+^^^^^^^^^^^^
 
-Pearson Correlation Coefficient is a measure of the linear correlation between two variables, X and Y, defined as,
+Population stability index (PSI) is a metric to measure how much a
+feature has shifted in distribution between two sample sets. Usually,
+PSI is used to measure the stability of models or qualities of features.
+In FATE, PSI module is used to compute PSI value of a feature between
+two tables.
 
-.. figure:: img/pearson.png
-   	:align: center
+Given two data columns: expect & actual, PSI will be computed by the
+following steps: \* expect column and actual column conduct quantile
+feature binning \* compute interval percentage, which is given by (bin
+sample count)/(total sample number) \* compute PSI value: psi = sum(
+(actual\_percentage - expect\_percentage) \* ln(actual\_percentage /
+expect\_percentage) )
 
-Let 
-
-.. figure:: img/standard.png
-   	:align: center
-
-then,
-
-.. figure:: img/rewrited.png
-   	:align: center
-
-
-Implementation Detail
----------------------
-
-We use an MPC protocol called SPDZ for Heterogeneous Pearson Correlation Coefficient calculation. 
-For more details, one can refer to `[README]. <../../secureprotol/README.rst>`_
-
+For more details of psi, you can refer to this `PSI
+tutorial <https://www.lexjansen.com/wuss/2017/47_Final_Paper_PDF.pdf>`__
 
 Param
-------
+^^^^^
 
-.. automodule:: federatedml.param.pearson_param
-   :members:
+-  max\_bin\_num: int, max bin number of quantile feature binning
+-  need\_run: bool, need to run this module in DSL
+-  dense\_missing\_val: int/ float/ string imputed missing value when
+   input format is dense, default is set to np.nan. Default setting is
+   suggested
 
+How to use
+^^^^^^^^^^
 
-How to Use
-----------
-
-:params:
-
-    :column_indexes: -1 or list of int. If -1 provided, all columns are used for calculation. If a list of int provided, columns with given indexes are used for calculation.
-    
-    :column_names: names of columns use for calculation. 
-    
-    .. Note::
-
-    	if both params are provided, the union of columns indicated are used for calculation.  
-
-:examples:
-    There is an example :download:`[conf] <../../../examples/federatedml-1.x-examples/hetero_pearson/test_conf.json>` and :download:`[dsl] <../../../examples/federatedml-1.x-examples/hetero_pearson/test_conf.json>`
+An example is offered in folder.
