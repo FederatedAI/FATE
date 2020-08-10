@@ -90,8 +90,6 @@ class HeteroLRHost(HeteroLRBase):
         else:
             self.need_one_vs_rest = False
             self.fit_binary(data_instances, validate_data)
-        self.set_summary(self.get_model_summary())
-
 
     def fit_binary(self, data_instances, validate_data):
         self._abnormal_detection(data_instances)
@@ -159,6 +157,7 @@ class HeteroLRHost(HeteroLRBase):
                 break
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
             self.load_model(self.validation_strategy.cur_best_model)
+        self.set_summary(self.get_model_summary())
 
         # LOGGER.debug("Final lr weights: {}".format(self.model_weights.unboxed))
 
