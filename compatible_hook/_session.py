@@ -33,9 +33,6 @@ def init(job_id=None,
          **kwargs):
     if kwargs:
         LOGGER.warning(f"{kwargs} not used, check!")
-    if session.has_default():
-        return session.get_latest_opened()
-
     if isinstance(mode, int):
         mode = WorkMode(mode)
     if isinstance(backend, int):
@@ -83,7 +80,3 @@ def stop():
 
 def kill():
     session.get_latest_opened().computing.kill()
-
-
-def exit():
-    session.exit_session()
