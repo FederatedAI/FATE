@@ -139,13 +139,14 @@ class TaskExecutor(object):
                 session_options = {"eggroll.session.processors.per.node": args.processors_per_node}
             else:
                 session_options = {}
-            session.init(session_id=job_utils.generate_session_id(task_id, task_version, role, party_id),
-                         mode=RuntimeConfig.WORK_MODE,
-                         backend=RuntimeConfig.BACKEND,
-                         options=session_options)
-            session.default().init_federation(
-                federation_session_id=job_utils.generate_federated_id(task_id, task_version),
-                runtime_conf=component_parameters_on_party)
+
+            sess = session.Session.create(backend=RuntimeConfig.BACKEND, work_mode=RuntimeConfig.WORK_MODE)
+            computing_session_id = job_utils.generate_session_id(task_id, task_version, role, party_id)
+            sess.init_computing(computing_session_id=computing_session_id, options=session_options)
+            federation_session_id = job_utils.generate_federated_id(task_id, task_version),
+            sess.init_federation(federation_session_id=federation_session_id,
+                                 runtime_conf=component_parameters_on_party)
+            sess.as_default()
 
             schedule_logger().info('Run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
             schedule_logger().info("Component parameters on party {}".format(component_parameters_on_party))

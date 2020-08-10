@@ -15,6 +15,7 @@
 #
 
 import typing
+import uuid
 from typing import Iterable
 
 from fate_arch import session
@@ -32,10 +33,21 @@ def init(job_id=None,
          **kwargs):
     if kwargs:
         LOGGER.warning(f"{kwargs} not used, check!")
-
     if session.has_default():
         return session.default()
-    return session.init(job_id, mode, backend, options)
+
+    if isinstance(mode, int):
+        mode = WorkMode(mode)
+    if isinstance(backend, int):
+        backend = Backend(backend)
+    if job_id is None:
+        job_id = str(uuid.uuid1())
+    if options is None:
+        options = {}
+    sess = session.Session.create(backend, mode)
+    sess.init_computing(computing_session_id=job_id, options=options)
+    sess.as_default()
+    return sess
 
 
 def table(name, namespace, **kwargs) -> CTableABC:
