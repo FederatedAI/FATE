@@ -75,7 +75,10 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         self.binning_obj.cal_local_iv(data_instances, label_table=label_table)
         all_iv = [(col_name, x.iv) for col_name, x in
                   self.binning_obj.bin_results.all_cols_results.items()]
-
+        all_woe = {col_name: x.woe_array for col_name, x in
+                   self.binning_obj.bin_results.all_cols_results.items()}
+        all_monotonic = {col_name: x.is_woe_monotonic for col_name, x in
+                         self.binning_obj.bin_results.all_cols_results.items()}
         encrypted_bin_infos = self.transfer_variable.encrypted_bin_sum.get(idx=-1)
         # LOGGER.debug("encrypted_bin_sums: {}".format(encrypted_bin_sums))
 
@@ -110,18 +113,29 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
                 host_binning_obj = BaseBinning()
                 host_binning_obj.cal_iv_woe(result_counts, self.model_param.adjustment_factor)
             host_binning_obj.set_role_party(role=consts.HOST, party_id=host_party_id)
-
+            all_iv.extend([(col_name, x.iv) for col_name, x in
+                           host_binning_obj.bin_results.all_cols_results.items()])
+            # LOGGER.debug(f"bin_results: {self}")
+            all_woe.update({col_name: x.woe_array for col_name, x in
+                            host_binning_obj.bin_results.all_cols_results.items()})
+            all_monotonic.update({col_name: x.is_woe_monotonic for col_name, x in
+                                  host_binning_obj.bin_results.all_cols_results.items()})
             self.host_results.append(host_binning_obj)
-
+        all_iv = sorted(all_iv, key=lambda p: p[1], reverse=True)
         self.set_schema(data_instances)
         self.transform(data_instances)
+        self.add_summary('iv', all_iv)
+        self.add_summary('woe', all_woe)
+        self.add_summary('monotonic', all_monotonic)
+
+        LOGGER.debug(f"Returned Summary: {self.summary()}")
         LOGGER.info("Finish feature binning fit and transform")
         return self.data_output
 
     # @staticmethod
     # def encrypt(x, cipher):
     #     return cipher.encrypt(x), cipher.encrypt(1 - x)
-    
+
     @staticmethod
     def encrypt(x, cipher):
         return cipher.encrypt(x)

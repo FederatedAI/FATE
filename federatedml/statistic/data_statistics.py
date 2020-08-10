@@ -153,6 +153,7 @@ class DataStatistics(ModelBase):
                     results[k][query_point] = v
         for k, v in results.items():
             self.add_summary(k, v)
+        LOGGER.debug(f"Before return, summary: {self.summary()}")
         return data_instances
 
     def _convert_pb(self, stat_res, stat_name):

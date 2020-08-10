@@ -126,7 +126,6 @@ class OneHotEncoder(ModelBase):
 
     def fit(self, data_instances):
         self._init_params(data_instances)
-
         f1 = functools.partial(self.record_new_header,
                                inner_param=self.inner_param)
 
