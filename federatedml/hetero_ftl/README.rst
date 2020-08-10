@@ -14,29 +14,27 @@ or may not have overlaps in the feature space. This is illustrated in
 Figure 1. Our objective is to predict labels for host as accurately as
 possible.
 
-.. raw:: html
 
-   <div style="text-align:center" ,="" align="center">
+       .. figure:: images/samples.png
+          :align: center
+          :width: 500
 
- Figure 1： Federated Transfer Learning in the sample and feature space
-for two-party problem
+         Figure 1： Federated Transfer Learning in the sample and feature space
+        for two-party problem
 
-.. raw:: html
 
-   </div>
 
 Our solution employs an architecture of two layers: local layer and
 federation layer.
 
-.. raw:: html
+       .. figure:: images/architecture.png
+          :align: center
+          :width: 500
 
-   <div style="text-align:center" ,="" align="center">
 
- Figure 2: Architecture of Federated Transfer Learning
+         Figure 2: Architecture of Federated Transfer Learning
 
-.. raw:: html
 
-   </div>
 
 In the Local layer, both guest and host exploit a local model for
 extracting features from input data and outputting extracted features in
