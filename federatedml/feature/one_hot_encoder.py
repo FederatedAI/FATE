@@ -26,6 +26,7 @@ from federatedml.protobuf.generated import onehot_param_pb2, onehot_meta_pb2
 from federatedml.statistic.data_overview import get_header
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
+from federatedml.util import abnormal_detection
 
 LOGGER = log_utils.getLogger()
 
@@ -124,8 +125,17 @@ class OneHotEncoder(ModelBase):
         self.model_param = model_param
         # self.cols_index = model_param.cols
 
+    def _abnormal_detection(self, data_instances):
+        """
+        Make sure input data_instances is valid.
+        """
+        abnormal_detection.empty_table_detection(data_instances)
+        abnormal_detection.empty_feature_detection(data_instances)
+        self.check_schema_content(data_instances.schema)
+
     def fit(self, data_instances):
         self._init_params(data_instances)
+        self._abnormal_detection(data_instances)
         f1 = functools.partial(self.record_new_header,
                                inner_param=self.inner_param)
 
