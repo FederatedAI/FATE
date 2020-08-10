@@ -15,24 +15,24 @@ Figure 1. Our objective is to predict labels for host as accurately as
 possible.
 
 
-       .. figure:: images/samples.png
-          :align: center
-          :width: 500
+.. figure:: images/samples.png
+   :align: center
+   :width: 500
 
-         Figure 1： Federated Transfer Learning in the sample and feature space
-        for two-party problem
+ Figure 1： Federated Transfer Learning in the sample and feature space
+for two-party problem
 
 
 
 Our solution employs an architecture of two layers: local layer and
 federation layer.
 
-       .. figure:: images/architecture.png
-          :align: center
-          :width: 500
+.. figure:: images/architecture.png
+   :align: center
+   :width: 500
 
 
-         Figure 2: Architecture of Federated Transfer Learning
+ Figure 2: Architecture of Federated Transfer Learning
 
 
 
