@@ -128,8 +128,10 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
     @staticmethod
     def _merge_summary(summary_1, summary_2):
         import operator
-        all_ivs = summary_1['iv'].extends(summary_2['iv'])
-        all_ivs = sorted(all_ivs.items(), key=operator.itemgetter(1), reverse=True)
+        summary_1['iv'].extend(summary_2['iv'])
+        all_ivs = summary_1['iv']
+        all_ivs = sorted(all_ivs, key=lambda p: p[1], reverse=True)
+        # all_ivs = sorted(all_ivs.items(), key=operator.itemgetter(1), reverse=True)
 
         all_woes = summary_1['woe']
         all_woes.update(summary_2['woe'])

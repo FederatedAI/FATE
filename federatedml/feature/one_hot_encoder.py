@@ -165,7 +165,8 @@ class OneHotEncoder(ModelBase):
 
         new_data = data_instances.mapValues(f)
         self.set_schema(new_data)
-
+        self.add_summary('transferred_dimension', len(self.inner_param.result_header))
+        LOGGER.debug(f"Final summary: {self.summary()}")
         # one_data = new_data.first()[1].features
         # LOGGER.debug("transfered data is : {}".format(one_data))
 
@@ -186,7 +187,8 @@ class OneHotEncoder(ModelBase):
             result_header.extend(new_headers)
 
         self.inner_param.set_result_header(result_header)
-        LOGGER.debug("[Result][OneHotEncoder]After one-hot, data_instances schema is : {}".format(header))
+        LOGGER.debug("[Result][OneHotEncoder]After one-hot, data_instances schema is :"
+                     " {}".format(header))
 
     def _init_params(self, data_instances):
         if len(self.schema) == 0:
@@ -198,6 +200,7 @@ class OneHotEncoder(ModelBase):
         # self.schema = data_instances.schema
         LOGGER.debug("In _init_params, schema is : {}".format(self.schema))
         header = get_header(data_instances)
+        self.add_summary("original_dimension", len(header))
         self.inner_param.set_header(header)
 
         if self.model_param.transform_col_indexes == -1:
