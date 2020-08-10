@@ -15,12 +15,8 @@
 #
 
 
-from fate_arch.computing import ComputingType
 from fate_arch.computing import is_table
-from fate_arch.federation import FederationType
 from fate_arch.session._parties import PartiesInfo
-from fate_arch.session._session import Session, default, has_default
-from fate_arch.storage import StorageType
+from fate_arch.session._session import Session, get_latest_opened
 
-__all__ = ['default', 'has_default', 'is_table', 'Session',
-           'ComputingType', 'FederationType', 'StorageType', 'PartiesInfo']
+__all__ = ['is_table', 'Session', 'PartiesInfo', 'get_latest_opened']

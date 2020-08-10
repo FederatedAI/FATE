@@ -1,3 +1,4 @@
+import threading
 import typing
 import uuid
 
@@ -8,39 +9,6 @@ from fate_arch.computing import ComputingType
 from fate_arch.federation import FederationType
 from fate_arch.session._parties import PartiesInfo
 from fate_arch.storage import StorageType
-
-_DEFAULT_SESSION: typing.Optional['Session'] = None
-
-
-def has_default():
-    return _DEFAULT_SESSION is not None
-
-
-def default() -> 'Session':
-    if _DEFAULT_SESSION is None:
-        raise RuntimeError(f"session not init")
-    return _DEFAULT_SESSION
-
-
-def set_default(session):
-    global _DEFAULT_SESSION
-    _DEFAULT_SESSION = session
-
-
-def exit_session():
-    global _DEFAULT_SESSION
-    _DEFAULT_SESSION = None
-
-
-_SESSIONS: typing.MutableMapping[str, 'Session'] = {}
-
-
-def get_session(session_id: str):
-    return _SESSIONS.get(session_id)
-
-
-def _add_session(session: 'Session'):
-    _SESSIONS[session.session_id] = session
 
 
 class Session(object):
@@ -71,37 +39,32 @@ class Session(object):
         self._federation_session: typing.Optional[FederationABC] = None
         self._storage_session = None
         self._parties_info: typing.Optional[PartiesInfo] = None
-        self._previous_session = None
         self._session_id = str(uuid.uuid1())
 
-        _add_session(self)
+        # add to session environment
+        _RuntimeSessionEnvironment.add_session(self)
 
     @property
     def session_id(self) -> str:
         return self._session_id
 
-    def start(self):
-        if has_default():
-            self._previous_session = default()
-        set_default(self)
-        return self
-
     def as_default(self):
-        if has_default():
-            self._previous_session = default()
-        set_default(self)
+        _RuntimeSessionEnvironment.as_default_opened(self)
         return self
 
-    def stop(self):
-        set_default(self._previous_session)
-        self._previous_session = None
+    def _open(self):
+        _RuntimeSessionEnvironment.open_non_default_session(self)
+        return self
+
+    def _close(self):
+        _RuntimeSessionEnvironment.close_non_default_session(self)
         return self
 
     def __enter__(self):
-        return self.as_default()
+        return self._open()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        return self.stop()
+        return self._close()
 
     def init_computing(self,
                        computing_session_id: str,
@@ -224,3 +187,65 @@ class Session(object):
     @property
     def is_storage_valid(self):
         return self._storage_session is not None
+
+
+class _RuntimeSessionEnvironment(object):
+    __DEFAULT = None
+    __SESSIONS = threading.local()
+
+    @classmethod
+    def add_session(cls, session: 'Session'):
+        if not hasattr(cls.__SESSIONS, "CREATED"):
+            cls.__SESSIONS.CREATED = {}
+        cls.__SESSIONS.CREATED[session.session_id] = session
+
+    @classmethod
+    def has_non_default_session_opened(cls):
+        if getattr(cls.__SESSIONS, 'OPENED_STACK', None) is not None and cls.__SESSIONS.OPENED_STACK:
+            return True
+        return False
+
+    @classmethod
+    def get_non_default_session(cls):
+        return cls.__SESSIONS.OPENED_STACK[-1]
+
+    @classmethod
+    def open_non_default_session(cls, session):
+        if not hasattr(cls.__SESSIONS, 'OPENED_STACK'):
+            cls.__SESSIONS.OPENED_STACK = []
+        cls.__SESSIONS.OPENED_STACK.append(session)
+
+    @classmethod
+    def close_non_default_session(cls, session: Session):
+        if not hasattr(cls.__SESSIONS, 'OPENED_STACK') or len(cls.__SESSIONS.OPENED_STACK) == 0:
+            raise RuntimeError(f"non_default_session stack empty, nothing to close")
+        least: Session = cls.__SESSIONS.OPENED_STACK.pop()
+        if least.session_id != session.session_id:
+            raise RuntimeError(f"least opened session({least.session_id}) should be close first! "
+                               f"while try to close {session.session_id}. all session: {cls.__SESSIONS.OPENED_STACK}")
+
+    @classmethod
+    def has_default_session_opened(cls):
+        return cls.__DEFAULT is not None
+
+    @classmethod
+    def get_default_session(cls):
+        return cls.__DEFAULT
+
+    @classmethod
+    def as_default_opened(cls, session):
+        cls.__DEFAULT = session
+
+    @classmethod
+    def get_latest_opened(cls) -> Session:
+        if not cls.has_non_default_session_opened():
+            if not cls.has_default_session_opened():
+                raise RuntimeError(f"no session opened")
+            else:
+                return cls.get_default_session()
+        else:
+            return cls.get_non_default_session()
+
+
+def get_latest_opened():
+    return _RuntimeSessionEnvironment.get_latest_opened()
