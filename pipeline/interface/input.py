@@ -14,22 +14,22 @@
 #  limitations under the License.
 #
 
-import copy
-from pipeline.component.component_base import Component
-from pipeline.interface.output import Output
-from pipeline.interface.input import Input
-from federatedml.param.dataio_param import DataIOParam
+
+class Input(object):
+    def __init__(self, name):
+        class InputData(object):
+            def __init__(self, prefix):
+                self.prefix = prefix
+
+            @property
+            def data(self):
+                return ".".join([self.prefix, "data"])
+
+            @staticmethod
+            def get_all_input():
+                return ["data"]
+
+        self.data = InputData(name).data
+        self.data_output = InputData(name).get_all_input()
 
 
-class DataIO(Component, DataIOParam):
-    def __init__(self, **kwargs):
-        Component.__init__(self, **kwargs)
-
-        print (self.name)
-        new_kwargs = self.erase_component_base_param(**kwargs)
-
-        DataIOParam.__init__(self, **new_kwargs)
-
-        self.input = Input(self.name)
-        self.output = Output(self.name, data_type='single')
-        self._module_name = "DataIO"
