@@ -23,7 +23,7 @@ class HeteroSecureBoost(Component, HeteroSecureBoostParam):
     def __init__(self, **kwargs):
         Component.__init__(self, **kwargs)
 
-        print (self.name)
+        print(self.name)
         new_kwargs = self.erase_component_base_param(**kwargs)
 
         HeteroSecureBoostParam.__init__(self, **new_kwargs)

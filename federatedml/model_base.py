@@ -18,14 +18,14 @@
 
 import copy
 
+import numpy as np
+
 from arch.api.utils import log_utils
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.statistic.data_overview import header_alignment
 from federatedml.util import abnormal_detection
 from federatedml.util.component_properties import ComponentProperties
 from federatedml.util.param_extract import ParamExtract
-
-import numpy as np
 
 LOGGER = log_utils.getLogger()
 
@@ -46,6 +46,7 @@ class ModelBase(object):
         self.validation_freqs = None
         self.component_properties = ComponentProperties()
         self._summary = dict()
+        self._align_cache = dict()
 
     def _init_runtime_parameters(self, component_parameters):
         param_extractor = ParamExtract()
@@ -351,15 +352,17 @@ class ModelBase(object):
         """
         abnormal_detection.check_legal_schema(schema)
 
-    @staticmethod
-    def align_data_header(data_instances, pre_header):
+    def align_data_header(self, data_instances, pre_header):
         """
         align features of given data, raise error if value in given schema not found
         :param data_instances: data table
         :param pre_header: list, header of model
         :return: dtable, aligned data
         """
-        result_data = header_alignment(data_instances=data_instances, pre_header=pre_header)
+        result_data = self._align_cache.get(id(data_instances))
+        if result_data is None:
+            result_data = header_alignment(data_instances=data_instances, pre_header=pre_header)
+            self._align_cache[id(data_instances)] = result_data
         return result_data
 
     @staticmethod

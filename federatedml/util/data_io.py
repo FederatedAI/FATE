@@ -147,7 +147,8 @@ class DenseFeatureReader(object):
             data_instance = self.fit(input_data, input_data_features, input_data_labels)
         else:
             data_instance = self.transform(input_data_features, input_data_labels)
-            data_instance = ModelBase.align_data_header(data_instance, fit_header)
+            # data_instance = ModelBase.align_data_header(data_instance, fit_header)
+            data_instance = data_overview.header_alignment(data_instance, fit_header)
 
         return data_instance
 

@@ -99,7 +99,7 @@
                     "train_data": [
                         "feature_scale_0.train"
                     ],
-                    "validate_data": [
+                    "eval_data": [
                         "feature_scale_1.eval_data"
                     ]
                 }
