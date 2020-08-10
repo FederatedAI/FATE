@@ -98,5 +98,3 @@ pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
                                  }
                              })
 
-with open("output.pkl", "wb") as fout:
-    fout.write(pipeline.dump())
