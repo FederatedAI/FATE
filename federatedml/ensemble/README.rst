@@ -184,7 +184,7 @@ Hetero Complete Secureboost
 Now hetero secureboost add a new option: complete_secure. Once enabled, the boosting model will only use guest features
 to build the first decision tree. This can avoid label leakages, accord to `[SecureBoost: A Lossless Federated Learning Framework]. <https://arxiv.org/abs/1901.08755>`_
 
-       .. figure:: images/homo_fit.png
+       .. figure:: images/complete_secure.png
           :align: center
           :width: 500
 
@@ -209,7 +209,7 @@ split points with the assistant of the guest party. The structures of host trees
 the host side while leaf weights will be preserved on the guest side. In this way, encryption and communication costs
 are reduced by half.
 
-       .. figure:: images/homo_fit.png
+       .. figure:: images/mix_tree.png
           :align: center
           :width: 500
 
@@ -218,7 +218,7 @@ are reduced by half.
 While conducting inference, every party will traverse its trees locally. All hosts will send the final leaf id to
 guests and the guest retrieves leaf weights from received leaf id. The prediction only needs one communication in mix mode.
 
-        .. figure:: images/homo_fit.png
+        .. figure:: images/mix_procedure.png
           :align: center
           :width: 500
 
@@ -232,7 +232,7 @@ The host will be responsible for building the first "host_depth" layers, with th
 be responsible
 for the next "guest_depth" layers. All trees will be built in this 'layered' manner.
 
-        .. figure:: images/homo_fit.png
+        .. figure:: images/layered_tree.png
           :align: center
           :width: 500
 
@@ -242,7 +242,7 @@ The benefits of layered mod is obvious, like the mix mode, parts of communicatio
 in the process of training. When predicting, we only need one communication because all host can conduct inferences of
 host layers locally.
 
-        .. figure:: images/homo_fit.png
+        .. figure:: images/layered_procedure.png
           :align: center
           :width: 500
 
