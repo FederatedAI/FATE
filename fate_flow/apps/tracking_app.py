@@ -225,7 +225,6 @@ def component_output_data():
             except Exception as e:
                 stat_logger.exception(e)
         else:
-            output_data_list.append(None)
             headers.append(None)
     if len(output_data_list) == 1 and not output_data_list[0]:
         return get_json_result(retcode=0, retmsg='no data', data=[])
