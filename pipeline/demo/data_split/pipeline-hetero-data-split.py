@@ -11,6 +11,8 @@ from pipeline.interface.data import Data
 guest = 9999
 host = 10000
 arbiter = 10002
+backend = Backend.EGGROLL
+work_mode = WorkMode.STANDALONE
 
 guest_train_data = {"name": "motor_hetero_guest", "namespace": "experiment"}
 host_train_data = {"name": "motor_hetero_host", "namespace": "experiment"}
@@ -42,7 +44,7 @@ pipeline.add_component(hetero_linr_0, data=Data(train_data=hetero_data_split_0.o
 
 pipeline.compile()
 
-pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
+pipeline.fit(backend=backend, work_mode=work_mode,
              feed_dict={input_0:
                            {"guest": {
                                9999: guest_train_data

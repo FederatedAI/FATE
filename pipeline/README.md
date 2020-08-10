@@ -18,7 +18,7 @@ A FATE job includes a sequence of tasks. FATE pipeline provides easy-to-use tool
 FATE is written in a modular style. Modules are designed to have input and output data and model. 
 Therefore two modules are connected when output of one module is set to be input of another module. 
 By tracing how one data set is processed through FATE modules in a task, we can see that a FATE job is in fact formed by a sequence of tasks. 
-For example, in the [mini demo](./pipeline-mini-demo.py) above, guest's data is first read in by `Reader`, then loaded into `DataIO`. 
+For example, in the [mini demo](./demo/pipeline-mini-demo.py) above, guest's data is first read in by `TableReader`, then loaded into `DataIO`. 
 Overlapping ids between guest and host are then found by running data through `Intersection`. Finally, `HeteroLR` model is run on the data. 
 Each of the listed modules run a small task with the data, and together they constitute a model training job.
 
@@ -82,7 +82,7 @@ output_model = dataio_0.output.model_output
 
 ## Build A Pipeline
 
-Below is a general guide to build a pipeline. Please refer to [mini demo](pipeline-mini-demo.py) for an explained demo.
+Below is a general guide to build a pipeline. Please refer to [mini demo](./demo/pipeline-mini-demo.py) for an explained demo.
 
 Once initialized a pipeline, job participants and initiator should be specified.
 Below is an example of initial setup of a pipeline:
@@ -93,14 +93,14 @@ pipeline.set_initiator(role='guest', party_id=10000)
 pipeline.set_roles(guest=10000, host=9999, arbiter=10002)
 ```
 
-Reader is required to use data source before any other component. 
-Add Reader to pipeline:
+`TableReader` is required to use data source before any other component. 
+Add TableReader to pipeline:
 
 ```python
 
 ```
 
-In most cases, `DataIO` follows `Reader` to load data into DataInstance format,
+In most cases, `DataIO` follows `TableReader` to load data into DataInstance format,
 which can then be used for data engineering and model training. 
 Some components (such as `Union` and `Intersection`) can run directly on non-DataInstance tables.
 
