@@ -108,6 +108,8 @@ class DSLParser(object):
         self.args_input = None
 
     def _init_components(self, pipeline_dsl=None, mode="train"):
+        if not self.dsl:
+            raise Exception("there are no dsl, please check if the role and party id are correct")
         components = self.dsl.get("components")
         if components is None:
             raise ValueError("there are no components in dsl, please have a check!")

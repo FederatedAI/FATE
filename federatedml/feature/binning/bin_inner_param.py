@@ -17,6 +17,7 @@
 #  limitations under the License.
 
 from arch.api.utils import log_utils
+import copy
 
 LOGGER = log_utils.getLogger()
 
@@ -37,7 +38,7 @@ class BinInnerParam(object):
         self.category_names = []
 
     def set_header(self, header):
-        self.header = header
+        self.header = copy.deepcopy(header)
         for idx, col_name in enumerate(self.header):
             self.col_name_maps[col_name] = idx
 
@@ -46,7 +47,7 @@ class BinInnerParam(object):
         Called when user set to bin all columns
         """
         self.bin_indexes = [i for i in range(len(self.header))]
-        self.bin_names = self.header
+        self.bin_names = copy.deepcopy(self.header)
 
     def set_transform_all(self):
         self.transform_bin_indexes = self.bin_indexes
@@ -117,6 +118,9 @@ class BinInnerParam(object):
             if idx not in self.category_indexes:
                 self.category_indexes.append(idx)
                 self.category_names.append(self.header[idx])
+            if idx in self.bin_indexes:
+                self.bin_indexes.remove(idx)
+                self.bin_names.remove(self.header[idx])
 
     def add_category_names(self, category_names):
         if category_names is None:
@@ -130,6 +134,9 @@ class BinInnerParam(object):
             if idx not in self.category_indexes:
                 self.category_indexes.append(idx)
                 self.category_names.append(self.header[idx])
+            if idx in self.bin_indexes:
+                self.bin_indexes.remove(idx)
+                self.bin_names.remove(self.header[idx])
 
     @property
     def bin_cols_map(self):

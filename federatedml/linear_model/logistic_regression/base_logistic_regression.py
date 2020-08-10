@@ -20,11 +20,12 @@ from google.protobuf import json_format
 from arch.api.utils import log_utils
 from federatedml.linear_model.linear_model_base import BaseLinearModel
 from federatedml.linear_model.linear_model_weight import LinearModelWeights as LogisticRegressionWeights
-from federatedml.optim.initialize import Initializer
-from federatedml.protobuf.generated import lr_model_param_pb2
 from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
+from federatedml.optim.initialize import Initializer
 from federatedml.param.logistic_regression_param import InitParam
-from federatedml.util import consts
+from federatedml.protobuf.generated import lr_model_param_pb2
+from federatedml.util.fate_operator import vec_dot
+from federatedml.param.evaluation_param import EvaluateParam
 
 LOGGER = log_utils.getLogger()
 
@@ -48,19 +49,14 @@ class BaseLogisticRegression(BaseLinearModel):
         super()._init_model(params)
         self.one_vs_rest_obj = one_vs_rest_factory(self, role=self.role, mode=self.mode, has_arbiter=True)
 
-    #     if params.multi_class == 'ovr':
-    #         self.need_one_vs_rest = True
-
-
-
     def compute_wx(self, data_instances, coef_, intercept_=0):
-        return data_instances.mapValues(lambda v: np.dot(v.features, coef_) + intercept_)
+        return data_instances.mapValues(lambda v: vec_dot(v.features, coef_) + intercept_)
 
     def get_single_model_param(self):
         weight_dict = {}
-        LOGGER.debug("in get_single_model_param, model_weights: {}, coef: {}, header: {}".format(
-            self.model_weights.unboxed, self.model_weights.coef_, self.header
-        ))
+        # LOGGER.debug("in get_single_model_param, model_weights: {}, coef: {}, header: {}".format(
+        #     self.model_weights.unboxed, self.model_weights.coef_, self.header
+        # ))
         for idx, header_name in enumerate(self.header):
             coef_i = self.model_weights.coef_[idx]
             weight_dict[header_name] = coef_i
@@ -70,7 +66,9 @@ class BaseLogisticRegression(BaseLinearModel):
                   'is_converged': self.is_converged,
                   'weight': weight_dict,
                   'intercept': self.model_weights.intercept_,
-                  'header': self.header
+                  'header': self.header,
+                  'best_iteration': -1 if self.validation_strategy is None else
+                  self.validation_strategy.best_iteration
                   }
         return result
 
@@ -89,11 +87,10 @@ class BaseLogisticRegression(BaseLinearModel):
             single_result = self.get_single_model_param()
             single_result['need_one_vs_rest'] = False
         single_result['one_vs_rest_result'] = one_vs_rest_result
-        LOGGER.debug("in _get_param, single_result: {}".format(single_result))
+        # LOGGER.debug("in _get_param, single_result: {}".format(single_result))
 
         param_protobuf_obj = lr_model_param_pb2.LRModelParam(**single_result)
-        json_result = json_format.MessageToJson(param_protobuf_obj)
-        LOGGER.debug("json_result: {}".format(json_result))
+
         return param_protobuf_obj
 
     def load_model(self, model_dict):
@@ -133,15 +130,13 @@ class BaseLogisticRegression(BaseLinearModel):
         if self.fit_intercept:
             tmp_vars = np.append(tmp_vars, single_model_obj.intercept)
         self.model_weights = LogisticRegressionWeights(tmp_vars, fit_intercept=self.fit_intercept)
+        self.n_iter_ = single_model_obj.iters
         return self
 
     def one_vs_rest_fit(self, train_data=None, validate_data=None):
         LOGGER.debug("Class num larger than 2, need to do one_vs_rest")
         self.one_vs_rest_obj.fit(data_instances=train_data, validate_data=validate_data)
 
-    # def one_vs_rest_predict(self, validate_data):
-    #     if not self.one_vs_rest_obj:
-    #         LOGGER.warning("Not one_vs_rest fit before, return now")
-    #         return
-    #     return self.one_vs_rest_obj.predict(data_instances=validate_data)
+    def get_metrics_param(self):
+        return EvaluateParam(eval_type="binary", metrics=self.metrics)
 

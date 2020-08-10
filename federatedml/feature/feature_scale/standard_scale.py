@@ -48,6 +48,7 @@ class StandardScale(BaseScale):
 
     @staticmethod
     def __scale_with_column_range(data, column_upper, column_lower, mean, std, process_cols_list):
+        features = np.array(data.features, dtype=float)
         for i in process_cols_list:
             value = data.features[i]
             if value > column_upper[i]:
@@ -55,15 +56,18 @@ class StandardScale(BaseScale):
             elif value < column_lower[i]:
                 value = column_lower[i]
 
-            data.features[i] = np.around((value - mean[i]) / std[i], 6)
+            features[i] = (value - mean[i]) / std[i]
+        data.features = features
 
         return data
 
     @staticmethod
     def __scale(data, mean, std, process_cols_list):
+        features = np.array(data.features, dtype=float)
         for i in process_cols_list:
-            data.features[i] = np.around((data.features[i] - mean[i]) / std[i], 6)
+            features[i] = (data.features[i] - mean[i]) / std[i]
 
+        data.features = features
         return data
 
     def fit(self, data):
@@ -142,7 +146,7 @@ class StandardScale(BaseScale):
             self.data_shape = -1
 
         meta_proto_obj = ScaleMeta(method="standard_scale",
-                                   area=self.area,
+                                   area="null",
                                    scale_column=scale_column,
                                    feat_upper=self._get_upper(self.data_shape),
                                    feat_lower=self._get_lower(self.data_shape),
@@ -157,10 +161,10 @@ class StandardScale(BaseScale):
         if self.header:
             for i, header in enumerate(self.header):
                 if i in self.scale_column_idx:
-                    param_obj = ColumnScaleParam(column_upper=np.round(self.column_max_value[i], self.round_num),
-                                                 column_lower=np.round(self.column_min_value[i], self.round_num),
-                                                 mean=np.round(self.mean[i], self.round_num),
-                                                 std=np.round(self.std[i], self.round_num))
+                    param_obj = ColumnScaleParam(column_upper=self.column_max_value[i],
+                                                 column_lower=self.column_min_value[i],
+                                                 mean=self.mean[i],
+                                                 std=self.std[i])
                     column_scale_param_dict[header] = param_obj
 
         param_proto_obj = ScaleParam(col_scale_param=column_scale_param_dict,

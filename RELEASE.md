@@ -1,3 +1,110 @@
+# Release 1.4.2
+## Major Features and Improvements
+> FederatedML
+* Optimize performance of Pearson which increases efficiency by more than twice.
+* Optimize Min-test module: Add secure-boost as optional test task. Set partyid and work_mode as input parameters. Use pre-import data set as input so that improved test process.
+* Support tok_k iv filter in feature selection module.
+* Support filling missing value for tag:value format data in DataIO.
+* Fix bug of lacking one layer of depth of tree in HeteroSecureBoost and support automatically alignment header of input data in predict process
+* Standardize the naming of example data set and add a data pre-import script. 
+
+> FATE-Flow
+* Distinguish between user stop job and system stop job;
+* Optimized some logs;
+* Optimize zookeeper configuration
+* The model supports persistent storage to mysql
+* Push the model to the online service to support the specified storage address (local file and FATEFlowServer interface)
+
+
+# Release 1.4.1
+## Major Features and Improvements
+> FederatedML
+* Reconstructed Evaluation Module improves efficiency by 60 times
+* Add PSI, confusion matrix, f1-score  and quantile threshold support for Precision/Recall in Evaluation.
+* Add option to retain duplicated keys in Union.
+* Support filter feature based on mode
+* Manual filter allows manually set columns to retain
+* Auto recoginize whether a data set includes a label column in predict process
+* Bug-fix: Missing schema after merge in Union; Fail to align label of multi-class in homo_nn with PyTorch backend; Floating-point precision error and value error due to int-type input in Feature Scale
+
+> FATE-Flow
+* Allow the host to stop the job
+* Optimize the task queue
+* Automatically align the input table partitions of all participants when the job is running
+* Fate flow client large file upload optimization
+* Fixed some bugs with abnormal status
+
+
+# Release 1.4.0
+## Major Features and Improvements
+> FederatedML
+* Support Homo Secureboost
+* Support AIC/BIC-based Stepwise for Linear Models
+* Add Hetero Optimal Feature Binning, support iv/gini/chi-square/ks,and allow asymmetric binning methods 
+* Interoperate with AI ecosystem: Add pytorch backend for Homo NN
+* Homo Framework factorization, simplify developing homo algorithms
+* Early stopping strategy for hetero algorithms.
+* Local Baseline supports multi-class classification
+* Add consistency check to Predict function
+* Optimize validation strategy，3x speed up in-training validation
+
+> FATE-Flow
+* Refactoring model management, native file directory storage, storage structure is more flexible, more information
+* Support model import and export, store and restore with reliable distributed system(Redis is currently supported)
+* Using MySQL instead of Redis to implement Job Queue, reducing system complexity
+* Support for uploading client local files
+* Automatically detects the existence of the table and provides the destroy option
+* Separate system, algorithm, scheduling command log, scheduling command log can be independently audited
+
+> Eggroll  
+>> Stability Boosts:
+* New resource management components introduce the brand new session mechanism. Processors can be cleaned up with a simple method call, even the session goes wrong.
+* Removes storage service. No C++ / native library compilation is needed.
+* Federated learning algorithms can still work at a 28% packet loss rate.
+>> Performance Boosts:
+* Performances of federated learning algorithms are improved on Eggroll 2. Some algorithms get 10x performance boost.
+* Join interface is 16x faster than pyspark under federated learning scenarios.
+>> User Experiences Boosts:
+* Quick deployment. Maven, pip, config and start.
+* Light dependencies. Check our requirements.txt / pom.xml and see.
+* Easy debugging. Necessary running contexts are provided. Runtime status are kept in log files and databases.
+* Few daemon processes. And they are all JVM applications.
+
+
+# Release 1.3.1
+## Major Features and Improvements
+>Deploy
+* Support deploying by MacOS
+* Support using external db
+* Deploy JDK and Python environments on demand
+* Improve MySQL and FATE Flow service.sh
+* Support more custom deployment configurations in the default_configurations.sh, such as ssh_port, mysql_port and so one.
+
+# Release 1.3.0
+## Major Features and Improvements
+>FederatedREC
+* Add federated recommendation submodule
+* Add heterogeneous Factoraization Machine
+* Add hemogeneous Factoraization Machine
+* Add heterogeneous Matrix Factorization
+* Add heterogeneous Singular Value Decomposition
+* Add heterogeneous SVD++ (Factorization Meets the Neighborhood)
+* Add heterogeneous Generalized Matrix Factorization
+
+>FederatedML
+* Support Sparse data training in heterogeneous General Linear Model(Hetero-LR、Hetero-LinR、Hetero-PoissonR)
+* Fix 32M limitation of quantile binning to support higher feature dimension
+* Fix 32M limitation of histogram statistics for  SecureBoost to support higher feature dimension training.
+* Add abnormal parameters and input data detection in OneHot Encoder
+* fix not passing validate data to fit process to support evaluate validation data during training process
+
+>FATE-Flow
+* Add clean job CLI for cleaning output and intermediate results, including data, metrics and sessions
+* Support for obtaining table namespace and name of output data via CLI
+* Fix KillJob unsuccessful execution in some special cases
+* Improve log system, add more exception and run time status prompts
+
+
 # Release 1.2.0
 ## Major Features and Improvements
 FederatedML

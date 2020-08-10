@@ -69,9 +69,6 @@
                         "homo_lr_0.train"
                     ]
                 }
-            },
-            "output": {
-                "data": ["evaluate"]
             }
         },
         "evaluation_1": {
@@ -80,9 +77,6 @@
                 "data": {
                     "data": ["homo_lr_1.predict"]
                 }
-            },
-            "output": {
-                "data": ["evaluate"]
             }
         }
     }

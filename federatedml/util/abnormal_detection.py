@@ -22,10 +22,18 @@ from federatedml.statistic import data_overview
 def empty_table_detection(data_instances):
     num_data = data_instances.count()
     if num_data == 0:
-        raise ValueError("Count of data_instance is 0")
+        table_name = data_instances.get_name()
+        namespace = data_instances.get_namespace()
+        raise ValueError("Count of data_instance is 0, table_name: {}, namespace: {}".format(
+            table_name, namespace
+        ))
 
 
 def empty_feature_detection(data_instances):
     is_empty_feature = data_overview.is_empty_feature(data_instances)
     if is_empty_feature:
-        raise ValueError("Number of features of DTable is 0.")
+        table_name = data_instances.get_name()
+        namespace = data_instances.get_namespace()
+        raise ValueError("Number of features of DTable is 0., table_name: {}, namespace: {}".format(
+            table_name, namespace
+        ))

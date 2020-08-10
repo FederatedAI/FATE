@@ -21,7 +21,7 @@ import numpy as np
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.sync import loss_sync
 from federatedml.optim.gradient import hetero_linear_model_gradient
-from federatedml.util.fate_operator import reduce_add
+from federatedml.util.fate_operator import reduce_add, vec_dot
 
 LOGGER = log_utils.getLogger()
 
@@ -50,7 +50,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         '''
         if offset is None:
             raise ValueError("Offset should be provided when compute poisson forwards")
-        mu = data_instances.join(offset, lambda d, m: np.exp(np.dot(d.features, model_weights.coef_)
+        mu = data_instances.join(offset, lambda d, m: np.exp(vec_dot(d.features, model_weights.coef_)
                                                              + model_weights.intercept_ + m))
         self.forwards = mu
 
@@ -81,7 +81,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         current_suffix = (n_iter_, batch_index)
         n = data_instances.count()
         guest_wx_y = data_instances.join(offset,
-            lambda v, m: (np.dot(v.features, model_weights.coef_) + model_weights.intercept_ + m, v.label))
+            lambda v, m: (vec_dot(v.features, model_weights.coef_) + model_weights.intercept_ + m, v.label))
         loss_list = []
         host_wxs = self.get_host_loss_intermediate(current_suffix)
         if loss_norm is not None:
@@ -115,7 +115,7 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
 
     def compute_forwards(self, data_instances, model_weights):
         mu = data_instances.mapValues(
-            lambda v: np.exp(np.dot(v.features, model_weights.coef_) + model_weights.intercept_))
+            lambda v: np.exp(vec_dot(v.features, model_weights.coef_) + model_weights.intercept_))
         return mu
 
     def compute_loss(self, data_instances, model_weights, encrypted_calculator,
@@ -142,16 +142,14 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
 
         '''
         current_suffix = (n_iter_, batch_index)
-        self_wx = data_instances.mapValues(lambda v: np.dot(v.features, model_weights.coef_) + model_weights.intercept_)
+        self_wx = data_instances.mapValues(lambda v: vec_dot(v.features, model_weights.coef_) + model_weights.intercept_)
         en_wx = encrypted_calculator[batch_index].encrypt(self_wx)
         self.remote_loss_intermediate(en_wx, suffix=current_suffix)
 
         loss_regular = optimizer.loss_norm(model_weights)
-        if loss_regular is None:
-            en_loss_regular = loss_regular
-        else:
+        if loss_regular is not None:
             en_loss_regular = cipher_operator.encrypt(loss_regular)
-        self.remote_loss_regular(en_loss_regular, suffix=current_suffix)
+            self.remote_loss_regular(en_loss_regular, suffix=current_suffix)
 
 
 class Arbiter(hetero_linear_model_gradient.Arbiter, loss_sync.Arbiter):

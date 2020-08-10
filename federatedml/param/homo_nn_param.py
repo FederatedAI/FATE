@@ -31,6 +31,8 @@ class HomoNNParam(BaseParam):
     """
     Parameters used for Homo Neural Network.
 
+    Parameters
+    ----------
     Args:
         secure_aggregate: enable secure aggregation or not, defaults to True.
         aggregate_every_n_epoch: aggregate model every n epoch, defaults to 1.
@@ -52,6 +54,7 @@ class HomoNNParam(BaseParam):
                 a)	diff： Use difference of loss between two iterations to judge whether converge.
                 b)  weight_diff: Use difference between weights of two consecutive iterations
                 c)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
+        encode_label : encode label to one_hot.
     """
 
     def __init__(self,
@@ -65,6 +68,7 @@ class HomoNNParam(BaseParam):
                  max_iter: int = 100,
                  batch_size: int = -1,
                  early_stop: typing.Union[str, dict, SimpleNamespace] = "diff",
+                 encode_label: bool = False,
                  predict_param=PredictParam(),
                  cv_param=CrossValidationParam()):
         super(HomoNNParam, self).__init__()
@@ -74,6 +78,7 @@ class HomoNNParam(BaseParam):
 
         self.config_type = config_type
         self.nn_define = nn_define or []
+        self.encode_label = encode_label
 
         self.batch_size = batch_size
         self.max_iter = max_iter
@@ -86,7 +91,7 @@ class HomoNNParam(BaseParam):
         self.cv_param = copy.deepcopy(cv_param)
 
     def check(self):
-        supported_config_type = ["nn", "keras"]
+        supported_config_type = ["nn", "keras","pytorch"]
         if self.config_type not in supported_config_type:
             raise ValueError(f"config_type should be one of {supported_config_type}")
         self.early_stop = _parse_early_stop(self.early_stop)
@@ -96,6 +101,7 @@ class HomoNNParam(BaseParam):
     def generate_pb(self):
         pb = nn_model_meta_pb2.HomoNNParam()
         pb.secure_aggregate = self.secure_aggregate
+        pb.encode_label = self.encode_label
         pb.aggregate_every_n_epoch = self.aggregate_every_n_epoch
         pb.config_type = self.config_type
 
@@ -104,6 +110,9 @@ class HomoNNParam(BaseParam):
                 pb.nn_define.append(json.dumps(layer))
         elif self.config_type == "keras":
             pb.nn_define.append(json.dumps(self.nn_define))
+        elif self.config_type == "pytorch":
+            for layer in self.nn_define:
+                pb.nn_define.append(json.dumps(layer))
 
         pb.batch_size = self.batch_size
         pb.max_iter = self.max_iter
@@ -121,6 +130,7 @@ class HomoNNParam(BaseParam):
 
     def restore_from_pb(self, pb):
         self.secure_aggregate = pb.secure_aggregate
+        self.encode_label = pb.encode_label
         self.aggregate_every_n_epoch = pb.aggregate_every_n_epoch
         self.config_type = pb.config_type
 
@@ -129,6 +139,9 @@ class HomoNNParam(BaseParam):
                 self.nn_define.append(json.loads(layer))
         elif self.config_type == "keras":
             self.nn_define = pb.nn_define[0]
+        elif self.config_type== "pytorch":
+            for layer in pb.nn_define:
+                self.nn_define.append(json.loads(layer))
         else:
             raise ValueError(f"{self.config_type} is not supported")
 

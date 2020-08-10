@@ -1,0 +1,58 @@
+{
+  "components": {
+       "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.train_data"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["dataio"]
+            }
+       },
+       "dataio_1": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.eval_data"
+                    ]
+                },
+                "model": [
+                    "dataio_0.dataio"
+                ]
+            },
+            "output": {
+                "data": ["eval"],
+                "model": ["dataio"]
+            }
+       },
+      "secureboost_0": {
+           "module": "HomoSecureboost",
+           "input": {
+                "data": {
+                       "train_data": ["dataio_0.train"],
+                       "eval_data": ["dataio_1.eval"]
+                }
+           },
+           "output": {
+                "data": ["train"],
+                "model": ["train"]
+            }
+      },
+      "evaluation_0": {
+          "module": "Evaluation",
+           "input": {
+                "data": {
+                    "data": [
+                        "secureboost_0.train"
+                    ]
+                }
+            }
+        }
+  }
+}

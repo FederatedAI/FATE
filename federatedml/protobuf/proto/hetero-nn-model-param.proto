@@ -44,5 +44,6 @@ message HeteroNNParam {
     bool is_converged = 4;
     repeated string header = 5;
 	int32 num_label = 6;
+	int32 best_iteration = 7;
 }
 

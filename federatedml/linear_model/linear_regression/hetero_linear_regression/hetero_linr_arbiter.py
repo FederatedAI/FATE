@@ -33,6 +33,7 @@ class HeteroLinRArbiter(HeteroBaseArbiter, HeteroLinRBase):
         self.header = None
         self.model_param_name = 'HeteroLinearRegressionParam'
         self.model_meta_name = 'HeteroLinearRegressionMeta'
+        self.model_name = 'HeteroLinearRegression'
         self.is_converged = False
         self.mode = consts.HETERO
-        self.in_one_vs_rest = False
+        self.need_call_back_loss = True

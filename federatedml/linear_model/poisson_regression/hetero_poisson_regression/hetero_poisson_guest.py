@@ -24,6 +24,7 @@ from federatedml.linear_model.poisson_regression.hetero_poisson_regression.heter
 from federatedml.optim.gradient import hetero_poisson_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import consts
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 
@@ -51,14 +52,15 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         self._abnormal_detection(data_instances)
         self.header = copy.deepcopy(self.get_header(data_instances))
 
-        validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 
         self.exposure_index = self.get_exposure_index(self.header, self.exposure_colname)
-        if self.exposure_index > -1:
-            self.header.pop(self.exposure_index)
+        exposure_index = self.exposure_index
+        if exposure_index > -1:
+            self.header.pop(exposure_index)
             LOGGER.info("expsoure provided at Guest, colname is {}".format(self.exposure_colname))
-        exposure = data_instances.mapValues(lambda v: self.load_exposure(v))
-        data_instances = data_instances.mapValues(lambda v: self.load_instance(v))
+        exposure = data_instances.mapValues(lambda v: HeteroPoissonBase.load_exposure(v, exposure_index))
+        data_instances = data_instances.mapValues(lambda v: HeteroPoissonBase.load_instance(v, exposure_index))
 
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
 
@@ -85,7 +87,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
                 # transforms features of raw input 'batch_data_inst' into more representative features 'batch_feat_inst'
                 batch_feat_inst = self.transform(batch_data)
                 # compute offset of this batch
-                batch_offset = exposure.join(batch_feat_inst, lambda ei, d: self.safe_log(ei))
+                batch_offset = exposure.join(batch_feat_inst, lambda ei, d: HeteroPoissonBase.safe_log(ei))
 
                 # Start gradient procedure
                 optimized_gradient, _, _ = self.gradient_loss_operator.compute_gradient_procedure(
@@ -97,7 +99,7 @@ class HeteroPoissonGuest(HeteroPoissonBase):
                     batch_index,
                     batch_offset
                 )
-                LOGGER.debug("iteration:{} Guest's gradient: {}".format(self.n_iter_, optimized_gradient))
+                # LOGGER.debug("iteration:{} Guest's gradient: {}".format(self.n_iter_, optimized_gradient))
                 loss_norm = self.optimizer.loss_norm(self.model_weights)
                 self.gradient_loss_operator.compute_loss(data_instances, self.model_weights, self.n_iter_,
                                                          batch_index, batch_offset, loss_norm)
@@ -109,11 +111,19 @@ class HeteroPoissonGuest(HeteroPoissonBase):
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
 
-            validation_strategy.validate(self, self.n_iter_)
+            if self.validation_strategy:
+                LOGGER.debug('Poisson guest running validation')
+                self.validation_strategy.validate(self, self.n_iter_)
+                if self.validation_strategy.need_stop():
+                    LOGGER.debug('early stopping triggered')
+                    break
             self.n_iter_ += 1
             if self.is_converged:
                 break
+        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
+            self.load_model(self.validation_strategy.cur_best_model)
 
+    @assert_io_num_rows_equal
     def predict(self, data_instances):
         """
         Prediction of Poisson
@@ -130,10 +140,12 @@ class HeteroPoissonGuest(HeteroPoissonBase):
 
         header = data_instances.schema.get("header")
         self.exposure_index = self.get_exposure_index(header, self.exposure_colname)
+        exposure_index = self.exposure_index
 
-        exposure = data_instances.mapValues(lambda v: self.load_exposure(v))
+        # OK
+        exposure = data_instances.mapValues(lambda v: HeteroPoissonBase.load_exposure(v, exposure_index))
 
-        data_instances = data_instances.mapValues(lambda v: self.load_instance(v))
+        data_instances = data_instances.mapValues(lambda v: HeteroPoissonBase.load_instance(v, exposure_index))
 
         data_features = self.transform(data_instances)
 

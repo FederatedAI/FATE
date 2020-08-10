@@ -30,5 +30,5 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 class OneVsRestTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.aggregate_classes = self._create_variable(name='aggregate_classes')
-        self.host_classes = self._create_variable(name='host_classes')
+        self.aggregate_classes = self._create_variable(name='aggregate_classes', src=['guest'], dst=['host', 'arbiter'])
+        self.host_classes = self._create_variable(name='host_classes', src=['host'], dst=['guest'])

@@ -1,0 +1,97 @@
+{
+  "initiator": {
+    "role": "guest",
+    "party_id": 10000
+  },
+  "job_parameters": {
+    "work_mode": 0
+  },
+  "role": {
+    "guest": [
+      10000
+    ]
+  },
+  "role_parameters": {
+    "guest": {
+      "args": {
+        "data": {
+          "data0": [
+            {
+              "name": "tag_value_1",
+              "namespace": "experiment"
+            }
+          ],
+          "data1": [
+            {
+              "name": "tag_value_2",
+              "namespace": "experiment"
+            }
+          ],
+          "data2": [
+            {
+              "name": "tag_value_3",
+              "namespace": "experiment"
+            }
+          ]
+        }
+      },
+      "dataio_0": {
+        "input_format": [
+          "tag"
+        ],
+        "with_label": [
+          false
+        ],
+        "tag_with_value": [
+          true
+        ],
+        "delimitor": [
+          ","
+        ],
+        "output_format": [
+          "dense"
+        ]
+      },
+      "dataio_1": {
+        "input_format": [
+          "tag"
+        ],
+        "with_label": [
+          false
+        ],
+        "tag_with_value": [
+          true
+        ],
+        "delimitor": [
+          ","
+        ],
+        "output_format": [
+          "dense"
+        ]
+      },
+      "dataio_2": {
+        "input_format": [
+          "tag"
+        ],
+        "with_label": [
+          false
+        ],
+        "tag_with_value": [
+          true
+        ],
+        "delimitor": [
+          ","
+        ],
+        "output_format": [
+          "dense"
+        ]
+      },
+      "union_0": {
+        "need_run": [true],
+        "allow_missing": [false],
+        "keep_duplicate": [true]
+      }
+    }
+  }
+}
+

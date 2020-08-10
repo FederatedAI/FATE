@@ -17,9 +17,10 @@
 #  limitations under the License.
 
 from arch.api.utils import log_utils
-from federatedml.feature.binning.base_binning import HostBaseBinning
+from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.bin_inner_param import BinInnerParam
 from federatedml.feature.binning.bucket_binning import BucketBinning
+from federatedml.feature.binning.optimal_binning.optimal_binning import OptimalBinning
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.model_base import ModelBase
 from federatedml.param.feature_binning_param import FeatureBinningParam
@@ -27,6 +28,7 @@ from federatedml.protobuf.generated import feature_binning_meta_pb2, feature_bin
 from federatedml.statistic.data_overview import get_header
 from federatedml.transfer_variable.transfer_class.hetero_feature_binning_transfer_variable import \
     HeteroFeatureBinningTransferVariable
+from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
 
@@ -45,7 +47,7 @@ class BaseHeteroFeatureBinning(ModelBase):
     def __init__(self):
         super(BaseHeteroFeatureBinning, self).__init__()
         self.transfer_variable = HeteroFeatureBinningTransferVariable()
-        self.binning_obj = None
+        self.binning_obj: BaseBinning = None
         self.header = None
         self.schema = None
         self.host_results = []
@@ -63,6 +65,12 @@ class BaseHeteroFeatureBinning(ModelBase):
             self.binning_obj = QuantileBinning(self.model_param)
         elif self.model_param.method == consts.BUCKET:
             self.binning_obj = BucketBinning(self.model_param)
+        elif self.model_param.method == consts.OPTIMAL:
+            if self.role == consts.HOST:
+                self.model_param.bin_num = self.model_param.optimal_binning_param.init_bin_nums
+                self.binning_obj = QuantileBinning(self.model_param)
+            else:
+                self.binning_obj = OptimalBinning(self.model_param)
         else:
             # self.binning_obj = QuantileBinning(self.bin_param)
             raise ValueError("Binning method: {} is not supported yet".format(self.model_param.method))
@@ -74,6 +82,8 @@ class BaseHeteroFeatureBinning(ModelBase):
             return
 
         self.header = get_header(data_instances)
+        LOGGER.debug("_setup_bin_inner_param, get header: {}".format(self.header))
+
         self.schema = data_instances.schema
         self.bin_inner_param.set_header(self.header)
         if params.bin_indexes == -1:
@@ -90,9 +100,11 @@ class BaseHeteroFeatureBinning(ModelBase):
         else:
             self.bin_inner_param.add_transform_bin_indexes(params.transform_param.transform_cols)
             self.bin_inner_param.add_transform_bin_names(params.transform_param.transform_names)
-
+        # LOGGER.debug("After _setup_bin_inner_param: {}".format(self.bin_inner_param.__dict__))
         self.binning_obj.set_bin_inner_param(self.bin_inner_param)
+        LOGGER.debug("After _setup_bin_inner_param, header: {}".format(self.header))
 
+    @assert_io_num_rows_equal
     def transform(self, data_instances):
         self._setup_bin_inner_param(data_instances, self.model_param)
         data_instances = self.binning_obj.transform(data_instances, self.transform_type)
@@ -124,6 +136,7 @@ class BaseHeteroFeatureBinning(ModelBase):
 
     def _get_param(self):
         binning_result_obj = self.binning_obj.bin_results.generated_pb()
+        # binning_result_obj = self.bin_results.generated_pb()
         host_results = [x.bin_results.generated_pb() for x in self.host_results]
 
         result_obj = feature_binning_param_pb2.FeatureBinningParam(binning_result=binning_result_obj,
@@ -161,7 +174,7 @@ class BaseHeteroFeatureBinning(ModelBase):
 
         self.host_results = []
         for host_pb in model_param.host_results:
-            host_bin_obj = HostBaseBinning()
+            host_bin_obj = BaseBinning()
             host_bin_obj.bin_results.reconstruct(host_pb)
             self.host_results.append(host_bin_obj)
 

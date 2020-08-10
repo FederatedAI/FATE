@@ -46,12 +46,19 @@ def _attr_injected_meta_class(**attrs):
     return _AttrInjected
 
 
-def segment_transfer_enabled(max_part_size=0x1fffc00):
+def segment_transfer_enabled(max_part_size=None):
     """
     a metaclass, indicate objects in this class should be transfer in segments
     Args:
-        max_part_size: defaults 32MB
+        max_part_size: 0xeffe20 for eggroll 1.x and 0x3bff8800 for eggroll 2.x
     """
+
+    if max_part_size is None:
+        from arch.api import _EGGROLL_VERSION
+        if _EGGROLL_VERSION == 1:
+            max_part_size = 0xeffe20
+        elif _EGGROLL_VERSION == 2:
+            max_part_size = 0x3bff8800
     return _attr_injected_meta_class(**{__FATE_BIG_OBJ_MAX_PART_SIZE: max_part_size})
 
 

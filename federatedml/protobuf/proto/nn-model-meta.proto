@@ -40,6 +40,7 @@ message HomoNNParam {
     repeated string metrics = 8;
     Optimizer optimizer = 9;
     string loss = 10;
+    bool encode_label = 11;
 }
 
 message NNModelMeta {

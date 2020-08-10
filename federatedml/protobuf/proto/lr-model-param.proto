@@ -28,6 +28,7 @@ message LRModelParam {
     repeated string header = 6;
     OneVsRestResult one_vs_rest_result = 7;
     bool need_one_vs_rest = 8;
+    int32 best_iteration = 9;
 }
 
 message SingleModel {
@@ -37,6 +38,7 @@ message SingleModel {
     map<string, double> weight = 4;
     double intercept = 5;
     repeated string header = 6;
+    int32 best_iteration = 7;
 }
 
 message OneVsRestResult {

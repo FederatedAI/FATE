@@ -39,6 +39,53 @@ def get_features_shape(data_instances):
         return None
 
 
+def header_alignment(data_instances, pre_header):
+    header = data_instances.schema["header"]
+    if len((set(header) & set(pre_header))) != len(pre_header):
+        raise ValueError("fit & transform data' header should be same")
+
+    if pre_header == header:
+        return data_instances
+
+    if len(pre_header) != len(header):
+        LOGGER.warning(
+            "header in prediction stage is super-set training stage, predict size is {}, training header size is {}".format(
+                len(header), len(pre_header)))
+    else:
+        LOGGER.warning("header in prediction stage will be shuffle to match the header of training stage")
+
+    header_idx_mapping = dict(zip(pre_header, [i for i in range(len(pre_header))]))
+    header_correct = {}
+    for i in range(len(header)):
+        col = header[i]
+        if col not in header_idx_mapping:
+            continue
+        header_correct[i] = header_idx_mapping[col]
+
+    def align_header(inst, header_pos=None):
+        if type(inst.features).__name__ == consts.SPARSE_VECTOR:
+            shape = len(header_pos)
+            new_data = {}
+            for k, v in inst.features.get_all_data():
+                if k not in header_pos:
+                    continue
+                new_data[header_pos.get(k)] = v
+
+            inst.features.set_shape(shape)
+            inst.features.set_sparse_vector(new_data)
+        else:
+            col_order = [None] * len(header_pos)
+            for k, v in header_pos.items():
+                col_order[v] = k
+            inst.features = inst.features[:, col_order]
+
+        return inst
+
+    data_instances = data_instances.mapValues(lambda inst: align_header(inst, header_pos=header_correct))
+
+    return data_instances
+
+
 def get_data_shape(data):
     one_feature = data.first()
     if one_feature is not None:
@@ -71,19 +118,20 @@ def is_sparse_data(data_instance):
         return True
 
 
-def is_binary_labels(data_instance):
-    def count_labels(instances):
+def count_labels(data_instance):
+    def _count_labels(instances):
         labels = set()
         for idx, instance in instances:
             label = instance.label
             labels.add(label)
         return labels
 
-    label_set = data_instance.mapPartitions(count_labels)
+    label_set = data_instance.mapPartitions(_count_labels)
     label_set = label_set.reduce(lambda x1, x2: x1.union(x2))
-    if len(label_set) != 2:
-        return False
-    return True
+    return len(label_set)
+    # if len(label_set) != 2:
+    #     return False
+    # return True
 
 
 def rubbish_clear(rubbish_list):
@@ -130,7 +178,8 @@ class DataStatistics(object):
     def __sparse_values_set(instances, static_col_indexes: list):
         tmp_result = {idx: set() for idx in static_col_indexes}
         for _, instance in instances:
-            for idx, value in instance.features.get_all_data:
+            data_generator = instance.features.get_all_data()
+            for idx, value in data_generator:
                 if idx not in tmp_result:
                     continue
                 tmp_result[idx].add(value)

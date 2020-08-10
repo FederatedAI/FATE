@@ -21,6 +21,7 @@ from federatedml.feature.feature_selection.filter_base import BaseFilterMethod
 from federatedml.statistic.statics import MultivariateStatisticalSummary
 from federatedml.param.feature_selection_param import VarianceOfCoeSelectionParam
 from federatedml.protobuf.generated import feature_selection_meta_pb2
+from federatedml.util import consts
 import math
 
 LOGGER = log_utils.getLogger()
@@ -50,6 +51,8 @@ class VarianceCoeFilter(BaseFilterMethod):
         for col_name in self.selection_properties.select_col_names:
             s_v = std_var.get(col_name)
             m_v = mean_value.get(col_name)
+            if math.fabs(m_v) < consts.FLOAT_ZERO:
+                m_v = consts.FLOAT_ZERO
             coeff_of_var = math.fabs(s_v / m_v)
 
             if coeff_of_var >= self.value_threshold:

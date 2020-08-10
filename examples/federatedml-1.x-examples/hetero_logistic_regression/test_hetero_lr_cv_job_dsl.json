@@ -33,9 +33,6 @@
                 "data": {
                     "train_data": ["intersection_0.train"]
                 }
-            },
-            "output": {
-                "data": ["train"]
             }
         }
     }

@@ -19,7 +19,7 @@ import time
 import random
 import string
 import unittest
-from fate_flow.manager.tracking import Tracking 
+from fate_flow.manager.tracking_manager import Tracking
 
 
 from federatedml.util.data_io import DataIO
@@ -36,7 +36,7 @@ class TestDenseFeatureReader(unittest.TestCase):
         data1 = [("a", "1,2,-1,0,0,5"), ("b", "4,5,6,0,1,2")]
         schema = {"header": "x1,x2,x3,x4,x5,x6",
                    "sid": "id"}
-        table1 = session.parallelize(data1, include_key=True)
+        table1 = session.parallelize(data1, include_key=True, partition=16)
         table1.save_as(name1, namespace) 
         session.save_data_table_meta(schema, 
                                      name1, 
@@ -44,7 +44,7 @@ class TestDenseFeatureReader(unittest.TestCase):
         self.table1 = session.table(name1, namespace)
 
         data2 = [("a", '-1,,na,null,null,2')]
-        table2 = session.parallelize(data2, include_key=True)
+        table2 = session.parallelize(data2, include_key=True, partition=16)
         table2.save_as(name2, namespace)
         session.save_data_table_meta(schema, 
                                      name2, 
@@ -152,6 +152,9 @@ class TestDenseFeatureReader(unittest.TestCase):
         self.assertTrue(label == -1)
         self.assertTrue(features.shape[0] == 5)
 
+    def tearDown(self):
+        session.stop()
+
 
 class TestSparseFeatureReader(unittest.TestCase):
     def setUp(self):
@@ -174,8 +177,8 @@ class TestSparseFeatureReader(unittest.TestCase):
              
             self.data.append((i, " ".join(row)))
 
-        self.table = session.parallelize(self.data, include_key=True)
-        self.args = {"data": 
+        self.table = session.parallelize(self.data, include_key=True, partition=16)
+        self.args = {"data":
                       {"data_io_0": {
                         "data": self.table
                         }
@@ -261,6 +264,9 @@ class TestSparseFeatureReader(unittest.TestCase):
 
                 self.assertTrue(np.fabs(features.get_data(int(fid)) - float(val)) < consts.FLOAT_ZERO)
 
+    def tearDown(self):
+        session.stop()
+
 
 class TestSparseTagReader(unittest.TestCase):
     def setUp(self):
@@ -279,8 +285,8 @@ class TestSparseTagReader(unittest.TestCase):
             self.data.append((i, ' '.join(row)))
             self.data_with_value.append((i, ' '.join(row_with_value)))
 
-        self.table1 = session.parallelize(self.data, include_key=True)
-        self.table2 = session.parallelize(self.data_with_value, include_key=True)
+        self.table1 = session.parallelize(self.data, include_key=True, partition=16)
+        self.table2 = session.parallelize(self.data_with_value, include_key=True, partition=16)
         self.args1 = {"data": 
                        {"data_io_0": {
                          "data": self.table1
@@ -434,6 +440,9 @@ class TestSparseTagReader(unittest.TestCase):
             
             ori_feature = np.asarray(ori_feature, dtype='float64')
             self.assertTrue(np.abs(ori_feature - features).all() < consts.FLOAT_ZERO)
+
+    def tearDown(self):
+        session.stop()
 
 
 if __name__ == '__main__':

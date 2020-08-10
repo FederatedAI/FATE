@@ -40,9 +40,9 @@ class IterativeAffineCipher(object):
         i = 0
         for key_size in key_size_array:
             n = random.SystemRandom().getrandbits(key_size)
-            a_ratio = random.SystemRandom().random()
             a = 0
             while True:
+                a_ratio = random.SystemRandom().random()
                 a_size = int(key_size * a_ratio)
                 if a_size is 0:
                     continue

@@ -67,7 +67,8 @@ class TestSyncBase(unittest.TestCase):
         self.transfer_variable.set_flowid(self.job_id)
 
     def tearDown(self) -> None:
-        self.clean_tables()
+        pass
+        # self.clean_tables()
 
     @classmethod
     def _call(cls, job_id, role, transfer_variable, num_hosts, ind, *args):

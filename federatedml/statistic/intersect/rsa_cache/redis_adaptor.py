@@ -14,8 +14,7 @@
 #  limitations under the License.
 #
 import os
-from arch.api.utils import log_utils
-from fate_flow.settings import REDIS, REDIS_QUEUE_DB_INDEX
+from arch.api.utils import log_utils, conf_utils
 import redis
 
 LOGGER = log_utils.getLogger()
@@ -36,9 +35,9 @@ def singleton(cls, *args, **kw):
 @singleton
 class RedisAdaptor(object):
     def __init__(self):
-        config = REDIS.copy()
+        config = conf_utils.get_base_config("redis", {}).copy()
         self.pool = redis.ConnectionPool(host=config['host'], port=config['port'], password=config['password'], \
-             max_connections=config['max_connections'], db=REDIS_QUEUE_DB_INDEX)
+             max_connections=config['max_connections'], db=config['db'])
         LOGGER.info('init redis connection pool.')
 
     def get_conn(self):

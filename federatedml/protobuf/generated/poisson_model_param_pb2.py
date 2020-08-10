@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
   serialized_options=_b('B\026PoissonModelParamProto'),
-  serialized_pb=_b('\n\x19poisson-model-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xf7\x01\n\x11PoissonModelParam\x12\r\n\x05iters\x18\x01 \x01(\x05\x12\x14\n\x0closs_history\x18\x02 \x03(\x01\x12\x14\n\x0cis_converged\x18\x03 \x01(\x08\x12U\n\x06weight\x18\x04 \x03(\x0b\x32\x45.com.webank.ai.fate.core.mlmodel.buffer.PoissonModelParam.WeightEntry\x12\x11\n\tintercept\x18\x05 \x01(\x01\x12\x0e\n\x06header\x18\x06 \x03(\t\x1a-\n\x0bWeightEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x01:\x02\x38\x01\x42\x18\x42\x16PoissonModelParamProtob\x06proto3')
+  serialized_pb=_b('\n\x19poisson-model-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\x8f\x02\n\x11PoissonModelParam\x12\r\n\x05iters\x18\x01 \x01(\x05\x12\x14\n\x0closs_history\x18\x02 \x03(\x01\x12\x14\n\x0cis_converged\x18\x03 \x01(\x08\x12U\n\x06weight\x18\x04 \x03(\x0b\x32\x45.com.webank.ai.fate.core.mlmodel.buffer.PoissonModelParam.WeightEntry\x12\x11\n\tintercept\x18\x05 \x01(\x01\x12\x0e\n\x06header\x18\x06 \x03(\t\x12\x16\n\x0e\x62\x65st_iteration\x18\x07 \x01(\x05\x1a-\n\x0bWeightEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x01:\x02\x38\x01\x42\x18\x42\x16PoissonModelParamProtob\x06proto3')
 )
 
 
@@ -58,8 +58,8 @@ _POISSONMODELPARAM_WEIGHTENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=272,
-  serialized_end=317,
+  serialized_start=296,
+  serialized_end=341,
 )
 
 _POISSONMODELPARAM = _descriptor.Descriptor(
@@ -111,6 +111,13 @@ _POISSONMODELPARAM = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='best_iteration', full_name='com.webank.ai.fate.core.mlmodel.buffer.PoissonModelParam.best_iteration', index=6,
+      number=7, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -124,7 +131,7 @@ _POISSONMODELPARAM = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=70,
-  serialized_end=317,
+  serialized_end=341,
 )
 
 _POISSONMODELPARAM_WEIGHTENTRY.containing_type = _POISSONMODELPARAM

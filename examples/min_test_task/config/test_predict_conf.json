@@ -1,0 +1,33 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 0
+    },
+    "job_parameters": {
+        "work_mode": 0,
+        "job_type": "predict",
+        "model_id": "",
+        "model_version": ""
+    },
+    "role": {
+        "guest": [],
+        "host": [],
+        "arbiter": []
+    },
+    "role_parameters": {
+        "guest": {
+            "args": {
+                "data": {
+                    "eval_data": [{"name": "", "namespace": ""}]
+                }
+            }
+        },
+        "host": {
+            "args": {
+                "data": {
+                    "eval_data": [{"name": "", "namespace": ""}]
+                }
+            }
+        }
+    }
+}

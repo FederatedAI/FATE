@@ -15,9 +15,23 @@
 #
 
 
-from enum import IntEnum, Enum
+from enum import IntEnum
 
-from arch.api.transfer import FederationWrapped, Federation
+from arch.api.base.build import Builder
+from arch.api.base.federation import Federation
+from arch.api.base.utils.wrap import FederationWrapped
+from arch.api.utils import log_utils
+
+
+def _infer_eggroll_version():
+    try:
+        import eggroll.roll_pair
+    except ImportError:
+        return 1
+    return 2
+
+
+_EGGROLL_VERSION = _infer_eggroll_version()
 
 
 class WorkMode(IntEnum):
@@ -47,14 +61,5 @@ class RuntimeInstance(object):
     MODE: WorkMode = None
     FEDERATION: Federation = None
     TABLE_WRAPPER: FederationWrapped = None
-    Backend: Backend = None
-
-
-class StoreType(Enum):
-    IN_MEMORY = "IN_MEMORY"
-    LMDB = "LMDB"
-
-
-class NamingPolicy(Enum):
-    DEFAULT = 'DEFAULT'
-    ITER_AWARE = 'ITER_AWARE'
+    BACKEND: Backend = None
+    BUILDER: Builder = None

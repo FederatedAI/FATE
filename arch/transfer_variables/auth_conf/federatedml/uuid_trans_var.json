@@ -1,0 +1,13 @@
+{
+  "UUIDTransVar": {
+    "uuid": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest",
+        "host"
+      ]
+    }
+  }
+}

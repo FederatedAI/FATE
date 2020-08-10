@@ -1,0 +1,20 @@
+- define
+  - proto
+    - xx-meta.proto
+    - xx-param.proto
+  - meta: define_meta.yaml
+- pipeline model buffer: pipeline.pb
+  - dsl:
+  - conf:
+  - fate version:
+  - model id: role_index_id with role_name
+  - model version: job_id
+- variables
+  - index
+  - data
+    - component_name
+      - model_alias
+        - model: model_name
+          - model buffer
+        - checkpoint model: model_name + component_id + epoch_num + tag
+          - model buffer

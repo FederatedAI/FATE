@@ -50,7 +50,7 @@ class IVValueSelectionParam(BaseParam):
     value_threshold: float, default: 1.0
         Used if iv_value_thres method is used in feature selection.
 
-    host_threshold: List of float or None, default: None
+    host_thresholds: List of float or None, default: None
         Set threshold for different host. If None, use same threshold as guest. If provided, the order should map with
         the host id setting.
 
@@ -96,6 +96,28 @@ class IVPercentileSelectionParam(BaseParam):
     def check(self):
         descr = "IV selection param's"
         self.check_decimal_float(self.percentile_threshold, descr)
+        self.check_boolean(self.local_only, descr)
+        return True
+
+
+class IVTopKParam(BaseParam):
+    """
+    Use information values to select features.
+
+    Parameters
+    ----------
+    k: int, should be greater than 0, default: 10
+        Percentile threshold for iv_percentile method
+    """
+
+    def __init__(self, k=10, local_only=False):
+        super().__init__()
+        self.k = k
+        self.local_only = local_only
+
+    def check(self):
+        descr = "IV selection param's"
+        self.check_positive_integer(self.k, descr)
         self.check_boolean(self.local_only, descr)
         return True
 
@@ -146,35 +168,76 @@ class OutlierColsSelectionParam(BaseParam):
         return True
 
 
+class PercentageValueParam(BaseParam):
+    """
+    Filter the columns that have a value that exceeds a certain percentage.
+
+    Parameters
+    ----------
+    upper_pct: float, [0.1, 1.], default: 1.0
+        The upper percentage threshold for filtering, upper_pct should not be less than 0.1.
+
+    """
+
+    def __init__(self, upper_pct=1.0):
+        super().__init__()
+        self.upper_pct = upper_pct
+
+    def check(self):
+        descr = "Percentage Filter param's"
+        if self.upper_pct not in [0, 1]:
+            self.check_decimal_float(self.upper_pct, descr)
+        if self.upper_pct < consts.PERCENTAGE_VALUE_LIMIT:
+            raise ValueError(descr + f" {self.upper_pct} not supported,"
+                                     f" should not be smaller than {consts.PERCENTAGE_VALUE_LIMIT}")
+        return True
+
+
 class ManuallyFilterParam(BaseParam):
     """
     Specified columns that need to be filtered. If exist, it will be filtered directly, otherwise, ignore it.
 
     Parameters
     ----------
-    filter_out_indexes: list or int, default: []
+    filter_out_indexes: list of int, default: None
         Specify columns' indexes to be filtered out
 
-    filter_out_names : list of string, default: []
+    filter_out_names : list of string, default: None
         Specify columns' names to be filtered out
+
+    left_col_indexes: list of int, default: None
+        Specify left_col_index
+
+    left_col_names: list of string, default: None
+        Specify left col names
+
+    Both Filter_out or left parameters only works for this specific filter. For instances, if you set some columns left
+    in this filter but those columns are filtered by other filters, those columns will NOT left in final.
+
+    Please note that (left_col_indexes & left_col_names) cannot use with
+        (filter_out_indexes & filter_out_names) simultaneously.
 
     """
 
-    def __init__(self, filter_out_indexes=None, filter_out_names=None):
+    def __init__(self, filter_out_indexes=None, filter_out_names=None, left_col_indexes=None,
+                 left_col_names=None):
         super().__init__()
-        if filter_out_indexes is None:
-            filter_out_indexes = []
-
-        if filter_out_names is None:
-            filter_out_names = []
-
         self.filter_out_indexes = filter_out_indexes
         self.filter_out_names = filter_out_names
+        self.left_col_indexes = left_col_indexes
+        self.left_col_names = left_col_names
 
     def check(self):
         descr = "Manually Filter param's"
         self.check_defined_type(self.filter_out_indexes, descr, ['list', 'NoneType'])
         self.check_defined_type(self.filter_out_names, descr, ['list', 'NoneType'])
+        self.check_defined_type(self.left_col_indexes, descr, ['list', 'NoneType'])
+        self.check_defined_type(self.left_col_names, descr, ['list', 'NoneType'])
+
+        if (self.filter_out_indexes or self.filter_out_names) is not None and \
+                        (self.left_col_names or self.left_col_indexes) is not None:
+            raise ValueError("(left_col_indexes & left_col_names) cannot use with"
+                             " (filter_out_indexes & filter_out_names) simultaneously")
         return True
 
 
@@ -191,7 +254,8 @@ class FeatureSelectionParam(BaseParam):
         Specify which columns need to calculated. Each element in the list represent for a column name in header.
 
     filter_methods: list, ["manually", "unique_value", "iv_value_thres", "iv_percentile",
-                "coefficient_of_variation_value_thres", "outlier_cols"],
+                "coefficient_of_variation_value_thres", "outlier_cols", "percentage_value",
+                "iv_top_k"],
                  default: ["unique_value"]
 
         Specify the filter methods used in feature selection. The orders of filter used is depended on this list.
@@ -214,6 +278,8 @@ class FeatureSelectionParam(BaseParam):
 
     outlier_param: Filter columns whose certain percentile value is larger than a threshold.
 
+    percentage_value_param: Filter the columns that have a value that exceeds a certain percentage.
+
     need_run: bool, default True
         Indicate if this module needed to be run
 
@@ -223,9 +289,11 @@ class FeatureSelectionParam(BaseParam):
                  unique_param=UniqueValueParam(),
                  iv_value_param=IVValueSelectionParam(),
                  iv_percentile_param=IVPercentileSelectionParam(),
+                 iv_top_k_param=IVTopKParam(),
                  variance_coe_param=VarianceOfCoeSelectionParam(),
                  outlier_param=OutlierColsSelectionParam(),
                  manually_param=ManuallyFilterParam(),
+                 percentage_value_param=PercentageValueParam(),
                  need_run=True
                  ):
         super(FeatureSelectionParam, self).__init__()
@@ -243,9 +311,11 @@ class FeatureSelectionParam(BaseParam):
         self.unique_param = copy.deepcopy(unique_param)
         self.iv_value_param = copy.deepcopy(iv_value_param)
         self.iv_percentile_param = copy.deepcopy(iv_percentile_param)
+        self.iv_top_k_param = copy.deepcopy(iv_top_k_param)
         self.variance_coe_param = copy.deepcopy(variance_coe_param)
         self.outlier_param = copy.deepcopy(outlier_param)
         self.manually_param = copy.deepcopy(manually_param)
+        self.percentage_value_param = copy.deepcopy(percentage_value_param)
         self.need_run = need_run
 
     def check(self):
@@ -255,9 +325,10 @@ class FeatureSelectionParam(BaseParam):
 
         for idx, method in enumerate(self.filter_methods):
             method = method.lower()
-            self.check_valid_value(method, descr, ["unique_value", "iv_value_thres", "iv_percentile",
-                                                   "coefficient_of_variation_value_thres",
-                                                   "outlier_cols", "manually"])
+            self.check_valid_value(method, descr, [consts.UNIQUE_VALUE, consts.IV_VALUE_THRES, consts.IV_PERCENTILE,
+                                                   consts.COEFFICIENT_OF_VARIATION_VALUE_THRES, consts.OUTLIER_COLS,
+                                                   consts.MANUALLY_FILTER, consts.PERCENTAGE_VALUE,
+                                                   consts.IV_TOP_K])
             self.filter_methods[idx] = method
 
         self.check_defined_type(self.select_col_indexes, descr, ['list', 'int'])
@@ -265,6 +336,8 @@ class FeatureSelectionParam(BaseParam):
         self.unique_param.check()
         self.iv_value_param.check()
         self.iv_percentile_param.check()
+        self.iv_top_k_param.check()
         self.variance_coe_param.check()
         self.outlier_param.check()
         self.manually_param.check()
+        self.percentage_value_param.check()

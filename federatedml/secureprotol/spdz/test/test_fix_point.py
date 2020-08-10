@@ -36,7 +36,6 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import numpy as np
 
-from arch.api.transfer import Party
 from federatedml.secureprotol.spdz import SPDZ
 from federatedml.secureprotol.spdz.tensor.fixedpoint_numpy import FixedPointTensor
 from federatedml.transfer_variable.transfer_class.secret_share_transfer_variable import SecretShareTransferVariable
@@ -151,7 +150,6 @@ def einsum(job_id, idx, einsum_expr, data_list):
             x = FixedPointTensor.from_source("x", all_parties[0])
             y = FixedPointTensor.from_source("y", data_list[1])
         return x.einsum(y, einsum_expr).get()
-
 
 
 class TestSyncBase(unittest.TestCase):

@@ -30,7 +30,7 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 class HeteroDNNLRTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.guest_dec_gradient = self._create_variable(name='guest_dec_gradient')
-        self.guest_enc_gradient = self._create_variable(name='guest_enc_gradient')
-        self.host_dec_gradient = self._create_variable(name='host_dec_gradient')
-        self.host_enc_gradient = self._create_variable(name='host_enc_gradient')
+        self.guest_dec_gradient = self._create_variable(name='guest_dec_gradient', src=['arbiter'], dst=['guest'])
+        self.guest_enc_gradient = self._create_variable(name='guest_enc_gradient', src=['guest'], dst=['arbiter'])
+        self.host_dec_gradient = self._create_variable(name='host_dec_gradient', src=['arbiter'], dst=['host'])
+        self.host_enc_gradient = self._create_variable(name='host_enc_gradient', src=['host'], dst=['arbiter'])

@@ -12,6 +12,9 @@
     ],
     "host": [
       10000
+    ],
+    "arbiter": [
+      10000
     ]
   },
   "role_parameters": {
@@ -20,69 +23,123 @@
         "data": {
           "data0": [
             {
-              "name": "hetero_breast_b",
-              "namespace": "hetero_breast_guest"
+              "name": "breast_hetero_guest",
+              "namespace": "experiment"
             }
           ],
           "data1": [
             {
-              "name": "hetero_breast_b",
-              "namespace": "hetero_breast_guest"
+              "name": "breast_hetero_guest",
+              "namespace": "experiment"
             }
           ]
         }
       },
       "dataio_0": {
-        "with_label": [true],
-        "label_name": ["y"],
-        "output_format": ["dense"],
-        "missing_fill": [false],
-        "outlier_replace": [false]
+        "with_label": [
+          true
+        ],
+        "label_name": [
+          "y"
+        ],
+        "output_format": [
+          "dense"
+        ],
+        "missing_fill": [
+          false
+        ],
+        "outlier_replace": [
+          false
+        ]
       },
       "dataio_1": {
-        "with_label": [true],
-        "label_name": ["y"],
-        "output_format": ["dense"],
-        "missing_fill": [false],
-        "outlier_replace": [false]
+        "with_label": [
+          true
+        ],
+        "label_name": [
+          "y"
+        ],
+        "output_format": [
+          "dense"
+        ],
+        "missing_fill": [
+          false
+        ],
+        "outlier_replace": [
+          false
+        ]
       },
       "union_0": {
-        "need_run": [true]
+        "need_run": [
+          true
+        ]
       }
     },
     "host": {
-        "args": {
-            "data": {
+      "args": {
+        "data": {
           "data0": [
             {
-              "name": "hetero_breast_a",
-              "namespace": "hetero_breast_host"
+              "name": "breast_hetero_host",
+              "namespace": "experiment"
             }
           ],
           "data1": [
             {
-              "name": "hetero_breast_a",
-              "namespace": "hetero_breast_host"
+              "name": "breast_hetero_host",
+              "namespace": "experiment"
             }
           ]
         }
       },
       "dataio_0": {
-        "with_label": [false],
-        "output_format": ["dense"],
-        "missing_fill": [false],
-        "outlier_replace": [false]
+        "with_label": [
+          false
+        ],
+        "output_format": [
+          "dense"
+        ],
+        "missing_fill": [
+          false
+        ],
+        "outlier_replace": [
+          false
+        ]
       },
       "dataio_1": {
-        "with_label": [false],
-        "output_format": ["dense"],
-        "missing_fill": [false],
-        "outlier_replace": [false]
+        "with_label": [
+          false
+        ],
+        "output_format": [
+          "dense"
+        ],
+        "missing_fill": [
+          false
+        ],
+        "outlier_replace": [
+          false
+        ]
       },
       "union_0": {
-        "need_run": [true]
+        "need_run": [
+          true
+        ]
+      }
+    }
+  },
+  "algorithm_parameters": {
+    "hetero_lr_0": {
+      "penalty": "L2",
+      "optimizer": "nesterov_momentum_sgd",
+      "tol": 1e-4,
+      "alpha": 0.01,
+      "max_iter": 30,
+      "early_stop": "weight_diff",
+      "batch_size": -1,
+      "learning_rate": 0.15,
+      "init_param": {
+        "init_method": "random_uniform"
       }
     }
   }
 }
-

@@ -30,6 +30,6 @@ python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto --grpc_py
 
 python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto --grpc_python_out=./arch/api/proto model_service.proto
 
-python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto --grpc_python_out=./arch/api/proto proxy.proto
+python -m grpc_tools.protoc -Iarch/proto --python_out=./arch/api/proto --grpc_python_out=./arch/api/proto fate_proxy.proto
 
 python -m grpc_tools.protoc -Iarch/driver/federation/proto --python_out=./arch/api/proto --grpc_python_out=./arch/api/proto federation.proto

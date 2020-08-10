@@ -30,5 +30,5 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 class CrossValidationTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.test_sid = self._create_variable(name='test_sid')
-        self.train_sid = self._create_variable(name='train_sid')
+        self.test_sid = self._create_variable(name='test_sid', src=['guest'], dst=['host'])
+        self.train_sid = self._create_variable(name='train_sid', src=['guest'], dst=['host'])

@@ -6,9 +6,9 @@
     "host": [
       9998,
       9999,
-	  10000,
-	  10001,
-	  10002
+      10000,
+      10001,
+      10002
     ],
     "arbiter": [
       9999
@@ -20,5 +20,14 @@
     "10000": -1,
     "10001": -1,
     "10002": -1
+  },
+  "force_upload": -1,
+  "work_mode": 0,
+  "backend": 0,
+  "spark_submit_config": {
+    "total-executor-cores": 2,
+    "conf": {
+      "spark.executor.memory": "2g"
+    }
   }
 }

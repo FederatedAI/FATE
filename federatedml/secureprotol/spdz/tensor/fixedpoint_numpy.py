@@ -15,8 +15,8 @@
 #
 import numpy as np
 
-from arch.api.table.table import Table
-from arch.api.transfer import Party
+from arch.api.base.table import Table
+from arch.api.base.utils.party import Party
 from federatedml.secureprotol.spdz.beaver_triples import beaver_triplets
 from federatedml.secureprotol.spdz.tensor.base import TensorBase
 from federatedml.secureprotol.spdz.utils.random_utils import urand_tensor

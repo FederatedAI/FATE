@@ -21,7 +21,7 @@ import numpy as np
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.sync import loss_sync
 from federatedml.optim.gradient import hetero_linear_model_gradient
-from federatedml.util.fate_operator import reduce_add
+from federatedml.util.fate_operator import reduce_add, vec_dot
 
 LOGGER = log_utils.getLogger()
 
@@ -45,14 +45,11 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         Define (0.25 * wx - 0.5 * y) as fore_gradient
 
         """
-        one_data = data_instances.first()[1]
-        dot_result = np.dot(one_data.features, model_weights.coef_) + model_weights.intercept_
-        LOGGER.debug("one_data: {}, dot_result: {} coef_: {}, intercept_: {}"
-                     "".format(one_data.features, dot_result, model_weights.coef_, model_weights.intercept_))
+
         half_wx = data_instances.mapValues(
-            lambda v: np.dot(v.features, model_weights.coef_) + model_weights.intercept_)
+            lambda v: vec_dot(v.features, model_weights.coef_) + model_weights.intercept_)
         self.forwards = half_wx
-        LOGGER.debug("half_wx: {}".format(half_wx.take(20)))
+        # LOGGER.debug("half_wx: {}".format(half_wx.take(20)))
         self.aggregated_forwards = encrypted_calculator[batch_index].encrypt(half_wx)
 
         for host_forward in self.host_forwards:
@@ -107,7 +104,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         define forward_hess = (1/N)*∑(0.25 * x * s)
         """
         forwards = data_instances.mapValues(
-            lambda v: (np.dot(v.features, delta_s.coef_) + delta_s.intercept_) * 0.25)
+            lambda v: (vec_dot(v.features, delta_s.coef_) + delta_s.intercept_) * 0.25)
         for host_forward in host_forwards:
             forwards = forwards.join(host_forward, lambda g, h: g + (h * 0.25))
         # forward_hess = forwards.mapValues(lambda x: 0.25 * x / sample_size)
@@ -132,7 +129,7 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         """
         forwards = wx
         """
-        wx = data_instances.mapValues(lambda v: np.dot(v.features, model_weights.coef_) + model_weights.intercept_)
+        wx = data_instances.mapValues(lambda v: vec_dot(v.features, model_weights.coef_) + model_weights.intercept_)
         return wx
 
     def compute_loss(self, lr_weights, optimizer, n_iter_, batch_index, cipher_operator):
@@ -153,7 +150,7 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         loss_regular = optimizer.loss_norm(lr_weights)
         if loss_regular is not None:
             loss_regular = cipher_operator.encrypt(loss_regular)
-        self.remote_loss_regular(loss_regular, suffix=current_suffix)
+            self.remote_loss_regular(loss_regular, suffix=current_suffix)
 
 
 class Arbiter(hetero_linear_model_gradient.Arbiter, loss_sync.Arbiter):
@@ -182,3 +179,4 @@ class Arbiter(hetero_linear_model_gradient.Arbiter, loss_sync.Arbiter):
         loss_list = self.sync_loss_info(suffix=current_suffix)
         de_loss_list = cipher.decrypt_list(loss_list)
         return de_loss_list
+

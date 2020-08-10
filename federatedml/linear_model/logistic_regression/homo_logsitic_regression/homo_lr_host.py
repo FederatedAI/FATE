@@ -28,6 +28,7 @@ from federatedml.optim.gradient.homo_lr_gradient import LogisticGradient, Taylor
 from federatedml.protobuf.generated import lr_model_param_pb2
 from federatedml.util import consts
 from federatedml.util import fate_operator
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 
@@ -59,7 +60,7 @@ class HomoLRHost(HomoLRBase):
 
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)
-        validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        # validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 
         pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, suffix=('fit',))
         if self.use_encrypt:
@@ -69,7 +70,7 @@ class HomoLRHost(HomoLRBase):
         w = self.cipher_operator.encrypt_list(self.model_weights.unboxed)
         self.model_weights = LogisticRegressionWeights(w, self.model_weights.fit_intercept)
 
-        LOGGER.debug("After init, model_weights: {}".format(self.model_weights.unboxed))
+        # LOGGER.debug("After init, model_weights: {}".format(self.model_weights.unboxed))
 
         mini_batch_obj = MiniBatch(data_inst=data_instances, batch_size=self.batch_size)
 
@@ -86,10 +87,10 @@ class HomoLRHost(HomoLRBase):
 
         model_weights = self.model_weights
         degree = 0
-        while self.n_iter_ < self.max_iter:
+        while self.n_iter_ < self.max_iter + 1:
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
 
-            if self.n_iter_ > 0 and self.n_iter_ % self.aggregate_iters == 0:
+            if ((self.n_iter_ + 1) % self.aggregate_iters == 0) or self.n_iter_ == self.max_iter:
                 weight = self.aggregator.aggregate_then_get(model_weights, degree=degree,
                                                             suffix=self.n_iter_)
                 # LOGGER.debug("Before aggregate: {}, degree: {} after aggregated: {}".format(
@@ -104,7 +105,7 @@ class HomoLRHost(HomoLRBase):
                 degree = 0
                 self.is_converged = self.aggregator.get_converge_status(suffix=(self.n_iter_,))
                 LOGGER.info("n_iters: {}, is_converge: {}".format(self.n_iter_, self.is_converged))
-                if self.is_converged:
+                if self.is_converged or self.n_iter_ == self.max_iter:
                     break
                 model_weights = self.model_weights
 
@@ -129,11 +130,12 @@ class HomoLRHost(HomoLRBase):
                     model_weights = LogisticRegressionWeights(w, self.fit_intercept)
                 batch_num += 1
 
-            validation_strategy.validate(self, self.n_iter_)
+            # validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
 
         LOGGER.info("Finish Training task, total iters: {}".format(self.n_iter_))
 
+    @assert_io_num_rows_equal
     def predict(self, data_instances):
 
         LOGGER.info(f'Start predict task')
@@ -179,7 +181,5 @@ class HomoLRHost(HomoLRBase):
                                                              weight=weight_dict,
                                                              intercept=intercept,
                                                              header=header)
-        from google.protobuf import json_format
-        json_result = json_format.MessageToJson(param_protobuf_obj)
-        LOGGER.debug("json_result: {}".format(json_result))
+
         return param_protobuf_obj

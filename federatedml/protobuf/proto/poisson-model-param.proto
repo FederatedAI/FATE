@@ -26,4 +26,5 @@ message PoissonModelParam {
     map<string, double> weight = 4;
     double intercept = 5;
     repeated string header = 6;
+    int32 best_iteration=7;
 }

@@ -28,12 +28,12 @@ def _get_cv_param(model):
     return model.model_param.cv_param
 
 
-def run(model, data_instances):
+def run(model, data_instances, host_do_evaluate=False):
     if not model.need_run:
         return data_instances
     kflod_obj = KFold()
     cv_param = _get_cv_param(model)
-    kflod_obj.run(cv_param, data_instances, model)
+    kflod_obj.run(cv_param, data_instances, model, host_do_evaluate)
     LOGGER.info("Finish KFold run")
     return data_instances
 

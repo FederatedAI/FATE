@@ -37,8 +37,8 @@ and component images have the below naming format:
 A sample of `.env` is as follows:
 ```bash
 PREFIX=federatedai
-BASE_TAG=1.2.0-release
-TAG=1.2.0-release
+BASE_TAG=1.4.0-release
+TAG=1.4.0-release
 ```
 **NOTE:** 
 If the FATE images will be pushed to a registry server, the above configuration assumes the use of Docker Hub. If a local registry (e.g. Harbor) is used for storing images, change the `PREFIX` as follows:
@@ -56,14 +56,10 @@ $ bash build_cluster_docker.sh all
 The command creates the base images and then the component images. After the command finishes, all images of FATE should be created. Use `docker images` to check the newly generated images:
 ```
 REPOSITORY                            TAG  
-federatedai/egg                       1.2.0-release
-federatedai/fateboard                 1.2.0-release
-federatedai/meta-service              1.2.0-release
-federatedai/python                    1.2.0-release
-federatedai/roll                      1.2.0-release
-federatedai/proxy                     1.2.0-release
-federatedai/federation                1.2.0-release
-federatedai/base-image                1.2.0-release
+federatedai/eggroll                   <TAG>
+federatedai/fateboard                 <TAG>
+federatedai/python                    <TAG>
+federatedai/base-image                <TAG>
 ```
 
 ##### Pushing images to a registry (optional)
@@ -94,14 +90,13 @@ Some environemts may not have access to the Internet. In this case, FATE's docke
 
 On the machine with all FATE docker images available, use the following commands to export and package images:
 ```bash
-# Pull mysql and redis first if you don't have those images in your machine.
-$ docker pull redis
+# Pull mysql first if you don't have those images in your machine.
 $ docker pull mysql
-$ docker save $(docker images | grep -E "redis|mysql" | awk '{print $1":"$2}') -o third-party.images.tar.gz
+$ docker save $(docker images | grep -E "mysql" | awk '{print $1":"$2}') -o third-party.images.tar.gz
 $ docker save $(docker images | grep federatedai| grep -v -E "base|builder" | awk '{print $1":"$2}') -o fate.images.tar.gz
 ```
 
-Two tar files should be generated `fate.images.tar.gz` and `third-party.images.tar.gz` . The formmer one contains all FATE images while the latter has the dependent third party images (mysql and redis). 
+Two tar files should be generated `fate.images.tar.gz` and `third-party.images.tar.gz` . The formmer one contains all FATE images while the latter has the dependent third party images (mysql). 
 
 Copy the two tar files to the targeted deployment machine which is not connected to the Internet. Log in to the machine and use the following command to load the images:
 ```bash

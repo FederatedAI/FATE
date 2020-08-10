@@ -2,7 +2,7 @@ absl-py==0.8.0
 astor==0.7.1
 audioread==2.1.6
 backcall==0.1.0
-bleach==1.5.0
+bleach==3.1.2
 cachetools==3.0.0
 certifi==2018.10.15
 cffi==1.11.5
@@ -28,8 +28,8 @@ gmpy2==2.0.8
 googleapis-common-protos==1.5.3
 graphviz==0.9
 greenlet==0.4.15
-grpcio==1.16.1
-grpcio-tools==1.16.1
+grpcio==1.22.0
+grpcio-tools==1.22.0
 h5py==2.7.0
 html5lib==0.9999999
 idna==2.7
@@ -88,7 +88,7 @@ ppft==1.6.4.8
 prometheus-client==0.3.1
 prompt-toolkit==1.0.15
 protobuf==3.6.1
-psutil==5.4.7
+psutil==5.6.6
 ptyprocess==0.6.0
 pyarrow==0.11.1
 pycparser==2.19
@@ -121,7 +121,7 @@ socketIO-client==0.7.2
 SoundFile==0.9.0.post1
 statsmodels==0.9.0
 tensorboard==1.15
-tensorflow==1.15
+tensorflow==1.15.2
 tensorflow-estimator==1.15.1
 termcolor==1.1.0
 terminado==0.8.1
@@ -140,3 +140,9 @@ widgetsnbextension==3.4.0
 xlrd==1.1.0
 apsw==3.9.2.post1
 deprecated==1.2.7
+torch==1.4.0
+torchvision==0.5.0
+ruamel.yaml==0.16.10
+python-dotenv==0.12.0
+requests_toolbelt==0.9.1
+cos-python-sdk-v5==1.8.0

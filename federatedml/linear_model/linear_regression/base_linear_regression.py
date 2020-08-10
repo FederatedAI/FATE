@@ -27,6 +27,7 @@ from federatedml.param.linear_regression_param import LinearParam
 from federatedml.protobuf.generated import linr_model_param_pb2, linr_model_meta_pb2
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.param.evaluation_param import EvaluateParam
+from federatedml.util.fate_operator import vec_dot
 
 LOGGER = log_utils.getLogger()
 
@@ -59,7 +60,7 @@ class BaseLinearRegression(BaseLinearModel):
 
     def compute_wx(self, data_instances, coef_, intercept_=0):
         return data_instances.mapValues(
-            lambda v: np.dot(v.features, coef_) + intercept_)
+            lambda v: vec_dot(v.features, coef_) + intercept_)
 
     def _get_meta(self):
         meta_protobuf_obj = linr_model_meta_pb2.LinRModelMeta(penalty=self.model_param.penalty,
@@ -85,12 +86,15 @@ class BaseLinearRegression(BaseLinearModel):
             coef_i = self.model_weights.coef_[idx]
             weight_dict[header_name] = coef_i
         intercept_ = self.model_weights.intercept_
+
+        best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
         param_protobuf_obj = linr_model_param_pb2.LinRModelParam(iters=self.n_iter_,
                                                                  loss_history=self.loss_history,
                                                                  is_converged=self.is_converged,
                                                                  weight=weight_dict,
                                                                  intercept=intercept_,
-                                                                 header=header)
+                                                                 header=header,
+                                                                 best_iteration=best_iteration)
         return param_protobuf_obj
 
     def load_model(self, model_dict):
@@ -115,6 +119,7 @@ class BaseLinearRegression(BaseLinearModel):
         if fit_intercept:
             tmp_vars = np.append(tmp_vars, result_obj.intercept)
         self.model_weights = LinearRegressionWeights(l=tmp_vars, fit_intercept=fit_intercept)
+        self.n_iter_ = result_obj.iters
     
     def get_metrics_param(self):
-        return EvaluateParam(eval_type="regression")
+        return EvaluateParam(eval_type="regression", metrics=self.metrics)

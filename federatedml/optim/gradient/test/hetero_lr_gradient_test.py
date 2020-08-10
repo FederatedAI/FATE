@@ -20,9 +20,10 @@ import numpy as np
 
 from arch.api import session
 from federatedml.feature.instance import Instance
+from federatedml.feature.sparse_vector import SparseVector
+from federatedml.optim.gradient import hetero_linear_model_gradient
 from federatedml.optim.gradient import hetero_lr_gradient_and_loss
 from federatedml.secureprotol import PaillierEncrypt
-from federatedml.linear_model.linear_model_weight import LinearModelWeights
 
 
 class TestHeteroLogisticGradient(unittest.TestCase):
@@ -33,11 +34,16 @@ class TestHeteroLogisticGradient(unittest.TestCase):
         self.hetero_lr_gradient = hetero_lr_gradient_and_loss.Guest()
 
         size = 10
-        self.wx = session.parallelize([self.paillier_encrypt.encrypt(i) for i in range(size)])
-        self.en_sum_wx_square = session.parallelize([self.paillier_encrypt.encrypt(np.square(i)) for i in range(size)])
-        self.w = [i for i in range(size)]
+        self.en_wx = session.parallelize([self.paillier_encrypt.encrypt(i) for i in range(size)], partition=48)
+        # self.en_wx = session.parallelize([self.paillier_encrypt.encrypt(i) for i in range(size)])
+
+        self.en_sum_wx_square = session.parallelize([self.paillier_encrypt.encrypt(np.square(i)) for i in range(size)],
+                                                    partition=48)
+        self.wx = np.array([i for i in range(size)])
+        self.w = self.wx / np.array([1 for _ in range(size)])
         self.data_inst = session.parallelize(
-            [Instance(features=[1 for _ in range(size)], label=pow(-1, i % 2)) for i in range(size)], partition=1)
+            [Instance(features=np.array([1 for _ in range(size)]), label=pow(-1, i % 2)) for i in range(size)],
+            partition=48)
 
         # test fore_gradient
         self.fore_gradient_local = [-0.5, 0.75, 0, 1.25, 0.5, 1.75, 1, 2.25, 1.5, 2.75]
@@ -47,52 +53,33 @@ class TestHeteroLogisticGradient(unittest.TestCase):
 
         self.loss = 4.505647
 
-    # def test_compute_fore_gradient(self):
-    #     # fore_gradient = self.hetero_lr_gradient.compute_and_aggregate_forwards(self.data_inst, self.wx)
-    #     model_weights = LinearModelWeights(l=self.w, fit_intercept=False)
-    #
-    #     class EncryptedCalculator(object):
-    #         encrypter = self.paillier_encrypt
-    #
-    #         def encrypt_row(self, row):
-    #             return np.array([self.encrypter.encrypt(row)])
-    #
-    #         def encrypt(self, input_data):
-    #             return input_data.mapValues(self.encrypt_row)
-    #
-    #     encrypted_calculator = [EncryptedCalculator()]
-    #     batch_index = 0
-    #     fore_gradient = self.hetero_lr_gradient.compute_and_aggregate_forwards(self.data_inst,
-    #                                                                            model_weights,
-    #                                                                            encrypted_calculator,
-    #                                                                            batch_index)
-    #
-    #     fore_gradient_local = [self.paillier_encrypt.decrypt(iterator[1]) for iterator in fore_gradient.collect()]
-    #
-    #     self.assertListEqual(fore_gradient_local, self.fore_gradient_local)
+    def test_compute_partition_gradient(self):
+        fore_gradient = self.en_wx.join(self.data_inst, lambda wx, d: 0.25 * wx - 0.5 * d.label)
+        sparse_data = self._make_sparse_data()
+        for fit_intercept in [True, False]:
+            dense_result = hetero_linear_model_gradient.compute_gradient(self.data_inst, fore_gradient, fit_intercept)
+            dense_result = [self.paillier_encrypt.decrypt(iterator) for iterator in dense_result]
+            if fit_intercept:
+                self.assertListEqual(dense_result, self.gradient_fit_intercept)
+            else:
+                self.assertListEqual(dense_result, self.gradient)
+            sparse_result = hetero_linear_model_gradient.compute_gradient(sparse_data, fore_gradient, fit_intercept)
+            sparse_result = [self.paillier_encrypt.decrypt(iterator) for iterator in sparse_result]
+            self.assertListEqual(dense_result, sparse_result)
 
-    # def test_compute_gradient(self):
-    #     fore_gradient = self.hetero_lr_gradient.compute_fore_gradient(self.data_inst, self.wx)
-    #
-    #     gradient = self.hetero_lr_gradient.compute_gradient(self.data_inst, fore_gradient, fit_intercept=False)
-    #     de_gradient = [self.paillier_encrypt.decrypt(iterator) for iterator in gradient]
-    #     self.assertListEqual(de_gradient, self.gradient)
-    #
-    #     gradient = self.hetero_lr_gradient.compute_gradient(self.data_inst, fore_gradient, fit_intercept=True)
-    #     de_gradient = [self.paillier_encrypt.decrypt(iterator) for iterator in gradient]
-    #     self.assertListEqual(de_gradient, self.gradient_fit_intercept)
-    #
-    # def test_compute_gradient_and_loss(self):
-    #     fore_gradient = self.hetero_lr_gradient.compute_fore_gradient(self.data_inst, self.wx)
-    #     gradient, loss = self.hetero_lr_gradient.compute_gradient_and_loss(self.data_inst, fore_gradient, self.wx,
-    #                                                                        self.en_sum_wx_square, False)
-    #     de_gradient = [self.paillier_encrypt.decrypt(i) for i in gradient]
-    #     self.assertListEqual(de_gradient, self.gradient)
-    #
-    #     diff_loss = np.abs(self.loss - self.paillier_encrypt.decrypt(loss))
-    #     self.assertLess(diff_loss, 1e-5)
+    def _make_sparse_data(self):
+        def trans_sparse(instance):
+            dense_features = instance.features
+            indices = [i for i in range(len(dense_features))]
+            sparse_features = SparseVector(indices=indices, data=dense_features, shape=len(dense_features))
+            return Instance(inst_id=None,
+                            features=sparse_features,
+                            label=instance.label)
+
+        return self.data_inst.mapValues(trans_sparse)
 
 
 if __name__ == "__main__":
     session.init("1111")
     unittest.main()
+    session.stop()

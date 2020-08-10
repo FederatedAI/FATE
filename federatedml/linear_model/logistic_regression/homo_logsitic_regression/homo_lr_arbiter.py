@@ -52,12 +52,12 @@ class HomoLRArbiter(HomoLRBase):
         host_has_no_cipher_ids = [idx for idx, cipher in host_ciphers.items() if cipher is None]
         self.re_encrypt_times = self.cipher.set_re_cipher_time(host_ciphers)
         max_iter = self.max_iter
-        validation_strategy = self.init_validation_strategy()
+        # validation_strategy = self.init_validation_strategy()
 
-        while self.n_iter_ < max_iter:
+        while self.n_iter_ < max_iter + 1:
             suffix = (self.n_iter_,)
 
-            if self.n_iter_ > 0 and self.n_iter_ % self.aggregate_iters == 0:
+            if ((self.n_iter_ + 1) % self.aggregate_iters == 0) or self.n_iter_ == max_iter:
                 merged_model = self.aggregator.aggregate_and_broadcast(ciphers_dict=host_ciphers,
                                                                        suffix=suffix)
                 total_loss = self.aggregator.aggregate_loss(host_has_no_cipher_ids, suffix)
@@ -74,7 +74,7 @@ class HomoLRArbiter(HomoLRBase):
                 LOGGER.info("n_iters: {}, total_loss: {}, converge flag is :{}".format(self.n_iter_,
                                                                                        total_loss,
                                                                                        self.is_converged))
-                if self.is_converged:
+                if self.is_converged or self.n_iter_ == max_iter:
                     break
                 self.model_weights = LogisticRegressionWeights(merged_model.unboxed,
                                                                self.model_param.init_param.fit_intercept)
@@ -86,7 +86,7 @@ class HomoLRArbiter(HomoLRBase):
                                   host_ciphers_dict=host_ciphers,
                                   re_encrypt_batches=self.re_encrypt_batches)
             
-            validation_strategy.validate(self, self.n_iter_)
+            # validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
 
         LOGGER.info("Finish Training task, total iters: {}".format(self.n_iter_))
@@ -97,7 +97,7 @@ class HomoLRArbiter(HomoLRBase):
         host_ciphers = self.cipher.paillier_keygen(key_length=self.model_param.encrypt_param.key_length,
                                                    suffix=current_suffix)
 
-        LOGGER.debug("Loaded arbiter model: {}".format(self.model_weights.unboxed))
+        # LOGGER.debug("Loaded arbiter model: {}".format(self.model_weights.unboxed))
         for idx, cipher in host_ciphers.items():
             if cipher is None:
                 continue
@@ -124,33 +124,3 @@ class HomoLRArbiter(HomoLRBase):
                                                          suffix=current_suffix)
             self.host_predict_results.append((prob_table, predict_table))
 
-    # def run(self, component_parameters=None, args=None):
-    #     self._init_runtime_parameters(component_parameters)
-    #     data_sets = args["data"]
-    #
-    #     data_statement_dict = list(data_sets.values())[0]
-    #     need_eval = False
-    #     for data_key in data_sets:
-    #         if 'eval_data' in data_sets[data_key]:
-    #             need_eval = True
-    #
-    #     LOGGER.debug("data_sets: {}, data_statement_dict: {}".format(data_sets, data_statement_dict))
-    #     if self.need_cv:
-    #         LOGGER.info("Task is cross validation.")
-    #         self.cross_validation(None)
-    #         return
-    #
-    #     elif not "model" in args:
-    #         LOGGER.info("Task is fit")
-    #         self.set_flowid('fit')
-    #         self.fit()
-    #         self.set_flowid('predict')
-    #         self.predict()
-    #         if need_eval:
-    #             self.set_flowid('validate')
-    #             self.predict()
-    #     else:
-    #         LOGGER.info("Task is predict")
-    #         self.load_model(args)
-    #         self.set_flowid('predict')
-    #         self.predict()

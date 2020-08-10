@@ -1,0 +1,20 @@
+{
+  "HeteroFeatureSelectionTransferVariable": {
+    "host_select_cols": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "result_left_cols": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    }
+  }
+}

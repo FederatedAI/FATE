@@ -30,7 +30,7 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 class SecretShareTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.multiply_triplets_cross = self._create_variable(name='multiply_triplets_cross')
-        self.multiply_triplets_encrypted = self._create_variable(name='multiply_triplets_encrypted')
-        self.rescontruct = self._create_variable(name='rescontruct')
-        self.share = self._create_variable(name='share')
+        self.multiply_triplets_cross = self._create_variable(name='multiply_triplets_cross', src=['guest', 'host'], dst=['guest', 'host'])
+        self.multiply_triplets_encrypted = self._create_variable(name='multiply_triplets_encrypted', src=['guest', 'host'], dst=['guest', 'host'])
+        self.rescontruct = self._create_variable(name='rescontruct', src=['guest', 'host'], dst=['guest', 'host'])
+        self.share = self._create_variable(name='share', src=['guest', 'host'], dst=['guest', 'host'])

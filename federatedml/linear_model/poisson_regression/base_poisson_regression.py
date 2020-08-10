@@ -26,6 +26,7 @@ from federatedml.param.poisson_regression_param import PoissonParam
 from federatedml.protobuf.generated import poisson_model_meta_pb2, poisson_model_param_pb2
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.param.evaluation_param import EvaluateParam
+from federatedml.util.fate_operator import vec_dot
 
 LOGGER = log_utils.getLogger()
 
@@ -53,35 +54,40 @@ class BasePoissonRegression(BaseLinearModel):
             exposure_index = -1
         return exposure_index
 
-    def load_instance(self, data_instance):
+    @staticmethod
+    def load_instance(data_instance, exposure_index):
         """
         return data_instance without exposure
         Parameters
         ----------
         data_instance: DTable of Instances, input data
+        exposure_index: column index of exposure variable
         """
-        if self.exposure_index == -1:
+        if exposure_index == -1:
             return data_instance
-        if self.exposure_index >= len(data_instance.features):
+        if exposure_index >= len(data_instance.features):
             raise ValueError(
-                "exposure_index {} out of features' range".format(self.exposure_index))
-        data_instance.features = np.delete(data_instance.features, self.exposure_index)
+                "exposure_index {} out of features' range".format(exposure_index))
+        data_instance.features = np.delete(data_instance.features, exposure_index)
         return data_instance
 
-    def load_exposure(self, data_instance):
+    @staticmethod
+    def load_exposure( data_instance, exposure_index):
         """
         return exposure of a given data_instance
         Parameters
         ----------
         data_instance: DTable of Instances, input data
+        exposure_index: column index of exposure variable
         """
-        if self.exposure_index == -1:
+        if exposure_index == -1:
             exposure = 1
         else:
-            exposure = data_instance.features[self.exposure_index]
+            exposure = data_instance.features[exposure_index]
         return exposure
 
-    def safe_log(self, v):
+    @staticmethod
+    def safe_log(v):
         if v == 0:
             return np.log(1e-7)
         return np.log(v)
@@ -89,11 +95,11 @@ class BasePoissonRegression(BaseLinearModel):
     def compute_mu(self, data_instances, coef_, intercept_=0, exposure=None):
         if exposure is None:
             mu = data_instances.mapValues(
-                lambda v: np.exp(np.dot(v.features, coef_) + intercept_ ))
+                lambda v: np.exp(vec_dot(v.features, coef_) + intercept_ ))
         else:
-            offset = exposure.mapValues(lambda v: self.safe_log(v))
+            offset = exposure.mapValues(lambda v: BasePoissonRegression.safe_log(v))
             mu = data_instances.join(offset,
-                lambda v, m: np.exp(np.dot(v.features, coef_) + intercept_ + m))
+                lambda v, m: np.exp(vec_dot(v.features, coef_) + intercept_ + m))
 
         return mu
 
@@ -123,12 +129,14 @@ class BasePoissonRegression(BaseLinearModel):
             coef_i = self.model_weights.coef_[idx]
             weight_dict[header_name] = coef_i
         intercept_ = self.model_weights.intercept_
+        best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
         param_protobuf_obj = poisson_model_param_pb2.PoissonModelParam(iters=self.n_iter_,
                                                                        loss_history=self.loss_history,
                                                                        is_converged=self.is_converged,
                                                                        weight=weight_dict,
                                                                        intercept=intercept_,
-                                                                       header=header)
+                                                                       header=header,
+                                                                       best_iteration=best_iteration)
         return param_protobuf_obj
 
     def load_model(self, model_dict):
@@ -154,6 +162,7 @@ class BasePoissonRegression(BaseLinearModel):
         if fit_intercept:
             tmp_vars = np.append(tmp_vars, result_obj.intercept)
         self.model_weights = PoissonRegressionWeights(l=tmp_vars, fit_intercept=fit_intercept)
-    
+        self.n_iter_ = result_obj.iters
+
     def get_metrics_param(self):
-        return EvaluateParam(eval_type="regression")
+        return EvaluateParam(eval_type="regression", metrics=self.metrics)

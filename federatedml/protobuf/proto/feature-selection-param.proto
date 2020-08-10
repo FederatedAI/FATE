@@ -47,4 +47,5 @@ message FeatureSelectionParam{
 
 message HostColNames{
     repeated string col_names = 1;
+    string party_id = 2;
 }

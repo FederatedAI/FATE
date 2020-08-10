@@ -13,20 +13,69 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import typing
 from typing import Union
 
 from arch.api import RuntimeInstance
-from arch.api.transfer import Party, Cleaner
+from arch.api.base.utils.clean import Cleaner
+from arch.api.base.utils.party import Party
+from arch.api.utils import log_utils
+from functools import wraps
+
+LOGGER = log_utils.getLogger()
 
 
+class TransferNameSpace(object):
+    __namespace = "default"
+
+    @classmethod
+    def set_namespace(cls, namespace):
+        cls.__namespace = namespace
+
+    @classmethod
+    def generate_tag(cls, *suffix):
+        tags = (cls.__namespace, *map(str, suffix))
+        return '.'.join(tags)
+
+
+def _singleton_variable(cls):
+    instances = {}
+
+    @wraps(cls)
+    def get_instance(*args, **kwargs):
+        if "name" in kwargs:
+            name = kwargs["name"]
+        else:
+            name = args[0]
+        if name not in instances:
+            instances[name] = cls(*args, **kwargs)
+        return instances[name]
+
+    return get_instance
+
+
+@_singleton_variable
 class Variable(object):
-    def __init__(self, name: str, transfer_variables: 'BaseTransferVariables'):
+
+    def __init__(self, name: str,
+                 src: typing.Tuple[str],
+                 dst: typing.Tuple[str]):
+        LOGGER.debug(f"create variable with name={name}, src={src}, dst={dst}")
         self.name = name
-        self._transfer_variable = transfer_variables
+        self._src = src
+        self._dst = dst
         self._get_cleaner = Cleaner()
         self._remote_cleaner = Cleaner()
         self._auto_clean = True
         self._preserve_num = 2
+
+    # copy never create a new instance
+    def __copy__(self):
+        return self
+
+    # deepcopy never create a new instance
+    def __deepcopy__(self, memo):
+        return self
 
     def set_preserve_num(self, n):
         self._preserve_num = n
@@ -34,12 +83,6 @@ class Variable(object):
 
     def get_preserve_num(self):
         return self._preserve_num
-
-    def generate_tag(self, *suffix):
-        tag = self._transfer_variable.flowid
-        if suffix:
-            tag = f"{tag}.{'.'.join(map(str, suffix))}"
-        return tag
 
     def disable_auto_clean(self):
         self._auto_clean = False
@@ -65,7 +108,7 @@ class Variable(object):
         if not isinstance(suffix, tuple):
             suffix = (suffix,)
         obj = RuntimeInstance.TABLE_WRAPPER.unboxed(obj)
-        tag = self.generate_tag(*suffix)
+        tag = TransferNameSpace.generate_tag(*suffix)
         rubbish = RuntimeInstance.FEDERATION.remote(obj=obj,
                                                     name=self.name,
                                                     tag=tag,
@@ -77,7 +120,7 @@ class Variable(object):
     def get_parties(self, parties: Union[list, Party], suffix=tuple()):
         if not isinstance(suffix, tuple):
             suffix = (suffix,)
-        tag = self.generate_tag(*suffix)
+        tag = TransferNameSpace.generate_tag(*suffix)
 
         if self._auto_clean:
             if self._get_cleaner.is_latest_tag(tag):
@@ -86,7 +129,7 @@ class Variable(object):
                 self._get_cleaner.keep_latest_n(self._preserve_num - 1)
 
         rtn, rubbish = RuntimeInstance.FEDERATION.get(name=self.name,
-                                                      tag=self.generate_tag(*suffix),
+                                                      tag=TransferNameSpace.generate_tag(*suffix),
                                                       parties=parties)
         rtn = [RuntimeInstance.TABLE_WRAPPER.boxed(value) for idx, value in enumerate(rtn)]
 
@@ -128,7 +171,7 @@ class Variable(object):
         Returns:
             object or list of object
         """
-        src_role = self.authorized_src_roles[:1]
+        src_role = self.authorized_src_roles
         src_parties = self.roles_to_parties(roles=src_role)
         if isinstance(idx, list):
             rtn = self.get_parties(parties=[src_parties[i] for i in idx], suffix=suffix)
@@ -141,21 +184,22 @@ class Variable(object):
 
 
 class BaseTransferVariables(object):
+    __singleton = True
     __instance = {}
 
-    def __init__(self, flowid=0):
-        self.flowid = str(flowid)
+    def __init__(self, *args):
+        pass
 
-    def __new__(cls, *args, **kwargs):
-        if cls.__name__ not in cls.__instance:
-            cls.__instance[cls.__name__] = object.__new__(cls)
-        return cls.__instance[cls.__name__]
+    @classmethod
+    def _disable__singleton(cls):
+        cls.__singleton = False
 
+    # noinspection PyMethodMayBeStatic
     def set_flowid(self, flowid):
-        self.flowid = flowid
+        TransferNameSpace.set_namespace(str(flowid))
 
-    def _create_variable(self, name):
-        return getattr(self, name, Variable(name=f"{self.__class__.__name__}.{name}", transfer_variables=self))
+    def _create_variable(self, name: str, src: typing.Iterable[str], dst: typing.Iterable[str]):
+        return Variable(name=f"{self.__class__.__name__}.{name}", src=tuple(src), dst=tuple(dst))
 
     @staticmethod
     def all_parties():
@@ -164,3 +208,7 @@ class BaseTransferVariables(object):
     @staticmethod
     def local_party():
         return RuntimeInstance.FEDERATION.local_party
+
+    @staticmethod
+    def roles_to_parties(roles: list) -> list:
+        return RuntimeInstance.FEDERATION.roles_to_parties(roles)

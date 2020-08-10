@@ -17,8 +17,8 @@ import operator
 
 import numpy as np
 
-from arch.api.table.table import Table
-from arch.api.transfer import Party
+from arch.api.base.table import Table
+from arch.api.base.utils.party import Party
 from federatedml.secureprotol.spdz.beaver_triples import beaver_triplets
 from federatedml.secureprotol.spdz.tensor.base import TensorBase
 from federatedml.secureprotol.spdz.tensor import fixedpoint_numpy
@@ -109,10 +109,10 @@ class FixedPointTensor(TensorBase):
             encoder = fixedpoint_numpy.FixedPointEndec(q_field, base, frac)
         if isinstance(source, Table):
             source = encoder.encode(source)
-            _pre = urand_tensor(spdz.q_field, source)
+            _pre = urand_tensor(spdz.q_field, source, use_mix=spdz.use_mix_rand)
             spdz.communicator.remote_share(share=_pre, tensor_name=tensor_name, party=spdz.other_parties[0])
             for _party in spdz.other_parties[1:]:
-                r = urand_tensor(spdz.q_field, source)
+                r = urand_tensor(spdz.q_field, source, use_mix=spdz.use_mix_rand)
                 spdz.communicator.remote_share(share=_table_binary_op(r, _pre, spdz.q_field, operator.sub),
                                                tensor_name=tensor_name, party=_party)
                 _pre = r

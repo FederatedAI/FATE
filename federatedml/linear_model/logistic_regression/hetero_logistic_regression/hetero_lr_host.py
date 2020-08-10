@@ -85,7 +85,7 @@ class HeteroLRHost(HeteroLRBase):
 
         if len(classes) > 2:
             self.need_one_vs_rest = True
-            self.in_one_vs_rest = True
+            self.need_call_back_loss = False
             self.one_vs_rest_fit(train_data=data_instances, validate_data=validate_data)
         else:
             self.need_one_vs_rest = False
@@ -94,7 +94,7 @@ class HeteroLRHost(HeteroLRBase):
     def fit_binary(self, data_instances, validate_data):
         self._abnormal_detection(data_instances)
 
-        validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
         LOGGER.debug(f"MODEL_STEP Start fin_binary, data count: {data_instances.count()}")
 
         self.header = self.get_header(data_instances)
@@ -113,7 +113,7 @@ class HeteroLRHost(HeteroLRBase):
         if self.init_param_obj.fit_intercept:
             self.init_param_obj.fit_intercept = False
         w = self.initializer.init_model(model_shape, init_params=self.init_param_obj)
-        LOGGER.debug("model_shape: {}, w shape: {}, w: {}".format(model_shape, w.shape, w))
+        # LOGGER.debug("model_shape: {}, w shape: {}, w: {}".format(model_shape, w.shape, w))
         self.model_weights = LinearModelWeights(w, fit_intercept=self.init_param_obj.fit_intercept)
 
         while self.n_iter_ < self.max_iter:
@@ -129,7 +129,7 @@ class HeteroLRHost(HeteroLRBase):
                 optim_host_gradient, fore_gradient = self.gradient_loss_operator.compute_gradient_procedure(
                     batch_feat_inst, self.encrypted_calculator, self.model_weights, self.optimizer, self.n_iter_,
                     batch_index)
-                LOGGER.debug('optim_host_gradient: {}'.format(optim_host_gradient))
+                # LOGGER.debug('optim_host_gradient: {}'.format(optim_host_gradient))
 
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.update_local_model(fore_gradient, data_instances, self.model_weights.coef_, **training_info)
@@ -144,14 +144,20 @@ class HeteroLRHost(HeteroLRBase):
 
             LOGGER.info("Get is_converged flag from arbiter:{}".format(self.is_converged))
 
-            validation_strategy.validate(self, self.n_iter_)
-
+            if self.validation_strategy:
+                LOGGER.debug('LR host running validation')
+                self.validation_strategy.validate(self, self.n_iter_)
+                if self.validation_strategy.need_stop():
+                    LOGGER.debug('early stopping triggered')
+                    break
             self.n_iter_ += 1
             LOGGER.info("iter: {}, is_converged: {}".format(self.n_iter_, self.is_converged))
             if self.is_converged:
                 break
+        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
+            self.load_model(self.validation_strategy.cur_best_model)
 
-        LOGGER.debug("Final lr weights: {}".format(self.model_weights.unboxed))
+        # LOGGER.debug("Final lr weights: {}".format(self.model_weights.unboxed))
 
     def predict(self, data_instances):
         self.transfer_variable.host_prob.disable_auto_clean()

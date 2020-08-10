@@ -131,12 +131,16 @@ class CompletedSelectionResults(object):
     def get_select_col_names(self):
         return self.__select_col_names
 
+    def set_all_left_col_indexes(self, left_indexes):
+        self.all_left_col_indexes = left_indexes.copy()
+
     @property
     def all_left_col_names(self):
         return [self.header[x] for x in self.all_left_col_indexes]
 
     def add_filter_results(self, filter_name, select_properties: SelectionProperties, host_select_properties=None):
-        self.all_left_col_indexes = select_properties.all_left_col_indexes.copy()
+        # self.all_left_col_indexes = select_properties.all_left_col_indexes.copy()
+        self.set_all_left_col_indexes(select_properties.all_left_col_indexes)
         if filter_name == 'conclusion':
             return
 

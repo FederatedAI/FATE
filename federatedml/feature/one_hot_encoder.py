@@ -25,6 +25,7 @@ from federatedml.param.onehot_encoder_param import OneHotEncoderParam
 from federatedml.protobuf.generated import onehot_param_pb2, onehot_meta_pb2
 from federatedml.statistic.data_overview import get_header
 from federatedml.util import consts
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 
@@ -54,6 +55,8 @@ class OneHotInnerParam(object):
         self.transform_names = self.header
 
     def add_transform_indexes(self, transform_indexes):
+        if transform_indexes is None:
+            return
         for idx in transform_indexes:
             if idx >= len(self.header):
                 LOGGER.warning("Adding a index that out of header's bound")
@@ -63,6 +66,8 @@ class OneHotInnerParam(object):
                 self.transform_names.append(self.header[idx])
 
     def add_transform_names(self, transform_names):
+        if transform_names is None:
+            return
         for col_name in transform_names:
             idx = self.col_name_maps.get(col_name)
             if idx is None:
@@ -135,14 +140,15 @@ class OneHotEncoder(ModelBase):
 
         return data_instances
 
+    @assert_io_num_rows_equal
     def transform(self, data_instances):
         self._init_params(data_instances)
         LOGGER.debug("In Onehot transform, ori_header: {}, transfered_header: {}".format(
             self.inner_param.header, self.inner_param.result_header
         ))
 
-        one_data = data_instances.first()[1].features
-        LOGGER.debug("Before transform, data is : {}".format(one_data))
+        # one_data = data_instances.first()[1].features
+        # LOGGER.debug("Before transform, data is : {}".format(one_data))
 
         f = functools.partial(self.transfer_one_instance,
                               col_maps=self.col_maps,
@@ -151,8 +157,8 @@ class OneHotEncoder(ModelBase):
         new_data = data_instances.mapValues(f)
         self.set_schema(new_data)
 
-        one_data = new_data.first()[1].features
-        LOGGER.debug("transfered data is : {}".format(one_data))
+        # one_data = new_data.first()[1].features
+        # LOGGER.debug("transfered data is : {}".format(one_data))
 
         return new_data
 
@@ -213,7 +219,10 @@ class OneHotEncoder(ModelBase):
             feature = instance.features
             for col_idx, col_name in zip(inner_param.transform_indexes, inner_param.transform_names):
                 pair_obj = col_maps.get(col_name)
-                feature_value = math.ceil(feature[col_idx])
+                int_feature = math.ceil(feature[col_idx])
+                if int_feature != feature[col_idx]:
+                    raise ValueError("Onehot input data support integer only")
+                feature_value = int_feature
                 pair_obj.add_value(feature_value)
         return col_maps
 

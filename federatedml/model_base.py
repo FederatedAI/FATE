@@ -40,8 +40,8 @@ class ModelBase(object):
         self.component_properties = ComponentProperties()
 
     def _init_runtime_parameters(self, component_parameters):
-        param_extracter = ParamExtract()
-        param = param_extracter.parse_param_from_config(self.model_param, component_parameters)
+        param_extractor = ParamExtract()
+        param = param_extractor.parse_param_from_config(self.model_param, component_parameters)
         param.check()
         self.role = self.component_properties.parse_component_param(component_parameters, param).role
         self._init_model(param)
@@ -97,10 +97,20 @@ class ModelBase(object):
             self.data_output = saved_result[0]
             # LOGGER.debug("One data: {}".format(self.data_output.first()[1].features))
         LOGGER.debug("saved_result is : {}, data_output: {}".format(saved_result, self.data_output))
+        self.check_consistency()
+
+
 
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary",
                              pos_label=1)
+
+    def check_consistency(self):
+        if not type(self.data_output) in ["DTable", "RDDTable"]:
+            return
+        if self.component_properties.input_data_count + self.component_properties.input_eval_data_count != \
+                self.data_output.count():
+            raise ValueError("Input data count does not match with output data count")
 
     def predict(self, data_inst):
         pass
@@ -112,6 +122,9 @@ class ModelBase(object):
         pass
 
     def cross_validation(self, data_inst):
+        pass
+
+    def stepwise(self, data_inst):
         pass
 
     def one_vs_rest_fit(self, train_data=None):

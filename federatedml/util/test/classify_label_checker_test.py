@@ -27,9 +27,9 @@ class TeskClassifyLabelChecker(unittest.TestCase):
         session.init("test_label_checker")
 
         self.small_label_set = [Instance(label=i % 5) for i in range(100)]
-        self.classify_inst = session.parallelize(self.small_label_set, include_key=False)
+        self.classify_inst = session.parallelize(self.small_label_set, include_key=False, partition=16)
         self.regression_label = [Instance(label=random.random()) for i in range(100)]
-        self.regression_inst = session.parallelize(self.regression_label)
+        self.regression_inst = session.parallelize(self.regression_label, partition=16)
         self.classify_checker = ClassifyLabelChecker()
         self.regression_checker = RegressionLabelChecker()
 
@@ -40,6 +40,9 @@ class TeskClassifyLabelChecker(unittest.TestCase):
 
     def test_regression_label_checker(self):
         self.regression_checker.validate_label(self.regression_inst)
+
+    def tearDown(self):
+        session.stop()
 
 
 if __name__ == '__main__':

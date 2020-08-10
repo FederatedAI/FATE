@@ -24,6 +24,7 @@ from federatedml.optim.gradient import hetero_lr_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
 
 from federatedml.util import consts
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 
@@ -69,7 +70,7 @@ class HeteroLRGuest(HeteroLRBase):
 
         if len(classes) > 2:
             self.need_one_vs_rest = True
-            self.in_one_vs_rest = True
+            self.need_call_back_loss = False
             self.one_vs_rest_fit(train_data=data_instances, validate_data=validate_data)
         else:
             self.need_one_vs_rest = False
@@ -79,7 +80,7 @@ class HeteroLRGuest(HeteroLRBase):
         LOGGER.info("Enter hetero_lr_guest fit")
         self.header = self.get_header(data_instances)
 
-        validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
         data_instances = data_instances.mapValues(HeteroLRGuest.load_data)
         LOGGER.debug(f"MODEL_STEP After load data, data count: {data_instances.count()}")
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
@@ -114,14 +115,14 @@ class HeteroLRGuest(HeteroLRBase):
                                                                                         batch_feat_inst.count()))
                 optim_guest_gradient, fore_gradient, host_forwards = self.gradient_loss_operator. \
                     compute_gradient_procedure(
-                        batch_feat_inst,
-                        self.encrypted_calculator,
-                        self.model_weights,
-                        self.optimizer,
-                        self.n_iter_,
-                        batch_index
+                    batch_feat_inst,
+                    self.encrypted_calculator,
+                    self.model_weights,
+                    self.optimizer,
+                    self.n_iter_,
+                    batch_index
                 )
-                LOGGER.debug('optim_guest_gradient: {}'.format(optim_guest_gradient))
+                # LOGGER.debug('optim_guest_gradient: {}'.format(optim_guest_gradient))
                 training_info = {"iteration": self.n_iter_, "batch_index": batch_index}
                 self.update_local_model(fore_gradient, data_instances, self.model_weights.coef_, **training_info)
 
@@ -130,19 +131,28 @@ class HeteroLRGuest(HeteroLRBase):
 
                 self.model_weights = self.optimizer.update_model(self.model_weights, optim_guest_gradient)
                 batch_index += 1
-                LOGGER.debug("lr_weight, iters: {}, update_model: {}".format(self.n_iter_, self.model_weights.unboxed))
+                # LOGGER.debug("lr_weight, iters: {}, update_model: {}".format(self.n_iter_, self.model_weights.unboxed))
 
             self.is_converged = self.converge_procedure.sync_converge_info(suffix=(self.n_iter_,))
             LOGGER.info("iter: {},  is_converged: {}".format(self.n_iter_, self.is_converged))
 
-            validation_strategy.validate(self, self.n_iter_)
+            if self.validation_strategy:
+                LOGGER.debug('LR guest running validation')
+                self.validation_strategy.validate(self, self.n_iter_)
+                if self.validation_strategy.need_stop():
+                    LOGGER.debug('early stopping triggered')
+                    break
 
             self.n_iter_ += 1
             if self.is_converged:
                 break
 
-        LOGGER.debug("Final lr weights: {}".format(self.model_weights.unboxed))
+        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
+            self.load_model(self.validation_strategy.cur_best_model)
 
+        # LOGGER.debug("Final lr weights: {}".format(self.model_weights.unboxed))
+
+    @assert_io_num_rows_equal
     def predict(self, data_instances):
         """
         Prediction of lr
@@ -173,7 +183,8 @@ class HeteroLRGuest(HeteroLRBase):
         for host_prob in host_probs:
             pred_prob = pred_prob.join(host_prob, lambda g, h: g + h)
         pred_prob = pred_prob.mapValues(lambda p: activation.sigmoid(p))
-        pred_label = pred_prob.mapValues(lambda x: 1 if x > self.model_param.predict_param.threshold else 0)
+        threshold = self.model_param.predict_param.threshold
+        pred_label = pred_prob.mapValues(lambda x: 1 if x > threshold else 0)
 
         predict_result = data_instances.mapValues(lambda x: x.label)
         predict_result = predict_result.join(pred_prob, lambda x, y: (x, y))

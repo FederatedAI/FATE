@@ -37,5 +37,6 @@ message BoostingTreeModelParam {
     repeated string classes_ = 7;
 	repeated FeatureImportanceInfo feature_importances = 8;
 	map<int32, string> feature_name_fid_mapping = 9;
+    int32 best_iteration = 10;
 }
 

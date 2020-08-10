@@ -36,8 +36,8 @@ class TestLeastSquaredErrorLoss(unittest.TestCase):
         self.lse_loss = LeastSquaredErrorLoss()
         self.y_list = [i % 2 for i in range(100)]
         self.predict_list = [random.random() for i in range(100)]
-        self.y = session.parallelize(self.y_list, include_key=False)
-        self.predict = session.parallelize(self.predict_list, include_key=False)
+        self.y = session.parallelize(self.y_list, include_key=False, partition=16)
+        self.predict = session.parallelize(self.predict_list, include_key=False, partition=16)
 
     def test_predict(self):
         for y in self.y_list:
@@ -61,6 +61,9 @@ class TestLeastSquaredErrorLoss(unittest.TestCase):
         lse_loss = self.lse_loss.compute_loss(self.y, self.predict)
         self.assertTrue(np.fabs(lse_loss - sklearn_loss) < consts.FLOAT_ZERO)
 
+    def tearDown(self):
+        session.stop()
+
 
 class TestLeastAbsoluteErrorLoss(unittest.TestCase):
     def setUp(self):
@@ -68,8 +71,8 @@ class TestLeastAbsoluteErrorLoss(unittest.TestCase):
         self.lae_loss = LeastAbsoluteErrorLoss()
         self.y_list = [i % 2 for i in range(100)]
         self.predict_list = [random.random() for i in range(100)]
-        self.y = session.parallelize(self.y_list, include_key=False)
-        self.predict = session.parallelize(self.predict_list, include_key=False)
+        self.y = session.parallelize(self.y_list, include_key=False, partition=16)
+        self.predict = session.parallelize(self.predict_list, include_key=False, partition=16)
 
     def test_predict(self):
         for y in self.y_list:
@@ -100,6 +103,9 @@ class TestLeastAbsoluteErrorLoss(unittest.TestCase):
         lae_loss = self.lae_loss.compute_loss(self.y, self.predict)
         self.assertTrue(np.fabs(lae_loss - sklearn_loss) < consts.FLOAT_ZERO)
 
+    def tearDown(self):
+        session.stop()
+
 
 class TestHuberLoss(unittest.TestCase):
     def setUp(self):
@@ -108,8 +114,8 @@ class TestHuberLoss(unittest.TestCase):
         self.huber_loss = HuberLoss(self.delta)
         self.y_list = [i % 2 for i in range(100)]
         self.predict_list = [random.random() for i in range(100)]
-        self.y = session.parallelize(self.y_list, include_key=False)
-        self.predict = session.parallelize(self.predict_list, include_key=False)
+        self.y = session.parallelize(self.y_list, include_key=False, partition=16)
+        self.predict = session.parallelize(self.predict_list, include_key=False, partition=16)
 
     def test_predict(self):
         for y in self.y_list:
@@ -140,6 +146,9 @@ class TestHuberLoss(unittest.TestCase):
         huber_loss = self.huber_loss.compute_loss(self.y, self.predict)
         self.assertTrue(np.fabs(huber_loss - loss) < consts.FLOAT_ZERO)
 
+    def tearDown(self):
+        session.stop()
+
 
 class TestFairLoss(unittest.TestCase):
     def setUp(self):
@@ -148,8 +157,8 @@ class TestFairLoss(unittest.TestCase):
         self.fair_loss = FairLoss(self.c)
         self.y_list = [i % 2 for i in range(100)]
         self.predict_list = [random.random() for i in range(100)]
-        self.y = session.parallelize(self.y_list, include_key=False)
-        self.predict = session.parallelize(self.predict_list, include_key=False)
+        self.y = session.parallelize(self.y_list, include_key=False, partition=16)
+        self.predict = session.parallelize(self.predict_list, include_key=False, partition=16)
 
     def test_predict(self):
         for y in self.y_list:
@@ -180,6 +189,9 @@ class TestFairLoss(unittest.TestCase):
         fair_loss = self.fair_loss.compute_loss(self.y, self.predict)
         self.assertTrue(np.fabs(fair_loss - loss) < consts.FLOAT_ZERO)
 
+    def tearDown(self):
+        session.stop()
+
 
 class TestLogCoshLoss(unittest.TestCase):
     def setUp(self):
@@ -187,8 +199,8 @@ class TestLogCoshLoss(unittest.TestCase):
         self.log_cosh_loss = LogCoshLoss()
         self.y_list = [i % 2 for i in range(100)]
         self.predict_list = [random.random() for i in range(100)]
-        self.y = session.parallelize(self.y_list, include_key=False)
-        self.predict = session.parallelize(self.predict_list, include_key=False)
+        self.y = session.parallelize(self.y_list, include_key=False, partition=16)
+        self.predict = session.parallelize(self.predict_list, include_key=False, partition=16)
 
     def test_predict(self):
         for y in self.y_list:
@@ -220,6 +232,9 @@ class TestLogCoshLoss(unittest.TestCase):
         log_cosh_loss = self.log_cosh_loss.compute_loss(self.y, self.predict)
         self.assertTrue(np.fabs(log_cosh_loss - loss) < consts.FLOAT_ZERO)
 
+    def tearDown(self):
+        session.stop()
+
 
 class TestTweedieLoss(unittest.TestCase):
     def setUp(self):
@@ -228,8 +243,8 @@ class TestTweedieLoss(unittest.TestCase):
         self.tweedie_loss = TweedieLoss(self.rho)
         self.y_list = [i % 2 for i in range(100)]
         self.predict_list = [random.random() for i in range(100)]
-        self.y = session.parallelize(self.y_list, include_key=False)
-        self.predict = session.parallelize(self.predict_list, include_key=False)
+        self.y = session.parallelize(self.y_list, include_key=False, partition=16)
+        self.predict = session.parallelize(self.predict_list, include_key=False, partition=16)
 
     def test_predict(self):
         for y in self.y_list:
@@ -264,6 +279,9 @@ class TestTweedieLoss(unittest.TestCase):
 
         tweedie_loss = self.tweedie_loss.compute_loss(self.y, self.predict)
         self.assertTrue(np.fabs(tweedie_loss - loss) < consts.FLOAT_ZERO)
+
+    def tearDown(self):
+        session.stop()
 
 
 if __name__ == "__main__":

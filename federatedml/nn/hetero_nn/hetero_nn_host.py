@@ -40,6 +40,7 @@ class HeteroNNHost(HeteroNNBase):
         self.model = None
 
         self.input_shape = None
+        self.validation_strategy = None
 
     def _init_model(self, hetero_nn_param):
         super(HeteroNNHost, self)._init_model(hetero_nn_param)
@@ -71,7 +72,7 @@ class HeteroNNHost(HeteroNNBase):
         self.model.predict(test_x)
 
     def fit(self, data_inst, validate_data=None):
-        validation_strategy = self.init_validation_strategy(data_inst, validate_data)
+        self.validation_strategy = self.init_validation_strategy(data_inst, validate_data)
         self._build_model()
         self.prepare_batch_data(self.batch_generator, data_inst)
 
@@ -85,8 +86,11 @@ class HeteroNNHost(HeteroNNBase):
                 self.model.evaluate(self.data_x[batch_idx], cur_epoch, batch_idx)
                 self.recovery_flowid()
 
-            if validation_strategy:
-                validation_strategy.validate(self, cur_epoch)
+            if self.validation_strategy:
+                self.validation_strategy.validate(self, cur_epoch)
+                if self.validation_strategy.need_stop():
+                    LOGGER.debug('early stopping triggered')
+                    break
 
             is_converge = self.transfer_variable.is_converge.get(idx=0,
                                                                  suffix=(cur_epoch,))
@@ -96,6 +100,9 @@ class HeteroNNHost(HeteroNNBase):
                 break
 
             cur_epoch += 1
+
+        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
+            self.load_model(self.validation_strategy.cur_best_model)
 
     def prepare_batch_data(self, batch_generator, data_inst):
         batch_generator.initialize_batch_generator(data_inst)
@@ -108,9 +115,13 @@ class HeteroNNHost(HeteroNNBase):
         self.set_partition(data_inst)
 
     def _load_data(self, data_inst):
-        batch_x = []
-        for key, inst in data_inst.collect():
-            batch_x.append(inst.features)
+        data = list(data_inst.collect())
+        data_keys = [key for (key, val) in data]
+        data_keys_map = dict(zip(sorted(data_keys), range(len(data_keys))))
+        batch_x = [None for i in range(len(data_keys))]
+
+        for key, inst in data:
+            batch_x[data_keys_map[key]] = inst.features
 
             if self.input_shape is None:
                 self.input_shape = inst.features.shape
@@ -129,5 +140,6 @@ class HeteroNNHost(HeteroNNBase):
     def _get_model_param(self):
         model_param = HeteroNNParam()
         model_param.hetero_nn_model_param.CopyFrom(self.model.get_hetero_nn_model_param())
+        model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
 
         return model_param

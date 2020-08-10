@@ -1,0 +1,58 @@
+{
+  "SecureMeanAggregatorTransVar": {
+    "AggregatorTransVar.ModelScatterTransVar.client_model": {
+      "src": [
+        "guest",
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "AggregatorTransVar.ModelBroadcasterTransVar.server_model": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "RandomPaddingCipherTransVar.UUIDTransVar.uuid": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "RandomPaddingCipherTransVar.DHTransVar.p_power_r": {
+      "src": [
+        "guest",
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "RandomPaddingCipherTransVar.DHTransVar.p_power_r_bc": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "RandomPaddingCipherTransVar.DHTransVar.pubkey": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest",
+        "host"
+      ]
+    }
+  }
+}

@@ -35,7 +35,7 @@ class Backend(IntEnum):
 class JobStatus(object):
     WAITING = 'waiting'
     RUNNING = 'running'
-    SUCCESS = 'success'
+    COMPLETE = 'success'
     FAILED = 'failed'
     TIMEOUT = 'timeout'
     CANCELED = 'canceled'
@@ -46,6 +46,25 @@ class JobStatus(object):
 class TaskStatus(object):
     START = 'start'
     RUNNING = 'running'
-    SUCCESS = 'success'
+    COMPLETE = 'success'
     FAILED = 'failed'
     TIMEOUT = 'timeout'
+
+
+class ModelStorage(object):
+    REDIS = "redis"
+    MYSQL = "mysql"
+
+
+class ModelOperation(object):
+    EXPORT = "export"
+    IMPORT = "import"
+    STORE = "store"
+    RESTORE = "restore"
+    LOAD = "load"
+    BIND = "bind"
+
+
+class ProcessRole(object):
+    SERVER = "server"
+    EXECUTOR = "executor"

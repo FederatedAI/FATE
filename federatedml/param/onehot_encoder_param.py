@@ -31,6 +31,10 @@ class OneHotEncoderParam(BaseParam):
     transform_col_indexes: list or int, default: -1
         Specify which columns need to calculated. -1 represent for all columns.
 
+    transform_col_names : list of string, default: []
+        Specify which columns need to calculated. Each element in the list represent for a column name in header.
+
+
     need_run: bool, default True
         Indicate if this module needed to be run
     """
@@ -45,5 +49,6 @@ class OneHotEncoderParam(BaseParam):
 
     def check(self):
         descr = "One-hot encoder param's"
-        self.check_defined_type(self.transform_col_indexes, descr, ['list', 'int'])
+        self.check_defined_type(self.transform_col_indexes, descr, ['list', 'int', 'NoneType'])
+        self.check_defined_type(self.transform_col_names, descr, ['list', 'NoneType'])
         return True

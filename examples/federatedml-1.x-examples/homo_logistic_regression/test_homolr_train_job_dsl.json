@@ -36,9 +36,6 @@
                         "homo_lr_0.train"
                     ]
                 }
-            },
-            "output": {
-                "data": ["evaluate"]
             }
         }
     }

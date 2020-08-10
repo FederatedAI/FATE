@@ -22,6 +22,7 @@ from federatedml.linear_model.poisson_regression.hetero_poisson_regression.heter
 from federatedml.optim.gradient import hetero_poisson_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.util import consts
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 
@@ -50,7 +51,7 @@ class HeteroPoissonHost(HeteroPoissonBase):
         LOGGER.info("Enter hetero_poisson host")
         self._abnormal_detection(data_instances)
 
-        validation_strategy = self.init_validation_strategy(data_instances, validate_data)
+        self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 
         self.header = self.get_header(data_instances)
         self.cipher_operator = self.cipher.gen_paillier_cipher_operator()
@@ -73,7 +74,7 @@ class HeteroPoissonHost(HeteroPoissonBase):
             LOGGER.info("iter:" + str(self.n_iter_))
 
             batch_data_generator = self.batch_generator.generate_batch_data()
-            self.optimizer.set_iters(self.n_iter_ + 1)
+            self.optimizer.set_iters(self.n_iter_)
 
             batch_index = 0
             for batch_data in batch_data_generator:
@@ -97,7 +98,12 @@ class HeteroPoissonHost(HeteroPoissonBase):
 
             LOGGER.info("Get is_converged flag from arbiter:{}".format(self.is_converged))
 
-            validation_strategy.validate(self, self.n_iter_)
+            if self.validation_strategy:
+                LOGGER.debug('Poisson host running validation')
+                self.validation_strategy.validate(self, self.n_iter_)
+                if self.validation_strategy.need_stop():
+                    LOGGER.debug('early stopping triggered')
+                    break
 
             self.n_iter_ += 1
             LOGGER.info("iter: {}, is_converged: {}".format(self.n_iter_, self.is_converged))
@@ -107,6 +113,10 @@ class HeteroPoissonHost(HeteroPoissonBase):
         if not self.is_converged:
             LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))
 
+        if self.validation_strategy and self.validation_strategy.has_saved_best_model():
+            self.load_model(self.validation_strategy.cur_best_model)
+
+    @assert_io_num_rows_equal
     def predict(self, data_instances):
         """
         Prediction of poisson
@@ -114,6 +124,7 @@ class HeteroPoissonHost(HeteroPoissonBase):
         ----------
         data_instances:DTable of Instance, input data
         """
+        self.transfer_variable.host_partial_prediction.disable_auto_clean()
         LOGGER.info("Start predict ...")
         data_features = self.transform(data_instances)
         pred_host = self.compute_mu(data_features, self.model_weights.coef_, self.model_weights.intercept_)

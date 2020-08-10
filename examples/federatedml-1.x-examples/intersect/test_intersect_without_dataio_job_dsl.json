@@ -1,0 +1,17 @@
+{
+    "components" : {
+        "intersect_0": {
+            "module": "Intersection",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["intersect_data"]
+            }
+        }
+    }
+}

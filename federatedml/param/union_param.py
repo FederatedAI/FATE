@@ -35,12 +35,15 @@ class UnionParam(BaseParam):
     allow_missing: bool, default False
         Whether allow mismatch between feature length and header length in the result. Note that empty tables will always be skipped regardless of this param setting.
 
+    keep_duplicate: bool, default False
+        Whether to keep entries with duplicated keys. If set to True, a new id will be generated for duplicated entry in the format {id}_{table_name}.
     """
 
-    def __init__(self, need_run=True, allow_missing=False):
+    def __init__(self, need_run=True, allow_missing=False, keep_duplicate=False):
         super().__init__()
         self.need_run = need_run
         self.allow_missing = allow_missing
+        self.keep_duplicate = keep_duplicate
 
 
     def check(self):
@@ -55,6 +58,11 @@ class UnionParam(BaseParam):
             raise ValueError(
                 descr + "allow_missing {} not supported, should be bool".format(
                     self.allow_missing))
+
+        if type(self.keep_duplicate).__name__ != "bool":
+            raise ValueError(
+                descr + "keep_duplicate {} not supported, should be bool".format(
+                    self.keep_duplicate))
 
         LOGGER.info("Finish union parameter check!")
         return True

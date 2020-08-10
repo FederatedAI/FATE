@@ -21,7 +21,7 @@ import numpy as np
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.sync import loss_sync
 from federatedml.optim.gradient import hetero_linear_model_gradient
-from federatedml.util.fate_operator import reduce_add
+from federatedml.util.fate_operator import reduce_add, vec_dot
 
 LOGGER = log_utils.getLogger()
 
@@ -60,7 +60,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         batch_index: int, use to obtain current encrypted_calculator index:
         """
         wx = data_instances.mapValues(
-            lambda v: np.dot(v.features, model_weights.coef_) + model_weights.intercept_)
+            lambda v: vec_dot(v.features, model_weights.coef_) + model_weights.intercept_)
         self.forwards = wx
         self.aggregated_forwards = encrypted_calculator[batch_index].encrypt(wx)
 
@@ -130,7 +130,7 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
                                  transfer_variables.loss_intermediate)
 
     def compute_forwards(self, data_instances, model_weights):
-        wx = data_instances.mapValues(lambda v: np.dot(v.features, model_weights.coef_) + model_weights.intercept_)
+        wx = data_instances.mapValues(lambda v: vec_dot(v.features, model_weights.coef_) + model_weights.intercept_)
         return wx
 
     def compute_loss(self, model_weights, optimizer, n_iter_, batch_index, cipher_operator):
@@ -147,11 +147,9 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
         self.remote_loss_intermediate(en_wx_square, suffix=current_suffix)
 
         loss_regular = optimizer.loss_norm(model_weights)
-        if loss_regular is None:
-            en_loss_regular = loss_regular
-        else:
+        if loss_regular is not None:
             en_loss_regular = cipher_operator.encrypt(loss_regular)
-        self.remote_loss_regular(en_loss_regular, suffix=current_suffix)
+            self.remote_loss_regular(en_loss_regular, suffix=current_suffix)
 
 
 class Arbiter(hetero_linear_model_gradient.Arbiter, loss_sync.Arbiter):

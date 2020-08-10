@@ -59,9 +59,6 @@
                 "data": {
                     "data": ["hetero_poisson_0.train"]
                 }
-            },
-            "output": {
-                "data": ["evaluate"]
             }
         }
     }

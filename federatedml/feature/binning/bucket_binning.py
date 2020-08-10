@@ -16,12 +16,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from federatedml.feature.binning.base_binning import Binning
+from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.statistic.statics import MultivariateStatisticalSummary
 from federatedml.statistic import data_overview
 
 
-class BucketBinning(Binning):
+class BucketBinning(BaseBinning):
     """
     For bucket binning, the length of each bin is the same which is:
     L = [max(x) - min(x)] / n
@@ -53,9 +53,9 @@ class BucketBinning(Binning):
         header = data_overview.get_header(data_instances)
         self._default_setting(header)
 
-        is_sparse = data_overview.is_sparse_data(data_instances)
-        if is_sparse:
-            raise RuntimeError("Bucket Binning method has not supported sparse data yet.")
+        # is_sparse = data_overview.is_sparse_data(data_instances)
+        # if is_sparse:
+        #     raise RuntimeError("Bucket Binning method has not supported sparse data yet.")
 
         # self._init_cols(data_instances)
 

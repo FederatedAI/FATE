@@ -13,8 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils.core import get_lan_ip
+from arch.api.utils.core_utils import get_lan_ip, json_loads
 from arch.api.utils.log_utils import schedule_logger
+from fate_flow.driver.task_scheduler import TaskScheduler
 from fate_flow.settings import detect_logger, API_VERSION
 from fate_flow.utils import cron, job_utils, api_utils
 
@@ -24,7 +25,7 @@ class JobDetector(cron.Cron):
         try:
             running_tasks = job_utils.query_task(status='running', run_ip=get_lan_ip())
             stop_job_ids = set()
-            detect_logger.info('start to detect running job..')
+            # detect_logger.info('start to detect running job..')
             for task in running_tasks:
                 try:
                     process_exist = job_utils.check_job_process(int(task.f_run_pid))
@@ -59,9 +60,9 @@ class JobDetector(cron.Cron):
                                             src_party_id=my_party_id,
                                             dest_party_id=initiator_party_id,
                                             src_role=None,
-                                            json_body={'job_id': job_id},
+                                            json_body={'job_id': job_id, 'operate': 'kill'},
                                             work_mode=job_work_mode)
-                    schedule_logger(job_id).info('send stop job {} command'.format(job_id))
+                    TaskScheduler.finish_job(job_id=job_id, job_runtime_conf=json_loads(jobs[0].f_runtime_conf), stop=True)
         except Exception as e:
             detect_logger.exception(e)
         finally:

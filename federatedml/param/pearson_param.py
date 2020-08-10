@@ -22,16 +22,23 @@ from federatedml.param.base_param import BaseParam
 
 class PearsonParam(BaseParam):
 
-    def __init__(self, column_names=None, column_indexes=None):
+    def __init__(self, column_names=None, column_indexes=None, cross_parties=True, need_run=True, use_mix_rand=False):
         super().__init__()
         self.column_names = column_names
         self.column_indexes = column_indexes
+        self.cross_parties = cross_parties
+        self.need_run = need_run
+        self.use_mix_rand = use_mix_rand
         if column_names is None:
             self.column_names = []
         if column_indexes is None:
             self.column_indexes = []
 
     def check(self):
+        if not isinstance(self.use_mix_rand, bool):
+            raise ValueError(f"use_mix_rand accept bool type only, {type(self.use_mix_rand)} got")
+        if self.cross_parties and (not self.need_run):
+            raise ValueError(f"need_run should be True(which is default) when cross_parties is True.")
         if not isinstance(self.column_names, list):
             raise ValueError(f"type mismatch, column_names with type {type(self.column_names)}")
         for name in self.column_names:
@@ -46,6 +53,7 @@ class PearsonParam(BaseParam):
         if isinstance(self.column_indexes, int) and self.column_indexes != -1:
             raise ValueError(f"column_indexes with type int and value {self.column_indexes}(only -1 allowed)")
 
-        if isinstance(self.column_indexes, list) and isinstance(self.column_names, list):
-            if len(self.column_indexes) == 0 and len(self.column_names) == 0:
-                raise ValueError(f"provide at least one column")
+        if self.need_run:
+            if isinstance(self.column_indexes, list) and isinstance(self.column_names, list):
+                if len(self.column_indexes) == 0 and len(self.column_names) == 0:
+                    raise ValueError(f"provide at least one column")

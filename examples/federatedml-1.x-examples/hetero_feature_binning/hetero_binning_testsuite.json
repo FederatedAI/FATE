@@ -1,42 +1,126 @@
 {
-  "data": [
-      {
-          "file": "examples/data/breast_b.csv",
-          "head": 1,
-          "partition": 10,
-          "table_name": "hetero_breast_b",
-          "namespace": "hetero_breast_guest",
-          "role": "guest_0"
-      },
-      {
-          "file": "examples/data/breast_a.csv",
-          "head": 1,
-          "partition": 10,
-          "table_name": "hetero_breast_a",
-          "namespace": "hetero_breast_host",
-          "role": "host_0"
-      },
-      {
-          "file": "examples/data/breast_a.csv",
-          "head": 1,
-          "partition": 10,
-          "table_name": "hetero_breast_a",
-          "namespace": "hetero_breast_host",
-          "role": "host_1"
-      }
-  ],
-  "tasks": {
-    "binning": {
-      "conf": "./test_hetero_binning_job_conf.json",
-      "dsl": "./test_hetero_binning_job_dsl.json"
-    },
-    "multi_host_binning": {
-      "conf": "./multi_hosts_binning_job_conf.json",
-      "dsl": "./test_hetero_binning_job_dsl.json"
-    },
-    "woe_binning": {
-      "conf": "./binning_transform_woe_job_conf.json",
-      "dsl": "./test_hetero_binning_job_dsl.json"
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/default_credit_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "default_credit_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/default_credit_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "default_credit_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_1"
+        },
+        {
+            "file": "examples/data/default_credit_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "default_credit_hetero_host",
+            "namespace": "experiment",
+            "role": "host_1"
+        }
+    ],
+    "tasks": {
+        "quantile_binning": {
+            "conf": "./test_hetero_binning_job_conf.json",
+            "dsl": "./test_hetero_binning_add_onehot_job_dsl.json"
+        },
+        "large_bin_nums_quantile": {
+            "conf": "./test_hetero_binning_big_bin_job_conf.json",
+            "dsl": "./test_hetero_binning_job_dsl.json"
+        },
+        "multi_host_binning": {
+            "conf": "./multi_hosts_binning_job_conf.json",
+            "dsl": "./test_hetero_binning_add_onehot_job_dsl.json"
+        },
+        "woe_binning": {
+            "conf": "./binning_transform_woe_job_conf.json",
+            "dsl": "./test_hetero_binning_job_dsl.json"
+        },
+        "bucket_binning": {
+            "conf": "./test_bucket_binning_job_conf.json",
+            "dsl": "./test_hetero_binning_job_dsl.json"
+        },
+        "sparse_bucket_binning": {
+            "conf": "./test_sparse_bucket_binning_job_conf.json",
+            "dsl": "./test_hetero_binning_job_dsl.json"
+        },
+        "category_binning": {
+            "conf": "./test_category_binning_job_conf.json",
+            "dsl": "./test_hetero_binning_job_dsl.json"
+        },
+        "optimal_iv": {
+            "conf": "./test_optimal_binning_iv_job_conf.json",
+            "dsl": "./test_hetero_binning_job_dsl.json"
+        },
+        "optimal_gini": {
+            "conf": "./test_optimal_binning_gini_job_conf.json",
+            "dsl": "./test_hetero_binning_job_dsl.json"
+        },
+        "optimal_chi_square": {
+            "conf": "./test_optimal_binning_chi_square_job_conf.json",
+            "dsl": "./test_hetero_binning_job_dsl.json"
+        },
+        "optimal_ks": {
+            "conf": "./test_optimal_binning_ks_job_conf.json",
+            "dsl": "./test_hetero_binning_job_dsl.json"
+        },
+        "sparse_optimal_iv": {
+            "conf": "./test_sparse_optimal_binning_iv_job_conf.json",
+            "dsl": "./test_hetero_binning_job_dsl.json"
+        },
+        "sparse_optimal_gini": {
+            "conf": "./test_sparse_optimal_binning_gini_job_conf.json",
+            "dsl": "./test_hetero_binning_job_dsl.json"
+        },
+        "sparse_optimal_chi_square": {
+            "conf": "./test_sparse_optimal_binning_chi_square_job_conf.json",
+            "dsl": "./test_hetero_binning_job_dsl.json"
+        },
+        "sparse_optimal_ks": {
+            "conf": "./test_sparse_optimal_binning_ks_job_conf.json",
+            "dsl": "./test_hetero_binning_job_dsl.json"
+        },
+        "multi_host_optimal": {
+            "conf": "./multi_hosts_optimal_binning_job_conf.json",
+            "dsl": "./test_hetero_binning_job_dsl.json"
+        },
+        "multi_host_sparse_optimal": {
+            "conf": "./multi_hosts_sparse_optimal_binning_job_conf.json",
+            "dsl": "./test_hetero_binning_job_dsl.json"
+        },
+        "asymmetric_job": {
+            "conf": "./test_asymmetric_job_conf.json",
+            "dsl": "./test_hetero_binning_job_dsl.json"
+        }
     }
-  }
 }

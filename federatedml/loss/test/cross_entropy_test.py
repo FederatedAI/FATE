@@ -32,8 +32,8 @@ class TestSigmoidBinaryCrossEntropyLoss(unittest.TestCase):
         self.sigmoid_loss = SigmoidBinaryCrossEntropyLoss()
         self.y_list = [i % 2 for i in range(100)]
         self.predict_list = [random.random() for i in range(100)]
-        self.y = session.parallelize(self.y_list, include_key=False)
-        self.predict = session.parallelize(self.predict_list, include_key=False)
+        self.y = session.parallelize(self.y_list, include_key=False, partition=16)
+        self.predict = session.parallelize(self.predict_list, include_key=False, partition=16)
 
     def test_predict(self):
         for i in range(1, 10):
@@ -59,6 +59,9 @@ class TestSigmoidBinaryCrossEntropyLoss(unittest.TestCase):
         sigmoid_loss = self.sigmoid_loss.compute_loss(self.y, self.predict)
         self.assertTrue(np.fabs(sigmoid_loss - sklearn_loss) < consts.FLOAT_ZERO)
 
+    def tearDown(self):
+        session.stop()
+
 
 class TestSoftmaxCrossEntropyLoss(unittest.TestCase):
     def setUp(self):
@@ -66,8 +69,8 @@ class TestSoftmaxCrossEntropyLoss(unittest.TestCase):
         self.softmax_loss = SoftmaxCrossEntropyLoss()
         self.y_list = [i % 5 for i in range(100)]
         self.predict_list = [np.array([random.random() for i in range(5)]) for j in range(100)]
-        self.y = session.parallelize(self.y_list, include_key=False)
-        self.predict = session.parallelize(self.predict_list, include_key=False)
+        self.y = session.parallelize(self.y_list, include_key=False, partition=16)
+        self.predict = session.parallelize(self.predict_list, include_key=False, partition=16)
 
     def test_predict(self):
         for i in range(10):
@@ -99,6 +102,9 @@ class TestSoftmaxCrossEntropyLoss(unittest.TestCase):
         softmax_loss = self.softmax_loss.compute_loss(self.y, self.predict)
         loss = sum(-np.log(pred[yi]) for yi, pred in zip(self.y_list, self.predict_list)) / len(self.y_list)
         self.assertTrue(np.fabs(softmax_loss - loss) < consts.FLOAT_ZERO)
+
+    def tearDown(self):
+        session.stop()
 
 
 if __name__ == '__main__':

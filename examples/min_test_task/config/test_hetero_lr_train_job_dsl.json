@@ -25,8 +25,7 @@
                 }
             },
             "output": {
-                "data": ["intersect_data"],
-                "model": ["intersect_results"]
+                "data": ["intersect_data"]
             }
         },
         "hetero_lr_0": {

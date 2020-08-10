@@ -16,85 +16,99 @@
 # -*- coding: utf-8 -*-
 import os
 
-from arch.api.utils import file_utils
-from arch.api.utils import log_utils
+from arch.api import Backend
+from arch.api.utils import file_utils, log_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
-from arch.api.utils.core import get_lan_ip
+from arch.api.utils.conf_utils import get_base_config
 import __main__
 
-from fate_flow.utils.setting_utils import CenterConfig
 
+WORK_MODE = get_base_config('work_mode', 0)
+BACKEND = Backend.EGGROLL
+USE_LOCAL_DATABASE = True
+
+# upload data
+USE_LOCAL_DATA = True
+
+# Local authentication switch
+USE_AUTHENTICATION = False
+PRIVILEGE_COMMAND_WHITELIST = []
+
+# Node check switch
+CHECK_NODES_IDENTITY = False
+
+# Registry
+SERVICES_SUPPORT_REGISTRY = ["servings", "fateflow"]
+FATE_SERVICES_REGISTERED_PATH = {
+    "fateflow": "/FATE-SERVICES/flow/online/transfer/providers",
+    "servings": "/FATE-SERVICES/serving/online/publishLoad/providers",
+}
+
+# FILE CONF
+SERVER_CONF_PATH = 'arch/conf/server_conf.json'
+
+# job maximum number  of the initiator
+MAX_CONCURRENT_JOB_RUN = 5
+
+# Limit the number of jobs on the host side
+LIMIT_ROLE = 'host'
+MAX_CONCURRENT_JOB_RUN_HOST = 5
+RE_ENTRY_QUEUE_TIME = 2*60
+RE_ENTRY_QUEUE_MAX = 60
+
+_ONE_DAY_IN_SECONDS = 60 * 60 * 24
+DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000 * 60  # ms
+JOB_DEFAULT_TIMEOUT = 7 * 24 * 60 * 60
+DATABASE = get_base_config("database", {})
+MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
+
+'''
+Constants
+'''
+API_VERSION = "v1"
+ROLE = 'fateflow'
+SERVERS = 'servers'
+MAIN_MODULE = os.path.relpath(__main__.__file__)
+SERVER_MODULE = 'fate_flow_server.py'
+TASK_EXECUTOR_MODULE = 'driver/task_executor.py'
+TEMP_DIRECTORY = os.path.join(file_utils.get_project_base_directory(), "fate_flow", "temp")
+HEADERS = {
+    'Content-Type': 'application/json',
+    'Connection': 'close'
+}
+DETECT_TABLE = ("fate_flow_detect_table_namespace", "fate_flow_detect_table_name", 16)
+
+# endpoint
+FATE_FLOW_MODEL_TRANSFER_ENDPOINT = '/v1/model/transfer'
+FATE_MANAGER_GET_NODE_INFO_ENDPOINT = '/fate-manager/api/site/secretinfo'
+FATE_MANAGER_NODE_CHECK_ENDPOINT = '/fate-manager/api/site/checksite'
+FATE_BOARD_DASHBOARD_ENDPOINT = '/index.html#/dashboard?job_id={}&role={}&party_id={}'
+
+# logger
+log_utils.LoggerFactory.LEVEL = 10
+# {CRITICAL: 50, FATAL:50, ERROR:40, WARNING:30, WARN:30, INFO:20, DEBUG:10, NOTSET:0}
 log_utils.LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), 'logs', 'fate_flow'))
 stat_logger = log_utils.getLogger("fate_flow_stat")
 detect_logger = log_utils.getLogger("fate_flow_detect")
 access_logger = log_utils.getLogger("fate_flow_access")
 
-'''
-Constants
-'''
+"""
+Services 
+"""
+IP = get_base_config("fate_flow", {}).get("host", "0.0.0.0")
+HTTP_PORT = get_base_config("fate_flow", {}).get("http_port")
+GRPC_PORT = get_base_config("fate_flow", {}).get("grpc_port")
 
-API_VERSION = "v1"
-ROLE = 'fateflow'
-SERVERS = 'servers'
-SERVINGS_ZK_PATH = '/FATE-SERVICES/serving/online/publishLoad/providers'
-FATE_FLOW_ZK_PATH = '/FATE-SERVICES/flow/online/transfer/providers'
-MAIN_MODULE = os.path.relpath(__main__.__file__)
-SERVER_MODULE = 'fate_flow_server.py'
-TASK_EXECUTOR_MODULE = 'driver/task_executor.py'
-MAX_CONCURRENT_JOB_RUN = 5
-MAX_CONCURRENT_JOB_RUN_HOST = 10
-DEFAULT_WORKFLOW_DATA_TYPE = ['train_input', 'data_input', 'id_library_input', 'model', 'predict_input',
-                              'predict_output', 'evaluation_output', 'intersect_data_output']
-_ONE_DAY_IN_SECONDS = 60 * 60 * 24
-DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000  # ms
-HEADERS = {
-    'Content-Type': 'application/json',
-}
-
-IP = '0.0.0.0'
-GRPC_PORT = 9360
-HTTP_PORT = 9380
-ZOOKEEPER_HOSTS = ['127.0.0.1:2181']
 # standalone job will be send to the standalone job server when FATE-Flow work on cluster deploy mode,
 # but not the port for FATE-Flow on standalone deploy mode.
 CLUSTER_STANDALONE_JOB_SERVER_PORT = 9381
-WORK_MODE = 0
-USE_LOCAL_DATABASE = True
-USE_AUTHENTICATION = False
-USE_CONFIGURATION_CENTER = False
-PRIVILEGE_COMMAND_WHITELIST = ['save_pipeline', 'clean']
 
-DATABASE = {
-    'name': 'fate_flow',
-    'user': 'root',
-    'passwd': 'fate_dev',
-    'host': '127.0.0.1',
-    'port': 3306,
-    'max_connections': 100,
-    'stale_timeout': 30,
-}
+# switch
+SAVE_AS_TASK_INPUT_DATA_SWITCH = True
+SAVE_AS_TASK_INPUT_DATA_IN_MEMORY = True
+ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH = True
 
-REDIS = {
-    'host': '127.0.0.1',
-    'port': 6379,
-    'password': 'fate_dev',
-    'max_connections': 500
-}
-
-REDIS_QUEUE_DB_INDEX = 0
-
-"""
-Services
-"""
-server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
-PROXY_HOST = server_conf.get(SERVERS).get('proxy').get('host')
-PROXY_PORT = server_conf.get(SERVERS).get('proxy').get('port')
-BOARD_HOST = server_conf.get(SERVERS).get('fateboard').get('host')
-if BOARD_HOST == 'localhost':
-    BOARD_HOST = get_lan_ip()
-BOARD_PORT = server_conf.get(SERVERS).get('fateboard').get('port')
-SERVINGS = CenterConfig.get_settings(path='/servers/servings', servings_zk_path=SERVINGS_ZK_PATH,
-                                     use_zk=USE_CONFIGURATION_CENTER, hosts=ZOOKEEPER_HOSTS)
-BOARD_DASHBOARD_URL = 'http://%s:%d/index.html#/dashboard?job_id={}&role={}&party_id={}' % (BOARD_HOST, BOARD_PORT)
+# init
 RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
 RuntimeConfig.init_config(HTTP_PORT=HTTP_PORT)
+RuntimeConfig.init_config(BACKEND=BACKEND)

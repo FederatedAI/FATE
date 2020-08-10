@@ -21,8 +21,10 @@ from federatedml.feature.feature_scale.standard_scale import StandardScale
 from federatedml.model_base import ModelBase
 from federatedml.param.scale_param import ScaleParam
 from federatedml.util import consts
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
+
 
 class Scale(ModelBase):
     """
@@ -44,7 +46,6 @@ class Scale(ModelBase):
         self.mean = None
         self.std = None
         self.scale_column_idx = None
-
 
     def fit(self, data):
         """
@@ -72,13 +73,15 @@ class Scale(ModelBase):
             fit_data.schema = data.schema
 
             self.callback_meta(metric_name="scale", metric_namespace="train",
-                               metric_meta=MetricMeta(name="scale", metric_type="SCALE", extra_metas={"method":self.model_param.method}))
+                               metric_meta=MetricMeta(name="scale", metric_type="SCALE",
+                                                      extra_metas={"method": self.model_param.method}))
         else:
             fit_data = data
 
         LOGGER.info("End fit data ...")
         return fit_data
 
+    @assert_io_num_rows_equal
     def transform(self, data, fit_config=None):
         """
         Transform input data using scale with fit results
@@ -118,7 +121,6 @@ class Scale(ModelBase):
 
         return transform_data
 
-
     def load_model(self, model_dict):
         model_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
         meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
@@ -126,7 +128,7 @@ class Scale(ModelBase):
         self.need_run = meta_obj.need_run
 
         shape = len(self.header)
-        self.column_max_value = [ 0 for _ in range(shape) ]
+        self.column_max_value = [0 for _ in range(shape)]
         self.column_min_value = [0 for _ in range(shape)]
         self.mean = [0 for _ in range(shape)]
         self.std = [1 for _ in range(shape)]
@@ -151,8 +153,3 @@ class Scale(ModelBase):
                 self.scale_obj = StandardScale(self.model_param)
 
         return self.scale_obj.export_model(self.need_run)
-
-
-
-
-

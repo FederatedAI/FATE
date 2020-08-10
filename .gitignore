@@ -8,6 +8,7 @@ __pycache__
 *.class
 .project
 *.prefs
+_build
 
 # excluded paths
 /arch/core/target/

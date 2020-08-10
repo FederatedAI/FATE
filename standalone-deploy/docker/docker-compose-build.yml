@@ -8,8 +8,9 @@ services:
             - "9360:9360"
 
         volumes:
-            - "/var/lib/fate/log:/fate/logs"
-            - "/var/lib/fate/data:/fate/fate_flow"
+            - "../fate/log:/fate/logs"
+            - "../fate/data:/fate/fate_flow"
+
         command: bash docker-entrypoint.sh
         container_name: fate_python
     fateboard:
@@ -21,8 +22,9 @@ services:
         depends_on:
             - python
         volumes:
-            - "/var/lib/fate/log:/data/projects/fate/python/logs"
-            - "/var/lib/fate/data:/fate/fate_flow"
+            - "../fate/log:/data/projects/fate/python/logs"
+            - "../fate/data:/fate/fate_flow"
+
 
         command: bash docker-entrypoint.sh
         container_name: fate_fateboard

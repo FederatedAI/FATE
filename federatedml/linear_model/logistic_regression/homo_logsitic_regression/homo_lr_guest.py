@@ -26,6 +26,7 @@ from federatedml.model_selection import MiniBatch
 from federatedml.optim.gradient.homo_lr_gradient import LogisticGradient
 from federatedml.util import consts
 from federatedml.util import fate_operator
+from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
 
@@ -55,17 +56,17 @@ class HomoLRGuest(HomoLRBase):
         model_weights = self.model_weights
 
         degree = 0
-        while self.n_iter_ < max_iter:
+        while self.n_iter_ < max_iter + 1:
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
 
             self.optimizer.set_iters(self.n_iter_)
-            if self.n_iter_ > 0 and self.n_iter_ % self.aggregate_iters == 0:
+            if ((self.n_iter_ + 1) % self.aggregate_iters == 0) or self.n_iter_ == max_iter:
                 weight = self.aggregator.aggregate_then_get(model_weights, degree=degree,
                                                             suffix=self.n_iter_)
-                LOGGER.debug("Before aggregate: {}, degree: {} after aggregated: {}".format(
-                    model_weights.unboxed / degree,
-                    degree,
-                    weight.unboxed))
+                # LOGGER.debug("Before aggregate: {}, degree: {} after aggregated: {}".format(
+                #     model_weights.unboxed / degree,
+                #     degree,
+                #     weight.unboxed))
 
                 self.model_weights = LogisticRegressionWeights(weight.unboxed, self.fit_intercept)
                 loss = self._compute_loss(data_instances)
@@ -74,22 +75,22 @@ class HomoLRGuest(HomoLRBase):
 
                 self.is_converged = self.aggregator.get_converge_status(suffix=(self.n_iter_,))
                 LOGGER.info("n_iters: {}, loss: {} converge flag is :{}".format(self.n_iter_, loss, self.is_converged))
-                if self.is_converged:
+                if self.is_converged or self.n_iter_ == max_iter:
                     break
                 model_weights = self.model_weights
 
             batch_num = 0
             for batch_data in batch_data_generator:
                 n = batch_data.count()
-                LOGGER.debug("In each batch, lr_weight: {}, batch_data count: {}".format(model_weights.unboxed, n))
+                # LOGGER.debug("In each batch, lr_weight: {}, batch_data count: {}".format(model_weights.unboxed, n))
                 f = functools.partial(self.gradient_operator.compute_gradient,
                                       coef=model_weights.coef_,
                                       intercept=model_weights.intercept_,
                                       fit_intercept=self.fit_intercept)
                 grad = batch_data.mapPartitions(f).reduce(fate_operator.reduce_add)
                 grad /= n
-                LOGGER.debug('iter: {}, batch_index: {}, grad: {}, n: {}'.format(
-                    self.n_iter_, batch_num, grad, n))
+                # LOGGER.debug('iter: {}, batch_index: {}, grad: {}, n: {}'.format(
+                #     self.n_iter_, batch_num, grad, n))
                 model_weights = self.optimizer.update_model(model_weights, grad, has_applied=False)
                 batch_num += 1
                 degree += n
@@ -97,6 +98,7 @@ class HomoLRGuest(HomoLRBase):
             validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
 
+    @assert_io_num_rows_equal
     def predict(self, data_instances):
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)

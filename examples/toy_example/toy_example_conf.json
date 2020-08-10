@@ -32,7 +32,7 @@
   },
   "algorithm_parameters": {
     "secure_add_example_0": {
-        "partition": 10,
+        "partition": 48,
         "data_num": 1000
     }
   }

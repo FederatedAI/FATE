@@ -20,6 +20,7 @@ from federatedml.tree import Node, SplitInfo
 
 
 class TestNode(unittest.TestCase):
+
     def setUp(self):
         pass
 
@@ -34,6 +35,7 @@ class TestNode(unittest.TestCase):
 
 
 class TestSplitInfo(unittest.TestCase):
+
     def setUp(self):
         pass
 

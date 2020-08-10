@@ -42,6 +42,10 @@ class LogisticGradient(object):
     @staticmethod
     def compute_loss(values, coef, intercept):
         X, Y = load_data(values)
+        batch_size = len(X)
+        if batch_size == 0:
+            LOGGER.warning("This partition got 0 data")
+            return None
         tot_loss = np.log(1 + np.exp(np.multiply(-Y.transpose(), X.dot(coef) + intercept))).sum()
         return tot_loss
 

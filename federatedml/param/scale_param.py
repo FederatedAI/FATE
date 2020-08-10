@@ -35,15 +35,11 @@ class ScaleParam(BaseParam):
         mode: str, the mode support "normal" and "cap". for mode is "normal", the feat_upper and feat_lower is the normal value like "10" or "3.1" and for "cap", feat_upper and
               feature_lower will between 0 and 1, which means the percentile of the column. Default "normal"
 
-        area: str, It supports "all" and "col". For "all", it will scale all data column, and for "col",
-        it just scale ths columns which parameter "cale_column_idx" corresponding to, so "scale_column_idx" will be a list, which including the column idx to be scaled.
-        Default "all"
-
         feat_upper: int or float, the upper limit in the column. If the scaled value is larger than feat_upper, it will be set to feat_upper. Default None.
         feat_lower: int or float, the lower limit in the column. If the scaled value is less than feat_lower, it will be set to feat_lower. Default None.
 
-        scale_column_idx: list, while parameter "area" is "col", the idx of column in scale_column_idx will be scaled, while the idx of column is not in, it will not be scaled.
-
+        scale_col_indexes: list,the idx of column in scale_column_idx will be scaled, while the idx of column is not in, it will not be scaled.
+        scale_names : list of string, default: [].Specify which columns need to scaled. Each element in the list represent for a column name in header.
         with_mean: bool, used for "standard_scale". Default False.
         with_std: bool, used for "standard_scale". Default False.
             The standard scale of column x is calculated as : z = (x - u) / s, where u is the mean of the column and s is the standard deviation of the column.
@@ -54,15 +50,19 @@ class ScaleParam(BaseParam):
 
     """
 
-    def __init__(self, method=None, mode="normal", area="all", scale_column_idx=None, feat_upper=None, feat_lower=None,
+    def __init__(self, method=None, mode="normal", scale_col_indexes=-1, scale_names=None, feat_upper=None, feat_lower=None,
                  with_mean=True, with_std=True, need_run=True):
         super().__init__()
+        if scale_names is None:
+            scale_names = []
+
         self.method = method
         self.mode = mode
-        self.area = area
         self.feat_upper = feat_upper
+        # LOGGER.debug("self.feat_upper:{}, type:{}".format(self.feat_upper, type(self.feat_upper)))
         self.feat_lower = feat_lower
-        self.scale_column_idx = scale_column_idx
+        self.scale_col_indexes = scale_col_indexes
+        self.scale_names = scale_names
 
         self.with_mean = with_mean
         self.with_std = with_std
@@ -80,14 +80,25 @@ class ScaleParam(BaseParam):
         self.mode = self.check_and_change_lower(self.mode,
                                                 [consts.NORMAL, consts.CAP],
                                                 descr)
+        # LOGGER.debug("self.feat_upper:{}, type:{}".format(self.feat_upper, type(self.feat_upper)))
+        # if type(self.feat_upper).__name__ not in ["float", "int"]:
+        #     raise ValueError("scale param's feat_upper {} not supported, should be float or int".format(
+        #         self.feat_upper))
 
-        descr = "scale param's area"
-        self.area = self.check_and_change_lower(self.area,
-                                                [consts.ALL, consts.COL],
-                                                descr)
+
+        if self.scale_col_indexes != -1  and not isinstance(self.scale_col_indexes, list):
+            raise ValueError("scale_col_indexes is should be -1 or a list")
+
+        if not isinstance(self.scale_names, list):
+            raise ValueError("scale_names is should be a list of string")
+        else:
+            for e in self.scale_names:
+                if not isinstance(e, str):
+                    raise ValueError("scale_names is should be a list of string")
 
         self.check_boolean(self.with_mean, "scale_param with_mean")
         self.check_boolean(self.with_std, "scale_param with_std")
+        self.check_boolean(self.need_run, "scale_param need_run")
 
         LOGGER.debug("Finish scale parameter check!")
         return True

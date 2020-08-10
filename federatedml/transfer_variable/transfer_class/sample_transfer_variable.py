@@ -30,4 +30,4 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 class SampleTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.sample_ids = self._create_variable(name='sample_ids')
+        self.sample_ids = self._create_variable(name='sample_ids', src=['guest'], dst=['host'])

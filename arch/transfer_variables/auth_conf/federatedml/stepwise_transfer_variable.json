@@ -1,0 +1,31 @@
+{
+  "StepwiseTransferVariable": {
+    "guest_data_info": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "arbiter",
+        "host"
+      ]
+    },
+    "host_data_info": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "arbiter",
+        "guest"
+      ]
+    },
+    "step_best": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "host",
+        "guest"
+      ]
+    }
+  }
+}
