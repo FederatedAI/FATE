@@ -400,7 +400,7 @@ class MetricInterface(object):
     @staticmethod
     def FowlkesMallowsScore(labels, pred_labels):
         """
-        Compute the Jaccard similarity score
+        Compute the Fowlkes Mallows score
         Parameters
         ----------
         labels: value list. The labels of data set.
@@ -415,7 +415,7 @@ class MetricInterface(object):
     @staticmethod
     def AdjustedRandScore(labels, pred_labels):
         """
-        Compute the Jaccard similarity score
+        Compute the adjusted-rand score
         Parameters
         ----------
         labels: value list. The labels of data set.

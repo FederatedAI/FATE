@@ -22,7 +22,7 @@ from federatedml.unsupervise.kmeans.kmeans_model_base import BaseKmeansModel
 from federatedml.param.hetero_kmeans_param import KmeansParam
 from federatedml.util import consts
 from federatedml.util import fate_operator
-
+from federatedml.framework.homo.blocks import secure_sum_aggregator
 
 LOGGER = log_utils.getLogger()
 
@@ -30,14 +30,15 @@ LOGGER = log_utils.getLogger()
 class HeteroKmeansClient(BaseKmeansModel):
     def __init__(self):
         super(HeteroKmeansClient, self).__init__()
+        self.dist_aggregator = secure_sum_aggregator.Client(enable_secure_aggregate=True)
         self.client_dist = None
         self.client_tol = None
 
     @staticmethod
-    def educl_dist(u, centroid_list, rand):
+    def educl_dist(u, centroid_list):
         result = []
         for c in centroid_list:
-            result.append(sqrt(sum(power(c - u.features, 2))) + rand)
+            result.append(sqrt(power(c - u.features, 2)))
         return result
 
     def get_centroid(self,data_instances):
@@ -76,9 +77,9 @@ class HeteroKmeansClient(BaseKmeansModel):
         self.centroid_list = self.get_centroid(data_instances)
         tol_sum = inf
         while self.n_iter_ < self.max_iter:
-            d = functools.partial(self.educl_dist, centroid_list=self.centroid_list, rand=random.random())
+            d = functools.partial(self.educl_dist, centroid_list=self.centroid_list)
             dist_all = data_instances.mapValues(d)
-            self.client_dist.remote(dist_all, role=consts.ARBITER, idx=0, suffix=(self.n_iter_,))
+            self.dist_aggregator.send_model(dist_all, suffix=(self.n_iter_,))
             cluster_result = self.transfer_variable.cluster_result.get(idx=0, suffix=(self.n_iter_,))
             centroid_new = self.centroid_cal(cluster_result, data_instances, self.centroid_list)
             client_tol = np.sum((self.centroid_list - centroid_new)**2,axis=1)
@@ -93,11 +94,8 @@ class HeteroKmeansClient(BaseKmeansModel):
     def predict(self, data_instances):
         LOGGER.info("Start predict ...")
         dist_list = self.educl_dist(data_instances.features, self.centroid_list)
-        dist_list_host = self.transfer_variable.host_dist_list.get(idx=-1)
-        LOGGER.info("Get distance from Host")
-        for host_pred in dist_list_host:
-            dist_list = dist_list.join(host_pred, lambda g, h: g + h)
-        sample_class = self.centroid_assign(dist_list)
+        self.client_dist.remote(dist_list, role=consts.ARBITER, idx=0)
+        sample_class = self.transfer_variable.cluster_result.get(idx=0)
         predict_result = data_instances.join(sample_class, lambda d, pred: [d.label, pred, pred, {"label": pred}])
         return predict_result
 
