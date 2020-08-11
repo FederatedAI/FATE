@@ -164,6 +164,8 @@ class DAGScheduler(object):
         schedule_logger(job_id=job.f_job_id).info("Job {} status is {}, calculate by task set status list: {}".format(job.f_job_id, new_job_status, task_sets_status))
         if new_job_status != job.f_status:
             job.f_status = new_job_status
+            if EndStatus.contains(job.f_status):
+                FederatedScheduler.save_pipelined_model(job=job)
             FederatedScheduler.sync_job(job=job, update_fields=["status"])
             cls.update_job_on_initiator(initiator_job_template=job, update_fields=["status"])
         if EndStatus.contains(job.f_status):
@@ -200,7 +202,6 @@ class DAGScheduler(object):
     @staticmethod
     def finish(job, end_status):
         schedule_logger(job_id=job.f_job_id).info("Job {} finished with {}, do something...".format(job.f_job_id, end_status))
-        FederatedScheduler.save_pipelined_model(job=job)
         FederatedScheduler.stop_job(job=job, stop_status=end_status)
         FederatedScheduler.clean_job(job=job)
         schedule_logger(job_id=job.f_job_id).info("Job {} finished with {}, done".format(job.f_job_id, end_status))
