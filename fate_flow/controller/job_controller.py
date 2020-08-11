@@ -32,7 +32,7 @@ from fate_flow.utils import job_utils, job_controller_utils
 from fate_flow.utils.job_utils import save_job_conf, get_job_dsl_parser
 import os
 from fate_flow.operation.job_saver import JobSaver
-from arch.api.utils.core_utils import json_dumps
+from arch.api.utils.core_utils import json_dumps, current_timestamp
 from fate_flow.entity.constant import Backend
 from fate_flow.controller.task_set_controller import TaskSetController
 
@@ -164,6 +164,7 @@ class JobController(object):
             "party_id": party_id,
             "status": JobStatus.RUNNING,
             "party_status": JobStatus.RUNNING,
+            "start_time": current_timestamp()
         }
         JobSaver.update_job(job_info=job_info)
 
