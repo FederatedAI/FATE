@@ -98,7 +98,6 @@ class HeteroKmeansClient(BaseKmeansModel):
         for host_pred in dist_list_host:
             dist_list = dist_list.join(host_pred, lambda g, h: g + h)
         sample_class = self.centroid_assign(dist_list)
-        #xiugai
         predict_result = data_instances.join(sample_class, lambda d, pred: [d.label, pred, pred, {"label": pred}])
         return predict_result
 

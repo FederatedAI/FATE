@@ -8,6 +8,7 @@ from arch.api.utils import log_utils
 
 from federatedml.evaluation.metrics import classification_metric
 from federatedml.evaluation.metrics import regression_metric
+from federatedml.evaluation.metrics import clustering_metric
 
 from functools import wraps
 
@@ -381,5 +382,47 @@ class MetricInterface(object):
         else:
             logging.warning('error: pr quantile is for binary classification only')
 
+    @staticmethod
+    def JaccardSimilarityScore(labels, pred_labels):
+        """
+        Compute the Jaccard similarity score
+        Parameters
+        ----------
+        labels: value list. The labels of data set.
+        pred_labels: value list. The predict results of model. It should be corresponding to labels each data.
+        Return
+        ----------
+        float
+            A positive floating point value
+        """
+        return clustering_metric.JaccardSimilarityScore.compute(labels, pred_labels)
 
+    @staticmethod
+    def FowlkesMallowsScore(labels, pred_labels):
+        """
+        Compute the Jaccard similarity score
+        Parameters
+        ----------
+        labels: value list. The labels of data set.
+        pred_labels: value list. The predict results of model. It should be corresponding to labels each data.
+        Return
+        ----------
+        float
+            A positive floating point value
+        """
+        return clustering_metric.FowlkesMallowsScore.compute(labels, pred_labels)
 
+    @staticmethod
+    def AdjustedRandScore(labels, pred_labels):
+        """
+        Compute the Jaccard similarity score
+        Parameters
+        ----------
+        labels: value list. The labels of data set.
+        pred_labels: value list. The predict results of model. It should be corresponding to labels each data.
+        Return
+        ----------
+        float
+            A positive floating point value
+        """
+        return clustering_metric.AdjustedRandScore.compute(labels, pred_labels)

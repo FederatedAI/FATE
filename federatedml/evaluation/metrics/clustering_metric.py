@@ -18,8 +18,8 @@ class JaccardSimilarityScore(object):
     Compute jaccard_similarity_score
     """
 
-    def compute(self, labels, pred_scores, normalize=True):
-        return jaccard_similarity_score(labels, pred_scores, normalize)
+    def compute(self, labels, pred_scores):
+        return jaccard_similarity_score(labels, pred_scores)
 
 
 class FowlkesMallowsScore(object):
@@ -27,14 +27,16 @@ class FowlkesMallowsScore(object):
     Compute fowlkes_mallows_score, as in FMI
     """
 
-    def compute(self, labels, pred_scores, normalize=True):
-        return fowlkes_mallows_score(labels, pred_scores, normalize)
+    def compute(self, labels, pred_scores):
+        return fowlkes_mallows_score(labels, pred_scores)
 
 
 class AdjustedRandScore(object):
     """
-    Compute adjusted_rand_score
+    Compute adjusted_rand_score，as in RI
     """
 
-    def compute(self, labels, pred_scores, normalize=True):
-        return adjusted_rand_score(labels, pred_scores, normalize)
+    def compute(self, labels, pred_scores):
+        return adjusted_rand_score(labels, pred_scores)
+
+
