@@ -529,10 +529,23 @@ class HeteroDecisionTreeGuest(DecisionTree):
                                                                      unleaf_state_nodeid1) == 2 else unleaf_state_nodeid2)
         self.node_dispatch = self.node_dispatch.union(dispatch_guest_result)
 
+    def remove_sensitive_info(self):
+        """
+        host is not allowed to get weights/g/h
+        """
+        new_tree_ = copy.deepcopy(self.tree_)
+        for node in new_tree_:
+            node.weight = None
+            node.sum_grad = None
+            node.sum_hess = None
+
+        return new_tree_
+
     def sync_tree(self):
         LOGGER.info("sync tree to host")
 
-        self.transfer_inst.tree.remote(self.tree_,
+        tree_nodes = self.remove_sensitive_info()
+        self.transfer_inst.tree.remote(tree_nodes,
                                        role=consts.HOST,
                                        idx=-1)
         """
