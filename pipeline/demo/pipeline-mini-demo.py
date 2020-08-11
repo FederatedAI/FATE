@@ -5,8 +5,8 @@ import yaml
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
 from pipeline.component.hetero_lr import HeteroLR
-from pipeline.component.input import Input
 from pipeline.component.intersection import Intersection
+from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
 from pipeline.interface.model import Model
 
@@ -21,6 +21,7 @@ def main():
                         help="config file")
     args = parser.parse_args()
     file = args.config
+    # obtain config
     with open(file, "r") as f:
         conf = yaml.load(f, Loader=Loader)
         host = conf["host"][0]
@@ -29,11 +30,12 @@ def main():
         backend = conf["backend"][0]
         work_mode = conf["work_mode"][0]
 
+    # specify input data name & namespace in database
     guest_train_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
     host_train_data = {"name": "breast_hetero_host", "namespace": "experiment"}
 
-    input_0 = Input(name="train_data")
-    input_1 = Input(name="validate_data")
+    guest_eval_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
+    host_eval_data = {"name": "breast_hetero_host", "namespace": "experiment"}
 
     # initialize pipeline
     pipeline = PipeLine()
@@ -41,6 +43,17 @@ def main():
     pipeline.set_initiator(role='guest', party_id=guest)
     # set participants information
     pipeline.set_roles(guest=guest, host=host, arbiter=arbiter)
+
+    # define Reader components to read in data
+    reader_0 = Reader(name="reader_0")
+    # configure Reader for guest
+    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
+    # configure Reader for host
+    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
+
+    reader_1 = Reader(name="reader_1")
+    reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_eval_data)
+    reader_1.get_party_instance(role='host', party_id=host).algorithm_param(table=host_eval_data)
 
     # define DataIO components
     dataio_0 = DataIO(name="dataio_0") # start component numbering at 0
@@ -53,9 +66,6 @@ def main():
     # get and configure DataIO party instance of host
     dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
 
-    #dataio_1.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense")
-    #dataio_1.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
-
     # define Intersection components
     intersection_0 = Intersection(name="intersection_0")
     intersection_1 = Intersection(name="intersection_1")
@@ -65,9 +75,10 @@ def main():
                            early_stopping_rounds=2, validation_freqs=2)
 
     # add components to pipeline, in order of task execution
-    pipeline.add_component(dataio_0, data=Data(data=input_0.data))
+    pipeline.add_component(reader_0)
+    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     # set dataio_1 to replicate model from dataio_0
-    pipeline.add_component(dataio_1, data=Data(data=input_1.data), model=Model(dataio_0.output.model_output))
+    pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data), model=Model(dataio_0.output.model_output))
     # set data input sources of intersection components
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
     pipeline.add_component(intersection_1, data=Data(data=dataio_1.output.data))
@@ -78,41 +89,14 @@ def main():
     pipeline.compile()
 
     # fit model
-    pipeline.fit(backend=backend, work_mode=work_mode,
-                 feed_dict={input_0:
-                               {"guest": {guest: guest_train_data},
-                                "host": {
-                                  host: host_train_data
-                                 }
-                                },
-                            input_1:
-                               {"guest": {guest: guest_train_data},
-                                "host": {
-                                  host: host_train_data
-                                 }
-                                }
-
-                           })
+    pipeline.fit(backend=backend, work_mode=work_mode)
 
     print (pipeline.get_component("hetero_lr_0").get_summary())
 
 
     # predict with result model of this pipeline
 
-    pipeline.predict(backend=backend, work_mode=work_mode,
-                     feed_dict={input_0:
-                                    {"guest": {
-                                        guest: guest_train_data},
-                                     "host": {
-                                         host: host_train_data}
-                                    },
-                                input_1:
-                                     {"guest": {
-                                         guest: guest_train_data},
-                                      "host": {
-                                         host: host_train_data}
-                                     }
-                                 })
+    pipeline.predict(backend=backend, work_mode=work_mode)
 
 
 if __name__ == "__main__":
