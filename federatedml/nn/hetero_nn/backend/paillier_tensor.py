@@ -34,7 +34,7 @@ class PaillierTensor(object):
                                             partition=partitions)
         else:
             self._ori_data = None
-            self._partitions = tb_obj._partitions
+            self._partitions = tb_obj.partitions
             self._obj = tb_obj
 
         LOGGER.debug("tensor's partition is {}".format(self._partitions))
