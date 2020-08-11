@@ -108,7 +108,7 @@ class ModelBase(object):
             # LOGGER.debug("One data: {}".format(self.data_output.first()[1].features))
         LOGGER.debug("saved_result is : {}, data_output: {}".format(saved_result, self.data_output))
         self.check_consistency()
-        # self.save_summary()
+        self.save_summary()
 
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary",
