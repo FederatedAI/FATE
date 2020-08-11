@@ -71,7 +71,7 @@ class HeteroNNBase(ModelBase):
         self.predict_param = hetero_nn_param.predict_param
         self.hetero_nn_param = hetero_nn_param
 
-        self.batch_generator.register_batch_generator(self.transfer_variable)
+        self.batch_generator.register_batch_generator(self.transfer_variable, has_arbiter=False)
 
     def reset_flowid(self):
         new_flowid = ".".join([self.flowid, "evaluate"])
