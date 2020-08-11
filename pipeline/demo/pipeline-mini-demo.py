@@ -1,4 +1,6 @@
-import argparse
+#import argparse
+
+import sys
 
 import yaml
 
@@ -15,14 +17,16 @@ try:
 except ImportError:
     from yaml import Loader, Dumper
 
-def main():
+def main(config="./config.yaml"):
+    """
     parser = argparse.ArgumentParser("PIPELINE DEMO")
     parser.add_argument("-config", default="./config.yaml", type=str,
                         help="config file")
     args = parser.parse_args()
     file = args.config
+    """
     # obtain config
-    with open(file, "r") as f:
+    with open(config, "r") as f:
         conf = yaml.load(f, Loader=Loader)
         host = conf["host"][0]
         guest = conf["guest"][0]
@@ -115,4 +119,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1])

@@ -1,4 +1,6 @@
 import argparse
+import importlib
+import tempfile
 import time
 from pathlib import Path
 
@@ -24,11 +26,10 @@ def main():
     parser.add_argument("-exclude", nargs="+", type=str)
     args = parser.parse_args()
 
-    conf = load_conf(args)
-    new_config = _write_temp_conf(conf)
-
+    # find all demos
     path = Path(args.path)
     paths = _find_demo_files(path)
+
     # exclude demos
     if args.exclude is not None:
         exclude_paths = set()
@@ -37,28 +38,29 @@ def main():
         paths = [p for p in paths if p not in exclude_paths]
 
     # run demos
-    summaries = run_demos(paths, new_config, summaries_base=Path(args.name).resolve())
-
+    conf = load_conf(args)
+    summaries = run_demos(paths, conf, summaries_base=Path(args.name).resolve())
 
 def load_conf(args):
     file = args.config
     with open(file, "r") as f:
         conf = yaml.load(f, Loader=Loader)
-    if args.back_end is not None:
+    if args.backend is not None:
         conf["backend"] = args.back_end
     if args.work_mode is not None:
         conf["work_mode"] = args.work_mode
     return conf
 
+"""
 def _write_temp_conf(conf):
-
-    # @TODO: write all config to temp file, then input temp file path to all demo
-    # @TODO: record temp config in summaries text
-    pass
+    temp_config = tempfile.NamedTemporaryFile("rw", suffix='.yaml', delete=False)
+    with temp_config as f:
+        yaml.dump(conf, f, default_flow_style=False)
+    return temp_config.name
 
 def _clean_temp_conf(config):
-    # @TODO: clean up temp config
     pass
+"""
 
 def _find_demo_files(path):
     if path.is_file():
@@ -68,13 +70,19 @@ def _find_demo_files(path):
             LOGGER.warning(f"{path} is file, but does not start with `pipeline-` or is not a python file, skip")
             paths = []
     else:
-        #@TODO: group demos by directory, if possible
-        paths = path.glob(f"**/pipeline-*.py")
+        # in future: group demos by directory
+        paths = path.glob("**/pipeline-*.py")
     return [p.resolve() for p in paths]
 
-def run_demos(demos, config, summaries_base):
-    #@TODO: run all demos with new specified config
-    pass
+def run_demos(demos, conf, summaries_base):
+    temp_config = tempfile.NamedTemporaryFile("rw", suffix='.yaml')
+    with temp_config as f:
+        yaml.dump(conf, f, default_flow_style=False)
+        for demo in demos:
+            demo_module_path = ".".join(demo.split("/", -1)[:-1]).replace(".py", "")
+            demo_module = importlib.import_module(demo_module_path)
+            demo_module.main(temp_config)
+
 
 if __name__ == "__main__":
     main()
