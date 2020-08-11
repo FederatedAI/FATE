@@ -63,7 +63,7 @@ class Component(object):
             elif not isinstance(party_id, int) or party_id <= 0:
                 raise ValueError("party id should be positive integer")
 
-        if role not in self.__instance:
+        if role not in self.__party_instance:
             self.__party_instance[role] = {}
             self.__party_instance[role]["party"] = {}
 
@@ -182,39 +182,6 @@ class Component(object):
         role_param_conf = {}
 
         if not self.__party_instance:
-            return role_param_conf
-
-        # print (self.__party_instance)
-
-        if VERSION == 1:
-            for role in roles:
-                if role not in self.__party_instance:
-                    continue
-
-                role_instances = self.__party_instance[role]["party"]
-                party_ids = roles[role]
-                role_params = {}
-                if None in role_instances:
-                    params = role_instances[None].get_algorithm_param()
-                    role_params = self.recursive_construct_role_parameters_v1(params, all_party_ids=party_ids)
-
-                for party_id in role_instances:
-                    params = role_instances[party_id].get_algorithm_param()
-                    if not isinstance(party_id, int):
-                        partys = list(map(int, party_id.split("|", -1)))
-                    else:
-                        partys = [party_id]
-
-                    print ("find role {}, partyid {}, all_partys {}".format(role, partys, party_ids))
-                    print (params)
-                    role_params.update(self.recursive_construct_role_parameters_v1(params, partys, party_ids))
-                    print ("flattern ", self.recursive_construct_role_parameters_v1(params, partys, party_ids))
-
-                role_param_conf[role] = {self.name: self.flattern_role_parameters_v1(role_params)}
-
-                print ("get output : ", role, role_params)
-
-            print ("version 1", role_param_conf)
             return role_param_conf
 
         for role in self.__party_instance:
