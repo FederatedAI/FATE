@@ -1,3 +1,3 @@
-from fate_arch.storage._type import StorageType
+from fate_arch.storage._type import StorageEngine
 
-__all__ = ['StorageType']
+__all__ = ['StorageEngine']

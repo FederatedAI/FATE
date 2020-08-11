@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class StorageType(Enum):
+class StorageEngine(Enum):
     EGGROLL = 'EGGROLL'
     HDFS = 'HDFS'
     STANDALONE = 'STANDALONE'

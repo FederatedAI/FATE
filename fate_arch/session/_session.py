@@ -5,8 +5,8 @@ import uuid
 from fate_arch.abc import CSessionABC, FederationABC
 from fate_arch.common import Backend, WorkMode
 from fate_arch.common.file_utils import load_json_conf
-from fate_arch.computing import ComputingType
-from fate_arch.federation import FederationType
+from fate_arch.computing import ComputingEngine
+from fate_arch.federation import FederationEngine
 from fate_arch.session._parties import PartiesInfo
 from fate_arch.storage import StorageType
 
@@ -23,14 +23,14 @@ class Session(object):
 
         if backend == Backend.EGGROLL:
             if work_mode == WorkMode.CLUSTER:
-                return Session(ComputingType.EGGROLL, FederationType.EGGROLL, StorageType.EGGROLL)
+                return Session(ComputingEngine.EGGROLL, FederationEngine.EGGROLL, StorageType.EGGROLL)
             else:
-                return Session(ComputingType.STANDALONE, FederationType.STANDALONE, StorageType.STANDALONE)
+                return Session(ComputingEngine.STANDALONE, FederationEngine.STANDALONE, StorageType.STANDALONE)
         if backend == Backend.SPARK:
-            return Session(ComputingType.SPARK, FederationType.MQ, StorageType.HDFS)
+            return Session(ComputingEngine.SPARK, FederationEngine.MQ, StorageType.HDFS)
 
-    def __init__(self, computing_type: ComputingType,
-                 federation_type: FederationType,
+    def __init__(self, computing_type: ComputingEngine,
+                 federation_type: FederationEngine,
                  storage_type: StorageType):
         self._computing_type = computing_type
         self._federation_type = federation_type
@@ -72,7 +72,7 @@ class Session(object):
         if self.is_computing_valid:
             raise RuntimeError(f"computing session already valid")
 
-        if self._computing_type == ComputingType.EGGROLL:
+        if self._computing_type == ComputingEngine.EGGROLL:
             from fate_arch.computing.eggroll import CSession
             work_mode = kwargs.get("work_mode", 1)
             options = kwargs.get("options", {})
@@ -81,16 +81,16 @@ class Session(object):
                                                options=options)
             return self
 
-        if self._computing_type == ComputingType.SPARK:
+        if self._computing_type == ComputingEngine.SPARK:
             from fate_arch.computing.spark import CSession
             self._computing_session = CSession(session_id=computing_session_id)
-            self._computing_type = ComputingType.SPARK
+            self._computing_type = ComputingEngine.SPARK
             return self
 
-        if self._computing_type == ComputingType.STANDALONE:
+        if self._computing_type == ComputingEngine.STANDALONE:
             from fate_arch.computing.standalone import CSession
             self._computing_session = CSession(session_id=computing_session_id)
-            self._computing_type = ComputingType.STANDALONE
+            self._computing_type = ComputingEngine.STANDALONE
             return self
 
         raise RuntimeError(f"{self._computing_type} not supported")
@@ -114,13 +114,13 @@ class Session(object):
         if self.is_federation_valid:
             raise RuntimeError("federation session already valid")
 
-        if self._federation_type == FederationType.EGGROLL:
+        if self._federation_type == FederationEngine.EGGROLL:
             from fate_arch.computing.eggroll import CSession
             from fate_arch.federation.eggroll import Federation
             from fate_arch.federation.eggroll import Proxy
 
             if not self.is_computing_valid or not isinstance(self._computing_session, CSession):
-                raise RuntimeError(f"require computing with type {ComputingType.EGGROLL} valid")
+                raise RuntimeError(f"require computing with type {ComputingEngine.EGGROLL} valid")
 
             proxy = Proxy.from_conf(server_conf)
             self._federation_session = Federation(rp_ctx=self._computing_session.get_rpc(),
@@ -129,12 +129,12 @@ class Session(object):
                                                   proxy=proxy)
             return self
 
-        if self._federation_type == FederationType.MQ:
+        if self._federation_type == FederationEngine.MQ:
             from fate_arch.computing.spark import CSession
             from fate_arch.federation.spark import Federation
 
             if not self.is_computing_valid or not isinstance(self._computing_session, CSession):
-                raise RuntimeError(f"require computing with type {ComputingType.SPARK} valid")
+                raise RuntimeError(f"require computing with type {ComputingEngine.SPARK} valid")
 
             self._federation_session = Federation.from_conf(federation_session_id=federation_session_id,
                                                             party=parties_info.local_party,
@@ -142,12 +142,12 @@ class Session(object):
                                                             server_conf=server_conf)
             return self
 
-        if self._federation_type == FederationType.STANDALONE:
+        if self._federation_type == FederationEngine.STANDALONE:
             from fate_arch.computing.standalone import CSession
             from fate_arch.federation.standalone import Federation
 
             if not self.is_computing_valid or not isinstance(self._computing_session, CSession):
-                raise RuntimeError(f"require computing with type {ComputingType.STANDALONE} valid")
+                raise RuntimeError(f"require computing with type {ComputingEngine.STANDALONE} valid")
 
             self._federation_session = \
                 Federation(standalone_session=self._computing_session.get_standalone_session(),
@@ -157,7 +157,7 @@ class Session(object):
 
         raise RuntimeError(f"{self._federation_type} not supported")
 
-    def init_storage(self, storage_type: StorageType = FederationType.EGGROLL):
+    def init_storage(self, storage_type: StorageType = FederationEngine.EGGROLL):
         pass
 
     @property
