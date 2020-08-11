@@ -8,7 +8,7 @@ from fate_arch.common.file_utils import load_json_conf
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 from fate_arch.session._parties import PartiesInfo
-from fate_arch.storage import StorageType
+from fate_arch.storage import StorageEngine
 
 
 class Session(object):
@@ -23,15 +23,15 @@ class Session(object):
 
         if backend == Backend.EGGROLL:
             if work_mode == WorkMode.CLUSTER:
-                return Session(ComputingEngine.EGGROLL, FederationEngine.EGGROLL, StorageType.EGGROLL)
+                return Session(ComputingEngine.EGGROLL, FederationEngine.EGGROLL, StorageEngine.EGGROLL)
             else:
-                return Session(ComputingEngine.STANDALONE, FederationEngine.STANDALONE, StorageType.STANDALONE)
+                return Session(ComputingEngine.STANDALONE, FederationEngine.STANDALONE, StorageEngine.STANDALONE)
         if backend == Backend.SPARK:
-            return Session(ComputingEngine.SPARK, FederationEngine.MQ, StorageType.HDFS)
+            return Session(ComputingEngine.SPARK, FederationEngine.MQ, StorageEngine.HDFS)
 
     def __init__(self, computing_type: ComputingEngine,
                  federation_type: FederationEngine,
-                 storage_type: StorageType):
+                 storage_type: StorageEngine):
         self._computing_type = computing_type
         self._federation_type = federation_type
         self._storage_type = storage_type
@@ -157,7 +157,7 @@ class Session(object):
 
         raise RuntimeError(f"{self._federation_type} not supported")
 
-    def init_storage(self, storage_type: StorageType = FederationEngine.EGGROLL):
+    def init_storage(self, storage_type: StorageEngine = FederationEngine.EGGROLL):
         pass
 
     @property
