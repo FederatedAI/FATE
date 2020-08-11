@@ -132,15 +132,6 @@ pipeline.compile()
 pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE)
 ```
 
-## Predict with Pipeline
-
-Once pipeline completes fit, prediction can be run on new data set. 
-```python
-pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE)
-```
-
-In addition, since pipeline is modular, new components can be added to the original pipeline when running prediction. 
-
 ## Query on Tasks
 
 FATE Pipeline also provides API to query component information, including data, model, and metrics.
@@ -150,15 +141,32 @@ All query API have matching name to [FlowPy](../fate_flow/doc), while Pipeline r
 summary = pipeline.get_component("hetero_lr_0").get_summary()
 ```
 
-## Deployment 
+## Deploy Components 
 
-After fitting a pipeline, user may deploy the result model to online service. 
-First mark component to be deployed, then deploy the component:
+Once fitting pipeline completes, prediction can be run on new data set. 
+Before prediction, necessary components need to be first deployed. 
+This step marks components that are used by prediction pipeline.
 
 ```python
-pipeline.set_deploy_end_component([dataio_0])
-pipeline.deploy_component([dataio_0])
+pipeline.deploy_component([dataio_0, hetero_lr_0])
 ```
+
+## Predict with Pipeline
+
+First, initiate a new pipeline, then specify data source used for prediction.
+```python
+predict_pipeline = PipeLine()
+predict_pipeline.add_component(reader_0)
+predict_pipeline.add_component(pipeline, data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
+```
+
+Prediction can then be initiated on the new pipeline.
+```python
+predict_pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE)
+```
+
+In addition, since pipeline is modular, new components can be added to the original pipeline when running prediction. 
+
 
 ## Pipeline vs. CLI 
 

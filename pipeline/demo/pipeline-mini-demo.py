@@ -94,8 +94,24 @@ def main():
     print (pipeline.get_component("hetero_lr_0").get_summary())
 
 
-    # predict with result model of this pipeline
-    pipeline.predict(backend=backend, work_mode=work_mode)
+    # predict
+    # deploy required components
+    pipeline.deploy_component([dataio_0, hetero_lr_0])
+
+    # initiate predict pipeline
+    predict_pipeline = PipeLine()
+
+    reader_0 = Reader(name="reader_0")
+    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_eval_data)
+    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_eval_data)
+    # add data reader onto predict pipeline
+    predict_pipeline.add_component(reader_0)
+    # add selected components from train pipeline onto predict pipeline
+    # specify data source
+    predict_pipeline.add_component(pipeline,
+                                   data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
+    # run predict model
+    predict_pipeline.predict(backend=backend, work_mode=work_mode)
 
 
 if __name__ == "__main__":

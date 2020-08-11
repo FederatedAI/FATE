@@ -49,10 +49,17 @@ print (pipeline.get_component("hetero_poisson_0").get_summary())
 print (pipeline.get_component("evaluation_0").get_summary())
 
 
-
 # predict
+# deploy required components
+pipeline.deploy_component([dataio_0, hetero_poisson_0])
 
-pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE)
+predict_pipeline = PipeLine()
+# add data reader onto predict pipeline
+predict_pipeline.add_component(reader_0)
+# add selected components from train pipeline onto predict pipeline
+# specify data source
+predict_pipeline.add_component(pipeline,
+                               data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
+# run predict model
+predict_pipeline.predict(backend=backend, work_mode=work_mode)
 
-with open("output.pkl", "wb") as fout:
-    fout.write(pipeline.dump())
