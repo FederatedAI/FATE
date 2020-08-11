@@ -1,3 +1,9 @@
+# Release 1.4.3
+## Major Features and Improvements
+> FederatedML
+* Fix bug of Hetero SecureBoost of sending tree weight info from guest to host.
+
+
 # Release 1.4.2
 ## Major Features and Improvements
 > FederatedML
