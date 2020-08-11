@@ -248,7 +248,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
                                                          partition=self.data_bin.partitions)
 
         best_splitinfo_table = splitinfo_guest_host_table.mapValues(self.find_best_split_guest_and_host)
-        best_splitinfos = [best_splitinfo[1] for best_splitinfo in best_splitinfo_table.collect()]
+
+        best_splitinfos = [None for i in range(len(merge_infos))]
+        for _, best_splitinfo in best_splitinfo_table.collect():
+            best_splitinfos[_] = best_splitinfo
 
         return best_splitinfos
 
