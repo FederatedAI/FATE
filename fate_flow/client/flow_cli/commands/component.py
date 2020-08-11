@@ -14,6 +14,9 @@
 #  limitations under the License.
 #
 import os
+import requests
+from datetime import datetime
+
 import click
 from contextlib import closing
 from fate_flow.client.flow_cli.utils import cli_args
@@ -218,8 +221,7 @@ def output_data_table(ctx, **kwargs):
 @cli_args.ROLE_REQUIRED
 @cli_args.PARTYID_REQUIRED
 @cli_args.COMPONENT_NAME_REQUIRED
-@click.option("-o", "--output-path", type=click.Path(exists=False),
-              help="User specifies output directory path.")
+@cli_args.OUTPUT_PATH
 @click.pass_context
 def download_summary(ctx, **kwargs):
     """
@@ -229,8 +231,35 @@ def download_summary(ctx, **kwargs):
 
     \b
     - USAGE:
-        flow component download-summary -j $JOB_ID -r host -p 10000 -cpn hetero_feature_binning_0 -o ./examples/summary.json
+        flow component download-summary -j $JOB_ID -r host -p 10000 -cpn hetero_feature_binning_0
+        flow component download-summary -j $JOB_ID -r host -p 10000 -cpn hetero_feature_binning_0 -o ./examples/
     """
     config_data, dsl_data = preprocess(**kwargs)
-    config_data['output_path'] = check_abs_path(kwargs.get('output_path'))
-    access_server('post', ctx, 'tracking/component/summary/download', config_data)
+    if config_data.get("output_path"):
+        if not os.path.isdir(config_data.get("output_path")):
+            response = {
+                "retcode": 100,
+                "retmsg": "Please input a valid directory path."
+            }
+        else:
+            config_data["filename"] = "summary_{}_{}.json".format(config_data['component_name'],
+                                                                  datetime.now().strftime('%Y%m%d%H%M%S'))
+            config_data["output_path"] = os.path.join(check_abs_path(config_data["output_path"]), config_data["filename"])
+            with closing(access_server("post", ctx, "tracking/component/summary/download",
+                                       config_data, False, stream=True)) as response:
+                if response.status_code == 200:
+                    with open(config_data["output_path"], "wb") as fout:
+                        for chunk in response.iter_content(1024):
+                            if chunk:
+                                fout.write(chunk)
+                    response = {
+                        "retcode": 0,
+                        "retmsg": "The summary of component <{}> has been stored successfully. "
+                                  "File path is: {}.".format(config_data["component_name"],
+                                                             config_data["output_path"])
+                    }
+                else:
+                    response = response.json()
+        prettify(response.json() if isinstance(response, requests.models.Response) else response)
+    else:
+        access_server("post", ctx, "tracking/component/summary/download", config_data)
