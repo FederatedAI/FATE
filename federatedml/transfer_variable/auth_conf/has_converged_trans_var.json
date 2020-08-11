@@ -1,0 +1,13 @@
+{
+  "federatedml.framework.homo.blocks.has_converged.HasConvergedTransVar": {
+    "has_converged": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest",
+        "host"
+      ]
+    }
+  }
+}

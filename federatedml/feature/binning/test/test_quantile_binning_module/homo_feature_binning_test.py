@@ -20,8 +20,9 @@ import argparse
 
 import numpy as np
 
-from arch.api import federation
 from arch.api import session
+from fate_arch.computing import ComputingType
+from fate_arch.session import Session
 from federatedml.feature.homo_feature_binning import homo_split_points
 from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
@@ -75,7 +76,7 @@ class TestHomoFeatureBinning():
         result = session.parallelize(data, include_key=True, partition=partition)
         result.schema = {'header': header}
         self.table_list.append(result)
-        return result       
+        return result
 
     def test_homo_split_points(self, is_sparse=False):
         # binning_obj = HomoSplitPointCalculator(role=self.role)
@@ -156,24 +157,26 @@ if __name__ == '__main__':
     own_party_id = args.pid
     role = args.role
     print("args: {}".format(args))
-    session.init(job_id)
-    federation.init(job_id,
-                    {"local": {
-                        "role": role,
-                        "party_id": own_party_id
-                    },
-                        "role": {
-                            "host": [str(x) for x in host_id_list],
-                            "guest": [
-                                '9999'
-                            ],
-                            "arbiter": ['9998']
-                        }
-                    })
 
-    test_obj = TestHomoFeatureBinning(role, own_party_id)
-    # homo_obj.test_homo_lr()
-    test_obj.test_query_quantiles()
-    # test_obj.test_homo_split_points()
-    # test_obj.test_homo_split_points(is_sparse=True)
-    test_obj.tearDown()
+    with Session() as session:
+        session.init_computing(job_id, computing_type=ComputingType.STANDALONE)
+        session.init_federation(job_id,
+                                runtime_conf={"local": {
+                                    "role": role,
+                                    "party_id": own_party_id
+                                },
+                                    "role": {
+                                        "host": [str(x) for x in host_id_list],
+                                        "guest": [
+                                            '9999'
+                                        ],
+                                        "arbiter": ['9998']
+                                    }
+                                })
+
+        test_obj = TestHomoFeatureBinning(role, own_party_id)
+        # homo_obj.test_homo_lr()
+        test_obj.test_query_quantiles()
+        # test_obj.test_homo_split_points()
+        # test_obj.test_homo_split_points(is_sparse=True)
+        test_obj.tearDown()

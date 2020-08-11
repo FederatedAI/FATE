@@ -23,7 +23,7 @@ import redis
 from fate_flow.db.db_models import DB, Job, Queue
 
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.entity.constant_config import WorkMode
+from fate_flow.entity.constant import WorkMode
 from fate_flow.settings import stat_logger, RE_ENTRY_QUEUE_MAX
 
 

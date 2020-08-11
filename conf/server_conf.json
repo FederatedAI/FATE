@@ -1,0 +1,46 @@
+{
+	"servers": {
+		"roll": {
+			"host": "localhost",
+			"port": 8011
+		},
+		"federation": {
+			"host": "localhost",
+			"port": 9394
+		},
+		"fateflow": {
+			"host": "localhost",
+			"grpc.port": 9360,
+			"http.port": 9380
+		},
+		"fateboard": {
+			"host": "localhost",
+			"port": 8080
+		},
+		"proxy": {
+			"host": "localhost",
+			"port": 9370
+		},
+		"fatemanager": {
+			"host": "localhost",
+			"port": 8001,
+			"federatedId": 0
+		},
+		"servings": [
+			"127.0.0.1:8000"
+		],
+		"rabbitmq": {
+			"self": {
+				"9999": "192.168.1.3",
+				"mng_port": 12345,
+				"port": 5672,
+				"user": "fate",
+				"password": "fate"
+			},
+			"10000": {
+				"host": "192.168.1.2",
+				"port": 5672
+			}
+		}
+	}
+}

@@ -15,13 +15,15 @@
 #
 from setuptools import setup, find_packages
 
+excluded_packages = ["docs"]
+
 setup(
     name='flow-client',
     version='0.1',
-    packages=find_packages(),
+    packages=find_packages(exclude=excluded_packages),
     include_package_data=True,
-    install_requires=['Click', 'six', 'ruamel.yaml', 'cachetools',
-                      'python-dotenv', 'kazoo', 'requests', 'requests_toolbelt'],
+    install_requires=['requests_toolbelt', 'requests', 'Click', 'six',
+                      'ruamel.yaml', 'cachetools', 'python-dotenv', 'kazoo'],
     entry_points='''
         [console_scripts]
         flow=fate_flow.client.flow:flow_cli

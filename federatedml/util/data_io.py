@@ -71,8 +71,8 @@ class DenseFeatureReader(object):
         self.exclusive_data_type_fid_map = {}
 
     def generate_header(self, input_data, mode="fit"):
-        header = input_data.get_meta("header")
-        sid_name = input_data.get_meta("sid")
+        header = input_data.schema["header"]
+        sid_name = input_data.schema["sid"]
         LOGGER.debug("header is {}".format(header))
         LOGGER.debug("sid_name is {}".format(sid_name))
 
