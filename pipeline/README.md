@@ -153,6 +153,12 @@ summary = pipeline.get_component("hetero_lr_0").get_summary()
 ## Deployment 
 
 After fitting a pipeline, user may deploy the result model to online service. 
+First mark component to be deployed, then deploy the component:
+
+```python
+pipeline.set_deploy_end_component([dataio_0])
+pipeline.deploy_component([dataio_0])
+```
 
 ## Pipeline vs. CLI 
 

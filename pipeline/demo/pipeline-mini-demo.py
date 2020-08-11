@@ -90,12 +90,11 @@ def main():
 
     # fit model
     pipeline.fit(backend=backend, work_mode=work_mode)
-
+    # query component summary
     print (pipeline.get_component("hetero_lr_0").get_summary())
 
 
     # predict with result model of this pipeline
-
     pipeline.predict(backend=backend, work_mode=work_mode)
 
 
