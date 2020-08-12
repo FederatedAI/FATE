@@ -20,7 +20,6 @@
         "params": [1.5]
     },
     "predict_param": {
-        "with_proba": true,
         "threshold": 0.5
     }
 }
