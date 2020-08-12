@@ -1,3 +1,19 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+
 import argparse
 import importlib
 import tempfile
@@ -51,17 +67,6 @@ def load_conf(args):
         conf["work_mode"] = args.work_mode
     return conf
 
-"""
-def _write_temp_conf(conf):
-    temp_config = tempfile.NamedTemporaryFile("rw", suffix='.yaml', delete=False)
-    with temp_config as f:
-        yaml.dump(conf, f, default_flow_style=False)
-    return temp_config.name
-
-def _clean_temp_conf(config):
-    pass
-"""
-
 def _find_demo_files(path):
     if path.is_file():
         if path.name.startswith("pipeline-") and path.name.endswith(".py"):
@@ -75,13 +80,16 @@ def _find_demo_files(path):
     return [p.resolve() for p in paths]
 
 def run_demos(demos, conf, summaries_base):
-    temp_config = tempfile.NamedTemporaryFile("rw", suffix='.yaml')
+    temp_config = tempfile.NamedTemporaryFile('w', suffix='.yaml')
     with temp_config as f:
         yaml.dump(conf, f, default_flow_style=False)
         for demo in demos:
-            demo_module_path = ".".join(demo.split("/", -1)[:-1]).replace(".py", "")
-            demo_module = importlib.import_module(demo_module_path)
-            demo_module.main(temp_config)
+            module_name = str(demo).split("/", -1)[-1].split(".")[0]
+            loader = importlib.machinery.SourceFileLoader(module_name, str(demo))
+            spec = importlib.util.spec_from_loader(loader.name, loader)
+            demo_module = importlib.util.module_from_spec(spec)
+            loader.exec_module(demo_module)
+            demo_module.main(temp_config.name)
 
 
 if __name__ == "__main__":
