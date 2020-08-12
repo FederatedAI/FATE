@@ -8,7 +8,7 @@ Run the [mini demo](./demo/pipeline-mini-demo.py) to have a taste of how FATE Pi
 Default values of party ids and work mode in [config file](./demo/config.yaml) may need to be modified depending on setting.
 
 ```bash
-python pipeline-mini-demo.py
+python pipeline-mini-demo.py config.yaml
 ```
 
 For more pipeline demo, please refer to [demos](./demo).
