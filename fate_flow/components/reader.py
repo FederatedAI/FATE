@@ -75,7 +75,9 @@ class Reader(object):
             table_info[data[0]] = ','.join(list(set(data[1:]))[:5])
         data_info = {
             "table_name": self.parameters[table_key]['name'],
-            "table_info": table_info
+            "table_info": table_info,
+            "partitions": data_table.get_partitions(),
+            "storage_engine": data_table.get_storage_engine()
         }
         self.tracker.set_metric_meta(metric_namespace="reader_namespace",
                                      metric_name="reader_name",
