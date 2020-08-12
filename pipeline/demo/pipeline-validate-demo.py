@@ -90,6 +90,8 @@ def main(config="./config.yaml"):
 
 
     # predict
+    pipeline.deploy_component([dataio_0, hetero_lr_0])
+
     predict_pipeline = PipeLine()
 
     predict_pipeline.add_component(reader_0)
