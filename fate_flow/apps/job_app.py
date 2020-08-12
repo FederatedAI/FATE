@@ -17,20 +17,21 @@ import io
 import os
 import json
 import tarfile
-from datetime import datetime
 
 from flask import Flask, request, send_file
 
-from arch.api.utils.core_utils import json_loads
-from fate_flow.driver.job_controller import JobController
-from fate_flow.driver.task_scheduler import TaskScheduler
-from fate_flow.manager import data_manager
-from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT
+import fate_flow.utils.clean_utils
+from arch.api.utils.core_utils import json_loads, json_dumps
+from fate_flow.operation.job_saver import JobSaver
+from fate_flow.scheduler.dag_scheduler import DAGScheduler
+from fate_flow.scheduler.federated_scheduler import FederatedScheduler
+from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT, TEMP_DIRECTORY
 from fate_flow.utils import job_utils, detect_utils
 from fate_flow.utils.job_utils import get_dsl_parser_by_version
-from fate_flow.utils.api_utils import get_json_result, request_execute_server
-from fate_flow.entity.constant_config import WorkMode, JobStatus
+from fate_flow.utils.api_utils import get_json_result, request_execute_server, error_response
+from fate_flow.entity.constant import WorkMode, JobStatus, FederatedSchedulingStatusCode, RetCode
 from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.operation.job_tracker import Tracker
 
 manager = Flask(__name__)
 
@@ -46,7 +47,7 @@ def submit_job():
     work_mode = request.json.get('job_runtime_conf', {}).get('job_parameters', {}).get('work_mode', None)
     detect_utils.check_config({'work_mode': work_mode}, required_arguments=[('work_mode', (WorkMode.CLUSTER, WorkMode.STANDALONE))])
     if work_mode == RuntimeConfig.WORK_MODE:
-        job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = JobController.submit_job(request.json)
+        job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(request.json)
         return get_json_result(retcode=0, retmsg='success',
                                job_id=job_id,
                                data={'job_dsl_path': job_dsl_path,
@@ -64,25 +65,21 @@ def submit_job():
 
 
 @manager.route('/stop', methods=['POST'])
-def start_stop_job():
-    response = TaskScheduler.start_stop(request.json.get('job_id'), request.json.get('operate'))
-    return get_json_result(retcode=response.get('retcode'), retmsg=response.get('retmsg'))
-
-
-@manager.route('/stop/do', methods=['POST'])
-@job_utils.job_server_routing()
 def stop_job():
     job_id = request.json.get('job_id')
-    operate = request.json.get('operate')
-    if operate == 'kill':
-        TaskScheduler.stop(job_id=job_id, end_status=JobStatus.FAILED)
+    jobs = job_utils.query_job(job_id=job_id)
+    if jobs:
+        status_code, response = FederatedScheduler.cancel_job(job=jobs[0])
+        if status_code in [FederatedSchedulingStatusCode.SUCCESS, FederatedSchedulingStatusCode.PARTIAL]:
+            return get_json_result(retcode=RetCode.SUCCESS, retmsg="cancel job success")
+        else:
+            status_code, response = FederatedScheduler.request_stop_job(job=jobs[0], stop_status=JobStatus.FAILED)
+            if status_code == FederatedSchedulingStatusCode.SUCCESS:
+                return get_json_result(retcode=RetCode.SUCCESS, retmsg="stop job success")
+            else:
+                return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="stop job failed:\n{}".format(json_dumps(response)))
     else:
-        response = TaskScheduler.stop(job_id=job_id, end_status=JobStatus.CANCELED)
-        operate = 'cancel'
-        if not response:
-            TaskScheduler.stop(job_id=job_id, end_status=JobStatus.FAILED)
-            operate = 'kill'
-    return get_json_result(retcode=0, retmsg='{} job success'.format(operate))
+        return get_json_result(retcode=RetCode.DATA_ERROR, retmsg="can not found job")
 
 
 @manager.route('/query', methods=['POST'])
@@ -108,10 +105,8 @@ def update_job():
     if not jobs:
         return get_json_result(retcode=101, retmsg='find job failed')
     else:
-        job = jobs[0]
-        TaskScheduler.sync_job_status(job_id=job.f_job_id, roles={job.f_role: [job.f_party_id]},
-                                      work_mode=job.f_work_mode, initiator_party_id=job.f_party_id,
-                                      initiator_role=job.f_role, job_info={'f_description': job_info.get('notes', '')})
+        JobSaver.update_job(job_info={'description': job_info.get('notes', ''), 'job_id': job_info['job_id'], 'role': job_info['role'],
+                                      'party_id': job_info['party_id']})
         return get_json_result(retcode=0, retmsg='success')
 
 
@@ -124,9 +119,9 @@ def job_config():
         job = jobs[0]
         response_data = dict()
         response_data['job_id'] = job.f_job_id
-        response_data['dsl'] = json_loads(job.f_dsl)
-        response_data['runtime_conf'] = json_loads(job.f_runtime_conf)
-        response_data['train_runtime_conf'] = json_loads(job.f_train_runtime_conf)
+        response_data['dsl'] = job.f_dsl
+        response_data['runtime_conf'] = job.f_runtime_conf
+        response_data['train_runtime_conf'] = job.f_train_runtime_conf
         response_data['model_info'] = {'model_id': response_data['runtime_conf']['job_parameters']['model_id'],
                                        'model_version': response_data['runtime_conf']['job_parameters'][
                                            'model_version']}
@@ -134,7 +129,6 @@ def job_config():
 
 
 @manager.route('/log', methods=['get'])
-@job_utils.job_server_routing(307)
 def job_log():
     job_id = request.json.get('job_id', '')
     memory_file = io.BytesIO()
@@ -167,32 +161,30 @@ def list_task():
 
 
 @manager.route('/data/view/query', methods=['POST'])
-def query_data_view():
-    data_views = data_manager.query_data_view(**request.json)
-    if not data_views:
+def query_component_output_data_info():
+    output_data_infos = Tracker.query_output_data_infos(**request.json)
+    if not output_data_infos:
         return get_json_result(retcode=101, retmsg='find data view failed')
-    return get_json_result(retcode=0, retmsg='success', data=[data_view.to_json() for data_view in data_views])
+    return get_json_result(retcode=0, retmsg='success', data=[output_data_info.to_json() for output_data_info in output_data_infos])
 
 
 @manager.route('/clean', methods=['POST'])
-@job_utils.job_server_routing()
 def clean_job():
-    job_utils.start_clean_job(**request.json)
+    fate_flow.utils.clean_utils.start_clean_job(**request.json)
     return get_json_result(retcode=0, retmsg='success')
 
 
 @manager.route('/clean/queue', methods=['POST'])
-@job_utils.job_server_routing()
 def clean_queue():
-    TaskScheduler.clean_queue()
+    job_utils.start_clean_queue()
     return get_json_result(retcode=0, retmsg='success')
 
 
 @manager.route('/dsl/generate', methods=['POST'])
 def dsl_generator():
+    data = request.json
+    cpn_str = data.get("cpn_str", "")
     try:
-        data = request.json
-        cpn_str = data.get("cpn_str", "")
         if not cpn_str:
             raise Exception("Component list should not be empty.")
         if isinstance(cpn_str, list):
@@ -205,23 +197,15 @@ def dsl_generator():
         train_dsl = json_loads(data.get("train_dsl"))
         parser = get_dsl_parser_by_version(data.get("version", "1"))
         predict_dsl = parser.deploy_component(cpn_list, train_dsl)
-        if data.get("output_path"):
-            abspath = os.path.abspath(data.get("output_path"))
-            if os.path.isdir(abspath):
-                fp = os.path.join(abspath, "predict_dsl_{}.json".format(datetime.now().strftime('%Y%m%d%H%M%S')))
-                with open(fp, "w") as fout:
-                    fout.write(json.dumps(predict_dsl, indent=4))
-                return get_json_result(retmsg="New predict dsl file has been generated successfully. "
-                                              "File path is: {}.".format(fp))
-            elif os.path.isfile(abspath):
-                with open(data.get("output_path"), "w") as fout:
-                    fout.write(json.dumps(predict_dsl, indent=4))
-                return get_json_result(retmsg="New predict dsl file has been generated successfully. "
-                                              "File path is: {}.".format(data.get("output_path")))
-            else:
-                return get_json_result(retcode=100,
-                                       retmsg='Generating new predict dsl file failed. Output path is invalid.')
-        return get_json_result(data=predict_dsl)
     except Exception as e:
-        return get_json_result(retcode=100, retmsg=str(e))
+        stat_logger.exception(e)
+        return error_response(500, "DSL generating failed. For more details, please checkout fate_flow_stat.log.")
+    else:
+        if data.get("filename"):
+            temp_filepath = os.path.join(TEMP_DIRECTORY, data.get("filename"))
+            with open(temp_filepath, "w") as fout:
+                fout.write(json.dumps(predict_dsl, indent=4))
+            return send_file(open(temp_filepath, 'rb'), as_attachment=True, attachment_filename=data.get("filename"))
+        return get_json_result(data=predict_dsl)
+
 

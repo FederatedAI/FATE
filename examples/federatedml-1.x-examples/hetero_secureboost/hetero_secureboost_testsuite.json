@@ -94,6 +94,10 @@
             "conf": "./test_secureboost_train_binary_conf.json",
             "dsl": "./test_secureboost_train_dsl.json"
         },
+        "train_complete_secure": {
+            "conf": "./test_secureboost_train_complete_secure_conf.json",
+            "dsl": "./test_secureboost_train_dsl.json"
+        },
         "train_binary_predict": {
             "conf": "./test_predict_conf.json",
             "deps": "train_binary"

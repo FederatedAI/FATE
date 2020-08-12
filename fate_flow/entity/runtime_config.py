@@ -18,12 +18,13 @@ import dotenv
 
 from arch.api.utils.core_utils import get_lan_ip
 from arch.api.utils.file_utils import get_project_base_directory
-from fate_flow.entity.constant_config import ProcessRole
+from fate_flow.entity.constant import ProcessRole
 
 
 class RuntimeConfig(object):
     WORK_MODE = None
     BACKEND = None
+    STORE_ENGINE = None
     JOB_QUEUE = None
     USE_LOCAL_DATABASE = False
     HTTP_PORT = None
@@ -37,8 +38,6 @@ class RuntimeConfig(object):
         for k, v in kwargs.items():
             if hasattr(RuntimeConfig, k):
                 setattr(RuntimeConfig, k, v)
-                if k == 'HTTP_PORT':
-                    setattr(RuntimeConfig, 'JOB_SERVER_HOST', "{}:{}".format(get_lan_ip(), RuntimeConfig.HTTP_PORT))
 
     @staticmethod
     def init_env():

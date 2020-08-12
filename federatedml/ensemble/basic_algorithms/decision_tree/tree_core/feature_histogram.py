@@ -21,21 +21,21 @@
 #
 ################################################################################
 
+import copy
 # =============================================================================
 # FeatureHistogram
 # =============================================================================
 import functools
 import uuid
-import copy
-from arch.api.utils import log_utils
-from arch.api import session
-from federatedml.feature.fate_element_type import NoneType
 from operator import add, sub
-from federatedml.framework.weights import ListWeights, Weights
-import numpy as np
 from typing import List
 
-LOGGER = log_utils.getLogger()
+from fate_arch import session
+from fate_arch.common import log
+from federatedml.feature.fate_element_type import NoneType
+from federatedml.framework.weights import Weights
+
+LOGGER = log.getLogger()
 
 
 class HistogramBag(object):
@@ -307,7 +307,7 @@ class FeatureHistogram(object):
             nid, fid = key
             buf.append((key, (fid, FeatureHistogram.accumulate_histogram(histograms_dict[key]))))
 
-        return session.parallelize(buf, include_key=True, partition=partition)
+        return session.default().computing.parallelize(buf, include_key=True, partition=partition)
 
 
 

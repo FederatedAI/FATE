@@ -251,7 +251,7 @@ class DataSplitter(ModelBase):
         if self.split_points is None:
             label_names = list(set(y_all))
 
-        original_freq_dict = DataSplitter.get_class_freq(y_train, self.split_points, label_names)
+        original_freq_dict = DataSplitter.get_class_freq(y_all, self.split_points, label_names)
         metas["original"] = original_freq_dict
 
         train_freq_dict = DataSplitter.get_class_freq(y_train, self.split_points, label_names)
@@ -286,16 +286,20 @@ class DataSplitter(ModelBase):
     def _match_id(data_inst, ids):
         return data_inst.filter(lambda k, v: k in ids)
 
+    @staticmethod
+    def _set_output_table_schema(data_inst, schema):
+        if schema is not None and data_inst.count() > 0:
+            data_io.set_schema(data_inst, schema)
+
     def split_data(self, data_inst, id_train, id_validate, id_test):
         train_data = DataSplitter._match_id(data_inst, id_train)
         validate_data = DataSplitter._match_id(data_inst, id_validate)
         test_data = DataSplitter._match_id(data_inst, id_test)
 
         schema = getattr(data_inst, "schema", None)
-        if schema:
-            data_io.set_schema(train_data, schema)
-            data_io.set_schema(validate_data, schema)
-            data_io.set_schema(test_data, schema)
+        self._set_output_table_schema(train_data, schema)
+        self._set_output_table_schema(validate_data, schema)
+        self._set_output_table_schema(test_data, schema)
         return train_data, validate_data, test_data
 
     def fit(self, data_inst):

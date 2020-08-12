@@ -124,6 +124,7 @@ class OneVsRest(object):
         LOGGER.info("Total classes:{}".format(self.classes))
 
         current_flow_id = self.classifier.flowid
+        summary_dict = {}
         for label_index, label in enumerate(self.classes):
             LOGGER.info("Start to train OneVsRest with label_index:{}, label:{}".format(label_index, label))
             classifier = copy.deepcopy(self.classifier)
@@ -140,9 +141,10 @@ class OneVsRest(object):
             else:
                 LOGGER.info("start classifier fit")
                 classifier.fit_binary(data_instances, validate_data=validate_data)
-
+            summary_dict[label] = classifier.summary()
             self.models.append(classifier)
             LOGGER.info("Finish model_{} training!".format(label_index))
+        self.classifier.set_summary(summary_dict)
 
     def _comprehensive_result(self, predict_res_list):
         """
@@ -213,7 +215,7 @@ class OneVsRest(object):
         """
         completed_models = one_vs_rest_result.completed_models
         one_vs_rest_classes = one_vs_rest_result.one_vs_rest_classes
-        self.classes = [int(x) for x in one_vs_rest_classes]   # Support other label type in the future
+        self.classes = [int(x) for x in one_vs_rest_classes]  # Support other label type in the future
         self.models = []
         for classifier_obj in list(completed_models):
             classifier = copy.deepcopy(self.classifier)

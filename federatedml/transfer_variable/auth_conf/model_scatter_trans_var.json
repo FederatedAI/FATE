@@ -1,0 +1,13 @@
+{
+  "federatedml.framework.homo.blocks.model_scatter.ModelScatterTransVar": {
+    "client_model": {
+      "src": [
+        "guest",
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    }
+  }
+}

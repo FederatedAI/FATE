@@ -13,12 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import warnings
 
-import os
-from arch.api.utils import file_utils
+from fate_arch.common.conf_utils import *
 
-
-# TODO: add config cache
-def get_base_config(key, default=None):
-    base_config = file_utils.load_yaml_conf(os.path.join(file_utils.get_project_base_directory(), "arch/conf/base_conf.yaml")) or dict()
-    return base_config.get(key, default)
+warnings.warn('arch.api.conf_utils argument deprecated, use fate_arch.common.conf_utils instead', DeprecationWarning)

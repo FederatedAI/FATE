@@ -15,10 +15,10 @@
 #
 import os
 
-from arch.api import session
-
 from arch.api.utils import log_utils, dtable_utils
 from fate_flow.entity.metric import Metric, MetricMeta
+from fate_flow.manager.table_manager.table_operation import get_table
+from fate_flow.utils.job_utils import generate_session_id
 
 LOGGER = log_utils.getLogger()
 
@@ -36,9 +36,9 @@ class Download(object):
         table_name, namespace = dtable_utils.get_table_info(config=self.parameters,
                                                             create=False)
         job_id = self.taskid.split("_")[0]
-        session.init(job_id, self.parameters["work_mode"])
         with open(os.path.abspath(self.parameters["output_path"]), "w") as fout:
-            data_table = session.get_data_table(name=table_name, namespace=namespace)
+            data_table = get_table(job_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id,),
+                                   namespace=namespace, name=table_name)
             count = data_table.count()
             LOGGER.info('===== begin to export data =====')
             lines = 0
@@ -55,7 +55,7 @@ class Download(object):
                     self.update_job_status(self.parameters["local"]['role'], self.parameters["local"]['party_id'],
                                            job_info)
             self.update_job_status(self.parameters["local"]['role'],
-                                   self.parameters["local"]['party_id'], {'f_progress': 100})
+                                   self.parameters["local"]['party_id'], {'progress': 100})
             self.callback_metric(metric_name='data_access',
                                  metric_namespace='download',
                                  metric_data=[Metric("count", data_table.count())])
@@ -64,7 +64,7 @@ class Download(object):
             LOGGER.info('===== export data file path:{} ====='.format(os.path.abspath(self.parameters["output_path"])))
 
     def update_job_status(self, role, party_id, job_info):
-        self.tracker.save_job_info(role=role, party_id=party_id, job_info=job_info)
+        self.tracker.start_job(role=role, party_id=party_id, job_info=job_info)
 
     def set_taskid(self, taskid):
         self.taskid = taskid
