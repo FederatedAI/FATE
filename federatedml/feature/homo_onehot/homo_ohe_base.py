@@ -23,7 +23,7 @@
 import functools
 
 from arch.api.utils import log_utils
-from federatedml.feature.one_hot_encoder import OneHotEncoder
+from federatedml.feature import one_hot_encoder
 from federatedml.param.homo_onehot_encoder_param import HomoOneHotParam
 from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
 from federatedml.transfer_variable.transfer_class.ohe_alignment_transfer_variable import OHEAlignmentTransferVariable
@@ -32,7 +32,7 @@ from federatedml.util import consts
 LOGGER = log_utils.getLogger()
 
 
-class HomoOneHotBase(OneHotEncoder):
+class HomoOneHotBase(one_hot_encoder.OneHotEncoder):
     def __init__(self):
         super(HomoOneHotBase, self).__init__()
         self.model_name = 'OHEAlignment'
@@ -77,7 +77,7 @@ class HomoOneHotBase(OneHotEncoder):
         self.col_maps = data_instances.mapPartitions(f1).reduce(self.merge_col_maps)
         col_maps = {}
         for col_name, pair_obj in self.col_maps.items():
-            values = [str(x) for x in pair_obj.values]
+            values = [x for x in pair_obj.values]
             col_maps[col_name] = values
 
         LOGGER.debug("new col_maps is: {}".format(col_maps))
@@ -95,29 +95,18 @@ class HomoOneHotBase(OneHotEncoder):
             aligned_col_maps = aligned_columns[0]
             LOGGER.debug("{} aligned columns received are: {}".format(self.role, aligned_col_maps))
 
-            # All the headers - original or new after alignment - are appended together
-            new_header = []
-            transform_col_names = []
-            for col in ori_header:
-                if col not in aligned_col_maps:
-                    new_header.append(col)
-                    continue
-                transform_col_names.append(col)
-                for vv in aligned_col_maps[col]:
-                    new_header.append(col + '_' + vv)
+            self.col_maps = {}
+            for col_name, value_list in aligned_col_maps.items():
+                value_set = set([str(x) for x in value_list])
+                if len(value_set) != len(value_list):
+                    raise ValueError("Same values with different types have occurred among different parties")
 
-            LOGGER.debug(
-                "new transform col names after format received aligned columns: {}".format(transform_col_names))
-            LOGGER.debug("new header after format received aligned columns: {}".format(new_header))
+                transfer_pair = one_hot_encoder.TransferPair(col_name)
+                for v in value_list:
+                    transfer_pair.add_value(v)
+                self.col_maps[col_name] = transfer_pair
 
-            self.inner_param.add_transform_names = transform_col_names
-            self.inner_param.set_result_header(new_header)
-
-            LOGGER.debug("Before set_schema in fit, schema is : {}, header: {}".format(self.schema,
-                                                                                       self.inner_param.header))
-
-        else:
-            self._transform_schema()
+        self._transform_schema()
 
         data_instances = self.transform(data_instances)
         LOGGER.debug(
@@ -125,7 +114,6 @@ class HomoOneHotBase(OneHotEncoder):
                                                                                                  self.inner_param.header))
 
         return data_instances
-
 
 # class OHEAlignmentGuest(OHEAlignmentBase):
 #     def __init__(self):
