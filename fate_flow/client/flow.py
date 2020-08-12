@@ -13,15 +13,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import os
+import json
 import click
-from arch.api.utils import file_utils
-from arch.api.utils.core_utils import get_lan_ip
-from fate_flow.settings import SERVERS, ROLE, API_VERSION
-from .flow_cli import (component, data, job, model,
-                       privilege, queue, task, table, tag)
+from ruamel import yaml
+from fate_flow.client.flow_cli.utils.cli_utils import prettify, get_lan_ip
+from fate_flow.client.flow_cli.commands import (component, data, job, model,
+                                                queue, task, table, tag)
 
-server_conf = file_utils.load_json_conf("conf/server_conf.json")
-CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+
+CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
 @click.group(short_help="Fate Flow Client", context_settings=CONTEXT_SETTINGS)
@@ -30,12 +31,69 @@ def flow_cli(ctx):
     """
     Fate Flow Client
     """
-    ip = server_conf.get(SERVERS).get(ROLE).get('host')
-    if ip in ['localhost', '127.0.0.1']:
-        ip = get_lan_ip()
     ctx.ensure_object(dict)
-    ctx.obj['http_port'] = server_conf.get(SERVERS).get(ROLE).get('http.port')
-    ctx.obj['server_url'] = "http://{}:{}/{}".format(ip, ctx.obj['http_port'], API_VERSION)
+    with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "r") as fin:
+        config = yaml.safe_load(fin)
+    if config.get("server_conf_path"):
+        is_server_conf_exist = os.path.exists(config.get("server_conf_path"))
+    else:
+        is_server_conf_exist = False
+
+    if is_server_conf_exist:
+        with open(config.get("server_conf_path")) as server_conf_fp:
+            server_conf = json.load(server_conf_fp)
+        ip = server_conf.get(config.get("server")).get(config.get("role")).get("host")
+        if ip in ["localhost", "127.0.0.1"]:
+            ip = get_lan_ip()
+        ctx.obj["http_port"] = server_conf.get(config.get("server")).get(config.get("role")).get("http.port")
+        ctx.obj["server_url"] = "http://{}:{}/{}".format(ip, ctx.obj["http_port"], config.get("api_version"))
+    else:
+        if config.get("ip") and config.get("port"):
+            ip = config.get("ip")
+            if ip in ["localhost", "127.0.0.1"]:
+                ip = get_lan_ip()
+            ctx.obj["http_port"] = int(config.get("port"))
+            ctx.obj["server_url"] = "http://{}:{}/{}".format(ip, ctx.obj["http_port"], config.get("api_version"))
+
+    ctx.obj["init"] = is_server_conf_exist or (config.get("ip") and config.get("port"))
+
+
+@flow_cli.command("init", short_help="Flow CLI Init Command")
+@click.option("-c", "--server-conf-path", type=click.Path(exists=True),
+              help="Server configuration file absolute path.")
+@click.option("--ip", type=click.STRING, help="Fate flow server ip address.")
+@click.option("--port", type=click.INT, help="Fate flow server port.")
+def initialization(**kwargs):
+    """
+    \b
+    - DESCRIPTION:
+        Flow CLI Init Command. Custom can choose to provide an absolute path of server conf file,
+        or provide ip address and http port of a valid fate flow server. Notice that, if custom
+        provides both, the server conf would be loaded in priority. In this case, ip address and
+        http port would be ignored.
+
+    \b
+    - USAGE:
+        flow init -c /data/projects/FATE/conf/server_conf.json
+        flow init --ip 10.1.2.3 --port 9380
+    """
+    with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "r") as fin:
+        config = yaml.safe_load(fin)
+    if kwargs.get("server_conf_path"):
+        config["server_conf_path"] = kwargs.get("server_conf_path")
+    if kwargs.get("ip"):
+        config["ip"] = kwargs.get("ip")
+    if kwargs.get("port"):
+        config["port"] = kwargs.get("port")
+    with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "w") as fout:
+        yaml.safe_dump(config, fout)
+
+    prettify(
+        {
+            "retcode": 0,
+            "retmsg": "Fate Flow CLI has been initialized successfully"
+        }
+    )
 
 
 flow_cli.add_command(component.component)

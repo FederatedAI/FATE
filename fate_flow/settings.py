@@ -16,8 +16,8 @@
 # -*- coding: utf-8 -*-
 import os
 
-from fate_arch.session import Backend
 from arch.api.utils import file_utils, log_utils, core_utils
+from fate_arch.common import Backend
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.constant import StoreEngine
 from arch.api.utils.conf_utils import get_base_config
@@ -108,7 +108,6 @@ GRPC_PORT = get_base_config("fate_flow", {}).get("grpc_port")
 CLUSTER_STANDALONE_JOB_SERVER_PORT = 9381
 
 # switch
-SAVE_AS_TASK_INPUT_DATA_IN_MEMORY = True
 ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH = True
 
 # init

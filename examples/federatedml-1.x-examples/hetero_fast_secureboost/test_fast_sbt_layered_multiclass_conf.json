@@ -1,0 +1,78 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "job_parameters": {
+        "work_mode": 0
+    },
+    "role": {
+        "guest": [10000],
+        "host": [10000]
+    },
+    "role_parameters": {
+        "guest": {
+            "args": {
+                "data": {
+                    "train_data": [{"name": "vehicle_scale_hetero_guest", "namespace": "experiment"}],
+                    "eval_data": [{"name": "vehicle_scale_hetero_guest", "namespace": "experiment"}]
+                }
+            },
+            "dataio_0":{
+                "with_label": [true],
+                "label_name": ["y"],
+                "label_type": ["int"],
+                "output_format": ["dense"]
+            }
+        },
+        "host": {
+            "args": {
+                "data": {
+                    "train_data": [{"name": "vehicle_scale_hetero_host", "namespace": "experiment"}],
+                    "eval_data": [{"name": "vehicle_scale_hetero_host", "namespace": "experiment"}]
+                }
+            },
+             "dataio_0":{
+                "with_label": [false],
+                "output_format": ["dense"]
+            }
+        }
+    },
+    "algorithm_parameters": {
+        "fast_secureboost_0": {
+            "task_type": "classification",
+            "learning_rate": 0.1,
+            "num_trees": 4,
+            "subsample_feature_rate": 1,
+            "n_iter_no_change": false,
+            "work_mode": "layered",
+            "guest_depth": 2,
+            "host_depth": 3,
+            "tol": 0.0001,
+            "bin_num": 50,
+            "objective_param": {
+                "objective": "cross_entropy"
+            },
+            "encrypt_param": {
+                "method": "iterativeAffine"
+            },
+            "predict_param": {
+                "with_proba": true,
+                "threshold": 0.5
+            },
+            "cv_param": {
+                "n_splits": 5,
+                "shuffle": false,
+                "random_seed": 103,
+                "need_cv": false,
+                "evaluate_param": {
+                    "eval_type": "multi"
+                }
+            },
+            "validation_freqs": 1
+        },
+        "evaluation_0": {
+            "eval_type": "multi"
+        }
+    }
+}

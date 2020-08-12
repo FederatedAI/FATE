@@ -384,12 +384,7 @@ class HeteroStepwise(object):
     def predict(data_instances, model):
         if data_instances is None:
             return
-        d_header = data_instances.schema.get("header")
-        best_feature = [d_header.index(x) for x in model.header]
-        best_mask = np.zeros(len(d_header), dtype=bool)
-        np.put(best_mask, best_feature, 1)
-        new_data = data_instances.mapValues(lambda v: Step.slice_data_instance(v, best_mask))
-        pred_result = model.predict(new_data)
+        pred_result = model.predict(data_instances)
         return pred_result
 
     def get_IC_computer(self, model):

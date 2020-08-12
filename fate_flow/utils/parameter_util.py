@@ -174,8 +174,8 @@ class BaseParameterUtil(object):
         param_variables = param_obj.__dict__
         for key, val_list in role_parameters.items():
             if key not in param_variables:
-                continue
-                # raise RedundantParameterError(component=component, module=module, other_info=key)
+                # continue
+                raise RedundantParameterError(component=component, module=module, other_info=key)
 
             attr = getattr(param_obj, key)
             if type(attr).__name__ in dir(builtins) or not attr:

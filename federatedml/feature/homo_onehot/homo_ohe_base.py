@@ -67,6 +67,7 @@ class HomoOneHotBase(OneHotEncoder):
         """
 
         self._init_params(data_instances)
+        self._abnormal_detection(data_instances)
         # keep a copy of original header
         ori_header = self.inner_param.header.copy()
 

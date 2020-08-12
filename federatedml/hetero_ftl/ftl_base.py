@@ -13,7 +13,7 @@ from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.util import consts
 from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
 from federatedml.protobuf.generated.ftl_model_param_pb2 import FTLModelParam
-from federatedml.protobuf.generated.ftl_model_meta_pb2 import FTLModelMeta, PredictParam, OptimizerParam
+from federatedml.protobuf.generated.ftl_model_meta_pb2 import FTLModelMeta, FTLPredictParam, FTLOptimizerParam
 from federatedml.util.validation_strategy import ValidationStrategy
 
 from arch.api.utils import log_utils
@@ -52,6 +52,7 @@ class FTL(ModelBase):
         self.nn_builder = None
         self.model_param = FTLParam()
         self.x_shape = None
+        self.input_dim = None
         self.data_num = 0
         self.overlap_num = 0
         self.transfer_variable = FTLTransferVariable()
@@ -70,7 +71,6 @@ class FTL(ModelBase):
 
     def _init_model(self, param: FTLParam):
 
-        self.learning_rate = param.learning_rate
         self.nn_define = param.nn_define
         self.alpha = param.alpha
         self.tol = param.tol
@@ -84,6 +84,8 @@ class FTL(ModelBase):
         self.mode = param.mode
         self.comm_eff = param.communication_efficient
         self.local_round = param.local_round
+        assert 'learning_rate' in self.optimizer.kwargs, 'optimizer setting must contain learning_rate'
+        self.learning_rate = self.optimizer.kwargs['learning_rate']
 
         if not self.comm_eff:
             self.local_round = 1
@@ -307,11 +309,11 @@ class FTL(ModelBase):
         model_meta.batch_size = self.batch_size
         model_meta.epochs = self.epochs
         model_meta.tol = self.tol
-        model_meta.input_dim = self.x_shape[0]
+        model_meta.input_dim = self.input_dim
 
-        predict_param = PredictParam()
+        predict_param = FTLPredictParam()
 
-        optimizer_param = OptimizerParam()
+        optimizer_param = FTLOptimizerParam()
         optimizer_param.optimizer = self.optimizer.optimizer
         optimizer_param.kwargs = json.dumps(self.optimizer.kwargs)
 
@@ -337,12 +339,12 @@ class FTL(ModelBase):
         self.epochs = model_meta.epochs
         self.tol = model_meta.tol
         self.optimizer = FTLParam()._parse_optimizer(FTLParam().optimizer)
-        input_dim = model_meta.input_dim
+        self.input_dim = model_meta.input_dim
 
         self.optimizer.optimizer = model_meta.optimizer_param.optimizer
         self.optimizer.kwargs = json.loads(model_meta.optimizer_param.kwargs)
 
-        self.initialize_nn((input_dim, ))
+        self.initialize_nn((self.input_dim, ))
 
     def set_model_param(self, model_param):
 

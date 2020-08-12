@@ -15,7 +15,6 @@ guest_train_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
 host_train_data = [{"name": "breast_hetero_host", "namespace": "experiment"},
                    {"name": "breast_hetero_host", "namespace": "experiment"}]
 
-
 pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=hosts, arbiter=arbiter)
 
 reader_0 = Reader(name="reader_0")
@@ -28,7 +27,11 @@ dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_l
 dataio_0.get_party_instance(role='host', party_id=hosts).algorithm_param(with_label=False)
 
 intersect_0 = Intersection(name="intersection_0")
-hetero_secure_boost_0 = HeteroSecureBoost(name="hetero_secure_boost_0")
+hetero_secure_boost_0 = HeteroSecureBoost(name="hetero_secure_boost_0",
+                                          num_trees=5, task_type='classification',
+                                          objective_param={"objective": "cross_entropy"},
+                                          encrypt_param={"method": "iterativeAffine"},
+                                          validation_freqs=1)
 
 pipeline.add_component(reader_0)
 pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
@@ -42,11 +45,10 @@ pipeline.compile()
 
 pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE)
 
-print (pipeline.get_component("intersection_0").get_output_data())
-print (pipeline.get_component("dataio_0").get_model_param())
-print (pipeline.get_component("hetero_secure_boost_0").get_model_param())
+print(pipeline.get_component("intersection_0").get_output_data())
+print(pipeline.get_component("dataio_0").get_model_param())
+print(pipeline.get_component("hetero_secure_boost_0").get_model_param())
 # pipeline.get_component("intersection_0").summary("intersect_count", "intersect_rate")
-
 
 # predict
 

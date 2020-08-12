@@ -1,27 +1,21 @@
 from operator import itemgetter
 import numpy as np
-
+from arch.api.utils import log_utils
+from typing import List
+import functools
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import ObjectiveMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
-
 from federatedml.ensemble.boosting.boosting_core import HeteroBoostingGuest
 from federatedml.param.boosting_param import HeteroSecureBoostParam
 from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeGuest
 from federatedml.util import consts
-
 from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
     HeteroSecureBoostTransferVariable
-
 from federatedml.util.io_check import assert_io_num_rows_equal
-
-from arch.api.utils import log_utils
-
-from typing import List
-
-import functools
+from federatedml.util.fate_operator import generate_anonymous
 
 LOGGER = log_utils.getLogger()
 
@@ -167,7 +161,8 @@ class HeteroSecureBoostGuest(HeteroBoostingGuest):
                 if 'guest' in id_[0]:
                     new_fi[fid_mapping[id_[1]]] = feature_importances[id_]
                 else:
-                    new_fi[id_] = feature_importances[id_]
+                    role, party_id = id_[0].split(':')
+                    new_fi[generate_anonymous(role=role, fid=id_[1], party_id=party_id)] = feature_importances[id_]
             else:
                 new_fi[fid_mapping[id_]] = feature_importances[id_]
 
@@ -365,9 +360,15 @@ class HeteroSecureBoostGuest(HeteroBoostingGuest):
         feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
         feature_importance_param = []
         for (sitename, fid), _importance in feature_importances:
+            if consts.GUEST in sitename:
+                fullname = self.feature_name_fid_mapping[fid]
+            else:
+                role_name, party_id = sitename.split(':')
+                fullname = generate_anonymous(fid=fid, party_id=party_id, role=role_name)
             feature_importance_param.append(FeatureImportanceInfo(sitename=sitename,
                                                                   fid=fid,
-                                                                  importance=_importance))
+                                                                  importance=_importance,
+                                                                  fullname=fullname))
         model_param.feature_importances.extend(feature_importance_param)
 
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)

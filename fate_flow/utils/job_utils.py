@@ -35,7 +35,6 @@ from arch.api.utils.log_utils import schedule_logger
 from fate_flow.scheduler.dsl_parser import DSLParser, DSLParserV2
 from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.manager.data_manager import query_data_view, delete_table, delete_metric_data
 from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE
 from fate_flow.utils import detect_utils
 from fate_flow.utils import api_utils
@@ -445,81 +444,27 @@ def kill_task_executor_process(task: Task, only_child=False):
         raise e
 
 
-def start_clean_job(**kwargs):
-    tasks = query_task(**kwargs)
-    if tasks:
-        for task in tasks:
-            task_info = get_task_info(task.f_job_id, task.f_role, task.f_party_id, task.f_component_name)
+def start_clean_queue():
+    schedule_logger().info('get clean queue command')
+    jobs = JobSaver.query_job(is_initiator=1, status=JobStatus.WAITING)
+    if jobs:
+        for job in jobs:
+            schedule_logger(job.f_job_id).info(
+                'start send {} job {} command success'.format(JobStatus.CANCELED, job.f_job_id))
+            job_info = {'f_job_id': job.f_job_id, 'f_status': JobStatus.CANCELED}
+            JobSaver.update_job(job_info=job_info)
+            job_runtime_conf = json_loads(job.f_runtime_conf)
+            event = job_event(job.f_job_id,
+                              job_runtime_conf['initiator']['role'],
+                              job_runtime_conf['initiator']['party_id'])
             try:
-                # clean session
-                stat_logger.info('start {} {} {} {} session stop'.format(task.f_job_id, task.f_role,
-                                                                         task.f_party_id, task.f_component_name))
-                start_session_stop(task)
-                stat_logger.info('stop {} {} {} {} session success'.format(task.f_job_id, task.f_role,
-                                                                           task.f_party_id, task.f_component_name))
+                RuntimeConfig.JOB_QUEUE.del_event(event)
+                schedule_logger(job.f_job_id).info(
+                    'send {} job {} command success'.format(JobStatus.CANCELED, job.f_job_id))
             except Exception as e:
-                pass
-            try:
-                # clean data table
-                stat_logger.info('start delete {} {} {} {} data table'.format(task.f_job_id, task.f_role,
-                                                                              task.f_party_id, task.f_component_name))
-                data_views = query_data_view(**task_info)
-                if data_views:
-                    delete_table(data_views)
-                    stat_logger.info('delete {} {} {} {} data table success'.format(task.f_job_id, task.f_role,
-                                                                                    task.f_party_id,
-                                                                                    task.f_component_name))
-            except Exception as e:
-                stat_logger.info('delete {} {} {} {} data table failed'.format(task.f_job_id, task.f_role,
-                                                                               task.f_party_id, task.f_component_name))
-                stat_logger.exception(e)
-            try:
-                # clean metric data
-                stat_logger.info('start delete {} {} {} {} metric data'.format(task.f_job_id, task.f_role,
-                                                                               task.f_party_id, task.f_component_name))
-                delete_metric_data(task_info)
-                stat_logger.info('delete {} {} {} {} metric data success'.format(task.f_job_id, task.f_role,
-                                                                                 task.f_party_id,
-                                                                                 task.f_component_name))
-            except Exception as e:
-                stat_logger.info('delete {} {} {} {} metric data failed'.format(task.f_job_id, task.f_role,
-                                                                                task.f_party_id,
-                                                                                task.f_component_name))
-                stat_logger.exception(e)
+                schedule_logger(job.f_job_id).error(e)
     else:
-        raise Exception('no found task')
-
-
-def start_clean_queue(**kwargs):
-    tasks = query_task(**kwargs)
-    if tasks:
-        for task in tasks:
-            task_info = get_task_info(task.f_job_id, task.f_role, task.f_party_id, task.f_component_name)
-            try:
-                # clean session
-                stat_logger.info('start {} {} {} {} session stop'.format(task.f_job_id, task.f_role,
-                                                                         task.f_party_id, task.f_component_name))
-                start_session_stop(task)
-            except:
-                pass
-            try:
-                # clean data table
-                stat_logger.info('start delete {} {} {} {} data table'.format(task.f_job_id, task.f_role,
-                                                                              task.f_party_id, task.f_component_name))
-                data_views = query_data_view(**task_info)
-                if data_views:
-                    delete_table(data_views)
-            except:
-                pass
-            try:
-                # clean metric data
-                stat_logger.info('start delete {} {} {} {} metric data'.format(task.f_job_id, task.f_role,
-                                                                               task.f_party_id, task.f_component_name))
-                delete_metric_data(task_info)
-            except:
-                pass
-    else:
-        raise Exception('no found task')
+        raise Exception('There are no jobs in the queue')
 
 
 def start_session_stop(task):

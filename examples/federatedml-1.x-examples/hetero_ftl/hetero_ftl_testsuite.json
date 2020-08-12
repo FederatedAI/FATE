@@ -1,0 +1,50 @@
+{
+    "data": [
+        {
+            "file": "examples/data/nus_wide_train_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "nus_wide_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/nus_wide_train_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "nus_wide_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/nus_wide_validate_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "nus_wide_guest_val",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/nus_wide_validate_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "nus_wide_host_val",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "tasks": {
+        "ftl": {
+            "conf": "./test_ftl_param.json",
+            "dsl": "./test_ftl_dsl.json"
+        },
+        "encrypted_ftl": {
+            "conf": "./test_ftl_encrypted_conf.json",
+            "dsl": "./test_ftl_dsl.json"
+        },
+        "comm_eff_ftl": {
+            "conf": "./test_ftl_comm_eff_conf.json",
+            "dsl": "./test_ftl_dsl.json"
+        }
+    }
+}

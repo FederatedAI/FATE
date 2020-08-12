@@ -23,7 +23,12 @@ reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=ho
 dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense")
 dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=True)
 
-homo_secureboost_0 = HomoSecureBoost(name="homo_secureboost_0")
+homo_secureboost_0 = HomoSecureBoost(name="homo_secureboost_0",
+                                     num_trees=5, task_type='classification',
+                                     objective_param={"objective": "cross_entropy"},
+                                     encrypt_param={"method": "iterativeAffine"},
+                                     validation_freqs=1,
+                                     )
 
 pipeline.add_component(reader_0)
 pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))

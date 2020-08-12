@@ -12,7 +12,7 @@ host = 10000
 arbiter = 10002
 
 guest_train_data = {"name": "breast_hetero_mini_guest", "namespace": "experiment"}
-host_train_data = {"name": "breast_hetero_min_host", "namespace": "experiment"}
+host_train_data = {"name": "breast_hetero_mini_host", "namespace": "experiment"}
 
 pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host, arbiter=arbiter)
 

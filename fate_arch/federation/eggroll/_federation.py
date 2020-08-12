@@ -24,23 +24,35 @@ from enum import Enum
 from eggroll.core.meta_model import ErEndpoint
 from eggroll.roll_pair.roll_pair import RollPair, RollPairContext
 from eggroll.roll_site.roll_site import RollSiteContext
-from fate_arch.abc import GarbageCollectionABC
 from fate_arch.abc import FederationABC
+from fate_arch.abc import GarbageCollectionABC
 from fate_arch.common import Party
 from fate_arch.common.log import getLogger
-from fate_arch.federation._split import is_split_head, split_get
 from fate_arch.computing.eggroll import Table
+from fate_arch.federation._split import _is_split_head, _split_get, _is_splitable_obj, _get_splits
 
 LOGGER = getLogger()
 
 
-class FederationEngine(FederationABC):
+class Proxy(object):
+    def __init__(self, host: str, port: int):
+        self.host = host
+        self.port = port
 
-    def __init__(self, rp_ctx: RollPairContext, rs_session_id: str, party: Party, host: str, port: int):
+    @staticmethod
+    def from_conf(conf):
+        host = conf.get('servers').get('proxy').get("host")
+        port = conf.get('servers').get('proxy').get("port")
+        return Proxy(host, int(port))
+
+
+class Federation(FederationABC):
+
+    def __init__(self, rp_ctx: RollPairContext, rs_session_id: str, party: Party, proxy: Proxy):
         options = {
             'self_role': party.role,
             'self_party_id': party.party_id,
-            'proxy_endpoint': ErEndpoint(host, port)
+            'proxy_endpoint': ErEndpoint(proxy.host, proxy.port)
         }
         self.rsc = RollSiteContext(rs_session_id, rp_ctx=rp_ctx, options=options)
         LOGGER.debug(f"init roll site context done: {self.rsc.__dict__}")
@@ -78,7 +90,7 @@ def _remote(v,
         return
 
     if t == _FederationValueType.SPLIT_OBJECT:
-        head, tails = v
+        head, tails = _get_splits(v)
         _push_with_exception_handle(rsc, head, name, tag, parties)
 
         for k, tail in enumerate(tails):
@@ -128,7 +140,7 @@ def _remote_tag_not_duplicate(name: str, tag: str, parties: typing.List[typing.T
 def _get_type(v):
     if isinstance(v, RollPair):
         return _FederationValueType.ROLL_PAIR
-    if is_split_head(v):
+    if _is_splitable_obj(v):
         return _FederationValueType.SPLIT_OBJECT
     return _FederationValueType.OBJECT
 
@@ -186,7 +198,7 @@ def _get_value_post_process(v, name: str, tag: str, party: typing.Tuple[str, str
         return v
 
     # got large object in splits
-    if is_split_head(v):
+    if _is_split_head(v):
         num_split = v.num_split()
         LOGGER.debug(f"[{log_str}]is split object, num_split={num_split}")
         split_objs = []
@@ -194,7 +206,7 @@ def _get_value_post_process(v, name: str, tag: str, party: typing.Tuple[str, str
             split_obj = _split_rs = rsc.load(name, tag=f"{tag}.__part_{k}").pull([party])[0].result()
             LOGGER.debug(f"[{log_str}]got split ({k}/{num_split})")
             split_objs.append(split_obj)
-        obj = split_get(split_objs)
+        obj = _split_get(split_objs)
         return obj
 
     # others

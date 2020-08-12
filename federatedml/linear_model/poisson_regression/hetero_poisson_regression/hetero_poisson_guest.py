@@ -147,8 +147,6 @@ class HeteroPoissonGuest(HeteroPoissonBase):
         # OK
         exposure = data_instances.mapValues(lambda v: HeteroPoissonBase.load_exposure(v, exposure_index))
 
-        data_instances = data_instances.mapValues(lambda v: HeteroPoissonBase.load_instance(v, exposure_index))
-
         data_instances = self.align_data_header(data_instances, self.header)
         data_features = self.transform(data_instances)
 

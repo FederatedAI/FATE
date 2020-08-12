@@ -14,6 +14,6 @@
 #  limitations under the License.
 #
 
-from fate_arch.federation.spark._federation import FederationEngine, MQ, RabbitManager
+from fate_arch.federation.spark._federation import Federation, MQ, RabbitManager
 
-__all__ = ['FederationEngine', 'MQ', 'RabbitManager']
+__all__ = ['Federation', 'MQ', 'RabbitManager']

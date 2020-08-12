@@ -16,6 +16,7 @@
 from arch.api.utils import dtable_utils
 from arch.api.utils.core_utils import json_loads
 from arch.api.utils.log_utils import schedule_logger
+from fate_arch.common import WorkMode
 from fate_flow.db.db_models import Job
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.scheduler.task_scheduler import TaskScheduler
@@ -54,7 +55,8 @@ class DAGScheduler(object):
             tracker = Tracker(job_id=job_id, role=job_initiator['role'], party_id=job_initiator['party_id'],
                                   model_id=job_parameters['model_id'], model_version=job_parameters['model_version'])
             pipeline_model = tracker.get_output_model('pipeline')
-            job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
+            if not job_dsl:
+                job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
             train_runtime_conf = json_loads(pipeline_model['Pipeline'].train_runtime_conf)
         path_dict = save_job_conf(job_id=job_id,
                                   job_dsl=job_dsl,
@@ -80,13 +82,15 @@ class DAGScheduler(object):
 
         FederatedScheduler.create_job(job=job)
 
-        # Save the state information of all participants in the initiator for scheduling
-        job_info = job.to_human_model_dict()
-        for role, party_ids in job_runtime_conf["role"].items():
-            for party_id in party_ids:
-                if role == job_initiator['role'] and party_id == job_initiator['party_id']:
-                    continue
-                JobController.create_job(job_id=job_id, role=role, party_id=party_id, job_info=job_info, init_tracker=False)
+        if job_parameters['work_mode'] == WorkMode.CLUSTER:
+            # Save the state information of all participants in the initiator for scheduling
+            schedule_logger('wzh_test').info('this is a test')
+            job_info = job.to_human_model_dict()
+            for role, party_ids in job_runtime_conf["role"].items():
+                for party_id in party_ids:
+                    if role == job_initiator['role'] and party_id == job_initiator['party_id']:
+                        continue
+                    JobController.create_job(job_id=job_id, role=role, party_id=party_id, job_info=job_info, init_tracker=False)
 
         # push into queue
         job_event = job_utils.job_event(job_id, initiator_role, initiator_party_id)
@@ -160,6 +164,8 @@ class DAGScheduler(object):
         schedule_logger(job_id=job.f_job_id).info("Job {} status is {}, calculate by task set status list: {}".format(job.f_job_id, new_job_status, task_sets_status))
         if new_job_status != job.f_status:
             job.f_status = new_job_status
+            if EndStatus.contains(job.f_status):
+                FederatedScheduler.save_pipelined_model(job=job)
             FederatedScheduler.sync_job(job=job, update_fields=["status"])
             cls.update_job_on_initiator(initiator_job_template=job, update_fields=["status"])
         if EndStatus.contains(job.f_status):
@@ -196,37 +202,6 @@ class DAGScheduler(object):
     @staticmethod
     def finish(job, end_status):
         schedule_logger(job_id=job.f_job_id).info("Job {} finished with {}, do something...".format(job.f_job_id, end_status))
-        FederatedScheduler.save_pipelined_model(job=job)
         FederatedScheduler.stop_job(job=job, stop_status=end_status)
         FederatedScheduler.clean_job(job=job)
         schedule_logger(job_id=job.f_job_id).info("Job {} finished with {}, done".format(job.f_job_id, end_status))
-
-    @staticmethod
-    def clean_queue():
-        schedule_logger().info('get clean queue command')
-        jobs = job_utils.query_job(is_initiator=1, status=JobStatus.WAITING)
-        if jobs:
-            for job in jobs:
-                schedule_logger(job.f_job_id).info(
-                    'start send {} job {} command success'.format(JobStatus.CANCELED, job.f_job_id))
-                job_info = {'f_job_id': job.f_job_id, 'f_status': JobStatus.CANCELED}
-                roles = json_loads(job.f_roles)
-                job_work_mode = job.f_work_mode
-                initiator_party_id = job.f_party_id
-
-                TaskScheduler.sync_job_status(job_id=job.f_job_id, roles=roles, initiator_party_id=initiator_party_id,
-                                              initiator_role=job.f_role,
-                                              work_mode=job_work_mode,
-                                              job_info=job_info)
-                job_runtime_conf = job.f_runtime_conf
-                event = job_utils.job_event(job.f_job_id,
-                                            job_runtime_conf['initiator']['role'],
-                                            job_runtime_conf['initiator']['party_id'])
-                try:
-                    RuntimeConfig.JOB_QUEUE.del_event(event)
-                    schedule_logger(job.f_job_id).info(
-                        'send {} job {} command success'.format(JobStatus.CANCELED, job.f_job_id))
-                except Exception as e:
-                    schedule_logger(job.f_job_id).error(e)
-        else:
-            raise Exception('There are no jobs in the queue')

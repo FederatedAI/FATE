@@ -53,7 +53,7 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
         new_param.check()
         iso_model = model.isometric_models.get(consts.STATISTIC_MODEL)
         if iso_model is None:
-            raise ValueError("None of statistic model has provided when using iv filter")
+            raise ValueError("None of statistic model has provided when using unique filter")
         return IsoModelFilter(new_param, iso_model)
 
     elif filter_name == consts.IV_VALUE_THRES:
@@ -116,7 +116,7 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
         coe_param.check()
         iso_model = model.isometric_models.get(consts.STATISTIC_MODEL)
         if iso_model is None:
-            raise ValueError("None of statistic model has provided when using iv filter")
+            raise ValueError("None of statistic model has provided when using coef_of_var filter")
         return IsoModelFilter(coe_param, iso_model)
 
     elif filter_name == consts.OUTLIER_COLS:
@@ -130,7 +130,7 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
         new_param.check()
         iso_model = model.isometric_models.get(consts.STATISTIC_MODEL)
         if iso_model is None:
-            raise ValueError("None of statistic model has provided when using iv filter")
+            raise ValueError("None of statistic model has provided when using outlier filter")
         return IsoModelFilter(new_param, iso_model)
 
         # outlier_param = model_param.outlier_param

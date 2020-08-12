@@ -15,77 +15,13 @@
 #
 
 
-import typing
+from fate_arch.computing import ComputingType
+from fate_arch.computing import is_table
+from fate_arch.federation import FederationType
+from fate_arch.session._create import create, init
+from fate_arch.session._parties import PartiesInfo
+from fate_arch.session._session import Session, default, has_default
+from fate_arch.storage import StorageType
 
-import uuid
-
-from fate_arch.abc import CSessionABC, CTableABC
-from fate_arch.common import WorkMode, Backend
-
-_DEFAULT_SESSION: typing.Optional[CSessionABC] = None
-
-__all__ = ['create', 'default', 'has_default', 'is_table']
-
-
-def init(session_id=None,
-         mode: typing.Union[int, WorkMode] = WorkMode.STANDALONE,
-         backend: typing.Union[int, Backend] = Backend.EGGROLL,
-         options: dict = None):
-    if isinstance(mode, int):
-        mode = WorkMode(mode)
-    if isinstance(backend, int):
-        backend = Backend(backend)
-
-    if session_id is None:
-        session_id = str(uuid.uuid1())
-    return create(session_id, mode, backend, options)
-
-
-def create(session_id=None,
-           mode: typing.Union[int, WorkMode] = WorkMode.STANDALONE,
-           backend: typing.Union[int, Backend] = Backend.EGGROLL,
-           options: dict = None) -> CSessionABC:
-    if isinstance(mode, int):
-        mode = WorkMode(mode)
-    if isinstance(backend, int):
-        backend = Backend(backend)
-
-    global _DEFAULT_SESSION
-
-    if backend.is_eggroll():
-        if mode.is_cluster():
-            from fate_arch.session.eggroll import Session
-            sess = Session(session_id, work_mode=mode, options=options)
-            _DEFAULT_SESSION = sess
-            return sess
-        else:
-            from fate_arch.session.standalone import Session
-            sess = Session(session_id)
-            _DEFAULT_SESSION = sess
-            return sess
-    if backend.is_spark():
-        from fate_arch.session.spark import Session
-        sess = Session(session_id)
-        _DEFAULT_SESSION = sess
-        return sess
-
-    raise NotImplementedError()
-
-
-def has_default():
-    return _DEFAULT_SESSION is not None
-
-
-def default() -> CSessionABC:
-    if _DEFAULT_SESSION is None:
-        raise RuntimeError(f"session not init")
-    return _DEFAULT_SESSION
-
-
-def exit_session():
-    global _DEFAULT_SESSION
-    _DEFAULT_SESSION = None
-
-
-def is_table(v):
-    return isinstance(v, CTableABC)
+__all__ = ['create', 'default', 'has_default', 'is_table', 'init', 'Session',
+           'ComputingType', 'FederationType', 'StorageType', 'PartiesInfo']

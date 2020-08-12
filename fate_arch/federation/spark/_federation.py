@@ -42,7 +42,32 @@ class MQ(object):
         self.mq_conf = mq_conf
 
 
-class FederationEngine(FederationABC):
+class Federation(FederationABC):
+
+    @staticmethod
+    def from_conf(federation_session_id: str,
+                  party: Party,
+                  runtime_conf: dict,
+                  server_conf: dict):
+
+        mq_conf = server_conf.get('rabbitmq')
+        rabbitmq_conf = mq_conf.get("self")
+
+        host = rabbitmq_conf.get("host")
+        port = rabbitmq_conf.get("port")
+        mng_port = rabbitmq_conf.get("mng_port")
+        base_user = rabbitmq_conf.get('user')
+        base_password = rabbitmq_conf.get('password')
+
+        federation_info = runtime_conf.get("job_parameters", {}).get("federation_info", {})
+        union_name = federation_info.get('union_name')
+        policy_id = federation_info.get("policy_id")
+
+        rabbit_manager = RabbitManager(base_user, base_password, f"{host}:{mng_port}")
+        rabbit_manager.create_user(union_name, policy_id)
+        mq = MQ(host, port, union_name, policy_id, mq_conf)
+        return Federation(federation_session_id, party, mq, rabbit_manager)
+
     def __init__(self, session_id, party: Party, mq: MQ, rabbit_manager: RabbitManager):
         self._session_id = session_id
         self._party = party

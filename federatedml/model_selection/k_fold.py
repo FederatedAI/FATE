@@ -101,6 +101,8 @@ class KFold(BaseCrossValidator):
         else:
             data_generator = [(data_inst, data_inst)] * self.n_splits
         fold_num = 0
+
+        summary_res = {}
         for train_data, test_data in data_generator:
             model = copy.deepcopy(original_model)
             LOGGER.debug("In CV, set_flowid flowid is : {}".format(fold_num))
@@ -146,9 +148,11 @@ class KFold(BaseCrossValidator):
                 pred_res = pred_res.mapValues(lambda value: value + ['validate'])
                 self.evaluate(pred_res, fold_name, model)
             LOGGER.debug("Finish fold: {}".format(fold_num))
+
+            summary_res[f"model_{fold_num}"] = model.summary()
             fold_num += 1
         LOGGER.debug("Finish all fold running")
-
+        original_model.set_summary(summary_res)
         return
 
     def _arbiter_run(self, original_model):

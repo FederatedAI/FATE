@@ -3,7 +3,7 @@
         "reader_0": {
             "module": "Reader",
             "output": {
-                "data": ["table"]
+                "data": ["data"]
             }
          },
         "dataio_0": {
@@ -11,7 +11,7 @@
             "input": {
                 "data": {
                     "data": [
-                         "reader_0.table"
+                         "reader_0.data"
                     ]
                 }
             },

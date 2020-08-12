@@ -15,5 +15,6 @@
 #
 
 from fate_arch.computing.standalone._table import Table
+from fate_arch.computing.standalone._csession import CSession
 
-__all__ = ['Table']
+__all__ = ['Table', 'CSession']

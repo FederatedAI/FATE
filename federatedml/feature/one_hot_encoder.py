@@ -26,6 +26,7 @@ from federatedml.protobuf.generated import onehot_param_pb2, onehot_meta_pb2
 from federatedml.statistic.data_overview import get_header
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
+from federatedml.util import abnormal_detection
 
 LOGGER = log_utils.getLogger()
 
@@ -124,9 +125,17 @@ class OneHotEncoder(ModelBase):
         self.model_param = model_param
         # self.cols_index = model_param.cols
 
+    def _abnormal_detection(self, data_instances):
+        """
+        Make sure input data_instances is valid.
+        """
+        abnormal_detection.empty_table_detection(data_instances)
+        abnormal_detection.empty_feature_detection(data_instances)
+        self.check_schema_content(data_instances.schema)
+
     def fit(self, data_instances):
         self._init_params(data_instances)
-
+        self._abnormal_detection(data_instances)
         f1 = functools.partial(self.record_new_header,
                                inner_param=self.inner_param)
 
@@ -156,7 +165,8 @@ class OneHotEncoder(ModelBase):
 
         new_data = data_instances.mapValues(f)
         self.set_schema(new_data)
-
+        self.add_summary('transferred_dimension', len(self.inner_param.result_header))
+        LOGGER.debug(f"Final summary: {self.summary()}")
         # one_data = new_data.first()[1].features
         # LOGGER.debug("transfered data is : {}".format(one_data))
 
@@ -177,7 +187,8 @@ class OneHotEncoder(ModelBase):
             result_header.extend(new_headers)
 
         self.inner_param.set_result_header(result_header)
-        LOGGER.debug("[Result][OneHotEncoder]After one-hot, data_instances schema is : {}".format(header))
+        LOGGER.debug("[Result][OneHotEncoder]After one-hot, data_instances schema is :"
+                     " {}".format(header))
 
     def _init_params(self, data_instances):
         if len(self.schema) == 0:
@@ -189,6 +200,7 @@ class OneHotEncoder(ModelBase):
         # self.schema = data_instances.schema
         LOGGER.debug("In _init_params, schema is : {}".format(self.schema))
         header = get_header(data_instances)
+        self.add_summary("original_dimension", len(header))
         self.inner_param.set_header(header)
 
         if self.model_param.transform_col_indexes == -1:

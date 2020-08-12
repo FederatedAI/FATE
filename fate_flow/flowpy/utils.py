@@ -75,7 +75,6 @@ def preprocess(**kwargs):
         if isinstance(config_data.get(key), int):
             config_data[key] = str(config_data[key])
 
-    # TODO what if job type is 'predict'
     dsl_data = {}
     if kwargs.get('dsl_path'):
         dsl_path = os.path.abspath(kwargs.get('dsl_path'))

@@ -19,18 +19,17 @@ import os
 import traceback
 import uuid
 
-from arch.api import federation
 from arch.api.utils import file_utils, log_utils
 from arch.api.utils.core_utils import current_timestamp, get_lan_ip, timestamp_to_date
 from arch.api.utils.log_utils import schedule_logger
 from fate_arch import session
 from fate_arch.storage.constant import StorageTypes, StorageEngine
-from fate_arch.session import Backend
+from fate_arch.common import Backend
 from fate_flow.entity.constant import TaskStatus, ProcessRole
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.manager.table_manager.table_operation import create, get_table
-from fate_flow.settings import SAVE_AS_TASK_INPUT_DATA_IN_MEMORY
+from fate_flow.manager.table_manager import table_operation
 from fate_flow.utils import job_utils
 from fate_flow.api.client.controller.remote_client import ControllerRemoteClient
 from fate_flow.api.client.tracker.remote_client import JobTrackerRemoteClient
@@ -99,6 +98,7 @@ class TaskExecutor(object):
             module_name = component.get_module()
             task_input_dsl = component.get_input()
             task_output_dsl = component.get_output()
+            component_parameters_on_party['output_data_name'] = task_output_dsl.get('data')
             task_parameters = file_utils.load_json_conf(args.config)
             TaskExecutor.monkey_patch()
         except Exception as e:
@@ -143,7 +143,9 @@ class TaskExecutor(object):
                          mode=RuntimeConfig.WORK_MODE,
                          backend=RuntimeConfig.BACKEND,
                          options=session_options)
-            federation.init(job_id=job_utils.generate_federated_id(task_id, task_version), runtime_conf=component_parameters_on_party)
+            session.default().init_federation(
+                federation_session_id=job_utils.generate_federated_id(task_id, task_version),
+                runtime_conf=component_parameters_on_party)
 
             schedule_logger().info('Run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
             schedule_logger().info("Component parameters on party {}".format(component_parameters_on_party))
@@ -239,26 +241,26 @@ class TaskExecutor(object):
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
                             search_component_name, {})
                         if data_table:
+                            partitions = task_parameters['input_data_partition'] if task_parameters.get('input_data_partition', 0) > 0 else data_table.get_partitions()
+                            """
                             schedule_logger().info("start save as task {} input data table {}".format(
                                 task_id, data_table.get_address()))
                             origin_table_schema = data_table.get_meta(_type="schema")
                             name = uuid.uuid1().hex
                             namespace = job_utils.generate_session_id(task_id=task_id, task_version=task_version, role=role, party_id=party_id)
-                            partitions = task_parameters['input_data_partition'] if task_parameters.get('input_data_partition', 0) > 0 else data_table.get_partitions()
                             if RuntimeConfig.BACKEND == Backend.SPARK:
                                 storage_engine = StorageEngine.HDFS
                             else:
-                                storage_engine = StorageEngine.IN_MEMORY if SAVE_AS_TASK_INPUT_DATA_IN_MEMORY \
-                                    else StorageEngine.LMDB
-                            # TODO: The computing engine transforms the tables
-                            address = create(name=name, namespace=namespace, storage_engine=storage_engine,
+                                storage_engine = StorageEngine.LMDB
+                            address = create(name=data_table.get_name(), namespace=data_table.get_namespace(), storage_engine=storage_engine,
                                              partitions=partitions)
-                            save_as_options = {"store_type": StorageTypes.ROLLPAIR_IN_MEMORY} if SAVE_AS_TASK_INPUT_DATA_IN_MEMORY else {}
+                            save_as_options = {"store_type": StorageTypes.ROLLPAIR_IN_MEMORY}
                             data_table.save_as(address=address, partition=partitions, options=save_as_options,
                                                name=name, namespace=namespace, schema_data=origin_table_schema)
                             schedule_logger().info("save as task {} input data table to {} done".format(task_id, address))
-                            data_table = session.default().load(address, schema=origin_table_schema,
-                                                                partitions=partitions)
+                            """
+                            data_table = session.default().computing.load(data_table.get_address(), schema=data_table.get_meta(_type="schema"),
+                                                                          partitions=partitions)
                         else:
                             schedule_logger().info("pass save as task {} input data table, because the table is none".format(task_id))
                         if not data_table or not filter_attr or not filter_attr.get("data", None):

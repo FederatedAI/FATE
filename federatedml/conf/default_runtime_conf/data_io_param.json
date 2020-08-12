@@ -3,7 +3,6 @@
     "missing_fill": false,
     "outlier_replace": false,
     "with_label": true,
-    "label_idx": 0,
     "label_type": "int",
     "output_format": "dense"
 }
