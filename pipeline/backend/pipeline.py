@@ -18,14 +18,13 @@ import pickle
 import pprint
 from types import SimpleNamespace
 
-from pipeline.component.reader import Reader
-
 from pipeline.backend.config import Backend, WorkMode
 from pipeline.backend.config import Role
 from pipeline.backend.config import StatusCode
 from pipeline.backend.config import VERSION
 from pipeline.backend.task_info import TaskInfo
 from pipeline.component.component_base import Component
+from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
 from pipeline.interface.model import Model
 from pipeline.utils import tools
@@ -352,10 +351,16 @@ class PipeLine(object):
     @staticmethod
     def _feed_job_parameters(conf, backend, work_mode, job_type=None, model_info=None):
         submit_conf = copy.deepcopy(conf)
-        print("submit conf' type {}".format(submit_conf))
+        print("submit conf' type {}".format(type(submit_conf)))
+
+        if not isinstance(work_mode, int):
+            work_mode = work_mode.value
+        if not isinstance(backend, int):
+            backend = backend.value
+
         submit_conf["job_parameters"] = {
-            "work_mode": work_mode.value,
-            "backend": backend.value,
+            "work_mode": work_mode,
+            "backend": backend,
             "dsl_version": VERSION
         }
 

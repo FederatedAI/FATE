@@ -28,11 +28,14 @@ def main(config="./config.yaml"):
     # obtain config
     with open(config, "r") as f:
         conf = yaml.load(f, Loader=Loader)
-        host = conf["host"][0]
-        guest = conf["guest"][0]
-        arbiter = conf["arbiter"][0]
-        backend = conf["backend"][0]
-        work_mode = conf["work_mode"][0]
+        parties = conf.get("parties", {})
+        if len(parties) == 0:
+            raise ValueError(f"Parties id must be sepecified.")
+        host = parties["host"][0]
+        guest = parties["guest"][0]
+        arbiter = parties["arbiter"][0]
+        backend = conf.get("backend", 0)
+        work_mode = conf.get("work_mode", 0)
 
     # specify input data name & namespace in database
     guest_train_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
@@ -80,9 +83,10 @@ def main(config="./config.yaml"):
 
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
+    pipeline.add_component(reader_1)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     # set dataio_1 to replicate model from dataio_0
-    pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data), model=Model(dataio_0.output.model_output))
+    pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data), model=Model(dataio_0.output.model))
     # set data input sources of intersection components
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
     pipeline.add_component(intersection_1, data=Data(data=dataio_1.output.data))

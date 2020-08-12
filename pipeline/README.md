@@ -65,7 +65,7 @@ the current model will replicate all model parameters from the previous model.
 Check below for a case from mini demo, where `model` from `dataio_0` is passed to `dataio_1`.
 
 ```python
-pipeline.add_component(dataio_1, data=Data(data=input_1.data), model=Model(dataio_0.output.model_output))
+pipeline.add_component(dataio_1, data=Data(data=input_1.data), model=Model(dataio_0.output.model))
 ```
 
 When a model from previous component is used but the current component is of different class from the previous component, `isometric_model` is used.
@@ -79,7 +79,7 @@ For instance, `HeteroFeatureSelection` uses `isometric_model` from `HeteroFeatur
 ```python
 output_all = dataio_0.output
 output_data = dataio_0.output.data
-output_model = dataio_0.output.model_output
+output_model = dataio_0.output.model
 ```
 
 ## Build A Pipeline
