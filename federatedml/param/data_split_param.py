@@ -58,7 +58,7 @@ class DataSplitParam(BaseParam):
 
     """
 
-    def __init__(self, random_state=None, test_size=0.0, train_size=0.8, validate_size=0.2, stratified=False,
+    def __init__(self, random_state=None, test_size=None, train_size=None, validate_size=None, stratified=False,
                  shuffle=True, split_points=None, need_run=True):
         super(DataSplitParam, self).__init__()
         self.random_state = random_state
@@ -89,6 +89,11 @@ class DataSplitParam(BaseParam):
             BaseParam.check_nonnegative_number(self.validate_size, f"{model_param_descr} validate_size ")
             if isinstance(self.validate_size, float):
                 BaseParam.check_decimal_float(self.validate_size, f"{model_param_descr} validate_size ")
+        # use default size values if none given
+        if self.test_size is None and self.train_size is None and self.validate_size is None:
+            self.test_size = 0.0
+            self.train_size = 0.8
+            self.validate_size = 0.2
 
         BaseParam.check_boolean(self.stratified, f"{model_param_descr} stratified ")
         BaseParam.check_boolean(self.shuffle, f"{model_param_descr} shuffle ")

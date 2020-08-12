@@ -70,6 +70,21 @@
                 "model": ["hetero_lr_model"]
             }
         },
+        "hetero_lr_1": {
+            "module": "HeteroLR",
+            "input": {
+                "data": {
+                    "eval_data": ["intersection_1.eval_data"]
+                },
+                "model": [
+                    "hetero_lr_0.hetero_lr_model"
+                ]
+            },
+            "output": {
+                "data": ["hetero_lr_data"],
+                "model": ["hetero_lr_model"]
+            }
+        },
         "evaluation_0": {
             "module": "Evaluation",
             "input": {

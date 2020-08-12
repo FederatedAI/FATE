@@ -557,7 +557,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
                         nid = tree_[nid].right_nodeid
                     else:
                         nid = tree_[nid].left_nodeid
-                elif data_inst.features.get_data(fid) <= bid:
+                elif data_inst.features.get_data(fid) <= bid + consts.FLOAT_ZERO:
                     nid = tree_[nid].left_nodeid
                 else:
                     nid = tree_[nid].right_nodeid
@@ -566,7 +566,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
                     nid = tree_[nid].right_nodeid
                 else:
                     nid = tree_[nid].left_nodeid
-            elif data_inst.features.get_data(fid, 0) <= bid:
+            elif data_inst.features.get_data(fid, 0) <= bid + consts.FLOAT_ZERO:
                 nid = tree_[nid].left_nodeid
             else:
                 nid = tree_[nid].right_nodeid

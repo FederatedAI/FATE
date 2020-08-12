@@ -34,33 +34,7 @@
         	    "label_name": ["target"],
             	"label_type": ["int"],
             	"output_format": ["dense"]
-        	},
-        	"sampler_0":{
-        	    "method": ["downsample"], 
-        	    "mode": ["stratified"],
-        	    "fractions": [[[0,1],[1,0.6]]], 
-        	    "task_type": ["homo"],
-        	    "random_state": [1234]
-        	} ,    
-        	"feature_scale_0": {
-        		"method": ["min_max_scale"],
-        		"area": ["col"],
-        		"scale_col_indexes": [[0,3,4,7,9]]
-      		},
-      		"feature_scale_1": {
-        		"method": ["min_max_scale"],
-        		"area": ["col"],
-        		"scale_col_indexes": [[0,3,4,7,9]]
-      		},
-            "evaluation_0": {
-                "eval_type": ["binary"],
-        		"pos_label": [1], 
-        		"need_run": [true]
-            }, 
-            "evaluation_1": {
-                "eval_type": ["binary"],
-        		"pos_label": [1]
-            }
+        	}
         },
         "host": {
             "args": {
@@ -82,74 +56,43 @@
         	"dataio_1":{
     	        "need_run": [false]
         	},
-        	"sampler_0":{
-        	    "mode":["stratified"],
-        	    "method": ["downsample"], 
-        	    "task_type": ["homo"],
-        	    "fractions": [[[0, 1], [1, 0.5]]], 
-        	    "random_state": [1234]
-        	} ,
-            "feature_scale_0": {
-            	"need_run": [true],
-        		"method": ["min_max_scale"],
-        		"area": ["col"],
-        		"scale_col_indexes": [[0,3,4,7,9]]
-      		},
             "evaluation_0": {
-                "need_run": [false],
-                "eval_type": ["binary"],
-        		"pos_label": [1]
-            },
-            "evaluation_1": {
-                "need_run": [false]
+              "need_run": [false]
             }
         }
     },
     "algorithm_parameters": {		
-      	"aligner_0":{
+      	"homo_onehot_0":{
       		"transform_col_indexes": [1,2,5,6,8,10,11,12],
       		"transform_col_names": [],
-      		"need_run": true,
-      		"need_alignment": true,
-      		"encrypt_param": {
-                "method": "Paillier", 
-                "need_run": true
-            }
+      		"need_alignment": true
       	},      		
-      	"aligner_1":{
+      	"homo_onehot_1":{
       		"transform_col_indexes": [1,2,5,6,8,10,11,12],
       		"transform_col_names": [],
-      		"need_run": true,
-      		"need_alignment": true,
-      		"encrypt_param": {
-                "method": "Paillier", 
-                "need_run": true
-            }
+      		"need_alignment": true
       	},
         "homo_lr_0": {
             "penalty": "L2",
             "optimizer": "sgd",
-            "eps": 1e-5,
+            "tol": 1e-05,
             "alpha": 0.01,
-            "max_iter": 4,
-            "aggregate_iters": 2,
-            "converge_func": "diff",
-            "batch_size": 300,
-            "learning_rate": 0.2,
-            "decay": 0.2,
+            "max_iter": 3,
+            "early_stop": "diff",
+            "batch_size": 500,
+            "learning_rate": 0.15,
+            "decay": 1,
             "decay_sqrt": true,
-            "mu":0.01,
             "init_param": {
-				"init_method": "random_normal"
+                "init_method": "zeros"
             },
             "encrypt_param": {
-                "method": "Paillier", 
-                "need_run": true
+                "method": "Paillier"
             },
             "cv_param": {
                 "n_splits": 4,
                 "shuffle": true,
-                "random_seed": 1028,
+                "random_seed": 33,
                 "need_cv": false
             }
         }
