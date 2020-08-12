@@ -85,15 +85,24 @@ def initialization(**kwargs):
         config["ip"] = kwargs.get("ip")
     if kwargs.get("port"):
         config["port"] = kwargs.get("port")
-    with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "w") as fout:
-        yaml.safe_dump(config, fout)
+    if kwargs.get("server_conf_path") or (kwargs.get("ip") and kwargs.get("port")):
+        with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "w") as fout:
+            yaml.safe_dump(config, fout)
 
-    prettify(
-        {
-            "retcode": 0,
-            "retmsg": "Fate Flow CLI has been initialized successfully"
-        }
-    )
+        prettify(
+            {
+                "retcode": 0,
+                "retmsg": "Fate Flow CLI has been initialized successfully."
+            }
+        )
+    else:
+        prettify(
+            {
+                "retcode": 100,
+                "retmsg": "Fate Flow CLI initialization failed. Please provides server configuration file path "
+                          "or server http ip address and port information."
+            }
+        )
 
 
 flow_cli.add_command(component.component)
