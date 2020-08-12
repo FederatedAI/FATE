@@ -21,3 +21,4 @@ from fate_flow.flowpy.client.api.priviledge import Priviledge
 from fate_flow.flowpy.client.api.queue import Queue
 from fate_flow.flowpy.client.api.table import Table
 from fate_flow.flowpy.client.api.task import Task
+from fate_flow.flowpy.client.api.tag import Tag

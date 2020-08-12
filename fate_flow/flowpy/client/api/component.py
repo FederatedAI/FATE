@@ -14,11 +14,9 @@
 #  limitations under the License.
 #
 import os
-import json
 from contextlib import closing
 from fate_flow.flowpy.client.api.base import BaseFlowAPI
-from fate_flow.flowpy.utils import (preprocess, check_config,
-                                    download_from_request, check_output_path)
+from fate_flow.flowpy.utils import preprocess, check_config, download_from_request
 
 
 class Component(BaseFlowAPI):

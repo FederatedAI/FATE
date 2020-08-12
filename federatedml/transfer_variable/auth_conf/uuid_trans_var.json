@@ -1,0 +1,13 @@
+{
+  "federatedml.framework.homo.blocks.uuid_generator.UUIDTransVar": {
+    "uuid": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest",
+        "host"
+      ]
+    }
+  }
+}

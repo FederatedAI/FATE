@@ -21,7 +21,7 @@ import base64
 from ruamel import yaml
 
 from arch.api.utils import file_utils
-from arch.api.proto import default_empty_fill_pb2
+from fate_arch.protobuf.python import default_empty_fill_pb2
 from fate_flow.settings import stat_logger, TEMP_DIRECTORY
 
 
@@ -107,6 +107,13 @@ class PipelinedModel(object):
                                 model_buffers["{}.{}:{}".format(component_name, model_alias, model_name)] = buffer_object_serialized_string
         return model_buffers
 
+    def set_model_path(self):
+        self.model_path = os.path.join(file_utils.get_project_base_directory(), "model_local_cache",
+                                       self.model_id, self.model_version)
+
+    def exists(self):
+        return os.path.exists(self.model_path)
+
     def save_pipeline(self, pipelined_buffer_object):
         buffer_object_serialized_string = pipelined_buffer_object.SerializeToString()
         if not buffer_object_serialized_string:
@@ -117,7 +124,7 @@ class PipelinedModel(object):
             fw.write(buffer_object_serialized_string)
 
     def packaging_model(self):
-        if not os.path.exists(self.model_path):
+        if not self.exists():
             raise Exception("Can not found {} {} model local cache".format(self.model_id, self.model_version))
         archive_file_path = shutil.make_archive(base_name=self.archive_model_base_path(), format=self.default_archive_format, root_dir=self.model_path)
         stat_logger.info("Make model {} {} archive on {} successfully".format(self.model_id,

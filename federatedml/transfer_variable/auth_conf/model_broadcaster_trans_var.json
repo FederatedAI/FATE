@@ -1,0 +1,13 @@
+{
+  "federatedml.framework.homo.blocks.model_broadcaster.ModelBroadcasterTransVar": {
+    "server_model": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest",
+        "host"
+      ]
+    }
+  }
+}

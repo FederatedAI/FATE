@@ -1,14 +1,12 @@
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
-
 from federatedml.ensemble.boosting.boosting_core import HeteroBoostingHost
 from federatedml.param.boosting_param import HeteroSecureBoostParam
 from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeHost
-
 from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
     HeteroSecureBoostTransferVariable
-
+from federatedml.util.fate_operator import generate_anonymous
 from federatedml.util.io_check import assert_io_num_rows_equal
 
 from arch.api.utils import log_utils
@@ -159,6 +157,18 @@ class HeteroSecureBoostHost(HeteroBoostingHost):
         model_param.tree_num = len(self.boosting_model_list)
         model_param.tree_dim = self.booster_dim
         model_param.trees_.extend(self.boosting_model_list)
+
+        anonymous_name_mapping = {}
+        party_id = self.component_properties.local_partyid
+        for fid, name in self.feature_name_fid_mapping.items():
+            anonymous_name_mapping = {generate_anonymous(fid, role=consts.HOST, party_id=party_id,):
+                                                name}
+
+        model_param.anonymous_name_mapping.update(anonymous_name_mapping)
+        model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
+        model_param.model_name = consts.HETERO_SBT
+
+        model_param.anonymous_name_mapping.update(anonymous_name_mapping)
         model_param.feature_name_fid_mapping.update(self.feature_name_fid_mapping)
         model_param.model_name = consts.HETERO_SBT
         model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration

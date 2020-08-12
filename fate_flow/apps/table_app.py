@@ -13,12 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_flow.manager.data_manager import query_data_view, delete_table
+from fate_flow.manager.table_manager.table_operation import get_table
 from fate_flow.utils.api_utils import get_json_result
-from fate_flow.utils import session_utils
 from fate_flow.settings import stat_logger
 from arch.api.utils.dtable_utils import get_table_info
-from arch.api import session
 from flask import Flask, request
 
 manager = Flask(__name__)
@@ -31,29 +29,24 @@ def internal_server_error(e):
 
 
 @manager.route('/delete', methods=['post'])
-@session_utils.session_detect()
 def table_delete():
     request_data = request.json
-    data_views = query_data_view(**request_data)
     table_name = request_data.get('table_name')
     namespace = request_data.get('namespace')
-    status = False
-    data = []
-    if table_name and namespace:
-        table = session.get_data_table(name=table_name, namespace=namespace)
+    table = get_table(name=table_name, namespace=namespace)
+    if table:
         table.destroy()
-        data.append({'table_name': table_name,
-                     'namespace': namespace})
-        status = True
-    elif data_views:
-        status, data = delete_table(data_views)
+        data = {'table_name': table_name, 'namespace': namespace}
+        try:
+            table.close()
+        except Exception as e:
+            stat_logger.exception(e)
     else:
         return get_json_result(retcode=101, retmsg='no find table')
-    return get_json_result(retcode=(0 if status else 101), retmsg=('success' if status else 'failed'), data=data)
+    return get_json_result(data=data)
 
 
 @manager.route('/<table_func>', methods=['post'])
-@session_utils.session_detect()
 def dtable(table_func):
     config = request.json
     if table_func == 'table_info':
@@ -62,10 +55,14 @@ def dtable(table_func):
             table_key_count = 0
             table_partition = None
         else:
-            table = session.get_data_table(name=table_name, namespace=namespace)
+            table = get_table(name=table_name, namespace=namespace, simple=True)
             if table:
                 table_key_count = table.count()
                 table_partition = table.get_partitions()
+                try:
+                    table.close()
+                except Exception as e:
+                    stat_logger.exception(e)
             else:
                 table_key_count = 0
                 table_partition = None

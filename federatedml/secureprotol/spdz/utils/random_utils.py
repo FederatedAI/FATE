@@ -18,12 +18,11 @@ import functools
 import random
 
 import numpy as np
-
-from arch.api.base.table import Table
+from fate_arch.session import is_table
 
 
 def rand_tensor(q_field, tensor):
-    if isinstance(tensor, Table):
+    if is_table(tensor):
         return tensor.mapValues(
             lambda x: np.random.randint(1, q_field, len(x)).astype(object))
     if isinstance(tensor, np.ndarray):
@@ -64,13 +63,13 @@ class _MixRand(object):
         return self
 
 
-def _mix_rand_func(iter, q_field):
+def _mix_rand_func(it, q_field):
     _mix = _MixRand(1, q_field)
-    return [(k, np.array([next(_mix) for _ in v], dtype=object)) for k, v in iter]
+    return [(k, np.array([next(_mix) for _ in v], dtype=object)) for k, v in it]
 
 
 def urand_tensor(q_field, tensor, use_mix=False):
-    if isinstance(tensor, Table):
+    if is_table(tensor):
         if use_mix:
             return tensor.mapPartitions2(functools.partial(_mix_rand_func, q_field=q_field))
         return tensor.mapValues(

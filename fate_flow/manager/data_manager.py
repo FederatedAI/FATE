@@ -15,10 +15,9 @@
 #
 import operator
 
-from arch.api import session
+from fate_flow.manager.table_manager.table_operation import get_table
 from fate_flow.settings import stat_logger
-from fate_flow.utils import session_utils
-from fate_flow.db.db_models import DB, DataView, TrackingMetric
+from fate_flow.db.db_models import DB, TrackingMetric
 
 
 def query_data_view(**kwargs):
@@ -35,20 +34,24 @@ def query_data_view(**kwargs):
         return [data_view for data_view in data_views]
 
 
-@session_utils.session_detect()
-def delete_table(data_views):
+def delete_tables_by_table_infos(output_data_table_infos):
     data = []
     status = False
-    for data_view in data_views:
-        table_name = data_view.f_table_name
-        namespace = data_view.f_table_namespace
+    for output_data_table_info in output_data_table_infos:
+        table_name = output_data_table_info.f_table_name
+        namespace = output_data_table_info.f_table_namespace
         table_info = {'table_name': table_name, 'namespace': namespace}
         if table_name and namespace and table_info not in data:
-            table = session.get_data_table(name=table_name, namespace=namespace)
+            table = get_table(name=table_name, namespace=namespace)
             try:
                 table.destroy()
+                table.close()
                 data.append(table_info)
                 status = True
+            except:
+                pass
+            try:
+                table.close()
             except:
                 pass
     return status, data

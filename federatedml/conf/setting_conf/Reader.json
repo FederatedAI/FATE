@@ -1,0 +1,12 @@
+{
+    "module_path":  "fate_flow/components",
+    "default_runtime_conf": "reader_param.json",
+    "param_class" : "fate_flow/param/reader_param.py/ReaderParam",
+    "role":
+    {
+        "guest|host":
+        {
+            "program": "reader.py/Reader"
+        }
+    }
+}
