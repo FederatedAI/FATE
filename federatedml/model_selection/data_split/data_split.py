@@ -251,7 +251,7 @@ class DataSplitter(ModelBase):
         if self.split_points is None:
             label_names = list(set(y_all))
 
-        original_freq_dict = DataSplitter.get_class_freq(y_train, self.split_points, label_names)
+        original_freq_dict = DataSplitter.get_class_freq(y_all, self.split_points, label_names)
         metas["original"] = original_freq_dict
 
         train_freq_dict = DataSplitter.get_class_freq(y_train, self.split_points, label_names)
