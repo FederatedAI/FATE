@@ -11,10 +11,6 @@
             10000
         ],
         "host": [
-            10000,
-            10001
-        ],
-        "arbiter": [
             10000
         ]
     },
@@ -24,33 +20,19 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "default_credit_guest",
+                            "name": "breast_hetero_guest",
                             "namespace": "experiment"
                         }
                     ],
                     "eval_data": [
                         {
-                            "name": "default_credit_test",
+                            "name": "breast_hetero_guest",
                             "namespace": "experiment"
                         }
                     ]
                 }
             },
             "dataio_0": {
-                "with_label": [
-                    true
-                ],
-                "label_name": [
-                    "y"
-                ],
-                "label_type": [
-                    "int"
-                ],
-                "output_format": [
-                    "dense"
-                ]
-            },
-            "dataio_1": {
                 "with_label": [
                     true
                 ],
@@ -70,21 +52,13 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "default_credit_host1",
-                            "namespace": "experiment"
-                        },
-                        {
-                            "name": "default_credit_host2",
+                            "name": "breast_hetero_host",
                             "namespace": "experiment"
                         }
                     ],
                     "eval_data": [
                         {
-                            "name": "default_credit_test",
-                            "namespace": "experiment"
-                        },
-                        {
-                            "name": "default_credit_test",
+                            "name": "breast_hetero_host",
                             "namespace": "experiment"
                         }
                     ]
@@ -92,27 +66,7 @@
             },
             "dataio_0": {
                 "with_label": [
-                    true
-                ],
-                "label_name": [
-                    "y"
-                ],
-                "label_type": [
-                    "int"
-                ],
-                "output_format": [
-                    "dense"
-                ]
-            },
-            "dataio_1": {
-                "with_label": [
-                    true
-                ],
-                "label_name": [
-                    "y"
-                ],
-                "label_type": [
-                    "int"
+                    false
                 ],
                 "output_format": [
                     "dense"
@@ -124,17 +78,17 @@
         "secureboost_0": {
             "task_type": "classification",
             "learning_rate": 0.1,
-            "num_trees": 3,
+            "num_trees": 5,
             "subsample_feature_rate": 1,
-            "n_iter_no_change": true,
+            "n_iter_no_change": false,
             "tol": 0.0001,
             "bin_num": 50,
-            "validation_freqs": 1,
-            "tree_param": {
-                "max_depth": 3
-            },
+            "complete_secure": true,
             "objective_param": {
                 "objective": "cross_entropy"
+            },
+            "encrypt_param": {
+                "method": "paillier"
             },
             "predict_param": {
                 "with_proba": true,
@@ -144,8 +98,12 @@
                 "n_splits": 5,
                 "shuffle": false,
                 "random_seed": 103,
-                "need_cv": false
-            }
+                "need_cv": false,
+                "evaluate_param": {
+                    "eval_type": "binary"
+                }
+            },
+            "validation_freqs": 1
         },
         "evaluation_0": {
             "eval_type": "binary"

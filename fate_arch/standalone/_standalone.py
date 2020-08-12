@@ -261,6 +261,10 @@ class Session(object):
         self.session_id = session_id
         self._pool = Executor()
 
+    def __getstate__(self):
+        # session won't be pickled
+        pass
+
     def load(self, name, namespace):
         return _load_table(session=self, name=name, namespace=namespace)
 

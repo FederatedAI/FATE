@@ -23,6 +23,6 @@
         "method": "paillier"
     },
     "predict_param": {
-        "threshold": 0.5
+        "threshold": 0.5 
     }
 }

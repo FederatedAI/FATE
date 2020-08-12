@@ -8,10 +8,10 @@ import re
 import sys
 from pathlib import Path
 
-project_base = Path(__file__).resolve().parent.parent.parent.parent
+project_base = Path(__file__).resolve().parent.parent.parent.parent.parent
 sys.path.append(project_base.__str__())
 
-from fate_arch.transfer_variable import Variable, BaseTransferVariables
+from fate_arch.federation.transfer_variable import Variable, BaseTransferVariables
 
 _camel_to_snake_pattern = re.compile('((?<=[a-z0-9])[A-Z]|(?!^)[A-Z](?=[a-z]))')
 
