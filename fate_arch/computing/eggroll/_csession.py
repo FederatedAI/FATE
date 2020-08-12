@@ -50,7 +50,7 @@ class CSession(CSessionABC):
     @log_elapsed
     def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
 
-        from fate_arch.storage.address import EggRollAddress
+        from fate_arch.common.address import EggRollAddress
         if isinstance(address, EggRollAddress):
             options = kwargs.get("option", {})
             options["total_partitions"] = partitions
@@ -69,7 +69,7 @@ class CSession(CSessionABC):
             table.schema = schema
             return table
 
-        from fate_arch.storage.address import FileAddress
+        from fate_arch.common.address import FileAddress
         if isinstance(address, FileAddress):
             return address
 

@@ -13,8 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import warnings
+from fate_arch.storage.hdfs._table import StorageTable
+from fate_arch.storage.hdfs._session import StorageSession
 
-from fate_arch.session import *
-
-warnings.warn('arch.api.session argument deprecated, use fate_arch.session instead', DeprecationWarning)
+__all__ = ["StorageTable", "StorageSession"]

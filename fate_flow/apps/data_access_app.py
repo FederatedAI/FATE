@@ -20,7 +20,8 @@ from flask import Flask, request
 
 from fate_arch.storage.constant import StorageEngine
 from fate_flow.entity.constant import StatusSet
-from fate_flow.manager.table_manager.table_operation import get_table
+from fate_arch.abc import StorageSessionABC
+from fate_arch.storage import StorageSessionBase
 from fate_flow.settings import stat_logger, USE_LOCAL_DATA, WORK_MODE
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils import detect_utils, job_utils
@@ -65,7 +66,7 @@ def download_upload(access_module):
         data['table_name'] = request_config["table_name"]
         data['namespace'] = request_config["namespace"]
         if WORK_MODE != 0:
-            data_table = get_table(name=request_config["table_name"], namespace=request_config["namespace"])
+            data_table = StorageSessionABC.get_table(name=request_config["table_name"], namespace=request_config["namespace"])
             if data_table and int(request_config.get('drop', 2)) == 2:
                 return get_json_result(retcode=100,
                                        retmsg='The data table already exists.'
@@ -115,7 +116,7 @@ def get_upload_info(jobs_run_conf):
         info = {}
         table_name = job_run_conf["table_name"][0]
         namespace = job_run_conf["namespace"][0]
-        table = get_table(name=table_name, namespace=namespace, simple=True)
+        table = StorageSessionABC.get_table(name=table_name, namespace=namespace, simple=True)
         if table:
             partition = job_run_conf["partition"][0]
             info["upload_info"] = {

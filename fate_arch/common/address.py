@@ -1,16 +1,21 @@
 from fate_arch.abc import AddressABC
 
 
-class HDFSAddress(AddressABC):
-    def __init__(self, path):
-        self.path = path
+class StandaloneAddress(AddressABC):
+    def __init__(self, name, namespace):
+        self.name = name
+        self.namespace = namespace
 
 
 class EggRollAddress(AddressABC):
-    def __init__(self, name, namespace, storage_type):
+    def __init__(self, name, namespace):
         self.name = name
         self.namespace = namespace
-        self.storage_type = storage_type  # LMDB or IN_MEMORY
+
+
+class HDFSAddress(AddressABC):
+    def __init__(self, path):
+        self.path = path
 
 
 class MysqlAddress(AddressABC):

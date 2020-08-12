@@ -17,19 +17,17 @@
 
 import abc
 from typing import Iterable
-
-import six
-
-from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from fate_arch.common.log import getLogger
-from fate_arch.db.db_models import DB, StorageTableMeta
-from fate_arch.storage.constant import StorageTableMetaType
+from fate_arch.common import StorageTableMetaType
+from fate_arch.computing import ComputingType
+from fate_arch.abc import AddressABC
+
+MAX_NUM = 10000
 
 LOGGER = getLogger()
 
 
-@six.add_metaclass(abc.ABCMeta)
-class TableABC(object):
+class StorageTableABC(metaclass=abc.ABCMeta):
     """
     table for distributed storage
     """
@@ -95,87 +93,58 @@ class TableABC(object):
 
     @abc.abstractmethod
     def save_as(self, name, namespace, partition=None, schema=None, **kwargs):
-        if schema:
-            self.save_meta(name=name, namespace=namespace, schema=schema, partitions=partition)
+        pass
 
     @abc.abstractmethod
     def close(self):
         pass
 
+    @abc.abstractmethod
     def destroy(self):
-        # destroy schema
-        self.destroy_meta()
-        # subclass method needs do: super().destroy()
+        ...
 
-    """
-    meta utils
-    """
-
+    @abc.abstractmethod
     def get_meta(self, _type=StorageTableMetaType.SCHEMA, name=None, namespace=None):
-        if not name and not namespace:
-            name = self.get_name()
-            namespace = self.get_namespace()
-        with DB.connection_context():
-            table_metas = StorageTableMeta.select().where(StorageTableMeta.f_name == name,
-                                                          StorageTableMeta.f_namespace == namespace)
-            meta = None
-            if table_metas:
-                table_meta = table_metas[0]
-                try:
-                    if _type == StorageTableMetaType.SCHEMA:
-                        meta = deserialize_b64(table_meta.f_schema)
-                    elif _type == StorageTableMetaType.PART_OF_DATA:
-                        meta = deserialize_b64(table_meta.f_part_of_data)
-                    elif _type == StorageTableMetaType.COUNT:
-                        meta = table_meta.f_count
-                    elif _type == StorageTableMetaType.PARTITIONS:
-                        meta = table_meta.f_partitions
-                except:
-                    meta = None
-        return meta
+        ...
 
+    @abc.abstractmethod
     def save_meta(self, schema=None, name=None, namespace=None, party_of_data=None, count=0, partitions=1):
-        # save metas to mysql
-        if not schema:
-            schema = {}
-        if not party_of_data:
-            party_of_data = []
-        if not name or not namespace:
-            name = self.get_name()
-            namespace = self.get_namespace()
-        with DB.connection_context():
-            table_metas = StorageTableMeta.select().where(StorageTableMeta.f_name == name,
-                                                          StorageTableMeta.f_namespace == namespace)
-            if table_metas:
-                # save schema info
-                table_meta = table_metas[0]
-                if table_meta.f_schema:
-                    _schema_data = deserialize_b64(table_meta.f_schema)
-                _schema_data.update(schema)
-                table_meta.f_schema = serialize_b64(_schema_data, to_str=True)
-                # save data
-                if party_of_data:
-                    _f_part_of_data = deserialize_b64(table_meta.f_part_of_data)
-                    if len(_f_part_of_data) < 100:
-                        _f_part_of_data.extend(party_of_data[:(100 - len(_f_part_of_data))])
-                        table_meta.f_part_of_data = serialize_b64(party_of_data[:100], to_str=True)
-                # save count
-                if count:
-                    table_meta.f_count = count
-                if partitions:
-                    table_meta.f_partitions = partitions
-            else:
-                raise Exception('please create table {} {} before useing'.format(name, namespace))
-            table_meta.f_update_time = current_timestamp()
-            table_meta.save()
+        ...
 
+    @abc.abstractmethod
     def destroy_meta(self):
-        try:
-            with DB.connection_context():
-                StorageTableMeta \
-                    .delete() \
-                    .where(StorageTableMeta.f_name == self.get_name(),
-                           StorageTableMeta.f_namespace == self.get_namespace()) \
-                    .execute()
-        except Exception as e:
-            LOGGER.error("delete_table_meta {}, {}, exception:{}.".format(self.get_namespace(), self.get_name(), e))
+        ...
+
+
+class StorageSessionABC(metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def create_table(self, address, name, namespace, partitions, storage_type=None, options=None, **kwargs) -> StorageTableABC:
+        pass
+
+    @abc.abstractmethod
+    def get_table(self, name, namespace) -> StorageTableABC:
+        pass
+
+    @abc.abstractmethod
+    def get_storage_info(self, name, namespace):
+        pass
+
+    @abc.abstractmethod
+    def get_address(self, storage_engine, address_dict) -> AddressABC:
+        pass
+
+    @abc.abstractmethod
+    def convert(self, src_table, dest_name, dest_namespace, session_id, computing_engine: ComputingType, force=False, **kwargs):
+        pass
+
+    @abc.abstractmethod
+    def copy_table(self, src_table, dest_table):
+        pass
+
+    @abc.abstractmethod
+    def stop(self):
+        pass
+
+    @abc.abstractmethod
+    def kill(self):
+        pass

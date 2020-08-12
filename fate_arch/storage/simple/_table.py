@@ -1,13 +1,24 @@
 from collections import Iterable
 
-from fate_arch.abc import TableABC
+from fate_arch.common import StorageEngine
+from fate_arch.storage import StorageTableBase
 
 
-class SimpleTable(TableABC):
-    def __init__(self, name, namespace, data_name, **kwargs):
-        self._name = name,
+class StorageTable(StorageTableBase):
+    def __init__(self,
+                 context,
+                 address=None,
+                 name: str = None,
+                 namespace: str = None,
+                 partitions: int = 1,
+                 data_name: str = ""):
+        self._context = context
+        self._address = address
+        self._name = name
         self._namespace = namespace
-        self.data_name = data_name
+        self._partitions = partitions
+        self._data_name = data_name
+        self._storage_engine = StorageEngine.SIMPLE
 
     def get_partitions(self):
         return self.get_meta(_type='partitions')
@@ -16,7 +27,7 @@ class SimpleTable(TableABC):
         return self._name
 
     def get_data_name(self):
-        return self.data_name
+        return self._data_name
 
     def get_namespace(self):
         return self._namespace

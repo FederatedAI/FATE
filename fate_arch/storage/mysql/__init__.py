@@ -1,4 +1,3 @@
-
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -14,26 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_arch.computing import ComputingType
-from fate_arch.common.address import StandaloneAddress, EggRollAddress, HDFSAddress, MysqlAddress
+from fate_arch.storage.mysql._table import StorageTable
+from fate_arch.storage.mysql._session import StorageSession
 
-
-
-
-
-class Relationship(object):
-    CompToStore = {
-        ComputingType.STANDALONE: [StorageEngine.STANDALONE],
-        ComputingType.EGGROLL: [StorageEngine.EGGROLL],
-        ComputingType.SPARK: [StorageEngine.HDFS]
-    }
-    EngineToAddress = {
-        StorageEngine.STANDALONE: StandaloneAddress,
-        StorageEngine.EGGROLL: EggRollAddress,
-        StorageEngine.HDFS: HDFSAddress,
-        StorageEngine.MYSQL: MysqlAddress
-    }
-
-
-
-
+__all__ = ["StorageTable", "StorageSession"]

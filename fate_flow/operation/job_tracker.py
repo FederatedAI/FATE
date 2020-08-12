@@ -19,14 +19,15 @@ from typing import List
 
 from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 from arch.api.utils.log_utils import schedule_logger
-from fate_arch.storage.simple_table import SimpleTable
+from fate_arch.storage.simple._table import StorageTable
 from fate_flow.db.db_models import DB, TrackingMetric, TrackingOutputDataInfo, ComponentSummary
 from fate_flow.entity.constant import Backend
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.model_manager import pipelined_model
-from fate_flow.manager.table_manager.table_operation import get_table, create
+from fate_flow.manager.table_manager.table_operation import get_table
 from fate_flow.utils import job_utils, model_utils
+from fate_arch.abc import StorageSessionABC
 
 
 class Tracker(object):
@@ -157,10 +158,10 @@ class Tracker(object):
                                                                                   persistent_table_name))
             partitions = data_table.partitions
             schedule_logger(self.job_id).info('output data table partitions is {}'.format(partitions))
-            address = create(name=persistent_table_name,
-                             namespace=persistent_table_namespace,
-                             storage_engine=output_storage_engine,
-                             partitions=partitions)
+            address = StorageSessionABC.register(name=persistent_table_name,
+                                                 namespace=persistent_table_namespace,
+                                                 storage_engine=output_storage_engine,
+                                                 partitions=partitions)
             schema = {}
             data_table.save(address, schema=schema, partitions=partitions)
             table = get_table(job_id=job_utils.generate_session_id(self.task_id, self.task_version, self.role, self.party_id),
@@ -192,7 +193,7 @@ class Tracker(object):
             for output_data_info in output_data_infos:
                 schedule_logger(self.job_id).info("Get task {} {} output table {} {}".format(output_data_info.f_task_id, output_data_info.f_task_version, output_data_info.f_table_namespace, output_data_info.f_table_name))
                 if not need_all:
-                    data_table = SimpleTable(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace, data_name=output_data_info.f_data_name)
+                    data_table = StorageTable(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace, data_name=output_data_info.f_data_name)
                 else:
                     data_table = get_table(job_id=session_id,
                                            name=output_data_info.f_table_name,

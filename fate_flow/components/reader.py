@@ -17,7 +17,7 @@
 #
 import uuid
 
-from fate_flow.manager.table_manager.table_convert import convert
+from fate_arch.abc import StorageSessionABC
 from fate_flow.entity.metric import MetricMeta
 
 from arch.api.utils import log_utils
@@ -46,8 +46,8 @@ class Reader(object):
             raise Exception('no find table: namespace {}, name {}'.format(self.parameters[table_key]['namespace'],
                                                                           self.parameters[table_key]['name']))
         persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(self.task_id), uuid.uuid1().hex
-        table = convert(data_table, job_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id),
-                        name=persistent_table_name, namespace=persistent_table_namespace, force=True, mode=component_parameters['job_parameters']['work_mode'])
+        table = StorageSessionABC.convert(data_table, job_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id),
+                                          name=persistent_table_name, namespace=persistent_table_namespace, force=True, mode=component_parameters['job_parameters']['work_mode'])
         if not table:
             persistent_table_name = data_table.get_name()
             persistent_table_namespace = data_table.get_namespace()

@@ -14,42 +14,32 @@
 #  limitations under the License.
 #
 
-import typing
 
 import pymysql
 
-from arch.api.utils.conf_utils import get_base_config
-from fate_arch.abc import TableABC
 from fate_arch.common.profile import log_elapsed
-from fate_arch.storage.constant import StorageEngine
-from fate_arch.common import WorkMode
+from fate_arch.common import StorageEngine, MySQLStorageType
+from fate_arch.storage import StorageTableBase
 
 
-# noinspection SpellCheckingInspection,PyProtectedMember,PyPep8Naming
-class MysqlTable(TableABC):
+class StorageTable(StorageTableBase):
     def __init__(self,
-                 mode: typing.Union[int, WorkMode] = get_base_config('work_mode', 0),
-                 persistent_engine: str = StorageEngine.MYSQL,
-                 partitions: int = 1,
+                 context,
+                 address=None,
                  name: str = None,
                  namespace: str = None,
-                 address=None,
-                 **kwargs):
-        self._partitions = partitions
-        self._storage_engine = persistent_engine
+                 partitions: int = 1,
+                 storage_type: MySQLStorageType = None,
+                 options=None):
+        self._context = context
         self._address = address
         self._name = name
         self._namespace = namespace
-        self._mode = mode
-        '''
-        database_config
-        {
-            'user': 'root',
-            'passwd': 'fate_dev',
-            'host': '127.0.0.1',
-            'port': 3306
-        }
-        '''
+        self._partitions = partitions
+        self._storage_type = storage_type
+        self._options = options if options else {}
+        self._storage_engine = StorageEngine.MYSQL
+
         try:
             self.con = pymysql.connect(host=self._address.host,
                                        user=self._address.user,

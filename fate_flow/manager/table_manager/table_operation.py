@@ -16,15 +16,15 @@
 import typing
 import uuid
 
-from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
-from fate_arch.storage.address import EggRollAddress, HDFSAddress, MysqlAddress
-from fate_arch.storage.simple_table import SimpleTable
+from arch.api.utils.core_utils import current_timestamp, serialize_b64
+from fate_arch.common.address import EggRollAddress, HDFSAddress, MysqlAddress
+from fate_arch.storage.simple._table import StorageTable
 from fate_arch.db.db_models import DB, StorageTableMeta
 from fate_flow.utils import data_utils
 
 from arch.api.utils.conf_utils import get_base_config
-from fate_arch.storage.hdfs_table import HDFSTable
-from fate_arch.storage.mysql_table import MysqlTable
+from fate_arch.storage.hdfs._table import StorageTable
+from fate_arch.storage.mysql._table import StorageTable
 from fate_arch.storage.constant import StorageEngine, Relationship
 from fate_arch.common import WorkMode, Backend
 from fate_flow.settings import WORK_MODE, data_manager_logger
@@ -50,7 +50,7 @@ def create(name, namespace, storage_engine, address=None, partitions=1, count=0)
             meta.f_engine = storage_engine
             if not address:
                 if storage_engine in Relationship.CompToStore.get(Backend.EGGROLL):
-                    address = EggRollAddress(name=name, namespace=namespace, storage_type=storage_engine)
+                    address = EggRollAddress(name=name, namespace=namespace)
                 elif storage_engine in Relationship.CompToStore.get(Backend.SPARK):
                     address = HDFSAddress(path=data_utils.generate_hdfs_address())
             meta.f_address = address.__dict__ if address else {}
@@ -92,7 +92,7 @@ def get_table(job_id: str = '',
     if not job_id:
         job_id = uuid.uuid1().hex
     if simple:
-        return SimpleTable(name=name, namespace=namespace, data_name='')
+        return StorageTable(name=name, namespace=namespace, data_name='')
     data_manager_logger.info('start get table by name {} namespace {}'.format(name, namespace))
     storage_engine, address, partitions = get_storage_info(name, namespace)
     if 'partition' in kwargs.keys():
@@ -113,23 +113,23 @@ def get_table(job_id: str = '',
                                    db=namespace, name=name)
         data_manager_logger.info(
             'get mysql table mode {} store_engine {} partition {}'.format(mode, storage_engine, partitions))
-        return MysqlTable(mode=mode, persistent_engine=StorageEngine.MYSQL, address=address, partitions=partitions,
-                          name=name, namespace=namespace)
+        return StorageTable(mode=mode, persistent_engine=StorageEngine.MYSQL, address=address, partitions=partitions,
+                            name=name, namespace=namespace)
     if storage_engine in Relationship.CompToStore.get(Backend.EGGROLL):
         data_manager_logger.info(
             'get eggroll table mode {} store_engine {} partition {}'.format(mode, storage_engine, partitions))
         if mode == WorkMode.CLUSTER:
-            from fate_arch.storage.eggroll_table import EggRollTable
-            return EggRollTable(job_id=job_id, mode=mode, persistent_engine=persistent_engine, name=name,
+            from fate_arch.storage.eggroll._table import StorageTable
+            return StorageTable(session_id=job_id, mode=mode, persistent_engine=persistent_engine, name=name,
                                 namespace=namespace, partitions=partitions, address=address, **kwargs)
         else:
-            from fate_arch.storage.standalone_table import StandaloneTable
-            return StandaloneTable(job_id, persistent_engine=persistent_engine, namespace=namespace, name=name,
-                                   address=address, partitions=partitions)
+            from fate_arch.storage.standalone._table import StorageTable
+            return StorageTable(job_id, storage_type=persistent_engine, namespace=namespace, name=name,
+                                address=address, partitions=partitions)
     if storage_engine in Relationship.CompToStore.get(Backend.SPARK):
         data_manager_logger.info(
             'get spark table store_engine {} partition {} path {}'.format(storage_engine, partitions, address.path))
-        return HDFSTable(address=address, partitions=partitions, name=name, namespace=namespace)
+        return StorageTable(address=address, partitions=partitions, name=name, namespace=namespace)
 
 
 def create_table(job_id: str = uuid.uuid1().hex,
@@ -144,19 +144,19 @@ def create_table(job_id: str = uuid.uuid1().hex,
         address = create(name=name, namespace=namespace, storage_engine=engine, partitions=partitions)
         data_manager_logger.info('create success')
         if mode == WorkMode.CLUSTER:
-            from fate_arch.storage.eggroll_table import EggRollTable
-            return EggRollTable(job_id=job_id, mode=mode, persistent_engine=engine, namespace=namespace,
+            from fate_arch.storage.eggroll._table import StorageTable
+            return StorageTable(session_id=job_id, mode=mode, persistent_engine=engine, namespace=namespace,
                                 name=name,
                                 address=address, partitions=partitions, **kwargs)
         else:
-            from fate_arch.storage.standalone_table import StandaloneTable
-            return StandaloneTable(job_id, persistent_engine=engine, namespace=namespace, name=name,
-                                   address=address, partitions=partitions)
+            from fate_arch.storage.standalone._table import StorageTable
+            return StorageTable(job_id, storage_type=engine, namespace=namespace, name=name,
+                                address=address, partitions=partitions)
 
     if engine in Relationship.CompToStore.get(Backend.SPARK):
         data_manager_logger.info('create success')
         address = create(name=name, namespace=namespace, storage_engine=engine, partitions=partitions)
-        return HDFSTable(address=address, partitions=partitions, namespace=namespace, name=name, **kwargs)
+        return StorageTable(address=address, partitions=partitions, namespace=namespace, name=name, **kwargs)
     else:
         raise Exception('does not support the creation of this type of table :{}'.format(engine))
 

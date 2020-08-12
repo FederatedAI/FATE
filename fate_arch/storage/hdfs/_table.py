@@ -19,26 +19,30 @@ from typing import Iterable
 
 from pyspark import SparkContext
 
-from fate_arch.abc import TableABC
 from fate_arch.common.log import getLogger
-from fate_arch.storage.constant import StorageEngine
+from fate_arch.common import StorageEngine, HDFSStorageType
+from fate_arch.storage import StorageTableBase
 
 LOGGER = getLogger()
 
 
-# noinspection PyProtectedMember
-class HDFSTable(TableABC):
-
+class StorageTable(StorageTableBase):
     def __init__(self,
+                 context,
                  address=None,
+                 name: str = None,
+                 namespace: str = None,
                  partitions: int = 1,
-                 name: str = '',
-                 namespace: str = '',
-                 **kwargs):
-        self.address = address
-        self._partitions = partitions
+                 storage_type: HDFSStorageType = None,
+                 options=None):
+        self._context = context
+        self._address = address
         self._name = name
         self._namespace = namespace
+        self._partitions = partitions
+        self._storage_type = storage_type
+        self._options = options if options else {}
+        self._storage_engine = StorageEngine.HDFS
 
     def get_partitions(self):
         return self._partitions
@@ -50,21 +54,21 @@ class HDFSTable(TableABC):
         return self._namespace
 
     def get_storage_engine(self):
-        return StorageEngine.HDFS
+        return self._storage_engine
 
     def get_address(self):
         return self.address
 
     def put_all(self, kv_list: Iterable, **kwargs):
-        path, fs = HDFSTable.get_hadoop_fs(address=self.address)
+        path, fs = StorageTable.get_hadoop_fs(address=self.address)
         if fs.exists(path):
             out = fs.append(path)
         else:
-            out = fs.create(path)
+            out = fs.create_table(path)
 
         counter = 0
         for k, v in kv_list:
-            content = u"{}{}{}\n".format(k, HDFSTable.delimiter, pickle.dumps(v).hex())
+            content = u"{}{}{}\n".format(k, StorageTable.delimiter, pickle.dumps(v).hex())
             out.write(bytearray(content, "utf-8"))
             counter = counter + 1
         out.flush()
@@ -73,15 +77,15 @@ class HDFSTable(TableABC):
 
     def collect(self, **kwargs) -> list:
         sc = SparkContext.getOrCreate()
-        hdfs_path = HDFSTable.generate_hdfs_path(self.address)
-        path = HDFSTable.get_path(sc, hdfs_path)
-        fs = HDFSTable.get_file_system(sc)
+        hdfs_path = StorageTable.generate_hdfs_path(self.address)
+        path = StorageTable.get_path(sc, hdfs_path)
+        fs = StorageTable.get_file_system(sc)
         istream = fs.open(path)
         reader = sc._gateway.jvm.java.io.BufferedReader(sc._jvm.java.io.InputStreamReader(istream))
         while True:
             line = reader.readLine()
             if line is not None:
-                fields = line.strip().partition(HDFSTable.delimiter)
+                fields = line.strip().partition(StorageTable.delimiter)
                 yield fields[0], pickle.loads(bytes.fromhex(fields[2]))
             else:
                 break
@@ -89,7 +93,7 @@ class HDFSTable(TableABC):
 
     def destroy(self):
         super().destroy()
-        path, fs = HDFSTable.get_hadoop_fs(self.address)
+        path, fs = StorageTable.get_hadoop_fs(self.address)
         if fs.exists(path):
             fs.delete(path)
 
@@ -103,11 +107,11 @@ class HDFSTable(TableABC):
     def save_as(self, address, partition=None, name=None, namespace=None, schema=None, **kwargs):
         super().save_as(name, namespace, partition=partition, schema=schema)
         sc = SparkContext.getOrCreate()
-        src_path = HDFSTable.get_path(sc, HDFSTable.generate_hdfs_path(address))
-        dst_path = HDFSTable.get_path(sc, HDFSTable.generate_hdfs_path(address))
-        fs = HDFSTable.get_file_system(sc)
+        src_path = StorageTable.get_path(sc, address.path)
+        dst_path = StorageTable.get_path(sc, address.path)
+        fs = StorageTable.get_file_system(sc)
         fs.rename(src_path, dst_path)
-        return HDFSTable(address=address, partitions=partition, name=name, namespace=namespace, **kwargs)
+        return StorageTable(address=address, partitions=partition, name=name, namespace=namespace, **kwargs)
 
     delimiter = '\t'
 
@@ -129,9 +133,9 @@ class HDFSTable(TableABC):
     @classmethod
     def get_hadoop_fs(cls, address):
         sc = SparkContext.getOrCreate()
-        hdfs_path = HDFSTable.generate_hdfs_path(address)
-        path = HDFSTable.get_path(sc, hdfs_path)
-        fs = HDFSTable.get_file_system(sc)
+        hdfs_path = StorageTable.generate_hdfs_path(address)
+        path = StorageTable.get_path(sc, hdfs_path)
+        fs = StorageTable.get_file_system(sc)
         return path, fs
 
     def close(self):
