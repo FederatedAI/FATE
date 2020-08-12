@@ -18,7 +18,6 @@ import json
 import os
 import shutil
 import tarfile
-from datetime import datetime
 
 from flask import Flask, request, send_file
 from google.protobuf import json_format
@@ -27,7 +26,7 @@ from arch.api.utils.core_utils import fate_uuid
 from fate_flow.db.db_models import Job, DB
 from fate_flow.manager.data_manager import delete_metric_data
 from fate_flow.operation.job_tracker import Tracker
-from fate_flow.settings import stat_logger
+from fate_flow.settings import stat_logger, TEMP_DIRECTORY
 from fate_flow.utils import job_utils, data_utils
 from fate_flow.utils.api_utils import get_json_result, error_response
 from federatedml.feature.instance import Instance
@@ -315,28 +314,15 @@ def get_component_summary():
                       role=request_data['role'], party_id=request_data['party_id'])
     summary = tracker.get_component_summary()
     if summary:
-        if request_data.get('output_path'):
-            abspath = os.path.abspath(request_data.get("output_path"))
-            if os.path.isdir(abspath):
-                fp = os.path.join(abspath, "summary_{}_{}.json".format(request_data['component_name'],
-                                                                       datetime.now().strftime('%Y%m%d%H%M%S')))
-                with open(fp, "w") as fout:
-                    fout.write(json.dumps(summary, indent=4))
-                return get_json_result(retmsg="{} summary has been stored successfully. "
-                                              "File path is: {}.".format(request_data['component_name'], fp))
-            elif os.path.isfile(abspath):
-                with open(request_data.get('output_path'), 'w') as fout:
-                    fout.write(json.dumps(summary, indent=4))
-                return get_json_result(retmsg="{} summary has been stored successfully. "
-                                              "File path is: {}.".format(request_data['component_name'],
-                                                                         request_data.get("output_path")))
-            else:
-                return get_json_result(retcode=100,
-                                       retmsg='Generating summary file failed. Output path is invalid.')
+        if request_data.get("filename"):
+            temp_filepath = os.path.join(TEMP_DIRECTORY, request_data.get("filename"))
+            with open(temp_filepath, "w") as fout:
+                fout.write(json.dumps(summary, indent=4))
+            return send_file(open(temp_filepath, "rb"), as_attachment=True,
+                             attachment_filename=request_data.get("filename"))
         else:
             return get_json_result(data=summary)
-    return get_json_result(retcode=100,
-                           retmsg="No component summary found, please check if arguments are specified correctly.")
+    return error_response(500, "No component summary found, please check if arguments are specified correctly.")
 
 
 @manager.route('/component/list', methods=['POST'])

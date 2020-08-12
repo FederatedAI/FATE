@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 from arch.api.utils import dtable_utils
-from arch.api.utils.core_utils import json_loads
+from arch.api.utils.core_utils import json_loads, current_timestamp
 from arch.api.utils.log_utils import schedule_logger
 from fate_arch.common import WorkMode
 from fate_flow.db.db_models import Job
@@ -118,6 +118,7 @@ class DAGScheduler(object):
         job_info["party_id"] = initiator_party_id
         job_info["status"] = JobStatus.RUNNING
         job_info["party_status"] = JobStatus.RUNNING
+        job_info["start_time"] = current_timestamp()
         job_info["tag"] = 'end_waiting'
         update_status = JobSaver.update_job(job_info=job_info)
         if update_status:
