@@ -14,22 +14,18 @@
 #  limitations under the License.
 #
 
-import copy
 from pipeline.component.component_base import Component
 from pipeline.interface.output import Output
-from pipeline.interface.input import Input
-from federatedml.param.dataio_param import DataIOParam
+from fate_flow.param.reader_param import ReaderParam
 
 
-class DataIO(Component, DataIOParam):
+class Reader(Component, ReaderParam):
     def __init__(self, **kwargs):
         Component.__init__(self, **kwargs)
 
-        print (self.name)
         new_kwargs = self.erase_component_base_param(**kwargs)
 
-        DataIOParam.__init__(self, **new_kwargs)
+        ReaderParam.__init__(self, **new_kwargs)
 
-        self.input = Input(self.name)
-        self.output = Output(self.name, data_type='single')
-        self._module_name = "DataIO"
+        self.output = Output(self.name, data_type='single', has_model=False)
+        self._module_name = "Reader"

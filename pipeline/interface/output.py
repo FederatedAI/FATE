@@ -15,6 +15,13 @@
 #
 
 
+class OutputDataType:
+    SINGLE = "data"
+    TRAIN = "train_data"
+    VALIDATE = "validate_data"
+    TEST = "test_data"
+
+
 class Output(object):
     def __init__(self, name, data_type='single', has_data=True, has_model=True, output_unit=1):
         class Model(object):
@@ -35,7 +42,7 @@ class Output(object):
 
             @property
             def data(self):
-                return ".".join([self.prefix, "data"])
+                return ".".join([self.prefix, OutputDataType.SINGLE])
 
             @staticmethod
             def get_all_output():
@@ -47,19 +54,21 @@ class Output(object):
 
             @property
             def train_data(self):
-                return ".".join([self.prefix, "train_data"])
+                return ".".join([self.prefix, OutputDataType.TRAIN])
 
             @property
             def test_data(self):
-                return ".".join([self.prefix, "test_data"])
+                return ".".join([self.prefix, OutputDataType.TEST])
 
             @property
             def validate_data(self):
-                return ".".join([self.prefix, "validate_data"])
+                return ".".join([self.prefix, OutputDataType.VALIDATE])
 
             @staticmethod
             def get_all_output():
-                return ["train_data", "validate_data", "test_data"]
+                return [OutputDataType.TRAIN,
+                        OutputDataType.VALIDATE,
+                        OutputDataType.TEST]
 
         class NoLimitOutputData(object):
             def __init__(self, prefix, output_unit=1):
