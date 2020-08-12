@@ -47,7 +47,7 @@ pipeline.compile()
 
 pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE)
 
-pipeline.deploy_component([dataio_0, dataio_1, hetero_nn_1, hetero_nn_0])
+pipeline.deploy_component([dataio_0, hetero_nn_0])
 print(pipeline.get_component("hetero_nn_0").get_output_data())
 
 # predict
