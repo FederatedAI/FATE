@@ -5,7 +5,6 @@
     "alpha": 0.01,
     "max_iter": 100,
     "early_stop": "weight_diff",
-    "re_encrypt_batches": 1,
     "batch_size": -1,
     "learning_rate": 0.01,
     "decay": 10,
