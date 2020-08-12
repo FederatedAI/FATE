@@ -279,6 +279,9 @@ class Session(object):
         table.put_all(data)
         return table
 
+    def __getstate__(self):
+        pass
+
     def cleanup(self, name, namespace):
         data_path = _get_data_dir()
         if not data_path.is_dir():

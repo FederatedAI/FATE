@@ -31,7 +31,6 @@ class PredictDataCache(object):
     def predict_data_last_round(self, dataset_key):
         if dataset_key not in self._data_map:
             return -1
-
         return self._data_map[dataset_key].get_last_round()
 
     @staticmethod
