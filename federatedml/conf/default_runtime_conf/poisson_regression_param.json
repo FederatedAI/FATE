@@ -7,7 +7,7 @@
     "early_stop": "diff",
     "batch_size": 320,
     "learning_rate": 0.01,
-    "exposure_index": -1,
+    "exposure_colname": null,
     "init_param": {
         "init_method": "random_normal"
     },
@@ -23,12 +23,6 @@
         "n_splits": 5,
         "shuffle": true,
         "random_seed": 1,
-        "evaluate_param": {
-            "metrics": null,
-            "eval_type": "regression",
-            "pos_label": 1,
-            "thresholds": null
-        },
         "need_cv": false
     }
 }
