@@ -306,7 +306,6 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
             self.inst2node_idx = self.host_local_assign_instances_to_new_node()
 
         self.sync_sample_leaf_pos(self.sample_leaf_pos)
-        LOGGER.debug('sync final leaf pos are {}'.format(list(self.sample_leaf_pos.collect())))
         self.convert_bin_to_real2()
         self.sync_leaf_nodes()
         self.remove_encrypted_info()
