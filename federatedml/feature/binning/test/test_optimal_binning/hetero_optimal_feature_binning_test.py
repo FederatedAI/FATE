@@ -20,13 +20,13 @@ import argparse
 
 import numpy as np
 
-from arch.api import federation
-from arch.api import session
+from fate_arch.common import Party
+from fate_arch.session import PartiesInfo
+from fate_arch.session import Session, ComputingType
 from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureBinningGuest
 from federatedml.feature.hetero_feature_binning.hetero_binning_host import HeteroFeatureBinningHost
 from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
-from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.util import consts
 
 GUEST = 'guest'
@@ -230,23 +230,16 @@ if __name__ == '__main__':
     host_id = args.hid
     role = args.role
 
-    session.init(job_id)
-    federation.init(job_id,
-                    {"local": {
-                        "role": role,
-                        "party_id": guest_id if role == GUEST else host_id
-                    },
-                        "role": {
-                            "host": [
-                                host_id
-                            ],
-                            "guest": [
-                                guest_id
-                            ]
-                        }
-                    })
+    with Session() as session:
+        session.init_computing(job_id, computing_type=ComputingType.STANDALONE)
+        session.init_federation(federation_session_id=job_id,
+                                parties_info=PartiesInfo(
+                                    local=Party(role, guest_id if role == GUEST else host_id),
+                                    role_to_parties={"host": [Party("host", host_id)],
+                                                     "guest": [Party("guest", guest_id)]}
+                                ))
 
-    test_obj = TestHeteroFeatureBinning(role, guest_id, host_id)
-    # homo_obj.test_homo_lr()
-    test_obj.test_feature_binning()
-    test_obj.tearDown()
+        test_obj = TestHeteroFeatureBinning(role, guest_id, host_id)
+        # homo_obj.test_homo_lr()
+        test_obj.test_feature_binning()
+        test_obj.tearDown()

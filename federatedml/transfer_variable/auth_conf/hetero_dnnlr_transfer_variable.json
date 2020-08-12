@@ -1,0 +1,36 @@
+{
+  "federatedml.transfer_variable.transfer_class.hetero_dnn_lr_transfer_variable.HeteroDNNLRTransferVariable": {
+    "guest_dec_gradient": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest"
+      ]
+    },
+    "guest_enc_gradient": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "host_dec_gradient": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "host_enc_gradient": {
+      "src": [
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    }
+  }
+}

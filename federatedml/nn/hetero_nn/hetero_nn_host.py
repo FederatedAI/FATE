@@ -20,6 +20,7 @@
 
 import numpy as np
 
+from federatedml.util import consts
 from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import batch_generator
 from federatedml.nn.hetero_nn.backend.model_builder import model_builder
@@ -38,6 +39,7 @@ class HeteroNNHost(HeteroNNBase):
 
         self.batch_generator = batch_generator.Host()
         self.model = None
+        self.role = consts.HOST
 
         self.input_shape = None
         self.validation_strategy = None

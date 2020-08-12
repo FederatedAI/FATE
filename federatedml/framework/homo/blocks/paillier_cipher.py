@@ -15,7 +15,6 @@
 #
 from typing import Union
 
-from arch.api import RuntimeInstance
 from arch.api.utils import log_utils
 from federatedml.framework.homo.blocks.base import HomoTransferBase
 from federatedml.secureprotol import PaillierEncrypt
@@ -33,10 +32,6 @@ class PaillierCipherTransVar(HomoTransferBase):
         self.re_encrypt_times = self.create_client_to_server_variable(name="re_encrypt_times")
         self.model_to_re_encrypt = self.create_client_to_server_variable(name="model_to_re_encrypt")
         self.model_re_encrypted = self.create_server_to_client_variable(name="model_re_encrypted")
-
-
-def _get_parties(roles):
-    return RuntimeInstance.FEDERATION.roles_to_parties(roles=roles)
 
 
 class Server(object):

@@ -6,7 +6,7 @@
     {
         "guest|host":
         {
-            "program": "OHE_alignment_base.py/HomoOneHotBase"
+            "program": "homo_ohe_base.py/HomoOneHotBase"
         },
         "arbiter":
         {

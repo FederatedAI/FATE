@@ -15,7 +15,7 @@
 #
 import os
 import sys
-from arch.api.utils import file_utils
+from fate_arch.common import file_utils
 from fate_flow.flowpy.client.api.base import BaseFlowAPI
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 from fate_flow.flowpy.utils import preprocess, start_cluster_standalone_job_server

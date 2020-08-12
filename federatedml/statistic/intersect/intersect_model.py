@@ -82,6 +82,9 @@ class IntersectModelBase(ModelBase):
         self.intersection_obj.guest_party_id = self.guest_party_id
         self.intersection_obj.host_party_id_list = self.host_party_id_list
 
+    def get_model_summary(self):
+        return {"intersect_num": self.intersect_num, "intersect_rate": self.intersect_rate}
+
     def __share_info(self, data: session.table) -> session.table:
         LOGGER.info("Start to share information with another role")
         info_share = self.transfer_variable.info_share_from_guest if self.model_param.info_owner == consts.GUEST else \
@@ -150,6 +153,8 @@ class IntersectModelBase(ModelBase):
         if self.intersect_ids:
             self.intersect_num = self.intersect_ids.count()
             self.intersect_rate = self.intersect_num * 1.0 / data.count()
+
+        self.set_summary(self.get_model_summary())
 
         self.callback_metric(metric_name=self.metric_name,
                              metric_namespace=self.metric_namespace,

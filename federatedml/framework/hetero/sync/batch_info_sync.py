@@ -23,18 +23,22 @@ LOGGER = log_utils.getLogger()
 
 
 class Guest(object):
-    def _register_batch_data_index_transfer(self, batch_data_info_transfer, batch_data_index_transfer):
+    def _register_batch_data_index_transfer(self, batch_data_info_transfer,
+                                            batch_data_index_transfer,
+                                            has_arbiter):
         self.batch_data_info_transfer = batch_data_info_transfer.disable_auto_clean()
         self.batch_data_index_transfer = batch_data_index_transfer.disable_auto_clean()
+        self.has_arbiter = has_arbiter
 
     def sync_batch_info(self, batch_info, suffix=tuple()):
         self.batch_data_info_transfer.remote(obj=batch_info,
                                              role=consts.HOST,
                                              suffix=suffix)
 
-        self.batch_data_info_transfer.remote(obj=batch_info,
-                                             role=consts.ARBITER,
-                                             suffix=suffix)
+        if self.has_arbiter:
+            self.batch_data_info_transfer.remote(obj=batch_info,
+                                                 role=consts.ARBITER,
+                                                 suffix=suffix)
 
     def sync_batch_index(self, batch_index, suffix=tuple()):
         self.batch_data_index_transfer.remote(obj=batch_index,

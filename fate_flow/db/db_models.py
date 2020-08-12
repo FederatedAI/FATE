@@ -17,15 +17,18 @@ import datetime
 import inspect
 import os
 import sys
+import json
 
 import __main__
-from peewee import Model, CharField, IntegerField, BigIntegerField, TextField, CompositeKey, BigAutoField
+from peewee import (Model, CharField, IntegerField, BigIntegerField,
+                    TextField, CompositeKey, BigAutoField)
 from playhouse.apsw_ext import APSWDatabase
 from playhouse.pool import PooledMySQLDatabase
 
 from arch.api.utils import log_utils
 from arch.api.utils.core_utils import current_timestamp
-from fate_flow.entity.constant_config import WorkMode
+from fate_arch.db.db_models import JSONField
+from fate_flow.entity.constant import WorkMode
 from fate_flow.settings import DATABASE, WORK_MODE, stat_logger, USE_LOCAL_DATABASE
 from fate_flow.entity.runtime_config import RuntimeConfig
 
@@ -42,6 +45,7 @@ def singleton(cls, *args, **kw):
         return instances[key]
 
     return _singleton
+
 
 
 @singleton
@@ -91,12 +95,25 @@ class DataBaseModel(Model):
     def to_json(self):
         return self.__dict__['__data__']
 
+    def to_human_model_dict(self, only_primary_with: list = None):
+        model_dict = self.__dict__["__data__"]
+        human_model_dict = {}
+        if not only_primary_with:
+            for k, v in model_dict.items():
+                human_model_dict[k.lstrip("f_")] = v
+        else:
+            for k in self._meta.primary_key.field_names:
+                human_model_dict[k.lstrip("f_")] = model_dict[k]
+            for k in only_primary_with:
+                human_model_dict[k] = model_dict["f_%s" % k]
+        return human_model_dict
+
     def save(self, *args, **kwargs):
         if hasattr(self, "f_update_date"):
             self.f_update_date = datetime.datetime.now()
         if hasattr(self, "f_update_time"):
             self.f_update_time = current_timestamp()
-        super(DataBaseModel, self).save(*args, **kwargs)
+        return super(DataBaseModel, self).save(*args, **kwargs)
 
 
 def init_database_tables():
@@ -121,23 +138,24 @@ class Queue(DataBaseModel):
 
 
 class Job(DataBaseModel):
+    # multi-party common configuration
     f_job_id = CharField(max_length=25)
     f_name = CharField(max_length=500, null=True, default='')
     f_description = TextField(null=True, default='')
     f_tag = CharField(max_length=50, null=True, index=True, default='')
+    f_dsl = JSONField()
+    f_runtime_conf = JSONField()
+    f_train_runtime_conf = JSONField(null=True)
+    f_roles = JSONField()
+    f_work_mode = IntegerField()
+    f_initiator_role = CharField(max_length=50, index=True)
+    f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
+    f_status = CharField(max_length=50)
+    f_status_level = BigIntegerField()
+    # this party configuration
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
-    f_roles = TextField()
-    f_work_mode = IntegerField()
-    f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
     f_is_initiator = IntegerField(null=True, index=True, default=-1)
-    f_dsl = TextField()
-    f_runtime_conf = TextField()
-    f_train_runtime_conf = TextField(null=True)
-    f_run_ip = CharField(max_length=100)
-    f_status = CharField(max_length=50)
-    f_current_steps = CharField(max_length=500, null=True)  # record component id in DSL
-    f_current_tasks = CharField(max_length=500, null=True)  # record task id
     f_progress = IntegerField(null=True, default=0)
     f_create_time = BigIntegerField()
     f_update_time = BigIntegerField(null=True)
@@ -150,16 +168,46 @@ class Job(DataBaseModel):
         primary_key = CompositeKey('f_job_id', 'f_role', 'f_party_id')
 
 
-class Task(DataBaseModel):
+class TaskSet(DataBaseModel):
+    # multi-party common configuration
     f_job_id = CharField(max_length=25)
-    f_component_name = TextField()
-    f_task_id = CharField(max_length=100)
+    f_task_set_id = BigIntegerField()
+    f_initiator_role = CharField(max_length=50, index=True)
+    f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
+    f_status = CharField(max_length=50)
+    f_status_level = BigIntegerField()
+    # this party configuration
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
-    f_operator = CharField(max_length=100, null=True)
+    f_create_time = BigIntegerField()
+    f_update_time = BigIntegerField(null=True)
+    f_start_time = BigIntegerField(null=True)
+    f_end_time = BigIntegerField(null=True)
+    f_elapsed = BigIntegerField(null=True)
+
+    class Meta:
+        db_table = "t_task_set"
+        primary_key = CompositeKey('f_job_id', 'f_task_set_id', 'f_role', 'f_party_id')
+
+
+class Task(DataBaseModel):
+    # multi-party common configuration
+    f_job_id = CharField(max_length=25)
+    f_task_set_id = BigIntegerField()
+    f_component_name = TextField()
+    f_task_id = CharField(max_length=100)
+    f_task_version = BigIntegerField()
+    f_initiator_role = CharField(max_length=50, index=True)
+    f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
+    f_status = CharField(max_length=50)
+    f_status_level = BigIntegerField()
+    # this party configuration
+    f_role = CharField(max_length=50, index=True)
+    f_party_id = CharField(max_length=10, index=True)
     f_run_ip = CharField(max_length=100, null=True)
     f_run_pid = IntegerField(null=True)
-    f_status = CharField(max_length=50)
+    f_party_status = CharField(max_length=50)
+    f_party_status_level = BigIntegerField()
     f_create_time = BigIntegerField()
     f_update_time = BigIntegerField(null=True)
     f_start_time = BigIntegerField(null=True)
@@ -168,51 +216,7 @@ class Task(DataBaseModel):
 
     class Meta:
         db_table = "t_task"
-        primary_key = CompositeKey('f_job_id', 'f_task_id', 'f_role', 'f_party_id')
-
-
-class DataView(DataBaseModel):
-    f_job_id = CharField(max_length=25)
-    f_role = CharField(max_length=50, index=True)
-    f_party_id = CharField(max_length=10, index=True)
-    f_table_name = CharField(max_length=500, null=True)
-    f_table_namespace = CharField(max_length=500, null=True)
-    f_component_name = TextField()
-    f_create_time = BigIntegerField()
-    f_update_time = BigIntegerField(null=True)
-    f_table_count_upload = IntegerField(null=True)
-    f_table_count_actual = IntegerField(null=True)
-    f_partition = IntegerField(null=True)
-    f_task_id = CharField(max_length=100)
-    f_type = CharField(max_length=50, null=True)
-    f_ttl = IntegerField(default=0)
-    f_party_model_id = CharField(max_length=100, null=True)
-    f_model_version = CharField(max_length=100, null=True)
-    f_size = BigIntegerField(default=0)
-    f_description = TextField(null=True, default='')
-    f_tag = CharField(max_length=50, null=True, index=True, default='')
-
-    class Meta:
-        db_table = "t_data_view"
-        primary_key = CompositeKey('f_job_id', 'f_task_id', 'f_role', 'f_party_id')
-
-
-class MachineLearningModelMeta(DataBaseModel):
-    f_id = BigIntegerField(primary_key=True)
-    f_role = CharField(max_length=50, index=True)
-    f_party_id = CharField(max_length=10, index=True)
-    f_roles = TextField()
-    f_job_id = CharField(max_length=25)
-    f_model_id = CharField(max_length=100, index=True)
-    f_model_version = CharField(max_length=100, index=True)
-    f_size = BigIntegerField(default=0)
-    f_create_time = BigIntegerField(default=0)
-    f_update_time = BigIntegerField(default=0)
-    f_description = TextField(null=True, default='')
-    f_tag = CharField(max_length=50, null=True, index=True, default='')
-
-    class Meta:
-        db_table = "t_machine_learning_model_meta"
+        primary_key = CompositeKey('f_job_id', 'f_task_id', 'f_task_version', 'f_role', 'f_party_id')
 
 
 class TrackingMetric(DataBaseModel):
@@ -240,7 +244,8 @@ class TrackingMetric(DataBaseModel):
     f_id = BigAutoField(primary_key=True)
     f_job_id = CharField(max_length=25)
     f_component_name = TextField()
-    f_task_id = CharField(max_length=100)
+    f_task_id = CharField(max_length=100, null=True)
+    f_task_version = BigIntegerField(null=True)
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
     f_metric_namespace = CharField(max_length=180, index=True)
@@ -252,8 +257,86 @@ class TrackingMetric(DataBaseModel):
     f_update_time = BigIntegerField(null=True)
 
 
-class ComponentSummary(DataBaseModel):
+class TrackingOutputDataInfo(DataBaseModel):
+    _mapper = {}
+
+    @classmethod
+    def model(cls, table_index=None, date=None):
+        if not table_index:
+            table_index = date.strftime(
+                '%Y%m%d') if date else datetime.datetime.now().strftime(
+                '%Y%m%d')
+        class_name = 'TrackingOutputDataInfo_%s' % table_index
+
+        ModelClass = TrackingOutputDataInfo._mapper.get(class_name, None)
+        if ModelClass is None:
+            class Meta:
+                db_table = '%s_%s' % ('t_tracking_output_data_info', table_index)
+                primary_key = CompositeKey('f_job_id', 'f_task_id', 'f_task_version', 'f_data_name', 'f_role', 'f_party_id')
+
+            attrs = {'__module__': cls.__module__, 'Meta': Meta}
+            ModelClass = type("%s_%s" % (cls.__name__, table_index), (cls,),
+                              attrs)
+            TrackingOutputDataInfo._mapper[class_name] = ModelClass
+        return ModelClass()
+
+    # multi-party common configuration
+    f_job_id = CharField(max_length=25)
+    f_component_name = TextField()
+    f_task_id = CharField(max_length=100, null=True)
+    f_task_version = BigIntegerField(null=True)
+    f_data_name = CharField(max_length=30)
+    # this party configuration
+    f_role = CharField(max_length=50, index=True)
+    f_party_id = CharField(max_length=10, index=True)
+    f_table_name = CharField(max_length=500, null=True)
+    f_table_namespace = CharField(max_length=500, null=True)
+    f_create_time = BigIntegerField()
+    f_update_time = BigIntegerField(null=True)
+    f_description = TextField(null=True, default='')
+
+
+class MachineLearningModelMeta(DataBaseModel):
     f_id = BigIntegerField(primary_key=True)
+    f_role = CharField(max_length=50, index=True)
+    f_party_id = CharField(max_length=10, index=True)
+    f_roles = TextField()
+    f_job_id = CharField(max_length=25)
+    f_model_id = CharField(max_length=100, index=True)
+    f_model_version = CharField(max_length=100, index=True)
+    f_loaded_times = IntegerField(default=0)
+    f_size = BigIntegerField(default=0)
+    f_create_time = BigIntegerField(default=0)
+    f_update_time = BigIntegerField(default=0)
+    f_description = TextField(null=True, default='')
+    # f_tag = CharField(max_length=50, null=True, index=True, default='')
+
+    class Meta:
+        db_table = "t_machine_learning_model_meta"
+
+
+class ModelTag(DataBaseModel):
+    f_id = BigAutoField(primary_key=True)
+    f_m_id = BigIntegerField(null=False)
+    f_t_id = BigIntegerField(null=False)
+
+    class Meta:
+        db_table = "t_model_tag"
+
+
+class Tag(DataBaseModel):
+    f_id = BigAutoField(primary_key=True)
+    f_name = CharField(max_length=100, index=True, unique=True)
+    f_desc = TextField(null=True)
+    f_create_time = BigIntegerField(default=current_timestamp())
+    f_update_time = BigIntegerField(default=current_timestamp())
+
+    class Meta:
+        db_table = "t_tags"
+
+
+class ComponentSummary(DataBaseModel):
+    f_id = BigAutoField(primary_key=True)
     f_job_id = CharField(max_length=25)
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
@@ -264,4 +347,26 @@ class ComponentSummary(DataBaseModel):
 
     class Meta:
         db_table = "t_component_summary"
-        # primary_key = CompositeKey('f_job_id', 'f_role', 'f_party_id', 'f_component_name')
+
+
+class ModelOperationLog(DataBaseModel):
+    f_operation_type = CharField(max_length=20, null=False, index=True)
+    f_operation_status = CharField(max_length=20, null=True, index=True)
+    f_initiator_role = CharField(max_length=50, index=True, null=True)
+    f_initiator_party_id = CharField(max_length=10, index=True, null=True)
+    f_request_ip = CharField(max_length=20, null=True)
+    f_model_id = CharField(max_length=100, index=True)
+    f_model_version = CharField(max_length=100, index=True)
+    f_create_time = BigIntegerField(default=current_timestamp())
+    f_update_time = BigIntegerField(default=current_timestamp())
+
+    class Meta:
+        db_table = "t_model_operation_log"
+
+
+def fill_db_model_object(model_object, human_model_dict):
+    for k, v in human_model_dict.items():
+        attr_name = 'f_%s' % k
+        if hasattr(model_object.__class__, attr_name):
+            setattr(model_object, attr_name, v)
+    return model_object

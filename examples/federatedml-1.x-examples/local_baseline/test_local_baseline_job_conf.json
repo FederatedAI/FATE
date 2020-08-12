@@ -158,7 +158,7 @@
                     "eval_type": "multi"
                 }
             },
-            "intersect_0": {
+            "intersection_0": {
                 "intersect_method": "rsa",
                 "sync_intersect_ids": true,
                 "only_output_key": false

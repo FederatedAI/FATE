@@ -1,0 +1,31 @@
+{
+  "federatedml.transfer_variable.transfer_class.homo_decision_tree_transfer_variable.HomoDecisionTreeTransferVariable": {
+    "best_split_points": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest",
+        "host"
+      ]
+    },
+    "node_sample_num": {
+      "src": [
+        "guest",
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "cur_layer_node_num": {
+      "src": [
+        "guest",
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    }
+  }
+}

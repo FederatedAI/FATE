@@ -15,7 +15,7 @@
             }
          },
         "homo_onehot_0":{
-      		"module": "OHEAlignment",
+      		"module": "HomoOneHotEncoder",
       		"input":{
       			"data": {
       				"data": [
@@ -45,7 +45,7 @@
             }
         },
         "homo_onehot_1":{
-      		"module": "OHEAlignment",
+      		"module": "HomoOneHotEncoder",
       		"input":{
       			"data": {
       				"data": [
