@@ -14,6 +14,7 @@ class HomoSBTAdapter(BaseAdapter):
 
         fid_mapping = dict(model_param.feature_name_fid_mapping)
         feat_importance_list = list(model_param.feature_importances)
+        fids = list(fid_mapping.keys())
 
         cols_names, importance_val = [], []
         for feat_importance in feat_importance_list:
@@ -22,6 +23,11 @@ class HomoSBTAdapter(BaseAdapter):
             feature_name = fid_mapping[fid]
             cols_names.append(feature_name)
             importance_val.append(importance)
+
+        for fid in fids:
+            if fid_mapping[fid] not in cols_names:
+                cols_names.append(fid_mapping[fid])
+                importance_val.append(0)
 
         single_info = isometric_model.SingleMetricInfo(
             values=np.array(importance_val),
@@ -41,7 +47,7 @@ class HeteroSBTAdapter(BaseAdapter):
 
         fid_mapping = dict(model_param.feature_name_fid_mapping)
         feat_importance_list = list(model_param.feature_importances)
-
+        guest_fids = list(fid_mapping.keys())
         guest_cols, guest_val = [], []
 
         # key is int party id, value is a dict, which has two key: col_name and value
@@ -62,6 +68,11 @@ class HeteroSBTAdapter(BaseAdapter):
             else:
                 guest_cols.append(fid_mapping[fid])
                 guest_val.append(importance)
+
+        for fid in guest_fids:
+            if fid_mapping[fid] not in guest_cols:
+                guest_cols.append(fid_mapping[fid])
+                guest_val.append(0)
 
         host_party_ids = []
         host_values = []

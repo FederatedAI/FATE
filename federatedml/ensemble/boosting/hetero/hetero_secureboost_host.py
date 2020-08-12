@@ -1,3 +1,7 @@
+from arch.api.utils import log_utils
+from federatedml.util import consts
+from typing import List
+import functools
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
@@ -6,18 +10,9 @@ from federatedml.param.boosting_param import HeteroSecureBoostParam
 from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeHost
 from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable import \
     HeteroSecureBoostTransferVariable
-from federatedml.util.fate_operator import generate_anonymous
 from federatedml.util.io_check import assert_io_num_rows_equal
+from federatedml.util.fate_operator import generate_anonymous
 
-from arch.api.utils import log_utils
-
-from federatedml.util import consts
-
-from typing import List
-
-import functools
-
-import numpy as np
 
 LOGGER = log_utils.getLogger()
 

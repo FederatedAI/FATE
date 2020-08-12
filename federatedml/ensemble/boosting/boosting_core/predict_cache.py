@@ -36,7 +36,7 @@ class PredictDataCache(object):
 
     @staticmethod
     def get_data_key(data):
-        return data.get_name(), data.get_namespace()
+        return id(data)
 
     def add_data(self, dataset_key, f):
         if dataset_key not in self._data_map:
