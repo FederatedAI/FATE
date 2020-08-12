@@ -31,7 +31,7 @@ from arch.api.utils.core_utils import get_lan_ip
 from fate_flow.settings import SERVERS, ROLE, API_VERSION
 from fate_flow.utils import detect_utils
 
-server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
+server_conf = file_utils.load_json_conf("conf/server_conf.json")
 JOB_OPERATE_FUNC = ["submit_job", "stop_job", "query_job", "data_view_query", "clean_job", "clean_queue"]
 JOB_FUNC = ["job_config", "job_log"]
 TASK_OPERATE_FUNC = ["query_task"]

@@ -15,8 +15,8 @@
 #
 import grpc
 
-from arch.api.proto import model_service_pb2
-from arch.api.proto import model_service_pb2_grpc
+from fate_arch.protobuf.python import model_service_pb2
+from fate_arch.protobuf.python import model_service_pb2_grpc
 from fate_flow.settings import stat_logger
 from fate_flow.utils import model_utils
 from fate_flow.manager.model_manager import pipelined_model

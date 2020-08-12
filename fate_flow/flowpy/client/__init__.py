@@ -19,7 +19,7 @@ from arch.api.utils import file_utils
 from arch.api.utils.core_utils import get_lan_ip
 from fate_flow.settings import SERVERS, ROLE, API_VERSION
 
-server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
+server_conf = file_utils.load_json_conf("conf/server_conf.json")
 
 
 default_ip = server_conf.get(SERVERS).get(ROLE).get('host')
@@ -37,7 +37,8 @@ class FlowClient(BaseFlowClient):
     table = api.Table()
     task = api.Task()
     model = api.Model()
-    priviledge = api.Priviledge()
+    tag = api.Tag()
+    # priviledge = api.Priviledge()
 
     def __init__(self, ip=default_ip, port=default_port, version=default_version):
         super().__init__(ip, port, version)

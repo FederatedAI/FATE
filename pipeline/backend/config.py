@@ -15,7 +15,7 @@
 #
 
 from enum import Enum
-from fate_flow.entity.constant_config import Backend, WorkMode, JobStatus
+from fate_flow.entity.constant import Backend, WorkMode, JobStatus
 
 VERSION = 2
 TIME_QUERY_FREQS = 0.01

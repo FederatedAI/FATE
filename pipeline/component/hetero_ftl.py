@@ -46,7 +46,7 @@ class HeteroFTL(Component):
             setattr(self, param_key, param_value)
 
         self.output = Output(self.name, data_type='single')
-        self._module_name = "HeteroFTL"
+        self._module_name = "FTL"
         self.optimizer = None
         self.loss = None
         self.config_type = "keras"

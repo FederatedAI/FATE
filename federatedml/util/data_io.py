@@ -71,8 +71,8 @@ class DenseFeatureReader(object):
         self.exclusive_data_type_fid_map = {}
 
     def generate_header(self, input_data, mode="fit"):
-        header = input_data.get_meta("header")
-        sid_name = input_data.get_meta("sid")
+        header = input_data.schema["header"]
+        sid_name = input_data.schema["sid"]
         LOGGER.debug("header is {}".format(header))
         LOGGER.debug("sid_name is {}".format(sid_name))
 
@@ -147,7 +147,8 @@ class DenseFeatureReader(object):
             data_instance = self.fit(input_data, input_data_features, input_data_labels)
         else:
             data_instance = self.transform(input_data_features, input_data_labels)
-            data_instance = ModelBase.align_data_header(data_instance, fit_header)
+            # data_instance = ModelBase.align_data_header(data_instance, fit_header)
+            data_instance = data_overview.header_alignment(data_instance, fit_header)
 
         return data_instance
 

@@ -113,7 +113,6 @@ class HomoSecureBoostClient(HomoBoostingClient):
 
         if class_num > 1:
             weights = weights.reshape((-1, class_num))
-
         return np.sum(weights * learning_rate, axis=0) + init_score
 
     def fast_homo_tree_predict(self, data_inst):

@@ -19,11 +19,11 @@ import operator
 
 import numpy as np
 
-from arch.api.utils import log_utils
-from arch.api.utils.splitable import segment_transfer_enabled
+from fate_arch.common import log
+from fate_arch.federation import segment_transfer_enabled
 from federatedml.secureprotol.encrypt import Encrypt
 
-LOGGER = log_utils.getLogger()
+LOGGER = log.getLogger()
 
 
 class TransferableWeights(metaclass=segment_transfer_enabled()):

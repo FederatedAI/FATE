@@ -16,16 +16,18 @@
 # -*- coding: utf-8 -*-
 import os
 
-from arch.api import Backend
-from arch.api.utils import file_utils, log_utils
+from arch.api.utils import file_utils, log_utils, core_utils
+from fate_arch.common import Backend
 from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.entity.constant import StoreEngine
 from arch.api.utils.conf_utils import get_base_config
 import __main__
 
 
 WORK_MODE = get_base_config('work_mode', 0)
 BACKEND = Backend.EGGROLL
-USE_LOCAL_DATABASE = True
+STORE_ENGINE=StoreEngine.EGGROLL
+USE_LOCAL_DATABASE = get_base_config('use_local_database', True)
 
 # upload data
 USE_LOCAL_DATA = True
@@ -45,7 +47,7 @@ FATE_SERVICES_REGISTERED_PATH = {
 }
 
 # FILE CONF
-SERVER_CONF_PATH = 'arch/conf/server_conf.json'
+SERVER_CONF_PATH = 'conf/server_conf.json'
 
 # job maximum number  of the initiator
 MAX_CONCURRENT_JOB_RUN = 5
@@ -61,7 +63,7 @@ DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000 * 60  # ms
 JOB_DEFAULT_TIMEOUT = 7 * 24 * 60 * 60
 DATABASE = get_base_config("database", {})
 MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
-
+HDFS_ADDRESS= ''
 '''
 Constants
 '''
@@ -91,6 +93,8 @@ log_utils.LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_d
 stat_logger = log_utils.getLogger("fate_flow_stat")
 detect_logger = log_utils.getLogger("fate_flow_detect")
 access_logger = log_utils.getLogger("fate_flow_access")
+data_manager_logger = log_utils.getLogger("fate_flow_data_manager")
+
 
 """
 Services 
@@ -104,11 +108,10 @@ GRPC_PORT = get_base_config("fate_flow", {}).get("grpc_port")
 CLUSTER_STANDALONE_JOB_SERVER_PORT = 9381
 
 # switch
-SAVE_AS_TASK_INPUT_DATA_SWITCH = True
-SAVE_AS_TASK_INPUT_DATA_IN_MEMORY = True
 ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH = True
 
 # init
 RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
-RuntimeConfig.init_config(HTTP_PORT=HTTP_PORT)
+RuntimeConfig.init_config(JOB_SERVER_HOST=core_utils.get_lan_ip(), HTTP_PORT=HTTP_PORT)
 RuntimeConfig.init_config(BACKEND=BACKEND)
+RuntimeConfig.init_config(STORE_ENGINE=STORE_ENGINE)

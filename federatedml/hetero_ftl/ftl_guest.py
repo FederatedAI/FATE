@@ -261,6 +261,7 @@ class FTLGuest(FTL):
 
         data_loader, self.x_shape, self.data_num, self.overlap_num = self.prepare_data(self.init_intersect_obj(),
                                                                                        data_inst, guest_side=True)
+        self.input_dim = self.x_shape[0]
 
         # cache data_loader for faster validation
         self.cache_dataloader[self.get_dataset_key(data_inst)] = data_loader
@@ -377,7 +378,7 @@ class FTLGuest(FTL):
     def export_model(self):
         model_param = self.get_model_param()
         model_param.phi_a.extend(self.phi.tolist()[0])
-        return {"FTLHostMeta": model_param, "FTLHostParam": self.get_model_param()}
+        return {"FTLGuestMeta": self.get_model_meta(), "FTLHostParam": model_param}
 
     def load_model(self, model_dict):
         model_param = None

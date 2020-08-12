@@ -19,7 +19,8 @@
 import numpy as np
 
 from arch.api import session
-from arch.api import federation
+from fate_arch.computing import ComputingType
+from fate_arch.session import Session
 from federatedml.feature.hetero_feature_binning.hetero_binning_guest import HeteroFeatureBinningGuest
 from federatedml.feature.instance import Instance
 
@@ -99,24 +100,26 @@ class TestHeteroFeatureBinning():
 
 if __name__ == '__main__':
     import sys
+
     job_id = str(sys.argv[1])
 
-    session.init(job_id)
-    federation.init(job_id,
-                    {"local": {
-                        "role": "guest",
-                        "party_id": 9999
-                    },
-                        "role": {
-                            "host": [
-                                10000
-                            ],
-                            "guest": [
-                                9999
-                            ]
-                        }
-                    })
+    with Session() as session:
+        session.init_computing(job_id, computing_type=ComputingType.STANDALONE)
+        session.init_federation(job_id,
+                                runtime_conf={"local": {
+                                    "role": "guest",
+                                    "party_id": 9999
+                                },
+                                    "role": {
+                                        "host": [
+                                            10000
+                                        ],
+                                        "guest": [
+                                            9999
+                                        ]
+                                    }
+                                })
 
-    binning_obj = TestHeteroFeatureBinning()
-    # homo_obj.test_homo_lr()
-    binning_obj.test_feature_binning()
+        binning_obj = TestHeteroFeatureBinning()
+        # homo_obj.test_homo_lr()
+        binning_obj.test_feature_binning()

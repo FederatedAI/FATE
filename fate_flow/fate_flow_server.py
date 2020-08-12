@@ -33,22 +33,26 @@ from fate_flow.apps.model_app import manager as model_app_manager
 from fate_flow.apps.pipeline_app import manager as pipeline_app_manager
 from fate_flow.apps.table_app import manager as table_app_manager
 from fate_flow.apps.tracking_app import manager as tracking_app_manager
-from fate_flow.apps.schedule_app import manager as schedule_app_manager
 from fate_flow.apps.permission_app import manager as permission_app_manager
 from fate_flow.apps.version_app import manager as version_app_manager
-from fate_flow.db.db_models import init_database_tables
-from fate_flow.driver import dag_scheduler, job_controller, job_detector
+from fate_flow.scheduling_apps.controller_app import manager as controller_app_manager
+from fate_flow.scheduling_apps.initiator_app import manager as initiator_app_manager
+from fate_flow.scheduling_apps.tracker_app import manager as tracker_app_manager
+from fate_flow.db.db_models import init_database_tables as init_flow_db
+from fate_arch.db.db_models import init_database_tables as init_arch_db
+from fate_flow.operation import job_trigger, job_detector
+from fate_flow.scheduler import schedule_trigger
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.entity.constant_config import WorkMode, ProcessRole
+from fate_flow.entity.constant import WorkMode, ProcessRole
 from fate_flow.manager import queue_manager
 from fate_flow.settings import IP, GRPC_PORT, CLUSTER_STANDALONE_JOB_SERVER_PORT, _ONE_DAY_IN_SECONDS, \
     MAX_CONCURRENT_JOB_RUN, stat_logger, API_VERSION
 from fate_flow.utils import job_utils
-from fate_flow.utils import session_utils
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryServicer
 from fate_flow.utils.service_utils import ServiceUtils
+from arch.api.utils import core_utils
 
 '''
 Initialize the manager
@@ -74,15 +78,19 @@ if __name__ == '__main__':
             '/{}/table'.format(API_VERSION): table_app_manager,
             '/{}/tracking'.format(API_VERSION): tracking_app_manager,
             '/{}/pipeline'.format(API_VERSION): pipeline_app_manager,
-            '/{}/schedule'.format(API_VERSION): schedule_app_manager,
             '/{}/permission'.format(API_VERSION): permission_app_manager,
-            '/{}/version'.format(API_VERSION): version_app_manager
+            '/{}/version'.format(API_VERSION): version_app_manager,
+            '/{}/controller'.format(API_VERSION): controller_app_manager,
+            '/{}/initiator'.format(API_VERSION): initiator_app_manager,
+            '/{}/tracker'.format(API_VERSION): tracker_app_manager,
         }
     )
     # init
     signal.signal(signal.SIGTERM, job_utils.cleaning)
     signal.signal(signal.SIGCHLD, job_utils.wait_child_process)
-    init_database_tables()
+    # init db
+    init_flow_db()
+    init_arch_db()
     # init runtime config
     import argparse
     parser = argparse.ArgumentParser()
@@ -90,21 +98,20 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.standalone_node:
         RuntimeConfig.init_config(WORK_MODE=WorkMode.STANDALONE)
-        RuntimeConfig.init_config(HTTP_PORT=CLUSTER_STANDALONE_JOB_SERVER_PORT)
-    session_utils.init_session_for_flow_server()
+        RuntimeConfig.init_config(JOB_SERVER_HOST=core_utils.get_lan_ip(), HTTP_PORT=CLUSTER_STANDALONE_JOB_SERVER_PORT)
     RuntimeConfig.init_env()
     RuntimeConfig.set_process_role(ProcessRole.SERVER)
     queue_manager.init_job_queue()
-    job_controller.JobController.init()
-    history_job_clean = job_controller.JobClean()
-    history_job_clean.start()
+    # history_job_clean = job_controller.JobClean()
+    # history_job_clean.start()
     PrivilegeAuth.init()
     ServiceUtils.register()
     # start job detector
     job_detector.JobDetector(interval=5 * 1000).start()
-    # start scheduler
-    scheduler = dag_scheduler.DAGScheduler(queue=RuntimeConfig.JOB_QUEUE, concurrent_num=MAX_CONCURRENT_JOB_RUN)
-    scheduler.start()
+    # start trigger
+    trigger = job_trigger.JobTrigger(queue=RuntimeConfig.JOB_QUEUE, concurrent_num=MAX_CONCURRENT_JOB_RUN)
+    trigger.start()
+    schedule_trigger.ScheduleTrigger(interval=1000).start()
     # start grpc server
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),
                          options=[(cygrpc.ChannelArgKey.max_send_message_length, -1),
@@ -128,6 +135,5 @@ if __name__ == '__main__':
         while True:
             time.sleep(_ONE_DAY_IN_SECONDS)
     except KeyboardInterrupt:
-        session_utils.clean_server_used_session()
         server.stop(0)
         sys.exit(0)

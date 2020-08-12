@@ -31,7 +31,7 @@ class HeteroNNTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
         self.batch_data_index = self._create_variable(name='batch_data_index', src=['guest'], dst=['host'])
-        self.batch_info = self._create_variable(name='batch_info', src=['guest'], dst=['host', 'arbiter'])
+        self.batch_info = self._create_variable(name='batch_info', src=['guest'], dst=['host'])
         self.decrypted_guest_fowrad = self._create_variable(name='decrypted_guest_fowrad', src=['host'], dst=['guest'])
         self.decrypted_guest_weight_gradient = self._create_variable(name='decrypted_guest_weight_gradient', src=['host'], dst=['guest'])
         self.encrypted_acc_noise = self._create_variable(name='encrypted_acc_noise', src=['host'], dst=['guest'])

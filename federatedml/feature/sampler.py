@@ -129,7 +129,7 @@ class RandomSampler(object):
 
             sample_dtable = session.parallelize(zip(sample_ids, range(len(sample_ids))),
                                                 include_key=True,
-                                                partition=data_inst._partitions)
+                                                partition=data_inst.partitions)
             new_data_inst = data_inst.join(sample_dtable, lambda v1, v2: v1)
 
             callback(self.tracker, "random", [Metric("count", new_data_inst.count())], self._summary_buf)
@@ -162,7 +162,7 @@ class RandomSampler(object):
 
             new_data_inst = session.parallelize(new_data,
                                                 include_key=True,
-                                                partition=data_inst._partitions)
+                                                partition=data_inst.partitions)
 
             callback(self.tracker, "random", [Metric("count", new_data_inst.count())], self._summary_buf)
 
@@ -319,7 +319,7 @@ class StratifiedSampler(object):
 
             sample_dtable = session.parallelize(zip(sample_ids, range(len(sample_ids))),
                                                 include_key=True,
-                                                partition=data_inst._partitions)
+                                                partition=data_inst.partitions)
             new_data_inst = data_inst.join(sample_dtable, lambda v1, v2: v1)
 
             if return_sample_ids:
@@ -381,7 +381,7 @@ class StratifiedSampler(object):
 
             new_data_inst = session.parallelize(new_data,
                                                 include_key=True,
-                                                partition=data_inst._partitions)
+                                                partition=data_inst.partitions)
 
             if return_sample_ids:
                 return new_data_inst, sample_ids

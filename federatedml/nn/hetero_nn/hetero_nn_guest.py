@@ -50,6 +50,7 @@ class HeteroNNGuest(HeteroNNBase):
         self.label_dict = {}
 
         self.model = None
+        self.role = consts.GUEST
         self.history_loss = []
         self.iter_epoch = 0
         self.num_label = 2
@@ -147,7 +148,7 @@ class HeteroNNGuest(HeteroNNBase):
 
         preds = self.model.predict(test_x)
 
-        predict_tb = session.parallelize(zip(keys, preds), include_key=True, partition=data_inst._partitions)
+        predict_tb = session.parallelize(zip(keys, preds), include_key=True, partition=data_inst.partitions)
         if self.task_type == "regression":
             result = self.predict_score_to_output(data_inst, predict_tb)
         else:

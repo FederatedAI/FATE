@@ -16,7 +16,7 @@
 import os
 import re
 from contextlib import closing
-from arch.api.utils import file_utils
+from fate_arch.common import file_utils
 from fate_flow.flowpy.client.api.base import BaseFlowAPI
 from fate_flow.flowpy.utils import preprocess
 
@@ -36,52 +36,63 @@ class Model(BaseFlowAPI):
         config_data, dsl_data = preprocess(**kwargs)
         return self._post(url='model/bind', json=config_data)
 
-    def imp(self, conf_path):
+    def import_model(self, conf_path, from_database=False):
         if not os.path.exists(conf_path):
             raise FileNotFoundError('Invalid conf path, file not exists.')
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
-        file_path = config_data["file"]
-        if not os.path.isabs(file_path):
-            file_path = os.path.join(file_utils.get_project_base_directory(), file_path)
-        if os.path.exists(file_path):
-            files = {'file': open(file_path, 'rb')}
-        else:
-            raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
-                            'please check the path: {}'.format(file_path))
-        return self._post(url='model/import', json=config_data, files=files)
-
-    def export(self, conf_path):
-        if not os.path.exists(conf_path):
-            raise FileNotFoundError('Invalid conf path, file not exists.')
-        kwargs = locals()
-        config_data, dsl_data = preprocess(**kwargs)
-        with closing(self._get(url='model/export', handle_result=False, json=config_data, stream=True)) as response:
-            if response.status_code == 200:
-                archive_file_name = re.findall("filename=(.+)", response.headers["Content-Disposition"])[0]
-                os.makedirs(config_data["output_path"], exist_ok=True)
-                archive_file_path = os.path.join(config_data["output_path"], archive_file_name)
-                with open(archive_file_path, 'wb') as fw:
-                    for chunk in response.iter_content(1024):
-                        if chunk:
-                            fw.write(chunk)
-                response = {'retcode': 0,
-                            'file': archive_file_path,
-                            'retmsg': 'download successfully, please check {}'.format(archive_file_path)}
+        if not kwargs.pop("from_database"):
+            file_path = config_data["file"]
+            if not os.path.isabs(file_path):
+                file_path = os.path.join(file_utils.get_project_base_directory(), file_path)
+            if os.path.exists(file_path):
+                files = {'file': open(file_path, 'rb')}
             else:
-                response = response.json()
-        return response
+                raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
+                                'please check the path: {}'.format(file_path))
+            return self._post(url='model/import', json=config_data, files=files)
+        return self._post(url='model/restore', json=config_data)
 
-    def store(self, conf_path):
+    def export_model(self, conf_path, to_database=False):
         if not os.path.exists(conf_path):
             raise FileNotFoundError('Invalid conf path, file not exists.')
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
+        if not config_data.pop("to_database"):
+            with closing(self._get(url='model/export', handle_result=False, json=config_data, stream=True)) as response:
+                if response.status_code == 200:
+                    archive_file_name = re.findall("filename=(.+)", response.headers["Content-Disposition"])[0]
+                    os.makedirs(config_data["output_path"], exist_ok=True)
+                    archive_file_path = os.path.join(config_data["output_path"], archive_file_name)
+                    with open(archive_file_path, 'wb') as fw:
+                        for chunk in response.iter_content(1024):
+                            if chunk:
+                                fw.write(chunk)
+                    response = {'retcode': 0,
+                                'file': archive_file_path,
+                                'retmsg': 'download successfully, please check {}'.format(archive_file_path)}
+                else:
+                    response = response.json()
+            return response
         return self._post(url='model/store', json=config_data)
 
-    def restore(self, conf_path):
+    def migrate(self, conf_path):
         if not os.path.exists(conf_path):
             raise FileNotFoundError('Invalid conf path, file not exists.')
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
-        return self._post(url='model/restore', json=config_data)
+        return self._post(url='model/migrate', json=config_data)
+
+    def tag_model(self, job_id, tag_name, remove=False):
+        kwargs = locals()
+        config_data, dsl_data = preprocess(**kwargs)
+        if not config_data.pop('remove'):
+            return self._post(url='model/model_tag/create', json=config_data)
+        else:
+            return self._post(url='model/model_tag/remove', json=config_data)
+
+    def tag_list(self, job_id):
+        kwargs = locals()
+        config_data, dsl_data = preprocess(**kwargs)
+        return self._post(url='model/model_tag/retrieve', json=config_data)
+
