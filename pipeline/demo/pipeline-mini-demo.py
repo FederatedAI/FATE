@@ -61,7 +61,7 @@ def main(config="./config.yaml"):
     reader_1.get_party_instance(role='host', party_id=host).algorithm_param(table=host_eval_data)
 
     # define DataIO components
-    dataio_0 = DataIO(name="dataio_0") # start component numbering at 0
+    dataio_0 = DataIO(name="dataio_0")
     dataio_1 = DataIO(name="dataio_1")
 
     # get DataIO party instance of guest

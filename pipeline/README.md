@@ -32,8 +32,7 @@ Beyond the given mini demo, a job may include multiple data sets and models. For
 ### Component
 FATE modules are each wrapped into `component` in Pipeline API. Each component can take in and output `Data` and `Model`. 
 Parameters of components can be set conveniently at the time of initialization. Unspecified parameters will take default values. 
-All components must have a `name`, whose numbering suffix starts at "0". 
-A component's name is its identifier, and so it must be unique within a pipeline.
+All components must have a `name`. A component's name is its identifier, and so it must be unique within a pipeline.
 
 An example of initializing a component with specified parameter values:
 ```python
