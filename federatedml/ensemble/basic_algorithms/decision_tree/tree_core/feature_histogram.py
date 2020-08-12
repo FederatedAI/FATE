@@ -307,7 +307,7 @@ class FeatureHistogram(object):
             nid, fid = key
             buf.append((key, (fid, FeatureHistogram.accumulate_histogram(histograms_dict[key]))))
 
-        return session.default().computing.parallelize(buf, include_key=True, partition=partition)
+        return session.get_latest_opened().computing.parallelize(buf, include_key=True, partition=partition)
 
 
 

@@ -48,15 +48,15 @@ class HeteroPearson(ModelBase):
     def _set_parties(self):
         # since multi-host not supported yet, we assume parties are one from guest and one from host
         parties = []
-        guest_parties = session.default().parties.roles_to_parties(["guest"])
-        host_parties = session.default().parties.roles_to_parties(["host"])
+        guest_parties = session.get_latest_opened().parties.roles_to_parties(["guest"])
+        host_parties = session.get_latest_opened().parties.roles_to_parties(["host"])
         if len(guest_parties) != 1 or len(host_parties) != 1:
             raise ValueError(f"one guest and one host required, "
                              f"while {len(guest_parties)} guest and {len(host_parties)} host provided")
         parties.extend(guest_parties)
         parties.extend(host_parties)
 
-        local_party = session.default().parties.local_party
+        local_party = session.get_latest_opened().parties.local_party
         other_party = parties[0] if parties[0] != local_party else parties[1]
 
         self.parties = parties
@@ -114,7 +114,7 @@ class HeteroPearson(ModelBase):
         n, normed = self._standardized(data)
         self.local_corr = table_dot(normed, normed)
         self.local_corr /= n
-        self._summary["local_corr"] = self.local_corr
+        self._summary["local_corr"] = self.local_corr.tolist()
         self._summary["num_local_features"] = n
 
         if self.model_param.cross_parties:
@@ -131,7 +131,7 @@ class HeteroPearson(ModelBase):
                 self.shapes.append(m2)
 
                 self.corr = spdz.dot(x, y, "corr").get() / n
-                self._summary["corr"] = self.corr
+                self._summary["corr"] = self.corr.tolist()
                 self._summary["num_remote_features"] = m2 if self.local_party.role == "guest" else m1
         else:
             self.shapes.append(self.local_corr.shape[0])
