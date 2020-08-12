@@ -63,6 +63,7 @@ def query_tag(ctx, **kwargs):
     \b
     - USAGE:
         flow tag query -t $TAG_NAME
+        flow tag query -t $TAG_NAME --with-model
     """
     config_data, dsl_data = preprocess(**kwargs)
     access_server('post', ctx, 'model/tag/retrieve', config_data)

@@ -17,6 +17,9 @@
 #
 import uuid
 
+import numpy as np
+
+from fate_arch.storage.constant import StorageTableMetaType
 from fate_flow.manager.table_manager.table_convert import convert
 from fate_flow.entity.metric import MetricMeta
 
@@ -60,11 +63,20 @@ class Reader(object):
         self.tracker.log_output_data_info(data_name=component_parameters.get('output_data_name')[0] if component_parameters.get('output_data_name') else table_key,
                                           table_namespace=persistent_table_namespace,
                                           table_name=persistent_table_name)
-        data_info = {"count": count,
-                     "partitions": partitions,
-                     "input_table_storage_engine": data_table.get_storage_engine(),
-                     "output_table_storage_engine": table.get_storage_engine() if table else
-                     data_table.get_storage_engine()}
+        headers_str = data_table.get_meta(_type=StorageTableMetaType.SCHEMA).get('header')
+        data_list = [headers_str.split(',')]
+        party_of_data = data_table.get_meta(_type=StorageTableMetaType.PART_OF_DATA)
+        for data in party_of_data:
+            data_list.append(data[1].split(','))
+        data = np.array(data_list)
+        Tdata = data.transpose()
+        table_info = {}
+        for data in Tdata:
+            table_info[data[0]] = ','.join(list(set(data[1:]))[:5])
+        data_info = {
+            "table_name": self.parameters[table_key]['name'],
+            "table_info": table_info
+        }
         self.tracker.set_metric_meta(metric_namespace="reader_namespace",
                                      metric_name="reader_name",
                                      metric_meta=MetricMeta(name='reader', metric_type='data_info', extra_metas=data_info))

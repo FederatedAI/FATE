@@ -18,7 +18,7 @@ from fate_flow.flowpy.utils import preprocess
 
 
 class Tag(BaseFlowAPI):
-    def create(self, tag_name, desc):
+    def create(self, tag_name, tag_desc=None):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
         return self._post(url='model/tag/create', json=config_data)
