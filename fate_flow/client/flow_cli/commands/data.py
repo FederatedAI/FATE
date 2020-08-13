@@ -56,7 +56,7 @@ def upload(ctx, **kwargs):
     kwargs['verbose'] = int(kwargs['verbose'])
     config_data, dsl_data = preprocess(**kwargs)
     if config_data.get('use_local_data', 1):
-        file_name = check_abs_path(config_data.get('file'), False)
+        file_name = check_abs_path(config_data.get('file'))
         if os.path.exists(file_name):
             with open(file_name, 'rb') as fp:
                 data = MultipartEncoder(

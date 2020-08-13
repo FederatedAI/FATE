@@ -130,12 +130,9 @@ def start_cluster_standalone_job_server():
     time.sleep(5)
 
 
-def check_abs_path(path, isdir=True):
-    if isdir:
-        if not os.path.isdir(path):
-            return None
+def check_abs_path(path):
     if not os.path.isabs(path):
-        return os.path.join(os.path.abspath(os.curdir), path)
+        return os.path.join(os.path.abspath(os.curdir), path).replace("./", "")
     return path
 
 
