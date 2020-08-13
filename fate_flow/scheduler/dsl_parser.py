@@ -675,7 +675,8 @@ class BaseDSLParser(object):
                         setting_conf_prefix=setting_conf_prefix,
                         deploy_cpns=deploy_cpns):
                     output_data_maps[name][output_data_str] = [up_input_data]
-                elif self.components[self.component_name_index.get(up_input_data_component_name)].get_module() == "Reader":
+                elif self.components[
+                    self.component_name_index.get(up_input_data_component_name)].get_module() == "Reader":
                     output_data_maps[name][output_data_str] = [up_input_data]
                 else:
                     up_input_data_suf = up_input_data.split(".", -1)[-1]
@@ -895,12 +896,20 @@ class DSLParserV2(BaseDSLParser):
         else:
             self._init_component_setting(setting_conf_prefix, pipeline_runtime_conf, version=2)
 
-        self.args_input, self.args_datakey = parameter_util.ParameterUtilV2.get_input_parameters(runtime_conf,
-                                                                                                 module="args")
+        self.args_input = parameter_util.ParameterUtilV2.get_input_parameters(runtime_conf,
+                                                                              components=self._get_reader_components())
 
         self.prepare_graph_dependency_info()
 
         return self.components
+
+    def _get_reader_components(self):
+        reader_components = []
+        for cpn, conf in self.dsl.get("components").items():
+            if conf.get("module") == "Reader":
+                reader_components.append(cpn)
+
+        return reader_components
 
     def get_need_deploy_parameter(self, name, deploy_cpns=None, **kwargs):
         if deploy_cpns is not None:
