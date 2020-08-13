@@ -46,8 +46,8 @@ TASK = 'train'
 # TASK = 'predict'
 
 # Put your data to /examples/data folder and indicate the data names here
-GUEST_DATA_SET = 'breast_b.csv'
-HOST_DATA_SET = 'breast_a.csv'
+GUEST_DATA_SET = 'breast_hetero_guest.csv'
+HOST_DATA_SET = 'breast_hetero_host.csv'
 # GUEST_DATA_SET = 'default_credit_homo_guest.csv'
 # HOST_DATA_SET = 'default_credit_homo_host.csv'
 
@@ -182,11 +182,10 @@ def job_status_checker(jobid):
     for component_stats in check_data:
         status = component_stats['f_status']
         task_status.append(status)
-
     if any([s == FAIL for s in task_status]):
         return FAIL
 
-    if any([s == RUNNING for s in task_status]):
+    if any([s in [RUNNING, 'waiting'] for s in task_status]):
         return RUNNING
 
     return SUCCESS
@@ -223,7 +222,7 @@ def generate_data_info(role):
         table_name = '_'.join(table_name_list[:-1])
     else:
         table_name = data_name
-    table_name_space = '{}_{}'.format(table_name, role)
+    table_name_space = "experiment"
     return table_name, table_name_space
 
 
