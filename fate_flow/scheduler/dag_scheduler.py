@@ -84,7 +84,6 @@ class DAGScheduler(object):
 
         if job_parameters['work_mode'] == WorkMode.CLUSTER:
             # Save the state information of all participants in the initiator for scheduling
-            schedule_logger('wzh_test').info('this is a test')
             job_info = job.to_human_model_dict()
             for role, party_ids in job_runtime_conf["role"].items():
                 for party_id in party_ids:

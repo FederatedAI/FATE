@@ -105,6 +105,11 @@ class JobController(object):
 
         job_args = dsl_parser.get_args_input()
         dataset = {}
+        dsl_version = 1
+        if job_args.get('dsl_version'):
+            if job_args.get('dsl_version') == 2:
+                dsl_version = 2
+            job_args.pop('dsl_version')
         for _role, _role_party_args in job_args.items():
             if is_initiator or _role == role:
                 for _party_index in range(len(_role_party_args)):
@@ -112,9 +117,15 @@ class JobController(object):
                     if is_initiator or _party_id == party_id:
                         dataset[_role] = dataset.get(_role, {})
                         dataset[_role][_party_id] = dataset[_role].get(_party_id, {})
-                        for _data_type, _data_location in _role_party_args[_party_index]['args']['data'].items():
-                            dataset[_role][_party_id][_data_type] = '{}.{}'.format(_data_location['namespace'],
-                                                                                   _data_location['name'])
+                        if dsl_version == 1:
+                            for _data_type, _data_location in _role_party_args[_party_index]['args']['data'].items():
+                                dataset[_role][_party_id][_data_type] = '{}.{}'.format(_data_location['namespace'],
+                                                                                       _data_location['name'])
+                        else:
+                            for key in _role_party_args[_party_index].keys():
+                                for _data_type, _data_location in _role_party_args[_party_index][key].items():
+                                    dataset[_role][_party_id][key] = '{}.{}'.format(
+                                        _data_location['namespace'], _data_location['name'])
         tracker.log_job_view({'partner': partner, 'dataset': dataset, 'roles': show_role})
 
     @classmethod
