@@ -185,7 +185,7 @@ def do_load_model():
                     model.f_loaded_times = count + 1
                     model.save(force_insert=True)
     except Exception as modify_err:
-        stat_logger.error(modify_err)
+        stat_logger.exception(modify_err)
     operation_record(request_data, "load", "success" if not retcode else "failed")
     return get_json_result(retcode=retcode, retmsg=retmsg)
 

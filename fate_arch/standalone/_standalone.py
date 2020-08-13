@@ -261,6 +261,10 @@ class Session(object):
         self.session_id = session_id
         self._pool = Executor()
 
+    def __getstate__(self):
+        # session won't be pickled
+        pass
+
     def load(self, name, namespace):
         return _load_table(session=self, name=name, namespace=namespace)
 
@@ -274,6 +278,9 @@ class Session(object):
         table = _create_table(session=self, name=str(uuid.uuid1()), namespace=self.session_id, partitions=partition)
         table.put_all(data)
         return table
+
+    def __getstate__(self):
+        pass
 
     def cleanup(self, name, namespace):
         data_path = _get_data_dir()

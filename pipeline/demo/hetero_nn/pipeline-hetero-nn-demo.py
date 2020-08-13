@@ -53,7 +53,7 @@ print(pipeline.get_component("hetero_nn_0").get_output_data())
 # predict
 
 predict_pipeline = PipeLine()
-predict_pipeline.add(reader_0)
+predict_pipeline.add_component(reader_0)
 predict_pipeline.add_component(pipeline, data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
 pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE)
 
