@@ -59,5 +59,6 @@ message FeatureBinningParam {
     FeatureBinningResult binning_result = 1;
     repeated FeatureBinningResult host_results = 2;
     repeated string header = 3;
-    string model_name = 4;
+    repeated string header_anonymous = 4;
+    string model_name = 5;
 }

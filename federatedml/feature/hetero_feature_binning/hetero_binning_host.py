@@ -75,6 +75,8 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
             encrypted_bin_sum = self.binning_obj.shuffle_static_counts(encrypted_bin_sum)
 
         encrypted_bin_sum = self.bin_inner_param.encode_col_name_dict(encrypted_bin_sum, self)
+        self.header_anonymous = self.bin_inner_param.encode_col_name_list(self.header, self)
+        LOGGER.debug(f"encrypted_bin_sum: {encrypted_bin_sum.keys()}, cols_map: {self.bin_inner_param.col_name_maps}")
         send_result = {
             "encrypted_bin_sum": encrypted_bin_sum,
             "category_names": self.bin_inner_param.encode_col_name_list(
