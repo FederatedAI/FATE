@@ -1,5 +1,5 @@
 {
-  "HeteroSecureBoostTransferVariable": {
+  "federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict_transfer_variable.HeteroSecureBoostTransferVariable": {
     "predict_stop_flag": {
       "src": "guest",
       "dst": [
