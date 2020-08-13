@@ -438,6 +438,9 @@ class BaseDSLParser(object):
                 model_input = inputs["model"]
                 for model_dep in model_input:
                     up_component_name = model_dep.split(".", -1)[0]
+                    if up_component_name == "pipeline":
+                        continue
+
                     model_name = model_dep.split(".", -1)[1]
                     up_pos = self.component_name_index.get(up_component_name)
                     up_component = self.components[up_pos]
@@ -771,11 +774,15 @@ class DSLParser(BaseDSLParser):
 
     @staticmethod
     def deploy_component(components, train_dsl):
+        training_cpns = set(train_dsl.get("components").keys())
+        deploy_cpns = set(components)
+        if len(deploy_cpns & training_cpns) != len(deploy_cpns):
+            raise DeployComponentNotExistError(msg=deploy_cpns - training_cpns)
+
         dsl_parser = DSLParser()
         dsl_parser.dsl = train_dsl
         dsl_parser._init_components()
         dsl_parser._find_dependencies()
-        deploy_cpns = set(components)
         dsl_parser._auto_deduction(deploy_cpns=deploy_cpns)
 
         return dsl_parser.predict_dsl
@@ -856,11 +863,15 @@ class DSLParserV2(BaseDSLParser):
 
     @staticmethod
     def deploy_component(components, train_dsl):
+        training_cpns = set(train_dsl.get("components").keys())
+        deploy_cpns = set(components)
+        if len(deploy_cpns & training_cpns) != len(deploy_cpns):
+            raise DeployComponentNotExistError(msg=deploy_cpns - training_cpns)
+
         dsl_parser = DSLParserV2()
         dsl_parser.dsl = train_dsl
         dsl_parser._init_components()
         dsl_parser._find_dependencies(version=2)
-        deploy_cpns = set(components)
         dsl_parser._auto_deduction(deploy_cpns=deploy_cpns, version=2)
 
         return dsl_parser.predict_dsl
