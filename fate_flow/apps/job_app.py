@@ -202,6 +202,7 @@ def dsl_generator():
         return error_response(500, "DSL generating failed. For more details, please checkout fate_flow_stat.log.")
     else:
         if data.get("filename"):
+            os.makedirs(TEMP_DIRECTORY, exist_ok=True)
             temp_filepath = os.path.join(TEMP_DIRECTORY, data.get("filename"))
             with open(temp_filepath, "w") as fout:
                 fout.write(json.dumps(predict_dsl, indent=4))
