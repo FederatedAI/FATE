@@ -64,6 +64,17 @@ def job_view():
         return get_json_result(retcode=101, retmsg='error')
 
 
+@manager.route('/component/log', methods=['post'])
+@job_utils.job_server_routing(307)
+def component_info_log():
+    job_id = request.json.get('job_id', '')
+    role = request.json.get('role')
+    party_id = request.json.get('party_id')
+    job_log_dir = job_utils.get_job_log_directory(job_id=job_id)
+    file_name = os.path.join(job_log_dir, role, party_id, 'INFO.log')
+    return send_file(open(file_name), attachment_filename='{}_{}_{}_INFO.log'.format(job_id, role, party_id), as_attachment=True)
+
+
 @manager.route('/component/metric/all', methods=['post'])
 def component_metric_all():
     request_data = request.json
