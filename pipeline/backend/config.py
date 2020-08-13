@@ -14,9 +14,6 @@
 #  limitations under the License.
 #
 
-from enum import Enum
-from fate_flow.entity.constant import Backend, WorkMode, JobStatus
-
 VERSION = 2
 TIME_QUERY_FREQS = 0.01
 
@@ -44,3 +41,14 @@ class StatusCode(object):
     FAIL = 1
     Cancel = 2
 
+
+class LogPath(object):
+    DEBUG = "pipeline/logs/DEBUG.log"
+    INFO = "pipeline/logs/INFO.log"
+    ERROR = "pipeline/logs/ERROR.log"
+
+
+class LogFormat(object):
+    SIMPLE = '<green>[{time:HH:mm:ss}]</green><level>{message}</level>'
+    NORMAL = '<green>{time:YYYY-MM-DD HH:mm:ss}</green> | ' \
+                 '<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'

@@ -15,7 +15,9 @@
 #
 
 import argparse
+import contextlib
 import importlib
+import sys
 import tempfile
 import time
 from pathlib import Path
@@ -31,17 +33,31 @@ except ImportError:
 LOGGER = loguru.logger
 
 
+class StreamToLogger:
+    def __init__(self, level="INFO"):
+        self._level = level
+
+    def write(self, buffer):
+        for line in buffer.rstrip().splitlines():
+            LOGGER.opt(depth=1).log(self._level, line.rstrip())
+
+    def flush(self):
+        pass
+
+
 def main():
-    parser = argparse.ArgumentParser("PIPELINE DEMO")
+    parser = argparse.ArgumentParser("RUN PIPELINE DEMO")
     parser.add_argument("path", help="path to search pipeline-xxx.py")
     parser.add_argument("-config", default="./config.yaml", type=str,
                         help="config file")
     parser.add_argument("-name", default=f'pipeline-demo-{time.strftime("%Y%m%d%H%M%S", time.localtime())}')
     parser.add_argument("-backend", choices=[0, 1], type=int, help="backend to use")
-    parser.add_argument("-work_mode", choices=[0, 1], type=int, help="work mode, if specified, overrides setting in config.yaml")
+    parser.add_argument("-work_mode", choices=[0, 1], type=int,
+                        help="work mode, if specified, overrides setting in config.yaml")
     parser.add_argument("-exclude", nargs="+", type=str)
     args = parser.parse_args()
 
+    _add_logger(args.name)
     # find all demos
     path = Path(args.path)
     paths = _find_demo_files(path)
@@ -53,9 +69,14 @@ def main():
             exclude_paths.update(_find_demo_files(Path(p).resolve()))
         paths = [p for p in paths if p not in exclude_paths]
 
-    # run demos
+    # load conf, replace arg values if provided
     conf = load_conf(args)
-    summaries = run_demos(paths, conf, summaries_base=Path(args.name).resolve())
+
+    # run demos
+    stream = StreamToLogger()
+    with contextlib.redirect_stdout(stream):
+        summaries = run_demos(paths, conf, summaries_base=Path(args.name).resolve())
+
 
 def load_conf(args):
     file = args.config
@@ -66,6 +87,21 @@ def load_conf(args):
     if args.work_mode is not None:
         conf["work_mode"] = args.work_mode
     return conf
+
+def _add_logger(name):
+    path = Path(name).joinpath("logs")
+    if path.exists() and not path.is_dir():
+        raise Exception(f"{name} exist, but is not a dir")
+    if not path.exists():
+        path.mkdir(parents=True)
+    loguru.logger.remove()
+    simple_log_format = '<green>[{time:HH:mm:ss}]</green><level>{message}</level>'
+    log_format = '<green>{time:YYYY-MM-DD HH:mm:ss}</green> | ' \
+                 '<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
+    loguru.logger.add(sys.stderr, level="INFO", colorize=True, format=simple_log_format)
+    # loguru.logger.add(f"{path.joinpath('INFO.log')}", level="INFO", format=log_format)
+    # loguru.logger.add(f"{path.joinpath('INFO.log')}", level="DEBUG", format=log_format)
+
 
 def _find_demo_files(path):
     if path.is_file():
@@ -78,6 +114,7 @@ def _find_demo_files(path):
         # in future: group demos by directory
         paths = path.glob("**/pipeline-*.py")
     return [p.resolve() for p in paths]
+
 
 def run_demos(demos, conf, summaries_base):
     temp_config = tempfile.NamedTemporaryFile('w', suffix='.yaml')

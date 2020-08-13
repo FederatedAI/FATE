@@ -14,23 +14,15 @@
 #  limitations under the License.
 #
 
-from federatedml.param.scale_param import ScaleParam
-from pipeline.component.component_base import Component
-from pipeline.interface.output import Output
-from pipeline.utils.logger import LOGGER
+import sys
+from pathlib import Path
 
+import loguru
 
-class FeatureScale(Component, ScaleParam):
-    def __init__(self, **kwargs):
-        Component.__init__(self, **kwargs)
+from pipeline.backend.config import LogPath, LogFormat
 
-        # print (self.name)
-        LOGGER.debug(f"{self.name} component created")
-
-        new_kwargs = self.erase_component_base_param(**kwargs)
-
-        ScaleParam.__init__(self, **new_kwargs)
-        self.output = Output(self.name, has_model=False)
-        self._module_name = "FeatureScale"
-
-
+LOGGER = loguru.logger
+LOGGER.add(sys.stderr, level="INFO", colorize=True, format=LogFormat.SIMPLE)
+LOGGER.add(Path(LogPath.INFO).resolve(), level="INFO", rotation="500MB", format=LogFormat.NORMAL)
+LOGGER.add(Path(LogPath.DEBUG).resolve(), level="DEBUG", rotation="500MB", format=LogFormat.NORMAL)
+LOGGER.add(Path(LogPath.ERROR).resolve(), level="ERROR", rotation="500MB", format=LogFormat.NORMAL, backtrace=True)

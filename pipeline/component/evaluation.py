@@ -14,16 +14,18 @@
 #  limitations under the License.
 #
 
+from federatedml.param.evaluation_param import EvaluateParam
 from pipeline.component.component_base import Component
 from pipeline.interface.output import Output
-from federatedml.param.evaluation_param import EvaluateParam
+from pipeline.utils.logger import LOGGER
 
 
 class Evaluation(Component, EvaluateParam):
     def __init__(self, **kwargs):
         Component.__init__(self, **kwargs)
 
-        print (self.name)
+        # print (self.name)
+        LOGGER.debug(f"{self.name} component created")
         new_kwargs = self.erase_component_base_param(**kwargs)
 
         EvaluateParam.__init__(self, **new_kwargs)

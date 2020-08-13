@@ -14,16 +14,19 @@
 #  limitations under the License.
 #
 
+from federatedml.param.pearson_param import PearsonParam
 from pipeline.component.component_base import Component
 from pipeline.interface.output import Output
-from federatedml.param.pearson_param import PearsonParam
+from pipeline.utils.logger import LOGGER
 
 
 class HeteroPearson(Component, PearsonParam):
     def __init__(self, **kwargs):
         Component.__init__(self, **kwargs)
 
-        print (self.name)
+        # print (self.name)
+        LOGGER.debug(f"{self.name} component created")
+
         new_kwargs = self.erase_component_base_param(**kwargs)
 
         PearsonParam.__init__(self, **new_kwargs)

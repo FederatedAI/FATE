@@ -26,6 +26,7 @@ from pipeline.backend import config as conf
 from pipeline.backend.config import JobStatus
 from pipeline.backend.config import StatusCode
 from pipeline.interface.output import OutputDataType
+from pipeline.utils.logger import LOGGER
 
 
 class JobFunc:
@@ -58,7 +59,8 @@ class JobInvoker(object):
                 if line == "":
                     continue
                 else:
-                    print(line.strip())
+                    # print(line.strip())
+                    LOGGER.debug(f"{line.strip()}")
 
     def submit_job(self, dsl=None, submit_conf=None):
         dsl_path = None
@@ -66,7 +68,8 @@ class JobInvoker(object):
             if dsl:
                 dsl_path = os.path.join(job_dir, "job_dsl.json")
                 import pprint
-                pprint.pprint(dsl)
+                # pprint.pprint(dsl)
+                LOGGER.info(f"submit dsl is: {pprint.pformat(dsl)}")
                 with open(dsl_path, "w") as fout:
                     fout.write(json.dumps(dsl))
 
@@ -85,7 +88,8 @@ class JobInvoker(object):
                 job_id = result["jobId"]
                 data = result["data"]
             except ValueError:
-                raise ValueError("job submit failed, err msg: {}".format(result))
+                LOGGER.exception(f"job submit failed, err msg: {result}")
+                # raise ValueError("job submit failed, err msg: {}".format(result))
 
         return job_id, data
 
@@ -106,7 +110,8 @@ class JobInvoker(object):
                 job_id = result["jobId"]
                 data = result["data"]
             except ValueError:
-                raise ValueError("job submit failed, err msg: {}".format(result))
+                LOGGER.exception(f"job submit failed, err msg: {result}")
+                # raise ValueError("job submit failed, err msg: {}".format(result))
 
         return job_id, data
 
@@ -114,21 +119,28 @@ class JobInvoker(object):
         party_id = str(party_id)
         start_time = time.time()
         pre_cpn = None
-        print ("Job id is {}".format(job_id))
+        # print ("Job id is {}".format(job_id))
+        LOGGER.info(f"Job id is {job_id}")
         while True:
             ret_code, ret_msg, data = self.query_job(job_id, role, party_id)
             status = data["f_status"]
             if status == JobStatus.COMPLETE:
-                print("job is success!!!")
+                # print("job is success!!!")
+                LOGGER.info("job is success!!!")
                 return StatusCode.SUCCESS
 
             if status == JobStatus.FAILED:
-                print("job is failed, please check out job {} by fate board or fate_flow cli".format(job_id))
+                # print("job is failed, please check out job {} by fate board or fate_flow cli".format(job_id))
+                LOGGER.error(f"job is failed, please check out job {job_id} by fate board or fate_flow cli")
                 return StatusCode.FAIL
 
             if status == JobStatus.WAITING:
                 elapse_seconds = timedelta(seconds=int(time.time() - start_time))
-                print("job is still waiting, time elapse: {}".format(elapse_seconds), end="\r", flush=True)
+                # print("job is still waiting, time elapse: {}".format(elapse_seconds), end="\r", flush=True)
+                import sys
+                sys.stdout.write("\r job is still waiting, time elapse: {}".format(elapse_seconds))
+                sys.stdout.flush()
+                #LOGGER.info(f"job is still waiting, time elapse:{elapse_seconds}")
 
             if status == JobStatus.RUNNING:
                 ret_code, _, data = self.query_task(job_id=job_id, role=role, party_id=party_id,
@@ -167,7 +179,8 @@ class JobInvoker(object):
             data = result["data"][0]
             return ret_code, ret_msg, data
         except ValueError:
-            raise ValueError("query job result is {}, can not parse useful info".format(result))
+            # raise ValueError("query job result is {}, can not parse useful info".format(result))
+            LOGGER.opt(exception=True).exception(f"query job result is {result}, can not parse useful info. err msg: ")
 
     def get_output_data_table(self, job_id, cpn_name, role, party_id):
         """
@@ -231,10 +244,12 @@ class JobInvoker(object):
                     data[data_name] = single_data
             # no data table obtained
             else:
-                print(f"No output data table found in {result}.")
+                # print(f"No output data table found in {result}.")
+                LOGGER.info(f"No output data table fount in {result}")
 
         except ValueError:
-            raise ValueError("job submit failed, err msg: {}".format(result))
+            LOGGER.exception(f"job submit failed, err msg: {result}")
+            # raise ValueError("job submit failed, err msg: {}".format(result))
         return data
 
     def query_task(self, job_id, role, party_id, status=None):
@@ -243,7 +258,7 @@ class JobInvoker(object):
                                         party_id=party_id, status=status)
         try:
             if 'retcode' not in result:
-                raise ValueError("can not query component {}' task status".format(cpn_name))
+                raise ValueError("can not query task status of job {}".format(job_id))
 
             ret_code = result["retcode"]
             ret_msg = result["retmsg"]
@@ -254,7 +269,8 @@ class JobInvoker(object):
                 data = result["data"]
             return ret_code, ret_msg, data
         except ValueError:
-            raise ValueError("query task result is {}, can not parse useful info".format(result))
+            LOGGER.opt(exception=True).exception(f"query task result is {result}, can not parse useful info. err msg: ")
+            # raise ValueError("query task result is {}, can not parse useful info".format(result))
 
     def get_output_data(self, job_id, cpn_name, role, party_id, limits=None):
         """
@@ -312,7 +328,8 @@ class JobInvoker(object):
                     data_dict[data_name] = curr_data_dict
             # no output data obtained
             else:
-                print(f"No output data found in directory {output_dir}.")
+                LOGGER.error(f"No output data found in directory{output_dir}")
+                # print(f"No output data found in directory {output_dir}.")
             return data_dict
 
     @staticmethod
@@ -345,9 +362,10 @@ class JobInvoker(object):
                 meta_dict = json.load(fin)
                 meta = meta_dict["header"]
             except ValueError:
-                print("Can not get output data meta.")
+                # print("Can not get output data meta.")
+                LOGGER.opt(exception=True).exception(f"Cannot get output data meta. err msg: ")
 
-        #print(f"{output_meta}: {meta}")
+        # print(f"{output_meta}: {meta}")
         return meta
 
     def get_model_param(self, job_id, cpn_name, role, party_id):
@@ -357,11 +375,13 @@ class JobInvoker(object):
             result = self.client.component.output_model(job_id=job_id, role=role,
                                                         party_id=party_id, component_name=cpn_name)
             if "data" not in result:
-                print("job {}, component {} has no output model param".format(job_id, cpn_name))
+                # print("job {}, component {} has no output model param".format(job_id, cpn_name))
+                LOGGER.error(f"job {job_id}, component {cpn_name} has no output model param")
                 return
             return result["data"]
         except:
-            print("Can not get output model, err msg is {}".format(result))
+            # print("Can not get output model, err msg is {}".format(result))
+            LOGGER.opt(exception=True).exception("Cannot get output model, err msg: ")
 
     def get_metric(self, job_id, cpn_name, role, party_id):
         result = None
@@ -370,11 +390,14 @@ class JobInvoker(object):
             result = self.client.component.metric_all(job_id=job_id, role=role,
                                                       party_id=party_id, component_name=cpn_name)
             if "data" not in result:
-                print("job {}, component {} has no output metric".format(job_id, cpn_name))
+                # print("job {}, component {} has no output metric".format(job_id, cpn_name))
+                LOGGER.error(f"job {job_id}, component {cpn_name} has no output metric")
                 return
             return result["data"]
         except:
-            print("Can not get output model, err msg is {}".format(result))
+            # print("Can not get output model, err msg is {}".format(result))
+            LOGGER.opt(exception=True).exception("Cannot get ouput model, err msg: ")
+
 
     def get_summary(self, job_id, cpn_name, role, party_id):
         result = None
@@ -383,11 +406,13 @@ class JobInvoker(object):
             result = self.client.component.get_summary(job_id=job_id, role=role,
                                                        party_id=party_id, component_name=cpn_name)
             if "data" not in result:
-                print("job {}, component {} has no output metric".format(job_id, cpn_name))
+                # print("job {}, component {} has no output metric".format(job_id, cpn_name))
+                LOGGER.error(f"job {job_id}, component {cpn_name} has no output metric")
                 return
             return result["data"]
         except:
-            print("Can not get output model, err msg is {}".format(result))
+            # print("Can not get output model, err msg is {}".format(result))
+            LOGGER.opt(exception=True).exception("Cannot get output model, err msg: ")
 
     def get_predict_dsl(self, train_dsl, cpn_list, version):
         result = None
@@ -399,8 +424,10 @@ class JobInvoker(object):
             result = self.client.job.generate_dsl(train_dsl_path=train_dsl_path, cpn_list=cpn_list, version=version)
 
         if result is None or 'retcode' not in result:
-            raise ValueError("call flow generate dsl is failed, check if fate_flow server is start!")
+            LOGGER.error(f"call flow generate dsl is failed, check if fate_flow server is start!")
+            # raise ValueError("call flow generate dsl is failed, check if fate_flow server is start!")
         elif result["retcode"] != 0:
-            raise ValueError("can not generate predict dsl, error msg is {}".format(result["retmsg"]))
+            LOGGER.error(f"Cannot generate predict dsl, error msg is {result['retmsg']}")
+            # raise ValueError("can not generate predict dsl, error msg is {}".format(result["retmsg"]))
         else:
             return result["data"]
