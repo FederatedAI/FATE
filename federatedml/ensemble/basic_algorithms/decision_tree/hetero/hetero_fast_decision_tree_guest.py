@@ -267,7 +267,6 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
 
         self.convert_bin_to_real()
         self.sync_tree(idx=-1)
-        LOGGER.debug('final sample weights are {}'.format(list(self.sample_weights.collect())))
 
     def fit(self):
 
