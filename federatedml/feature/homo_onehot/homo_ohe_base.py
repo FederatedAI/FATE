@@ -114,14 +114,3 @@ class HomoOneHotBase(one_hot_encoder.OneHotEncoder):
                                                                                                  self.inner_param.header))
 
         return data_instances
-
-# class OHEAlignmentGuest(OHEAlignmentBase):
-#     def __init__(self):
-#         super(OHEAlignmentGuest, self).__init__()
-#         self.role = consts.GUEST
-#
-#
-# class OHEAlignmentHost(OHEAlignmentBase):
-#     def __init__(self):
-#         super(OHEAlignmentHost, self).__init__()
-#         self.role = consts.HOST

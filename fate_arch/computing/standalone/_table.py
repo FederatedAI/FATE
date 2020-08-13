@@ -103,3 +103,7 @@ class Table(CTableABC):
 
     def union(self, other: 'Table', func=lambda v1, v2: v1):
         return Table(self._table.union(other._table, func))
+
+
+    def __getstate__(self):
+        pass

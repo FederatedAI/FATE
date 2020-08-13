@@ -251,6 +251,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         return best_splitinfos
 
+
     def federated_find_split(self, dep=-1, batch=-1, idx=-1):
 
         LOGGER.info("federated find split of depth {}, batch {}".format(dep, batch))
