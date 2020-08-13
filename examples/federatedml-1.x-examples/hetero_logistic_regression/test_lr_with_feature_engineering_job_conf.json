@@ -108,14 +108,14 @@
             }
         },
         "hetero_feature_selection_0": {
-            "select_cols": -1,
+            "select_col_indexes": -1,
             "filter_methods": [
+                "manually",
                 "iv_value_thres",
                 "iv_percentile"
             ],
-            "local_only": false,
-            "unique_param": {
-                "eps": 1e-06
+            "manually_param": {
+                "filter_out_indexes": null
             },
             "iv_value_param": {
                 "value_threshold": 1.0
@@ -123,17 +123,12 @@
             "iv_percentile_param": {
                 "percentile_threshold": 0.9
             },
-            "variance_coe_param": {
-                "value_threshold": 0.3
-            },
-            "outlier_param": {
-                "percentile": 0.95,
-                "upper_threshold": 10
-            },
             "need_run": true
         },
         "one_hot_encoder_0": {
-            "cols": -1
+            "transform_col_indexes": -1,
+            "transform_col_names": null,
+            "need_run": true
         },
         "hetero_lr_0": {
             "penalty": "L2",
