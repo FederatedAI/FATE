@@ -197,10 +197,7 @@ def dsl_generator():
         train_dsl = json_loads(data.get("train_dsl"))
         parser = get_dsl_parser_by_version(data.get("version", "1"))
         predict_dsl = parser.deploy_component(cpn_list, train_dsl)
-    except Exception as e:
-        stat_logger.exception(e)
-        return error_response(500, "DSL generating failed. For more details, please checkout fate_flow_stat.log.")
-    else:
+
         if data.get("filename"):
             os.makedirs(TEMP_DIRECTORY, exist_ok=True)
             temp_filepath = os.path.join(TEMP_DIRECTORY, data.get("filename"))
@@ -208,5 +205,8 @@ def dsl_generator():
                 fout.write(json.dumps(predict_dsl, indent=4))
             return send_file(open(temp_filepath, 'rb'), as_attachment=True, attachment_filename=data.get("filename"))
         return get_json_result(data=predict_dsl)
+    except Exception as e:
+        stat_logger.exception(e)
+        return error_response(500, "DSL generating failed. For more details, please checkout fate_flow_stat.log.")
 
 
