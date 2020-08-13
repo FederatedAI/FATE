@@ -186,7 +186,7 @@ class FeatureHistogram(object):
             rs = FeatureHistogram.recombine_histograms(histograms_dict, node_map, feature_num)
             return rs
         else:
-            return FeatureHistogram.construct_table(histograms_dict, data_bin._partitions)
+            return FeatureHistogram.construct_table(histograms_dict, data_bin.partitions)
 
 
     @staticmethod
