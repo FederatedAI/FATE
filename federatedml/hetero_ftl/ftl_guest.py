@@ -266,7 +266,7 @@ class FTLGuest(FTL):
         # cache data_loader for faster validation
         self.cache_dataloader[self.get_dataset_key(data_inst)] = data_loader
 
-        self.partitions = data_inst._partitions
+        self.partitions = data_inst.partitions
 
         self.initialize_nn(input_shape=self.x_shape)
         self.feat_dim = self.nn._model.output_shape[1]
@@ -365,7 +365,7 @@ class FTLGuest(FTL):
         predicts = list(map(float, predicts))
 
         predict_tb = session.parallelize(zip(data_loader.get_overlap_keys(), predicts,), include_key=True,
-                                         partition=data_inst._partitions)
+                                         partition=data_inst.partitions)
 
         threshold = self.predict_param.threshold
         predict_result = self.predict_score_to_output(data_inst_, predict_tb, classes=[0, 1], threshold=threshold)
