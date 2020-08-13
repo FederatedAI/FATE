@@ -19,7 +19,7 @@ import os
 import shutil
 import tarfile
 
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, make_response
 from google.protobuf import json_format
 
 from arch.api.utils.core_utils import deserialize_b64
@@ -71,9 +71,13 @@ def component_info_log():
     role = request.json.get('role')
     party_id = request.json.get('party_id')
     job_log_dir = job_utils.get_job_log_directory(job_id=job_id)
-    file_name = os.path.join(job_log_dir, role, party_id, 'INFO.log')
-    return send_file(open(file_name), attachment_filename='{}_{}_{}_INFO.log'.format(job_id, role, party_id), as_attachment=True)
-
+    file_name = os.path.join(job_log_dir, role, str(party_id), 'INFO.log')
+    if os.path.exists(file_name):
+        return send_file(open(file_name, 'rb'), attachment_filename='{}_{}_{}_INFO.log'.format(job_id, role, party_id), as_attachment=True)
+    else:
+        response = make_response("no find log file")
+        response.status = '500'
+        return response
 
 @manager.route('/component/metric/all', methods=['post'])
 def component_metric_all():
