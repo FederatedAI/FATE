@@ -137,7 +137,7 @@ class PSI(ModelBase):
 
         if not tb.count() > 0:
             raise ValueError('input table must contains at least 1 sample')
-        first_ = tb.take(0)[0][1]
+        first_ = tb.take(1)[0][1]
         if type(first_) == Instance:
             return True
         else:
@@ -145,7 +145,7 @@ class PSI(ModelBase):
 
     @staticmethod
     def is_sparse(tb):
-        return type(tb.take(0)[0][1].features) == SparseVector
+        return type(tb.take(1)[0][1].features) == SparseVector
 
     @staticmethod
     def check_duplicates(l_):
