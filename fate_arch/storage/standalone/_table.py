@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 from typing import Iterable
-from fate_arch.common import StorageEngine, StandaloneStorageType
+from fate_arch.storage import StorageEngine, StandaloneStorageType
 from fate_arch.storage import StorageTableBase
 
 

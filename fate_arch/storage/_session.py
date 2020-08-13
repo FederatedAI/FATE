@@ -16,33 +16,37 @@
 
 
 from fate_arch.common.log import getLogger
-from fate_arch.common import StorageEngine
-from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
+from fate_arch.storage._types import StorageEngine, Relationship
+from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64, fate_uuid
 from fate_arch.db.db_models import DB, StorageTableMeta
-from arch.api.utils import log_utils
-from fate_arch.storage.constant import Relationship
-from fate_arch.computing import ComputingType
+from fate_arch.computing import ComputingEngine
 from fate_arch.abc import StorageSessionABC, StorageTableABC
-
-logger = log_utils.getLogger()
 
 MAX_NUM = 10000
 
 LOGGER = getLogger()
 
 
-class StorageSessionBase(StorageSessionABC):
-    def create(self,
-               session_id=None,
-               storage_engine: StorageEngine = None,
-               **kwargs):
+class Session(object):
+    @classmethod
+    def build(cls, session_id=None, storage_engine=None, **kwargs):
+        session_id = session_id if session_id else fate_uuid()
         if storage_engine == StorageEngine.EGGROLL:
             from fate_arch.storage.eggroll import StorageSession
-            storage_session = StorageSession(session_id=session_id, options=kwargs.get("options", {}))
-            return storage_session
+            return StorageSession(session_id=session_id, options=kwargs.get("options", {}))
+        else:
+            return StorageSessionBase()
+
+    @classmethod
+    def storage_engine_for_computing(cls):
+        pass
+
+
+class StorageSessionBase(StorageSessionABC):
+    def create(self):
         raise NotImplementedError()
 
-    def create_table(self, address, name, namespace, partitions=1, storage_type=None, options=None, **kwargs):
+    def create_table(self, address, name, namespace, partitions=1, **kwargs):
         with DB.connection_context():
             metas = StorageTableMeta.select().where(StorageTableMeta.f_name == name,
                                                     StorageTableMeta.f_namespace == namespace)
@@ -50,16 +54,17 @@ class StorageSessionBase(StorageSessionABC):
                     raise Exception('table {} {} has been created by storage engine {} '.format(name, namespace,
                                                                                                 metas.f_engine))
             else:
-                table = self.table(address=address, name=name, namespace=namespace, partitions=partitions, storage_type=storage_type, options=options)
+                table = self.table(address=address, name=name, namespace=namespace, partitions=partitions, **kwargs)
                 meta = StorageTableMeta()
                 meta.f_create_time = current_timestamp()
                 meta.f_name = name
                 meta.f_namespace = namespace
-                meta.f_engine = table.get_storage_engine()
                 meta.f_address = address.__dict__ if address else {}
+                meta.f_engine = table.get_storage_engine()
+                meta.f_type = table.get_storage_type()
                 meta.f_partitions = partitions
-                meta.f_options = serialize_b64(options) if options else ""
-                meta.f_count = options.get("count", None)
+                meta.f_options = serialize_b64(table.get_options())
+                meta.f_count = table.get_options().get("count", None)
                 meta.f_schema = serialize_b64({}, to_str=True)
                 meta.f_part_of_data = serialize_b64([], to_str=True)
             meta.f_update_time = current_timestamp()
@@ -76,13 +81,13 @@ class StorageSessionBase(StorageSessionABC):
                                   name=meta.f_name,
                                   namespace=meta.f_namespace,
                                   partitions=meta.f_partitions,
-                                  storage_type=meta.f_storage_type,
+                                  storage_type=meta.f_type,
                                   options=(deserialize_b64(meta.f_options) if meta.f_options else None))
             else:
                 return None
 
     def table(self, address, name, namespace, partitions, storage_type=None, options=None, **kwargs) -> StorageTableABC:
-        pass
+        raise NotImplementedError()
 
     def get_storage_info(self, name, namespace):
         with DB.connection_context():
@@ -101,7 +106,7 @@ class StorageSessionBase(StorageSessionABC):
     def get_address(self, storage_engine, address_dict):
         return Relationship.EngineToAddress.get(storage_engine)(*address_dict)
 
-    def convert(self, src_table, dest_name, dest_namespace, session_id, computing_engine: ComputingType, force=False, **kwargs):
+    def convert(self, src_table, dest_name, dest_namespace, session_id, computing_engine: ComputingEngine, force=False, **kwargs):
         partitions = src_table.get_partitions()
         if src_table.get_storage_engine() not in Relationship.CompToStore.get(computing_engine, []):
             if computing_engine == ComputingType.STANDALONE:
@@ -136,20 +141,23 @@ class StorageSessionBase(StorageSessionABC):
                 data = []
         if data:
             dest_table.put_all(data)
-        dest_table.save_meta(schema=src_table.get_meta(_type="schema"), count=src_table.count(), party_of_data=party_of_data)
+        dest_table.update_metas(schema=src_table.get_meta(meta_type="schema"), count=src_table.count(), party_of_data=party_of_data)
 
     def __enter__(self):
-        print("enter")
         self.create()
+        return self
 
-    def __exit__(self):
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+
+    def close(self):
         try:
             self.stop()
         except Exception as e:
             self.kill()
 
     def stop(self):
-        pass
+        raise NotImplementedError()
 
     def kill(self):
-        pass
+        raise NotImplementedError()

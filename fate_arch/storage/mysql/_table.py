@@ -18,7 +18,7 @@
 import pymysql
 
 from fate_arch.common.profile import log_elapsed
-from fate_arch.common import StorageEngine, MySQLStorageType
+from fate_arch.storage import StorageEngine, MySQLStorageType
 from fate_arch.storage import StorageTableBase
 
 
@@ -99,7 +99,7 @@ class StorageTable(StorageTableBase):
 
     @log_elapsed
     def count(self, **kwargs):
-        return self.get_meta(_type='count')
+        return self.get_meta(meta_type='count')
 
     def close(self):
         self.con.close()

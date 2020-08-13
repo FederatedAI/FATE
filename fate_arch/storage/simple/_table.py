@@ -1,6 +1,6 @@
 from collections import Iterable
 
-from fate_arch.common import StorageEngine
+from fate_arch.storage import StorageEngine
 from fate_arch.storage import StorageTableBase
 
 
@@ -21,7 +21,7 @@ class StorageTable(StorageTableBase):
         self._storage_engine = StorageEngine.SIMPLE
 
     def get_partitions(self):
-        return self.get_meta(_type='partitions')
+        return self.get_meta(meta_type='partitions')
 
     def get_name(self):
         return self._name
@@ -42,7 +42,7 @@ class StorageTable(StorageTableBase):
         pass
 
     def count(self):
-        return self.get_meta(_type='count')
+        return self.get_meta(meta_type='count')
 
     def save_as(self, name, namespace, partition=None, schema=None, **kwargs):
         pass
@@ -51,6 +51,6 @@ class StorageTable(StorageTableBase):
         pass
 
     def collect(self, **kwargs):
-        part_of_data = self.get_meta(_type='part_of_data')
+        part_of_data = self.get_meta(meta_type='part_of_data')
         for k_v in part_of_data:
             yield k_v

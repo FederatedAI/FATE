@@ -20,7 +20,7 @@ from typing import Iterable
 from pyspark import SparkContext
 
 from fate_arch.common.log import getLogger
-from fate_arch.common import StorageEngine, HDFSStorageType
+from fate_arch.storage import StorageEngine, HDFSStorageType
 from fate_arch.storage import StorageTableBase
 
 LOGGER = getLogger()
@@ -73,7 +73,7 @@ class StorageTable(StorageTableBase):
             counter = counter + 1
         out.flush()
         out.close()
-        self.save_meta(count=counter)
+        self.update_metas(count=counter)
 
     def collect(self, **kwargs) -> list:
         sc = SparkContext.getOrCreate()
@@ -98,7 +98,7 @@ class StorageTable(StorageTableBase):
             fs.delete(path)
 
     def count(self):
-        meta = self.get_meta(_type='count')
+        meta = self.get_meta(meta_type='count')
         if meta:
             return meta.f_count
         else:

@@ -16,8 +16,7 @@
 
 from typing import Iterable
 from fate_arch.common.profile import log_elapsed
-from fate_arch.common import StorageEngine, EggRollStorageType
-from fate_arch.storage import StorageTableBase
+from fate_arch.storage import StorageTableBase, StorageEngine, EggRollStorageType
 
 
 class StorageTable(StorageTableBase):
@@ -27,7 +26,7 @@ class StorageTable(StorageTableBase):
                  name: str = None,
                  namespace: str = None,
                  partitions: int = 1,
-                 storage_type: EggRollStorageType = None,
+                 storage_type: EggRollStorageType = EggRollStorageType.ROLLPAIR_LMDB,
                  options=None):
         self._context = context
         self._address = address
@@ -43,8 +42,8 @@ class StorageTable(StorageTableBase):
         self._options["total_partitions"] = partitions
         self._table = self._context.load(namespace=self._namespace, name=self._name, options=self._options)
 
-    def get_partitions(self):
-        return self._table.get_partitions()
+    def get_address(self):
+        return self._address
 
     def get_name(self):
         return self._name
@@ -55,8 +54,14 @@ class StorageTable(StorageTableBase):
     def get_storage_engine(self):
         return self._storage_engine
 
-    def get_address(self):
-        return self._address
+    def get_storage_type(self):
+        return self._storage_type
+
+    def get_partitions(self):
+        return self._table.get_partitions()
+
+    def get_options(self):
+        return self._options
 
     def put_all(self, kv_list: Iterable, **kwargs):
         return self._table.put_all(kv_list)
@@ -84,6 +89,3 @@ class StorageTable(StorageTableBase):
     @log_elapsed
     def count(self, **kwargs):
         return self._table.count()
-
-    def close(self):
-        self.session.stop()

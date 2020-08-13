@@ -174,7 +174,7 @@ class Tracker(object):
                 count -= 1
                 if count == 0:
                     break
-            table.save_meta(schema=schema, party_of_data=party_of_data, count=data_table.count(), partitions=partitions)
+            table.update_metas(schema=schema, party_of_data=party_of_data, count=data_table.count(), partitions=partitions)
             return persistent_table_namespace, persistent_table_name
         else:
             schedule_logger(self.job_id).info('task id {} output data table is none'.format(self.task_id))

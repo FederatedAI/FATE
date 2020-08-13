@@ -18,8 +18,6 @@
 import abc
 from typing import Iterable
 from fate_arch.common.log import getLogger
-from fate_arch.common import StorageTableMetaType
-from fate_arch.computing import ComputingType
 from fate_arch.abc import AddressABC
 
 MAX_NUM = 10000
@@ -33,7 +31,7 @@ class StorageTableABC(metaclass=abc.ABCMeta):
     """
 
     @abc.abstractmethod
-    def get_partitions(self):
+    def get_address(self):
         pass
 
     @abc.abstractmethod
@@ -49,7 +47,15 @@ class StorageTableABC(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def get_address(self):
+    def get_storage_type(self):
+        pass
+
+    @abc.abstractmethod
+    def get_options(self):
+        pass
+
+    @abc.abstractmethod
+    def get_partitions(self):
         pass
 
     @abc.abstractmethod
@@ -96,23 +102,27 @@ class StorageTableABC(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def close(self):
-        pass
-
-    @abc.abstractmethod
     def destroy(self):
         ...
 
     @abc.abstractmethod
-    def get_meta(self, _type=StorageTableMetaType.SCHEMA, name=None, namespace=None):
+    def get_meta(self, meta_type, name=None, namespace=None):
         ...
 
     @abc.abstractmethod
-    def save_meta(self, schema=None, name=None, namespace=None, party_of_data=None, count=0, partitions=1):
+    def create_metas(self, **kwargs):
         ...
 
     @abc.abstractmethod
-    def destroy_meta(self):
+    def get_metas(self, filter_fields, query_fields=None):
+        ...
+
+    @abc.abstractmethod
+    def update_metas(self, **kwargs):
+        ...
+
+    @abc.abstractmethod
+    def destroy_metas(self):
         ...
 
 
@@ -134,7 +144,7 @@ class StorageSessionABC(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def convert(self, src_table, dest_name, dest_namespace, session_id, computing_engine: ComputingType, force=False, **kwargs):
+    def convert(self, src_table, dest_name, dest_namespace, session_id, computing_engine, force=False, **kwargs):
         pass
 
     @abc.abstractmethod

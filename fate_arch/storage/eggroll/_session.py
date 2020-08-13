@@ -15,29 +15,33 @@
 #
 
 from fate_arch.common.profile import log_elapsed
-from fate_arch.storage import StorageSessionBase
+from fate_arch.storage import StorageSessionBase, EggRollStorageType
 from fate_arch.abc import AddressABC
+from fate_arch.common.address import EggRollAddress
 
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        if options is None:
-            options = {}
+        self._session_id = session_id
+        self._options = options if options else {}
+
+    def create(self):
         from eggroll.core.session import session_init
         from eggroll.roll_pair.roll_pair import RollPairContext
-        options['eggroll.session.deploy.mode'] = "cluster"
-        self._rp_session = session_init(session_id=session_id, options=options)
+        self._options['eggroll.session.deploy.mode'] = "cluster"
+        self._rp_session = session_init(session_id=self._session_id, options=self._options)
         self._rpc = RollPairContext(session=self._rp_session)
         self._session_id = self._rp_session.get_session_id()
 
-    def table(self, address: AddressABC, name, namespace, partitions, storage_type=None, options=None, **kwargs):
-        from fate_arch.storage.constant import EggRollAddress
+    def table(self, address: AddressABC, name, namespace, partitions, storage_type: EggRollStorageType = EggRollStorageType.ROLLPAIR_LMDB, options=None, **kwargs):
         if isinstance(address, EggRollAddress):
+            if not options:
+                options = {}
             if storage_type:
                 options["store_type"] = storage_type
             options["total_partitions"] = partitions
             from fate_arch.storage.eggroll._table import StorageTable
-            return StorageTable(context=self._rp_session)
+            return StorageTable(context=self._rpc, address=address, name=name, namespace=namespace, storage_type=storage_type, options=options)
         raise NotImplementedError(f"address type {type(address)} not supported with eggroll storage")
 
     def _get_session_id(self):

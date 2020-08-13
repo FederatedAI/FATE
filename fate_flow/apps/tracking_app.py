@@ -384,7 +384,7 @@ def get_component_output_data_line(src_key, src_value):
 
 def get_component_output_data_schema(output_data_table, have_data_label, is_str=False):
     # get schema
-    schema = output_data_table.get_meta(_type="schema")
+    schema = output_data_table.get_meta(meta_type="schema")
     if not schema:
          return None
     header = [schema.get('sid_name', 'sid')]

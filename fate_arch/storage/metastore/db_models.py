@@ -29,6 +29,7 @@ from arch.api.utils.conf_utils import get_base_config
 from arch.api.utils.core_utils import current_timestamp
 from fate_flow.entity.constant import WorkMode
 from fate_flow.entity.runtime_config import RuntimeConfig
+from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 
 DATABASE = get_base_config("database", {})
 USE_LOCAL_DATABASE = get_base_config('use_local_database', True)
@@ -55,6 +56,15 @@ class JSONField(TextField):
     def python_value(self, value):
         if value is not None:
             return json.loads(value)
+
+
+class SerializedField(LongTextField):
+    def db_value(self, value):
+        return serialize_b64(value, to_str=True)
+
+    def python_value(self, value):
+        if value is not None:
+            return deserialize_b64(value)
 
 
 @singleton
@@ -125,12 +135,12 @@ class StorageTableMeta(DataBaseModel):
     f_address = JSONField()
     f_engine = CharField(max_length=100, index=True)  # 'EGGROLL', 'MYSQL'
     f_type = CharField(max_length=50, index=True)  # storage type
-    f_partitions = IntegerField(null=True, default=1)
-    f_options = TextField(default='')
-    f_schema = TextField(default='')
-    f_count = IntegerField(null=True, default=0)
-    f_part_of_data = LongTextField()
-    f_description = TextField(null=True, default='')
+    f_partitions = IntegerField(null=True)
+    f_options = JSONField()
+    f_schema = SerializedField()
+    f_count = IntegerField(null=True)
+    f_part_of_data = SerializedField()
+    f_description = TextField(default='')
     f_create_time = BigIntegerField(null=True)
     f_update_time = BigIntegerField(null=True)
 

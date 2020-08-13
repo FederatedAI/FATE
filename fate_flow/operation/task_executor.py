@@ -144,7 +144,7 @@ class TaskExecutor(object):
             sess = session.Session.create(backend=RuntimeConfig.BACKEND, work_mode=RuntimeConfig.WORK_MODE)
             computing_session_id = job_utils.generate_session_id(task_id, task_version, role, party_id)
             sess.init_computing(computing_session_id=computing_session_id, options=session_options)
-            federation_session_id = job_utils.generate_federated_id(task_id, task_version),
+            federation_session_id = job_utils.generate_federated_id(task_id, task_version)
             sess.init_federation(federation_session_id=federation_session_id,
                                  runtime_conf=component_parameters_on_party)
             sess.as_default()
@@ -259,30 +259,10 @@ class TaskExecutor(object):
                         if data_table:
                             partitions = task_parameters['input_data_partition'] if task_parameters.get(
                                 'input_data_partition', 0) > 0 else data_table.get_partitions()
-                            """
-                            schedule_logger().info("start save as task {} input data table {}".format(
-                                task_id, data_table.get_address()))
-                            origin_table_schema = data_table.get_meta(_type="schema")
-                            name = uuid.uuid1().hex
-                            namespace = job_utils.generate_session_id(task_id=task_id, task_version=task_version, role=role, party_id=party_id)
-                            if RuntimeConfig.BACKEND == Backend.SPARK:
-                                storage_engine = StorageEngine.HDFS
-                            else:
-                                storage_engine = StorageEngine.LMDB
-                            address = create(name=data_table.get_name(), namespace=data_table.get_namespace(), storage_engine=storage_engine,
-                                             partitions=partitions)
-                            save_as_options = {"store_type": StorageTypes.ROLLPAIR_IN_MEMORY}
-                            data_table.save_as(address=address, partition=partitions, options=save_as_options,
-                                               name=name, namespace=namespace, schema_data=origin_table_schema)
-                            schedule_logger().info("save as task {} input data table to {} done".format(task_id, address))
-                            """
                             data_table = session.get_latest_opened().computing.load(
                                 data_table.get_address(),
                                 schema=data_table.get_meta(_type="schema"),
                                 partitions=partitions)
-                            partitions = task_parameters['input_data_partition'] if task_parameters.get('input_data_partition', 0) > 0 else data_table.get_partitions()
-                            data_table = session.default().computing.load(data_table.get_address(), schema=data_table.get_meta(_type="schema"),
-                                                                          partitions=partitions)
                         else:
                             schedule_logger().info(
                                 "pass save as task {} input data table, because the table is none".format(task_id))

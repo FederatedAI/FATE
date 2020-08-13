@@ -1,5 +1,5 @@
 {
-    "module_path":  "fate_flow/utils",
+    "module_path":  "fate_flow/components",
     "default_runtime_conf": "download_param.json",
     "param_class" : "fate_flow/param/download_param.py/DownloadParam",
     "role":

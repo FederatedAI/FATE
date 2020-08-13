@@ -18,10 +18,10 @@ import shutil
 
 from flask import Flask, request
 
-from fate_arch.storage.constant import StorageEngine
+from fate_arch.storage import StorageEngine
 from fate_flow.entity.constant import StatusSet
 from fate_arch.abc import StorageSessionABC
-from fate_arch.storage import StorageSessionBase
+from fate_arch import storage
 from fate_flow.settings import stat_logger, USE_LOCAL_DATA, WORK_MODE
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils import detect_utils, job_utils
@@ -66,7 +66,9 @@ def download_upload(access_module):
         data['table_name'] = request_config["table_name"]
         data['namespace'] = request_config["namespace"]
         if WORK_MODE != 0:
-            data_table = StorageSessionABC.get_table(name=request_config["table_name"], namespace=request_config["namespace"])
+            request_config["storage_engine"] = request_config.get("storage_engine", StorageEngine.EGGROLL)
+            with storage.Session.build(**request_config) as session:
+                data_table = session.get_table(name=request_config["table_name"], namespace=request_config["namespace"])
             if data_table and int(request_config.get('drop', 2)) == 2:
                 return get_json_result(retcode=100,
                                        retmsg='The data table already exists.'
@@ -126,7 +128,7 @@ def get_upload_info(jobs_run_conf):
                 'upload_count': table.count()
             }
             info["notes"] = job_run_conf["notes"]
-            info["schema"] = table.get_meta(_type="schema")
+            info["schema"] = table.get_meta(meta_type="schema")
             data.append({job_id: info})
     return data
 
@@ -157,7 +159,7 @@ def gen_data_access_job_config(config_data, access_module):
                 "file": [config_data["file"]],
                 "namespace": [config_data["namespace"]],
                 "table_name": [config_data["table_name"]],
-                "storage_engine": [config_data.get("storage_engine", StorageEngine.LMDB)]
+                "storage_engine": [config_data.get("storage_engine", StorageEngine.EGGROLL)]
             }
         }
         if int(config_data.get('dsl_version', 1)) == 2:
