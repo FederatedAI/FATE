@@ -438,6 +438,9 @@ class BaseDSLParser(object):
                 model_input = inputs["model"]
                 for model_dep in model_input:
                     up_component_name = model_dep.split(".", -1)[0]
+                    if up_component_name == "pipeline":
+                        continue
+
                     model_name = model_dep.split(".", -1)[1]
                     up_pos = self.component_name_index.get(up_component_name)
                     up_component = self.components[up_pos]
