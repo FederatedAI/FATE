@@ -18,7 +18,7 @@ import json
 from contextlib import closing
 from fate_flow.flowpy.client.api.base import BaseFlowAPI
 from fate_flow.utils.job_utils import get_parser_version_mapping
-from fate_flow.flowpy.utils import preprocess, check_config, download_from_request, check_output_path
+from fate_flow.flowpy.utils import preprocess, check_config, download_from_request
 
 
 class Job(BaseFlowAPI):

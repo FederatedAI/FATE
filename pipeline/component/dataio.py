@@ -17,6 +17,7 @@
 import copy
 from pipeline.component.component_base import Component
 from pipeline.interface.output import Output
+from pipeline.interface.input import Input
 from federatedml.param.dataio_param import DataIOParam
 
 
@@ -29,5 +30,6 @@ class DataIO(Component, DataIOParam):
 
         DataIOParam.__init__(self, **new_kwargs)
 
+        self.input = Input(self.name)
         self.output = Output(self.name, data_type='single')
         self._module_name = "DataIO"

@@ -26,9 +26,9 @@ def pipeline_dag_dependency(job_info):
             if not jobs:
                 raise Exception('query job {} failed'.format(job_info.get('job_id', '')))
             job = jobs[0]
-            job_dsl_parser = job_utils.get_job_dsl_parser(dsl=json_loads(job.f_dsl),
-                                                          runtime_conf=json_loads(job.f_runtime_conf),
-                                                          train_runtime_conf=json_loads(job.f_train_runtime_conf))
+            job_dsl_parser = job_utils.get_job_dsl_parser(dsl=job.f_dsl,
+                                                          runtime_conf=job.f_runtime_conf,
+                                                          train_runtime_conf=job.f_train_runtime_conf)
         else:
             job_dsl_parser = job_utils.get_job_dsl_parser(dsl=job_info.get('job_dsl', {}),
                                                           runtime_conf=job_info.get('job_runtime_conf', {}),

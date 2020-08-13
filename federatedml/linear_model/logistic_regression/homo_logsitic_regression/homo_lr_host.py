@@ -134,6 +134,7 @@ class HomoLRHost(HomoLRBase):
             # validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
 
+        self.set_summary(self.get_model_summary())
         LOGGER.info("Finish Training task, total iters: {}".format(self.n_iter_))
 
     @assert_io_num_rows_equal

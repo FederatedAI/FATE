@@ -153,12 +153,9 @@
                 "n_splits": 5,
                 "shuffle": false,
                 "random_seed": 103,
-                "need_cv": false,
-                "evaluate_param": {
-                    "eval_type": "multi"
-                }
+                "need_cv": false
             },
-            "intersect_0": {
+            "intersection_0": {
                 "intersect_method": "rsa",
                 "sync_intersect_ids": true,
                 "only_output_key": false

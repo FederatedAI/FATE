@@ -122,10 +122,7 @@
                 "n_splits": 5,
                 "shuffle": false,
                 "random_seed": 42,
-                "need_cv": true,
-                "evaluate_param": {
-                    "eval_type": "regression"
-                }
+                "need_cv": true
             }
         }
     }

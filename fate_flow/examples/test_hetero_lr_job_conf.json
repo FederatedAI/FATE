@@ -6,7 +6,8 @@
     "job_parameters": {
         "work_mode": 1,
         "processors_per_node": 1,
-        "align_task_input_data_partition": true
+        "align_task_input_data_partition": true,
+        "dsl_version": "1"
     },
     "role": {
         "guest": [9999],
@@ -15,10 +16,8 @@
     },
     "role_parameters": {
         "guest": {
-            "args": {
-                "data": {
-                    "train_data": [{"name": "breast_hetero_guest", "namespace": "fate_flow_test_breast_hetero"}]
-                }
+            "reader_0": {
+                "table": [{"name": "breast_hetero_guest", "namespace": "fate_flow_test_breast_hetero"}]
             },
             "dataio_0":{
                 "with_label": [true],
@@ -28,10 +27,8 @@
             }
         },
         "host": {
-            "args": {
-                "data": {
-                    "train_data": [{"name": "breast_hetero_host", "namespace": "fate_flow_test_breast_hetero"}]
-                }
+            "reader_0": {
+                "table": [{"name": "breast_hetero_host", "namespace": "fate_flow_test_breast_hetero"}]
             },
              "dataio_0":{
                 "with_label": [false],

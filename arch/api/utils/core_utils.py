@@ -39,11 +39,11 @@ def bytes_to_string(byte):
     return byte.decode(encoding="utf-8")
 
 
-def json_dumps(src, byte=False):
+def json_dumps(src, byte=False, indent=None):
     if byte:
-        return string_to_bytes(json.dumps(src))
+        return string_to_bytes(json.dumps(src, indent=indent))
     else:
-        return json.dumps(src)
+        return json.dumps(src, indent=indent)
 
 
 def json_loads(src):
@@ -62,14 +62,6 @@ def timestamp_to_date(timestamp, format_string="%Y-%m-%d %H:%M:%S"):
     time_array = time.localtime(timestamp)
     str_date = time.strftime(format_string, time_array)
     return str_date
-
-
-def base64_encode(src):
-    return bytes_to_string(base64.b64encode(src.encode("utf-8")))
-
-
-def base64_decode(src):
-    return bytes_to_string(base64.b64decode(src))
 
 
 def serialize_b64(src, to_str=False):

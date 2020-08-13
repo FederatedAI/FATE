@@ -104,15 +104,6 @@
             },
             "encrypted_mode_calculator_param": {
                 "mode": "fast"
-            },
-            "cv_param": {
-                "n_splits": 5,
-                "shuffle": false,
-                "random_seed": 103,
-                "need_cv": false,
-                "evaluate_param": {
-                    "eval_type": "regression"
-                }
             }
         }
     }

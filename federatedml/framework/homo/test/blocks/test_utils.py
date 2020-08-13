@@ -18,6 +18,8 @@ import unittest
 import uuid
 from multiprocessing import Pool
 
+from fate_arch.computing import ComputingType
+from fate_arch.session import Session
 from federatedml.util import consts
 
 
@@ -42,22 +44,17 @@ class TestBlocks(unittest.TestCase):
         self.clean_tables()
 
     @staticmethod
-    def init_session_and_federation(job_id, role, partyid, partyid_map):
-        from arch.api import session
-        from arch.api import federation
-
-        session.init(job_id)
-        federation.init(job_id=job_id,
-                        runtime_conf={"local": {"role": role, "party_id": partyid}, "role": partyid_map})
-
-    @staticmethod
     def apply_func(func, job_id, role, num_hosts, ind, *args):
         partyid_map = dict(host=[9999 + i for i in range(num_hosts)], guest=[9999], arbiter=[9999])
         partyid = 9999
         if role == consts.HOST:
             partyid = 9999 + ind
-        TestBlocks.init_session_and_federation(job_id, role, partyid, partyid_map)
-        return func(job_id, role, ind, *args)
+
+        with Session() as session:
+            session.init_computing(job_id, computing_type=ComputingType.STANDALONE)
+            session.init_federation(federation_session_id=job_id,
+                                    runtime_conf={"local": {"role": role, "party_id": partyid}, "role": partyid_map})
+            return func(job_id, role, ind, *args)
 
     @staticmethod
     def run_test(func, job_id, num_hosts, *args):
