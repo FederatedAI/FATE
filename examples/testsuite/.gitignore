@@ -1,3 +1,5 @@
 fate_testsuite/testsuite_config.yaml
 .venv/
 poetry.lock
+*.egg-info/
+dist/
