@@ -77,7 +77,8 @@ class Reader(object):
             "table_name": self.parameters[table_key]['name'],
             "table_info": table_info,
             "partitions": data_table.get_partitions(),
-            "storage_engine": data_table.get_storage_engine()
+            "storage_engine": data_table.get_storage_engine(),
+            "count": count
         }
         self.tracker.set_metric_meta(metric_namespace="reader_namespace",
                                      metric_name="reader_name",
