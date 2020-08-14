@@ -22,6 +22,7 @@ import loguru
 from pipeline.backend.config import LogPath, LogFormat
 
 LOGGER = loguru.logger
+LOGGER.remove()
 LOGGER.add(sys.stderr, level="INFO", colorize=True, format=LogFormat.SIMPLE)
 LOGGER.add(Path(LogPath.INFO).resolve(), level="INFO", rotation="500MB", format=LogFormat.NORMAL)
 LOGGER.add(Path(LogPath.DEBUG).resolve(), level="DEBUG", rotation="500MB", format=LogFormat.NORMAL)

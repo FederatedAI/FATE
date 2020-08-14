@@ -47,7 +47,7 @@ def get_filter(filter_name, model_param: FeatureSelectionParam, role=consts.GUES
         new_param = feature_selection_param.CommonFilterParam(
             metrics=consts.STANDARD_DEVIATION,
             filter_type='threshold',
-            take_high=False,
+            take_high=True,
             threshold=unique_param.eps
         )
         new_param.check()

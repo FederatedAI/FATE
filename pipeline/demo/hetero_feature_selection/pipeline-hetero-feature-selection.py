@@ -5,10 +5,9 @@ import yaml
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.data_statistics import DataStatistics
 from pipeline.component.dataio import DataIO
-from pipeline.component.evaluation import Evaluation
 from pipeline.component.hetero_feature_binning import HeteroFeatureBinning
 from pipeline.component.hetero_feature_selection import HeteroFeatureSelection
-from pipeline.component.hetero_lr import HeteroLR
+from pipeline.component.hetero_secureboost import HeteroSecureBoost
 from pipeline.component.intersection import Intersection
 from pipeline.component.psi import PSI
 from pipeline.component.reader import Reader
@@ -37,22 +36,21 @@ def main(config="./config.yaml"):
             raise ValueError(f"Parties id must be sepecified.")
         host = parties["host"][0]
         guest = parties["guest"][0]
-        arbiter = parties["arbiter"][0]
         backend = conf.get("backend", 0)
         work_mode = conf.get("work_mode", 0)
 
-    guest_train_data = {"name": "breast_homo_guest", "namespace": "experiment"}
-    host_train_data = {"name": "breast_homo_host", "namespace": "experiment"}
+    guest_train_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
+    host_train_data = {"name": "breast_hetero_host", "namespace": "experiment"}
 
-    guest_eval_data = {"name": "homo_breast_test", "namespace": "experiment"}
-    host_eval_data = {"name": "homo_breast_test", "namespace": "experiment"}
+    guest_eval_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
+    host_eval_data = {"name": "breast_hetero_host", "namespace": "experiment"}
 
     # initialize pipeline
     pipeline = PipeLine()
     # set job initiator
     pipeline.set_initiator(role='guest', party_id=guest)
     # set participants information
-    pipeline.set_roles(guest=guest, host=host, arbiter=arbiter)
+    pipeline.set_roles(guest=guest, host=host)
 
     # define Reader components to read in data
     reader_0 = Reader(name="reader_0")
@@ -95,8 +93,36 @@ def main(config="./config.yaml"):
     psi_0 = PSI(name='psi_0')
 
     param = {
+                "task_type": "classification",
+                "learning_rate": 0.1,
+                "num_trees": 5,
+                "subsample_feature_rate": 1,
+                "n_iter_no_change": False,
+                "tol": 0.0001,
+                "bin_num": 50,
+                "objective_param": {
+                    "objective": "cross_entropy"
+                },
+                "encrypt_param": {
+                    "method": "paillier"
+                },
+                "predict_param": {
+                    "threshold": 0.5
+                },
+                "cv_param": {
+                    "n_splits": 5,
+                    "shuffle": False,
+                    "random_seed": 103,
+                    "need_cv": False
+                },
+                "validation_freqs": 1
+            }
+
+    secureboost_0 = HeteroSecureBoost(name='secureboost_0', **param)
+
+    param = {
         "name": 'hetero_feature_selection_0',
-        "filter_methods": ["manually", "iv_filter", "statistic_filter", "psi_filter"],
+        "filter_methods": ["manually", "iv_filter", "statistic_filter", "psi_filter", "hetero_sbt_filter"],
         "manually_param": {
             "filter_out_indexes": [1]
         },
@@ -104,7 +130,7 @@ def main(config="./config.yaml"):
             "metrics": ["iv", "iv"],
             "filter_type": ["top_k", "threshold"],
             "take_high": [True, True],
-            "threshold": [10, 0.001]
+            "threshold": [10, 0.01]
         },
         "statistic_param": {
             "metrics": ["coefficient_of_variance", "skewness"],
@@ -118,22 +144,15 @@ def main(config="./config.yaml"):
             "take_high": [False],
             "threshold": [0.1]
         },
+        "sbt_param": {
+            "metrics": ["feature_importance"],
+            "filter_type": ["threshold"],
+            "take_high": [True],
+            "threshold": [0.1]
+        },
         "select_col_indexes": -1
     }
     hetero_feature_selection_0 = HeteroFeatureSelection(**param)
-    hetero_feature_selection_1 = HeteroFeatureSelection(name='hetero_feature_selection_1')
-
-    param = {
-        "penalty": "L2",
-        "validation_freqs": 1,
-        "early_stopping_rounds": 1,
-        "max_iter": 5
-    }
-
-    hetero_lr_0 = HeteroLR(name='hetero_lr_0', **param)
-    hetero_lr_1 = HeteroLR(name='hetero_lr_1')
-
-    evaluation_0 = Evaluation(name='evaluation_0')
 
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
@@ -152,22 +171,14 @@ def main(config="./config.yaml"):
     pipeline.add_component(statistic_0, data=Data(data=intersection_0.output.data))
     pipeline.add_component(psi_0, data=Data(train_data=intersection_0.output.data,
                                             validate_data=intersection_1.output.data))
+    pipeline.add_component(secureboost_0, data=Data(train_data=intersection_0.output.data,
+                                                    validate_data=intersection_1.output.data))
 
     pipeline.add_component(hetero_feature_selection_0, data=Data(data=intersection_0.output.data),
                            model=Model(isometric_model=[hetero_feature_binning_0.output.model,
                                                         statistic_0.output.model,
-                                                        psi_0.output.model]))
-
-    pipeline.add_component(hetero_feature_selection_1, data=Data(data=intersection_1.output.data),
-                           model=Model(model=hetero_feature_selection_0.output.model))
-
-    pipeline.add_component(hetero_lr_0, data=Data(train_data=hetero_feature_selection_0.output.data,
-                                                  validate_data=hetero_feature_selection_1.output.data))
-
-    pipeline.add_component(hetero_lr_1, data=Data(test_data=hetero_feature_selection_1.output.data),
-                           model=Model(model=hetero_lr_0.output.model))
-
-    pipeline.add_component(evaluation_0, data=Data(data=[hetero_lr_0.output.data, hetero_lr_1.output.data]))
+                                                        psi_0.output.model,
+                                                        secureboost_0.output.model]))
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
     pipeline.compile()
 
@@ -175,8 +186,6 @@ def main(config="./config.yaml"):
     pipeline.fit(backend=backend, work_mode=work_mode)
     # query component summary
     print(pipeline.get_component("hetero_feature_selection_0").get_summary())
-    print(pipeline.get_component("hetero_lr_0").get_summary())
-    print(pipeline.get_component("evaluation_0").get_summary())
 
 
 if __name__ == "__main__":

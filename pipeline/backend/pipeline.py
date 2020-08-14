@@ -15,7 +15,7 @@
 #
 import copy
 import pickle
-import pprint
+import json
 from types import SimpleNamespace
 
 from pipeline.backend.config import Backend, WorkMode
@@ -202,6 +202,7 @@ class PipeLine(object):
                         role=init_role,
                         party_id=party_id)
 
+    @LOGGER.catch
     def get_component(self, component_names=None):
         job_id = self._train_job_id
         if self._cur_state != "fit":
@@ -266,7 +267,7 @@ class PipeLine(object):
                                                                        self._train_conf["role_parameters"])
 
         #pprint.pprint(self._train_conf)
-        LOGGER.debug(f"self._train_conf: {pprint.pformat(self._train_conf)}")
+        LOGGER.debug(f"self._train_conf: \n {json.dumps(self._train_conf, indent=4, ensure_ascii=False)}")
         return self._train_conf
 
     def _get_job_parameters(self, job_type="train", backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, version=2):
@@ -293,6 +294,7 @@ class PipeLine(object):
     def _set_state(self, state):
         self._cur_state = state
 
+    @LOGGER.catch
     def compile(self):
         self._construct_train_dsl()
         self._train_conf = self._construct_train_conf()
@@ -376,16 +378,17 @@ class PipeLine(object):
 
         return submit_conf
 
+    @LOGGER.catch
     def fit(self, backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE):
         if self._stage == "predict":
             raise ValueError("The pipeline is construct for predicting, can not use fit interface")
 
         # print("_train_conf {}".format(self._train_conf))
-        LOGGER.debug(f"in fit, _train_conf is {self._train_conf}")
+        LOGGER.debug(f"in fit, _train_conf is: \n {json.dumps(self._train_conf)}")
         self._set_state("fit")
         training_conf = self._feed_job_parameters(self._train_conf, backend, work_mode)
         # pprint.pprint(training_conf)
-        LOGGER.debug(f"train_conf is: {pprint.pformat(training_conf)}")
+        LOGGER.debug(f"train_conf is: \n {json.dumps(training_conf, indent=4, ensure_ascii=False)}")
         self._train_job_id, detail_info = self._job_invoker.submit_job(self._train_dsl, training_conf)
         self._train_board_url = detail_info["board_url"]
         self._model_info = SimpleNamespace(model_id=detail_info["model_info"]["model_id"],
@@ -395,6 +398,7 @@ class PipeLine(object):
                                                                 self._initiator.role,
                                                                 self._initiator.party_id)
 
+    @LOGGER.catch
     def predict(self, backend=Backend.EGGROLL, work_mode=WorkMode.CLUSTER):
         if self._stage != "predict":
             raise ValueError(
@@ -442,9 +446,10 @@ class PipeLine(object):
         with open(file, "w") as fin:
             return pickle.loads(fin.read())
 
+    @LOGGER.catch
     def deploy_component(self, components):
         if self._train_dsl is None:
-            raise ValueError("before deploy model, training should be finish!!!")
+            raise ValueError("Before deploy model, training should be finish!!!")
 
         if not components:
             deploy_cpns = list(self._components.keys())
@@ -487,6 +492,7 @@ class PipeLine(object):
         self._initiator = config["initiator"]
         self._train_components = config["train_components"]
 
+    @LOGGER.catch
     def get_component_input_msg(self):
         if VERSION != 2:
             raise ValueError("In DSL Version 1，only need to config data from args, no need special component")
@@ -523,6 +529,7 @@ class PipeLine(object):
 
         return input_placeholder
 
+    @LOGGER.catch
     def set_inputs(self, data_dict):
         if not isinstance(data_dict, dict):
             raise ValueError(

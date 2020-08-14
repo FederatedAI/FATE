@@ -113,8 +113,17 @@ class SingleMetricInfo(object):
             col_name_map = {name: idx for idx, name in
                             enumerate(self.host_col_names[party_idx])}
             LOGGER.debug(f"col_name_map: {col_name_map}")
-            col_indices = [col_name_map[x] for x in select_col_names]
-            values = np.array(self.host_values[party_idx])[col_indices]
+
+            values = []
+            host_values = np.array(self.host_values[party_idx])
+            for host_col_name in select_col_names:
+                if host_col_name in col_name_map:
+                    values.append(host_values[col_name_map[host_col_name]])
+                else:
+                    values.append(0)
+
+            # col_indices = [col_name_map[x] for x in select_col_names]
+            # values = np.array(self.host_values[party_idx])[col_indices]
         return list(values)
 
 
