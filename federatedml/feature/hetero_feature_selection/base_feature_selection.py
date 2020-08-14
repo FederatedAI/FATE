@@ -322,6 +322,7 @@ class BaseHeteroFeatureSelection(ModelBase):
                     self._filter(data_instances, method, suffix=str(filter_idx))
 
         last_col_nums = self.curt_select_properties.last_left_col_names
+
         self.add_summary("all", {
             "last_col_nums": original_col_nums,
             "left_col_nums": len(last_col_nums),
