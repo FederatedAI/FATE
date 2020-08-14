@@ -95,33 +95,23 @@ public class DataTransferPipedServerImpl extends DataTransferServiceGrpc.DataTra
         applicationEventPublisher.publishEvent(event);
 
         long startTimestamp = System.currentTimeMillis();
-        long lastPacketTimestamp = startTimestamp;
-        long loopEndTimestamp = lastPacketTimestamp;
-
-        Proxy.Packet packet = null;
+        Proxy.Packet packet;
         boolean hasReturnedBefore = false;
         int emptyRetryCount = 0;
-        Proxy.Packet lastReturnedPacket = null;
-
-        while ((!hasReturnedBefore || !pipe.isDrained())
-                && !pipe.hasError()
-                && !timeouts.isTimeout(packetIntervalTimeout, lastPacketTimestamp, loopEndTimestamp)
-                && !timeouts.isTimeout(overallTimeout, startTimestamp, loopEndTimestamp)) {
+        long loopEndTimestamp = System.currentTimeMillis();
+        while (true) {
+            if (pipe.hasError() || timeouts.isTimeout(overallTimeout, startTimestamp, loopEndTimestamp)) break;
             packet = (Proxy.Packet) pipe.read(1, TimeUnit.SECONDS);
-            // LOGGER.info("packet is null: {}", Proxy.Packet == null);
             loopEndTimestamp = System.currentTimeMillis();
             if (packet != null) {
-                // LOGGER.info("server pull onNext()");
                 responseObserver.onNext(packet);
                 hasReturnedBefore = true;
-                lastReturnedPacket = packet;
-                lastPacketTimestamp = loopEndTimestamp;
-                emptyRetryCount = 0;
+                break;
             } else {
-                long currentPacketInterval = loopEndTimestamp - lastPacketTimestamp;
+                long currentOverallWaitTime = loopEndTimestamp - startTimestamp;
                 if (++emptyRetryCount % 60 == 0) {
-                    LOGGER.info("[PULL][SERVER] pull waiting. current packetInterval: {}, packetIntervalTimeout: {}, metadata: {}",
-                            currentPacketInterval, packetIntervalTimeout, oneLineStringInputMetadata);
+                    LOGGER.info("[UNARYCALL][SERVER] unary call waiting. current overallWaitTime: {}, packetIntervalTimeout: {}, metadata: {}",
+                            currentOverallWaitTime, packetIntervalTimeout, oneLineStringInputMetadata);
                 }
             }
         }
