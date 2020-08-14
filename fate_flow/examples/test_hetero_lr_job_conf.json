@@ -7,7 +7,7 @@
         "work_mode": 1,
         "processors_per_node": 1,
         "align_task_input_data_partition": true,
-        "dsl_version": "1"
+        "dsl_version": "2"
     },
     "role": {
         "guest": [9999],
@@ -16,23 +16,27 @@
     },
     "role_parameters": {
         "guest": {
-            "reader_0": {
-                "table": [{"name": "breast_hetero_guest", "namespace": "fate_flow_test_breast_hetero"}]
-            },
-            "dataio_0":{
-                "with_label": [true],
-                "label_name": ["y"],
-                "label_type": ["int"],
-                "output_format": ["dense"]
+            "0": {
+                "reader_0": {
+                    "table": {"name": "breast_hetero_guest", "namespace": "fate_flow_test_breast_hetero"}
+                },
+                "dataio_0":{
+                    "with_label": true,
+                    "label_name": "y",
+                    "label_type": "int",
+                    "output_format": "dense"
+                }
             }
         },
         "host": {
-            "reader_0": {
-                "table": [{"name": "breast_hetero_host", "namespace": "fate_flow_test_breast_hetero"}]
-            },
-             "dataio_0":{
-                "with_label": [false],
-                "output_format": ["dense"]
+            "0": {
+                "reader_0": {
+                    "table": {"name": "breast_hetero_host", "namespace": "fate_flow_test_breast_hetero"}
+                },
+                "dataio_0":{
+                    "with_label": false,
+                    "output_format": "dense"
+                }
             }
         }
     },
@@ -40,10 +44,8 @@
         "hetero_lr_0": {
             "penalty": "L2",
             "optimizer": "rmsprop",
-            "eps": 1e-5,
             "alpha": 0.01,
             "max_iter": 3,
-            "converge_func": "diff",
             "batch_size": 320,
             "learning_rate": 0.15,
             "init_param": {

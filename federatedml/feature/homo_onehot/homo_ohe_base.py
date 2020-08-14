@@ -26,7 +26,7 @@ from arch.api.utils import log_utils
 from federatedml.feature import one_hot_encoder
 from federatedml.param.homo_onehot_encoder_param import HomoOneHotParam
 from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
-from federatedml.transfer_variable.transfer_class.ohe_alignment_transfer_variable import OHEAlignmentTransferVariable
+from federatedml.transfer_variable.transfer_class.homo_onehot_transfer_variable import HomoOneHotTransferVariable
 from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
@@ -44,7 +44,7 @@ class HomoOneHotBase(one_hot_encoder.OneHotEncoder):
         super(HomoOneHotBase, self)._init_model(params)
         # self.re_encrypt_batches = params.re_encrypt_batches
         self.need_alignment = params.need_alignment
-        self.transfer_variable = OHEAlignmentTransferVariable()
+        self.transfer_variable = HomoOneHotTransferVariable()
 
     def _init_params(self, data_instances):
         if data_instances is None:

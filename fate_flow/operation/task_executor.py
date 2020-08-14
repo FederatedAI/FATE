@@ -91,7 +91,7 @@ class TaskExecutor(object):
                                                       )
             party_index = job_runtime_conf["role"][role].index(party_id)
             job_args = dsl_parser.get_args_input()
-            job_args_on_party = job_args[role][party_index]["args"] if role in job_args else {}
+            job_args_on_party = job_args[role][party_index].get('args') if role in job_args else {}
             component = dsl_parser.get_component_info(component_name=component_name)
             component_parameters = component.get_role_parameters()
             component_parameters_on_party = component_parameters[role][party_index] if role in component_parameters else {}
