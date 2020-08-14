@@ -32,7 +32,8 @@ Beyond the given mini demo, a job may include multiple data sets and models. For
 ### Component
 FATE modules are each wrapped into `component` in Pipeline API. Each component can take in and output `Data` and `Model`. 
 Parameters of components can be set conveniently at the time of initialization. Unspecified parameters will take default values. 
-All components must have a `name`. A component's name is its identifier, and so it must be unique within a pipeline.
+All components have a `name`, which can be arbitrarily set. A component's name is its identifier, and so it must be unique within a pipeline. 
+We suggest that name of components include a numbering suffix for convenience.
 
 An example of initializing a component with specified parameter values:
 ```python
@@ -49,11 +50,19 @@ pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
 ```
 
 For data sets used in different stages (e.g., train & validate) within a single component, 
-keywords `train_data`, `validate_data`, and `test_data` are used to distinguish data sets.
+additional keywords `train_data`, `validate_data` are used to distinguish data sets.
 Also from mini demo, result from `intersection_0` and `intersection_1` are set as train and validate data input to training component, respectively.
 
 ```python
 pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data, validate_data=intersection_1.output.data))
+```
+
+Another case of using keywords `train_data`, `validate_data`, and `test_data` is to select from `DataSplit` module's multiple outputs:
+
+```python
+pipeline.add_component(hetero_linr_0, 
+                       data=Data(train_data=hetero_data_split_0.output.data.train_data,
+                                 validate_data=hetero_data_split_0.output.data.test_data))
 ```
     
 ### Model

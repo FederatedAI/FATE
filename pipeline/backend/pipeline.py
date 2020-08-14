@@ -18,7 +18,7 @@ import pickle
 import pprint
 from types import SimpleNamespace
 
-from fate_flow.entity.constant import Backend, WorkMode
+from pipeline.backend.config import Backend, WorkMode
 from pipeline.backend.config import Role
 from pipeline.backend.config import StatusCode
 from pipeline.backend.config import VERSION
