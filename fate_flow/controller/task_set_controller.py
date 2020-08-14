@@ -32,7 +32,7 @@ from fate_flow.utils import job_utils, job_controller_utils
 from fate_flow.utils.job_utils import save_job_conf, get_job_dsl_parser
 import os
 from fate_flow.operation.job_saver import JobSaver
-from arch.api.utils.core_utils import json_dumps
+from fate_arch.common.base_utils import json_dumps
 from fate_flow.entity.constant import Backend
 from fate_flow.controller.task_controller import TaskController
 

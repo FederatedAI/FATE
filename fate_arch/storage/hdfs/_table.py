@@ -104,14 +104,14 @@ class StorageTable(StorageTableBase):
         else:
             return -1
 
-    def save_as(self, address, partition=None, name=None, namespace=None, schema=None, **kwargs):
-        super().save_as(name, namespace, partition=partition, schema=schema)
+    def save_as(self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs):
+        super().save_as(name, namespace, partitions=partitions, schema=schema)
         sc = SparkContext.getOrCreate()
         src_path = StorageTable.get_path(sc, address.path)
         dst_path = StorageTable.get_path(sc, address.path)
         fs = StorageTable.get_file_system(sc)
         fs.rename(src_path, dst_path)
-        return StorageTable(address=address, partitions=partition, name=name, namespace=namespace, **kwargs)
+        return StorageTable(address=address, partitions=partitions, name=name, namespace=namespace, **kwargs)
 
     delimiter = '\t'
 

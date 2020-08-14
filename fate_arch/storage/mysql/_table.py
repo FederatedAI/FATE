@@ -86,7 +86,7 @@ class StorageTable(StorageTableBase):
         data = self.execute(sql)
         return data
 
-    def save_as(self, name, namespace, partition=None, schema=None, **kwargs):
+    def save_as(self, name, namespace, partitions=None, schema=None, **kwargs):
         pass
 
     def put_all(self, kv_list, **kwargs):

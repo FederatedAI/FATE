@@ -15,7 +15,7 @@
 #
 
 import operator
-from arch.api.utils.core_utils import current_timestamp, json_loads
+from fate_arch.common.base_utils import current_timestamp, json_loads
 from arch.api.utils import core_utils
 from fate_flow.db.db_models import DB, Job, TaskSet, Task
 from fate_flow.entity.constant import StatusSet, JobStatus, TaskSetStatus, TaskStatus, EndStatus

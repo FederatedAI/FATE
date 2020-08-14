@@ -16,7 +16,7 @@
 from typing import List
 
 from arch.api.utils import log_utils
-from arch.api.utils.core_utils import serialize_b64
+from fate_arch.common.base_utils import serialize_b64
 from fate_flow.api.client.tracker import api_client
 from fate_flow.entity.constant import RetCode
 from fate_flow.entity.metric import Metric, MetricMeta

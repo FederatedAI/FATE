@@ -45,8 +45,8 @@ class StorageTable(StorageTableBase):
     def close(self):
         return self._session.stop()
 
-    def save_as(self, name, namespace, partition=None, schema=None, **kwargs):
-        return self._table.save_as(name=name, namespace=namespace, partition=partition, need_cleanup=False)
+    def save_as(self, name, namespace, partitions=None, schema=None, **kwargs):
+        return self._table.save_as(name=name, namespace=namespace, partitions=partitions, need_cleanup=False)
 
     def put_all(self, kv_list: Iterable, **kwargs):
         return self._table.put_all(kv_list)

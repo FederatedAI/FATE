@@ -17,7 +17,7 @@ import uuid
 import operator
 from typing import List
 
-from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
+from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64
 from arch.api.utils.log_utils import schedule_logger
 from fate_arch.storage.simple._table import StorageTable
 from fate_flow.db.db_models import DB, TrackingMetric, TrackingOutputDataInfo, ComponentSummary
@@ -25,7 +25,7 @@ from fate_flow.entity.constant import Backend
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.model_manager import pipelined_model
-from fate_flow.manager.table_manager.table_operation import get_table
+from fate_arch import storage
 from fate_flow.utils import job_utils, model_utils
 from fate_arch.abc import StorageSessionABC
 
@@ -164,17 +164,15 @@ class Tracker(object):
                                                  partitions=partitions)
             schema = {}
             data_table.save(address, schema=schema, partitions=partitions)
-            table = get_table(job_id=job_utils.generate_session_id(self.task_id, self.task_version, self.role, self.party_id),
-                              name=persistent_table_name,
-                              namespace=persistent_table_namespace)
-            party_of_data = []
+            table = storage.Session.build().get_table(name=persistent_table_name, namespace=persistent_table_namespace)
+            part_of_data = []
             count = 100
             for k, v in data_table.collect():
-                party_of_data.append((k, v))
+                part_of_data.append((k, v))
                 count -= 1
                 if count == 0:
                     break
-            table.update_metas(schema=schema, party_of_data=party_of_data, count=data_table.count(), partitions=partitions)
+            table.update_metas(schema=schema, part_of_data=part_of_data, count=data_table.count(), partitions=partitions)
             return persistent_table_namespace, persistent_table_name
         else:
             schedule_logger(self.job_id).info('task id {} output data table is none'.format(self.task_id))

@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils.core_utils import get_lan_ip, json_loads
+from fate_arch.common.base_utils import get_lan_ip, json_loads
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.entity.constant import JobStatus, TaskStatus

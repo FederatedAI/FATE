@@ -20,14 +20,14 @@ import traceback
 import uuid
 
 from arch.api.utils import file_utils, log_utils
-from arch.api.utils.core_utils import current_timestamp, get_lan_ip, timestamp_to_date
+from fate_arch.common.base_utils import current_timestamp, get_lan_ip, timestamp_to_date
 from arch.api.utils.log_utils import schedule_logger
 from fate_arch import session
 from fate_arch.common import Backend
 from fate_flow.entity.constant import TaskStatus, ProcessRole
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
-from fate_flow.manager.table_manager.table_operation import get_table
+from fate_arch import storage
 from fate_flow.utils import job_utils
 from fate_flow.api.client.controller.remote_client import ControllerRemoteClient
 from fate_flow.api.client.tracker.remote_client import JobTrackerRemoteClient
@@ -232,10 +232,7 @@ class TaskExecutor(object):
                         if search_component_name == 'args':
                             if job_args.get('data', {}).get(search_data_name).get('namespace', '') and job_args.get(
                                     'data', {}).get(search_data_name).get('name', ''):
-                                data_table = get_table(
-                                    job_id=session_id,
-                                    namespace=job_args['data'][search_data_name]['namespace'],
-                                    name=job_args['data'][search_data_name]['name'])
+                                data_table = storage.Session.build().get_table(namespace=job_args['data'][search_data_name]['namespace'], name=job_args['data'][search_data_name]['name'])
                         else:
                             tracker_remote_client = JobTrackerRemoteClient(job_id=job_id, role=role, party_id=party_id,
                                                                            component_name=search_component_name)

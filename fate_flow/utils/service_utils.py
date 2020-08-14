@@ -19,7 +19,7 @@ from kazoo.client import KazooClient
 from kazoo.security import make_digest_acl
 
 from arch.api.utils import file_utils
-from arch.api.utils.core_utils import get_lan_ip
+from fate_arch.common.base_utils import get_lan_ip
 from arch.api.utils.conf_utils import get_base_config
 from fate_flow.settings import FATE_FLOW_MODEL_TRANSFER_ENDPOINT, HTTP_PORT
 from fate_flow.settings import stat_logger, SERVER_CONF_PATH, SERVICES_SUPPORT_REGISTRY, FATE_SERVICES_REGISTERED_PATH

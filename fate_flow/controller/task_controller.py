@@ -24,7 +24,7 @@ from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.utils import job_utils, job_controller_utils
 import os
 from fate_flow.operation.job_saver import JobSaver
-from arch.api.utils.core_utils import json_dumps
+from fate_arch.common.base_utils import json_dumps
 from fate_flow.entity.constant import Backend
 from fate_flow.manager.resource_manager import ResourceManager
 

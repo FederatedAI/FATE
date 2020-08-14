@@ -23,7 +23,7 @@ from fate_flow.utils.model_utils import gen_party_model_id
 from arch.api.utils import dtable_utils
 from federatedml.protobuf.generated import pipeline_pb2
 from fate_flow.manager.model_manager import pipelined_model
-from arch.api.utils.core_utils import json_loads, json_dumps
+from fate_arch.common.base_utils import json_loads, json_dumps
 from arch.api.utils.file_utils import get_project_base_directory
 
 

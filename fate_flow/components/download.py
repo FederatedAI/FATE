@@ -17,7 +17,7 @@ import os
 
 from arch.api.utils import log_utils, dtable_utils
 from fate_flow.entity.metric import Metric, MetricMeta
-from fate_flow.manager.table_manager.table_operation import get_table
+from fate_arch import storage
 from fate_flow.utils.job_utils import generate_session_id
 
 LOGGER = log_utils.getLogger()
@@ -37,28 +37,30 @@ class Download(object):
                                                             create=False)
         job_id = self.taskid.split("_")[0]
         with open(os.path.abspath(self.parameters["output_path"]), "w") as fout:
-            data_table = get_table(job_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id,),
-                                   namespace=namespace, name=table_name)
-            count = data_table.count()
-            LOGGER.info('===== begin to export data =====')
-            lines = 0
-            for key, value in data_table.collect():
-                if not value:
-                    fout.write(key + "\n")
-                else:
-                    fout.write(key + self.parameters.get("delimitor", ",") + str(value) + "\n")
-                lines += 1
-                if lines % 2000 == 0:
-                    LOGGER.info("===== export {} lines =====".format(lines))
-                if lines % 10000 == 0:
-                    job_info = {'f_progress': lines/count*100//1}
-                    self.update_job_status(self.parameters["local"]['role'], self.parameters["local"]['party_id'],
-                                           job_info)
-            self.update_job_status(self.parameters["local"]['role'],
-                                   self.parameters["local"]['party_id'], {'progress': 100})
-            self.callback_metric(metric_name='data_access',
-                                 metric_namespace='download',
-                                 metric_data=[Metric("count", data_table.count())])
+            with storage.Session.build(session_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id),
+                                       name=table_name,
+                                       namespace=namespace) as session:
+                data_table = session.get_table(namespace=namespace, name=table_name)
+                count = data_table.count()
+                LOGGER.info('===== begin to export data =====')
+                lines = 0
+                for key, value in data_table.collect():
+                    if not value:
+                        fout.write(key + "\n")
+                    else:
+                        fout.write(key + self.parameters.get("delimitor", ",") + str(value) + "\n")
+                    lines += 1
+                    if lines % 2000 == 0:
+                        LOGGER.info("===== export {} lines =====".format(lines))
+                    if lines % 10000 == 0:
+                        job_info = {'f_progress': lines/count*100//1}
+                        self.update_job_status(self.parameters["local"]['role'], self.parameters["local"]['party_id'],
+                                               job_info)
+                self.update_job_status(self.parameters["local"]['role'],
+                                       self.parameters["local"]['party_id'], {'progress': 100})
+                self.callback_metric(metric_name='data_access',
+                                     metric_namespace='download',
+                                     metric_data=[Metric("count", data_table.count())])
             LOGGER.info("===== export {} lines totally =====".format(lines))
             LOGGER.info('===== export data finish =====')
             LOGGER.info('===== export data file path:{} ====='.format(os.path.abspath(self.parameters["output_path"])))

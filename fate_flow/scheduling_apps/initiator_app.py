@@ -19,7 +19,7 @@ import tarfile
 
 from flask import Flask, request, send_file
 
-from arch.api.utils.core_utils import json_loads, json_dumps
+from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_flow.scheduler.task_scheduler import TaskScheduler
 from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler

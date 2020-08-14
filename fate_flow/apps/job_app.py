@@ -21,7 +21,7 @@ import tarfile
 from flask import Flask, request, send_file
 
 import fate_flow.utils.clean_utils
-from arch.api.utils.core_utils import json_loads, json_dumps
+from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_flow.operation.job_saver import JobSaver
 from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler

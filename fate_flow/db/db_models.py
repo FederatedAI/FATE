@@ -26,8 +26,8 @@ from playhouse.apsw_ext import APSWDatabase
 from playhouse.pool import PooledMySQLDatabase
 
 from arch.api.utils import log_utils
-from arch.api.utils.core_utils import current_timestamp
-from fate_arch.db.db_models import JSONField
+from fate_arch.common.base_utils import current_timestamp
+from fate_arch.storage.metastore.db_models import JSONField
 from fate_flow.entity.constant import WorkMode
 from fate_flow.settings import DATABASE, WORK_MODE, stat_logger, USE_LOCAL_DATABASE
 from fate_flow.entity.runtime_config import RuntimeConfig

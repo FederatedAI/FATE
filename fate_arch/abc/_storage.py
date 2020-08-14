@@ -110,7 +110,7 @@ class StorageTableABC(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
-    def create_metas(self, **kwargs):
+    def create_metas(self):
         ...
 
     @abc.abstractmethod
@@ -118,7 +118,7 @@ class StorageTableABC(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
-    def update_metas(self, **kwargs):
+    def update_metas(self, name=None, namespace=None, schema=None, count=None, part_of_data=None, description=None, partitions=None, **kwargs):
         ...
 
     @abc.abstractmethod
@@ -141,14 +141,6 @@ class StorageSessionABC(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_address(self, storage_engine, address_dict) -> AddressABC:
-        pass
-
-    @abc.abstractmethod
-    def convert(self, src_table, dest_name, dest_namespace, session_id, computing_engine, force=False, **kwargs):
-        pass
-
-    @abc.abstractmethod
-    def copy_table(self, src_table, dest_table):
         pass
 
     @abc.abstractmethod

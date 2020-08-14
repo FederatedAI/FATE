@@ -29,8 +29,8 @@ import psutil
 from fate_flow.entity.constant import JobStatus
 
 from arch.api.utils import file_utils
-from arch.api.utils.core_utils import current_timestamp
-from arch.api.utils.core_utils import json_loads, json_dumps
+from fate_arch.common.base_utils import current_timestamp
+from fate_arch.common.base_utils import json_loads, json_dumps
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.scheduler.dsl_parser import DSLParser, DSLParserV2
 from fate_flow.db.db_models import DB, Job, Task

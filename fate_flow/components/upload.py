@@ -47,12 +47,12 @@ class Upload(object):
             raise Exception("%s is not exist, please check the configure" % (self.parameters["file"]))
         if not os.path.getsize(self.parameters["file"]):
             raise Exception("%s is an empty file" % (self.parameters["file"]))
-        table_name, namespace = dtable_utils.get_table_info(config=self.parameters, create=True)
+        name, namespace = dtable_utils.get_table_info(config=self.parameters, create=True)
         _namespace, _table_name = self.generate_table_name(self.parameters["file"])
         if namespace is None:
             namespace = _namespace
-        if table_name is None:
-            table_name = _table_name
+        if name is None:
+            name = _table_name
         read_head = self.parameters['head']
         if read_head == 0:
             head = False
@@ -65,11 +65,14 @@ class Upload(object):
             raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITIONS))
         session_id = generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id)
         with storage.Session.build(session_id=session_id, storage_engine=self.parameters["storage_engine"], options=self.parameters.get("options")) as session:
-            address = session.get_address(storage_engine=self.parameters["storage_engine"], address_dict={"name": table_name, "namespace": namespace})
+            address = session.get_address(storage_engine=self.parameters["storage_engine"], address_dict={"name": name, "namespace": namespace})
             self.parameters["partitions"] = partitions
-            self.parameters["name"] = table_name
+            self.parameters["name"] = name
+            if self.parameters.get("destroy", False):
+                LOGGER.info(f"destroy table {name} {namespace}")
+                session.get_table(name=name, namespace=namespace).destroy()
             self.table = session.create_table(address=address, **self.parameters)
-            data_table_count = self.save_data_table(job_id, table_name, namespace, head)
+            data_table_count = self.save_data_table(job_id, name, namespace, head)
         LOGGER.info("------------load data finish!-----------------")
         # rm tmp file
         try:
@@ -80,7 +83,7 @@ class Upload(object):
             LOGGER.info("remove tmp file failed")
         LOGGER.info("file: {}".format(self.parameters["file"]))
         LOGGER.info("total data_count: {}".format(data_table_count))
-        LOGGER.info("table name: {}, table namespace: {}".format(table_name, namespace))
+        LOGGER.info("table name: {}, table namespace: {}".format(name, namespace))
 
     def set_taskid(self, taskid):
         self.taskid = taskid
@@ -111,7 +114,7 @@ class Upload(object):
                     ControllerRemoteClient.update_job(job_info=job_info)
                     self.table.put_all(data)
                     if n == 0:
-                        self.table.update_metas(party_of_data=data)
+                        self.table.update_metas(part_of_data=data)
                 else:
                     self.table.update_metas(count=self.table.count(), partitions=self.parameters["partition"])
                     count_actual = self.table.count()

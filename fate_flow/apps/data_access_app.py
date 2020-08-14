@@ -49,10 +49,10 @@ def download_upload(access_module):
         except Exception as e:
             shutil.rmtree(os.path.join(get_job_directory(job_id), 'tmp'))
             raise e
-        request_config = request.args.to_dict()
-        request_config['file'] = filename
+        job_config = request.args.to_dict()
+        job_config['file'] = filename
     else:
-        request_config = request.json
+        job_config = request.json
     required_arguments = ['work_mode', 'namespace', 'table_name']
     if access_module == 'upload':
         required_arguments.extend(['file', 'head', 'partition'])
@@ -60,29 +60,23 @@ def download_upload(access_module):
         required_arguments.extend(['output_path'])
     else:
         raise Exception('can not support this operating: {}'.format(access_module))
-    detect_utils.check_config(request_config, required_arguments=required_arguments)
+    detect_utils.check_config(job_config, required_arguments=required_arguments)
     data = {}
     if access_module == "upload":
-        data['table_name'] = request_config["table_name"]
-        data['namespace'] = request_config["namespace"]
+        data['table_name'] = job_config["table_name"]
+        data['namespace'] = job_config["namespace"]
         if WORK_MODE != 0:
-            request_config["storage_engine"] = request_config.get("storage_engine", StorageEngine.EGGROLL)
-            with storage.Session.build(**request_config) as session:
-                data_table = session.get_table(name=request_config["table_name"], namespace=request_config["namespace"])
-            if data_table and int(request_config.get('drop', 2)) == 2:
+            job_config["storage_engine"] = job_config.get("storage_engine", StorageEngine.EGGROLL)
+            data_table = storage.Session.build(**job_config).get_table(name=job_config["table_name"], namespace=job_config["namespace"])
+            if data_table and int(job_config.get('drop', 2)) == 2:
                 return get_json_result(retcode=100,
                                        retmsg='The data table already exists.'
                                               'If you still want to continue uploading, please add the parameter -drop.'
                                               ' 0 means not to delete and continue uploading, '
                                               '1 means to upload again after deleting the table')
-            elif data_table and int(request_config.get('drop', 2)) == 1:
-                data_table.destroy()
-            try:
-                if data_table:
-                    data_table.close()
-            except:
-                pass
-    job_dsl, job_runtime_conf = gen_data_access_job_config(request_config, access_module)
+            elif data_table and int(job_config.get('drop', 2)) == 1:
+                job_config["destroy"] = True
+    job_dsl, job_runtime_conf = gen_data_access_job_config(job_config, access_module)
     job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(
         {'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)
     data.update({'job_dsl_path': job_dsl_path, 'job_runtime_conf_path': job_runtime_conf_path,
@@ -159,7 +153,8 @@ def gen_data_access_job_config(config_data, access_module):
                 "file": [config_data["file"]],
                 "namespace": [config_data["namespace"]],
                 "table_name": [config_data["table_name"]],
-                "storage_engine": [config_data.get("storage_engine", StorageEngine.EGGROLL)]
+                "storage_engine": [config_data.get("storage_engine", StorageEngine.EGGROLL)],
+                "destroy": [config_data.get("destroy", False)],
             }
         }
         if int(config_data.get('dsl_version', 1)) == 2:

@@ -2,7 +2,7 @@ import argparse
 
 import pymysql
 
-from fate_flow.manager.table_manager.table_operation import create, get_table
+from fate_arch import storage
 
 database_config = {
     'user': 'root',
@@ -49,7 +49,7 @@ def list_to_str(input_list):
 
 def write_to_db(conf, table_name, file_name, namespace, partitions, head):
     db = MysqldbHelper(**conf)
-    table = get_table(name=table_name, namespace=namespace)
+    table = storage.Session.build().get_table(name=table_name, namespace=namespace)
     create_table = 'create table {}(id varchar(50) NOT NULL, features LONGTEXT, PRIMARY KEY(id))'.format(table_name)
     db.execute(create_table.format(table_name))
     print('create table {}'.format(table_name))
@@ -58,8 +58,7 @@ def write_to_db(conf, table_name, file_name, namespace, partitions, head):
         if head:
             data_head = f.readline()
             header_source_item = data_head.split(',')
-            table.update_metas(schema={'header': ','.join(header_source_item[1:]).strip(),
-                                           'sid': header_source_item[0]})
+            table.update_metas(schema={'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]})
         n = 0
         count = 0
         while True:
@@ -75,7 +74,7 @@ def write_to_db(conf, table_name, file_name, namespace, partitions, head):
                     sql += '("{}", "{}"),'.format(values[0], list_to_str(values[1:]))
                 sql = ','.join(sql.split(',')[:-1]) + ';'
                 if n == 0:
-                    table.update_metas(party_of_data=data, partitions=partitions)
+                    table.update_metas(part_of_data=data, partitions=partitions)
                 n +=1
                 db.execute(sql)
                 db.con.commit()

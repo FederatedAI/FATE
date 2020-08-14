@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_flow.manager.table_manager.table_operation import get_table
+from fate_arch import storage
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.settings import stat_logger
 from arch.api.utils.dtable_utils import get_table_info
@@ -55,17 +55,18 @@ def dtable(table_func):
             table_key_count = 0
             table_partition = None
         else:
-            table = get_table(name=table_name, namespace=namespace, simple=True)
-            if table:
-                table_key_count = table.count()
-                table_partition = table.get_partitions()
-                try:
-                    table.close()
-                except Exception as e:
-                    stat_logger.exception(e)
-            else:
-                table_key_count = 0
-                table_partition = None
+            table_key_count = 0
+            table_partition = None
+            session = storage.Session.build()  # do not create session
+            if session:
+                table = session.get_table(name=table_name, namespace=namespace)
+                if table:
+                    table_key_count = table.count()
+                    table_partition = table.get_partitions()
+                    try:
+                        table.close()
+                    except Exception as e:
+                        stat_logger.exception(e)
         return get_json_result(data={'table_name': table_name, 'namespace': namespace, 'count': table_key_count, 'partition': table_partition})
     else:
         return get_json_result()

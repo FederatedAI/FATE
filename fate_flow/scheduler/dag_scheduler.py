@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 from arch.api.utils import dtable_utils
-from arch.api.utils.core_utils import json_loads
+from fate_arch.common.base_utils import json_loads
 from arch.api.utils.log_utils import schedule_logger
 from fate_arch.common import WorkMode
 from fate_flow.db.db_models import Job

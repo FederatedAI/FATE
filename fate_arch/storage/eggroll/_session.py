@@ -24,6 +24,8 @@ class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
         self._session_id = session_id
         self._options = options if options else {}
+        self._rp_session = None
+        self._rpc = None
 
     def create(self):
         from eggroll.core.session import session_init

@@ -22,7 +22,7 @@ from fate_arch.storage import StorageTableBase, StorageEngine, EggRollStorageTyp
 class StorageTable(StorageTableBase):
     def __init__(self,
                  context,
-                 address=None,
+                 address,
                  name: str = None,
                  namespace: str = None,
                  partitions: int = 1,
@@ -40,7 +40,7 @@ class StorageTable(StorageTableBase):
         if self._storage_type:
             self._options["store_type"] = self._storage_type
         self._options["total_partitions"] = partitions
-        self._table = self._context.load(namespace=self._namespace, name=self._name, options=self._options)
+        self._table = self._context.load(namespace=self._namespace, name=self._name, options=self._options) if self._context else None
 
     def get_address(self):
         return self._address
@@ -75,16 +75,16 @@ class StorageTable(StorageTableBase):
         return self._table.destroy()
 
     @log_elapsed
-    def save_as(self, name=None, namespace=None, partition=None, schema=None, **kwargs):
-        super().save_as(name, namespace, schema=schema, partition=partition)
+    def save_as(self, name=None, namespace=None, partitions=None, schema=None, **kwargs):
+        super().save_as(name, namespace, schema=schema, partitions=partitions)
 
         options = kwargs.get("options", {})
-        store_type = options.get("store_type", StorageEngine.LMDB)
+        store_type = options.get("store_type", EggRollStorageType.ROLLPAIR_LMDB)
         options["store_type"] = store_type
 
-        if partition is None:
-            partition = self._partitions
-        self._table.save_as(name=name, namespace=namespace, partition=partition, options=options).disable_gc()
+        if partitions is None:
+            partitions = self._partitions
+        self._table.save_as(name=name, namespace=namespace, partition=partitions, options=options).disable_gc()
 
     @log_elapsed
     def count(self, **kwargs):

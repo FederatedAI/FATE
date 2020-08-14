@@ -17,11 +17,10 @@
 #
 import uuid
 
-from fate_arch.abc import StorageSessionABC
 from fate_flow.entity.metric import MetricMeta
 
 from arch.api.utils import log_utils
-from fate_flow.manager.table_manager.table_operation import get_table
+from fate_arch import storage
 from fate_flow.utils.job_utils import generate_session_id
 
 LOGGER = log_utils.getLogger()
@@ -36,35 +35,23 @@ class Reader(object):
 
     def run(self, component_parameters=None, args=None):
         self.parameters = component_parameters["ReaderParam"]
-        job_id = generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id)
+        session_id = generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id)
         table_key = [key for key in self.parameters.keys()][0]
-        data_table = get_table(job_id=job_id,
-                               namespace=self.parameters[table_key]['namespace'],
-                               name=self.parameters[table_key]['name']
-                               )
-        if not data_table:
-            raise Exception('no find table: namespace {}, name {}'.format(self.parameters[table_key]['namespace'],
-                                                                          self.parameters[table_key]['name']))
         persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(self.task_id), uuid.uuid1().hex
-        table = StorageSessionABC.convert(data_table, job_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id),
-                                          name=persistent_table_name, namespace=persistent_table_namespace, force=True, mode=component_parameters['job_parameters']['work_mode'])
-        if not table:
-            persistent_table_name = data_table.get_name()
-            persistent_table_namespace = data_table.get_namespace()
-        partitions = data_table.get_partitions()
-        count = data_table.count()
-        LOGGER.info('save data view:name {}, namespace {}, partitions {}, count {}'.format(persistent_table_name,
-                                                                                           persistent_table_namespace,
-                                                                                           partitions,
-                                                                                           count))
+        src_session, src_table, dest_session, dest_table, if_convert = storage.Session.convert(session_id=session_id,
+                                                                                               src_name=self.parameters[table_key]['name'],
+                                                                                               src_namespace=self.parameters[table_key]['namespace'],
+                                                                                               dest_name=persistent_table_name,
+                                                                                               dest_namespace=persistent_table_namespace,
+                                                                                               force=True)
         self.tracker.log_output_data_info(data_name=component_parameters.get('output_data_name')[0] if component_parameters.get('output_data_name') else table_key,
                                           table_namespace=persistent_table_namespace,
                                           table_name=persistent_table_name)
-        data_info = {"count": count,
-                     "partitions": partitions,
-                     "input_table_storage_engine": data_table.get_storage_engine(),
-                     "output_table_storage_engine": table.get_storage_engine() if table else
-                     data_table.get_storage_engine()}
+        with dest_session:
+            data_info = {"count": dest_table.count(),
+                         "partitions": dest_table.get_partitions(),
+                         "input_table_storage_engine": src_table.get_storage_engine(),
+                         "output_table_storage_engine": dest_table.get_storage_engine()}
         self.tracker.set_metric_meta(metric_namespace="reader_namespace",
                                      metric_name="reader_name",
                                      metric_meta=MetricMeta(name='reader', metric_type='data_info', extra_metas=data_info))

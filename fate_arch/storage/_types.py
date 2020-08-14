@@ -46,6 +46,8 @@ class MySQLStorageType(object):
 
 
 class StorageTableMetaType(object):
+    ENGINE = "engine"
+    TYPE = "type"
     SCHEMA = "schema"
     PART_OF_DATA = "part_of_data"
     COUNT = "count"
