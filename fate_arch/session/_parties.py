@@ -51,8 +51,22 @@ class PartiesInfo(object):
     def all_parties(self):
         return [party for parties in self._role_to_parties.values() for party in parties]
 
-    def roles_to_parties(self, roles: typing.Iterable) -> list:
-        return [party for role in roles for party in self._role_to_parties[role]]
+    @property
+    def role_set(self):
+        return set(self._role_to_parties)
+
+    def roles_to_parties(self, roles: typing.Iterable, strict=True) -> list:
+        parties = []
+        for role in roles:
+            if role not in self._role_to_parties:
+                if strict:
+                    raise RuntimeError(f"try to get role {role} "
+                                       f"which is not configured in `role` in runtime conf({self._role_to_parties})")
+                else:
+                    continue
+            parties.extend(self._role_to_parties[role])
+
+        return parties
 
     def role_to_party(self, role, idx) -> Party:
         return self._role_to_parties[role][idx]
