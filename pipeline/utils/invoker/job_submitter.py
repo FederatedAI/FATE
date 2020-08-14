@@ -69,9 +69,8 @@ class JobInvoker(object):
         with tempfile.TemporaryDirectory() as job_dir:
             if dsl:
                 dsl_path = os.path.join(job_dir, "job_dsl.json")
-                import pprint
                 # pprint.pprint(dsl)
-                LOGGER.info(f"submit dsl is: {pprint.pformat(dsl)}")
+                LOGGER.info(f"submit dsl is: \n {json.dumps(dsl, indent=4, ensure_ascii=False)}")
                 with open(dsl_path, "w") as fout:
                     fout.write(json.dumps(dsl))
 
@@ -269,7 +268,7 @@ class JobInvoker(object):
         except ValueError:
             # LOGGER.opt(exception=True).error(f"job submit failed, err msg: {result}")
             # raise
-            raise ValueError("job submit failed, err msg: {}".format(result))
+            raise ValueError("Job submit failed, err msg: {}".format(result))
         return data
 
     @LOGGER.catch
@@ -279,7 +278,7 @@ class JobInvoker(object):
                                         party_id=party_id, status=status)
         try:
             if 'retcode' not in result:
-                raise ValueError("can not query task status of job {}".format(job_id))
+                raise ValueError("Cannot query task status of job {}".format(job_id))
                 # LOGGER.opt(exception=True).error(f"can not query task status of job {job_id}")
 
             ret_code = result["retcode"]
@@ -293,7 +292,7 @@ class JobInvoker(object):
         except ValueError:
             # LOGGER.opt(exception=True).error(f"query task result is {result}, can not parse useful info. err msg: ")
             # raise
-            raise ValueError("query task result is {}, can not parse useful info".format(result))
+            raise ValueError("Query task result is {}, cannot parse useful info".format(result))
 
     @LOGGER.catch
     def get_output_data(self, job_id, cpn_name, role, party_id, limits=None):
@@ -433,7 +432,7 @@ class JobInvoker(object):
                                                        party_id=party_id, component_name=cpn_name)
             if "data" not in result:
                 # print("job {}, component {} has no output metric".format(job_id, cpn_name))
-                LOGGER.error(f"job {job_id}, component {cpn_name} has no output metric")
+                LOGGER.error(f"Job {job_id}, component {cpn_name} has no output metric")
                 return
             return result["data"]
         except:
@@ -453,9 +452,9 @@ class JobInvoker(object):
 
         if result is None or 'retcode' not in result:
             # LOGGER.opt(exception=True).error(f"call flow generate dsl is failed, check if fate_flow server is start!")
-            raise ValueError("call flow generate dsl is failed, check if fate_flow server is start!")
+            raise ValueError("Call flow generate dsl is failed, check if fate_flow server is start!")
         elif result["retcode"] != 0:
             # LOGGER.opt(exception=True).error(f"Cannot generate predict dsl, error msg is {result['retmsg']}")
-            raise ValueError("can not generate predict dsl, error msg is {}".format(result["retmsg"]))
+            raise ValueError("Cannot generate predict dsl, error msg is {}".format(result["retmsg"]))
         else:
             return result["data"]
