@@ -19,11 +19,7 @@
         "objective": "cross_entropy",
         "params": [1.5]
     },
-    "encrypt_param": {
-        "method": "paillier"
-    },
     "predict_param": {
-        "with_proba": true,
-        "threshold": 0.5 
+        "threshold": 0.5
     }
 }

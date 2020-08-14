@@ -94,8 +94,8 @@ class BaseDSLParser(object):
         self.component_name_index = {}
         self.component_upstream = []
         self.component_downstream = []
-        self.component_upstream_data_relation_set = set()
-        self.component_upstream_model_relation_set = set()
+        # self.component_upstream_data_relation_set = set()
+        # self.component_upstream_model_relation_set = set()
         self.train_input_model = {}
         self.in_degree = []
         self.topo_rank = []
@@ -183,7 +183,7 @@ class BaseDSLParser(object):
                                 idx_dependendy = self.component_name_index.get(module_name)
                                 self.component_downstream[idx_dependendy].append(name)
                                 self.component_upstream[idx].append(module_name)
-                                self.component_upstream_model_relation_set.add((name, module_name))
+                                # self.component_upstream_model_relation_set.add((name, module_name))
 
                                 if model_key == "model":
                                     self.train_input_model[name] = module_name
@@ -216,7 +216,7 @@ class BaseDSLParser(object):
                             idx_dependendy = self.component_name_index.get(module_name)
                             self.component_downstream[idx_dependendy].append(name)
                             self.component_upstream[idx].append(module_name)
-                            self.component_upstream_data_relation_set.add((name, module_name))
+                            # self.component_upstream_data_relation_set.add((name, module_name))
 
         self.in_degree = [0 for i in range(len(self.components))]
         for i in range(len(self.components)):
@@ -295,6 +295,22 @@ class BaseDSLParser(object):
     def get_component_info(self, component_name):
         idx = self.component_name_index.get(component_name)
         return self.components[idx]
+
+    def get_upstream_dependent_components(self, component_name):
+        dependent_component_names = self.get_component_info(component_name).get_upstream()
+        dependent_components = []
+        for up_cpn in dependent_component_names:
+            up_cpn_idx = self.component_name_index.get(up_cpn)
+            dependent_components.append(self.components[up_cpn_idx])
+
+        return dependent_components
+
+    def get_topology_components(self):
+        topo_components = []
+        for i in range(len(self.topo_rank)):
+            topo_components.append(self.components[self.topo_rank[i]])
+
+        return topo_components
 
     def _find_outputs(self):
         outputs = {}
@@ -387,17 +403,68 @@ class BaseDSLParser(object):
             name = component.get_name()
             module = component.get_module()
             component_module[name] = module
-            upstream = self.component_upstream[self.component_name_index.get(name)]
-            if upstream:
-                dependence_dict[name] = []
-                for up_component in upstream:
-                    if (name, up_component) in self.component_upstream_data_relation_set:
-                        dependence_dict[name].append({"component_name": up_component,
-                                                      "type": "data"})
+            if not component.get_input():
+                continue
+            dependence_dict[name] = []
+            inputs = component.get_input()
+            if "data" in inputs:
+                data_input = inputs["data"]
+                for data_key, data_list in data_input.items():
+                    for dataset in data_list:
+                        up_component_name = dataset.split(".", -1)[0]
+                        if up_component_name == "args":
+                            continue
+                        up_pos = self.component_name_index.get(up_component_name)
+                        up_component = self.components[up_pos]
+                        data_name = dataset.split(".", -1)[1]
+                        if up_component.get_output().get("data"):
+                            data_pos = up_component.get_output().get("data").index(data_name)
+                        else:
+                            data_pos = 0
 
-                    if (name, up_component) in self.component_upstream_model_relation_set:
-                        dependence_dict[name].append({"component_name": up_component,
-                                                      "type": "model"})
+                        if up_component_name == "args":
+                            continue
+
+                        if data_key == "data" or data_key == "train_data":
+                            data_type = data_key
+                        else:
+                            data_type = "validate_data"
+
+                        dependence_dict[name].append({"component_name": up_component_name,
+                                                      "type": data_type,
+                                                      "up_output_info": ["data", data_pos]})
+
+            if "model" in inputs:
+                model_input = inputs["model"]
+                for model_dep in model_input:
+                    up_component_name = model_dep.split(".", -1)[0]
+                    if up_component_name == "pipeline":
+                        continue
+
+                    model_name = model_dep.split(".", -1)[1]
+                    up_pos = self.component_name_index.get(up_component_name)
+                    up_component = self.components[up_pos]
+                    if up_component.get_output().get("model"):
+                        model_pos = up_component.get_output().get("model").index(model_name)
+                    else:
+                        model_pos = 0
+                    dependence_dict[name].append({"component_name": up_component_name,
+                                                  "type": "model",
+                                                  "up_output_info": ["model", model_pos]})
+
+            if not dependence_dict[name]:
+                del dependence_dict[name]
+            # upstream = self.component_upstream[self.component_name_index.get(name)]
+            # if upstream:
+            #     dependence_dict[name] = []
+            #     for up_component in upstream:
+            #         if (name, up_component) in self.component_upstream_data_relation_set:
+            #             dependence_dict[name].append({"component_name": up_component,
+            #                                           "type": "data"})
+
+            #         if (name, up_component) in self.component_upstream_model_relation_set:
+            #             dependence_dict[name].append({"component_name": up_component,
+            #                                           "type": "model"})
 
         component_list = [None for i in range(len(self.components))]
         topo_rank_reverse_mapping = {}
@@ -608,6 +675,9 @@ class BaseDSLParser(object):
                         setting_conf_prefix=setting_conf_prefix,
                         deploy_cpns=deploy_cpns):
                     output_data_maps[name][output_data_str] = [up_input_data]
+                elif self.components[
+                    self.component_name_index.get(up_input_data_component_name)].get_module() == "Reader":
+                    output_data_maps[name][output_data_str] = [up_input_data]
                 else:
                     up_input_data_suf = up_input_data.split(".", -1)[-1]
                     output_data_maps[name][output_data_str] = output_data_maps[up_input_data_component_name][
@@ -705,11 +775,15 @@ class DSLParser(BaseDSLParser):
 
     @staticmethod
     def deploy_component(components, train_dsl):
+        training_cpns = set(train_dsl.get("components").keys())
+        deploy_cpns = set(components)
+        if len(deploy_cpns & training_cpns) != len(deploy_cpns):
+            raise DeployComponentNotExistError(msg=deploy_cpns - training_cpns)
+
         dsl_parser = DSLParser()
         dsl_parser.dsl = train_dsl
         dsl_parser._init_components()
         dsl_parser._find_dependencies()
-        deploy_cpns = set(components)
         dsl_parser._auto_deduction(deploy_cpns=deploy_cpns)
 
         return dsl_parser.predict_dsl
@@ -790,11 +864,15 @@ class DSLParserV2(BaseDSLParser):
 
     @staticmethod
     def deploy_component(components, train_dsl):
+        training_cpns = set(train_dsl.get("components").keys())
+        deploy_cpns = set(components)
+        if len(deploy_cpns & training_cpns) != len(deploy_cpns):
+            raise DeployComponentNotExistError(msg=deploy_cpns - training_cpns)
+
         dsl_parser = DSLParserV2()
         dsl_parser.dsl = train_dsl
         dsl_parser._init_components()
         dsl_parser._find_dependencies(version=2)
-        deploy_cpns = set(components)
         dsl_parser._auto_deduction(deploy_cpns=deploy_cpns, version=2)
 
         return dsl_parser.predict_dsl
@@ -818,12 +896,20 @@ class DSLParserV2(BaseDSLParser):
         else:
             self._init_component_setting(setting_conf_prefix, pipeline_runtime_conf, version=2)
 
-        self.args_input, self.args_datakey = parameter_util.ParameterUtilV2.get_input_parameters(runtime_conf,
-                                                                                                 module="args")
+        self.args_input = parameter_util.ParameterUtilV2.get_input_parameters(runtime_conf,
+                                                                              components=self._get_reader_components())
 
         self.prepare_graph_dependency_info()
 
         return self.components
+
+    def _get_reader_components(self):
+        reader_components = []
+        for cpn, conf in self.dsl.get("components").items():
+            if conf.get("module") == "Reader":
+                reader_components.append(cpn)
+
+        return reader_components
 
     def get_need_deploy_parameter(self, name, deploy_cpns=None, **kwargs):
         if deploy_cpns is not None:

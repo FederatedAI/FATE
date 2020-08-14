@@ -101,7 +101,6 @@
                 "method": "paillier"
             },
             "predict_param": {
-                "with_proba": true,
                 "threshold": 0.5
             },
             "validation_freqs": 5

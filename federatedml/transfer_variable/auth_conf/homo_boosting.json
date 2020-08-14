@@ -1,5 +1,5 @@
 {
-  "HomoBoostingTransferVariable": {
+  "federatedml.transfer_variable.transfer_class.homo_boosting_transfer_variable.HomoBoostingTransferVariable": {
     "tree_dim": {
       "src": [
         "guest",

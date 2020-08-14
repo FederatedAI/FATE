@@ -92,10 +92,8 @@
         "hetero_lr_0": {
             "penalty": "L2",
             "optimizer": "rmsprop",
-            "eps": 1e-05,
             "alpha": 0.01,
             "max_iter": 10,
-            "converge_func": "diff",
             "batch_size": 320,
             "learning_rate": 0.15,
             "init_param": {
@@ -105,10 +103,8 @@
         "hetero_lr_1": {
             "penalty": "L2",
             "optimizer": "rmsprop",
-            "eps": 1e-05,
             "alpha": 0.01,
             "max_iter": 10,
-            "converge_func": "diff",
             "batch_size": 320,
             "learning_rate": 0.15,
             "init_param": {
@@ -118,10 +114,7 @@
                 "n_splits": 5,
                 "shuffle": true,
                 "random_seed": 103,
-                "need_cv": true,
-                "evaluate_param": {
-                    "eval_type": "binary"
-                }
+                "need_cv": true
             }
         },
         "hetero_secureboost_0": {
@@ -132,8 +125,7 @@
             "num_trees": 5
         },
         "hetero_secureboost_1": {
-            "num_trees": 5,
-            "shuffle": false
+            "num_trees": 5
         }
     }
 }

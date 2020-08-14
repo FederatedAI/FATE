@@ -94,6 +94,7 @@ class TransferPair(object):
                              .format(consts.ONE_HOT_LIMIT))
 
         self._transformed_headers[value] = self.__encode_new_header(value)
+        LOGGER.debug(f"transformed_header: {self._transformed_headers}")
 
     @property
     def values(self):

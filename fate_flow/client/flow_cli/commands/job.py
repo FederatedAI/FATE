@@ -281,27 +281,22 @@ def dsl_generator(ctx, **kwargs):
     }
 
     if kwargs.get("output_path"):
-        if not os.path.isdir(kwargs.get("output_path")):
-            response = {
-                "retcode": 100,
-                "retmsg": "Please input a valid directory path."
-            }
-        else:
-            dsl_filename = "predict_dsl_{}.json".format(datetime.now().strftime('%Y%m%d%H%M%S'))
-            output_path = os.path.join(check_abs_path(kwargs.get("output_path")), dsl_filename)
-            config_data["filename"] = dsl_filename
+        dsl_filename = "predict_dsl_{}.json".format(datetime.now().strftime('%Y%m%d%H%M%S'))
+        output_path = os.path.join(check_abs_path(kwargs.get("output_path")), dsl_filename)
+        config_data["filename"] = dsl_filename
 
-            with closing(access_server('post', ctx, 'job/dsl/generate', config_data, False, stream=True)) as response:
-                if response.status_code == 200:
-                    with open(output_path, "wb") as fw:
-                        for chunk in response.iter_content(1024):
-                            if chunk:
-                                fw.write(chunk)
-                    response = {'retcode': 0,
-                                'retmsg': "New predict dsl file has been generated successfully. "
-                                          "File path is: {}".format(output_path)}
-                else:
-                    response = response.json()
+        with closing(access_server('post', ctx, 'job/dsl/generate', config_data, False, stream=True)) as response:
+            if response.status_code == 200:
+                os.makedirs(os.path.dirname(output_path), exist_ok=True)
+                with open(output_path, "wb") as fw:
+                    for chunk in response.iter_content(1024):
+                        if chunk:
+                            fw.write(chunk)
+                response = {'retcode': 0,
+                            'retmsg': "New predict dsl file has been generated successfully. "
+                                      "File path is: {}".format(output_path)}
+            else:
+                response = response.json()
         prettify(response.json() if isinstance(response, requests.models.Response) else response)
     else:
         access_server('post', ctx, 'job/dsl/generate', config_data)

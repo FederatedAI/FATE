@@ -89,7 +89,7 @@ def imp(ctx, **kwargs):
         flow model import -c fate_flow/examples/restore_model.json --from-database
     """
     config_data, dsl_data = preprocess(**kwargs)
-    if not kwargs.pop('from_database'):
+    if not config_data.pop('from_database'):
         file_path = config_data["file"]
         if not os.path.isabs(file_path):
             file_path = os.path.join(get_project_base_directory(), file_path)
@@ -120,8 +120,8 @@ def export(ctx, **kwargs):
         flow model export -c fate_flow/examples/export_model.json
         flow model export -c fate_flow/examplse/store_model.json --to-database
     """
-    if not kwargs.get('to_database'):
-        config_data, dsl_data = preprocess(**kwargs)
+    config_data, dsl_data = preprocess(**kwargs)
+    if not config_data.pop('to_database'):
         with closing(access_server('get', ctx, 'model/export', config_data, False, stream=True)) as response:
             if response.status_code == 200:
                 archive_file_name = re.findall("filename=(.+)", response.headers["Content-Disposition"])[0]
@@ -138,7 +138,7 @@ def export(ctx, **kwargs):
                 response = response.json()
         prettify(response.json() if isinstance(response, requests.models.Response) else response)
     else:
-        config_data, dsl_data = preprocess(**kwargs)
+        # config_data, dsl_data = preprocess(**kwargs)
         access_server('post', ctx, 'model/store', config_data)
 
 

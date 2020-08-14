@@ -462,6 +462,8 @@ class MultivariateStatisticalSummary(object):
         # result = {self.header[header_idx]: result_row[col_idx]
         #           for col_idx, header_idx in enumerate(self.cols_index)}
         result = {}
+
+        result_row = result_row.tolist()
         for col_idx, header_idx in enumerate(self.cols_index):
             result[self.header[header_idx]] = result_row[col_idx]
         return result

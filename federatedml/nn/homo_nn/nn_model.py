@@ -16,10 +16,10 @@
 
 import typing
 
-from arch.api.utils import log_utils
+from fate_arch.common import log
 from federatedml.framework.weights import Weights
 
-LOGGER = log_utils.getLogger()
+LOGGER = log.getLogger()
 
 
 class NNModel(object):
@@ -58,11 +58,11 @@ class DataConverter(object):
 
 def get_data_converter(config_type) -> DataConverter:
     if config_type == "pytorch":
-       from federatedml.nn.backend.pytorch.nn_model import PytorchDataConverter
-       return PytorchDataConverter()
+        from federatedml.nn.backend.pytorch.nn_model import PytorchDataConverter
+        return PytorchDataConverter()
     else:
-       from federatedml.nn.backend.tf_keras.nn_model import KerasSequenceDataConverter
-       return KerasSequenceDataConverter()
+        from federatedml.nn.backend.tf_keras.nn_model import KerasSequenceDataConverter
+        return KerasSequenceDataConverter()
 
 
 def get_nn_builder(config_type):
@@ -72,7 +72,7 @@ def get_nn_builder(config_type):
     elif config_type == "keras":
         from federatedml.nn.backend.tf_keras.nn_model import build_keras
         return build_keras
-    elif config_type== "pytorch":
+    elif config_type == "pytorch":
         from federatedml.nn.backend.pytorch.nn_model import build_pytorch
         return build_pytorch
     else:

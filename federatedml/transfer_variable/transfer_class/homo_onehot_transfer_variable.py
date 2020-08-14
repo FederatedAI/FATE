@@ -27,7 +27,7 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 
 
 # noinspection PyAttributeOutsideInit
-class OHEAlignmentTransferVariable(BaseTransferVariables):
+class HomoOneHotTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
         self.aligned_columns = self._create_variable(name='aligned_columns', src=['arbiter'], dst=['guest','host'])

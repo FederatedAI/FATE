@@ -151,7 +151,7 @@ class OptimalBinning(BaseBinning):
         bucket_table = [(k, v) for k, v in bucket_table.items()]
         LOGGER.debug("bucket_table: {}, length: {}".format(type(bucket_table), len(bucket_table)))
 
-        bucket_table = session.parallelize(bucket_table, include_key=True, partition=data_instances.get_partitions())
+        bucket_table = session.parallelize(bucket_table, include_key=True, partition=data_instances.partitions)
 
         return bucket_table
 

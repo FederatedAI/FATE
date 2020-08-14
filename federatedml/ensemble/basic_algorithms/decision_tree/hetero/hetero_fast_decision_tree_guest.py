@@ -61,7 +61,7 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
         if tree_action == plan.tree_actions['guest_only']:
             acc_histograms = self.get_local_histograms(node_map, ret='tensor')
             cur_best_split = self.splitter.find_split(acc_histograms, self.valid_features,
-                                                      self.data_bin._partitions, self.sitename,
+                                                      self.data_bin.partitions, self.sitename,
                                                       self.use_missing, self.zero_as_missing)
             LOGGER.debug('computing local splits done')
 
@@ -267,7 +267,6 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
 
         self.convert_bin_to_real()
         self.sync_tree(idx=-1)
-        LOGGER.debug('final sample weights are {}'.format(list(self.sample_weights.collect())))
 
     def fit(self):
 

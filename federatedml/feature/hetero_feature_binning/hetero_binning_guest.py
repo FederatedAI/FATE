@@ -103,7 +103,7 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
                 self.binning_obj.event_total, self.binning_obj.non_event_total = self.get_histogram(data_instances)
                 optimal_binning_cols = {x: y for x, y in result_counts.items() if x not in category_names}
                 host_binning_obj = self.optimal_binning_sync(optimal_binning_cols, data_instances.count(),
-                                                             data_instances._partitions,
+                                                             data_instances.partitions,
                                                              host_idx, host_model_params)
                 category_bins = {x: y for x, y in result_counts.items() if x in category_names}
                 host_binning_obj.cal_iv_woe(category_bins, self.model_param.adjustment_factor)

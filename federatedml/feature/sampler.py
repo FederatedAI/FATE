@@ -132,7 +132,7 @@ class RandomSampler(object):
                                                 partition=data_inst.partitions)
             new_data_inst = data_inst.join(sample_dtable, lambda v1, v2: v1)
 
-            callback(self.tracker, "random", [Metric("count", new_data_inst.count())], self._summary_buf)
+            callback(self.tracker, "random", [Metric("count", new_data_inst.count())], summary_dict=self._summary_buf)
 
             if return_sample_ids:
                 return new_data_inst, sample_ids
@@ -164,7 +164,7 @@ class RandomSampler(object):
                                                 include_key=True,
                                                 partition=data_inst.partitions)
 
-            callback(self.tracker, "random", [Metric("count", new_data_inst.count())], self._summary_buf)
+            callback(self.tracker, "random", [Metric("count", new_data_inst.count())], summary_dict=self._summary_buf)
 
             if return_sample_ids:
                 return new_data_inst, sample_ids
