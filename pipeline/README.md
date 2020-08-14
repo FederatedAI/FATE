@@ -8,7 +8,7 @@ Run the [mini demo](./demo/pipeline-mini-demo.py) to have a taste of how FATE Pi
 Default values of party ids and work mode in [config file](./demo/config.yaml) may need to be modified depending on setting.
 
 ```bash
-python pipeline-mini-demo.py
+python pipeline-mini-demo.py config.yaml
 ```
 
 For more pipeline demo, please refer to [demos](./demo).
@@ -32,8 +32,8 @@ Beyond the given mini demo, a job may include multiple data sets and models. For
 ### Component
 FATE modules are each wrapped into `component` in Pipeline API. Each component can take in and output `Data` and `Model`. 
 Parameters of components can be set conveniently at the time of initialization. Unspecified parameters will take default values. 
-All components must have a `name`, whose numbering suffix starts at "0". 
-A component's name is its identifier, and so it must be unique within a pipeline.
+All components have a `name`, which can be arbitrarily set. A component's name is its identifier, and so it must be unique within a pipeline. 
+We suggest that name of components include a numbering suffix for convenience.
 
 An example of initializing a component with specified parameter values:
 ```python
@@ -50,11 +50,19 @@ pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
 ```
 
 For data sets used in different stages (e.g., train & validate) within a single component, 
-keywords `train_data`, `validate_data`, and `test_data` are used to distinguish data sets.
+additional keywords `train_data`, `validate_data` and `test_data` are used to distinguish data sets.
 Also from mini demo, result from `intersection_0` and `intersection_1` are set as train and validate data input to training component, respectively.
 
 ```python
 pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data, validate_data=intersection_1.output.data))
+```
+
+Another case of using keywords `train_data`, `validate_data`, and `test_data` is to select from `DataSplit` module's multiple outputs:
+
+```python
+pipeline.add_component(hetero_linr_1, 
+                       data=Data(test_data=hetero_data_split_0.output.data.test_data),
+                       model=Model(model=hetero_linr_0))
 ```
     
 ### Model
@@ -65,7 +73,7 @@ the current model will replicate all model parameters from the previous model.
 Check below for a case from mini demo, where `model` from `dataio_0` is passed to `dataio_1`.
 
 ```python
-pipeline.add_component(dataio_1, data=Data(data=input_1.data), model=Model(dataio_0.output.model_output))
+pipeline.add_component(dataio_1, data=Data(data=input_1.data), model=Model(dataio_0.output.model))
 ```
 
 When a model from previous component is used but the current component is of different class from the previous component, `isometric_model` is used.
@@ -79,7 +87,7 @@ For instance, `HeteroFeatureSelection` uses `isometric_model` from `HeteroFeatur
 ```python
 output_all = dataio_0.output
 output_data = dataio_0.output.data
-output_model = dataio_0.output.model_output
+output_model = dataio_0.output.model
 ```
 
 ## Build A Pipeline

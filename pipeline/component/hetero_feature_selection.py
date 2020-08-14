@@ -14,16 +14,19 @@
 #  limitations under the License.
 #
 
+from federatedml.param.feature_selection_param import FeatureSelectionParam
 from pipeline.component.component_base import Component
 from pipeline.interface.output import Output
-from federatedml.param.feature_selection_param import FeatureSelectionParam
+from pipeline.utils.logger import LOGGER
 
 
 class HeteroFeatureSelection(Component, FeatureSelectionParam):
     def __init__(self, **kwargs):
         Component.__init__(self, **kwargs)
 
-        print (self.name)
+        # print (self.name)
+        LOGGER.debug(f"{self.name} component created")
+
         new_kwargs = self.erase_component_base_param(**kwargs)
 
         FeatureSelectionParam.__init__(self, **new_kwargs)

@@ -13,24 +13,3 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-from federatedml.param.union_param import UnionParam
-from pipeline.component.component_base import Component
-from pipeline.interface.output import Output
-from pipeline.utils.logger import LOGGER
-
-
-class Union(Component, UnionParam):
-    def __init__(self, **kwargs):
-        Component.__init__(self, **kwargs)
-
-        # print (self.name)
-        LOGGER.debug(f"{self.name} component created")
-
-        new_kwargs = self.erase_component_base_param(**kwargs)
-
-        UnionParam.__init__(self, **new_kwargs)
-        self.output = Output(self.name, has_model=False)
-        self._module_name = "Union"
-
-

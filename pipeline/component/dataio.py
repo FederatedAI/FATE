@@ -14,18 +14,19 @@
 #  limitations under the License.
 #
 
-import copy
-from pipeline.component.component_base import Component
-from pipeline.interface.output import Output
-from pipeline.interface.input import Input
 from federatedml.param.dataio_param import DataIOParam
+from pipeline.component.component_base import Component
+from pipeline.interface.input import Input
+from pipeline.interface.output import Output
+from pipeline.utils.logger import LOGGER
 
 
 class DataIO(Component, DataIOParam):
     def __init__(self, **kwargs):
         Component.__init__(self, **kwargs)
 
-        print (self.name)
+        #print (self.name)
+        LOGGER.debug(f"{self.name} component created")
         new_kwargs = self.erase_component_base_param(**kwargs)
 
         DataIOParam.__init__(self, **new_kwargs)
