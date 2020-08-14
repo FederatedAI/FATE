@@ -2,15 +2,17 @@ from fate_arch.abc import AddressABC
 
 
 class StandaloneAddress(AddressABC):
-    def __init__(self, name, namespace):
+    def __init__(self, name, namespace, storage_type):
         self.name = name
         self.namespace = namespace
+        self.storage_type = storage_type
 
 
 class EggRollAddress(AddressABC):
-    def __init__(self, name, namespace):
+    def __init__(self, name, namespace, storage_type):
         self.name = name
         self.namespace = namespace
+        self.storage_type = storage_type
 
 
 class HDFSAddress(AddressABC):

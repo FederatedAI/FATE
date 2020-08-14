@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class FederationEngine(Enum):
+class FederationEngine(object):
     EGGROLL = 'EGGROLL'
     MQ = 'MQ'
     STANDALONE = 'STANDALONE'

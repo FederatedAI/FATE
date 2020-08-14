@@ -15,7 +15,6 @@ class WorkMode(IntEnum):
 class Backend(IntEnum):
     EGGROLL = 0
     SPARK = 1
-    STANDALONE = 2
 
     def is_spark(self):
         return self.value == self.SPARK
@@ -23,8 +22,16 @@ class Backend(IntEnum):
     def is_eggroll(self):
         return self.value == self.EGGROLL
 
-    def is_standalone(self):
-        return self.value == self.STANDALONE
+
+class FederationMode(IntEnum):
+    SINGLE = 0
+    MULTIPLE = 1
+
+    def is_single(self):
+        return self.value == self.SINGLE
+
+    def is_multiple(self):
+        return self.value == self.MULTIPLE
 
 
 class Party(object):

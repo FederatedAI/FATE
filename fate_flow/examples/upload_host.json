@@ -4,7 +4,7 @@
   "partition": 10,
   "work_mode": 1,
   "drop": 2,
-  "backend": 1,
+  "backend": 0,
   "namespace": "fate_flow_test_breast_hetero",
   "table_name": "breast_hetero_host"
 }

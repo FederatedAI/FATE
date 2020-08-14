@@ -62,19 +62,22 @@ def download_upload(access_module):
         raise Exception('can not support this operating: {}'.format(access_module))
     detect_utils.check_config(job_config, required_arguments=required_arguments)
     data = {}
+    for _ in ["work_mode", "backend", "drop"]:
+        if _ in job_config:
+            job_config[_] = int(job_config[_])
     if access_module == "upload":
         data['table_name'] = job_config["table_name"]
         data['namespace'] = job_config["namespace"]
         if WORK_MODE != 0:
             job_config["storage_engine"] = job_config.get("storage_engine", StorageEngine.EGGROLL)
             data_table = storage.Session.build(**job_config).get_table(name=job_config["table_name"], namespace=job_config["namespace"])
-            if data_table and int(job_config.get('drop', 2)) == 2:
+            if data_table and job_config.get('drop', 2) == 2:
                 return get_json_result(retcode=100,
                                        retmsg='The data table already exists.'
                                               'If you still want to continue uploading, please add the parameter -drop.'
                                               ' 0 means not to delete and continue uploading, '
                                               '1 means to upload again after deleting the table')
-            elif data_table and int(job_config.get('drop', 2)) == 1:
+            elif data_table and job_config.get('drop', 2) == 1:
                 job_config["destroy"] = True
     job_dsl, job_runtime_conf = gen_data_access_job_config(job_config, access_module)
     job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(
@@ -138,7 +141,9 @@ def gen_data_access_job_config(config_data, access_module):
     initiator_party_id = config_data.get('party_id', 0)
     job_runtime_conf["initiator"]["role"] = initiator_role
     job_runtime_conf["initiator"]["party_id"] = initiator_party_id
-    job_runtime_conf["job_parameters"]["work_mode"] = int(config_data["work_mode"])
+    for _ in ["work_mode", "backend"]:
+        if _ in config_data:
+            job_runtime_conf["job_parameters"][_] = config_data[_]
     job_runtime_conf["role"][initiator_role] = [initiator_party_id]
     job_dsl = {
         "components": {}

@@ -17,11 +17,12 @@ from arch.api.utils import dtable_utils
 from fate_arch.common.base_utils import json_loads
 from arch.api.utils.log_utils import schedule_logger
 from fate_arch.common import WorkMode
+from fate_arch.common import compatibility_utils
 from fate_flow.db.db_models import Job
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.scheduler.task_scheduler import TaskScheduler
 from fate_flow.operation.job_saver import JobSaver
-from fate_flow.entity.constant import JobStatus, TaskStatus, EndStatus, InterruptStatus, StatusSet, OngoingStatus, SchedulingStatusCode
+from fate_flow.entity.constant import JobStatus, TaskStatus, EndStatus, StatusSet, SchedulingStatusCode
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.controller.job_controller import JobController
@@ -39,6 +40,12 @@ class DAGScheduler(object):
         schedule_logger(job_id).info('submit job, job_id {}, body {}'.format(job_id, job_data))
         job_dsl = job_data.get('job_dsl', {})
         job_runtime_conf = job_data.get('job_runtime_conf', {})
+
+        # Compatible
+        computing_engine, federation_engine, federation_mode = compatibility_utils.backend_compatibility(**job_runtime_conf["job_parameters"])
+        job_runtime_conf["job_parameters"]["computing_engine"] = computing_engine
+        job_runtime_conf["job_parameters"]["federation_engine"] = federation_engine
+        job_runtime_conf["job_parameters"]["federation_mode"] = federation_mode
 
         # set default parameters
         job_runtime_conf["job_parameters"]["task_parallelism"] = job_runtime_conf["job_parameters"].get("task_parallelism", DEFAULT_TASK_PARALLELISM)

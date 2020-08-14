@@ -17,13 +17,13 @@
 
 from fate_arch.common.log import getLogger
 from fate_arch.storage._types import StorageEngine, Relationship
-from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64, fate_uuid
+from fate_arch.common.base_utils import fate_uuid
+from fate_arch.common import compatibility_utils
 from fate_arch.storage.metastore.db_models import DB, StorageTableMeta
 from fate_arch.computing import ComputingEngine
 from fate_arch.abc import StorageSessionABC, StorageTableABC
 from fate_arch.storage._table import StorageTableBase
 from fate_arch.storage import StorageTableMetaType
-from fate_arch.common import Backend, WorkMode
 
 MAX_NUM = 10000
 
@@ -39,13 +39,7 @@ class Session(object):
             if tables_meta:
                 storage_engine = tables_meta[0].f_engine
         if storage_engine is None and computing_engine is None:
-            if kwargs.get("work_mode") and kwargs.get("backend"):
-                # Compatible with previous 1.5 versions
-                backend = kwargs.get("backend")
-                if backend == Backend.EGGROLL:
-                    computing_engine = ComputingEngine.EGGROLL if kwargs.get("work_mode") == WorkMode.CLUSTER else ComputingEngine.STANDALONE
-                elif backend == Backend.SPARK:
-                    computing_engine = ComputingEngine.SPARK
+            computing_engine, federation_engine, federation_mode = compatibility_utils.backend_compatibility(**kwargs)
         if storage_engine is None and computing_engine:
             # Gets the computing engine default storage engine
             storage_engine = Relationship.CompToStore.get(computing_engine)[0]

@@ -28,7 +28,7 @@ import uuid
 import psutil
 from fate_flow.entity.constant import JobStatus
 
-from arch.api.utils import file_utils
+from fate_arch.common import file_utils
 from fate_arch.common.base_utils import current_timestamp
 from fate_arch.common.base_utils import json_loads, json_dumps
 from arch.api.utils.log_utils import schedule_logger
@@ -143,7 +143,7 @@ def save_job_conf(job_id, job_dsl, job_runtime_conf, train_runtime_conf, pipelin
             f.truncate()
             if not data:
                 data = {}
-            f.write(json.dumps(data, indent=4))
+            f.write(json_dumps(data, indent=4))
             f.flush()
     return path_dict
 
