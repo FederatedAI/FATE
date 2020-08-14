@@ -17,7 +17,7 @@ import click
 import os
 import sys
 from fate_flow.client.flow_cli.utils import cli_args
-from fate_flow.client.flow_cli.utils.cli_utils import preprocess, access_server, check_abs_path
+from fate_flow.client.flow_cli.utils.cli_utils import preprocess, access_server, check_abs_path, prettify
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
 
@@ -77,8 +77,13 @@ def upload(ctx, **kwargs):
                 access_server('post', ctx, 'data/upload', json=None, data=data,
                               params=config_data, headers={'Content-Type': data.content_type})
         else:
-            raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
-                            'please check the path: {}'.format(file_name))
+            prettify(
+                {
+                    "retcode": 100,
+                    "retmsg": "The file is obtained from the fate flow client machine, but it does not exist, "
+                              "please check the path: {}".format(file_name)
+                }
+            )
     else:
         access_server('post', ctx, 'data/upload', config_data)
 

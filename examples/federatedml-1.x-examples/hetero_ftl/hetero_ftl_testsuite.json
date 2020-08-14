@@ -38,6 +38,10 @@
             "conf": "./test_ftl_conf.json",
             "dsl": "./test_ftl_dsl.json"
         },
+        "ftl_predict": {
+            "conf": "./test_ftl_predict.json",
+            "deps": "ftl"
+        },
         "encrypted_ftl": {
             "conf": "./test_ftl_encrypted_conf.json",
             "dsl": "./test_ftl_dsl.json"

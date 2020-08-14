@@ -251,3 +251,11 @@ class ComponentMultiMappingError(ModuleException):
         return "Component prefix {} should be used for only one module, but another".format(self.component)
 
 
+# add
+class DeployComponentNotExistError(BaseDSLException):
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self):
+        return "components {} not exist in training dsl, can not deploy!!!".format(self.msg)
+

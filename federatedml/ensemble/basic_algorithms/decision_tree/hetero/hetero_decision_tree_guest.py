@@ -1,7 +1,7 @@
 import copy
 import functools
 
-from fate_arch import session
+from arch.api import session
 from fate_arch.common import log
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.decision_tree import DecisionTree
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.node import Node
@@ -239,9 +239,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
             merge_infos.append(splitinfo)
 
-        splitinfo_guest_host_table = session.default().computing.parallelize(merge_infos,
-                                                                             include_key=False,
-                                                                             partition=self.data_bin._partitions)
+        splitinfo_guest_host_table = session.parallelize(merge_infos,
+                                                         include_key=False,
+                                                         partition=self.data_bin.partitions)
 
         best_splitinfo_table = splitinfo_guest_host_table.mapValues(self.find_best_split_guest_and_host)
 
@@ -250,7 +250,6 @@ class HeteroDecisionTreeGuest(DecisionTree):
             best_splitinfos[_] = best_splitinfo
 
         return best_splitinfos
-
 
     def federated_find_split(self, dep=-1, batch=-1, idx=-1):
 
@@ -267,10 +266,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 batch_splitinfo_host = [encrypted_splitinfo[k: k + consts.MAX_FEDERATED_NODES] for encrypted_splitinfo
                                         in encrypted_splitinfo_host[i]]
 
-                encrypted_splitinfo_host_table = \
-                    session.default().computing.parallelize(zip(self.cur_to_split_nodes, batch_splitinfo_host),
-                                                            include_key=False,
-                                                            partition=self.data_bin._partitions)
+                encrypted_splitinfo_host_table = session.parallelize(zip(self.cur_to_split_nodes, batch_splitinfo_host),
+                                                                     include_key=False,
+                                                                     partition=self.data_bin.partitions)
 
                 splitinfos = encrypted_splitinfo_host_table.mapValues(self.find_host_split).collect()
 
@@ -290,7 +288,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
             self.sync_federated_best_splitinfo_host(best_splitinfo_host, dep, batch, i)
 
-    def initialize_root_node(self, ):
+    def initialize_root_node(self,):
         root_sum_grad, root_sum_hess = self.get_grad_hess_sum(self.grad_and_hess)
         root_node = Node(id=0, sitename=self.sitename, sum_grad=root_sum_grad, sum_hess=root_sum_hess,
                          weight=self.splitter.node_weight(root_sum_grad, root_sum_hess))
@@ -300,7 +298,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         acc_histograms = self.get_local_histograms(node_map, ret='tensor')
         best_split_info_guest = self.splitter.find_split(acc_histograms, self.valid_features,
-                                                         self.data_bin._partitions, self.sitename,
+                                                         self.data_bin.partitions, self.sitename,
                                                          self.use_missing, self.zero_as_missing)
         LOGGER.debug('computing local splits done')
 
@@ -368,9 +366,9 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
     @staticmethod
     def assign_a_instance(value, tree_=None, decoder=None, sitename=consts.GUEST,
-                          split_maskdict=None, bin_sparse_points=None,
-                          use_missing=False, zero_as_missing=False,
-                          missing_dir_maskdict=None):
+                      split_maskdict=None, bin_sparse_points=None,
+                      use_missing=False, zero_as_missing=False,
+                      missing_dir_maskdict=None):
 
         unleaf_state, nodeid = value[1]
 
@@ -454,7 +452,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
                 self.inst2node_idx = self.inst2node_idx.join(dispatch_node_host_result[idx],
                                                              lambda unleaf_state_nodeid1, unleaf_state_nodeid2:
                                                              unleaf_state_nodeid1 if len(
-                                                                 unleaf_state_nodeid1) == 2 else unleaf_state_nodeid2)
+                                                             unleaf_state_nodeid1) == 2 else unleaf_state_nodeid2)
 
         self.inst2node_idx = self.inst2node_idx.union(dispatch_guest_result)
 
@@ -486,10 +484,11 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
             self.sync_node_positions(dep)
             self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda data_inst, dispatch_info: (
-                data_inst, dispatch_info))
+                                                                      data_inst, dispatch_info))
 
             split_info = []
             for batch_idx, i in enumerate(range(0, len(self.cur_layer_nodes), self.max_split_nodes)):
+
                 self.cur_to_split_nodes = self.cur_layer_nodes[i: i + self.max_split_nodes]
                 cur_splitinfos = self.compute_best_splits(self.get_node_map(self.cur_to_split_nodes), dep, batch_idx, )
                 split_info.extend(cur_splitinfos)
@@ -679,3 +678,4 @@ class HeteroDecisionTreeGuest(DecisionTree):
 
         self.split_maskdict = dict(model_param.split_maskdict)
         self.missing_dir_maskdict = dict(model_param.missing_dir_maskdict)
+
