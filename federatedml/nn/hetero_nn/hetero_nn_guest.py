@@ -186,6 +186,11 @@ class HeteroNNGuest(HeteroNNBase):
         self._summary_buf["best_iteration"] = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
         self._summary_buf["history_loss"] = self.history_loss
 
+        if self.validation_strategy:
+            validation_summary = self.validation_strategy.summary()
+            if validation_summary:
+                self._summary_buf["validation_metrics"] = validation_summary
+
         return self._summary_buf
 
     def _get_model_meta(self):
