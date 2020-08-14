@@ -16,11 +16,11 @@
 
 
 import operator
+
 import peewee
 from fate_arch.common.log import getLogger
-from fate_arch.storage._types import StorageTableMetaType
 from fate_arch.common.base_utils import current_timestamp
-from fate_arch.storage.metastore.db_models import DB, StorageTableMeta
+from fate_arch.storage.metastore.db_models import DB, StorageTableMetaModel
 from fate_arch.abc import StorageTableABC
 
 
@@ -30,29 +30,62 @@ LOGGER = getLogger()
 
 
 class StorageTableBase(StorageTableABC):
+    def __init__(self, name, namespace):
+        self._name = name
+        self._namespace = namespace
+        self._meta = StorageTableMeta(name=self._name, namespace=self._namespace)
+
     def save_as(self, name, namespace, partitions=None, schema=None, **kwargs):
         if schema:
-            self.update_metas(name=name, namespace=namespace, schema=schema, partitions=partitions)
+            self._meta.update_metas(name=name, namespace=namespace, schema=schema, partitions=partitions)
 
     def destroy(self):
         # destroy schema
-        self.destroy_metas()
+        self._meta.destroy_metas()
         # subclass method needs do: super().destroy()
 
-    def create_metas(self):
+    def get_meta(self):
+        return self._meta
+
+
+class StorageTableMeta(object):
+    def __init__(self, name, namespace):
+        self.name = name
+        self.namespace = namespace
+        self.address = None
+        self.engine = None
+        self.type = None
+        self.options = None
+        self.partitions = None
+        self.schema = None
+        self.count = None
+        self.part_of_data = None
+        self.description = None
+        self.create_time = None
+        self.update_time = None
+        self.init_meta()
+
+    def init_meta(self):
+        if not self.name or not self.namespace:
+            raise RuntimeError("name and namespace cannot be empty")
+        tables_meta = self.query_table_meta(filter_fields=dict(name=self.name, namespace=self.namespace))
+        if not tables_meta:
+            raise RuntimeError(f"can not found table meta by {self.name} and {self.namespace}")
+        table_meta = tables_meta[0]
+        for k, v in table_meta.__dict__["__data__"].items():
+            setattr(self, k.lstrip("f_"), v)
+
+    @classmethod
+    def create_metas(cls, **kwargs):
         with DB.connection_context():
-            table_meta = StorageTableMeta()
+            table_meta = StorageTableMetaModel()
             table_meta.f_create_time = current_timestamp()
-            table_meta.f_name = self.get_name()
-            table_meta.f_namespace = self.get_namespace()
-            table_meta.f_address = self.get_address().__dict__
-            table_meta.f_engine = self.get_storage_engine()
-            table_meta.f_type = self.get_storage_type()
-            table_meta.f_partitions = self.get_partitions()
-            table_meta.f_options = self.get_options()
-            table_meta.f_count = self.get_options().get("count", None)
             table_meta.f_schema = {}
             table_meta.f_part_of_data = {}
+            for k, v in kwargs.items():
+                attr_name = 'f_%s' % k
+                if hasattr(StorageTableMetaModel, attr_name):
+                    setattr(table_meta, attr_name, v)
             try:
                 rows = table_meta.save(force_insert=True)
                 if rows != 1:
@@ -66,66 +99,67 @@ class StorageTableBase(StorageTableABC):
             except Exception as e:
                 raise e
 
-    def get_metas(self, filter_fields, query_fields=None):
+    @classmethod
+    def query_table_meta(cls, filter_fields, query_fields=None):
         with DB.connection_context():
             filters = []
             querys = []
             for f_n, f_v in filter_fields.items():
                 attr_name = 'f_%s' % f_n
-                if hasattr(StorageTableMeta, attr_name):
-                    filters.append(operator.attrgetter('f_%s' % f_n)(StorageTableMeta) == f_v)
+                if hasattr(StorageTableMetaModel, attr_name):
+                    filters.append(operator.attrgetter('f_%s' % f_n)(StorageTableMetaModel) == f_v)
             for f_n in query_fields:
                 attr_name = 'f_%s' % f_n
-                if hasattr(StorageTableMeta, attr_name):
-                    querys.append(operator.attrgetter('f_%s' % f_n)(StorageTableMeta))
+                if hasattr(StorageTableMetaModel, attr_name):
+                    querys.append(operator.attrgetter('f_%s' % f_n)(StorageTableMetaModel))
             if filters:
-                tables_meta = StorageTableMeta.select(querys).where(*filters)
+                tables_meta = StorageTableMetaModel.select(querys).where(*filters)
                 return [table_meta for table_meta in tables_meta]
             else:
                 # not allow query all table
                 return []
 
-    def get_meta(self, meta_type=StorageTableMetaType.SCHEMA, name=None, namespace=None):
-        if not name and not namespace:
-            name = self.get_name()
-            namespace = self.get_namespace()
-        tables_meta = self.get_metas(filter_fields=dict(name=name, namespace=namespace), query_fields=[meta_type])
+    """
+    def get_meta(self, meta_type=StorageTableMetaType.SCHEMA):
+        tables_meta = self.query_table_meta(filter_fields=dict(name=self.name, namespace=self.namespace), query_fields=[meta_type])
         if tables_meta:
             return getattr(f"f_{meta_type}", tables_meta[0])
         else:
             return None
+    """
 
-    def update_metas(self, name=None, namespace=None, schema=None, count=None, part_of_data=None, description=None, partitions=None, **kwargs):
+    @classmethod
+    def update_metas(cls, name, namespace, schema=None, count=None, part_of_data=None, description=None, partitions=None, **kwargs):
         meta_info = {}
         for k, v in locals().items():
             if k not in ["self", "kwargs", "meta_info"] and v is not None:
                 meta_info[k] = v
         meta_info.update(kwargs)
-        meta_info["name"] = meta_info.get("name", self.get_name())
-        meta_info["namespace"] = meta_info.get("namespace", self.get_namespace())
+        meta_info["name"] = meta_info.get("name", name)
+        meta_info["namespace"] = meta_info.get("namespace", namespace)
         with DB.connection_context():
             query_filters = []
-            primary_keys = StorageTableMeta._meta.primary_key.field_names
+            primary_keys = StorageTableMetaModel._meta.primary_key.field_names
             for p_k in primary_keys:
-                query_filters.append(operator.attrgetter(p_k)(StorageTableMeta) == meta_info[p_k.lstrip("f_")])
-            tables_meta = StorageTableMeta.select().where(*query_filters)
+                query_filters.append(operator.attrgetter(p_k)(StorageTableMetaModel) == meta_info[p_k.lstrip("f_")])
+            tables_meta = StorageTableMetaModel.select().where(*query_filters)
             if tables_meta:
                 table_meta = tables_meta[0]
             else:
-                raise Exception(f"can not found the {StorageTableMeta.__class__.__name__}")
+                raise Exception(f"can not found the {StorageTableMetaModel.__class__.__name__}")
             update_filters = query_filters[:]
             update_fields = {}
             for k, v in meta_info.items():
                 attr_name = 'f_%s' % k
-                if hasattr(StorageTableMeta, attr_name) and attr_name not in primary_keys:
+                if hasattr(StorageTableMetaModel, attr_name) and attr_name not in primary_keys:
                     if k == "part_of_data":
                         if len(v) < 100:
                             tmp = table_meta.f_part_of_data[- (100 - len(v)):] + v
                         else:
                             tmp = v[:100]
-                        update_fields[operator.attrgetter(attr_name)(StorageTableMeta)] = tmp
+                        update_fields[operator.attrgetter(attr_name)(StorageTableMetaModel)] = tmp
                     else:
-                        update_fields[operator.attrgetter(attr_name)(StorageTableMeta)] = v
+                        update_fields[operator.attrgetter(attr_name)(StorageTableMetaModel)] = v
             if update_filters:
                 operate = table_meta.update(update_fields).where(*update_filters)
             else:
@@ -135,14 +169,10 @@ class StorageTableBase(StorageTableABC):
     def destroy_metas(self):
         try:
             with DB.connection_context():
-                StorageTableMeta \
+                StorageTableMetaModel \
                     .delete() \
-                    .where(StorageTableMeta.f_name == self.get_name(),
-                           StorageTableMeta.f_namespace == self.get_namespace()) \
+                    .where(StorageTableMetaModel.f_name == self.name,
+                           StorageTableMetaModel.f_namespace == self.namespace) \
                     .execute()
         except Exception as e:
-            LOGGER.error("delete_table_meta {}, {}, exception:{}.".format(self.get_namespace(), self.get_name(), e))
-
-    def get_address(self):
-        pass
-
+            raise e

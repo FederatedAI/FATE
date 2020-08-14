@@ -63,7 +63,7 @@ class Upload(object):
         partitions = self.parameters["partition"]
         if partitions <= 0 or partitions >= self.MAX_PARTITIONS:
             raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITIONS))
-        session_id = generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id)
+        session_id = generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, random_end=True)
         with storage.Session.build(session_id=session_id, storage_engine=self.parameters["storage_engine"], options=self.parameters.get("options")) as session:
             from fate_arch.storage import EggRollStorageType
             address = session.get_address(storage_engine=self.parameters["storage_engine"], address_dict={"name": name, "namespace": namespace, "storage_type": EggRollStorageType.ROLLPAIR_LMDB})
@@ -115,9 +115,9 @@ class Upload(object):
                     ControllerRemoteClient.update_job(job_info=job_info)
                     self.table.put_all(data)
                     if n == 0:
-                        self.table.update_metas(part_of_data=data)
+                        self.table.get_meta().update_metas(part_of_data=data)
                 else:
-                    self.table.update_metas(count=self.table.count(), partitions=self.parameters["partition"])
+                    self.table.get_meta().update_metas(count=self.table.count(), partitions=self.parameters["partition"])
                     count_actual = self.table.count()
                     self.tracker.log_output_data_info(data_name='upload',
                                                       table_namespace=dst_table_namespace,
@@ -134,7 +134,7 @@ class Upload(object):
 
     def save_data_header(self, header_source):
         header_source_item = header_source.split(',')
-        self.table.update_metas(schema={'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]})
+        self.table.get_meta().update_metas(schema={'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]})
 
     def get_count(self, input_file):
         with open(input_file, 'r', encoding='utf-8') as fp:

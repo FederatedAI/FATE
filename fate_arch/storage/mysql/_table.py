@@ -74,7 +74,7 @@ class StorageTable(StorageTableBase):
     def get_namespace(self):
         return self._namespace
 
-    def get_storage_engine(self):
+    def get_engine(self):
         return self._storage_engine
 
     def get_address(self):
@@ -99,7 +99,7 @@ class StorageTable(StorageTableBase):
 
     @log_elapsed
     def count(self, **kwargs):
-        return self.get_meta(meta_type='count')
+        pass
 
     def close(self):
         self.con.close()

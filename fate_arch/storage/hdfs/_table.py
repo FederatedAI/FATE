@@ -53,7 +53,7 @@ class StorageTable(StorageTableBase):
     def get_namespace(self):
         return self._namespace
 
-    def get_storage_engine(self):
+    def get_engine(self):
         return self._storage_engine
 
     def get_address(self):
@@ -73,7 +73,7 @@ class StorageTable(StorageTableBase):
             counter = counter + 1
         out.flush()
         out.close()
-        self.update_metas(count=counter)
+        self._meta.update_metas(count=counter)
 
     def collect(self, **kwargs) -> list:
         sc = SparkContext.getOrCreate()
@@ -98,11 +98,7 @@ class StorageTable(StorageTableBase):
             fs.delete(path)
 
     def count(self):
-        meta = self.get_meta(meta_type='count')
-        if meta:
-            return meta.f_count
-        else:
-            return -1
+        pass
 
     def save_as(self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs):
         super().save_as(name, namespace, partitions=partitions, schema=schema)

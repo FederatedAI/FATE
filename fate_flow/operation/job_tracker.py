@@ -162,8 +162,9 @@ class Tracker(object):
                                                  storage_engine=output_storage_engine,
                                                  partitions=partitions)
             schema = {}
+            # persistent table
             data_table.save(address, schema=schema, partitions=partitions)
-            table = storage.Session.build().get_table(name=persistent_table_name, namespace=persistent_table_namespace)
+            table_meta = storage.StorageTableMeta(name=persistent_table_name, namespace=persistent_table_namespace)
             part_of_data = []
             count = 100
             for k, v in data_table.collect():
@@ -171,31 +172,28 @@ class Tracker(object):
                 count -= 1
                 if count == 0:
                     break
-            table.update_metas(schema=schema, part_of_data=part_of_data, count=data_table.count(), partitions=partitions)
+            table_meta.update_metas(schema=schema, part_of_data=part_of_data, count=data_table.count(), partitions=partitions)
             return persistent_table_namespace, persistent_table_name
         else:
             schedule_logger(self.job_id).info('task id {} output data table is none'.format(self.task_id))
             return None, None
 
-    def get_output_data_table(self, output_data_infos, init_session=False, need_all=True, session_id=''):
+    def get_output_data_table(self, output_data_infos, need_all=True):
         """
         Get component output data table, will run in the task executor process
         :param data_name:
         :return:
         """
-        if not init_session and not session_id:
-            session_id = job_utils.generate_session_id(self.task_id, self.task_version, self.role, self.party_id)
-        data_tables = {}
+        data_tables_meta = {}
         if output_data_infos:
             for output_data_info in output_data_infos:
                 schedule_logger(self.job_id).info("Get task {} {} output table {} {}".format(output_data_info.f_task_id, output_data_info.f_task_version, output_data_info.f_table_namespace, output_data_info.f_table_name))
                 if not need_all:
-                    data_table = StorageTable(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace, data_name=output_data_info.f_data_name)
+                    data_table_meta = StorageTable(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace, data_name=output_data_info.f_data_name)
                 else:
-                    #data_table = storage.Session.build(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace).get_table(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace)
-                    data_table = storage.StorageTableBase()
-                data_tables[output_data_info.f_data_name] = data_table
-        return data_tables
+                    data_table_meta = storage.StorageTableMeta(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace)
+                data_tables_meta[output_data_info.f_data_name] = data_table_meta
+        return data_tables_meta
 
     def init_pipelined_model(self):
         self.pipelined_model.create_pipelined_model()

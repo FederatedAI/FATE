@@ -54,7 +54,7 @@ class StorageTable(StorageTableBase):
     def get_address(self):
         return self._address
 
-    def get_storage_engine(self):
+    def get_engine(self):
         return self._storage_engine
 
     def get_partitions(self):

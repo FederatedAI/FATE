@@ -17,8 +17,6 @@ import argparse
 import importlib
 import os
 import traceback
-import uuid
-
 from arch.api.utils import file_utils, log_utils
 from fate_arch.common.base_utils import current_timestamp, get_lan_ip, timestamp_to_date
 from arch.api.utils.log_utils import schedule_logger
@@ -212,8 +210,9 @@ class TaskExecutor(object):
 
     @classmethod
     def get_task_run_args(cls, job_id, role, party_id, task_id, task_version, job_args, job_parameters, task_parameters,
-                          input_dsl, filter_type=None, filter_attr=None, output_storage_engine=None):
+                          input_dsl, filter_type=None, filter_attr=None):
         task_run_args = {}
+        output_storage_engine = None
         for input_type, input_detail in input_dsl.items():
             if filter_type and input_type not in filter_type:
                 continue
@@ -227,12 +226,11 @@ class TaskExecutor(object):
                     for data_key in data_list:
                         data_key_item = data_key.split('.')
                         search_component_name, search_data_name = data_key_item[0], data_key_item[1]
-                        session_id = job_utils.generate_session_id(task_id, task_version, role, party_id)
-                        data_table = None
+                        data_table_meta = None
                         if search_component_name == 'args':
                             if job_args.get('data', {}).get(search_data_name).get('namespace', '') and job_args.get(
                                     'data', {}).get(search_data_name).get('name', ''):
-                                data_table = storage.Session.build().get_table(namespace=job_args['data'][search_data_name]['namespace'], name=job_args['data'][search_data_name]['name'])
+                                data_table_meta = storage.StorageTableMeta(name=job_args['data'][search_data_name]['name'], namespace=job_args['data'][search_data_name]['namespace'])
                         else:
                             tracker_remote_client = JobTrackerRemoteClient(job_id=job_id, role=role, party_id=party_id,
                                                                            component_name=search_component_name)
@@ -246,19 +244,22 @@ class TaskExecutor(object):
                                     data_table_infos.append(fill_db_model_object(
                                         Tracker.get_dynamic_db_model(TrackingOutputDataInfo, job_id)(),
                                         data_table_info_json))
-                                data_tables = tracker.get_output_data_table(output_data_infos=data_table_infos,
-                                                                            session_id=session_id)
-                                if data_tables:
-                                    data_table = data_tables.get(search_data_name, None)
-                        output_storage_engine.append(data_table.get_storage_engine() if data_table else None)
+                                data_tables_meta = tracker.get_output_data_table(output_data_infos=data_table_infos)
+                                if data_tables_meta:
+                                    data_table_meta = data_tables_meta.get(search_data_name, None)
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
                             search_component_name, {})
-                        if data_table:
-                            partitions = task_parameters['input_data_partition'] if task_parameters.get(
-                                'input_data_partition', 0) > 0 else data_table.get_partitions()
+                        data_table = None
+                        if data_table_meta:
+                            with storage.Session.build(session_id=job_utils.generate_session_id(task_id, task_version, role, party_id, True),
+                                                       name=data_table_meta.name, namespace=data_table_meta.namespace) as session:
+                                data_table = session.get_table(name=data_table_meta.name, namespace=data_table_meta.namespace)
+                                partitions = task_parameters['input_data_partition'] if task_parameters.get(
+                                    'input_data_partition', 0) > 0 else data_table.get_partitions()
+                            output_storage_engine = data_table.get_engine()
                             data_table = session.get_latest_opened().computing.load(
                                 data_table.get_address(),
-                                schema=data_table.get_meta(_type="schema"),
+                                schema=data_table.get_meta().schema,
                                 partitions=partitions)
                         else:
                             schedule_logger().info(
@@ -284,7 +285,7 @@ class TaskExecutor(object):
                                      model_version=job_parameters['model_version']).get_output_model(
                         model_alias=search_model_alias)
                     this_type_args[search_component_name] = models
-        return task_run_args
+        return task_run_args, output_storage_engine
 
     @classmethod
     def report_task_update_to_driver(cls, task_info):

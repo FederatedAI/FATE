@@ -115,17 +115,17 @@ def get_upload_info(jobs_run_conf):
         info = {}
         table_name = job_run_conf["table_name"][0]
         namespace = job_run_conf["namespace"][0]
-        table = StorageSessionABC.get_table(name=table_name, namespace=namespace, simple=True)
-        if table:
+        table_meta = storage.StorageTableMeta(name=table_name, namespace=namespace)
+        if table_meta:
             partition = job_run_conf["partition"][0]
             info["upload_info"] = {
                 "table_name": table_name,
                 "namespace": namespace,
                 "partition": partition,
-                'upload_count': table.count()
+                'upload_count': table_meta.count
             }
             info["notes"] = job_run_conf["notes"]
-            info["schema"] = table.get_meta(meta_type="schema")
+            info["schema"] = table_meta.schema
             data.append({job_id: info})
     return data
 

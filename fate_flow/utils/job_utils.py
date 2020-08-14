@@ -29,8 +29,7 @@ import psutil
 from fate_flow.entity.constant import JobStatus
 
 from fate_arch.common import file_utils
-from fate_arch.common.base_utils import current_timestamp
-from fate_arch.common.base_utils import json_loads, json_dumps
+from fate_arch.common.base_utils import json_loads, json_dumps, fate_uuid, current_timestamp
 from arch.api.utils.log_utils import schedule_logger
 from fate_flow.scheduler.dsl_parser import DSLParser, DSLParserV2
 from fate_flow.db.db_models import DB, Job, Task
@@ -73,8 +72,11 @@ def generate_federated_id(task_id, task_version):
     return "{}_{}".format(task_id, task_version)
 
 
-def generate_session_id(task_id, task_version, role, party_id):
-    return '{}_{}_{}_{}'.format(task_id, task_version, role, party_id)
+def generate_session_id(task_id, task_version, role, party_id, random_end=False):
+    if not random_end:
+        return '{}_{}_{}_{}'.format(task_id, task_version, role, party_id)
+    else:
+        return '{}_{}_{}_{}_{}'.format(task_id, task_version, role, party_id, fate_uuid())
 
 
 def generate_task_input_data_namespace(task_id, task_version, role, party_id):

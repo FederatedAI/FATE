@@ -53,8 +53,8 @@ class Reader(object):
             dest_table = dest_session.get_table(name=dest_table.get_name(), namespace=dest_table.get_namespace())
             data_info = {"count": dest_table.count(),
                          "partitions": dest_table.get_partitions(),
-                         "input_table_storage_engine": src_table.get_storage_engine(),
-                         "output_table_storage_engine": dest_table.get_storage_engine()}
+                         "input_table_storage_engine": src_table.get_engine(),
+                         "output_table_storage_engine": dest_table.get_engine()}
         self.tracker.set_metric_meta(metric_namespace="reader_namespace",
                                      metric_name="reader_name",
                                      metric_meta=MetricMeta(name='reader', metric_type='data_info', extra_metas=data_info))

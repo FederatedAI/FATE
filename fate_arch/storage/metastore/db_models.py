@@ -130,7 +130,7 @@ class LongTextField(TextField):
     field_type = 'LONGTEXT'
 
 
-class StorageTableMeta(DataBaseModel):
+class StorageTableMetaModel(DataBaseModel):
     f_name = CharField(max_length=100, index=True)
     f_namespace = CharField(max_length=100, index=True)
     f_address = JSONField()

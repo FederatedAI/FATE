@@ -19,11 +19,10 @@ from fate_arch.common.log import getLogger
 from fate_arch.storage._types import StorageEngine, Relationship
 from fate_arch.common.base_utils import fate_uuid
 from fate_arch.common import compatibility_utils
-from fate_arch.storage.metastore.db_models import DB, StorageTableMeta
+from fate_arch.storage.metastore.db_models import DB, StorageTableMetaModel
 from fate_arch.computing import ComputingEngine
 from fate_arch.abc import StorageSessionABC, StorageTableABC
-from fate_arch.storage._table import StorageTableBase
-from fate_arch.storage import StorageTableMetaType
+from fate_arch.storage._table import StorageTableMeta
 
 MAX_NUM = 10000
 
@@ -34,6 +33,7 @@ class Session(object):
     @classmethod
     def build(cls, session_id=None, storage_engine=None, computing_engine=None, **kwargs):
         session_id = session_id if session_id else fate_uuid()
+        # Find the storage engine type
         if storage_engine is None and kwargs.get("name") and kwargs.get("namespace"):
             storage_engine, address, partitions = StorageSessionBase.get_storage_info(name=kwargs.get("name"), namespace=kwargs.get("namespace"))
         if storage_engine is None and computing_engine is None:
@@ -41,11 +41,12 @@ class Session(object):
         if storage_engine is None and computing_engine:
             # Gets the computing engine default storage engine
             storage_engine = Relationship.CompToStore.get(computing_engine)[0]
+
         if storage_engine == StorageEngine.EGGROLL:
             from fate_arch.storage.eggroll import StorageSession
             return StorageSession(session_id=session_id, options=kwargs.get("options", {}))
         else:
-            return StorageSessionBase()
+            raise NotImplementedError(f"can not be initialized with storage engine: {storage_engine}")
 
     @classmethod
     def convert(cls, session_id, src_name, src_namespace, dest_name, dest_namespace, computing_engine: ComputingEngine = ComputingEngine.EGGROLL, force=False, **kwargs):
@@ -55,7 +56,7 @@ class Session(object):
         src_table = src_session.get_table(name=src_name, namespace=src_namespace)
         if not src_table:
             raise RuntimeError(f"can not found table name: {src_name} namespace: {src_namespace}")
-        if src_table.get_storage_engine() not in Relationship.CompToStore.get(computing_engine, []):
+        if src_table.get_engine() not in Relationship.CompToStore.get(computing_engine, []):
             dest_session_id = f"{session_id}_convert_dest"
             if computing_engine == ComputingEngine.STANDALONE:
                 pass
@@ -90,7 +91,7 @@ class Session(object):
                 data = []
         if data:
             dest_table.put_all(data)
-        dest_table.update_metas(schema=src_table.get_meta(meta_type="schema"), count=src_table.count(), part_of_data=part_of_data)
+        dest_table.get_meta().update_metas(schema=src_table.get_meta(meta_type="schema"), count=src_table.count(), part_of_data=part_of_data)
 
 
 class StorageSessionBase(StorageSessionABC):
@@ -98,18 +99,26 @@ class StorageSessionBase(StorageSessionABC):
         raise NotImplementedError()
 
     def create_table(self, address, name, namespace, partitions=1, **kwargs):
+        StorageTableMeta.create_metas(**kwargs)
         table = self.table(address=address, name=name, namespace=namespace, partitions=partitions, **kwargs)
-        table.create_metas()
+        kwargs["name"] = table.get_name()
+        kwargs["namespace"] = table.get_namespace()
+        kwargs["address"] = table.get_address().__dict__
+        kwargs["partitions"] = table.get_partitions()
+        kwargs["engine"] = table.get_engine()
+        kwargs["type"] = table.get_type()
+        kwargs["options"] = table.get_options()
+        kwargs["count"] = table.count()
         return table
 
     def get_table(self, name, namespace):
         with DB.connection_context():
-            metas = StorageTableMeta.select().where(StorageTableMeta.f_name == name,
-                                                    StorageTableMeta.f_namespace == namespace)
+            metas = StorageTableMetaModel.select().where(StorageTableMetaModel.f_name == name,
+                                                         StorageTableMetaModel.f_namespace == namespace)
             if metas:
                 meta = metas[0]
-                return self.table(address=self.get_address(storage_engine=meta.f_engine, address_dict=meta.f_address),
-                                  name=meta.f_name,
+                return self.table(name=meta.f_name,
+                                  address=self.get_address(storage_engine=meta.f_engine, address_dict=meta.f_address),
                                   namespace=meta.f_namespace,
                                   partitions=meta.f_partitions,
                                   storage_type=meta.f_type,
@@ -117,14 +126,14 @@ class StorageSessionBase(StorageSessionABC):
             else:
                 return None
 
-    def table(self, address, name, namespace, partitions, storage_type=None, options=None, **kwargs) -> StorageTableABC:
+    def table(self, name, namespace, address, partitions, storage_type=None, options=None, **kwargs) -> StorageTableABC:
         raise NotImplementedError()
 
     @classmethod
     def get_storage_info(cls, name, namespace):
         with DB.connection_context():
-            metas = StorageTableMeta.select().where(StorageTableMeta.f_name == name,
-                                                    StorageTableMeta.f_namespace == namespace)
+            metas = StorageTableMetaModel.select().where(StorageTableMetaModel.f_name == name,
+                                                         StorageTableMetaModel.f_namespace == namespace)
             if metas:
                 meta = metas[0]
                 engine = meta.f_engine

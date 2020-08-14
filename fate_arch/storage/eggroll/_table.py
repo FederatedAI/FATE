@@ -22,28 +22,24 @@ from fate_arch.storage import StorageTableBase, StorageEngine, EggRollStorageTyp
 class StorageTable(StorageTableBase):
     def __init__(self,
                  context,
+                 name,
+                 namespace,
                  address,
-                 name: str = None,
-                 namespace: str = None,
                  partitions: int = 1,
                  storage_type: EggRollStorageType = EggRollStorageType.ROLLPAIR_LMDB,
                  options=None):
+        super(StorageTable, self).__init__(name=name, namespace=namespace)
         self._context = context
         self._address = address
-        self._name = name
-        self._namespace = namespace
         self._partitions = partitions
-        self._storage_type = storage_type
+        self._type = storage_type
         self._options = options if options else {}
-        self._storage_engine = StorageEngine.EGGROLL
+        self._engine = StorageEngine.EGGROLL
 
-        if self._storage_type:
-            self._options["store_type"] = self._storage_type
+        if self._type:
+            self._options["store_type"] = self._type
         self._options["total_partitions"] = partitions
-        self._table = self._context.load(namespace=self._namespace, name=self._name, options=self._options) if self._context else None
-
-    def get_address(self):
-        return self._address
+        self._table = self._context.load(namespace=self._namespace, name=self._name, options=self._options)
 
     def get_name(self):
         return self._name
@@ -51,11 +47,14 @@ class StorageTable(StorageTableBase):
     def get_namespace(self):
         return self._namespace
 
-    def get_storage_engine(self):
-        return self._storage_engine
+    def get_address(self):
+        return self._address
 
-    def get_storage_type(self):
-        return self._storage_type
+    def get_engine(self):
+        return self._engine
+
+    def get_type(self):
+        return self._type
 
     def get_partitions(self):
         return self._table.get_partitions()
