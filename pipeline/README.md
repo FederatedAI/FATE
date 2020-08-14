@@ -50,7 +50,7 @@ pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
 ```
 
 For data sets used in different stages (e.g., train & validate) within a single component, 
-additional keywords `train_data`, `validate_data` are used to distinguish data sets.
+additional keywords `train_data`, `validate_data` and `test_data` are used to distinguish data sets.
 Also from mini demo, result from `intersection_0` and `intersection_1` are set as train and validate data input to training component, respectively.
 
 ```python
@@ -60,9 +60,9 @@ pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.d
 Another case of using keywords `train_data`, `validate_data`, and `test_data` is to select from `DataSplit` module's multiple outputs:
 
 ```python
-pipeline.add_component(hetero_linr_0, 
-                       data=Data(train_data=hetero_data_split_0.output.data.train_data,
-                                 validate_data=hetero_data_split_0.output.data.test_data))
+pipeline.add_component(hetero_linr_1, 
+                       data=Data(test_data=hetero_data_split_0.output.data.test_data),
+                       model=Model(model=hetero_linr_0))
 ```
     
 ### Model
