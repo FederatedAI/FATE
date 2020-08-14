@@ -15,7 +15,6 @@
 #
 
 
-import abc
 import operator
 import peewee
 from fate_arch.common.log import getLogger
@@ -144,6 +143,6 @@ class StorageTableBase(StorageTableABC):
         except Exception as e:
             LOGGER.error("delete_table_meta {}, {}, exception:{}.".format(self.get_namespace(), self.get_name(), e))
 
-    @abc.abstractmethod
     def get_address(self):
         pass
+

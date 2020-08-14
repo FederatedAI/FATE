@@ -44,10 +44,13 @@ class Reader(object):
                                                                                                dest_name=persistent_table_name,
                                                                                                dest_namespace=persistent_table_namespace,
                                                                                                force=True)
+        print(dest_table.get_name())
+        print(dest_table.get_namespace())
         self.tracker.log_output_data_info(data_name=component_parameters.get('output_data_name')[0] if component_parameters.get('output_data_name') else table_key,
-                                          table_namespace=persistent_table_namespace,
-                                          table_name=persistent_table_name)
+                                          table_namespace=dest_table.get_namespace(),
+                                          table_name=dest_table.get_name())
         with dest_session:
+            dest_table = dest_session.get_table(name=dest_table.get_name(), namespace=dest_table.get_namespace())
             data_info = {"count": dest_table.count(),
                          "partitions": dest_table.get_partitions(),
                          "input_table_storage_engine": src_table.get_storage_engine(),

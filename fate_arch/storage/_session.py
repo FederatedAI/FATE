@@ -35,9 +35,7 @@ class Session(object):
     def build(cls, session_id=None, storage_engine=None, computing_engine=None, **kwargs):
         session_id = session_id if session_id else fate_uuid()
         if storage_engine is None and kwargs.get("name") and kwargs.get("namespace"):
-            tables_meta = StorageTableBase().get_metas(filter_fields=dict(name=kwargs.get("name"), namespace=kwargs.get("namespace")), query_fields=[StorageTableMetaType.ENGINE])
-            if tables_meta:
-                storage_engine = tables_meta[0].f_engine
+            storage_engine, address, partitions = StorageSessionBase.get_storage_info(name=kwargs.get("name"), namespace=kwargs.get("namespace"))
         if storage_engine is None and computing_engine is None:
             computing_engine, federation_engine, federation_mode = compatibility_utils.backend_compatibility(**kwargs)
         if storage_engine is None and computing_engine:
@@ -122,7 +120,8 @@ class StorageSessionBase(StorageSessionABC):
     def table(self, address, name, namespace, partitions, storage_type=None, options=None, **kwargs) -> StorageTableABC:
         raise NotImplementedError()
 
-    def get_storage_info(self, name, namespace):
+    @classmethod
+    def get_storage_info(cls, name, namespace):
         with DB.connection_context():
             metas = StorageTableMeta.select().where(StorageTableMeta.f_name == name,
                                                     StorageTableMeta.f_namespace == namespace)
@@ -130,13 +129,14 @@ class StorageSessionBase(StorageSessionABC):
                 meta = metas[0]
                 engine = meta.f_engine
                 address_dict = meta.f_address
-                address = self.get_address(storage_engine=engine, address_dict=address_dict)
+                address = cls.get_address(storage_engine=engine, address_dict=address_dict)
                 partitions = meta.f_partitions
             else:
                 return None, None, None
         return engine, address, partitions
 
-    def get_address(self, storage_engine, address_dict):
+    @classmethod
+    def get_address(cls, storage_engine, address_dict):
         return Relationship.EngineToAddress.get(storage_engine)(*address_dict)
 
     def __enter__(self):

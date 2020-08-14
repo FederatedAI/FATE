@@ -19,7 +19,7 @@ from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 
 
-def backend_compatibility(work_mode: typing.Union[WorkMode, int] = None, backend: typing.Union[Backend, int] = None, **kwargs):
+def backend_compatibility(work_mode: typing.Union[WorkMode, int] = WorkMode.STANDALONE, backend: typing.Union[Backend, int] = Backend.EGGROLL, **kwargs):
     # Compatible with previous 1.5 versions
     if kwargs.get("computing_engine") is None or kwargs.get("federation_engine") is None or kwargs.get("federation_mode") is None:
         if work_mode is None or backend is None:

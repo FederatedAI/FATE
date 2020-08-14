@@ -19,7 +19,6 @@ from typing import List
 
 from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64
 from arch.api.utils.log_utils import schedule_logger
-from fate_arch.storage.simple._table import StorageTable
 from fate_flow.db.db_models import DB, TrackingMetric, TrackingOutputDataInfo, ComponentSummary
 from fate_flow.entity.constant import Backend
 from fate_flow.entity.metric import Metric, MetricMeta
@@ -193,10 +192,8 @@ class Tracker(object):
                 if not need_all:
                     data_table = StorageTable(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace, data_name=output_data_info.f_data_name)
                 else:
-                    data_table = get_table(job_id=session_id,
-                                           name=output_data_info.f_table_name,
-                                           namespace=output_data_info.f_table_namespace,
-                                           init_session=init_session)
+                    #data_table = storage.Session.build(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace).get_table(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace)
+                    data_table = storage.StorageTableBase()
                 data_tables[output_data_info.f_data_name] = data_table
         return data_tables
 
