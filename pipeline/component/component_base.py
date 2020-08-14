@@ -16,6 +16,8 @@
 import copy
 
 # from pipeline.backend.config import VERSION
+import typing
+
 from pipeline.utils.logger import LOGGER
 
 
@@ -51,7 +53,7 @@ class Component(object):
     def reset_name(self, name):
         self._component_name = name
 
-    def get_party_instance(self, role="all", party_id=None):
+    def get_party_instance(self, role="all", party_id=None) -> 'Component':
         if role not in ["all", "guest", "host", "arbiter"]:
             raise ValueError("Role should be one of guest/host/arbiter, if not set, default is all")
 
