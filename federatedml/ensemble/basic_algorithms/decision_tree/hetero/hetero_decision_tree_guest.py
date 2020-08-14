@@ -323,7 +323,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             sum_grad = self.cur_layer_nodes[i].sum_grad
             sum_hess = self.cur_layer_nodes[i].sum_hess
             if reach_max_depth or split_info[i].gain <= \
-                    self.min_impurity_split + consts.FLOAT_ZERO:
+                    self.min_impurity_split + consts.FLOAT_ZERO:  # if reach max_depth, only conver nodes to leaves
                 self.cur_layer_nodes[i].is_leaf = True
             else:
                 self.cur_layer_nodes[i].left_nodeid = self.tree_node_num + 1
@@ -437,11 +437,10 @@ class HeteroDecisionTreeGuest(DecisionTree):
         else:
             self.sample_weights = self.sample_weights.union(leaf)
 
-        if reach_max_depth:
+        if reach_max_depth:  # if reach max_depth only update weight samples
             return
 
         dispatch_guest_result = dispatch_guest_result.subtractByKey(leaf)
-
         dispatch_node_host_result = self.sync_dispatch_node_host(dispatch_to_host_result, dep)
 
         self.inst2node_idx = None
@@ -455,6 +454,13 @@ class HeteroDecisionTreeGuest(DecisionTree):
                                                              unleaf_state_nodeid1) == 2 else unleaf_state_nodeid2)
 
         self.inst2node_idx = self.inst2node_idx.union(dispatch_guest_result)
+
+    def assign_instance_to_leaves_and_update_weights(self):
+        # re-assign samples to leaf nodes and update weights
+        self.update_tree([], True)
+        self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda data_inst, dispatch_info: (
+            data_inst, dispatch_info))
+        self.assign_instances_to_new_node(self.max_depth, reach_max_depth=True)
 
     def convert_bin_to_real(self):
         LOGGER.info("convert tree node bins to real value")
@@ -497,10 +503,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             self.assign_instances_to_new_node(dep)
 
         if self.cur_layer_nodes:
-            self.update_tree([], True)
-            self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda data_inst, dispatch_info: (
-                data_inst, dispatch_info))
-            self.assign_instances_to_new_node(self.max_depth, reach_max_depth=True)
+            self.assign_instance_to_leaves_and_update_weights()
 
         self.convert_bin_to_real()
         self.sync_tree()
