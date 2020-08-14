@@ -90,7 +90,7 @@ def initialization(**kwargs):
         config["port"] = kwargs.get("port")
     if kwargs.get("server_conf_path") or (kwargs.get("ip") and kwargs.get("port")):
         with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "w") as fout:
-            yaml.safe_dump(config, fout)
+            yaml.dump(config, fout, Dumper=yaml.RoundTripDumper)
 
         prettify(
             {
