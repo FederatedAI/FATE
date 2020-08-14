@@ -89,6 +89,7 @@ class JobInvoker(object):
                 data = result["data"]
             except ValueError:
                 LOGGER.exception(f"job submit failed, err msg: {result}")
+                raise
                 # raise ValueError("job submit failed, err msg: {}".format(result))
 
         return job_id, data
@@ -111,6 +112,7 @@ class JobInvoker(object):
                 data = result["data"]
             except ValueError:
                 LOGGER.exception(f"job submit failed, err msg: {result}")
+                raise
                 # raise ValueError("job submit failed, err msg: {}".format(result))
 
         return job_id, data
@@ -181,6 +183,7 @@ class JobInvoker(object):
         except ValueError:
             # raise ValueError("query job result is {}, can not parse useful info".format(result))
             LOGGER.opt(exception=True).exception(f"query job result is {result}, can not parse useful info. err msg: ")
+            raise
 
     def get_output_data_table(self, job_id, cpn_name, role, party_id):
         """
@@ -249,6 +252,7 @@ class JobInvoker(object):
 
         except ValueError:
             LOGGER.exception(f"job submit failed, err msg: {result}")
+            raise
             # raise ValueError("job submit failed, err msg: {}".format(result))
         return data
 
@@ -270,6 +274,7 @@ class JobInvoker(object):
             return ret_code, ret_msg, data
         except ValueError:
             LOGGER.opt(exception=True).exception(f"query task result is {result}, can not parse useful info. err msg: ")
+            raise
             # raise ValueError("query task result is {}, can not parse useful info".format(result))
 
     def get_output_data(self, job_id, cpn_name, role, party_id, limits=None):
@@ -364,6 +369,7 @@ class JobInvoker(object):
             except ValueError:
                 # print("Can not get output data meta.")
                 LOGGER.opt(exception=True).exception(f"Cannot get output data meta. err msg: ")
+                raise
 
         # print(f"{output_meta}: {meta}")
         return meta
@@ -382,6 +388,7 @@ class JobInvoker(object):
         except:
             # print("Can not get output model, err msg is {}".format(result))
             LOGGER.opt(exception=True).exception("Cannot get output model, err msg: ")
+            raise
 
     def get_metric(self, job_id, cpn_name, role, party_id):
         result = None
@@ -397,6 +404,7 @@ class JobInvoker(object):
         except:
             # print("Can not get output model, err msg is {}".format(result))
             LOGGER.opt(exception=True).exception("Cannot get ouput model, err msg: ")
+            raise
 
 
     def get_summary(self, job_id, cpn_name, role, party_id):
@@ -413,6 +421,7 @@ class JobInvoker(object):
         except:
             # print("Can not get output model, err msg is {}".format(result))
             LOGGER.opt(exception=True).exception("Cannot get output model, err msg: ")
+            raise
 
     def get_predict_dsl(self, train_dsl, cpn_list, version):
         result = None
