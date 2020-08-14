@@ -305,7 +305,7 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
             self.inst2node_idx = self.host_local_assign_instances_to_new_node()
 
         if self.cur_layer_nodes:
-            self.update_host_side_tree([], reach_max_depth=False)
+            self.update_host_side_tree([], reach_max_depth=True)
             self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
             self.host_local_assign_instances_to_new_node()
 
