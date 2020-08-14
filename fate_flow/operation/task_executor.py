@@ -150,16 +150,14 @@ class TaskExecutor(object):
             schedule_logger().info('Run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
             schedule_logger().info("Component parameters on party {}".format(component_parameters_on_party))
             schedule_logger().info("Task input dsl {}".format(task_input_dsl))
-            output_storage_engine = []
-            task_run_args = cls.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
-                                                  task_id=task_id,
-                                                  task_version=task_version,
-                                                  job_args=job_args_on_party,
-                                                  job_parameters=job_parameters,
-                                                  task_parameters=task_parameters,
-                                                  input_dsl=task_input_dsl,
-                                                  output_storage_engine=output_storage_engine
-                                                  )
+            task_run_args, output_storage_engine = cls.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
+                                                                         task_id=task_id,
+                                                                         task_version=task_version,
+                                                                         job_args=job_args_on_party,
+                                                                         job_parameters=job_parameters,
+                                                                         task_parameters=task_parameters,
+                                                                         input_dsl=task_input_dsl,
+                                                                         )
             print(task_run_args)
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
             run_object.set_tracker(tracker=tracker_remote_client)
@@ -172,7 +170,7 @@ class TaskExecutor(object):
                 data_name = task_output_dsl.get('data')[index] if task_output_dsl.get('data') else '{}'.format(index)
                 persistent_table_namespace, persistent_table_name = tracker.save_output_data(
                     data_table=output_data[index],
-                    output_storage_engine=output_storage_engine[0] if output_storage_engine else None)
+                    output_storage_engine=output_storage_engine if output_storage_engine else None)
                 if persistent_table_namespace and persistent_table_name:
                     tracker.log_output_data_info(data_name=data_name,
                                                  table_namespace=persistent_table_namespace,
@@ -230,7 +228,7 @@ class TaskExecutor(object):
                         if search_component_name == 'args':
                             if job_args.get('data', {}).get(search_data_name).get('namespace', '') and job_args.get(
                                     'data', {}).get(search_data_name).get('name', ''):
-                                data_table_meta = storage.StorageTableMeta(name=job_args['data'][search_data_name]['name'], namespace=job_args['data'][search_data_name]['namespace'])
+                                data_table_meta = storage.StorageTableMeta.build(name=job_args['data'][search_data_name]['name'], namespace=job_args['data'][search_data_name]['namespace'])
                         else:
                             tracker_remote_client = JobTrackerRemoteClient(job_id=job_id, role=role, party_id=party_id,
                                                                            component_name=search_component_name)

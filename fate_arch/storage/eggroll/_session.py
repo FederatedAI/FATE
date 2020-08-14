@@ -35,7 +35,7 @@ class StorageSession(StorageSessionBase):
         self._rpc = RollPairContext(session=self._rp_session)
         self._session_id = self._rp_session.get_session_id()
 
-    def table(self, address: AddressABC, name, namespace, partitions, storage_type: EggRollStorageType = EggRollStorageType.ROLLPAIR_LMDB, options=None, **kwargs):
+    def table(self, name, namespace, address: AddressABC, partitions, storage_type: EggRollStorageType = EggRollStorageType.ROLLPAIR_LMDB, options=None, **kwargs):
         if isinstance(address, EggRollAddress):
             if not options:
                 options = {}

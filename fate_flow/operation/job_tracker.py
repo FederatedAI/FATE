@@ -164,7 +164,7 @@ class Tracker(object):
             schema = {}
             # persistent table
             data_table.save(address, schema=schema, partitions=partitions)
-            table_meta = storage.StorageTableMeta(name=persistent_table_name, namespace=persistent_table_namespace)
+            table_meta = storage.StorageTableMeta.build(name=persistent_table_name, namespace=persistent_table_namespace)
             part_of_data = []
             count = 100
             for k, v in data_table.collect():
@@ -191,7 +191,7 @@ class Tracker(object):
                 if not need_all:
                     data_table_meta = StorageTable(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace, data_name=output_data_info.f_data_name)
                 else:
-                    data_table_meta = storage.StorageTableMeta(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace)
+                    data_table_meta = storage.StorageTableMeta.build(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace)
                 data_tables_meta[output_data_info.f_data_name] = data_table_meta
         return data_tables_meta
 

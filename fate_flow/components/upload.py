@@ -66,7 +66,7 @@ class Upload(object):
         session_id = generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, random_end=True)
         with storage.Session.build(session_id=session_id, storage_engine=self.parameters["storage_engine"], options=self.parameters.get("options")) as session:
             from fate_arch.storage import EggRollStorageType
-            address = session.get_address(storage_engine=self.parameters["storage_engine"], address_dict={"name": name, "namespace": namespace, "storage_type": EggRollStorageType.ROLLPAIR_LMDB})
+            address = storage.StorageTableMeta.create_address(storage_engine=self.parameters["storage_engine"], address_dict={"name": name, "namespace": namespace, "storage_type": EggRollStorageType.ROLLPAIR_LMDB})
             self.parameters["partitions"] = partitions
             self.parameters["name"] = name
             if self.parameters.get("destroy", False):

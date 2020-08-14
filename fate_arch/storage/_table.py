@@ -16,12 +16,14 @@
 
 
 import operator
+from typing import Iterable
 
 import peewee
 from fate_arch.common.log import getLogger
 from fate_arch.common.base_utils import current_timestamp
 from fate_arch.storage.metastore.db_models import DB, StorageTableMetaModel
-from fate_arch.abc import StorageTableABC
+from fate_arch.abc import StorageTableMetaABC, StorageTableABC, AddressABC
+from fate_arch.storage import Relationship
 
 
 MAX_NUM = 10000
@@ -33,22 +35,51 @@ class StorageTableBase(StorageTableABC):
     def __init__(self, name, namespace):
         self._name = name
         self._namespace = namespace
-        self._meta = StorageTableMeta(name=self._name, namespace=self._namespace)
-
-    def save_as(self, name, namespace, partitions=None, schema=None, **kwargs):
-        if schema:
-            self._meta.update_metas(name=name, namespace=namespace, schema=schema, partitions=partitions)
+        self._meta = None
 
     def destroy(self):
         # destroy schema
         self._meta.destroy_metas()
         # subclass method needs do: super().destroy()
 
+    def set_meta(self, meta):
+        self._meta = meta
+
     def get_meta(self):
         return self._meta
 
+    def get_name(self):
+        pass
 
-class StorageTableMeta(object):
+    def get_namespace(self):
+        pass
+
+    def get_address(self):
+        pass
+
+    def get_engine(self):
+        pass
+
+    def get_type(self):
+        pass
+
+    def get_options(self):
+        pass
+
+    def get_partitions(self):
+        pass
+
+    def put_all(self, kv_list: Iterable, **kwargs):
+        pass
+
+    def collect(self, **kwargs) -> list:
+        pass
+
+    def count(self):
+        pass
+
+
+class StorageTableMeta(StorageTableMetaABC):
     def __init__(self, name, namespace):
         self.name = name
         self.namespace = namespace
@@ -63,17 +94,20 @@ class StorageTableMeta(object):
         self.description = None
         self.create_time = None
         self.update_time = None
-        self.init_meta()
 
-    def init_meta(self):
-        if not self.name or not self.namespace:
-            raise RuntimeError("name and namespace cannot be empty")
-        tables_meta = self.query_table_meta(filter_fields=dict(name=self.name, namespace=self.namespace))
+    @classmethod
+    def build(cls, name, namespace):
+        if not name or not namespace:
+            return
+        tables_meta = cls.query_table_meta(filter_fields=dict(name=name, namespace=namespace))
         if not tables_meta:
-            raise RuntimeError(f"can not found table meta by {self.name} and {self.namespace}")
+            return
+        instance = StorageTableMeta(name=name, namespace=namespace)
         table_meta = tables_meta[0]
         for k, v in table_meta.__dict__["__data__"].items():
-            setattr(self, k.lstrip("f_"), v)
+            setattr(instance, k.lstrip("f_"), v)
+        instance.address = instance.create_address(storage_engine=instance.engine, address_dict=instance.address)
+        return instance
 
     @classmethod
     def create_metas(cls, **kwargs):
@@ -85,7 +119,7 @@ class StorageTableMeta(object):
             for k, v in kwargs.items():
                 attr_name = 'f_%s' % k
                 if hasattr(StorageTableMetaModel, attr_name):
-                    setattr(table_meta, attr_name, v)
+                    setattr(table_meta, attr_name, v if not issubclass(type(v), AddressABC) else v.__dict__)
             try:
                 rows = table_meta.save(force_insert=True)
                 if rows != 1:
@@ -108,12 +142,16 @@ class StorageTableMeta(object):
                 attr_name = 'f_%s' % f_n
                 if hasattr(StorageTableMetaModel, attr_name):
                     filters.append(operator.attrgetter('f_%s' % f_n)(StorageTableMetaModel) == f_v)
-            for f_n in query_fields:
-                attr_name = 'f_%s' % f_n
-                if hasattr(StorageTableMetaModel, attr_name):
-                    querys.append(operator.attrgetter('f_%s' % f_n)(StorageTableMetaModel))
+            if query_fields:
+                for f_n in query_fields:
+                    attr_name = 'f_%s' % f_n
+                    if hasattr(StorageTableMetaModel, attr_name):
+                        querys.append(operator.attrgetter('f_%s' % f_n)(StorageTableMetaModel))
             if filters:
-                tables_meta = StorageTableMetaModel.select(querys).where(*filters)
+                if querys:
+                    tables_meta = StorageTableMetaModel.select(querys).where(*filters)
+                else:
+                    tables_meta = StorageTableMetaModel.select().where(*filters)
                 return [table_meta for table_meta in tables_meta]
             else:
                 # not allow query all table
@@ -128,15 +166,14 @@ class StorageTableMeta(object):
             return None
     """
 
-    @classmethod
-    def update_metas(cls, name, namespace, schema=None, count=None, part_of_data=None, description=None, partitions=None, **kwargs):
+    def update_metas(self, schema=None, count=None, part_of_data=None, description=None, partitions=None, **kwargs):
         meta_info = {}
         for k, v in locals().items():
             if k not in ["self", "kwargs", "meta_info"] and v is not None:
                 meta_info[k] = v
         meta_info.update(kwargs)
-        meta_info["name"] = meta_info.get("name", name)
-        meta_info["namespace"] = meta_info.get("namespace", namespace)
+        meta_info["name"] = meta_info.get("name", self.name)
+        meta_info["namespace"] = meta_info.get("namespace", self.namespace)
         with DB.connection_context():
             query_filters = []
             primary_keys = StorageTableMetaModel._meta.primary_key.field_names
@@ -176,3 +213,7 @@ class StorageTableMeta(object):
                     .execute()
         except Exception as e:
             raise e
+
+    @classmethod
+    def create_address(cls, storage_engine, address_dict):
+        return Relationship.EngineToAddress.get(storage_engine)(**address_dict)

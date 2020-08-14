@@ -20,7 +20,6 @@ from flask import Flask, request
 
 from fate_arch.storage import StorageEngine
 from fate_flow.entity.constant import StatusSet
-from fate_arch.abc import StorageSessionABC
 from fate_arch import storage
 from fate_flow.settings import stat_logger, USE_LOCAL_DATA, WORK_MODE
 from fate_flow.utils.api_utils import get_json_result
@@ -70,14 +69,14 @@ def download_upload(access_module):
         data['namespace'] = job_config["namespace"]
         if WORK_MODE != 0:
             job_config["storage_engine"] = job_config.get("storage_engine", StorageEngine.EGGROLL)
-            data_table = storage.Session.build(**job_config).get_table(name=job_config["table_name"], namespace=job_config["namespace"])
-            if data_table and job_config.get('drop', 2) == 2:
+            data_table_meta = storage.StorageTableMeta.build(name=job_config["table_name"], namespace=job_config["namespace"])
+            if data_table_meta and job_config.get('drop', 2) == 2:
                 return get_json_result(retcode=100,
                                        retmsg='The data table already exists.'
                                               'If you still want to continue uploading, please add the parameter -drop.'
                                               ' 0 means not to delete and continue uploading, '
                                               '1 means to upload again after deleting the table')
-            elif data_table and job_config.get('drop', 2) == 1:
+            elif data_table_meta and job_config.get('drop', 2) == 1:
                 job_config["destroy"] = True
     job_dsl, job_runtime_conf = gen_data_access_job_config(job_config, access_module)
     job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(
@@ -115,7 +114,7 @@ def get_upload_info(jobs_run_conf):
         info = {}
         table_name = job_run_conf["table_name"][0]
         namespace = job_run_conf["namespace"][0]
-        table_meta = storage.StorageTableMeta(name=table_name, namespace=namespace)
+        table_meta = storage.StorageTableMeta.build(name=table_name, namespace=namespace)
         if table_meta:
             partition = job_run_conf["partition"][0]
             info["upload_info"] = {

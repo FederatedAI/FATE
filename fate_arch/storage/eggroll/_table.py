@@ -74,17 +74,5 @@ class StorageTable(StorageTableBase):
         return self._table.destroy()
 
     @log_elapsed
-    def save_as(self, name=None, namespace=None, partitions=None, schema=None, **kwargs):
-        super().save_as(name, namespace, schema=schema, partitions=partitions)
-
-        options = kwargs.get("options", {})
-        store_type = options.get("store_type", EggRollStorageType.ROLLPAIR_LMDB)
-        options["store_type"] = store_type
-
-        if partitions is None:
-            partitions = self._partitions
-        self._table.save_as(name=name, namespace=namespace, partition=partitions, options=options).disable_gc()
-
-    @log_elapsed
     def count(self, **kwargs):
         return self._table.count()

@@ -18,11 +18,28 @@
 import abc
 from typing import Iterable
 from fate_arch.common.log import getLogger
-from fate_arch.abc import AddressABC
 
 MAX_NUM = 10000
 
 LOGGER = getLogger()
+
+
+class StorageTableMetaABC(metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def create_metas(self, **kwargs):
+        ...
+
+    @abc.abstractmethod
+    def query_table_meta(self, filter_fields, query_fields=None):
+        ...
+
+    @abc.abstractmethod
+    def update_metas(self, name, namespace, schema=None, count=None, part_of_data=None, description=None, partitions=None, **kwargs):
+        ...
+
+    @abc.abstractmethod
+    def destroy_metas(self):
+        ...
 
 
 class StorageTableABC(metaclass=abc.ABCMeta):
@@ -58,7 +75,11 @@ class StorageTableABC(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def get_meta(self):
+    def set_meta(self, meta: StorageTableMetaABC):
+        ...
+
+    @abc.abstractmethod
+    def get_meta(self) -> StorageTableMetaABC:
         ...
 
     @abc.abstractmethod
@@ -101,10 +122,6 @@ class StorageTableABC(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def save_as(self, name, namespace, partition=None, schema=None, **kwargs):
-        pass
-
-    @abc.abstractmethod
     def destroy(self):
         ...
 
@@ -123,10 +140,6 @@ class StorageSessionABC(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def get_address(self, storage_engine, address_dict) -> AddressABC:
-        pass
-
-    @abc.abstractmethod
     def stop(self):
         pass
 
@@ -135,27 +148,3 @@ class StorageSessionABC(metaclass=abc.ABCMeta):
         pass
 
 
-class StorageTableMetaABC(metaclass=abc.ABCMeta):
-    @abc.abstractmethod
-    def init_meta(self):
-        ...
-
-    @abc.abstractmethod
-    def create_metas(self, **kwargs):
-        ...
-
-    @abc.abstractmethod
-    def query_table_meta(self, filter_fields, query_fields=None):
-        ...
-
-    @abc.abstractmethod
-    def get_meta(self):
-        ...
-
-    @abc.abstractmethod
-    def update_metas(self, name, namespace, schema=None, count=None, part_of_data=None, description=None, partitions=None, **kwargs):
-        ...
-
-    @abc.abstractmethod
-    def destroy_metas(self):
-        ...
