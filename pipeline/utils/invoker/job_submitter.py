@@ -173,7 +173,7 @@ class JobInvoker(object):
         party_id = str(party_id)
         result = self.client.job.query(job_id=job_id, role=role, party_id=party_id)
         try:
-            if 'retcode' not in result:
+            if 'retcode' not in result or result["retcode"] != 0:
                 raise ValueError("can not query_job")
 
             ret_code = result["retcode"]
