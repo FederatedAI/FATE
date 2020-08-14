@@ -14,11 +14,12 @@
 #  limitations under the License.
 #
 
+
 from pipeline.component.hetero_pearson import HeteroPearson
 from pipeline.demo.hetero_pearson._common_component import run_pipeline, get_config
 
 if __name__ == "__main__":
-    hetero_pearson = HeteroPearson(name="hetero_pearson_0", column_indexes=-1)
+    hetero_pearson = HeteroPearson(name="hetero_pearson_0", column_indexes=-1, cross_parties=False)
     pipeline = run_pipeline(config=get_config(),
                             guest_data={"name": "breast_hetero_guest", "namespace": "experiment"},
                             host_data={"name": "breast_hetero_host", "namespace": "experiment"},
