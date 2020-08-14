@@ -69,7 +69,13 @@ def access_server(method, ctx, postfix, json=None, echo=True, **kwargs):
             response = {'retcode': 100, 'retmsg': str(e),
                         'traceback': traceback.format_exception(exc_type, exc_value, exc_traceback_obj)}
             if 'Connection refused' in str(e):
-                response['retmsg'] = 'Connection refused, Please check if the fate flow service is started'
+                response['retmsg'] = 'Connection refused. Please check if the fate flow service is started'
+                del response['traceback']
+            if 'Connection aborted' in str(e):
+                response['retmsg'] = 'Connection aborted. Please make sure that the address of fate flow server ' \
+                                     'is configured correctly. The configuration file path is: ' \
+                                     '{}.'.format(os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                                                  os.pardir, os.pardir, 'settings.yaml')))
                 del response['traceback']
             if echo:
                 prettify(response.json() if isinstance(response, requests.models.Response) else response)
@@ -79,7 +85,11 @@ def access_server(method, ctx, postfix, json=None, echo=True, **kwargs):
     else:
         prettify({
             'retcode': 100,
-            'retmsg': "Fate flow CLI has not been initialized yet, please initialize it before using."
+            'retmsg': "Fate flow CLI has not been initialized yet or configured incorrectly. "
+                      "Please initialize it before using CLI at the first time. And make sure "
+                      "the address of fate flow server is configured correctly. The configuration "
+                      "file path is: {}.".format(os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                                                 os.pardir, os.pardir, 'settings.yaml')))
         })
 
 
