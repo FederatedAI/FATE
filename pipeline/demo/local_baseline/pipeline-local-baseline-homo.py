@@ -85,9 +85,10 @@ def main(config="../config.yaml"):
     print(pipeline.get_component("local_baseline_0").get_model_param())
     print(pipeline.get_component("local_baseline_0").get_summary())
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("PIPELINE DEMO")
-    parser.add_argument("-config", default="./config.yaml", type=str,
+    parser.add_argument("-config", type=str,
                         help="config file")
     args = parser.parse_args()
     if args.config is not None:

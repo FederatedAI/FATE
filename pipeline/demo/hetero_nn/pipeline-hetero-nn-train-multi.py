@@ -15,8 +15,10 @@
 #
 
 import argparse
+
 from tensorflow.keras import optimizers
 from tensorflow.keras.layers import Dense
+
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
 from pipeline.component.evaluation import Evaluation
@@ -78,7 +80,7 @@ def main(config="../config.yaml"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("PIPELINE DEMO")
-    parser.add_argument("-config", default="./config.yaml", type=str,
+    parser.add_argument("-config", type=str,
                         help="config file")
     args = parser.parse_args()
     if args.config is not None:

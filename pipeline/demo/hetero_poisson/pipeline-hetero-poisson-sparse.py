@@ -76,7 +76,7 @@ def main(config="../config.yaml"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("PIPELINE DEMO")
-    parser.add_argument("-config", default="./config.yaml", type=str,
+    parser.add_argument("-config", type=str,
                         help="config file")
     args = parser.parse_args()
     if args.config is not None:

@@ -17,7 +17,6 @@
 import argparse
 import contextlib
 import importlib
-import sys
 import tempfile
 import time
 from pathlib import Path
@@ -98,9 +97,9 @@ def _add_logger(name):
     simple_log_format = '<green>[{time:HH:mm:ss}]</green><level>{message}</level>'
     log_format = '<green>{time:YYYY-MM-DD HH:mm:ss}</green> | ' \
                  '<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
-    loguru.logger.add(sys.stderr, level="INFO", colorize=True, format=simple_log_format)
-    # loguru.logger.add(f"{path.joinpath('INFO.log')}", level="INFO", format=log_format)
-    # loguru.logger.add(f"{path.joinpath('INFO.log')}", level="DEBUG", format=log_format)
+    # loguru.logger.add(sys.stderr, level="INFO", colorize=True, format=simple_log_format)
+    loguru.logger.add(f"{path.joinpath('INFO.log')}", level="INFO", format=log_format)
+    loguru.logger.add(f"{path.joinpath('INFO.log')}", level="DEBUG", format=log_format)
 
 
 def _find_demo_files(path):
