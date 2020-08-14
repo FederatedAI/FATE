@@ -14,14 +14,17 @@
 #  limitations under the License.
 #
 import copy
-from pipeline.backend.config import VERSION
+
+# from pipeline.backend.config import VERSION
+from pipeline.utils.logger import LOGGER
 
 
 class Component(object):
     __instance = {}
 
     def __init__(self, *args, **kwargs):
-        print ("kwargs : ", kwargs)
+        #print ("kwargs : ", kwargs)
+        LOGGER.debug(f"kwargs: {kwargs}")
         if "name" in kwargs:
             self._component_name = kwargs["name"]
         self.__party_instance = {}
@@ -42,7 +45,8 @@ class Component(object):
 
     def set_name(self, idx):
         self._component_name = self.__class__.__name__.lower() + "_" + str(idx)
-        print("enter set name func", self._component_name)
+        #print("enter set name func", self._component_name)
+        LOGGER.debug(f"enter set name func {self._component_name}")
 
     def reset_name(self, name):
         self._component_name = name
@@ -80,14 +84,16 @@ class Component(object):
             self._decrease_instance_count()
 
             self.__party_instance[role]["party"][party_key] = party_instance
-            print ("enter init")
+            # print ("enter init")
+            LOGGER.debug(f"enter init")
 
         return self.__party_instance[role]["party"][party_key]
 
     @classmethod
     def _decrease_instance_count(cls):
         cls.__instance[cls.__name__.lower()] -= 1
-        print ("decrease instance count")
+        # print ("decrease instance count")
+        LOGGER.debug(f"decrease instance count")
 
     @property
     def name(self):
@@ -106,7 +112,8 @@ class Component(object):
                 del new_kwargs[attr]
 
         for attr in new_kwargs:
-            print ("key {}, value {} not use".format(attr, new_kwargs[attr]))
+            # print ("key {}, value {} not use".format(attr, new_kwargs[attr]))
+            LOGGER.warning(f"key {attr}, value {new_kwargs[attr]} not use")
 
         self._role_parameter_keywords |= set(kwargs.keys())
 
@@ -213,7 +220,8 @@ class Component(object):
 
                 role_param_conf[role][party_key][self._component_name] = party_inst.get_algorithm_param()
 
-        print ("role_param_conf {}".format(role_param_conf))
+        #print ("role_param_conf {}".format(role_param_conf))
+        LOGGER.debug(f"role_param_conf {role_param_conf}")
         return role_param_conf
 
     @classmethod

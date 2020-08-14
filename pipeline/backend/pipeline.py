@@ -29,6 +29,7 @@ from pipeline.interface.data import Data
 from pipeline.interface.model import Model
 from pipeline.utils import tools
 from pipeline.utils.invoker.job_submitter import JobInvoker
+from pipeline.utils.logger import LOGGER
 
 
 class PipeLine(object):
@@ -242,7 +243,8 @@ class PipeLine(object):
         if not self._train_dsl:
             raise ValueError("there are no components to train")
 
-        print("train_dsl : ", self._train_dsl)
+        #print("train_dsl: ", self._train_dsl)
+        LOGGER.debug(f"train_dsl: {self._train_dsl}")
 
     def _construct_train_conf(self):
         self._train_conf["initiator"] = self._get_initiator_conf()
@@ -263,8 +265,8 @@ class PipeLine(object):
                 self._train_conf["role_parameters"] = tools.merge_dict(role_param_conf,
                                                                        self._train_conf["role_parameters"])
 
-        import pprint
-        pprint.pprint(self._train_conf)
+        #pprint.pprint(self._train_conf)
+        LOGGER.debug(f"self._train_conf: {pprint.pformat(self._train_conf)}")
         return self._train_conf
 
     def _get_job_parameters(self, job_type="train", backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, version=2):
@@ -351,7 +353,8 @@ class PipeLine(object):
     @staticmethod
     def _feed_job_parameters(conf, backend, work_mode, job_type=None, model_info=None):
         submit_conf = copy.deepcopy(conf)
-        print("submit conf' type {}".format(type(submit_conf)))
+        # print("submit conf' type {}".format(type(submit_conf)))
+        LOGGER.debug(f"submit conf type is {type(submit_conf)}")
 
         if not isinstance(work_mode, int):
             work_mode = work_mode.value
@@ -377,10 +380,12 @@ class PipeLine(object):
         if self._stage == "predict":
             raise ValueError("The pipeline is construct for predicting, can not use fit interface")
 
-        print("_train_conf {}".format(self._train_conf))
+        # print("_train_conf {}".format(self._train_conf))
+        LOGGER.debug(f"in fit, _train_conf is {self._train_conf}")
         self._set_state("fit")
         training_conf = self._feed_job_parameters(self._train_conf, backend, work_mode)
-        pprint.pprint(training_conf)
+        # pprint.pprint(training_conf)
+        LOGGER.debug(f"train_conf is: {pprint.pformat(training_conf)}")
         self._train_job_id, detail_info = self._job_invoker.submit_job(self._train_dsl, training_conf)
         self._train_board_url = detail_info["board_url"]
         self._model_info = SimpleNamespace(model_id=detail_info["model_info"]["model_id"],

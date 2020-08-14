@@ -17,13 +17,15 @@
 from federatedml.param.data_split_param import DataSplitParam
 from pipeline.component.component_base import Component
 from pipeline.interface.output import Output
+from pipeline.utils.logger import LOGGER
 
 
 class HeteroDataSplit(Component, DataSplitParam):
     def __init__(self, **kwargs):
         Component.__init__(self, **kwargs)
 
-        print (self.name)
+        # print (self.name)
+        LOGGER.debug(f"{self.name} component created")
         new_kwargs = self.erase_component_base_param(**kwargs)
 
         DataSplitParam.__init__(self, **new_kwargs)

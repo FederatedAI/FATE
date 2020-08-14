@@ -14,16 +14,19 @@
 #  limitations under the License.
 #
 
+from federatedml.param.logistic_regression_param import HeteroLogisticParam
 from pipeline.component.component_base import Component
 from pipeline.interface.output import Output
-from federatedml.param.logistic_regression_param import HeteroLogisticParam
+from pipeline.utils.logger import LOGGER
 
 
 class HeteroLR(Component, HeteroLogisticParam):
     def __init__(self, **kwargs):
         Component.__init__(self, **kwargs)
 
-        print (self.name)
+        # print (self.name)
+        LOGGER.debug(f"{self.name} component created")
+
         new_kwargs = self.erase_component_base_param(**kwargs)
 
         HeteroLogisticParam.__init__(self, **new_kwargs)

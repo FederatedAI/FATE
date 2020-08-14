@@ -79,7 +79,7 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
 
         return cur_best_split
 
-    def assign_instances_to_new_node_with_node_plan(self, dep, tree_action, mode=consts.MIX_TREE):
+    def assign_instances_to_new_node_with_node_plan(self, dep, tree_action, mode=consts.MIX_TREE, ):
 
         LOGGER.info("redispatch node of depth {}".format(dep))
         dispatch_node_method = functools.partial(self.assign_a_instance,
@@ -120,7 +120,8 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
                                                                  lambda unleaf_state_nodeid1,
                                                                         unleaf_state_nodeid2:
                                                                  unleaf_state_nodeid1 if len(
-                                                                     unleaf_state_nodeid1) == 2 else unleaf_state_nodeid2)
+                                                                     unleaf_state_nodeid1) == 2 else
+                                                                 unleaf_state_nodeid2)
             self.inst2node_idx = self.inst2node_idx.union(dispatch_guest_result)
         else:
             LOGGER.debug('skip host only inst2node_idx computation')
@@ -209,10 +210,8 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
                                                                          mode=consts.MIX_TREE)
                 split_info.extend(cur_splitinfos)
 
-            reach_max_depth = True if dep + 1 == self.max_depth else False
-
             if self.tree_type == plan.tree_type_dict['guest_feat_only']:
-                self.update_tree(split_info, reach_max_depth)
+                self.update_tree(split_info, False)
                 self.assign_instances_to_new_node_with_node_plan(dep, tree_action, host_idx)
 
         if self.tree_type == plan.tree_type_dict['host_feat_only']:
@@ -222,6 +221,8 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
             sample_pos = self.sync_sample_leaf_pos(idx=target_idx)
             self.sample_weights = self.extract_sample_weights_from_node(sample_pos)
         else:
+            if self.cur_layer_nodes:
+                self.assign_instance_to_leaves_and_update_weights()
             self.convert_bin_to_real()
 
     def layered_mode_fit(self):
@@ -260,10 +261,11 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
                                                                          mode=consts.LAYERED_TREE)
                 split_info.extend(cur_splitinfos)
 
-            reach_max_depth = True if dep + 1 == self.max_depth else False
+            self.update_tree(split_info, False)
+            self.assign_instances_to_new_node_with_node_plan(dep, tree_action, mode=consts.LAYERED_TREE,)
 
-            self.update_tree(split_info, reach_max_depth)
-            self.assign_instances_to_new_node_with_node_plan(dep, tree_action, mode=consts.LAYERED_TREE)
+        if self.cur_layer_nodes:
+            self.assign_instance_to_leaves_and_update_weights()
 
         self.convert_bin_to_real()
         self.sync_tree(idx=-1)

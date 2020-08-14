@@ -1,0 +1,28 @@
+{
+  "federatedml.transfer_variable.transfer_class.data_split_transfer_variable.DataSplitTransferVariable": {
+    "id_train": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "id_test": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    },
+    "id_validate": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    }
+  }
+}

@@ -148,3 +148,4 @@ requests_toolbelt==0.9.1
 cos-python-sdk-v5==1.8.0
 pika
 typing_extensions==3.7.4.2
+yaml==4.2
