@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
+from fate_flow.entity.constant import Backend, JobStatus, WorkMode
 
 VERSION = 2
 TIME_QUERY_FREQS = 0.01
