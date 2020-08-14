@@ -154,7 +154,7 @@ class FTLHost(FTL):
                                                                                        data_inst, guest_side=False)
         self.input_dim = self.x_shape[0]
         # cache data_loader for faster validation
-        self.cache_dataloader[(data_inst.get_name(), data_inst.get_namespace())] = data_loader
+        self.cache_dataloader[self.get_dataset_key(data_inst)] = data_loader
 
         self.partitions = data_inst.partitions
         self.initialize_nn(input_shape=self.x_shape)

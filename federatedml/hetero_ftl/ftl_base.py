@@ -299,7 +299,7 @@ class FTL(ModelBase):
 
     @staticmethod
     def get_dataset_key(data_inst):
-        return data_inst.get_name(), data_inst.get_namespace()
+        return id(data_inst)
 
     def get_model_meta(self):
 
