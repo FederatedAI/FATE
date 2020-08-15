@@ -24,3 +24,5 @@ if __name__ == "__main__":
                             guest_data={"name": "breast_hetero_guest", "namespace": "experiment"},
                             host_data={"name": "breast_hetero_host", "namespace": "experiment"},
                             hetero_pearson=hetero_pearson)
+    print(pipeline.get_component("hetero_pearson_0").get_model_param())
+    print(pipeline.get_component("hetero_pearson_0").get_summary())
