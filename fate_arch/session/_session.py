@@ -8,7 +8,6 @@ from fate_arch.common.file_utils import load_json_conf
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 from fate_arch.session._parties import PartiesInfo
-from fate_arch.storage import StorageEngine
 
 
 class Session(object):
@@ -23,21 +22,18 @@ class Session(object):
 
         if backend == Backend.EGGROLL:
             if work_mode == WorkMode.CLUSTER:
-                return Session(ComputingEngine.EGGROLL, FederationEngine.EGGROLL, StorageEngine.EGGROLL)
+                return Session(ComputingEngine.EGGROLL, FederationEngine.EGGROLL)
             else:
-                return Session(ComputingEngine.STANDALONE, FederationEngine.STANDALONE, StorageEngine.STANDALONE)
+                return Session(ComputingEngine.STANDALONE, FederationEngine.STANDALONE)
         if backend == Backend.SPARK:
-            return Session(ComputingEngine.SPARK, FederationEngine.MQ, StorageEngine.HDFS)
+            return Session(ComputingEngine.SPARK, FederationEngine.MQ)
 
     def __init__(self, computing_type: ComputingEngine,
-                 federation_type: FederationEngine,
-                 storage_type: StorageEngine):
+                 federation_type: FederationEngine):
         self._computing_type = computing_type
         self._federation_type = federation_type
-        self._storage_type = storage_type
         self._computing_session: typing.Optional[CSessionABC] = None
         self._federation_session: typing.Optional[FederationABC] = None
-        self._storage_session = None
         self._parties_info: typing.Optional[PartiesInfo] = None
         self._session_id = str(uuid.uuid1())
 
@@ -157,9 +153,6 @@ class Session(object):
 
         raise RuntimeError(f"{self._federation_type} not supported")
 
-    def init_storage(self, storage_type: StorageEngine = FederationEngine.EGGROLL):
-        pass
-
     @property
     def computing(self) -> CSessionABC:
         return self._computing_session
@@ -167,10 +160,6 @@ class Session(object):
     @property
     def federation(self) -> FederationABC:
         return self._federation_session
-
-    @property
-    def storage(self):
-        return self._storage_session
 
     @property
     def parties(self):
@@ -183,10 +172,6 @@ class Session(object):
     @property
     def is_federation_valid(self):
         return self._federation_session is not None
-
-    @property
-    def is_storage_valid(self):
-        return self._storage_session is not None
 
 
 class _RuntimeSessionEnvironment(object):
