@@ -51,7 +51,11 @@ class StatusCode(object):
 class LogPath(object):
     @classmethod
     def log_directory(cls):
-        log_directory = Path(os.environ.get("FATE_PIPELINE_LOG", Path(__file__).parent.parent.joinpath("logs")))
+        log_directory = os.environ.get("FATE_PIPELINE_LOG", "")
+        if log_directory:
+            log_directory = Path(log_directory).resolve()
+        else:
+            log_directory = Path(__file__).parent.parent.joinpath("logs")
         try:
             log_directory.mkdir(parents=True, exist_ok=True)
         except Exception as e:
