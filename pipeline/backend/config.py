@@ -15,10 +15,10 @@
 #
 
 import os
+from pathlib import Path
 
 from fate_arch.common import file_utils
 from fate_flow.entity.constant import Backend, JobStatus, WorkMode
-
 
 VERSION = 2
 TIME_QUERY_FREQS = 0.01
@@ -51,8 +51,11 @@ class StatusCode(object):
 class LogPath(object):
     @classmethod
     def log_directory(cls):
-        pipeline_directory = os.path.join(file_utils.get_project_base_directory(), 'pipeline')
-        log_directory = os.path.join(pipeline_directory, 'logs')
+        log_directory = Path(os.environ.get("FATE_PIPELINE_LOG", Path(__file__).parent.parent.joinpath("logs")))
+        try:
+            log_directory.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            raise RuntimeError(f"can't create log directory for pipeline: {log_directory}") from e
         return log_directory
 
     DEBUG = 'DEBUG.log'
