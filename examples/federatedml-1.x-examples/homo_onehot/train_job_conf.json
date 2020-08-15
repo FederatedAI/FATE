@@ -27,12 +27,7 @@
     	        "with_label": [true],
         	    "label_name": ["target"],
             	"label_type": ["int"],
-            	"output_format": ["dense"]
-        	},
-        	"dataio_1":{
-    	        "with_label": [true],
-        	    "label_name": ["target"],
-            	"label_type": ["int"],
+                "data_type": ["str"],
             	"output_format": ["dense"]
         	}
         },
@@ -51,10 +46,8 @@
     	        "with_label": [true],
         	    "label_name": ["target"],
             	"label_type": ["int"],
+                "data_type": ["str"],
             	"output_format": ["dense"]
-        	}, 
-        	"dataio_1":{
-    	        "need_run": [false]
         	},
             "evaluation_0": {
               "need_run": [false]
