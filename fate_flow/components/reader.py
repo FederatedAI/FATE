@@ -35,7 +35,6 @@ class Reader(object):
 
     def run(self, component_parameters=None, args=None):
         self.parameters = component_parameters["ReaderParam"]
-        session_id = generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, random_end=True)
         table_key = [key for key in self.parameters.keys()][0]
         persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(self.task_id), uuid.uuid1().hex
         src_table_meta, dest_table_address, dest_table_engine = storage.Session.convert(src_name=self.parameters[table_key]['name'],
@@ -44,7 +43,8 @@ class Reader(object):
                                                                                         dest_namespace=persistent_table_namespace,
                                                                                         force=True)
         if dest_table_address:
-            with storage.Session.build(session_id=session_id, storage_engine=dest_table_engine) as dest_session:
+            with storage.Session.build(session_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage"),
+                                       storage_engine=dest_table_engine) as dest_session:
                 dest_table = dest_session.create_table(address=dest_table_address, name=persistent_table_name, namespace=persistent_table_namespace, partitions=src_table_meta.partitions)
                 dest_table.count()
                 dest_table_meta = dest_table.get_meta()

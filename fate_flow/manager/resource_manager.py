@@ -21,6 +21,24 @@ from fate_flow.utils import job_utils
 
 class ResourceManager(object):
     @classmethod
+    def apply_for_resource_to_job(cls, job_id, role, party_id):
+        return cls.resource_for_job(job_id=job_id, role=role, party_id=party_id, operation_type="apply")
+
+    @classmethod
+    def return_resource(cls, job_id, role, party_id):
+        pass
+
+    @classmethod
+    def resource_for_job(cls, job_id, role, party_id, operation_type):
+        dsl, runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id,
+                                                                                role=role,
+                                                                                party_id=party_id)
+        task_parallelism = runtime_conf["job_parameters"]["task_parallelism"]
+        processors_per_task = runtime_conf["job_parameters"]["processors_per_task"]
+        cores = task_parallelism * processors_per_task
+        return True, cores
+
+    @classmethod
     def apply_for_resource_to_task(cls, task_info):
         return ResourceManager.resource_for_task(task_info=task_info, operation_type="apply")
 

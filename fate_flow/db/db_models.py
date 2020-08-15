@@ -17,7 +17,6 @@ import datetime
 import inspect
 import os
 import sys
-import json
 
 import __main__
 from peewee import (Model, CharField, IntegerField, BigIntegerField,
@@ -170,32 +169,9 @@ class Job(DataBaseModel):
         primary_key = CompositeKey('f_job_id', 'f_role', 'f_party_id')
 
 
-class TaskSet(DataBaseModel):
-    # multi-party common configuration
-    f_job_id = CharField(max_length=25)
-    f_task_set_id = BigIntegerField()
-    f_initiator_role = CharField(max_length=50, index=True)
-    f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
-    f_status = CharField(max_length=50)
-    f_status_level = BigIntegerField()
-    # this party configuration
-    f_role = CharField(max_length=50, index=True)
-    f_party_id = CharField(max_length=10, index=True)
-    f_create_time = BigIntegerField()
-    f_update_time = BigIntegerField(null=True)
-    f_start_time = BigIntegerField(null=True)
-    f_end_time = BigIntegerField(null=True)
-    f_elapsed = BigIntegerField(null=True)
-
-    class Meta:
-        db_table = "t_task_set"
-        primary_key = CompositeKey('f_job_id', 'f_task_set_id', 'f_role', 'f_party_id')
-
-
 class Task(DataBaseModel):
     # multi-party common configuration
     f_job_id = CharField(max_length=25)
-    #f_task_set_id = BigIntegerField()
     f_component_name = TextField()
     f_task_id = CharField(max_length=100)
     f_task_version = BigIntegerField()

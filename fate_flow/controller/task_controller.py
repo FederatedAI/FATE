@@ -19,9 +19,9 @@ from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import Task
 from fate_flow.operation.task_executor import TaskExecutor
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
-from fate_flow.entity.constant import JobStatus, TaskSetStatus, TaskStatus, EndStatus
+from fate_flow.entity.constant import TaskStatus, EndStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.utils import job_utils, job_controller_utils
+from fate_flow.utils import job_utils
 import os
 from fate_flow.operation.job_saver import JobSaver
 from fate_arch.common.base_utils import json_dumps
@@ -69,7 +69,8 @@ class TaskController(object):
 
             if backend.is_eggroll():
                 process_cmd = [
-                    'python3', sys.modules[TaskExecutor.__module__].__file__,
+                    'python3',
+                    sys.modules[TaskExecutor.__module__].__file__,
                     '-j', job_id,
                     '-n', component_name,
                     '-t', task_id,
@@ -180,7 +181,7 @@ class TaskController(object):
             schedule_logger(task.f_job_id).exception(e)
         finally:
             schedule_logger(task.f_job_id).info(
-                'Job {} task {} {} on {} {} process {} kill {}'.format(task.f_job_id, task.f_task_id,
+                'job {} task {} {} on {} {} process {} kill {}'.format(task.f_job_id, task.f_task_id,
                                                                        task.f_task_version,
                                                                        task.f_role,
                                                                        task.f_party_id,

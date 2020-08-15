@@ -69,20 +69,6 @@ def job_status(job_id, role, party_id):
     return get_json_result(retcode=0, retmsg='success')
 
 
-@manager.route('/<job_id>/<task_set_id>/<role>/<party_id>/status', methods=['POST'])
-def task_set_status(job_id, task_set_id, role, party_id):
-    task_set_info = {}
-    task_set_info.update(request.json)
-    task_set_info.update({
-        "job_id": job_id,
-        "task_set_id": task_set_id,
-        "role": role,
-        "party_id": party_id
-    })
-    JobSaver.update_task_set(task_set_info=task_set_info)
-    return get_json_result(retcode=0, retmsg='success')
-
-
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/status', methods=['POST'])
 def task_status(job_id, component_name, task_id, task_version, role, party_id):
     task_info = {}

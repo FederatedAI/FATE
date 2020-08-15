@@ -30,7 +30,7 @@ from fate_flow.utils import model_utils
 
 class Tracker(object):
     """
-    Tracker for Job/TaskSet/Task/Metric
+    Tracker for Job/Task/Metric
     """
     METRIC_DATA_PARTITION = 48
     METRIC_LIST_PARTITION = 48
@@ -39,7 +39,6 @@ class Tracker(object):
     def __init__(self, job_id: str, role: str, party_id: int,
                  model_id: str = None,
                  model_version: str = None,
-                 task_set_id: int = None,
                  component_name: str = None,
                  component_module_name: str = None,
                  task_id: str = None,
@@ -55,8 +54,6 @@ class Tracker(object):
         if self.party_model_id and self.model_version:
             self.pipelined_model = pipelined_model.PipelinedModel(model_id=self.party_model_id,
                                                                   model_version=self.model_version)
-
-        self.task_set_id = task_set_id
 
         self.component_name = component_name if component_name else self.job_virtual_component_name()
         self.module_name = component_module_name if component_module_name else self.job_virtual_component_module_name()
@@ -173,10 +170,11 @@ class Tracker(object):
             meta_info["namespace"] = persistent_table_namespace
             meta_info["address"] = address
             meta_info["partitions"] = computing_table.partitions
-            meta_info["schema"] = schema
             meta_info["engine"] = output_storage_engine
             meta_info["type"] = storage.EggRollStorageType.ROLLPAIR_LMDB
             meta_info["options"] = {}
+            meta_info["schema"] = schema
+            meta_info["part_of_data"] = part_of_data
             meta_info["count"] = table_count
             storage.StorageTableMeta.create_metas(**meta_info)
             """
@@ -190,20 +188,17 @@ class Tracker(object):
             schedule_logger(self.job_id).info('task id {} output data table is none'.format(self.task_id))
             return None, None
 
-    def get_output_data_table(self, output_data_infos, need_all=True):
+    def get_output_data_table(self, output_data_infos):
         """
         Get component output data table, will run in the task executor process
-        :param data_name:
+        :param output_data_infos:
         :return:
         """
         output_tables_meta = {}
         if output_data_infos:
             for output_data_info in output_data_infos:
                 schedule_logger(self.job_id).info("Get task {} {} output table {} {}".format(output_data_info.f_task_id, output_data_info.f_task_version, output_data_info.f_table_namespace, output_data_info.f_table_name))
-                if not need_all:
-                    data_table_meta = StorageTable(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace, data_name=output_data_info.f_data_name)
-                else:
-                    data_table_meta = storage.StorageTableMeta.build(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace)
+                data_table_meta = storage.StorageTableMeta.build(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace)
                 output_tables_meta[output_data_info.f_data_name] = data_table_meta
         return output_tables_meta
 

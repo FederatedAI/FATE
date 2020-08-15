@@ -15,28 +15,20 @@
 #
 import threading
 import time
-import sys
 
 from fate_flow.utils.authentication_utils import authentication_check
 from federatedml.protobuf.generated import pipeline_pb2
 from fate_arch.common.log import schedule_logger
-from fate_arch.common.base_utils import current_timestamp
-from fate_flow.scheduler.dsl_parser import Component
-from fate_flow.db.db_models import Task
-from fate_flow.operation.task_executor import TaskExecutor
 from fate_flow.scheduler.task_scheduler import TaskScheduler
-from fate_flow.scheduler.federated_scheduler import FederatedScheduler
-from fate_flow.entity.constant import JobStatus, TaskSetStatus, TaskStatus
+from fate_flow.entity.constant import JobStatus, TaskStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.settings import USE_AUTHENTICATION
 from fate_flow.utils import job_utils, job_controller_utils
 from fate_flow.utils.job_utils import save_job_conf, get_job_dsl_parser
-import os
 from fate_flow.operation.job_saver import JobSaver
 from fate_arch.common.base_utils import json_dumps, current_timestamp
-from fate_flow.entity.constant import Backend
-from fate_flow.controller.task_set_controller import TaskSetController
+from fate_flow.controller.task_controller import TaskController
 
 
 class JobController(object):
@@ -153,45 +145,6 @@ class JobController(object):
                     JobSaver.create_task(task_info=task_info)
 
     @classmethod
-    def initialize_job(cls, job_id, role, party_id, initiator_role, initiator_party_id, dsl_parser):
-        """
-        Parse the DAG and create TaskSet/Task
-        :param job_id:
-        :param role:
-        :param party_id:
-        :param initiator_role:
-        :param initiator_party_id:
-        :param dsl_parser:
-        :return:
-        """
-        component_map, task_sets = dsl_parser.get_dsl_hierarchical_structure()
-        for i in range(len(task_sets)):
-            task_set_info = {}
-            task_set_info["job_id"] = job_id
-            task_set_info["task_set_id"] = i
-            task_set_info["initiator_role"] = initiator_role
-            task_set_info["initiator_party_id"] = initiator_party_id
-            task_set_info["role"] = role
-            task_set_info["party_id"] = party_id
-            task_set_info["status"] = TaskSetStatus.WAITING
-            for component_name in task_sets[i]:
-                component = dsl_parser.get_component_info(component_name=component_name)
-                component_parameters = component.get_role_parameters()
-                for parameters_on_party in component_parameters.get(role, []):
-                    if parameters_on_party.get('local', {}).get('party_id') == party_id:
-                        task_info = {}
-                        task_info.update(task_set_info)
-                        task_info["component_name"] = component_name
-                        task_info["task_version"] = 0
-                        task_info["task_id"] = job_utils.generate_task_id(job_id=job_id, component_name=component_name)
-                        task_info["initiator_role"] = initiator_role
-                        task_info["initiator_party_id"] = initiator_party_id
-                        task_info["status"] = TaskStatus.WAITING
-                        task_info["party_status"] = TaskStatus.WAITING
-                        JobSaver.create_task(task_info=task_info)
-            JobSaver.create_task_set(task_set_info=task_set_info)
-
-    @classmethod
     def start_job(cls, job_id, role, party_id):
         job_info = {
             "job_id": job_id,
@@ -214,9 +167,9 @@ class JobController(object):
 
     @classmethod
     def stop_job(cls, job, stop_status):
-        task_sets = JobSaver.query_task_set(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
-        for task_set in task_sets:
-            TaskSetController.stop_task_set(task_set=task_set, stop_status=stop_status)
+        tasks = job_utils.query_task(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
+        for task in tasks:
+            TaskController.stop_task(task=task, stop_status=stop_status)
         # Job status depends on the final operation result and initiator calculate
 
     @classmethod
@@ -281,6 +234,7 @@ class JobController(object):
             schedule_logger(job_id).info('cancel waiting job successfully, job id is {}'.format(job.f_job_id))
             return True
         else:
+            schedule_logger(job_id).warning('role {} party id {} cancel waiting job failed, no find jod {}'.format(role, party_id, job_id))
             raise Exception('role {} party id {} cancel waiting job failed, no find jod {}'.format(role, party_id, job_id))
 
 

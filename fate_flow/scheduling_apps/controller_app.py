@@ -18,9 +18,7 @@ from flask import Flask, request
 
 from fate_flow.entity.constant import RetCode
 from fate_flow.controller.job_controller import JobController
-from fate_flow.controller.task_set_controller import TaskSetController
 from fate_flow.controller.task_controller import TaskController
-from fate_flow.operation.job_saver import JobSaver
 from fate_flow.settings import stat_logger
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import request_authority_certification
@@ -99,28 +97,6 @@ def cancel_job(job_id, role, party_id):
 @request_authority_certification
 def clean(job_id, role, party_id):
     JobController.clean_job(job_id=job_id, role=role, party_id=party_id, roles=request.json)
-    return get_json_result(retcode=0, retmsg='success')
-
-
-# Control API for task set
-@manager.route('/<job_id>/<task_set_id>/<role>/<party_id>/update', methods=['POST'])
-def update_task_set(job_id, task_set_id, role, party_id):
-    task_set_info = {}
-    task_set_info.update(request.json)
-    task_set_info.update({
-        "job_id": job_id,
-        "task_set_id": task_set_id,
-        "role": role,
-        "party_id": party_id
-    })
-    TaskSetController.update_task_set(task_set_info=task_set_info)
-    return get_json_result(retcode=0, retmsg='success')
-
-
-@manager.route('/<job_id>/<task_set_id>/<role>/<party_id>/stop/<stop_status>', methods=['POST'])
-def stop_task_set(job_id, task_set_id, role, party_id, stop_status):
-    for task_set in JobSaver.query_task_set(job_id=job_id, task_set_id=task_set_id, role=role, party_id=party_id):
-        TaskSetController.stop_task_set(task_set=task_set, stop_status=stop_status)
     return get_json_result(retcode=0, retmsg='success')
 
 

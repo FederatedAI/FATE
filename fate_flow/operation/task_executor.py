@@ -140,7 +140,7 @@ class TaskExecutor(object):
                 session_options = {}
 
             sess = session.Session.create(backend=RuntimeConfig.BACKEND, work_mode=RuntimeConfig.WORK_MODE)
-            computing_session_id = job_utils.generate_session_id(task_id, task_version, role, party_id)
+            computing_session_id = job_utils.generate_session_id(task_id, task_version, role, party_id, "computing")
             sess.init_computing(computing_session_id=computing_session_id, options=session_options)
             federation_session_id = job_utils.generate_federated_id(task_id, task_version)
             sess.init_federation(federation_session_id=federation_session_id,
@@ -247,7 +247,7 @@ class TaskExecutor(object):
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
                             search_component_name, {})
                         if storage_table_meta:
-                            with storage.Session.build(session_id=job_utils.generate_session_id(task_id, task_version, role, party_id, True),
+                            with storage.Session.build(session_id=job_utils.generate_session_id(task_id, task_version, role, party_id, suffix="storage"),
                                                        name=storage_table_meta.get_name(), namespace=storage_table_meta.get_namespace()) as storage_session:
                                 storage_table = storage_session.get_table(name=storage_table_meta.get_name(), namespace=storage_table_meta.get_namespace())
                                 partitions = task_parameters['input_data_partition'] if task_parameters.get(

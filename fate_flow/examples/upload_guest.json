@@ -5,6 +5,6 @@
     "work_mode": 1,
     "drop": 2,
     "backend": 0,
-    "namespace": "fate_flow_test_breast_hetero",
+    "namespace": "experiment",
     "table_name": "breast_hetero_guest"
 }

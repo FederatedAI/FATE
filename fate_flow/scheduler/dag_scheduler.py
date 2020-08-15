@@ -30,6 +30,7 @@ from fate_flow.utils import detect_utils, job_utils
 from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_log_directory
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils import model_utils
+from fate_flow.manager.resource_manager import ResourceManager
 
 
 class DAGScheduler(object):
@@ -48,8 +49,8 @@ class DAGScheduler(object):
         job_runtime_conf["job_parameters"]["federation_mode"] = federation_mode
 
         # set default parameters
-        job_runtime_conf["job_parameters"]["task_parallelism"] = job_runtime_conf["job_parameters"].get("task_parallelism", DEFAULT_TASK_PARALLELISM)
-        job_runtime_conf["job_parameters"]["processors_per_task"] = job_runtime_conf["job_parameters"].get("processors_per_task", DEFAULT_PROCESSORS_PER_TASK)
+        job_runtime_conf["job_parameters"]["task_parallelism"] = int(job_runtime_conf["job_parameters"].get("task_parallelism", DEFAULT_TASK_PARALLELISM))
+        job_runtime_conf["job_parameters"]["processors_per_task"] = int(job_runtime_conf["job_parameters"].get("processors_per_task", DEFAULT_PROCESSORS_PER_TASK))
 
         job_utils.check_pipeline_job_runtime_conf(job_runtime_conf)
         job_parameters = job_runtime_conf['job_parameters']
@@ -131,7 +132,8 @@ class DAGScheduler(object):
         job_info["start_time"] = current_timestamp()
         job_info["tag"] = 'end_waiting'
         # TODO: Apply for resources
-        job_info["resources"] = 40
+        st, cores = ResourceManager.apply_for_resource_to_job(job_id=job_id, role=initiator_role, party_id=initiator_party_id)
+        job_info["resources"] = cores
         job_info["remaining_resources"] = job_info["resources"]
         update_status = JobSaver.update_job(job_info=job_info)
         if update_status:
@@ -151,13 +153,21 @@ class DAGScheduler(object):
         task_scheduling_status_code, tasks = TaskScheduler.schedule(job=job, dsl_parser=dsl_parser)
         tasks_status = [task.f_status for task in tasks]
         new_job_status = cls.calculate_job_status(task_scheduling_status_code=task_scheduling_status_code, tasks_status=tasks_status)
+        total, finished_count = cls.calculate_job_progress(tasks_status=tasks_status)
+        new_progress = float(finished_count) / total * 100
         schedule_logger(job_id=job.f_job_id).info("Job {} status is {}, calculate by task status list: {}".format(job.f_job_id, new_job_status, tasks_status))
-        if new_job_status != job.f_status:
-            job.f_status = new_job_status
-            if EndStatus.contains(job.f_status):
-                FederatedScheduler.save_pipelined_model(job=job)
-            FederatedScheduler.sync_job(job=job, update_fields=["status"])
-            cls.update_job_on_initiator(initiator_job=job, update_fields=["status"])
+        if new_job_status != job.f_status or new_progress != job.f_progress:
+            # Make sure to update separately, because these two fields update with anti-weight logic
+            if new_progress != job.f_progress:
+                job.f_progress = new_progress
+                FederatedScheduler.sync_job(job=job, update_fields=["progress"])
+                cls.update_job_on_initiator(initiator_job=job, update_fields=["progress"])
+            if new_job_status != job.f_status:
+                job.f_status = new_job_status
+                if EndStatus.contains(job.f_status):
+                    FederatedScheduler.save_pipelined_model(job=job)
+                FederatedScheduler.sync_job(job=job, update_fields=["status"])
+                cls.update_job_on_initiator(initiator_job=job, update_fields=["status"])
         if EndStatus.contains(job.f_status):
             cls.finish(job=job, end_status=job.f_status)
         schedule_logger(job_id=job.f_job_id).info("Finish scheduling job {}".format(job.f_job_id))
@@ -204,6 +214,16 @@ class DAGScheduler(object):
                     return status
 
             raise Exception("Calculate job status failed: {}".format(tasks_status))
+
+    @classmethod
+    def calculate_job_progress(cls, tasks_status):
+        total = 0
+        finished_count = 0
+        for task_status in tasks_status:
+            total += 1
+            if EndStatus.contains(task_status):
+                finished_count += 1
+        return total, finished_count
 
     @classmethod
     def finish(cls, job, end_status):

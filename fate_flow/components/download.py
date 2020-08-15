@@ -36,7 +36,7 @@ class Download(object):
         self.parameters["local"] = component_parameters["local"]
         name, namespace = self.parameters.get("name"), self.parameters.get("namespace")
         with open(os.path.abspath(self.parameters["output_path"]), "w") as fout:
-            with storage.Session.build(session_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, True),
+            with storage.Session.build(session_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage"),
                                        name=name,
                                        namespace=namespace) as storage_session:
                 data_table = storage_session.get_table(namespace=namespace, name=name)
