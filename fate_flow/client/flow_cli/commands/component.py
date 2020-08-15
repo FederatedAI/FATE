@@ -172,8 +172,8 @@ def output_data(ctx, **kwargs):
                 response = {'retcode': 100,
                             'retmsg': 'download failed, please check if the parameters are correct'}
         else:
-            response = response.json()
-    prettify(response)
+            response = response.json
+    prettify(response.json() if isinstance(response, requests.models.Response) else response)
 
 
 @component.command("output-model", short_help="Component Output Model Command")
@@ -259,7 +259,7 @@ def download_summary(ctx, **kwargs):
                                                              config_data["output_path"])
                     }
                 else:
-                    response = response.json()
+                    response = response.json
         prettify(response.json() if isinstance(response, requests.models.Response) else response)
     else:
         access_server("post", ctx, "tracking/component/summary/download", config_data)

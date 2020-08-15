@@ -24,6 +24,7 @@ import tarfile
 import requests
 import traceback
 import configparser
+from flask import Response
 
 
 def check_config(config: typing.Dict, required_arguments: typing.List):
@@ -50,15 +51,15 @@ def prettify(response, verbose=True):
     return response
 
 
-def access_server(method, ctx, postfix, json=None, echo=True, **kwargs):
+def access_server(method, ctx, postfix, json_data=None, echo=True, **kwargs):
     if ctx.obj.get('init', False):
         try:
             url = "/".join([ctx.obj['server_url'], postfix])
             response = {}
             if method == 'get':
-                response = requests.get(url=url, json=json, **kwargs)
+                response = requests.get(url=url, json=json_data, **kwargs)
             elif method == 'post':
-                response = requests.post(url=url, json=json, **kwargs)
+                response = requests.post(url=url, json=json_data, **kwargs)
             if echo:
                 prettify(response.json() if isinstance(response, requests.models.Response) else response)
                 return
@@ -66,6 +67,10 @@ def access_server(method, ctx, postfix, json=None, echo=True, **kwargs):
                 return response
         except Exception as e:
             exc_type, exc_value, exc_traceback_obj = sys.exc_info()
+            # response = Response(json.dumps({'retcode': 100, 'retmsg': str(e),
+            #                                 'traceback': traceback.format_exception(exc_type, exc_value,
+            #                                                                         exc_traceback_obj)}),
+            #                     status=500, mimetype='application/json')
             response = {'retcode': 100, 'retmsg': str(e),
                         'traceback': traceback.format_exception(exc_type, exc_value, exc_traceback_obj)}
             if 'Connection refused' in str(e):
@@ -81,16 +86,20 @@ def access_server(method, ctx, postfix, json=None, echo=True, **kwargs):
                 prettify(response.json() if isinstance(response, requests.models.Response) else response)
                 return
             else:
-                return response
+                return Response(json.dumps(response), status=500, mimetype='application/json')
     else:
-        prettify({
-            'retcode': 100,
-            'retmsg': "Fate flow CLI has not been initialized yet or configured incorrectly. "
-                      "Please initialize it before using CLI at the first time. And make sure "
-                      "the address of fate flow server is configured correctly. The configuration "
-                      "file path is: {}.".format(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                                                 os.pardir, os.pardir, 'settings.yaml')))
-        })
+        response = {
+                'retcode': 100,
+                'retmsg': "Fate flow CLI has not been initialized yet or configured incorrectly. "
+                          "Please initialize it before using CLI at the first time. And make sure "
+                          "the address of fate flow server is configured correctly. The configuration "
+                          "file path is: {}.".format(os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                                                     os.pardir, os.pardir, 'settings.yaml')))
+                }
+        if echo:
+            prettify(response)
+        else:
+            return Response(json.dumps(response), status=500, mimetype='application/json')
 
 
 def preprocess(**kwargs):

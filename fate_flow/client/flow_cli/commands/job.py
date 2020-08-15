@@ -296,7 +296,7 @@ def dsl_generator(ctx, **kwargs):
                             'retmsg': "New predict dsl file has been generated successfully. "
                                       "File path is: {}".format(output_path)}
             else:
-                response = response.json()
+                response = response.json
         prettify(response.json() if isinstance(response, requests.models.Response) else response)
     else:
         access_server('post', ctx, 'job/dsl/generate', config_data)

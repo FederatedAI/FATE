@@ -135,10 +135,9 @@ def export(ctx, **kwargs):
                             'file': archive_file_path,
                             'retmsg': 'download successfully, please check {}'.format(archive_file_path)}
             else:
-                response = response.json()
+                response = response.json
         prettify(response.json() if isinstance(response, requests.models.Response) else response)
     else:
-        # config_data, dsl_data = preprocess(**kwargs)
         access_server('post', ctx, 'model/store', config_data)
 
 
