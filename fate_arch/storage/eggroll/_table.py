@@ -75,4 +75,6 @@ class StorageTable(StorageTableBase):
 
     @log_elapsed
     def count(self, **kwargs):
-        return self._table.count()
+        count = self._table.count()
+        self.get_meta().update_metas(count=count)
+        return count

@@ -49,32 +49,28 @@ class Session(object):
             raise NotImplementedError(f"can not be initialized with storage engine: {storage_engine}")
 
     @classmethod
-    def convert(cls, session_id, src_name, src_namespace, dest_name, dest_namespace, computing_engine: ComputingEngine = ComputingEngine.EGGROLL, force=False, **kwargs):
+    def convert(cls, src_name, src_namespace, dest_name, dest_namespace, computing_engine: ComputingEngine = ComputingEngine.EGGROLL, force=False):
         # The source and target may be different session types
-        src_session_id = f"{session_id}_convert_src"
-        src_session = cls.build(session_id=src_session_id, name=src_name, namespace=src_namespace)
-        src_table = src_session.get_table(name=src_name, namespace=src_namespace)
-        if not src_table:
+        src_table_meta = StorageTableMeta.build(name=src_name, namespace=src_namespace)
+        if not src_table_meta:
             raise RuntimeError(f"can not found table name: {src_name} namespace: {src_namespace}")
-        if src_table.get_engine() not in Relationship.CompToStore.get(computing_engine, []):
-            dest_session_id = f"{session_id}_convert_dest"
+        dest_table_address = None
+        dest_table_engine = None
+        if src_table_meta.engine not in Relationship.CompToStore.get(computing_engine, []):
             if computing_engine == ComputingEngine.STANDALONE:
                 pass
             elif computing_engine == ComputingEngine.EGGROLL:
                 from fate_arch.storage.eggroll import StorageSession
-                dest_session = StorageSession(session_id=dest_session_id, options=kwargs.get("options", {}))
-                dest_address = StorageTableMeta.create_address(storage_engine=StorageEngine.EGGROLL, address_dict=dict(name=dest_name, namespace=dest_namespace))
-                dest_table = dest_session.create_table(address=dest_address, name=dest_name, namespace=dest_namespace, partitions=src_table.get_partitions(), **kwargs)
+                from fate_arch.storage import EggRollStorageType
+                dest_table_address = StorageTableMeta.create_address(storage_engine=StorageEngine.EGGROLL, address_dict=dict(name=dest_name, namespace=dest_namespace, storage_type=EggRollStorageType.ROLLPAIR_LMDB))
+                dest_table_engine = StorageEngine.EGGROLL
             elif computing_engine == ComputingEngine.SPARK:
                 pass
             else:
                 raise RuntimeError(f"can not support computing engine {computing_engine}")
-            with src_session:
-                with dest_session:
-                    cls.copy_table(src_table, dest_table)
-            return src_session, src_table, dest_session, dest_table, True
+            return src_table_meta, dest_table_address, dest_table_engine
         else:
-            return src_session, src_table, src_session, src_table, False
+            return src_table_meta, dest_table_address, dest_table_engine
 
     @classmethod
     def copy_table(cls, src_table, dest_table):
@@ -109,9 +105,10 @@ class StorageSessionBase(StorageSessionABC):
         meta_info["engine"] = table.get_engine()
         meta_info["type"] = table.get_type()
         meta_info["options"] = table.get_options()
-        meta_info["count"] = table.count()
         StorageTableMeta.create_metas(**meta_info)
         table.set_meta(StorageTableMeta.build(name=name, namespace=namespace))
+        # update count on meta
+        table.count()
         return table
 
     def get_table(self, name, namespace):

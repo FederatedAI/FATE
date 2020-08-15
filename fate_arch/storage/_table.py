@@ -157,15 +157,6 @@ class StorageTableMeta(StorageTableMetaABC):
                 # not allow query all table
                 return []
 
-    """
-    def get_meta(self, meta_type=StorageTableMetaType.SCHEMA):
-        tables_meta = self.query_table_meta(filter_fields=dict(name=self.name, namespace=self.namespace), query_fields=[meta_type])
-        if tables_meta:
-            return getattr(f"f_{meta_type}", tables_meta[0])
-        else:
-            return None
-    """
-
     def update_metas(self, schema=None, count=None, part_of_data=None, description=None, partitions=None, **kwargs):
         meta_info = {}
         for k, v in locals().items():
@@ -175,16 +166,9 @@ class StorageTableMeta(StorageTableMetaABC):
         meta_info["name"] = meta_info.get("name", self.name)
         meta_info["namespace"] = meta_info.get("namespace", self.namespace)
         with DB.connection_context():
-            query_filters = []
+            update_filters = []
             primary_keys = StorageTableMetaModel._meta.primary_key.field_names
-            for p_k in primary_keys:
-                query_filters.append(operator.attrgetter(p_k)(StorageTableMetaModel) == meta_info[p_k.lstrip("f_")])
-            tables_meta = StorageTableMetaModel.select().where(*query_filters)
-            if tables_meta:
-                table_meta = tables_meta[0]
-            else:
-                raise Exception(f"can not found the {StorageTableMetaModel.__class__.__name__}")
-            update_filters = query_filters[:]
+            table_meta = StorageTableMetaModel()
             update_fields = {}
             for k, v in meta_info.items():
                 attr_name = 'f_%s' % k

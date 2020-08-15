@@ -35,26 +35,28 @@ class Reader(object):
 
     def run(self, component_parameters=None, args=None):
         self.parameters = component_parameters["ReaderParam"]
-        session_id = generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id)
+        session_id = generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, random_end=True)
         table_key = [key for key in self.parameters.keys()][0]
         persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(self.task_id), uuid.uuid1().hex
-        src_session, src_table, dest_session, dest_table, if_convert = storage.Session.convert(session_id=session_id,
-                                                                                               src_name=self.parameters[table_key]['name'],
-                                                                                               src_namespace=self.parameters[table_key]['namespace'],
-                                                                                               dest_name=persistent_table_name,
-                                                                                               dest_namespace=persistent_table_namespace,
-                                                                                               force=True)
-        print(dest_table.get_name())
-        print(dest_table.get_namespace())
+        src_table_meta, dest_table_address, dest_table_engine = storage.Session.convert(src_name=self.parameters[table_key]['name'],
+                                                                                        src_namespace=self.parameters[table_key]['namespace'],
+                                                                                        dest_name=persistent_table_name,
+                                                                                        dest_namespace=persistent_table_namespace,
+                                                                                        force=True)
+        if dest_table_address:
+            with storage.Session.build(session_id=session_id, storage_engine=dest_table_engine) as dest_session:
+                dest_table = dest_session.create_table(address=dest_table_address, name=persistent_table_name, namespace=persistent_table_namespace, partitions=src_table_meta.partitions)
+                dest_table.count()
+                dest_table_meta = dest_table.get_meta()
+        else:
+            dest_table_meta = src_table_meta
         self.tracker.log_output_data_info(data_name=component_parameters.get('output_data_name')[0] if component_parameters.get('output_data_name') else table_key,
-                                          table_namespace=dest_table.get_namespace(),
-                                          table_name=dest_table.get_name())
-        with dest_session:
-            dest_table = dest_session.get_table(name=dest_table.get_name(), namespace=dest_table.get_namespace())
-            data_info = {"count": dest_table.count(),
-                         "partitions": dest_table.get_partitions(),
-                         "input_table_storage_engine": src_table.get_engine(),
-                         "output_table_storage_engine": dest_table.get_engine()}
+                                          table_namespace=dest_table_meta.namespace,
+                                          table_name=dest_table_meta.name)
+        data_info = {"count": dest_table_meta.count,
+                     "partitions": dest_table_meta.partitions,
+                     "input_table_storage_engine": src_table_meta.engine,
+                     "output_table_storage_engine": dest_table_meta.engine}
         self.tracker.set_metric_meta(metric_namespace="reader_namespace",
                                      metric_name="reader_name",
                                      metric_meta=MetricMeta(name='reader', metric_type='data_info', extra_metas=data_info))

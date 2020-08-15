@@ -224,50 +224,48 @@ class TaskExecutor(object):
                     for data_key in data_list:
                         data_key_item = data_key.split('.')
                         search_component_name, search_data_name = data_key_item[0], data_key_item[1]
-                        data_table_meta = None
+                        storage_table_meta = None
                         if search_component_name == 'args':
                             if job_args.get('data', {}).get(search_data_name).get('namespace', '') and job_args.get(
                                     'data', {}).get(search_data_name).get('name', ''):
-                                data_table_meta = storage.StorageTableMeta.build(name=job_args['data'][search_data_name]['name'], namespace=job_args['data'][search_data_name]['namespace'])
+                                storage_table_meta = storage.StorageTableMeta.build(name=job_args['data'][search_data_name]['name'], namespace=job_args['data'][search_data_name]['namespace'])
                         else:
                             tracker_remote_client = JobTrackerRemoteClient(job_id=job_id, role=role, party_id=party_id,
                                                                            component_name=search_component_name)
-                            data_table_infos_json = tracker_remote_client.get_output_data_info(
+                            upstream_output_table_infos_json = tracker_remote_client.get_output_data_info(
                                 data_name=search_data_name)
-                            if data_table_infos_json:
+                            if upstream_output_table_infos_json:
                                 tracker = Tracker(job_id=job_id, role=role, party_id=party_id,
                                                   component_name=search_component_name)
-                                data_table_infos = []
-                                for data_table_info_json in data_table_infos_json:
-                                    data_table_infos.append(fill_db_model_object(
-                                        Tracker.get_dynamic_db_model(TrackingOutputDataInfo, job_id)(),
-                                        data_table_info_json))
-                                data_tables_meta = tracker.get_output_data_table(output_data_infos=data_table_infos)
-                                if data_tables_meta:
-                                    data_table_meta = data_tables_meta.get(search_data_name, None)
+                                upstream_output_table_infos = []
+                                for _ in upstream_output_table_infos_json:
+                                    upstream_output_table_infos.append(fill_db_model_object(
+                                        Tracker.get_dynamic_db_model(TrackingOutputDataInfo, job_id)(), _))
+                                output_tables_meta = tracker.get_output_data_table(output_data_infos=upstream_output_table_infos)
+                                if output_tables_meta:
+                                    storage_table_meta = output_tables_meta.get(search_data_name, None)
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
                             search_component_name, {})
-                        data_table = None
-                        if data_table_meta:
-                            with storage.Session.build(session_id=job_utils.generate_session_id(task_id, task_version, role, party_id, True),
-                                                       name=data_table_meta.name, namespace=data_table_meta.namespace) as session:
-                                data_table = session.get_table(name=data_table_meta.name, namespace=data_table_meta.namespace)
-                                partitions = task_parameters['input_data_partition'] if task_parameters.get(
-                                    'input_data_partition', 0) > 0 else data_table.get_partitions()
-                            output_storage_engine = data_table.get_engine()
-                            data_table = session.get_latest_opened().computing.load(
-                                data_table.get_address(),
-                                schema=data_table.get_meta().schema,
+                        if not storage_table_meta:
+                            raise RuntimeError(f"can not found upstream output table by component {search_component_name} data {search_data_name}")
+
+                        with storage.Session.build(session_id=job_utils.generate_session_id(task_id, task_version, role, party_id, True),
+                                                   name=storage_table_meta.name, namespace=storage_table_meta.namespace) as storage_session:
+                            storage_table = storage_session.get_table(name=storage_table_meta.name, namespace=storage_table_meta.namespace)
+                            partitions = task_parameters['input_data_partition'] if task_parameters.get(
+                                'input_data_partition', 0) > 0 else storage_table.get_partitions()
+                            output_storage_engine = storage_table.get_engine()
+                            computing_table = session.get_latest_opened().computing.load(
+                                storage_table.get_address(),
+                                schema=storage_table.get_meta().schema,
                                 partitions=partitions)
-                        else:
-                            schedule_logger().info(
-                                "pass save as task {} input data table, because the table is none".format(task_id))
-                        if not data_table or not filter_attr or not filter_attr.get("data", None):
-                            data_dict[search_component_name][data_type].append(data_table)
+
+                        if not computing_table or not filter_attr or not filter_attr.get("data", None):
+                            data_dict[search_component_name][data_type].append(computing_table)
                             args_from_component[data_type] = data_dict[search_component_name][data_type]
                         else:
                             args_from_component[data_type] = dict(
-                                [(a, getattr(data_table, "get_{}".format(a))()) for a in filter_attr["data"]])
+                                [(a, getattr(computing_table, "get_{}".format(a))()) for a in filter_attr["data"]])
             elif input_type in ['model', 'isometric_model']:
                 this_type_args = task_run_args[input_type] = task_run_args.get(input_type, {})
                 for dsl_model_key in input_detail:

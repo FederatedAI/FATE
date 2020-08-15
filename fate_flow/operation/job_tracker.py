@@ -157,14 +157,10 @@ class Tracker(object):
                                                                                   persistent_table_name))
             partitions = data_table.partitions
             schedule_logger(self.job_id).info('output data table partitions is {}'.format(partitions))
-            address = StorageSessionABC.register(name=persistent_table_name,
-                                                 namespace=persistent_table_namespace,
-                                                 storage_engine=output_storage_engine,
-                                                 partitions=partitions)
+            address = storage.StorageTableMeta.create_address(storage_engine=output_storage_engine, address_dict={"name": persistent_table_name, "namespace": persistent_table_namespace, "storage_type": storage.EggRollStorageType.ROLLPAIR_LMDB})
             schema = {}
             # persistent table
             data_table.save(address, schema=schema, partitions=partitions)
-            table_meta = storage.StorageTableMeta.build(name=persistent_table_name, namespace=persistent_table_namespace)
             part_of_data = []
             count = 100
             for k, v in data_table.collect():
@@ -172,7 +168,9 @@ class Tracker(object):
                 count -= 1
                 if count == 0:
                     break
-            table_meta.update_metas(schema=schema, part_of_data=part_of_data, count=data_table.count(), partitions=partitions)
+            with storage.Session.build(storage_engine=output_storage_engine) as storage_session:
+                table = storage_session.create_table(address=address, name=persistent_table_name, namespace=persistent_table_namespace, partitions=partitions)
+                table.get_meta().update_metas(schema=schema, part_of_data=part_of_data, count=data_table.count(), partitions=partitions)
             return persistent_table_namespace, persistent_table_name
         else:
             schedule_logger(self.job_id).info('task id {} output data table is none'.format(self.task_id))
@@ -184,7 +182,7 @@ class Tracker(object):
         :param data_name:
         :return:
         """
-        data_tables_meta = {}
+        output_tables_meta = {}
         if output_data_infos:
             for output_data_info in output_data_infos:
                 schedule_logger(self.job_id).info("Get task {} {} output table {} {}".format(output_data_info.f_task_id, output_data_info.f_task_version, output_data_info.f_table_namespace, output_data_info.f_table_name))
@@ -192,8 +190,8 @@ class Tracker(object):
                     data_table_meta = StorageTable(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace, data_name=output_data_info.f_data_name)
                 else:
                     data_table_meta = storage.StorageTableMeta.build(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace)
-                data_tables_meta[output_data_info.f_data_name] = data_table_meta
-        return data_tables_meta
+                output_tables_meta[output_data_info.f_data_name] = data_table_meta
+        return output_tables_meta
 
     def init_pipelined_model(self):
         self.pipelined_model.create_pipelined_model()

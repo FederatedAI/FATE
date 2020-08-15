@@ -34,7 +34,7 @@ class StorageTableMetaABC(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
-    def update_metas(self, name, namespace, schema=None, count=None, part_of_data=None, description=None, partitions=None, **kwargs):
+    def update_metas(self, schema=None, count=None, part_of_data=None, description=None, partitions=None, **kwargs):
         ...
 
     @abc.abstractmethod
