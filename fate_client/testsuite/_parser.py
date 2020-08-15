@@ -23,7 +23,7 @@ from pathlib import Path
 
 import click
 import prettytable
-import yaml
+from ruamel import yaml
 
 
 # noinspection PyPep8Naming
