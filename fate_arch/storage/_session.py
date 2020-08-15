@@ -17,8 +17,8 @@
 
 from fate_arch.common.log import getLogger
 from fate_arch.storage._types import StorageEngine, Relationship
-from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64, fate_uuid
-from fate_arch.db.db_models import DB, StorageTableMeta
+from fate_arch.common.core_utils import current_timestamp, serialize_b64, deserialize_b64, fate_uuid
+from fate_arch.metastore.db_models import DB, StorageTableMeta
 from fate_arch.computing import ComputingEngine
 from fate_arch.abc import StorageSessionABC, StorageTableABC
 

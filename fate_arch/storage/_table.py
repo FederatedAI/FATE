@@ -20,12 +20,9 @@ import operator
 import peewee
 from fate_arch.common.log import getLogger
 from fate_arch.storage._types import StorageTableMetaType
-from arch.api.utils.core_utils import current_timestamp
-from fate_arch.db.db_models import DB, StorageTableMeta
-from arch.api.utils import log_utils
+from fate_arch.common.core_utils import current_timestamp
+from fate_arch.metastore.db_models import DB, StorageTableMeta
 from fate_arch.abc import StorageTableABC
-
-logger = log_utils.getLogger()
 
 MAX_NUM = 10000
 

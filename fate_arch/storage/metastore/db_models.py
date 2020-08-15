@@ -24,17 +24,18 @@ from peewee import Model, CharField, IntegerField, BigIntegerField, TextField, C
 from playhouse.apsw_ext import APSWDatabase
 from playhouse.pool import PooledMySQLDatabase
 
-from arch.api.utils import log_utils
-from arch.api.utils.conf_utils import get_base_config
-from arch.api.utils.core_utils import current_timestamp
-from fate_flow.entity.constant import WorkMode
+from fate_arch.common.log import getLogger
+from fate_arch.common import WorkMode
+from fate_arch.common.conf_utils import get_base_config
+from fate_arch.common.core_utils import current_timestamp
+from fate_arch.common.core_utils import current_timestamp, serialize_b64, deserialize_b64
+
 from fate_flow.entity.runtime_config import RuntimeConfig
-from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
 
 DATABASE = get_base_config("database", {})
 USE_LOCAL_DATABASE = get_base_config('use_local_database', True)
 WORK_MODE = get_base_config('work_mode', 0)
-stat_logger = log_utils.getLogger("fate_flow_stat")
+stat_logger = getLogger("fate_flow_stat")
 
 
 def singleton(cls, *args, **kw):
