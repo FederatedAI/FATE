@@ -91,6 +91,9 @@ class Session(object):
 
 
 class StorageSessionBase(StorageSessionABC):
+    def __init__(self, session_id):
+        self._session_id = session_id
+
     def create(self):
         raise NotImplementedError()
 
@@ -161,3 +164,6 @@ class StorageSessionBase(StorageSessionABC):
 
     def kill(self):
         raise NotImplementedError()
+
+    def session_id(self):
+        return self._session_id

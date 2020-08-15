@@ -192,4 +192,9 @@ class StorageSessionABC(metaclass=abc.ABCMeta):
     def kill(self):
         ...
 
+    @property
+    @abc.abstractmethod
+    def session_id(self) -> str:
+        ...
+
 

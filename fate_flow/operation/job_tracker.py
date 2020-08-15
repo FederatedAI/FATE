@@ -25,8 +25,7 @@ from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.model_manager import pipelined_model
 from fate_arch import storage
-from fate_flow.utils import job_utils, model_utils
-from fate_arch.abc import StorageSessionABC
+from fate_flow.utils import model_utils
 
 
 class Tracker(object):
@@ -168,27 +167,23 @@ class Tracker(object):
                 part_of_limit -= 1
                 if part_of_limit == 0:
                     break
-            print("count")
             table_count = computing_table.count()
-            print(f"save meta count {table_count}")
             meta_info = {}
             meta_info["name"] = persistent_table_name
             meta_info["namespace"] = persistent_table_namespace
             meta_info["address"] = address
             meta_info["partitions"] = computing_table.partitions
+            meta_info["schema"] = schema
             meta_info["engine"] = output_storage_engine
             meta_info["type"] = storage.EggRollStorageType.ROLLPAIR_LMDB
             meta_info["options"] = {}
             meta_info["count"] = table_count
             storage.StorageTableMeta.create_metas(**meta_info)
-            print(self.component_name)
-            print(schema)
-            print(persistent_table_name)
-            print(persistent_table_namespace)
             """
+            # The same table is read by two different sessions
             with storage.Session.build(storage_engine=output_storage_engine) as storage_session:
                 table = storage_session.create_table(address=address, name=persistent_table_name, namespace=persistent_table_namespace, partitions=partitions)
-                table.get_meta().update_metas(schema=schema, part_of_data=part_of_data, count=data_table.count(), partitions=partitions)
+                table.get_meta().update_metas(schema=schema, part_of_data=part_of_data, count=computing_table.count(), partitions=partitions)
             """
             return persistent_table_namespace, persistent_table_name
         else:

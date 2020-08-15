@@ -246,21 +246,19 @@ class TaskExecutor(object):
                                     storage_table_meta = output_tables_meta.get(search_data_name, None)
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
                             search_component_name, {})
-                        if not storage_table_meta:
-                            raise RuntimeError(f"can not found upstream output table by component {search_component_name} data {search_data_name}")
-
-                        with storage.Session.build(session_id=job_utils.generate_session_id(task_id, task_version, role, party_id, True),
-                                                   name=storage_table_meta.get_name(), namespace=storage_table_meta.get_namespace()) as storage_session:
-                            storage_table = storage_session.get_table(name=storage_table_meta.get_name(), namespace=storage_table_meta.get_namespace())
-                            print(f"upstream {search_component_name} storage table {storage_table.get_name()} {storage_table.get_namespace()}")
-                            print(storage_table_meta.get_schema().get("header"))
-                            partitions = task_parameters['input_data_partition'] if task_parameters.get(
-                                'input_data_partition', 0) > 0 else storage_table.get_partitions()
-                            output_storage_engine = storage_table.get_engine()
+                        if storage_table_meta:
+                            with storage.Session.build(session_id=job_utils.generate_session_id(task_id, task_version, role, party_id, True),
+                                                       name=storage_table_meta.get_name(), namespace=storage_table_meta.get_namespace()) as storage_session:
+                                storage_table = storage_session.get_table(name=storage_table_meta.get_name(), namespace=storage_table_meta.get_namespace())
+                                partitions = task_parameters['input_data_partition'] if task_parameters.get(
+                                    'input_data_partition', 0) > 0 else storage_table.get_partitions()
+                                output_storage_engine = storage_table.get_engine()
                             computing_table = session.get_latest_opened().computing.load(
-                                storage_table.get_address(),
-                                schema=storage_table.get_meta().schema,
+                                storage_table_meta.get_address(),
+                                schema=storage_table_meta.get_schema(),
                                 partitions=partitions)
+                        else:
+                            computing_table = None
 
                         if not computing_table or not filter_attr or not filter_attr.get("data", None):
                             data_dict[search_component_name][data_type].append(computing_table)
