@@ -23,6 +23,7 @@ from flask import Flask, request, send_file
 from google.protobuf import json_format
 
 from fate_arch.common.base_utils import fate_uuid
+from fate_arch import storage
 from fate_flow.db.db_models import Job, DB
 from fate_flow.manager.data_manager import delete_metric_data
 from fate_flow.operation.job_tracker import Tracker
@@ -193,36 +194,33 @@ def component_output_model():
 @manager.route('/component/output/data', methods=['post'])
 def component_output_data():
     request_data = request.json
-    output_data_tables = get_component_output_data_table(task_data=request_data, need_all=False)
-    if not output_data_tables:
+    output_tables_meta = get_component_output_tables_meta(task_data=request_data)
+    if not output_tables_meta:
         return get_json_result(retcode=0, retmsg='no data', data=[])
     output_data_list = []
     headers = []
     totals = []
     data_names = []
-    for output_data_table in output_data_tables.values():
+    for output_name, output_table_meta in output_tables_meta.items():
         output_data = []
         num = 100
         have_data_label = False
         is_str = False
-        if output_data_table:
-            for k, v in output_data_table.collect():
+        if output_table_meta:
+            # part_of_data format: [(k, v)]
+            for k, v in output_table_meta.get_part_of_data():
                 if num == 0:
                     break
                 data_line, have_data_label, is_str = get_component_output_data_line(src_key=k, src_value=v)
                 output_data.append(data_line)
                 num -= 1
-            total = output_data_table.count()
+            total = output_table_meta.get_count()
             output_data_list.append(output_data)
-            data_names.append(output_data_table.get_data_name())
+            data_names.append(output_name)
             totals.append(total)
         if output_data:
-            header = get_component_output_data_schema(output_data_table=output_data_table, have_data_label=have_data_label, is_str=is_str)
+            header = get_component_output_data_schema(output_table_meta=output_table_meta, have_data_label=have_data_label, is_str=is_str)
             headers.append(header)
-            try:
-                output_data_table.close()
-            except Exception as e:
-                stat_logger.exception(e)
         else:
             headers.append(None)
     if len(output_data_list) == 1 and not output_data_list[0]:
@@ -233,9 +231,9 @@ def component_output_data():
 @manager.route('/component/output/data/download', methods=['get'])
 def component_output_data_download():
     request_data = request.json
-    output_data_tables = get_component_output_data_table(task_data=request_data)
+    output_tables_meta = get_component_output_tables_meta(task_data=request_data)
     limit = request_data.get('limit', -1)
-    if not output_data_tables:
+    if not output_tables_meta:
         return error_response(response_code=500, retmsg='no data')
     if limit == 0:
         return error_response(response_code=500, retmsg='limit is 0')
@@ -245,23 +243,25 @@ def component_output_data_download():
     output_data_file_list = []
     output_data_meta_file_list = []
     output_tmp_dir = os.path.join(os.getcwd(), 'tmp/{}'.format(fate_uuid()))
-    for data_name, output_data_table in output_data_tables.items():
+    for output_name, output_table_meta in output_tables_meta.items():
         is_str = False
-        output_data_file_path = "{}/{}.csv".format(output_tmp_dir, data_name)
+        output_data_file_path = "{}/{}.csv".format(output_tmp_dir, output_name)
         os.makedirs(os.path.dirname(output_data_file_path), exist_ok=True)
         with open(output_data_file_path, 'w') as fw:
-            for k, v in output_data_table.collect():
-                data_line, have_data_label, is_str = get_component_output_data_line(src_key=k, src_value=v)
-                fw.write('{}\n'.format(','.join(map(lambda x: str(x), data_line))))
-                output_data_count += 1
-                if output_data_count == limit:
-                    break
+            with storage.Session.build(name=output_table_meta.get_name(), namespace=output_table_meta.get_namespace()) as storage_session:
+                output_table = storage_session.get_table(name=output_table_meta.get_name(), namespace=output_table_meta.get_namespace())
+                for k, v in output_table.collect():
+                    data_line, have_data_label, is_str = get_component_output_data_line(src_key=k, src_value=v)
+                    fw.write('{}\n'.format(','.join(map(lambda x: str(x), data_line))))
+                    output_data_count += 1
+                    if output_data_count == limit:
+                        break
 
         if output_data_count:
             # get meta
             output_data_file_list.append(output_data_file_path)
-            header = get_component_output_data_schema(output_data_table=output_data_table, have_data_label=have_data_label, is_str=is_str)
-            output_data_meta_file_path = "{}/{}.meta".format(output_tmp_dir, data_name)
+            header = get_component_output_data_schema(output_table_meta=output_table_meta, have_data_label=have_data_label, is_str=is_str)
+            output_data_meta_file_path = "{}/{}.meta".format(output_tmp_dir, output_name)
             output_data_meta_file_list.append(output_data_meta_file_path)
             with open(output_data_meta_file_path, 'w') as fw:
                 json.dump({'header': header}, fw, indent=4)
@@ -270,10 +270,6 @@ def component_output_data_download():
                     content = f.read()
                     f.seek(0, 0)
                     f.write('{}\n'.format(','.join(header)) + content)
-            try:
-                output_data_table.close()
-            except Exception as e:
-                stat_logger.exception(e)
     # tar
     memory_file = io.BytesIO()
     tar = tarfile.open(fileobj=memory_file, mode='w:gz')
@@ -335,7 +331,7 @@ def component_list():
         return get_json_result(retcode=100, retmsg='No job matched, please make sure the job id is valid.')
 
 
-def get_component_output_data_table(task_data, need_all=True):
+def get_component_output_tables_meta(task_data):
     check_request_parameters(task_data)
     tracker = Tracker(job_id=task_data['job_id'], component_name=task_data['component_name'],
                       role=task_data['role'], party_id=task_data['party_id'])
@@ -346,8 +342,8 @@ def get_component_output_data_table(task_data, need_all=True):
     if not component:
         raise Exception('can not found component, please check if the parameters are correct')
     output_data_table_infos = tracker.get_output_data_info()
-    output_data_tables = tracker.get_output_data_table(output_data_infos=output_data_table_infos, init_session=True, need_all=need_all)
-    return output_data_tables
+    output_tables_meta = tracker.get_output_data_table(output_data_infos=output_data_table_infos)
+    return output_tables_meta
 
 
 def get_component_output_data_line(src_key, src_value):
@@ -367,9 +363,9 @@ def get_component_output_data_line(src_key, src_value):
     return data_line, have_data_label, is_str
 
 
-def get_component_output_data_schema(output_data_table, have_data_label, is_str=False):
+def get_component_output_data_schema(output_table_meta, have_data_label, is_str=False):
     # get schema
-    schema = output_data_table.get_meta(meta_type="schema")
+    schema = output_table_meta.get_schema()
     if not schema:
          return None
     header = [schema.get('sid_name', 'sid')]
