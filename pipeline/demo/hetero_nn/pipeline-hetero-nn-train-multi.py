@@ -55,7 +55,8 @@ def main(config="../config.yaml"):
 
     hetero_nn_0 = HeteroNN(name="hetero_nn_0", epochs=10)
     hetero_nn_0.add_bottom_model(Dense(units=2, input_shape=(10,), activation="relu"))
-    hetero_nn_0.set_interactve_layer(Dense(units=2, input_shape=(2,), activation="relu"))
+    hetero_nn_0.add_bottom_model(Dense(units=2, input_shape=(10,), activation="relu"))
+    hetero_nn_0.set_interactve_layer(Dense(units=2, input_shape=(2,)))
     hetero_nn_0.add_top_model(Dense(units=4, input_shape=(2,), activation="softmax"))
     hetero_nn_0.compile(optimizer=optimizers.Adam(lr=0.15), metrics=["accuracy"], loss="categorical_crossentropy")
     hetero_nn_1 = HeteroNN(name="hetero_nn_1")
