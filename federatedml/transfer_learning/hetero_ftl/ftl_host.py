@@ -1,8 +1,7 @@
-from federatedml.hetero_ftl.ftl_base import FTL
+from federatedml.transfer_learning.hetero_ftl.ftl_base import FTL
 from federatedml.statistic.intersect import intersect_host
 from arch.api.utils import log_utils
-from federatedml.hetero_ftl.ftl_dataloder import FTLDataLoader
-from federatedml.nn.hetero_nn.backend.tf_keras.data_generator import KerasSequenceDataConverter
+from federatedml.transfer_learning.hetero_ftl.ftl_dataloder import FTLDataLoader
 from federatedml.util import consts
 
 from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor

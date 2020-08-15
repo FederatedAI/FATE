@@ -5,7 +5,7 @@ from federatedml.nn.homo_nn.nn_model import NNModel
 from federatedml.nn.backend.tf_keras.nn_model import KerasNNModel
 from federatedml.util.classify_label_checker import ClassifyLabelChecker
 from federatedml.transfer_variable.transfer_class.ftl_transfer_variable import FTLTransferVariable
-from federatedml.hetero_ftl.ftl_dataloder import FTLDataLoader
+from federatedml.transfer_learning.hetero_ftl.ftl_dataloder import FTLDataLoader
 from federatedml.nn.hetero_nn.backend.tf_keras.data_generator import KerasSequenceDataConverter
 from federatedml.nn.hetero_nn.util import random_number_generator
 from federatedml.secureprotol import PaillierEncrypt

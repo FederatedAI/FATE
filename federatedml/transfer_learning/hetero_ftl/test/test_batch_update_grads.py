@@ -1,16 +1,10 @@
 from federatedml.nn.homo_nn.nn_model import get_nn_builder
 import json
-import tensorflow as tf
 from federatedml.param.ftl_param import FTLParam
 import numpy as np
 from numpy import array
-from arch.api.session import init
 from arch.api import session
-from federatedml.hetero_ftl.ftl_dataloder import FTLDataLoader
 import pandas as pd
-
-from federatedml.protobuf.generated.ftl_model_param_pb2 import FTLModelParam
-from federatedml.protobuf.generated.ftl_model_meta_pb2 import FTLModelMeta
 
 from federatedml.nn.hetero_nn.backend.tf_keras.data_generator import KerasSequenceDataConverter
 
