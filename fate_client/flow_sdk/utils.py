@@ -1,8 +1,11 @@
 import os
 import json
+import socket
 import time
 import typing
 import tarfile
+
+PROJECT_BASE = None
 
 
 def start_cluster_standalone_job_server():
@@ -11,11 +14,15 @@ def start_cluster_standalone_job_server():
     time.sleep(5)
 
 
+def get_parser_version_set():
+    return {"1", "2"}
+
+
 def get_project_base_directory():
     global PROJECT_BASE
     if PROJECT_BASE is None:
         PROJECT_BASE = os.path.abspath(
-            os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir, os.pardir))
+            os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir))
     return PROJECT_BASE
 
 
@@ -46,7 +53,8 @@ def check_config(config: typing.Dict, required_arguments: typing.List):
         elif require_argument not in config:
             no_arguments.append(require_argument)
     if no_arguments or error_arguments:
-        raise Exception('the following arguments are required: {} {}'.format(','.join(no_arguments), ','.join(['{}={}'.format(a[0], a[1]) for a in error_arguments])))
+        raise Exception('the following arguments are required: {} {}'.format(','.join(no_arguments), ','.join(
+            ['{}={}'.format(a[0], a[1]) for a in error_arguments])))
 
 
 def preprocess(**kwargs):
@@ -89,7 +97,34 @@ def check_output_path(path):
     return path
 
 
+def get_lan_ip():
+    if os.name != "nt":
+        import fcntl
+        import struct
 
+        def get_interface_ip(ifname):
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            return socket.inet_ntoa(
+                fcntl.ioctl(s.fileno(), 0x8915, struct.pack('256s', string_to_bytes(ifname[:15])))[20:24])
 
-
-
+    ip = socket.gethostbyname(socket.getfqdn())
+    if ip.startswith("127.") and os.name != "nt":
+        interfaces = [
+            "bond1",
+            "eth0",
+            "eth1",
+            "eth2",
+            "wlan0",
+            "wlan1",
+            "wifi0",
+            "ath0",
+            "ath1",
+            "ppp0",
+        ]
+        for ifname in interfaces:
+            try:
+                ip = get_interface_ip(ifname)
+                break
+            except IOError as e:
+                pass
+    return ip or ''

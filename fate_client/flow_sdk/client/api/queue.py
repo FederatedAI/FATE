@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_flow.flowpy.client.api.base import BaseFlowAPI
+from flow_sdk.client.api.base import BaseFlowAPI
 
 
 class Queue(BaseFlowAPI):

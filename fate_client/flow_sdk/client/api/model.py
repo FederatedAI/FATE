@@ -16,9 +16,8 @@
 import os
 import re
 from contextlib import closing
-from fate_arch.common import file_utils
-from fate_flow.flowpy.client.api.base import BaseFlowAPI
-from fate_flow.flowpy.utils import preprocess
+from flow_sdk.client.api.base import BaseFlowAPI
+from flow_sdk.utils import preprocess, get_project_base_directory
 
 
 class Model(BaseFlowAPI):
@@ -44,7 +43,7 @@ class Model(BaseFlowAPI):
         if not kwargs.pop("from_database"):
             file_path = config_data["file"]
             if not os.path.isabs(file_path):
-                file_path = os.path.join(file_utils.get_project_base_directory(), file_path)
+                file_path = os.path.join(get_project_base_directory(), file_path)
             if os.path.exists(file_path):
                 files = {'file': open(file_path, 'rb')}
             else:

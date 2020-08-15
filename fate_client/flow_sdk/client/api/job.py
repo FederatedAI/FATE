@@ -13,12 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
 import os
 import json
 from contextlib import closing
-from fate_flow.flowpy.client.api.base import BaseFlowAPI
-from fate_flow.utils.job_utils import get_parser_version_mapping
-from fate_flow.flowpy.utils import preprocess, check_config, download_from_request
+from flow_sdk.client.api.base import BaseFlowAPI
+from flow_sdk.utils import preprocess, check_config, download_from_request, get_parser_version_set
 
 
 class Job(BaseFlowAPI):
@@ -107,8 +107,7 @@ class Job(BaseFlowAPI):
         kwargs = locals()
         if not os.path.exists(kwargs.get("train_dsl_path")):
             raise Exception("Train dsl file not exists.")
-        parser_mapping = get_parser_version_mapping()
-        if str(version) not in parser_mapping:
+        if str(version) not in get_parser_version_set():
             raise Exception("{} version of dsl parser is not currently supported.".format(version))
         if kwargs.get("cpn_list"):
             cpn_str = kwargs.get("cpn_list")
@@ -131,4 +130,3 @@ class Job(BaseFlowAPI):
         if not res.get("data"):
             res["data"] = {}
         return res
-

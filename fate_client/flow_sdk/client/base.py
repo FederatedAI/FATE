@@ -13,12 +13,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
 import sys
 import json
 import inspect
 import requests
 import traceback
-from fate_flow.flowpy.client.api.base import BaseFlowAPI
+from flow_sdk.client.api.base import BaseFlowAPI
 
 
 def _is_api_endpoint(obj):

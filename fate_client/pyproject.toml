@@ -21,7 +21,8 @@ classifiers = [
 ]
 
 packages = [
-    { include = "flow_client" }
+    { include = "flow_client" },
+    { include = "flow_sdk" }
 ]
 
 [tool.poetry.dependencies]

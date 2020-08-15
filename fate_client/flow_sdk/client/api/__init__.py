@@ -13,17 +13,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_flow.flowpy.utils import preprocess
-from fate_flow.flowpy.client.api.base import BaseFlowAPI
 
-
-class Task(BaseFlowAPI):
-    def list(self, limit=10):
-        kwargs = locals()
-        config_data, dsl_data = preprocess(**kwargs)
-        return self._post(url='job/list/task', json=config_data)
-
-    def query(self, job_id=None, role=None, party_id=None, component_name=None, status=None):
-        kwargs = locals()
-        config_data, dsl_data = preprocess(**kwargs)
-        return self._post(url='job/task/query', json=config_data)
+from flow_sdk.client.api.job import Job
+from flow_sdk.client.api.component import Component
+from flow_sdk.client.api.data import Data
+from flow_sdk.client.api.model import Model
+from flow_sdk.client.api.priviledge import Priviledge
+from flow_sdk.client.api.queue import Queue
+from flow_sdk.client.api.table import Table
+from flow_sdk.client.api.task import Task
+from flow_sdk.client.api.tag import Tag

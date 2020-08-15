@@ -15,8 +15,8 @@
 #
 import os
 from contextlib import closing
-from fate_flow.flowpy.client.api.base import BaseFlowAPI
-from fate_flow.flowpy.utils import preprocess, check_config, download_from_request
+from flow_sdk.client.api.base import BaseFlowAPI
+from flow_sdk.utils import preprocess, check_config, download_from_request
 
 
 class Component(BaseFlowAPI):

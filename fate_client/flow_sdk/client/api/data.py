@@ -13,12 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
 import os
 import sys
-from fate_arch.common import file_utils
-from fate_flow.flowpy.client.api.base import BaseFlowAPI
+from flow_sdk.client.api.base import BaseFlowAPI
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
-from fate_flow.flowpy.utils import preprocess, start_cluster_standalone_job_server
+from flow_sdk.utils import preprocess, start_cluster_standalone_job_server, get_project_base_directory
 
 
 class Data(BaseFlowAPI):
@@ -29,7 +29,7 @@ class Data(BaseFlowAPI):
         config_data, dsl_data = preprocess(**kwargs)
         file_name = config_data.get('file')
         if not os.path.isabs(file_name):
-            file_name = os.path.join(file_utils.get_project_base_directory(), file_name)
+            file_name = os.path.join(get_project_base_directory(), file_name)
         if os.path.exists(file_name):
             with open(file_name, 'rb') as fp:
                 data = MultipartEncoder(
