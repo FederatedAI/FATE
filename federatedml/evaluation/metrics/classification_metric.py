@@ -34,7 +34,7 @@ def sort_score_and_label(labels: np.ndarray, pred_scores: np.ndarray):
 def map_ndarray_to_dtable(arr, partitions=10):
 
     instances = [Instance(features=SparseVector(indices=[0], data=[arr[i]])) for i in arr]
-    dt = session.default().computing.parallelize(instances, partition=partitions)
+    dt = session.get_latest_opened().computing.parallelize(instances, partition=partitions)
     dt.schema['header'] = ['scores']
 
     return dt

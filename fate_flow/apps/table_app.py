@@ -13,10 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_flow.manager.table_manager.table_operation import get_table
+from fate_arch import storage
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.settings import stat_logger
-from arch.api.utils.dtable_utils import get_table_info
 from flask import Flask, request
 
 manager = Flask(__name__)
@@ -50,23 +49,19 @@ def table_delete():
 def dtable(table_func):
     config = request.json
     if table_func == 'table_info':
-        table_name, namespace = get_table_info(config=config, create=config.get('create', False))
+        table_key_count = 0
+        table_partition = None
+        table_schema = None
+        table_name, namespace = config.get("name") or config.get("table_name"), config.get("namespace")
         if config.get('create', False):
-            table_key_count = 0
-            table_partition = None
+            pass
         else:
-            table = get_table(name=table_name, namespace=namespace, simple=True)
-            if table:
-                table_key_count = table.count()
-                table_partition = table.get_partitions()
-                try:
-                    table.close()
-                except Exception as e:
-                    stat_logger.exception(e)
-            else:
-                table_key_count = 0
-                table_partition = None
-        return get_json_result(data={'table_name': table_name, 'namespace': namespace, 'count': table_key_count, 'partition': table_partition})
+            table_meta = storage.StorageTableMeta.build(name=table_name, namespace=namespace)
+            if table_meta:
+                table_key_count = table_meta.get_count()
+                table_partition = table_meta.get_partitions()
+                table_schema = table_meta.get_schema()
+        return get_json_result(data={'table_name': table_name, 'namespace': namespace, 'count': table_key_count, 'partition': table_partition, "schema": table_schema})
     else:
         return get_json_result()
 

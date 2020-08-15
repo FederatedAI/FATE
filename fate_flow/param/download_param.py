@@ -17,11 +17,11 @@
 
 class DownloadParam:
     def __init__(self, output_path="", delimitor=",",
-                 namespace="", table_name="", work_mode=0):
+                 namespace="", name="", work_mode=0):
         self.output_path = output_path
         self.delimitor = delimitor
         self.namespace = namespace
-        self.table_name = table_name
+        self.name = name
         self.work_mode = work_mode
 
     def check(self):

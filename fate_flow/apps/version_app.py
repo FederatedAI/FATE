@@ -17,7 +17,7 @@ from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.settings import stat_logger, SERVER_CONF_PATH, SERVERS
 from flask import Flask, request
 
-from arch.api.utils.file_utils import set_server_conf
+from fate_arch.common.file_utils import set_server_conf
 from fate_flow.utils.api_utils import get_json_result
 
 

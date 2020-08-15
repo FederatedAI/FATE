@@ -22,7 +22,7 @@ import tarfile
 from flask import Flask, request, send_file
 from google.protobuf import json_format
 
-from arch.api.utils.core_utils import fate_uuid
+from fate_arch.common.base_utils import fate_uuid
 from fate_flow.db.db_models import Job, DB
 from fate_flow.manager.data_manager import delete_metric_data
 from fate_flow.operation.job_tracker import Tracker
@@ -369,7 +369,7 @@ def get_component_output_data_line(src_key, src_value):
 
 def get_component_output_data_schema(output_data_table, have_data_label, is_str=False):
     # get schema
-    schema = output_data_table.get_meta(_type="schema")
+    schema = output_data_table.get_meta(meta_type="schema")
     if not schema:
          return None
     header = [schema.get('sid_name', 'sid')]

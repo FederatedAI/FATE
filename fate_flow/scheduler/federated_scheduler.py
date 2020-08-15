@@ -16,8 +16,8 @@
 
 from fate_flow.settings import API_VERSION
 from fate_flow.utils.api_utils import federated_api
-from arch.api.utils.core_utils import json_dumps
-from arch.api.utils.log_utils import schedule_logger
+from fate_arch.common.base_utils import json_dumps
+from fate_arch.common.log import schedule_logger
 from fate_flow.entity.constant import RetCode, FederatedSchedulingStatusCode
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.db.db_models import Job, TaskSet, Task

@@ -18,13 +18,11 @@ import base64
 import shutil
 from datetime import datetime
 
-from fate_flow.utils.model_utils import gen_party_model_id
-
-from arch.api.utils import dtable_utils
 from federatedml.protobuf.generated import pipeline_pb2
 from fate_flow.manager.model_manager import pipelined_model
-from arch.api.utils.core_utils import json_loads, json_dumps
-from arch.api.utils.file_utils import get_project_base_directory
+from fate_arch.common.base_utils import json_loads, json_dumps
+from fate_arch.common.file_utils import get_project_base_directory
+from fate_flow.utils import model_utils
 
 
 def gen_model_file_path(model_id, model_version):
@@ -65,9 +63,9 @@ def import_from_db(config: dict):
 
 def migration(config_data: dict):
     try:
-        party_model_id = gen_party_model_id(model_id=config_data["model_id"],
-                                            role=config_data["local"]["role"],
-                                            party_id=config_data["local"]["party_id"])
+        party_model_id = model_utils.gen_party_model_id(model_id=config_data["model_id"],
+                                                        role=config_data["local"]["role"],
+                                                        party_id=config_data["local"]["party_id"])
         model = pipelined_model.PipelinedModel(model_id=party_model_id,
                                                model_version=config_data["model_version"])
         if not model.exists():
@@ -87,9 +85,9 @@ def migration(config_data: dict):
         # Generate 1. new job_id as new model version, 2. new model id (file path)
         previous_model_path = model.model_path
 
-        model.model_id = dtable_utils.gen_party_namespace(config_data["migrate_role"], "model",
-                                                          config_data["local"]["role"],
-                                                          config_data["local"]["migrate_party_id"])
+        model.model_id = model_utils.gen_party_model_id(model_id=model_utils.gen_model_id(config_data["migrate_role"]),
+                                                        role=config_data["local"]["role"],
+                                                        party_id=config_data["local"]["migrate_party_id"])
         model.model_version = config_data["unify_model_version"]
 
         # Copy the older version of files of models to the new dirpath
@@ -98,7 +96,7 @@ def migration(config_data: dict):
 
         # Utilize Pipeline_model collect model data. And modify related inner information of model
         train_runtime_conf["role"] = config_data["migrate_role"]
-        train_runtime_conf["job_parameters"]["model_id"] = dtable_utils.all_party_key(train_runtime_conf["role"]) + "#model"
+        train_runtime_conf["job_parameters"]["model_id"] = model_utils.gen_model_id(train_runtime_conf["role"])
         train_runtime_conf["job_parameters"]["model_version"] = model.model_version
 
         pipeline.train_runtime_conf = json_dumps(train_runtime_conf, byte=True)

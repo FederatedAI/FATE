@@ -15,6 +15,7 @@
 #
 
 import typing
+import uuid
 from typing import Iterable
 
 from fate_arch import session
@@ -32,46 +33,50 @@ def init(job_id=None,
          **kwargs):
     if kwargs:
         LOGGER.warning(f"{kwargs} not used, check!")
-
-    if session.has_default():
-        return session.default()
-    return session.init(job_id, mode, backend, options)
+    if isinstance(mode, int):
+        mode = WorkMode(mode)
+    if isinstance(backend, int):
+        backend = Backend(backend)
+    if job_id is None:
+        job_id = str(uuid.uuid1())
+    if options is None:
+        options = {}
+    sess = session.Session.create(backend, mode)
+    sess.init_computing(computing_session_id=job_id, options=options)
+    sess.as_default()
+    return sess
 
 
 def table(name, namespace, **kwargs) -> CTableABC:
-    return session.default().computing.load(name=name, namespace=namespace, **kwargs)
+    return session.get_latest_opened().computing.load(name=name, namespace=namespace, **kwargs)
 
 
 def parallelize(data: Iterable, partition, include_key=False, **kwargs) -> CTableABC:
-    return session.default().computing.parallelize(data=data, partition=partition, include_key=include_key, **kwargs)
+    return session.get_latest_opened().computing.parallelize(data=data, partition=partition, include_key=include_key, **kwargs)
 
 
 def cleanup(name, namespace, *args, **kwargs):
     if len(args) > 0 or len(kwargs) > 0:
         LOGGER.warning(f"some args removed, please check! {args}, {kwargs}")
-    return session.default().computing.cleanup(name=name, namespace=namespace)
+    return session.get_latest_opened().computing.cleanup(name=name, namespace=namespace)
 
 
 def get_session_id():
-    return session.default().computing.session_id
+    return session.get_latest_opened().computing.session_id
 
 
 def get_data_table(name, namespace):
     LOGGER.warning(f"don't use this, use table directly")
-    return session.default().computing.load(name=name, namespace=namespace)
+    return session.get_latest_opened().computing.load(name=name, namespace=namespace)
 
 
 def clean_tables(namespace, regex_string='*'):
-    session.default().computing.cleanup(namespace=namespace, name=regex_string)
+    session.get_latest_opened().computing.cleanup(namespace=namespace, name=regex_string)
 
 
 def stop():
-    session.default().computing.stop()
+    session.get_latest_opened().computing.stop()
 
 
 def kill():
-    session.default().computing.kill()
-
-
-def exit():
-    session.exit_session()
+    session.get_latest_opened().computing.kill()

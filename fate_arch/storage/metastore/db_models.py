@@ -24,16 +24,16 @@ from peewee import Model, CharField, IntegerField, BigIntegerField, TextField, C
 from playhouse.apsw_ext import APSWDatabase
 from playhouse.pool import PooledMySQLDatabase
 
-from arch.api.utils import log_utils
-from arch.api.utils.conf_utils import get_base_config
-from arch.api.utils.core_utils import current_timestamp
+from fate_arch.common.conf_utils import get_base_config
 from fate_flow.entity.constant import WorkMode
 from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64
+from fate_arch.common.log import getLogger
 
 DATABASE = get_base_config("database", {})
 USE_LOCAL_DATABASE = get_base_config('use_local_database', True)
 WORK_MODE = get_base_config('work_mode', 0)
-stat_logger = log_utils.getLogger("fate_flow_stat")
+stat_logger = getLogger("fate_flow_stat")
 
 
 def singleton(cls, *args, **kw):
@@ -50,11 +50,22 @@ def singleton(cls, *args, **kw):
 
 class JSONField(TextField):
     def db_value(self, value):
+        if value is None:
+            value = {}
         return json.dumps(value)
 
     def python_value(self, value):
-        if value is not None:
-            return json.loads(value)
+        if value is None:
+            value = {}
+        return json.loads(value)
+
+
+class SerializedField(TextField):
+    def db_value(self, value):
+        return serialize_b64(value, to_str=True)
+
+    def python_value(self, value):
+        return deserialize_b64(value)
 
 
 @singleton
@@ -102,7 +113,7 @@ class DataBaseModel(Model):
             self.f_update_date = datetime.datetime.now()
         if hasattr(self, "f_update_time"):
             self.f_update_time = current_timestamp()
-        super(DataBaseModel, self).save(*args, **kwargs)
+        return super(DataBaseModel, self).save(*args, **kwargs)
 
 
 def init_database_tables():
@@ -119,18 +130,22 @@ class LongTextField(TextField):
     field_type = 'LONGTEXT'
 
 
-class StorageTableMeta(DataBaseModel):
+class StorageTableMetaModel(DataBaseModel):
     f_name = CharField(max_length=100, index=True)
     f_namespace = CharField(max_length=100, index=True)
+    f_address = JSONField()
+    f_engine = CharField(max_length=100, index=True)  # 'EGGROLL', 'MYSQL'
+    f_type = CharField(max_length=50, index=True)  # storage type
+    f_options = JSONField()
+
+    f_partitions = IntegerField(null=True)
+    f_schema = SerializedField()
+    f_count = IntegerField(null=True)
+    f_part_of_data = SerializedField()
+    f_description = TextField(default='')
+
     f_create_time = BigIntegerField(null=True)
     f_update_time = BigIntegerField(null=True)
-    f_description = TextField(null=True, default='')
-    f_schema = TextField(default='')
-    f_engine = CharField(max_length=100, index=True)  # 'EGGROLL', 'MYSQL'
-    f_partitions = IntegerField(null=True, default=1)
-    f_address = JSONField()
-    f_count = IntegerField(null=True, default=0)
-    f_part_of_data = LongTextField()
 
     class Meta:
         db_table = "t_storage_table_meta"

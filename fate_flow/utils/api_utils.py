@@ -16,11 +16,11 @@
 import json
 
 import requests
-from arch.api.utils import file_utils
+from fate_arch.common import file_utils
 from flask import jsonify
 from flask import Response
 
-from arch.api.utils.log_utils import audit_logger
+from fate_arch.common.log import audit_logger
 from fate_flow.entity.constant import WorkMode
 from fate_flow.settings import DEFAULT_GRPC_OVERALL_TIMEOUT, CHECK_NODES_IDENTITY,\
     FATE_MANAGER_GET_NODE_INFO_ENDPOINT, HEADERS, SERVER_CONF_PATH, SERVERS

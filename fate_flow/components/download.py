@@ -15,12 +15,13 @@
 #
 import os
 
-from arch.api.utils import log_utils, dtable_utils
+from fate_arch.common import log
 from fate_flow.entity.metric import Metric, MetricMeta
-from fate_flow.manager.table_manager.table_operation import get_table
+from fate_arch import storage
 from fate_flow.utils.job_utils import generate_session_id
+from fate_flow.api.client.controller.remote_client import ControllerRemoteClient
 
-LOGGER = log_utils.getLogger()
+LOGGER = log.getLogger()
 
 
 class Download(object):
@@ -33,38 +34,38 @@ class Download(object):
         self.parameters = component_parameters["DownloadParam"]
         self.parameters["role"] = component_parameters["role"]
         self.parameters["local"] = component_parameters["local"]
-        table_name, namespace = dtable_utils.get_table_info(config=self.parameters,
-                                                            create=False)
-        job_id = self.taskid.split("_")[0]
+        name, namespace = self.parameters.get("name"), self.parameters.get("namespace")
         with open(os.path.abspath(self.parameters["output_path"]), "w") as fout:
-            data_table = get_table(job_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id,),
-                                   namespace=namespace, name=table_name)
-            count = data_table.count()
-            LOGGER.info('===== begin to export data =====')
-            lines = 0
-            for key, value in data_table.collect():
-                if not value:
-                    fout.write(key + "\n")
-                else:
-                    fout.write(key + self.parameters.get("delimitor", ",") + str(value) + "\n")
-                lines += 1
-                if lines % 2000 == 0:
-                    LOGGER.info("===== export {} lines =====".format(lines))
-                if lines % 10000 == 0:
-                    job_info = {'f_progress': lines/count*100//1}
-                    self.update_job_status(self.parameters["local"]['role'], self.parameters["local"]['party_id'],
-                                           job_info)
-            self.update_job_status(self.parameters["local"]['role'],
-                                   self.parameters["local"]['party_id'], {'progress': 100})
-            self.callback_metric(metric_name='data_access',
-                                 metric_namespace='download',
-                                 metric_data=[Metric("count", data_table.count())])
+            with storage.Session.build(session_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, True),
+                                       name=name,
+                                       namespace=namespace) as storage_session:
+                data_table = storage_session.get_table(namespace=namespace, name=name)
+                count = data_table.count()
+                LOGGER.info('===== begin to export data =====')
+                lines = 0
+                job_info = {}
+                job_info["job_id"] = self.tracker.job_id
+                job_info["role"] = self.tracker.role
+                job_info["party_id"] = self.tracker.party_id
+                for key, value in data_table.collect():
+                    if not value:
+                        fout.write(key + "\n")
+                    else:
+                        fout.write(key + self.parameters.get("delimitor", ",") + str(value) + "\n")
+                    lines += 1
+                    if lines % 2000 == 0:
+                        LOGGER.info("===== export {} lines =====".format(lines))
+                    if lines % 10000 == 0:
+                        job_info["progress"] = lines/count*100//1
+                        ControllerRemoteClient.update_job(job_info=job_info)
+                job_info["progress"] = 100
+                ControllerRemoteClient.update_job(job_info=job_info)
+                self.callback_metric(metric_name='data_access',
+                                     metric_namespace='download',
+                                     metric_data=[Metric("count", data_table.count())])
             LOGGER.info("===== export {} lines totally =====".format(lines))
             LOGGER.info('===== export data finish =====')
             LOGGER.info('===== export data file path:{} ====='.format(os.path.abspath(self.parameters["output_path"])))
-
-    def update_job_status(self, role, party_id, job_info):
-        self.tracker.start_job(role=role, party_id=party_id, job_info=job_info)
 
     def set_taskid(self, taskid):
         self.taskid = taskid

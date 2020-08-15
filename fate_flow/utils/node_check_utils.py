@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 import requests
-from arch.api.utils import file_utils
+from fate_arch.common import file_utils
 
 from fate_flow.settings import CHECK_NODES_IDENTITY, FATE_MANAGER_NODE_CHECK_ENDPOINT, \
     SERVER_CONF_PATH, SERVERS

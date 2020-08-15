@@ -17,13 +17,13 @@ import os
 import shutil
 import time
 
-from arch.api.utils import log_utils, file_utils, dtable_utils
+from fate_arch.common import log, file_utils
 from fate_flow.entity.metric import Metric, MetricMeta
-from fate_flow.manager.table_manager.table_operation import create_table
 from fate_flow.utils.job_utils import generate_session_id
 from fate_flow.api.client.controller.remote_client import ControllerRemoteClient
+from fate_arch import storage
 
-LOGGER = log_utils.getLogger()
+LOGGER = log.getLogger()
 
 
 class Upload(object):
@@ -47,12 +47,12 @@ class Upload(object):
             raise Exception("%s is not exist, please check the configure" % (self.parameters["file"]))
         if not os.path.getsize(self.parameters["file"]):
             raise Exception("%s is an empty file" % (self.parameters["file"]))
-        table_name, namespace = dtable_utils.get_table_info(config=self.parameters, create=True)
+        name, namespace = self.parameters.get("name"), self.parameters.get("namespace")
         _namespace, _table_name = self.generate_table_name(self.parameters["file"])
         if namespace is None:
             namespace = _namespace
-        if table_name is None:
-            table_name = _table_name
+        if name is None:
+            name = _table_name
         read_head = self.parameters['head']
         if read_head == 0:
             head = False
@@ -63,10 +63,17 @@ class Upload(object):
         partitions = self.parameters["partition"]
         if partitions <= 0 or partitions >= self.MAX_PARTITIONS:
             raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITIONS))
-        self.table = create_table(job_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id), name=table_name,
-                                  namespace=namespace, partitions=self.parameters["partition"],
-                                  engine=self.parameters['storage_engine'], mode=self.parameters['work_mode'])
-        data_table_count = self.save_data_table(job_id, table_name, namespace, head)
+        session_id = generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, random_end=True)
+        with storage.Session.build(session_id=session_id, storage_engine=self.parameters["storage_engine"], options=self.parameters.get("options")) as storage_session:
+            from fate_arch.storage import EggRollStorageType
+            address = storage.StorageTableMeta.create_address(storage_engine=self.parameters["storage_engine"], address_dict={"name": name, "namespace": namespace, "storage_type": EggRollStorageType.ROLLPAIR_LMDB})
+            self.parameters["partitions"] = partitions
+            self.parameters["name"] = name
+            if self.parameters.get("destroy", False):
+                LOGGER.info(f"destroy table {name} {namespace}")
+                storage_session.get_table(name=name, namespace=namespace).destroy()
+            self.table = storage_session.create_table(address=address, **self.parameters)
+            data_table_count = self.save_data_table(job_id, name, namespace, head)
         LOGGER.info("------------load data finish!-----------------")
         # rm tmp file
         try:
@@ -77,7 +84,7 @@ class Upload(object):
             LOGGER.info("remove tmp file failed")
         LOGGER.info("file: {}".format(self.parameters["file"]))
         LOGGER.info("total data_count: {}".format(data_table_count))
-        LOGGER.info("table name: {}, table namespace: {}".format(table_name, namespace))
+        LOGGER.info("table name: {}, table namespace: {}".format(name, namespace))
 
     def set_taskid(self, taskid):
         self.taskid = taskid
@@ -108,9 +115,9 @@ class Upload(object):
                     ControllerRemoteClient.update_job(job_info=job_info)
                     self.table.put_all(data)
                     if n == 0:
-                        self.table.save_meta(party_of_data=data)
+                        self.table.get_meta().update_metas(part_of_data=data)
                 else:
-                    self.table.save_meta(count=self.table.count(), partitions=self.parameters["partition"])
+                    self.table.get_meta().update_metas(count=self.table.count(), partitions=self.parameters["partition"])
                     count_actual = self.table.count()
                     self.tracker.log_output_data_info(data_name='upload',
                                                       table_namespace=dst_table_namespace,
@@ -127,7 +134,7 @@ class Upload(object):
 
     def save_data_header(self, header_source):
         header_source_item = header_source.split(',')
-        self.table.save_meta(schema={'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]})
+        self.table.get_meta().update_metas(schema={'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]})
 
     def get_count(self, input_file):
         with open(input_file, 'r', encoding='utf-8') as fp:

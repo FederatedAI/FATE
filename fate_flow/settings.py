@@ -16,11 +16,11 @@
 # -*- coding: utf-8 -*-
 import os
 
-from arch.api.utils import file_utils, log_utils, core_utils
+from fate_arch.common import file_utils, log, base_utils
 from fate_arch.common import Backend
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.constant import StoreEngine
-from arch.api.utils.conf_utils import get_base_config
+from fate_arch.common.conf_utils import get_base_config
 import __main__
 
 
@@ -51,6 +51,8 @@ SERVER_CONF_PATH = 'conf/server_conf.json'
 
 # job maximum number  of the initiator
 MAX_CONCURRENT_JOB_RUN = 5
+DEFAULT_TASK_PARALLELISM = 2
+DEFAULT_PROCESSORS_PER_TASK = 10
 
 # Limit the number of jobs on the host side
 LIMIT_ROLE = 'host'
@@ -87,13 +89,13 @@ FATE_MANAGER_NODE_CHECK_ENDPOINT = '/fate-manager/api/site/checksite'
 FATE_BOARD_DASHBOARD_ENDPOINT = '/index.html#/dashboard?job_id={}&role={}&party_id={}'
 
 # logger
-log_utils.LoggerFactory.LEVEL = 10
+log.LoggerFactory.LEVEL = 10
 # {CRITICAL: 50, FATAL:50, ERROR:40, WARNING:30, WARN:30, INFO:20, DEBUG:10, NOTSET:0}
-log_utils.LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), 'logs', 'fate_flow'))
-stat_logger = log_utils.getLogger("fate_flow_stat")
-detect_logger = log_utils.getLogger("fate_flow_detect")
-access_logger = log_utils.getLogger("fate_flow_access")
-data_manager_logger = log_utils.getLogger("fate_flow_data_manager")
+log.LoggerFactory.set_directory(os.path.join(file_utils.get_project_base_directory(), 'logs', 'fate_flow'))
+stat_logger = log.getLogger("fate_flow_stat")
+detect_logger = log.getLogger("fate_flow_detect")
+access_logger = log.getLogger("fate_flow_access")
+data_manager_logger = log.getLogger("fate_flow_data_manager")
 
 
 """
@@ -112,6 +114,6 @@ ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH = True
 
 # init
 RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
-RuntimeConfig.init_config(JOB_SERVER_HOST=core_utils.get_lan_ip(), HTTP_PORT=HTTP_PORT)
+RuntimeConfig.init_config(JOB_SERVER_HOST=base_utils.get_lan_ip(), HTTP_PORT=HTTP_PORT)
 RuntimeConfig.init_config(BACKEND=BACKEND)
 RuntimeConfig.init_config(STORE_ENGINE=STORE_ENGINE)

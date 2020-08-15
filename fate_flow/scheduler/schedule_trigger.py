@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils.log_utils import schedule_logger
+from fate_arch.common.log import schedule_logger
 from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.utils import cron, job_utils
 from fate_flow.entity.constant import JobStatus

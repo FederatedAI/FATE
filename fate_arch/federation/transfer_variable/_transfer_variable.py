@@ -17,12 +17,12 @@ import hashlib
 import typing
 from typing import Union
 
-from fate_arch import session
 from fate_arch.common import Party
 from fate_arch.common.log import getLogger
 from fate_arch.federation.transfer_variable._auth import _check_variable_auth_conf
 from fate_arch.federation.transfer_variable._cleaner import IterationGC
 from fate_arch.federation.transfer_variable._namespace import FederationTagNamespace
+from fate_arch.session import get_latest_opened
 
 LOGGER = getLogger()
 
@@ -100,6 +100,7 @@ class Variable(object):
                        obj,
                        parties: Union[typing.List[Party], Party],
                        suffix: Union[typing.Any, typing.Tuple] = tuple()):
+        session = get_latest_opened()
         if isinstance(parties, Party):
             parties = [parties]
         if not isinstance(suffix, tuple):
@@ -109,18 +110,18 @@ class Variable(object):
         for party in parties:
             if party.role not in self._dst:
                 raise RuntimeError(f"not allowed to remote object to {party} using {self._name}")
-        local = session.default().parties.local_party.role
+        local = session.parties.local_party.role
         if local not in self._src:
             raise RuntimeError(f"not allowed to remote object from {local} using {self._name}")
 
         name = self._short_name if self._use_short_name else self._name
-        session.default().federation.remote(v=obj, name=name, tag=tag, parties=parties, gc=self._remote_gc)
+        session.federation.remote(v=obj, name=name, tag=tag, parties=parties, gc=self._remote_gc)
         self._remote_gc.gc()
 
     def get_parties(self,
                     parties: Union[typing.List[Party], Party],
                     suffix: Union[typing.Any, typing.Tuple] = tuple()):
-
+        session = get_latest_opened()
         if not isinstance(parties, list):
             parties = [parties]
         if not isinstance(suffix, tuple):
@@ -130,12 +131,12 @@ class Variable(object):
         for party in parties:
             if party.role not in self._src:
                 raise RuntimeError(f"not allowed to get object from {party} using {self._name}")
-        local = session.default().parties.local_party.role
+        local = session.parties.local_party.role
         if local not in self._dst:
             raise RuntimeError(f"not allowed to get object to {local} using {self._name}")
 
         name = self._short_name if self._use_short_name else self._name
-        rtn = session.default().federation.get(name=name, tag=tag, parties=parties, gc=self._get_gc)
+        rtn = session.federation.get(name=name, tag=tag, parties=parties, gc=self._get_gc)
         self._get_gc.gc()
 
         return rtn
@@ -152,7 +153,7 @@ class Variable(object):
                 The default is -1, which means sent values to parties regardless their party id
             suffix: additional tag suffix, the default is tuple()
         """
-        party_info = session.default().parties
+        party_info = get_latest_opened().parties
         if idx >= 0 and role is None:
             raise ValueError("role cannot be None if idx specified")
 
@@ -180,8 +181,7 @@ class Variable(object):
         Returns:
             object or list of object
         """
-        src_parties = session.default().parties.roles_to_parties(self._src, strict=False)
-
+        src_parties = get_latest_opened().parties.roles_to_parties(roles=self._src, strict=False)
         if isinstance(idx, list):
             rtn = self.get_parties(parties=[src_parties[i] for i in idx], suffix=suffix)
         elif isinstance(idx, int):
@@ -212,8 +212,8 @@ class BaseTransferVariables(object):
 
     @staticmethod
     def all_parties():
-        return session.default().parties.all_parties
+        return get_latest_opened().parties.all_parties
 
     @staticmethod
     def local_party():
-        return session.default().parties.local_party
+        return get_latest_opened().parties.local_party

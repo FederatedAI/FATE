@@ -17,16 +17,15 @@ import uuid
 import operator
 from typing import List
 
-from arch.api.utils.core_utils import current_timestamp, serialize_b64, deserialize_b64
-from arch.api.utils.log_utils import schedule_logger
-from fate_arch.storage.simple_table import SimpleTable
+from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64
+from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import DB, TrackingMetric, TrackingOutputDataInfo, ComponentSummary
 from fate_flow.entity.constant import Backend
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.model_manager import pipelined_model
-from fate_flow.manager.table_manager.table_operation import get_table, create
-from fate_flow.utils import job_utils, model_utils
+from fate_arch import storage
+from fate_flow.utils import model_utils
 
 
 class Tracker(object):
@@ -148,58 +147,65 @@ class Tracker(object):
             else:
                 return ""
 
-    def save_output_data(self, data_table, output_storage_engine=None):
-        if data_table:
+    def save_output_data(self, computing_table, output_storage_engine=None):
+        if computing_table:
             persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(
                 self.task_id), uuid.uuid1().hex
             schedule_logger(self.job_id).info(
                 'persisting the component output temporary table to {} {}'.format(persistent_table_namespace,
                                                                                   persistent_table_name))
-            partitions = data_table.partitions
+            partitions = computing_table.partitions
             schedule_logger(self.job_id).info('output data table partitions is {}'.format(partitions))
-            address = create(name=persistent_table_name,
-                             namespace=persistent_table_namespace,
-                             storage_engine=output_storage_engine,
-                             partitions=partitions)
+            address = storage.StorageTableMeta.create_address(storage_engine=output_storage_engine, address_dict={"name": persistent_table_name, "namespace": persistent_table_namespace, "storage_type": storage.EggRollStorageType.ROLLPAIR_LMDB})
             schema = {}
-            data_table.save(address, schema=schema, partitions=partitions)
-            table = get_table(job_id=job_utils.generate_session_id(self.task_id, self.task_version, self.role, self.party_id),
-                              name=persistent_table_name,
-                              namespace=persistent_table_namespace)
-            party_of_data = []
-            count = 100
-            for k, v in data_table.collect():
-                party_of_data.append((k, v))
-                count -= 1
-                if count == 0:
+            # persistent table
+            computing_table.save(address, schema=schema, partitions=partitions)
+            part_of_data = []
+            part_of_limit = 100
+            for k, v in computing_table.collect():
+                part_of_data.append((k, v))
+                part_of_limit -= 1
+                if part_of_limit == 0:
                     break
-            table.save_meta(schema=schema, party_of_data=party_of_data, count=data_table.count(), partitions=partitions)
+            table_count = computing_table.count()
+            meta_info = {}
+            meta_info["name"] = persistent_table_name
+            meta_info["namespace"] = persistent_table_namespace
+            meta_info["address"] = address
+            meta_info["partitions"] = computing_table.partitions
+            meta_info["schema"] = schema
+            meta_info["engine"] = output_storage_engine
+            meta_info["type"] = storage.EggRollStorageType.ROLLPAIR_LMDB
+            meta_info["options"] = {}
+            meta_info["count"] = table_count
+            storage.StorageTableMeta.create_metas(**meta_info)
+            """
+            # The same table is read by two different sessions
+            with storage.Session.build(storage_engine=output_storage_engine) as storage_session:
+                table = storage_session.create_table(address=address, name=persistent_table_name, namespace=persistent_table_namespace, partitions=partitions)
+                table.get_meta().update_metas(schema=schema, part_of_data=part_of_data, count=computing_table.count(), partitions=partitions)
+            """
             return persistent_table_namespace, persistent_table_name
         else:
             schedule_logger(self.job_id).info('task id {} output data table is none'.format(self.task_id))
             return None, None
 
-    def get_output_data_table(self, output_data_infos, init_session=False, need_all=True, session_id=''):
+    def get_output_data_table(self, output_data_infos, need_all=True):
         """
         Get component output data table, will run in the task executor process
         :param data_name:
         :return:
         """
-        if not init_session and not session_id:
-            session_id = job_utils.generate_session_id(self.task_id, self.task_version, self.role, self.party_id)
-        data_tables = {}
+        output_tables_meta = {}
         if output_data_infos:
             for output_data_info in output_data_infos:
                 schedule_logger(self.job_id).info("Get task {} {} output table {} {}".format(output_data_info.f_task_id, output_data_info.f_task_version, output_data_info.f_table_namespace, output_data_info.f_table_name))
                 if not need_all:
-                    data_table = SimpleTable(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace, data_name=output_data_info.f_data_name)
+                    data_table_meta = StorageTable(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace, data_name=output_data_info.f_data_name)
                 else:
-                    data_table = get_table(job_id=session_id,
-                                           name=output_data_info.f_table_name,
-                                           namespace=output_data_info.f_table_namespace,
-                                           init_session=init_session)
-                data_tables[output_data_info.f_data_name] = data_table
-        return data_tables
+                    data_table_meta = storage.StorageTableMeta.build(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace)
+                output_tables_meta[output_data_info.f_data_name] = data_table_meta
+        return output_tables_meta
 
     def init_pipelined_model(self):
         self.pipelined_model.create_pipelined_model()

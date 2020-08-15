@@ -25,14 +25,14 @@ from peewee import (Model, CharField, IntegerField, BigIntegerField,
 from playhouse.apsw_ext import APSWDatabase
 from playhouse.pool import PooledMySQLDatabase
 
-from arch.api.utils import log_utils
-from arch.api.utils.core_utils import current_timestamp
-from fate_arch.db.db_models import JSONField
+from fate_arch.common import log
+from fate_arch.common.base_utils import current_timestamp
+from fate_arch.storage.metastore.db_models import JSONField
 from fate_flow.entity.constant import WorkMode
 from fate_flow.settings import DATABASE, WORK_MODE, stat_logger, USE_LOCAL_DATABASE
 from fate_flow.entity.runtime_config import RuntimeConfig
 
-LOGGER = log_utils.getLogger()
+LOGGER = log.getLogger()
 
 
 def singleton(cls, *args, **kw):
@@ -156,6 +156,8 @@ class Job(DataBaseModel):
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
     f_is_initiator = IntegerField(null=True, index=True, default=-1)
+    f_resources = IntegerField(index=True, default=0)
+    f_remaining_resources = IntegerField(index=True, default=0)
     f_progress = IntegerField(null=True, default=0)
     f_create_time = BigIntegerField()
     f_update_time = BigIntegerField(null=True)
@@ -193,7 +195,7 @@ class TaskSet(DataBaseModel):
 class Task(DataBaseModel):
     # multi-party common configuration
     f_job_id = CharField(max_length=25)
-    f_task_set_id = BigIntegerField()
+    #f_task_set_id = BigIntegerField()
     f_component_name = TextField()
     f_task_id = CharField(max_length=100)
     f_task_version = BigIntegerField()

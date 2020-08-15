@@ -16,7 +16,7 @@
 import requests
 import json
 
-from arch.api.utils.log_utils import audit_logger
+from fate_arch.common.log import audit_logger
 from fate_flow.utils.proto_compatibility import basic_meta_pb2
 from fate_flow.utils.proto_compatibility import proxy_pb2, proxy_pb2_grpc
 import grpc
