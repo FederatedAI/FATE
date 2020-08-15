@@ -14,14 +14,17 @@
 #  limitations under the License.
 #
 import typing
+
 from fate_arch.common import WorkMode, Backend, FederationMode
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 
 
-def backend_compatibility(work_mode: typing.Union[WorkMode, int] = WorkMode.STANDALONE, backend: typing.Union[Backend, int] = Backend.EGGROLL, **kwargs):
+def backend_compatibility(work_mode: typing.Union[WorkMode, int] = WorkMode.STANDALONE,
+                          backend: typing.Union[Backend, int] = Backend.EGGROLL, **kwargs):
     # Compatible with previous 1.5 versions
-    if kwargs.get("computing_engine") is None or kwargs.get("federation_engine") is None or kwargs.get("federation_mode") is None:
+    if kwargs.get("computing_engine") is None or kwargs.get("federation_engine") is None or kwargs.get(
+            "federation_mode") is None:
         if work_mode is None or backend is None:
             raise RuntimeError("unable to find compatible engines")
         if isinstance(work_mode, int):
@@ -36,4 +39,5 @@ def backend_compatibility(work_mode: typing.Union[WorkMode, int] = WorkMode.STAN
         if backend == Backend.SPARK:
             return ComputingEngine.SPARK, FederationEngine.MQ, FederationMode.MULTIPLE
     else:
-        return ComputingEngine(kwargs["computing_engine"]), FederationEngine(kwargs["federation_engine"]), FederationMode(kwargs["federation_mode"])
+        return ComputingEngine(kwargs["computing_engine"]), FederationEngine(
+            kwargs["federation_engine"]), FederationMode(kwargs["federation_mode"])

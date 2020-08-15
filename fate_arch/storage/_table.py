@@ -19,12 +19,12 @@ import operator
 from typing import Iterable
 
 import peewee
-from fate_arch.common.log import getLogger
-from fate_arch.common.base_utils import current_timestamp
-from fate_arch.storage.metastore.db_models import DB, StorageTableMetaModel
-from fate_arch.abc import StorageTableMetaABC, StorageTableABC, AddressABC
-from fate_arch.storage import Relationship
 
+from fate_arch.abc import StorageTableMetaABC, StorageTableABC, AddressABC
+from fate_arch.common.base_utils import current_timestamp
+from fate_arch.common.log import getLogger
+from fate_arch.storage import Relationship
+from fate_arch.storage.metastore.db_models import DB, StorageTableMetaModel
 
 MAX_NUM = 10000
 

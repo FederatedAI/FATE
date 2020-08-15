@@ -1,4 +1,4 @@
-from enum import IntEnum, Enum
+from enum import IntEnum
 
 
 class WorkMode(IntEnum):

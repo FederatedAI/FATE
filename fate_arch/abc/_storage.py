@@ -17,9 +17,8 @@
 
 import abc
 from typing import Iterable
-from fate_arch.common.log import getLogger
 
-MAX_NUM = 10000
+from fate_arch.common.log import getLogger
 
 LOGGER = getLogger()
 
@@ -88,9 +87,6 @@ class StorageTableMetaABC(metaclass=abc.ABCMeta):
 
 
 class StorageTableABC(metaclass=abc.ABCMeta):
-    """
-    table for distributed storage
-    """
     @abc.abstractmethod
     def get_name(self):
         ...
@@ -129,41 +125,14 @@ class StorageTableABC(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def put_all(self, kv_list: Iterable, **kwargs):
-        """
-        Puts (key, value) 2-tuple stream from the iterable items.
-
-        Elements must be exact 2-tuples, they may not be of any other type, or tuple subclass.
-        Parameters
-        ----------
-        kv_list : Iterable
-          Key-Value 2-tuple iterable. Will be serialized.
-        Notes
-        -----
-        Each key must be less than 512 bytes, value must be less than 32 MB(implementation depends).
-        """
         ...
 
     @abc.abstractmethod
     def collect(self, **kwargs) -> list:
-        """
-        Returns an iterator of (key, value) 2-tuple from the Table.
-
-        Returns
-        -------
-        Iterator
-        """
         ...
 
     @abc.abstractmethod
     def count(self):
-        """
-        Returns the number of elements in the Table.
-
-        Returns
-        -------
-        int
-          Number of elements in this Table.
-        """
         ...
 
     @abc.abstractmethod
@@ -173,7 +142,8 @@ class StorageTableABC(metaclass=abc.ABCMeta):
 
 class StorageSessionABC(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def create_table(self, address, name, namespace, partitions, storage_type=None, options=None, **kwargs) -> StorageTableABC:
+    def create_table(self, address, name, namespace, partitions, storage_type=None, options=None,
+                     **kwargs) -> StorageTableABC:
         ...
 
     @abc.abstractmethod
@@ -196,5 +166,3 @@ class StorageSessionABC(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def session_id(self) -> str:
         ...
-
-

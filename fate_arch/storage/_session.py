@@ -15,14 +15,14 @@
 #
 
 
-from fate_arch.common.log import getLogger
-from fate_arch.storage._types import StorageEngine, Relationship
-from fate_arch.common.base_utils import fate_uuid
-from fate_arch.common import compatibility_utils
-from fate_arch.storage.metastore.db_models import DB, StorageTableMetaModel
-from fate_arch.computing import ComputingEngine
 from fate_arch.abc import StorageSessionABC, StorageTableABC
+from fate_arch.common import compatibility_utils
+from fate_arch.common.base_utils import fate_uuid
+from fate_arch.common.log import getLogger
+from fate_arch.computing import ComputingEngine
 from fate_arch.storage._table import StorageTableMeta
+from fate_arch.storage._types import StorageEngine, Relationship
+from fate_arch.storage.metastore.db_models import DB, StorageTableMetaModel
 
 MAX_NUM = 10000
 
@@ -35,7 +35,8 @@ class Session(object):
         session_id = session_id if session_id else fate_uuid()
         # Find the storage engine type
         if storage_engine is None and kwargs.get("name") and kwargs.get("namespace"):
-            storage_engine, address, partitions = StorageSessionBase.get_storage_info(name=kwargs.get("name"), namespace=kwargs.get("namespace"))
+            storage_engine, address, partitions = StorageSessionBase.get_storage_info(name=kwargs.get("name"),
+                                                                                      namespace=kwargs.get("namespace"))
         if storage_engine is None and computing_engine is None:
             computing_engine, federation_engine, federation_mode = compatibility_utils.backend_compatibility(**kwargs)
         if storage_engine is None and computing_engine:
@@ -49,7 +50,8 @@ class Session(object):
             raise NotImplementedError(f"can not be initialized with storage engine: {storage_engine}")
 
     @classmethod
-    def convert(cls, src_name, src_namespace, dest_name, dest_namespace, computing_engine: ComputingEngine = ComputingEngine.EGGROLL, force=False):
+    def convert(cls, src_name, src_namespace, dest_name, dest_namespace,
+                computing_engine: ComputingEngine = ComputingEngine.EGGROLL, force=False):
         # The source and target may be different session types
         src_table_meta = StorageTableMeta.build(name=src_name, namespace=src_namespace)
         if not src_table_meta:
@@ -62,7 +64,10 @@ class Session(object):
             elif computing_engine == ComputingEngine.EGGROLL:
                 from fate_arch.storage.eggroll import StorageSession
                 from fate_arch.storage import EggRollStorageType
-                dest_table_address = StorageTableMeta.create_address(storage_engine=StorageEngine.EGGROLL, address_dict=dict(name=dest_name, namespace=dest_namespace, storage_type=EggRollStorageType.ROLLPAIR_LMDB))
+                dest_table_address = StorageTableMeta.create_address(storage_engine=StorageEngine.EGGROLL,
+                                                                     address_dict=dict(name=dest_name,
+                                                                                       namespace=dest_namespace,
+                                                                                       storage_type=EggRollStorageType.ROLLPAIR_LMDB))
                 dest_table_engine = StorageEngine.EGGROLL
             elif computing_engine == ComputingEngine.SPARK:
                 pass
@@ -87,7 +92,8 @@ class Session(object):
                 data = []
         if data:
             dest_table.put_all(data)
-        dest_table.get_meta().update_metas(schema=src_table.get_meta(meta_type="schema"), count=src_table.count(), part_of_data=part_of_data)
+        dest_table.get_meta().update_metas(schema=src_table.get_meta(meta_type="schema"), count=src_table.count(),
+                                           part_of_data=part_of_data)
 
 
 class StorageSessionBase(StorageSessionABC):

@@ -16,11 +16,10 @@
 
 import json
 import os
-from ruamel import yaml
 
 from cachetools import LRUCache
 from cachetools import cached
-
+from ruamel import yaml
 
 PROJECT_BASE = None
 
