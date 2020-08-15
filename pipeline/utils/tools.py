@@ -42,4 +42,3 @@ def extract_explicit_parameter(func):
         return func(*args, **explict_kwargs)
 
     return wrapper
-

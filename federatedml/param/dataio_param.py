@@ -92,7 +92,7 @@ class DataIOParam(BaseParam):
                  missing_impute=None, outlier_replace=True, outlier_replace_method=None,
                  outlier_impute=None, outlier_replace_value=0,
                  with_label=False, label_name='y',
-                 label_type='int', output_format='dense'):
+                 label_type='int', output_format='dense', need_run=True):
         self.input_format = input_format
         self.delimitor = delimitor
         self.data_type = data_type
@@ -111,6 +111,7 @@ class DataIOParam(BaseParam):
         self.label_name = label_name
         self.label_type = label_type
         self.output_format = output_format
+        self.need_run = need_run
 
     def check(self):
 

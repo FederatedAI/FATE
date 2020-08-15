@@ -104,10 +104,10 @@
         "hetero_lr_0": {
             "penalty": "L2",
             "optimizer": "nesterov_momentum_sgd",
-            "eps": 1e-05,
+            "tol": 1e-05,
             "alpha": 0.0001,
             "max_iter": 10,
-            "converge_func": "diff",
+            "early_stop": "diff",
             "multi_class": "ovr",
             "batch_size": -1,
             "learning_rate": 0.15,
