@@ -23,7 +23,7 @@ from arch.api.utils import log_utils
 from federatedml.secureprotol import gmpy_math
 from federatedml.statistic.intersect import RawIntersect
 from federatedml.statistic.intersect import RsaIntersect
-from federatedml.statistic.intersect.rsa_cache import cache_utils
+#from federatedml.statistic.intersect.rsa_cache import cache_utils
 from federatedml.util import consts
 from federatedml.transfer_variable.transfer_class.rsa_intersect_transfer_variable import RsaIntersectTransferVariable
 
