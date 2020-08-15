@@ -128,10 +128,6 @@ class EndStatus(BaseStatus):
     FAILED = StatusSet.FAILED
     COMPLETE = StatusSet.COMPLETE
 
-    @staticmethod
-    def is_end_status(status):
-        return status in EndStatus.__dict__.keys()
-
 
 class ModelStorage(object):
     REDIS = "redis"

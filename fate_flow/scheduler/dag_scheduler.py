@@ -151,13 +151,21 @@ class DAGScheduler(object):
         task_scheduling_status_code, tasks = TaskScheduler.schedule(job=job, dsl_parser=dsl_parser)
         tasks_status = [task.f_status for task in tasks]
         new_job_status = cls.calculate_job_status(task_scheduling_status_code=task_scheduling_status_code, tasks_status=tasks_status)
+        total, finished_count = cls.calculate_job_progress(tasks_status=tasks_status)
+        new_progress = float(finished_count) / total * 100
         schedule_logger(job_id=job.f_job_id).info("Job {} status is {}, calculate by task status list: {}".format(job.f_job_id, new_job_status, tasks_status))
-        if new_job_status != job.f_status:
-            job.f_status = new_job_status
-            if EndStatus.contains(job.f_status):
-                FederatedScheduler.save_pipelined_model(job=job)
-            FederatedScheduler.sync_job(job=job, update_fields=["status"])
-            cls.update_job_on_initiator(initiator_job=job, update_fields=["status"])
+        if new_job_status != job.f_status or new_progress != job.f_progress:
+            # Make sure to update separately, because these two fields update with anti-weight logic
+            if new_progress != job.f_progress:
+                job.f_progress = new_progress
+                FederatedScheduler.sync_job(job=job, update_fields=["progress"])
+                cls.update_job_on_initiator(initiator_job=job, update_fields=["progress"])
+            if new_job_status != job.f_status:
+                job.f_status = new_job_status
+                if EndStatus.contains(job.f_status):
+                    FederatedScheduler.save_pipelined_model(job=job)
+                FederatedScheduler.sync_job(job=job, update_fields=["status"])
+                cls.update_job_on_initiator(initiator_job=job, update_fields=["status"])
         if EndStatus.contains(job.f_status):
             cls.finish(job=job, end_status=job.f_status)
         schedule_logger(job_id=job.f_job_id).info("Finish scheduling job {}".format(job.f_job_id))
@@ -204,6 +212,16 @@ class DAGScheduler(object):
                     return status
 
             raise Exception("Calculate job status failed: {}".format(tasks_status))
+
+    @classmethod
+    def calculate_job_progress(cls, tasks_status):
+        total = 0
+        finished_count = 0
+        for task_status in tasks_status:
+            total += 1
+            if EndStatus.contains(task_status):
+                finished_count += 1
+        return total, finished_count
 
     @classmethod
     def finish(cls, job, end_status):
