@@ -22,7 +22,7 @@ import time
 from datetime import timedelta
 import sys
 
-from fate_flow.flowpy.client import FlowClient
+from fate_sdk.client import FlowClient
 from pipeline.backend import config as conf
 from pipeline.backend.config import JobStatus
 from pipeline.backend.config import StatusCode
