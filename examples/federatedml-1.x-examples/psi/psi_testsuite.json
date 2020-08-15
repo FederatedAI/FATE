@@ -1,0 +1,42 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_homo_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_guest",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_homo_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/default_credit_homo_guest.csv",
+            "head": 0,
+            "partition": 16,
+            "table_name": "default_credit_homo_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/default_credit_homo_host.csv",
+            "head": 0,
+            "partition": 16,
+            "table_name": "default_credit_homo_host",
+            "namespace": "experiment",
+            "role": "guest_0"
+        }
+    ],
+    "tasks": {
+        "psi": {
+            "conf": "psi_cpn_conf.json",
+            "dsl": "psi_cpn_dsl.json"
+        }
+    }
+}

@@ -92,30 +92,30 @@
             },
             "dataio_0": {
                 "with_label": [
-                    true
+                    true, true
                 ],
                 "label_name": [
-                    "y"
+                    "y", "y"
                 ],
                 "label_type": [
-                    "int"
+                    "int", "int"
                 ],
                 "output_format": [
-                    "dense"
+                    "dense", "dense"
                 ]
             },
             "dataio_1": {
                 "with_label": [
-                    true
+                    true, true
                 ],
                 "label_name": [
-                    "y"
+                    "y", "y"
                 ],
                 "label_type": [
-                    "int"
+                    "int", "int"
                 ],
                 "output_format": [
-                    "dense"
+                    "dense", "dense"
                 ]
             }
         }
