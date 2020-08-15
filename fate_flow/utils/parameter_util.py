@@ -91,9 +91,10 @@ class BaseParameterUtil(object):
                     if key not in ["algorithm_parameters", "role_parameters"]:
                         runtime_dict[key] = value
 
+                role_param_obj = copy.deepcopy(param_obj)
+
                 if "algorithm_parameters" in submit_dict:
                     if module_alias in submit_dict["algorithm_parameters"]:
-                        role_param_obj = copy.deepcopy(param_obj)
                         common_parameters = submit_dict["algorithm_parameters"].get(module_alias)
                         merge_dict = ParameterUtil.merge_parameters(runtime_dict[param_class],
                                                                     common_parameters,
@@ -103,18 +104,12 @@ class BaseParameterUtil(object):
                                                                     version=version)
                         runtime_dict[param_class] = merge_dict
 
-                        try:
-                            role_param_obj.check()
-                        except Exception as e:
-                            raise ParameterCheckError(component=module_alias, module=module, other_info=e)
-
                 if "role_parameters" in submit_dict and role in submit_dict["role_parameters"]:
                     if version == 2:
                         role_parameters = submit_dict["role_parameters"][role]
 
                         role_idxs = role_parameters.keys()
                         for role_id in role_idxs:
-                            role_param_obj = copy.deepcopy(param_obj)
                             if role_id == "all" or str(idx) in role_id.split("|"):
                                 role_dict = role_parameters[role_id]
                                 if module_alias in role_dict:
@@ -130,15 +125,10 @@ class BaseParameterUtil(object):
                                                                                 version=version)
 
                                     runtime_dict[param_class] = merge_dict
-                                    try:
-                                        role_param_obj.check()
-                                    except Exception as e:
-                                        raise ParameterCheckError(component=module_alias, module=module, other_info=e)
 
                     if version == 1:
                         role_dict = submit_dict["role_parameters"][role]
                         if module_alias in role_dict:
-                            role_param_obj = copy.deepcopy(param_obj)
                             role_parameters = role_dict.get(module_alias)
                             merge_dict = ParameterUtil.merge_parameters(runtime_dict[param_class],
                                                                         role_parameters,
@@ -151,10 +141,10 @@ class BaseParameterUtil(object):
                                                                         version=version)
                             runtime_dict[param_class] = merge_dict
 
-                            try:
-                                role_param_obj.check()
-                            except Exception as e:
-                                raise ParameterCheckError(component=module_alias, module=module, other_info=e)
+                try:
+                    role_param_obj.check()
+                except Exception as e:
+                    raise ParameterCheckError(component=module_alias, module=module, other_info=e)
 
                 runtime_dict['local'] = submit_dict.get('local', {})
                 my_local = {
