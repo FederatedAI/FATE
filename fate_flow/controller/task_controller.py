@@ -69,7 +69,8 @@ class TaskController(object):
 
             if backend.is_eggroll():
                 process_cmd = [
-                    'python3', sys.modules[TaskExecutor.__module__].__file__,
+                    'python3',
+                    sys.modules[TaskExecutor.__module__].__file__,
                     '-j', job_id,
                     '-n', component_name,
                     '-t', task_id,
@@ -180,7 +181,7 @@ class TaskController(object):
             schedule_logger(task.f_job_id).exception(e)
         finally:
             schedule_logger(task.f_job_id).info(
-                'Job {} task {} {} on {} {} process {} kill {}'.format(task.f_job_id, task.f_task_id,
+                'job {} task {} {} on {} {} process {} kill {}'.format(task.f_job_id, task.f_task_id,
                                                                        task.f_task_version,
                                                                        task.f_role,
                                                                        task.f_party_id,

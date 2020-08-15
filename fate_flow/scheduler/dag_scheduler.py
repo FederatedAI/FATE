@@ -30,6 +30,7 @@ from fate_flow.utils import detect_utils, job_utils
 from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_log_directory
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils import model_utils
+from fate_flow.manager.resource_manager import ResourceManager
 
 
 class DAGScheduler(object):
@@ -48,8 +49,8 @@ class DAGScheduler(object):
         job_runtime_conf["job_parameters"]["federation_mode"] = federation_mode
 
         # set default parameters
-        job_runtime_conf["job_parameters"]["task_parallelism"] = job_runtime_conf["job_parameters"].get("task_parallelism", DEFAULT_TASK_PARALLELISM)
-        job_runtime_conf["job_parameters"]["processors_per_task"] = job_runtime_conf["job_parameters"].get("processors_per_task", DEFAULT_PROCESSORS_PER_TASK)
+        job_runtime_conf["job_parameters"]["task_parallelism"] = int(job_runtime_conf["job_parameters"].get("task_parallelism", DEFAULT_TASK_PARALLELISM))
+        job_runtime_conf["job_parameters"]["processors_per_task"] = int(job_runtime_conf["job_parameters"].get("processors_per_task", DEFAULT_PROCESSORS_PER_TASK))
 
         job_utils.check_pipeline_job_runtime_conf(job_runtime_conf)
         job_parameters = job_runtime_conf['job_parameters']
@@ -131,7 +132,8 @@ class DAGScheduler(object):
         job_info["start_time"] = current_timestamp()
         job_info["tag"] = 'end_waiting'
         # TODO: Apply for resources
-        job_info["resources"] = 40
+        st, cores = ResourceManager.apply_for_resource_to_job(job_id=job_id, role=initiator_role, party_id=initiator_party_id)
+        job_info["resources"] = cores
         job_info["remaining_resources"] = job_info["resources"]
         update_status = JobSaver.update_job(job_info=job_info)
         if update_status:

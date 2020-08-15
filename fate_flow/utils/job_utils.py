@@ -40,6 +40,7 @@ from fate_flow.utils import api_utils
 from fate_flow.utils import session_utils
 from flask import request, redirect, url_for
 from fate_flow.operation.job_saver import JobSaver
+from fate_flow.entity.constant import TaskStatus
 
 
 class IdCounter(object):
@@ -400,23 +401,24 @@ def is_task_executor_process(task: Task, process: psutil.Process):
         3: "f_job_id",
         5: "f_component_name",
         7: "f_task_id",
-        9: "f_role",
-        11: "f_party_id"
+        9: "f_task_version",
+        11: "f_role",
+        13: "f_party_id"
     }
     try:
         cmdline = process.cmdline()
+        schedule_logger(task.f_job_id).info(cmdline)
     except Exception as e:
         # Not sure whether the process is a task executor process, operations processing is required
         schedule_logger(task.f_job_id).warning(e)
         return False
     for i, k in run_cmd_map.items():
-        if len(cmdline) > i and cmdline[i] == getattr(task, k):
+        if len(cmdline) > i and cmdline[i] == str(getattr(task, k)):
             continue
         else:
             # todo: The logging level should be obtained first
             if len(cmdline) > i:
-                schedule_logger(task.f_job_id).debug(cmdline[i])
-                schedule_logger(task.f_job_id).debug(getattr(task, k))
+                schedule_logger(task.f_job_id).debug(f"cmd map {i} {k}, cmd value {cmdline[i]} task value {getattr(task, k)}")
             return False
     else:
         return True
@@ -425,15 +427,20 @@ def is_task_executor_process(task: Task, process: psutil.Process):
 def kill_task_executor_process(task: Task, only_child=False):
     try:
         if not task.f_run_pid:
+            schedule_logger(task.f_job_id).info("job {} task {} {} {} no process pid".format(
+                task.f_job_id, task.f_task_id, task.f_role, task.f_party_id))
             return True
         pid = int(task.f_run_pid)
         schedule_logger(task.f_job_id).info("try to stop job {} task {} {} {} process pid:{}".format(
             task.f_job_id, task.f_task_id, task.f_role, task.f_party_id, pid))
         if not check_job_process(pid):
+            schedule_logger(task.f_job_id).info("can not found job {} task {} {} {} process pid:{}".format(
+                task.f_job_id, task.f_task_id, task.f_role, task.f_party_id, pid))
             return True
         p = psutil.Process(int(pid))
         if not is_task_executor_process(task=task, process=p):
-            schedule_logger(task.f_job_id).warning("this pid {} is not task executor".format(pid))
+            schedule_logger(task.f_job_id).warning("this pid {} is not job {} task {} {} {} executor".format(
+                pid, task.f_job_id, task.f_task_id, task.f_role, task.f_party_id))
             return False
         for child in p.children(recursive=True):
             if check_job_process(child.pid) and is_task_executor_process(task=task, process=child):
@@ -441,6 +448,8 @@ def kill_task_executor_process(task: Task, only_child=False):
         if not only_child:
             if check_job_process(p.pid) and is_task_executor_process(task=task, process=p):
                 p.kill()
+        schedule_logger(task.f_job_id).info("successfully stop job {} task {} {} {} process pid:{}".format(
+            task.f_job_id, task.f_task_id, task.f_role, task.f_party_id, pid))
         return True
     except Exception as e:
         raise e
@@ -473,6 +482,13 @@ def start_session_stop(task):
     job_conf_dict = get_job_conf(task.f_job_id)
     runtime_conf = job_conf_dict['job_runtime_conf_path']
     session_id = generate_session_id(task.f_task_id, task.f_task_version, task.f_role, task.f_party_id)
+    if task.f_status != TaskStatus.WAITING:
+        schedule_logger(task.f_job_id).info('start run subprocess to stop task {} {} session {}'
+                                            .format(task.f_task_id, task.f_task_version, session_id))
+    else:
+        schedule_logger(task.f_job_id).info('task {} {} is waiting, pass stop session {}'
+                                            .format(task.f_task_id, task.f_task_version, session_id))
+        return
     process_cmd = [
         'python3', sys.modules[session_utils.SessionStop.__module__].__file__,
         '-j', session_id,
@@ -480,8 +496,6 @@ def start_session_stop(task):
         '-b', str(runtime_conf.get('job_parameters').get('backend', 0)),
         '-c', 'stop' if task.f_status == JobStatus.COMPLETE else 'kill'
     ]
-    schedule_logger(task.f_job_id).info('start run subprocess to stop task {} {} session {}'
-                                        .format(task.f_task_id, task.f_task_version, session_id))
     task_dir = os.path.join(get_job_directory(job_id=task.f_job_id), task.f_role,
                             task.f_party_id, task.f_component_name, 'session_stop')
     os.makedirs(task_dir, exist_ok=True)
