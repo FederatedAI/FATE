@@ -24,7 +24,8 @@ classifiers = [
 packages = [
     { include = "flow_client" },
     { include = "flow_sdk" },
-    { include = "testsuite" }
+    { include = "testsuite" },
+    { include = "pipeline" }
 ]
 
 [tool.poetry.dependencies]
@@ -40,6 +41,8 @@ kazoo = "^2.8.0"
 loguru = "^0.5.1"
 prettytable = "^0.7.2"
 sshtunnel = "^0.1.5"
+tensorflow = "1.5.2"
+torch = "1.4.0"
 
 [tool.poetry.dev-dependencies]
 
