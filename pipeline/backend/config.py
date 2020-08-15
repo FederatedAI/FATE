@@ -17,9 +17,10 @@
 import os
 from pathlib import Path
 
-from fate_arch.common import file_utils
 from fate_flow.entity.constant import Backend, JobStatus, WorkMode
 
+__all__ = ["Backend", "WorkMode", "JobStatus", "VERSION", "TIME_QUERY_FREQS", "Role", "StatusCode",
+           "LogPath", "LogFormat"]
 VERSION = 2
 TIME_QUERY_FREQS = 0.01
 
