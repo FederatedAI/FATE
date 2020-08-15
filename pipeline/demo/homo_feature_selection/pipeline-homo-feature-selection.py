@@ -96,16 +96,10 @@ def main(config="./config.yaml"):
     secureboost_0 = HomoSecureBoost(name='secureboost_0', **param)
 
     param = {
-        "name": 'hetero_feature_selection_0',
-        "filter_methods": ["manually", "statistic_filter", "homo_sbt_filter"],
+        "name": 'homo_feature_selection_0',
+        "filter_methods": ["manually", "homo_sbt_filter"],
         "manually_param": {
             "filter_out_indexes": [1]
-        },
-        "statistic_param": {
-            "metrics": ["coefficient_of_variance", "skewness"],
-            "filter_type": ["threshold", "threshold"],
-            "take_high": [True, True],
-            "threshold": [0.001, -0.01]
         },
         "sbt_param": {
             "metrics": ["feature_importance"],
@@ -126,21 +120,18 @@ def main(config="./config.yaml"):
 
     # set train & validate data of hetero_lr_0 component
 
-    pipeline.add_component(statistic_0, data=Data(data=dataio_0.output.data))
-
     pipeline.add_component(secureboost_0, data=Data(train_data=dataio_0.output.data,
                                                     validate_data=dataio_1.output.data))
 
     pipeline.add_component(hetero_feature_selection_0, data=Data(data=dataio_0.output.data),
-                           model=Model(isometric_model=[statistic_0.output.model,
-                                                        secureboost_0.output.model]))
+                           model=Model(isometric_model=[secureboost_0.output.model]))
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
     pipeline.compile()
 
     # fit model
     pipeline.fit(backend=backend, work_mode=work_mode)
     # query component summary
-    print(pipeline.get_component("hetero_feature_selection_0").get_summary())
+    print(pipeline.get_component("homo_feature_selection_0").get_summary())
 
 
 if __name__ == "__main__":
