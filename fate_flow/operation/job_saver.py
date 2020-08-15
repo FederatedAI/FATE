@@ -18,7 +18,7 @@ import operator
 from fate_arch.common.base_utils import current_timestamp
 from fate_arch.common import base_utils
 from fate_flow.db.db_models import DB, Job, Task
-from fate_flow.entity.constant import StatusSet, JobStatus, EndStatus
+from fate_flow.entity.constant import StatusSet, JobStatus, TaskStatus, EndStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_arch.common.log import schedule_logger, sql_logger
 import peewee
@@ -93,6 +93,22 @@ class JobSaver(object):
                 raise Exception("Create {} failed:\n{}".format(entity_model, e))
 
     @classmethod
+    def gen_update_status_filter(cls, obj, update_info, field, update_filters):
+        if_pass = False
+        if isinstance(obj, Task):
+            if TaskStatus.StateTransitionRule.if_pass(src_status=getattr(obj, f"f_{field}"), dest_status=update_info[field]):
+                if_pass = True
+        elif isinstance(obj, Job):
+            if JobStatus.StateTransitionRule.if_pass(src_status=getattr(obj, f"f_{field}"), dest_status=update_info[field]):
+                if_pass = True
+        if if_pass:
+            update_filters.append(operator.attrgetter(f"f_{field}")(type(obj)) == getattr(obj, f"f_{field}"))
+        else:
+            # not allow update
+            update_info.pop(field)
+        return if_pass
+
+    @classmethod
     def update_job_family_entity(cls, entity_model, entity_info):
         with DB.connection_context():
             query_filters = []
@@ -106,12 +122,10 @@ class JobSaver(object):
                 raise Exception("Can not found the {}".format(entity_model.__class__.__name__))
             update_filters = query_filters[:]
             if 'status' in entity_info and hasattr(entity_model, "f_status"):
-                update_filters.append(operator.attrgetter("f_status_level")(entity_model) < StatusSet.get_level(entity_info["status"]))
-                entity_info["status_level"] = StatusSet.get_level(entity_info["status"])
+                cls.gen_update_status_filter(obj=obj, update_info=entity_info, field="status", update_filters=update_filters)
             if "party_status" in entity_info and hasattr(entity_model, "f_party_status"):
-                update_filters.append(operator.attrgetter("f_party_status_level")(entity_model) < StatusSet.get_level(entity_info["party_status"]))
-                entity_info["party_status_level"] = StatusSet.get_level(entity_info["party_status"])
-                if EndStatus.contains(entity_info["party_status"]):
+                if_pass = cls.gen_update_status_filter(obj=obj, update_info=entity_info, field="party_status", update_filters=update_filters)
+                if if_pass and EndStatus.contains(entity_info["party_status"]):
                     entity_info['end_time'] = current_timestamp()
                     if obj.f_start_time:
                         entity_info['elapsed'] = entity_info['end_time'] - obj.f_start_time
@@ -122,12 +136,15 @@ class JobSaver(object):
                 attr_name = 'f_%s' % k
                 if hasattr(entity_model, attr_name) and attr_name not in primary_keys:
                     update_fields[operator.attrgetter(attr_name)(entity_model)] = v
-            if update_filters:
-                operate = obj.update(update_fields).where(*update_filters)
+            if update_fields:
+                if update_filters:
+                    operate = obj.update(update_fields).where(*update_filters)
+                else:
+                    operate = obj.update(update_fields)
+                sql_logger(job_id=entity_info.get("job_id", "fate_flow")).info(operate)
+                return operate.execute() > 0
             else:
-                operate = obj.update(update_fields)
-            sql_logger(job_id=entity_info.get("job_id", "fate_flow")).info(operate)
-            return operate.execute() > 0
+                return False
 
     @classmethod
     def update_job_resource(cls, job_id, role, party_id, volume: int):

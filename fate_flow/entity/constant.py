@@ -93,6 +93,19 @@ class StatusSet(BaseStatus):
         return dict(zip(cls.status_list(), range(len(cls.status_list())))).get(status, None)
 
 
+class BaseStateTransitionRule(object):
+    RULES = {}
+
+    @classmethod
+    def if_pass(cls, src_status, dest_status):
+        if src_status not in cls.RULES:
+            return False
+        if dest_status not in cls.RULES[src_status]:
+            return False
+        else:
+            return True
+
+
 class JobStatus(BaseStatus):
     WAITING = StatusSet.WAITING
     RUNNING = StatusSet.RUNNING
@@ -100,6 +113,14 @@ class JobStatus(BaseStatus):
     TIMEOUT = StatusSet.TIMEOUT
     FAILED = StatusSet.FAILED
     COMPLETE = StatusSet.COMPLETE
+
+    class StateTransitionRule(BaseStateTransitionRule):
+        RULES = {
+            StatusSet.WAITING: [StatusSet.RUNNING, StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.COMPLETE],
+            StatusSet.RUNNING: [StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.COMPLETE],
+            StatusSet.CANCELED: [StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.COMPLETE],
+            StatusSet.TIMEOUT: [StatusSet.FAILED, StatusSet.COMPLETE],
+        }
 
 
 class TaskStatus(BaseStatus):
@@ -109,6 +130,14 @@ class TaskStatus(BaseStatus):
     TIMEOUT = StatusSet.TIMEOUT
     FAILED = StatusSet.FAILED
     COMPLETE = StatusSet.COMPLETE
+
+    class StateTransitionRule(BaseStateTransitionRule):
+        RULES = {
+            StatusSet.WAITING: [StatusSet.RUNNING],
+            StatusSet.RUNNING: [StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.COMPLETE],
+            StatusSet.CANCELED: [StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.COMPLETE],
+            StatusSet.TIMEOUT: [StatusSet.FAILED, StatusSet.COMPLETE],
+        }
 
 
 class OngoingStatus(BaseStatus):
