@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from fate_flow.db.db_models import Job, TaskSet, Task
+from fate_flow.db.db_models import Task
 from fate_flow.entity.constant import TaskStatus, EndStatus, StatusSet, SchedulingStatusCode
 from fate_flow.settings import API_VERSION, ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH
 from fate_flow.utils import job_utils
@@ -22,7 +22,6 @@ from fate_flow.utils.api_utils import federated_api
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.operation.job_saver import JobSaver
 from fate_arch.common.log import schedule_logger
-from fate_flow.controller.task_controller import TaskController
 from fate_flow.manager.resource_manager import ResourceManager
 
 
@@ -172,21 +171,3 @@ class TaskScheduler(object):
             task_info["role"] = task.f_role
             task_info["party_id"] = task.f_party_id
             JobSaver.update_task(task_info=task_info)
-
-    @classmethod
-    def update_task_set_on_initiator(cls, initiator_task_set_template: TaskSet, update_fields: list):
-        task_sets = JobSaver.query_task_set(job_id=initiator_task_set_template.f_job_id, task_set_id=initiator_task_set_template.f_task_set_id)
-        if not task_sets:
-            raise Exception("Failed to update task set status on initiator")
-        task_set_info = initiator_task_set_template.to_human_model_dict(only_primary_with=update_fields)
-        for field in update_fields:
-            task_set_info[field] = getattr(initiator_task_set_template, "f_%s" % field)
-        for task_set in task_sets:
-            task_set_info["role"] = task_set.f_role
-            task_set_info["party_id"] = task_set.f_party_id
-            JobSaver.update_task_set(task_set_info=task_set_info)
-
-    @classmethod
-    def finish(cls, job: Job, task_set: TaskSet, end_status):
-        schedule_logger(job_id=task_set.f_job_id).info("Finish job {} task set {}".format(task_set.f_job_id, task_set.f_task_set_id))
-        FederatedScheduler.stop_task_set(job=job, task_set=task_set, stop_status=end_status)

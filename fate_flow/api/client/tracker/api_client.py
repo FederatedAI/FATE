@@ -22,7 +22,6 @@ class JobTrackerClient(object):
     def __init__(self, job_id: str, role: str, party_id: int,
                  model_id: str = None,
                  model_version: str = None,
-                 task_set_id: int = None,
                  component_name: str = None,
                  component_module_name: str = None,
                  task_id: str = None,
@@ -33,7 +32,6 @@ class JobTrackerClient(object):
         self.party_id = party_id
         self.model_id = model_id
         self.model_version = model_version
-        self.task_set_id = task_set_id
         self.component_name = component_name if component_name else 'pipeline'
         self.module_name = component_module_name if component_module_name else 'Pipeline'
         self.task_id = task_id

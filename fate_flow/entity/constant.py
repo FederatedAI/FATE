@@ -102,15 +102,6 @@ class JobStatus(BaseStatus):
     COMPLETE = StatusSet.COMPLETE
 
 
-class TaskSetStatus(BaseStatus):
-    WAITING = StatusSet.WAITING
-    RUNNING = StatusSet.RUNNING
-    CANCELED = StatusSet.CANCELED
-    TIMEOUT = StatusSet.TIMEOUT
-    FAILED = StatusSet.FAILED
-    COMPLETE = StatusSet.COMPLETE
-
-
 class TaskStatus(BaseStatus):
     WAITING = StatusSet.WAITING
     RUNNING = StatusSet.RUNNING

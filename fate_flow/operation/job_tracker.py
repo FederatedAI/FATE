@@ -30,7 +30,7 @@ from fate_flow.utils import model_utils
 
 class Tracker(object):
     """
-    Tracker for Job/TaskSet/Task/Metric
+    Tracker for Job/Task/Metric
     """
     METRIC_DATA_PARTITION = 48
     METRIC_LIST_PARTITION = 48
@@ -39,7 +39,6 @@ class Tracker(object):
     def __init__(self, job_id: str, role: str, party_id: int,
                  model_id: str = None,
                  model_version: str = None,
-                 task_set_id: int = None,
                  component_name: str = None,
                  component_module_name: str = None,
                  task_id: str = None,
@@ -55,8 +54,6 @@ class Tracker(object):
         if self.party_model_id and self.model_version:
             self.pipelined_model = pipelined_model.PipelinedModel(model_id=self.party_model_id,
                                                                   model_version=self.model_version)
-
-        self.task_set_id = task_set_id
 
         self.component_name = component_name if component_name else self.job_virtual_component_name()
         self.module_name = component_module_name if component_module_name else self.job_virtual_component_module_name()

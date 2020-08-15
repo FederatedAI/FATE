@@ -15,10 +15,10 @@
 #
 
 import operator
-from fate_arch.common.base_utils import current_timestamp, json_loads
+from fate_arch.common.base_utils import current_timestamp
 from fate_arch.common import base_utils
-from fate_flow.db.db_models import DB, Job, TaskSet, Task
-from fate_flow.entity.constant import StatusSet, JobStatus, TaskSetStatus, TaskStatus, EndStatus
+from fate_flow.db.db_models import DB, Job, Task
+from fate_flow.entity.constant import StatusSet, JobStatus, EndStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_arch.common.log import schedule_logger, sql_logger
 import peewee
@@ -28,10 +28,6 @@ class JobSaver(object):
     @classmethod
     def create_job(cls, job_info):
         cls.create_job_family_entity(Job, job_info)
-
-    @classmethod
-    def create_task_set(cls, task_set_info):
-        cls.create_job_family_entity(TaskSet, task_set_info)
 
     @classmethod
     def create_task(cls, task_info):
@@ -55,21 +51,6 @@ class JobSaver(object):
             job_info['tag'] = 'job_end'
             job_info["end_time"] = current_timestamp()
         return cls.update_job_family_entity(Job, job_info)
-
-    @classmethod
-    def update_task_set_status(cls, task_set):
-        task_set_info = {
-            "task_set_id": task_set.f_task_set_id,
-            "role": task_set.f_role,
-            "party_id": task_set.f_party_id,
-            "status": task_set.f_status
-        }
-        return cls.update_task_set(task_set_info=task_set_info)
-
-    @classmethod
-    def update_task_set(cls, task_set_info):
-        schedule_logger(job_id=task_set_info["job_id"]).info("Update job {} task set {}".format(task_set_info["job_id"], task_set_info["task_set_id"]))
-        return cls.update_job_family_entity(TaskSet, task_set_info)
 
     @classmethod
     def update_task_status(cls, task):
@@ -196,12 +177,6 @@ class JobSaver(object):
                 return []
 
     @classmethod
-    def get_top_task_set(cls, job_id, role, party_id):
-        with DB.connection_context():
-            task_sets = TaskSet.select().where(TaskSet.f_job_id == job_id, TaskSet.f_role == role, TaskSet.f_party_id == party_id).order_by(TaskSet.f_task_set_id.asc())
-            return [task_set for task_set in task_sets]
-
-    @classmethod
     def get_top_tasks(cls, job_id, role, party_id):
         with DB.connection_context():
             tasks = Task.select().where(Task.f_job_id == job_id, Task.f_role == role, Task.f_party_id == party_id).order_by(Task.f_create_time.asc())
@@ -213,20 +188,6 @@ class JobSaver(object):
                     # update new version task
                     tasks_group[task.f_task_id] = task
             return tasks_group
-
-    @classmethod
-    def query_task_set(cls, **kwargs):
-        with DB.connection_context():
-            filters = []
-            for f_n, f_v in kwargs.items():
-                attr_name = 'f_%s' % f_n
-                if hasattr(TaskSet, attr_name):
-                    filters.append(operator.attrgetter('f_%s' % f_n)(TaskSet) == f_v)
-            if filters:
-                task_sets = TaskSet.select().where(*filters)
-            else:
-                task_sets = TaskSet.select()
-            return [task_set for task_set in task_sets]
 
     @classmethod
     def query_task(cls, **kwargs):

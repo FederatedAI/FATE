@@ -38,24 +38,6 @@ class ControllerRemoteClient(api_client.ControllerClient):
         return response
 
     @classmethod
-    def update_task_set(cls, task_set_info):
-        LOGGER.info(
-            "Request update job {} task set {} on {} {}".format(task_set_info["job_id"], task_set_info["task_set_id"],
-                                                                task_set_info["role"], task_set_info["party_id"]))
-        response = api_utils.local_api(
-            job_id=task_set_info["job_id"],
-            method='POST',
-            endpoint='/{}/controller/{}/{}/{}/{}/update'.format(
-                API_VERSION,
-                task_set_info["job_id"],
-                task_set_info["task_set_id"],
-                task_set_info["role"],
-                task_set_info["party_id"]
-            ),
-            json_body=task_set_info)
-        return response
-
-    @classmethod
     def update_task(cls, task_info):
         LOGGER.info("Request update job {} task {} {} on {} {}".format(task_info["job_id"], task_info["task_id"],
                                                                        task_info["task_version"], task_info["role"],

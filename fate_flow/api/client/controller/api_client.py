@@ -21,10 +21,6 @@ class ControllerClient(object):
         raise NotImplementedError()
 
     @classmethod
-    def update_task_set(cls, task_set_info):
-        raise NotImplementedError()
-
-    @classmethod
     def update_task(cls, task_info):
         raise NotImplementedError()
 
