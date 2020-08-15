@@ -73,11 +73,13 @@ def generate_federated_id(task_id, task_version):
     return "{}_{}".format(task_id, task_version)
 
 
-def generate_session_id(task_id, task_version, role, party_id, random_end=False):
-    if not random_end:
-        return '{}_{}_{}_{}'.format(task_id, task_version, role, party_id)
-    else:
-        return '{}_{}_{}_{}_{}'.format(task_id, task_version, role, party_id, fate_uuid())
+def generate_session_id(task_id, task_version, role, party_id, suffix=None, random_end=False):
+    items = [task_id, str(task_version), role, str(party_id)]
+    if suffix:
+        items.append(suffix)
+    if random_end:
+        items.append(fate_uuid())
+    return "_".join(items)
 
 
 def generate_task_input_data_namespace(task_id, task_version, role, party_id):
@@ -481,24 +483,27 @@ def start_clean_queue():
 def start_session_stop(task):
     job_conf_dict = get_job_conf(task.f_job_id)
     runtime_conf = job_conf_dict['job_runtime_conf_path']
-    session_id = generate_session_id(task.f_task_id, task.f_task_version, task.f_role, task.f_party_id)
+    computing_session_id = generate_session_id(task.f_task_id, task.f_task_version, task.f_role, task.f_party_id, suffix="computing")
+    storage_session_id = generate_session_id(task.f_task_id, task.f_task_version, task.f_role, task.f_party_id, suffix="storage")
     if task.f_status != TaskStatus.WAITING:
-        schedule_logger(task.f_job_id).info('start run subprocess to stop task {} {} session {}'
-                                            .format(task.f_task_id, task.f_task_version, session_id))
+        schedule_logger(task.f_job_id).info('start run subprocess to stop task {} {} session {} and {}'
+                                            .format(task.f_task_id, task.f_task_version, computing_session_id, storage_session_id))
     else:
-        schedule_logger(task.f_job_id).info('task {} {} is waiting, pass stop session {}'
-                                            .format(task.f_task_id, task.f_task_version, session_id))
+        schedule_logger(task.f_job_id).info('task {} {} is waiting, pass stop session {} and {}'
+                                            .format(task.f_task_id, task.f_task_version, computing_session_id, storage_session_id))
         return
+    task_dir = os.path.join(get_job_directory(job_id=task.f_job_id), task.f_role,
+                            task.f_party_id, task.f_component_name, 'session_stop')
+    os.makedirs(task_dir, exist_ok=True)
     process_cmd = [
         'python3', sys.modules[session_utils.SessionStop.__module__].__file__,
-        '-j', session_id,
+        '-j', computing_session_id,
         '-w', str(runtime_conf.get('job_parameters').get('work_mode')),
         '-b', str(runtime_conf.get('job_parameters').get('backend', 0)),
         '-c', 'stop' if task.f_status == JobStatus.COMPLETE else 'kill'
     ]
-    task_dir = os.path.join(get_job_directory(job_id=task.f_job_id), task.f_role,
-                            task.f_party_id, task.f_component_name, 'session_stop')
-    os.makedirs(task_dir, exist_ok=True)
+    p = run_subprocess(config_dir=task_dir, process_cmd=process_cmd, log_dir=None)
+    process_cmd[3] = storage_session_id
     p = run_subprocess(config_dir=task_dir, process_cmd=process_cmd, log_dir=None)
 
 
