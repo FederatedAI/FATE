@@ -78,14 +78,8 @@ class BaseLinearRegression(BaseLinearModel):
         header = self.header
         LOGGER.debug("In get_param, header: {}".format(header))
         if header is None:
-            param_protobuf_obj = linr_model_param_pb2.LinRModelParam()
+            param_protobuf_obj = linr_model_param_pb2.LinRModelParam(best_iteration=-1)
             return param_protobuf_obj
-
-        """weight_dict = {}
-        for idx, header_name in enumerate(header):
-            coef_i = self.model_weights.coef_[idx]
-            weight_dict[header_name] = coef_i
-        intercept_ = self.model_weights.intercept_"""
 
         weight_dict, intercept_ = self.get_weight_intercept_dict(header)
 

@@ -74,8 +74,9 @@ def main():
 
     # run demos
     stream = StreamToLogger()
-    with contextlib.redirect_stdout(stream):
-        summaries = run_demos(paths, conf, summaries_base=Path(args.name).resolve())
+    # with contextlib.redirect_stdout(stream):
+    #    run_demos(paths, conf)
+    run_demos(paths, conf)
 
 
 def load_conf(args):
@@ -117,7 +118,7 @@ def _find_demo_files(path):
     return [p.resolve() for p in paths]
 
 
-def run_demos(demos, conf, summaries_base):
+def run_demos(demos, conf):
     temp_config = tempfile.NamedTemporaryFile('w', suffix='.yaml')
     with temp_config as f:
         yaml.dump(conf, f, default_flow_style=False)
