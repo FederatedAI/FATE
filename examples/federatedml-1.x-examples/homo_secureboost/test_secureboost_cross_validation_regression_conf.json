@@ -26,12 +26,6 @@
                             "name": "homo_student_guest",
                             "namespace": "experiment"
                         }
-                    ],
-                    "eval_data": [
-                        {
-                            "name": "homo_student_test",
-                            "namespace": "experiment"
-                        }
                     ]
                 }
             },
@@ -56,12 +50,6 @@
                     "train_data": [
                         {
                             "name": "homo_student_host",
-                            "namespace": "experiment"
-                        }
-                    ],
-                    "eval_data": [
-                        {
-                            "name": "homo_student_test",
                             "namespace": "experiment"
                         }
                     ]

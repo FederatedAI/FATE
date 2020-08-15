@@ -1,23 +1,16 @@
-from federatedml.hetero_ftl.ftl_base import FTL
+import numpy as np
+from arch.api import session
+from federatedml.transfer_learning.hetero_ftl.ftl_base import FTL
 from federatedml.statistic.intersect import intersect_guest
 from arch.api.utils import log_utils
-from federatedml.hetero_ftl.ftl_dataloder import FTLDataLoader
-
+from federatedml.transfer_learning.hetero_ftl.ftl_dataloder import FTLDataLoader
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
-
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
-
-from arch.api import session
-
-import numpy as np
-
 from federatedml.util import consts
-
-from federatedml.util.io_check import assert_io_num_rows_equal
-
 from federatedml.statistic import data_overview
+from federatedml.optim.activation import sigmoid
 
 LOGGER = log_utils.getLogger()
 
@@ -251,7 +244,16 @@ class FTLGuest(FTL):
 
     @staticmethod
     def sigmoid(x):
-        return 1. / (1. + np.exp(-x))
+        return np.array(list(map(sigmoid, x)))
+
+    def generate_summary(self):
+
+        summary = {'loss_history': self.history_loss,
+                   "best_iteration": -1 if self.validation_strategy is None else self.validation_strategy.best_iteration}
+        if self.validation_strategy:
+            summary['validation_metrics'] = self.validation_strategy.summary()
+
+        return summary
 
     def fit(self, data_inst, validate_data):
 
@@ -340,8 +342,8 @@ class FTLGuest(FTL):
                                       metric_type="LOSS",
                                       extra_metas={"Best": min(self.history_loss)}))
 
+        self.set_summary(self.generate_summary())
         LOGGER.debug('fitting ftl model done')
-
 
     def predict(self, data_inst):
 

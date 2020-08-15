@@ -237,7 +237,7 @@ class HomoNNClient(HomoNNBase):
         if num_output_units == 1:
             kv = zip(data.get_keys(), map(lambda x: x.tolist()[0], predict))
         else:
-            kv = zip(data.get_keys(), predict)
+            kv = zip(data.get_keys(), predict.tolist())
         pred_tbl = session.default().computing.parallelize(kv, include_key=True, partition=data_inst.partitions)
         classes = [0, 1] if num_output_units == 1 else [i for i in range(num_output_units)]
         return self.predict_score_to_output(data_inst, pred_tbl, classes=classes,

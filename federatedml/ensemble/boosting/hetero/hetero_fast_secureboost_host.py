@@ -172,8 +172,8 @@ class HeteroFastSecureBoostHost(HeteroSecureBoostHost):
         feature_importances = list(self.feature_importances_.items())
         feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
         feature_importance_param = []
-        for (sitename, fid), _importance in feature_importances:
-            feature_importance_param.append(FeatureImportanceInfo(sitename=sitename,
+        for fid, _importance in feature_importances:
+            feature_importance_param.append(FeatureImportanceInfo(sitename=self.role,
                                                                   fid=fid,
                                                                   importance=_importance,
                                                                   fullname=self.feature_name_fid_mapping[fid]))

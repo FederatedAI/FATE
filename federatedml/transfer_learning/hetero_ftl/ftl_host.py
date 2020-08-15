@@ -1,8 +1,7 @@
-from federatedml.hetero_ftl.ftl_base import FTL
+from federatedml.transfer_learning.hetero_ftl.ftl_base import FTL
 from federatedml.statistic.intersect import intersect_host
 from arch.api.utils import log_utils
-from federatedml.hetero_ftl.ftl_dataloder import FTLDataLoader
-from federatedml.nn.hetero_nn.backend.tf_keras.data_generator import KerasSequenceDataConverter
+from federatedml.transfer_learning.hetero_ftl.ftl_dataloder import FTLDataLoader
 from federatedml.util import consts
 
 from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
@@ -197,6 +196,13 @@ class FTLHost(FTL):
                     break
 
             LOGGER.debug('fitting epoch {} done'.format(epoch_idx))
+
+        self.set_summary(self.generate_summary())
+
+    def generate_summary(self):
+
+        summary = {"best_iteration": -1 if self.validation_strategy is None else self.validation_strategy.best_iteration}
+        return summary
 
     @assert_io_num_rows_equal
     def predict(self, data_inst):
