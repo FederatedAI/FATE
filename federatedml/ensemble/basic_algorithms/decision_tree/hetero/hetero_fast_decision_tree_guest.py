@@ -162,6 +162,7 @@ class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):
             n.sum_hess = self.decrypt(n.sum_hess)
             n.sum_grad = self.decrypt(n.sum_grad)
             n.weight = self.splitter.node_weight(n.sum_grad, n.sum_hess)
+            n.sitename = self.sitename
             if n.id > max_node_id:
                 max_node_id = n.id
         new_nodes = [Node() for i in range(max_node_id+1)]
