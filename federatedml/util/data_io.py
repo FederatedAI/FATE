@@ -314,7 +314,7 @@ class DenseFeatureReader(object):
         return SparseVector(indices, data, column_shape)
 
     def get_summary(self):
-        if not self.missing_fill or self.outlier_replace:
+        if not self.missing_fill and not self.outlier_replace:
             return {}
 
         summary_buf = {}
@@ -330,7 +330,7 @@ class DenseFeatureReader(object):
             outlier_replace_summary["outlier_value"] = list(self.outlier_impute)
             outlier_replace_summary["outlier_replace_value"] = dict(zip(self.header, self.outlier_replace_value))
             outlier_replace_summary["outlier_replace_rate"] = dict(zip(self.header, self.outlier_replace_rate))
-            summary_buf["outlier_replace_rate"] = summary_buf
+            summary_buf["outlier_replace_rate"] = outlier_replace_summary
 
         return summary_buf
 
