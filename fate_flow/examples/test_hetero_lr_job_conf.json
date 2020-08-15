@@ -18,7 +18,7 @@
         "guest": {
             "0": {
                 "reader_0": {
-                    "table": {"name": "breast_hetero_guest", "namespace": "fate_flow_test_breast_hetero"}
+                    "table": {"name": "breast_hetero_guest", "namespace": "experiment"}
                 },
                 "dataio_0":{
                     "with_label": true,
@@ -31,7 +31,7 @@
         "host": {
             "0": {
                 "reader_0": {
-                    "table": {"name": "breast_hetero_host", "namespace": "fate_flow_test_breast_hetero"}
+                    "table": {"name": "breast_hetero_host", "namespace": "experiment"}
                 },
                 "dataio_0":{
                     "with_label": false,
