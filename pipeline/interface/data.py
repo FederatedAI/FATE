@@ -17,11 +17,12 @@ from pipeline.backend.config import VERSION
 
 
 class Data(object):
-    def __init__(self, data=None, train_data=None, validate_data=None, test_data=None):
+    def __init__(self, data=None, train_data=None, validate_data=None, test_data=None, predict_input=None):
         self._data = data
         self._train_data = train_data
         self._validate_data = validate_data
         self._test_data = test_data
+        self._predict_input = predict_input
 
     def __getattr__(self, data_key):
         if data_key == "train_data":
@@ -35,6 +36,9 @@ class Data(object):
 
         elif data_key == "data":
             return self._data
+
+        elif data_key == "predict_input":
+            return self._predict_input
 
         else:
             raise ValueError("data key {} not support".format(data_key))

@@ -30,7 +30,7 @@ import uuid
 from operator import add, sub
 from typing import List
 
-from fate_arch import session
+from arch.api import session
 from fate_arch.common import log
 from federatedml.feature.fate_element_type import NoneType
 from federatedml.framework.weights import Weights
@@ -186,7 +186,7 @@ class FeatureHistogram(object):
             rs = FeatureHistogram.recombine_histograms(histograms_dict, node_map, feature_num)
             return rs
         else:
-            return FeatureHistogram.construct_table(histograms_dict, data_bin._partitions)
+            return FeatureHistogram.construct_table(histograms_dict, data_bin.partitions)
 
 
     @staticmethod
@@ -307,7 +307,7 @@ class FeatureHistogram(object):
             nid, fid = key
             buf.append((key, (fid, FeatureHistogram.accumulate_histogram(histograms_dict[key]))))
 
-        return session.default().computing.parallelize(buf, include_key=True, partition=partition)
+        return session.parallelize(buf, include_key=True, partition=partition)
 
 
 

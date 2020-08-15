@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils.core_utils import json_loads
+from fate_arch.common.base_utils import json_loads
 from fate_flow.settings import stat_logger
 from fate_flow.utils import job_utils, detect_utils
 

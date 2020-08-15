@@ -91,9 +91,10 @@ class BaseParameterUtil(object):
                     if key not in ["algorithm_parameters", "role_parameters"]:
                         runtime_dict[key] = value
 
+                role_param_obj = copy.deepcopy(param_obj)
+
                 if "algorithm_parameters" in submit_dict:
                     if module_alias in submit_dict["algorithm_parameters"]:
-                        role_param_obj = copy.deepcopy(param_obj)
                         common_parameters = submit_dict["algorithm_parameters"].get(module_alias)
                         merge_dict = ParameterUtil.merge_parameters(runtime_dict[param_class],
                                                                     common_parameters,
@@ -103,18 +104,12 @@ class BaseParameterUtil(object):
                                                                     version=version)
                         runtime_dict[param_class] = merge_dict
 
-                        try:
-                            role_param_obj.check()
-                        except Exception as e:
-                            raise ParameterCheckError(component=module_alias, module=module, other_info=e)
-
                 if "role_parameters" in submit_dict and role in submit_dict["role_parameters"]:
                     if version == 2:
                         role_parameters = submit_dict["role_parameters"][role]
 
                         role_idxs = role_parameters.keys()
                         for role_id in role_idxs:
-                            role_param_obj = copy.deepcopy(param_obj)
                             if role_id == "all" or str(idx) in role_id.split("|"):
                                 role_dict = role_parameters[role_id]
                                 if module_alias in role_dict:
@@ -130,15 +125,10 @@ class BaseParameterUtil(object):
                                                                                 version=version)
 
                                     runtime_dict[param_class] = merge_dict
-                                    try:
-                                        role_param_obj.check()
-                                    except Exception as e:
-                                        raise ParameterCheckError(component=module_alias, module=module, other_info=e)
 
                     if version == 1:
                         role_dict = submit_dict["role_parameters"][role]
                         if module_alias in role_dict:
-                            role_param_obj = copy.deepcopy(param_obj)
                             role_parameters = role_dict.get(module_alias)
                             merge_dict = ParameterUtil.merge_parameters(runtime_dict[param_class],
                                                                         role_parameters,
@@ -151,10 +141,10 @@ class BaseParameterUtil(object):
                                                                         version=version)
                             runtime_dict[param_class] = merge_dict
 
-                            try:
-                                role_param_obj.check()
-                            except Exception as e:
-                                raise ParameterCheckError(component=module_alias, module=module, other_info=e)
+                try:
+                    role_param_obj.check()
+                except Exception as e:
+                    raise ParameterCheckError(component=module_alias, module=module, other_info=e)
 
                 runtime_dict['local'] = submit_dict.get('local', {})
                 my_local = {
@@ -174,8 +164,8 @@ class BaseParameterUtil(object):
         param_variables = param_obj.__dict__
         for key, val_list in role_parameters.items():
             if key not in param_variables:
-                continue
-                # raise RedundantParameterError(component=component, module=module, other_info=key)
+                # continue
+                raise RedundantParameterError(component=component, module=module, other_info=key)
 
             attr = getattr(param_obj, key)
             if type(attr).__name__ in dir(builtins) or not attr:
@@ -342,35 +332,38 @@ class ParameterUtilV2(BaseParameterUtil):
                                                  version=2)
 
     @staticmethod
-    def get_input_parameters(submit_dict, module="args"):
-        if "role_parameters" not in submit_dict:
-            return {}, {}
+    def get_input_parameters(submit_dict, components=None):
+        if "role_parameters" not in submit_dict or components is None:
+            return {}
 
         roles = submit_dict["role_parameters"].keys()
         if not roles:
-            return {}, {}
+            return {}
 
-        input_parameters = {}
-        input_datakey = set()
+        input_parameters = {"dsl_version": 2}
 
+        cpn_dict = {}
+        for reader_cpn in components:
+            cpn_dict[reader_cpn] = {}
         for role in roles:
             role_parameters = submit_dict["role_parameters"][role]
-            input_parameters[role] = [{module: {"data": {}}} for i in range(len(submit_dict["role"][role]))]
+            input_parameters[role] = [copy.deepcopy(cpn_dict) for i in range(len(submit_dict["role"][role]))]
 
             for idx in role_parameters.keys():
                 parameters = role_parameters[idx]
-                if module not in parameters:
-                    continue
-
-                dataset = parameters[module]
-                for data_key, data_val in dataset.items():
-                    input_datakey.add(data_key)
+                for reader in components:
+                    if reader not in parameters:
+                        continue
 
                     if idx == "all":
                         partyid_list = submit_dict["role"][role]
                         for i in range(len(partyid_list)):
-                            input_parameters[role][i][module]["data"][data_key] = data_val
+                            input_parameters[role][i][reader] = parameters[reader]
+                    elif len(idx.split("|")) == 1:
+                        input_parameters[role][int(idx)][reader] = parameters[reader]
                     else:
-                        input_parameters[role][int(idx)][module]["data"][data_key] = data_val
+                        id_set = list(map(int, idx.split("|")))
+                        for _id in id_set:
+                            input_parameters[role][_id][reader] = parameters[reader]
 
-        return input_parameters, input_datakey
+        return input_parameters

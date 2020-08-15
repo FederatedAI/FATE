@@ -14,14 +14,19 @@
 #  limitations under the License.
 #
 import copy
-from pipeline.backend.config import VERSION
+
+# from pipeline.backend.config import VERSION
+import typing
+
+from pipeline.utils.logger import LOGGER
 
 
 class Component(object):
     __instance = {}
 
     def __init__(self, *args, **kwargs):
-        print ("kwargs : ", kwargs)
+        #print ("kwargs : ", kwargs)
+        LOGGER.debug(f"kwargs: {kwargs}")
         if "name" in kwargs:
             self._component_name = kwargs["name"]
         self.__party_instance = {}
@@ -42,9 +47,13 @@ class Component(object):
 
     def set_name(self, idx):
         self._component_name = self.__class__.__name__.lower() + "_" + str(idx)
-        print("enter set name func", self._component_name)
+        #print("enter set name func", self._component_name)
+        LOGGER.debug(f"enter set name func {self._component_name}")
 
-    def get_party_instance(self, role="all", party_id=None):
+    def reset_name(self, name):
+        self._component_name = name
+
+    def get_party_instance(self, role="all", party_id=None) -> 'Component':
         if role not in ["all", "guest", "host", "arbiter"]:
             raise ValueError("Role should be one of guest/host/arbiter, if not set, default is all")
 
@@ -60,7 +69,7 @@ class Component(object):
             elif not isinstance(party_id, int) or party_id <= 0:
                 raise ValueError("party id should be positive integer")
 
-        if role not in self.__instance:
+        if role not in self.__party_instance:
             self.__party_instance[role] = {}
             self.__party_instance[role]["party"] = {}
 
@@ -77,14 +86,16 @@ class Component(object):
             self._decrease_instance_count()
 
             self.__party_instance[role]["party"][party_key] = party_instance
-            print ("enter init")
+            # print ("enter init")
+            LOGGER.debug(f"enter init")
 
         return self.__party_instance[role]["party"][party_key]
 
     @classmethod
     def _decrease_instance_count(cls):
         cls.__instance[cls.__name__.lower()] -= 1
-        print ("decrease instance count")
+        # print ("decrease instance count")
+        LOGGER.debug(f"decrease instance count")
 
     @property
     def name(self):
@@ -103,7 +114,8 @@ class Component(object):
                 del new_kwargs[attr]
 
         for attr in new_kwargs:
-            print ("key {}, value {} not use".format(attr, new_kwargs[attr]))
+            # print ("key {}, value {} not use".format(attr, new_kwargs[attr]))
+            LOGGER.warning(f"key {attr}, value {new_kwargs[attr]} not use")
 
         self._role_parameter_keywords |= set(kwargs.keys())
 
@@ -181,39 +193,6 @@ class Component(object):
         if not self.__party_instance:
             return role_param_conf
 
-        # print (self.__party_instance)
-
-        if VERSION == 1:
-            for role in roles:
-                if role not in self.__party_instance:
-                    continue
-
-                role_instances = self.__party_instance[role]["party"]
-                party_ids = roles[role]
-                role_params = {}
-                if None in role_instances:
-                    params = role_instances[None].get_algorithm_param()
-                    role_params = self.recursive_construct_role_parameters_v1(params, all_party_ids=party_ids)
-
-                for party_id in role_instances:
-                    params = role_instances[party_id].get_algorithm_param()
-                    if not isinstance(party_id, int):
-                        partys = list(map(int, party_id.split("|", -1)))
-                    else:
-                        partys = [party_id]
-
-                    print ("find role {}, partyid {}, all_partys {}".format(role, partys, party_ids))
-                    print (params)
-                    role_params.update(self.recursive_construct_role_parameters_v1(params, partys, party_ids))
-                    print ("flattern ", self.recursive_construct_role_parameters_v1(params, partys, party_ids))
-
-                role_param_conf[role] = {self.name: self.flattern_role_parameters_v1(role_params)}
-
-                print ("get output : ", role, role_params)
-
-            print ("version 1", role_param_conf)
-            return role_param_conf
-
         for role in self.__party_instance:
             if role == "all":
                 pass
@@ -243,7 +222,8 @@ class Component(object):
 
                 role_param_conf[role][party_key][self._component_name] = party_inst.get_algorithm_param()
 
-        print ("role_param_conf {}".format(role_param_conf))
+        #print ("role_param_conf {}".format(role_param_conf))
+        LOGGER.debug(f"role_param_conf {role_param_conf}")
         return role_param_conf
 
     @classmethod

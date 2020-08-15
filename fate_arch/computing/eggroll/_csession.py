@@ -23,6 +23,7 @@ from fate_arch.common import WorkMode
 from fate_arch.common.log import getLogger
 from fate_arch.common.profile import log_elapsed
 from fate_arch.computing.eggroll import Table
+from fate_arch.common.base_utils import fate_uuid
 
 LOGGER = getLogger()
 
@@ -50,7 +51,7 @@ class CSession(CSessionABC):
     @log_elapsed
     def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
 
-        from fate_arch.storage.address import EggRollAddress
+        from fate_arch.common.address import EggRollAddress
         if isinstance(address, EggRollAddress):
             options = kwargs.get("option", {})
             options["total_partitions"] = partitions
@@ -61,15 +62,14 @@ class CSession(CSessionABC):
                 raise RuntimeError(f"no exists: {address.name}, {address.namespace}, {address.storage_type}")
 
             if address.storage_type != StoreTypes.ROLLPAIR_IN_MEMORY:
-                # TODO: Generate a name and namespace using a random string
-                rp = rp.save_as(name=address.name, namespace=address.namespace, partition=partitions,
+                rp = rp.save_as(name=f"{address.name}_{fate_uuid()}", namespace=address.namespace, partition=partitions,
                                 options={'store_type': StoreTypes.ROLLPAIR_IN_MEMORY})
 
             table = Table(rp=rp)
             table.schema = schema
             return table
 
-        from fate_arch.storage.address import FileAddress
+        from fate_arch.common.address import FileAddress
         if isinstance(address, FileAddress):
             return address
 

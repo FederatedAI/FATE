@@ -35,7 +35,6 @@ class Table(CTableABC):
     def __init__(self, rdd: RDD):
         self._rdd = rdd
 
-    @staticmethod
     def __getstate__(self):
         pass
 
@@ -99,7 +98,7 @@ class Table(CTableABC):
 
     @log_elapsed
     def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
-        from fate_arch.storage.address import HDFSAddress
+        from fate_arch.common.address import HDFSAddress
         if isinstance(address, HDFSAddress):
             save_as_hdfs(rdd=self._rdd, paths=address.path, partitions=partitions)
             schema.update(self.schema)

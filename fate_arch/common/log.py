@@ -50,7 +50,7 @@ class LoggerFactory(object):
     @staticmethod
     def set_directory(directory=None, parent_log_dir=None, append_to_parent_log=None, force=False):
         if parent_log_dir:
-           LoggerFactory.PARENT_LOG_DIR = parent_log_dir
+            LoggerFactory.PARENT_LOG_DIR = parent_log_dir
         if append_to_parent_log:
             LoggerFactory.append_to_parent_log = append_to_parent_log
         with LoggerFactory.lock:
@@ -63,10 +63,10 @@ class LoggerFactory(object):
                 for className, (logger, handler) in LoggerFactory.logger_dict.items():
                     logger.removeHandler(ghandler)
                 ghandler.close()
-            LoggerFactory.global_handler_dict={}
+            LoggerFactory.global_handler_dict = {}
             for className, (logger, handler) in LoggerFactory.logger_dict.items():
                 logger.removeHandler(handler)
-                _hanlder=None
+                _hanlder = None
                 if handler:
                     handler.close()
                 if className != "default":
@@ -99,7 +99,7 @@ class LoggerFactory(object):
             with LoggerFactory.lock:
                 if logger_name_key not in LoggerFactory.global_handler_dict:
                     handler = LoggerFactory.get_handler(logger_name, level, log_dir)
-                    LoggerFactory.global_handler_dict[logger_name_key]=handler
+                    LoggerFactory.global_handler_dict[logger_name_key] = handler
         return LoggerFactory.global_handler_dict[logger_name_key]
 
     @staticmethod
@@ -113,7 +113,8 @@ class LoggerFactory(object):
             else:
                 log_file = os.path.join(log_dir, "{}.log".format(class_name))
         else:
-            log_file = os.path.join(log_dir, "fate_flow_{}.log".format(log_type) if level == LoggerFactory.LEVEL else 'fate_flow_{}_error.log'.format(log_type))
+            log_file = os.path.join(log_dir, "fate_flow_{}.log".format(
+                log_type) if level == LoggerFactory.LEVEL else 'fate_flow_{}_error.log'.format(log_type))
         formatter = logging.Formatter(LoggerFactory.FORMAT)
         handler = TimedRotatingFileHandler(log_file,
                                            when='D',
@@ -122,7 +123,7 @@ class LoggerFactory(object):
                                            delay=True)
 
         if level:
-            handler.level=level
+            handler.level = level
 
         handler.setFormatter(formatter)
         return handler
@@ -156,7 +157,8 @@ class LoggerFactory(object):
             for level in LoggerFactory.levels:
                 if level >= LoggerFactory.LEVEL:
                     level_logger_name = logging._levelToName[level]
-                    logger.addHandler(LoggerFactory.get_global_hanlder(level_logger_name, level, LoggerFactory.PARENT_LOG_DIR))
+                    logger.addHandler(
+                        LoggerFactory.get_global_hanlder(level_logger_name, level, LoggerFactory.PARENT_LOG_DIR))
 
     @staticmethod
     def get_schedule_logger(job_id='', log_type='schedule'):
@@ -233,5 +235,3 @@ def sql_logger(job_id='', log_type='sql'):
     if key in LoggerFactory.schedule_logger_dict.keys():
         return LoggerFactory.schedule_logger_dict[key]
     return LoggerFactory.get_schedule_logger(job_id=job_id, log_type=log_type)
-
-

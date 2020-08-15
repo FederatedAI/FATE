@@ -16,7 +16,7 @@
 import argparse
 
 from fate_arch.common.log import schedule_logger
-from fate_arch.session import create
+from fate_arch.session import Session
 
 
 class SessionStop(object):
@@ -33,19 +33,21 @@ class SessionStop(object):
         work_mode = int(args.work_mode)
         backend = int(args.backend)
         command = args.command
-        session = create(session_id=session_job_id, mode=work_mode, backend=backend)
-        try:
-            schedule_logger(fate_job_id).info('start {} session {}'.format(command, session.computing.session_id))
-            if command == 'stop':
-                session.computing.stop()
-            elif command == 'kill':
-                session.computing.kill()
-            else:
-                schedule_logger(fate_job_id).info(
-                    '{} session {} failed, this command is not supported'.format(command, session.computing.session_id))
-            schedule_logger(fate_job_id).info('{} session {} success'.format(command, session.computing.session_id))
-        except Exception as e:
-            schedule_logger().exception(e)
+        with Session.create(backend=backend, work_mode=work_mode) as session:
+            session.init_computing(computing_session_id=session_job_id)
+            try:
+                schedule_logger(fate_job_id).info('start {} session {}'.format(command, session.computing.session_id))
+                if command == 'stop':
+                    session.computing.stop()
+                elif command == 'kill':
+                    session.computing.kill()
+                else:
+                    schedule_logger(fate_job_id).info(
+                        '{} session {} failed, this command is not supported'.format(command,
+                                                                                     session.computing.session_id))
+                schedule_logger(fate_job_id).info('{} session {} success'.format(command, session.computing.session_id))
+            except Exception as e:
+                schedule_logger().exception(e)
 
 
 if __name__ == '__main__':

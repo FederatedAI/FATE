@@ -32,7 +32,7 @@ class Table(CTableABC):
         return self._table.partitions
 
     def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
-        from fate_arch.storage.address import EggRollAddress
+        from fate_arch.common.address import EggRollAddress
         if isinstance(address, EggRollAddress):
             self._table.save_as(name=address.name, namespace=address.namespace, partition=partitions,
                                 need_cleanup=False)
@@ -103,3 +103,7 @@ class Table(CTableABC):
 
     def union(self, other: 'Table', func=lambda v1, v2: v1):
         return Table(self._table.union(other._table, func))
+
+
+    def __getstate__(self):
+        pass

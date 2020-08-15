@@ -65,13 +65,13 @@ class LocalBaseline(ModelBase):
 
     def _get_model_param(self):
         model = self.model_fit
-        n_iter = model.n_iter_[0]
-        is_converged = n_iter < model.max_iter
+        n_iter = int(model.n_iter_[0])
+        is_converged = bool(n_iter < model.max_iter)
 
         coef = model.coef_[0]
-        LOGGER.debug(f"model coef len {coef.shape[0]}, value: {coef}")
-        weight_dict = dict(zip(self.header, list(coef)))
-        LOGGER.debug(f"model weight dict {weight_dict}")
+        #LOGGER.debug(f"model coef len {coef.shape[0]}, value: {coef}")
+        weight_dict = dict(zip(self.header, [float(i) for i in coef]))
+        #LOGGER.debug(f"model weight dict {weight_dict}")
         # intercept is in array format if fit_intercept
         intercept = model.intercept_[0] if model.fit_intercept else model.intercept_
 
@@ -86,8 +86,8 @@ class LocalBaseline(ModelBase):
 
     def _get_model_param_ovr(self):
         model = self.model_fit
-        n_iter = model.n_iter_[0]
-        is_converged = n_iter < model.max_iter
+        n_iter = int(model.n_iter_[0])
+        is_converged = bool(n_iter < model.max_iter)
         classes = model.classes_
         coef_all = model.coef_
         intercept_all = model.intercept_
@@ -120,7 +120,7 @@ class LocalBaseline(ModelBase):
 
     def _get_param(self):
         header = self.header
-        LOGGER.debug("In get_param, header: {}".format(header))
+        #LOGGER.debug("In get_param, header: {}".format(header))
         if header is None:
             param_protobuf_obj = lr_model_param_pb2.LRModelParam()
             return param_protobuf_obj
@@ -132,7 +132,7 @@ class LocalBaseline(ModelBase):
             result = self._get_model_param()
             param_protobuf_obj = lr_model_param_pb2.LRModelParam(**result)
 
-        LOGGER.debug("in _get_param, result: {}".format(result))
+        #LOGGER.debug("in _get_param, result: {}".format(result))
 
         return param_protobuf_obj
 
@@ -173,12 +173,12 @@ class LocalBaseline(ModelBase):
                 'intercept': param['intercept'],
                 'is_converged': param['is_converged'],
                 'iters': param['iters'],
-                'one_vs_rest': True
+                'one_vs_rest': False
             }
         else:
             model = self.model_fit
-            n_iter = model.n_iter_[0]
-            is_converged = n_iter < model.max_iter
+            n_iter = int(model.n_iter_[0])
+            is_converged = bool(n_iter < model.max_iter)
             classes = model.classes_
             coef_all = model.coef_
             intercept_all = model.intercept_
@@ -186,8 +186,8 @@ class LocalBaseline(ModelBase):
 
             for i, label in enumerate(classes):
                 coef = coef_all[i,]
-                weight_dict = dict(zip(self.header, list(coef)))
-                intercept = intercept_all[i] if model.fit_intercept else intercept_all
+                weight_dict = dict(zip(self.header, [float(i) for i in coef]))
+                intercept = float(intercept_all[i]) if model.fit_intercept else float(intercept_all)
                 single_summary = {
                     'coef': weight_dict,
                     'intercept': intercept,
@@ -196,7 +196,7 @@ class LocalBaseline(ModelBase):
                     }
                 single_key = f"{label}"
                 summary[single_key] = single_summary
-                summary["one_vs_rest"] = True
+                summary['one_vs_rest'] = True
         return summary
 
     @assert_io_num_rows_equal

@@ -3,7 +3,7 @@ import time
 import unittest
 
 import requests
-from arch.api.utils import file_utils
+from fate_arch.common import file_utils
 
 from fate_flow.settings import HTTP_PORT, API_VERSION, WORK_MODE
 

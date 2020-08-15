@@ -17,9 +17,9 @@ import redis
 
 from fate_flow.manager.model_manager.pipelined_model import PipelinedModel
 from fate_flow.manager.model_manager.model_storage_base import ModelStorageBase
-from arch.api.utils import log_utils
+from fate_arch.common import log
 
-LOGGER = log_utils.getLogger()
+LOGGER = log.getLogger()
 
 
 class RedisModelStorage(ModelStorageBase):

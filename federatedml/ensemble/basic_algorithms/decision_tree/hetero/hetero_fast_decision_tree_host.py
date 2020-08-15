@@ -217,10 +217,15 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
         self.transfer_inst.dispatch_node_host_result.remote(sample_leaf_pos, idx=0,
                                                             suffix=('final sample pos', ), role=consts.GUEST)
 
-    def remove_encrypted_info(self):
+    def process_leaves_info(self):
+
+        # remove g/h info and rename leaves
+
         for node in self.tree_node:
             node.sum_grad = None
             node.sum_hess = None
+            if node.is_leaf:
+                node.sitename = consts.GUEST
 
     def sync_leaf_nodes(self):
         leaves = []
@@ -301,15 +306,18 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
                 batch += 1
                 split_info.extend(batch_split_info)
 
-            reach_max_depth = True if dep + 1 == self.max_depth else False
-            self.update_host_side_tree(split_info, reach_max_depth=reach_max_depth)
+            self.update_host_side_tree(split_info, reach_max_depth=False)
             self.inst2node_idx = self.host_local_assign_instances_to_new_node()
 
-        self.sync_sample_leaf_pos(self.sample_leaf_pos)
-        LOGGER.debug('sync final leaf pos are {}'.format(list(self.sample_leaf_pos.collect())))
-        self.convert_bin_to_real2()
-        self.sync_leaf_nodes()
-        self.remove_encrypted_info()
+        if self.cur_layer_nodes:
+            self.update_host_side_tree([], reach_max_depth=True)
+            self.data_with_node_assignments = self.data_bin.join(self.inst2node_idx, lambda v1, v2: (v1, v2))
+            self.host_local_assign_instances_to_new_node()
+
+        self.sync_sample_leaf_pos(self.sample_leaf_pos)  # sync sample final leaf positions
+        self.convert_bin_to_real2()  # convert bin num to val
+        self.sync_leaf_nodes()  # send leaf nodes to guest
+        self.process_leaves_info()  # remove encrypted g/h
 
     def layered_mode_fit(self):
 
@@ -354,9 +362,7 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
 
         if self.tree_type == plan.tree_type_dict['guest_feat_only'] or \
                 self.tree_type == plan.tree_type_dict['host_feat_only']:
-
             self.mix_mode_fit()
-
         else:
             self.layered_mode_fit()
 

@@ -81,7 +81,7 @@ class BaseLogisticRegression(BaseLinearModel):
         if self.need_one_vs_rest:
             # one_vs_rest_class = list(map(str, self.one_vs_rest_obj.classes))
             one_vs_rest_result = self.one_vs_rest_obj.save(lr_model_param_pb2.SingleModel)
-            single_result = {'header': header, 'need_one_vs_rest': True}
+            single_result = {'header': header, 'need_one_vs_rest': True, "best_iteration": -1}
         else:
             one_vs_rest_result = None
             single_result = self.get_single_model_param()
@@ -136,6 +136,7 @@ class BaseLogisticRegression(BaseLinearModel):
     def one_vs_rest_fit(self, train_data=None, validate_data=None):
         LOGGER.debug("Class num larger than 2, need to do one_vs_rest")
         self.one_vs_rest_obj.fit(data_instances=train_data, validate_data=validate_data)
+        LOGGER.debug(f"Final summary: {self.summary()}")
 
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary", metrics=self.metrics)

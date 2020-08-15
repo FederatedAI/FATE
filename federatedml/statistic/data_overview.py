@@ -77,7 +77,7 @@ def header_alignment(data_instances, pre_header):
             col_order = [None] * len(header_pos)
             for k, v in header_pos.items():
                 col_order[v] = k
-            inst.features = inst.features[:, col_order]
+            inst.features = inst.features[col_order]
 
         return inst
 

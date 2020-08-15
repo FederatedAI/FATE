@@ -1,4 +1,4 @@
-from arch.api.utils import log_utils
+from fate_arch.common import log
 
 try:
     from eggroll.core.proto import basic_meta_pb2

@@ -15,12 +15,12 @@
 #
 
 import operator
-from arch.api.utils.core_utils import current_timestamp, json_loads
-from arch.api.utils import core_utils
+from fate_arch.common.base_utils import current_timestamp, json_loads
+from fate_arch.common import base_utils
 from fate_flow.db.db_models import DB, Job, TaskSet, Task
 from fate_flow.entity.constant import StatusSet, JobStatus, TaskSetStatus, TaskStatus, EndStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
-from arch.api.utils.log_utils import schedule_logger, sql_logger
+from fate_arch.common.log import schedule_logger, sql_logger
 import peewee
 
 
@@ -149,6 +149,17 @@ class JobSaver(object):
             return operate.execute() > 0
 
     @classmethod
+    def update_job_resource(cls, job_id, role, party_id, volume: int):
+        update_filters = [Job.f_job_id == job_id, Job.f_role == role, Job.f_party_id == party_id]
+        if volume > 0:
+            update_filters.append(Job.f_remaining_resources >= volume)
+            operate = Job.update({Job.f_remaining_resources: Job.f_remaining_resources-volume}).where(*update_filters)
+        else:
+            operate = Job.update({Job.f_remaining_resources: Job.f_remaining_resources-volume}).where(*update_filters)
+        sql_logger(job_id=job_id).info(operate)
+        return operate.execute() > 0
+
+    @classmethod
     def get_job_configuration(cls, job_id, role, party_id, tasks=None):
         with DB.connection_context():
             if tasks:
@@ -189,6 +200,19 @@ class JobSaver(object):
         with DB.connection_context():
             task_sets = TaskSet.select().where(TaskSet.f_job_id == job_id, TaskSet.f_role == role, TaskSet.f_party_id == party_id).order_by(TaskSet.f_task_set_id.asc())
             return [task_set for task_set in task_sets]
+
+    @classmethod
+    def get_top_tasks(cls, job_id, role, party_id):
+        with DB.connection_context():
+            tasks = Task.select().where(Task.f_job_id == job_id, Task.f_role == role, Task.f_party_id == party_id).order_by(Task.f_create_time.asc())
+            tasks_group = {}
+            for task in tasks:
+                if task.f_task_id not in tasks_group:
+                    tasks_group[task.f_task_id] = task
+                elif task.f_task_version > tasks_group[task.f_task_id].f_task_version:
+                    # update new version task
+                    tasks_group[task.f_task_id] = task
+            return tasks_group
 
     @classmethod
     def query_task_set(cls, **kwargs):
@@ -239,5 +263,5 @@ class JobSaver(object):
         job = Job()
         job.f_progress = float(success_count) / component_count * 100
         job.f_update_time = current_timestamp()
-        job.f_current_tasks = core_utils.json_dumps([current_task_id])
+        job.f_current_tasks = base_utils.json_dumps([current_task_id])
         return job

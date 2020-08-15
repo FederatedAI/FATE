@@ -20,7 +20,7 @@ import re
 
 from flask import request
 
-from arch.api.utils import file_utils
+from fate_arch.common import file_utils
 from fate_flow.settings import USE_AUTHENTICATION, PRIVILEGE_COMMAND_WHITELIST, stat_logger, \
     CLUSTER_STANDALONE_JOB_SERVER_PORT
 

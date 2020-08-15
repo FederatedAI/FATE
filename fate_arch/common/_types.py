@@ -23,6 +23,17 @@ class Backend(IntEnum):
         return self.value == self.EGGROLL
 
 
+class FederationMode(IntEnum):
+    SINGLE = 0
+    MULTIPLE = 1
+
+    def is_single(self):
+        return self.value == self.SINGLE
+
+    def is_multiple(self):
+        return self.value == self.MULTIPLE
+
+
 class Party(object):
     """
     Uniquely identify

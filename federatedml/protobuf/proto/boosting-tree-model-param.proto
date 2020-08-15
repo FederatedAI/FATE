@@ -25,6 +25,7 @@ message FeatureImportanceInfo {
 	string sitename = 1;
 	int32 fid = 2;
 	double importance = 3;
+    string fullname = 4;
 }
 
 message BoostingTreeModelParam {
@@ -40,5 +41,6 @@ message BoostingTreeModelParam {
     int32 best_iteration = 10;
     repeated string tree_plan = 11;
     string model_name = 12;
+    map<string, string> anonymous_name_mapping = 13;
 }
 

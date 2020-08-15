@@ -18,9 +18,9 @@ import shutil
 
 from flask import Flask, request
 
-from fate_arch.storage.constant import StorageEngine
+from fate_arch.storage import StorageEngine
 from fate_flow.entity.constant import StatusSet
-from fate_flow.manager.table_manager.table_operation import get_table
+from fate_arch import storage
 from fate_flow.settings import stat_logger, USE_LOCAL_DATA, WORK_MODE
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils import detect_utils, job_utils
@@ -48,10 +48,10 @@ def download_upload(access_module):
         except Exception as e:
             shutil.rmtree(os.path.join(get_job_directory(job_id), 'tmp'))
             raise e
-        request_config = request.args.to_dict()
-        request_config['file'] = filename
+        job_config = request.args.to_dict()
+        job_config['file'] = filename
     else:
-        request_config = request.json
+        job_config = request.json
     required_arguments = ['work_mode', 'namespace', 'table_name']
     if access_module == 'upload':
         required_arguments.extend(['file', 'head', 'partition'])
@@ -59,27 +59,29 @@ def download_upload(access_module):
         required_arguments.extend(['output_path'])
     else:
         raise Exception('can not support this operating: {}'.format(access_module))
-    detect_utils.check_config(request_config, required_arguments=required_arguments)
+    detect_utils.check_config(job_config, required_arguments=required_arguments)
     data = {}
+    for _ in ["work_mode", "backend", "drop"]:
+        if _ in job_config:
+            job_config[_] = int(job_config[_])
     if access_module == "upload":
-        data['table_name'] = request_config["table_name"]
-        data['namespace'] = request_config["namespace"]
+        data['table_name'] = job_config["table_name"]
+        data['namespace'] = job_config["namespace"]
         if WORK_MODE != 0:
-            data_table = get_table(name=request_config["table_name"], namespace=request_config["namespace"])
-            if data_table and int(request_config.get('drop', 2)) == 2:
+            job_config["storage_engine"] = job_config.get("storage_engine", StorageEngine.EGGROLL)
+            data_table_meta = storage.StorageTableMeta.build(name=job_config["table_name"], namespace=job_config["namespace"])
+            if data_table_meta and job_config.get('drop', 2) == 2:
                 return get_json_result(retcode=100,
                                        retmsg='The data table already exists.'
                                               'If you still want to continue uploading, please add the parameter -drop.'
                                               ' 0 means not to delete and continue uploading, '
                                               '1 means to upload again after deleting the table')
-            elif data_table and int(request_config.get('drop', 2)) == 1:
-                data_table.destroy()
-            try:
-                if data_table:
-                    data_table.close()
-            except:
-                pass
-    job_dsl, job_runtime_conf = gen_data_access_job_config(request_config, access_module)
+            elif data_table_meta and job_config.get('drop', 2) == 1:
+                job_config["destroy"] = True
+    # compatibility
+    if "table_name" in job_config:
+        job_config["name"] = job_config["table_name"]
+    job_dsl, job_runtime_conf = gen_data_access_job_config(job_config, access_module)
     job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(
         {'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)
     data.update({'job_dsl_path': job_dsl_path, 'job_runtime_conf_path': job_runtime_conf_path,
@@ -115,17 +117,17 @@ def get_upload_info(jobs_run_conf):
         info = {}
         table_name = job_run_conf["table_name"][0]
         namespace = job_run_conf["namespace"][0]
-        table = get_table(name=table_name, namespace=namespace, simple=True)
-        if table:
+        table_meta = storage.StorageTableMeta.build(name=table_name, namespace=namespace)
+        if table_meta:
             partition = job_run_conf["partition"][0]
             info["upload_info"] = {
                 "table_name": table_name,
                 "namespace": namespace,
                 "partition": partition,
-                'upload_count': table.count()
+                'upload_count': table_meta.get_count()
             }
             info["notes"] = job_run_conf["notes"]
-            info["schema"] = table.get_meta(_type="schema")
+            info["schema"] = table_meta.get_schema()
             data.append({job_id: info})
     return data
 
@@ -141,7 +143,9 @@ def gen_data_access_job_config(config_data, access_module):
     initiator_party_id = config_data.get('party_id', 0)
     job_runtime_conf["initiator"]["role"] = initiator_role
     job_runtime_conf["initiator"]["party_id"] = initiator_party_id
-    job_runtime_conf["job_parameters"]["work_mode"] = int(config_data["work_mode"])
+    for _ in ["work_mode", "backend"]:
+        if _ in config_data:
+            job_runtime_conf["job_parameters"][_] = config_data[_]
     job_runtime_conf["role"][initiator_role] = [initiator_party_id]
     job_dsl = {
         "components": {}
@@ -155,8 +159,9 @@ def gen_data_access_job_config(config_data, access_module):
                 "partition": [int(config_data["partition"])],
                 "file": [config_data["file"]],
                 "namespace": [config_data["namespace"]],
-                "table_name": [config_data["table_name"]],
-                "storage_engine": [config_data.get("storage_engine", StorageEngine.LMDB)]
+                "name": [config_data["name"]],
+                "storage_engine": [config_data.get("storage_engine", StorageEngine.EGGROLL)],
+                "destroy": [config_data.get("destroy", False)],
             }
         }
         if int(config_data.get('dsl_version', 1)) == 2:
@@ -176,7 +181,7 @@ def gen_data_access_job_config(config_data, access_module):
                 "delimitor": [config_data.get("delimitor", ",")],
                 "output_path": [config_data["output_path"]],
                 "namespace": [config_data["namespace"]],
-                "table_name": [config_data["table_name"]]
+                "name": [config_data["name"]]
             }
         }
         if int(config_data.get('dsl_version', 1)) == 2:

@@ -218,7 +218,7 @@ class BoostingParam(BaseParam):
 
         learning_rate : float, accepted float, int or long only, the learning rate of secure boost. default: 0.3
 
-        boosting_round : int, accepted int, float only, the max number of boosting round. default: 5
+        num_trees : int, accepted int, float only, the max number of boosting round. default: 5
 
         subsample_feature_rate : float, a float-number in [0, 1], default: 0.8
 
@@ -237,7 +237,7 @@ class BoostingParam(BaseParam):
 
     def __init__(self,  task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
-                 learning_rate=0.3, boosting_round=5, subsample_feature_rate=0.8, n_iter_no_change=True,
+                 learning_rate=0.3, num_trees=5, subsample_feature_rate=0.8, n_iter_no_change=True,
                  tol=0.0001, bin_num=32,
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, metrics=None):
@@ -247,7 +247,7 @@ class BoostingParam(BaseParam):
         self.task_type = task_type
         self.objective_param = copy.deepcopy(objective_param)
         self.learning_rate = learning_rate
-        self.boosting_round = boosting_round
+        self.num_trees = num_trees
         self.subsample_feature_rate = subsample_feature_rate
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
@@ -312,14 +312,14 @@ class HeteroBoostingParam(BoostingParam):
 
     def __init__(self, task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
-                 learning_rate=0.3, boosting_round=5, subsample_feature_rate=0.8, n_iter_no_change=True,
+                 learning_rate=0.3, num_trees=5, subsample_feature_rate=0.8, n_iter_no_change=True,
                  tol=0.0001, encrypt_param=EncryptParam(),
                  bin_num=32,
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, early_stopping_rounds=None, metrics=None, use_first_metric_only=False):
 
-        super(HeteroBoostingParam, self).__init__(task_type, objective_param, learning_rate, boosting_round,
+        super(HeteroBoostingParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                   subsample_feature_rate, n_iter_no_change, tol, bin_num,
                                                   predict_param, cv_param, validation_freqs, metrics=metrics)
 
@@ -411,7 +411,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
 
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
-                 learning_rate=0.3, boosting_round=5, subsample_feature_rate=0.8, n_iter_no_change=True,
+                 learning_rate=0.3, num_trees=5, subsample_feature_rate=0.8, n_iter_no_change=True,
                  tol=0.0001, encrypt_param=EncryptParam(),
                  bin_num=32,
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
@@ -419,7 +419,7 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  validation_freqs=None, early_stopping_rounds=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, metrics=None, use_first_metric_only=False):
 
-        super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, boosting_round,
+        super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
                                                      bin_num, encrypted_mode_calculator_param, predict_param, cv_param,
                                                      validation_freqs, early_stopping_rounds, metrics=metrics,
@@ -446,7 +446,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
 
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
-                 learning_rate=0.3, boosting_round=5, subsample_feature_rate=0.8, n_iter_no_change=True,
+                 learning_rate=0.3, num_trees=5, subsample_feature_rate=0.8, n_iter_no_change=True,
                  tol=0.0001, encrypt_param=EncryptParam(),
                  bin_num=32,
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
@@ -472,7 +472,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
         """
 
         super(HeteroFastSecureBoostParam, self).__init__(tree_param, task_type, objective_param, learning_rate,
-                                                         boosting_round, subsample_feature_rate, n_iter_no_change, tol,
+                                                         num_trees, subsample_feature_rate, n_iter_no_change, tol,
                                                          encrypt_param, bin_num, encrypted_mode_calculator_param,
                                                          predict_param, cv_param, validation_freqs, early_stopping,
                                                          use_missing, zero_as_missing, complete_secure, metrics=metrics)
@@ -504,7 +504,7 @@ class HomoSecureBoostParam(BoostingParam):
 
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
-                 learning_rate=0.3, boosting_round=5, subsample_feature_rate=0.8, n_iter_no_change=True,
+                 learning_rate=0.3, num_trees=5, subsample_feature_rate=0.8, n_iter_no_change=True,
                  tol=0.0001,
                  bin_num=32,
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
@@ -513,7 +513,7 @@ class HomoSecureBoostParam(BoostingParam):
         super(HomoSecureBoostParam, self).__init__(task_type=task_type,
                                                    objective_param=objective_param,
                                                    learning_rate=learning_rate,
-                                                   boosting_round=boosting_round,
+                                                   num_trees=num_trees,
                                                    subsample_feature_rate=subsample_feature_rate,
                                                    n_iter_no_change=n_iter_no_change,
                                                    tol=tol,

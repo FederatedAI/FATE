@@ -261,11 +261,12 @@ class FTLGuest(FTL):
 
         data_loader, self.x_shape, self.data_num, self.overlap_num = self.prepare_data(self.init_intersect_obj(),
                                                                                        data_inst, guest_side=True)
+        self.input_dim = self.x_shape[0]
 
         # cache data_loader for faster validation
         self.cache_dataloader[self.get_dataset_key(data_inst)] = data_loader
 
-        self.partitions = data_inst._partitions
+        self.partitions = data_inst.partitions
 
         self.initialize_nn(input_shape=self.x_shape)
         self.feat_dim = self.nn._model.output_shape[1]
@@ -364,7 +365,7 @@ class FTLGuest(FTL):
         predicts = list(map(float, predicts))
 
         predict_tb = session.parallelize(zip(data_loader.get_overlap_keys(), predicts,), include_key=True,
-                                         partition=data_inst._partitions)
+                                         partition=data_inst.partitions)
 
         threshold = self.predict_param.threshold
         predict_result = self.predict_score_to_output(data_inst_, predict_tb, classes=[0, 1], threshold=threshold)
@@ -377,7 +378,7 @@ class FTLGuest(FTL):
     def export_model(self):
         model_param = self.get_model_param()
         model_param.phi_a.extend(self.phi.tolist()[0])
-        return {"FTLHostMeta": model_param, "FTLHostParam": self.get_model_param()}
+        return {"FTLGuestMeta": self.get_model_meta(), "FTLHostParam": model_param}
 
     def load_model(self, model_dict):
         model_param = None

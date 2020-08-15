@@ -28,10 +28,9 @@ import uuid
 import psutil
 from fate_flow.entity.constant import JobStatus
 
-from arch.api.utils import file_utils
-from arch.api.utils.core_utils import current_timestamp
-from arch.api.utils.core_utils import json_loads, json_dumps
-from arch.api.utils.log_utils import schedule_logger
+from fate_arch.common import file_utils
+from fate_arch.common.base_utils import json_loads, json_dumps, fate_uuid, current_timestamp
+from fate_arch.common.log import schedule_logger
 from fate_flow.scheduler.dsl_parser import DSLParser, DSLParserV2
 from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -73,8 +72,11 @@ def generate_federated_id(task_id, task_version):
     return "{}_{}".format(task_id, task_version)
 
 
-def generate_session_id(task_id, task_version, role, party_id):
-    return '{}_{}_{}_{}'.format(task_id, task_version, role, party_id)
+def generate_session_id(task_id, task_version, role, party_id, random_end=False):
+    if not random_end:
+        return '{}_{}_{}_{}'.format(task_id, task_version, role, party_id)
+    else:
+        return '{}_{}_{}_{}_{}'.format(task_id, task_version, role, party_id, fate_uuid())
 
 
 def generate_task_input_data_namespace(task_id, task_version, role, party_id):
@@ -143,7 +145,7 @@ def save_job_conf(job_id, job_dsl, job_runtime_conf, train_runtime_conf, pipelin
             f.truncate()
             if not data:
                 data = {}
-            f.write(json.dumps(data, indent=4))
+            f.write(json_dumps(data, indent=4))
             f.flush()
     return path_dict
 

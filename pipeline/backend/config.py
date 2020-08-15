@@ -14,8 +14,11 @@
 #  limitations under the License.
 #
 
-from enum import Enum
-from fate_flow.entity.constant import Backend, WorkMode, JobStatus
+import os
+
+from fate_arch.common import file_utils
+from fate_flow.entity.constant import Backend, JobStatus, WorkMode
+
 
 VERSION = 2
 TIME_QUERY_FREQS = 0.01
@@ -44,3 +47,20 @@ class StatusCode(object):
     FAIL = 1
     Cancel = 2
 
+
+class LogPath(object):
+    @classmethod
+    def log_directory(cls):
+        pipeline_directory = os.path.join(file_utils.get_project_base_directory(), 'pipeline')
+        log_directory = os.path.join(pipeline_directory, 'logs')
+        return log_directory
+
+    DEBUG = 'DEBUG.log'
+    INFO = 'INFO.log'
+    ERROR = 'ERROR.log'
+
+
+class LogFormat(object):
+    SIMPLE = '<green>[{time:HH:mm:ss}]</green><level>{message}</level>'
+    NORMAL = '<green>{time:YYYY-MM-DD HH:mm:ss}</green> | ' \
+             '<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'

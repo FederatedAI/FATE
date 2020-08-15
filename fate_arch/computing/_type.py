@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class ComputingType(Enum):
+class ComputingEngine(object):
     EGGROLL = 'EGGROLL'
     SPARK = 'SPARK'
     STANDALONE = 'STANDALONE'
