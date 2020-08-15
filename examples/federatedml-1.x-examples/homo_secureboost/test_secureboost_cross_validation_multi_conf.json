@@ -1,3 +1,4 @@
+
 {
     "initiator": {
         "role": "guest",
@@ -26,12 +27,6 @@
                             "name": "homo_vehicle_scale_guest",
                             "namespace": "experiment"
                         }
-                    ],
-                    "eval_data": [
-                        {
-                            "name": "homo_vehicle_scale_test",
-                            "namespace": "experiment"
-                        }
                     ]
                 }
             },
@@ -56,12 +51,6 @@
                     "train_data": [
                         {
                             "name": "homo_vehicle_scale_host",
-                            "namespace": "experiment"
-                        }
-                    ],
-                    "eval_data": [
-                        {
-                            "name": "homo_vehicle_scale_test",
                             "namespace": "experiment"
                         }
                     ]
