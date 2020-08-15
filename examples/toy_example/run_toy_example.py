@@ -170,7 +170,7 @@ def exec_toy_example(runtime_config):
         if status == "failed":
             show_log(jobid, "error")
             return
-        elif status == "success":
+        elif status == "complete":
             show_log(jobid, "info")
             return
         else:

@@ -81,7 +81,8 @@ class StatisticsParam(BaseParam):
         if statistic_name == "summary":
             return [consts.SUM, consts.MEAN, consts.STANDARD_DEVIATION,
                     consts.MEDIAN, consts.MIN, consts.MAX,
-                    consts.MISSING_COUNT, consts.SKEWNESS, consts.KURTOSIS]
+                    consts.MISSING_COUNT, consts.SKEWNESS, consts.KURTOSIS,
+                    consts.COEFFICIENT_OF_VARIATION]
         if statistic_name == "describe":
             return [consts.COUNT, consts.MEAN, consts.STANDARD_DEVIATION, consts.MIN, consts.MAX]
 

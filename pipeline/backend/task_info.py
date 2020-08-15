@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from pipeline.backend.config import JobStatus
 
 
 class TaskInfo(object):
@@ -23,30 +22,6 @@ class TaskInfo(object):
         self._job_client = job_client
         self._party_id = party_id
         self._role = role
-
-    def summary(self, *args):
-        ret_code, ret_msg, data = self._job_client.query_job(self._jobid)
-        if ret_code != 0:
-            raise ValueError(
-                "Job is failed, jobid is {}, error_code is {}, error_msg is {}".format(self._jobid, ret_code,
-                                                                                       ret_msg))
-
-        name = self._component.name
-        ret_code, ret_msg, data = self._job_client.query_task(self._jobid, self._role, self._party_id)
-
-        if ret_code != 0:
-            raise ValueError(
-                "Task {} is failed, jobid is {}, error_code is {}, error_msg is {}".format(name, self._jobid, et_code, ret_msg))
-
-        data = data[0]
-        status = data.get("f_status", JobStatus.FAIL)
-        if status == JobStatus.RUNNING:
-            print("job {}, sub task {} is running".format(self._jobid, name))
-            return
-
-        if status == JobStatus.FAIL:
-            raise ValueError(
-                "job {}, sub task {} is running".format(self._jobid, name))
 
     def get_output_data(self, limits=None):
         return self._job_client.get_output_data(self._jobid, self._component.name, self._role, self._party_id, limits)

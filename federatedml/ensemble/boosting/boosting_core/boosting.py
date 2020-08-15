@@ -110,7 +110,7 @@ class Boosting(ModelBase, ABC):
         self.task_type = boosting_param.task_type
         self.objective_param = boosting_param.objective_param
         self.learning_rate = boosting_param.learning_rate
-        self.boosting_round = boosting_param.boosting_round
+        self.boosting_round = boosting_param.num_trees
         self.n_iter_no_change = boosting_param.n_iter_no_change
         self.tol = boosting_param.tol
         self.bin_num = boosting_param.bin_num
@@ -482,6 +482,7 @@ class Boosting(ModelBase, ABC):
 
         self.set_model_meta(model_meta)
         self.set_model_param(model_param)
+        self.loss = self.get_loss_function()
 
 
 

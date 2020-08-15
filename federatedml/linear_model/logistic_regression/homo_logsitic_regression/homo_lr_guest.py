@@ -100,6 +100,7 @@ class HomoLRGuest(HomoLRBase):
 
             validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
+        self.set_summary(self.get_model_summary())
 
     @assert_io_num_rows_equal
     def predict(self, data_instances):
@@ -110,13 +111,8 @@ class HomoLRGuest(HomoLRBase):
         data_instances = self.align_data_header(data_instances, self.header)
         # predict_wx = self.compute_wx(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
         pred_prob = data_instances.mapValues(lambda v: activation.sigmoid(vec_dot(v.features, self.model_weights.coef_)
-                                                              + self.model_weights.intercept_))
+                                                                          + self.model_weights.intercept_))
 
-        # pred_table = self.classify(predict_wx, self.model_param.predict_param.threshold)
-
-        # predict_result = data_instances.mapValues(lambda x: x.label)
-        # predict_result = pred_table.join(predict_result, lambda x, y: [y, x[1], x[0],
-        #                                                                {"1": x[0], "0": 1 - x[0]}])
         predict_result = self.predict_score_to_output(data_instances, pred_prob, classes=[0, 1],
                                                       threshold=self.model_param.predict_param.threshold)
 

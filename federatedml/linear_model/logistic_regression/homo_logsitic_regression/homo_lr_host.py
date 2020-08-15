@@ -134,7 +134,25 @@ class HomoLRHost(HomoLRBase):
             # validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
 
+        self.set_summary(self.get_model_summary())
         LOGGER.info("Finish Training task, total iters: {}".format(self.n_iter_))
+
+    def get_model_summary(self):
+        header = self.header
+        if header is None:
+            return {}
+        if not self.use_encrypt:
+            weight_dict, intercept_ = self.get_weight_intercept_dict(header)
+        else:
+            weight_dict = {}
+            intercept_ = None
+        best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
+
+        summary = {"coef": weight_dict,
+                   "intercept": intercept_,
+                   "is_converged": self.is_converged,
+                   "best_iteration": best_iteration}
+        return summary
 
     @assert_io_num_rows_equal
     def predict(self, data_instances):

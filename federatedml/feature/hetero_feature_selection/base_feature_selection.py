@@ -235,6 +235,7 @@ class BaseHeteroFeatureSelection(ModelBase):
         """
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
+        self.check_schema_content(data_instances.schema)
 
     def set_schema(self, data_instance, header=None):
         if header is None:
@@ -296,17 +297,22 @@ class BaseHeteroFeatureSelection(ModelBase):
         self._abnormal_detection(data_instances)
         self._init_select_params(data_instances)
 
+        original_col_nums = len(self.curt_select_properties.last_left_col_names)
+
         if len(self.curt_select_properties.select_col_indexes) == 0:
             LOGGER.warning("None of columns has been set to select")
         else:
             for filter_idx, method in enumerate(self.filter_methods):
-                if method in [consts.STATISTIC_FILTER, consts.IV_FILTER, consts.PSI_FILTER]:
+                if method in [consts.STATISTIC_FILTER, consts.IV_FILTER, consts.PSI_FILTER,
+                              consts.HETERO_SBT_FILTER, consts.HOMO_SBT_FILTER]:
                     if method == consts.STATISTIC_FILTER:
                         metrics = self.model_param.statistic_param.metrics
                     elif method == consts.IV_FILTER:
                         metrics = self.model_param.iv_param.metrics
                     elif method == consts.PSI_FILTER:
                         metrics = self.model_param.psi_param.metrics
+                    elif method in [consts.HETERO_SBT_FILTER, consts.HOMO_SBT_FILTER]:
+                        metrics = self.model_param.sbt_param.metrics
                     else:
                         raise ValueError(f"method: {method} is not supported")
                     for idx, _ in enumerate(metrics):
@@ -315,7 +321,16 @@ class BaseHeteroFeatureSelection(ModelBase):
                 else:
                     self._filter(data_instances, method, suffix=str(filter_idx))
 
+        last_col_nums = self.curt_select_properties.last_left_col_names
+
+        self.add_summary("all", {
+            "last_col_nums": original_col_nums,
+            "left_col_nums": len(last_col_nums),
+            "left_col_names": last_col_nums
+        })
+
         new_data = self._transfer_data(data_instances)
+        LOGGER.debug(f"Final summary: {self.summary()}")
         LOGGER.info("Finish Hetero Selection Fit and transform.")
         return new_data
 

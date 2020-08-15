@@ -3,12 +3,12 @@ syntax = "proto3";
 package com.webank.ai.fate.core.mlmodel.buffer;
 option java_outer_classname = "FTLModelMetaProto";
 
-message OptimizerParam {
+message FTLOptimizerParam {
     string optimizer = 1;
     string kwargs = 2;
 }
 
-message PredictParam {
+message FTLPredictParam {
     double threshold = 1;
 }
 
@@ -18,7 +18,7 @@ message FTLModelMeta {
     int32 batch_size = 3;
     int32 epochs = 4;
     double tol = 5;
-    OptimizerParam optimizer_param = 6;
-    PredictParam predict_param = 7;
+    FTLOptimizerParam optimizer_param = 6;
+    FTLPredictParam predict_param = 7;
     int32 input_dim = 8;
 }

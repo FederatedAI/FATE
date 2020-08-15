@@ -397,7 +397,7 @@ class HomoDecisionTreeClient(DecisionTree):
 
                     nid = tree[nid].right_nodeid if missing_dir == 1 else tree[nid].left_nodeid
 
-                elif data_inst.features.get_data(fid) <= bid:
+                elif data_inst.features.get_data(fid) <= bid + consts.FLOAT_ZERO:
                     nid = tree[nid].left_nodeid
                 else:
                     nid = tree[nid].right_nodeid
@@ -406,7 +406,7 @@ class HomoDecisionTreeClient(DecisionTree):
 
                 nid = tree[nid].right_nodeid if missing_dir == 1 else tree[nid].left_nodeid
 
-            elif data_inst.features.get_data(fid, 0) <= bid:
+            elif data_inst.features.get_data(fid, 0) <= bid + consts.FLOAT_ZERO:
                 nid = tree[nid].left_nodeid
             else:
                 nid = tree[nid].right_nodeid

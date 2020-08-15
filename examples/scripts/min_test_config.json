@@ -1,0 +1,36 @@
+{
+  "data": [
+    {
+      "file": "examples/data/breast_hetero_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "breast_hetero_guest",
+      "namespace": "experiment",
+      "count": 569
+    },
+    {
+      "file": "examples/data/breast_hetero_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "breast_hetero_host",
+      "namespace": "experiment",
+      "count": 569
+    },
+    {
+      "file": "examples/data/default_credit_hetero_guest.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "default_credit_hetero_guest",
+      "namespace": "experiment",
+      "count": 30000
+    },
+    {
+      "file": "examples/data/default_credit_hetero_host.csv",
+      "head": 1,
+      "partition": 16,
+      "table_name": "default_credit_hetero_host",
+      "namespace": "experiment",
+      "count": 30000
+    }
+  ]
+}

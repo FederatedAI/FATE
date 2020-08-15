@@ -193,7 +193,7 @@ def _get_value_post_process(v, name: str, tag: str, party: typing.Tuple[str, str
 
     # got a roll pair
     if isinstance(v, RollPair):
-        assert _count(v, log_str) > 0, f"[{log_str}]count is 0"
+        # assert _count(v, log_str) > 0, f"[{log_str}]count is 0"
         gc.add_gc_action(tag, v, 'destroy', {})
         return v
 

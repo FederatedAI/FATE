@@ -174,8 +174,8 @@ class BaseParameterUtil(object):
         param_variables = param_obj.__dict__
         for key, val_list in role_parameters.items():
             if key not in param_variables:
-                continue
-                # raise RedundantParameterError(component=component, module=module, other_info=key)
+                # continue
+                raise RedundantParameterError(component=component, module=module, other_info=key)
 
             attr = getattr(param_obj, key)
             if type(attr).__name__ in dir(builtins) or not attr:
@@ -342,35 +342,38 @@ class ParameterUtilV2(BaseParameterUtil):
                                                  version=2)
 
     @staticmethod
-    def get_input_parameters(submit_dict, module="args"):
-        if "role_parameters" not in submit_dict:
-            return {}, {}
+    def get_input_parameters(submit_dict, components=None):
+        if "role_parameters" not in submit_dict or components is None:
+            return {}
 
         roles = submit_dict["role_parameters"].keys()
         if not roles:
-            return {}, {}
+            return {}
 
-        input_parameters = {}
-        input_datakey = set()
+        input_parameters = {"dsl_version": 2}
 
+        cpn_dict = {}
+        for reader_cpn in components:
+            cpn_dict[reader_cpn] = {}
         for role in roles:
             role_parameters = submit_dict["role_parameters"][role]
-            input_parameters[role] = [{module: {"data": {}}} for i in range(len(submit_dict["role"][role]))]
+            input_parameters[role] = [copy.deepcopy(cpn_dict) for i in range(len(submit_dict["role"][role]))]
 
             for idx in role_parameters.keys():
                 parameters = role_parameters[idx]
-                if module not in parameters:
-                    continue
-
-                dataset = parameters[module]
-                for data_key, data_val in dataset.items():
-                    input_datakey.add(data_key)
+                for reader in components:
+                    if reader not in parameters:
+                        continue
 
                     if idx == "all":
                         partyid_list = submit_dict["role"][role]
                         for i in range(len(partyid_list)):
-                            input_parameters[role][i][module]["data"][data_key] = data_val
+                            input_parameters[role][i][reader] = parameters[reader]
+                    elif len(idx.split("|")) == 1:
+                        input_parameters[role][int(idx)][reader] = parameters[reader]
                     else:
-                        input_parameters[role][int(idx)][module]["data"][data_key] = data_val
+                        id_set = list(map(int, idx.split("|")))
+                        for _id in id_set:
+                            input_parameters[role][_id][reader] = parameters[reader]
 
-        return input_parameters, input_datakey
+        return input_parameters

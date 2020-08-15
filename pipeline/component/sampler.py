@@ -14,16 +14,18 @@
 #  limitations under the License.
 #
 
+from federatedml.param.sample_param import SampleParam
 from pipeline.component.component_base import Component
 from pipeline.interface.output import Output
-from federatedml.param.sample_param import SampleParam
+from pipeline.utils.logger import LOGGER
 
 
 class FederatedSample(Component, SampleParam):
     def __init__(self, **kwargs):
         Component.__init__(self, **kwargs)
 
-        print (self.name)
+        # print (self.name)
+        LOGGER.debug(f"{self.name} component created")
         new_kwargs = self.erase_component_base_param(**kwargs)
 
         SampleParam.__init__(self, **new_kwargs)

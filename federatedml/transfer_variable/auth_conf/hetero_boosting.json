@@ -1,5 +1,5 @@
 {
-  "HeteroBoostingTransferVariable": {
+  "federatedml.transfer_variable.transfer_class.hetero_boosting_transfer_variable.HeteroBoostingTransferVariable": {
     "booster_dim": {
       "src": "guest",
       "dst": [

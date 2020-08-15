@@ -28,7 +28,7 @@
     "tasks": {
         "selection": {
             "conf": "./test_hetero_feature_selection_job_conf.json",
-            "dsl": "./test_hetero_feature_statistic_selection_job_dsl.json"
+            "dsl": "./test_hetero_feature_selection_job_dsl.json"
         },
         "iv_top_k": {
             "conf": "./test_hetero_iv_topk_selection_job_conf.json",

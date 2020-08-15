@@ -14,9 +14,10 @@
 #  limitations under the License.
 #
 
-from arch.api import session
-from arch.api.utils.log_utils import LoggerFactory
-from fate_flow.entity.metric import MetricType, MetricMeta, Metric
+from fate_arch import session
+from fate_arch.abc import CTableABC
+from fate_arch.common import log
+from fate_flow.entity.metric import MetricMeta, Metric
 from federatedml.framework.homo.blocks import secure_mean_aggregator, loss_scatter, has_converged
 from federatedml.framework.homo.blocks.base import HomoTransferBase
 from federatedml.framework.homo.blocks.has_converged import HasConvergedTransVar
@@ -30,7 +31,8 @@ from federatedml.param.homo_nn_param import HomoNNParam
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
 
-Logger = LoggerFactory.get_logger()
+Logger = log.getLogger()
+
 MODEL_META_NAME = "HomoNNModelMeta"
 MODEL_PARAM_NAME = "HomoNNModelParam"
 
@@ -82,6 +84,7 @@ class HomoNNServer(HomoNNBase):
         self.loss_consumed = early_stop.converge_func != "weight_diff"
 
     def callback_loss(self, iter_num, loss):
+        # noinspection PyTypeChecker
         metric_meta = MetricMeta(name='train',
                                  metric_type="LOSS",
                                  extra_metas={
@@ -173,7 +176,7 @@ class HomoNNClient(HomoNNBase):
                                            loss=self.loss,
                                            metrics=self.metrics)
 
-    def fit(self, data_inst, *args):
+    def fit(self, data_inst: CTableABC, *args):
         self._header = data_inst.schema["header"]
         data = self.data_converter.convert(data_inst, batch_size=self.batch_size, encode_label=self.encode_label)
         if self.config_type == "pytorch":
@@ -226,7 +229,7 @@ class HomoNNClient(HomoNNBase):
         return param_pb
 
     @assert_io_num_rows_equal
-    def predict(self, data_inst):
+    def predict(self, data_inst: CTableABC):
         self.align_data_header(data_instances=data_inst, pre_header=self._header)
         data = self.data_converter.convert(data_inst, batch_size=self.batch_size, encode_label=self.encode_label)
         predict = self.nn_model.predict(data)
@@ -235,7 +238,7 @@ class HomoNNClient(HomoNNBase):
             kv = zip(data.get_keys(), map(lambda x: x.tolist()[0], predict))
         else:
             kv = zip(data.get_keys(), predict)
-        pred_tbl = session.parallelize(kv, include_key=True, partition=data_inst.get_partitions())
+        pred_tbl = session.default().computing.parallelize(kv, include_key=True, partition=data_inst.partitions)
         classes = [0, 1] if num_output_units == 1 else [i for i in range(num_output_units)]
         return self.predict_score_to_output(data_inst, pred_tbl, classes=classes,
                                             threshold=self.param.predict_param.threshold)
