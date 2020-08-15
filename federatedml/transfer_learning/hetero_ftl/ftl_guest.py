@@ -1,7 +1,7 @@
-from federatedml.hetero_ftl.ftl_base import FTL
+from federatedml.transfer_learning.hetero_ftl.ftl_base import FTL
 from federatedml.statistic.intersect import intersect_guest
 from arch.api.utils import log_utils
-from federatedml.hetero_ftl.ftl_dataloder import FTLDataLoader
+from federatedml.transfer_learning.hetero_ftl.ftl_dataloder import FTLDataLoader
 
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
@@ -14,8 +14,6 @@ from arch.api import session
 import numpy as np
 
 from federatedml.util import consts
-
-from federatedml.util.io_check import assert_io_num_rows_equal
 
 from federatedml.statistic import data_overview
 
