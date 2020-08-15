@@ -15,6 +15,6 @@
 #
 
 import warnings
-from fate_arch.common.core_utils import *
+from fate_arch.common.base_utils import *
 
 warnings.warn('arch.api.core_utils argument deprecated, use fate_arch.common.core_utils instead', DeprecationWarning)
