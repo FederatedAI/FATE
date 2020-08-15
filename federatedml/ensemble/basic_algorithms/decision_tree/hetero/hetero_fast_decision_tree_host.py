@@ -217,10 +217,15 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
         self.transfer_inst.dispatch_node_host_result.remote(sample_leaf_pos, idx=0,
                                                             suffix=('final sample pos', ), role=consts.GUEST)
 
-    def remove_encrypted_info(self):
+    def process_leaves_info(self):
+
+        # remove g/h info and rename leaves
+
         for node in self.tree_node:
             node.sum_grad = None
             node.sum_hess = None
+            if node.is_leaf:
+                node.sitename = consts.GUEST
 
     def sync_leaf_nodes(self):
         leaves = []
@@ -312,7 +317,7 @@ class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):
         self.sync_sample_leaf_pos(self.sample_leaf_pos)  # sync sample final leaf positions
         self.convert_bin_to_real2()  # convert bin num to val
         self.sync_leaf_nodes()  # send leaf nodes to guest
-        self.remove_encrypted_info()  # remove encrypted g/h
+        self.process_leaves_info()  # remove encrypted g/h
 
     def layered_mode_fit(self):
 

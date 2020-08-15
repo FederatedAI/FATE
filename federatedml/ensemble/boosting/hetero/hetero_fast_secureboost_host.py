@@ -168,14 +168,15 @@ class HeteroFastSecureBoostHost(HeteroSecureBoostHost):
         param_name = "HeteroSecureBoostHostParam"
         model_param.tree_plan.extend(plan.encode_plan(self.tree_plan))
 
-        # in mix mode, host can output their own feature importance
+        # in mix mode, host can output feature importance
         feature_importances = list(self.feature_importances_.items())
         feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)
         feature_importance_param = []
         for (sitename, fid), _importance in feature_importances:
             feature_importance_param.append(FeatureImportanceInfo(sitename=sitename,
                                                                   fid=fid,
-                                                                  importance=_importance))
+                                                                  importance=_importance,
+                                                                  fullname=self.feature_name_fid_mapping[fid]))
         model_param.feature_importances.extend(feature_importance_param)
 
         return param_name, model_param
