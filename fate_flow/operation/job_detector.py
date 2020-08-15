@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 from fate_arch.common.base_utils import get_lan_ip, json_loads
-from arch.api.utils.log_utils import schedule_logger
+from fate_arch.common.log import schedule_logger
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.entity.constant import JobStatus, TaskStatus
 from fate_flow.settings import detect_logger, API_VERSION

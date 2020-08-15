@@ -13,9 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils import dtable_utils
 from fate_arch.common.base_utils import json_loads, current_timestamp
-from arch.api.utils.log_utils import schedule_logger
+from fate_arch.common.log import schedule_logger
 from fate_arch.common import WorkMode
 from fate_arch.common import compatibility_utils
 from fate_flow.db.db_models import Job
@@ -30,6 +29,7 @@ from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT, DEFAULT_TASK_PARAL
 from fate_flow.utils import detect_utils, job_utils
 from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_log_directory
 from fate_flow.utils.service_utils import ServiceUtils
+from fate_flow.utils import model_utils
 
 
 class DAGScheduler(object):
@@ -57,7 +57,7 @@ class DAGScheduler(object):
         job_type = job_parameters.get('job_type', '')
         if job_type != 'predict':
             # generate job model info
-            job_parameters['model_id'] = '#'.join([dtable_utils.all_party_key(job_runtime_conf['role']), 'model'])
+            job_parameters['model_id'] = model_utils.gen_model_id(job_runtime_conf['role'])
             job_parameters['model_version'] = job_id
             train_runtime_conf = {}
         else:

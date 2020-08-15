@@ -19,7 +19,7 @@ import sys
 
 from fate_flow.utils.authentication_utils import authentication_check
 from federatedml.protobuf.generated import pipeline_pb2
-from arch.api.utils.log_utils import schedule_logger
+from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import Task
 from fate_flow.operation.task_executor import TaskExecutor
 from fate_flow.scheduler.task_scheduler import TaskScheduler

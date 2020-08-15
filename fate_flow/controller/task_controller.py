@@ -15,7 +15,7 @@
 #
 import sys
 
-from arch.api.utils.log_utils import schedule_logger
+from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import Task
 from fate_flow.operation.task_executor import TaskExecutor
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler

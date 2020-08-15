@@ -18,7 +18,7 @@ import operator
 from typing import List
 
 from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64
-from arch.api.utils.log_utils import schedule_logger
+from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import DB, TrackingMetric, TrackingOutputDataInfo, ComponentSummary
 from fate_flow.entity.constant import Backend
 from fate_flow.entity.metric import Metric, MetricMeta

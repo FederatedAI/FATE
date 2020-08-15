@@ -17,7 +17,7 @@ import os
 import dotenv
 
 from fate_arch.common.base_utils import get_lan_ip
-from arch.api.utils.file_utils import get_project_base_directory
+from fate_arch.common.file_utils import get_project_base_directory
 from fate_flow.entity.constant import ProcessRole
 
 

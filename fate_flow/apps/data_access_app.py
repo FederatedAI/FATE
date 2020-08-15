@@ -78,6 +78,9 @@ def download_upload(access_module):
                                               '1 means to upload again after deleting the table')
             elif data_table_meta and job_config.get('drop', 2) == 1:
                 job_config["destroy"] = True
+    # compatibility
+    if "table_name" in job_config:
+        job_config["name"] = job_config["table_name"]
     job_dsl, job_runtime_conf = gen_data_access_job_config(job_config, access_module)
     job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(
         {'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)
@@ -156,7 +159,7 @@ def gen_data_access_job_config(config_data, access_module):
                 "partition": [int(config_data["partition"])],
                 "file": [config_data["file"]],
                 "namespace": [config_data["namespace"]],
-                "table_name": [config_data["table_name"]],
+                "name": [config_data["name"]],
                 "storage_engine": [config_data.get("storage_engine", StorageEngine.EGGROLL)],
                 "destroy": [config_data.get("destroy", False)],
             }
@@ -178,7 +181,7 @@ def gen_data_access_job_config(config_data, access_module):
                 "delimitor": [config_data.get("delimitor", ",")],
                 "output_path": [config_data["output_path"]],
                 "namespace": [config_data["namespace"]],
-                "table_name": [config_data["table_name"]]
+                "name": [config_data["name"]]
             }
         }
         if int(config_data.get('dsl_version', 1)) == 2:

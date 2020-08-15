@@ -15,12 +15,12 @@
 #
 import os
 
-from arch.api.utils import log_utils, dtable_utils
+from fate_arch.common import log
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_arch import storage
 from fate_flow.utils.job_utils import generate_session_id
 
-LOGGER = log_utils.getLogger()
+LOGGER = log.getLogger()
 
 
 class Download(object):
@@ -33,14 +33,12 @@ class Download(object):
         self.parameters = component_parameters["DownloadParam"]
         self.parameters["role"] = component_parameters["role"]
         self.parameters["local"] = component_parameters["local"]
-        table_name, namespace = dtable_utils.get_table_info(config=self.parameters,
-                                                            create=False)
-        job_id = self.taskid.split("_")[0]
+        name, namespace = self.parameters.get("name"), self.parameters.get("namespace")
         with open(os.path.abspath(self.parameters["output_path"]), "w") as fout:
-            with storage.Session.build(session_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id),
-                                       name=table_name,
-                                       namespace=namespace) as session:
-                data_table = session.get_table(namespace=namespace, name=table_name)
+            with storage.Session.build(session_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, True),
+                                       name=name,
+                                       namespace=namespace) as storage_session:
+                data_table = storage_session.get_table(namespace=namespace, name=name)
                 count = data_table.count()
                 LOGGER.info('===== begin to export data =====')
                 lines = 0

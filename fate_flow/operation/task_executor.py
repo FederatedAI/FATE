@@ -17,9 +17,9 @@ import argparse
 import importlib
 import os
 import traceback
-from arch.api.utils import file_utils, log_utils
+from fate_arch.common import file_utils, log
 from fate_arch.common.base_utils import current_timestamp, get_lan_ip, timestamp_to_date
-from arch.api.utils.log_utils import schedule_logger
+from fate_arch.common.log import schedule_logger
 from fate_arch import session
 from fate_arch.common import Backend
 from fate_flow.entity.constant import TaskStatus, ProcessRole
@@ -107,7 +107,7 @@ class TaskExecutor(object):
         try:
             job_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, str(party_id))
             task_log_dir = os.path.join(job_log_dir, component_name)
-            log_utils.LoggerFactory.set_directory(directory=task_log_dir, parent_log_dir=job_log_dir,
+            log.LoggerFactory.set_directory(directory=task_log_dir, parent_log_dir=job_log_dir,
                                                   append_to_parent_log=True, force=True)
 
             tracker = Tracker(job_id=job_id, role=role, party_id=party_id, component_name=component_name,

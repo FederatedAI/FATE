@@ -16,11 +16,11 @@
 
 import operator
 from fate_arch.common.base_utils import current_timestamp, json_loads
-from arch.api.utils import core_utils
+from fate_arch.common import base_utils
 from fate_flow.db.db_models import DB, Job, TaskSet, Task
 from fate_flow.entity.constant import StatusSet, JobStatus, TaskSetStatus, TaskStatus, EndStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
-from arch.api.utils.log_utils import schedule_logger, sql_logger
+from fate_arch.common.log import schedule_logger, sql_logger
 import peewee
 
 
@@ -263,5 +263,5 @@ class JobSaver(object):
         job = Job()
         job.f_progress = float(success_count) / component_count * 100
         job.f_update_time = current_timestamp()
-        job.f_current_tasks = core_utils.json_dumps([current_task_id])
+        job.f_current_tasks = base_utils.json_dumps([current_task_id])
         return job

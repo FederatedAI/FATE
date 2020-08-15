@@ -52,7 +52,7 @@ from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryServicer
 from fate_flow.utils.service_utils import ServiceUtils
-from arch.api.utils import core_utils
+from fate_arch.common import base_utils
 
 '''
 Initialize the manager
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.standalone_node:
         RuntimeConfig.init_config(WORK_MODE=WorkMode.STANDALONE)
-        RuntimeConfig.init_config(JOB_SERVER_HOST=core_utils.get_lan_ip(), HTTP_PORT=CLUSTER_STANDALONE_JOB_SERVER_PORT)
+        RuntimeConfig.init_config(JOB_SERVER_HOST=base_utils.get_lan_ip(), HTTP_PORT=CLUSTER_STANDALONE_JOB_SERVER_PORT)
     RuntimeConfig.init_env()
     RuntimeConfig.set_process_role(ProcessRole.SERVER)
     queue_manager.init_job_queue()

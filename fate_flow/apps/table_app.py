@@ -16,7 +16,6 @@
 from fate_arch import storage
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.settings import stat_logger
-from arch.api.utils.dtable_utils import get_table_info
 from flask import Flask, request
 
 manager = Flask(__name__)
@@ -53,7 +52,7 @@ def dtable(table_func):
         table_key_count = 0
         table_partition = None
         table_schema = None
-        table_name, namespace = get_table_info(config=config, create=config.get('create', False))
+        table_name, namespace = config.get("name") or config.get("table_name"), config.get("namespace")
         if config.get('create', False):
             pass
         else:

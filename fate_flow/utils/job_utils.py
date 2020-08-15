@@ -30,7 +30,7 @@ from fate_flow.entity.constant import JobStatus
 
 from fate_arch.common import file_utils
 from fate_arch.common.base_utils import json_loads, json_dumps, fate_uuid, current_timestamp
-from arch.api.utils.log_utils import schedule_logger
+from fate_arch.common.log import schedule_logger
 from fate_flow.scheduler.dsl_parser import DSLParser, DSLParserV2
 from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.entity.runtime_config import RuntimeConfig

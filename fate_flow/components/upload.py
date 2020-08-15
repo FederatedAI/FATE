@@ -17,13 +17,13 @@ import os
 import shutil
 import time
 
-from arch.api.utils import log_utils, file_utils, dtable_utils
+from fate_arch.common import log, file_utils
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.utils.job_utils import generate_session_id
 from fate_flow.api.client.controller.remote_client import ControllerRemoteClient
 from fate_arch import storage
 
-LOGGER = log_utils.getLogger()
+LOGGER = log.getLogger()
 
 
 class Upload(object):
@@ -47,7 +47,7 @@ class Upload(object):
             raise Exception("%s is not exist, please check the configure" % (self.parameters["file"]))
         if not os.path.getsize(self.parameters["file"]):
             raise Exception("%s is an empty file" % (self.parameters["file"]))
-        name, namespace = dtable_utils.get_table_info(config=self.parameters, create=True)
+        name, namespace = self.parameters.get("name"), self.parameters.get("namespace")
         _namespace, _table_name = self.generate_table_name(self.parameters["file"])
         if namespace is None:
             namespace = _namespace

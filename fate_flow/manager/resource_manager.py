@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from arch.api.utils.log_utils import schedule_logger
+from fate_arch.common.log import schedule_logger
 from fate_flow.operation.job_saver import JobSaver
 from fate_flow.utils import job_utils
 

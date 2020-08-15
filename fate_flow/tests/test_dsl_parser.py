@@ -15,7 +15,7 @@
 #
 import os
 from fate_flow.scheduler.dsl_parser import DSLParser
-from arch.api.utils import file_utils
+from fate_arch.common import file_utils
 
 dsl_parser = DSLParser()
 default_runtime_conf_path = os.path.join(file_utils.get_project_base_directory(),

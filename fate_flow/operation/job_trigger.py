@@ -19,7 +19,7 @@ from concurrent.futures import as_completed
 
 from fate_flow.entity.constant import WorkMode
 
-from arch.api.utils.log_utils import schedule_logger
+from fate_arch.common.log import schedule_logger
 from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.manager.queue_manager import BaseQueue

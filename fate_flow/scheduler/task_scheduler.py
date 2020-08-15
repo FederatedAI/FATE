@@ -21,7 +21,7 @@ from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.operation.job_saver import JobSaver
-from arch.api.utils.log_utils import schedule_logger
+from fate_arch.common.log import schedule_logger
 from fate_flow.controller.task_controller import TaskController
 from fate_flow.manager.resource_manager import ResourceManager
 

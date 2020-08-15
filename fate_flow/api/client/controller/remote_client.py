@@ -13,12 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils import log_utils
+from fate_arch.common import log
 from fate_flow.api.client.controller import api_client
 from fate_flow.settings import API_VERSION
 from fate_flow.utils import api_utils
 
-LOGGER = log_utils.getLogger()
+LOGGER = log.getLogger()
 
 
 class ControllerRemoteClient(api_client.ControllerClient):
