@@ -38,7 +38,7 @@ class HomoTransferBase(BaseTransferVariables):
 
     @staticmethod
     def get_parties(roles):
-        return session.default().parties.roles_to_parties(roles=roles)
+        return session.get_latest_opened().parties.roles_to_parties(roles=roles)
 
     @property
     def client_parties(self):
