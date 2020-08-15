@@ -81,7 +81,7 @@ class BaseLogisticRegression(BaseLinearModel):
         if self.need_one_vs_rest:
             # one_vs_rest_class = list(map(str, self.one_vs_rest_obj.classes))
             one_vs_rest_result = self.one_vs_rest_obj.save(lr_model_param_pb2.SingleModel)
-            single_result = {'header': header, 'need_one_vs_rest': True}
+            single_result = {'header': header, 'need_one_vs_rest': True, "best_iteration": -1}
         else:
             one_vs_rest_result = None
             single_result = self.get_single_model_param()
