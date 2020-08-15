@@ -169,7 +169,7 @@ class TaskExecutor(object):
             for index in range(0, len(output_data)):
                 data_name = task_output_dsl.get('data')[index] if task_output_dsl.get('data') else '{}'.format(index)
                 persistent_table_namespace, persistent_table_name = tracker.save_output_data(
-                    data_table=output_data[index],
+                    computing_table=output_data[index],
                     output_storage_engine=output_storage_engine if output_storage_engine else None)
                 if persistent_table_namespace and persistent_table_name:
                     tracker.log_output_data_info(data_name=data_name,
@@ -250,8 +250,10 @@ class TaskExecutor(object):
                             raise RuntimeError(f"can not found upstream output table by component {search_component_name} data {search_data_name}")
 
                         with storage.Session.build(session_id=job_utils.generate_session_id(task_id, task_version, role, party_id, True),
-                                                   name=storage_table_meta.name, namespace=storage_table_meta.namespace) as storage_session:
-                            storage_table = storage_session.get_table(name=storage_table_meta.name, namespace=storage_table_meta.namespace)
+                                                   name=storage_table_meta.get_name(), namespace=storage_table_meta.get_namespace()) as storage_session:
+                            storage_table = storage_session.get_table(name=storage_table_meta.get_name(), namespace=storage_table_meta.get_namespace())
+                            print(f"upstream {search_component_name} storage table {storage_table.get_name()} {storage_table.get_namespace()}")
+                            print(storage_table_meta.get_schema().get("header"))
                             partitions = task_parameters['input_data_partition'] if task_parameters.get(
                                 'input_data_partition', 0) > 0 else storage_table.get_partitions()
                             output_storage_engine = storage_table.get_engine()

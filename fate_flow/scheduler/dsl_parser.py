@@ -434,20 +434,25 @@ class BaseDSLParser(object):
                                                       "type": data_type,
                                                       "up_output_info": ["data", data_pos]})
 
-            if "model" in inputs:
-                model_input = inputs["model"]
-                for model_dep in model_input:
-                    up_component_name = model_dep.split(".", -1)[0]
-                    model_name = model_dep.split(".", -1)[1]
-                    up_pos = self.component_name_index.get(up_component_name)
-                    up_component = self.components[up_pos]
-                    if up_component.get_output().get("model"):
-                        model_pos = up_component.get_output().get("model").index(model_name)
-                    else:
-                        model_pos = 0
-                    dependence_dict[name].append({"component_name": up_component_name,
-                                                  "type": "model",
-                                                  "up_output_info": ["model", model_pos]})
+            model_keyword = ["model", "isometric_model"]
+            for model_key in model_keyword:
+                if model_key in inputs:
+                    model_input = inputs[model_key]
+                    for model_dep in model_input:
+                        up_component_name = model_dep.split(".", -1)[0]
+                        if up_component_name == "pipeline":
+                            continue
+
+                        model_name = model_dep.split(".", -1)[1]
+                        up_pos = self.component_name_index.get(up_component_name)
+                        up_component = self.components[up_pos]
+                        if up_component.get_output().get("model"):
+                            model_pos = up_component.get_output().get("model").index(model_name)
+                        else:
+                            model_pos = 0
+                        dependence_dict[name].append({"component_name": up_component_name,
+                                                      "type": "model",
+                                                      "up_output_info": ["model", model_pos]})
 
             if not dependence_dict[name]:
                 del dependence_dict[name]
@@ -564,7 +569,6 @@ class BaseDSLParser(object):
             module = self.predict_components[i].get_module()
 
             if module == "Reader":
-                """
                 if version != 2:
                     raise ValueError("Reader component can only be set in dsl_version 2")
                 if self.get_need_deploy_parameter(name=name,
@@ -573,7 +577,6 @@ class BaseDSLParser(object):
                     raise ValueError(
                         "Reader component should not be include in predict process, it should be just as an input placeholder")
 
-                """
                 continue
 
             if self.get_need_deploy_parameter(name=name,

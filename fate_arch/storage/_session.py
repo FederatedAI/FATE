@@ -56,7 +56,7 @@ class Session(object):
             raise RuntimeError(f"can not found table name: {src_name} namespace: {src_namespace}")
         dest_table_address = None
         dest_table_engine = None
-        if src_table_meta.engine not in Relationship.CompToStore.get(computing_engine, []):
+        if src_table_meta.get_engine() not in Relationship.CompToStore.get(computing_engine, []):
             if computing_engine == ComputingEngine.STANDALONE:
                 pass
             elif computing_engine == ComputingEngine.EGGROLL:
@@ -114,12 +114,12 @@ class StorageSessionBase(StorageSessionABC):
     def get_table(self, name, namespace):
         meta = StorageTableMeta.build(name=name, namespace=namespace)
         if meta:
-            table = self.table(name=meta.name,
-                               namespace=meta.namespace,
-                               address=meta.address,
-                               partitions=meta.partitions,
-                               storage_type=meta.type,
-                               options=meta.options)
+            table = self.table(name=meta.get_name(),
+                               namespace=meta.get_namespace(),
+                               address=meta.get_address(),
+                               partitions=meta.get_partitions(),
+                               storage_type=meta.get_type(),
+                               options=meta.get_options())
             table.set_meta(meta)
             return table
         else:

@@ -41,6 +41,51 @@ class StorageTableMetaABC(metaclass=abc.ABCMeta):
     def destroy_metas(self):
         ...
 
+    @abc.abstractmethod
+    def get_name(self):
+        ...
+        ...
+
+    @abc.abstractmethod
+    def get_namespace(self):
+        ...
+
+    @abc.abstractmethod
+    def get_address(self):
+        ...
+
+    @abc.abstractmethod
+    def get_engine(self):
+        ...
+
+    @abc.abstractmethod
+    def get_type(self):
+        ...
+
+    @abc.abstractmethod
+    def get_options(self):
+        ...
+
+    @abc.abstractmethod
+    def get_partitions(self):
+        ...
+
+    @abc.abstractmethod
+    def get_schema(self):
+        ...
+
+    @abc.abstractmethod
+    def get_count(self):
+        ...
+
+    @abc.abstractmethod
+    def get_part_of_data(self):
+        ...
+
+    @abc.abstractmethod
+    def get_description(self):
+        ...
+
 
 class StorageTableABC(metaclass=abc.ABCMeta):
     """
@@ -48,31 +93,31 @@ class StorageTableABC(metaclass=abc.ABCMeta):
     """
     @abc.abstractmethod
     def get_name(self):
-        pass
+        ...
 
     @abc.abstractmethod
     def get_namespace(self):
-        pass
+        ...
 
     @abc.abstractmethod
     def get_address(self):
-        pass
+        ...
 
     @abc.abstractmethod
     def get_engine(self):
-        pass
+        ...
 
     @abc.abstractmethod
     def get_type(self):
-        pass
+        ...
 
     @abc.abstractmethod
     def get_options(self):
-        pass
+        ...
 
     @abc.abstractmethod
     def get_partitions(self):
-        pass
+        ...
 
     @abc.abstractmethod
     def set_meta(self, meta: StorageTableMetaABC):
@@ -96,7 +141,7 @@ class StorageTableABC(metaclass=abc.ABCMeta):
         -----
         Each key must be less than 512 bytes, value must be less than 32 MB(implementation depends).
         """
-        pass
+        ...
 
     @abc.abstractmethod
     def collect(self, **kwargs) -> list:
@@ -107,7 +152,7 @@ class StorageTableABC(metaclass=abc.ABCMeta):
         -------
         Iterator
         """
-        pass
+        ...
 
     @abc.abstractmethod
     def count(self):
@@ -119,7 +164,7 @@ class StorageTableABC(metaclass=abc.ABCMeta):
         int
           Number of elements in this Table.
         """
-        pass
+        ...
 
     @abc.abstractmethod
     def destroy(self):
@@ -129,22 +174,22 @@ class StorageTableABC(metaclass=abc.ABCMeta):
 class StorageSessionABC(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def create_table(self, address, name, namespace, partitions, storage_type=None, options=None, **kwargs) -> StorageTableABC:
-        pass
+        ...
 
     @abc.abstractmethod
     def get_table(self, name, namespace) -> StorageTableABC:
-        pass
+        ...
 
     @abc.abstractmethod
     def get_storage_info(self, name, namespace):
-        pass
+        ...
 
     @abc.abstractmethod
     def stop(self):
-        pass
+        ...
 
     @abc.abstractmethod
     def kill(self):
-        pass
+        ...
 
 

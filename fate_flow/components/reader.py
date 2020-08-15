@@ -16,15 +16,14 @@
 #  limitations under the License.
 #
 import uuid
+import numpy as np
 
-from fate_flow.manager.table_manager.table_convert import convert
 from fate_flow.entity.metric import MetricMeta
-
-from arch.api.utils import log_utils
+from fate_arch.common import log
 from fate_arch import storage
 from fate_flow.utils.job_utils import generate_session_id
 
-LOGGER = log_utils.getLogger()
+LOGGER = log.getLogger()
 
 
 class Reader(object):
@@ -52,18 +51,11 @@ class Reader(object):
         else:
             dest_table_meta = src_table_meta
         self.tracker.log_output_data_info(data_name=component_parameters.get('output_data_name')[0] if component_parameters.get('output_data_name') else table_key,
-                                          table_namespace=persistent_table_namespace,
-                                          table_name=persistent_table_name)
-        data_info = {"count": count,
-                     "partitions": partitions,
-                     "input_table_storage_engine": data_table.get_storage_engine(),
-                     "output_table_storage_engine": table.get_storage_engine() if table else
-                     data_table.get_storage_engine()}
-        # 冲突
-        headers_str = data_table.get_meta(_type=StorageTableMetaType.SCHEMA).get('header')
+                                          table_namespace=dest_table_meta.get_namespace(),
+                                          table_name=dest_table_meta.get_name())
+        headers_str = dest_table_meta.get_schema().get('header')
         data_list = [headers_str.split(',')]
-        party_of_data = data_table.get_meta(_type=StorageTableMetaType.PART_OF_DATA)
-        for data in party_of_data:
+        for data in dest_table_meta.get_part_of_data():
             data_list.append(data[1].split(','))
         data = np.array(data_list)
         Tdata = data.transpose()
@@ -73,9 +65,9 @@ class Reader(object):
         data_info = {
             "table_name": self.parameters[table_key]['name'],
             "table_info": table_info,
-            "partitions": data_table.get_partitions(),
-            "storage_engine": data_table.get_storage_engine(),
-            "count": count
+            "partitions": dest_table_meta.get_partitions(),
+            "storage_engine": dest_table_meta.get_engine(),
+            "count": dest_table_meta.get_count()
         }
 
         self.tracker.set_metric_meta(metric_namespace="reader_namespace",

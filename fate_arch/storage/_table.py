@@ -168,6 +168,8 @@ class StorageTableMeta(StorageTableMetaABC):
         with DB.connection_context():
             update_filters = []
             primary_keys = StorageTableMetaModel._meta.primary_key.field_names
+            for p_k in primary_keys:
+                update_filters.append(operator.attrgetter(p_k)(StorageTableMetaModel) == meta_info[p_k.lstrip("f_")])
             table_meta = StorageTableMetaModel()
             update_fields = {}
             for k, v in meta_info.items():
@@ -201,3 +203,36 @@ class StorageTableMeta(StorageTableMetaABC):
     @classmethod
     def create_address(cls, storage_engine, address_dict):
         return Relationship.EngineToAddress.get(storage_engine)(**address_dict)
+
+    def get_name(self):
+        return self.name
+
+    def get_namespace(self):
+        return self.namespace
+
+    def get_address(self):
+        return self.address
+
+    def get_engine(self):
+        return self.engine
+
+    def get_type(self):
+        return self.type
+
+    def get_options(self):
+        return self.options
+
+    def get_partitions(self):
+        return self.partitions
+
+    def get_schema(self):
+        return self.schema
+
+    def get_count(self):
+        return self.count
+
+    def get_part_of_data(self):
+        return self.part_of_data
+
+    def get_description(self):
+        return self.description

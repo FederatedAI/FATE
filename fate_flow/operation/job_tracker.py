@@ -148,29 +148,48 @@ class Tracker(object):
             else:
                 return ""
 
-    def save_output_data(self, data_table, output_storage_engine=None):
-        if data_table:
+    def save_output_data(self, computing_table, output_storage_engine=None):
+        if computing_table:
             persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(
                 self.task_id), uuid.uuid1().hex
             schedule_logger(self.job_id).info(
                 'persisting the component output temporary table to {} {}'.format(persistent_table_namespace,
                                                                                   persistent_table_name))
-            partitions = data_table.partitions
+            partitions = computing_table.partitions
             schedule_logger(self.job_id).info('output data table partitions is {}'.format(partitions))
             address = storage.StorageTableMeta.create_address(storage_engine=output_storage_engine, address_dict={"name": persistent_table_name, "namespace": persistent_table_namespace, "storage_type": storage.EggRollStorageType.ROLLPAIR_LMDB})
             schema = {}
             # persistent table
-            data_table.save(address, schema=schema, partitions=partitions)
+            computing_table.save(address, schema=schema, partitions=partitions)
             part_of_data = []
-            count = 100
-            for k, v in data_table.collect():
+            part_of_limit = 100
+            for k, v in computing_table.collect():
                 part_of_data.append((k, v))
-                count -= 1
-                if count == 0:
+                part_of_limit -= 1
+                if part_of_limit == 0:
                     break
+            print("count")
+            table_count = computing_table.count()
+            print(f"save meta count {table_count}")
+            meta_info = {}
+            meta_info["name"] = persistent_table_name
+            meta_info["namespace"] = persistent_table_namespace
+            meta_info["address"] = address
+            meta_info["partitions"] = computing_table.partitions
+            meta_info["engine"] = output_storage_engine
+            meta_info["type"] = storage.EggRollStorageType.ROLLPAIR_LMDB
+            meta_info["options"] = {}
+            meta_info["count"] = table_count
+            storage.StorageTableMeta.create_metas(**meta_info)
+            print(self.component_name)
+            print(schema)
+            print(persistent_table_name)
+            print(persistent_table_namespace)
+            """
             with storage.Session.build(storage_engine=output_storage_engine) as storage_session:
                 table = storage_session.create_table(address=address, name=persistent_table_name, namespace=persistent_table_namespace, partitions=partitions)
                 table.get_meta().update_metas(schema=schema, part_of_data=part_of_data, count=data_table.count(), partitions=partitions)
+            """
             return persistent_table_namespace, persistent_table_name
         else:
             schedule_logger(self.job_id).info('task id {} output data table is none'.format(self.task_id))

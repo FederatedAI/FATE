@@ -121,10 +121,10 @@ def get_upload_info(jobs_run_conf):
                 "table_name": table_name,
                 "namespace": namespace,
                 "partition": partition,
-                'upload_count': table_meta.count
+                'upload_count': table_meta.get_count()
             }
             info["notes"] = job_run_conf["notes"]
-            info["schema"] = table_meta.schema
+            info["schema"] = table_meta.get_schema()
             data.append({job_id: info})
     return data
 

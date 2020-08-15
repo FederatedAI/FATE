@@ -64,15 +64,15 @@ class Upload(object):
         if partitions <= 0 or partitions >= self.MAX_PARTITIONS:
             raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITIONS))
         session_id = generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, random_end=True)
-        with storage.Session.build(session_id=session_id, storage_engine=self.parameters["storage_engine"], options=self.parameters.get("options")) as session:
+        with storage.Session.build(session_id=session_id, storage_engine=self.parameters["storage_engine"], options=self.parameters.get("options")) as storage_session:
             from fate_arch.storage import EggRollStorageType
             address = storage.StorageTableMeta.create_address(storage_engine=self.parameters["storage_engine"], address_dict={"name": name, "namespace": namespace, "storage_type": EggRollStorageType.ROLLPAIR_LMDB})
             self.parameters["partitions"] = partitions
             self.parameters["name"] = name
             if self.parameters.get("destroy", False):
                 LOGGER.info(f"destroy table {name} {namespace}")
-                session.get_table(name=name, namespace=namespace).destroy()
-            self.table = session.create_table(address=address, **self.parameters)
+                storage_session.get_table(name=name, namespace=namespace).destroy()
+            self.table = storage_session.create_table(address=address, **self.parameters)
             data_table_count = self.save_data_table(job_id, name, namespace, head)
         LOGGER.info("------------load data finish!-----------------")
         # rm tmp file

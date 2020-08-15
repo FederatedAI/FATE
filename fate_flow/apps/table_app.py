@@ -50,24 +50,19 @@ def table_delete():
 def dtable(table_func):
     config = request.json
     if table_func == 'table_info':
+        table_key_count = 0
+        table_partition = None
+        table_schema = None
         table_name, namespace = get_table_info(config=config, create=config.get('create', False))
         if config.get('create', False):
-            table_key_count = 0
-            table_partition = None
+            pass
         else:
-            table_key_count = 0
-            table_partition = None
-            session = storage.Session.build()  # do not create session
-            if session:
-                table = session.get_table(name=table_name, namespace=namespace)
-                if table:
-                    table_key_count = table.count()
-                    table_partition = table.get_partitions()
-                    try:
-                        table.close()
-                    except Exception as e:
-                        stat_logger.exception(e)
-        return get_json_result(data={'table_name': table_name, 'namespace': namespace, 'count': table_key_count, 'partition': table_partition})
+            table_meta = storage.StorageTableMeta.build(name=table_name, namespace=namespace)
+            if table_meta:
+                table_key_count = table_meta.get_count()
+                table_partition = table_meta.get_partitions()
+                table_schema = table_meta.get_schema()
+        return get_json_result(data={'table_name': table_name, 'namespace': namespace, 'count': table_key_count, 'partition': table_partition, "schema": table_schema})
     else:
         return get_json_result()
 
