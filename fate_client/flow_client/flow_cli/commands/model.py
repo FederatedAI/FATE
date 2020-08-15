@@ -17,10 +17,9 @@ import os
 import re
 import click
 import requests
-from fate_flow.client.flow_cli.utils import cli_args
+from flow_client.flow_cli.utils import cli_args
 from contextlib import closing
-from fate_flow.client.flow_cli.utils.cli_utils import (preprocess, access_server,
-                                                       prettify, get_project_base_directory)
+from flow_client.flow_cli.utils.cli_utils import preprocess, access_server, prettify, get_project_base_directory
 
 
 @click.group(short_help="Model Operations")

@@ -16,8 +16,8 @@
 import click
 import os
 import sys
-from fate_flow.client.flow_cli.utils import cli_args
-from fate_flow.client.flow_cli.utils.cli_utils import preprocess, access_server, check_abs_path, prettify
+from flow_client.flow_cli.utils import cli_args
+from flow_client.flow_cli.utils.cli_utils import preprocess, access_server, check_abs_path, prettify
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
 

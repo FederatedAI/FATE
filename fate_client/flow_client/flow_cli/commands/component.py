@@ -19,9 +19,9 @@ from datetime import datetime
 
 import click
 from contextlib import closing
-from fate_flow.client.flow_cli.utils import cli_args
-from fate_flow.client.flow_cli.utils.cli_utils import (prettify, preprocess, download_from_request,
-                                                       access_server, check_abs_path)
+from flow_client.flow_cli.utils import cli_args
+from flow_client.flow_cli.utils.cli_utils import (prettify, preprocess, download_from_request,
+                                                  access_server, check_abs_path)
 
 
 @click.group(short_help="Component Operations")

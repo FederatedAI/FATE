@@ -14,58 +14,57 @@
 #  limitations under the License.
 #
 import click
-import requests
-from fate_flow.client.flow_cli.utils import cli_args
-from fate_flow.client.flow_cli.utils.cli_utils import preprocess, access_server, prettify
+from flow_client.flow_cli.utils import cli_args
+from flow_client.flow_cli.utils.cli_utils import preprocess, access_server
 
 
-@click.group(short_help="Task Operations")
+@click.group(short_help="Table Operations")
 @click.pass_context
-def task(ctx):
+def table(ctx):
     """
     \b
-    Provides numbers of task operational commands, including list and query.
+    Provides numbers of table operational commands, including info and delete.
     For more details, please check out the help text.
     """
     pass
 
 
-@task.command("list", short_help="List Task Command")
-@cli_args.LIMIT
+@table.command("info", short_help="Query Table Command")
+@cli_args.NAMESPACE_REQUIRED
+@cli_args.TABLE_NAME_REQUIRED
 @click.pass_context
-def list(ctx, **kwargs):
+def info(ctx, **kwargs):
     """
     \b
     - DESCRIPTION:
-        List Task description
+        Query Table Information.
 
     \b
     - USAGE:
-        flow task list
-        flow task list -l 25
+        flow table info -n $NAMESPACE -t $TABLE_NAME
     """
     config_data, dsl_data = preprocess(**kwargs)
-    access_server('post', ctx, 'job/list/task', config_data)
+    access_server('post', ctx, 'table/table_info', config_data)
 
 
-@task.command("query", short_help="Query Task Command")
+@table.command("delete", short_help="Delete Table Command")
+@cli_args.NAMESPACE
+@cli_args.TABLE_NAME
 @cli_args.JOBID
-@cli_args.PARTYID
 @cli_args.ROLE
+@cli_args.PARTYID
 @cli_args.COMPONENT_NAME
-@cli_args.STATUS
 @click.pass_context
-def query(ctx, **kwargs):
+def delete(ctx, **kwargs):
     """
     \b
     - DESCRIPTION:
-        Query Task Command.
+        Delete A Specified Table.
 
     \b
     - USAGE:
-        flow task query -j $JOB_ID -p 9999 -r guest
-        flow task query -cpn hetero_feature_binning_0 -s success
+        flow table delete -n $NAMESPACE -t $TABLE_NAME
+        flow table delete -j $JOB_ID -r guest -p 9999
     """
     config_data, dsl_data = preprocess(**kwargs)
-    response = access_server('post', ctx, 'job/task/query', config_data, False)
-    prettify(response.json() if isinstance(response, requests.models.Response) else response)
+    access_server('post', ctx, 'table/delete', config_data)

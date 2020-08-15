@@ -15,8 +15,8 @@
 #
 import click
 
-from fate_flow.client.flow_cli.utils import cli_args
-from fate_flow.client.flow_cli.utils.cli_utils import preprocess, access_server
+from flow_client.flow_cli.utils import cli_args
+from flow_client.flow_cli.utils.cli_utils import preprocess, access_server
 
 
 @click.group(short_help="Tag Operations")

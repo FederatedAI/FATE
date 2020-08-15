@@ -17,9 +17,8 @@ import os
 import json
 import click
 from ruamel import yaml
-from fate_flow.client.flow_cli.utils.cli_utils import prettify, get_lan_ip
-from fate_flow.client.flow_cli.commands import (component, data, job, model,
-                                                queue, task, table, tag)
+from flow_client.flow_cli.utils.cli_utils import prettify, get_lan_ip
+from flow_client.flow_cli.commands import (component, data, job, model, queue, task, table, tag)
 
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
