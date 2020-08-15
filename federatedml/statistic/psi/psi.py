@@ -301,7 +301,11 @@ class PSI(ModelBase):
         self.interval_perc1 = self.count_dict_to_percentage(copy.deepcopy(count1), expect_table.count())
         self.interval_perc2 = self.count_dict_to_percentage(copy.deepcopy(count2), actual_table.count())
 
+        self.set_summary(self.generate_summary())
         LOGGER.info('psi computation done')
+
+    def generate_summary(self):
+        return {'psi_scores': self.total_scores}
 
     def export_model(self):
 

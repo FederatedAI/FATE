@@ -251,6 +251,15 @@ class FTLGuest(FTL):
     def sigmoid(x):
         return 1. / (1. + np.exp(-x))
 
+    def generate_summary(self):
+
+        summary = {'loss_history': self.history_loss,
+                   "best_iteration": -1 if self.validation_strategy is None else self.validation_strategy.best_iteration}
+        if self.validation_strategy:
+            summary['validation_metrics'] = self.validation_strategy.summary()
+
+        return summary
+
     def fit(self, data_inst, validate_data):
 
         LOGGER.info('start to fit a ftl model, '
@@ -338,8 +347,8 @@ class FTLGuest(FTL):
                                       metric_type="LOSS",
                                       extra_metas={"Best": min(self.history_loss)}))
 
+        self.set_summary(self.generate_summary())
         LOGGER.debug('fitting ftl model done')
-
 
     def predict(self, data_inst):
 

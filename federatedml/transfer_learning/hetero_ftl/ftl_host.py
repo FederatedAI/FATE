@@ -197,6 +197,13 @@ class FTLHost(FTL):
 
             LOGGER.debug('fitting epoch {} done'.format(epoch_idx))
 
+        self.set_summary(self.generate_summary())
+
+    def generate_summary(self):
+
+        summary = {"best_iteration": -1 if self.validation_strategy is None else self.validation_strategy.best_iteration}
+        return summary
+
     @assert_io_num_rows_equal
     def predict(self, data_inst):
 
