@@ -57,6 +57,4 @@ def run_pipeline(config, guest_data, host_data, hetero_pearson):
 
     pipeline.compile()
     pipeline.fit(backend=config.backend, work_mode=config.work_mode)
-    print(pipeline.get_component("hetero_pearson_0").get_model_param())
-    print(pipeline.get_component("hetero_pearson_0").get_summary())
     return pipeline
