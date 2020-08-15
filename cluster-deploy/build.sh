@@ -44,11 +44,9 @@ fateboard_git_branch=`grep -A 3 '"fateboard"' .gitmodules | grep 'branch' | awk 
 echo "[INFO] Package fate start"
 mkdir -p ${package_dir}/python/
 cp fate.env requirements.txt RELEASE.md sitecustomize.py ${package_dir}/python/
-cp -r arch fate_arch compatible_hook conf examples federatedml fate_flow pipeline ${package_dir}/python/
 
-# debug
-rm -rf ${package_dir}/python/fate_arch/conf
-
+# pass copy conf
+cp -r arch fate_arch compatible_hook examples federatedml fate_flow pipeline ${package_dir}/python/
 cp -r bin  ${package_dir}/
 echo "[INFO] Package fate done"
 
