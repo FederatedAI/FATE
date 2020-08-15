@@ -17,4 +17,4 @@ import warnings
 
 from fate_arch.common.conf_utils import *
 
-warnings.warn('arch.api.log_utils argument deprecated, use fate_arch.common.log instead', DeprecationWarning)
+warnings.warn('arch.api.conf_utils argument deprecated, use fate_arch.common.conf_utils instead', DeprecationWarning)

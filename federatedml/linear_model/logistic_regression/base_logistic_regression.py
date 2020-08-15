@@ -136,6 +136,7 @@ class BaseLogisticRegression(BaseLinearModel):
     def one_vs_rest_fit(self, train_data=None, validate_data=None):
         LOGGER.debug("Class num larger than 2, need to do one_vs_rest")
         self.one_vs_rest_obj.fit(data_instances=train_data, validate_data=validate_data)
+        LOGGER.debug(f"Final summary: {self.summary()}")
 
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary", metrics=self.metrics)

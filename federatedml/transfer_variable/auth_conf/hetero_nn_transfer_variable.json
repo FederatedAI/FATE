@@ -13,8 +13,7 @@
         "guest"
       ],
       "dst": [
-        "host",
-        "arbiter"
+        "host"
       ]
     },
     "decrypted_guest_fowrad": {

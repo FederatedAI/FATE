@@ -40,8 +40,8 @@ class Party(object):
     """
 
     def __init__(self, role, party_id):
-        self.role = role
-        self.party_id = party_id
+        self.role = str(role)
+        self.party_id = str(party_id)
 
     def __hash__(self):
         return (self.role, self.party_id).__hash__()

@@ -50,6 +50,7 @@ class BaseHeteroFeatureBinning(ModelBase):
         self.transfer_variable = HeteroFeatureBinningTransferVariable()
         self.binning_obj: BaseBinning = None
         self.header = None
+        self.header_anonymous = None
         self.schema = None
         self.host_results = []
         self.transform_type = None
@@ -145,6 +146,7 @@ class BaseHeteroFeatureBinning(ModelBase):
             FeatureBinningParam(binning_result=binning_result_obj,
                                 host_results=host_results,
                                 header=self.header,
+                                header_anonymous=self.header_anonymous,
                                 model_name=consts.BINNING_MODEL)
 
         return result_obj
@@ -208,3 +210,4 @@ class BaseHeteroFeatureBinning(ModelBase):
         """
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
+        self.check_schema_content(data_instances.schema)

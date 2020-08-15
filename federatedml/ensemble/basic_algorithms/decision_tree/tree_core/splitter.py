@@ -27,7 +27,7 @@
 
 import warnings
 
-from fate_arch import session
+from arch.api import session
 from fate_arch.common import log
 from fate_arch.federation import segment_transfer_enabled
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.criterion import XgboostCriterion
@@ -49,7 +49,7 @@ class SplitInfo(object):
 
     def __str__(self):
         return '**fid {}, bid {}, sum_grad{}, sum_hess{}, gain{}**'.format(self.best_fid, self.best_bid, \
-                                                                           self.sum_grad, self.sum_hess, self.gain)
+                self.sum_grad, self.sum_hess, self.gain)
 
 
 class Splitter(object):
@@ -85,7 +85,7 @@ class Splitter(object):
         missing_bin = 0
         if use_missing:
             missing_bin = 1
-
+        
         # in default, missing value going to right
         missing_dir = 1
 
@@ -116,6 +116,7 @@ class Splitter(object):
                                                      [sum_grad_l, sum_hess_l], [sum_grad_r, sum_hess_r])
 
                     if gain > self.min_impurity_split and gain > best_gain:
+
                         best_gain = gain
                         best_fid = fid
                         best_bid = bid
@@ -154,8 +155,7 @@ class Splitter(object):
     def find_split(self, histograms, valid_features, partitions=1, sitename=consts.GUEST,
                    use_missing=False, zero_as_missing=False):
         LOGGER.info("splitter find split of raw data")
-        histogram_table = session.get_latest_opened().computing.parallelize(histograms,
-                                                                            include_key=False, partition=partitions)
+        histogram_table = session.parallelize(histograms, include_key=False, partition=partitions)
         splitinfo_table = histogram_table.mapValues(lambda sub_hist:
                                                     self.find_split_single_histogram_guest(sub_hist,
                                                                                            valid_features,

@@ -42,6 +42,20 @@
                 "model": ["model"]
             }
         },
+        "statistic_0": {
+            "module": "DataStatistics",
+            "input": {
+                "data": {
+                    "data": [
+                        "intersection_0.train_data"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train_data"],
+                "model": ["model"]
+            }
+        },
         "hetero_feature_selection_0": {
             "module": "HeteroFeatureSelection",
             "input": {
@@ -51,7 +65,8 @@
                     ]
                 },
                 "isometric_model": [
-                    "hetero_feature_binning_0.model"
+                    "hetero_feature_binning_0.model",
+                    "statistic_0.model"
                 ]
             },
             "output": {

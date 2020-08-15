@@ -53,6 +53,7 @@ class JobSaver(object):
         job_info['run_ip'] = RuntimeConfig.JOB_SERVER_HOST
         if EndStatus.contains(job_info.get("status")):
             job_info['tag'] = 'job_end'
+            job_info["end_time"] = current_timestamp()
         return cls.update_job_family_entity(Job, job_info)
 
     @classmethod

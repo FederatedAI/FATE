@@ -58,6 +58,7 @@ class SummaryStatistics(object):
 
         where i is the current count, and S_i is the current expectation of x
         """
+        rows = np.array(rows, dtype=float)
         if self.abnormal_list is None:
             self.count += 1
             self.sum += rows
@@ -462,6 +463,8 @@ class MultivariateStatisticalSummary(object):
         # result = {self.header[header_idx]: result_row[col_idx]
         #           for col_idx, header_idx in enumerate(self.cols_index)}
         result = {}
+
+        result_row = result_row.tolist()
         for col_idx, header_idx in enumerate(self.cols_index):
             result[self.header[header_idx]] = result_row[col_idx]
         return result

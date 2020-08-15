@@ -153,13 +153,18 @@ class Variable(object):
                 The default is -1, which means sent values to parties regardless their party id
             suffix: additional tag suffix, the default is tuple()
         """
+        party_info = get_latest_opened().parties
         if idx >= 0 and role is None:
             raise ValueError("role cannot be None if idx specified")
+
+        # get subset of dst roles in runtime conf
         if role is None:
-            role = self._dst
-        if isinstance(role, str):
-            role = [role]
-        parties = get_latest_opened().parties.roles_to_parties(role)
+            parties = party_info.roles_to_parties(self._dst, strict=False)
+        else:
+            if isinstance(role, str):
+                role = [role]
+            parties = party_info.roles_to_parties(role)
+
         if idx >= 0:
             parties = parties[idx]
         return self.remote_parties(obj=obj, parties=parties, suffix=suffix)
@@ -176,7 +181,7 @@ class Variable(object):
         Returns:
             object or list of object
         """
-        src_parties = get_latest_opened().parties.roles_to_parties(roles=self._src)
+        src_parties = get_latest_opened().parties.roles_to_parties(roles=self._src, strict=False)
         if isinstance(idx, list):
             rtn = self.get_parties(parties=[src_parties[i] for i in idx], suffix=suffix)
         elif isinstance(idx, int):

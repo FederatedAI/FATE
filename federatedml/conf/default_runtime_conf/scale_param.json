@@ -1,8 +1,6 @@
 {
   "method": "min_max_scale",
   "mode": "normal",
-  "area": "all",
-  "scale_column_idx": [],
   "feat_upper": null,
   "feat_lower": null,
   "need_run": true

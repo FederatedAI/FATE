@@ -14,20 +14,23 @@
 #  limitations under the License.
 #
 
+from federatedml.param.feature_binning_param import FeatureBinningParam
 from pipeline.component.component_base import Component
 from pipeline.interface.output import Output
-from federatedml.param.feature_binning_param import FeatureBinningParam
+from pipeline.utils.logger import LOGGER
 
 
 class HeteroFeatureBinning(Component, FeatureBinningParam):
     def __init__(self, **kwargs):
         Component.__init__(self, **kwargs)
 
-        print (self.name)
+        # print (self.name)
+        LOGGER.debug(f"{self.name} component created")
+
         new_kwargs = self.erase_component_base_param(**kwargs)
 
         FeatureBinningParam.__init__(self, **new_kwargs)
-        self.output = Output(self.name, has_model=False)
+        self.output = Output(self.name)
         self._module_name = "HeteroFeatureBinning"
 
 

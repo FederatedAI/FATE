@@ -35,7 +35,6 @@ class Table(CTableABC):
     def __init__(self, rdd: RDD):
         self._rdd = rdd
 
-    @staticmethod
     def __getstate__(self):
         pass
 

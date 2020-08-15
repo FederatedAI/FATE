@@ -195,6 +195,11 @@ class BaseLinearModel(ModelBase):
                    "intercept": intercept_,
                    "is_converged": self.is_converged,
                    "best_iteration": best_iteration}
+
+        if self.validation_strategy:
+            validation_summary = self.validation_strategy.summary()
+            if validation_summary:
+                summary["validation_metrics"] = validation_summary
         return summary
 
     def check_abnormal_values(self, data_instances):

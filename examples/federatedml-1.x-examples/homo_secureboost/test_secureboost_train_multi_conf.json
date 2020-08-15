@@ -100,7 +100,6 @@
                 "objective": "cross_entropy"
             },
             "predict_param": {
-                "with_proba": true,
                 "threshold": 0.5
             },
             "cv_param": {
