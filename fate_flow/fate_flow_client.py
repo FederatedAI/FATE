@@ -27,7 +27,6 @@ import requests
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
 from fate_arch.common import file_utils
-from fate_arch.common.base_utils import get_lan_ip
 from fate_flow.settings import SERVERS, ROLE, API_VERSION
 from fate_flow.utils import detect_utils
 
@@ -52,8 +51,6 @@ def prettify(response, verbose=True):
 
 def call_fun(func, config_data, dsl_path, config_path):
     ip = server_conf.get(SERVERS).get(ROLE).get('host')
-    if ip in ['localhost', '127.0.0.1']:
-        ip = get_lan_ip()
     http_port = server_conf.get(SERVERS).get(ROLE).get('http.port')
     server_url = "http://{}:{}/{}".format(ip, http_port, API_VERSION)
 

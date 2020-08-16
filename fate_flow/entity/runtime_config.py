@@ -16,7 +16,6 @@
 import os
 import dotenv
 
-from fate_arch.common.base_utils import get_lan_ip
 from fate_arch.common.file_utils import get_project_base_directory
 from fate_flow.entity.constant import ProcessRole
 
@@ -29,6 +28,7 @@ class RuntimeConfig(object):
     USE_LOCAL_DATABASE = False
     HTTP_PORT = None
     JOB_SERVER_HOST = None
+    JOB_SERVER_VIP = None
     IS_SERVER = False
     PROCESS_ROLE = None
     ENV = dict()

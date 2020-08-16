@@ -43,7 +43,7 @@ class Reader(object):
                                                                                         dest_namespace=persistent_table_namespace,
                                                                                         force=True)
         if dest_table_address:
-            with storage.Session.build(session_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage"),
+            with storage.Session.build(session_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),
                                        storage_engine=dest_table_engine) as dest_session:
                 dest_table = dest_session.create_table(address=dest_table_address, name=persistent_table_name, namespace=persistent_table_namespace, partitions=src_table_meta.partitions)
                 dest_table.count()

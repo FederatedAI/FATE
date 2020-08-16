@@ -96,9 +96,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--standalone_node', default=False, help="if standalone node mode or not ", action='store_true')
     args = parser.parse_args()
-    if args.standalone_node:
-        RuntimeConfig.init_config(WORK_MODE=WorkMode.STANDALONE)
-        RuntimeConfig.init_config(JOB_SERVER_HOST=base_utils.get_lan_ip(), HTTP_PORT=CLUSTER_STANDALONE_JOB_SERVER_PORT)
     RuntimeConfig.init_env()
     RuntimeConfig.set_process_role(ProcessRole.SERVER)
     queue_manager.init_job_queue()

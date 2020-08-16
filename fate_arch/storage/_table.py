@@ -190,15 +190,12 @@ class StorageTableMeta(StorageTableMetaABC):
             return operate.execute() > 0
 
     def destroy_metas(self):
-        try:
-            with DB.connection_context():
-                StorageTableMetaModel \
-                    .delete() \
-                    .where(StorageTableMetaModel.f_name == self.name,
-                           StorageTableMetaModel.f_namespace == self.namespace) \
-                    .execute()
-        except Exception as e:
-            raise e
+        with DB.connection_context():
+            StorageTableMetaModel \
+                .delete() \
+                .where(StorageTableMetaModel.f_name == self.name,
+                       StorageTableMetaModel.f_namespace == self.namespace) \
+                .execute()
 
     @classmethod
     def create_address(cls, storage_engine, address_dict):

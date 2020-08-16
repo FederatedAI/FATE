@@ -15,14 +15,15 @@
 #
 
 
+import peewee
 from fate_arch.abc import StorageSessionABC, StorageTableABC
 from fate_arch.common import compatibility_utils
-from fate_arch.common.base_utils import fate_uuid
+from fate_arch.common.base_utils import fate_uuid, current_timestamp
 from fate_arch.common.log import getLogger
 from fate_arch.computing import ComputingEngine
 from fate_arch.storage._table import StorageTableMeta
 from fate_arch.storage._types import StorageEngine, Relationship
-from fate_arch.storage.metastore.db_models import DB, StorageTableMetaModel
+from fate_arch.storage.metastore.db_models import DB, StorageTableMetaModel, SessionRecord
 
 MAX_NUM = 10000
 
@@ -153,11 +154,28 @@ class StorageSessionBase(StorageSessionABC):
         return engine, address, partitions
 
     def __enter__(self):
+        with DB.connection_context():
+            session_record = SessionRecord()
+            session_record.f_session_id = self._session_id
+            session_record.f_engine_type = "storage"
+            # TODO: engine address
+            session_record.f_engine_address = {}
+            session_record.f_create_time = current_timestamp()
+            rows = session_record.save(force_insert=True)
+            if rows != 1:
+                raise Exception(f"create session record {self._session_id} failed")
+            LOGGER.info(f"save session {self._session_id} record")
         self.create()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
+        with DB.connection_context():
+            rows = SessionRecord.delete().where(SessionRecord.f_session_id == self._session_id).execute()
+            if rows > 0:
+                LOGGER.info(f"delete session {self._session_id} record")
+            else:
+                LOGGER.warning(f"failed delete session {self._session_id} record")
 
     def close(self):
         try:

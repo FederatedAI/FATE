@@ -13,18 +13,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_arch.common.base_utils import get_lan_ip, json_loads
 from fate_arch.common.log import schedule_logger
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.entity.constant import JobStatus, TaskStatus
 from fate_flow.settings import detect_logger, API_VERSION
 from fate_flow.utils import cron, job_utils, api_utils
+from fate_flow.entity.runtime_config import RuntimeConfig
 
 
 class JobDetector(cron.Cron):
     def run_do(self):
         try:
-            running_tasks = job_utils.query_task(party_status=TaskStatus.RUNNING, run_ip=get_lan_ip())
+            running_tasks = job_utils.query_task(party_status=TaskStatus.RUNNING, run_ip=RuntimeConfig.JOB_SERVER_HOST)
             stop_job_ids = set()
             # detect_logger.info('start to detect running job..')
             for task in running_tasks:

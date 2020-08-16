@@ -101,7 +101,7 @@ data_manager_logger = log.getLogger("fate_flow_data_manager")
 """
 Services 
 """
-IP = get_base_config("fate_flow", {}).get("host", "0.0.0.0")
+IP = get_base_config("fate_flow", {}).get("host", "127.0.0.1")
 HTTP_PORT = get_base_config("fate_flow", {}).get("http_port")
 GRPC_PORT = get_base_config("fate_flow", {}).get("grpc_port")
 
@@ -114,6 +114,6 @@ ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH = True
 
 # init
 RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
-RuntimeConfig.init_config(JOB_SERVER_HOST=base_utils.get_lan_ip(), HTTP_PORT=HTTP_PORT)
+RuntimeConfig.init_config(JOB_SERVER_HOST=IP, HTTP_PORT=HTTP_PORT)
 RuntimeConfig.init_config(BACKEND=BACKEND)
 RuntimeConfig.init_config(STORE_ENGINE=STORE_ENGINE)

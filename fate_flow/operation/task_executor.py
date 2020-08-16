@@ -18,7 +18,7 @@ import importlib
 import os
 import traceback
 from fate_arch.common import file_utils, log
-from fate_arch.common.base_utils import current_timestamp, get_lan_ip, timestamp_to_date
+from fate_arch.common.base_utils import current_timestamp, timestamp_to_date
 from fate_arch.common.log import schedule_logger
 from fate_arch import session
 from fate_arch.common import Backend
@@ -49,6 +49,7 @@ class TaskExecutor(object):
             parser.add_argument('-p', '--party_id', required=True, type=str, help="party id")
             parser.add_argument('-c', '--config', required=True, type=str, help="task parameters")
             parser.add_argument('--processors_per_node', help="processors_per_node", type=int)
+            parser.add_argument('--run_ip', help="run ip", type=str)
             parser.add_argument('--job_server', help="job server", type=str)
             args = parser.parse_args()
             schedule_logger(args.job_id).info('enter task process')
@@ -72,7 +73,7 @@ class TaskExecutor(object):
                 "task_version": task_version,
                 "role": role,
                 "party_id": party_id,
-                "run_ip": get_lan_ip(),
+                "run_ip": args.run_ip,
                 "run_pid": executor_pid,
                 "start_time": current_timestamp(),
             })
@@ -247,7 +248,7 @@ class TaskExecutor(object):
                         args_from_component = this_type_args[search_component_name] = this_type_args.get(
                             search_component_name, {})
                         if storage_table_meta:
-                            with storage.Session.build(session_id=job_utils.generate_session_id(task_id, task_version, role, party_id, suffix="storage"),
+                            with storage.Session.build(session_id=job_utils.generate_session_id(task_id, task_version, role, party_id, suffix="storage", random_end=True),
                                                        name=storage_table_meta.get_name(), namespace=storage_table_meta.get_namespace()) as storage_session:
                                 storage_table = storage_session.get_table(name=storage_table_meta.get_name(), namespace=storage_table_meta.get_namespace())
                                 partitions = task_parameters['input_data_partition'] if task_parameters.get(

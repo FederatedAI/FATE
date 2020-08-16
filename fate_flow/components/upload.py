@@ -63,7 +63,7 @@ class Upload(object):
         partitions = self.parameters["partition"]
         if partitions <= 0 or partitions >= self.MAX_PARTITIONS:
             raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITIONS))
-        with storage.Session.build(session_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage"),
+        with storage.Session.build(session_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),
                                    storage_engine=self.parameters["storage_engine"], options=self.parameters.get("options")) as storage_session:
             from fate_arch.storage import EggRollStorageType
             address = storage.StorageTableMeta.create_address(storage_engine=self.parameters["storage_engine"], address_dict={"name": name, "namespace": namespace, "storage_type": EggRollStorageType.ROLLPAIR_LMDB})

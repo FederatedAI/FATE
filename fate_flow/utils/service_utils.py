@@ -19,9 +19,8 @@ from kazoo.client import KazooClient
 from kazoo.security import make_digest_acl
 
 from fate_arch.common import file_utils
-from fate_arch.common.base_utils import get_lan_ip
 from fate_arch.common.conf_utils import get_base_config
-from fate_flow.settings import FATE_FLOW_MODEL_TRANSFER_ENDPOINT, HTTP_PORT
+from fate_flow.settings import FATE_FLOW_MODEL_TRANSFER_ENDPOINT, IP, HTTP_PORT
 from fate_flow.settings import stat_logger, SERVER_CONF_PATH, SERVICES_SUPPORT_REGISTRY, FATE_SERVICES_REGISTERED_PATH
 
 
@@ -71,7 +70,7 @@ class ServiceUtils(object):
         if get_base_config("use_registry", False):
             zk = ServiceUtils.get_zk()
             zk.start()
-            model_transfer_url = 'http://{}:{}{}'.format(get_lan_ip(), HTTP_PORT, FATE_FLOW_MODEL_TRANSFER_ENDPOINT)
+            model_transfer_url = 'http://{}:{}{}'.format(IP, HTTP_PORT, FATE_FLOW_MODEL_TRANSFER_ENDPOINT)
             fate_flow_model_transfer_service = '{}/{}'.format(FATE_SERVICES_REGISTERED_PATH.get("fateflow", ""), parse.quote(model_transfer_url, safe=' '))
             try:
                 zk.create(fate_flow_model_transfer_service, makepath=True, ephemeral=True)

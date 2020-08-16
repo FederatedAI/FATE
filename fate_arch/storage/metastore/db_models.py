@@ -19,7 +19,6 @@ import json
 import os
 import sys
 
-import __main__
 from peewee import Model, CharField, IntegerField, BigIntegerField, TextField, CompositeKey
 from playhouse.apsw_ext import APSWDatabase
 from playhouse.pool import PooledMySQLDatabase
@@ -144,9 +143,19 @@ class StorageTableMetaModel(DataBaseModel):
     f_part_of_data = SerializedField()
     f_description = TextField(default='')
 
-    f_create_time = BigIntegerField(null=True)
+    f_create_time = BigIntegerField()
     f_update_time = BigIntegerField(null=True)
 
     class Meta:
         db_table = "t_storage_table_meta"
         primary_key = CompositeKey('f_name', 'f_namespace')
+
+
+class SessionRecord(DataBaseModel):
+    f_session_id = CharField(max_length=150, null=False, primary_key=True)
+    f_engine_type = CharField(max_length=10, index=True)
+    f_engine_address = JSONField()
+    f_create_time = BigIntegerField(index=True)
+
+    class Meta:
+        db_table = "t_session_record"

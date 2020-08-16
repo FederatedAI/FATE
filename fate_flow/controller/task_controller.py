@@ -79,6 +79,7 @@ class TaskController(object):
                     '-p', party_id,
                     '-c', task_parameters_path,
                     '--processors_per_node', str(task_parameters.get("processors_per_node", 0)),
+                    '--run_ip', RuntimeConfig.JOB_SERVER_HOST,
                     '--job_server', '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT),
                 ]
             elif backend.is_spark():
@@ -111,6 +112,7 @@ class TaskController(object):
                     '-r', role,
                     '-p', party_id,
                     '-c', task_parameters_path,
+                    '--run_ip', RuntimeConfig.JOB_SERVER_HOST,
                     '--job_server', '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT),
                 ])
             else:
