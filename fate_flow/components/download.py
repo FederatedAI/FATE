@@ -19,7 +19,8 @@ from fate_arch.common import log
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_arch import storage
 from fate_flow.utils.job_utils import generate_session_id
-from fate_flow.api.client.controller.remote_client import ControllerRemoteClient
+from fate_flow.scheduling_apps.client import ControllerClient
+
 
 LOGGER = log.getLogger()
 
@@ -57,9 +58,9 @@ class Download(object):
                         LOGGER.info("===== export {} lines =====".format(lines))
                     if lines % 10000 == 0:
                         job_info["progress"] = lines/count*100//1
-                        ControllerRemoteClient.update_job(job_info=job_info)
+                        ControllerClient.update_job(job_info=job_info)
                 job_info["progress"] = 100
-                ControllerRemoteClient.update_job(job_info=job_info)
+                ControllerClient.update_job(job_info=job_info)
                 self.callback_metric(metric_name='data_access',
                                      metric_namespace='download',
                                      metric_data=[Metric("count", data_table.count())])

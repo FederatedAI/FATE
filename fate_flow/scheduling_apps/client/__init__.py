@@ -13,3 +13,5 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from fate_flow.scheduling_apps.client.control_client import ControllerClient
+from fate_flow.scheduling_apps.client.tracker_client import TrackerClient

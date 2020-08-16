@@ -17,7 +17,6 @@ from typing import List
 
 from fate_arch.common import log
 from fate_arch.common.base_utils import serialize_b64
-from fate_flow.api.client.tracker import api_client
 from fate_flow.entity.constant import RetCode
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.settings import API_VERSION
@@ -26,7 +25,25 @@ from fate_flow.utils import api_utils
 LOGGER = log.getLogger()
 
 
-class JobTrackerRemoteClient(api_client.JobTrackerClient):
+class TrackerClient(object):
+    def __init__(self, job_id: str, role: str, party_id: int,
+                 model_id: str = None,
+                 model_version: str = None,
+                 component_name: str = None,
+                 component_module_name: str = None,
+                 task_id: str = None,
+                 task_version: int = None
+                 ):
+        self.job_id = job_id
+        self.role = role
+        self.party_id = party_id
+        self.model_id = model_id
+        self.model_version = model_version
+        self.component_name = component_name if component_name else 'pipeline'
+        self.module_name = component_module_name if component_module_name else 'Pipeline'
+        self.task_id = task_id
+        self.task_version = task_version
+
     def log_job_metric_data(self, metric_namespace: str, metric_name: str, metrics: List[Metric]):
         self.log_metric_data_common(metric_namespace=metric_namespace, metric_name=metric_name, metrics=metrics,
                                     job_level=True)

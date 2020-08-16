@@ -20,7 +20,7 @@ import time
 from fate_arch.common import log, file_utils
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.utils.job_utils import generate_session_id
-from fate_flow.api.client.controller.remote_client import ControllerRemoteClient
+from fate_flow.scheduling_apps.client import ControllerClient
 from fate_arch import storage
 
 LOGGER = log.getLogger()
@@ -112,7 +112,7 @@ class Upload(object):
                     lines_count += len(data)
                     save_progress = lines_count/count*100//1
                     job_info = {'progress': save_progress, "job_id": job_id, "role": self.parameters["local"]['role'], "party_id": self.parameters["local"]['party_id']}
-                    ControllerRemoteClient.update_job(job_info=job_info)
+                    ControllerClient.update_job(job_info=job_info)
                     self.table.put_all(data)
                     if n == 0:
                         self.table.get_meta().update_metas(part_of_data=data)

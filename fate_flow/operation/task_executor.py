@@ -27,8 +27,8 @@ from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
 from fate_arch import storage
 from fate_flow.utils import job_utils
-from fate_flow.api.client.controller.remote_client import ControllerRemoteClient
-from fate_flow.api.client.tracker.remote_client import JobTrackerRemoteClient
+from fate_flow.scheduling_apps.client import ControllerClient
+from fate_flow.scheduling_apps.client import TrackerClient
 from fate_flow.db.db_models import TrackingOutputDataInfo, fill_db_model_object
 
 
@@ -117,13 +117,13 @@ class TaskExecutor(object):
                               model_id=job_parameters['model_id'],
                               model_version=job_parameters['model_version'],
                               component_module_name=module_name)
-            tracker_remote_client = JobTrackerRemoteClient(job_id=job_id, role=role, party_id=party_id,
-                                                           component_name=component_name,
-                                                           task_id=task_id,
-                                                           task_version=task_version,
-                                                           model_id=job_parameters['model_id'],
-                                                           model_version=job_parameters['model_version'],
-                                                           component_module_name=module_name)
+            tracker_client = TrackerClient(job_id=job_id, role=role, party_id=party_id,
+                                           component_name=component_name,
+                                           task_id=task_id,
+                                           task_version=task_version,
+                                           model_id=job_parameters['model_id'],
+                                           model_version=job_parameters['model_version'],
+                                           component_module_name=module_name)
             run_class_paths = component_parameters_on_party.get('CodePath').split('/')
             run_class_package = '.'.join(run_class_paths[:-2]) + '.' + run_class_paths[-2].replace('.py', '')
             run_class_name = run_class_paths[-1]
@@ -161,7 +161,7 @@ class TaskExecutor(object):
                                                                          )
             print(task_run_args)
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
-            run_object.set_tracker(tracker=tracker_remote_client)
+            run_object.set_tracker(tracker=tracker_client)
             run_object.set_taskid(taskid=job_utils.generate_federated_id(task_id, task_version))
             run_object.run(component_parameters_on_party, task_run_args)
             output_data = run_object.save_data()
@@ -231,9 +231,9 @@ class TaskExecutor(object):
                                     'data', {}).get(search_data_name).get('name', ''):
                                 storage_table_meta = storage.StorageTableMeta.build(name=job_args['data'][search_data_name]['name'], namespace=job_args['data'][search_data_name]['namespace'])
                         else:
-                            tracker_remote_client = JobTrackerRemoteClient(job_id=job_id, role=role, party_id=party_id,
-                                                                           component_name=search_component_name)
-                            upstream_output_table_infos_json = tracker_remote_client.get_output_data_info(
+                            tracker_client = TrackerClient(job_id=job_id, role=role, party_id=party_id,
+                                                           component_name=search_component_name)
+                            upstream_output_table_infos_json = tracker_client.get_output_data_info(
                                 data_name=search_data_name)
                             if upstream_output_table_infos_json:
                                 tracker = Tracker(job_id=job_id, role=role, party_id=party_id,
@@ -297,7 +297,7 @@ class TaskExecutor(object):
             task_info["role"],
             task_info["party_id"],
         ))
-        ControllerRemoteClient.update_task(task_info=task_info)
+        ControllerClient.update_task(task_info=task_info)
 
     @classmethod
     def monkey_patch(cls):

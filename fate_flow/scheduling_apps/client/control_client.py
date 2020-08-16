@@ -14,14 +14,13 @@
 #  limitations under the License.
 #
 from fate_arch.common import log
-from fate_flow.api.client.controller import api_client
 from fate_flow.settings import API_VERSION
 from fate_flow.utils import api_utils
 
 LOGGER = log.getLogger()
 
 
-class ControllerRemoteClient(api_client.ControllerClient):
+class ControllerClient(object):
     @classmethod
     def update_job(cls, job_info):
         LOGGER.info("Request update job {} on {} {}".format(job_info["job_id"], job_info["role"], job_info["party_id"]))
