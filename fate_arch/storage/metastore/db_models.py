@@ -47,6 +47,10 @@ def singleton(cls, *args, **kw):
     return _singleton
 
 
+class LongTextField(TextField):
+    field_type = 'LONGTEXT'
+
+
 class JSONField(TextField):
     def db_value(self, value):
         if value is None:
@@ -59,7 +63,7 @@ class JSONField(TextField):
         return json.loads(value)
 
 
-class SerializedField(TextField):
+class SerializedField(LongTextField):
     def db_value(self, value):
         return serialize_b64(value, to_str=True)
 
@@ -125,8 +129,6 @@ def init_database_tables():
         DB.create_tables(table_objs)
 
 
-class LongTextField(TextField):
-    field_type = 'LONGTEXT'
 
 
 class StorageTableMetaModel(DataBaseModel):

@@ -46,7 +46,7 @@ mkdir -p ${package_dir}/python/
 cp fate.env requirements.txt RELEASE.md sitecustomize.py ${package_dir}/python/
 
 # pass copy conf
-cp -r arch fate_arch compatible_hook examples federatedml fate_flow pipeline ${package_dir}/python/
+cp -r arch fate_arch compatible_hook examples federatedml fate_flow fate_client ${package_dir}/python/
 cp -r bin  ${package_dir}/
 echo "[INFO] Package fate done"
 
