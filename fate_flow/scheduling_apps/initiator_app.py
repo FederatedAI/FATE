@@ -31,6 +31,7 @@ from fate_flow.utils import job_utils, detect_utils
 from fate_flow.utils.api_utils import get_json_result, request_execute_server
 from fate_flow.entity.constant import WorkMode, JobStatus, RetCode, FederatedSchedulingStatusCode
 from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.controller.job_controller import JobController
 
 manager = Flask(__name__)
 
@@ -47,11 +48,28 @@ def internal_server_error(e):
 def stop_job(job_id, role, party_id, stop_status):
     jobs = job_utils.query_job(job_id=job_id, role=role, party_id=party_id, is_initiator=1)
     if len(jobs) > 0:
+        if stop_status == JobStatus.CANCELED:
+            status_code, response = FederatedScheduler.request_cancel_job(job=jobs[0])
+            if status_code == FederatedSchedulingStatusCode.SUCCESS:
+                return get_json_result(retcode=RetCode.SUCCESS, retmsg="cancel job success")
         status_code, response = FederatedScheduler.stop_job(job=jobs[0], stop_status=stop_status)
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
             return get_json_result(retcode=0, retmsg='success')
         else:
             return get_json_result(retcode=RetCode.FEDERATED_ERROR, retmsg=json_dumps(response))
+    else:
+        return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="can not found job")
+
+
+@manager.route('/<job_id>/<role>/<party_id>/cancel', methods=['POST'])
+def cancel_job(job_id, role, party_id):
+    jobs = job_utils.query_job(job_id=job_id, role=role, party_id=party_id, is_initiator=1)
+    if len(jobs) > 0:
+        status = JobController.cancel_job(job_id=job_id, role=role, party_id=party_id)
+        if status:
+            return get_json_result(retcode=0, retmsg='success')
+        else:
+            return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg=f"cancel job {job_id} failed, job status is {jobs[0].f_status}")
     else:
         return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="can not found job")
 

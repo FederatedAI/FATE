@@ -202,12 +202,12 @@ def log(ctx, **kwargs):
     with closing(access_server('get', ctx, 'job/log', config_data, False, stream=True)) as response:
         if response.status_code == 200:
             download_from_request(http_response=response, tar_file_name=tar_file_name, extract_dir=extract_dir)
-            response = {'retcode': 0,
-                        'directory': extract_dir,
-                        'retmsg': 'download successfully, please check {} directory'.format(extract_dir)}
+            response_dict = {'retcode': 0,
+                             'directory': extract_dir,
+                             'retmsg': 'download successfully, please check {} directory'.format(extract_dir)}
         else:
-            response = response.json()
-    prettify(response.json() if isinstance(response, requests.models.Response) else response)
+            response_dict = response.json() if isinstance(response, requests.models.Response) else response.json
+    prettify(response_dict)
 
 
 @job.command("view", short_help="Query Job Data View Command")
@@ -292,11 +292,11 @@ def dsl_generator(ctx, **kwargs):
                     for chunk in response.iter_content(1024):
                         if chunk:
                             fw.write(chunk)
-                response = {'retcode': 0,
-                            'retmsg': "New predict dsl file has been generated successfully. "
-                                      "File path is: {}".format(output_path)}
+                response_dict = {'retcode': 0,
+                                 'retmsg': "New predict dsl file has been generated successfully. "
+                                           "File path is: {}".format(output_path)}
             else:
-                response = response.json
-        prettify(response.json() if isinstance(response, requests.models.Response) else response)
+                response_dict = response.json() if isinstance(response, requests.models.Response) else response.json
+        prettify(response_dict)
     else:
         access_server('post', ctx, 'job/dsl/generate', config_data)

@@ -27,7 +27,7 @@ from fate_flow.operation.job_tracker import Tracker
 from fate_flow.controller.job_controller import JobController
 from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT, DEFAULT_TASK_PARALLELISM, DEFAULT_PROCESSORS_PER_TASK
 from fate_flow.utils import detect_utils, job_utils
-from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_log_directory
+from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_log_directory, get_job_dsl_parser
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils import model_utils
 from fate_flow.manager.resource_manager import ResourceManager
@@ -93,15 +93,17 @@ class DAGScheduler(object):
             raise Exception("initiator party id error {}".format(initiator_party_id))
 
         FederatedScheduler.create_job(job=job)
+        dsl_parser = get_job_dsl_parser(dsl=job_dsl,
+                                        runtime_conf=job_runtime_conf,
+                                        train_runtime_conf=train_runtime_conf)
 
         if job_parameters['work_mode'] == WorkMode.CLUSTER:
-            # Save the state information of all participants in the initiator for scheduling
-            job_info = job.to_human_model_dict()
+            # Save the status information of all participants in the initiator for scheduling
             for role, party_ids in job_runtime_conf["role"].items():
                 for party_id in party_ids:
                     if role == job_initiator['role'] and party_id == job_initiator['party_id']:
                         continue
-                    JobController.create_job(job_id=job_id, role=role, party_id=party_id, job_info=job_info, init_tracker=False)
+                    JobController.initialize_tasks(job_id, role, party_id, job_initiator, dsl_parser)
 
         # push into queue
         job_event = job_utils.job_event(job_id, initiator_role, initiator_party_id)
