@@ -49,7 +49,7 @@ def main(config="../config.yaml"):
                              table_name=host_train_data["name"],
                              namespace=host_train_data["namespace"])
     # upload all data
-    pipeline_upload.upload(work_mode=work_mode)
+    pipeline_upload.upload(work_mode=work_mode, drop=-1)
 
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
 
