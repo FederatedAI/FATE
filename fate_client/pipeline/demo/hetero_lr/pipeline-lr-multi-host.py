@@ -1,6 +1,20 @@
-import sys
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
 
-import yaml
+import argparse
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
@@ -8,33 +22,18 @@ from pipeline.component.hetero_lr import HeteroLR
 from pipeline.component.intersection import Intersection
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
+from pipeline.demo.util.demo_util import Config
 from pipeline.interface.model import Model
 
-try:
-    from yaml import CLoader as Loader, CDumper as Dumper
-except ImportError:
-    from yaml import Loader, Dumper
 
-
-def main(config="./config.yaml"):
-    """
-    parser = argparse.ArgumentParser("PIPELINE DEMO")
-    parser.add_argument("-config", default="./config.yaml", type=str,
-                        help="config file")
-    args = parser.parse_args()
-    file = args.config
-    """
+def main(config="../config.yaml"):
     # obtain config
-    with open(config, "r") as f:
-        conf = yaml.load(f, Loader=Loader)
-        parties = conf.get("parties", {})
-        if len(parties) == 0:
-            raise ValueError(f"Parties id must be sepecified.")
-        host = parties["host"]
-        guest = parties["guest"][0]
-        arbiter = parties["arbiter"][0]
-        backend = conf.get("backend", 0)
-        work_mode = conf.get("work_mode", 0)
+    config = Config(config)
+    guest = config.guest
+    hosts = config.host
+    arbiter = config.arbiter
+    backend = config.backend
+    work_mode = config.work_mode
 
     guest_train_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
     host_train_data = [{"name": "breast_hetero_host", "namespace": "experiment"},
@@ -49,20 +48,20 @@ def main(config="./config.yaml"):
     # set job initiator
     pipeline.set_initiator(role='guest', party_id=guest)
     # set participants information
-    pipeline.set_roles(guest=guest, host=host, arbiter=arbiter)
+    pipeline.set_roles(guest=guest, host=hosts, arbiter=arbiter)
 
     # define Reader components to read in data
     reader_0 = Reader(name="reader_0")
     # configure Reader for guest
     reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
     # configure Reader for host
-    reader_0.get_party_instance(role='host', party_id=host[0]).algorithm_param(table=host_train_data[0])
-    reader_0.get_party_instance(role='host', party_id=host[1]).algorithm_param(table=host_train_data[1])
+    reader_0.get_party_instance(role='host', party_id=hosts[0]).algorithm_param(table=host_train_data[0])
+    reader_0.get_party_instance(role='host', party_id=hosts[1]).algorithm_param(table=host_train_data[1])
 
     reader_1 = Reader(name="reader_1")
     reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_eval_data)
-    reader_1.get_party_instance(role='host', party_id=host[0]).algorithm_param(table=host_eval_data[0])
-    reader_1.get_party_instance(role='host', party_id=host[1]).algorithm_param(table=host_eval_data[1])
+    reader_1.get_party_instance(role='host', party_id=hosts[0]).algorithm_param(table=host_eval_data[0])
+    reader_1.get_party_instance(role='host', party_id=hosts[1]).algorithm_param(table=host_eval_data[1])
 
     # define DataIO components
     dataio_0 = DataIO(name="dataio_0")  # start component numbering at 0
@@ -72,8 +71,8 @@ def main(config="./config.yaml"):
     # configure DataIO for guest
     dataio_0_guest_party_instance.algorithm_param(with_label=True, output_format="dense")
     # get and configure DataIO party instance of host
-    dataio_0.get_party_instance(role='host', party_id=host[0]).algorithm_param(with_label=False)
-    dataio_0.get_party_instance(role='host', party_id=host[1]).algorithm_param(with_label=False)
+    dataio_0.get_party_instance(role='host', party_id=hosts[0]).algorithm_param(with_label=False)
+    dataio_0.get_party_instance(role='host', party_id=hosts[1]).algorithm_param(with_label=False)
 
     dataio_1 = DataIO(name="dataio_1")
 
@@ -124,4 +123,11 @@ def main(config="./config.yaml"):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    parser = argparse.ArgumentParser("PIPELINE DEMO")
+    parser.add_argument("-config", type=str,
+                        help="config file")
+    args = parser.parse_args()
+    if args.config is not None:
+        main(args.config)
+    else:
+        main()

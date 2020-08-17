@@ -46,15 +46,12 @@
                     true
                 ],
                 "outlier_replace": [
-                    true
+                    false
                 ]
             },
             "feature_scale_0": {
                 "method": [
-                    "standard_scale"
-                ],
-                "need_run": [
-                    false
+                    "min_max_scale"
                 ]
             },
             "hetero_feature_binning_0": {
@@ -164,7 +161,7 @@
                     "dense"
                 ],
                 "outlier_replace": [
-                    true
+                    false
                 ]
             },
             "feature_scale_0": {
@@ -267,25 +264,16 @@
             "optimizer": "rmsprop",
             "tol": 0.001,
             "alpha": 100.0,
-            "max_iter": 20,
+            "max_iter": 10,
             "early_stop": "weight_diff",
-            "decay": 0.0,
-            "decay_sqrt": false,
             "batch_size": -1,
             "learning_rate": 0.01,
             "exposure_colname": "exposure",
             "init_param": {
-                "init_method": "zeros",
-                "init_const": 0
+                "init_method": "zeros"
             },
             "encrypted_mode_calculator_param": {
                 "mode": "fast"
-            },
-            "cv_param": {
-                "n_splits": 5,
-                "shuffle": false,
-                "random_seed": 103,
-                "need_cv": false
             }
         }
     }
