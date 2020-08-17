@@ -150,7 +150,6 @@ class Job(DataBaseModel):
     f_initiator_role = CharField(max_length=50, index=True)
     f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
     f_status = CharField(max_length=50)
-    f_status_level = BigIntegerField()
     # this party configuration
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
@@ -178,14 +177,12 @@ class Task(DataBaseModel):
     f_initiator_role = CharField(max_length=50, index=True)
     f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
     f_status = CharField(max_length=50)
-    f_status_level = BigIntegerField()
     # this party configuration
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
     f_run_ip = CharField(max_length=100, null=True)
     f_run_pid = IntegerField(null=True)
     f_party_status = CharField(max_length=50)
-    f_party_status_level = BigIntegerField()
     f_create_time = BigIntegerField()
     f_update_time = BigIntegerField(null=True)
     f_start_time = BigIntegerField(null=True)
