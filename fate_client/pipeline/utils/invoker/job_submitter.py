@@ -17,16 +17,16 @@
 import json
 import os
 import subprocess
+import sys
 import tempfile
 import time
 from datetime import timedelta
-import sys
 
-from fate_sdk.client import FlowClient
+from flow_sdk.client import FlowClient
 from pipeline.backend import config as conf
+from pipeline.backend.config import IODataType
 from pipeline.backend.config import JobStatus
 from pipeline.backend.config import StatusCode
-from pipeline.interface.output import OutputDataType
 from pipeline.utils.logger import LOGGER
 
 
@@ -342,11 +342,11 @@ class JobInvoker(object):
                     n += 1
             # single output data
             if n == 1:
-                data_dict = JobInvoker.create_data_meta_dict(OutputDataType.SINGLE, output_dir, limits)
+                data_dict = JobInvoker.create_data_meta_dict(IODataType.SINGLE, output_dir, limits)
             # multiple output data
             elif n > 1:
                 data_dict = {}
-                for data_name in [OutputDataType.TRAIN, OutputDataType.VALIDATE, OutputDataType.TEST]:
+                for data_name in [IODataType.TRAIN, IODataType.VALIDATE, IODataType.TEST]:
                     curr_data_dict = JobInvoker.create_data_meta_dict(data_name, output_dir, limits)
                     data_dict[data_name] = curr_data_dict
             # no output data obtained

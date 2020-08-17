@@ -104,7 +104,7 @@ class JobSaver(object):
         if if_pass:
             update_filters.append(operator.attrgetter(f"f_{field}")(type(obj)) == getattr(obj, f"f_{field}"))
         else:
-            # not allow update
+            # not allow update status
             update_info.pop(field)
         return if_pass
 
@@ -122,13 +122,17 @@ class JobSaver(object):
                 raise Exception("Can not found the {}".format(entity_model.__class__.__name__))
             update_filters = query_filters[:]
             if 'status' in entity_info and hasattr(entity_model, "f_status"):
-                cls.gen_update_status_filter(obj=obj, update_info=entity_info, field="status", update_filters=update_filters)
-            if "party_status" in entity_info and hasattr(entity_model, "f_party_status"):
-                if_pass = cls.gen_update_status_filter(obj=obj, update_info=entity_info, field="party_status", update_filters=update_filters)
-                if if_pass and EndStatus.contains(entity_info["party_status"]):
+                if entity_model == Job and EndStatus.contains(entity_info["status"]):
                     entity_info['end_time'] = current_timestamp()
                     if obj.f_start_time:
                         entity_info['elapsed'] = entity_info['end_time'] - obj.f_start_time
+                cls.gen_update_status_filter(obj=obj, update_info=entity_info, field="status", update_filters=update_filters)
+            if "party_status" in entity_info and hasattr(entity_model, "f_party_status"):
+                if EndStatus.contains(entity_info["party_status"]):
+                    entity_info['end_time'] = current_timestamp()
+                    if obj.f_start_time:
+                        entity_info['elapsed'] = entity_info['end_time'] - obj.f_start_time
+                cls.gen_update_status_filter(obj=obj, update_info=entity_info, field="party_status", update_filters=update_filters)
             if "progress" in entity_info and hasattr(entity_model, "f_progress"):
                 update_filters.append(operator.attrgetter("f_progress")(entity_model) <= entity_info["progress"])
             update_fields = {}

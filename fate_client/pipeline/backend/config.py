@@ -20,7 +20,7 @@ from pathlib import Path
 from pipeline.constant import Backend, JobStatus, WorkMode
 
 __all__ = ["Backend", "WorkMode", "JobStatus", "VERSION", "TIME_QUERY_FREQS", "Role", "StatusCode",
-           "LogPath", "LogFormat"]
+           "LogPath", "LogFormat", "IODataType"]
 VERSION = 2
 TIME_QUERY_FREQS = 0.01
 
