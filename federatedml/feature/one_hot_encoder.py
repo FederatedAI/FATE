@@ -287,7 +287,7 @@ class OneHotEncoder(ModelBase):
 
         new_feature = [_transformed_value[x] if x in _transformed_value else 0 for x in result_header]
 
-        feature_array = np.array(new_feature)
+        feature_array = np.array(new_feature, dtype='float64')
         instance.features = feature_array
         return instance
 
