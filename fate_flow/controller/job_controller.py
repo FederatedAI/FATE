@@ -33,7 +33,7 @@ from fate_flow.controller.task_controller import TaskController
 
 class JobController(object):
     @classmethod
-    def create_job(cls, job_id, role, party_id, job_info, init_tracker=True):
+    def create_job(cls, job_id, role, party_id, job_info):
         # parse job configuration
         dsl = job_info['dsl']
         runtime_conf = job_info['runtime_conf']
@@ -66,6 +66,12 @@ class JobController(object):
         dsl_parser = get_job_dsl_parser(dsl=dsl,
                                         runtime_conf=runtime_conf,
                                         train_runtime_conf=train_runtime_conf)
+
+        cls.initialize_tasks(job_id, role, party_id, job_initiator, dsl_parser)
+        cls.initialize_job_tracker(job_id=job_id, role=role, party_id=party_id, job_info=job_info, is_initiator=is_initiator, dsl_parser=dsl_parser)
+
+    @classmethod
+    def initialize_tasks(cls, job_id, role, party_id, job_initiator, dsl_parser):
         base_task_info = {}
         base_task_info["job_id"] = job_id
         base_task_info["initiator_role"] = job_initiator['role']
@@ -74,10 +80,16 @@ class JobController(object):
         base_task_info["role"] = role
         base_task_info["party_id"] = party_id
         base_task_info["party_status"] = TaskStatus.WAITING
-
-        cls.initialize_tasks(base_task_info=base_task_info, dsl_parser=dsl_parser)
-        if init_tracker:
-            cls.initialize_job_tracker(job_id=job_id, role=role, party_id=party_id, job_info=job_info, is_initiator=is_initiator, dsl_parser=dsl_parser)
+        for component in dsl_parser.get_topology_components():
+            component_parameters = component.get_role_parameters()
+            for parameters_on_party in component_parameters.get(base_task_info["role"], []):
+                if parameters_on_party.get('local', {}).get('party_id') == base_task_info["party_id"]:
+                    task_info = {}
+                    task_info.update(base_task_info)
+                    task_info["component_name"] = component.get_name()
+                    task_info["task_id"] = job_utils.generate_task_id(job_id=base_task_info["job_id"], component_name=component.get_name())
+                    task_info["task_version"] = 0
+                    JobSaver.create_task(task_info=task_info)
 
     @classmethod
     def initialize_job_tracker(cls, job_id, role, party_id, job_info, is_initiator, dsl_parser):
@@ -130,19 +142,6 @@ class JobController(object):
                                     dataset[_role][_party_id][key] = '{}.{}'.format(
                                         _data_location['namespace'], _data_location['name'])
         tracker.log_job_view({'partner': partner, 'dataset': dataset, 'roles': show_role})
-
-    @classmethod
-    def initialize_tasks(cls, base_task_info, dsl_parser):
-        for component in dsl_parser.get_topology_components():
-            component_parameters = component.get_role_parameters()
-            for parameters_on_party in component_parameters.get(base_task_info["role"], []):
-                if parameters_on_party.get('local', {}).get('party_id') == base_task_info["party_id"]:
-                    task_info = {}
-                    task_info.update(base_task_info)
-                    task_info["component_name"] = component.get_name()
-                    task_info["task_id"] = job_utils.generate_task_id(job_id=base_task_info["job_id"], component_name=component.get_name())
-                    task_info["task_version"] = 0
-                    JobSaver.create_task(task_info=task_info)
 
     @classmethod
     def start_job(cls, job_id, role, party_id):

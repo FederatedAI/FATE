@@ -118,8 +118,10 @@ class JobStatus(BaseStatus):
         RULES = {
             StatusSet.WAITING: [StatusSet.RUNNING, StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.COMPLETE],
             StatusSet.RUNNING: [StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.COMPLETE],
-            StatusSet.CANCELED: [StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.COMPLETE],
+            StatusSet.CANCELED: [],
             StatusSet.TIMEOUT: [StatusSet.FAILED, StatusSet.COMPLETE],
+            StatusSet.FAILED: [],
+            StatusSet.COMPLETE: [],
         }
 
 
@@ -135,8 +137,10 @@ class TaskStatus(BaseStatus):
         RULES = {
             StatusSet.WAITING: [StatusSet.RUNNING],
             StatusSet.RUNNING: [StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.COMPLETE],
-            StatusSet.CANCELED: [StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.COMPLETE],
+            StatusSet.CANCELED: [],
             StatusSet.TIMEOUT: [StatusSet.FAILED, StatusSet.COMPLETE],
+            StatusSet.FAILED: [],
+            StatusSet.COMPLETE: [],
         }
 
 

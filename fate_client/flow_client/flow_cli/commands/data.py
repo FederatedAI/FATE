@@ -74,7 +74,7 @@ def upload(ctx, **kwargs):
                                 sys.stdout.write('\n')
 
                 data = MultipartEncoderMonitor(data, read_callback)
-                access_server('post', ctx, 'data/upload', json=None, data=data,
+                access_server('post', ctx, 'data/upload', json_data=None, data=data,
                               params=config_data, headers={'Content-Type': data.content_type})
         else:
             prettify(
