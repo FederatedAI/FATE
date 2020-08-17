@@ -21,6 +21,7 @@ from fate_flow.utils import job_utils
 from fate_flow.db.db_models import DB, ResourceRegistry, ResourceRecord
 from fate_arch.common.conf_utils import get_base_config
 from fate_flow.settings import stat_logger
+from fate_flow.entity.constant import ResourceOperation
 
 
 class ResourceManager(object):
@@ -56,7 +57,7 @@ class ResourceManager(object):
 
     @classmethod
     def apply_for_resource_to_job(cls, job_id, role, party_id):
-        status, engine_id, cores, memory = cls.resource_for_job(job_id=job_id, role=role, party_id=party_id, operation_type="apply")
+        status, engine_id, cores, memory = cls.resource_for_job(job_id=job_id, role=role, party_id=party_id, operation_type=ResourceOperation.APPLY)
         if status:
             try:
                 with DB.connection_context():
@@ -75,7 +76,7 @@ class ResourceManager(object):
                         schedule_logger(job_id=job_id).info(f"successfully apply resource for job {job_id} on {role} {party_id}")
                         return True
             except Exception as e:
-                status, engine_id, cores, memory = cls.resource_for_job(job_id=job_id, role=role, party_id=party_id, operation_type="return")
+                status, engine_id, cores, memory = cls.resource_for_job(job_id=job_id, role=role, party_id=party_id, operation_type=ResourceOperation.RETURN)
                 schedule_logger(job_id=job_id).warning(f"failed save resource record for job {job_id} on {role} {party_id}")
                 return False
         else:
@@ -83,8 +84,8 @@ class ResourceManager(object):
             return False
 
     @classmethod
-    def return_resource(cls, job_id, role, party_id):
-        status, engine_id, cores, memory = cls.resource_for_job(job_id=job_id, role=role, party_id=party_id, operation_type="return")
+    def return_job_resource(cls, job_id, role, party_id):
+        status, engine_id, cores, memory = cls.resource_for_job(job_id=job_id, role=role, party_id=party_id, operation_type=ResourceOperation.RETURN)
         if status:
             try:
                 with DB.connection_context():
@@ -113,18 +114,18 @@ class ResourceManager(object):
             engine_type = "EGGROLL"
             update_filters = [ResourceRegistry.f_engine_id == engine_id]
             if engine_type == "EGGROLL":
-                cores_volume = cores if operation_type == "apply" else -cores
+                cores_volume = cores if operation_type == ResourceOperation.APPLY else -cores
                 memory_volume = 0
             else:
                 cores_volume = 0
                 memory_volume = 0
-            if operation_type == "apply":
+            if operation_type == ResourceOperation.APPLY:
                 update_filters.append(ResourceRegistry.f_remaining_cores >= cores_volume)
                 update_filters.append(ResourceRegistry.f_remaining_memory >= memory_volume)
                 operate = ResourceRegistry.update({ResourceRegistry.f_remaining_cores: ResourceRegistry.f_remaining_cores - cores_volume,
                                                    ResourceRegistry.f_remaining_memory: ResourceRegistry.f_remaining_memory - memory_volume}
                                                   ).where(*update_filters)
-            elif operation_type == "return":
+            elif operation_type == ResourceOperation.RETURN:
                 operate = ResourceRegistry.update({ResourceRegistry.f_remaining_cores: ResourceRegistry.f_remaining_cores + cores_volume,
                                                    ResourceRegistry.f_remaining_memory: ResourceRegistry.f_remaining_memory + memory_volume}
                                                   ).where(*update_filters)
@@ -134,11 +135,11 @@ class ResourceManager(object):
 
     @classmethod
     def apply_for_resource_to_task(cls, task_info):
-        return ResourceManager.resource_for_task(task_info=task_info, operation_type="apply")
+        return ResourceManager.resource_for_task(task_info=task_info, operation_type=ResourceOperation.APPLY)
 
     @classmethod
     def return_resource_to_job(cls, task_info):
-        return ResourceManager.resource_for_task(task_info=task_info, operation_type="return")
+        return ResourceManager.resource_for_task(task_info=task_info, operation_type=ResourceOperation.RETURN)
 
     @classmethod
     def resource_for_task(cls, task_info, operation_type):
@@ -151,7 +152,7 @@ class ResourceManager(object):
                                                           task_info["task_version"]))
         update_status = JobSaver.update_job_resource(job_id=task_info["job_id"], role=task_info["role"],
                                                      party_id=task_info["party_id"], volume=(
-                processors_per_task if operation_type == "apply" else -processors_per_task))
+                processors_per_task if operation_type == ResourceOperation.APPLY else -processors_per_task))
         if update_status:
             schedule_logger(job_id=task_info["job_id"]).info(
                 "Successfully {} job {} resource to task {} {}".format(operation_type, task_info["job_id"],

@@ -29,6 +29,7 @@ from fate_flow.utils.job_utils import save_job_conf, get_job_dsl_parser
 from fate_flow.operation.job_saver import JobSaver
 from fate_arch.common.base_utils import json_dumps, current_timestamp
 from fate_flow.controller.task_controller import TaskController
+from fate_flow.manager.resource_manager import ResourceManager
 
 
 class JobController(object):
@@ -142,6 +143,14 @@ class JobController(object):
                                     dataset[_role][_party_id][key] = '{}.{}'.format(
                                         _data_location['namespace'], _data_location['name'])
         tracker.log_job_view({'partner': partner, 'dataset': dataset, 'roles': show_role})
+
+    @classmethod
+    def apply_resource(cls, job_id, role, party_id):
+        return ResourceManager.apply_for_resource_to_job(job_id=job_id, role=role, party_id=party_id)
+
+    @classmethod
+    def return_resource(cls, job_id, role, party_id):
+        return ResourceManager.return_job_resource(job_id=job_id, role=role, party_id=party_id)
 
     @classmethod
     def start_job(cls, job_id, role, party_id):

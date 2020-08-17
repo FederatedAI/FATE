@@ -37,6 +37,16 @@ class FederatedScheduler(object):
             raise Exception("Create job failed: {}".format(response))
 
     @classmethod
+    def resource_for_job(cls, job, operation_type):
+        schedule_logger(job_id=job.f_job_id).info(f"try to {operation_type} job {job.f_job_id} resource")
+        status_code, response = cls.job_command(job=job, command=f"resource/{operation_type}")
+        if status_code == FederatedSchedulingStatusCode.SUCCESS:
+            schedule_logger(job_id=job.f_job_id).info(f"{operation_type} job {job.f_job_id} successfully")
+        else:
+            schedule_logger(job_id=job.f_job_id).info(f"{operation_type} job {job.f_job_id} failed")
+        return status_code, response
+
+    @classmethod
     def check_job(cls, job):
         return cls.job_command(job=job, command="check")
 

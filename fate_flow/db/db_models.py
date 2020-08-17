@@ -108,6 +108,8 @@ class DataBaseModel(Model):
         return human_model_dict
 
     def save(self, *args, **kwargs):
+        print(args)
+        print(kwargs)
         if hasattr(self, "f_update_date"):
             self.f_update_date = datetime.datetime.now()
         if hasattr(self, "f_update_time"):
@@ -384,6 +386,8 @@ class NewQueue(DataBaseModel):
     f_job_status = CharField(max_length=50, index=True)
     f_initiator_role = CharField(max_length=50, index=True)
     f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
+    f_create_time = BigIntegerField()
+    f_update_time = BigIntegerField(null=True)
     f_tag = CharField(max_length=50, null=True, index=True, default='')
 
     class Meta:

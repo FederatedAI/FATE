@@ -81,7 +81,7 @@ class BaseStatus(object):
 
 class StatusSet(BaseStatus):
     WAITING = 'waiting'
-    START = 'start'
+    READY = 'ready'
     RUNNING = "running"
     CANCELED = "canceled"
     TIMEOUT = "timeout"
@@ -108,6 +108,7 @@ class BaseStateTransitionRule(object):
 
 class JobStatus(BaseStatus):
     WAITING = StatusSet.WAITING
+    READY = StatusSet.READY
     RUNNING = StatusSet.RUNNING
     CANCELED = StatusSet.CANCELED
     TIMEOUT = StatusSet.TIMEOUT
@@ -116,7 +117,8 @@ class JobStatus(BaseStatus):
 
     class StateTransitionRule(BaseStateTransitionRule):
         RULES = {
-            StatusSet.WAITING: [StatusSet.RUNNING, StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.COMPLETE],
+            StatusSet.WAITING: [StatusSet.READY, StatusSet.RUNNING, StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.COMPLETE],
+            StatusSet.READY: [StatusSet.WAITING, StatusSet.RUNNING],
             StatusSet.RUNNING: [StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.COMPLETE],
             StatusSet.CANCELED: [],
             StatusSet.TIMEOUT: [StatusSet.FAILED, StatusSet.COMPLETE],
@@ -187,3 +189,8 @@ class TagOperation(object):
     UPDATE = "update"
     DESTROY = "destroy"
     LIST = "list"
+
+
+class ResourceOperation(object):
+    APPLY = "apply"
+    RETURN = "return"

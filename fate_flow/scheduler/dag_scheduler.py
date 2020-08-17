@@ -21,7 +21,7 @@ from fate_flow.db.db_models import Job
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.scheduler.task_scheduler import TaskScheduler
 from fate_flow.operation.job_saver import JobSaver
-from fate_flow.entity.constant import JobStatus, TaskStatus, EndStatus, StatusSet, SchedulingStatusCode
+from fate_flow.entity.constant import JobStatus, TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, ResourceOperation
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.controller.job_controller import JobController
@@ -31,6 +31,7 @@ from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_lo
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils import model_utils
 from fate_flow.manager.resource_manager import ResourceManager
+from fate_flow.scheduler.job_queue import JobQueue
 
 
 class DAGScheduler(object):
@@ -121,6 +122,21 @@ class DAGScheduler(object):
         logs_directory = get_job_log_directory(job_id)
         return job_id, path_dict['job_dsl_path'], path_dict['job_runtime_conf_path'], logs_directory, \
                {'model_id': job_parameters['model_id'], 'model_version': job_parameters['model_version']}, board_url
+
+    @classmethod
+    def check(cls):
+        schedule_logger().info("start check waiting jobs")
+        events = JobQueue.get_event(status=JobStatus.WAITING)
+        for event in events:
+            set_status = JobQueue.update_event(job_id=event.f_job_id, initiator_role=event.f_initiator_role, initiator_party_id=event.f_initiator_party_id)
+            if not set_status:
+                schedule_logger().info(f"job {event.f_job_id} may be handled by another scheduler")
+                continue
+            # apply resource on all party
+            jobs = job_utils.query_job(job_id=event.f_job_id, role=event.f_initiator_role, party_id=event.f_initiator_party_id)
+            job = jobs[0]
+            FederatedScheduler.resource_for_job(job=job, operation_type=ResourceOperation.APPLY)
+            #
 
     @classmethod
     def start(cls, job_id, initiator_role, initiator_party_id):

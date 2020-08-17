@@ -50,6 +50,24 @@ def check_job(job_id, role, party_id):
         return get_json_result(retcode=101, retmsg='The job running on the host side exceeds the maximum running amount')
 
 
+@manager.route('/<job_id>/<role>/<party_id>/resource/apply', methods=['POST'])
+def apply_resource(job_id, role, party_id):
+    status = JobController.apply_resource(job_id=job_id, role=role, party_id=int(party_id))
+    if status:
+        return get_json_result(retcode=0, retmsg='success')
+    else:
+        return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg=f"apply for job {job_id} resource failed")
+
+
+@manager.route('/<job_id>/<role>/<party_id>/resource/return', methods=['POST'])
+def return_resource(job_id, role, party_id):
+    status = JobController.return_resource(job_id=job_id, role=role, party_id=int(party_id))
+    if status:
+        return get_json_result(retcode=0, retmsg='success')
+    else:
+        return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg=f"apply for job {job_id} resource failed")
+
+
 @manager.route('/<job_id>/<role>/<party_id>/start', methods=['POST'])
 def start_job(job_id, role, party_id):
     JobController.start_job(job_id=job_id, role=role, party_id=int(party_id))
