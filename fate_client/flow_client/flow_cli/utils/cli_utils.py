@@ -67,10 +67,6 @@ def access_server(method, ctx, postfix, json_data=None, echo=True, **kwargs):
                 return response
         except Exception as e:
             exc_type, exc_value, exc_traceback_obj = sys.exc_info()
-            # response = Response(json.dumps({'retcode': 100, 'retmsg': str(e),
-            #                                 'traceback': traceback.format_exception(exc_type, exc_value,
-            #                                                                         exc_traceback_obj)}),
-            #                     status=500, mimetype='application/json')
             response = {'retcode': 100, 'retmsg': str(e),
                         'traceback': traceback.format_exception(exc_type, exc_value, exc_traceback_obj)}
             if 'Connection refused' in str(e):

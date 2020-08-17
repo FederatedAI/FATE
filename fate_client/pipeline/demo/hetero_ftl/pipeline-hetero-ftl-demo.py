@@ -1,62 +1,90 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+
+import argparse
+
 from tensorflow.keras import optimizers
 from tensorflow.keras.layers import Dense
 
-from pipeline.backend.config import Backend
-from pipeline.backend.config import WorkMode
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
 from pipeline.component.hetero_ftl import HeteroFTL
-from pipeline.component.input import Input
-from pipeline.component.intersection import Intersection
 from pipeline.interface.data import Data
-from pipeline.interface.model import Model
+from pipeline.component.reader import Reader
+from pipeline.demo.util.demo_util import Config
 
-guest = 9999
-host = 10000
 
-guest_train_data = {"name": "nus_wide_guest", "namespace": "experiment"}
-host_train_data = [{"name": "nus_wide_host", "namespace": "experiment"}]
+def main(config="../config.yaml"):
+    # obtain config
+    config = Config(config)
+    guest = config.guest
+    host = config.host[0]
+    backend = config.backend
+    work_mode = config.work_mode
 
-input_0 = Input(name="train_data")
-print("get input_0's init name {}".format(input_0.name))
 
-pipeline = PipeLine().set_initiator(role='guest', party_id=9999).set_roles(guest=9999, host=host)
-dataio_0 = DataIO(name="dataio_0")
+    guest_train_data = {"name": "nus_wide_guest", "namespace": "experiment"}
+    host_train_data = [{"name": "nus_wide_host", "namespace": "experiment"}]
+    pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
 
-dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense")
-dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
+    reader_0 = Reader(name="reader_0")
+    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
+    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
 
-hetero_ftl_0 = HeteroFTL(name='hetero_ftl_0', epochs=10, alpha=1, batch_size=-1)
-hetero_ftl_0.add_nn_layer(Dense(units=32, activation='sigmoid'))
-hetero_ftl_0.compile(optimizer=optimizers.Adam(lr=0.01))
+    dataio_0 = DataIO(name="dataio_0")
+    dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense")
+    dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
 
-print("get input_0's name {}".format(input_0.name))
-pipeline.add_component(dataio_0, data=Data(data=input_0.data))
-pipeline.add_component(hetero_ftl_0, data=Data(train_data=Data(data=dataio_0.output.data)))
+    hetero_ftl_0 = HeteroFTL(name='hetero_ftl_0', epochs=10, alpha=1, batch_size=-1)
+    hetero_ftl_0.add_nn_layer(Dense(units=32, activation='sigmoid'))
+    hetero_ftl_0.compile(optimizer=optimizers.Adam(lr=0.01))
 
-pipeline.compile()
+    pipeline.add_component(reader_0)
+    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(hetero_ftl_0, data=Data(train_data=Data(data=dataio_0.output.data)))
 
-pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
-             feed_dict={input_0:
-                            {"guest": {9999: guest_train_data},
-                             "host": {
-                                 10000: host_train_data[0]
-                             }
-                             }
+    pipeline.compile()
 
-                        })
+    pipeline.fit(backend=backend, work_mode=work_mode)
 
-# predict
+    """
+    # predict
 
-pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
-                 feed_dict={input_0:
-                                {"guest":
-                                     {9999: guest_train_data},
-                                 "host": {
-                                     10000: host_train_data[0]
-                                 }
-                                 }
-                            })
+    pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
+                     feed_dict={input_0:
+                                    {"guest":
+                                         {9999: guest_train_data},
+                                     "host": {
+                                         10000: host_train_data[0]
+                                     }
+                                     }
+                                })
+            
 
-with open("output.pkl", "wb") as fout:
-    fout.write(pipeline.dump())
+    with open("output.pkl", "wb") as fout:
+        fout.write(pipeline.dump())
+    """
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser("PIPELINE DEMO")
+    parser.add_argument("-config", type=str,
+                        help="config file")
+    args = parser.parse_args()
+    if args.config is not None:
+        main(args.config)
+    else:
+        main()

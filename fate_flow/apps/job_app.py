@@ -67,17 +67,14 @@ def submit_job():
 @manager.route('/stop', methods=['POST'])
 def stop_job():
     job_id = request.json.get('job_id')
+    stop_status = request.json.get("stop_status", "canceled")
     jobs = job_utils.query_job(job_id=job_id)
     if jobs:
-        status_code, response = FederatedScheduler.cancel_job(job=jobs[0])
-        if status_code in [FederatedSchedulingStatusCode.SUCCESS, FederatedSchedulingStatusCode.PARTIAL]:
-            return get_json_result(retcode=RetCode.SUCCESS, retmsg="cancel job success")
+        status_code, response = FederatedScheduler.request_stop_job(job=jobs[0], stop_status=stop_status)
+        if status_code == FederatedSchedulingStatusCode.SUCCESS:
+            return get_json_result(retcode=RetCode.SUCCESS, retmsg="stop job success")
         else:
-            status_code, response = FederatedScheduler.request_stop_job(job=jobs[0], stop_status=JobStatus.FAILED)
-            if status_code == FederatedSchedulingStatusCode.SUCCESS:
-                return get_json_result(retcode=RetCode.SUCCESS, retmsg="stop job success")
-            else:
-                return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="stop job failed:\n{}".format(json_dumps(response)))
+            return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="stop job failed:\n{}".format(json_dumps(response)))
     else:
         return get_json_result(retcode=RetCode.DATA_ERROR, retmsg="can not found job")
 

@@ -75,12 +75,13 @@ def main(config="../config.yaml"):
     print(pipeline.get_component("dataio_0").get_model_param())
     print(pipeline.get_component("hetero_fast_secure_boost_0").get_summary())
 
-
+    """
     # predict
     pipeline.predict(backend=backend, work_mode=work_mode)
 
     with open("output.pkl", "wb") as fout:
         fout.write(pipeline.dump())
+    """
 
 
 if __name__ == "__main__":
