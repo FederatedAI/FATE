@@ -143,12 +143,16 @@ Alogorithm List
 |                              |                           |                       |            |                |             | and model-   |
 |                              |                           |                       |            |                |             | param        |
 +------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
-| `Homo OneHot Encoder`_      | HomoOneHotEncoder          | Build homo secure     | DTable,    | \              | \           | SecureBoost  |
-|                              |                           | boosting module       | values are |                |             | Model,       |
+| `Homo OneHot Encoder`_      | HomoOneHotEncoder          | Build homo onehot     | DTable,    | \              | \           | SecureBoost  |
+|                              |                           | encoder module        | values are |                |             | Model,       |
 |                              |                           | through multiple      | instances. |                |             | consists of  |
 |                              |                           | parties.              |            |                |             | model-meta   |
 |                              |                           |                       |            |                |             | and model-   |
 |                              |                           |                       |            |                |             | param        |
++------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
+| `Data Split`_                | Data Split                | Split one data table  | 3 Tables,  | \              | \           |              |
+|                              |                           | into 3 tables by      | values are |                |             |              |
+|                              |                           | given ratio or count. | instances. |                |             |              |
 +------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
 
 
@@ -173,6 +177,7 @@ Alogorithm List
 .. _Hetero Pearson: statistic/correlation/README.rst
 .. _Hetero-NN: nn/hetero_nn/README.rst
 .. _Homo Secure Boosting: tree/README.rst
+.. _Data Split: model_selection/data_split/README.rst
 .. _Homo OneHot Encoder: feature/README.rst
 
 
@@ -194,6 +199,7 @@ Alogorithm List
    statistic/correlation/README
    nn/hetero_nn/README
    model_selection/stepwise/README
+   data_split/README
 
 
 
