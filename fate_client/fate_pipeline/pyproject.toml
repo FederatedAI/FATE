@@ -1,15 +1,15 @@
 [tool.poetry]
-name = "fate_client"
+name = "fate_pipeline"
 version = "0.1.0"
-description = "Clients for FATE, including flow_client, flow_sdk, fate_pipeline and fate_testsuite"
+description = "pipeline client for FATE"
 authors = ["FederatedAI <contact@FedAI.org>"]
 license = "Apache-2.0"
-readme = "README.rst"
+readme = "README.md"
 
 homepage = "https://fate.fedai.org/"
 repository = "https://github.com/FederatedAI/FATE"
 documentation = "https://fate.readthedocs.io/en/latest/?badge=latest"
-keywords = ["FATE", "clients", "Federated Learning"]
+keywords = ["FATE", "pipeline", "Federated Learning"]
 
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -22,15 +22,17 @@ classifiers = [
 ]
 
 packages = [
+    { include = "pipeline" }
 ]
 
 [tool.poetry.dependencies]
 python = "^3.6"
-flow_client = "^0.1.0"
+"ruamel.yaml" = "^0.16.10"
+loguru = "^0.5.1"
+tensorflow = "1.15.2"
+torch = "1.4.0"
+pyyaml = "^5.3.1"
 flow_sdk = "^0.1.0"
-fate_pipeline = "^0.1.0"
-fate_testsuite = "^0.1.0"
-
 
 [tool.poetry.dev-dependencies]
 
