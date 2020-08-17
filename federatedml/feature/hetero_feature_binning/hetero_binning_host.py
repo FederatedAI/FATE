@@ -70,7 +70,6 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         encrypted_bin_sum = self.__static_encrypted_bin_label(data_bin_table, encrypted_label_table,
                                                               self.bin_inner_param.bin_cols_map, split_points)
         # LOGGER.debug("encrypted_bin_sum: {}".format(encrypted_bin_sum))
-
         if need_shuffle:
             encrypted_bin_sum = self.binning_obj.shuffle_static_counts(encrypted_bin_sum)
 
