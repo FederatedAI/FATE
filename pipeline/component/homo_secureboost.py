@@ -31,6 +31,6 @@ class HomoSecureBoost(Component, HomoSecureBoostParam):
 
         HomoSecureBoostParam.__init__(self, **new_kwargs)
         self.output = Output(self.name)
-        self._module_name = "HomoSecureBoost"
+        self._module_name = "HomoSecureboost"
 
 

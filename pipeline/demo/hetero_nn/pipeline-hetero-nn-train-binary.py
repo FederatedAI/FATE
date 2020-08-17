@@ -53,11 +53,12 @@ def main(config="../config.yaml"):
 
     intersection_0 = Intersection(name="intersection_0")
 
-    hetero_nn_0 = HeteroNN(name="hetero_nn_0", epochs=10)
+    hetero_nn_0 = HeteroNN(name="hetero_nn_0", epochs=10, interactive_layer_lr=0.15)
     hetero_nn_0.add_bottom_model(Dense(units=2, input_shape=(10,), activation="relu"))
-    hetero_nn_0.set_interactve_layer(Dense(units=2, input_shape=(2,), activation="relu"))
+    hetero_nn_0.add_bottom_model(Dense(units=2, activation="relu"))
+    hetero_nn_0.set_interactve_layer(Dense(units=2, input_shape=(2,)))
     hetero_nn_0.add_top_model(Dense(units=1, input_shape=(2,), activation="sigmoid"))
-    hetero_nn_0.compile(optimizer=optimizers.SGD(lr=0.1), metrics=["AUC"], loss="binary_crossentropy")
+    hetero_nn_0.compile(optimizer=optimizers.SGD(lr=0.15), metrics=["AUC"], loss="binary_crossentropy")
     hetero_nn_1 = HeteroNN(name="hetero_nn_1")
 
     evaluation_0 = Evaluation(name="evaluation_0")

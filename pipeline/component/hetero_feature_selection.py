@@ -30,7 +30,7 @@ class HeteroFeatureSelection(Component, FeatureSelectionParam):
         new_kwargs = self.erase_component_base_param(**kwargs)
 
         FeatureSelectionParam.__init__(self, **new_kwargs)
-        self.output = Output(self.name, has_model=False)
+        self.output = Output(self.name)
         self._module_name = "HeteroFeatureSelection"
 
 

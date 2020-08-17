@@ -58,6 +58,7 @@ class SummaryStatistics(object):
 
         where i is the current count, and S_i is the current expectation of x
         """
+        rows = np.array(rows, dtype=float)
         if self.abnormal_list is None:
             self.count += 1
             self.sum += rows

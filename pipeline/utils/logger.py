@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
+import os
 import sys
 from pathlib import Path
 
@@ -21,8 +22,13 @@ import loguru
 
 from pipeline.backend.config import LogPath, LogFormat
 
+info_log_path = os.path.join(LogPath.log_directory(), LogPath.INFO)
+debug_log_path = os.path.join(LogPath.log_directory(), LogPath.DEBUG)
+error_log_path = os.path.join(LogPath.log_directory(), LogPath.ERROR)
+
 LOGGER = loguru.logger
+LOGGER.remove()
 LOGGER.add(sys.stderr, level="INFO", colorize=True, format=LogFormat.SIMPLE)
-LOGGER.add(Path(LogPath.INFO).resolve(), level="INFO", rotation="500MB", format=LogFormat.NORMAL)
-LOGGER.add(Path(LogPath.DEBUG).resolve(), level="DEBUG", rotation="500MB", format=LogFormat.NORMAL)
-LOGGER.add(Path(LogPath.ERROR).resolve(), level="ERROR", rotation="500MB", format=LogFormat.NORMAL, backtrace=True)
+LOGGER.add(Path(info_log_path).resolve(), level="INFO", rotation="500MB", format=LogFormat.NORMAL)
+LOGGER.add(Path(debug_log_path).resolve(), level="DEBUG", rotation="500MB", format=LogFormat.NORMAL)
+LOGGER.add(Path(error_log_path).resolve(), level="ERROR", rotation="500MB", format=LogFormat.NORMAL, backtrace=True)

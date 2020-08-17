@@ -23,6 +23,7 @@ from pathlib import Path
 
 import loguru
 import yaml
+import sys
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
@@ -73,8 +74,9 @@ def main():
 
     # run demos
     stream = StreamToLogger()
-    with contextlib.redirect_stdout(stream):
-        summaries = run_demos(paths, conf, summaries_base=Path(args.name).resolve())
+    # with contextlib.redirect_stdout(stream):
+    #    run_demos(paths, conf)
+    run_demos(paths, conf)
 
 
 def load_conf(args):
@@ -87,6 +89,7 @@ def load_conf(args):
         conf["work_mode"] = args.work_mode
     return conf
 
+
 def _add_logger(name):
     path = Path(name).joinpath("logs")
     if path.exists() and not path.is_dir():
@@ -97,9 +100,9 @@ def _add_logger(name):
     simple_log_format = '<green>[{time:HH:mm:ss}]</green><level>{message}</level>'
     log_format = '<green>{time:YYYY-MM-DD HH:mm:ss}</green> | ' \
                  '<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
-    # loguru.logger.add(sys.stderr, level="INFO", colorize=True, format=simple_log_format)
+    loguru.logger.add(sys.stderr, level="INFO", colorize=True, format=simple_log_format)
     loguru.logger.add(f"{path.joinpath('INFO.log')}", level="INFO", format=log_format)
-    loguru.logger.add(f"{path.joinpath('INFO.log')}", level="DEBUG", format=log_format)
+    loguru.logger.add(f"{path.joinpath('DEBUG.log')}", level="DEBUG", format=log_format)
 
 
 def _find_demo_files(path):
@@ -115,7 +118,7 @@ def _find_demo_files(path):
     return [p.resolve() for p in paths]
 
 
-def run_demos(demos, conf, summaries_base):
+def run_demos(demos, conf):
     temp_config = tempfile.NamedTemporaryFile('w', suffix='.yaml')
     with temp_config as f:
         yaml.dump(conf, f, default_flow_style=False)
@@ -125,6 +128,7 @@ def run_demos(demos, conf, summaries_base):
             spec = importlib.util.spec_from_loader(loader.name, loader)
             demo_module = importlib.util.module_from_spec(spec)
             loader.exec_module(demo_module)
+            LOGGER.info(f"Running demo {module_name}...")
             demo_module.main(temp_config.name)
 
 
