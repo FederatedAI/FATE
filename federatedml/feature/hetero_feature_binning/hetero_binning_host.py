@@ -46,6 +46,7 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
 
         if not self.model_param.local_only:
             self._sync_init_bucket(data_instances, split_points)
+            LOGGER.debug(f"x0_split_point_len: {len(split_points['x0'])}")
             if self.model_param.method == consts.OPTIMAL:
                 self.optimal_binning_sync()
 
@@ -70,7 +71,7 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         encrypted_bin_sum = self.__static_encrypted_bin_label(data_bin_table, encrypted_label_table,
                                                               self.bin_inner_param.bin_cols_map, split_points)
         # LOGGER.debug("encrypted_bin_sum: {}".format(encrypted_bin_sum))
-
+        LOGGER.debug(f"x0_length: {len(encrypted_bin_sum['x0'])}")
         if need_shuffle:
             encrypted_bin_sum = self.binning_obj.shuffle_static_counts(encrypted_bin_sum)
 
@@ -103,6 +104,8 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
                               cols_dict=cols_dict)
         result_sum = data_bin_with_label.mapPartitions(f)
         encrypted_bin_sum = result_sum.reduce(self.binning_obj.aggregate_partition_label)
+        LOGGER.debug(f"__static_encrypted_bin_label x0_length: {len(encrypted_bin_sum['x0'])},"
+                     f"split_points: {len(split_points['x0'])}")
 
         for col_name, bin_results in encrypted_bin_sum.items():
             for b in bin_results:
@@ -113,6 +116,7 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         bucket_idx = self.transfer_variable.bucket_idx.get(idx=0)
         LOGGER.debug("In optimal_binning_sync, received bucket_idx: {}".format(bucket_idx))
         original_split_points = self.binning_obj.bin_results.all_split_points
+        LOGGER.debug(f"original_split_points_x0: {len(original_split_points['x0'])}")
         for encoded_col_name, b_idx in bucket_idx.items():
             col_name = self.bin_inner_param.decode_col_name(encoded_col_name)
             ori_sp_list = original_split_points.get(col_name)

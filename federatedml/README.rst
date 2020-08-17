@@ -143,7 +143,7 @@ Alogorithm List
 |                              |                           |                       |            |                |             | and model-   |
 |                              |                           |                       |            |                |             | param        |
 +------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
-| `Homo OneHot Encoder`_      | HomoOneHotEncoder          | Build homo onehot     | DTable,    | \              | \           | SecureBoost  |
+| `Homo OneHot Encoder`_       | HomoOneHotEncoder         | Build homo onehot     | DTable,    | \              | \           | Homo OneHot  |
 |                              |                           | encoder module        | values are |                |             | Model,       |
 |                              |                           | through multiple      | instances. |                |             | consists of  |
 |                              |                           | parties.              |            |                |             | model-meta   |
