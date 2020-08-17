@@ -47,6 +47,9 @@ class Session(object):
         if storage_engine == StorageEngine.EGGROLL:
             from fate_arch.storage.eggroll import StorageSession
             return StorageSession(session_id=session_id, options=kwargs.get("options", {}))
+        if storage_engine == StorageEngine.STANDALONE:
+            from fate_arch.storage.standalone import StorageSession
+            return StorageSession(session_id=session_id, options=kwargs.get("options", {}))
         else:
             raise NotImplementedError(f"can not be initialized with storage engine: {storage_engine}")
 
@@ -61,7 +64,11 @@ class Session(object):
         dest_table_engine = None
         if src_table_meta.get_engine() not in Relationship.CompToStore.get(computing_engine, []):
             if computing_engine == ComputingEngine.STANDALONE:
-                pass
+                from fate_arch.storage import EggRollStorageType
+                dest_table_address = StorageTableMeta.create_address(storage_engine=StorageEngine.STANDALONE,
+                                                                     address_dict=dict(name=dest_name,
+                                                                                       namespace=dest_namespace,
+                                                                                       storage_type=EggRollStorageType.ROLLPAIR_LMDB))
             elif computing_engine == ComputingEngine.EGGROLL:
                 from fate_arch.storage.eggroll import StorageSession
                 from fate_arch.storage import EggRollStorageType
