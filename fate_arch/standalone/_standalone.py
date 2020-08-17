@@ -268,8 +268,9 @@ class Session(object):
     def load(self, name, namespace):
         return _load_table(session=self, name=name, namespace=namespace)
 
-    def create_table(self, name, namespace, partitions):
-        return _create_table(session=self, name=name, namespace=namespace, partitions=partitions)
+    def create_table(self, name, namespace, partitions, need_cleanup, error_if_exist):
+        return _create_table(session=self, name=name, namespace=namespace, partitions=partitions,
+                             need_cleanup=need_cleanup, error_if_exist=error_if_exist)
 
     # noinspection PyUnusedLocal
     def parallelize(self, data: Iterable, partition: int, include_key: bool = False, **kwargs):
@@ -278,9 +279,6 @@ class Session(object):
         table = _create_table(session=self, name=str(uuid.uuid1()), namespace=self.session_id, partitions=partition)
         table.put_all(data)
         return table
-
-    def __getstate__(self):
-        pass
 
     def cleanup(self, name, namespace):
         data_path = _get_data_dir()
