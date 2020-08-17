@@ -189,7 +189,7 @@ class _SgdOptimizer(_Optimizer):
         learning_rate = self.decay_learning_rate()
 
         delta_grad = learning_rate * grad
-        LOGGER.debug("In sgd optimizer, learning_rate: {}, delta_grad: {}".format(learning_rate, delta_grad))
+        # LOGGER.debug("In sgd optimizer, learning_rate: {}, delta_grad: {}".format(learning_rate, delta_grad))
 
         return delta_grad
 
@@ -242,9 +242,9 @@ class _NesterovMomentumSGDOpimizer(_Optimizer):
         v = self.nesterov_momentum_coeff * self.opt_m - learning_rate * grad
         delta_grad = self.nesterov_momentum_coeff * self.opt_m - (1 + self.nesterov_momentum_coeff) * v
         self.opt_m = v
-        LOGGER.debug('In nesterov_momentum, opt_m: {}, v: {}, delta_grad: {}'.format(
-            self.opt_m, v, delta_grad
-        ))
+        # LOGGER.debug('In nesterov_momentum, opt_m: {}, v: {}, delta_grad: {}'.format(
+        #     self.opt_m, v, delta_grad
+        # ))
         return delta_grad
 
 
@@ -291,7 +291,7 @@ class _StochasticQuansiNewtonOptimizer(_Optimizer):
             delta_grad = learning_rate * grad
         else:
             delta_grad = learning_rate * self.__opt_hess.dot(grad)
-            LOGGER.debug("In sqn updater, grad: {}, delta_grad: {}".format(grad, delta_grad))
+            # LOGGER.debug("In sqn updater, grad: {}, delta_grad: {}".format(grad, delta_grad))
         return delta_grad
 
     def set_hess_matrix(self, hess_matrix):
