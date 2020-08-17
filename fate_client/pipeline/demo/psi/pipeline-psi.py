@@ -1,55 +1,78 @@
-from pipeline.backend.config import Backend
-from pipeline.backend.config import WorkMode
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+
+import argparse
+
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
-from pipeline.component.input import Input
-from pipeline.component.psi import PSI
+from pipeline.component.reader import Reader
+from pipeline.demo.util.demo_util import Config
 from pipeline.interface.data import Data
+from pipeline.component.psi import PSI
 from pipeline.interface.model import Model
 
-guest = 9999
-host = 10000
+def main(config="../config.yaml"):
+    # obtain config
+    config = Config(config)
+    guest = config.guest
+    host = config.host[0]
+    backend = config.backend
+    work_mode = config.work_mode
 
-guest_train_data = {"name": "breast_homo_guest", "namespace": "experiment"}
-host_train_data = {"name": "breast_homo_host", "namespace": "experiment"}
+    guest_train_data = {"name": "breast_homo_guest", "namespace": "experiment"}
+    host_train_data = {"name": "breast_homo_host", "namespace": "experiment"}
 
-input_0 = Input(name="train_data_0")
-input_1 = Input(name="train_data_1")
+    pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
 
-pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host, )
-dataio_0 = DataIO(name="dataio_0")
-dataio_1 = DataIO(name="dataio_1")
+    reader_0 = Reader(name="reader_0")
+    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
+    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
 
-dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=False, output_format="dense")
-dataio_1.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=False, output_format="dense")
+    reader_1 = Reader(name="reader_1")
+    reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
+    reader_1.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
 
-dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False, output_format="dense")
-dataio_1.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False, output_format="dense")
+    dataio_0 = DataIO(name="dataio_0")
+    dataio_1 = DataIO(name="dataio_1")
 
-psi_0 = PSI(name='psi_0', max_bin_num=20)
+    dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=False, output_format="dense")
+    dataio_1.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=False, output_format="dense")
 
-pipeline.add_component(dataio_0, data=Data(data=input_0.data))
-pipeline.add_component(dataio_1, data=Data(data=input_1.data), model=Model(dataio_0.output.model))
-pipeline.add_component(psi_0, data=Data(train_data=dataio_0.output.data, validate_data=dataio_1.output.data))
+    dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False, output_format="dense")
+    dataio_1.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False, output_format="dense")
 
-pipeline.compile()
+    psi_0 = PSI(name='psi_0', max_bin_num=20)
 
-pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
-             feed_dict={
-                 input_0: {
-                     "guest": {
-                        9999: guest_train_data
-                     },
-                     "host": {
-                        10000: guest_train_data
-                     }
-                 },
-                 input_1: {
-                     "guest": {
-                        9999: host_train_data
-                     },
-                     "host": {
-                        10000: host_train_data
-                     }
-                 }
-             })
+    pipeline.add_component(reader_0)
+    pipeline.add_component(reader_1)
+    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data), model=Model(dataio_0.output.model))
+    pipeline.add_component(psi_0, data=Data(train_data=dataio_0.output.data, validate_data=dataio_1.output.data))
+
+    pipeline.compile()
+
+    pipeline.fit(backend=backend, work_mode=work_mode)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser("PIPELINE DEMO")
+    parser.add_argument("-config", type=str,
+                        help="config file")
+    args = parser.parse_args()
+    if args.config is not None:
+        main(args.config)
+    else:
+        main()

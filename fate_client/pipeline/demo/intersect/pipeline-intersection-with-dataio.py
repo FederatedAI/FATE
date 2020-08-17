@@ -24,7 +24,7 @@ from pipeline.demo.util.demo_util import Config
 from pipeline.interface.data import Data
 
 
-def main(config="./config.yaml"):
+def main(config="../config.yaml"):
     # obtain config
     config = Config(config)
     guest = config.guest
