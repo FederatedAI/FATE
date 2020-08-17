@@ -77,9 +77,6 @@ class JobSaver(object):
                 attr_name = 'f_%s' % k
                 if hasattr(entity_model, attr_name):
                     setattr(obj, attr_name, v)
-            obj.f_status_level = StatusSet.get_level(obj.f_status)
-            if hasattr(entity_model, "f_party_status"):
-                obj.f_party_status_level = StatusSet.get_level(obj.f_party_status)
             try:
                 rows = obj.save(force_insert=True)
                 if rows != 1:
