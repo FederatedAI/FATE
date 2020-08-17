@@ -16,6 +16,7 @@
 
 from pipeline.param.data_split_param import DataSplitParam
 from pipeline.component.component_base import Component
+from pipeline.interface.input import Input
 from pipeline.interface.output import Output
 from pipeline.utils.logger import LOGGER
 
@@ -29,6 +30,7 @@ class HeteroDataSplit(Component, DataSplitParam):
         new_kwargs = self.erase_component_base_param(**kwargs)
 
         DataSplitParam.__init__(self, **new_kwargs)
+        self.input = Input(self.name, )
         self.output = Output(self.name, has_model=False, data_type="multi")
         self._module_name = "HeteroDataSplit"
 

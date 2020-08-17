@@ -16,6 +16,7 @@
 
 from pipeline.param.evaluation_param import EvaluateParam
 from pipeline.component.component_base import Component
+from pipeline.interface.input import Input
 from pipeline.interface.output import Output
 from pipeline.utils.logger import LOGGER
 
@@ -29,6 +30,7 @@ class Evaluation(Component, EvaluateParam):
         new_kwargs = self.erase_component_base_param(**kwargs)
 
         EvaluateParam.__init__(self, **new_kwargs)
+        self.input = Input(self.name)
         self.output = Output(self.name, has_model=False)
         self._module_name = "Evaluation"
 

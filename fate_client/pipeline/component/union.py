@@ -16,6 +16,7 @@
 
 from pipeline.param.union_param import UnionParam
 from pipeline.component.component_base import Component
+from pipeline.interface.input import Input
 from pipeline.interface.output import Output
 from pipeline.utils.logger import LOGGER
 
@@ -30,6 +31,7 @@ class Union(Component, UnionParam):
         new_kwargs = self.erase_component_base_param(**kwargs)
 
         UnionParam.__init__(self, **new_kwargs)
+        self.input = Input(self.name)
         self.output = Output(self.name, has_model=False)
         self._module_name = "Union"
 

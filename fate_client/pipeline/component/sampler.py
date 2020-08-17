@@ -16,6 +16,7 @@
 
 from pipeline.param.sample_param import SampleParam
 from pipeline.component.component_base import Component
+from pipeline.interface.input import Input
 from pipeline.interface.output import Output
 from pipeline.utils.logger import LOGGER
 
@@ -29,6 +30,7 @@ class FederatedSample(Component, SampleParam):
         new_kwargs = self.erase_component_base_param(**kwargs)
 
         SampleParam.__init__(self, **new_kwargs)
+        self.input = Input(self.name)
         self.output = Output(self.name)
         self._module_name = "FederatedSample"
 

@@ -16,6 +16,7 @@
 
 from pipeline.component.component_base import Component
 from pipeline.component.nn.models.sequantial import Sequential
+from pipeline.interface.input import Input
 from pipeline.interface.output import Output
 from pipeline.utils.tools import extract_explicit_parameter
 
@@ -45,6 +46,7 @@ class HomoNN(Component):
         self.metrics = None
         self.nn_define = None
         self.config_type = "keras"
+        self.input = Input(self.name, data_type="multi")
         self.output = Output(self.name, data_type='single')
         self._module_name = "HomoNN"
         self._model = Sequential()

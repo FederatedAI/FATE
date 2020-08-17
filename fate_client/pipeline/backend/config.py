@@ -49,6 +49,13 @@ class StatusCode(object):
     Cancel = 2
 
 
+class IODataType:
+    SINGLE = "data"
+    TRAIN = "train_data"
+    VALIDATE = "validate_data"
+    TEST = "test_data"
+
+
 class LogPath(object):
     @classmethod
     def log_directory(cls):

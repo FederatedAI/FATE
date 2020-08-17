@@ -16,6 +16,7 @@
 
 from pipeline.param.logistic_regression_param import HomoLogisticParam
 from pipeline.component.component_base import Component
+from pipeline.interface.input import Input
 from pipeline.interface.output import Output
 from pipeline.utils.logger import LOGGER
 
@@ -30,6 +31,7 @@ class HomoLR(Component, HomoLogisticParam):
         new_kwargs = self.erase_component_base_param(**kwargs)
 
         HomoLogisticParam.__init__(self, **new_kwargs)
+        self.input = Input(self.name, data_type="multi")
         self.output = Output(self.name)
         self._module_name = "HomoLR"
 
