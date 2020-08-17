@@ -4,7 +4,7 @@
             "file": "examples/data/breast_homo_guest.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "host_expect",
+            "table_name": "expect",
             "namespace": "experiment",
             "role": "host_0"
         },
@@ -12,7 +12,7 @@
             "file": "examples/data/breast_homo_host.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "host_actual",
+            "table_name": "actual",
             "namespace": "experiment",
             "role": "host_0"
         },
@@ -20,7 +20,7 @@
             "file": "examples/data/breast_homo_guest.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "guest_expect",
+            "table_name": "expect",
             "namespace": "experiment",
             "role": "guest_0"
         },
@@ -28,7 +28,7 @@
             "file": "examples/data/breast_homo_host.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "guest_actual",
+            "table_name": "actual",
             "namespace": "experiment",
             "role": "guest_0"
         }

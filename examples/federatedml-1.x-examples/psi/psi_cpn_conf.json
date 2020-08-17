@@ -14,8 +14,8 @@
         "guest": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "guest_expect", "namespace": "experiment"}],
-                    "eval_data": [{"name": "guest_actual", "namespace": "experiment"}]
+                    "train_data": [{"name": "expect", "namespace": "experiment"}],
+                    "eval_data": [{"name": "actual", "namespace": "experiment"}]
                 }
             },
             "dataio_0":{
@@ -28,8 +28,8 @@
         "host": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "host_expect", "namespace": "experiment"}],
-                    "eval_data": [{"name": "host_actual", "namespace": "experiment"}]
+                    "train_data": [{"name": "expect", "namespace": "experiment"}],
+                    "eval_data": [{"name": "actual", "namespace": "experiment"}]
                 }
             },
              "dataio_0":{
