@@ -36,31 +36,42 @@ def main(config="../config.yaml"):
     backend = config.backend
     work_mode = config.work_mode
 
-    guest_train_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
-    host_train_data = {"name": "breast_hetero_host", "namespace": "experiment"}
+    dense_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
+    tag_data = {"name": "tag_value_1", "namespace": "experiment"}
 
     pipeline_upload = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
     # add upload data info
     # csv file name from python path & file name
-    pipeline_upload.add_upload_data(os.path.join(SITE_PATH, "examples/data/breast_hetero_guest.csv"),
-                             table_name=guest_train_data["name"],             # table name
-                             namespace=guest_train_data["namespace"])         # namespace
-    pipeline_upload.add_upload_data(os.path.join(SITE_PATH, "examples/data/breast_hetero_host.csv"),
-                             table_name=host_train_data["name"],
-                             namespace=host_train_data["namespace"])
+    pipeline_upload.add_upload_data(file=os.path.join(SITE_PATH, "examples/data/breast_hetero_guest.csv"),
+                                    table_name=dense_data["name"],             # table name
+                                    namespace=dense_data["namespace"],         # namespace
+                                    head=0, partition=8)
+    pipeline_upload.add_upload_data(file=os.path.join(SITE_PATH, "examples/data/tag_value_1000_140.csv"),
+                                    table_name=tag_data["name"],
+                                    namespace=tag_data["namespace"],
+                                    head=0, partition=8)
     # upload all data
-    pipeline_upload.upload(work_mode=work_mode, drop=-1)
+    pipeline_upload.upload(work_mode=work_mode, drop=1)
 
-    pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
+    pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest)
 
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
-    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
+    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=dense_data)
 
-    dataio_0 = DataIO(name="dataio_0", with_label=False, tag_with_value=True, output_format="dense")
+    reader_1 = Reader(name="reader_1")
+    reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=tag_data)
+
+    dataio_0 = DataIO(name="dataio_0", with_label=True, label_name="y", output_format="dense",
+                      missing_fill=False, outlier_replace=False)
+
+    dataio_1 = DataIO(name="dataio_1", with_label=False, input_format="tag", output_format="dense",
+                      tag_with_value=True, delimitor=",")
+
 
     pipeline.add_component(reader_0)
+    pipeline.add_component(reader_1)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data))
 
     pipeline.compile()
 
