@@ -20,6 +20,7 @@ from fate_flow.operation.job_saver import JobSaver
 from fate_flow.utils import job_utils
 from fate_flow.db.db_models import DB, ResourceRegistry, ResourceRecord
 from fate_arch.common.conf_utils import get_base_config
+from fate_flow.settings import stat_logger
 
 
 class ResourceManager(object):
@@ -29,6 +30,7 @@ class ResourceManager(object):
         # eggroll
         with DB.connection_context():
             resources = ResourceRegistry.select().where(ResourceRegistry.f_engine_id == "default_computing")
+            is_insert = False
             if resources:
                 resource = resources[0]
             else:
@@ -36,12 +38,21 @@ class ResourceManager(object):
                 resource.f_create_time = base_utils.current_timestamp()
                 resource.f_remaining_cores = get_base_config("computing", {}).get("cores", None)
                 resource.f_remaining_memory = get_base_config("computing", {}).get("memory", 0)
+                is_insert = True
             resource.f_engine_id = "default_computing"
             resource.f_engine_type = get_base_config("computing", {}).get("engine", {})
             resource.f_engine_address = get_base_config("computing", {}).get("address", {})
             resource.f_cores = get_base_config("computing", {}).get("cores", None)
             resource.f_memory = get_base_config("computing", {}).get("memory", 0)
-            resource.save()
+            if is_insert:
+                try:
+                    resource.save(force_insert=True)
+                except Exception as e:
+                    stat_logger.warning(e)
+                stat_logger.info(f"initialize default computing engine")
+            else:
+                resource.save()
+                stat_logger.info(f"update default computing engine")
 
     @classmethod
     def apply_for_resource_to_job(cls, job_id, role, party_id):

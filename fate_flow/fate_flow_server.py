@@ -45,6 +45,7 @@ from fate_flow.scheduler import schedule_trigger
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.constant import WorkMode, ProcessRole
 from fate_flow.manager import queue_manager
+from fate_flow.manager.resource_manager import ResourceManager
 from fate_flow.settings import IP, GRPC_PORT, CLUSTER_STANDALONE_JOB_SERVER_PORT, _ONE_DAY_IN_SECONDS, \
     MAX_CONCURRENT_JOB_RUN, stat_logger, API_VERSION
 from fate_flow.utils import job_utils
@@ -52,7 +53,6 @@ from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryServicer
 from fate_flow.utils.service_utils import ServiceUtils
-from fate_arch.common import base_utils
 
 '''
 Initialize the manager
@@ -109,6 +109,7 @@ if __name__ == '__main__':
     trigger = job_trigger.JobTrigger(queue=RuntimeConfig.JOB_QUEUE, concurrent_num=MAX_CONCURRENT_JOB_RUN)
     trigger.start()
     schedule_trigger.ScheduleTrigger(interval=1000).start()
+    ResourceManager.initialize()
     # start grpc server
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),
                          options=[(cygrpc.ChannelArgKey.max_send_message_length, -1),
