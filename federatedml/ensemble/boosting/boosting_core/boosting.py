@@ -53,7 +53,6 @@ class Boosting(ModelBase, ABC):
         self.boosting_round = None
         self.subsample_feature_rate = None
         self.n_iter_no_change = None
-        self.early_stopping_rounds = -1
         self.tol = 0.0
         self.bin_num = None
         self.calculated_mode = None
