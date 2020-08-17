@@ -130,12 +130,12 @@ def export(ctx, **kwargs):
                     for chunk in response.iter_content(1024):
                         if chunk:
                             fw.write(chunk)
-                response = {'retcode': 0,
-                            'file': archive_file_path,
-                            'retmsg': 'download successfully, please check {}'.format(archive_file_path)}
+                response_dict = {'retcode': 0,
+                                 'file': archive_file_path,
+                                 'retmsg': 'download successfully, please check {}'.format(archive_file_path)}
             else:
-                response = response.json
-        prettify(response.json() if isinstance(response, requests.models.Response) else response)
+                response_dict = response.json() if isinstance(response, requests.models.Response) else response.json
+        prettify(response_dict)
     else:
         access_server('post', ctx, 'model/store', config_data)
 

@@ -67,5 +67,4 @@ def query(ctx, **kwargs):
         flow task query -cpn hetero_feature_binning_0 -s success
     """
     config_data, dsl_data = preprocess(**kwargs)
-    response = access_server('post', ctx, 'job/task/query', config_data, False)
-    prettify(response.json() if isinstance(response, requests.models.Response) else response)
+    access_server('post', ctx, 'job/task/query', config_data, False)
