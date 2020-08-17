@@ -35,9 +35,9 @@ def main(config="../config.yaml"):
     backend = config.backend
     work_mode = config.work_mode
 
-    guest_train_data = {"name": "nus_wide_guest", "namespace": "hetero"}
-    host_train_data = {"name": "nus_wide_host", "namespace": "hetero"}
 
+    guest_train_data = {"name": "nus_wide_guest", "namespace": "experiment"}
+    host_train_data = [{"name": "nus_wide_host", "namespace": "experiment"}]
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
 
     reader_0 = Reader(name="reader_0")
