@@ -35,8 +35,8 @@ class HeteroFTL(Component):
 
         explicit_parameters = kwargs["explict_parameters"]
         explicit_parameters["optimizer"] = None
-        explicit_parameters["loss"] = None
-        explicit_parameters["metrics"] = None
+        # explicit_parameters["loss"] = None
+        # explicit_parameters["metrics"] = None
         explicit_parameters["nn_define"] = None
         explicit_parameters["config_type"] = "keras"
         Component.__init__(self, **explicit_parameters)

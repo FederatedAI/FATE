@@ -14,8 +14,8 @@ from pipeline.interface.model import Model
 guest = 9999
 host = 10000
 
-guest_train_data = {"name": "nus_wide_guest", "namespace": "hetero"}
-host_train_data = [{"name": "nus_wide_host", "namespace": "hetero"}]
+guest_train_data = {"name": "nus_wide_guest", "namespace": "experiment"}
+host_train_data = [{"name": "nus_wide_host", "namespace": "experiment"}]
 
 input_0 = Input(name="train_data")
 print("get input_0's init name {}".format(input_0.name))

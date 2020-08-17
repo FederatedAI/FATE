@@ -255,7 +255,7 @@ class FTLGuest(FTL):
 
         return summary
 
-    def fit(self, data_inst, validate_data):
+    def fit(self, data_inst, validate_data=None):
 
         LOGGER.info('start to fit a ftl model, '
                     'run mode is {},'
@@ -319,7 +319,7 @@ class FTLGuest(FTL):
                 self.phi, self.phi_product, self.overlap_ua, self.send_components = self.batch_compute_components(
                     data_loader)
 
-            # check early_stopping
+            # check early_stopping_rounds
             if self.validation_strategy is not None:
                 self.validation_strategy.validate(self, epoch_idx)
                 if self.validation_strategy.need_stop():
