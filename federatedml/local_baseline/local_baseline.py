@@ -21,7 +21,6 @@ import copy
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 
-from arch.api import session
 from arch.api.utils import log_utils
 from federatedml.model_base import ModelBase
 from federatedml.param.local_baseline_param import LocalBaselineParam
@@ -31,7 +30,6 @@ from federatedml.util import abnormal_detection
 from federatedml.util.io_check import assert_io_num_rows_equal
 
 LOGGER = log_utils.getLogger()
-session.init("baseline")
 
 
 class LocalBaseline(ModelBase):
