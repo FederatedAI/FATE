@@ -181,7 +181,7 @@ Param
 Hetero Complete Secureboost
 -----------------------
 
-Now hetero secureboost add a new option: complete_secure. Once enabled, the boosting model will only use guest features
+Now hetero secureboost adds a new option: complete_secure. Once enabled, the boosting model will only use guest features
 to build the first decision tree. This can avoid label leakages, accord to `[SecureBoost: A Lossless Federated Learning Framework]. <https://arxiv.org/abs/1901.08755>`_
 
        .. figure:: images/complete_secure.png
@@ -196,18 +196,19 @@ Hetero Fast Secureboost
 
 We support Hetero Fast SecureBoost, in abbreviation, fast sbt, in FATE-1.5.
 The fast sbt uses guest features and host features alternately to build trees, in order to save encryption costs and
-communication costs. In fast sbt, we support **MIX** mode and **LAYERED** mode and they use different strategies while building decision trees.
+communication costs. In fast sbt, we support **MIX** mode and **LAYERED** mode and they use different strategies
+while building decision trees.
 
 MIX mode
 ^^^^^^^^
 In mix mode, we offer a new parameter k. Every participated party will build k trees using their local features, and this
-procedure will be repeated until reach the max tree number. Figure xx illustrates the mix mode.
+procedure will be repeated until reach the max tree number. Figure 5 illustrates the mix mode.
 
 While building a guest tree, the guest party side simply computes g/h and finds the best split points, other host parties will
 skip this tree and wait. While building a host tree, the related host party will receive encrypted g/h and find the best
 split points with the assistant of the guest party. The structures of host trees and split points will be preserved on
 the host side while leaf weights will be preserved on the guest side. In this way, encryption and communication costs
-are reduced by half.
+are reduced by half. (If there are two parties)
 
        .. figure:: images/mix_tree.png
           :align: center
@@ -248,8 +249,8 @@ host layers locally.
 
           Figure 8: layered mode training and predicting
 
-According our experiments on our several standard datasets, mix mode and layered mode of fast sbt can still give
-similar performances (sometimes even better)
+According to experiments on our standard datasets, mix mode and layered mode of fast sbt can still give
+performances (sometimes even better) equivalent to standard hetero secureboost,
 even the training data is unbalanced distributed in different parties or contains noise features. (Binary, multi-class,
 and regression tasks are tested)
 
@@ -258,7 +259,7 @@ Optimization in learning
 
 * The fast sbt uses guest features and host features alternately by trees/layers to reduce encryption and communication
 costs.
-* Only need one communication round.
+* Prediction only needs one communication round.
 
 
 Applications
