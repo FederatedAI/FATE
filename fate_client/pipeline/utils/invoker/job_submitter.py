@@ -17,16 +17,16 @@
 import json
 import os
 import subprocess
+import sys
 import tempfile
 import time
 from datetime import timedelta
-import sys
 
-from fate_flow.flowpy.client import FlowClient
+from fate_client.flow_sdk.client import FlowClient
 from pipeline.backend import config as conf
+from pipeline.backend.config import IODataType
 from pipeline.backend.config import JobStatus
 from pipeline.backend.config import StatusCode
-from pipeline.backend.config import IODataType
 from pipeline.utils.logger import LOGGER
 
 
