@@ -31,7 +31,7 @@ from pipeline.interface.data import Data
 from pipeline.interface.model import Model
 
 
-def main(config="./config.yaml"):
+def main(config="../config.yaml"):
     # obtain config
     config = Config(config)
     guest = config.guest
