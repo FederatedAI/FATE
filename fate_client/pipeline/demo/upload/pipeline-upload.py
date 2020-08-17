@@ -15,12 +15,17 @@
 #
 
 import argparse
+import os
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
 from pipeline.component.reader import Reader
 from pipeline.demo.util.demo_util import Config
 from pipeline.interface.data import Data
+
+# find python path
+import site
+SITE_PATH = site.getsitepackages()[0]
 
 
 def main(config="../config.yaml"):
@@ -36,10 +41,11 @@ def main(config="../config.yaml"):
 
     pipeline_upload = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
     # add upload data info
-    pipeline_upload.add_upload_data("examples/data/breast_hetero_guest.csv",  # csv file name
+    # csv file name from python path & file name
+    pipeline_upload.add_upload_data(os.path.join(SITE_PATH, "examples/data/breast_hetero_guest.csv"),
                              table_name=guest_train_data["name"],             # table name
                              namespace=guest_train_data["namespace"])         # namespace
-    pipeline_upload.add_upload_data("examples/data/breast_hetero_host.csv",
+    pipeline_upload.add_upload_data(os.path.join(SITE_PATH, "examples/data/breast_hetero_host.csv"),
                              table_name=host_train_data["name"],
                              namespace=host_train_data["namespace"])
     # upload all data
