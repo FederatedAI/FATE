@@ -16,6 +16,7 @@
 
 from pipeline.component.component_base import Component
 from pipeline.component.nn.models.sequantial import Sequential
+from pipeline.interface.input import Input
 from pipeline.interface.output import Output
 from pipeline.utils.tools import extract_explicit_parameter
 
@@ -42,6 +43,7 @@ class HeteroNN(Component):
         for param_key, param_value in explicit_parameters.items():
             setattr(self, param_key, param_value)
 
+        self.input = Input(self.name, data_type="multi")
         self.output = Output(self.name, data_type='single')
         self._module_name = "HeteroNN"
         self.optimizer = None

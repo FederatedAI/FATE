@@ -16,6 +16,7 @@
 
 from pipeline.param.boosting_param import HeteroSecureBoostParam
 from pipeline.component.component_base import Component
+from pipeline.interface.input import Input
 from pipeline.interface.output import Output
 from pipeline.utils.logger import LOGGER
 
@@ -30,6 +31,7 @@ class HeteroSecureBoost(Component, HeteroSecureBoostParam):
         new_kwargs = self.erase_component_base_param(**kwargs)
 
         HeteroSecureBoostParam.__init__(self, **new_kwargs)
+        self.input = Input(self.name, data_type="multi")
         self.output = Output(self.name)
         self._module_name = "HeteroSecureBoost"
 

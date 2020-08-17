@@ -16,6 +16,7 @@
 
 from pipeline.param.local_baseline_param import LocalBaselineParam
 from pipeline.component.component_base import Component
+from pipeline.interface.input import Input
 from pipeline.interface.output import Output
 from pipeline.utils.logger import LOGGER
 
@@ -30,6 +31,7 @@ class LocalBaseline(Component, LocalBaselineParam):
         new_kwargs = self.erase_component_base_param(**kwargs)
 
         LocalBaselineParam.__init__(self, **new_kwargs)
+        self.input = Input(self.name, data_type="multi")
         self.output = Output(self.name)
         self._module_name = "LocalBaseline"
 

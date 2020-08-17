@@ -14,12 +14,7 @@
 #  limitations under the License.
 #
 
-
-class OutputDataType:
-    SINGLE = "data"
-    TRAIN = "train_data"
-    VALIDATE = "validate_data"
-    TEST = "test_data"
+from pipeline.backend.config import IODataType
 
 
 class Output(object):
@@ -42,7 +37,7 @@ class Output(object):
 
             @property
             def data(self):
-                return ".".join([self.prefix, OutputDataType.SINGLE])
+                return ".".join([self.prefix, IODataType.SINGLE])
 
             @staticmethod
             def get_all_output():
@@ -54,21 +49,21 @@ class Output(object):
 
             @property
             def train_data(self):
-                return ".".join([self.prefix, OutputDataType.TRAIN])
+                return ".".join([self.prefix, IODataType.TRAIN])
 
             @property
             def test_data(self):
-                return ".".join([self.prefix, OutputDataType.TEST])
+                return ".".join([self.prefix, IODataType.TEST])
 
             @property
             def validate_data(self):
-                return ".".join([self.prefix, OutputDataType.VALIDATE])
+                return ".".join([self.prefix, IODataType.VALIDATE])
 
             @staticmethod
             def get_all_output():
-                return [OutputDataType.TRAIN,
-                        OutputDataType.VALIDATE,
-                        OutputDataType.TEST]
+                return [IODataType.TRAIN,
+                        IODataType.VALIDATE,
+                        IODataType.TEST]
 
         class NoLimitOutputData(object):
             def __init__(self, prefix, output_unit=1):
