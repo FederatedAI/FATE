@@ -143,6 +143,13 @@ Alogorithm List
 |                              |                           |                       |            |                |             | and model-   |
 |                              |                           |                       |            |                |             | param        |
 +------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
+| `Homo OneHot Encoder`_      | HomoOneHotEncoder          | Build homo secure     | DTable,    | \              | \           | SecureBoost  |
+|                              |                           | boosting module       | values are |                |             | Model,       |
+|                              |                           | through multiple      | instances. |                |             | consists of  |
+|                              |                           | parties.              |            |                |             | model-meta   |
+|                              |                           |                       |            |                |             | and model-   |
+|                              |                           |                       |            |                |             | param        |
++------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
 
 
 
@@ -166,7 +173,7 @@ Alogorithm List
 .. _Hetero Pearson: statistic/correlation/README.rst
 .. _Hetero-NN: nn/hetero_nn/README.rst
 .. _Homo Secure Boosting: tree/README.rst
-
+.. _Homo OneHot Encoder: feature/README.rst
 
 
 

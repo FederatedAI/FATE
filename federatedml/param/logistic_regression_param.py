@@ -96,12 +96,7 @@ class LogisticParam(BaseParam):
     use_first_metric_only: bool, default: False
         Indicate whether use the first metric only for early stopping judgement.
 
-    use_proximal: bool, default: False
-        Whether to turn on additional proximial term. 
 
-    mu: float, default 0.1
-        To scale the proximal term
-    
 
 
     """
@@ -115,9 +110,7 @@ class LogisticParam(BaseParam):
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  stepwise_param=StepwiseParam(),
                  metrics=None,
-                 use_first_metric_only=False, 
-                 use_proximal = False,
-                 mu = 0.1
+                 use_first_metric_only=False
                  ):
         super(LogisticParam, self).__init__()
         self.penalty = penalty
@@ -140,8 +133,6 @@ class LogisticParam(BaseParam):
         self.early_stopping_rounds = early_stopping_rounds
         self.metrics = metrics or []
         self.use_first_metric_only = use_first_metric_only
-        self.use_proximal = use_proximal
-        self.mu = mu
 
     def check(self):
         descr = "logistic_param's"
@@ -252,6 +243,12 @@ class HomoLogisticParam(LogisticParam):
     aggregate_iters : int, default: 1
         Indicate how many iterations are aggregated once.
 
+    use_proximal: bool, default: False
+        Whether to turn on additional proximial term.
+
+    mu: float, default 0.1
+        To scale the proximal term
+
     """
     def __init__(self, penalty='L2',
                  tol=1e-5, alpha=1.0, optimizer='sgd',
@@ -263,7 +260,9 @@ class HomoLogisticParam(LogisticParam):
                  aggregate_iters=1, multi_class='ovr', validation_freqs=None,
                  early_stopping_rounds=None,
                  metrics=['auc', 'ks'],
-                 use_first_metric_only=False
+                 use_first_metric_only=False,
+                 use_proximal=False,
+                 mu=0.1
                  ):
         super(HomoLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                 batch_size=batch_size,
@@ -277,6 +276,8 @@ class HomoLogisticParam(LogisticParam):
                                                 metrics=metrics, use_first_metric_only=use_first_metric_only)
         self.re_encrypt_batches = re_encrypt_batches
         self.aggregate_iters = aggregate_iters
+        self.use_proximal = use_proximal
+        self.mu = mu
 
     def check(self):
         super().check()
