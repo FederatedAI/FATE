@@ -1,6 +1,20 @@
-import sys
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
 
-import yaml
+import argparse
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
@@ -8,32 +22,17 @@ from pipeline.component.hetero_feature_binning import HeteroFeatureBinning
 from pipeline.component.intersection import Intersection
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
+from pipeline.demo.util.demo_util import Config
 from pipeline.interface.model import Model
 
-try:
-    from yaml import CLoader as Loader, CDumper as Dumper
-except ImportError:
-    from yaml import Loader, Dumper
 
-
-def main(config="./config.yaml"):
-    """
-    parser = argparse.ArgumentParser("PIPELINE DEMO")
-    parser.add_argument("-config", default="./config.yaml", type=str,
-                        help="config file")
-    args = parser.parse_args()
-    file = args.config
-    """
+def main(config="../config.yaml"):
     # obtain config
-    with open(config, "r") as f:
-        conf = yaml.load(f, Loader=Loader)
-        parties = conf.get("parties", {})
-        if len(parties) == 0:
-            raise ValueError(f"Parties id must be sepecified.")
-        host = parties["host"][0]
-        guest = parties["guest"][0]
-        backend = conf.get("backend", 0)
-        work_mode = conf.get("work_mode", 0)
+    config = Config(config)
+    guest = config.guest
+    host = config.host[0]
+    backend = config.backend
+    work_mode = config.work_mode
 
     guest_train_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
     host_train_data = {"name": "breast_hetero_host", "namespace": "experiment"}
@@ -109,4 +108,11 @@ def main(config="./config.yaml"):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    parser = argparse.ArgumentParser("PIPELINE DEMO")
+    parser.add_argument("-config", type=str,
+                        help="config file")
+    args = parser.parse_args()
+    if args.config is not None:
+        main(args.config)
+    else:
+        main()

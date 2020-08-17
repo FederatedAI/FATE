@@ -2,7 +2,7 @@ import threading
 import typing
 import uuid
 
-from fate_arch.abc import CSessionABC, FederationABC
+from fate_arch.abc import CSessionABC, FederationABC, CTableABC
 from fate_arch.common import Backend, WorkMode
 from fate_arch.common.file_utils import load_json_conf
 from fate_arch.computing import ComputingEngine
@@ -232,5 +232,28 @@ class _RuntimeSessionEnvironment(object):
             return cls.get_non_default_session()
 
 
-def get_latest_opened():
+def get_latest_opened() -> Session:
     return _RuntimeSessionEnvironment.get_latest_opened()
+
+
+# noinspection PyPep8Naming
+class computing_session(object):
+
+    @staticmethod
+    def init(session_id, work_mode=0, backend=0):
+        Session.create(work_mode, backend).init_computing(session_id).as_default()
+
+    @staticmethod
+    def parallelize(data: typing.Iterable, partition: int, include_key: bool, **kwargs) -> CTableABC:
+        return get_latest_opened().computing.parallelize(data, partition, include_key, **kwargs)
+
+    @staticmethod
+    def stop():
+        get_latest_opened().computing.stop()
+
+
+# noinspection PyPep8Naming
+class runtime_parties(object):
+    @staticmethod
+    def roles_to_parties(roles: typing.Iterable, strict=True):
+        return get_latest_opened().parties.roles_to_parties(roles=roles, strict=strict)
