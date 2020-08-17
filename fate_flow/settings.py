@@ -16,7 +16,7 @@
 # -*- coding: utf-8 -*-
 import os
 
-from fate_arch.common import file_utils, log, base_utils
+from fate_arch.common import file_utils, log
 from fate_arch.common import Backend
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.constant import StoreEngine

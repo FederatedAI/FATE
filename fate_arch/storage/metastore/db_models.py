@@ -129,8 +129,6 @@ def init_database_tables():
         DB.create_tables(table_objs)
 
 
-
-
 class StorageTableMetaModel(DataBaseModel):
     f_name = CharField(max_length=100, index=True)
     f_namespace = CharField(max_length=100, index=True)

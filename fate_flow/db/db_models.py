@@ -125,6 +125,14 @@ def init_database_tables():
         DB.create_tables(table_objs)
 
 
+def fill_db_model_object(model_object, human_model_dict):
+    for k, v in human_model_dict.items():
+        attr_name = 'f_%s' % k
+        if hasattr(model_object.__class__, attr_name):
+            setattr(model_object, attr_name, v)
+    return model_object
+
+
 class Queue(DataBaseModel):
     f_job_id = CharField(max_length=100)
     f_event = CharField(max_length=500)
@@ -342,9 +350,44 @@ class ModelOperationLog(DataBaseModel):
         db_table = "t_model_operation_log"
 
 
-def fill_db_model_object(model_object, human_model_dict):
-    for k, v in human_model_dict.items():
-        attr_name = 'f_%s' % k
-        if hasattr(model_object.__class__, attr_name):
-            setattr(model_object, attr_name, v)
-    return model_object
+class ResourceRegistry(DataBaseModel):
+    f_engine_id = CharField(max_length=150, null=False, primary_key=True)
+    f_engine_type = CharField(max_length=10, index=True)
+    f_engine_address = JSONField()
+    f_cores = IntegerField(index=True, null=True)
+    f_memory = IntegerField(index=True, null=True)  # MB
+    f_remaining_cores = IntegerField(index=True, default=0)
+    f_remaining_memory = IntegerField(index=True, default=0) # MB
+    f_create_time = BigIntegerField()
+    f_update_time = BigIntegerField(null=True)
+
+    class Meta:
+        db_table = "t_resource_registry"
+
+
+class ResourceRecord(DataBaseModel):
+    f_job_id = CharField(max_length=25)
+    f_role = CharField(max_length=50, index=True)
+    f_party_id = CharField(max_length=10, index=True)
+    f_engine_id = CharField(max_length=150)
+    f_cores = IntegerField(index=True, null=True)
+    f_memory = IntegerField(index=True, null=True)  # MB
+    f_remaining_cores = IntegerField(index=True, default=0)
+    f_remaining_memory = IntegerField(index=True, default=0)  # MB
+    f_create_time = BigIntegerField()
+    f_update_time = BigIntegerField(null=True)
+
+    class Meta:
+        db_table = "t_resource_record"
+        primary_key = CompositeKey('f_job_id', 'f_role', 'f_party_id')
+
+
+class NewQueue(DataBaseModel):
+    f_job_id = CharField(max_length=25, primary_key=True)
+    f_job_status = CharField(max_length=50, index=True)
+    f_initiator_role = CharField(max_length=50, index=True)
+    f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
+    f_tag = CharField(max_length=50, null=True, index=True, default='')
+
+    class Meta:
+        db_table = "t_new_queue"

@@ -13,6 +13,20 @@ database:
   port: 3306
   max_connections: 100
   stale_timeout: 30
+computing:
+  engine: EGGROLL
+  address:
+    proxy:
+      host: 127.0.0.1
+      port: 9370
+    home: "./eggroll/python/eggroll"
+  cores: 20
+federation:
+  engine: EGGROLL
+  address:
+    proxy:
+      host: 127.0.0.1
+      port: 9370
 zookeeper:
   hosts:
     - 127.0.0.1:2281
