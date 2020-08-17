@@ -26,7 +26,7 @@ LOGGER = log_utils.getLogger()
 
 
 class _Optimizer(object):
-    def __init__(self, learning_rate, alpha, penalty, decay, decay_sqrt, mu = 0):
+    def __init__(self, learning_rate, alpha, penalty, decay, decay_sqrt, mu=0):
         self.learning_rate = learning_rate
         self.iters = 0
         self.alpha = alpha
@@ -96,7 +96,8 @@ class _Optimizer(object):
 
         return new_grad
 
-    def regularization_update(self, model_weights: LinearModelWeights, grad, prev_round_weights: LinearModelWeights = None):
+    def regularization_update(self, model_weights: LinearModelWeights, grad,
+                              prev_round_weights: LinearModelWeights = None):
         if self.penalty == consts.L1_PENALTY:
             model_weights = self._l1_updator(model_weights, grad)
         elif self.penalty == consts.L2_PENALTY:
@@ -105,23 +106,24 @@ class _Optimizer(object):
             new_vars = model_weights.unboxed - grad
             model_weights = LinearModelWeights(new_vars, model_weights.fit_intercept)
 
-        if prev_round_weights is not None: # additional proximal term
+        if prev_round_weights is not None:  # additional proximal term
             coef_ = model_weights.unboxed
 
             if model_weights.fit_intercept:
-                coef_without_intercept = coef_[: -1] 
+                coef_without_intercept = coef_[: -1]
             else:
                 coef_without_intercept = coef_
-            
+
             LOGGER.debug("before applying additional proximal terms, weights {}".format(coef_without_intercept))
             coef_without_intercept -= self.mu * (model_weights.coef_ - prev_round_weights.coef_)
-            LOGGER.debug("after applying additional proximal terms, new weights {}, with difference {}".format(coef_without_intercept,model_weights.coef_ - prev_round_weights.coef_))
+            LOGGER.debug("after applying additional proximal terms, new weights {}, with difference {}".format(
+                coef_without_intercept, model_weights.coef_ - prev_round_weights.coef_))
 
             if model_weights.fit_intercept:
                 new_coef_ = np.append(coef_without_intercept, coef_[-1])
             else:
                 new_coef_ = coef_without_intercept
-            
+
             model_weights = LinearModelWeights(new_coef_, model_weights.fit_intercept)
         return model_weights
 
@@ -156,9 +158,9 @@ class _Optimizer(object):
             loss_norm_value = None
 
         # additional proximal term
-        if loss_norm_value is None: 
+        if loss_norm_value is None:
             loss_norm_value = proximal_term
-        elif proximal_term is not None: 
+        elif proximal_term is not None:
             loss_norm_value += proximal_term
         return loss_norm_value
 
@@ -170,7 +172,8 @@ class _Optimizer(object):
         else:
             return LinearModelWeights(np.zeros_like(delta_s.unboxed), fit_intercept=delta_s.fit_intercept)
 
-    def update_model(self, model_weights: LinearModelWeights, grad, prev_round_weights: LinearModelWeights = None, has_applied=True):
+    def update_model(self, model_weights: LinearModelWeights, grad, prev_round_weights: LinearModelWeights = None,
+                     has_applied=True):
 
         if not has_applied:
             grad = self.add_regular_to_grad(grad, model_weights)
@@ -303,8 +306,12 @@ def optimizer_factory(param):
         penalty = param.penalty
         decay = param.decay
         decay_sqrt = param.decay_sqrt
-        mu = param.mu 
+        if hasattr(param, 'mu'):
+            mu = param.mu
+        else:
+            mu = 0.0
         init_params = [learning_rate, alpha, penalty, decay, decay_sqrt, mu]
+
     except AttributeError:
         raise AttributeError("Optimizer parameters has not been totally set")
 
