@@ -45,7 +45,7 @@ def main(config="../config.yaml"):
     pipeline_upload.add_upload_data(file=os.path.join(SITE_PATH, "examples/data/breast_hetero_guest.csv"),
                                     table_name=dense_data["name"],             # table name
                                     namespace=dense_data["namespace"],         # namespace
-                                    head=0, partition=8)
+                                    head=1, partition=8)
     pipeline_upload.add_upload_data(file=os.path.join(SITE_PATH, "examples/data/tag_value_1000_140.csv"),
                                     table_name=tag_data["name"],
                                     namespace=tag_data["namespace"],
