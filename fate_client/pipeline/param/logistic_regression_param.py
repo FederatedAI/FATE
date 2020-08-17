@@ -18,15 +18,15 @@
 #
 import copy
 
+from pipeline.param import consts
 from pipeline.param.base_param import BaseParam
 from pipeline.param.cross_validation_param import CrossValidationParam
 from pipeline.param.encrypt_param import EncryptParam
 from pipeline.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from pipeline.param.init_model_param import InitParam
 from pipeline.param.predict_param import PredictParam
-from pipeline.param.stepwise_param import StepwiseParam
 from pipeline.param.sqn_param import StochasticQuasiNewtonParam
-from pipeline.param import consts
+from pipeline.param.stepwise_param import StepwiseParam
 
 
 class LogisticParam(BaseParam):
@@ -95,6 +95,9 @@ class LogisticParam(BaseParam):
 
     use_first_metric_only: bool, default: False
         Indicate whether use the first metric only for early stopping judgement.
+
+
+
 
     """
 
@@ -240,6 +243,12 @@ class HomoLogisticParam(LogisticParam):
     aggregate_iters : int, default: 1
         Indicate how many iterations are aggregated once.
 
+    use_proximal: bool, default: False
+        Whether to turn on additional proximial term.
+
+    mu: float, default 0.1
+        To scale the proximal term
+
     """
     def __init__(self, penalty='L2',
                  tol=1e-5, alpha=1.0, optimizer='sgd',
@@ -251,7 +260,9 @@ class HomoLogisticParam(LogisticParam):
                  aggregate_iters=1, multi_class='ovr', validation_freqs=None,
                  early_stopping_rounds=None,
                  metrics=['auc', 'ks'],
-                 use_first_metric_only=False
+                 use_first_metric_only=False,
+                 use_proximal=False,
+                 mu=0.1
                  ):
         super(HomoLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                 batch_size=batch_size,
@@ -265,6 +276,8 @@ class HomoLogisticParam(LogisticParam):
                                                 metrics=metrics, use_first_metric_only=use_first_metric_only)
         self.re_encrypt_batches = re_encrypt_batches
         self.aggregate_iters = aggregate_iters
+        self.use_proximal = use_proximal
+        self.mu = mu
 
     def check(self):
         super().check()
