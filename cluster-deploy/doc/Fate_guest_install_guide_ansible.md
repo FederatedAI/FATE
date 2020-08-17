@@ -503,7 +503,7 @@ python run_toy_example.py 9999 9999 1
 ```
 source /data/projects/fate/init_env.sh
 cd /data/projects/fate/python/examples/toy_example/
-python run_toy_example.py 9999 {xxxx} 1
+python run_toy_example.py 9999 ${host_partyid} 1
 ```
 
 类似如下结果表示成功：
@@ -531,12 +531,12 @@ python upload_default_data.py -m 1
 
 快速模式下，最小化测试脚本将使用一个相对较小的数据集，即包含了569条数据的breast数据集。
 
-选定本端10000为guest方，在192.168.0.1上执行：
+选定本端9999为guest方，在192.168.0.1上执行：
 
 ```
 source /data/projects/fate/init_env.sh
 cd /data/projects/fate/python/examples/min_test_task/
-python run_task.py -m 1 -gid 9999 -hid {xxxx} -aid {xxxx} -f fast
+python run_task.py -m 1 -gid 9999 -hid ${host_partyid} -aid ${host_partyid} -f fast
 ```
 
 其他一些可能有用的参数包括：
