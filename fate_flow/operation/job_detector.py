@@ -32,13 +32,21 @@ class JobDetector(cron.Cron):
                     process_exist = job_utils.check_job_process(int(task.f_run_pid))
                     if not process_exist:
                         detect_logger.info(
-                            'Job {} task {} {} on {} {} process {} does not exist'.format(
+                            'job {} task {} {} on {} {} process {} does not exist'.format(
                                 task.f_job_id,
                                 task.f_task_id,
                                 task.f_task_version,
                                 task.f_role,
                                 task.f_party_id,
                                 task.f_run_pid))
+                        schedule_logger(job_id=task.f_job_id).info(
+                                'job {} task {} {} on {} {} process {} does not exist'.format(
+                                    task.f_job_id,
+                                    task.f_task_id,
+                                    task.f_task_version,
+                                    task.f_role,
+                                    task.f_party_id,
+                                    task.f_run_pid))
                         stop_job_ids.add(task.f_job_id)
                 except Exception as e:
                     detect_logger.exception(e)
@@ -48,6 +56,7 @@ class JobDetector(cron.Cron):
                 jobs = job_utils.query_job(job_id=job_id)
                 if jobs:
                     status_code, response = FederatedScheduler.request_stop_job(job=jobs[0], stop_status=JobStatus.FAILED)
+                    schedule_logger(job_id=job_id).info(f"detector request stop job success")
         except Exception as e:
             detect_logger.exception(e)
         finally:
