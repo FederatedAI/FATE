@@ -22,7 +22,7 @@ import tempfile
 import time
 from datetime import timedelta
 
-from fate_client.flow_sdk.client import FlowClient
+from flow_sdk.client import FlowClient
 from pipeline.backend import config as conf
 from pipeline.backend.config import IODataType
 from pipeline.backend.config import JobStatus
