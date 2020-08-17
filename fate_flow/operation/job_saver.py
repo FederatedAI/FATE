@@ -15,12 +15,12 @@
 #
 
 import operator
-from arch.api.utils.core_utils import current_timestamp, json_loads
-from arch.api.utils import core_utils
-from fate_flow.db.db_models import DB, Job, TaskSet, Task
-from fate_flow.entity.constant import StatusSet, JobStatus, TaskSetStatus, TaskStatus, EndStatus
+from fate_arch.common.base_utils import current_timestamp
+from fate_arch.common import base_utils
+from fate_flow.db.db_models import DB, Job, Task
+from fate_flow.entity.constant import StatusSet, JobStatus, TaskStatus, EndStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
-from arch.api.utils.log_utils import schedule_logger, sql_logger
+from fate_arch.common.log import schedule_logger, sql_logger
 import peewee
 
 
@@ -28,10 +28,6 @@ class JobSaver(object):
     @classmethod
     def create_job(cls, job_info):
         cls.create_job_family_entity(Job, job_info)
-
-    @classmethod
-    def create_task_set(cls, task_set_info):
-        cls.create_job_family_entity(TaskSet, task_set_info)
 
     @classmethod
     def create_task(cls, task_info):
@@ -55,21 +51,6 @@ class JobSaver(object):
             job_info['tag'] = 'job_end'
             job_info["end_time"] = current_timestamp()
         return cls.update_job_family_entity(Job, job_info)
-
-    @classmethod
-    def update_task_set_status(cls, task_set):
-        task_set_info = {
-            "task_set_id": task_set.f_task_set_id,
-            "role": task_set.f_role,
-            "party_id": task_set.f_party_id,
-            "status": task_set.f_status
-        }
-        return cls.update_task_set(task_set_info=task_set_info)
-
-    @classmethod
-    def update_task_set(cls, task_set_info):
-        schedule_logger(job_id=task_set_info["job_id"]).info("Update job {} task set {}".format(task_set_info["job_id"], task_set_info["task_set_id"]))
-        return cls.update_job_family_entity(TaskSet, task_set_info)
 
     @classmethod
     def update_task_status(cls, task):
@@ -112,6 +93,22 @@ class JobSaver(object):
                 raise Exception("Create {} failed:\n{}".format(entity_model, e))
 
     @classmethod
+    def gen_update_status_filter(cls, obj, update_info, field, update_filters):
+        if_pass = False
+        if isinstance(obj, Task):
+            if TaskStatus.StateTransitionRule.if_pass(src_status=getattr(obj, f"f_{field}"), dest_status=update_info[field]):
+                if_pass = True
+        elif isinstance(obj, Job):
+            if JobStatus.StateTransitionRule.if_pass(src_status=getattr(obj, f"f_{field}"), dest_status=update_info[field]):
+                if_pass = True
+        if if_pass:
+            update_filters.append(operator.attrgetter(f"f_{field}")(type(obj)) == getattr(obj, f"f_{field}"))
+        else:
+            # not allow update status
+            update_info.pop(field)
+        return if_pass
+
+    @classmethod
     def update_job_family_entity(cls, entity_model, entity_info):
         with DB.connection_context():
             query_filters = []
@@ -125,15 +122,17 @@ class JobSaver(object):
                 raise Exception("Can not found the {}".format(entity_model.__class__.__name__))
             update_filters = query_filters[:]
             if 'status' in entity_info and hasattr(entity_model, "f_status"):
-                update_filters.append(operator.attrgetter("f_status_level")(entity_model) < StatusSet.get_level(entity_info["status"]))
-                entity_info["status_level"] = StatusSet.get_level(entity_info["status"])
+                if entity_model == Job and EndStatus.contains(entity_info["status"]):
+                    entity_info['end_time'] = current_timestamp()
+                    if obj.f_start_time:
+                        entity_info['elapsed'] = entity_info['end_time'] - obj.f_start_time
+                cls.gen_update_status_filter(obj=obj, update_info=entity_info, field="status", update_filters=update_filters)
             if "party_status" in entity_info and hasattr(entity_model, "f_party_status"):
-                update_filters.append(operator.attrgetter("f_party_status_level")(entity_model) < StatusSet.get_level(entity_info["party_status"]))
-                entity_info["party_status_level"] = StatusSet.get_level(entity_info["party_status"])
                 if EndStatus.contains(entity_info["party_status"]):
                     entity_info['end_time'] = current_timestamp()
                     if obj.f_start_time:
                         entity_info['elapsed'] = entity_info['end_time'] - obj.f_start_time
+                cls.gen_update_status_filter(obj=obj, update_info=entity_info, field="party_status", update_filters=update_filters)
             if "progress" in entity_info and hasattr(entity_model, "f_progress"):
                 update_filters.append(operator.attrgetter("f_progress")(entity_model) <= entity_info["progress"])
             update_fields = {}
@@ -141,12 +140,26 @@ class JobSaver(object):
                 attr_name = 'f_%s' % k
                 if hasattr(entity_model, attr_name) and attr_name not in primary_keys:
                     update_fields[operator.attrgetter(attr_name)(entity_model)] = v
-            if update_filters:
-                operate = obj.update(update_fields).where(*update_filters)
+            if update_fields:
+                if update_filters:
+                    operate = obj.update(update_fields).where(*update_filters)
+                else:
+                    operate = obj.update(update_fields)
+                sql_logger(job_id=entity_info.get("job_id", "fate_flow")).info(operate)
+                return operate.execute() > 0
             else:
-                operate = obj.update(update_fields)
-            sql_logger(job_id=entity_info.get("job_id", "fate_flow")).info(operate)
-            return operate.execute() > 0
+                return False
+
+    @classmethod
+    def update_job_resource(cls, job_id, role, party_id, volume: int):
+        update_filters = [Job.f_job_id == job_id, Job.f_role == role, Job.f_party_id == party_id]
+        if volume > 0:
+            update_filters.append(Job.f_remaining_resources >= volume)
+            operate = Job.update({Job.f_remaining_resources: Job.f_remaining_resources-volume}).where(*update_filters)
+        else:
+            operate = Job.update({Job.f_remaining_resources: Job.f_remaining_resources-volume}).where(*update_filters)
+        sql_logger(job_id=job_id).info(operate)
+        return operate.execute() > 0
 
     @classmethod
     def get_job_configuration(cls, job_id, role, party_id, tasks=None):
@@ -185,24 +198,17 @@ class JobSaver(object):
                 return []
 
     @classmethod
-    def get_top_task_set(cls, job_id, role, party_id):
+    def get_top_tasks(cls, job_id, role, party_id):
         with DB.connection_context():
-            task_sets = TaskSet.select().where(TaskSet.f_job_id == job_id, TaskSet.f_role == role, TaskSet.f_party_id == party_id).order_by(TaskSet.f_task_set_id.asc())
-            return [task_set for task_set in task_sets]
-
-    @classmethod
-    def query_task_set(cls, **kwargs):
-        with DB.connection_context():
-            filters = []
-            for f_n, f_v in kwargs.items():
-                attr_name = 'f_%s' % f_n
-                if hasattr(TaskSet, attr_name):
-                    filters.append(operator.attrgetter('f_%s' % f_n)(TaskSet) == f_v)
-            if filters:
-                task_sets = TaskSet.select().where(*filters)
-            else:
-                task_sets = TaskSet.select()
-            return [task_set for task_set in task_sets]
+            tasks = Task.select().where(Task.f_job_id == job_id, Task.f_role == role, Task.f_party_id == party_id).order_by(Task.f_create_time.asc())
+            tasks_group = {}
+            for task in tasks:
+                if task.f_task_id not in tasks_group:
+                    tasks_group[task.f_task_id] = task
+                elif task.f_task_version > tasks_group[task.f_task_id].f_task_version:
+                    # update new version task
+                    tasks_group[task.f_task_id] = task
+            return tasks_group
 
     @classmethod
     def query_task(cls, **kwargs):
@@ -239,5 +245,5 @@ class JobSaver(object):
         job = Job()
         job.f_progress = float(success_count) / component_count * 100
         job.f_update_time = current_timestamp()
-        job.f_current_tasks = core_utils.json_dumps([current_task_id])
+        job.f_current_tasks = base_utils.json_dumps([current_task_id])
         return job

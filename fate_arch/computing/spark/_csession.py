@@ -33,12 +33,12 @@ class CSession(CSessionABC):
         self._session_id = session_id
 
     def load(self, address: AddressABC, partitions, schema, **kwargs):
-        from fate_arch.storage.address import HDFSAddress
+        from fate_arch.common.address import HDFSAddress
         if isinstance(address, HDFSAddress):
             table = from_hdfs(paths=address.path, partitions=partitions)
             table.schema = schema
             return table
-        from fate_arch.storage.address import FileAddress
+        from fate_arch.common.address import FileAddress
         if isinstance(address, FileAddress):
             return address
         raise NotImplementedError(f"address type {type(address)} not supported with spark backend")

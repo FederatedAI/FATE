@@ -3,6 +3,6 @@
   "head": 1,
   "partition": 10,
   "work_mode": 0,
-  "namespace": "fate_flow_test_breast_homo",
+  "namespace": "experiment",
   "table_name": "breast_homo_guest"
 }

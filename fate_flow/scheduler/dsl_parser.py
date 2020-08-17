@@ -370,7 +370,6 @@ class BaseDSLParser(object):
             for i in range(len(self.components)):
                 if vis[i]:
                     continue
-                loops = []
                 self._find_loop(i, vis, stack, loops)
                 raise LoopError(loops)
 
@@ -388,7 +387,6 @@ class BaseDSLParser(object):
                     self._find_loop(v, vis, stack, loops)
             else:
                 index = stack.index(v)
-                loops = []
                 for node in stack[index:]:
                     loops.append(self.components[node].get_name())
 

@@ -1,1 +1,1 @@
-from fate_arch.common._types import WorkMode, Backend, Party
+from fate_arch.common._types import WorkMode, Backend, Party, FederationMode

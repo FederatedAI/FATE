@@ -16,7 +16,7 @@
 
 from flask import Flask, request
 
-from arch.api.utils.core_utils import deserialize_b64
+from fate_arch.common.base_utils import deserialize_b64
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.settings import stat_logger
 from fate_flow.utils.api_utils import get_json_result

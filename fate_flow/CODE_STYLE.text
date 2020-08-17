@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 1. Based on Google Python Code Style
-2. The log or message string begins with an uppercase letter
+2. The log or message string begins with an lowercase letter
 3. Strings use double quotes
 4. Import Module but not Class
 5. Using {} instead of Dict

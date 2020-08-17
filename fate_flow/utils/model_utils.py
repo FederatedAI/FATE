@@ -13,9 +13,38 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils import dtable_utils
+gen_key_string_separator = '#'
 
 
 def gen_party_model_id(model_id, role, party_id):
-    return dtable_utils.gen_party_namespace_by_federated_namespace(federated_namespace=model_id, role=role,
-                                                                   party_id=party_id) if model_id else None
+    return gen_key_string_separator.join([role, str(party_id), model_id]) if model_id else None
+
+
+def gen_model_id(all_party):
+    return gen_key_string_separator.join([all_party_key(all_party), "model"])
+
+
+def all_party_key(all_party):
+    """
+    Join all party as party key
+    :param all_party:
+        "role": {
+            "guest": [9999],
+            "host": [10000],
+            "arbiter": [10000]
+         }
+    :return:
+    """
+    if not all_party:
+        all_party_key = 'all'
+    elif isinstance(all_party, dict):
+        sorted_role_name = sorted(all_party.keys())
+        all_party_key = gen_key_string_separator.join([
+            ('%s-%s' % (
+                role_name,
+                '_'.join([str(p) for p in sorted(set(all_party[role_name]))]))
+             )
+            for role_name in sorted_role_name])
+    else:
+        all_party_key = None
+    return all_party_key

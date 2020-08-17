@@ -19,7 +19,7 @@ import tarfile
 
 from flask import Flask, request, send_file
 
-from arch.api.utils.core_utils import json_loads, json_dumps
+from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_flow.scheduler.task_scheduler import TaskScheduler
 from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
@@ -66,20 +66,6 @@ def job_status(job_id, role, party_id):
         "party_id": party_id
     })
     JobSaver.update_job(job_info=job_info)
-    return get_json_result(retcode=0, retmsg='success')
-
-
-@manager.route('/<job_id>/<task_set_id>/<role>/<party_id>/status', methods=['POST'])
-def task_set_status(job_id, task_set_id, role, party_id):
-    task_set_info = {}
-    task_set_info.update(request.json)
-    task_set_info.update({
-        "job_id": job_id,
-        "task_set_id": task_set_id,
-        "role": role,
-        "party_id": party_id
-    })
-    JobSaver.update_task_set(task_set_info=task_set_info)
     return get_json_result(retcode=0, retmsg='success')
 
 

@@ -1,6 +1,0 @@
-server_conf_path: null
-server: servers
-role: fateflow
-api_version: v1
-ip: null
-port: null

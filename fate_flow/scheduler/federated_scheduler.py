@@ -16,11 +16,10 @@
 
 from fate_flow.settings import API_VERSION
 from fate_flow.utils.api_utils import federated_api
-from arch.api.utils.core_utils import json_dumps
-from arch.api.utils.log_utils import schedule_logger
+from fate_arch.common.log import schedule_logger
 from fate_flow.entity.constant import RetCode, FederatedSchedulingStatusCode
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.db.db_models import Job, TaskSet, Task
+from fate_flow.db.db_models import Job, Task
 from fate_flow.utils import job_utils
 
 
@@ -143,66 +142,6 @@ class FederatedScheduler(object):
                     ))
         return cls.return_federated_response(federated_response=federated_response)
 
-    # TaskSet
-    @classmethod
-    def sync_task_set(cls, job, task_set, update_fields):
-        schedule_logger(job_id=task_set.f_job_id).info("Job {} task set {} is {}, sync to all party".format(task_set.f_job_id, task_set.f_task_set_id, task_set.f_status))
-        status_code, response = cls.task_set_command(job=job, task_set=task_set, command="update", command_body=task_set.to_human_model_dict(only_primary_with=update_fields))
-        if status_code == FederatedSchedulingStatusCode.SUCCESS:
-            schedule_logger(job_id=task_set.f_job_id).info("Sync job {} task set {} status {} to all party success".format(task_set.f_job_id, task_set.f_task_set_id, task_set.f_status))
-        else:
-            schedule_logger(job_id=task_set.f_job_id).info("Sync job {} task set {} status {} to all party failed: \n{}".format(task_set.f_job_id, task_set.f_task_set_id, task_set.f_status, response))
-        return status_code, response
-
-    @classmethod
-    def stop_task_set(cls, job, task_set, stop_status):
-        schedule_logger(job_id=task_set.f_job_id).info("Try to stop job {} task set {}".format(task_set.f_job_id, task_set.f_task_set_id))
-        task_set.f_status = stop_status
-        status_code, response = cls.task_set_command(job=job, task_set=task_set, command="stop/{}".format(stop_status))
-        if status_code == FederatedSchedulingStatusCode.SUCCESS:
-            schedule_logger(job_id=job.f_job_id).info("Stop job {} task set {} success".format(task_set.f_job_id, task_set.f_task_set_id))
-        else:
-            schedule_logger(job_id=job.f_job_id).info("Stop job {} task set {} failed:\n{}".format(task_set.f_job_id, task_set.f_task_set_id, response))
-        return status_code, response
-
-    @classmethod
-    def task_set_command(cls, job, task_set, command, command_body=None):
-        federated_response = {}
-        roles, job_initiator = job.f_runtime_conf["role"], job.f_runtime_conf['initiator']
-        for dest_role, dest_party_ids in roles.items():
-            federated_response[dest_role] = {}
-            for dest_party_id in dest_party_ids:
-                try:
-                    response = federated_api(job_id=job.f_job_id,
-                                             method='POST',
-                                             endpoint='/{}/controller/{}/{}/{}/{}/{}'.format(
-                                                 API_VERSION,
-                                                 job.f_job_id,
-                                                 task_set.f_task_set_id,
-                                                 dest_role,
-                                                 dest_party_id,
-                                                 command
-                                             ),
-                                             src_party_id=job_initiator['party_id'],
-                                             dest_party_id=dest_party_id,
-                                             src_role=job_initiator['role'],
-                                             json_body=command_body if command_body else {},
-                                             work_mode=job.f_work_mode)
-                    federated_response[dest_role][dest_party_id] = response
-                except Exception as e:
-                    federated_response[dest_role][dest_party_id] = {
-                        "retcode": RetCode.FEDERATED_ERROR,
-                        "retmsg": "Federated schedule error, {}".format(str(e))
-                    }
-                if federated_response[dest_role][dest_party_id]["retcode"]:
-                    schedule_logger(job_id=job.f_job_id).error("An error occurred while {} the task set to role {} party {}: \n{}".format(
-                        command,
-                        dest_role,
-                        dest_party_id,
-                        federated_response[dest_role][dest_party_id]["retmsg"]
-                    ))
-        return cls.return_federated_response(federated_response=federated_response)
-
     # Task
     REPORT_TO_INITIATOR_FIELDS = ["party_status", "start_time", "update_time", "end_time", "elapsed"]
 
@@ -313,77 +252,6 @@ class FederatedScheduler(object):
                 return FederatedSchedulingStatusCode.FAILED
             else:
                 return FederatedSchedulingStatusCode.SUCCESS
-        else:
-            return FederatedSchedulingStatusCode.SUCCESS
-
-    @classmethod
-    def to_initiator(cls, task: Task = None, task_set: TaskSet = None, job: Job = None):
-        if task:
-            if task.f_role != task.f_initiator_role and task.f_party_id != task.f_initiator_party_id:
-                return FederatedSchedulingStatusCode.SUCCESS
-            endpoint = "/{}/initiator/{}/{}/{}/{}/{}/{}/status".format(
-                API_VERSION,
-                task.f_job_id,
-                task.f_component_name,
-                task.f_task_id,
-                task.f_task_version,
-                task.f_role,
-                task.f_party_id)
-            job_id = task.f_job_id
-            src_party_id = task.f_party_id
-            dest_party_id = task.f_initiator_party_id
-            src_role = task.f_role
-            report_info = task.to_human_model_dict(only_primary_with=cls.REPORT_TO_INITIATOR_FIELDS)
-        elif task_set:
-            if task_set.f_role != task_set.f_initiator_role and task_set.f_party_id != task_set.f_initiator_party_id:
-                return FederatedSchedulingStatusCode.SUCCESS
-            endpoint = "/{}/initiator/{}/{}/{}/{}/status".format(
-                API_VERSION,
-                task_set.f_job_id,
-                task_set.f_task_set_id,
-                task_set.f_role,
-                task_set.f_party_id,
-                ),
-            job_id = task_set.f_job_id
-            src_party_id = task_set.f_party_id
-            dest_party_id = task_set.f_initiator_party_id
-            src_role = task_set.f_role
-            report_info = task_set.to_human_model_dict(only_primary_with=cls.REPORT_TO_INITIATOR_FIELDS)
-        elif job:
-            if job.f_is_initiator == 1:
-                return FederatedSchedulingStatusCode.SUCCESS
-            endpoint = "/{}/initiator/{}/{}/{}/status".format(
-                API_VERSION,
-                job.f_job_id,
-                job.f_role,
-                job.f_party_id
-            )
-            job_id = job.f_job_id
-            src_party_id = job.f_party_id
-            dest_party_id = job.f_initiator_party_id
-            src_role = job.f_role
-            report_info = job.to_human_model_dict(only_primary_with=cls.REPORT_TO_INITIATOR_FIELDS)
-        else:
-            raise Exception("Can not get info object")
-        try:
-            response = federated_api(job_id=task.f_job_id,
-                                     method='POST',
-                                     endpoint=endpoint,
-                                     src_party_id=src_party_id,
-                                     dest_party_id=dest_party_id,
-                                     src_role=src_role,
-                                     json_body=report_info,
-                                     work_mode=RuntimeConfig.WORK_MODE)
-        except Exception as e:
-            response = {
-                "retcode": RetCode.FEDERATED_ERROR,
-                "retmsg": "Federated error, {}".format(str(e))
-            }
-        if response["retcode"]:
-            schedule_logger(job_id=job_id).error("An error occurred while report the status to initiator:\n{}".format(
-                response["retmsg"]
-            ))
-            return FederatedSchedulingStatusCode.FAILED
         else:
             return FederatedSchedulingStatusCode.SUCCESS
 

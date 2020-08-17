@@ -15,17 +15,18 @@
 #
 import sys
 
-from arch.api.utils.log_utils import schedule_logger
+from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import Task
 from fate_flow.operation.task_executor import TaskExecutor
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
-from fate_flow.entity.constant import JobStatus, TaskSetStatus, TaskStatus
+from fate_flow.entity.constant import TaskStatus, EndStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.utils import job_utils, job_controller_utils
+from fate_flow.utils import job_utils
 import os
 from fate_flow.operation.job_saver import JobSaver
-from arch.api.utils.core_utils import json_dumps
+from fate_arch.common.base_utils import json_dumps
 from fate_flow.entity.constant import Backend
+from fate_flow.manager.resource_manager import ResourceManager
 
 
 class TaskController(object):
@@ -52,8 +53,8 @@ class TaskController(object):
                 "task_version": task_version,
                 "role": role,
                 "party_id": party_id,
-                "status": TaskStatus.START,
-                "party_status": TaskStatus.START,
+                "status": TaskStatus.RUNNING,
+                "party_status": TaskStatus.RUNNING,
             }
             cls.update_task(task_info=task_info)
             task_dir = os.path.join(job_utils.get_job_directory(job_id=job_id), role, party_id, component_name, task_id, task_version)
@@ -68,7 +69,8 @@ class TaskController(object):
 
             if backend.is_eggroll():
                 process_cmd = [
-                    'python3', sys.modules[TaskExecutor.__module__].__file__,
+                    'python3',
+                    sys.modules[TaskExecutor.__module__].__file__,
                     '-j', job_id,
                     '-n', component_name,
                     '-t', task_id,
@@ -77,6 +79,7 @@ class TaskController(object):
                     '-p', party_id,
                     '-c', task_parameters_path,
                     '--processors_per_node', str(task_parameters.get("processors_per_node", 0)),
+                    '--run_ip', RuntimeConfig.JOB_SERVER_HOST,
                     '--job_server', '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT),
                 ]
             elif backend.is_spark():
@@ -109,6 +112,7 @@ class TaskController(object):
                     '-r', role,
                     '-p', party_id,
                     '-c', task_parameters_path,
+                    '--run_ip', RuntimeConfig.JOB_SERVER_HOST,
                     '--job_server', '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT),
                 ])
             else:
@@ -133,15 +137,20 @@ class TaskController(object):
         :param task_info:
         :return:
         """
-        JobSaver.update_task(task_info=task_info)
-        tasks = job_utils.query_task(task_id=task_info["task_id"],
-                                     task_version=task_info["task_version"],
-                                     role=task_info["role"],
-                                     party_id=task_info["party_id"])
-        if len(tasks) == 1:
+        update_status = False
+        try:
+            update_status = JobSaver.update_task(task_info=task_info)
+            if update_status and EndStatus.contains(task_info.get("status")):
+                ResourceManager.return_resource_to_job(task_info=task_info)
+            tasks = job_utils.query_task(task_id=task_info["task_id"],
+                                         task_version=task_info["task_version"],
+                                         role=task_info["role"],
+                                         party_id=task_info["party_id"])
             FederatedScheduler.report_task_to_initiator(task=tasks[0])
-        else:
-            raise Exception("Found {} {} {} task on {} {}, error".format(len(tasks), task_info["task_id"], task_info["task_version"], task_info["role"], task_info["party_id"]))
+        except Exception as e:
+            schedule_logger(job_id=task_info["job_id"]).exception(e)
+        finally:
+            return update_status
 
     @classmethod
     def stop_task(cls, task, stop_status):
@@ -174,7 +183,7 @@ class TaskController(object):
             schedule_logger(task.f_job_id).exception(e)
         finally:
             schedule_logger(task.f_job_id).info(
-                'Job {} task {} {} on {} {} process {} kill {}'.format(task.f_job_id, task.f_task_id,
+                'job {} task {} {} on {} {} process {} kill {}'.format(task.f_job_id, task.f_task_id,
                                                                        task.f_task_version,
                                                                        task.f_role,
                                                                        task.f_party_id,

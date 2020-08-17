@@ -24,7 +24,6 @@ from abc import ABCMeta
 from collections import Iterable
 
 from fate_arch.abc._address import AddressABC
-from fate_arch.abc._federation import FederationABC
 from fate_arch.abc._path import PathABC
 
 

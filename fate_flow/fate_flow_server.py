@@ -39,7 +39,7 @@ from fate_flow.scheduling_apps.controller_app import manager as controller_app_m
 from fate_flow.scheduling_apps.initiator_app import manager as initiator_app_manager
 from fate_flow.scheduling_apps.tracker_app import manager as tracker_app_manager
 from fate_flow.db.db_models import init_database_tables as init_flow_db
-from fate_arch.db.db_models import init_database_tables as init_arch_db
+from fate_arch.storage.metastore.db_models import init_database_tables as init_arch_db
 from fate_flow.operation import job_trigger, job_detector
 from fate_flow.scheduler import schedule_trigger
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -52,7 +52,7 @@ from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryServicer
 from fate_flow.utils.service_utils import ServiceUtils
-from arch.api.utils import core_utils
+from fate_arch.common import base_utils
 
 '''
 Initialize the manager
@@ -96,9 +96,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--standalone_node', default=False, help="if standalone node mode or not ", action='store_true')
     args = parser.parse_args()
-    if args.standalone_node:
-        RuntimeConfig.init_config(WORK_MODE=WorkMode.STANDALONE)
-        RuntimeConfig.init_config(JOB_SERVER_HOST=core_utils.get_lan_ip(), HTTP_PORT=CLUSTER_STANDALONE_JOB_SERVER_PORT)
     RuntimeConfig.init_env()
     RuntimeConfig.set_process_role(ProcessRole.SERVER)
     queue_manager.init_job_queue()

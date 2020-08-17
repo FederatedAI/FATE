@@ -20,7 +20,7 @@ from arch.api import session
 from arch.api.utils import log_utils
 from federatedml.secureprotol import gmpy_math
 from federatedml.secureprotol.encrypt import RsaEncrypt
-from federatedml.statistic.intersect.rsa_cache import cache_utils
+#from federatedml.statistic.intersect.rsa_cache import cache_utils
 from federatedml.statistic.intersect import RawIntersect
 from federatedml.statistic.intersect import RsaIntersect
 from federatedml.util import consts
