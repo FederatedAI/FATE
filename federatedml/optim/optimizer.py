@@ -26,13 +26,14 @@ LOGGER = log_utils.getLogger()
 
 
 class _Optimizer(object):
-    def __init__(self, learning_rate, alpha, penalty, decay, decay_sqrt):
+    def __init__(self, learning_rate, alpha, penalty, decay, decay_sqrt, mu = 0):
         self.learning_rate = learning_rate
         self.iters = 0
         self.alpha = alpha
         self.penalty = penalty
         self.decay = decay
         self.decay_sqrt = decay_sqrt
+        self.mu = mu
 
     def decay_learning_rate(self):
         if self.decay_sqrt:
@@ -95,7 +96,7 @@ class _Optimizer(object):
 
         return new_grad
 
-    def regularization_update(self, model_weights: LinearModelWeights, grad):
+    def regularization_update(self, model_weights: LinearModelWeights, grad, prev_round_weights: LinearModelWeights = None):
         if self.penalty == consts.L1_PENALTY:
             model_weights = self._l1_updator(model_weights, grad)
         elif self.penalty == consts.L2_PENALTY:
@@ -103,6 +104,25 @@ class _Optimizer(object):
         else:
             new_vars = model_weights.unboxed - grad
             model_weights = LinearModelWeights(new_vars, model_weights.fit_intercept)
+
+        if prev_round_weights is not None: # additional proximal term
+            coef_ = model_weights.unboxed
+
+            if model_weights.fit_intercept:
+                coef_without_intercept = coef_[: -1] 
+            else:
+                coef_without_intercept = coef_
+            
+            LOGGER.debug("before applying additional proximal terms, weights {}".format(coef_without_intercept))
+            coef_without_intercept -= self.mu * (model_weights.coef_ - prev_round_weights.coef_)
+            LOGGER.debug("after applying additional proximal terms, new weights {}, with difference {}".format(coef_without_intercept,model_weights.coef_ - prev_round_weights.coef_))
+
+            if model_weights.fit_intercept:
+                new_coef_ = np.append(coef_without_intercept, coef_[-1])
+            else:
+                new_coef_ = coef_without_intercept
+            
+            model_weights = LinearModelWeights(new_coef_, model_weights.fit_intercept)
         return model_weights
 
     def __l1_loss_norm(self, model_weights: LinearModelWeights):
@@ -115,13 +135,31 @@ class _Optimizer(object):
         loss_norm = 0.5 * self.alpha * np.dot(coef_, coef_)
         return loss_norm
 
-    def loss_norm(self, model_weights: LinearModelWeights):
+    def __add_proximal(self, model_weights, prev_round_weights):
+        prev_round_coef_ = prev_round_weights.coef_
+        coef_ = model_weights.coef_
+        diff = coef_ - prev_round_coef_
+        loss_norm = self.mu * 0.5 * np.dot(diff, diff)
+        return loss_norm
+
+    def loss_norm(self, model_weights: LinearModelWeights, prev_round_weights: LinearModelWeights = None):
+        proximal_term = None
+
+        if prev_round_weights is not None:
+            proximal_term = self.__add_proximal(model_weights, prev_round_weights)
+
         if self.penalty == consts.L1_PENALTY:
             loss_norm_value = self.__l1_loss_norm(model_weights)
         elif self.penalty == consts.L2_PENALTY:
             loss_norm_value = self.__l2_loss_norm(model_weights)
         else:
             loss_norm_value = None
+
+        # additional proximal term
+        if loss_norm_value is None: 
+            loss_norm_value = proximal_term
+        elif proximal_term is not None: 
+            loss_norm_value += proximal_term
         return loss_norm_value
 
     def hess_vector_norm(self, delta_s: LinearModelWeights):
@@ -132,14 +170,14 @@ class _Optimizer(object):
         else:
             return LinearModelWeights(np.zeros_like(delta_s.unboxed), fit_intercept=delta_s.fit_intercept)
 
-    def update_model(self, model_weights: LinearModelWeights, grad, has_applied=True):
+    def update_model(self, model_weights: LinearModelWeights, grad, prev_round_weights: LinearModelWeights = None, has_applied=True):
 
         if not has_applied:
             grad = self.add_regular_to_grad(grad, model_weights)
             delta_grad = self.apply_gradients(grad)
         else:
             delta_grad = grad
-        model_weights = self.regularization_update(model_weights, delta_grad)
+        model_weights = self.regularization_update(model_weights, delta_grad, prev_round_weights)
         return model_weights
 
 
@@ -154,7 +192,7 @@ class _SgdOptimizer(_Optimizer):
 
 
 class _RMSPropOptimizer(_Optimizer):
-    def __init__(self, learning_rate, alpha, penalty, decay, decay_sqrt):
+    def __init__(self, learning_rate, alpha, penalty, decay, decay_sqrt, mu):
         super().__init__(learning_rate, alpha, penalty, decay, decay_sqrt)
         self.rho = 0.99
         self.opt_m = None
@@ -172,7 +210,7 @@ class _RMSPropOptimizer(_Optimizer):
 
 
 class _AdaGradOptimizer(_Optimizer):
-    def __init__(self, learning_rate, alpha, penalty, decay, decay_sqrt):
+    def __init__(self, learning_rate, alpha, penalty, decay, decay_sqrt, mu):
         super().__init__(learning_rate, alpha, penalty, decay, decay_sqrt)
         self.opt_m = None
 
@@ -188,7 +226,7 @@ class _AdaGradOptimizer(_Optimizer):
 
 
 class _NesterovMomentumSGDOpimizer(_Optimizer):
-    def __init__(self, learning_rate, alpha, penalty, decay, decay_sqrt):
+    def __init__(self, learning_rate, alpha, penalty, decay, decay_sqrt, mu):
         super().__init__(learning_rate, alpha, penalty, decay, decay_sqrt)
         self.nesterov_momentum_coeff = 0.9
         self.opt_m = None
@@ -208,7 +246,7 @@ class _NesterovMomentumSGDOpimizer(_Optimizer):
 
 
 class _AdamOptimizer(_Optimizer):
-    def __init__(self, learning_rate, alpha, penalty, decay, decay_sqrt):
+    def __init__(self, learning_rate, alpha, penalty, decay, decay_sqrt, mu):
         super().__init__(learning_rate, alpha, penalty, decay, decay_sqrt)
         self.opt_beta1 = 0.9
         self.opt_beta2 = 0.999
@@ -239,7 +277,7 @@ class _AdamOptimizer(_Optimizer):
 
 
 class _StochasticQuansiNewtonOptimizer(_Optimizer):
-    def __init__(self, learning_rate, alpha, penalty, decay, decay_sqrt):
+    def __init__(self, learning_rate, alpha, penalty, decay, decay_sqrt, mu):
         super().__init__(learning_rate, alpha, penalty, decay, decay_sqrt)
         self.__opt_hess = None
 
@@ -265,7 +303,8 @@ def optimizer_factory(param):
         penalty = param.penalty
         decay = param.decay
         decay_sqrt = param.decay_sqrt
-        init_params = [learning_rate, alpha, penalty, decay, decay_sqrt]
+        mu = param.mu 
+        init_params = [learning_rate, alpha, penalty, decay, decay_sqrt, mu]
     except AttributeError:
         raise AttributeError("Optimizer parameters has not been totally set")
 
