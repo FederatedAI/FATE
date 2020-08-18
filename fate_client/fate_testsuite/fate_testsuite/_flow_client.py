@@ -24,7 +24,7 @@ from pathlib import Path
 import requests
 from requests_toolbelt import MultipartEncoderMonitor, MultipartEncoder
 
-from testsuite._parser import Data, Job
+from fate_testsuite._parser import Data, Job
 
 
 class FLOWClient(object):

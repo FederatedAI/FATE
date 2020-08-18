@@ -20,12 +20,12 @@ from pathlib import Path
 
 import click
 
-from testsuite._client import Clients
-from testsuite._config import create_config, priority_config
-from testsuite._flow_client import SubmitJobResponse, QueryJobResponse, JobProgress, DataProgress, \
+from fate_testsuite._client import Clients
+from fate_testsuite._config import create_config, priority_config
+from fate_testsuite._flow_client import SubmitJobResponse, QueryJobResponse, JobProgress, DataProgress, \
     UploadDataResponse
-from testsuite._io import set_logger, LOGGER, echo
-from testsuite._parser import Testsuite, Config, DATA_JSON_HOOK, CONF_JSON_HOOK, DSL_JSON_HOOK, JSON_STRING
+from fate_testsuite._io import set_logger, LOGGER, echo
+from fate_testsuite._parser import Testsuite, Config, DATA_JSON_HOOK, CONF_JSON_HOOK, DSL_JSON_HOOK, JSON_STRING
 
 
 @click.group(name="cli")
