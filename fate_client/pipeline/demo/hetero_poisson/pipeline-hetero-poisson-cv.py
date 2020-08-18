@@ -40,6 +40,7 @@ def main(config="../config.yaml"):
 
 
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host, arbiter=arbiter)
+
     reader_0 = Reader(name="reader_0")
     reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
     reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
@@ -63,6 +64,7 @@ def main(config="../config.yaml"):
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)
 
+    pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
     pipeline.add_component(hetero_poisson_0, data=Data(train_data=intersection_0.output.data))

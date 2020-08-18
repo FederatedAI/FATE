@@ -58,6 +58,7 @@ def main(config="../config.yaml"):
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)
 
+    pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
     pipeline.add_component(hetero_poisson_0, data=Data(train_data=intersection_0.output.data))
