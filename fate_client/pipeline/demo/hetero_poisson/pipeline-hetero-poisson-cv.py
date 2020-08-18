@@ -40,6 +40,7 @@ def main(config="../config.yaml"):
 
 
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host, arbiter=arbiter)
+
     reader_0 = Reader(name="reader_0")
     reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
     reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
@@ -55,14 +56,15 @@ def main(config="../config.yaml"):
                                      init_param={"init_method": "zeros"},
                                      encrypted_mode_calculator_param={"mode": "fast"},
                                      cv_param={
-                                         "n_splits": 5,
-                                         "shuffle": False,
-                                         "random_seed": 103,
+                                         "n_splits": 3,
+                                         "shuffle": True,
+                                         "random_seed": 42,
                                          "need_cv": True
                                      })
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)
 
+    pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
     pipeline.add_component(hetero_poisson_0, data=Data(train_data=intersection_0.output.data))
@@ -72,9 +74,9 @@ def main(config="../config.yaml"):
 
     pipeline.fit(backend=backend, work_mode=work_mode)
 
-    print (pipeline.get_component("hetero_poisson_0").get_model_param())
-    print (pipeline.get_component("hetero_poisson_0").get_summary())
-    print (pipeline.get_component("evaluation_0").get_summary())
+    print(pipeline.get_component("hetero_poisson_0").get_model_param())
+    print(pipeline.get_component("hetero_poisson_0").get_summary())
+    print(pipeline.get_component("evaluation_0").get_summary())
 
 
 if __name__ == "__main__":

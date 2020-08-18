@@ -82,7 +82,7 @@ def initialization(**kwargs):
     with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "r") as fin:
         config = yaml.safe_load(fin)
     if kwargs.get("server_conf_path"):
-        config["server_conf_path"] = kwargs.get("server_conf_path")
+        config["server_conf_path"] = os.path.abspath(kwargs.get("server_conf_path"))
     if kwargs.get("ip"):
         config["ip"] = kwargs.get("ip")
     if kwargs.get("port"):
