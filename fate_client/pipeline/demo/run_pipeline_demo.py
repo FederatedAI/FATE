@@ -15,16 +15,14 @@
 #
 
 import argparse
-import contextlib
 import importlib
+import sys
 import tempfile
 import time
 from pathlib import Path
-from pipeline.utils.logger import LOGGER, DEMO_LOG, LogFormat
 
 import yaml
-import sys
-
+from pipeline.utils.logger import LOGGER, DEMO_LOG, LogFormat
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
@@ -87,7 +85,6 @@ def load_conf(args):
 def demo_log_only(record):
     log_type = record["extra"].get("log_type", "")
     return log_type == DEMO_LOG
-
 
 
 def _add_logger(name):
