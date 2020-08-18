@@ -57,8 +57,8 @@ def main(config="../config.yaml"):
                                learning_rate=0.15, decay=0.0, decay_sqrt=False,
                                init_param={"init_method": "zeros"},
                                encrypted_mode_calculator_param={"mode": "fast"},
-                               cv_param={"n_splits": 5,
-                                         "shuffle": False,
+                               cv_param={"n_splits": 3,
+                                         "shuffle": True,
                                          "need_cv": True
                                          }
                                )
@@ -72,7 +72,7 @@ def main(config="../config.yaml"):
 
     pipeline.fit(backend=backend, work_mode=work_mode)
 
-    print (pipeline.get_component("hetero_linr_0").get_summary())
+    print(pipeline.get_component("hetero_linr_0").get_summary())
 
 
 if __name__ == "__main__":

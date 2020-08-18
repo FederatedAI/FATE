@@ -56,9 +56,9 @@ def main(config="../config.yaml"):
                                      init_param={"init_method": "zeros"},
                                      encrypted_mode_calculator_param={"mode": "fast"},
                                      cv_param={
-                                         "n_splits": 5,
-                                         "shuffle": False,
-                                         "random_seed": 103,
+                                         "n_splits": 3,
+                                         "shuffle": True,
+                                         "random_seed": 42,
                                          "need_cv": True
                                      })
 
@@ -74,9 +74,9 @@ def main(config="../config.yaml"):
 
     pipeline.fit(backend=backend, work_mode=work_mode)
 
-    print (pipeline.get_component("hetero_poisson_0").get_model_param())
-    print (pipeline.get_component("hetero_poisson_0").get_summary())
-    print (pipeline.get_component("evaluation_0").get_summary())
+    print(pipeline.get_component("hetero_poisson_0").get_model_param())
+    print(pipeline.get_component("hetero_poisson_0").get_summary())
+    print(pipeline.get_component("evaluation_0").get_summary())
 
 
 if __name__ == "__main__":

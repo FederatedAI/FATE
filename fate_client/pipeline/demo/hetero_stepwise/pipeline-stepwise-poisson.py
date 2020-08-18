@@ -64,7 +64,7 @@ def main(config="../config.yaml"):
 
     pipeline.fit(backend=backend, work_mode=work_mode)
 
-    print (pipeline.get_component("hetero_poisson_0").get_summary())
+    print(pipeline.get_component("hetero_poisson_0").get_summary())
 
 
 if __name__ == "__main__":
