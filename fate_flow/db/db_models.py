@@ -110,17 +110,6 @@ def fill_db_model_object(model_object, human_model_dict):
     return model_object
 
 
-class Queue(DataBaseModel):
-    f_job_id = CharField(max_length=100)
-    f_event = CharField(max_length=500)
-    f_is_waiting = IntegerField(default=1)
-    # 0: out; 1: in queue one; 2 :cancel; 3: in queue two; 4: out because of Over limit; 5: Intermediate queue
-    f_frequency = IntegerField(default=0)
-
-    class Meta:
-        db_table = "t_queue"
-
-
 class Job(DataBaseModel):
     # multi-party common configuration
     f_job_id = CharField(max_length=25)
