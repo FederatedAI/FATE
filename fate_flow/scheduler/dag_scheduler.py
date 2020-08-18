@@ -41,12 +41,14 @@ class DAGScheduler(Cron):
         schedule_logger(job_id).info('submit job, job_id {}, body {}'.format(job_id, job_data))
         job_dsl = job_data.get('job_dsl', {})
         job_runtime_conf = job_data.get('job_runtime_conf', {})
+        job_parameters = job_runtime_conf['job_parameters']
+        job_initiator = job_runtime_conf['initiator']
 
         # Compatible
         computing_engine, federation_engine, federation_mode = compatibility_utils.backend_compatibility(**job_runtime_conf["job_parameters"])
-        job_runtime_conf["job_parameters"]["computing_engine"] = computing_engine
-        job_runtime_conf["job_parameters"]["federation_engine"] = federation_engine
-        job_runtime_conf["job_parameters"]["federation_mode"] = federation_mode
+        job_parameters["computing_backend"] = job_parameters.get("computing_backend", f"DEFAULT_{computing_engine}")
+        job_parameters["federation_backend"] = job_parameters.get("federation_backend", f"DEFAULT_{federation_engine}")
+        job_parameters["federation_mode"] = federation_mode
 
         # set default parameters
         job_runtime_conf["job_parameters"]["task_parallelism"] = int(job_runtime_conf["job_parameters"].get("task_parallelism", DEFAULT_TASK_PARALLELISM))
@@ -54,8 +56,6 @@ class DAGScheduler(Cron):
         job_runtime_conf["job_parameters"]["memory_per_task"] = int(job_runtime_conf["job_parameters"].get("memory_per_task", DEFAULT_MEMORY_PER_TASK))
 
         job_utils.check_pipeline_job_runtime_conf(job_runtime_conf)
-        job_parameters = job_runtime_conf['job_parameters']
-        job_initiator = job_runtime_conf['initiator']
         job_type = job_parameters.get('job_type', '')
         if job_type != 'predict':
             # generate job model info
@@ -154,19 +154,21 @@ class DAGScheduler(Cron):
                     pass
             else:
                 # rollback resource
-                rollback_party = []
-                failed_party = []
+                rollback_party = {}
+                failed_party = {}
                 for dest_role in federated_response.keys():
                     for dest_party_id in federated_response[dest_role].keys():
                         retcode = federated_response[dest_role][dest_party_id]["retcode"]
                         if retcode == 0:
-                            rollback_party.append((dest_role, dest_party_id))
+                            rollback_party[dest_role] = rollback_party.get(dest_role, [])
+                            rollback_party[dest_role].append(dest_party_id)
                         else:
-                            failed_party.append((dest_role, dest_party_id))
+                            failed_party[dest_role] = failed_party.get(dest_role, [])
+                            failed_party[dest_role].append(dest_party_id)
                 schedule_logger(job_id).info("job {} apply resource failed on {}, rollback {}".format(
                     job_id,
-                    ",".join([f"{item[0]}:{item[1]}" for item in failed_party]),
-                    ",".join([f"{item[0]}:{item[1]}" for item in rollback_party]),
+                    ",".join([",".join([f"{_r}:{_p}" for _p in _ps]) for _r, _ps in failed_party.items()]),
+                    ",".join([",".join([f"{_r}:{_p}" for _p in _ps]) for _r, _ps in rollback_party.items()]),
                 ))
                 if rollback_party:
                     status_code, federated_response = FederatedScheduler.resource_for_job(job=job, operation_type=ResourceOperation.RETURN, specific_dest=rollback_party)

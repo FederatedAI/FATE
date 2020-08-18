@@ -128,8 +128,11 @@ class Job(DataBaseModel):
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
     f_is_initiator = IntegerField(null=True, index=True, default=-1)
-    f_resources = IntegerField(index=True, default=0)
-    f_remaining_resources = IntegerField(index=True, default=0)
+    f_engine_id = CharField(max_length=150, null=True)
+    f_cores = IntegerField(index=True, default=0)
+    f_memory = IntegerField(index=True, default=0)  # MB
+    f_remaining_cores = IntegerField(index=True, default=0)
+    f_remaining_memory = IntegerField(index=True, default=0)  # MB
     f_progress = IntegerField(null=True, default=0)
     f_create_time = BigIntegerField()
     f_update_time = BigIntegerField(null=True)
@@ -317,33 +320,15 @@ class ResourceRegistry(DataBaseModel):
     f_engine_id = CharField(max_length=150, null=False, primary_key=True)
     f_engine_type = CharField(max_length=10, index=True)
     f_engine_address = JSONField()
-    f_cores = IntegerField(index=True, null=True)
-    f_memory = IntegerField(index=True, null=True)  # MB
-    f_remaining_cores = IntegerField(index=True, default=0)
-    f_remaining_memory = IntegerField(index=True, default=0) # MB
+    f_cores = IntegerField(index=True)
+    f_memory = IntegerField(index=True)  # MB
+    f_remaining_cores = IntegerField(index=True)
+    f_remaining_memory = IntegerField(index=True) # MB
     f_create_time = BigIntegerField()
     f_update_time = BigIntegerField(null=True)
 
     class Meta:
         db_table = "t_resource_registry"
-
-
-class ResourceRecord(DataBaseModel):
-    f_job_id = CharField(max_length=25)
-    f_role = CharField(max_length=50, index=True)
-    f_party_id = CharField(max_length=10, index=True)
-    f_engine_id = CharField(max_length=150)
-    f_cores = IntegerField(index=True, null=True)
-    f_memory = IntegerField(index=True, null=True)  # MB
-    f_remaining_cores = IntegerField(index=True, default=0)
-    f_remaining_memory = IntegerField(index=True, default=0)  # MB
-    f_in_use = BooleanField(index=True, default=True)
-    f_create_time = BigIntegerField()
-    f_update_time = BigIntegerField(null=True)
-
-    class Meta:
-        db_table = "t_resource_record"
-        primary_key = CompositeKey('f_job_id', 'f_role', 'f_party_id')
 
 
 class DBQueue(DataBaseModel):

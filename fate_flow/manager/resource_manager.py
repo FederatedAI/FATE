@@ -15,98 +15,125 @@
 #
 
 import operator
-from fate_arch.common.log import schedule_logger
+
 from fate_arch.common import base_utils
-from fate_flow.utils import job_utils
-from fate_flow.db.db_models import DB, ResourceRegistry, ResourceRecord
 from fate_arch.common.conf_utils import get_base_config
-from fate_flow.settings import stat_logger
+from fate_arch.common.log import schedule_logger
+from fate_flow.db.db_models import DB, ResourceRegistry, Job
 from fate_flow.entity.constant import ResourceOperation
+from fate_flow.settings import stat_logger
+from fate_flow.utils import job_utils
 
 
 class ResourceManager(object):
     @classmethod
     def initialize(cls):
         # initialize default
-        # eggroll
         with DB.connection_context():
-            resources = ResourceRegistry.select().where(ResourceRegistry.f_engine_id == "default_computing")
-            is_insert = False
-            if resources:
-                resource = resources[0]
-            else:
-                resource = ResourceRegistry()
-                resource.f_create_time = base_utils.current_timestamp()
-                resource.f_remaining_cores = get_base_config("computing", {}).get("cores", None)
-                resource.f_remaining_memory = get_base_config("computing", {}).get("memory", 0)
-                is_insert = True
-            resource.f_engine_id = "default_computing"
-            resource.f_engine_type = get_base_config("computing", {}).get("engine", {})
-            resource.f_engine_address = get_base_config("computing", {}).get("address", {})
-            resource.f_cores = get_base_config("computing", {}).get("cores", None)
-            resource.f_memory = get_base_config("computing", {}).get("memory", 0)
-            if is_insert:
-                try:
-                    resource.save(force_insert=True)
-                except Exception as e:
-                    stat_logger.warning(e)
-                stat_logger.info(f"initialize default computing engine")
-            else:
-                resource.save()
-                stat_logger.info(f"update default computing engine")
+            for engine_id, engine_info in get_base_config("computing", {}).items():
+                resources = ResourceRegistry.select().where(ResourceRegistry.f_engine_id == engine_id)
+                is_insert = False
+                if resources:
+                    resource = resources[0]
+                else:
+                    resource = ResourceRegistry()
+                    resource.f_create_time = base_utils.current_timestamp()
+                    resource.f_remaining_cores = engine_info.get("cores", 0)
+                    resource.f_remaining_memory = engine_info.get("memory", 0)
+                    is_insert = True
+                resource.f_engine_id = engine_id
+                resource.f_engine_type = engine_info.get("engine", {})
+                resource.f_engine_address = engine_info.get("address", {})
+                resource.f_cores = engine_info.get("cores", 0)
+                resource.f_memory = engine_info.get("memory", 0)
+                if is_insert:
+                    try:
+                        resource.save(force_insert=True)
+                    except Exception as e:
+                        stat_logger.warning(e)
+                    stat_logger.info(f"initialize default computing engine")
+                else:
+                    resource.save()
+                    stat_logger.info(f"update default computing engine")
 
     @classmethod
     def apply_for_job_resource(cls, job_id, role, party_id):
-        status, engine_id, cores, memory = cls.resource_for_job(job_id=job_id, role=role, party_id=party_id, operation_type=ResourceOperation.APPLY)
-        if status:
-            try:
-                with DB.connection_context():
-                    resource_record = ResourceRecord()
-                    resource_record.f_job_id = job_id
-                    resource_record.f_role = role
-                    resource_record.f_party_id = party_id
-                    resource_record.f_engine_id = engine_id
-                    resource_record.f_cores = cores
-                    resource_record.f_memory = memory
-                    resource_record.f_remaining_cores = cores
-                    resource_record.f_remaining_memory = memory
-                    resource_record.f_in_use = True
-                    resource_record.f_create_time = base_utils.current_timestamp()
-                    rows = resource_record.save(force_insert=True)
-                    if rows == 1:
-                        schedule_logger(job_id=job_id).info(f"successfully apply resource for job {job_id} on {role} {party_id}")
-                        return True
-            except Exception as e:
-                status, engine_id, cores, memory = cls.resource_for_job(job_id=job_id, role=role, party_id=party_id, operation_type=ResourceOperation.RETURN)
-                schedule_logger(job_id=job_id).warning(f"failed save resource record for job {job_id} on {role} {party_id}")
+        engine_id, cores, memory = cls.calculate_job_resource(job_id=job_id, role=role, party_id=party_id)
+        apply_status = cls.update_resource(model=ResourceRegistry,
+                                           cores=cores,
+                                           memory=memory,
+                                           operation_type=ResourceOperation.APPLY,
+                                           engine_id=engine_id,
+                                           )
+        if apply_status:
+            update_fields = {
+                Job.f_engine_id: engine_id,
+                Job.f_cores: cores,
+                Job.f_memory: memory,
+                Job.f_remaining_cores: cores,
+                Job.f_remaining_memory: memory,
+            }
+            filter_fields = [
+                Job.f_job_id == job_id,
+                Job.f_role == role,
+                Job.f_party_id == party_id,
+                Job.f_cores == 0,
+                Job.f_memory == 0
+            ]
+            with DB.connection_context():
+                operate = Job.update(update_fields).where(*filter_fields)
+                update_status = operate.execute() > 0
+            if update_status:
+                schedule_logger(job_id=job_id).info(f"apply job {job_id} resource on {role} {party_id} successfully")
+                return True
+            else:
+                schedule_logger(job_id=job_id).info(
+                    f"save apply job {job_id} resource on {role} {party_id} record failed, rollback...")
+                cls.return_job_resource(job_id=job_id, role=role, party_id=party_id)
                 return False
         else:
-            schedule_logger(job_id=job_id).info(f"failed apply resource for job {job_id} on {role} {party_id}")
+            schedule_logger(job_id=job_id).info(f"apply job {job_id} resource on {role} {party_id} failed")
             return False
 
     @classmethod
     def return_job_resource(cls, job_id, role, party_id):
-        status, engine_id, cores, memory = cls.resource_for_job(job_id=job_id, role=role, party_id=party_id, operation_type=ResourceOperation.RETURN)
-        if status:
-            try:
-                with DB.connection_context():
-                    job_resource_records = ResourceRecord.select().where(ResourceRecord.f_job_id==job_id, ResourceRecord.f_role==role, ResourceRecord.f_party_id==party_id)
-                    if not job_resource_records:
-                        schedule_logger(job_id=job_id).warning(f"can not found job {job_id} {role} {party_id} resource record")
-                    job_resource_record = job_resource_records[0]
-                    job_resource_record.f_in_use = False
-                    operate = ResourceRecord.update({ResourceRecord.f_in_use: False}).where(ResourceRecord.f_job_id==job_id, ResourceRecord.f_role==role, ResourceRecord.f_party_id==party_id)
-                    if operate.execute() > 0:
-                        schedule_logger(job_id=job_id).info(f"successfully return job {job_id} on {role} {party_id} resource and invalidate the record")
-            except Exception as e:
-                schedule_logger(job_id=job_id).warning(f"failed delete job {job_id} on {role} {party_id} resource record")
-            return True
+        engine_id, cores, memory = cls.calculate_job_resource(job_id=job_id, role=role, party_id=party_id)
+        update_fields = {
+            Job.f_engine_id: engine_id,
+            Job.f_cores: 0,
+            Job.f_memory: 0,
+            Job.f_remaining_cores: 0,
+            Job.f_remaining_memory: 0,
+        }
+        filter_fields = [
+            Job.f_job_id == job_id,
+            Job.f_role == role,
+            Job.f_party_id == party_id,
+            Job.f_cores == cores,
+            Job.f_memory == memory
+        ]
+        with DB.connection_context():
+            operate = Job.update(update_fields).where(*filter_fields)
+            update_status = operate.execute() > 0
+        if update_status:
+            return_status = cls.update_resource(model=ResourceRegistry,
+                                                cores=cores,
+                                                memory=memory,
+                                                operation_type=ResourceOperation.RETURN,
+                                                engine_id=engine_id,
+                                                )
+            if return_status:
+                schedule_logger(job_id=job_id).info(f"return job {job_id} resource on {role} {party_id} successfully")
+                return True
+            else:
+                schedule_logger(job_id=job_id).info(f"return job {job_id} resource on {role} {party_id} failed")
+                return False
         else:
-            schedule_logger(job_id=job_id).info(f"failed return job {job_id} on {role} {party_id} resource")
+            schedule_logger(job_id=job_id).info(f"save return job {job_id} resource on {role} {party_id} record failed")
             return False
 
     @classmethod
-    def resource_for_job(cls, job_id, role, party_id, operation_type):
+    def calculate_job_resource(cls, job_id, role, party_id):
         dsl, runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id,
                                                                                 role=role,
                                                                                 party_id=party_id)
@@ -115,30 +142,8 @@ class ResourceManager(object):
         memory_per_task = runtime_conf["job_parameters"]["memory_per_task"]
         cores = task_parallelism * cores_per_task
         memory = task_parallelism * memory_per_task
-
-        engine_id = "default_computing"
-        engine_type = "EGGROLL"
-        if engine_type == "EGGROLL":
-            cores_on_engine = cores
-            memory_on_engine = 0
-        else:
-            cores_on_engine = 0
-            memory_on_engine = 0
-        schedule_logger(job_id=job_id).info(
-            "try {} job {} resource on {} {}".format(operation_type, job_id, role, party_id))
-        update_status = cls.update_resource(model=ResourceRegistry,
-                                            cores=cores_on_engine,
-                                            memory=memory_on_engine,
-                                            operation_type=operation_type,
-                                            engine_id=engine_id,
-                                            )
-        if update_status:
-            schedule_logger(job_id=job_id).info(
-                "{} job {} resource on {} {} successfully".format(operation_type, job_id, role, party_id))
-        else:
-            schedule_logger(job_id=job_id).info(
-                "{} job {} resource on {} {} failed".format(operation_type, job_id, role, party_id))
-        return update_status, engine_id, cores, memory
+        engine_id = runtime_conf["job_parameters"]["computing_backend"]
+        return engine_id, cores, memory
 
     @classmethod
     def apply_for_task_resource(cls, task_info):
@@ -159,7 +164,7 @@ class ResourceManager(object):
             "try {} job {} resource to task {} {}".format(operation_type, task_info["job_id"], task_info["task_id"],
                                                           task_info["task_version"]))
 
-        update_status = cls.update_resource(model=ResourceRecord,
+        update_status = cls.update_resource(model=Job,
                                             cores=cores_per_task,
                                             memory=memory_per_task,
                                             operation_type=operation_type,

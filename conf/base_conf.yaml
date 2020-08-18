@@ -14,18 +14,24 @@ database:
   max_connections: 100
   stale_timeout: 30
 computing:
-  engine: EGGROLL
-  address:
-    host: 127.0.0.1
-    port: 9370
-    home: "./eggroll/python/eggroll"
-  cores: 20
-  nodes: 1
+  DEFAULT_EGGROLL:
+    engine: EGGROLL
+    address:
+      host: 127.0.0.1
+      port: 9370
+      home: "./eggroll/python/eggroll"
+    cores: 20
+    nodes: 1
+  DEFAULT_SPARK:
+    engine: SPARK
+    address:
+      home: ""
 federation:
-  engine: EGGROLL
-  address:
-    host: 127.0.0.1
-    port: 9370
+  DEFAULT_EGGROLL:
+    engine: EGGROLL
+    address:
+      host: 127.0.0.1
+      port: 9370
 zookeeper:
   hosts:
     - 127.0.0.1:2281

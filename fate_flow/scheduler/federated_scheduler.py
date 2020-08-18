@@ -41,9 +41,9 @@ class FederatedScheduler(object):
         schedule_logger(job_id=job.f_job_id).info(f"try to {operation_type} job {job.f_job_id} resource")
         status_code, response = cls.job_command(job=job, command=f"resource/{operation_type}", specific_dest=specific_dest)
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
-            schedule_logger(job_id=job.f_job_id).info(f"{operation_type} job {job.f_job_id} successfully")
+            schedule_logger(job_id=job.f_job_id).info(f"{operation_type} job {job.f_job_id} resource successfully")
         else:
-            schedule_logger(job_id=job.f_job_id).info(f"{operation_type} job {job.f_job_id} failed")
+            schedule_logger(job_id=job.f_job_id).info(f"{operation_type} job {job.f_job_id} resource failed")
         return status_code, response
 
     @classmethod
@@ -120,7 +120,7 @@ class FederatedScheduler(object):
             dest_partys = [(job_initiator["role"], [job_initiator["party_id"]])]
             api_type = "initiator"
         elif specific_dest:
-            dest_partys = specific_dest
+            dest_partys = specific_dest.items()
             api_type = "controller"
         else:
             dest_partys = roles.items()

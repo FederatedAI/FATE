@@ -54,14 +54,14 @@ class BaseDataBase(object):
             if USE_LOCAL_DATABASE:
                 self.database_connection = APSWDatabase('fate_flow_sqlite.db')
                 RuntimeConfig.init_config(USE_LOCAL_DATABASE=True)
-                LOGGER.info('init sqlite database on standalone mode successfully')
+                #LOGGER.info('init sqlite database on standalone mode successfully')
             else:
                 self.database_connection = PooledMySQLDatabase(db_name, **database_config)
-                LOGGER.info('init mysql database on standalone mode successfully')
+                #LOGGER.info('init mysql database on standalone mode successfully')
                 RuntimeConfig.init_config(USE_LOCAL_DATABASE=False)
         elif WORK_MODE == WorkMode.CLUSTER:
             self.database_connection = PooledMySQLDatabase(db_name, **database_config)
-            LOGGER.info('init mysql database on cluster mode successfully')
+            #LOGGER.info('init mysql database on cluster mode successfully')
             RuntimeConfig.init_config(USE_LOCAL_DATABASE=False)
         else:
             raise Exception('can not init database')
