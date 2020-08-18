@@ -87,7 +87,8 @@ Other features
 * Support missing value in train and predict process
 * Support evaluate training and validate data during training process
 * Support another homomorphic encryption method called "Iterative Affine" since FATE-1.1 
-* Support early stopping in FATE-1.4, to use early stopping, see :download:`[Boosting Tree Param] <../param/boosting_tree_param.py>`
+* Support early stopping in FATE-1.4, to use early stopping, see :download:`[Boosting Tree Param] <../param/boosting
+_param.py>`
 
 
 
@@ -175,7 +176,7 @@ Other features
 Param
 ^^^^^^
 
-.. automodule:: federatedml.param.boosting_tree_param
+.. automodule:: federatedml.param.boosting_param
    :members:
 
 Hetero Complete Secureboost
