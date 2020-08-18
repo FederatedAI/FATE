@@ -35,7 +35,7 @@ class StorageTable(StorageTableBase):
         self._name = name
         self._namespace = namespace
         self._partitions = partitions
-        self._type = storage_type
+        self._type = storage_type if not storage_type else StandaloneStorageType.ROLLPAIR_LMDB
         self._options = options if options else {}
         self._storage_engine = StorageEngine.STANDALONE
         need_cleanup = self._type == StandaloneStorageType.ROLLPAIR_IN_MEMORY
