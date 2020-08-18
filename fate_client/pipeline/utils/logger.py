@@ -36,7 +36,7 @@ error_log_path = os.path.join(LogPath.log_directory(), LogPath.ERROR)
 LOGGER = loguru.logger
 LOGGER.remove()
 # LOGGER.add(sys.stderr, level="INFO", colorize=True, format=LogFormat.SIMPLE)
-LOGGER.add(lambda msg: print(msg, flush=True, end=""), level="INFO", colorize=True,
+LOGGER.add(lambda msg: sys.stdout.write(msg), level="INFO", colorize=True,
            format=LogFormat.SIMPLE, filter=runtime_log_only)
 LOGGER.add(Path(info_log_path).resolve(), level="INFO", rotation="500MB",
            colorize=True, format=LogFormat.NORMAL, filter=runtime_log_only)
