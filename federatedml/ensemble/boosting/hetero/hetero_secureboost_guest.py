@@ -89,7 +89,7 @@ class HeteroSecureBoostGuest(HeteroBoostingGuest):
         tree.set_grad_and_hess(g_h)
         tree.set_encrypter(self.encrypter)
         tree.set_encrypted_mode_calculator(self.encrypted_calculator)
-        tree.set_valid_features(self.sample_valid_features())
+        tree.set_valid_features(self.sample_valid_fseatures())
         tree.set_flowid(self.generate_flowid(epoch_idx, booster_dim))
         tree.set_host_party_idlist(self.component_properties.host_party_idlist)
         tree.set_runtime_idx(self.component_properties.local_partyid)
