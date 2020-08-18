@@ -18,6 +18,7 @@
 import uuid
 import numpy as np
 
+from fate_arch.computing import ComputingEngine
 from fate_flow.entity.metric import MetricMeta
 from fate_arch.common import log
 from fate_arch import storage
@@ -41,6 +42,7 @@ class Reader(object):
                                                                                         src_namespace=self.parameters[table_key]['namespace'],
                                                                                         dest_name=persistent_table_name,
                                                                                         dest_namespace=persistent_table_namespace,
+                                                                                        computing_engine=component_parameters.get('job_parameters').get('computing_engine', ComputingEngine.EGGROLL),
                                                                                         force=True)
         if dest_table_address:
             with storage.Session.build(session_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),

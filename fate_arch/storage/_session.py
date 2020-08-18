@@ -69,6 +69,7 @@ class Session(object):
                                                                      address_dict=dict(name=dest_name,
                                                                                        namespace=dest_namespace,
                                                                                        storage_type=EggRollStorageType.ROLLPAIR_LMDB))
+                dest_table_engine = StorageEngine.STANDALONE
             elif computing_engine == ComputingEngine.EGGROLL:
                 from fate_arch.storage.eggroll import StorageSession
                 from fate_arch.storage import EggRollStorageType
