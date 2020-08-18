@@ -16,6 +16,7 @@
 from collections import Iterable
 
 from fate_arch.abc import AddressABC, CSessionABC
+from fate_arch.common.base_utils import fate_uuid
 from fate_arch.common.log import getLogger
 from fate_arch.computing.standalone import Table
 from fate_arch.standalone import Session
@@ -32,9 +33,15 @@ class CSession(CSessionABC):
         return self._session
 
     def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
-        from fate_arch.common.address import EggRollAddress
-        if isinstance(address, EggRollAddress):
-            table = Table(self._session.load(address.name, address.namespace))
+        from fate_arch.common.address import StandaloneAddress
+        from fate_arch.storage import StandaloneStorageType
+        if isinstance(address, StandaloneAddress):
+            raw_table = self._session.load(address.name, address.namespace)
+            if address.storage_type != StandaloneStorageType.ROLLPAIR_IN_MEMORY:
+                raw_table = raw_table.save_as(name=f"{address.name}_{fate_uuid()}",
+                                              namespace=address.namespace, partition=partitions,
+                                              need_cleanup=True)
+            table = Table(raw_table)
             table.schema = schema
             return table
 
