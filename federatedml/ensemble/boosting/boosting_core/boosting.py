@@ -66,6 +66,7 @@ class Boosting(ModelBase, ABC):
         self.model_name = 'default'  # model name
         self.early_stopping_rounds = None
         self.use_first_metric_only = False
+        self.binning_error = consts.DEFAULT_RELATIVE_ERROR
 
         # running variable
 
@@ -121,6 +122,7 @@ class Boosting(ModelBase, ABC):
         self.metrics = boosting_param.metrics
         self.subsample_feature_rate = boosting_param.subsample_feature_rate
         self.subsample_random_seed = boosting_param.subsample_random_seed
+        self.binning_error = boosting_param.binning_error
 
     @staticmethod
     def data_format_transform(row):
@@ -167,10 +169,10 @@ class Boosting(ModelBase, ABC):
 
     def convert_feature_to_bin(self, data_instance, handle_missing_value=False):
         LOGGER.info("convert feature to bins")
-        param_obj = FeatureBinningParam(bin_num=self.bin_num)
+        param_obj = FeatureBinningParam(bin_num=self.bin_num, error=self.binning_error)
 
         if handle_missing_value:
-            self.binning_obj = self.binning_class(param_obj, abnormal_list=[NoneType()])
+            self.binning_obj = self.binning_class(param_obj, abnormal_list=[NoneType()],)
         else:
             self.binning_obj = self.binning_class(param_obj)
 
