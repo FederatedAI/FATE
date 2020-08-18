@@ -35,7 +35,7 @@ class HeteroBoosting(Boosting, ABC):
         super(HeteroBoosting, self).__init__()
         self.encrypter = None
         self.encrypted_calculator = None
-        self.early_stopping = -1
+        self.early_stopping_rounds = None
         self.binning_class = QuantileBinning
         self.model_param = HeteroBoostingParam()
         self.transfer_variable = HeteroBoostingTransferVariable()
@@ -48,7 +48,7 @@ class HeteroBoosting(Boosting, ABC):
         self.re_encrypt_rate = param.encrypted_mode_calculator_param
         self.calculated_mode = param.encrypted_mode_calculator_param.mode
         self.re_encrypted_rate = param.encrypted_mode_calculator_param.re_encrypted_rate
-        self.early_stopping = param.early_stopping_rounds
+        self.early_stopping_rounds = param.early_stopping_rounds
         self.use_first_metric_only = param.use_first_metric_only
 
     def generate_encrypter(self):

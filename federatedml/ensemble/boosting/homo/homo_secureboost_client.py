@@ -149,7 +149,7 @@ class HomoSecureBoostClient(HomoBoostingClient):
 
     def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
         tree_inst = HomoDecisionTreeClient(tree_param=self.tree_param, mode='predict')
-        tree_inst.load_model(model_meta=self.booster_meta, model_param=model_param)
+        tree_inst.load_model(model_meta=model_meta, model_param=model_param)
         return tree_inst
 
     def set_model_param(self, model_param):
@@ -162,7 +162,7 @@ class HomoSecureBoostClient(HomoBoostingClient):
 
     def set_model_meta(self, model_meta):
 
-        self.booster_dim = model_meta.tree_meta
+        self.booster_meta = model_meta.tree_meta
         self.learning_rate = model_meta.learning_rate
         self.boosting_round = model_meta.num_trees
         self.bin_num = model_meta.quantile_meta.bin_num

@@ -151,3 +151,13 @@ Param
 .. automodule:: federatedml.param.onehot_encoder_param
    :members:
 
+
+Homo OneHot Encoder
+==============
+OneHot encoding is a process by which category variables are converted to binary values. The detailed info could be found in `[OneHot wiki] <https://en.wikipedia.org/wiki/One-hot>`_
+
+Param
+------
+
+.. automodule:: federatedml.param.homo_onehot_encoder_param
+   :members:

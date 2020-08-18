@@ -14,8 +14,8 @@
         "guest": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "default_credit_homo_guest", "namespace": "experiment"}],
-                    "eval_data": [{"name": "default_credit_homo_host", "namespace": "experiment"}]
+                    "train_data": [{"name": "expect", "namespace": "experiment"}],
+                    "eval_data": [{"name": "actual", "namespace": "experiment"}]
                 }
             },
             "dataio_0":{
@@ -28,8 +28,8 @@
         "host": {
             "args": {
                 "data": {
-                    "train_data": [{"name": "breast_homo_guest", "namespace": "experiment"}],
-                    "eval_data": [{"name": "breast_homo_host", "namespace": "experiment"}]
+                    "train_data": [{"name": "expect", "namespace": "experiment"}],
+                    "eval_data": [{"name": "actual", "namespace": "experiment"}]
                 }
             },
              "dataio_0":{
