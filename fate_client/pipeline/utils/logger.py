@@ -22,13 +22,26 @@ import loguru
 
 from pipeline.backend.config import LogPath, LogFormat
 
+DEMO_LOG = "demo"
+RUNTIME_LOG = "runtime"
+
+def runtime_log_only(record):
+    log_type = record["extra"].get("log_type", "")
+    return log_type == RUNTIME_LOG
+
 info_log_path = os.path.join(LogPath.log_directory(), LogPath.INFO)
 debug_log_path = os.path.join(LogPath.log_directory(), LogPath.DEBUG)
 error_log_path = os.path.join(LogPath.log_directory(), LogPath.ERROR)
 
 LOGGER = loguru.logger
 LOGGER.remove()
-LOGGER.add(sys.stderr, level="INFO", colorize=True, format=LogFormat.SIMPLE)
-LOGGER.add(Path(info_log_path).resolve(), level="INFO", rotation="500MB", format=LogFormat.NORMAL)
-LOGGER.add(Path(debug_log_path).resolve(), level="DEBUG", rotation="500MB", format=LogFormat.NORMAL)
-LOGGER.add(Path(error_log_path).resolve(), level="ERROR", rotation="500MB", format=LogFormat.NORMAL, backtrace=True)
+# LOGGER.add(sys.stderr, level="INFO", colorize=True, format=LogFormat.SIMPLE)
+LOGGER.add(lambda msg: print(msg, flush=True, end=""), level="INFO", colorize=True,
+           format=LogFormat.SIMPLE, filter=runtime_log_only)
+LOGGER.add(Path(info_log_path).resolve(), level="INFO", rotation="500MB",
+           colorize=True, format=LogFormat.NORMAL, filter=runtime_log_only)
+LOGGER.add(Path(debug_log_path).resolve(), level="DEBUG", rotation="500MB", colorize=True,
+           format=LogFormat.NORMAL,filter=runtime_log_only)
+LOGGER.add(Path(error_log_path).resolve(), level="ERROR", rotation="500MB", colorize=True,
+           format=LogFormat.NORMAL, backtrace=True, filter=runtime_log_only)
+LOGGER = LOGGER.bind(log_type=RUNTIME_LOG)

@@ -20,44 +20,43 @@ import importlib
 import tempfile
 import time
 from pathlib import Path
+from pipeline.utils.logger import LOGGER, DEMO_LOG, LogFormat
 
-import loguru
 import yaml
 import sys
+
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
 except ImportError:
     from yaml import Loader, Dumper
 
-LOGGER = loguru.logger
 
+# LOGGER = loguru.logger
 
 class StreamToLogger:
-    def __init__(self, level="INFO"):
+    def __init__(self, logger, level="INFO"):
         self._level = level
+        self.logger = logger
+        self.line_buffer = ''
 
     def write(self, buffer):
-        for line in buffer.rstrip().splitlines():
-            LOGGER.opt(depth=1).log(self._level, line.rstrip())
+        temp_buffer = self.line_buffer + buffer
+        self.log_buffer = ''
+        for line in temp_buffer.splitlines(True):
+            if line[-1] == '\r':
+                self.logger.opt(depth=1).log(self._level, line.rstrip())
+            else:
+                self.line_buffer += line
 
     def flush(self):
-        pass
+        if self.line_buffer != '':
+            self.logger.opt(depth=1).log(self._level, self.line_buffer.rstrip())
+        self.line_buffer = ''
 
 
-def main():
-    parser = argparse.ArgumentParser("RUN PIPELINE DEMO")
-    parser.add_argument("path", help="path to search pipeline-xxx.py")
-    parser.add_argument("-config", default="./config.yaml", type=str,
-                        help="config file")
-    parser.add_argument("-name", default=f'pipeline-demo-{time.strftime("%Y%m%d%H%M%S", time.localtime())}')
-    parser.add_argument("-backend", choices=[0, 1], type=int, help="backend to use")
-    parser.add_argument("-work_mode", choices=[0, 1], type=int,
-                        help="work mode, if specified, overrides setting in config.yaml")
-    parser.add_argument("-exclude", nargs="+", type=str)
-    args = parser.parse_args()
-
-    _add_logger(args.name)
+def main(args):
+    demo_logger, demo_log_path = _add_logger(args.name)
     # find all demos
     path = Path(args.path)
     paths = _find_demo_files(path)
@@ -73,10 +72,7 @@ def main():
     conf = load_conf(args)
 
     # run demos
-    stream = StreamToLogger()
-    # with contextlib.redirect_stdout(stream):
-    #    run_demos(paths, conf)
-    run_demos(paths, conf)
+    run_demos(paths, conf, path, demo_logger, demo_log_path)
 
 
 def load_conf(args):
@@ -96,13 +92,12 @@ def _add_logger(name):
         raise Exception(f"{name} exist, but is not a dir")
     if not path.exists():
         path.mkdir(parents=True)
-    loguru.logger.remove()
-    simple_log_format = '<green>[{time:HH:mm:ss}]</green><level>{message}</level>'
-    log_format = '<green>{time:YYYY-MM-DD HH:mm:ss}</green> | ' \
-                 '<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
-    loguru.logger.add(sys.stderr, level="INFO", colorize=True, format=simple_log_format)
-    loguru.logger.add(f"{path.joinpath('INFO.log')}", level="INFO", format=log_format)
-    loguru.logger.add(f"{path.joinpath('DEBUG.log')}", level="DEBUG", format=log_format)
+    LOGGER.add(f"{path.joinpath('DEMO.log')}", level="INFO", colorize=True, format=LogFormat.SIMPLE)
+    LOGGER.add(f"{path.joinpath('INFO.log')}", level="INFO", colorize=True, format=LogFormat.NORMAL)
+    LOGGER.add(f"{path.joinpath('DEBUG.log')}", level="DEBUG", colorize=True, format=LogFormat.NORMAL)
+    LOGGER.add(f"{path.joinpath('ERROR.log')}", level="ERROR", colorize=True, format=LogFormat.NORMAL)
+    demo_logger = LOGGER.bind(log_type=DEMO_LOG)
+    return demo_logger, path
 
 
 def _find_demo_files(path):
@@ -118,7 +113,7 @@ def _find_demo_files(path):
     return [p.resolve() for p in paths]
 
 
-def run_demos(demos, conf):
+def run_demos(demos, conf, path, demo_logger, demo_log_path):
     temp_config = tempfile.NamedTemporaryFile('w', suffix='.yaml')
     with temp_config as f:
         yaml.dump(conf, f, default_flow_style=False)
@@ -128,9 +123,21 @@ def run_demos(demos, conf):
             spec = importlib.util.spec_from_loader(loader.name, loader)
             demo_module = importlib.util.module_from_spec(spec)
             loader.exec_module(demo_module)
-            LOGGER.info(f"Running demo {module_name}...")
+            demo_logger.info(f"Running demo(s) in {path}.")
+            demo_logger.info(f"Demo logs are located in {demo_log_path}.\n")
+            demo_logger.info(f"Running demo {module_name}...")
             demo_module.main(temp_config.name)
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser("RUN PIPELINE DEMO")
+    parser.add_argument("path", help="path to search pipeline-xxx.py")
+    parser.add_argument("-config", default="./config.yaml", type=str,
+                        help="config file")
+    parser.add_argument("-name", default=f'pipeline-demo-{time.strftime("%Y%m%d%H%M%S", time.localtime())}')
+    parser.add_argument("-backend", choices=[0, 1], type=int, help="backend to use")
+    parser.add_argument("-work_mode", choices=[0, 1], type=int,
+                        help="work mode, if specified, overrides setting in config.yaml")
+    parser.add_argument("-exclude", nargs="+", type=str)
+    args = parser.parse_args()
+    main(args)
