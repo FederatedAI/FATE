@@ -20,7 +20,7 @@ classifiers = [
 ]
 
 packages = [
-    { include = "testsuite" }
+    { include = "fate_testsuite" }
 ]
 
 [tool.poetry.dependencies]
@@ -37,7 +37,7 @@ dataclasses = { version = "^0.7", python = "3.6", optional = true }
 [tool.poetry.dev-dependencies]
 
 [tool.poetry.scripts]
-testsuite = "testsuite.cli:cli"
+fate_testsuite = "fate_testsuite.cli:cli"
 
 [build-system]
 requires = ["poetry>=0.12"]

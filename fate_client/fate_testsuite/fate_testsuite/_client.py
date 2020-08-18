@@ -23,41 +23,41 @@ from fate_testsuite._parser import Config
 
 class Clients(object):
     def __init__(self, config: Config):
-        self.config = config
         self._flow_clients = {}
+        self._tunnel_id_to_flow_clients = {}
+        self._role_str_to_service_id = {}
+        self._tunnel_id_to_tunnel = config.tunnel_id_to_tunnel
 
-        # create flow clients for local
-        for local_service in self.config.local_services:
-            flow_client = FLOWClient(local_service.address.string_format, self.config.data_base_dir)
-            for role_str in self.config.parties.parties_to_role_string(local_service.parties):
-                self._flow_clients[role_str] = flow_client
+        for service_id, service in config.service_id_to_service.items():
+            if isinstance(service, Config.service):
+                self._flow_clients[service_id] = FLOWClient(service.address, config.data_base_dir)
+            elif isinstance(service, Config.tunnel_service):
+                self._flow_clients[service_id] = FLOWClient(None, config.data_base_dir)
+                self._tunnel_id_to_flow_clients.setdefault(service.tunnel_id, []).append(
+                    (service.index, self._flow_clients[service_id]))
+
+        for party, service_id in config.party_to_service_id.items():
+            for role_str in config.parties.party_to_role_string(party):
+                self._role_str_to_service_id[role_str] = service_id
 
     def __getitem__(self, role_str: str) -> 'FLOWClient':
-        if role_str not in self._flow_clients:
+        if role_str not in self._role_str_to_service_id:
             raise RuntimeError(f"no flow client found binding to {role_str}")
-        return self._flow_clients[role_str]
+        return self._flow_clients[self._role_str_to_service_id[role_str]]
 
     def __enter__(self):
         # open ssh tunnels and create flow clients for remote
         self._tunnels = []
-        for tunnel_conf in self.config.ssh_tunnel:
-            role_strings = []
-            remote_bind_addresses = []
-            for service in tunnel_conf.services:
-                role_strings.append(self.config.parties.parties_to_role_string(service.parties))
-                remote_bind_addresses.append(service.address.tuple_format)
-
-            tunnel = sshtunnel.SSHTunnelForwarder(ssh_address_or_host=tunnel_conf.ssh_address.tuple_format,
+        for tunnel_id, tunnel_conf in self._tunnel_id_to_tunnel.items():
+            tunnel = sshtunnel.SSHTunnelForwarder(ssh_address_or_host=tunnel_conf.ssh_address,
                                                   ssh_username=tunnel_conf.ssh_username,
                                                   ssh_password=tunnel_conf.ssh_password,
                                                   ssh_pkey=tunnel_conf.ssh_priv_key,
-                                                  remote_bind_addresses=remote_bind_addresses)
+                                                  remote_bind_addresses=tunnel_conf.services_address)
             tunnel.start()
-            for role_strings, address in zip(role_strings, tunnel.local_bind_addresses):
-                client = FLOWClient(address=f"127.0.0.1:{address[1]}", data_base_dir=self.config.data_base_dir)
-                for role_string in role_strings:
-                    self._flow_clients[role_string] = client
             self._tunnels.append(tunnel)
+            for index, flow_client in self._tunnel_id_to_flow_clients[tunnel_id]:
+                flow_client.set_address(f"127.0.0.1:{tunnel.local_bind_ports[index]}")
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):

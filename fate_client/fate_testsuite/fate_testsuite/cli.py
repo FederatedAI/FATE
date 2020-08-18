@@ -90,7 +90,7 @@ def run_suite(replace, namespace, config, include, exclude, glob, yes):
             try:
                 start = time.time()
                 echo.echo(f"[{i + 1}/{len(suites)}]start at {time.strftime('%Y-%m-%d %X')} {suite.path}", fg='red')
-                suite.reflash_configs(client.config)
+                suite.reflash_configs(config_inst)
 
                 try:
                     _upload_data(client, suite)
@@ -119,7 +119,7 @@ def run_suite(replace, namespace, config, include, exclude, glob, yes):
 
 def _parse_config(config):
     try:
-        config_inst = Config.from_yaml(config)
+        config_inst = Config.load(config)
     except Exception as e:
         raise RuntimeError(f"error parse config from {config}") from e
     return config_inst
@@ -254,7 +254,7 @@ def _submit_job(clients: Clients, suite: Testsuite):
                     suite.update_status(job_name=job.job_name, job_id=resp.job_id)
 
                 if isinstance(resp, QueryJobResponse):
-                    job_progress.running(resp.status, resp.progress, resp.current_tasks)
+                    job_progress.running(resp.status, resp.progress)
 
                 update_bar(0)
 
