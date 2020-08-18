@@ -13,26 +13,24 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import datetime
 import inspect
-import json
 import os
 import sys
 
-from peewee import Model, CharField, IntegerField, BigIntegerField, TextField, CompositeKey
+from peewee import CharField, IntegerField, BigIntegerField, TextField, CompositeKey
 from playhouse.apsw_ext import APSWDatabase
 from playhouse.pool import PooledMySQLDatabase
 
+from fate_arch.storage.metastore.base_model import JSONField, SerializedField, BaseModel
 from fate_arch.common.conf_utils import get_base_config
 from fate_flow.entity.constant import WorkMode
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64
-from fate_arch.common.log import getLogger
+from fate_arch.common import log
 
 DATABASE = get_base_config("database", {})
 USE_LOCAL_DATABASE = get_base_config('use_local_database', True)
 WORK_MODE = get_base_config('work_mode', 0)
-stat_logger = getLogger("fate_flow_stat")
+LOGGER = log.getLogger()
 
 
 def singleton(cls, *args, **kw):
@@ -47,30 +45,6 @@ def singleton(cls, *args, **kw):
     return _singleton
 
 
-class LongTextField(TextField):
-    field_type = 'LONGTEXT'
-
-
-class JSONField(TextField):
-    def db_value(self, value):
-        if value is None:
-            value = {}
-        return json.dumps(value)
-
-    def python_value(self, value):
-        if value is None:
-            value = {}
-        return json.loads(value)
-
-
-class SerializedField(LongTextField):
-    def db_value(self, value):
-        return serialize_b64(value, to_str=True)
-
-    def python_value(self, value):
-        return deserialize_b64(value)
-
-
 @singleton
 class BaseDataBase(object):
     def __init__(self):
@@ -80,14 +54,14 @@ class BaseDataBase(object):
             if USE_LOCAL_DATABASE:
                 self.database_connection = APSWDatabase('fate_flow_sqlite.db')
                 RuntimeConfig.init_config(USE_LOCAL_DATABASE=True)
-                # stat_logger.info('init sqlite database on standalone mode successfully')
+                LOGGER.info('init sqlite database on standalone mode successfully')
             else:
                 self.database_connection = PooledMySQLDatabase(db_name, **database_config)
-                # stat_logger.info('init mysql database on standalone mode successfully')
+                LOGGER.info('init mysql database on standalone mode successfully')
                 RuntimeConfig.init_config(USE_LOCAL_DATABASE=False)
         elif WORK_MODE == WorkMode.CLUSTER:
             self.database_connection = PooledMySQLDatabase(db_name, **database_config)
-            # stat_logger.info('init mysql database on cluster mode successfully')
+            LOGGER.info('init mysql database on cluster mode successfully')
             RuntimeConfig.init_config(USE_LOCAL_DATABASE=False)
         else:
             raise Exception('can not init database')
@@ -101,22 +75,12 @@ def close_connection():
         if DB:
             DB.close()
     except Exception as e:
-        stat_logger.exception(e)
+        LOGGER.exception(e)
 
 
-class DataBaseModel(Model):
+class DataBaseModel(BaseModel):
     class Meta:
         database = DB
-
-    def to_json(self):
-        return self.__dict__['__data__']
-
-    def save(self, *args, **kwargs):
-        if hasattr(self, "f_update_date"):
-            self.f_update_date = datetime.datetime.now()
-        if hasattr(self, "f_update_time"):
-            self.f_update_time = current_timestamp()
-        return super(DataBaseModel, self).save(*args, **kwargs)
 
 
 def init_database_tables():

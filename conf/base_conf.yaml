@@ -16,17 +16,16 @@ database:
 computing:
   engine: EGGROLL
   address:
-    proxy:
-      host: 127.0.0.1
-      port: 9370
+    host: 127.0.0.1
+    port: 9370
     home: "./eggroll/python/eggroll"
   cores: 20
+  nodes: 1
 federation:
   engine: EGGROLL
   address:
-    proxy:
-      host: 127.0.0.1
-      port: 9370
+    host: 127.0.0.1
+    port: 9370
 zookeeper:
   hosts:
     - 127.0.0.1:2281

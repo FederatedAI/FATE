@@ -40,14 +40,12 @@ from fate_flow.scheduling_apps.initiator_app import manager as initiator_app_man
 from fate_flow.scheduling_apps.tracker_app import manager as tracker_app_manager
 from fate_flow.db.db_models import init_database_tables as init_flow_db
 from fate_arch.storage.metastore.db_models import init_database_tables as init_arch_db
-from fate_flow.operation import job_trigger, job_detector
-from fate_flow.scheduler import schedule_trigger
+from fate_flow.scheduler import job_detector
+from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.entity.constant import WorkMode, ProcessRole
-from fate_flow.manager import queue_manager
+from fate_flow.entity.constant import ProcessRole
 from fate_flow.manager.resource_manager import ResourceManager
-from fate_flow.settings import IP, GRPC_PORT, CLUSTER_STANDALONE_JOB_SERVER_PORT, _ONE_DAY_IN_SECONDS, \
-    MAX_CONCURRENT_JOB_RUN, stat_logger, API_VERSION
+from fate_flow.settings import IP, GRPC_PORT, _ONE_DAY_IN_SECONDS, stat_logger, API_VERSION
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import PrivilegeAuth
@@ -98,18 +96,15 @@ if __name__ == '__main__':
     args = parser.parse_args()
     RuntimeConfig.init_env()
     RuntimeConfig.set_process_role(ProcessRole.SERVER)
-    queue_manager.init_job_queue()
     # history_job_clean = job_controller.JobClean()
     # history_job_clean.start()
     PrivilegeAuth.init()
     ServiceUtils.register()
+    ResourceManager.initialize()
     # start job detector
     job_detector.JobDetector(interval=5 * 1000).start()
     # start trigger
-    trigger = job_trigger.JobTrigger(queue=RuntimeConfig.JOB_QUEUE, concurrent_num=MAX_CONCURRENT_JOB_RUN)
-    trigger.start()
-    schedule_trigger.ScheduleTrigger(interval=1000).start()
-    ResourceManager.initialize()
+    DAGScheduler(interval=1000).start()
     # start grpc server
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),
                          options=[(cygrpc.ChannelArgKey.max_send_message_length, -1),

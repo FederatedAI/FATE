@@ -21,20 +21,19 @@ from fate_flow.db.db_models import Job
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.scheduler.task_scheduler import TaskScheduler
 from fate_flow.operation.job_saver import JobSaver
-from fate_flow.entity.constant import JobStatus, TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, ResourceOperation
-from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.entity.constant import JobStatus, TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, ResourceOperation, FederatedSchedulingStatusCode
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.controller.job_controller import JobController
-from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT, DEFAULT_TASK_PARALLELISM, DEFAULT_PROCESSORS_PER_TASK
+from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT, DEFAULT_TASK_PARALLELISM, DEFAULT_CORES_PER_TASK, DEFAULT_MEMORY_PER_TASK
 from fate_flow.utils import detect_utils, job_utils
 from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_log_directory, get_job_dsl_parser
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils import model_utils
-from fate_flow.manager.resource_manager import ResourceManager
 from fate_flow.scheduler.job_queue import JobQueue
+from fate_flow.utils.cron import Cron
 
 
-class DAGScheduler(object):
+class DAGScheduler(Cron):
     @classmethod
     def submit(cls, job_data, job_id=None):
         if not job_id:
@@ -51,7 +50,8 @@ class DAGScheduler(object):
 
         # set default parameters
         job_runtime_conf["job_parameters"]["task_parallelism"] = int(job_runtime_conf["job_parameters"].get("task_parallelism", DEFAULT_TASK_PARALLELISM))
-        job_runtime_conf["job_parameters"]["processors_per_task"] = int(job_runtime_conf["job_parameters"].get("processors_per_task", DEFAULT_PROCESSORS_PER_TASK))
+        job_runtime_conf["job_parameters"]["cores_per_task"] = int(job_runtime_conf["job_parameters"].get("cores_per_task", DEFAULT_CORES_PER_TASK))
+        job_runtime_conf["job_parameters"]["memory_per_task"] = int(job_runtime_conf["job_parameters"].get("memory_per_task", DEFAULT_MEMORY_PER_TASK))
 
         job_utils.check_pipeline_job_runtime_conf(job_runtime_conf)
         job_parameters = job_runtime_conf['job_parameters']
@@ -107,11 +107,10 @@ class DAGScheduler(object):
                     JobController.initialize_tasks(job_id, role, party_id, job_initiator, dsl_parser)
 
         # push into queue
-        job_event = job_utils.job_event(job_id, initiator_role, initiator_party_id)
         try:
-            RuntimeConfig.JOB_QUEUE.put_event(job_event)
+            JobQueue.set_event(job_id=job_id, initiator_role=initiator_role, initiator_party_id=initiator_party_id)
         except Exception as e:
-            raise Exception('push job into queue failed')
+            raise Exception(f'push job into queue failed:\n{e}')
 
         schedule_logger(job_id).info(
             'submit job successfully, job id is {}, model id is {}'.format(job.f_job_id, job_parameters['model_id']))
@@ -123,23 +122,81 @@ class DAGScheduler(object):
         return job_id, path_dict['job_dsl_path'], path_dict['job_runtime_conf_path'], logs_directory, \
                {'model_id': job_parameters['model_id'], 'model_version': job_parameters['model_version']}, board_url
 
-    @classmethod
-    def check(cls):
-        schedule_logger().info("start check waiting jobs")
-        events = JobQueue.get_event(status=JobStatus.WAITING)
-        for event in events:
-            set_status = JobQueue.update_event(job_id=event.f_job_id, initiator_role=event.f_initiator_role, initiator_party_id=event.f_initiator_party_id)
-            if not set_status:
-                schedule_logger().info(f"job {event.f_job_id} may be handled by another scheduler")
-                continue
-            # apply resource on all party
-            jobs = job_utils.query_job(job_id=event.f_job_id, role=event.f_initiator_role, party_id=event.f_initiator_party_id)
-            job = jobs[0]
-            FederatedScheduler.resource_for_job(job=job, operation_type=ResourceOperation.APPLY)
-            #
+    def run_do(self):
+        self.schedule_waiting_jobs()
+        self.schedule_running_jobs()
 
     @classmethod
-    def start(cls, job_id, initiator_role, initiator_party_id):
+    def schedule_waiting_jobs(cls):
+        schedule_logger().info("start schedule waiting jobs")
+        events = JobQueue.get_event(job_status=JobStatus.WAITING)
+        schedule_logger().info(f"have {len(events)} waiting jobs")
+        for event in events:
+            job_id, initiator_role, initiator_party_id, = event.f_job_id, event.f_initiator_role, event.f_initiator_party_id,
+            set_status = JobQueue.update_event(job_id=job_id,
+                                               initiator_role=initiator_role,
+                                               initiator_party_id=initiator_party_id,
+                                               job_status=JobStatus.READY)
+            if not set_status:
+                schedule_logger(job_id).info(f"job {job_id} may be handled by another scheduler")
+                continue
+            # apply resource on all party
+            jobs = job_utils.query_job(job_id=job_id, role=initiator_role, party_id=initiator_party_id)
+            job = jobs[0]
+            status_code, federated_response = FederatedScheduler.resource_for_job(job=job, operation_type=ResourceOperation.APPLY)
+            if status_code == FederatedSchedulingStatusCode.SUCCESS:
+                cls.start_job(job_id=job_id, initiator_role=initiator_role, initiator_party_id=initiator_party_id)
+                set_status = JobQueue.update_event(job_id=job_id,
+                                                   initiator_role=initiator_role,
+                                                   initiator_party_id=initiator_party_id,
+                                                   job_status=JobStatus.RUNNING)
+                if not set_status:
+                    pass
+            else:
+                # rollback resource
+                rollback_party = []
+                failed_party = []
+                for dest_role in federated_response.keys():
+                    for dest_party_id in federated_response[dest_role].keys():
+                        retcode = federated_response[dest_role][dest_party_id]["retcode"]
+                        if retcode == 0:
+                            rollback_party.append((dest_role, dest_party_id))
+                        else:
+                            failed_party.append((dest_role, dest_party_id))
+                schedule_logger(job_id).info("job {} apply resource failed on {}, rollback {}".format(
+                    job_id,
+                    ",".join([f"{item[0]}:{item[1]}" for item in failed_party]),
+                    ",".join([f"{item[0]}:{item[1]}" for item in rollback_party]),
+                ))
+                if rollback_party:
+                    status_code, federated_response = FederatedScheduler.resource_for_job(job=job, operation_type=ResourceOperation.RETURN, specific_dest=rollback_party)
+                    if status_code != FederatedSchedulingStatusCode.SUCCESS:
+                        schedule_logger(job_id).info(f"job {job_id} return resource failed:\n{federated_response}")
+                else:
+                    schedule_logger(job_id).info(f"job {job_id} no party should be rollback resource")
+                update_status = JobQueue.update_event(job_id=job_id,
+                                                      initiator_role=initiator_role,
+                                                      initiator_party_id=initiator_party_id,
+                                                      job_status=JobStatus.WAITING)
+                schedule_logger(job_id).info(f"update job {job_id} status to waiting {update_status}")
+        schedule_logger().info("schedule waiting jobs finished")
+
+    @classmethod
+    def schedule_running_jobs(cls):
+        schedule_logger().info("start schedule running jobs")
+        events = JobQueue.get_event(job_status=JobStatus.RUNNING)
+        schedule_logger().info(f"have {len(events)} running jobs")
+        for event in events:
+            try:
+                jobs = JobSaver.query_job(job_id=event.f_job_id, initiator_role=event.f_initiator_role, initiator_party_id=event.f_initiator_party_id, is_initiator=1, status=JobStatus.RUNNING)
+                if jobs:
+                    cls.schedule_job(job=jobs[0])
+            except Exception as e:
+                schedule_logger(event.f_job_id).error(f"schedule job {event.f_job_id} failed:\n{e}")
+        schedule_logger().info("schedule running jobs finished")
+
+    @classmethod
+    def start_job(cls, job_id, initiator_role, initiator_party_id):
         schedule_logger(job_id=job_id).info("Try to start job {} on initiator {} {}".format(job_id, initiator_role, initiator_party_id))
         job_info = {}
         job_info["job_id"] = job_id
@@ -149,21 +206,16 @@ class DAGScheduler(object):
         job_info["party_status"] = JobStatus.RUNNING
         job_info["start_time"] = current_timestamp()
         job_info["tag"] = 'end_waiting'
-        # TODO: Apply for resources
-        st, cores = ResourceManager.apply_for_resource_to_job(job_id=job_id, role=initiator_role, party_id=initiator_party_id)
-        job_info["resources"] = cores
-        job_info["remaining_resources"] = job_info["resources"]
-        update_status = JobSaver.update_job(job_info=job_info)
-        if update_status:
-            jobs = job_utils.query_job(job_id=job_id, role=initiator_role, party_id=initiator_party_id)
+        jobs = job_utils.query_job(job_id=job_id, role=initiator_role, party_id=initiator_party_id)
+        if jobs:
             job = jobs[0]
             FederatedScheduler.start_job(job=job)
-            schedule_logger(job_id=job_id).info("Start job {} on initiator {} {}".format(job_id, initiator_role, initiator_party_id))
+            schedule_logger(job_id=job_id).info("start job {} on initiator {} {}".format(job_id, initiator_role, initiator_party_id))
         else:
-            schedule_logger(job_id=job_id).info("Job {} start on another scheduler".format(job_id))
+            schedule_logger(job_id=job_id).error("can not found job {} on initiator {} {}".format(job_id, initiator_role, initiator_party_id))
 
     @classmethod
-    def schedule(cls, job):
+    def schedule_job(cls, job):
         schedule_logger(job_id=job.f_job_id).info("Scheduling job {}".format(job.f_job_id))
         dsl_parser = job_utils.get_job_dsl_parser(dsl=job.f_dsl,
                                                   runtime_conf=job.f_runtime_conf,
@@ -248,4 +300,5 @@ class DAGScheduler(object):
         schedule_logger(job_id=job.f_job_id).info("Job {} finished with {}, do something...".format(job.f_job_id, end_status))
         FederatedScheduler.stop_job(job=job, stop_status=end_status)
         FederatedScheduler.clean_job(job=job)
+        JobQueue.delete_event(job_id=job.f_job_id, initiator_role=job.f_initiator_role, initiator_party_id=job.f_initiator_party_id)
         schedule_logger(job_id=job.f_job_id).info("Job {} finished with {}, done".format(job.f_job_id, end_status))

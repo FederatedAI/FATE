@@ -37,9 +37,9 @@ class FederatedScheduler(object):
             raise Exception("Create job failed: {}".format(response))
 
     @classmethod
-    def resource_for_job(cls, job, operation_type):
+    def resource_for_job(cls, job, operation_type, specific_dest=None):
         schedule_logger(job_id=job.f_job_id).info(f"try to {operation_type} job {job.f_job_id} resource")
-        status_code, response = cls.job_command(job=job, command=f"resource/{operation_type}")
+        status_code, response = cls.job_command(job=job, command=f"resource/{operation_type}", specific_dest=specific_dest)
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
             schedule_logger(job_id=job.f_job_id).info(f"{operation_type} job {job.f_job_id} successfully")
         else:
@@ -113,15 +113,18 @@ class FederatedScheduler(object):
         return status_code, response
 
     @classmethod
-    def job_command(cls, job, command, command_body=None, dest_only_initiator=False):
+    def job_command(cls, job, command, command_body=None, dest_only_initiator=False, specific_dest=None):
         federated_response = {}
         roles, job_initiator = job.f_runtime_conf["role"], job.f_runtime_conf['initiator']
-        if not dest_only_initiator:
-            dest_partys = roles.items()
-            api_type = "controller"
-        else:
+        if dest_only_initiator:
             dest_partys = [(job_initiator["role"], [job_initiator["party_id"]])]
             api_type = "initiator"
+        elif specific_dest:
+            dest_partys = specific_dest
+            api_type = "controller"
+        else:
+            dest_partys = roles.items()
+            api_type = "controller"
         for dest_role, dest_party_ids in dest_partys:
             federated_response[dest_role] = {}
             for dest_party_id in dest_party_ids:

@@ -19,17 +19,18 @@ import os
 import sys
 
 import __main__
-from peewee import (Model, CharField, IntegerField, BigIntegerField,
-                    TextField, CompositeKey, BigAutoField)
+from peewee import (CharField, IntegerField, BigIntegerField,
+                    TextField, CompositeKey, BigAutoField, BooleanField)
 from playhouse.apsw_ext import APSWDatabase
 from playhouse.pool import PooledMySQLDatabase
 
 from fate_arch.common import log
 from fate_arch.common.base_utils import current_timestamp
-from fate_arch.storage.metastore.db_models import JSONField
+from fate_arch.storage.metastore.base_model import JSONField, SerializedField, BaseModel
 from fate_flow.entity.constant import WorkMode
 from fate_flow.settings import DATABASE, WORK_MODE, stat_logger, USE_LOCAL_DATABASE
 from fate_flow.entity.runtime_config import RuntimeConfig
+
 
 LOGGER = log.getLogger()
 
@@ -44,7 +45,6 @@ def singleton(cls, *args, **kw):
         return instances[key]
 
     return _singleton
-
 
 
 @singleton
@@ -87,34 +87,9 @@ def close_connection():
         LOGGER.exception(e)
 
 
-class DataBaseModel(Model):
+class DataBaseModel(BaseModel):
     class Meta:
         database = DB
-
-    def to_json(self):
-        return self.__dict__['__data__']
-
-    def to_human_model_dict(self, only_primary_with: list = None):
-        model_dict = self.__dict__["__data__"]
-        human_model_dict = {}
-        if not only_primary_with:
-            for k, v in model_dict.items():
-                human_model_dict[k.lstrip("f_")] = v
-        else:
-            for k in self._meta.primary_key.field_names:
-                human_model_dict[k.lstrip("f_")] = model_dict[k]
-            for k in only_primary_with:
-                human_model_dict[k] = model_dict["f_%s" % k]
-        return human_model_dict
-
-    def save(self, *args, **kwargs):
-        print(args)
-        print(kwargs)
-        if hasattr(self, "f_update_date"):
-            self.f_update_date = datetime.datetime.now()
-        if hasattr(self, "f_update_time"):
-            self.f_update_time = current_timestamp()
-        return super(DataBaseModel, self).save(*args, **kwargs)
 
 
 def init_database_tables():
@@ -373,6 +348,7 @@ class ResourceRecord(DataBaseModel):
     f_memory = IntegerField(index=True, null=True)  # MB
     f_remaining_cores = IntegerField(index=True, default=0)
     f_remaining_memory = IntegerField(index=True, default=0)  # MB
+    f_in_use = BooleanField(index=True, default=True)
     f_create_time = BigIntegerField()
     f_update_time = BigIntegerField(null=True)
 
@@ -381,7 +357,7 @@ class ResourceRecord(DataBaseModel):
         primary_key = CompositeKey('f_job_id', 'f_role', 'f_party_id')
 
 
-class NewQueue(DataBaseModel):
+class DBQueue(DataBaseModel):
     f_job_id = CharField(max_length=25, primary_key=True)
     f_job_status = CharField(max_length=50, index=True)
     f_initiator_role = CharField(max_length=50, index=True)
@@ -391,4 +367,4 @@ class NewQueue(DataBaseModel):
     f_tag = CharField(max_length=50, null=True, index=True, default='')
 
     class Meta:
-        db_table = "t_new_queue"
+        db_table = "t_queue"

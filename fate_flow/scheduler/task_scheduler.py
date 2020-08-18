@@ -72,7 +72,7 @@ class TaskScheduler(object):
     def start_task(cls, job, task):
         schedule_logger(job_id=task.f_job_id).info("Try to start job {} task {} {} on {} {}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_role, task.f_party_id))
         # TODO: apply for job resource
-        apply_status = ResourceManager.apply_for_resource_to_task(task_info=task.to_human_model_dict(only_primary_with=["status"]))
+        apply_status = ResourceManager.apply_for_task_resource(task_info=task.to_human_model_dict(only_primary_with=["status"]))
         if not apply_status:
             return SchedulingStatusCode.NO_RESOURCE
         task.f_status = TaskStatus.RUNNING
@@ -82,7 +82,7 @@ class TaskScheduler(object):
             schedule_logger(job_id=task.f_job_id).info("Job {} task {} {} start on another scheduler".format(task.f_job_id, task.f_task_id, task.f_task_version))
             # Rollback
             task.f_status = TaskStatus.WAITING
-            ResourceManager.return_resource_to_job(task_info=task.to_human_model_dict(only_primary_with=["status"]))
+            ResourceManager.return_task_resource(task_info=task.to_human_model_dict(only_primary_with=["status"]))
             return SchedulingStatusCode.PASS
         schedule_logger(job_id=task.f_job_id).info("Start job {} task {} {} on {} {}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_role, task.f_party_id))
         task_parameters = {}

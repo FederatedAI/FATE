@@ -141,7 +141,7 @@ class TaskController(object):
         try:
             update_status = JobSaver.update_task(task_info=task_info)
             if update_status and EndStatus.contains(task_info.get("status")):
-                ResourceManager.return_resource_to_job(task_info=task_info)
+                ResourceManager.return_task_resource(task_info=task_info)
             tasks = job_utils.query_task(task_id=task_info["task_id"],
                                          task_version=task_info["task_version"],
                                          role=task_info["role"],

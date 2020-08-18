@@ -20,7 +20,7 @@ from fate_flow.utils.authentication_utils import authentication_check
 from federatedml.protobuf.generated import pipeline_pb2
 from fate_arch.common.log import schedule_logger
 from fate_flow.scheduler.task_scheduler import TaskScheduler
-from fate_flow.entity.constant import JobStatus, TaskStatus
+from fate_flow.entity.constant import JobStatus, TaskStatus, EndStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.settings import USE_AUTHENTICATION
@@ -146,7 +146,7 @@ class JobController(object):
 
     @classmethod
     def apply_resource(cls, job_id, role, party_id):
-        return ResourceManager.apply_for_resource_to_job(job_id=job_id, role=role, party_id=party_id)
+        return ResourceManager.apply_for_job_resource(job_id=job_id, role=role, party_id=party_id)
 
     @classmethod
     def return_resource(cls, job_id, role, party_id):
@@ -171,7 +171,9 @@ class JobController(object):
         :param job_info:
         :return:
         """
-        JobSaver.update_job(job_info=job_info)
+        update_status = JobSaver.update_job(job_info=job_info)
+        if update_status and EndStatus.contains(job_info.get("status")):
+            ResourceManager.return_job_resource(job_id=job_info["job_id"], role=job_info["role"], party_id=job_info["party_id"])
 
     @classmethod
     def stop_job(cls, job, stop_status):
