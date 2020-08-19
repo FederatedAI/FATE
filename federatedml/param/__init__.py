@@ -15,6 +15,8 @@
 #
 
 from federatedml.param.boosting_param import BoostingParam
+from federatedml.param.boosting_param import DecisionTreeParam
+from federatedml.param.boosting_param import ObjectiveParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.data_split_param import DataSplitParam
 from federatedml.param.dataio_param import DataIOParam
@@ -30,12 +32,16 @@ from federatedml.param.homo_onehot_encoder_param import HomoOneHotParam
 from federatedml.param.init_model_param import InitParam
 from federatedml.param.intersect_param import IntersectParam
 from federatedml.param.linear_regression_param import LinearParam
+from federatedml.param.linear_regression_param import LinearParam
 from federatedml.param.local_baseline_param import LocalBaselineParam
+from federatedml.param.logistic_regression_param import InitParam
+from federatedml.param.logistic_regression_param import LogisticParam
 from federatedml.param.logistic_regression_param import LogisticParam
 from federatedml.param.one_vs_rest_param import OneVsRestParam
 from federatedml.param.one_vs_rest_param import OneVsRestParam
 from federatedml.param.pearson_param import PearsonParam
 from federatedml.param.poisson_regression_param import PoissonParam
+from federatedml.param.predict_param import PredictParam
 from federatedml.param.predict_param import PredictParam
 from federatedml.param.psi_param import PSIParam
 from federatedml.param.rsa_param import RsaParam
@@ -49,6 +55,8 @@ from federatedml.param.union_param import UnionParam
 
 __all__ = [
     "BoostingParam",
+    "ObjectiveParam",
+    "DecisionTreeParam",
     "CrossValidationParam",
     "DataSplitParam",
     "DataIOParam",
