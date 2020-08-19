@@ -53,17 +53,6 @@ class BaseParameterUtil(object):
 
         default_runtime_dict = ParameterUtil.change_object_to_dict(param_obj)
 
-        if version == 1:
-            default_runtime_conf_suf = _module_setting["default_runtime_conf"]
-            default_runtime_conf_buf = ParameterUtil.get_default_runtime_conf(default_runtime_conf_prefix,
-                                                                              default_runtime_conf_suf,
-                                                                              module,
-                                                                              module_alias)
-
-            default_runtime_dict = ParameterUtil.merge_parameters(default_runtime_dict, default_runtime_conf_buf,
-                                                                  param_obj, component=module_alias, module=module,
-                                                                  version=version)
-
         if not submit_dict:
             raise SubmitConfNotExistError()
 
