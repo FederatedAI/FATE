@@ -43,7 +43,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - DataIO
      - 该组件通常是建模任务的第一个组件。 它将用户上传的数据转换为Instance对象，该对象可用于以下组件。
      - DTable，值为原始数据
-     - 转换后的数据表，值为在 :download:`federatedml/feature/instance.py <feature/instance.py>` 中定义的Data Instance的实例
+     - 转换后的数据表，值为在 : `federatedml/feature/instance.py` 中定义的Data Instance的实例
      - 
      -
 

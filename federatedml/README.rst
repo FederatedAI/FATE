@@ -41,7 +41,7 @@ Alogorithm List
      - DataIO
      - This component is  typically the first component of a modeling task. It will transform user-uploaded date into Instance object which can be used for the following components.
      - DTable，values are raw data
-     - Transformed DTable, values are data instance define in :download:`federatedml/feature/instance.py <feature/instance.py>`
+     - Transformed DTable, values are data instance define in `federatedml/feature/instance.py`
      -
      -
 
