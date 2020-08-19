@@ -504,7 +504,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
         super(HeteroFastSecureBoostParam, self).check()
         if type(self.guest_depth).__name__ not in ["int", "long"] or self.guest_depth <= 0:
             raise ValueError("guest_depth should be larger than 0")
-        if type(self.host_depth).__name__ not in ["int", "long"] or self.guest_depth <= 0:
+        if type(self.host_depth).__name__ not in ["int", "long"] or self.host_depth <= 0:
             raise ValueError("host_depth should be larger than 0")
         if type(self.tree_num_per_party).__name__ not in ["int", "long"] or self.tree_num_per_party <= 0:
             raise ValueError("tree_num_per_party should be larger than 0")
