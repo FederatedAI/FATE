@@ -168,7 +168,7 @@ class JobInvoker(object):
                         cpn.append(cpn_data["f_component_name"])
 
                 if cpn != pre_cpn:
-                    print("\n", end="\r")
+                    # print("\n", end="\r")
                     sys.stdout.write(f"\n \r")
                     pre_cpn = cpn
                 """
