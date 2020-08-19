@@ -125,6 +125,7 @@ class DAGScheduler(Cron):
     def run_do(self):
         self.schedule_waiting_jobs()
         self.schedule_running_jobs()
+        self.schedule_ready_jobs()
 
     @classmethod
     def schedule_waiting_jobs(cls):
@@ -133,11 +134,11 @@ class DAGScheduler(Cron):
         schedule_logger().info(f"have {len(events)} waiting jobs")
         for event in events:
             job_id, initiator_role, initiator_party_id, = event.f_job_id, event.f_initiator_role, event.f_initiator_party_id,
-            set_status = JobQueue.update_event(job_id=job_id,
-                                               initiator_role=initiator_role,
-                                               initiator_party_id=initiator_party_id,
-                                               job_status=JobStatus.READY)
-            if not set_status:
+            update_status = JobQueue.update_event(job_id=job_id,
+                                                  initiator_role=initiator_role,
+                                                  initiator_party_id=initiator_party_id,
+                                                  job_status=JobStatus.READY)
+            if not update_status:
                 schedule_logger(job_id).info(f"job {job_id} may be handled by another scheduler")
                 continue
             # apply resource on all party
@@ -146,11 +147,11 @@ class DAGScheduler(Cron):
             status_code, federated_response = FederatedScheduler.resource_for_job(job=job, operation_type=ResourceOperation.APPLY)
             if status_code == FederatedSchedulingStatusCode.SUCCESS:
                 cls.start_job(job_id=job_id, initiator_role=initiator_role, initiator_party_id=initiator_party_id)
-                set_status = JobQueue.update_event(job_id=job_id,
-                                                   initiator_role=initiator_role,
-                                                   initiator_party_id=initiator_party_id,
-                                                   job_status=JobStatus.RUNNING)
-                if not set_status:
+                update_status = JobQueue.update_event(job_id=job_id,
+                                                      initiator_role=initiator_role,
+                                                      initiator_party_id=initiator_party_id,
+                                                      job_status=JobStatus.RUNNING)
+                if not update_status:
                     pass
             else:
                 # rollback resource
@@ -198,6 +199,25 @@ class DAGScheduler(Cron):
         schedule_logger().info("schedule running jobs finished")
 
     @classmethod
+    def schedule_ready_jobs(cls):
+        # some ready job exit before start
+        schedule_logger().info("start schedule ready jobs")
+        events = JobQueue.get_event(job_status=JobStatus.READY)
+        schedule_logger().info(f"have {len(events)} ready jobs")
+        for event in events:
+            try:
+                job_id, initiator_role, initiator_party_id, = event.f_job_id, event.f_initiator_role, event.f_initiator_party_id,
+                update_status = JobQueue.update_event(job_id=job_id,
+                                                      initiator_role=initiator_role,
+                                                      initiator_party_id=initiator_party_id,
+                                                      job_status=JobStatus.WAITING,
+                                                      ttl=5*60*1000)
+                schedule_logger(job_id).info(f"update job {job_id} ready status to waiting {update_status}")
+            except Exception as e:
+                schedule_logger(event.f_job_id).error(f"schedule ready job {event.f_job_id} failed:\n{e}")
+        schedule_logger().info("schedule ready jobs finished")
+
+    @classmethod
     def start_job(cls, job_id, initiator_role, initiator_party_id):
         schedule_logger(job_id=job_id).info("Try to start job {} on initiator {} {}".format(job_id, initiator_role, initiator_party_id))
         job_info = {}
@@ -218,7 +238,7 @@ class DAGScheduler(Cron):
 
     @classmethod
     def schedule_job(cls, job):
-        schedule_logger(job_id=job.f_job_id).info("Scheduling job {}".format(job.f_job_id))
+        schedule_logger(job_id=job.f_job_id).info("scheduling job {}".format(job.f_job_id))
         dsl_parser = job_utils.get_job_dsl_parser(dsl=job.f_dsl,
                                                   runtime_conf=job.f_runtime_conf,
                                                   train_runtime_conf=job.f_train_runtime_conf)
@@ -242,7 +262,7 @@ class DAGScheduler(Cron):
                 cls.update_job_on_initiator(initiator_job=job, update_fields=["status"])
         if EndStatus.contains(job.f_status):
             cls.finish(job=job, end_status=job.f_status)
-        schedule_logger(job_id=job.f_job_id).info("Finish scheduling job {}".format(job.f_job_id))
+        schedule_logger(job_id=job.f_job_id).info("finish scheduling job {}".format(job.f_job_id))
 
     @classmethod
     def update_job_on_initiator(cls, initiator_job: Job, update_fields: list):

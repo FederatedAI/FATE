@@ -49,11 +49,12 @@ def stop_job(job_id, role, party_id, stop_status):
     jobs = job_utils.query_job(job_id=job_id, role=role, party_id=party_id, is_initiator=1)
     if len(jobs) > 0:
         if stop_status == JobStatus.CANCELED:
-            status_code, response = FederatedScheduler.request_cancel_job(job=jobs[0])
-            if status_code == FederatedSchedulingStatusCode.SUCCESS:
-                return get_json_result(retcode=RetCode.SUCCESS, retmsg="cancel job success")
+            JobController.cancel_job(job_id=job_id, role=role, party_id=party_id)
+        job = jobs[0]
+        job.f_status = stop_status
         status_code, response = FederatedScheduler.stop_job(job=jobs[0], stop_status=stop_status)
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
+            FederatedScheduler.sync_job(job=job, update_fields=["status"])
             return get_json_result(retcode=0, retmsg='success')
         else:
             return get_json_result(retcode=RetCode.FEDERATED_ERROR, retmsg=json_dumps(response))

@@ -29,7 +29,7 @@ class TaskScheduler(object):
     @classmethod
     def schedule(cls, job, dsl_parser):
         schedule_logger(job_id=job.f_job_id).info("Scheduling job {} tasks".format(job.f_job_id))
-        tasks_group = JobSaver.get_top_tasks(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
+        tasks_group = JobSaver.get_tasks_asc(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
         waiting_tasks = []
         for task_id, task in tasks_group.items():
             # update task status

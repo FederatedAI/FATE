@@ -41,15 +41,30 @@ class JobQueue(object):
         return events
 
     @classmethod
-    def update_event(cls, job_id, initiator_role, initiator_party_id, job_status):
+    def update_event(cls, job_id, initiator_role, initiator_party_id, job_status, ttl=None):
         events = cls.query_event(job_id=job_id, initiator_role=initiator_role, initiator_party_id=initiator_party_id)
         if not events:
             raise RuntimeError(f"job {job_id} {initiator_role} {initiator_party_id} not in queue")
         event = events[0]
         if JobStatus.StateTransitionRule.if_pass(event.f_job_status, job_status):
-            operate = DBQueue.update({DBQueue.f_job_status: job_status}).where(DBQueue.f_job_id == job_id,
-                                                                               DBQueue.f_initiator_role == initiator_role,
-                                                                               DBQueue.f_initiator_party_id == initiator_party_id)
+            if ttl:
+                operate = DBQueue.update({DBQueue.f_job_status: job_status}).where(
+                    (DBQueue.f_job_id == job_id) &
+                    (DBQueue.f_initiator_role == initiator_role) &
+                    (DBQueue.f_initiator_party_id == initiator_party_id) &
+                    ((DBQueue.f_job_status == event.f_job_status) |
+                     (
+                             (DBQueue.f_job_status == JobStatus.READY) & (DBQueue.f_update_time < (base_utils.current_timestamp() - ttl))
+                     )
+                     )
+                )
+            else:
+                operate = DBQueue.update({DBQueue.f_job_status: job_status}).where(
+                    (DBQueue.f_job_id == job_id) &
+                    (DBQueue.f_initiator_role == initiator_role) &
+                    (DBQueue.f_initiator_party_id == initiator_party_id) &
+                    (DBQueue.f_job_status == event.f_job_status)
+                )
             return operate.execute() > 0
         else:
             raise RuntimeError(f"can not update job status {event.f_job_status} to {job_status} on queue")
@@ -66,9 +81,13 @@ class JobQueue(object):
             return [event for event in events]
 
     @classmethod
-    def delete_event(cls, job_id, initiator_role, initiator_party_id):
-        operate = DBQueue.delete().where(DBQueue.f_job_id == job_id, DBQueue.f_initiator_role == initiator_role,
-                                         DBQueue.f_initiator_party_id == initiator_party_id)
+    def delete_event(cls, job_id, initiator_role, initiator_party_id, job_status=None):
+        if job_status:
+            operate = DBQueue.delete().where(DBQueue.f_job_id == job_id, DBQueue.f_initiator_role == initiator_role,
+                                             DBQueue.f_initiator_party_id == initiator_party_id, DBQueue.f_job_status==job_status)
+        else:
+            operate = DBQueue.delete().where(DBQueue.f_job_id == job_id, DBQueue.f_initiator_role == initiator_role,
+                                             DBQueue.f_initiator_party_id == initiator_party_id)
         return operate.execute() > 0
 
     def qsize(self, job_status=None):

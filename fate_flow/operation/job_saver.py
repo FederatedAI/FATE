@@ -184,7 +184,7 @@ class JobSaver(object):
                 return []
 
     @classmethod
-    def get_top_tasks(cls, job_id, role, party_id):
+    def get_tasks_asc(cls, job_id, role, party_id):
         with DB.connection_context():
             tasks = Task.select().where(Task.f_job_id == job_id, Task.f_role == role, Task.f_party_id == party_id).order_by(Task.f_create_time.asc())
             tasks_group = {}

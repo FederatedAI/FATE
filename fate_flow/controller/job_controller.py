@@ -30,6 +30,7 @@ from fate_flow.operation.job_saver import JobSaver
 from fate_arch.common.base_utils import json_dumps, current_timestamp
 from fate_flow.controller.task_controller import TaskController
 from fate_flow.manager.resource_manager import ResourceManager
+from fate_flow.scheduler.job_queue import JobQueue
 
 
 class JobController(object):
@@ -233,12 +234,10 @@ class JobController(object):
         jobs = job_utils.query_job(job_id=job_id)
         if jobs:
             job = jobs[0]
-            job_runtime_conf = job.f_runtime_conf
-            event = job_utils.job_event(job.f_job_id,
-                                        job_runtime_conf['initiator']['role'],
-                                        job_runtime_conf['initiator']['party_id'])
             try:
-                RuntimeConfig.JOB_QUEUE.del_event(event)
+                status = JobQueue.delete_event(job_id=job.f_job_id, initiator_role=job.f_initiator_role, initiator_party_id=job.f_initiator_party_id, job_status=JobStatus.WAITING)
+                if not status:
+                    return False
             except:
                 return False
             schedule_logger(job_id).info('cancel waiting job successfully, job id is {}'.format(job.f_job_id))
