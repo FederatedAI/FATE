@@ -15,12 +15,18 @@
 #
 
 import os
+from ruamel import yaml
 from pathlib import Path
+
 
 from pipeline.constant import Backend, JobStatus, WorkMode
 
+
 __all__ = ["Backend", "WorkMode", "JobStatus", "VERSION", "TIME_QUERY_FREQS", "Role", "StatusCode",
-           "LogPath", "LogFormat", "IODataType"]
+           "LogPath", "LogFormat", "IODataType", "FlowConfig"]
+
+default_config = Path(__file__).parent.parent.joinpath("config.yaml").resolve()
+
 VERSION = 2
 TIME_QUERY_FREQS = 0.01
 
@@ -56,10 +62,20 @@ class IODataType:
     TEST = "test_data"
 
 
+class FlowConfig(object):
+    with open(default_config, "r") as f:
+        conf = yaml.safe_load(f)
+    IP = conf.get("ip", "")
+    PORT = conf.get("port", "")
+
+
 class LogPath(object):
     @classmethod
     def log_directory(cls):
-        log_directory = os.environ.get("FATE_PIPELINE_LOG", "")
+        with open(default_config, "r") as f:
+            conf = yaml.safe_load(f)
+        # log_directory = os.environ.get("FATE_PIPELINE_LOG", "")
+        log_directory = conf.get("log_directory", "")
         if log_directory:
             log_directory = Path(log_directory).resolve()
         else:
