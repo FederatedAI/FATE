@@ -44,9 +44,9 @@ class TaskExecutor(object):
             parser.add_argument('-n', '--component_name', required=True, type=str,
                                 help="component name")
             parser.add_argument('-t', '--task_id', required=True, type=str, help="task id")
-            parser.add_argument('-v', '--task_version', required=True, type=str, help="task version")
+            parser.add_argument('-v', '--task_version', required=True, type=int, help="task version")
             parser.add_argument('-r', '--role', required=True, type=str, help="role")
-            parser.add_argument('-p', '--party_id', required=True, type=str, help="party id")
+            parser.add_argument('-p', '--party_id', required=True, type=int, help="party id")
             parser.add_argument('-c', '--config', required=True, type=str, help="task parameters")
             parser.add_argument('--processors_per_node', help="processors_per_node", type=int)
             parser.add_argument('--run_ip', help="run ip", type=str)
@@ -64,7 +64,8 @@ class TaskExecutor(object):
             task_id = args.task_id
             task_version = args.task_version
             role = args.role
-            party_id = int(args.party_id)
+            party_id = args.party_id
+            print(f"party id type {type(party_id)}")
             executor_pid = os.getpid()
             task_info.update({
                 "job_id": job_id,
@@ -163,6 +164,8 @@ class TaskExecutor(object):
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
             run_object.set_tracker(tracker=tracker_client)
             run_object.set_taskid(taskid=job_utils.generate_federated_id(task_id, task_version))
+            if task_version == 0 and component_name == "dataio_0":
+                raise Exception("debug retry ")
             run_object.run(component_parameters_on_party, task_run_args)
             output_data = run_object.save_data()
             if not isinstance(output_data, list):

@@ -95,6 +95,10 @@ class FederatedScheduler(object):
         return cls.job_command(job=job, command="stop/{}".format(stop_status), dest_only_initiator=True)
 
     @classmethod
+    def request_rerun_job(cls, job, command_body):
+        return cls.job_command(job=job, command="rerun", command_body=command_body, dest_only_initiator=True)
+
+    @classmethod
     def cancel_job(cls, job):
         return cls.job_command(job=job, command="cancel")
 
@@ -130,20 +134,20 @@ class FederatedScheduler(object):
             for dest_party_id in dest_party_ids:
                 try:
                     response = federated_api(job_id=job.f_job_id,
-                                                  method='POST',
-                                                  endpoint='/{}/{}/{}/{}/{}/{}'.format(
-                                                      API_VERSION,
-                                                      api_type,
-                                                      job.f_job_id,
-                                                      dest_role,
-                                                      dest_party_id,
-                                                      command
-                                                  ),
-                                                  src_party_id=job_initiator['party_id'],
-                                                  dest_party_id=dest_party_id,
-                                                  src_role=job_initiator['role'],
-                                                  json_body=command_body if command_body else {},
-                                                  work_mode=job.f_work_mode)
+                                             method='POST',
+                                             endpoint='/{}/{}/{}/{}/{}/{}'.format(
+                                                 API_VERSION,
+                                                 api_type,
+                                                 job.f_job_id,
+                                                 dest_role,
+                                                 dest_party_id,
+                                                 command
+                                             ),
+                                             src_party_id=job_initiator['party_id'],
+                                             dest_party_id=dest_party_id,
+                                             src_role=job_initiator['role'],
+                                             json_body=command_body if command_body else {},
+                                             work_mode=job.f_work_mode)
                     federated_response[dest_role][dest_party_id] = response
                 except Exception as e:
                     federated_response[dest_role][dest_party_id] = {
@@ -161,6 +165,10 @@ class FederatedScheduler(object):
 
     # Task
     REPORT_TO_INITIATOR_FIELDS = ["party_status", "start_time", "update_time", "end_time", "elapsed"]
+
+    @classmethod
+    def create_task(cls, job, task):
+        return cls.task_command(job=job, task=task, command="create", command_body=task.to_human_model_dict())
 
     @classmethod
     def start_task(cls, job, task, task_parameters):
@@ -185,6 +193,16 @@ class FederatedScheduler(object):
             schedule_logger(job_id=job.f_job_id).info("Stop job {} task {} {} success".format(task.f_job_id, task.f_task_id, task.f_task_version))
         else:
             schedule_logger(job_id=job.f_job_id).info("Stop job {} task {} {} failed:\n{}".format(task.f_job_id, task.f_task_id, task.f_task_version, response))
+        return status_code, response
+
+    @classmethod
+    def clean_task(cls, job, task, content_type):
+        schedule_logger(job_id=task.f_job_id).info("try to clean task {} {} {}".format(task.f_task_id, task.f_task_version, content_type))
+        status_code, response = cls.task_command(job=job, task=task, command="clean/{}".format(content_type))
+        if status_code == FederatedSchedulingStatusCode.SUCCESS:
+            schedule_logger(job_id=job.f_job_id).info("clean task {} {} {} successfully".format(task.f_task_id, task.f_task_version, content_type))
+        else:
+            schedule_logger(job_id=job.f_job_id).info("clean task {} {} {} failed:\n{}".format(task.f_task_id, task.f_task_version, content_type, response))
         return status_code, response
 
     @classmethod

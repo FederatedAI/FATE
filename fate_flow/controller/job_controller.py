@@ -24,7 +24,7 @@ from fate_flow.entity.constant import JobStatus, TaskStatus, EndStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.settings import USE_AUTHENTICATION
-from fate_flow.utils import job_utils, job_controller_utils
+from fate_flow.utils import job_utils
 from fate_flow.utils.job_utils import save_job_conf, get_job_dsl_parser
 from fate_flow.operation.job_saver import JobSaver
 from fate_arch.common.base_utils import json_dumps, current_timestamp
@@ -78,10 +78,8 @@ class JobController(object):
         base_task_info["job_id"] = job_id
         base_task_info["initiator_role"] = job_initiator['role']
         base_task_info["initiator_party_id"] = job_initiator['party_id']
-        base_task_info["status"] = TaskStatus.WAITING
         base_task_info["role"] = role
         base_task_info["party_id"] = party_id
-        base_task_info["party_status"] = TaskStatus.WAITING
         for component in dsl_parser.get_topology_components():
             component_parameters = component.get_role_parameters()
             for parameters_on_party in component_parameters.get(base_task_info["role"], []):
@@ -89,9 +87,7 @@ class JobController(object):
                     task_info = {}
                     task_info.update(base_task_info)
                     task_info["component_name"] = component.get_name()
-                    task_info["task_id"] = job_utils.generate_task_id(job_id=base_task_info["job_id"], component_name=component.get_name())
-                    task_info["task_version"] = 0
-                    JobSaver.create_task(task_info=task_info)
+                    TaskController.create_task(role=role, party_id=party_id, task_info=task_info)
 
     @classmethod
     def initialize_job_tracker(cls, job_id, role, party_id, job_info, is_initiator, dsl_parser):
@@ -178,10 +174,14 @@ class JobController(object):
 
     @classmethod
     def stop_job(cls, job, stop_status):
-        tasks = job_utils.query_task(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
+        tasks = JobSaver.query_task(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
         for task in tasks:
             TaskController.stop_task(task=task, stop_status=stop_status)
         # Job status depends on the final operation result and initiator calculate
+
+    @classmethod
+    def rerun_job(cls, job_id, role, party_id, component_name):
+        pass
 
     @classmethod
     def save_pipelined_model(cls, job_id, role, party_id):
@@ -212,7 +212,7 @@ class JobController(object):
     @classmethod
     def clean_job(cls, job_id, role, party_id, roles):
         schedule_logger(job_id).info('Job {} on {} {} start to clean'.format(job_id, role, party_id))
-        tasks = job_utils.query_task(job_id=job_id, role=role, party_id=party_id)
+        tasks = JobSaver.query_task(job_id=job_id, role=role, party_id=party_id, only_latest=False)
         for task in tasks:
             try:
                 Tracker(job_id=job_id, role=role, party_id=party_id, task_id=task.f_task_id, task_version=task.f_task_version).clean_task(roles)
@@ -225,13 +225,9 @@ class JobController(object):
         schedule_logger(job_id).info('job {} on {} {} clean done'.format(job_id, role, party_id))
 
     @classmethod
-    def check_job_run(cls, job_id, role, party_id):
-        return job_controller_utils.job_quantity_constraint(job_id, role, party_id)
-
-    @classmethod
     def cancel_job(cls, job_id, role, party_id):
         schedule_logger(job_id).info('{} {} get cancel waiting job {} command'.format(role, party_id, job_id))
-        jobs = job_utils.query_job(job_id=job_id)
+        jobs = JobSaver.query_job(job_id=job_id)
         if jobs:
             job = jobs[0]
             try:
@@ -250,7 +246,7 @@ class JobController(object):
 class JobClean(threading.Thread):
     def run(self):
         time.sleep(5)
-        jobs = job_utils.query_job(status=JobStatus.RUNNING, is_initiator=1)
+        jobs = JobSaver.query_job(status=JobStatus.RUNNING, is_initiator=1)
         job_ids = set([job.f_job_id for job in jobs])
         for job_id in job_ids:
             schedule_logger(job_id).info('fate flow server start clean job')

@@ -16,7 +16,6 @@
 import datetime
 import functools
 import errno
-import json
 import operator
 import os
 import subprocess
@@ -238,19 +237,12 @@ def get_job_configuration(job_id, role, party_id, tasks=None):
             return {}, {}, {}
 
 
-def query_job(**kwargs):
-    with DB.connection_context():
-        filters = []
-        for f_n, f_v in kwargs.items():
-            attr_name = 'f_%s' % f_n
-            if hasattr(Job, attr_name):
-                filters.append(operator.attrgetter('f_%s' % f_n)(Job) == f_v)
-        if filters:
-            jobs = Job.select().where(*filters)
-            return [job for job in jobs]
-        else:
-            # not allow query all job
-            return []
+def job_virtual_component_name():
+    return "pipeline"
+
+
+def job_virtual_component_module_name():
+    return "Pipeline"
 
 
 def list_job(limit):
@@ -268,48 +260,10 @@ def show_job_queue():
     pass
 
 
-def query_task(**kwargs):
-    with DB.connection_context():
-        filters = []
-        for f_n, f_v in kwargs.items():
-            attr_name = 'f_%s' % f_n
-            if hasattr(Task, attr_name):
-                filters.append(operator.attrgetter('f_%s' % f_n)(Task) == f_v)
-        if filters:
-            tasks = Task.select().where(*filters)
-        else:
-            tasks = Task.select()
-        return [task for task in tasks]
-
-
 def list_task(limit):
     with DB.connection_context():
         tasks = Task.select().order_by(Task.f_create_time.desc()).limit(limit)
         return [task for task in tasks]
-
-
-def success_task_count(job_id):
-    count = 0
-    tasks = query_task(job_id=job_id)
-    job_component_status = {}
-    for task in tasks:
-        job_component_status[task.f_component_name] = job_component_status.get(task.f_component_name, set())
-        job_component_status[task.f_component_name].add(task.f_status)
-    for component_name, role_status in job_component_status.items():
-        if len(role_status) == 1 and JobStatus.COMPLETE in role_status:
-            count += 1
-    return count
-
-
-def update_job_progress(job_id, dag, current_task_id):
-    role, party_id = query_job_info(job_id)
-    component_count = len(dag.get_dependency(role=role, party_id=int(party_id))['component_list'])
-    success_count = success_task_count(job_id=job_id)
-    job = Job()
-    job.f_progress = float(success_count) / component_count * 100
-    job.f_update_time = current_timestamp()
-    job.f_current_tasks = json_dumps([current_task_id])
-    return job
 
 
 def gen_status_id():
@@ -528,28 +482,6 @@ def gen_all_party_key(all_party):
     return all_party_key
 
 
-# TODO: support task executor routing
-def job_server_routing(routing_type=0):
-    def _out_wrapper(func):
-        @functools.wraps(func)
-        def _wrapper(*args, **kwargs):
-            job_server = set()
-            jobs = query_job(job_id=request.json.get('job_id', None))
-            for job in jobs:
-                if job.f_run_ip:
-                    job_server.add(job.f_run_ip)
-            if len(job_server) == 1:
-                execute_host = job_server.pop()
-                if execute_host != RuntimeConfig.JOB_SERVER_HOST:
-                    if routing_type == 0:
-                        return api_utils.request_execute_server(request=request, execute_host=execute_host)
-                    else:
-                        return redirect('http://{}{}'.format(execute_host, url_for(request.endpoint)), code=307)
-            return func(*args, **kwargs)
-        return _wrapper
-    return _out_wrapper
-
-
 def get_timeout(job_id, timeout, runtime_conf, dsl):
     try:
         if timeout > 0:
@@ -590,17 +522,6 @@ def get_task_info(job_id, role, party_id, component_name):
     if component_name:
         task_info['component_name'] = component_name
     return task_info
-
-
-def query_job_info(job_id):
-    jobs = query_job(job_id=job_id, is_initiator=1)
-    party_id = None
-    role = None
-    if jobs:
-        job = jobs[0]
-        role = job.f_role
-        party_id = job.f_party_id
-    return role, party_id
 
 
 def cleaning(signum, frame):

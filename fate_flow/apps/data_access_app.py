@@ -25,6 +25,7 @@ from fate_flow.settings import stat_logger, USE_LOCAL_DATA, WORK_MODE
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils import detect_utils, job_utils
 from fate_flow.scheduler.dag_scheduler import DAGScheduler
+from fate_flow.operation.job_saver import JobSaver
 from fate_flow.utils.job_utils import get_job_configuration, generate_job_id, get_job_directory
 
 manager = Flask(__name__)
@@ -100,9 +101,9 @@ def upload_history():
 def get_upload_history():
     request_data = request.json
     if request_data.get('job_id'):
-        tasks = job_utils.query_task(component_name='upload_0', status=StatusSet.COMPLETE, job_id=request_data.get('job_id'))
+        tasks = JobSaver.query_task(component_name='upload_0', status=StatusSet.COMPLETE, job_id=request_data.get('job_id'))
     else:
-        tasks = job_utils.query_task(component_name='upload_0', status=StatusSet.COMPLETE)
+        tasks = JobSaver.query_task(component_name='upload_0', status=StatusSet.COMPLETE)
     limit= request_data.get('limit')
     if not limit:
         tasks = tasks[-1::-1]

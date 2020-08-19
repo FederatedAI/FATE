@@ -13,16 +13,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_arch.common.base_utils import json_loads
 from fate_flow.settings import stat_logger
 from fate_flow.utils import job_utils, detect_utils
+from fate_flow.operation.job_saver import JobSaver
 
 
 def pipeline_dag_dependency(job_info):
     try:
         detect_utils.check_config(job_info, required_arguments=["party_id", "role"])
         if job_info.get('job_id'):
-            jobs = job_utils.query_job(job_id=job_info["job_id"], party_id=job_info["party_id"], role=job_info["role"])
+            jobs = JobSaver.query_job(job_id=job_info["job_id"], party_id=job_info["party_id"], role=job_info["role"])
             if not jobs:
                 raise Exception('query job {} failed'.format(job_info.get('job_id', '')))
             job = jobs[0]

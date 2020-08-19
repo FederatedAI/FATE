@@ -25,7 +25,7 @@ from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.model_manager import pipelined_model
 from fate_arch import storage
-from fate_flow.utils import model_utils
+from fate_flow.utils import model_utils, job_utils
 
 
 class Tracker(object):
@@ -55,8 +55,8 @@ class Tracker(object):
             self.pipelined_model = pipelined_model.PipelinedModel(model_id=self.party_model_id,
                                                                   model_version=self.model_version)
 
-        self.component_name = component_name if component_name else self.job_virtual_component_name()
-        self.module_name = component_module_name if component_module_name else self.job_virtual_component_module_name()
+        self.component_name = component_name if component_name else job_utils.job_virtual_component_name()
+        self.module_name = component_module_name if component_module_name else job_utils.job_virtual_component_module_name()
         self.task_id = task_id
         self.task_version = task_version
 
@@ -233,7 +233,7 @@ class Tracker(object):
             try:
                 tracking_metric = self.get_dynamic_db_model(TrackingMetric, self.job_id)()
                 tracking_metric.f_job_id = self.job_id
-                tracking_metric.f_component_name = (self.component_name if not job_level else self.job_virtual_component_name())
+                tracking_metric.f_component_name = (self.component_name if not job_level else job_utils.job_virtual_component_name())
                 tracking_metric.f_task_id = self.task_id
                 tracking_metric.f_task_version = self.task_version
                 tracking_metric.f_role = self.role
@@ -305,7 +305,7 @@ class Tracker(object):
                 tracking_metric_model = self.get_dynamic_db_model(TrackingMetric, self.job_id)
                 tracking_metrics = tracking_metric_model.select(tracking_metric_model.f_key, tracking_metric_model.f_value).where(
                     tracking_metric_model.f_job_id == self.job_id,
-                    tracking_metric_model.f_component_name == (self.component_name if not job_level else self.job_virtual_component_name()),
+                    tracking_metric_model.f_component_name == (self.component_name if not job_level else job_utils.job_virtual_component_name()),
                     tracking_metric_model.f_role == self.role,
                     tracking_metric_model.f_party_id == self.party_id,
                     tracking_metric_model.f_metric_namespace == metric_namespace,
@@ -318,6 +318,17 @@ class Tracker(object):
                 schedule_logger(self.job_id).exception(e)
                 raise e
             return metrics
+
+    def clean_metrics(self):
+        with DB.connection_context():
+            tracking_metric_model = self.get_dynamic_db_model(TrackingMetric, self.job_id)
+            operate = tracking_metric_model.delete().where(
+                tracking_metric_model.f_task_id==self.task_id,
+                tracking_metric_model.f_task_version==self.task_version,
+                tracking_metric_model.f_role==self.role,
+                tracking_metric_model.f_party_id==self.party_id
+            )
+            return operate.execute() > 0
 
     def get_metric_list(self, job_level: bool = False):
         with DB.connection_context():
@@ -418,12 +429,3 @@ class Tracker(object):
     @staticmethod
     def job_view_table_name():
         return '_'.join(['job', 'view'])
-
-    @classmethod
-    def job_virtual_component_name(cls):
-        return "pipeline"
-
-    @classmethod
-    def job_virtual_component_module_name(cls):
-        return "Pipeline"
-

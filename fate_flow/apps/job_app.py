@@ -20,9 +20,7 @@ import tarfile
 
 from flask import Flask, request, send_file
 
-import fate_flow.utils.clean_utils
 from fate_arch.common.base_utils import json_loads, json_dumps
-from fate_flow.operation.job_saver import JobSaver
 from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT, TEMP_DIRECTORY
@@ -32,6 +30,8 @@ from fate_flow.utils.api_utils import get_json_result, request_execute_server, e
 from fate_flow.entity.constant import WorkMode, JobStatus, FederatedSchedulingStatusCode, RetCode
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation.job_tracker import Tracker
+from fate_flow.operation.job_saver import JobSaver
+from fate_flow.operation.job_clean import JobClean
 
 manager = Flask(__name__)
 
@@ -68,7 +68,7 @@ def submit_job():
 def stop_job():
     job_id = request.json.get('job_id')
     stop_status = request.json.get("stop_status", "canceled")
-    jobs = job_utils.query_job(job_id=job_id)
+    jobs = JobSaver.query_job(job_id=job_id)
     if jobs:
         status_code, response = FederatedScheduler.request_stop_job(job=jobs[0], stop_status=stop_status)
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
@@ -79,9 +79,23 @@ def stop_job():
         return get_json_result(retcode=RetCode.DATA_ERROR, retmsg="can not found job")
 
 
+@manager.route('/rerun', methods=['POST'])
+def rerun_job():
+    job_id = request.json.get("job_id")
+    jobs = JobSaver.query_job(job_id=job_id)
+    if jobs:
+        status_code, response = FederatedScheduler.request_rerun_job(job=jobs[0], command_body=request.json)
+        if status_code == FederatedSchedulingStatusCode.SUCCESS:
+            return get_json_result(retcode=RetCode.SUCCESS, retmsg="stop job success")
+        else:
+            return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="stop job failed:\n{}".format(json_dumps(response)))
+    else:
+        return get_json_result(retcode=RetCode.DATA_ERROR, retmsg="can not found job")
+
+
 @manager.route('/query', methods=['POST'])
 def query_job():
-    jobs = job_utils.query_job(**request.json)
+    jobs = JobSaver.query_job(**request.json)
     if not jobs:
         return get_json_result(retcode=101, retmsg='find job failed')
     return get_json_result(retcode=0, retmsg='success', data=[job.to_json() for job in jobs])
@@ -98,7 +112,7 @@ def list_job():
 @manager.route('/update', methods=['POST'])
 def update_job():
     job_info = request.json
-    jobs = job_utils.query_job(job_id=job_info['job_id'], party_id=job_info['party_id'], role=job_info['role'])
+    jobs = JobSaver.query_job(job_id=job_info['job_id'], party_id=job_info['party_id'], role=job_info['role'])
     if not jobs:
         return get_json_result(retcode=101, retmsg='find job failed')
     else:
@@ -109,7 +123,7 @@ def update_job():
 
 @manager.route('/config', methods=['POST'])
 def job_config():
-    jobs = job_utils.query_job(**request.json)
+    jobs = JobSaver.query_job(**request.json)
     if not jobs:
         return get_json_result(retcode=101, retmsg='find job failed')
     else:
@@ -143,7 +157,7 @@ def job_log():
 
 @manager.route('/task/query', methods=['POST'])
 def query_task():
-    tasks = job_utils.query_task(**request.json)
+    tasks = JobSaver.query_task(**request.json)
     if not tasks:
         return get_json_result(retcode=101, retmsg='find task failed')
     return get_json_result(retcode=0, retmsg='success', data=[task.to_json() for task in tasks])
@@ -167,7 +181,7 @@ def query_component_output_data_info():
 
 @manager.route('/clean', methods=['POST'])
 def clean_job():
-    fate_flow.utils.clean_utils.start_clean_job(**request.json)
+    JobClean.start_clean_job(**request.json)
     return get_json_result(retcode=0, retmsg='success')
 
 

@@ -19,12 +19,13 @@ from fate_flow.entity.constant import JobStatus, TaskStatus
 from fate_flow.settings import detect_logger, API_VERSION
 from fate_flow.utils import cron, job_utils, api_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.operation.job_saver import JobSaver
 
 
 class JobDetector(cron.Cron):
     def run_do(self):
         try:
-            running_tasks = job_utils.query_task(party_status=TaskStatus.RUNNING, run_ip=RuntimeConfig.JOB_SERVER_HOST)
+            running_tasks = JobSaver.query_task(party_status=TaskStatus.RUNNING, run_ip=RuntimeConfig.JOB_SERVER_HOST, only_latest=False)
             stop_job_ids = set()
             # detect_logger.info('start to detect running job..')
             for task in running_tasks:
@@ -53,7 +54,7 @@ class JobDetector(cron.Cron):
             if stop_job_ids:
                 schedule_logger().info('start to stop jobs: {}'.format(stop_job_ids))
             for job_id in stop_job_ids:
-                jobs = job_utils.query_job(job_id=job_id)
+                jobs = JobSaver.query_job(job_id=job_id)
                 if jobs:
                     status_code, response = FederatedScheduler.request_stop_job(job=jobs[0], stop_status=JobStatus.FAILED)
                     schedule_logger(job_id=job_id).info(f"detector request stop job success")

@@ -25,11 +25,26 @@ from fate_flow.utils import job_utils
 import os
 from fate_flow.operation.job_saver import JobSaver
 from fate_arch.common.base_utils import json_dumps
+from fate_arch.common import base_utils
 from fate_flow.entity.constant import Backend
 from fate_flow.manager.resource_manager import ResourceManager
+from fate_flow.operation.job_tracker import Tracker
 
 
 class TaskController(object):
+    @classmethod
+    def create_task(cls, role, party_id, task_info):
+        task_info["role"] = role
+        task_info["party_id"] = party_id
+        task_info["status"] = TaskStatus.WAITING
+        task_info["party_status"] = TaskStatus.WAITING
+        task_info["create_time"] = base_utils.current_timestamp()
+        if "task_id" not in task_info:
+            task_info["task_id"] = job_utils.generate_task_id(job_id=task_info["job_id"], component_name=task_info["component_name"])
+        if "task_version" not in task_info:
+            task_info["task_version"] = 0
+        JobSaver.create_task(task_info=task_info)
+
     @classmethod
     def start_task(cls, job_id, component_name, task_id, task_version, role, party_id, task_parameters):
         """
@@ -142,10 +157,10 @@ class TaskController(object):
             update_status = JobSaver.update_task(task_info=task_info)
             if update_status and EndStatus.contains(task_info.get("status")):
                 ResourceManager.return_task_resource(task_info=task_info)
-            tasks = job_utils.query_task(task_id=task_info["task_id"],
-                                         task_version=task_info["task_version"],
-                                         role=task_info["role"],
-                                         party_id=task_info["party_id"])
+            tasks = JobSaver.query_task(task_id=task_info["task_id"],
+                                        task_version=task_info["task_version"],
+                                        role=task_info["role"],
+                                        party_id=task_info["party_id"])
             FederatedScheduler.report_task_to_initiator(task=tasks[0])
         except Exception as e:
             schedule_logger(job_id=task_info["job_id"]).exception(e)
@@ -189,6 +204,17 @@ class TaskController(object):
                                                                        task.f_party_id,
                                                                        task.f_run_pid,
                                                                        'success' if kill_status else 'failed'))
+
+    @classmethod
+    def clean_task(cls, task, content_type):
+        status = set()
+        if content_type == "metrics":
+            tracker = Tracker(job_id=task.f_job_id, role=task.f_role, party_id=task.f_party_id, task_id=task.f_task_id, task_version=task.f_task_version)
+            status.add(tracker.clean_metrics())
+        if len(status) == 1 and True in status:
+            return True
+        else:
+            return False
 
     @classmethod
     def query_task_input_args(cls, job_id, task_id, role, party_id, job_args, job_parameters, input_dsl, filter_type=None, filter_attr=None):

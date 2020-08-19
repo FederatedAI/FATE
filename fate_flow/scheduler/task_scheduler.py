@@ -32,8 +32,8 @@ class TaskScheduler(object):
         tasks_group = JobSaver.get_tasks_asc(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
         waiting_tasks = []
         for task_id, task in tasks_group.items():
-            # update task status
-            tasks = job_utils.query_task(task_id=task.f_task_id, task_version=task.f_task_version)
+            # query all party task party status
+            tasks = JobSaver.query_task(task_id=task.f_task_id, task_version=task.f_task_version)
             tasks_party_status = [task.f_party_status for task in tasks]
             new_task_status = cls.calculate_multi_party_task_status(tasks_party_status=tasks_party_status)
             schedule_logger(job_id=task.f_job_id).info("Job {} task {} {} status is {}, calculate by task party status list: {}".format(task.f_job_id, task.f_task_id, task.f_task_version, new_task_status, tasks_party_status))
@@ -65,7 +65,7 @@ class TaskScheduler(object):
                 if status_code == SchedulingStatusCode.NO_RESOURCE:
                     # Wait for the next round of scheduling
                     break
-        schedule_logger(job_id=job.f_job_id).info("Finish scheduling job {} tasks".format(job.f_job_id))
+        schedule_logger(job_id=job.f_job_id).info("finish scheduling job {} tasks".format(job.f_job_id))
         return scheduling_status_code, tasks_group.values()
 
     @classmethod

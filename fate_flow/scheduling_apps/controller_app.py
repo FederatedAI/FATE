@@ -22,7 +22,7 @@ from fate_flow.controller.task_controller import TaskController
 from fate_flow.settings import stat_logger
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import request_authority_certification
-from fate_flow.utils import job_utils
+from fate_flow.operation.job_saver import JobSaver
 
 manager = Flask(__name__)
 
@@ -39,15 +39,6 @@ def internal_server_error(e):
 def create_job(job_id, role, party_id):
     JobController.create_job(job_id=job_id, role=role, party_id=int(party_id), job_info=request.json)
     return get_json_result(retcode=0, retmsg='success')
-
-
-@manager.route('/<job_id>/<role>/<party_id>/check', methods=['POST'])
-def check_job(job_id, role, party_id):
-    status = JobController.check_job_run(job_id, role, party_id)
-    if status:
-        return get_json_result(retcode=0, retmsg='success')
-    else:
-        return get_json_result(retcode=101, retmsg='The job running on the host side exceeds the maximum running amount')
 
 
 @manager.route('/<job_id>/<role>/<party_id>/resource/apply', methods=['POST'])
@@ -96,7 +87,7 @@ def save_pipelined_model(job_id, role, party_id):
 
 @manager.route('/<job_id>/<role>/<party_id>/stop/<stop_status>', methods=['POST'])
 def stop_job(job_id, role, party_id, stop_status):
-    jobs = job_utils.query_job(job_id=job_id, role=role, party_id=party_id)
+    jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id)
     for job in jobs:
         JobController.stop_job(job=job, stop_status=stop_status)
     return get_json_result(retcode=0, retmsg='success')
@@ -119,6 +110,13 @@ def clean(job_id, role, party_id):
 
 
 # Control API for task
+@manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/create', methods=['POST'])
+@request_authority_certification
+def create_task(job_id, component_name, task_id, task_version, role, party_id):
+    TaskController.create_task(role, party_id, request.json)
+    return get_json_result(retcode=0, retmsg='success')
+
+
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/start', methods=['POST'])
 @request_authority_certification
 def start_task(job_id, component_name, task_id, task_version, role, party_id):
@@ -143,9 +141,17 @@ def update_task(job_id, component_name, task_id, task_version, role, party_id):
 
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/stop/<stop_status>', methods=['POST'])
 def stop_task(job_id, component_name, task_id, task_version, role, party_id, stop_status):
-    tasks = job_utils.query_task(job_id=job_id, task_id=task_id, task_version=task_version, role=role, party_id=int(party_id))
+    tasks = JobSaver.query_task(job_id=job_id, task_id=task_id, task_version=task_version, role=role, party_id=int(party_id))
     for task in tasks:
         TaskController.stop_task(task=task, stop_status=stop_status)
+    return get_json_result(retcode=0, retmsg='success')
+
+
+@manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/clean/<content_type>', methods=['POST'])
+def clean_task(job_id, component_name, task_id, task_version, role, party_id, content_type):
+    tasks = JobSaver.query_task(job_id=job_id, task_id=task_id, task_version=task_version, role=role, party_id=int(party_id))
+    for task in tasks:
+        TaskController.clean_task(task=task, content_type=content_type)
     return get_json_result(retcode=0, retmsg='success')
 
 

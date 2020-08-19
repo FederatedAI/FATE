@@ -187,17 +187,10 @@ class JobSaver(object):
     def get_tasks_asc(cls, job_id, role, party_id):
         with DB.connection_context():
             tasks = Task.select().where(Task.f_job_id == job_id, Task.f_role == role, Task.f_party_id == party_id).order_by(Task.f_create_time.asc())
-            tasks_group = {}
-            for task in tasks:
-                if task.f_task_id not in tasks_group:
-                    tasks_group[task.f_task_id] = task
-                elif task.f_task_version > tasks_group[task.f_task_id].f_task_version:
-                    # update new version task
-                    tasks_group[task.f_task_id] = task
-            return tasks_group
+            return cls.get_latest_tasks(tasks=tasks)
 
     @classmethod
-    def query_task(cls, **kwargs):
+    def query_task(cls, only_latest=True, **kwargs):
         with DB.connection_context():
             filters = []
             for f_n, f_v in kwargs.items():
@@ -208,28 +201,19 @@ class JobSaver(object):
                 tasks = Task.select().where(*filters)
             else:
                 tasks = Task.select()
-            return [task for task in tasks]
+            if only_latest:
+                tasks_group = cls.get_latest_tasks(tasks=tasks)
+                return list(tasks_group.values())
+            else:
+                return [task for task in tasks]
 
     @classmethod
-    def success_task_count(cls, job_id):
-        count = 0
-        tasks = cls.query_task(job_id=job_id)
-        job_component_status = {}
+    def get_latest_tasks(cls, tasks):
+        tasks_group = {}
         for task in tasks:
-            job_component_status[task.f_component_name] = job_component_status.get(task.f_component_name, set())
-            job_component_status[task.f_component_name].add(task.f_status)
-        for component_name, role_status in job_component_status.items():
-            if len(role_status) == 1 and JobStatus.COMPLETE in role_status:
-                count += 1
-        return count
-
-    @classmethod
-    def update_job_progress(cls, job_id, dag, current_task_id):
-        role, party_id = cls.query_job_info(job_id)
-        component_count = len(dag.get_dependency(role=role, party_id=int(party_id))['component_list'])
-        success_count = cls.success_task_count(job_id=job_id)
-        job = Job()
-        job.f_progress = float(success_count) / component_count * 100
-        job.f_update_time = current_timestamp()
-        job.f_current_tasks = base_utils.json_dumps([current_task_id])
-        return job
+            if task.f_task_id not in tasks_group:
+                tasks_group[task.f_task_id] = task
+            elif task.f_task_version > tasks_group[task.f_task_id].f_task_version:
+                # update new version task
+                tasks_group[task.f_task_id] = task
+        return tasks_group
