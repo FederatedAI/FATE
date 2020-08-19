@@ -15,24 +15,20 @@
 #
 
 import argparse
-import contextlib
 import importlib
+import sys
 import tempfile
 import time
 from pathlib import Path
-from pipeline.utils.logger import LOGGER, DEMO_LOG, LogFormat
 
 import yaml
-import sys
-
+from pipeline.utils.logger import LOGGER, DEMO_LOG, LogFormat
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
 except ImportError:
     from yaml import Loader, Dumper
 
-
-# LOGGER = loguru.logger
 
 class StreamToLogger:
     def __init__(self, logger, level="INFO"):
@@ -86,13 +82,19 @@ def load_conf(args):
     return conf
 
 
+def demo_log_only(record):
+    log_type = record["extra"].get("log_type", "")
+    return log_type == DEMO_LOG
+
+
 def _add_logger(name):
     path = Path(name).joinpath("logs")
     if path.exists() and not path.is_dir():
         raise Exception(f"{name} exist, but is not a dir")
     if not path.exists():
         path.mkdir(parents=True)
-    LOGGER.add(f"{path.joinpath('DEMO.log')}", level="INFO", colorize=True, format=LogFormat.SIMPLE)
+    # LOGGER.add(f"{path.joinpath('DEMO.log')}", level="INFO", colorize=True, format=LogFormat.SIMPLE)
+    LOGGER.add(sys.stdout, level="INFO", colorize=True, format=LogFormat.SIMPLE, filter=demo_log_only)
     LOGGER.add(f"{path.joinpath('INFO.log')}", level="INFO", colorize=True, format=LogFormat.NORMAL)
     LOGGER.add(f"{path.joinpath('DEBUG.log')}", level="DEBUG", colorize=True, format=LogFormat.NORMAL)
     LOGGER.add(f"{path.joinpath('ERROR.log')}", level="ERROR", colorize=True, format=LogFormat.NORMAL)
