@@ -1,0 +1,24 @@
+aiocontextvars==0.2.2; python_version < "3.7"
+bcrypt==3.2.0
+certifi==2020.6.20
+cffi==1.14.2
+chardet==3.0.4
+click==7.1.2
+colorama==0.4.3; sys_platform == "win32"
+contextvars==2.4; python_version < "3.7"
+cryptography==3.0
+idna==2.10
+immutables==0.14; python_version < "3.7"
+loguru==0.5.1
+paramiko==2.7.1
+prettytable==0.7.2
+pycparser==2.20
+pynacl==1.4.0
+requests==2.24.0
+requests-toolbelt==0.9.1
+ruamel.yaml==0.16.10
+ruamel.yaml.clib==0.2.0; platform_python_implementation == "CPython" and python_version < "3.9"
+six==1.15.0
+sshtunnel==0.1.5
+urllib3==1.25.10
+win32-setctime==1.0.1; sys_platform == "win32"
