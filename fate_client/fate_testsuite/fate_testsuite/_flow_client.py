@@ -24,7 +24,7 @@ from pathlib import Path
 import requests
 from requests_toolbelt import MultipartEncoderMonitor, MultipartEncoder
 
-from testsuite._parser import Data, Job
+from fate_testsuite._parser import Data, Job
 
 
 class FLOWClient(object):
@@ -34,9 +34,15 @@ class FLOWClient(object):
                  data_base_dir: typing.Optional[Path]):
         self.address = address
         self.version = "v1"
-        self._base = f"http://{self.address}/{self.version}/"
         self._http = requests.Session()
         self._data_base_dir = data_base_dir
+
+    def set_address(self, address):
+        self.address = address
+
+    @property
+    def _base(self):
+        return f"http://{self.address}/{self.version}/"
 
     def upload_data(self, data: Data, callback=None) -> 'UploadDataResponse':
         try:
@@ -160,10 +166,6 @@ class QueryJobResponse(object):
             raise RuntimeError(f"query job error, response: {response}") from e
         self.status = status
         self.progress = None
-        try:
-            self.current_tasks = response.get('data')[0]["f_current_tasks"]
-        except KeyError:
-            pass
 
 
 class UploadDataResponse(object):
@@ -220,12 +222,10 @@ class JobProgress(object):
         self.job_id = job_id
         self.show_str = f"[{self.elapse()}]{self.job_id} submitted {self.name}"
 
-    def running(self, status, progress, current_tasks):
+    def running(self, status, progress):
         if progress is None:
             progress = 0
-        if current_tasks is None:
-            current_tasks = []
-        self.show_str = f"[{self.elapse()}]{self.job_id} {status} {progress:3}% {self.name}:{current_tasks}"
+        self.show_str = f"[{self.elapse()}]{self.job_id} {status} {progress:3}% {self.name}"
 
     def exception(self, exception_id):
         self.show_str = f"[{self.elapse()}]{self.name} exception({exception_id}): {self.job_id}"

@@ -23,7 +23,8 @@ from pathlib import Path
 
 import click
 import prettytable
-from ruamel import yaml
+
+from fate_testsuite._config import Parties, Config
 
 
 # noinspection PyPep8Naming
@@ -57,137 +58,6 @@ class chain_hook(object):
 DATA_JSON_HOOK = chain_hook()
 CONF_JSON_HOOK = chain_hook()
 DSL_JSON_HOOK = chain_hook()
-
-
-@dataclass
-class Address(object):
-    host: str
-    port: int
-
-    @staticmethod
-    def from_string(address: str):
-        host, port = address.split(":")
-        return Address(host, int(port))
-
-    @property
-    def tuple_format(self):
-        return self.host, self.port
-
-    @property
-    def string_format(self):
-        return f"{self.host}:{self.port}"
-
-
-@dataclass
-class Service(object):
-    address: Address
-    parties: typing.List
-
-    @staticmethod
-    def from_dict(d: dict):
-        address = d["address"]
-        parties = d["parties"]
-        return Service(Address.from_string(address), parties)
-
-
-@dataclass
-class SSHTunnel(object):
-    ssh_address: Address
-    ssh_username: str
-    ssh_password: str
-    ssh_priv_key: str
-    services: typing.List[Service]
-
-    @staticmethod
-    def from_dict(d: dict):
-        ssh_address = Address.from_string(d["ssh_address"])
-        ssh_username = d["ssh_username"]
-        ssh_password = d.get("ssh_password", None)
-        ssh_priv_key = d.get("ssh_priv_key", None)
-        services = [Service.from_dict(service) for service in d["services"]]
-        return SSHTunnel(ssh_address, ssh_username, ssh_password, ssh_priv_key, services)
-
-
-@dataclass
-class Parties(object):
-    guest: typing.List[int]
-    host: typing.List[int]
-    arbiter: typing.List[int] = field(default_factory=list)
-
-    @staticmethod
-    def from_dict(d: dict):
-        return Parties(**d)
-
-    def __post_init__(self):
-        self._party_to_role_string = {}
-        for role in self.__class__.__annotations__:
-            parties = getattr(self, role)
-            for i, party in enumerate(parties):
-                if party not in self._party_to_role_string:
-                    self._party_to_role_string[party] = set()
-                self._party_to_role_string[party].add(f"{role.lower()}_{i}")
-
-    def parties_to_role_string(self, parties):
-        role_strings = set()
-        for party in parties:
-            if party not in self._party_to_role_string:
-                raise ValueError(f"{party} not in parties")
-            role_strings.update(self._party_to_role_string[party])
-        return role_strings
-
-    def extract_role(self, counts: typing.MutableMapping[str, int]):
-        roles = {}
-        for role, num in counts.items():
-            if not hasattr(self, role):
-                raise ValueError(f"{role} should be one of [guest, host, arbiter]")
-            else:
-                if len(getattr(self, role)) < num:
-                    raise ValueError(f"require {num} {role} parties, only {len(getattr(self, role))} in config")
-            roles[role] = getattr(self, role)[:num]
-        return roles
-
-    def extract_initiator_role(self, role):
-        initiator_role = role.strip()
-        if len(getattr(self, initiator_role)) < 1:
-            raise ValueError(f"role {initiator_role} has empty party list")
-        party_id = getattr(self, initiator_role)[0]
-        return dict(role=initiator_role, party_id=party_id)
-
-
-@dataclass
-class Config(object):
-    parties: Parties
-    local_services: typing.List[Service] = field(default_factory=list)
-    ssh_tunnel: typing.List[SSHTunnel] = field(default_factory=list)
-    work_mode: int = 0
-    data_base_dir: Path = None
-
-    @staticmethod
-    def from_yaml(path: typing.Union[str, Path], **kwargs):
-        if isinstance(path, str):
-            path = Path(path)
-        config = {}
-        if path is not None:
-            with path.open("r") as f:
-                config.update(yaml.safe_load(f))
-        config.update(kwargs)
-
-        if "parties" not in config:
-            raise NameError(f"`parties` not found")
-        parties = Parties.from_dict(config["parties"])
-
-        local_services = [Service.from_dict(d) for d in config.get("local_services", [])]
-        ssh_tunnel = [SSHTunnel.from_dict(d) for d in config.get("ssh_tunnel", [])]
-        work_mode = int(config.get("work_mode", 0))
-        if config.get("data_base_dir") is not None:
-            data_base_dir = Path(config["data_base_dir"])
-            if not data_base_dir.is_absolute():
-                data_base_dir = path.parent.joinpath(data_base_dir)
-            data_base_dir = data_base_dir.resolve()
-        else:
-            data_base_dir = None
-
-        return Config(parties, local_services, ssh_tunnel, work_mode, data_base_dir)
 
 
 @dataclass

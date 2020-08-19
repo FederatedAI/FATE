@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "fate_client"
+name = "fate_testsuite"
 version = "0.1.0"
-description = "Clients for FATE, including flow_client, flow_sdk, fate_pipeline and fate_testsuite"
+description = "testsuite for FATE"
 authors = ["FederatedAI <contact@FedAI.org>"]
 license = "Apache-2.0"
 readme = "README.rst"
@@ -9,32 +9,35 @@ readme = "README.rst"
 homepage = "https://fate.fedai.org/"
 repository = "https://github.com/FederatedAI/FATE"
 documentation = "https://fate.readthedocs.io/en/latest/?badge=latest"
-keywords = ["FATE", "clients", "Federated Learning"]
+keywords = ["FATE", "Federated Learning", "Testsuite"]
 
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Topic :: Software Development :: Testing",
     "Intended Audience :: Developers",
-    "Intended Audience :: Education",
-    "Intended Audience :: End Users/Desktop",
-    "Topic :: Software Development :: Libraries :: Python Modules"
+    "Intended Audience :: Education"
 ]
 
 packages = [
+    { include = "fate_testsuite" }
 ]
 
 [tool.poetry.dependencies]
 python = "^3.6"
-flow_client = "^0.1.0"
-flow_sdk = "^0.1.0"
-fate_pipeline = "^0.1.0"
-fate_testsuite = "^0.1.0"
-
+requests_toolbelt = "^0.9.1"
+requests = "^2.24.0"
+click = "^7.1.2"
+"ruamel.yaml" = "^0.16.10"
+loguru = "^0.5.1"
+prettytable = "^0.7.2"
+sshtunnel = "^0.1.5"
+dataclasses = { version = "^0.7", python = "3.6", optional = true }
 
 [tool.poetry.dev-dependencies]
 
 [tool.poetry.scripts]
+fate_testsuite = "fate_testsuite.cli:cli"
 
 [build-system]
 requires = ["poetry>=0.12"]

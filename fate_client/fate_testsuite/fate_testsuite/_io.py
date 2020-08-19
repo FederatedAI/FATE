@@ -16,7 +16,7 @@
 import click
 import loguru
 
-from testsuite._ascii import HEAD, TAIL
+from fate_testsuite._ascii import HEAD, TAIL
 
 
 # noinspection PyPep8Naming
