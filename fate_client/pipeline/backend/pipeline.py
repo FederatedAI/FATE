@@ -381,7 +381,7 @@ class PipeLine(object):
     @LOGGER.catch
     def fit(self, backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE):
         if self._stage == "predict":
-            raise ValueError("The pipeline is construct for predicting, can not use fit interface")
+            raise ValueError("This pipeline is constructed for predicting, cannot use fit interface")
 
         # print("_train_conf {}".format(self._train_conf))
         LOGGER.debug(f"in fit, _train_conf is: \n {json.dumps(self._train_conf)}")
@@ -402,8 +402,8 @@ class PipeLine(object):
     def predict(self, backend=Backend.EGGROLL, work_mode=WorkMode.CLUSTER):
         if self._stage != "predict":
             raise ValueError(
-                "To use predict function, please use a new predict pipeline "
-                "and add data reader component and training pipeline to make a predict pipeline")
+                "To use predict function, please deploy component(s) from training pipeline"
+                "and construct a new predict pipeline with data reader and training pipeline.")
 
         self.compile()
 
@@ -419,6 +419,7 @@ class PipeLine(object):
                                              self._initiator.role,
                                              self._initiator.party_id)
 
+    @LOGGER.catch
     def upload(self, work_mode=WorkMode.STANDALONE, drop=0):
         for data_conf in self._upload_conf:
             upload_conf = self._construct_upload_conf(data_conf, work_mode)
@@ -541,12 +542,14 @@ class PipeLine(object):
 
         self._data_to_feed_in_prediction = data_dict
 
+    @LOGGER.catch
     def __getattr__(self, attr):
         if attr in self._components:
             return self._components[attr]
 
         return self.__getattribute__(attr)
 
+    @LOGGER.catch
     def __getitem__(self, item):
         if item not in self._components:
             raise ValueError("Pipeline does not has component }{}".format(item))

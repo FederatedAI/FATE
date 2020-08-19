@@ -29,7 +29,7 @@ try:
 except ImportError:
     from yaml import Loader, Dumper
 
-
+"""
 class StreamToLogger:
     def __init__(self, logger, level="INFO"):
         self._level = level
@@ -49,6 +49,7 @@ class StreamToLogger:
         if self.line_buffer != '':
             self.logger.opt(depth=1).log(self._level, self.line_buffer.rstrip())
         self.line_buffer = ''
+"""
 
 
 def main(args):
@@ -82,6 +83,7 @@ def load_conf(args):
     return conf
 
 
+# filter for demo-only log
 def demo_log_only(record):
     log_type = record["extra"].get("log_type", "")
     return log_type == DEMO_LOG
@@ -107,7 +109,7 @@ def _find_demo_files(path):
         if path.name.startswith("pipeline-") and path.name.endswith(".py"):
             paths = [path]
         else:
-            LOGGER.warning(f"{path} is file, but does not start with `pipeline-` or is not a python file, skip")
+            LOGGER.warning(f"{path} is a file, but does not start with `pipeline-` or is not a python file, skip")
             paths = []
     else:
         # in future: group demos by directory
@@ -136,10 +138,10 @@ if __name__ == "__main__":
     parser.add_argument("path", help="path to search pipeline-xxx.py")
     parser.add_argument("-config", default="./config.yaml", type=str,
                         help="config file")
-    parser.add_argument("-name", default=f'pipeline-demo-{time.strftime("%Y%m%d%H%M%S", time.localtime())}')
+    parser.add_argument("-name", default=f'demo_logs/pipeline-demo-{time.strftime("%Y%m%d%H%M%S", time.localtime())}')
     parser.add_argument("-backend", choices=[0, 1], type=int, help="backend to use")
     parser.add_argument("-work_mode", choices=[0, 1], type=int,
                         help="work mode, if specified, overrides setting in config.yaml")
     parser.add_argument("-exclude", nargs="+", type=str)
-    args = parser.parse_args()
-    main(args)
+    args_input = parser.parse_args()
+    main(args_input)

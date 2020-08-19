@@ -135,7 +135,9 @@ class JobInvoker(object):
             status = data["f_status"]
             if status == JobStatus.COMPLETE:
                 # print("job is success!!!")
+                elapse_seconds = timedelta(seconds=int(time.time() - start_time))
                 LOGGER.info(f"Job is success!!! Job id is {job_id}")
+                LOGGER.info(f"Total time: {elapse_seconds}")
                 return StatusCode.SUCCESS
 
             if status == JobStatus.FAILED:
