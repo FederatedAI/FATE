@@ -25,7 +25,7 @@ temperate = """\
 work_mode: 0
 # base dir for data upload conf eg
 # examples/data/breast_hetero_guest.csv -> $data_base_dir/examples/data/breast_hetero_guest.csv
-data_base_dir:
+data_base_dir: ../../../
 parties:
   guest: [10000]
   host: [9999, 10000]
