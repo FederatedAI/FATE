@@ -56,14 +56,15 @@ class Reader(object):
                                           table_namespace=dest_table_meta.get_namespace(),
                                           table_name=dest_table_meta.get_name())
         headers_str = dest_table_meta.get_schema().get('header')
-        data_list = [headers_str.split(',')]
-        for data in dest_table_meta.get_part_of_data():
-            data_list.append(data[1].split(','))
-        data = np.array(data_list)
-        Tdata = data.transpose()
         table_info = {}
-        for data in Tdata:
-            table_info[data[0]] = ','.join(list(set(data[1:]))[:5])
+        if headers_str:
+            data_list = [headers_str.split(',')]
+            for data in dest_table_meta.get_part_of_data():
+                data_list.append(data[1].split(','))
+            data = np.array(data_list)
+            Tdata = data.transpose()
+            for data in Tdata:
+                table_info[data[0]] = ','.join(list(set(data[1:]))[:5])
         data_info = {
             "table_name": self.parameters[table_key]['name'],
             "table_info": table_info,
