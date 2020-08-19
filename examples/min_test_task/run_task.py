@@ -444,7 +444,7 @@ def main():
                             default=1, choices=[0, 1])
 
     arg_parser.add_argument("-s", "--serving", type=int, help="Test Serving process",
-                            default=1, choices=[0, 1])
+                            default=0, choices=[0, 1])
 
     args = arg_parser.parse_args()
 
