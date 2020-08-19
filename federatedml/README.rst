@@ -231,3 +231,11 @@ Secure Protocol
 .. _Encode: secureprotol/README.rst#encode
 .. _Diffne Hellman Key Exchange: secureprotol/README.rst#diffne-hellman-key-exchange
 .. _SecretShare MPC Protocol(SPDZ): secureprotol/README.rst#secretshare-mpc-protocol-spdz
+
+
+Params
+-------
+
+.. automodule:: federatedml.param
+   :autosummary:
+   :members:

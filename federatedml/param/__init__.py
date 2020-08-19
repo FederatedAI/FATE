@@ -14,19 +14,68 @@
 #  limitations under the License.
 #
 
+from federatedml.param.boosting_param import BoostingParam
+from federatedml.param.cross_validation_param import CrossValidationParam
+from federatedml.param.data_split_param import DataSplitParam
 from federatedml.param.dataio_param import DataIOParam
 from federatedml.param.encrypt_param import EncryptParam
-from federatedml.param.logistic_regression_param import InitParam
-from federatedml.param.logistic_regression_param import LogisticParam
-from federatedml.param.linear_regression_param import LinearParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
-from federatedml.param.boosting_param import ObjectiveParam
-from federatedml.param.boosting_param import DecisionTreeParam
-from federatedml.param.predict_param import PredictParam
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.param.feature_binning_param import FeatureBinningParam
+from federatedml.param.feature_selection_param import FeatureSelectionParam
+from federatedml.param.ftl_param import FTLParam
+from federatedml.param.hetero_nn_param import HeteroNNParam
+from federatedml.param.homo_nn_param import HomoNNParam
+from federatedml.param.homo_onehot_encoder_param import HomoOneHotParam
+from federatedml.param.init_model_param import InitParam
+from federatedml.param.intersect_param import IntersectParam
+from federatedml.param.linear_regression_param import LinearParam
+from federatedml.param.local_baseline_param import LocalBaselineParam
+from federatedml.param.logistic_regression_param import LogisticParam
+from federatedml.param.one_vs_rest_param import OneVsRestParam
+from federatedml.param.one_vs_rest_param import OneVsRestParam
+from federatedml.param.pearson_param import PearsonParam
+from federatedml.param.poisson_regression_param import PoissonParam
+from federatedml.param.predict_param import PredictParam
+from federatedml.param.psi_param import PSIParam
+from federatedml.param.rsa_param import RsaParam
+from federatedml.param.sample_param import SampleParam
+from federatedml.param.scale_param import ScaleParam
+from federatedml.param.secure_add_example_param import SecureAddExampleParam
+from federatedml.param.sqn_param import StochasticQuasiNewtonParam
+from federatedml.param.statistics_param import StatisticsParam
+from federatedml.param.stepwise_param import StepwiseParam
+from federatedml.param.union_param import UnionParam
 
-
-__all__ = ["DataIOParam", "DecisionTreeParam", "InitParam", "LogisticParam", "ObjectiveParam",
-           "EncryptParam", "EvaluateParam", "PredictParam", 'FeatureBinningParam',
-           "LinearParam"]
+__all__ = [
+    "BoostingParam",
+    "CrossValidationParam",
+    "DataSplitParam",
+    "DataIOParam",
+    "EncryptParam",
+    "EncryptedModeCalculatorParam",
+    "FeatureBinningParam",
+    "FeatureSelectionParam",
+    "FTLParam",
+    "HeteroNNParam",
+    "HomoNNParam",
+    "HomoOneHotParam",
+    "InitParam",
+    "IntersectParam",
+    "LinearParam",
+    "LocalBaselineParam",
+    "LogisticParam",
+    "OneVsRestParam",
+    "PearsonParam",
+    "PoissonParam",
+    "PredictParam",
+    "PSIParam",
+    "RsaParam",
+    "SampleParam",
+    "ScaleParam",
+    "SecureAddExampleParam",
+    "StochasticQuasiNewtonParam",
+    "StatisticsParam",
+    "StepwiseParam",
+    "UnionParam"
+]
