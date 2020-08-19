@@ -18,6 +18,7 @@
 import uuid
 import numpy as np
 
+from fate_arch.computing import ComputingEngine
 from fate_flow.entity.metric import MetricMeta
 from fate_arch.common import log
 from fate_arch import storage
@@ -41,6 +42,7 @@ class Reader(object):
                                                                                         src_namespace=self.parameters[table_key]['namespace'],
                                                                                         dest_name=persistent_table_name,
                                                                                         dest_namespace=persistent_table_namespace,
+                                                                                        computing_engine=component_parameters.get('job_parameters').get('computing_engine', ComputingEngine.EGGROLL),
                                                                                         force=True)
         if dest_table_address:
             with storage.Session.build(session_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),
@@ -54,14 +56,15 @@ class Reader(object):
                                           table_namespace=dest_table_meta.get_namespace(),
                                           table_name=dest_table_meta.get_name())
         headers_str = dest_table_meta.get_schema().get('header')
-        data_list = [headers_str.split(',')]
-        for data in dest_table_meta.get_part_of_data():
-            data_list.append(data[1].split(','))
-        data = np.array(data_list)
-        Tdata = data.transpose()
         table_info = {}
-        for data in Tdata:
-            table_info[data[0]] = ','.join(list(set(data[1:]))[:5])
+        if headers_str:
+            data_list = [headers_str.split(',')]
+            for data in dest_table_meta.get_part_of_data():
+                data_list.append(data[1].split(','))
+            data = np.array(data_list)
+            Tdata = data.transpose()
+            for data in Tdata:
+                table_info[data[0]] = ','.join(list(set(data[1:]))[:5])
         data_info = {
             "table_name": self.parameters[table_key]['name'],
             "table_info": table_info,

@@ -146,9 +146,9 @@ class JobInvoker(object):
             if status == JobStatus.WAITING:
                 elapse_seconds = timedelta(seconds=int(time.time() - start_time))
                 # print("job is still waiting, time elapse: {}".format(elapse_seconds), end="\r", flush=True)
-                sys.stdout.write("Job is still waiting, time elapse: {}\r".format(elapse_seconds))
+                sys.stdout.write(f"Job is still waiting, time elapse: {elapse_seconds}\r")
                 sys.stdout.flush()
-                #LOGGER.info(f"job is still waiting, time elapse:{elapse_seconds}")
+                # LOGGER.trace(f"Job is still waiting, time elapse: {elapse_seconds}")
 
             if status == JobStatus.RUNNING:
                 ret_code, _, data = self.query_task(job_id=job_id, role=role, party_id=party_id,
@@ -176,6 +176,7 @@ class JobInvoker(object):
                 """
                 sys.stdout.write(f"Running component {cpn}, time elapse: {elapse_seconds}\r")
                 sys.stdout.flush()
+                # LOGGER.trace(f"Running component {cpn}, time elapse: {elapse_seconds}")
 
             time.sleep(conf.TIME_QUERY_FREQS)
 
