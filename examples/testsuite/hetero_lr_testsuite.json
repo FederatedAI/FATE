@@ -1,0 +1,143 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_1"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/vehicle_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "tasks": {
+        "lr": {
+            "conf": "test_hetero_lr_train_job_conf.json",
+            "dsl": "test_hetero_lr_train_job_dsl.json"
+        },
+        "lr_validate": {
+            "conf": "test_hetero_lr_validate_job_conf.json",
+            "dsl": "test_hetero_lr_validate_job_dsl.json"
+        },
+        "lr_cv": {
+            "conf": "test_hetero_lr_cv_job_conf.json",
+            "dsl": "test_hetero_lr_cv_job_dsl.json"
+        },
+        "lr_one_vs_all": {
+            "conf": "test_hetero_lr_one_vs_rest_job_conf.json",
+            "dsl": "test_hetero_lr_train_job_dsl.json"
+        },
+        "lr_feature_engineering": {
+            "conf": "test_lr_with_feature_engineering_job_conf.json",
+            "dsl": "test_lr_with_feature_engineering_dsl.json"
+        },
+        "lr_multi_host": {
+            "conf": "test_multi_host_job_conf.json",
+            "dsl": "test_hetero_lr_train_job_dsl.json"
+        },
+        "lr_sparse": {
+            "conf": "test_hetero_lr_sparse_train_job_conf.json",
+            "dsl": "test_hetero_lr_train_job_dsl.json"
+        },
+        "lr_sparse_sqn": {
+            "conf": "test_hetero_lr_sparse_sqn_train_job_conf.json",
+            "dsl": "test_hetero_lr_train_job_dsl.json"
+        },
+        "lr_ovr_cv": {
+            "conf": "test_hetero_lr_cv_ovr_job_conf.json",
+            "dsl": "test_hetero_lr_cv_job_dsl.json"
+        },
+        "lr_sparse_cv": {
+            "conf": "test_hetero_lr_cv_sparse_job_conf.json",
+            "dsl": "test_hetero_lr_cv_job_dsl.json"
+        },
+        "lr_ovr_sqn": {
+            "conf": "test_hetero_lr_ovr_sqn_job_conf.json",
+            "dsl": "test_hetero_lr_train_job_dsl.json"
+        },
+        "lr_sqn": {
+            "conf": "test_hetero_lr_sqn_job_conf.json",
+            "dsl": "test_hetero_lr_train_job_dsl.json"
+        },
+        "lr-predict": {
+            "conf": "test_predict_conf.json",
+            "deps": "lr"
+        },
+        "early_stop_lr": {
+            "conf": "test_hetero_lr_early_stop_train_job_conf.json",
+            "dsl": "test_hetero_lr_validate_job_dsl.json"
+        }
+    },
+    "pipeline_tasks": {
+        "lr": {
+            "script": "pipeline-hetero-lr-train.py"
+        },
+        "lr_validate": {
+            "script": "pipeline-hetero-lr-validate.py"
+        },
+        "lr_cv": {
+            "script": "pipeline-hetero-lr-cv.py"
+        },
+        "lr_one_vs_all": {
+            "script": "pipeline-hetero-lr-one-vs-all.py"
+        },
+        "lr_feature_engineering": {
+            "script": "pipeline-hetero-lr-feature-engineering.py"
+        },
+        "lr_multi_host": {
+            "script": "pipeline-hetero-lr-multi-host.py"
+        },
+        "lr_sparse": {
+            "script": "pipeline-hetero-lr-sparse.py"
+        },
+        "lr_sparse_sqn": {
+            "script": "pipeline-hetero-lr-sparse-sqn.py"
+        },
+        "lr_ovr_cv": {
+            "script": "pipeline-hetero-lr-ovr-cv.py"
+        },
+        "lr_sparse_cv": {
+            "script": "pipeline-hetero-lr-sparse-cv.py"
+        },
+        "lr_ovr_sqn": {
+            "script": "pipeline-hetero-lr-ovr-sqn.py"
+        },
+        "lr_sqn": {
+            "script": "pipeline-hetero-lr-sqn.py"
+        },
+        "early_stop_lr": {
+            "script": "pipeline-hetero-lr-early-stop.py"
+        }
+    }
+}

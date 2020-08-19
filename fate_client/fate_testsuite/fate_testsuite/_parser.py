@@ -140,9 +140,16 @@ class Job(object):
 
 
 @dataclass
+class PipelineJob(object):
+    job_name: str
+    script_path: Path
+
+
+@dataclass
 class Testsuite(object):
     dataset: typing.List[Data]
     jobs: typing.List[Job]
+    pipeline_jobs: typing.List[PipelineJob]
     path: Path
 
     @staticmethod
@@ -158,7 +165,12 @@ class Testsuite(object):
         for job_name, job_configs in testsuite_config.get("tasks", {}).items():
             jobs.append(Job.load(job_name=job_name, job_configs=job_configs, base=path.parent))
 
-        testsuite = Testsuite(dataset, jobs, path)
+        pipeline_jobs = []
+        for job_name, job_configs in testsuite_config.get("pipeline_tasks", {}).items():
+            script_path = path.joinpath(job_configs["script"])
+            pipeline_jobs.append(PipelineJob(job_name, script_path))
+
+        testsuite = Testsuite(dataset, jobs, pipeline_jobs, path)
         return testsuite
 
     def jobs_iter(self):
@@ -226,7 +238,7 @@ def _namespace_hook(namespace):
     def _hook(d):
         if d is None:
             return d
-        if 'namespace' in d:
+        if 'namespace' in d and namespace:
             d['namespace'] = f"{d['namespace']}_{namespace}"
         return d
 

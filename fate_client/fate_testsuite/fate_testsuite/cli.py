@@ -64,7 +64,13 @@ def _config(cmd):
               help="glob string to filter sub-directory of path specified by <include>")
 @click.option("--yes", is_flag=True,
               help="skip double check")
-def run_suite(replace, namespace, config, include, exclude, glob, yes):
+@click.option("--skip-json-jobs", is_flag=True, default=False,
+              help="skip json jobs defined in testsuite")
+@click.option("--skip-pipeline-jobs", is_flag=True, default=False,
+              help="skip pipeline jobs defined in testsuite")
+@click.option("--skip-data", is_flag=True, default=False,
+              help="skip pipeline jobs defined in testsuite")
+def run_suite(replace, namespace, config, include, exclude, glob, skip_json_jobs, skip_pipeline_jobs, skip_data, yes):
     """
     process testsuite
     """
@@ -92,18 +98,27 @@ def run_suite(replace, namespace, config, include, exclude, glob, yes):
                 echo.echo(f"[{i + 1}/{len(suites)}]start at {time.strftime('%Y-%m-%d %X')} {suite.path}", fg='red')
                 suite.reflash_configs(config_inst)
 
-                try:
-                    _upload_data(client, suite)
-                except Exception as e:
-                    raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
+                if not skip_data:
+                    try:
+                        _upload_data(client, suite)
+                    except Exception as e:
+                        raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
 
-                echo.stdout_newline()
-                try:
-                    _submit_job(client, suite)
-                except Exception as e:
-                    raise RuntimeError(f"exception occur while submit job for {suite.path}") from e
+                if not skip_json_jobs:
+                    echo.stdout_newline()
+                    try:
+                        _submit_job(client, suite)
+                    except Exception as e:
+                        raise RuntimeError(f"exception occur while submit job for {suite.path}") from e
 
-                _delete_data(client, suite)
+                if not skip_pipeline_jobs:
+                    try:
+                        _run_pipeline_jobs(config_inst, suite)
+                    except Exception as e:
+                        raise RuntimeError(f"exception occur while running pipeline jobs for {suite.path}") from e
+
+                if not skip_data:
+                    _delete_data(client, suite)
                 echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
                 echo.echo(suite.pretty_final_summary(), fg='red')
 
@@ -274,6 +289,12 @@ def _submit_job(clients: Clients, suite: Testsuite):
                     suite.feed_success_model_info(job.job_name, response.model_info)
             update_bar(0)
             echo.stdout_newline()
+
+
+def _run_pipeline_jobs(config: Config, testsuite: Testsuite):
+    # pipeline demo goes here
+    print(config.parties)
+    print(testsuite.pipeline_jobs)
 
 
 def main():
