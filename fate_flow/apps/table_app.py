@@ -74,7 +74,7 @@ def dtable(table_func):
                 table_key_count = 0
                 table_partition = None
         return get_json_result(data={'table_name': table_name, 'namespace': namespace, 'count': table_key_count,
-                                     'partition': table_partition, 'headers': headers})
+                                     'partition': table_partition, 'schema': headers})
     else:
         return get_json_result()
 
