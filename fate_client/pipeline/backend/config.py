@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 
-import os
 from ruamel import yaml
 from pathlib import Path
 

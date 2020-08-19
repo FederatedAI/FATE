@@ -15,7 +15,7 @@
 #
 
 import click
-import Path
+from pathlib import Path
 import os
 from ruamel import yaml
 
@@ -27,12 +27,13 @@ def cli():
     pass
 
 
-@click.command()
+@click.command(name="config")
 @click.option("-c", "--pipeline-conf-path", type=click.Path(exists=True),
               help="Absolute path to pipeline configuration file.")
+@click.option("-d", "--log-directory", type=click.Path(exists=True),
+              help="Absolute path to pipeline logs directory.")
 @click.option("--ip", type=click.STRING, help="Fate flow server ip address.")
 @click.option("--port", type=click.INT, help="Fate flow server port.")
-@click.option("-d", "--log-directory", type=click.Path(exists=True), help="Absolute path to pipeline logs directory.")
 def config(**kwargs):
     """
         \b
@@ -48,22 +49,22 @@ def config(**kwargs):
             pipeline config -c /data/projects/FATE/fate_client/pipeline/config.yaml
             pipeline config --ip 10.1.2.3 --port 9380
     """
-    with (default_config, "r") as fin:
+    with open(default_config, "r") as fin:
         config = yaml.safe_load(fin)
-    if kwargs.get("pipeline-conf-path"):
-        config_path = os.path.abspath(kwargs.get("pipeline-conf-path"))
-        with (config_path, "r") as fin:
+    if kwargs.get("pipeline_conf_path"):
+        config_path = os.path.abspath(kwargs.get("pipeline_conf_path"))
+        with open(config_path, "r") as fin:
             config = yaml.safe_load(fin)
     else:
         if kwargs.get("ip"):
             config["ip"] = kwargs.get("ip")
         if kwargs.get("port"):
             config["port"] = kwargs.get("port")
-        if kwargs.get("log-directory"):
-            config["log-directory"] = kwargs.get("directory")
-    if kwargs.get("pipeline-conf-pat") or (kwargs.get("ip") and kwargs.get("port") and kwargs.get("log-directory")):
+        if kwargs.get("log_directory"):
+            config["log_directory"] = kwargs.get("log_directory")
+    if kwargs.get("pipeline_conf_path") or (kwargs.get("ip") and kwargs.get("port") and kwargs.get("log_directory")):
         with open(default_config, "w") as fout:
-            yaml.dump(config, fout)
+            yaml.dump(config, fout, Dumper=yaml.RoundTripDumper)
 
         print(
             {
@@ -80,6 +81,7 @@ def config(**kwargs):
             }
         )
 
+cli.add_command(config)
 
 if __name__ == '__main__':
     cli()
