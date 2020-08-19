@@ -169,28 +169,6 @@ Alogorithm List
 
 
 
-
-.. toctree::
-   :maxdepth: 2
-
-   util/README
-   statistic/intersect/README
-   feature/README
-   statistic/union/README
-   linear_model/logistic_regression/README
-   local_baseline/README
-   linear_model/linear_regression/README
-   linear_model/poisson_regression/README
-   nn/homo_nn/README
-   tree/README
-   evaluation/README
-   statistic/correlation/README
-   nn/hetero_nn/README
-   model_selection/stepwise/README
-
-
-
-
 Secure Protocol
 ---------------
 
