@@ -39,6 +39,12 @@ class JobSaver(object):
         update_status = cls.update_status(Job, job_info)
         if update_status:
             schedule_logger(job_id=job_info["job_id"]).info("update job {} status successfully".format(job_info["job_id"]))
+            if EndStatus.contains(job_info.get("status")):
+                new_job_info = {}
+                for k in ["job_id", "role", "party_id"]:
+                    new_job_info[k] = job_info[k]
+                new_job_info["tag"] = "job_end"
+                cls.update_job_family_entity(Job, new_job_info)
         else:
             schedule_logger(job_id=job_info["job_id"]).info("update job {} status failed".format(job_info["job_id"]))
         return update_status
@@ -49,12 +55,6 @@ class JobSaver(object):
         update_status = cls.update_job_family_entity(Job, job_info)
         if update_status:
             schedule_logger(job_id=job_info.get("job_id")).info(f"job {job_info['job_id']} update successfully: {job_info}")
-            if EndStatus.contains(job_info.get("status")):
-                new_job_info = {}
-                for k in ["job_id", "role", "party_id"]:
-                    new_job_info[k] = job_info[k]
-                new_job_info["tag"] = "job_end"
-                cls.update_job_family_entity(Job, new_job_info)
         else:
             schedule_logger(job_id=job_info.get("job_id")).warning(f"job {job_info['job_id']} update does not take effect: {job_info}")
         return update_status

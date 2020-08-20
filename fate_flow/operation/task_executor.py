@@ -164,8 +164,6 @@ class TaskExecutor(object):
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
             run_object.set_tracker(tracker=tracker_client)
             run_object.set_taskid(taskid=job_utils.generate_federated_id(task_id, task_version))
-            if task_version == 0 and component_name == "dataio_0":
-                raise Exception("debug retry ")
             run_object.run(component_parameters_on_party, task_run_args)
             output_data = run_object.save_data()
             if not isinstance(output_data, list):
