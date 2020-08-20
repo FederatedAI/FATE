@@ -47,26 +47,28 @@ class FederatedScheduler(object):
         return status_code, response
 
     @classmethod
-    def check_job(cls, job):
-        return cls.job_command(job=job, command="check")
-
-    @classmethod
-    def cancel_ready(cls, job):
-        # TODO: sync job tag cancel_ready
-        return True
-
-    @classmethod
     def start_job(cls, job):
         return cls.job_command(job=job, command="start")
 
     @classmethod
     def sync_job(cls, job, update_fields):
-        schedule_logger(job_id=job.f_job_id).info("Job {} is {}, sync to all party".format(job.f_job_id, job.f_status))
-        status_code, response = cls.job_command(job=job, command="update", command_body=job.to_human_model_dict(only_primary_with=update_fields))
+        sync_info = job.to_human_model_dict(only_primary_with=update_fields)
+        schedule_logger(job_id=job.f_job_id).info("sync job {} info to all party".format(job.f_job_id))
+        status_code, response = cls.job_command(job=job, command="update", command_body=sync_info)
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
-            schedule_logger(job_id=job.f_job_id).info("Sync job {} status {} to all party success".format(job.f_job_id, job.f_status))
+            schedule_logger(job_id=job.f_job_id).info("sync job {} info to all party successfully".format(job.f_job_id))
         else:
-            schedule_logger(job_id=job.f_job_id).info("Sync job {} status {} to all party failed: \n{}".format(job.f_job_id, job.f_status, response))
+            schedule_logger(job_id=job.f_job_id).info("sync job {} info to all party failed: \n{}".format(job.f_job_id, response))
+        return status_code, response
+
+    @classmethod
+    def sync_job_status(cls, job):
+        schedule_logger(job_id=job.f_job_id).info("job {} is {}, sync to all party".format(job.f_job_id, job.f_status))
+        status_code, response = cls.job_command(job=job, command=f"status/{job.f_status}")
+        if status_code == FederatedSchedulingStatusCode.SUCCESS:
+            schedule_logger(job_id=job.f_job_id).info("sync job {} status {} to all party success".format(job.f_job_id, job.f_status))
+        else:
+            schedule_logger(job_id=job.f_job_id).info("sync job {} status {} to all party failed: \n{}".format(job.f_job_id, job.f_status, response))
         return status_code, response
 
     @classmethod
@@ -99,10 +101,6 @@ class FederatedScheduler(object):
         return cls.job_command(job=job, command="rerun", command_body=command_body, dest_only_initiator=True)
 
     @classmethod
-    def cancel_job(cls, job):
-        return cls.job_command(job=job, command="cancel")
-
-    @classmethod
     def request_cancel_job(cls, job):
         return cls.job_command(job=job, command="cancel", dest_only_initiator=True)
 
@@ -125,10 +123,10 @@ class FederatedScheduler(object):
             api_type = "initiator"
         elif specific_dest:
             dest_partys = specific_dest.items()
-            api_type = "controller"
+            api_type = "party"
         else:
             dest_partys = roles.items()
-            api_type = "controller"
+            api_type = "party"
         for dest_role, dest_party_ids in dest_partys:
             federated_response[dest_role] = {}
             for dest_party_id in dest_party_ids:
@@ -177,12 +175,23 @@ class FederatedScheduler(object):
 
     @classmethod
     def sync_task(cls, job, task, update_fields):
-        schedule_logger(job_id=task.f_job_id).info("Job {} task {} {} is {}, sync to all party".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_status))
-        status_code, response = cls.task_command(job=job, task=task, command="update", command_body=task.to_human_model_dict(only_primary_with=update_fields))
+        sync_info = task.to_human_model_dict(only_primary_with=update_fields)
+        schedule_logger(job_id=task.f_job_id).info("sync job {} task {} {} info to all party".format(task.f_job_id, task.f_task_id, task.f_task_version))
+        status_code, response = cls.task_command(job=job, task=task, command="update", command_body=sync_info)
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
-            schedule_logger(job_id=task.f_job_id).info("Sync job {} task {} {} status {} to all party success".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_status))
+            schedule_logger(job_id=task.f_job_id).info("sync job {} task {} {} info to all party successfully".format(task.f_job_id, task.f_task_id, task.f_task_version))
         else:
-            schedule_logger(job_id=task.f_job_id).info("Sync job {} task {} {} status {} to all party failed: \n{}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_status, response))
+            schedule_logger(job_id=task.f_job_id).info("sync job {} task {} {} info to all party failed: \n{}".format(task.f_job_id, task.f_task_id, task.f_task_version, response))
+        return status_code, response
+
+    @classmethod
+    def sync_task_status(cls, job, task):
+        schedule_logger(job_id=task.f_job_id).info("job {} task {} {} is {}, sync to all party".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_status))
+        status_code, response = cls.task_command(job=job, task=task, command=f"status/{task.f_status}")
+        if status_code == FederatedSchedulingStatusCode.SUCCESS:
+            schedule_logger(job_id=task.f_job_id).info("sync job {} task {} {} status {} to all party success".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_status))
+        else:
+            schedule_logger(job_id=task.f_job_id).info("sync job {} task {} {} status {} to all party failed: \n{}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_status, response))
         return status_code, response
 
     @classmethod
@@ -220,7 +229,7 @@ class FederatedScheduler(object):
                 try:
                     response = federated_api(job_id=task.f_job_id,
                                              method='POST',
-                                             endpoint='/{}/controller/{}/{}/{}/{}/{}/{}/{}'.format(
+                                             endpoint='/{}/party/{}/{}/{}/{}/{}/{}/{}'.format(
                                                  API_VERSION,
                                                  task.f_job_id,
                                                  task.f_component_name,
@@ -262,7 +271,7 @@ class FederatedScheduler(object):
                 try:
                     response = federated_api(job_id=task.f_job_id,
                                              method='POST',
-                                             endpoint='/{}/initiator/{}/{}/{}/{}/{}/{}/status'.format(
+                                             endpoint='/{}/initiator/{}/{}/{}/{}/{}/{}/report'.format(
                                                  API_VERSION,
                                                  task.f_job_id,
                                                  task.f_component_name,
@@ -278,7 +287,7 @@ class FederatedScheduler(object):
                 except Exception as e:
                     exception = e
                     continue
-                if response["retcode"]:
+                if response["retcode"] != RetCode.SUCCESS:
                     exception = Exception(response["retmsg"])
                 else:
                     return

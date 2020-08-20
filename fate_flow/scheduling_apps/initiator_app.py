@@ -33,6 +33,7 @@ from fate_flow.utils.api_utils import get_json_result, request_execute_server
 from fate_flow.entity.constant import WorkMode, JobStatus, RetCode, FederatedSchedulingStatusCode
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.controller.job_controller import JobController
+from fate_flow.db.db_models import Task
 
 manager = Flask(__name__)
 
@@ -55,23 +56,10 @@ def stop_job(job_id, role, party_id, stop_status):
         job.f_status = stop_status
         status_code, response = FederatedScheduler.stop_job(job=jobs[0], stop_status=stop_status)
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
-            FederatedScheduler.sync_job(job=job, update_fields=["status"])
+            FederatedScheduler.sync_job_status(job=job)
             return get_json_result(retcode=0, retmsg='success')
         else:
             return get_json_result(retcode=RetCode.FEDERATED_ERROR, retmsg=json_dumps(response))
-    else:
-        return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="can not found job")
-
-
-@manager.route('/<job_id>/<role>/<party_id>/cancel', methods=['POST'])
-def cancel_job(job_id, role, party_id):
-    jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id, is_initiator=True)
-    if len(jobs) > 0:
-        status = JobController.cancel_job(job_id=job_id, role=role, party_id=party_id)
-        if status:
-            return get_json_result(retcode=0, retmsg='success')
-        else:
-            return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg=f"cancel job {job_id} failed, job status is {jobs[0].f_status}")
     else:
         return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="can not found job")
 
@@ -82,21 +70,8 @@ def rerun_job(job_id, role, party_id):
     return get_json_result(retcode=0, retmsg='success')
 
 
-@manager.route('/<job_id>/<role>/<party_id>/status', methods=['POST'])
-def job_status(job_id, role, party_id):
-    job_info = {}
-    job_info.update(request.json)
-    job_info.update({
-        "job_id": job_id,
-        "role": role,
-        "party_id": party_id
-    })
-    JobSaver.update_job(job_info=job_info)
-    return get_json_result(retcode=0, retmsg='success')
-
-
-@manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/status', methods=['POST'])
-def task_status(job_id, component_name, task_id, task_version, role, party_id):
+@manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/report', methods=['POST'])
+def report_task(job_id, component_name, task_id, task_version, role, party_id):
     task_info = {}
     task_info.update(request.json)
     task_info.update({
@@ -107,4 +82,6 @@ def task_status(job_id, component_name, task_id, task_version, role, party_id):
         "party_id": party_id,
     })
     JobSaver.update_task(task_info=task_info)
+    if task_info.get("party_status"):
+        JobSaver.update_status(Task, task_info)
     return get_json_result(retcode=0, retmsg='success')

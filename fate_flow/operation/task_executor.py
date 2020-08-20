@@ -293,13 +293,13 @@ class TaskExecutor(object):
         :param task_info:
         :return:
         """
-        schedule_logger().info("Report task {} {} {} {} to driver".format(
+        schedule_logger().info("report task {} {} {} {} to driver".format(
             task_info["task_id"],
             task_info["task_version"],
             task_info["role"],
             task_info["party_id"],
         ))
-        ControllerClient.update_task(task_info=task_info)
+        ControllerClient.report_task(task_info=task_info)
 
     @classmethod
     def monkey_patch(cls):

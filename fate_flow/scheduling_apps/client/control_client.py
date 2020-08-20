@@ -23,11 +23,11 @@ LOGGER = log.getLogger()
 class ControllerClient(object):
     @classmethod
     def update_job(cls, job_info):
-        LOGGER.info("Request update job {} on {} {}".format(job_info["job_id"], job_info["role"], job_info["party_id"]))
+        LOGGER.info("request update job {} on {} {}".format(job_info["job_id"], job_info["role"], job_info["party_id"]))
         response = api_utils.local_api(
             job_id=job_info["job_id"],
             method='POST',
-            endpoint='/{}/controller/{}/{}/{}/update'.format(
+            endpoint='/{}/party/{}/{}/{}/update'.format(
                 API_VERSION,
                 job_info["job_id"],
                 job_info["role"],
@@ -37,14 +37,14 @@ class ControllerClient(object):
         return response
 
     @classmethod
-    def update_task(cls, task_info):
-        LOGGER.info("Request update job {} task {} {} on {} {}".format(task_info["job_id"], task_info["task_id"],
+    def report_task(cls, task_info):
+        LOGGER.info("request update job {} task {} {} on {} {}".format(task_info["job_id"], task_info["task_id"],
                                                                        task_info["task_version"], task_info["role"],
                                                                        task_info["party_id"]))
         response = api_utils.local_api(
             job_id=task_info["job_id"],
             method='POST',
-            endpoint='/{}/controller/{}/{}/{}/{}/{}/{}/update'.format(
+            endpoint='/{}/party/{}/{}/{}/{}/{}/{}/report'.format(
                 API_VERSION,
                 task_info["job_id"],
                 task_info["component_name"],

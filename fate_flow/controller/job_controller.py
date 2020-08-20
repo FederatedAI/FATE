@@ -73,13 +73,15 @@ class JobController(object):
         cls.initialize_job_tracker(job_id=job_id, role=role, party_id=party_id, job_info=job_info, is_initiator=is_initiator, dsl_parser=dsl_parser)
 
     @classmethod
-    def initialize_tasks(cls, job_id, role, party_id, run_on, job_initiator, dsl_parser, component_name=None):
+    def initialize_tasks(cls, job_id, role, party_id, run_on, job_initiator, dsl_parser, component_name=None, task_version=None):
         base_task_info = {}
         base_task_info["job_id"] = job_id
         base_task_info["initiator_role"] = job_initiator['role']
         base_task_info["initiator_party_id"] = job_initiator['party_id']
         base_task_info["role"] = role
         base_task_info["party_id"] = party_id
+        if task_version:
+            base_task_info["task_version"] = task_version
         if not component_name:
             components = dsl_parser.get_topology_components()
         else:
@@ -155,15 +157,17 @@ class JobController(object):
 
     @classmethod
     def start_job(cls, job_id, role, party_id):
+        schedule_logger(job_id=job_id).info(f"try to start job {job_id} on {role} {party_id}")
         job_info = {
             "job_id": job_id,
             "role": role,
             "party_id": party_id,
             "status": JobStatus.RUNNING,
-            "party_status": JobStatus.RUNNING,
             "start_time": current_timestamp()
         }
-        JobSaver.update_job(job_info=job_info)
+        cls.update_job_status(job_info=job_info)
+        cls.update_job(job_info=job_info)
+        schedule_logger(job_id=job_id).info(f"start job {job_id} on {role} {party_id} successfully")
 
     @classmethod
     def update_job(cls, job_info):
@@ -172,7 +176,11 @@ class JobController(object):
         :param job_info:
         :return:
         """
-        update_status = JobSaver.update_job(job_info=job_info)
+        return JobSaver.update_job(job_info=job_info)
+
+    @classmethod
+    def update_job_status(cls, job_info):
+        update_status = JobSaver.update_job_status(job_info=job_info)
         if update_status and EndStatus.contains(job_info.get("status")):
             ResourceManager.return_job_resource(job_id=job_info["job_id"], role=job_info["role"], party_id=job_info["party_id"])
         return update_status
@@ -183,10 +191,6 @@ class JobController(object):
         for task in tasks:
             TaskController.stop_task(task=task, stop_status=stop_status)
         # Job status depends on the final operation result and initiator calculate
-
-    @classmethod
-    def rerun_job(cls, job_id, role, party_id, component_name):
-        pass
 
     @classmethod
     def save_pipelined_model(cls, job_id, role, party_id):
@@ -246,18 +250,4 @@ class JobController(object):
         else:
             schedule_logger(job_id).warning('role {} party id {} cancel waiting job failed, no find jod {}'.format(role, party_id, job_id))
             raise Exception('role {} party id {} cancel waiting job failed, no find jod {}'.format(role, party_id, job_id))
-
-
-class JobClean(threading.Thread):
-    def run(self):
-        time.sleep(5)
-        jobs = JobSaver.query_job(status=JobStatus.RUNNING, is_initiator=1)
-        job_ids = set([job.f_job_id for job in jobs])
-        for job_id in job_ids:
-            schedule_logger(job_id).info('fate flow server start clean job')
-            TaskScheduler.stop(job_id, JobStatus.FAILED)
-
-
-
-
 

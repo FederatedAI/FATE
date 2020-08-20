@@ -34,7 +34,7 @@ def internal_server_error(e):
     return get_json_result(retcode=RetCode.EXCEPTION_ERROR, retmsg=log.exception_to_trace_string(e))
 
 
-# Control API for job
+# execute command on every party
 @manager.route('/<job_id>/<role>/<party_id>/create', methods=['POST'])
 @request_authority_certification
 def create_job(job_id, role, party_id):
@@ -77,6 +77,21 @@ def update_job(job_id, role, party_id):
     })
     JobController.update_job(job_info=job_info)
     return get_json_result(retcode=0, retmsg='success')
+
+
+@manager.route('/<job_id>/<role>/<party_id>/status/<status>', methods=['POST'])
+def job_status(job_id, role, party_id, status):
+    job_info = {}
+    job_info.update({
+        "job_id": job_id,
+        "role": role,
+        "party_id": party_id,
+        "status": status
+    })
+    if JobController.update_job_status(job_info=job_info):
+        return get_json_result(retcode=0, retmsg='success')
+    else:
+        return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="update job status failed")
 
 
 @manager.route('/<job_id>/<role>/<party_id>/model', methods=['POST'])
@@ -125,6 +140,24 @@ def start_task(job_id, component_name, task_id, task_version, role, party_id):
     return get_json_result(retcode=0, retmsg='success')
 
 
+@manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/report', methods=['POST'])
+def report_task(job_id, component_name, task_id, task_version, role, party_id):
+    task_info = {}
+    task_info.update(request.json)
+    task_info.update({
+        "job_id": job_id,
+        "task_id": task_id,
+        "task_version": task_version,
+        "role": role,
+        "party_id": party_id,
+    })
+    TaskController.update_task(task_info=task_info)
+    if task_info.get("party_status"):
+        if not TaskController.update_task_status(task_info=task_info):
+            return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="update task status failed")
+    return get_json_result(retcode=0, retmsg='success')
+
+
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/update', methods=['POST'])
 def update_task(job_id, component_name, task_id, task_version, role, party_id):
     task_info = {}
@@ -138,6 +171,23 @@ def update_task(job_id, component_name, task_id, task_version, role, party_id):
     })
     TaskController.update_task(task_info=task_info)
     return get_json_result(retcode=0, retmsg='success')
+
+
+@manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/status/<status>', methods=['POST'])
+def task_status(job_id, component_name, task_id, task_version, role, party_id, status):
+    task_info = {}
+    task_info.update({
+        "job_id": job_id,
+        "task_id": task_id,
+        "task_version": task_version,
+        "role": role,
+        "party_id": party_id,
+        "status": status
+    })
+    if TaskController.update_task_status(task_info=task_info):
+        return get_json_result(retcode=0, retmsg='success')
+    else:
+        return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="update task status failed")
 
 
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/stop/<stop_status>', methods=['POST'])

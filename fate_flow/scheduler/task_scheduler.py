@@ -28,7 +28,7 @@ from fate_flow.manager.resource_manager import ResourceManager
 class TaskScheduler(object):
     @classmethod
     def schedule(cls, job, dsl_parser):
-        schedule_logger(job_id=job.f_job_id).info("Scheduling job {} tasks".format(job.f_job_id))
+        schedule_logger(job_id=job.f_job_id).info("scheduling job {} tasks".format(job.f_job_id))
         tasks_group = JobSaver.get_tasks_asc(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
         waiting_tasks = []
         for task_id, task in tasks_group.items():
@@ -36,12 +36,12 @@ class TaskScheduler(object):
             tasks_on_all = JobSaver.query_task(task_id=task.f_task_id, task_version=task.f_task_version)
             tasks_party_status = [task.f_party_status for task in tasks_on_all]
             new_task_status = cls.calculate_multi_party_task_status(tasks_party_status=tasks_party_status)
-            schedule_logger(job_id=task.f_job_id).info("Job {} task {} {} status is {}, calculate by task party status list: {}".format(task.f_job_id, task.f_task_id, task.f_task_version, new_task_status, tasks_party_status))
+            schedule_logger(job_id=task.f_job_id).info("job {} task {} {} status is {}, calculate by task party status list: {}".format(task.f_job_id, task.f_task_id, task.f_task_version, new_task_status, tasks_party_status))
             task_status_have_update = False
             if new_task_status != task.f_status:
                 task_status_have_update = True
                 task.f_status = new_task_status
-                FederatedScheduler.sync_task(job=job, task=task, update_fields=["status"])
+                FederatedScheduler.sync_task_status(job=job, task=task)
 
             if task.f_status == TaskStatus.WAITING:
                 waiting_tasks.append(task)
@@ -75,21 +75,21 @@ class TaskScheduler(object):
 
     @classmethod
     def start_task(cls, job, task):
-        schedule_logger(job_id=task.f_job_id).info("Try to start job {} task {} {} on {} {}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_role, task.f_party_id))
+        schedule_logger(job_id=task.f_job_id).info("try to start job {} task {} {} on {} {}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_role, task.f_party_id))
         # TODO: apply for job resource
         apply_status = ResourceManager.apply_for_task_resource(task_info=task.to_human_model_dict(only_primary_with=["status"]))
         if not apply_status:
             return SchedulingStatusCode.NO_RESOURCE
         task.f_status = TaskStatus.RUNNING
-        update_status = JobSaver.update_task(task_info=task.to_human_model_dict(only_primary_with=["status"]))
+        update_status = JobSaver.update_task_status(task_info=task.to_human_model_dict(only_primary_with=["status"]))
         if not update_status:
             # Another scheduler scheduling the task
-            schedule_logger(job_id=task.f_job_id).info("Job {} task {} {} start on another scheduler".format(task.f_job_id, task.f_task_id, task.f_task_version))
+            schedule_logger(job_id=task.f_job_id).info("job {} task {} {} start on another scheduler".format(task.f_job_id, task.f_task_id, task.f_task_version))
             # Rollback
             task.f_status = TaskStatus.WAITING
             ResourceManager.return_task_resource(task_info=task.to_human_model_dict(only_primary_with=["status"]))
             return SchedulingStatusCode.PASS
-        schedule_logger(job_id=task.f_job_id).info("Start job {} task {} {} on {} {}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_role, task.f_party_id))
+        schedule_logger(job_id=task.f_job_id).info("start job {} task {} {} on {} {}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_role, task.f_party_id))
         task_parameters = {}
         #extra_task_parameters = TaskScheduler.align_task_parameters(job_id, job_parameters, job_initiator, job_args, component, task_id)
         #task_parameters.update(extra_task_parameters)
@@ -163,16 +163,3 @@ class TaskScheduler(object):
             if TaskStatus.RUNNING in tmp_status_set or TaskStatus.COMPLETE in tmp_status_set:
                 return StatusSet.RUNNING
             raise Exception("Calculate task status failed: {}".format(tasks_party_status))
-
-    @classmethod
-    def update_task_on_initiator(cls, initiator_task_template: Task, update_fields: list):
-        tasks = JobSaver.query_task(task_id=initiator_task_template.f_task_id, task_version=initiator_task_template.f_task_version)
-        if not tasks:
-            raise Exception("Failed to update task status on initiator")
-        task_info = initiator_task_template.to_human_model_dict(only_primary_with=update_fields)
-        for field in update_fields:
-            task_info[field] = getattr(initiator_task_template, "f_%s" % field)
-        for task in tasks:
-            task_info["role"] = task.f_role
-            task_info["party_id"] = task.f_party_id
-            JobSaver.update_task(task_info=task_info)

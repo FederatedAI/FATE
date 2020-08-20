@@ -72,6 +72,7 @@ class TaskController(object):
                 "status": TaskStatus.RUNNING,
                 "party_status": TaskStatus.RUNNING,
             }
+            cls.update_task_status(task_info=task_info)
             cls.update_task(task_info=task_info)
             task_dir = os.path.join(job_utils.get_job_directory(job_id=job_id), role, party_id, component_name, task_id, task_version)
             os.makedirs(task_dir, exist_ok=True)
@@ -157,8 +158,6 @@ class TaskController(object):
         update_status = False
         try:
             update_status = JobSaver.update_task(task_info=task_info)
-            if update_status and EndStatus.contains(task_info.get("status")):
-                ResourceManager.return_task_resource(task_info=task_info)
             tasks = JobSaver.query_task(task_id=task_info["task_id"],
                                         task_version=task_info["task_version"],
                                         role=task_info["role"],
@@ -168,6 +167,18 @@ class TaskController(object):
             schedule_logger(job_id=task_info["job_id"]).exception(e)
         finally:
             return update_status
+
+    @classmethod
+    def update_task_status(cls, task_info):
+        update_status = JobSaver.update_task_status(task_info=task_info)
+        if update_status and EndStatus.contains(task_info.get("status")):
+            ResourceManager.return_task_resource(task_info=task_info)
+        tasks = JobSaver.query_task(task_id=task_info["task_id"],
+                                    task_version=task_info["task_version"],
+                                    role=task_info["role"],
+                                    party_id=task_info["party_id"])
+        FederatedScheduler.report_task_to_initiator(task=tasks[0])
+        return update_status
 
     @classmethod
     def stop_task(cls, task, stop_status):
@@ -186,6 +197,7 @@ class TaskController(object):
             "party_id": task.f_party_id,
             "party_status": stop_status
         }
+        cls.update_task_status(task_info=task_info)
         cls.update_task(task_info=task_info)
 
     @classmethod

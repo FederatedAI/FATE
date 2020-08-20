@@ -16,14 +16,15 @@
 
 import operator
 from fate_arch.common.base_utils import current_timestamp
-from fate_arch.common import base_utils
 from fate_flow.db.db_models import DB, Job, Task
-from fate_flow.entity.constant import StatusSet, JobStatus, TaskStatus
+from fate_flow.entity.constant import StatusSet, JobStatus, TaskStatus, EndStatus
 from fate_arch.common.log import schedule_logger, sql_logger
 import peewee
 
 
 class JobSaver(object):
+    STATUS_FIELDS = ["status", "party_status"]
+
     @classmethod
     def create_job(cls, job_info):
         cls.create_job_family_entity(Job, job_info)
@@ -33,14 +34,14 @@ class JobSaver(object):
         cls.create_job_family_entity(Task, task_info)
 
     @classmethod
-    def update_job_status(cls, job):
-        job_info = {
-            "job_id": job.f_job_id,
-            "role": job.f_role,
-            "party_id": job.f_party_id,
-            "status": job.f_status,
-        }
-        return cls.update_job(job_info=job_info)
+    def update_job_status(cls, job_info):
+        schedule_logger(job_id=job_info["job_id"]).info("try to update job {} status".format(job_info["job_id"]))
+        update_status = cls.update_status(Job, job_info)
+        if update_status:
+            schedule_logger(job_id=job_info["job_id"]).info("update job {} status successfully".format(job_info["job_id"]))
+        else:
+            schedule_logger(job_id=job_info["job_id"]).info("update job {} status failed".format(job_info["job_id"]))
+        return update_status
 
     @classmethod
     def update_job(cls, job_info):
@@ -48,20 +49,25 @@ class JobSaver(object):
         update_status = cls.update_job_family_entity(Job, job_info)
         if update_status:
             schedule_logger(job_id=job_info.get("job_id")).info(f"job {job_info['job_id']} update successfully: {job_info}")
+            if EndStatus.contains(job_info.get("status")):
+                new_job_info = {}
+                for k in ["job_id", "role", "party_id"]:
+                    new_job_info[k] = job_info[k]
+                new_job_info["tag"] = "job_end"
+                cls.update_job_family_entity(Job, new_job_info)
         else:
             schedule_logger(job_id=job_info.get("job_id")).warning(f"job {job_info['job_id']} update does not take effect: {job_info}")
         return update_status
 
     @classmethod
-    def update_task_status(cls, task):
-        task_info = {
-            "task_id": task.f_task_id,
-            "task_version": task.f_task_version,
-            "role": task.f_role,
-            "party_id": task.f_party_id,
-            "status": task.f_status
-        }
-        return cls.update_task(task_info=task_info)
+    def update_task_status(cls, task_info):
+        schedule_logger(job_id=task_info["job_id"]).info("try to update job {} task {} {} status".format(task_info["job_id"], task_info["task_id"], task_info["task_version"]))
+        update_status = cls.update_status(Task, task_info)
+        if update_status:
+            schedule_logger(job_id=task_info["job_id"]).info("update job {} task {} {} status successfully".format(task_info["job_id"], task_info["task_id"], task_info["task_version"]))
+        else:
+            schedule_logger(job_id=task_info["job_id"]).info("update job {} task {} {} status failed".format(task_info["job_id"], task_info["task_id"], task_info["task_version"]))
+        return update_status
 
     @classmethod
     def update_task(cls, task_info):
@@ -107,8 +113,40 @@ class JobSaver(object):
             update_filters.append(operator.attrgetter(f"f_{field}")(type(obj)) == getattr(obj, f"f_{field}"))
         else:
             # not allow update status
-            update_info.pop(field)
+            update_info.pop(field, None)
         return if_pass
+
+    @classmethod
+    def update_status(cls, entity_model, entity_info):
+        with DB.connection_context():
+            query_filters = []
+            primary_keys = entity_model.get_primary_keys_name()
+            for p_k in primary_keys:
+                query_filters.append(operator.attrgetter(p_k)(entity_model) == entity_info[p_k.lstrip("f_")])
+            objs = entity_model.select().where(*query_filters)
+            if objs:
+                obj = objs[0]
+            else:
+                raise Exception("can not found the {}".format(entity_model.__class__.__name__))
+            update_filters = query_filters[:]
+            update_info = {}
+            for status_field in cls.STATUS_FIELDS:
+                if entity_info.get(status_field) and hasattr(entity_model, f"f_{status_field}"):
+                    if status_field in ["status", "party_status"]:
+                        update_info[status_field] = entity_info[status_field]
+                        if_pass = False
+                        if isinstance(obj, Task):
+                            if TaskStatus.StateTransitionRule.if_pass(src_status=getattr(obj, f"f_{status_field}"), dest_status=update_info[status_field]):
+                                if_pass = True
+                        elif isinstance(obj, Job):
+                            if JobStatus.StateTransitionRule.if_pass(src_status=getattr(obj, f"f_{status_field}"), dest_status=update_info[status_field]):
+                                if_pass = True
+                        if if_pass:
+                            update_filters.append(operator.attrgetter(f"f_{status_field}")(type(obj)) == getattr(obj, f"f_{status_field}"))
+                        else:
+                            # not allow update status
+                            update_info.pop(status_field)
+            return cls.execute_update(old_obj=obj, model=entity_model, update_info=update_info, update_filters=update_filters)
 
     @classmethod
     def update_job_family_entity(cls, entity_model, entity_info):
@@ -121,33 +159,37 @@ class JobSaver(object):
             if objs:
                 obj = objs[0]
             else:
-                raise Exception("Can not found the {}".format(entity_model.__class__.__name__))
+                raise Exception("can not found the {}".format(entity_model.__class__.__name__))
             update_filters = query_filters[:]
-            if 'status' in entity_info and hasattr(entity_model, "f_status"):
-                cls.gen_update_status_filter(obj=obj, update_info=entity_info, field="status", update_filters=update_filters)
-            if "party_status" in entity_info and hasattr(entity_model, "f_party_status"):
-                cls.gen_update_status_filter(obj=obj, update_info=entity_info, field="party_status", update_filters=update_filters)
-            if "progress" in entity_info and hasattr(entity_model, "f_progress"):
-                update_filters.append(operator.attrgetter("f_progress")(entity_model) <= entity_info["progress"])
-                if int(entity_info["progress"]) == 100:
-                    entity_info['tag'] = 'job_end'
-                    entity_info["end_time"] = current_timestamp()
-                    if obj.f_start_time:
-                        entity_info['elapsed'] = entity_info['end_time'] - obj.f_start_time
-            update_fields = {}
-            for k, v in entity_info.items():
-                attr_name = 'f_%s' % k
-                if hasattr(entity_model, attr_name) and attr_name not in primary_keys:
-                    update_fields[operator.attrgetter(attr_name)(entity_model)] = v
-            if update_fields:
-                if update_filters:
-                    operate = obj.update(update_fields).where(*update_filters)
-                else:
-                    operate = obj.update(update_fields)
-                sql_logger(job_id=entity_info.get("job_id", "fate_flow")).info(operate)
-                return operate.execute() > 0
+            update_info = {}
+            update_info.update(entity_info)
+            for _ in cls.STATUS_FIELDS:
+                # not allow update status fields by this function
+                update_info.pop(_, None)
+            if update_info.get("tag") == "job_end" and hasattr(entity_model, "f_tag"):
+                update_info["end_time"] = current_timestamp()
+                if obj.f_start_time:
+                    update_info['elapsed'] = update_info['end_time'] - obj.f_start_time
+            if update_info.get("progress") and hasattr(entity_model, "f_progress"):
+                update_filters.append(operator.attrgetter("f_progress")(entity_model) <= update_info["progress"])
+            return cls.execute_update(old_obj=obj, model=entity_model, update_info=update_info, update_filters=update_filters)
+
+    @classmethod
+    def execute_update(cls, old_obj, model, update_info, update_filters):
+        update_fields = {}
+        for k, v in update_info.items():
+            attr_name = 'f_%s' % k
+            if hasattr(model, attr_name) and attr_name not in model.get_primary_keys_name():
+                update_fields[operator.attrgetter(attr_name)(model)] = v
+        if update_fields:
+            if update_filters:
+                operate = old_obj.update(update_fields).where(*update_filters)
             else:
-                return False
+                operate = old_obj.update(update_fields)
+            sql_logger(job_id=update_info.get("job_id", "fate_flow")).info(operate)
+            return operate.execute() > 0
+        else:
+            return False
 
     @classmethod
     def get_job_configuration(cls, job_id, role, party_id, tasks=None):

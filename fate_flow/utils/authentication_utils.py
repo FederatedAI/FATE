@@ -181,7 +181,7 @@ class PrivilegeAuth(object):
             component_path = os.path.join(file_utils.get_project_base_directory(),
                                           'federatedml', 'conf', 'setting_conf')
             command_file_path = os.path.join(file_utils.get_project_base_directory(),
-                                             'fate_flow', 'apps', 'controller_app.py')
+                                             'fate_flow', 'apps', 'party_app.py')
             stat_logger.info('search commands from {}'.format(command_file_path))
             search_command(command_file_path)
             stat_logger.info('search components from {}'.format(component_path))

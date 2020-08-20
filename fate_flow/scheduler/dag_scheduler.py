@@ -256,11 +256,13 @@ class DAGScheduler(Cron):
                 task.f_task_version = task.f_task_version + 1
                 FederatedScheduler.create_task(job=job, task=task)
                 # Save the status information of all participants in the initiator for scheduling
+                schedule_logger(job_id=job_id).info(f"create task {task.f_task_id} new version {task.f_task_version}")
                 for _role, _party_ids in job.f_runtime_conf["role"].items():
                     for _party_id in _party_ids:
                         if _role == initiator_role and _party_id == initiator_party_id:
                             continue
-                        JobController.initialize_tasks(job_id, _role, _party_id, False, job.f_runtime_conf["initiator"], dsl_parser, component_name=task.f_component_name)
+                        JobController.initialize_tasks(job_id, _role, _party_id, False, job.f_runtime_conf["initiator"], dsl_parser, component_name=task.f_component_name, task_version=task.f_task_version)
+                schedule_logger(job_id=job_id).info(f"create task {task.f_task_id} new version {task.f_task_version} successfully")
                 should_rerun = True
             else:
                 schedule_logger(job_id=job_id).info(f"task {task.f_task_id} {task.f_task_version} on {task.f_role} {task.f_party_id} is complete, pass rerun")
@@ -268,7 +270,7 @@ class DAGScheduler(Cron):
             if EndStatus.contains(job.f_status):
                 job.f_status = JobStatus.WAITING
                 schedule_logger(job_id=job_id).info(f"job {job_id} has been finished, set waiting to rerun")
-                status, response = FederatedScheduler.sync_job(job=job, update_fields=["status"])
+                status, response = FederatedScheduler.sync_job_status(job=job)
                 if status == FederatedSchedulingStatusCode.SUCCESS:
                     JobQueue.set_event(job_id=job_id, initiator_role=initiator_role, initiator_party_id=initiator_party_id)
                     schedule_logger(job_id=job_id).info(f"job {job_id} set waiting to rerun successfully")
@@ -302,7 +304,7 @@ class DAGScheduler(Cron):
                 job.f_status = new_job_status
                 if EndStatus.contains(job.f_status):
                     FederatedScheduler.save_pipelined_model(job=job)
-                FederatedScheduler.sync_job(job=job, update_fields=["status"])
+                status, response = FederatedScheduler.sync_job_status(job=job)
                 cls.update_job_on_initiator(initiator_job=job, update_fields=["status"])
         if EndStatus.contains(job.f_status):
             cls.finish(job=job, end_status=job.f_status)
@@ -319,6 +321,7 @@ class DAGScheduler(Cron):
         for job in jobs:
             job_info["role"] = job.f_role
             job_info["party_id"] = job.f_party_id
+            JobSaver.update_job_status(job_info=job_info)
             JobSaver.update_job(job_info=job_info)
 
     @classmethod
