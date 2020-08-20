@@ -304,7 +304,10 @@ def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_na
         spec = importlib.util.spec_from_loader(loader.name, loader)
         demo_module = importlib.util.module_from_spec(spec)
         loader.exec_module(demo_module)
-        demo_module.main(config)
+        if data_namespace_mangling:
+            demo_module.main(config, f"_{namespace}")
+        else:
+            demo_module.main(config)
 
 
 def main():

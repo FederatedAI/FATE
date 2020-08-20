@@ -16,20 +16,19 @@
 
 import argparse
 
+from fate_test._parser import Config
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
 from pipeline.component.hetero_lr import HeteroLR
 from pipeline.component.intersection import Intersection
 from pipeline.component.reader import Reader
-from pipeline.demo.util.demo_util import Config
 from pipeline.interface.data import Data
 
 
-def main(config="../config.yaml"):
+def main(config="../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
-        config = Config(config)
-    print(f"received config is {config}")
+        config = Config.load(config)
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
@@ -37,8 +36,8 @@ def main(config="../config.yaml"):
     backend = config.backend
     work_mode = config.work_mode
 
-    guest_train_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
-    host_train_data = {"name": "breast_hetero_host", "namespace": "experiment"}
+    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
 
     # initialize pipeline
     pipeline = PipeLine()
