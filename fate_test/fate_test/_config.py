@@ -60,7 +60,7 @@ services:
 
 """
 
-default_config = Path(__file__).parent.joinpath("testsuite_config.yaml").resolve()
+default_config = Path(__file__).parent.joinpath("fate_test_config.yaml").resolve()
 
 
 def create_config(path: Path, override=False):
@@ -71,8 +71,8 @@ def create_config(path: Path, override=False):
 
 
 def priority_config():
-    if Path("testsuite_config.yaml").exists():
-        return Path("testsuite_config.yaml").resolve()
+    if Path("fate_test_config.yaml").exists():
+        return Path("fate_test_config.yaml").resolve()
     if not default_config.exists():
         create_config(default_config)
     return default_config

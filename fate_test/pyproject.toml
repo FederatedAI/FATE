@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "fate_testsuite"
+name = "fate_test"
 version = "0.1.0"
-description = "testsuite for FATE"
+description = "test tools for FATE"
 authors = ["FederatedAI <contact@FedAI.org>"]
 license = "Apache-2.0"
 readme = "README.rst"
@@ -20,7 +20,7 @@ classifiers = [
 ]
 
 packages = [
-    { include = "fate_testsuite" }
+    { include = "fate_test" }
 ]
 
 [tool.poetry.dependencies]
@@ -32,12 +32,13 @@ click = "^7.1.2"
 loguru = "^0.5.1"
 prettytable = "^0.7.2"
 sshtunnel = "^0.1.5"
+#fate_pipeline = "^0.1.0"
 dataclasses = { version = "^0.7", python = "3.6", optional = true }
 
 [tool.poetry.dev-dependencies]
 
 [tool.poetry.scripts]
-fate_testsuite = "fate_testsuite.cli:cli"
+fate_test = "fate_test.cli:cli"
 
 [build-system]
 requires = ["poetry>=0.12"]

@@ -16,9 +16,9 @@
 
 import sshtunnel
 
-from fate_testsuite._flow_client import FLOWClient
-from fate_testsuite._io import LOGGER
-from fate_testsuite._parser import Config
+from fate_test._flow_client import FLOWClient
+from fate_test._io import LOGGER
+from fate_test._parser import Config
 
 
 class Clients(object):

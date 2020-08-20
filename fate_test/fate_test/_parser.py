@@ -24,7 +24,7 @@ from pathlib import Path
 import click
 import prettytable
 
-from fate_testsuite._config import Parties, Config
+from fate_test._config import Parties, Config
 
 
 # noinspection PyPep8Naming

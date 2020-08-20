@@ -1,7 +1,7 @@
 testsuite
 ==============
 
-A useful script to running FATE's testsuites.
+A useful script to running FATE's test.
 
 quick start
 -----------
@@ -14,35 +14,35 @@ quick start
       source venv/bin/activate
 
 
-2. install fate_testsuite
+2. install fate_test
 
    .. code-block:: bash
 
-      pip install fate_testsuite
-      fate_testsuite --help
+      pip install fate_test
+      fate_test --help
 
 
-3. new and edit the testsuite_config.yaml
+3. new and edit the fate_test_config.yaml
 
    .. code-block:: bash
 
-      # create a testsuite_config.yaml in current dir
-      testsuite config new
+      # create a fate_test_config.yaml in current dir
+      fate_test config new
       # edit priority config file with system default editor
       # filling some field according to comments
-      fate_testsuite config edit
+      fate_test config edit
 
 
-4. run some testsuites
+4. run some fate_test
 
    .. code-block:: bash
 
-      fate_testsuite suite -i <path contains *testsuite.json>
+      fate_test suite -i <path contains *testsuite.json>
 
 5. useful logs or exception will be saved to logs dir with namespace showed in last step
 
 
-testsuite_config.yaml examples
+fate_test_config.yaml examples
 ------------------------------
 
 
@@ -102,7 +102,7 @@ command options
 
    .. code-block:: bash
 
-      testsuite suite -i <path1 contains *testsuite.json> -e <path2 to exclude> -e <path3 to exclude> ...
+      fate_test suite -i <path1 contains *testsuite.json> -e <path2 to exclude> -e <path3 to exclude> ...
 
    will run testsuites in `path1` but not in `path2` and `path3`
 
@@ -110,7 +110,7 @@ command options
 
    .. code-block:: bash
 
-      testsuite suite -i <path1 contains *testsuite.json> -r '{"maxIter": 5}'
+      fate_test suite -i <path1 contains *testsuite.json> -r '{"maxIter": 5}'
 
    will find all key-value pair with key "maxIter" in `data conf` or `conf` or `dsl` and replace the value with 5
 
@@ -118,6 +118,6 @@ command options
 
    .. code-block:: bash
 
-      testsuite suite -i <path1 contains *testsuite.json> -g "hetero*"
+      fate_test suite -i <path1 contains *testsuite.json> -g "hetero*"
 
    will run testsuites in sub directory start with `hetero` of `path1`

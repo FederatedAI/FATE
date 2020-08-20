@@ -16,7 +16,7 @@
 
 from click.testing import CliRunner
 
-from fate_testsuite.cli import cli
+from fate_test.cli import cli
 
 
 def test_cli():
