@@ -350,7 +350,7 @@ class PipeLine(object):
                 if not isinstance(val, list):
                     val = [val]
 
-                self._predict_dsl["components"][cpn][dataset] = val
+                self._predict_dsl["components"][cpn]["input"]["data"][dataset] = val
 
     @staticmethod
     def _feed_job_parameters(conf, backend, work_mode, job_type=None, model_info=None):
