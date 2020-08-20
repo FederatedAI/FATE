@@ -113,7 +113,7 @@ def run_suite(replace, namespace, config, include, exclude, glob, skip_json_jobs
 
                 if not skip_pipeline_jobs:
                     try:
-                        _run_pipeline_jobs(config_inst, suite)
+                        _run_pipeline_jobs(config_inst, suite, namespace)
                     except Exception as e:
                         raise RuntimeError(f"exception occur while running pipeline jobs for {suite.path}") from e
 
@@ -291,7 +291,7 @@ def _submit_job(clients: Clients, suite: Testsuite):
             echo.stdout_newline()
 
 
-def _run_pipeline_jobs(config: Config, testsuite: Testsuite):
+def _run_pipeline_jobs(config: Config, testsuite: Testsuite, namespace: str):
     # pipeline demo goes here
     print(config.parties)
     print(testsuite.pipeline_jobs)
