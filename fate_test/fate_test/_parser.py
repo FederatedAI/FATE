@@ -207,7 +207,7 @@ class Testsuite(object):
     def reflash_configs(self, config: Config):
 
         for data in self.dataset:
-            data.config.update(dict(work_mode=config.work_mode))
+            data.config.update(dict(work_mode=config.work_mode, backend=config.backend))
 
         for job in self.jobs:
             job.job_conf.update(config.parties, config.work_mode)

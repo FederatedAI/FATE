@@ -23,6 +23,8 @@ from ruamel import yaml
 temperate = """\
 # 0 for standalone, 1 for cluster
 work_mode: 0
+# 0 for eggroll, 1 for spark
+backend: 0
 # base dir for data upload conf eg
 # examples/data/breast_hetero_guest.csv -> $data_base_dir/examples/data/breast_hetero_guest.csv
 data_base_dir: ../../../
