@@ -804,7 +804,9 @@ class DSLParser(BaseDSLParser):
         if mode == "train":
             self._init_component_setting(setting_conf_prefix, self.runtime_conf)
         else:
-            self._init_component_setting(setting_conf_prefix, pipeline_runtime_conf)
+            predict_runtime_conf = copy.deepcopy(pipeline_runtime_conf)
+            predict_runtime_conf.update(runtime_conf)
+            self._init_component_setting(setting_conf_prefix, predict_runtime_conf)
 
         self.args_input, self.args_datakey = parameter_util.ParameterUtil.get_args_input(runtime_conf, module="args")
         self._check_args_input()
@@ -892,7 +894,9 @@ class DSLParserV2(BaseDSLParser):
         if mode == "train":
             self._init_component_setting(setting_conf_prefix, self.runtime_conf, version=2)
         else:
-            self._init_component_setting(setting_conf_prefix, pipeline_runtime_conf, version=2)
+            predict_runtime_conf = copy.deepcopy(pipeline_runtime_conf)
+            predict_runtime_conf.update(runtime_conf)
+            self._init_component_setting(setting_conf_prefix, predict_runtime_conf, version=2)
 
         self.args_input = parameter_util.ParameterUtilV2.get_input_parameters(runtime_conf,
                                                                               components=self._get_reader_components())
