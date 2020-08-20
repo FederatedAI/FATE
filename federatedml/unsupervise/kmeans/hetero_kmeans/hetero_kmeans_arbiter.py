@@ -78,5 +78,9 @@ class HeteroKmeansArbiter(BaseKmeansModel):
         dist_table = self.cal_ave_dist(dist_sum, sample_class, self.k)
         cluster_dist = self.cluster_dist_aggregator.sum_model(suffix='predict')
         self.transfer_variable.cluster_result.remote(sample_class, role=consts.Guest, idx=0)
-
-        return
+        result=[]
+        for i in range(len(dist_sum)):
+            item = tuple(i,[sample_class[i],dist_table,cluster_dist])
+            result.append(item)
+        predict_result = session.parallelize(result)
+        return predict_result

@@ -395,6 +395,7 @@ class MetricInterface(object):
         float
             A positive floating point value
         """
+
         return clustering_metric.JaccardSimilarityScore.compute(labels, pred_labels)
 
     @staticmethod
@@ -410,6 +411,7 @@ class MetricInterface(object):
         float
             A positive floating point value
         """
+
         return clustering_metric.FowlkesMallowsScore.compute(labels, pred_labels)
 
     @staticmethod
@@ -425,6 +427,7 @@ class MetricInterface(object):
         float
             A positive floating point value
         """
+
         return clustering_metric.AdjustedRandScore.compute(labels, pred_labels)
 
     def AdjustedRandScore(labels, pred_labels):
@@ -439,7 +442,9 @@ class MetricInterface(object):
         float
             A positive floating point value
         """
-
+        pred_output=list(pred_labels.first().collect())
+        dist_table_dtable=list(v[2] for v in pred_output)
+        cluster_dist_dtable=list(v[3] for v in pred_output)
 
         ## process data from evaluation
         return clustering_metric.AdjustedRandScore.compute(dist_table_dtable, cluster_dist_dtable)
