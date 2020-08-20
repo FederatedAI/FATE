@@ -167,7 +167,7 @@ class Testsuite(object):
 
         pipeline_jobs = []
         for job_name, job_configs in testsuite_config.get("pipeline_tasks", {}).items():
-            script_path = path.joinpath(job_configs["script"])
+            script_path = path.parent.joinpath(job_configs["script"]).resolve()
             pipeline_jobs.append(PipelineJob(job_name, script_path))
 
         testsuite = Testsuite(dataset, jobs, pipeline_jobs, path)

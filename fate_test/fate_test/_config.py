@@ -127,6 +127,7 @@ class Config(object):
 
     def __init__(self, config):
         self.work_mode = config["work_mode"]
+        self.backend = config["backend"]
         self.data_base_dir = config["data_base_dir"]
         self.parties = Parties.from_dict(config["parties"])
         self.party_to_service_id = {}

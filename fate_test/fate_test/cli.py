@@ -15,6 +15,7 @@
 #
 import time
 import uuid
+import importlib
 from datetime import timedelta
 from pathlib import Path
 
@@ -64,13 +65,13 @@ def _config(cmd):
               help="glob string to filter sub-directory of path specified by <include>")
 @click.option("--yes", is_flag=True,
               help="skip double check")
-@click.option("--skip-json-jobs", is_flag=True, default=False,
-              help="skip json jobs defined in testsuite")
+@click.option("--skip-dsl-jobs", is_flag=True, default=False,
+              help="skip dsl jobs defined in testsuite")
 @click.option("--skip-pipeline-jobs", is_flag=True, default=False,
               help="skip pipeline jobs defined in testsuite")
 @click.option("--skip-data", is_flag=True, default=False,
               help="skip pipeline jobs defined in testsuite")
-def run_suite(replace, namespace, config, include, exclude, glob, skip_json_jobs, skip_pipeline_jobs, skip_data, yes):
+def run_suite(replace, namespace, config, include, exclude, glob, skip_dsl_jobs, skip_pipeline_jobs, skip_data, yes):
     """
     process testsuite
     """
@@ -104,7 +105,7 @@ def run_suite(replace, namespace, config, include, exclude, glob, skip_json_jobs
                     except Exception as e:
                         raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
 
-                if not skip_json_jobs:
+                if not skip_dsl_jobs:
                     echo.stdout_newline()
                     try:
                         _submit_job(client, suite)
@@ -291,10 +292,16 @@ def _submit_job(clients: Clients, suite: Testsuite):
             echo.stdout_newline()
 
 
-def _run_pipeline_jobs(config: Config, testsuite: Testsuite, namespace: str):
+def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str):
     # pipeline demo goes here
-    print(config.parties)
-    print(testsuite.pipeline_jobs)
+    for pipeline_job in suite.pipeline_jobs:
+        job_name, script_path = pipeline_job.job_name, pipeline_job.script_path
+        module_name = str(script_path).split("/", -1)[-1].split(".")[0]
+        loader = importlib.machinery.SourceFileLoader(module_name, str(script_path))
+        spec = importlib.util.spec_from_loader(loader.name, loader)
+        demo_module = importlib.util.module_from_spec(spec)
+        loader.exec_module(demo_module)
+        demo_module.main(config)
 
 
 def main():
