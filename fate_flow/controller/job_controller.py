@@ -171,6 +171,7 @@ class JobController(object):
         update_status = JobSaver.update_job(job_info=job_info)
         if update_status and EndStatus.contains(job_info.get("status")):
             ResourceManager.return_job_resource(job_id=job_info["job_id"], role=job_info["role"], party_id=job_info["party_id"])
+        return update_status
 
     @classmethod
     def stop_job(cls, job, stop_status):

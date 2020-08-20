@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from fate_flow.settings import API_VERSION
+from fate_flow.settings import API_VERSION, DEFAULT_FEDERATED_COMMAND_TRYS
 from fate_flow.utils.api_utils import federated_api
 from fate_arch.common.log import schedule_logger
 from fate_flow.entity.constant import RetCode, FederatedSchedulingStatusCode
@@ -256,39 +256,33 @@ class FederatedScheduler(object):
         :return:
         """
         if task.f_role != task.f_initiator_role and task.f_party_id != task.f_initiator_party_id:
-            try:
-                response = federated_api(job_id=task.f_job_id,
-                                         method='POST',
-                                         endpoint='/{}/initiator/{}/{}/{}/{}/{}/{}/status'.format(
-                                             API_VERSION,
-                                             task.f_job_id,
-                                             task.f_component_name,
-                                             task.f_task_id,
-                                             task.f_task_version,
-                                             task.f_role,
-                                             task.f_party_id),
-                                         src_party_id=task.f_party_id,
-                                         dest_party_id=task.f_initiator_party_id,
-                                         src_role=task.f_role,
-                                         json_body=task.to_human_model_dict(only_primary_with=cls.REPORT_TO_INITIATOR_FIELDS),
-                                         work_mode=RuntimeConfig.WORK_MODE)
-            except Exception as e:
-                response = {
-                    "retcode": RetCode.FEDERATED_ERROR,
-                    "retmsg": "Federated error, {}".format(str(e))
-                }
-            if response["retcode"]:
-                schedule_logger(job_id=task.f_job_id).error("An error occurred while {} the task to role {} party {}: \n{}".format(
-                    "report",
-                    task.f_initiator_role,
-                    task.f_initiator_party_id,
-                    response["retmsg"]
-                ))
-                return FederatedSchedulingStatusCode.FAILED
+            exception = None
+            for t in range(DEFAULT_FEDERATED_COMMAND_TRYS):
+                try:
+                    response = federated_api(job_id=task.f_job_id,
+                                             method='POST',
+                                             endpoint='/{}/initiator/{}/{}/{}/{}/{}/{}/status'.format(
+                                                 API_VERSION,
+                                                 task.f_job_id,
+                                                 task.f_component_name,
+                                                 task.f_task_id,
+                                                 task.f_task_version,
+                                                 task.f_role,
+                                                 task.f_party_id),
+                                             src_party_id=task.f_party_id,
+                                             dest_party_id=task.f_initiator_party_id,
+                                             src_role=task.f_role,
+                                             json_body=task.to_human_model_dict(only_primary_with=cls.REPORT_TO_INITIATOR_FIELDS),
+                                             work_mode=RuntimeConfig.WORK_MODE)
+                except Exception as e:
+                    exception = e
+                    continue
+                if response["retcode"]:
+                    exception = Exception(response["retmsg"])
+                else:
+                    return
             else:
-                return FederatedSchedulingStatusCode.SUCCESS
-        else:
-            return FederatedSchedulingStatusCode.SUCCESS
+                raise exception
 
     # Utils
     @classmethod

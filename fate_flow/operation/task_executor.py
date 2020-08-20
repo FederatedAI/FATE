@@ -191,7 +191,6 @@ class TaskExecutor(object):
             try:
                 task_info["end_time"] = current_timestamp()
                 task_info["elapsed"] = task_info["end_time"] - task_info["start_time"]
-                task_info["update_time"] = current_timestamp()
                 cls.report_task_update_to_driver(task_info=task_info)
             except Exception as e:
                 task_info["party_status"] = TaskStatus.FAILED

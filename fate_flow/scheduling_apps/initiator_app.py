@@ -20,6 +20,7 @@ import tarfile
 from flask import Flask, request, send_file
 
 from fate_arch.common.base_utils import json_loads, json_dumps
+from fate_arch.common import log
 from fate_flow.scheduler.task_scheduler import TaskScheduler
 from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
@@ -39,7 +40,7 @@ manager = Flask(__name__)
 @manager.errorhandler(500)
 def internal_server_error(e):
     stat_logger.exception(e)
-    return get_json_result(retcode=100, retmsg=str(e))
+    return get_json_result(retcode=RetCode.EXCEPTION_ERROR, retmsg=log.exception_to_trace_string(e))
 
 # apply initiator for control operation
 

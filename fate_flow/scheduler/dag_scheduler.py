@@ -232,6 +232,7 @@ class DAGScheduler(Cron):
 
     @classmethod
     def rerun_job(cls, job_id, initiator_role, initiator_party_id, component_name):
+        schedule_logger(job_id=job_id).info(f"try to rerun job {job_id} on {initiator_role} {initiator_party_id}")
         jobs = JobSaver.query_job(job_id=job_id, role=initiator_role, party_id=initiator_party_id)
         if jobs:
             job = jobs[0]

@@ -18,8 +18,7 @@ import operator
 from fate_arch.common.base_utils import current_timestamp
 from fate_arch.common import base_utils
 from fate_flow.db.db_models import DB, Job, Task
-from fate_flow.entity.constant import StatusSet, JobStatus, TaskStatus, EndStatus
-from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.entity.constant import StatusSet, JobStatus, TaskStatus
 from fate_arch.common.log import schedule_logger, sql_logger
 import peewee
 
@@ -45,12 +44,13 @@ class JobSaver(object):
 
     @classmethod
     def update_job(cls, job_info):
-        schedule_logger(job_id=job_info["job_id"]).info("Update job {}".format(job_info["job_id"]))
-        job_info['run_ip'] = RuntimeConfig.JOB_SERVER_HOST
-        if EndStatus.contains(job_info.get("status")):
-            job_info['tag'] = 'job_end'
-            job_info["end_time"] = current_timestamp()
-        return cls.update_job_family_entity(Job, job_info)
+        schedule_logger(job_id=job_info["job_id"]).info("try to update job {}".format(job_info["job_id"]))
+        update_status = cls.update_job_family_entity(Job, job_info)
+        if update_status:
+            schedule_logger(job_id=job_info.get("job_id")).info(f"job {job_info['job_id']} update successfully: {job_info}")
+        else:
+            schedule_logger(job_id=job_info.get("job_id")).warning(f"job {job_info['job_id']} update does not take effect: {job_info}")
+        return update_status
 
     @classmethod
     def update_task_status(cls, task):
@@ -65,8 +65,13 @@ class JobSaver(object):
 
     @classmethod
     def update_task(cls, task_info):
-        schedule_logger(job_id=task_info["job_id"]).info("Update job {} task {} {}".format(task_info["job_id"], task_info["task_id"], task_info["task_version"]))
-        return cls.update_job_family_entity(Task, task_info)
+        schedule_logger(job_id=task_info["job_id"]).info("try to update job {} task {} {}".format(task_info["job_id"], task_info["task_id"], task_info["task_version"]))
+        update_status = cls.update_job_family_entity(Task, task_info)
+        if update_status:
+            schedule_logger(job_id=task_info["job_id"]).info("job {} task {} {} update successfully".format(task_info["job_id"], task_info["task_id"], task_info["task_version"]))
+        else:
+            schedule_logger(job_id=task_info["job_id"]).warning("job {} task {} {} update does not take effect".format(task_info["job_id"], task_info["task_id"], task_info["task_version"]))
+        return update_status
 
     @classmethod
     def create_job_family_entity(cls, entity_model, entity_info):
@@ -119,19 +124,16 @@ class JobSaver(object):
                 raise Exception("Can not found the {}".format(entity_model.__class__.__name__))
             update_filters = query_filters[:]
             if 'status' in entity_info and hasattr(entity_model, "f_status"):
-                if entity_model == Job and EndStatus.contains(entity_info["status"]):
-                    entity_info['end_time'] = current_timestamp()
-                    if obj.f_start_time:
-                        entity_info['elapsed'] = entity_info['end_time'] - obj.f_start_time
                 cls.gen_update_status_filter(obj=obj, update_info=entity_info, field="status", update_filters=update_filters)
             if "party_status" in entity_info and hasattr(entity_model, "f_party_status"):
-                if EndStatus.contains(entity_info["party_status"]):
-                    entity_info['end_time'] = current_timestamp()
-                    if obj.f_start_time:
-                        entity_info['elapsed'] = entity_info['end_time'] - obj.f_start_time
                 cls.gen_update_status_filter(obj=obj, update_info=entity_info, field="party_status", update_filters=update_filters)
             if "progress" in entity_info and hasattr(entity_model, "f_progress"):
                 update_filters.append(operator.attrgetter("f_progress")(entity_model) <= entity_info["progress"])
+                if int(entity_info["progress"]) == 100:
+                    entity_info['tag'] = 'job_end'
+                    entity_info["end_time"] = current_timestamp()
+                    if obj.f_start_time:
+                        entity_info['elapsed'] = entity_info['end_time'] - obj.f_start_time
             update_fields = {}
             for k, v in entity_info.items():
                 attr_name = 'f_%s' % k

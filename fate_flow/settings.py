@@ -54,18 +54,14 @@ DEFAULT_TASK_PARALLELISM = 2
 DEFAULT_CORES_PER_TASK = 5
 DEFAULT_MEMORY_PER_TASK = 0
 
-# Limit the number of jobs on the host side
-LIMIT_ROLE = 'host'
-MAX_CONCURRENT_JOB_RUN_HOST = 5
-RE_ENTRY_QUEUE_TIME = 2*60
-RE_ENTRY_QUEUE_MAX = 60
-
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000 * 60  # ms
+DEFAULT_FEDERATED_COMMAND_TRYS = 3
 JOB_DEFAULT_TIMEOUT = 7 * 24 * 60 * 60
 DATABASE = get_base_config("database", {})
 MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
 HDFS_ADDRESS= ''
+
 '''
 Constants
 '''
@@ -80,7 +76,6 @@ HEADERS = {
     'Content-Type': 'application/json',
     'Connection': 'close'
 }
-DETECT_TABLE = ("fate_flow_detect_table_namespace", "fate_flow_detect_table_name", 16)
 
 # endpoint
 FATE_FLOW_MODEL_TRANSFER_ENDPOINT = '/v1/model/transfer'

@@ -59,7 +59,7 @@ class TaskController(object):
         :return:
         """
         schedule_logger(job_id).info(
-            'Try to start job {} task {} {} on {} {} executor subprocess'.format(job_id, task_id, task_version, role, party_id))
+            'try to start job {} task {} {} on {} {} executor subprocess'.format(job_id, task_id, task_version, role, party_id))
         task_executor_process_start_status = False
         try:
             task_info = {
@@ -135,15 +135,16 @@ class TaskController(object):
 
             task_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, party_id, component_name)
             schedule_logger(job_id).info(
-                'Job {} task {} {} on {} {} executor subprocess is ready'.format(job_id, task_id, task_version, role, party_id))
+                'job {} task {} {} on {} {} executor subprocess is ready'.format(job_id, task_id, task_version, role, party_id))
             p = job_utils.run_subprocess(config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir)
             if p:
                 task_executor_process_start_status = True
         except Exception as e:
             schedule_logger(job_id).exception(e)
+            raise e
         finally:
             schedule_logger(job_id).info(
-                'Job {} task {} {} on {} {} executor subprocess start {}'.format(job_id, task_id, task_version, role, party_id, "success" if task_executor_process_start_status else "failed"))
+                'job {} task {} {} on {} {} executor subprocess start {}'.format(job_id, task_id, task_version, role, party_id, "success" if task_executor_process_start_status else "failed"))
 
     @classmethod
     def update_task(cls, task_info):
