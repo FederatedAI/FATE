@@ -24,6 +24,7 @@ from fate_flow.operation.job_saver import JobSaver
 from fate_flow.entity.constant import JobStatus, TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, ResourceOperation, FederatedSchedulingStatusCode
 from fate_flow.operation.job_tracker import Tracker
 from fate_flow.controller.job_controller import JobController
+from fate_flow.controller.task_controller import TaskController
 from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT, DEFAULT_TASK_PARALLELISM, DEFAULT_CORES_PER_TASK, DEFAULT_MEMORY_PER_TASK
 from fate_flow.utils import detect_utils, job_utils
 from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_log_directory, get_job_dsl_parser
@@ -251,6 +252,12 @@ class DAGScheduler(Cron):
                 # create new version task
                 task.f_task_version = task.f_task_version + 1
                 FederatedScheduler.create_task(job=job, task=task)
+                # Save the status information of all participants in the initiator for scheduling
+                for _role, _party_ids in job.f_runtime_conf["role"].items():
+                    for _party_id in _party_ids:
+                        if _role == initiator_role and _party_id == initiator_party_id:
+                            continue
+                        TaskController.create_task(role=_role, party_id=_party_id, task_info=task.to_human_model_dict())
                 should_rerun = True
             else:
                 schedule_logger(job_id=job_id).info(f"task {task.f_task_id} {task.f_task_version} on {task.f_role} {task.f_party_id} is complete, pass rerun")
@@ -258,8 +265,8 @@ class DAGScheduler(Cron):
             if EndStatus.contains(job.f_status):
                 job.f_status = JobStatus.WAITING
                 schedule_logger(job_id=job_id).info(f"job {job_id} has been finished, set waiting to rerun")
-                update_status = JobSaver.update_job(job_info=job.to_human_model_dict(only_primary_with=["status"]))
-                if update_status:
+                status, response = FederatedScheduler.sync_job(job=job, update_fields=["status"])
+                if status == FederatedSchedulingStatusCode.SUCCESS:
                     JobQueue.set_event(job_id=job_id, initiator_role=initiator_role, initiator_party_id=initiator_party_id)
                     schedule_logger(job_id=job_id).info(f"job {job_id} set waiting to rerun successfully")
                 else:
