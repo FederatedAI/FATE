@@ -32,7 +32,7 @@ from fate_flow.utils import job_utils, detect_utils
 from fate_flow.utils.api_utils import get_json_result, request_execute_server
 from fate_flow.entity.constant import WorkMode, JobStatus, RetCode, FederatedSchedulingStatusCode
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.controller.job_controller import JobController
+from fate_flow.controller import JobController
 from fate_flow.db.db_models import Task
 
 manager = Flask(__name__)

@@ -23,8 +23,7 @@ from fate_flow.scheduler.task_scheduler import TaskScheduler
 from fate_flow.operation.job_saver import JobSaver
 from fate_flow.entity.constant import JobStatus, TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, ResourceOperation, FederatedSchedulingStatusCode
 from fate_flow.operation.job_tracker import Tracker
-from fate_flow.controller.job_controller import JobController
-from fate_flow.controller.task_controller import TaskController
+from fate_flow.controller import JobController
 from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT, DEFAULT_TASK_PARALLELISM, DEFAULT_CORES_PER_TASK, DEFAULT_MEMORY_PER_TASK
 from fate_flow.utils import detect_utils, job_utils
 from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_log_directory, get_job_dsl_parser
