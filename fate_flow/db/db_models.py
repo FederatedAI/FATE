@@ -127,7 +127,7 @@ class Job(DataBaseModel):
     # this party configuration
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
-    f_is_initiator = IntegerField(null=True, index=True, default=-1)
+    f_is_initiator = BooleanField(null=True, index=True, default=False)
     f_engine_id = CharField(max_length=150, null=True)
     f_cores = IntegerField(index=True, default=0)
     f_memory = IntegerField(index=True, default=0)  # MB
@@ -157,6 +157,7 @@ class Task(DataBaseModel):
     # this party configuration
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
+    f_run_on = BooleanField(null=True, index=True, default=False)
     f_run_ip = CharField(max_length=100, null=True)
     f_run_pid = IntegerField(null=True)
     f_party_status = CharField(max_length=50)

@@ -23,6 +23,7 @@ from fate_flow.settings import stat_logger
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import request_authority_certification
 from fate_flow.operation.job_saver import JobSaver
+from fate_arch.common import log
 
 manager = Flask(__name__)
 
@@ -30,7 +31,7 @@ manager = Flask(__name__)
 @manager.errorhandler(500)
 def internal_server_error(e):
     stat_logger.exception(e)
-    return get_json_result(retcode=RetCode.EXCEPTION_ERROR, retmsg=str(e))
+    return get_json_result(retcode=RetCode.EXCEPTION_ERROR, retmsg=log.exception_to_trace_string(e))
 
 
 # Control API for job
@@ -113,7 +114,7 @@ def clean(job_id, role, party_id):
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/create', methods=['POST'])
 @request_authority_certification
 def create_task(job_id, component_name, task_id, task_version, role, party_id):
-    TaskController.create_task(role, party_id, request.json)
+    TaskController.create_task(role, party_id, True, request.json)
     return get_json_result(retcode=0, retmsg='success')
 
 

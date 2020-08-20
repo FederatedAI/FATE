@@ -105,7 +105,7 @@ class DAGScheduler(Cron):
                 for party_id in party_ids:
                     if role == job_initiator['role'] and party_id == job_initiator['party_id']:
                         continue
-                    JobController.initialize_tasks(job_id, role, party_id, job_initiator, dsl_parser)
+                    JobController.initialize_tasks(job_id, role, party_id, False, job_initiator, dsl_parser)
 
         # push into queue
         try:
@@ -183,7 +183,7 @@ class DAGScheduler(Cron):
     @classmethod
     def schedule_running_jobs(cls):
         schedule_logger().info("start schedule running jobs")
-        jobs = JobSaver.query_job(is_initiator=1, status=JobStatus.RUNNING)
+        jobs = JobSaver.query_job(is_initiator=True, status=JobStatus.RUNNING)
         schedule_logger().info(f"have {len(jobs)} running jobs")
         for job in jobs:
             try:
@@ -233,7 +233,7 @@ class DAGScheduler(Cron):
 
     @classmethod
     def rerun_job(cls, job_id, initiator_role, initiator_party_id, component_name):
-        schedule_logger(job_id=job_id).info(f"try to rerun job {job_id} on {initiator_role} {initiator_party_id}")
+        schedule_logger(job_id=job_id).info(f"try to rerun job {job_id} on initiator {initiator_role} {initiator_party_id}")
         jobs = JobSaver.query_job(job_id=job_id, role=initiator_role, party_id=initiator_party_id)
         if jobs:
             job = jobs[0]
@@ -244,6 +244,9 @@ class DAGScheduler(Cron):
         else:
             tasks = JobSaver.query_task(job_id=job_id, role=initiator_role, party_id=initiator_party_id)
         should_rerun = False
+        dsl_parser = get_job_dsl_parser(dsl=job.f_dsl,
+                                        runtime_conf=job.f_runtime_conf,
+                                        train_runtime_conf=job.f_train_runtime_conf)
         for task in tasks:
             if task.f_status != TaskStatus.COMPLETE and task.f_party_status != TaskStatus.COMPLETE:
                 # stop old version task
@@ -257,7 +260,7 @@ class DAGScheduler(Cron):
                     for _party_id in _party_ids:
                         if _role == initiator_role and _party_id == initiator_party_id:
                             continue
-                        TaskController.create_task(role=_role, party_id=_party_id, task_info=task.to_human_model_dict())
+                        JobController.initialize_tasks(job_id, _role, _party_id, False, job.f_runtime_conf["initiator"], dsl_parser, component_name=task.f_component_name)
                 should_rerun = True
             else:
                 schedule_logger(job_id=job_id).info(f"task {task.f_task_id} {task.f_task_version} on {task.f_role} {task.f_party_id} is complete, pass rerun")

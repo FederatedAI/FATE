@@ -114,7 +114,7 @@ class JobSaver(object):
     def update_job_family_entity(cls, entity_model, entity_info):
         with DB.connection_context():
             query_filters = []
-            primary_keys = entity_model._meta.primary_key.field_names
+            primary_keys = entity_model.get_primary_keys_name()
             for p_k in primary_keys:
                 query_filters.append(operator.attrgetter(p_k)(entity_model) == entity_info[p_k.lstrip("f_")])
             objs = entity_model.select().where(*query_filters)
@@ -189,7 +189,8 @@ class JobSaver(object):
     def get_tasks_asc(cls, job_id, role, party_id):
         with DB.connection_context():
             tasks = Task.select().where(Task.f_job_id == job_id, Task.f_role == role, Task.f_party_id == party_id).order_by(Task.f_create_time.asc())
-            return cls.get_latest_tasks(tasks=tasks)
+            tasks_group = cls.get_latest_tasks(tasks=tasks)
+            return tasks_group
 
     @classmethod
     def query_task(cls, only_latest=True, **kwargs):
@@ -213,9 +214,14 @@ class JobSaver(object):
     def get_latest_tasks(cls, tasks):
         tasks_group = {}
         for task in tasks:
-            if task.f_task_id not in tasks_group:
-                tasks_group[task.f_task_id] = task
-            elif task.f_task_version > tasks_group[task.f_task_id].f_task_version:
+            task_key = cls.task_key(task_id=task.f_task_id, role=task.f_role, party_id=task.f_party_id)
+            if task_key not in tasks_group:
+                tasks_group[task_key] = task
+            elif task.f_task_version > tasks_group[task_key].f_task_version:
                 # update new version task
-                tasks_group[task.f_task_id] = task
+                tasks_group[task_key] = task
         return tasks_group
+
+    @classmethod
+    def task_key(cls, task_id, role, party_id):
+        return f"{task_id}_{role}_{party_id}"

@@ -150,9 +150,10 @@ class FederatedScheduler(object):
                                              work_mode=job.f_work_mode)
                     federated_response[dest_role][dest_party_id] = response
                 except Exception as e:
+                    schedule_logger(job_id=job.f_job_id).exception(e)
                     federated_response[dest_role][dest_party_id] = {
                         "retcode": RetCode.FEDERATED_ERROR,
-                        "retmsg": "Federated schedule error, {}".format(str(e))
+                        "retmsg": "Federated schedule error, {}".format(e)
                     }
                 if federated_response[dest_role][dest_party_id]["retcode"]:
                     schedule_logger(job_id=job.f_job_id).error("An error occurred while {} the job to role {} party {}: \n{}".format(

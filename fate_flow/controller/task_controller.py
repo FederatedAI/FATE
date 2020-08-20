@@ -33,12 +33,13 @@ from fate_flow.operation.job_tracker import Tracker
 
 class TaskController(object):
     @classmethod
-    def create_task(cls, role, party_id, task_info):
+    def create_task(cls, role, party_id, run_on, task_info):
         task_info["role"] = role
         task_info["party_id"] = party_id
         task_info["status"] = TaskStatus.WAITING
         task_info["party_status"] = TaskStatus.WAITING
         task_info["create_time"] = base_utils.current_timestamp()
+        task_info["run_on"] = run_on
         if "task_id" not in task_info:
             task_info["task_id"] = job_utils.generate_task_id(job_id=task_info["job_id"], component_name=task_info["component_name"])
         if "task_version" not in task_info:

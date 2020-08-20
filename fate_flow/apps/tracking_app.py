@@ -382,7 +382,7 @@ def check_request_parameters(request_data):
     with DB.connection_context():
         if 'role' not in request_data and 'party_id' not in request_data:
             jobs = Job.select(Job.f_runtime_conf).where(Job.f_job_id == request_data.get('job_id', ''),
-                                                        Job.f_is_initiator == 1)
+                                                        Job.f_is_initiator == True)
             if jobs:
                 job = jobs[0]
                 job_runtime_conf = job.f_runtime_conf

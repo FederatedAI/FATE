@@ -25,7 +25,7 @@ from fate_flow.operation.job_saver import JobSaver
 class JobDetector(cron.Cron):
     def run_do(self):
         try:
-            running_tasks = JobSaver.query_task(party_status=TaskStatus.RUNNING, run_ip=RuntimeConfig.JOB_SERVER_HOST, only_latest=False)
+            running_tasks = JobSaver.query_task(party_status=TaskStatus.RUNNING, run_on=True, run_ip=RuntimeConfig.JOB_SERVER_HOST, only_latest=False)
             stop_job_ids = set()
             # detect_logger.info('start to detect running job..')
             for task in running_tasks:

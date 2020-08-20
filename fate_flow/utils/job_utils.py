@@ -413,7 +413,7 @@ def kill_task_executor_process(task: Task, only_child=False):
 
 def start_clean_queue():
     schedule_logger().info('get clean queue command')
-    jobs = JobSaver.query_job(is_initiator=1, status=JobStatus.WAITING)
+    jobs = JobSaver.query_job(is_initiator=True, status=JobStatus.WAITING)
     if jobs:
         for job in jobs:
             schedule_logger(job.f_job_id).info(

@@ -47,7 +47,7 @@ def internal_server_error(e):
 
 @manager.route('/<job_id>/<role>/<party_id>/stop/<stop_status>', methods=['POST'])
 def stop_job(job_id, role, party_id, stop_status):
-    jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id, is_initiator=1)
+    jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id, is_initiator=True)
     if len(jobs) > 0:
         if stop_status == JobStatus.CANCELED:
             JobController.cancel_job(job_id=job_id, role=role, party_id=party_id)
@@ -65,7 +65,7 @@ def stop_job(job_id, role, party_id, stop_status):
 
 @manager.route('/<job_id>/<role>/<party_id>/cancel', methods=['POST'])
 def cancel_job(job_id, role, party_id):
-    jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id, is_initiator=1)
+    jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id, is_initiator=True)
     if len(jobs) > 0:
         status = JobController.cancel_job(job_id=job_id, role=role, party_id=party_id)
         if status:
@@ -78,11 +78,8 @@ def cancel_job(job_id, role, party_id):
 
 @manager.route('/<job_id>/<role>/<party_id>/rerun', methods=['POST'])
 def rerun_job(job_id, role, party_id):
-    status = DAGScheduler.rerun_job(job_id=job_id, initiator_role=role, initiator_party_id=party_id, component_name=request.json.get("component_name"))
-    if status:
-        return get_json_result(retcode=0, retmsg='success')
-    else:
-        return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg=f"rerun job {job_id} failed")
+    DAGScheduler.rerun_job(job_id=job_id, initiator_role=role, initiator_party_id=party_id, component_name=request.json.get("component_name"))
+    return get_json_result(retcode=0, retmsg='success')
 
 
 @manager.route('/<job_id>/<role>/<party_id>/status', methods=['POST'])

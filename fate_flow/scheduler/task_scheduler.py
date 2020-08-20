@@ -33,8 +33,8 @@ class TaskScheduler(object):
         waiting_tasks = []
         for task_id, task in tasks_group.items():
             # query all party task party status
-            tasks = JobSaver.query_task(task_id=task.f_task_id, task_version=task.f_task_version)
-            tasks_party_status = [task.f_party_status for task in tasks]
+            tasks_on_all = JobSaver.query_task(task_id=task.f_task_id, task_version=task.f_task_version)
+            tasks_party_status = [task.f_party_status for task in tasks_on_all]
             new_task_status = cls.calculate_multi_party_task_status(tasks_party_status=tasks_party_status)
             schedule_logger(job_id=task.f_job_id).info("Job {} task {} {} status is {}, calculate by task party status list: {}".format(task.f_job_id, task.f_task_id, task.f_task_version, new_task_status, tasks_party_status))
             task_status_have_update = False
@@ -53,7 +53,12 @@ class TaskScheduler(object):
             # component = dsl_parser.get_component_info(component_name=waiting_task.f_component_name)
             # for component_name in component.get_upstream():
             for component in dsl_parser.get_upstream_dependent_components(component_name=waiting_task.f_component_name):
-                dependent_task = tasks_group[job_utils.generate_task_id(job_id=job.f_job_id, component_name=component.get_name())]
+                dependent_task = tasks_group[
+                    JobSaver.task_key(task_id=job_utils.generate_task_id(job_id=job.f_job_id, component_name=component.get_name()),
+                                      role=job.f_role,
+                                      party_id=job.f_party_id
+                                      )
+                ]
                 if dependent_task.f_status != TaskStatus.COMPLETE:
                     # can not start task
                     break
