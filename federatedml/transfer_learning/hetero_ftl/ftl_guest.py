@@ -1,16 +1,21 @@
-import numpy as np
-from arch.api import session
 from federatedml.transfer_learning.hetero_ftl.ftl_base import FTL
 from federatedml.statistic.intersect import intersect_guest
 from arch.api.utils import log_utils
 from federatedml.transfer_learning.hetero_ftl.ftl_dataloder import FTLDataLoader
+
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
+
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
-from federatedml.util import consts
-from federatedml.statistic import data_overview
+
+from arch.api import session
 from federatedml.optim.activation import sigmoid
+import numpy as np
+
+from federatedml.util import consts
+
+from federatedml.statistic import data_overview
 
 LOGGER = log_utils.getLogger()
 
@@ -109,8 +114,17 @@ class FTLGuest(FTL):
         if self.mode == 'encrypted':
             comp_to_send = self.encrypt_tensor(comp_to_send)
 
-        self.transfer_variable.guest_components.remote(comp_to_send, suffix=(epoch_idx, 'exchange_guest_comp'))
-        host_components = self.transfer_variable.host_components.get(idx=0, suffix=(epoch_idx, 'exchange_host_comp'))
+        # sending [y_overlap_2_phi_2, y_overlap_phi, mapping_comp_a]
+        self.transfer_variable.y_overlap_2_phi_2.remote(comp_to_send[0], suffix=(epoch_idx, ))
+        self.transfer_variable.y_overlap_phi.remote(comp_to_send[1], suffix=(epoch_idx, ))
+        self.transfer_variable.mapping_comp_a.remote(comp_to_send[2], suffix=(epoch_idx, ))
+
+        # receiving [overlap_ub, overlap_ub_2, mapping_comp_b]
+        overlap_ub = self.transfer_variable.overlap_ub.get(idx=0, suffix=(epoch_idx, ))
+        overlap_ub_2 = self.transfer_variable.overlap_ub_2.get(idx=0, suffix=(epoch_idx, ))
+        mapping_comp_b = self.transfer_variable.mapping_comp_b.get(idx=0, suffix=(epoch_idx, ))
+        host_components = [overlap_ub, overlap_ub_2, mapping_comp_b]
+
         if self.mode == 'encrypted':
             host_paillier_tensors = [PaillierTensor(tb_obj=tb) for tb in host_components]
             return host_paillier_tensors
@@ -128,16 +142,14 @@ class FTLGuest(FTL):
         rand_1 = PaillierTensor(ori_data=self.rng_generator.generate_random_number(grad_a_overlap.shape))
         grad_a_overlap = grad_a_overlap + rand_1
 
-        send_data = [encrypted_const, grad_a_overlap.get_obj()]
-        self.transfer_variable.guest_side_gradients.remote(send_data, suffix=(epoch_idx,
-                                                                              local_round,
-                                                                              'guest_de_send'))
-        rs = self.transfer_variable.decrypted_guest_gradients.get(suffix=(epoch_idx,
-                                                                          local_round,
-                                                                          'guest_de_get'), idx=0)
-
-        const = rs[0] - rand_0
-        grad_a_overlap = PaillierTensor(tb_obj=rs[1]) - rand_1
+        self.transfer_variable.guest_side_const.remote(encrypted_const, suffix=(epoch_idx,
+                                                                                local_round,))
+        self.transfer_variable.guest_side_gradients.remote(grad_a_overlap.get_obj(), suffix=(epoch_idx,
+                                                                                             local_round,))
+        const = self.transfer_variable.decrypted_guest_const.get(suffix=(epoch_idx, local_round, ), idx=0)
+        grad = self.transfer_variable.decrypted_guest_gradients.get(suffix=(epoch_idx, local_round, ), idx=0)
+        const = const - rand_0
+        grad_a_overlap = PaillierTensor(tb_obj=grad) - rand_1
 
         return const, grad_a_overlap
 
