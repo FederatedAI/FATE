@@ -426,3 +426,20 @@ class MetricInterface(object):
             A positive floating point value
         """
         return clustering_metric.AdjustedRandScore.compute(labels, pred_labels)
+
+    def AdjustedRandScore(labels, pred_labels):
+        """
+        Compute the adjusted-rand score
+        Parameters
+        ----------
+        labels: value list. The labels of data set.
+        pred_labels: value list. The predict results of model. It should be corresponding to labels each data.
+        Return
+        ----------
+        float
+            A positive floating point value
+        """
+
+
+        ## process data from evaluation
+        return clustering_metric.AdjustedRandScore.compute(dist_table_dtable, cluster_dist_dtable)

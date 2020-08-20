@@ -16,6 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import numpy as np
 from arch.api.utils import log_utils
 from federatedml.model_base import ModelBase
 from federatedml.transfer_variable.transfer_class.hetero_kmeans_transfer_variable import HeteroKmeansTransferVariable
@@ -72,7 +73,9 @@ class BaseKmeansModel(ModelBase):
         return result
 
     def centroid_assign(self, dist_sum):
-        new_centroid = dist_sum.mapValues(lambda x: x.index(max(x)))
+        new_centroid= []
+        for row in dist_sum:
+            new_centroid.append(np.argmin(row))
         return new_centroid
 
     def _abnormal_detection(self, data_instances):

@@ -40,3 +40,17 @@ class AdjustedRandScore(object):
         return adjusted_rand_score(labels, pred_scores)
 
 
+class DB_index(object):
+    """
+        Compute dbi，as in dbi
+    """
+    def compute(self,dist_table,cluster_dist):
+        max_dij_list=[]
+        for i in range(0,len(dist_table)):
+            dij_list=[]
+            for j in range (0,len(dist_table)):
+                if j!=i:
+                    dij_list.append((dist_table[i]+dist_table[j])/(cluster_dist[i+j] ** 0.5))
+            max_dij=max(dij_list)
+        max_dij_list.append(max_dij)
+        return np.sum(max_dij_list)/len(dist_table)

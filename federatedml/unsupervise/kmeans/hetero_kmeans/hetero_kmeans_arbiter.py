@@ -20,48 +20,63 @@ from federatedml.unsupervise.kmeans.kmeans_model_base import BaseKmeansModel
 from federatedml.param.hetero_kmeans_param import KmeansParam
 from federatedml.util import consts
 from federatedml.framework.homo.blocks import secure_sum_aggregator
+from arch.api import session
+from federatedml.evaluation.metrics import clustering_metric
+
 
 LOGGER = log_utils.getLogger()
 
 
-class HeteroKmenasArbiter(BaseKmeansModel):
+class HeteroKmeansArbiter(BaseKmeansModel):
     def __init__(self):
-        super(HeteroKmenasArbiter, self).__init__()
+        super(HeteroKmeansArbiter, self).__init__()
         self.model_param = KmeansParam()
         self.dist_aggregator = secure_sum_aggregator.Server(enable_secure_aggregate=True)
+        self.cluster_dist_aggregator = secure_sum_aggregator.Server(enable_secure_aggregate=True)
+        self.DBI = 0
+
+    def cal_ave_dist(self, dist_sum, cluster_result, k):
+        for i in range(0, k):
+            dist_list =[]
+            for j in range(len(dist_sum)):
+                sum = 0
+                count = 0
+                if cluster_result[j]== i:
+                    sum += dist_sum[j][i]
+                    count += 1
+                ave_dist = sum / count
+            dist_list.append(ave_dist)
+        return dist_list
 
     def fit(self, data_instances=None):
         LOGGER.info("Enter hetero Kmeans arbiter fit")
-        tol_sum = inf
-        while self.n_iter_ < self.max_iter :
-            # p1 = self.transfer_variable.guest_dist.get(idx=0, suffix=(self.n_iter_,))
-            # p2 = self.transfer_variable.host_dist.get(idx=-1, suffix=(self.n_iter_,))
+        while self.n_iter_ < self.max_iter:
             dist_sum = self.dist_aggregator.sum_model(suffix=(self.n_iter_,))
-            # dist_sum = p1
-            # for p in p2:
-            #     dist_sum = dist_sum.join(p, lambda v1, v2: np.array(v1) + np.array(v2))
+            cluster_result = self.centroid_assign(dist_sum)
+            self.transfer_variable.cluster_result.remote(cluster_result, role=consts.GUEST, idx=0, suffix=(self.n_iter_,))
+            self.transfer_variable.cluster_result.remote(cluster_result, role=consts.HOST, idx=-1, suffix=(self.n_iter_,))
 
-            new_centroid = self.centroid_assign(dist_sum)
-            self.transfer_variable.cluster_result.remote(new_centroid, role=consts.GUEST, idx=0, suffix=(self.n_iter_,))
-            self.transfer_variable.cluster_result.remote(new_centroid, role=consts.HOST, idx=-1, suffix=(self.n_iter_,))
+            dist_table = self.cal_ave_dist(dist_sum, cluster_result, self.k)
+            cluster_dist = self.cluster_dist_aggregator.sum_model(suffix=(self.n_iter_,))
+            self.DBI=clustering_metric.AdjustedRandScore.compute(dist_table, cluster_dist)
 
             tol1 = self.transfer_variable.guest_tol.get(idx=0, suffix=(self.n_iter_,))
             tol2 = self.transfer_variable.host_tol.get(idx=-1, suffix=(self.n_iter_,))
-            tol_sum = tol1
-            for tol in tol2:
-                tol_sum += tol2[tol]
-            tol_final = np.sum(tol_sum**2)**0.5
-
-            if tol_final < self.tol:
-                tol_tag = 1
-                self.transfer_variable.arbiter_tol.remote(tol_tag, role=consts.HOST, idx=-1)
-                self.transfer_variable.arbiter_tol.remote(tol_tag, role=consts.GUEST, idx=0)
+            tol_final = tol1+tol2
+            tol_tag = 0 if tol_final > self.tol else 1
+            self.transfer_variable.arbiter_tol.remote(tol_tag, role=consts.HOST, idx=-1, suffix=(self.n_iter_,))
+            self.transfer_variable.arbiter_tol.remote(tol_tag, role=consts.GUEST, idx=0, suffix=(self.n_iter_,))
+            if tol_tag:
                 break
 
             self.n_iter_ += 1
 
     def predict(self, data_instances):
         LOGGER.info("Start predict ...")
-        dist_sum = self.dist_aggregator.sum_model(suffix=1)
+        dist_sum = self.dist_aggregator.sum_model(suffix='predict')
         sample_class = self.centroid_assign(dist_sum)
+        dist_table = self.cal_ave_dist(dist_sum, sample_class, self.k)
+        cluster_dist = self.cluster_dist_aggregator.sum_model(suffix='predict')
         self.transfer_variable.cluster_result.remote(sample_class, role=consts.Guest, idx=0)
+
+        return
