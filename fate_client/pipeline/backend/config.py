@@ -14,17 +14,13 @@
 #  limitations under the License.
 #
 
-from ruamel import yaml
 from pathlib import Path
 
-
+from pipeline.backend import get_default_config
 from pipeline.constant import Backend, JobStatus, WorkMode
-
 
 __all__ = ["Backend", "WorkMode", "JobStatus", "VERSION", "TIME_QUERY_FREQS", "Role", "StatusCode",
            "LogPath", "LogFormat", "IODataType", "FlowConfig"]
-
-default_config = Path(__file__).parent.parent.joinpath("config.yaml").resolve()
 
 VERSION = 2
 TIME_QUERY_FREQS = 0.01
@@ -62,8 +58,7 @@ class IODataType:
 
 
 class FlowConfig(object):
-    with open(default_config, "r") as f:
-        conf = yaml.safe_load(f)
+    conf = get_default_config()
     IP = conf.get("ip", "")
     PORT = conf.get("port", "")
 
@@ -71,8 +66,7 @@ class FlowConfig(object):
 class LogPath(object):
     @classmethod
     def log_directory(cls):
-        with open(default_config, "r") as f:
-            conf = yaml.safe_load(f)
+        conf = get_default_config()
         # log_directory = os.environ.get("FATE_PIPELINE_LOG", "")
         log_directory = conf.get("log_directory", "")
         if log_directory:
