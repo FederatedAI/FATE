@@ -51,8 +51,8 @@ def _config(cmd):
 
 @LOGGER.catch
 @cli.command(name="suite")
-@click.option('--namespace', default=time.strftime('%Y%m%d%H%M%S'), type=str,
-              help="namespace to distinguish each run")
+@click.option('--data-namespace-mangling', type=bool, is_flag=True, default=False,
+              help="mangling data namespace")
 @click.option('-i', '--include', required=True, type=click.Path(exists=True), multiple=True, metavar="<include>",
               help="include *testsuite.json under these paths")
 @click.option('-e', '--exclude', type=click.Path(exists=True), multiple=True,
@@ -71,13 +71,14 @@ def _config(cmd):
               help="skip pipeline jobs defined in testsuite")
 @click.option("--skip-data", is_flag=True, default=False,
               help="skip pipeline jobs defined in testsuite")
-def run_suite(replace, namespace, config, include, exclude, glob, skip_dsl_jobs, skip_pipeline_jobs, skip_data, yes):
+def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
+              skip_dsl_jobs, skip_pipeline_jobs, skip_data, yes):
     """
     process testsuite
     """
-
+    namespace = time.strftime('%Y%m%d%H%M%S')
     # prepare output dir and json hooks
-    _prepare(namespace, replace)
+    _prepare(data_namespace_mangling, namespace, replace)
 
     echo.welcome()
     config_inst = _parse_config(config)
@@ -114,7 +115,7 @@ def run_suite(replace, namespace, config, include, exclude, glob, skip_dsl_jobs,
 
                 if not skip_pipeline_jobs:
                     try:
-                        _run_pipeline_jobs(config_inst, suite, namespace)
+                        _run_pipeline_jobs(config_inst, suite, namespace, data_namespace_mangling)
                     except Exception as e:
                         raise RuntimeError(f"exception occur while running pipeline jobs for {suite.path}") from e
 
@@ -141,13 +142,15 @@ def _parse_config(config):
     return config_inst
 
 
-def _prepare(namespace, replace):
+def _prepare(data_namespace_mangling, namespace, replace):
     Path(f"logs/{namespace}").mkdir(exist_ok=True, parents=True)
     set_logger(f"logs/{namespace}/exception.log")
     echo.set_file(click.open_file(f'logs/{namespace}/stdout', "a"))
 
-    DATA_JSON_HOOK.add_extend_namespace_hook(namespace)
-    CONF_JSON_HOOK.add_extend_namespace_hook(namespace)
+    if data_namespace_mangling:
+        echo.echo(f"add data_namespace_mangling: _{namespace}")
+        DATA_JSON_HOOK.add_extend_namespace_hook(namespace)
+        CONF_JSON_HOOK.add_extend_namespace_hook(namespace)
     DATA_JSON_HOOK.add_replace_hook(replace)
     CONF_JSON_HOOK.add_replace_hook(replace)
     DSL_JSON_HOOK.add_replace_hook(replace)
@@ -292,7 +295,7 @@ def _submit_job(clients: Clients, suite: Testsuite):
             echo.stdout_newline()
 
 
-def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str):
+def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_namespace_mangling: bool):
     # pipeline demo goes here
     for pipeline_job in suite.pipeline_jobs:
         job_name, script_path = pipeline_job.job_name, pipeline_job.script_path
