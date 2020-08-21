@@ -14,26 +14,28 @@
 #  limitations under the License.
 #
 
-import argparse
 
+from pipeline.backend.config import Backend, WorkMode
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
 from pipeline.component.hetero_lr import HeteroLR
 from pipeline.component.intersection import Intersection
 from pipeline.component.reader import Reader
-from pipeline.demo.util.demo_util import Config
 from pipeline.interface.data import Data
 from pipeline.interface.model import Model
 
 
-def main(config="./config.yaml"):
-    # obtain config
-    config = Config(config)
-    guest = config.guest
-    host = config.host[0]
-    arbiter = config.arbiter
-    backend = config.backend
-    work_mode = config.work_mode
+def main():
+    # parties config
+    guest = 9999
+    host = 10000
+    arbiter = 10000
+    # 0 for eggroll, 1 for spark
+    backend = Backend.EGGROLL
+    # 0 for standalone, 1 for cluster
+    work_mode = WorkMode.STANDALONE
+    # use the work mode below for cluster deployment
+    # work_mode = WorkMode.CLUSTER
 
     # specify input data name & namespace in database
     guest_train_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
@@ -121,11 +123,4 @@ def main(config="./config.yaml"):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("PIPELINE DEMO")
-    parser.add_argument("-config", type=str,
-                        help="config file")
-    args = parser.parse_args()
-    if args.config is not None:
-        main(args.config)
-    else:
-        main()
+    main()

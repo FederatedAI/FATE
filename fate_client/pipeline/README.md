@@ -5,13 +5,13 @@ FATE Pipeline is designed to be user-friendly and consistent in behavior with FA
 User can customize job workflow by adding components to pipeline and then initiate a job with one call. 
 In addition, Pipeline provides functionality to run prediction and query information after fitting a pipeline.
 Run the [mini demo](./demo/pipeline-mini-demo.py) to have a taste of how FATE Pipeline works.
-Default values of party ids and work mode in [config file](./demo/config.yaml) may need to be modified depending on setting.
+Default values of party ids and work mode may need to be modified depending on the deployment setting.
 
 ```bash
 python pipeline-mini-demo.py config.yaml
 ```
 
-For more pipeline demo, please refer to [demos](./demo).
+For more pipeline demo, please refer to [examples](../../examples/pipeline).
 
 ## A FATE Job is A Sequence
 
@@ -174,6 +174,12 @@ predict_pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE)
 ```
 
 In addition, since pipeline is modular, new components can be added to the original pipeline when running prediction. 
+
+## Upload Data
+
+Pipeline provides functionality to upload local data table. Please refer to [upload demo](./demo/pipeline-upload.py) for a quick demo.
+Note that uploading data can be added all at once, 
+and the pipeline used to perform upload can be either training or predict pipeline (or, a separate pipeline as in the demo). 
 
 
 ## Pipeline vs. CLI 
