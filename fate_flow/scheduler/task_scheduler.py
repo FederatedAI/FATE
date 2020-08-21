@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
+from fate_arch.common import FederatedComm
 from fate_flow.entity.constant import TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, FederatedSchedulingStatusCode
 from fate_flow.settings import API_VERSION, ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH
 from fate_flow.utils import job_utils
@@ -32,12 +32,11 @@ class TaskScheduler(object):
         waiting_tasks = []
         for initiator_task in initiator_tasks_group.values():
             # collect all party task party status
-            tasks_on_all_party = JobSaver.query_task(task_id=initiator_task.f_task_id, task_version=initiator_task.f_task_version)
-            tasks_status_on_all = set([task.f_status for task in tasks_on_all_party])
-            if len(tasks_status_on_all) == 1 and (TaskStatus.WAITING in tasks_status_on_all or EndStatus.contains(tasks_status_on_all.pop())):
-                pass
-            else:
-                cls.collect_task_of_all_party(job=job, task=initiator_task)
+            if job.f_runtime_conf["job_parameters"]["federated_comm"] == FederatedComm.PULL:
+                tasks_on_all_party = JobSaver.query_task(task_id=initiator_task.f_task_id, task_version=initiator_task.f_task_version)
+                tasks_status_on_all = set([task.f_status for task in tasks_on_all_party])
+                if len(tasks_status_on_all) > 1 or TaskStatus.RUNNING in tasks_status_on_all:
+                    cls.collect_task_of_all_party(job=job, task=initiator_task)
             new_task_status = cls.federated_task_status(job_id=initiator_task.f_job_id, task_id=initiator_task.f_task_id, task_version=initiator_task.f_task_version)
             task_status_have_update = False
             if new_task_status != initiator_task.f_status:
@@ -163,7 +162,7 @@ class TaskScheduler(object):
     @classmethod
     def calculate_multi_party_task_status(cls, tasks_party_status):
         # 1. all waiting
-        # 2. have interrupt
+        # 2. have end status, should be interrupted
         # 3. have running
         # 4. waiting + complete
         # 5. all the same end status

@@ -13,10 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from fate_arch.common import FederatedMode, FederatedComm
 from fate_arch.common.base_utils import json_loads, current_timestamp
 from fate_arch.common.log import schedule_logger
 from fate_arch.common import WorkMode
-from fate_arch.common import compatibility_utils
+from fate_arch.common import compatibility_utils, conf_utils
 from fate_flow.db.db_models import Job
 from fate_flow.scheduler import FederatedScheduler
 from fate_flow.scheduler import TaskScheduler
@@ -44,15 +45,16 @@ class DAGScheduler(Cron):
         job_initiator = job_runtime_conf['initiator']
 
         # Compatible
-        computing_engine, federation_engine, federation_mode = compatibility_utils.backend_compatibility(**job_runtime_conf["job_parameters"])
+        computing_engine, federation_engine, federated_mode = compatibility_utils.backend_compatibility(**job_runtime_conf["job_parameters"])
         job_parameters["computing_backend"] = job_parameters.get("computing_backend", f"DEFAULT_{computing_engine}")
         job_parameters["federation_backend"] = job_parameters.get("federation_backend", f"DEFAULT_{federation_engine}")
-        job_parameters["federation_mode"] = federation_mode
+        job_parameters["federated_mode"] = federated_mode
 
         # set default parameters
-        job_runtime_conf["job_parameters"]["task_parallelism"] = int(job_runtime_conf["job_parameters"].get("task_parallelism", DEFAULT_TASK_PARALLELISM))
-        job_runtime_conf["job_parameters"]["cores_per_task"] = int(job_runtime_conf["job_parameters"].get("cores_per_task", DEFAULT_CORES_PER_TASK))
-        job_runtime_conf["job_parameters"]["memory_per_task"] = int(job_runtime_conf["job_parameters"].get("memory_per_task", DEFAULT_MEMORY_PER_TASK))
+        job_parameters["task_parallelism"] = int(job_parameters.get("task_parallelism", DEFAULT_TASK_PARALLELISM))
+        job_parameters["cores_per_task"] = int(job_parameters.get("cores_per_task", DEFAULT_CORES_PER_TASK))
+        job_parameters["memory_per_task"] = int(job_parameters.get("memory_per_task", DEFAULT_MEMORY_PER_TASK))
+        job_parameters["federated_comm"] = job_parameters.get("federated_comm", conf_utils.get_base_config("federated_comm", FederatedComm.PUSH))
 
         job_utils.check_pipeline_job_runtime_conf(job_runtime_conf)
         job_type = job_parameters.get('job_type', '')
@@ -71,10 +73,10 @@ class DAGScheduler(Cron):
                 job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
             train_runtime_conf = json_loads(pipeline_model['Pipeline'].train_runtime_conf)
         path_dict = job_utils.save_job_conf(job_id=job_id,
-                                  job_dsl=job_dsl,
-                                  job_runtime_conf=job_runtime_conf,
-                                  train_runtime_conf=train_runtime_conf,
-                                  pipeline_dsl=None)
+                                            job_dsl=job_dsl,
+                                            job_runtime_conf=job_runtime_conf,
+                                            train_runtime_conf=train_runtime_conf,
+                                            pipeline_dsl=None)
 
         job = Job()
         job.f_job_id = job_id
@@ -103,7 +105,7 @@ class DAGScheduler(Cron):
                 for party_id in party_ids:
                     if role == job_initiator['role'] and party_id == job_initiator['party_id']:
                         continue
-                    JobController.initialize_tasks(job_id, role, party_id, False, job_initiator, dsl_parser)
+                    JobController.initialize_tasks(job_id, role, party_id, False, job_initiator, job_parameters, dsl_parser)
 
         # push into queue
         try:
@@ -259,7 +261,7 @@ class DAGScheduler(Cron):
                     for _party_id in _party_ids:
                         if _role == initiator_role and _party_id == initiator_party_id:
                             continue
-                        JobController.initialize_tasks(job_id, _role, _party_id, False, job.f_runtime_conf["initiator"], dsl_parser, component_name=task.f_component_name, task_version=task.f_task_version)
+                        JobController.initialize_tasks(job_id, _role, _party_id, False, job.f_runtime_conf["initiator"], job.f_runtime_conf["job_parameters"], dsl_parser, component_name=task.f_component_name, task_version=task.f_task_version)
                 schedule_logger(job_id=job_id).info(f"create task {task.f_task_id} new version {task.f_task_version} successfully")
                 should_rerun = True
             else:

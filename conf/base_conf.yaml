@@ -1,6 +1,7 @@
 work_mode: 1
 use_local_database: true
 use_registry: false
+federated_comm: PUSH
 fate_flow:
   host: 0.0.0.0
   http_port: 9380

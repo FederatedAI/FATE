@@ -68,3 +68,20 @@ def stop_job(job_id, role, party_id, stop_status):
 def rerun_job(job_id, role, party_id):
     DAGScheduler.rerun_job(job_id=job_id, initiator_role=role, initiator_party_id=party_id, component_name=request.json.get("component_name"))
     return get_json_result(retcode=0, retmsg='success')
+
+
+@manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/report', methods=['POST'])
+def report_task(job_id, component_name, task_id, task_version, role, party_id):
+    task_info = {}
+    task_info.update(request.json)
+    task_info.update({
+        "job_id": job_id,
+        "task_id": task_id,
+        "task_version": task_version,
+        "role": role,
+        "party_id": party_id,
+    })
+    JobSaver.update_task(task_info=task_info)
+    if task_info.get("party_status"):
+        JobSaver.update_status(Task, task_info)
+    return get_json_result(retcode=0, retmsg='success')

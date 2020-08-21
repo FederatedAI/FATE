@@ -263,6 +263,41 @@ class FederatedScheduler(object):
                     ))
         return cls.return_federated_response(federated_response=federated_response)
 
+    @classmethod
+    def report_task_to_initiator(cls, task: Task):
+        """
+        :param task:
+        :return:
+        """
+        if task.f_role != task.f_initiator_role and task.f_party_id != task.f_initiator_party_id:
+            exception = None
+            for t in range(DEFAULT_FEDERATED_COMMAND_TRYS):
+                try:
+                    response = federated_api(job_id=task.f_job_id,
+                                             method='POST',
+                                             endpoint='/{}/initiator/{}/{}/{}/{}/{}/{}/report'.format(
+                                                 API_VERSION,
+                                                 task.f_job_id,
+                                                 task.f_component_name,
+                                                 task.f_task_id,
+                                                 task.f_task_version,
+                                                 task.f_role,
+                                                 task.f_party_id),
+                                             src_party_id=task.f_party_id,
+                                             dest_party_id=task.f_initiator_party_id,
+                                             src_role=task.f_role,
+                                             json_body=task.to_human_model_dict(only_primary_with=cls.REPORT_TO_INITIATOR_FIELDS),
+                                             work_mode=RuntimeConfig.WORK_MODE)
+                except Exception as e:
+                    exception = e
+                    continue
+                if response["retcode"] != RetCode.SUCCESS:
+                    exception = Exception(response["retmsg"])
+                else:
+                    return
+            else:
+                raise exception
+
     # Utils
     @classmethod
     def return_federated_response(cls, federated_response):

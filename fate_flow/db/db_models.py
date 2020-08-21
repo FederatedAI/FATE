@@ -153,6 +153,7 @@ class Task(DataBaseModel):
     f_task_version = BigIntegerField()
     f_initiator_role = CharField(max_length=50, index=True)
     f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
+    f_federated_comm = CharField(max_length=10, index=True)
     f_status = CharField(max_length=50)
     # this party configuration
     f_role = CharField(max_length=50, index=True)

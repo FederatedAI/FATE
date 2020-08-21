@@ -15,6 +15,7 @@
 #
 import sys
 
+from fate_arch.common import FederatedComm
 from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import Task
 from fate_flow.operation.task_executor import TaskExecutor
@@ -160,6 +161,7 @@ class TaskController(object):
         update_status = False
         try:
             update_status = JobSaver.update_task(task_info=task_info)
+            cls.report_task_to_initiator(task_info=task_info)
         except Exception as e:
             schedule_logger(job_id=task_info["job_id"]).exception(e)
         finally:
@@ -170,7 +172,17 @@ class TaskController(object):
         update_status = JobSaver.update_task_status(task_info=task_info)
         if update_status and EndStatus.contains(task_info.get("status")):
             ResourceManager.return_task_resource(task_info=task_info)
+        cls.report_task_to_initiator(task_info=task_info)
         return update_status
+
+    @classmethod
+    def report_task_to_initiator(cls, task_info):
+        tasks = JobSaver.query_task(task_id=task_info["task_id"],
+                                    task_version=task_info["task_version"],
+                                    role=task_info["role"],
+                                    party_id=task_info["party_id"])
+        if tasks[0].f_federated_comm == FederatedComm.PUSH:
+            FederatedScheduler.report_task_to_initiator(task=tasks[0])
 
     @classmethod
     def collect_task(cls, job_id, component_name, task_id, task_version, role, party_id):
