@@ -101,8 +101,8 @@ class HeteroKmeansClient(BaseKmeansModel):
             cluster_result = self.transfer_variable.cluster_result.get(idx=0, suffix=(self.n_iter_,))
             centroid_new = self.centroid_cal(cluster_result, data_instances)
             client_tol = np.sum(np.sum((np.array(self.centroid_list) - np.array(centroid_new))**2,axis=1))
-            self.centroid_list = centroid_new#output centroid detail
-            self.cluster_result = cluster_result#output cluster detail
+            self.centroid_list = centroid_new
+            self.cluster_result = cluster_result
             self.client_tol.remote(client_tol, role=consts.ARBITER, idx=0, suffix=(self.n_iter_,))
             cluster_dist = self.centroid_dist(self.centroid_list)
             self.cluster_dist_aggregator.send_model(cluster_dist, suffix=(self.n_iter_,))
@@ -114,13 +114,17 @@ class HeteroKmeansClient(BaseKmeansModel):
     def predict(self, data_instances):
         LOGGER.info("Start predict ...")
         d = functools.partial(self.educl_dist, centroid_list=self.centroid_list)
-        dist_list = data_instances.mapValues(d)
-        self.dist_aggregator.send_model(NumpyWeights(dist_list), suffix='predict')
+        dist_all_dtable = data_instances.mapValues(d)
+        sorted_dist_table = sorted(list(dist_all_dtable.collect()), key=lambda k: k[0])
+        dist_all = np.array([v[1] for v in sorted_dist_table])
+        self.dist_aggregator.send_model(NumpyWeights(dist_all), suffix='predict')
         sample_class = self.transfer_variable.cluster_result.get(idx=0)
         cluster_dist = self.centroid_dist(self.centroid_list)
         self.cluster_dist_aggregator.send_model(cluster_dist, suffix='predict')
-        predict_result = data_instances.join(sample_class, lambda d, pred: [d.label, pred, pred, {"label": pred}])
-
+        dist_fake = [-1] * data_instances.count()
+        sorted_key = list(sorted_dist_table.mapValues(lambda k: k[0]).collect())
+        predict_concat = session.parallelize(tuple(zip(sorted_key,sample_class,dist_fake,dist_fake)), partition=data_instances.patitions)
+        predict_result = data_instances.join(predict_concat, lambda v1, v2: [v1.label, v2[0], v2[1], v2[2]])
         return predict_result
 
 

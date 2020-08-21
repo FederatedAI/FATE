@@ -80,7 +80,7 @@ class HeteroKmeansArbiter(BaseKmeansModel):
         self.transfer_variable.cluster_result.remote(sample_class, role=consts.Guest, idx=0)
         result=[]
         for i in range(len(dist_sum)):
-            item = tuple(i,[sample_class[i],dist_table,cluster_dist])
+            item = tuple(i,[-1,sample_class[i],dist_table,cluster_dist])
             result.append(item)
         predict_result = session.parallelize(result)
         return predict_result

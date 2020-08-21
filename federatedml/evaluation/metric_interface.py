@@ -430,7 +430,7 @@ class MetricInterface(object):
 
         return clustering_metric.AdjustedRandScore.compute(labels, pred_labels)
 
-    def AdjustedRandScore(labels, pred_labels):
+    def Davies_Bouldin_index(labels, pred_labels):
         """
         Compute the adjusted-rand score
         Parameters
