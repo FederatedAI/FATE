@@ -15,7 +15,7 @@
 #
 from fate_flow.scheduler.dsl_parser import DSLParser, DSLParserV2
 from fate_flow.scheduler.job_queue import JobQueue
-from fate_flow.scheduler.dag_scheduler import DAGScheduler
 from fate_flow.scheduler.federated_scheduler import FederatedScheduler
 from fate_flow.scheduler.task_scheduler import TaskScheduler
 from fate_flow.scheduler.job_detector import JobDetector
+from fate_flow.scheduler.dag_scheduler import DAGScheduler

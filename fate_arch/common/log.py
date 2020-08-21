@@ -26,7 +26,8 @@ from fate_arch.common import file_utils
 
 class LoggerFactory(object):
     TYPE = "FILE"
-    FORMAT = "[%(levelname)s] [%(asctime)s] [%(process)s:%(thread)s] - %(filename)s[line:%(lineno)d]: %(message)s"
+    LOG_FORMAT = "[%(levelname)s] [%(asctime)s] [%(process)s:%(thread)s] - %(filename)s[line:%(lineno)d]: %(message)s"
+    JOB_LOG_FORMAT = "[%(levelname)s] [jobid] [%(asctime)s] [%(process)s:%(thread)s] - %(filename)s[line:%(lineno)d]: %(message)s"
     LEVEL = logging.DEBUG
     logger_dict = {}
     global_handler_dict = {}
@@ -104,7 +105,7 @@ class LoggerFactory(object):
         return LoggerFactory.global_handler_dict[logger_name_key]
 
     @staticmethod
-    def get_handler(class_name, level=None, log_dir=None, log_type=None):
+    def get_handler(class_name, level=None, log_dir=None, log_type=None, job_id=None):
         if not log_type:
             if not LoggerFactory.LOG_DIR or not class_name:
                 return logging.StreamHandler()
@@ -116,7 +117,10 @@ class LoggerFactory(object):
         else:
             log_file = os.path.join(log_dir, "fate_flow_{}.log".format(
                 log_type) if level == LoggerFactory.LEVEL else 'fate_flow_{}_error.log'.format(log_type))
-        formatter = logging.Formatter(LoggerFactory.FORMAT)
+        if job_id:
+            formatter = logging.Formatter(LoggerFactory.JOB_LOG_FORMAT.replace("jobid", job_id))
+        else:
+            formatter = logging.Formatter(LoggerFactory.LOG_FORMAT)
         handler = TimedRotatingFileHandler(log_file,
                                            when='D',
                                            interval=1,

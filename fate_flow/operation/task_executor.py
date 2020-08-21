@@ -26,7 +26,7 @@ from fate_flow.entity.constant import TaskStatus, ProcessRole
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation import Tracker
 from fate_arch import storage
-from fate_flow.utils import job_utils
+from fate_flow.utils import job_utils, schedule_utils
 from fate_flow.scheduling_apps.client import ControllerClient
 from fate_flow.scheduling_apps.client import TrackerClient
 from fate_flow.db.db_models import TrackingOutputDataInfo, fill_db_model_object
@@ -83,7 +83,7 @@ class TaskExecutor(object):
             job_runtime_conf = job_conf["job_runtime_conf_path"]
             job_parameters = job_runtime_conf['job_parameters']
             job_initiator = job_runtime_conf['initiator']
-            dsl_parser = job_utils.get_job_dsl_parser(dsl=job_dsl,
+            dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
                                                       runtime_conf=job_runtime_conf,
                                                       train_runtime_conf=job_conf["train_runtime_conf_path"],
                                                       pipeline_dsl=job_conf["pipeline_dsl_path"]

@@ -13,19 +13,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import threading
-import time
-
 from fate_flow.utils.authentication_utils import authentication_check
 from federatedml.protobuf.generated import pipeline_pb2
 from fate_arch.common.log import schedule_logger
-from fate_flow.scheduler import TaskScheduler
 from fate_flow.entity.constant import JobStatus, TaskStatus, EndStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation import Tracker
 from fate_flow.settings import USE_AUTHENTICATION
-from fate_flow.utils import job_utils
-from fate_flow.utils.job_utils import save_job_conf, get_job_dsl_parser
+from fate_flow.utils import job_utils, schedule_utils
 from fate_flow.operation import JobSaver
 from fate_arch.common.base_utils import json_dumps, current_timestamp
 from fate_flow.controller import TaskController
@@ -43,7 +38,7 @@ class JobController(object):
         if USE_AUTHENTICATION:
             authentication_check(src_role=job_info.get('src_role', None), src_party_id=job_info.get('src_party_id', None),
                                  dsl=dsl, runtime_conf=runtime_conf, role=role, party_id=party_id)
-        save_job_conf(job_id=job_id,
+        job_utils.save_job_conf(job_id=job_id,
                       job_dsl=dsl,
                       job_runtime_conf=runtime_conf,
                       train_runtime_conf=train_runtime_conf,
@@ -65,7 +60,7 @@ class JobController(object):
         job_info["progress"] = 0
         JobSaver.create_job(job_info=job_info)
 
-        dsl_parser = get_job_dsl_parser(dsl=dsl,
+        dsl_parser = schedule_utils.get_job_dsl_parser(dsl=dsl,
                                         runtime_conf=runtime_conf,
                                         train_runtime_conf=train_runtime_conf)
 
@@ -203,7 +198,7 @@ class JobController(object):
         job_type = job_parameters.get('job_type', '')
         if job_type == 'predict':
             return
-        dag = job_utils.get_job_dsl_parser(dsl=job_dsl,
+        dag = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
                                            runtime_conf=job_runtime_conf,
                                            train_runtime_conf=train_runtime_conf)
         predict_dsl = dag.get_predict_dsl(role=role)

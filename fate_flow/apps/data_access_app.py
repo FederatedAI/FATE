@@ -26,7 +26,6 @@ from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils import detect_utils, job_utils
 from fate_flow.scheduler import DAGScheduler
 from fate_flow.operation import JobSaver
-from fate_flow.utils.job_utils import get_job_configuration, generate_job_id, get_job_directory
 
 manager = Flask(__name__)
 
@@ -39,15 +38,15 @@ def internal_server_error(e):
 
 @manager.route('/<access_module>', methods=['post'])
 def download_upload(access_module):
-    job_id = generate_job_id()
+    job_id = job_utils.generate_job_id()
     if access_module == "upload" and USE_LOCAL_DATA and not (request.json and request.json.get("use_local_data") == 0):
         file = request.files['file']
-        filename = os.path.join(get_job_directory(job_id), 'fate_upload_tmp', file.filename)
+        filename = os.path.join(job_utils.get_job_directory(job_id), 'fate_upload_tmp', file.filename)
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         try:
             file.save(filename)
         except Exception as e:
-            shutil.rmtree(os.path.join(get_job_directory(job_id), 'tmp'))
+            shutil.rmtree(os.path.join(job_utils.get_job_directory(job_id), 'tmp'))
             raise e
         job_config = request.args.to_dict()
         job_config['file'] = filename
@@ -109,7 +108,7 @@ def get_upload_history():
         tasks = tasks[-1::-1]
     else:
         tasks = tasks[-1:-limit - 1:-1]
-    jobs_run_conf = get_job_configuration(None, None, None, tasks)
+    jobs_run_conf = job_utils.get_job_configuration(None, None, None, tasks)
     return get_upload_info(jobs_run_conf)
 
 

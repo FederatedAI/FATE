@@ -22,7 +22,7 @@ from fate_arch.computing import ComputingEngine
 from fate_flow.entity.metric import MetricMeta
 from fate_arch.common import log
 from fate_arch import storage
-from fate_flow.utils.job_utils import generate_session_id
+from fate_flow.utils import job_utils
 
 LOGGER = log.getLogger()
 
@@ -45,7 +45,7 @@ class Reader(object):
                                                                                         computing_engine=component_parameters.get('job_parameters').get('computing_engine', ComputingEngine.EGGROLL),
                                                                                         force=True)
         if dest_table_address:
-            with storage.Session.build(session_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),
+            with storage.Session.build(session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),
                                        storage_engine=dest_table_engine) as dest_session:
                 dest_table = dest_session.create_table(address=dest_table_address, name=persistent_table_name, namespace=persistent_table_namespace, partitions=src_table_meta.partitions)
                 dest_table.count()

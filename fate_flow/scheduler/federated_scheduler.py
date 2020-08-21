@@ -20,7 +20,7 @@ from fate_arch.common.log import schedule_logger
 from fate_flow.entity.constant import RetCode, FederatedSchedulingStatusCode
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.db.db_models import Job, Task
-from fate_flow.utils import job_utils
+from fate_flow.utils import schedule_utils
 
 
 class FederatedScheduler(object):
@@ -219,7 +219,7 @@ class FederatedScheduler(object):
     def task_command(cls, job, task, command, command_body=None):
         federated_response = {}
         roles, job_initiator = job.f_runtime_conf["role"], job.f_runtime_conf['initiator']
-        dsl_parser = job_utils.get_job_dsl_parser(dsl=job.f_dsl, runtime_conf=job.f_runtime_conf, train_runtime_conf=job.f_train_runtime_conf)
+        dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl, runtime_conf=job.f_runtime_conf, train_runtime_conf=job.f_train_runtime_conf)
         component = dsl_parser.get_component_info(component_name=task.f_component_name)
         component_parameters = component.get_role_parameters()
         for dest_role, parameters_on_partys in component_parameters.items():

@@ -25,8 +25,7 @@ from fate_flow.entity.constant import JobStatus, TaskStatus, EndStatus, StatusSe
 from fate_flow.operation import Tracker
 from fate_flow.controller import JobController
 from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT, DEFAULT_TASK_PARALLELISM, DEFAULT_CORES_PER_TASK, DEFAULT_MEMORY_PER_TASK
-from fate_flow.utils import detect_utils, job_utils
-from fate_flow.utils.job_utils import generate_job_id, save_job_conf, get_job_log_directory, get_job_dsl_parser
+from fate_flow.utils import detect_utils, job_utils, schedule_utils
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils import model_utils
 from fate_flow.scheduler import JobQueue
@@ -37,7 +36,7 @@ class DAGScheduler(Cron):
     @classmethod
     def submit(cls, job_data, job_id=None):
         if not job_id:
-            job_id = generate_job_id()
+            job_id = job_utils.generate_job_id()
         schedule_logger(job_id).info('submit job, job_id {}, body {}'.format(job_id, job_data))
         job_dsl = job_data.get('job_dsl', {})
         job_runtime_conf = job_data.get('job_runtime_conf', {})
@@ -71,7 +70,7 @@ class DAGScheduler(Cron):
             if not job_dsl:
                 job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
             train_runtime_conf = json_loads(pipeline_model['Pipeline'].train_runtime_conf)
-        path_dict = save_job_conf(job_id=job_id,
+        path_dict = job_utils.save_job_conf(job_id=job_id,
                                   job_dsl=job_dsl,
                                   job_runtime_conf=job_runtime_conf,
                                   train_runtime_conf=train_runtime_conf,
@@ -94,7 +93,7 @@ class DAGScheduler(Cron):
             raise Exception("initiator party id error {}".format(initiator_party_id))
 
         FederatedScheduler.create_job(job=job)
-        dsl_parser = get_job_dsl_parser(dsl=job_dsl,
+        dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
                                         runtime_conf=job_runtime_conf,
                                         train_runtime_conf=train_runtime_conf)
 
@@ -118,7 +117,7 @@ class DAGScheduler(Cron):
             ServiceUtils.get_item("fateboard", "host"),
             ServiceUtils.get_item("fateboard", "port"),
             FATE_BOARD_DASHBOARD_ENDPOINT).format(job_id, job_initiator['role'], job_initiator['party_id'])
-        logs_directory = get_job_log_directory(job_id)
+        logs_directory = job_utils.get_job_log_directory(job_id)
         return job_id, path_dict['job_dsl_path'], path_dict['job_runtime_conf_path'], logs_directory, \
                {'model_id': job_parameters['model_id'], 'model_version': job_parameters['model_version']}, board_url
 
@@ -243,7 +242,7 @@ class DAGScheduler(Cron):
         else:
             tasks = JobSaver.query_task(job_id=job_id, role=initiator_role, party_id=initiator_party_id)
         should_rerun = False
-        dsl_parser = get_job_dsl_parser(dsl=job.f_dsl,
+        dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl,
                                         runtime_conf=job.f_runtime_conf,
                                         train_runtime_conf=job.f_train_runtime_conf)
         for task in tasks:
@@ -284,7 +283,7 @@ class DAGScheduler(Cron):
     @classmethod
     def schedule_job(cls, job):
         schedule_logger(job_id=job.f_job_id).info("scheduling job {}".format(job.f_job_id))
-        dsl_parser = job_utils.get_job_dsl_parser(dsl=job.f_dsl,
+        dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl,
                                                   runtime_conf=job.f_runtime_conf,
                                                   train_runtime_conf=job.f_train_runtime_conf)
         task_scheduling_status_code, tasks = TaskScheduler.schedule(job=job, dsl_parser=dsl_parser)

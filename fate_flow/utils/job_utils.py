@@ -30,14 +30,11 @@ from fate_flow.entity.constant import JobStatus
 from fate_arch.common import file_utils
 from fate_arch.common.base_utils import json_loads, json_dumps, fate_uuid, current_timestamp
 from fate_arch.common.log import schedule_logger
-from fate_flow.scheduler.dsl_parser import DSLParser, DSLParserV2
 from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE
 from fate_flow.utils import detect_utils
-from fate_flow.utils import api_utils
 from fate_flow.utils import session_utils
-from flask import request, redirect, url_for
 from fate_flow.operation import JobSaver
 from fate_flow.entity.constant import TaskStatus
 
@@ -170,50 +167,6 @@ def get_job_conf(job_id):
         config = file_utils.load_json_conf(path)
         conf_dict[key] = config
     return conf_dict
-
-
-def get_job_dsl_parser_by_job_id(job_id):
-    with DB.connection_context():
-        jobs = Job.select(Job.f_dsl, Job.f_runtime_conf, Job.f_train_runtime_conf).where(Job.f_job_id == job_id)
-        if jobs:
-            job = jobs[0]
-            job_dsl_parser = get_job_dsl_parser(dsl=job.f_dsl, runtime_conf=job.f_runtime_conf,
-                                                train_runtime_conf=job.f_train_runtime_conf)
-            return job_dsl_parser
-        else:
-            return None
-
-
-def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, train_runtime_conf=None):
-    # dsl_parser = DSLParser()
-    parser_version = str(runtime_conf.get('job_parameters', {}).get('dsl_version', '1'))
-    dsl_parser = get_dsl_parser_by_version(parser_version)
-    default_runtime_conf_path = os.path.join(file_utils.get_project_base_directory(),
-                                             *['federatedml', 'conf', 'default_runtime_conf'])
-    setting_conf_path = os.path.join(file_utils.get_project_base_directory(), *['federatedml', 'conf', 'setting_conf'])
-    job_type = runtime_conf.get('job_parameters', {}).get('job_type', 'train')
-    dsl_parser.run(dsl=dsl,
-                   runtime_conf=runtime_conf,
-                   pipeline_dsl=pipeline_dsl,
-                   pipeline_runtime_conf=train_runtime_conf,
-                   default_runtime_conf_prefix=default_runtime_conf_path,
-                   setting_conf_prefix=setting_conf_path,
-                   mode=job_type)
-    return dsl_parser
-
-
-def get_parser_version_mapping():
-    return {
-        "1": DSLParser(),
-        "2": DSLParserV2()
-    }
-
-
-def get_dsl_parser_by_version(version: str = "1"):
-    mapping = get_parser_version_mapping()
-    if version not in mapping:
-        raise Exception("{} version of dsl parser is not currently supported.".format(version))
-    return mapping[version]
 
 
 def get_job_configuration(job_id, role, party_id, tasks=None):

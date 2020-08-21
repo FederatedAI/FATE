@@ -24,8 +24,7 @@ from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_flow.scheduler import DAGScheduler
 from fate_flow.scheduler import FederatedScheduler
 from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT, TEMP_DIRECTORY
-from fate_flow.utils import job_utils, detect_utils
-from fate_flow.utils.job_utils import get_dsl_parser_by_version
+from fate_flow.utils import job_utils, detect_utils, schedule_utils
 from fate_flow.utils.api_utils import get_json_result, request_execute_server, error_response
 from fate_flow.entity.constant import WorkMode, JobStatus, FederatedSchedulingStatusCode, RetCode
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -206,7 +205,7 @@ def dsl_generator():
             cpn_str = cpn_str.replace(" ", "").replace("\n", "").strip(",[]")
             cpn_list = cpn_str.split(",")
         train_dsl = json_loads(data.get("train_dsl"))
-        parser = get_dsl_parser_by_version(data.get("version", "1"))
+        parser = schedule_utils.get_dsl_parser_by_version(data.get("version", "1"))
         predict_dsl = parser.deploy_component(cpn_list, train_dsl)
 
         if data.get("filename"):

@@ -13,5 +13,5 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_flow.controller.job_controller import JobController
 from fate_flow.controller.task_controller import TaskController
+from fate_flow.controller.job_controller import JobController
