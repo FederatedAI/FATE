@@ -173,6 +173,15 @@ def update_task(job_id, component_name, task_id, task_version, role, party_id):
     return get_json_result(retcode=0, retmsg='success')
 
 
+@manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/collect', methods=['POST'])
+def collect_task(job_id, component_name, task_id, task_version, role, party_id):
+    task_info = TaskController.collect_task(job_id=job_id, component_name=component_name, task_id=task_id, task_version=task_version, role=role, party_id=party_id)
+    if task_info:
+        return get_json_result(retcode=RetCode.SUCCESS, retmsg="success", data=task_info)
+    else:
+        return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="query task failed")
+
+
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/status/<status>', methods=['POST'])
 def task_status(job_id, component_name, task_id, task_version, role, party_id, status):
     task_info = {}

@@ -14,8 +14,7 @@
 #  limitations under the License.
 #
 
-from fate_flow.db.db_models import Task
-from fate_flow.entity.constant import TaskStatus, EndStatus, StatusSet, SchedulingStatusCode
+from fate_flow.entity.constant import TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, FederatedSchedulingStatusCode
 from fate_flow.settings import API_VERSION, ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
@@ -29,31 +28,32 @@ class TaskScheduler(object):
     @classmethod
     def schedule(cls, job, dsl_parser):
         schedule_logger(job_id=job.f_job_id).info("scheduling job {} tasks".format(job.f_job_id))
-        tasks_group = JobSaver.get_tasks_asc(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
+        initiator_tasks_group = JobSaver.get_tasks_asc(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
         waiting_tasks = []
-        for task_id, task in tasks_group.items():
-            # query all party task party status
-            tasks_on_all = JobSaver.query_task(task_id=task.f_task_id, task_version=task.f_task_version)
-            tasks_party_status = [task.f_party_status for task in tasks_on_all]
-            new_task_status = cls.calculate_multi_party_task_status(tasks_party_status=tasks_party_status)
-            schedule_logger(job_id=task.f_job_id).info("job {} task {} {} status is {}, calculate by task party status list: {}".format(task.f_job_id, task.f_task_id, task.f_task_version, new_task_status, tasks_party_status))
+        for initiator_task in initiator_tasks_group.values():
+            # collect all party task party status
+            tasks_on_all_party = JobSaver.query_task(task_id=initiator_task.f_task_id, task_version=initiator_task.f_task_version)
+            tasks_status_on_all = set([task.f_status for task in tasks_on_all_party])
+            if len(tasks_status_on_all) == 1 and (TaskStatus.WAITING in tasks_status_on_all or EndStatus.contains(tasks_status_on_all.pop())):
+                pass
+            else:
+                cls.collect_task_of_all_party(job=job, task=initiator_task)
+            new_task_status = cls.federated_task_status(job_id=initiator_task.f_job_id, task_id=initiator_task.f_task_id, task_version=initiator_task.f_task_version)
             task_status_have_update = False
-            if new_task_status != task.f_status:
+            if new_task_status != initiator_task.f_status:
                 task_status_have_update = True
-                task.f_status = new_task_status
-                FederatedScheduler.sync_task_status(job=job, task=task)
+                initiator_task.f_status = new_task_status
+                FederatedScheduler.sync_task_status(job=job, task=initiator_task)
 
-            if task.f_status == TaskStatus.WAITING:
-                waiting_tasks.append(task)
-            elif task_status_have_update and EndStatus.contains(task.f_status):
-                FederatedScheduler.stop_task(job=job, task=task, stop_status=task.f_status)
+            if initiator_task.f_status == TaskStatus.WAITING:
+                waiting_tasks.append(initiator_task)
+            elif task_status_have_update and EndStatus.contains(initiator_task.f_status):
+                FederatedScheduler.stop_task(job=job, task=initiator_task, stop_status=initiator_task.f_status)
 
         scheduling_status_code = SchedulingStatusCode.NO_NEXT
         for waiting_task in waiting_tasks:
-            # component = dsl_parser.get_component_info(component_name=waiting_task.f_component_name)
-            # for component_name in component.get_upstream():
             for component in dsl_parser.get_upstream_dependent_components(component_name=waiting_task.f_component_name):
-                dependent_task = tasks_group[
+                dependent_task = initiator_tasks_group[
                     JobSaver.task_key(task_id=job_utils.generate_task_id(job_id=job.f_job_id, component_name=component.get_name()),
                                       role=job.f_role,
                                       party_id=job.f_party_id
@@ -66,12 +66,12 @@ class TaskScheduler(object):
                 # can start task
                 scheduling_status_code = SchedulingStatusCode.HAVE_NEXT
                 status_code = cls.start_task(job=job, task=waiting_task)
-                tasks_group[waiting_task.f_task_id] = waiting_task
+                #initiator_tasks_group[JobSaver.task_key(waiting_task.f_task_id, role=waiting_task.f_role, party_id=waiting_task.f_party_id)] = waiting_task
                 if status_code == SchedulingStatusCode.NO_RESOURCE:
                     # Wait for the next round of scheduling
                     break
         schedule_logger(job_id=job.f_job_id).info("finish scheduling job {} tasks".format(job.f_job_id))
-        return scheduling_status_code, tasks_group.values()
+        return scheduling_status_code, initiator_tasks_group.values()
 
     @classmethod
     def start_task(cls, job, task):
@@ -96,6 +96,17 @@ class TaskScheduler(object):
         task_parameters.update(job.f_runtime_conf["job_parameters"])
         FederatedScheduler.start_task(job=job, task=task, task_parameters=task_parameters)
         return SchedulingStatusCode.SUCCESS
+
+    @classmethod
+    def collect_task_of_all_party(cls, job, task):
+        status, federated_response = FederatedScheduler.collect_task(job=job, task=task)
+        if status != FederatedSchedulingStatusCode.SUCCESS:
+            schedule_logger(job_id=job.f_job_id).warning(f"collect task {task.f_task_id} {task.f_task_version} on {task.f_role} {task.f_party_id} failed")
+            return
+        for _role in federated_response.keys():
+            for _party_id, party_response in federated_response[_role].items():
+                JobSaver.update_task_status(task_info=party_response["data"])
+                JobSaver.update_task(task_info=party_response["data"])
 
     @staticmethod
     def align_task_parameters(job_id, job_parameters, job_initiator, job_args, component, task_id):
@@ -140,6 +151,14 @@ class TaskScheduler(object):
                                                                                                            role,
                                                                                                            dest_party_id))
         return extra_task_parameters
+
+    @classmethod
+    def federated_task_status(cls, job_id, task_id, task_version):
+        tasks_on_all_party = JobSaver.query_task(task_id=task_id, task_version=task_version)
+        tasks_party_status = [task.f_party_status for task in tasks_on_all_party]
+        status = cls.calculate_multi_party_task_status(tasks_party_status)
+        schedule_logger(job_id=job_id).info("job {} task {} {} status is {}, calculate by task party status list: {}".format(job_id, task_id, task_version, status, tasks_party_status))
+        return status
 
     @classmethod
     def calculate_multi_party_task_status(cls, tasks_party_status):

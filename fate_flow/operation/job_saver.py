@@ -64,9 +64,9 @@ class JobSaver(object):
         schedule_logger(job_id=task_info["job_id"]).info("try to update job {} task {} {} status".format(task_info["job_id"], task_info["task_id"], task_info["task_version"]))
         update_status = cls.update_status(Task, task_info)
         if update_status:
-            schedule_logger(job_id=task_info["job_id"]).info("update job {} task {} {} status successfully".format(task_info["job_id"], task_info["task_id"], task_info["task_version"]))
+            schedule_logger(job_id=task_info["job_id"]).info("update job {} task {} {} status successfully: {}".format(task_info["job_id"], task_info["task_id"], task_info["task_version"], task_info))
         else:
-            schedule_logger(job_id=task_info["job_id"]).info("update job {} task {} {} status failed".format(task_info["job_id"], task_info["task_id"], task_info["task_version"]))
+            schedule_logger(job_id=task_info["job_id"]).info("update job {} task {} {} status update does not take effect: {}".format(task_info["job_id"], task_info["task_id"], task_info["task_version"], task_info))
         return update_status
 
     @classmethod

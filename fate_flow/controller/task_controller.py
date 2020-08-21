@@ -32,6 +32,8 @@ from fate_flow.operation import Tracker
 
 
 class TaskController(object):
+    INITIATOR_COLLECT_FIELDS = ["status", "party_status", "start_time", "update_time", "end_time", "elapsed"]
+
     @classmethod
     def create_task(cls, role, party_id, run_on, task_info):
         task_info["role"] = role
@@ -72,8 +74,8 @@ class TaskController(object):
                 "status": TaskStatus.RUNNING,
                 "party_status": TaskStatus.RUNNING,
             }
-            cls.update_task_status(task_info=task_info)
             cls.update_task(task_info=task_info)
+            cls.update_task_status(task_info=task_info)
             task_dir = os.path.join(job_utils.get_job_directory(job_id=job_id), role, party_id, component_name, task_id, task_version)
             os.makedirs(task_dir, exist_ok=True)
             task_parameters_path = os.path.join(task_dir, 'task_parameters.json')
@@ -158,11 +160,6 @@ class TaskController(object):
         update_status = False
         try:
             update_status = JobSaver.update_task(task_info=task_info)
-            tasks = JobSaver.query_task(task_id=task_info["task_id"],
-                                        task_version=task_info["task_version"],
-                                        role=task_info["role"],
-                                        party_id=task_info["party_id"])
-            FederatedScheduler.report_task_to_initiator(task=tasks[0])
         except Exception as e:
             schedule_logger(job_id=task_info["job_id"]).exception(e)
         finally:
@@ -173,12 +170,15 @@ class TaskController(object):
         update_status = JobSaver.update_task_status(task_info=task_info)
         if update_status and EndStatus.contains(task_info.get("status")):
             ResourceManager.return_task_resource(task_info=task_info)
-        tasks = JobSaver.query_task(task_id=task_info["task_id"],
-                                    task_version=task_info["task_version"],
-                                    role=task_info["role"],
-                                    party_id=task_info["party_id"])
-        FederatedScheduler.report_task_to_initiator(task=tasks[0])
         return update_status
+
+    @classmethod
+    def collect_task(cls, job_id, component_name, task_id, task_version, role, party_id):
+        tasks = JobSaver.query_task(job_id=job_id, component_name=component_name, task_id=task_id, task_version=task_version, role=role, party_id=party_id)
+        if tasks:
+            return tasks[0].to_human_model_dict(only_primary_with=cls.INITIATOR_COLLECT_FIELDS)
+        else:
+            return None
 
     @classmethod
     def stop_task(cls, task, stop_status):
