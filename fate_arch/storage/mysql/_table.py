@@ -38,6 +38,7 @@ class StorageTable(StorageTableBase):
         self._storage_type = storage_type
         self._options = options if options else {}
         self._storage_engine = StorageEngine.MYSQL
+        self._type = storage_type if storage_type else MySQLStorageType.InnoDB
 
     def execute(self, sql, select=True):
         self.cur.execute(sql)
@@ -67,6 +68,22 @@ class StorageTable(StorageTableBase):
     def get_address(self):
         return self._address
 
+    def get_type(self):
+        return self._type
+
+    def get_options(self):
+        return self._options
+
+    @log_elapsed
+    def count(self, **kwargs):
+        sql = 'select count(*) from {}'.format(self._name)
+        try:
+            count = self.execute(sql, select=False)
+            count = next(count)
+        except:
+            count = 0
+        return count
+
     @log_elapsed
     def collect(self, **kwargs) -> list:
         sql = 'select * from {}'.format(self._name)
@@ -74,14 +91,14 @@ class StorageTable(StorageTableBase):
         return data
 
     def put_all(self, kv_list, **kwargs):
-        create_table = 'create table {}(id varchar(50) NOT NULL, features LONGTEXT, PRIMARY KEY(id))'.format(self._address.name)
-        self.execute(create_table, select=False)
+        create_table = 'create table if not exists {}(id varchar(50) NOT NULL, features LONGTEXT, PRIMARY KEY(id))'.format(self._address.name)
+        self.cur.execute(create_table)
         sql = 'REPLACE INTO {}(id, features)  VALUES'.format(self._address.name)
         for kv in kv_list:
-            sql += '("{}", "{}"),'.format(kv[0], kv[1:])
+            sql += '("{}", "{}"),'.format(kv[0], kv[1])
         sql = ','.join(sql.split(',')[:-1]) + ';'
-        self.execute(sql, select=False)
-        self.con.submit()
+        self.cur.execute(sql)
+        self.con.commit()
 
     def destroy(self):
         super().destroy()

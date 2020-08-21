@@ -60,7 +60,7 @@ class StorageSession(StorageSessionBase):
     def create_db(self):
         conn = pymysql.connect(host=self.address.host,
                                user=self.address.user,
-                               password=self.address.password,
+                               password=self.address.passwd,
                                port=self.address.port)
         cursor = conn.cursor()
         cursor.execute("create database if not exists {}".format(self.address.db))
