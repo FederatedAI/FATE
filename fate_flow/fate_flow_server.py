@@ -41,10 +41,10 @@ from fate_flow.scheduling_apps.tracker_app import manager as tracker_app_manager
 from fate_flow.db.db_models import init_database_tables as init_flow_db
 from fate_arch.storage.metastore.db_models import init_database_tables as init_arch_db
 from fate_flow.scheduler import job_detector
-from fate_flow.scheduler.dag_scheduler import DAGScheduler
+from fate_flow.scheduler import DAGScheduler
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.constant import ProcessRole
-from fate_flow.manager.resource_manager import ResourceManager
+from fate_flow.manager import ResourceManager
 from fate_flow.settings import IP, GRPC_PORT, _ONE_DAY_IN_SECONDS, stat_logger, API_VERSION
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import get_json_result

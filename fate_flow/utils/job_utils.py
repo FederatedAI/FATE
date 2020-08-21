@@ -38,7 +38,7 @@ from fate_flow.utils import detect_utils
 from fate_flow.utils import api_utils
 from fate_flow.utils import session_utils
 from flask import request, redirect, url_for
-from fate_flow.operation.job_saver import JobSaver
+from fate_flow.operation import JobSaver
 from fate_flow.entity.constant import TaskStatus
 
 

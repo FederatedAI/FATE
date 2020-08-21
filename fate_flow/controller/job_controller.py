@@ -19,18 +19,18 @@ import time
 from fate_flow.utils.authentication_utils import authentication_check
 from federatedml.protobuf.generated import pipeline_pb2
 from fate_arch.common.log import schedule_logger
-from fate_flow.scheduler.task_scheduler import TaskScheduler
+from fate_flow.scheduler import TaskScheduler
 from fate_flow.entity.constant import JobStatus, TaskStatus, EndStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.operation.job_tracker import Tracker
+from fate_flow.operation import Tracker
 from fate_flow.settings import USE_AUTHENTICATION
 from fate_flow.utils import job_utils
 from fate_flow.utils.job_utils import save_job_conf, get_job_dsl_parser
-from fate_flow.operation.job_saver import JobSaver
+from fate_flow.operation import JobSaver
 from fate_arch.common.base_utils import json_dumps, current_timestamp
-from fate_flow.controller.task_controller import TaskController
-from fate_flow.manager.resource_manager import ResourceManager
-from fate_flow.scheduler.job_queue import JobQueue
+from fate_flow.controller import TaskController
+from fate_flow.manager import ResourceManager
+from fate_flow.scheduler import JobQueue
 
 
 class JobController(object):

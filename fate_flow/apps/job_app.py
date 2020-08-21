@@ -21,17 +21,17 @@ import tarfile
 from flask import Flask, request, send_file
 
 from fate_arch.common.base_utils import json_loads, json_dumps
-from fate_flow.scheduler.dag_scheduler import DAGScheduler
-from fate_flow.scheduler.federated_scheduler import FederatedScheduler
+from fate_flow.scheduler import DAGScheduler
+from fate_flow.scheduler import FederatedScheduler
 from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT, TEMP_DIRECTORY
 from fate_flow.utils import job_utils, detect_utils
 from fate_flow.utils.job_utils import get_dsl_parser_by_version
 from fate_flow.utils.api_utils import get_json_result, request_execute_server, error_response
 from fate_flow.entity.constant import WorkMode, JobStatus, FederatedSchedulingStatusCode, RetCode
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.operation.job_tracker import Tracker
-from fate_flow.operation.job_saver import JobSaver
-from fate_flow.operation.job_clean import JobClean
+from fate_flow.operation import Tracker
+from fate_flow.operation import JobSaver
+from fate_flow.operation import JobClean
 
 manager = Flask(__name__)
 

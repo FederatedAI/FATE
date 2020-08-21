@@ -21,11 +21,11 @@ from flask import Flask, request, send_file
 
 from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_arch.common import log
-from fate_flow.scheduler.task_scheduler import TaskScheduler
-from fate_flow.scheduler.dag_scheduler import DAGScheduler
-from fate_flow.scheduler.federated_scheduler import FederatedScheduler
-from fate_flow.controller.task_controller import TaskController
-from fate_flow.operation.job_saver import JobSaver
+from fate_flow.scheduler import TaskScheduler
+from fate_flow.scheduler import DAGScheduler
+from fate_flow.scheduler import FederatedScheduler
+from fate_flow.controller import TaskController
+from fate_flow.operation import JobSaver
 from fate_flow.manager import data_manager
 from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT
 from fate_flow.utils import job_utils, detect_utils

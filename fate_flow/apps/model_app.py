@@ -25,7 +25,7 @@ from fate_flow.db.db_models import Tag, DB, ModelTag, ModelOperationLog as OperL
 from flask import Flask, request, send_file
 
 from fate_flow.manager.model_manager.migrate_model import compare_roles
-from fate_flow.scheduler.dag_scheduler import DAGScheduler
+from fate_flow.scheduler import DAGScheduler
 from fate_flow.settings import stat_logger, API_VERSION, MODEL_STORE_ADDRESS, TEMP_DIRECTORY
 from fate_flow.manager.model_manager import publish_model, migrate_model
 from fate_flow.manager.model_manager import pipelined_model

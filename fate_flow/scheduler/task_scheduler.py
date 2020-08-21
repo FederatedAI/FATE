@@ -19,10 +19,10 @@ from fate_flow.entity.constant import TaskStatus, EndStatus, StatusSet, Scheduli
 from fate_flow.settings import API_VERSION, ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import federated_api
-from fate_flow.scheduler.federated_scheduler import FederatedScheduler
-from fate_flow.operation.job_saver import JobSaver
+from fate_flow.scheduler import FederatedScheduler
+from fate_flow.operation import JobSaver
 from fate_arch.common.log import schedule_logger
-from fate_flow.manager.resource_manager import ResourceManager
+from fate_flow.manager import ResourceManager
 
 
 class TaskScheduler(object):

@@ -24,7 +24,7 @@ from fate_arch import session
 from fate_arch.common import Backend
 from fate_flow.entity.constant import TaskStatus, ProcessRole
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.operation.job_tracker import Tracker
+from fate_flow.operation import Tracker
 from fate_arch import storage
 from fate_flow.utils import job_utils
 from fate_flow.scheduling_apps.client import ControllerClient
