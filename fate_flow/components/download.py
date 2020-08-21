@@ -40,7 +40,7 @@ class Download(object):
             with storage.Session.build(session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),
                                        name=name,
                                        namespace=namespace) as storage_session:
-                data_table = storage_session.get_table(namespace=namespace, name=name)
+                data_table = storage_session.get_table()
                 count = data_table.count()
                 LOGGER.info('===== begin to export data =====')
                 lines = 0

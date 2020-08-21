@@ -250,7 +250,7 @@ class TaskExecutor(object):
                         if storage_table_meta:
                             with storage.Session.build(session_id=job_utils.generate_session_id(task_id, task_version, role, party_id, suffix="storage", random_end=True),
                                                        name=storage_table_meta.get_name(), namespace=storage_table_meta.get_namespace()) as storage_session:
-                                storage_table = storage_session.get_table(name=storage_table_meta.get_name(), namespace=storage_table_meta.get_namespace())
+                                storage_table = storage_session.get_table()
                                 partitions = task_parameters['input_data_partition'] if task_parameters.get(
                                     'input_data_partition', 0) > 0 else storage_table.get_partitions()
                                 output_storage_engine = storage_table.get_engine()

@@ -249,7 +249,7 @@ def component_output_data_download():
         os.makedirs(os.path.dirname(output_data_file_path), exist_ok=True)
         with open(output_data_file_path, 'w') as fw:
             with storage.Session.build(name=output_table_meta.get_name(), namespace=output_table_meta.get_namespace()) as storage_session:
-                output_table = storage_session.get_table(name=output_table_meta.get_name(), namespace=output_table_meta.get_namespace())
+                output_table = storage_session.get_table()
                 for k, v in output_table.collect():
                     data_line, have_data_label, is_str = get_component_output_data_line(src_key=k, src_value=v)
                     fw.write('{}\n'.format(','.join(map(lambda x: str(x), data_line))))
