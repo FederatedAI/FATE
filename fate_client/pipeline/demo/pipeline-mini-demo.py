@@ -47,31 +47,31 @@ def main():
     # initialize pipeline
     pipeline = PipeLine()
     # set job initiator
-    pipeline.set_initiator(role='guest', party_id=guest)
+    pipeline.set_initiator(role="guest", party_id=guest)
     # set participants information
     pipeline.set_roles(guest=guest, host=host, arbiter=arbiter)
 
     # define Reader components to read in data
     reader_0 = Reader(name="reader_0")
     # configure Reader for guest
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
+    reader_0.get_party_instance(role="guest", party_id=guest).algorithm_param(table=guest_train_data)
     # configure Reader for host
-    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
+    reader_0.get_party_instance(role="host", party_id=host).algorithm_param(table=host_train_data)
 
     reader_1 = Reader(name="reader_1")
-    reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_eval_data)
-    reader_1.get_party_instance(role='host', party_id=host).algorithm_param(table=host_eval_data)
+    reader_1.get_party_instance(role="guest", party_id=guest).algorithm_param(table=guest_eval_data)
+    reader_1.get_party_instance(role="host", party_id=host).algorithm_param(table=host_eval_data)
 
     # define DataIO components
     dataio_0 = DataIO(name="dataio_0")
     dataio_1 = DataIO(name="dataio_1")
 
     # get DataIO party instance of guest
-    dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
+    dataio_0_guest_party_instance = dataio_0.get_party_instance(role="guest", party_id=guest)
     # configure DataIO for guest
     dataio_0_guest_party_instance.algorithm_param(with_label=True, output_format="dense")
     # get and configure DataIO party instance of host
-    dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
+    dataio_0.get_party_instance(role="host", party_id=host).algorithm_param(with_label=False)
 
     # define Intersection components
     intersection_0 = Intersection(name="intersection_0")
@@ -109,15 +109,15 @@ def main():
     # initiate predict pipeline
     predict_pipeline = PipeLine()
 
-    reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_eval_data)
-    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_eval_data)
+    reader_2 = Reader(name="reader_2")
+    reader_2.get_party_instance(role="guest", party_id=guest).algorithm_param(table=guest_eval_data)
+    reader_2.get_party_instance(role="host", party_id=host).algorithm_param(table=host_eval_data)
     # add data reader onto predict pipeline
-    predict_pipeline.add_component(reader_0)
+    predict_pipeline.add_component(reader_2)
     # add selected components from train pipeline onto predict pipeline
     # specify data source
     predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
+                                   data=Data(predict_input={pipeline.dataio_0.input.data: reader_2.output.data}))
     # run predict model
     predict_pipeline.predict(backend=backend, work_mode=work_mode)
 
