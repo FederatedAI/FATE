@@ -69,7 +69,7 @@ class TaskController(object):
 
             if backend.is_eggroll():
                 process_cmd = [
-                    'python3',
+                    sys.executable,  # the python executable path
                     sys.modules[TaskExecutor.__module__].__file__,
                     '-j', job_id,
                     '-n', component_name,

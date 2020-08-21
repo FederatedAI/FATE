@@ -18,6 +18,7 @@ import shutil
 import time
 
 from fate_arch.common import log, file_utils
+from fate_arch.storage import StorageEngine, EggRollStorageType
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.utils.job_utils import generate_session_id
 from fate_flow.scheduling_apps.client import ControllerClient
@@ -65,8 +66,14 @@ class Upload(object):
             raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITIONS))
         with storage.Session.build(session_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),
                                    storage_engine=self.parameters["storage_engine"], options=self.parameters.get("options")) as storage_session:
-            from fate_arch.storage import EggRollStorageType
-            address = storage.StorageTableMeta.create_address(storage_engine=self.parameters["storage_engine"], address_dict={"name": name, "namespace": namespace, "storage_type": EggRollStorageType.ROLLPAIR_LMDB})
+            if self.parameters["storage_engine"] in [StorageEngine.EGGROLL, StorageEngine.STANDALONE]:
+                address_dict = {"name": name, "namespace": namespace, "storage_type": EggRollStorageType.ROLLPAIR_LMDB}
+            elif self.parameters["storage_engine"] in [StorageEngine.MYSQL]:
+                from fate_arch.common.conf_utils import get_base_config
+                address_dict = get_base_config("data_storage_address", {})
+                address_dict['db'] = namespace
+                address_dict['name'] = name
+            address = storage.StorageTableMeta.create_address(storage_engine=self.parameters["storage_engine"], address_dict=address_dict)
             self.parameters["partitions"] = partitions
             self.parameters["name"] = name
             if self.parameters.get("destroy", False):

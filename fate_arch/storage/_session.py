@@ -34,6 +34,7 @@ class Session(object):
     @classmethod
     def build(cls, session_id=None, storage_engine=None, computing_engine=None, **kwargs):
         session_id = session_id if session_id else fate_uuid()
+        address = kwargs.get('address', None)
         # Find the storage engine type
         if storage_engine is None and kwargs.get("name") and kwargs.get("namespace"):
             storage_engine, address, partitions = StorageSessionBase.get_storage_info(name=kwargs.get("name"),
@@ -49,6 +50,9 @@ class Session(object):
             return StorageSession(session_id=session_id, options=kwargs.get("options", {}))
         if storage_engine == StorageEngine.STANDALONE:
             from fate_arch.storage.standalone import StorageSession
+            return StorageSession(session_id=session_id, options=kwargs.get("options", {}))
+        if storage_engine == StorageEngine.MYSQL:
+            from fate_arch.storage.mysql import StorageSession
             return StorageSession(session_id=session_id, options=kwargs.get("options", {}))
         else:
             raise NotImplementedError(f"can not be initialized with storage engine: {storage_engine}")
@@ -69,6 +73,7 @@ class Session(object):
                                                                      address_dict=dict(name=dest_name,
                                                                                        namespace=dest_namespace,
                                                                                        storage_type=EggRollStorageType.ROLLPAIR_LMDB))
+                dest_table_engine = StorageEngine.STANDALONE
             elif computing_engine == ComputingEngine.EGGROLL:
                 from fate_arch.storage.eggroll import StorageSession
                 from fate_arch.storage import EggRollStorageType
