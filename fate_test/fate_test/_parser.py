@@ -66,10 +66,11 @@ class Data(object):
     role_str: str
 
     @staticmethod
-    def load(config):
+    def load(config, path: Path):
         kwargs = {}
-        for field_name in ['file', 'head', 'partition', 'table_name', 'namespace']:
+        for field_name in ['head', 'partition', 'table_name', 'namespace']:
             kwargs[field_name] = config[field_name]
+        kwargs['file'] = path.parent.joinpath(config['file']).resolve()
         role_str = config.get("role") if config.get("role") != "guest" else "guest_0"
         return Data(config=kwargs, role_str=role_str)
 
@@ -159,7 +160,7 @@ class Testsuite(object):
 
         dataset = []
         for d in testsuite_config.get("data"):
-            dataset.append(Data.load(d))
+            dataset.append(Data.load(d, path))
 
         jobs = []
         for job_name, job_configs in testsuite_config.get("tasks", {}).items():
