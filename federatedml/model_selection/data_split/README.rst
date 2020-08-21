@@ -20,8 +20,8 @@ definition <../../param/data_split_param.py>`__.
 Data Split module always outputs three tables (train, test, and validate
 sets). Each table may be used as input of another module. Below are the
 rules regarding set sizes: 1. if all three set sizes are None, the
-original data input will be returned as train set, output test and
-validate sets empty; 2. if only test size or validate size is given,
+original data input will be split in the following ratio: 80% to train set,
+20% to validate set, and an empty test set; 2. if only test size or validate size is given,
 train size is set to be of complement given size; 3. only one of the
 three sizes is needed to split input data, but all three may be
 specified. The module takes either int (instance count) or float

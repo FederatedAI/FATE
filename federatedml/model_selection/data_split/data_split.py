@@ -54,12 +54,16 @@ class DataSplitter(ModelBase):
 
     @staticmethod
     def _safe_divide(n, d):
-        result = n / d if d != 0 else 0
+        result = n / d if d > FLOAT_ZERO else 0.0
+        if result >= 1:
+            result = 1.0
         return result
 
     def _split(self, ids, y, test_size, train_size):
-        if test_size == 0:
+        if test_size <= FLOAT_ZERO:
             return ids, [], y, []
+        if train_size <= FLOAT_ZERO:
+            return [], ids, [], y
         stratify = y if self.stratified else None
         id_train, id_test, y_train, y_test = train_test_split(ids, y,
                                                               test_size=test_size, train_size=train_size,
@@ -92,14 +96,14 @@ class DataSplitter(ModelBase):
         return
 
     @staticmethod
-    def get_train_test_size(test_size, validate_size):
+    def get_train_test_size(train_size, test_size):
         # return original set size if int
-        if isinstance(test_size, int):
-            return validate_size, test_size
-        test_validate_size = test_size + validate_size
-        new_train_size = DataSplitter._safe_divide(test_size, test_validate_size)
-        new_test_size = DataSplitter._safe_divide(validate_size, test_validate_size)
-        return new_test_size, new_train_size
+        if isinstance(test_size, int) and isinstance(train_size, int):
+            return train_size, test_size
+        total_size = test_size + train_size
+        new_train_size = DataSplitter._safe_divide(train_size, total_size)
+        new_test_size = DataSplitter._safe_divide(test_size, total_size)
+        return new_train_size, new_test_size
 
     def param_validator(self, data_inst):
         """
