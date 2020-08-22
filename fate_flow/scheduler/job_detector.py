@@ -15,7 +15,7 @@
 #
 from fate_arch.common.log import schedule_logger
 from fate_flow.scheduler import FederatedScheduler
-from fate_flow.entity.constant import JobStatus, TaskStatus
+from fate_flow.entity.types import JobStatus, TaskStatus
 from fate_flow.settings import detect_logger, API_VERSION
 from fate_flow.utils import cron, job_utils, api_utils
 from fate_flow.entity.runtime_config import RuntimeConfig

@@ -19,7 +19,7 @@ import shutil
 from flask import Flask, request
 
 from fate_arch.storage import StorageEngine
-from fate_flow.entity.constant import StatusSet
+from fate_flow.entity.types import StatusSet
 from fate_arch import storage
 from fate_flow.settings import stat_logger, USE_LOCAL_DATA, WORK_MODE
 from fate_flow.utils.api_utils import get_json_result

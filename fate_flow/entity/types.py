@@ -13,41 +13,19 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from fate_arch.common import WorkMode, Backend
 from enum import IntEnum
-
-
-class WorkMode(IntEnum):
-    STANDALONE = 0
-    CLUSTER = 1
-
-
-class Backend(IntEnum):
-    EGGROLL = 0
-    SPARK = 1
-
-    def is_eggroll(self):
-        return self.value == self.EGGROLL
-
-    def is_spark(self):
-        return self.value == self.SPARK
-
-
-class StoreEngine(IntEnum):
-    EGGROLL = 0
-    HDFS = 1
-
-    def is_hdfs(self):
-        return self.value == self.HDFS
-
-    def is_eggroll(self):
-        return self.value == self.EGGROLL
 
 
 class RunParameters(object):
     def __init__(self, **kwargs):
-        self.work_mode = None
+        self.job_type = "train"
+        self.work_mode = WorkMode.STANDALONE
+        self.backend = Backend.EGGROLL  # Pre-v1.5 configuration item
         self.computing_backend = None
+        self.computing_engine = None
         self.federation_backend = None
+        self.federation_engine = None
         self.federated_mode = None
         self.task_parallelism = None
         self.task_nodes = None
@@ -55,7 +33,10 @@ class RunParameters(object):
         self.task_memory_per_node = None
         self.federated_comm = None
         self.align_task_input_data_partition = None
+        self.model_id = None
+        self.model_version = None
         self.dsl_version = None
+        self.input_data_partition = None
 
         for k, v in kwargs.items():
             if hasattr(self, k):

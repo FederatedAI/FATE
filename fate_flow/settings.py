@@ -19,14 +19,12 @@ import os
 from fate_arch.common import file_utils, log
 from fate_arch.common import Backend
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.entity.constant import StoreEngine
 from fate_arch.common.conf_utils import get_base_config
 import __main__
 
 
 WORK_MODE = get_base_config('work_mode', 0)
 BACKEND = Backend.EGGROLL
-STORE_ENGINE=StoreEngine.EGGROLL
 USE_LOCAL_DATABASE = get_base_config('use_local_database', True)
 
 # upload data
@@ -50,7 +48,7 @@ FATE_SERVICES_REGISTERED_PATH = {
 SERVER_CONF_PATH = 'conf/server_conf.json'
 
 # job maximum number  of the initiator
-DEFAULT_TASK_PARALLELISM = 2
+DEFAULT_TASK_PARALLELISM = 1
 DEFAULT_TASK_CORES_PER_NODE = 5
 DEFAULT_TASK_MEMORY_PER_NODE = 0
 
@@ -110,5 +108,3 @@ ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH = True
 # init
 RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
 RuntimeConfig.init_config(JOB_SERVER_HOST=IP, HTTP_PORT=HTTP_PORT)
-RuntimeConfig.init_config(BACKEND=BACKEND)
-RuntimeConfig.init_config(STORE_ENGINE=STORE_ENGINE)

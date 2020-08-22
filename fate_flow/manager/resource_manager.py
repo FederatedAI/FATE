@@ -20,7 +20,7 @@ from fate_arch.common import base_utils
 from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import DB, BackendEngine, Job
-from fate_flow.entity.constant import ResourceOperation, RunParameters
+from fate_flow.entity.types import ResourceOperation, RunParameters
 from fate_flow.settings import stat_logger
 from fate_flow.utils import job_utils
 

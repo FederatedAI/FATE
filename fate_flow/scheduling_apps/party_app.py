@@ -16,7 +16,7 @@
 
 from flask import Flask, request
 
-from fate_flow.entity.constant import RetCode
+from fate_flow.entity.types import RetCode
 from fate_flow.controller import JobController
 from fate_flow.controller import TaskController
 from fate_flow.settings import stat_logger

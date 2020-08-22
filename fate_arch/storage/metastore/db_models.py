@@ -23,7 +23,7 @@ from playhouse.pool import PooledMySQLDatabase
 
 from fate_arch.storage.metastore.base_model import JSONField, SerializedField, BaseModel
 from fate_arch.common.conf_utils import get_base_config
-from fate_flow.entity.constant import WorkMode
+from fate_arch.common import WorkMode
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_arch.common import log
 

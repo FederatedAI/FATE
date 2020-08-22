@@ -13,16 +13,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_arch.common import FederatedComm
+from fate_arch.common import FederatedComm, FederatedMode
 from fate_arch.common.base_utils import json_loads, current_timestamp
 from fate_arch.common.log import schedule_logger
-from fate_arch.common import WorkMode
-from fate_arch.common import compatibility_utils, conf_utils
+from fate_arch.common import WorkMode, Backend
+from fate_arch.common import conf_utils
 from fate_flow.db.db_models import Job
 from fate_flow.scheduler import FederatedScheduler
 from fate_flow.scheduler import TaskScheduler
 from fate_flow.operation import JobSaver
-from fate_flow.entity.constant import JobStatus, TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, ResourceOperation, FederatedSchedulingStatusCode
+from fate_flow.entity.types import JobStatus, TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, ResourceOperation, FederatedSchedulingStatusCode, RunParameters
 from fate_flow.operation import Tracker
 from fate_flow.controller import JobController
 from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT, DEFAULT_TASK_PARALLELISM, DEFAULT_TASK_CORES_PER_NODE, DEFAULT_TASK_MEMORY_PER_NODE
@@ -32,6 +32,8 @@ from fate_flow.utils import model_utils
 from fate_flow.scheduler import JobQueue
 from fate_flow.utils.cron import Cron
 from fate_flow.manager import ResourceManager
+from fate_arch.computing import ComputingEngine
+from fate_arch.federation import FederationEngine
 
 
 class DAGScheduler(Cron):
@@ -42,39 +44,28 @@ class DAGScheduler(Cron):
         schedule_logger(job_id).info('submit job, job_id {}, body {}'.format(job_id, job_data))
         job_dsl = job_data.get('job_dsl', {})
         job_runtime_conf = job_data.get('job_runtime_conf', {})
-        job_parameters = job_runtime_conf['job_parameters']
         job_initiator = job_runtime_conf['initiator']
-
-        # Compatible
-        computing_engine, federation_engine, federated_mode = compatibility_utils.backend_compatibility(**job_runtime_conf["job_parameters"])
-        job_parameters["computing_backend"] = job_parameters.get("computing_backend", f"DEFAULT_{computing_engine}")
-        job_parameters["federation_backend"] = job_parameters.get("federation_backend", f"DEFAULT_{federation_engine}")
-        job_parameters["federated_mode"] = federated_mode
-
-        # set default parameters
-        job_parameters["task_parallelism"] = int(job_parameters.get("task_parallelism", DEFAULT_TASK_PARALLELISM))
-        computing_backend_info = ResourceManager.get_backend_registration_info(engine_id=job_parameters["computing_backend"])
-        job_parameters["task_nodes"] = job_parameters.get("task_nodes", computing_backend_info.f_nodes)
-        job_parameters["task_cores_per_node"] = job_parameters.get("task_cores_per_node", DEFAULT_TASK_CORES_PER_NODE)
-        job_parameters["task_memory_per_node"] = job_parameters.get("task_memory_per_node", DEFAULT_TASK_MEMORY_PER_NODE)
-        job_parameters["federated_comm"] = job_parameters.get("federated_comm", conf_utils.get_base_config("federated_comm", FederatedComm.PUSH))
+        job_parameters = RunParameters(**job_runtime_conf['job_parameters'])
+        cls.backend_compatibility(job_parameters=job_parameters)
+        cls.set_default_job_parameters(job_parameters=job_parameters)
 
         job_utils.check_pipeline_job_runtime_conf(job_runtime_conf)
-        job_type = job_parameters.get('job_type', '')
-        if job_type != 'predict':
+        if job_parameters.job_type != 'predict':
             # generate job model info
-            job_parameters['model_id'] = model_utils.gen_model_id(job_runtime_conf['role'])
-            job_parameters['model_version'] = job_id
+            job_parameters.model_id = model_utils.gen_model_id(job_runtime_conf['role'])
+            job_parameters.model_version = job_id
             train_runtime_conf = {}
         else:
-            detect_utils.check_config(job_parameters, ['model_id', 'model_version'])
+            detect_utils.check_config(job_parameters.to_dict(), ['model_id', 'model_version'])
             # get inference dsl from pipeline model as job dsl
             tracker = Tracker(job_id=job_id, role=job_initiator['role'], party_id=job_initiator['party_id'],
-                                  model_id=job_parameters['model_id'], model_version=job_parameters['model_version'])
+                              model_id=job_parameters.model_id, model_version=job_parameters.model_version)
             pipeline_model = tracker.get_output_model('pipeline')
             if not job_dsl:
                 job_dsl = json_loads(pipeline_model['Pipeline'].inference_dsl)
             train_runtime_conf = json_loads(pipeline_model['Pipeline'].train_runtime_conf)
+
+        job_runtime_conf["job_parameters"] = job_parameters.to_dict()
         path_dict = job_utils.save_job_conf(job_id=job_id,
                                             job_dsl=job_dsl,
                                             job_runtime_conf=job_runtime_conf,
@@ -87,7 +78,7 @@ class DAGScheduler(Cron):
         job.f_runtime_conf = job_runtime_conf
         job.f_train_runtime_conf = train_runtime_conf
         job.f_roles = job_runtime_conf['role']
-        job.f_work_mode = job_parameters['work_mode']
+        job.f_work_mode = job_parameters.work_mode
         job.f_initiator_role = job_initiator['role']
         job.f_initiator_party_id = job_initiator['party_id']
 
@@ -99,16 +90,16 @@ class DAGScheduler(Cron):
 
         FederatedScheduler.create_job(job=job)
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
-                                        runtime_conf=job_runtime_conf,
-                                        train_runtime_conf=train_runtime_conf)
+                                                       runtime_conf=job_runtime_conf,
+                                                       train_runtime_conf=train_runtime_conf)
 
-        if job_parameters['work_mode'] == WorkMode.CLUSTER:
+        if job_parameters.work_mode == WorkMode.CLUSTER:
             # Save the status information of all participants in the initiator for scheduling
             for role, party_ids in job_runtime_conf["role"].items():
                 for party_id in party_ids:
                     if role == job_initiator['role'] and party_id == job_initiator['party_id']:
                         continue
-                    JobController.initialize_tasks(job_id, role, party_id, False, job_initiator, job_parameters, dsl_parser)
+                    JobController.initialize_tasks(job_id, role, party_id, False, job_initiator, job_parameters.to_dict(), dsl_parser)
 
         # push into queue
         try:
@@ -117,14 +108,54 @@ class DAGScheduler(Cron):
             raise Exception(f'push job into queue failed:\n{e}')
 
         schedule_logger(job_id).info(
-            'submit job successfully, job id is {}, model id is {}'.format(job.f_job_id, job_parameters['model_id']))
+            'submit job successfully, job id is {}, model id is {}'.format(job.f_job_id, job_parameters.model_id))
         board_url = "http://{}:{}{}".format(
             ServiceUtils.get_item("fateboard", "host"),
             ServiceUtils.get_item("fateboard", "port"),
             FATE_BOARD_DASHBOARD_ENDPOINT).format(job_id, job_initiator['role'], job_initiator['party_id'])
         logs_directory = job_utils.get_job_log_directory(job_id)
         return job_id, path_dict['job_dsl_path'], path_dict['job_runtime_conf_path'], logs_directory, \
-               {'model_id': job_parameters['model_id'], 'model_version': job_parameters['model_version']}, board_url
+               {'model_id': job_parameters.model_id, 'model_version': job_parameters.model_version}, board_url
+
+    @classmethod
+    def backend_compatibility(cls, job_parameters: RunParameters):
+        # Compatible with previous 1.5 versions
+        if job_parameters.computing_backend is None or job_parameters.federation_backend is None:
+            if job_parameters.work_mode is None or job_parameters.backend is None:
+                raise RuntimeError("unable to find compatible backend engines")
+            work_mode = WorkMode(job_parameters.work_mode)
+            backend = Backend(job_parameters.backend)
+            if backend == Backend.EGGROLL:
+                if work_mode == WorkMode.CLUSTER:
+                    job_parameters.computing_engine = ComputingEngine.EGGROLL
+                    job_parameters.federation_engine = FederationEngine.EGGROLL
+                else:
+                    job_parameters.computing_engine = ComputingEngine.STANDALONE
+                    job_parameters.federation_engine = FederationEngine.STANDALONE
+            elif backend == Backend.SPARK:
+                job_parameters.computing_engine = ComputingEngine.SPARK
+                job_parameters.federation_engine = FederationEngine.MQ
+            job_parameters.computing_backend = f"DEFAULT_{job_parameters.computing_engine}"
+            job_parameters.federation_backend = f"DEFAULT_{job_parameters.federation_engine}"
+        if job_parameters.federated_mode is None:
+            if job_parameters.computing_engine in [ComputingEngine.EGGROLL, ComputingEngine.SPARK]:
+                job_parameters.federated_mode = FederatedMode.MULTIPLE
+            elif job_parameters.computing_engine in [ComputingEngine.STANDALONE]:
+                job_parameters.federated_mode = FederatedMode.SINGLE
+
+    @classmethod
+    def set_default_job_parameters(cls, job_parameters: RunParameters):
+        if job_parameters.task_parallelism is None:
+            job_parameters.task_parallelism = DEFAULT_TASK_PARALLELISM
+        computing_backend_info = ResourceManager.get_backend_registration_info(engine_id=job_parameters.computing_backend)
+        if job_parameters.task_nodes is None:
+            job_parameters.task_nodes = computing_backend_info.f_nodes
+        if job_parameters.task_cores_per_node is None:
+            job_parameters.task_cores_per_node = DEFAULT_TASK_CORES_PER_NODE
+        if job_parameters.task_memory_per_node is None:
+            job_parameters.task_memory_per_node = DEFAULT_TASK_MEMORY_PER_NODE
+        if job_parameters.federated_comm is None:
+            job_parameters.federated_comm = conf_utils.get_base_config("federated_comm", FederatedComm.PUSH)
 
     def run_do(self):
         self.schedule_waiting_jobs()

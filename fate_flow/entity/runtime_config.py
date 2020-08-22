@@ -17,13 +17,15 @@ import os
 import dotenv
 
 from fate_arch.common.file_utils import get_project_base_directory
-from fate_flow.entity.constant import ProcessRole
+from fate_flow.entity.types import ProcessRole
 
 
 class RuntimeConfig(object):
     WORK_MODE = None
-    BACKEND = None
-    STORE_ENGINE = None
+    COMPUTING_ENGINE = None
+    FEDERATION_ENGINE = None
+    FEDERATED_MODE = None
+
     JOB_QUEUE = None
     USE_LOCAL_DATABASE = False
     HTTP_PORT = None

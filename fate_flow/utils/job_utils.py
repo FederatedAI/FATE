@@ -25,7 +25,7 @@ import typing
 import uuid
 
 import psutil
-from fate_flow.entity.constant import JobStatus
+from fate_flow.entity.types import JobStatus
 
 from fate_arch.common import file_utils
 from fate_arch.common.base_utils import json_loads, json_dumps, fate_uuid, current_timestamp
@@ -36,7 +36,7 @@ from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE
 from fate_flow.utils import detect_utils
 from fate_flow.utils import session_utils
 from fate_flow.operation import JobSaver
-from fate_flow.entity.constant import TaskStatus
+from fate_flow.entity.types import TaskStatus
 
 
 class IdCounter(object):
@@ -482,7 +482,8 @@ def cleaning(signum, frame):
 
 
 def federation_cleanup(job, task):
-    from fate_flow.entity.constant import Backend, StoreEngine
+    from fate_arch.common import Backend
+    from fate_arch.storage import StorageEngine
     from fate_arch.common import Party
 
     runtime_conf = json_loads(job.f_runtime_conf)

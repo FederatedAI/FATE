@@ -21,8 +21,7 @@ from fate_arch.common import file_utils, log
 from fate_arch.common.base_utils import current_timestamp, timestamp_to_date
 from fate_arch.common.log import schedule_logger
 from fate_arch import session
-from fate_arch.common import Backend
-from fate_flow.entity.constant import TaskStatus, ProcessRole
+from fate_flow.entity.types import TaskStatus, ProcessRole, RunParameters
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation import Tracker
 from fate_arch import storage
@@ -30,6 +29,7 @@ from fate_flow.utils import job_utils, schedule_utils
 from fate_flow.scheduling_apps.client import ControllerClient
 from fate_flow.scheduling_apps.client import TrackerClient
 from fate_flow.db.db_models import TrackingOutputDataInfo, fill_db_model_object
+from fate_arch.computing import ComputingEngine
 
 
 class TaskExecutor(object):
@@ -81,8 +81,7 @@ class TaskExecutor(object):
             job_conf = job_utils.get_job_conf(job_id)
             job_dsl = job_conf["job_dsl_path"]
             job_runtime_conf = job_conf["job_runtime_conf_path"]
-            job_parameters = job_runtime_conf['job_parameters']
-            job_initiator = job_runtime_conf['initiator']
+            job_parameters = RunParameters(**job_runtime_conf['job_parameters'])
             dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
                                                       runtime_conf=job_runtime_conf,
                                                       train_runtime_conf=job_conf["train_runtime_conf_path"],
@@ -99,7 +98,8 @@ class TaskExecutor(object):
             task_input_dsl = component.get_input()
             task_output_dsl = component.get_output()
             component_parameters_on_party['output_data_name'] = task_output_dsl.get('data')
-            task_parameters = file_utils.load_json_conf(args.config)
+            # task_parameters = file_utils.load_json_conf(args.config)
+            task_parameters = RunParameters(**file_utils.load_json_conf(args.config))
             TaskExecutor.monkey_patch()
         except Exception as e:
             traceback.print_exc()
@@ -110,20 +110,20 @@ class TaskExecutor(object):
             job_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, str(party_id))
             task_log_dir = os.path.join(job_log_dir, component_name)
             log.LoggerFactory.set_directory(directory=task_log_dir, parent_log_dir=job_log_dir,
-                                                  append_to_parent_log=True, force=True)
+                                            append_to_parent_log=True, force=True)
 
             tracker = Tracker(job_id=job_id, role=role, party_id=party_id, component_name=component_name,
                               task_id=task_id,
                               task_version=task_version,
-                              model_id=job_parameters['model_id'],
-                              model_version=job_parameters['model_version'],
+                              model_id=job_parameters.model_id,
+                              model_version=job_parameters.model_version,
                               component_module_name=module_name)
             tracker_client = TrackerClient(job_id=job_id, role=role, party_id=party_id,
                                            component_name=component_name,
                                            task_id=task_id,
                                            task_version=task_version,
-                                           model_id=job_parameters['model_id'],
-                                           model_version=job_parameters['model_version'],
+                                           model_id=job_parameters.model_id,
+                                           model_version=job_parameters.model_version,
                                            component_module_name=module_name)
             run_class_paths = component_parameters_on_party.get('CodePath').split('/')
             run_class_package = '.'.join(run_class_paths[:-2]) + '.' + run_class_paths[-2].replace('.py', '')
@@ -132,16 +132,17 @@ class TaskExecutor(object):
             cls.report_task_update_to_driver(task_info=task_info)
 
             # init environment, process is shared globally
-            RuntimeConfig.init_config(WORK_MODE=job_parameters['work_mode'],
-                                      BACKEND=job_parameters.get('backend', 0),
-                                      STORE_ENGINE=job_parameters.get('store_engine', 0))
+            RuntimeConfig.init_config(WORK_MODE=job_parameters.work_mode,
+                                      COMPUTING_ENGINE=job_parameters.computing_engine,
+                                      FEDERATION_ENGINE=job_parameters.federation_engine,
+                                      FEDERATED_MODE=job_parameters.federated_mode)
 
-            if args.processors_per_node and args.processors_per_node > 0 and RuntimeConfig.BACKEND == Backend.EGGROLL:
+            if args.processors_per_node and args.processors_per_node > 0 and RuntimeConfig.COMPUTING_ENGINE == ComputingEngine.EGGROLL:
                 session_options = {"eggroll.session.processors.per.node": args.processors_per_node}
             else:
                 session_options = {}
 
-            sess = session.Session.create(backend=RuntimeConfig.BACKEND, work_mode=RuntimeConfig.WORK_MODE)
+            sess = session.Session(computing_type=job_parameters.computing_engine, federation_type=job_parameters.federation_engine)
             computing_session_id = job_utils.generate_session_id(task_id, task_version, role, party_id, "computing")
             sess.init_computing(computing_session_id=computing_session_id, options=session_options)
             federation_session_id = job_utils.generate_federated_id(task_id, task_version)
@@ -208,7 +209,7 @@ class TaskExecutor(object):
                                                         task_info["party_status"]))
 
     @classmethod
-    def get_task_run_args(cls, job_id, role, party_id, task_id, task_version, job_args, job_parameters, task_parameters,
+    def get_task_run_args(cls, job_id, role, party_id, task_id, task_version, job_args, job_parameters: RunParameters, task_parameters: RunParameters,
                           input_dsl, filter_type=None, filter_attr=None):
         task_run_args = {}
         output_storage_engine = None
@@ -251,8 +252,7 @@ class TaskExecutor(object):
                             with storage.Session.build(session_id=job_utils.generate_session_id(task_id, task_version, role, party_id, suffix="storage", random_end=True),
                                                        name=storage_table_meta.get_name(), namespace=storage_table_meta.get_namespace()) as storage_session:
                                 storage_table = storage_session.get_table()
-                                partitions = task_parameters['input_data_partition'] if task_parameters.get(
-                                    'input_data_partition', 0) > 0 else storage_table.get_partitions()
+                                partitions = task_parameters.input_data_partition if task_parameters.input_data_partition else storage_table.get_partitions()
                                 output_storage_engine = storage_table.get_engine()
                             computing_table = session.get_latest_opened().computing.load(
                                 storage_table_meta.get_address(),
@@ -278,8 +278,8 @@ class TaskExecutor(object):
                     else:
                         raise Exception('get input {} failed'.format(input_type))
                     models = Tracker(job_id=job_id, role=role, party_id=party_id, component_name=search_component_name,
-                                     model_id=job_parameters['model_id'],
-                                     model_version=job_parameters['model_version']).get_output_model(
+                                     model_id=job_parameters.model_id,
+                                     model_version=job_parameters.model_version).get_output_model(
                         model_alias=search_model_alias)
                     this_type_args[search_component_name] = models
         return task_run_args, output_storage_engine

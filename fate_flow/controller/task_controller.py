@@ -20,14 +20,14 @@ from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import Task
 from fate_flow.operation.task_executor import TaskExecutor
 from fate_flow.scheduler import FederatedScheduler
-from fate_flow.entity.constant import TaskStatus, EndStatus
+from fate_flow.entity.types import TaskStatus, EndStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.utils import job_utils
 import os
 from fate_flow.operation import JobSaver
 from fate_arch.common.base_utils import json_dumps
-from fate_arch.common import base_utils
-from fate_flow.entity.constant import Backend, RunParameters
+from fate_arch.common import base_utils, Backend
+from fate_flow.entity.types import RunParameters
 from fate_flow.manager import ResourceManager
 from fate_flow.operation import Tracker
 

@@ -16,7 +16,7 @@ import operator
 
 from fate_arch.common import base_utils
 from fate_flow.db.db_models import DB, DBQueue
-from fate_flow.entity.constant import JobStatus
+from fate_flow.entity.types import JobStatus
 
 
 class JobQueue(object):

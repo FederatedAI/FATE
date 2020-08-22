@@ -17,10 +17,10 @@ import uuid
 import operator
 from typing import List
 
+from fate_arch.computing import ComputingEngine
 from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64
 from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import DB, TrackingMetric, TrackingOutputDataInfo, ComponentSummary
-from fate_flow.entity.constant import Backend
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.model_manager import pipelined_model
@@ -388,7 +388,7 @@ class Tracker(object):
         schedule_logger(self.job_id).info('clean task {} on {} {}'.format(self.task_id,
                                                                           self.role,
                                                                           self.party_id))
-        if Backend.EGGROLL != RuntimeConfig.BACKEND:
+        if RuntimeConfig.COMPUTING_ENGINE != ComputingEngine.EGGROLL:
             return
         try:
             for role, party_ids in roles.items():

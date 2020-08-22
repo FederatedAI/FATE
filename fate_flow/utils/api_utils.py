@@ -21,7 +21,7 @@ from flask import jsonify
 from flask import Response
 
 from fate_arch.common.log import audit_logger
-from fate_flow.entity.constant import WorkMode
+from fate_arch.common import WorkMode
 from fate_flow.settings import DEFAULT_GRPC_OVERALL_TIMEOUT, CHECK_NODES_IDENTITY,\
     FATE_MANAGER_GET_NODE_INFO_ENDPOINT, HEADERS, SERVER_CONF_PATH, SERVERS
 from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_proxy_data_channel

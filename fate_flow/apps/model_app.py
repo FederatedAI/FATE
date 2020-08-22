@@ -34,7 +34,7 @@ from fate_flow.utils import job_utils
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils.detect_utils import check_config
 from fate_flow.utils.model_utils import gen_party_model_id
-from fate_flow.entity.constant import ModelOperation, TagOperation
+from fate_flow.entity.types import ModelOperation, TagOperation
 
 manager = Flask(__name__)
 

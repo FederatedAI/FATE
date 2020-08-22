@@ -16,7 +16,7 @@
 from fate_flow.utils.authentication_utils import authentication_check
 from federatedml.protobuf.generated import pipeline_pb2
 from fate_arch.common.log import schedule_logger
-from fate_flow.entity.constant import JobStatus, TaskStatus, EndStatus
+from fate_flow.entity.types import JobStatus, TaskStatus, EndStatus
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation import Tracker
 from fate_flow.settings import USE_AUTHENTICATION

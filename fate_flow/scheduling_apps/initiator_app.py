@@ -13,27 +13,19 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import io
-import os
-import tarfile
 
-from flask import Flask, request, send_file
+from flask import Flask, request
 
-from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_arch.common import log
-from fate_flow.scheduler import TaskScheduler
-from fate_flow.scheduler import DAGScheduler
-from fate_flow.scheduler import FederatedScheduler
-from fate_flow.controller import TaskController
-from fate_flow.operation import JobSaver
-from fate_flow.manager import data_manager
-from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT
-from fate_flow.utils import job_utils, detect_utils
-from fate_flow.utils.api_utils import get_json_result, request_execute_server
-from fate_flow.entity.constant import WorkMode, JobStatus, RetCode, FederatedSchedulingStatusCode
-from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_arch.common.base_utils import json_dumps
 from fate_flow.controller import JobController
 from fate_flow.db.db_models import Task
+from fate_flow.entity.types import JobStatus, RetCode, FederatedSchedulingStatusCode
+from fate_flow.operation import JobSaver
+from fate_flow.scheduler import DAGScheduler
+from fate_flow.scheduler import FederatedScheduler
+from fate_flow.settings import stat_logger
+from fate_flow.utils.api_utils import get_json_result
 
 manager = Flask(__name__)
 
@@ -42,6 +34,7 @@ manager = Flask(__name__)
 def internal_server_error(e):
     stat_logger.exception(e)
     return get_json_result(retcode=RetCode.EXCEPTION_ERROR, retmsg=log.exception_to_trace_string(e))
+
 
 # apply initiator for control operation
 
@@ -66,7 +59,8 @@ def stop_job(job_id, role, party_id, stop_status):
 
 @manager.route('/<job_id>/<role>/<party_id>/rerun', methods=['POST'])
 def rerun_job(job_id, role, party_id):
-    DAGScheduler.rerun_job(job_id=job_id, initiator_role=role, initiator_party_id=party_id, component_name=request.json.get("component_name"))
+    DAGScheduler.rerun_job(job_id=job_id, initiator_role=role, initiator_party_id=party_id,
+                           component_name=request.json.get("component_name"))
     return get_json_result(retcode=0, retmsg='success')
 
 
