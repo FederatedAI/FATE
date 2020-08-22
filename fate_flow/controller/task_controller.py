@@ -27,7 +27,7 @@ import os
 from fate_flow.operation import JobSaver
 from fate_arch.common.base_utils import json_dumps
 from fate_arch.common import base_utils
-from fate_flow.entity.constant import Backend
+from fate_flow.entity.constant import Backend, RunParameters
 from fate_flow.manager import ResourceManager
 from fate_flow.operation import Tracker
 
@@ -65,6 +65,7 @@ class TaskController(object):
         schedule_logger(job_id).info(
             'try to start job {} task {} {} on {} {} executor subprocess'.format(job_id, task_id, task_version, role, party_id))
         task_executor_process_start_status = False
+        run_parameters = RunParameters(**task_parameters)
         try:
             task_info = {
                 "job_id": job_id,
@@ -98,7 +99,7 @@ class TaskController(object):
                     '-r', role,
                     '-p', party_id,
                     '-c', task_parameters_path,
-                    '--processors_per_node', str(task_parameters.get("processors_per_node", 0)),
+                    '--processors_per_node', str(run_parameters.task_cores_per_node if run_parameters.task_cores_per_node else 0),
                     '--run_ip', RuntimeConfig.JOB_SERVER_HOST,
                     '--job_server', '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT),
                 ]

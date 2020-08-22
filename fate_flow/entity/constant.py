@@ -43,6 +43,28 @@ class StoreEngine(IntEnum):
         return self.value == self.EGGROLL
 
 
+class RunParameters(object):
+    def __init__(self, **kwargs):
+        self.work_mode = None
+        self.computing_backend = None
+        self.federation_backend = None
+        self.federated_mode = None
+        self.task_parallelism = None
+        self.task_nodes = None
+        self.task_cores_per_node = None
+        self.task_memory_per_node = None
+        self.federated_comm = None
+        self.align_task_input_data_partition = None
+        self.dsl_version = None
+
+        for k, v in kwargs.items():
+            if hasattr(self, k):
+                setattr(self, k, v)
+
+    def to_dict(self):
+        return self.__dict__
+
+
 class RetCode(IntEnum):
     SUCCESS = 0
     EXCEPTION_ERROR = 100

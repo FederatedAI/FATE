@@ -21,7 +21,7 @@ computing:
       host: 127.0.0.1
       port: 9370
       home: "./eggroll/python/eggroll"
-    cores: 20
+    cores_per_node: 20
     nodes: 1
   DEFAULT_SPARK:
     engine: SPARK

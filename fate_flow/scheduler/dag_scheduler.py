@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_arch.common import FederatedMode, FederatedComm
+from fate_arch.common import FederatedComm
 from fate_arch.common.base_utils import json_loads, current_timestamp
 from fate_arch.common.log import schedule_logger
 from fate_arch.common import WorkMode
@@ -25,12 +25,13 @@ from fate_flow.operation import JobSaver
 from fate_flow.entity.constant import JobStatus, TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, ResourceOperation, FederatedSchedulingStatusCode
 from fate_flow.operation import Tracker
 from fate_flow.controller import JobController
-from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT, DEFAULT_TASK_PARALLELISM, DEFAULT_CORES_PER_TASK, DEFAULT_MEMORY_PER_TASK
+from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT, DEFAULT_TASK_PARALLELISM, DEFAULT_TASK_CORES_PER_NODE, DEFAULT_TASK_MEMORY_PER_NODE
 from fate_flow.utils import detect_utils, job_utils, schedule_utils
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils import model_utils
 from fate_flow.scheduler import JobQueue
 from fate_flow.utils.cron import Cron
+from fate_flow.manager import ResourceManager
 
 
 class DAGScheduler(Cron):
@@ -52,8 +53,10 @@ class DAGScheduler(Cron):
 
         # set default parameters
         job_parameters["task_parallelism"] = int(job_parameters.get("task_parallelism", DEFAULT_TASK_PARALLELISM))
-        job_parameters["cores_per_task"] = int(job_parameters.get("cores_per_task", DEFAULT_CORES_PER_TASK))
-        job_parameters["memory_per_task"] = int(job_parameters.get("memory_per_task", DEFAULT_MEMORY_PER_TASK))
+        computing_backend_info = ResourceManager.get_backend_registration_info(engine_id=job_parameters["computing_backend"])
+        job_parameters["task_nodes"] = job_parameters.get("task_nodes", computing_backend_info.f_nodes)
+        job_parameters["task_cores_per_node"] = job_parameters.get("task_cores_per_node", DEFAULT_TASK_CORES_PER_NODE)
+        job_parameters["task_memory_per_node"] = job_parameters.get("task_memory_per_node", DEFAULT_TASK_MEMORY_PER_NODE)
         job_parameters["federated_comm"] = job_parameters.get("federated_comm", conf_utils.get_base_config("federated_comm", FederatedComm.PUSH))
 
         job_utils.check_pipeline_job_runtime_conf(job_runtime_conf)

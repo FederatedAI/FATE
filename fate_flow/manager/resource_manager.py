@@ -15,12 +15,12 @@
 #
 
 import operator
-
+from fate_arch.computing import ComputingEngine
 from fate_arch.common import base_utils
 from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common.log import schedule_logger
-from fate_flow.db.db_models import DB, ResourceRegistry, Job
-from fate_flow.entity.constant import ResourceOperation
+from fate_flow.db.db_models import DB, BackendEngine, Job
+from fate_flow.entity.constant import ResourceOperation, RunParameters
 from fate_flow.settings import stat_logger
 from fate_flow.utils import job_utils
 
@@ -30,43 +30,48 @@ class ResourceManager(object):
     def initialize(cls):
         # initialize default
         with DB.connection_context():
-            for engine_id, engine_info in get_base_config("computing", {}).items():
-                resources = ResourceRegistry.select().where(ResourceRegistry.f_engine_id == engine_id)
-                if resources:
-                    resource = resources[0]
-                    update_fields = {}
-                    update_fields[ResourceRegistry.f_cores] = engine_info.get("cores", 0)
-                    update_fields[ResourceRegistry.f_memory] = engine_info.get("memory", 0)
-                    update_fields[ResourceRegistry.f_remaining_cores] = ResourceRegistry.f_remaining_cores + (engine_info.get("cores", 0) - resource.f_cores)
-                    update_fields[ResourceRegistry.f_remaining_memory] = ResourceRegistry.f_remaining_memory + (engine_info.get("memory", 0) - resource.f_memory)
-                    update_fields[ResourceRegistry.f_nodes] = engine_info.get("nodes", 1)
-                    operate = ResourceRegistry.update(update_fields).where(ResourceRegistry.f_engine_id == engine_id)
-                    update_status = operate.execute() > 0
-                    if update_status:
-                        stat_logger.info(f"update default computing engine")
+            for engine_type in ["computing"]:
+                for engine_id, engine_info in get_base_config(engine_type, {}).items():
+                    nodes = engine_info.get("nodes", 1)
+                    cores = engine_info.get("cores_per_node", 0) * nodes
+                    memory = engine_info.get("memory_per_node", 0) * nodes
+                    resources = BackendEngine.select().where(BackendEngine.f_engine_id == engine_id)
+                    if resources:
+                        resource = resources[0]
+                        update_fields = {}
+                        update_fields[BackendEngine.f_cores] = cores
+                        update_fields[BackendEngine.f_memory] = memory
+                        update_fields[BackendEngine.f_remaining_cores] = BackendEngine.f_remaining_cores + (cores - resource.f_cores)
+                        update_fields[BackendEngine.f_remaining_memory] = BackendEngine.f_remaining_memory + (memory - resource.f_memory)
+                        update_fields[BackendEngine.f_nodes] = nodes
+                        operate = BackendEngine.update(update_fields).where(BackendEngine.f_engine_id == engine_id)
+                        update_status = operate.execute() > 0
+                        if update_status:
+                            stat_logger.info(f"update default {engine_type} engine {engine_id} registration information")
+                        else:
+                            stat_logger.info(f"update default {engine_type} engine {engine_id} registration information takes no effect")
                     else:
-                        stat_logger.info(f"update default computing engine takes no effect")
-                else:
-                    resource = ResourceRegistry()
-                    resource.f_create_time = base_utils.current_timestamp()
-                    resource.f_engine_id = engine_id
-                    resource.f_engine_type = engine_info.get("engine", {})
-                    resource.f_engine_address = engine_info.get("address", {})
-                    resource.f_cores = engine_info.get("cores", 0)
-                    resource.f_memory = engine_info.get("memory", 0)
-                    resource.f_remaining_cores = engine_info.get("cores", 0)
-                    resource.f_remaining_memory = engine_info.get("memory", 0)
-                    resource.f_nodes = engine_info.get("nodes", 1)
-                    try:
-                        resource.save(force_insert=True)
-                    except Exception as e:
-                        stat_logger.warning(e)
-                    stat_logger.info(f"initialize default computing engine")
+                        resource = BackendEngine()
+                        resource.f_create_time = base_utils.current_timestamp()
+                        resource.f_engine_id = engine_id
+                        resource.f_engine_name = engine_info.get("engine", {})
+                        resource.f_engine_type = engine_type
+                        resource.f_engine_address = engine_info.get("address", {})
+                        resource.f_cores = cores
+                        resource.f_memory = memory
+                        resource.f_remaining_cores = cores
+                        resource.f_remaining_memory = memory
+                        resource.f_nodes = nodes
+                        try:
+                            resource.save(force_insert=True)
+                        except Exception as e:
+                            stat_logger.warning(e)
+                        stat_logger.info(f"create default {engine_type} engine {engine_id} registration information")
 
     @classmethod
     def apply_for_job_resource(cls, job_id, role, party_id):
         engine_id, cores, memory = cls.calculate_job_resource(job_id=job_id, role=role, party_id=party_id)
-        apply_status, remaining_cores, remaining_memory = cls.update_resource(model=ResourceRegistry,
+        apply_status, remaining_cores, remaining_memory = cls.update_resource(model=BackendEngine,
                                                                               cores=cores,
                                                                               memory=memory,
                                                                               operation_type=ResourceOperation.APPLY,
@@ -123,7 +128,7 @@ class ResourceManager(object):
             operate = Job.update(update_fields).where(*filter_fields)
             update_status = operate.execute() > 0
         if update_status:
-            return_status, remaining_cores, remaining_memory = cls.update_resource(model=ResourceRegistry,
+            return_status, remaining_cores, remaining_memory = cls.update_resource(model=BackendEngine,
                                                                                    cores=cores,
                                                                                    memory=memory,
                                                                                    operation_type=ResourceOperation.RETURN,
@@ -144,13 +149,26 @@ class ResourceManager(object):
         dsl, runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id,
                                                                                 role=role,
                                                                                 party_id=party_id)
-        task_parallelism = runtime_conf["job_parameters"]["task_parallelism"]
-        cores_per_task = runtime_conf["job_parameters"]["cores_per_task"]
-        memory_per_task = runtime_conf["job_parameters"]["memory_per_task"]
-        cores = task_parallelism * cores_per_task
-        memory = task_parallelism * memory_per_task
-        engine_id = runtime_conf["job_parameters"]["computing_backend"]
-        return engine_id, cores, memory
+        run_parameters = RunParameters(**runtime_conf["job_parameters"])
+        cores = run_parameters.task_cores_per_node * run_parameters.task_nodes * run_parameters.task_parallelism
+        memory = run_parameters.task_memory_per_node * run_parameters.task_nodes * run_parameters.task_parallelism
+        computing_backend_info = cls.get_backend_registration_info(engine_id=run_parameters.computing_backend)
+        if computing_backend_info.f_engine_name == ComputingEngine.EGGROLL:
+            memory = 0
+        return run_parameters.computing_backend, cores, memory
+
+    @classmethod
+    def calculate_task_resource(cls, task_info):
+        dsl, runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=task_info["job_id"],
+                                                                                role=task_info["role"],
+                                                                                party_id=task_info["party_id"])
+        run_parameters = RunParameters(**runtime_conf["job_parameters"])
+        cores_per_task = run_parameters.task_cores_per_node * run_parameters.task_nodes
+        memory_per_task = run_parameters.task_memory_per_node * run_parameters.task_nodes
+        computing_backend_info = cls.get_backend_registration_info(engine_id=run_parameters.computing_backend)
+        if computing_backend_info.f_engine_name == ComputingEngine.EGGROLL:
+            memory_per_task = 0
+        return cores_per_task, memory_per_task
 
     @classmethod
     def apply_for_task_resource(cls, task_info):
@@ -162,11 +180,8 @@ class ResourceManager(object):
 
     @classmethod
     def resource_for_task(cls, task_info, operation_type):
-        dsl, runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=task_info["job_id"],
-                                                                                role=task_info["role"],
-                                                                                party_id=task_info["party_id"])
-        cores_per_task = runtime_conf["job_parameters"]["cores_per_task"]
-        memory_per_task = runtime_conf["job_parameters"]["memory_per_task"]
+        cores_per_task, memory_per_task = cls.calculate_task_resource(task_info=task_info)
+
         schedule_logger(job_id=task_info["job_id"]).info(
             "task {} {} try {} resource successfully".format(task_info["task_id"],
                                                              task_info["task_version"], operation_type))
@@ -216,3 +231,11 @@ class ResourceManager(object):
             else:
                 remaining_cores, remaining_memory = None, None
             return update_status, remaining_cores, remaining_memory
+
+    @classmethod
+    def get_backend_registration_info(cls, engine_id):
+        engines = BackendEngine.select().where(BackendEngine.f_engine_id == engine_id)
+        if engines:
+            return engines[0]
+        else:
+            return None

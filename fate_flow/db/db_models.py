@@ -318,8 +318,9 @@ class ModelOperationLog(DataBaseModel):
         db_table = "t_model_operation_log"
 
 
-class ResourceRegistry(DataBaseModel):
+class BackendEngine(DataBaseModel):
     f_engine_id = CharField(max_length=150, null=False, primary_key=True)
+    f_engine_name = CharField(max_length=10, index=True)
     f_engine_type = CharField(max_length=10, index=True)
     f_engine_address = JSONField()
     f_cores = IntegerField(index=True)
@@ -331,7 +332,7 @@ class ResourceRegistry(DataBaseModel):
     f_update_time = BigIntegerField(null=True)
 
     class Meta:
-        db_table = "t_resource_registry"
+        db_table = "t_backend_engine"
 
 
 class DBQueue(DataBaseModel):
