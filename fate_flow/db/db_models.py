@@ -326,6 +326,7 @@ class ResourceRegistry(DataBaseModel):
     f_memory = IntegerField(index=True)  # MB
     f_remaining_cores = IntegerField(index=True)
     f_remaining_memory = IntegerField(index=True) # MB
+    f_nodes = IntegerField(index=True)
     f_create_time = BigIntegerField()
     f_update_time = BigIntegerField(null=True)
 

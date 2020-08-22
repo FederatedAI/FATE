@@ -39,6 +39,7 @@ class ResourceManager(object):
                     update_fields[ResourceRegistry.f_memory] = engine_info.get("memory", 0)
                     update_fields[ResourceRegistry.f_remaining_cores] = ResourceRegistry.f_remaining_cores + (engine_info.get("cores", 0) - resource.f_cores)
                     update_fields[ResourceRegistry.f_remaining_memory] = ResourceRegistry.f_remaining_memory + (engine_info.get("memory", 0) - resource.f_memory)
+                    update_fields[ResourceRegistry.f_nodes] = engine_info.get("nodes", 1)
                     operate = ResourceRegistry.update(update_fields).where(ResourceRegistry.f_engine_id == engine_id)
                     update_status = operate.execute() > 0
                     if update_status:
@@ -55,6 +56,7 @@ class ResourceManager(object):
                     resource.f_memory = engine_info.get("memory", 0)
                     resource.f_remaining_cores = engine_info.get("cores", 0)
                     resource.f_remaining_memory = engine_info.get("memory", 0)
+                    resource.f_nodes = engine_info.get("nodes", 1)
                     try:
                         resource.save(force_insert=True)
                     except Exception as e:
