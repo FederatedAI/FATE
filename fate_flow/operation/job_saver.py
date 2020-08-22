@@ -17,7 +17,7 @@
 import operator
 from fate_arch.common.base_utils import current_timestamp
 from fate_flow.db.db_models import DB, Job, Task
-from fate_flow.entity.constant import StatusSet, JobStatus, TaskStatus, EndStatus
+from fate_flow.entity.constant import JobStatus, TaskStatus, EndStatus
 from fate_arch.common.log import schedule_logger, sql_logger
 import peewee
 
@@ -101,22 +101,6 @@ class JobSaver(object):
                 raise Exception("Create {} failed:\n{}".format(entity_model, e))
 
     @classmethod
-    def gen_update_status_filter(cls, obj, update_info, field, update_filters):
-        if_pass = False
-        if isinstance(obj, Task):
-            if TaskStatus.StateTransitionRule.if_pass(src_status=getattr(obj, f"f_{field}"), dest_status=update_info[field]):
-                if_pass = True
-        elif isinstance(obj, Job):
-            if JobStatus.StateTransitionRule.if_pass(src_status=getattr(obj, f"f_{field}"), dest_status=update_info[field]):
-                if_pass = True
-        if if_pass:
-            update_filters.append(operator.attrgetter(f"f_{field}")(type(obj)) == getattr(obj, f"f_{field}"))
-        else:
-            # not allow update status
-            update_info.pop(field, None)
-        return if_pass
-
-    @classmethod
     def update_status(cls, entity_model, entity_info):
         with DB.connection_context():
             query_filters = []
@@ -190,27 +174,6 @@ class JobSaver(object):
             return operate.execute() > 0
         else:
             return False
-
-    @classmethod
-    def get_job_configuration(cls, job_id, role, party_id, tasks=None):
-        with DB.connection_context():
-            if tasks:
-                jobs_run_conf = {}
-                for task in tasks:
-                    jobs = Job.select(Job.f_job_id, Job.f_runtime_conf, Job.f_description).where(Job.f_job_id == task.f_job_id)
-                    job = jobs[0]
-                    jobs_run_conf[job.f_job_id] = job.f_runtime_conf["role_parameters"]["local"]["upload_0"]
-                    jobs_run_conf[job.f_job_id]["notes"] = job.f_description
-                return jobs_run_conf
-            else:
-                jobs = Job.select(Job.f_dsl, Job.f_runtime_conf, Job.f_train_runtime_conf).where(Job.f_job_id == job_id,
-                                                                                                 Job.f_role == role,
-                                                                                                 Job.f_party_id == party_id)
-            if jobs:
-                job = jobs[0]
-                return job.f_dsl, job.f_runtime_conf, job.f_train_runtime_conf
-            else:
-                return {}, {}, {}
 
     @classmethod
     def query_job(cls, **kwargs):

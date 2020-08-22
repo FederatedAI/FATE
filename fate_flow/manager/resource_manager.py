@@ -32,29 +32,34 @@ class ResourceManager(object):
         with DB.connection_context():
             for engine_id, engine_info in get_base_config("computing", {}).items():
                 resources = ResourceRegistry.select().where(ResourceRegistry.f_engine_id == engine_id)
-                is_insert = False
                 if resources:
                     resource = resources[0]
+                    update_fields = {}
+                    update_fields[ResourceRegistry.f_cores] = engine_info.get("cores", 0)
+                    update_fields[ResourceRegistry.f_memory] = engine_info.get("memory", 0)
+                    update_fields[ResourceRegistry.f_remaining_cores] = ResourceRegistry.f_remaining_cores + (engine_info.get("cores", 0) - resource.f_cores)
+                    update_fields[ResourceRegistry.f_remaining_memory] = ResourceRegistry.f_remaining_memory + (engine_info.get("memory", 0) - resource.f_memory)
+                    operate = ResourceRegistry.update(update_fields).where(ResourceRegistry.f_engine_id == engine_id)
+                    update_status = operate.execute() > 0
+                    if update_status:
+                        stat_logger.info(f"update default computing engine")
+                    else:
+                        stat_logger.info(f"update default computing engine takes no effect")
                 else:
                     resource = ResourceRegistry()
                     resource.f_create_time = base_utils.current_timestamp()
+                    resource.f_engine_id = engine_id
+                    resource.f_engine_type = engine_info.get("engine", {})
+                    resource.f_engine_address = engine_info.get("address", {})
+                    resource.f_cores = engine_info.get("cores", 0)
+                    resource.f_memory = engine_info.get("memory", 0)
                     resource.f_remaining_cores = engine_info.get("cores", 0)
                     resource.f_remaining_memory = engine_info.get("memory", 0)
-                    is_insert = True
-                resource.f_engine_id = engine_id
-                resource.f_engine_type = engine_info.get("engine", {})
-                resource.f_engine_address = engine_info.get("address", {})
-                resource.f_cores = engine_info.get("cores", 0)
-                resource.f_memory = engine_info.get("memory", 0)
-                if is_insert:
                     try:
                         resource.save(force_insert=True)
                     except Exception as e:
                         stat_logger.warning(e)
                     stat_logger.info(f"initialize default computing engine")
-                else:
-                    resource.save()
-                    stat_logger.info(f"update default computing engine")
 
     @classmethod
     def apply_for_job_resource(cls, job_id, role, party_id):
@@ -161,8 +166,8 @@ class ResourceManager(object):
         cores_per_task = runtime_conf["job_parameters"]["cores_per_task"]
         memory_per_task = runtime_conf["job_parameters"]["memory_per_task"]
         schedule_logger(job_id=task_info["job_id"]).info(
-            "task {} {} try {} resource successfully".format(task_info["job_id"],
-                                                             task_info["task_id"], operation_type))
+            "task {} {} try {} resource successfully".format(task_info["task_id"],
+                                                             task_info["task_version"], operation_type))
 
         update_status, remaining_cores, remaining_memory = cls.update_resource(model=Job,
                                                                                cores=cores_per_task,
@@ -174,12 +179,12 @@ class ResourceManager(object):
                                                                                )
         if update_status:
             schedule_logger(job_id=task_info["job_id"]).info(
-                "task {} {} {} resource successfully".format(task_info["job_id"],
-                                                             task_info["task_id"], operation_type))
+                "task {} {} {} resource successfully".format(task_info["task_id"],
+                                                             task_info["task_version"], operation_type))
         else:
             schedule_logger(job_id=task_info["job_id"]).info(
-                "task {} {} {} resource failed".format(task_info["job_id"],
-                                                             task_info["task_id"], operation_type))
+                "task {} {} {} resource failed".format(task_info["task_id"],
+                                                       task_info["task_version"], operation_type))
         return update_status
 
     @classmethod
