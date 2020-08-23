@@ -53,10 +53,10 @@ class BaseModel(Model):
         human_model_dict = {}
         if not only_primary_with:
             for k, v in model_dict.items():
-                human_model_dict[k.lstrip("f_")] = v
+                human_model_dict[k.lstrip("f").lstrip("_")] = v
         else:
             for k in self._meta.primary_key.field_names:
-                human_model_dict[k.lstrip("f_")] = model_dict[k]
+                human_model_dict[k.lstrip("f").lstrip("_")] = model_dict[k]
             for k in only_primary_with:
                 human_model_dict[k] = model_dict["f_%s" % k]
         return human_model_dict

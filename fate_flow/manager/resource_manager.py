@@ -209,7 +209,7 @@ class ResourceManager(object):
         filters = []
         primary_filters = []
         for p_k in model.get_primary_keys_name():
-            primary_filters.append(operator.attrgetter(p_k)(model) == kwargs[p_k.lstrip("f_")])
+            primary_filters.append(operator.attrgetter(p_k)(model) == kwargs[p_k.lstrip("f").lstrip("_")])
         with DB.connection_context():
             filters.extend(primary_filters)
             if operation_type == ResourceOperation.APPLY:
