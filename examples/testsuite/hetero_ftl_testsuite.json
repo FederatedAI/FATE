@@ -1,7 +1,7 @@
 {
     "data": [
         {
-            "file": "examples/data/nus_wide_train_guest.csv",
+            "file": "../data/nus_wide_train_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "nus_wide_guest",
@@ -9,7 +9,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/nus_wide_train_host.csv",
+            "file": "../data/nus_wide_train_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "nus_wide_host",
@@ -17,7 +17,7 @@
             "role": "host_0"
         },
         {
-            "file": "examples/data/nus_wide_validate_guest.csv",
+            "file": "../data/nus_wide_validate_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "nus_wide_guest_val",
@@ -25,7 +25,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/nus_wide_validate_host.csv",
+            "file": "../data/nus_wide_validate_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "nus_wide_host_val",
@@ -35,20 +35,25 @@
     ],
     "tasks": {
         "ftl": {
-            "conf": "./test_ftl_conf.json",
-            "dsl": "./test_ftl_dsl.json"
+            "conf": "../dsl/hetero_ftl/test_ftl_conf.json",
+            "dsl": "../dsl/hetero_ftl/test_ftl_dsl.json"
         },
         "ftl_predict": {
-            "conf": "./test_ftl_predict.json",
+            "conf": "../dsl/hetero_ftl/test_ftl_predict.json",
             "deps": "ftl"
         },
         "encrypted_ftl": {
-            "conf": "./test_ftl_encrypted_conf.json",
-            "dsl": "./test_ftl_dsl.json"
+            "conf": "../dsl/hetero_ftl/test_ftl_encrypted_conf.json",
+            "dsl": "../dsl/hetero_ftl/test_ftl_dsl.json"
         },
         "comm_eff_ftl": {
-            "conf": "./test_ftl_comm_eff_conf.json",
-            "dsl": "./test_ftl_dsl.json"
+            "conf": "../dsl/hetero_ftl/test_ftl_comm_eff_conf.json",
+            "dsl": "../dsl/hetero_ftl/test_ftl_dsl.json"
+        }
+    },
+    "pipeline_tasks": {
+        "ftl": {
+            "script": "../pipeline/hetero_ftl/pipeline-hetero-ftl.py"
         }
     }
 }

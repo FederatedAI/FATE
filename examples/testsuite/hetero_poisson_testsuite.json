@@ -1,0 +1,56 @@
+{
+    "data": [
+        {
+            "file": "../data/dvisits_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "dvisits_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "../data/dvisits_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "dvisits_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "tasks": {
+        "poisson": {
+            "conf": "../dsl/hetero_poisson_regression/test_hetero_poisson_train_job_conf.json",
+            "dsl": "test_hetero_poisson_train_job_dsl.json"
+        },
+        "poisson-predict": {
+            "conf": "../dsl/hetero_poisson_regression/test_predict_conf.json",
+            "deps": "poisson"
+        },
+        "poisson-validate": {
+            "conf": "../dsl/hetero_poisson_regression/test_hetero_poisson_validate_job_conf.json",
+            "dsl": "test_hetero_poisson_validate_job_dsl.json"
+        },
+        "poisson-sparse": {
+            "conf": "../dsl/hetero_poisson_regression/test_hetero_poisson_train_sparse_job_conf.json",
+            "dsl": "test_hetero_poisson_train_job_dsl.json"
+        },
+        "poisson-cv": {
+            "conf": "../dsl/hetero_poisson_regression/test_hetero_poisson_cv_job_conf.json",
+            "dsl": "test_hetero_poisson_cv_job_dsl.json"
+        }
+    },
+    "pipeline_tasks": {
+        "poisson": {
+            "script": "../pipeline/hetero_poisson/pipeline-hetero-poisson.py"
+        },
+        "poisson-validate": {
+            "script": "../pipeline/hetero_poisson/pipeline-hetero-poisson-validate.py"
+        },
+        "poisson-sparse": {
+            "script": "../pipeline/hetero_poisson/pipeline-hetero-poisson-sparse.py"
+        },
+        "poisson-cv": {
+            "script": "../pipeline/hetero_poisson/pipeline-hetero-poisson-cv.py"
+        }
+    }
+}

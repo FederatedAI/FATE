@@ -19,27 +19,29 @@ import argparse
 from tensorflow.keras import optimizers
 from tensorflow.keras.layers import Dense
 
+from fate_test.fate_test._config import Config
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
 from pipeline.component.evaluation import Evaluation
 from pipeline.component.hetero_nn import HeteroNN
 from pipeline.component.intersection import Intersection
 from pipeline.component.reader import Reader
-from pipeline.demo.util.demo_util import Config
 from pipeline.interface.data import Data
 from pipeline.interface.model import Model
 
 
-def main(config="../config.yaml"):
+def main(config="../config.yaml", namespace=""):
     # obtain config
-    config = Config(config)
-    guest = config.guest
-    host = config.host[0]
+    if isinstance(config, str):
+        config = Config.load(config)
+    parties = config.parties
+    guest = parties.guest[0]
+    host = parties.host[0]
     backend = config.backend
     work_mode = config.work_mode
 
-    guest_train_data = {"name": "vehicle_scale_hetero_guest", "namespace": "experiment"}
-    host_train_data = {"name": "vehicle_scale_hetero_host", "namespace": "experiment"}
+    guest_train_data = {"name": "vehicle_scale_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "vehicle_scale_hetero_host", "namespace": f"experiment{namespace}"}
 
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
 
