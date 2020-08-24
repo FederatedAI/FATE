@@ -126,7 +126,7 @@ class FTLGuest(FTL):
         host_components = [overlap_ub, overlap_ub_2, mapping_comp_b]
 
         if self.mode == 'encrypted':
-            host_paillier_tensors = [PaillierTensor(tb_obj=tb) for tb in host_components]
+            host_paillier_tensors = [PaillierTensor(tb_obj=tb, partitions=self.partitions) for tb in host_components]
             return host_paillier_tensors
         else:
             return host_components
@@ -139,7 +139,7 @@ class FTLGuest(FTL):
 
         rand_0 = self.rng_generator.generate_random_number(encrypted_const.shape)
         encrypted_const = encrypted_const + rand_0
-        rand_1 = PaillierTensor(ori_data=self.rng_generator.generate_random_number(grad_a_overlap.shape))
+        rand_1 = PaillierTensor(ori_data=self.rng_generator.generate_random_number(grad_a_overlap.shape), partitions=self.partitions)
         grad_a_overlap = grad_a_overlap + rand_1
 
         self.transfer_variable.guest_side_const.remote(encrypted_const, suffix=(epoch_idx,
@@ -149,7 +149,7 @@ class FTLGuest(FTL):
         const = self.transfer_variable.decrypted_guest_const.get(suffix=(epoch_idx, local_round, ), idx=0)
         grad = self.transfer_variable.decrypted_guest_gradients.get(suffix=(epoch_idx, local_round, ), idx=0)
         const = const - rand_0
-        grad_a_overlap = PaillierTensor(tb_obj=grad) - rand_1
+        grad_a_overlap = PaillierTensor(tb_obj=grad, partitions=self.partitions) - rand_1
 
         return const, grad_a_overlap
 
@@ -158,7 +158,7 @@ class FTLGuest(FTL):
         inter_grad = self.transfer_variable.host_side_gradients.get(suffix=(epoch_idx,
                                                                             local_round,
                                                                             'host_de_send'), idx=0)
-        inter_grad_pt = PaillierTensor(tb_obj=inter_grad)
+        inter_grad_pt = PaillierTensor(tb_obj=inter_grad, partitions=self.partitions)
         self.transfer_variable.decrypted_host_gradients.remote(inter_grad_pt.decrypt(self.encrypter).get_obj(),
                                                                suffix=(epoch_idx,
                                                                        local_round,

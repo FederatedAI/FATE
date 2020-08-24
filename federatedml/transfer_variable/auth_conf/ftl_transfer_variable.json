@@ -1,5 +1,5 @@
 {
-  "FTLTransferVariable": {
+  "federatedml.transfer_variable.transfer_class.ftl_transfer_variable.FTLTransferVariable": {
     "guest_components": {
       "src": ["guest"],
       "dst": [

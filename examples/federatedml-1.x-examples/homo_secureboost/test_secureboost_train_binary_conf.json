@@ -87,7 +87,7 @@
         "secureboost_0": {
             "task_type": "classification",
             "learning_rate": 0.1,
-            "num_trees": 3,
+            "num_trees": 5,
             "subsample_feature_rate": 1,
             "n_iter_no_change": false,
             "tol": 0.0001,
