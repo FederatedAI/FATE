@@ -383,7 +383,7 @@ class MetricInterface(object):
             logging.warning('error: pr quantile is for binary classification only')
 
     @staticmethod
-    def JaccardSimilarityScore(labels, pred_labels):
+    def jaccard_similarity_score(labels, pred_labels):
         """
         Compute the Jaccard similarity score
         Parameters
@@ -399,7 +399,7 @@ class MetricInterface(object):
         return clustering_metric.JaccardSimilarityScore.compute(labels, pred_labels)
 
     @staticmethod
-    def FowlkesMallowsScore(labels, pred_labels):
+    def fowlkes_mallows_score(labels, pred_labels):
         """
         Compute the Fowlkes Mallows score
         Parameters
@@ -415,7 +415,7 @@ class MetricInterface(object):
         return clustering_metric.FowlkesMallowsScore.compute(labels, pred_labels)
 
     @staticmethod
-    def AdjustedRandScore(labels, pred_labels):
+    def adjusted_rand_score(labels, pred_labels):
         """
         Compute the adjusted-rand score
         Parameters
@@ -430,7 +430,7 @@ class MetricInterface(object):
 
         return clustering_metric.AdjustedRandScore.compute(labels, pred_labels)
 
-    def Davies_Bouldin_index(labels, pred_labels):
+    def davies_bouldin_index(labels, pred_labels):
         """
         Compute the adjusted-rand score
         Parameters

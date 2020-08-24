@@ -22,7 +22,7 @@ class JaccardSimilarityScore(object):
         return jaccard_similarity_score(labels, pred_scores)
 
 
-class FowlkesMallowsScore(object):
+class fowlkes_mallows_score(object):
     """
     Compute fowlkes_mallows_score, as in FMI
     """
