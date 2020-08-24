@@ -1,7 +1,7 @@
 {
     "data": [
         {
-            "file": "examples/data/breast_homo_guest.csv",
+            "file": "../data/breast_homo_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "breast_homo_guest",
@@ -9,7 +9,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/breast_homo_host.csv",
+            "file": "../data/breast_homo_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "breast_homo_host",
@@ -17,7 +17,7 @@
             "role": "host_0"
         },
         {
-            "file": "examples/data/breast_homo_test.csv",
+            "file": "../data/breast_homo_test.csv",
             "head": 1,
             "partition": 16,
             "table_name": "homo_breast_test",
@@ -25,7 +25,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/breast_homo_test.csv",
+            "file": "../data/breast_homo_test.csv",
             "head": 1,
             "partition": 16,
             "table_name": "homo_breast_test",
@@ -33,7 +33,7 @@
             "role": "host_0"
         },
         {
-            "file": "examples/data/vehicle_scale_homo_guest.csv",
+            "file": "../data/vehicle_scale_homo_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "homo_vehicle_scale_guest",
@@ -41,7 +41,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/vehicle_scale_homo_host.csv",
+            "file": "../data/vehicle_scale_homo_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "homo_vehicle_scale_host",
@@ -49,7 +49,7 @@
             "role": "host_0"
         },
         {
-            "file": "examples/data/vehicle_scale_homo_test.csv",
+            "file": "../data/vehicle_scale_homo_test.csv",
             "head": 1,
             "partition": 16,
             "table_name": "homo_vehicle_scale_test",
@@ -57,7 +57,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/vehicle_scale_homo_test.csv",
+            "file": "../data/vehicle_scale_homo_test.csv",
             "head": 1,
             "partition": 16,
             "table_name": "homo_vehicle_scale_test",
@@ -65,7 +65,7 @@
             "role": "host_0"
         },
         {
-            "file": "examples/data/student_homo_guest.csv",
+            "file": "../data/student_homo_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "homo_student_guest",
@@ -73,7 +73,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/student_homo_host.csv",
+            "file": "../data/student_homo_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "homo_student_host",
@@ -81,7 +81,7 @@
             "role": "host_0"
         },
         {
-            "file": "examples/data/student_homo_test.csv",
+            "file": "../data/student_homo_test.csv",
             "head": 1,
             "partition": 16,
             "table_name": "homo_student_test",
@@ -89,7 +89,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/student_homo_test.csv",
+            "file": "../data/student_homo_test.csv",
             "head": 1,
             "partition": 16,
             "table_name": "homo_student_test",
@@ -97,7 +97,7 @@
             "role": "host_0"
         },
         {
-            "file": "examples/data/ionosphere_scale_hetero_guest.csv",
+            "file": "../data/ionosphere_scale_hetero_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "ionosphere_scale_guest",
@@ -105,7 +105,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/ionosphere_scale_hetero_guest.csv",
+            "file": "../data/ionosphere_scale_hetero_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "ionosphere_scale_host",
@@ -113,7 +113,7 @@
             "role": "host_0"
         },
         {
-            "file": "examples/data/default_credit_homo_guest.csv",
+            "file": "../data/default_credit_homo_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "default_credit_guest",
@@ -121,7 +121,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/default_credit_homo_host_1.csv",
+            "file": "../data/default_credit_homo_host_1.csv",
             "head": 1,
             "partition": 16,
             "table_name": "default_credit_host1",
@@ -129,7 +129,7 @@
             "role": "host_0"
         },
         {
-            "file": "examples/data/default_credit_homo_host_2.csv",
+            "file": "../data/default_credit_homo_host_2.csv",
             "head": 1,
             "partition": 16,
             "table_name": "default_credit_host2",
@@ -137,7 +137,7 @@
             "role": "host_1"
         },
         {
-            "file": "examples/data/default_credit_homo_test.csv",
+            "file": "../data/default_credit_homo_test.csv",
             "head": 1,
             "partition": 16,
             "table_name": "default_credit_test",
@@ -145,7 +145,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/default_credit_homo_test.csv",
+            "file": "../data/default_credit_homo_test.csv",
             "head": 1,
             "partition": 16,
             "table_name": "default_credit_test",
@@ -153,7 +153,7 @@
             "role": "host_0"
         },
         {
-            "file": "examples/data/default_credit_homo_test.csv",
+            "file": "../data/default_credit_homo_test.csv",
             "head": 1,
             "partition": 16,
             "table_name": "default_credit_test",
@@ -163,40 +163,45 @@
     ],
     "tasks": {
         "train_binary": {
-            "conf": "./test_secureboost_train_binary_conf.json",
-            "dsl": "./test_secureboost_train_dsl.json"
+            "conf": "../dsl/homo_secureboost/test_secureboost_train_binary_conf.json",
+            "dsl": "../dsl/homo_secureboost/test_secureboost_train_dsl.json"
         },
         "train_binary_predict": {
-            "conf": "./test_predict_conf.json",
+            "conf": "../dsl/homo_secureboost/test_predict_conf.json",
             "deps": "train_binary"
         },
         "train_multi": {
-            "conf": "./test_secureboost_train_multi_conf.json",
-            "dsl": "./test_secureboost_train_dsl.json"
+            "conf": "../dsl/homo_secureboost/test_secureboost_train_multi_conf.json",
+            "dsl": "../dsl/homo_secureboost/test_secureboost_train_dsl.json"
         },
         "train_regression": {
-            "conf": "./test_secureboost_train_regression_conf.json",
-            "dsl": "./test_secureboost_train_dsl.json"
+            "conf": "../dsl/homo_secureboost/test_secureboost_train_regression_conf.json",
+            "dsl": "../dsl/homo_secureboost/test_secureboost_train_dsl.json"
         },
         "train_binary_with_missing_value": {
-            "conf": "./test_secureboost_train_binary_with_missing_value_conf.json",
-            "dsl": "./test_secureboost_train_dsl.json"
+            "conf": "../dsl/homo_secureboost/test_secureboost_train_binary_with_missing_value_conf.json",
+            "dsl": "../dsl/homo_secureboost/test_secureboost_train_dsl.json"
         },
         "train_multi_host": {
-            "conf": "./test_secureboost_train_binary_multi_host_conf.json",
-            "dsl": "./test_secureboost_train_dsl.json"
+            "conf": "../dsl/homo_secureboost/test_secureboost_train_binary_multi_host_conf.json",
+            "dsl": "../dsl/homo_secureboost/test_secureboost_train_dsl.json"
         },
         "cv_binary": {
-            "conf": "./test_secureboost_cross_validation_binary_conf.json",
-            "dsl": "./test_secureboost_cross_validation_dsl.json"
+            "conf": "../dsl/homo_secureboost/test_secureboost_cross_validation_binary_conf.json",
+            "dsl": "../dsl/homo_secureboost/test_secureboost_cross_validation_dsl.json"
         },
         "cv_multi": {
-            "conf": "./test_secureboost_cross_validation_multi_conf.json",
-            "dsl": "./test_secureboost_cross_validation_dsl.json"
+            "conf": "../dsl/homo_secureboost/test_secureboost_cross_validation_multi_conf.json",
+            "dsl": "../dsl/homo_secureboost/test_secureboost_cross_validation_dsl.json"
         },
         "cv_regression": {
-            "conf": "./test_secureboost_cross_validation_regression_conf.json",
-            "dsl": "./test_secureboost_cross_validation_dsl.json"
+            "conf": "../dsl/homo_secureboost/test_secureboost_cross_validation_regression_conf.json",
+            "dsl": "../dsl/homo_secureboost/test_secureboost_cross_validation_dsl.json"
+        }
+    },
+    "pipeline_tasks": {
+        "train_binary": {
+            "script": "../pipeline/homo_sbt/pipeline-homo-sbt.py"
         }
     }
 }

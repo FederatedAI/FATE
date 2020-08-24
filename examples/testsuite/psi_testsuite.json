@@ -1,7 +1,7 @@
 {
     "data": [
         {
-            "file": "examples/data/breast_homo_guest.csv",
+            "file": "../data/breast_homo_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "expect",
@@ -9,7 +9,7 @@
             "role": "host_0"
         },
         {
-            "file": "examples/data/breast_homo_host.csv",
+            "file": "../data/breast_homo_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "actual",
@@ -17,7 +17,7 @@
             "role": "host_0"
         },
         {
-            "file": "examples/data/breast_homo_guest.csv",
+            "file": "../data/breast_homo_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "expect",
@@ -25,7 +25,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/breast_homo_host.csv",
+            "file": "../data/breast_homo_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "actual",
@@ -35,8 +35,13 @@
     ],
     "tasks": {
         "psi": {
-            "conf": "psi_cpn_conf.json",
-            "dsl": "psi_cpn_dsl.json"
+            "conf": "../dsl/psi/psi_cpn_conf.json",
+            "dsl": "../dsl/psi/psi_cpn_dsl.json"
+        }
+    },
+    "pipeline_tasks": {
+        "psi": {
+            "script": "../pipeline/psi/pipeline-psi.py"
         }
     }
 }
