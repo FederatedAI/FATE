@@ -65,8 +65,16 @@ class FTLHost(FTL):
         if self.mode == 'encrypted':
             comp_to_send = self.encrypt_tensor(comp_to_send)
 
-        self.transfer_variable.host_components.remote(comp_to_send, suffix=(epoch_idx, 'exchange_host_comp'))
-        guest_components = self.transfer_variable.guest_components.get(idx=0, suffix=(epoch_idx, 'exchange_guest_comp'))
+        # receiving guest components
+        y_overlap_2_phi_2 = self.transfer_variable.y_overlap_2_phi_2.get(idx=0, suffix=(epoch_idx, ))
+        y_overlap_phi = self.transfer_variable.y_overlap_phi.get(idx=0, suffix=(epoch_idx, ))
+        mapping_comp_a = self.transfer_variable.mapping_comp_a.get(idx=0, suffix=(epoch_idx, ))
+        guest_components = [y_overlap_2_phi_2, y_overlap_phi, mapping_comp_a]
+
+        # sending host components
+        self.transfer_variable.overlap_ub.remote(comp_to_send[0], suffix=(epoch_idx, ))
+        self.transfer_variable.overlap_ub_2.remote(comp_to_send[1], suffix=(epoch_idx, ))
+        self.transfer_variable.mapping_comp_b.remote(comp_to_send[2], suffix=(epoch_idx, ))
 
         if self.mode == 'encrypted':
             guest_paillier_tensors = [PaillierTensor(tb_obj=tb) for tb in guest_components]
@@ -76,14 +84,19 @@ class FTLHost(FTL):
 
     def decrypt_guest_data(self, epoch_idx, local_round=-1):
 
-        encrypted_guest_data = self.transfer_variable.guest_side_gradients.\
-                                    get(suffix=(epoch_idx, local_round, 'guest_de_send'), idx=0)
-        encrypted_consts, grad_table = encrypted_guest_data[0], encrypted_guest_data[1]
+        encrypted_consts = self.transfer_variable.guest_side_const.get(suffix=(epoch_idx, local_round, ),
+                                                                       idx=0)
+        grad_table = self.transfer_variable.guest_side_gradients.get(suffix=(epoch_idx, local_round, ),
+                                                                     idx=0)
+
         inter_grad = PaillierTensor(tb_obj=grad_table, )
         decrpyted_grad = inter_grad.decrypt(self.encrypter)
         decrypted_const = self.encrypter.recursive_decrypt(encrypted_consts)
-        self.transfer_variable.decrypted_guest_gradients.remote([decrypted_const, decrpyted_grad.get_obj()],
-                                                                suffix=(epoch_idx, local_round, 'guest_de_get'))
+
+        self.transfer_variable.decrypted_guest_const.remote(decrypted_const,
+                                                            suffix=(epoch_idx, local_round, ))
+        self.transfer_variable.decrypted_guest_gradients.remote(decrpyted_grad.get_obj(),
+                                                                suffix=(epoch_idx, local_round, ))
 
     def decrypt_inter_result(self, loss_grad_b, epoch_idx, local_round=-1):
 
