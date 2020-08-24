@@ -180,10 +180,10 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 ```
 mkdir -p /data/projects/install
 cd /data/projects/install
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.2-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.3-release.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.2-release.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.2-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.3-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.3-release.tar.gz
 
 #传输到192.168.0.2和192.168.0.3
 scp *.tar.gz app@192.168.0.2:/data/projects/install
@@ -336,7 +336,7 @@ sh Miniconda3-4.5.4-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
 tar xvf pip-packages-fate-*.tar.gz
 source /data/projects/fate/common/python/venv/bin/activate
 pip install setuptools-42.0.2-py2.py3-none-any.whl
-pip install -r pip-packages-fate-1.4.2/requirements.txt -f ./pip-packages-fate-1.4.2 --no-index
+pip install -r pip-packages-fate-1.4.3/requirements.txt -f ./pip-packages-fate-1.4.3 --no-index
 pip list | wc -l
 #结果应为161
 ```
