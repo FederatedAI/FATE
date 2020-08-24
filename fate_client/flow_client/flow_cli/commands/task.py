@@ -51,7 +51,7 @@ def list(ctx, **kwargs):
 @task.command("query", short_help="Query Task Command")
 @cli_args.JOBID
 @cli_args.PARTYID
-@cli_args.ROLE
+@cli_args.FATEFLOW_SERVICE_NAME
 @cli_args.COMPONENT_NAME
 @cli_args.STATUS
 @click.pass_context

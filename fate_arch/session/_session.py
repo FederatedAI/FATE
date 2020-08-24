@@ -96,16 +96,13 @@ class Session(object):
                         *,
                         runtime_conf: typing.Optional[dict] = None,
                         parties_info: typing.Optional[PartiesInfo] = None,
-                        server_conf: typing.Optional[dict] = None):
+                        service_conf: typing.Optional[dict] = None):
 
         if parties_info is None:
             if runtime_conf is None:
                 raise RuntimeError(f"`party_info` and `runtime_conf` are both `None`")
             parties_info = PartiesInfo.from_conf(runtime_conf)
         self._parties_info = parties_info
-
-        if server_conf is None:
-            server_conf = load_json_conf("conf/server_conf.json")
 
         if self.is_federation_valid:
             raise RuntimeError("federation session already valid")
@@ -118,7 +115,7 @@ class Session(object):
             if not self.is_computing_valid or not isinstance(self._computing_session, CSession):
                 raise RuntimeError(f"require computing with type {ComputingEngine.EGGROLL} valid")
 
-            proxy = Proxy.from_conf(server_conf)
+            proxy = Proxy.from_conf(service_conf)
             self._federation_session = Federation(rp_ctx=self._computing_session.get_rpc(),
                                                   rs_session_id=federation_session_id,
                                                   party=parties_info.local_party,
@@ -135,7 +132,7 @@ class Session(object):
             self._federation_session = Federation.from_conf(federation_session_id=federation_session_id,
                                                             party=parties_info.local_party,
                                                             runtime_conf=runtime_conf,
-                                                            server_conf=server_conf)
+                                                            service_conf=service_conf)
             return self
 
         if self._federation_type == FederationEngine.STANDALONE:

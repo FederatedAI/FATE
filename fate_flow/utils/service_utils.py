@@ -18,10 +18,10 @@ from urllib import parse
 from kazoo.client import KazooClient
 from kazoo.security import make_digest_acl
 
-from fate_arch.common import file_utils
+from fate_arch.common import conf_utils
 from fate_arch.common.conf_utils import get_base_config
-from fate_flow.settings import FATE_FLOW_MODEL_TRANSFER_ENDPOINT, IP, HTTP_PORT
-from fate_flow.settings import stat_logger, SERVER_CONF_PATH, SERVICES_SUPPORT_REGISTRY, FATE_SERVICES_REGISTERED_PATH
+from fate_flow.settings import FATE_FLOW_MODEL_TRANSFER_ENDPOINT, IP, HTTP_PORT, FATEFLOW_SERVICE_NAME
+from fate_flow.settings import stat_logger, SERVICES_SUPPORT_REGISTRY, FATE_SERVICES_REGISTERED_PATH
 
 
 class ServiceUtils(object):
@@ -39,8 +39,7 @@ class ServiceUtils(object):
 
     @staticmethod
     def get_from_file(service_name, default=None):
-        server_conf = file_utils.load_json_conf(SERVER_CONF_PATH)
-        return server_conf.get("servers").get(service_name, default)
+        return conf_utils.get_base_config(service_name, default)
 
     @staticmethod
     def get_zk():
@@ -71,7 +70,7 @@ class ServiceUtils(object):
             zk = ServiceUtils.get_zk()
             zk.start()
             model_transfer_url = 'http://{}:{}{}'.format(IP, HTTP_PORT, FATE_FLOW_MODEL_TRANSFER_ENDPOINT)
-            fate_flow_model_transfer_service = '{}/{}'.format(FATE_SERVICES_REGISTERED_PATH.get("fateflow", ""), parse.quote(model_transfer_url, safe=' '))
+            fate_flow_model_transfer_service = '{}/{}'.format(FATE_SERVICES_REGISTERED_PATH.get(FATEFLOW_SERVICE_NAME, ""), parse.quote(model_transfer_url, safe=' '))
             try:
                 zk.create(fate_flow_model_transfer_service, makepath=True, ephemeral=True)
                 stat_logger.info("register path {} to {}".format(fate_flow_model_transfer_service, ";".join(get_base_config("zookeeper", {}).get("hosts"))))

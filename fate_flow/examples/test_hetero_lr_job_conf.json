@@ -5,7 +5,7 @@
     },
     "job_parameters": {
         "work_mode": 1,
-        "task_parallelism": 2,
+        "task_parallelism": 1,
         "task_nodes": 1,
         "task_cores_per_node": 5,
         "task_memory_per_node": 1024,

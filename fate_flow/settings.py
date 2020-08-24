@@ -44,9 +44,6 @@ FATE_SERVICES_REGISTERED_PATH = {
     "servings": "/FATE-SERVICES/serving/online/publishLoad/providers",
 }
 
-# FILE CONF
-SERVER_CONF_PATH = 'conf/server_conf.json'
-
 # job maximum number  of the initiator
 DEFAULT_TASK_PARALLELISM = 1
 DEFAULT_TASK_CORES_PER_NODE = 5
@@ -64,8 +61,7 @@ HDFS_ADDRESS= ''
 Constants
 '''
 API_VERSION = "v1"
-ROLE = 'fateflow'
-SERVERS = 'servers'
+FATEFLOW_SERVICE_NAME = 'fateflow'
 MAIN_MODULE = os.path.relpath(__main__.__file__)
 SERVER_MODULE = 'fate_flow_server.py'
 TASK_EXECUTOR_MODULE = 'driver/task_executor.py'
@@ -94,9 +90,9 @@ data_manager_logger = log.getLogger("fate_flow_data_manager")
 """
 Services 
 """
-IP = get_base_config("fate_flow", {}).get("host", "127.0.0.1")
-HTTP_PORT = get_base_config("fate_flow", {}).get("http_port")
-GRPC_PORT = get_base_config("fate_flow", {}).get("grpc_port")
+IP = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("host", "127.0.0.1")
+HTTP_PORT = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("http_port")
+GRPC_PORT = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("grpc_port")
 
 # standalone job will be send to the standalone job server when FATE-Flow work on cluster deploy mode,
 # but not the port for FATE-Flow on standalone deploy mode.
