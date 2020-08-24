@@ -44,9 +44,6 @@ def main(config="../config.yaml", namespace=""):
     reader_1 = Reader(name="reader_1")
     reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data[1])
 
-    reader_2 = Reader(name="reader_2")
-    reader_2.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data[2])
-
     union_0 = Union(name="union_0", allow_missing=False, keep_duplicate=True)
 
     dataio_0 = DataIO(name="dataio_0", with_label=True, output_format="dense", label_name="y",
