@@ -73,7 +73,7 @@ the current model will replicate all model parameters from the previous model.
 Check below for a case from mini demo, where `model` from `dataio_0` is passed to `dataio_1`.
 
 ```python
-pipeline.add_component(dataio_1, data=Data(data=input_1.data), model=Model(dataio_0.output.model))
+pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data), model=Model(dataio_0.output.model))
 ```
 
 When a model from previous component is used but the current component is of different class from the previous component, `isometric_model` is used.
@@ -127,7 +127,7 @@ To include a component in a pipeline, use `add_component`.
 To add the `DataIO` component to the previously created pipeline, try this:
 
 ```python
-pipeline.add_component(dataio_0, data=Data(data=input_0.data))
+pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
 ```
 
 ## Run A Pipeline
