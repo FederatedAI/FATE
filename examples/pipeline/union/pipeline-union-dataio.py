@@ -34,7 +34,6 @@ def main(config="../config.yaml", namespace=""):
     work_mode = config.work_mode
 
     guest_train_data = [{"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"},
-                        {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"},
                         {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}]
 
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest)
@@ -55,7 +54,7 @@ def main(config="../config.yaml", namespace=""):
 
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)
-    pipeline.add_component(union_0, data=Data(data=[reader_0.output.data, reader_1.output.data, reader_2.output.data]))
+    pipeline.add_component(union_0, data=Data(data=[reader_0.output.data, reader_1.output.data]))
     pipeline.add_component(dataio_0, data=Data(data=union_0.output.data))
 
     pipeline.compile()
