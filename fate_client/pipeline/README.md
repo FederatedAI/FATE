@@ -77,7 +77,7 @@ pipeline.add_component(dataio_1, data=Data(data=input_1.data), model=Model(datai
 ```
 
 When a model from previous component is used but the current component is of different class from the previous component, `isometric_model` is used.
-For instance, `HeteroFeatureSelection` uses `isometric_model` from `HeteroFeatureBinning` to select most important features. 
+For instance, `HeteroFeatureSelection` can use `isometric_model` from `HeteroFeatureBinning` to select most important features. 
 
 
 ### Output
