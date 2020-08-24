@@ -115,10 +115,6 @@ class DataSplitter(ModelBase):
 
         # check & transform data set sizes
         n_count = data_inst.count()
-        # only output train data
-        if self.train_size is None and self.test_size is None and self.validate_size is None:
-            self.train_size = 1.0
-            self.test_size, self.validate_size = 0.0, 0.0
         if isinstance(self.test_size, float) or isinstance(self.train_size, float) or isinstance(self.validate_size,
                                                                                                  float):
             total_size = 1.0
