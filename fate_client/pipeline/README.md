@@ -19,9 +19,9 @@ A FATE job includes a sequence of tasks. FATE pipeline provides easy-to-use tool
 
 FATE is written in a modular style. Modules are designed to have input and output data and model. 
 Therefore two modules are connected when output of one module is set to be input of another module. 
-By tracing how one data set is processed through FATE modules in a task, we can see that a FATE job is in fact formed by a sequence of tasks. 
+By tracing how one data set is processed through FATE modules, we can see that a FATE job is in fact formed by a sequence of sub-tasks. 
 For example, in the [mini demo](./demo/pipeline-mini-demo.py) above, guest's data is first read in by `Reader`, then loaded into `DataIO`. 
-Overlapping ids between guest and host are then found by running data through `Intersection`. Finally, `HeteroLR` model is run on the data. 
+Overlapping ids between guest and host are then found by running data through `Intersection`. Finally, `HeteroLR` model is fit on the data. 
 Each of the listed modules run a small task with the data, and together they constitute a model training job.
 
 Beyond the given mini demo, a job may include multiple data sets and models. For more pipeline examples, please refer to [demos](./demo/).
@@ -33,7 +33,7 @@ Beyond the given mini demo, a job may include multiple data sets and models. For
 FATE modules are each wrapped into `component` in Pipeline API. Each component can take in and output `Data` and `Model`. 
 Parameters of components can be set conveniently at the time of initialization. Unspecified parameters will take default values. 
 All components have a `name`, which can be arbitrarily set. A component's name is its identifier, and so it must be unique within a pipeline. 
-We suggest that name of components include a numbering suffix for convenience.
+We suggest that each component name includes a numbering as suffix for easy tracking.
 
 An example of initializing a component with specified parameter values:
 ```python
@@ -42,14 +42,14 @@ hetero_lr_0 = HeteroLR(name="hetero_lr_0", early_stop="weight_diff", max_iter=10
 ```
 
 ### Data 
-In most cases, data set(s) should be set as `data`. 
+In most cases, data sets are wrapped into `data` when being past between modules. 
 For instance, in the mini demo, data output of `dataio_0` is set as data input to `intersection_0`.
 
 ```python
 pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
 ```
 
-For data sets used in different stages (e.g., train & validate) within a single component, 
+For data sets used in different modeling stages (e.g., train & validate) of the same component, 
 additional keywords `train_data`, `validate_data` and `test_data` are used to distinguish data sets.
 Also from mini demo, result from `intersection_0` and `intersection_1` are set as train and validate data input to training component, respectively.
 
