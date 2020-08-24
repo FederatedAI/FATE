@@ -92,7 +92,7 @@ output_model = dataio_0.output.model
 
 ## Build A Pipeline
 
-Below is a general guide to build a pipeline. Please refer to [mini demo](./demo/pipeline-mini-demo.py) for an explained demo.
+Below is a general guide to building a pipeline. Please refer to [mini demo](./demo/pipeline-mini-demo.py) for an explained demo.
 
 Once initialized a pipeline, job participants and initiator should be specified.
 Below is an example of initial setup of a pipeline:
