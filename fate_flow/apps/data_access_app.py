@@ -78,6 +78,8 @@ def download_upload(access_module):
                                               '1 means to upload again after deleting the table')
             elif data_table_meta and job_config.get('drop', 2) == 1:
                 job_config["destroy"] = True
+        else:
+            job_config["storage_engine"] = job_config.get("storage_engine", StorageEngine.STANDALONE)
     # compatibility
     if "table_name" in job_config:
         job_config["name"] = job_config["table_name"]
