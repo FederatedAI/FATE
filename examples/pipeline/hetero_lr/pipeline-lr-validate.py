@@ -16,6 +16,7 @@
 
 import argparse
 
+from fate_test.fate_test._config import Config
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.data_statistics import DataStatistics
 from pipeline.component.dataio import DataIO
@@ -26,25 +27,26 @@ from pipeline.component.hetero_lr import HeteroLR
 from pipeline.component.intersection import Intersection
 from pipeline.component.psi import PSI
 from pipeline.component.reader import Reader
-from pipeline.demo.util.demo_util import Config
 from pipeline.interface.data import Data
 from pipeline.interface.model import Model
 
 
-def main(config="../config.yaml"):
+def main(config="../config.yaml", namespace=""):
     # obtain config
-    config = Config(config)
-    guest = config.guest
-    host = config.host[0]
-    arbiter = config.arbiter
+    if isinstance(config, str):
+        config = Config.load(config)
+    parties = config.parties
+    guest = parties.guest[0]
+    host = parties.host[0]
+    arbiter = parties.arbiter[0]
     backend = config.backend
     work_mode = config.work_mode
 
-    guest_train_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
-    host_train_data = {"name": "breast_hetero_host", "namespace": "experiment"}
+    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
 
-    guest_eval_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
-    host_eval_data = {"name": "breast_hetero_host", "namespace": "experiment"}
+    guest_eval_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_eval_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
 
     # initialize pipeline
     pipeline = PipeLine()

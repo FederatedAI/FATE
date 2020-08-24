@@ -64,16 +64,13 @@
             "script": "../pipeline/union/pipeline-union.py"
         },
         "union-basic": {
-            "conf": "../dsl/union/test_union_basic_job_conf.json",
-            "dsl": "../dsl/union/test_union_basic_job_dsl.json"
+            "script": "../pipeline/union/pipeline-union-basic.py"
         },
         "union-dataio": {
-            "conf": "../dsl/union/test_union_basic_job_conf.json",
-            "dsl": "../dsl/union/test_union_dataio_job_dsl.json"
+            "script": "../pipeline/union/pipeline-dataio.py"
         },
         "union-tag": {
-            "conf": "../dsl/union/test_union_tag_value_job_conf.json",
-            "dsl": "../dsl/union/test_union_dataio_job_dsl.json"
+            "script": "../pipeline/union/pipeline-union-tag-value.py"
         }
     }
 }
