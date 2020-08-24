@@ -1,7 +1,7 @@
 {
     "data": [
         {
-            "file": "examples/data/vehicle_scale_hetero_guest.csv",
+            "file": "../data/vehicle_scale_hetero_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "vehicle_scale_hetero_guest",
@@ -9,7 +9,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/vehicle_scale_hetero_host.csv",
+            "file": "../data/vehicle_scale_hetero_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "vehicle_scale_hetero_host",
@@ -17,7 +17,7 @@
             "role": "host_0"
         },
         {
-            "file": "examples/data/breast_homo_guest.csv",
+            "file": "../data/breast_homo_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "breast_homo_guest",
@@ -25,7 +25,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/breast_homo_host.csv",
+            "file": "../data/breast_homo_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "breast_homo_host",
@@ -35,12 +35,20 @@
     ],
     "tasks": {
         "local_baseline": {
-            "conf": "test_local_baseline_job_conf.json",
-            "dsl": "test_local_baseline_job_dsl.json"
+            "conf": "../dsl/local_baseline/test_local_baseline_job_conf.json",
+            "dsl": "../dsl/local_baseline/test_local_baseline_job_dsl.json"
         },
         "local_baseline-homo": {
-            "conf": "test_local_baseline_homo_job_conf.json",
-            "dsl": "test_local_baseline_homo_job_dsl.json"
+            "conf": "../dsl/local_baseline/test_local_baseline_homo_job_conf.json",
+            "dsl": "../dsl/local_baseline/test_local_baseline_homo_job_dsl.json"
+        }
+    },
+    "pipeline_tasks": {
+        "local_baseline": {
+            "script": "../pipeline/local_baseline/pipeline-local-baseline.py"
+        },
+        "local_baseline-homo": {
+            "script": "../pipeline/local_baseline/pipeline-local-baseline-homo.py"
         }
     }
 }

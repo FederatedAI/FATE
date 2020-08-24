@@ -20,7 +20,7 @@
     "tasks": {
         "poisson": {
             "conf": "../dsl/hetero_poisson_regression/test_hetero_poisson_train_job_conf.json",
-            "dsl": "test_hetero_poisson_train_job_dsl.json"
+            "dsl": "../dsl/hetero_poisson_regression/test_hetero_poisson_train_job_dsl.json"
         },
         "poisson-predict": {
             "conf": "../dsl/hetero_poisson_regression/test_predict_conf.json",
@@ -28,15 +28,15 @@
         },
         "poisson-validate": {
             "conf": "../dsl/hetero_poisson_regression/test_hetero_poisson_validate_job_conf.json",
-            "dsl": "test_hetero_poisson_validate_job_dsl.json"
+            "dsl": "../dsl/hetero_poisson_regression/test_hetero_poisson_validate_job_dsl.json"
         },
         "poisson-sparse": {
             "conf": "../dsl/hetero_poisson_regression/test_hetero_poisson_train_sparse_job_conf.json",
-            "dsl": "test_hetero_poisson_train_job_dsl.json"
+            "dsl": "../dsl/hetero_poisson_regression/test_hetero_poisson_train_job_dsl.json"
         },
         "poisson-cv": {
             "conf": "../dsl/hetero_poisson_regression/test_hetero_poisson_cv_job_conf.json",
-            "dsl": "test_hetero_poisson_cv_job_dsl.json"
+            "dsl": "../dsl/hetero_poisson_regression/test_hetero_poisson_cv_job_dsl.json"
         }
     },
     "pipeline_tasks": {

@@ -19,9 +19,6 @@ import argparse
 from fate_test.fate_test._config import Config
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
-from pipeline.component.hetero_lr import HeteroLR
-from pipeline.component.intersection import Intersection
-from pipeline.component.evaluation import Evaluation
 from pipeline.component.reader import Reader
 from pipeline.component.union import Union
 from pipeline.interface.data import Data
@@ -34,59 +31,36 @@ def main(config="../config.yaml", namespace=""):
         config = Config.load(config)
     parties = config.parties
     guest = parties.guest[0]
-    host = parties.host[0]
-    arbiter = parties.arbiter[0]
     backend = config.backend
     work_mode = config.work_mode
 
     guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
 
-    pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host, arbiter=arbiter)
+    pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest)
 
     reader_0 = Reader(name="reader_0")
     reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
-    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
 
     reader_1 = Reader(name="reader_1")
     reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
-    reader_1.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
 
-    dataio_0 = DataIO(name="dataio_0")
-    dataio_1 = DataIO(name="dataio_1")
+    dataio_0 = DataIO(name="dataio_0", with_label=True, output_format="dense", label_name="y",
+                      missing_fill=False, outlier_replace=False)
+    dataio_1 = DataIO(name="dataio_1", with_label=True, output_format="dense", label_name="y",
+                      missing_fill=False, outlier_replace=False)
 
-    dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
-
-    dataio_1.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense")
-    dataio_1.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
-
-    intersect_0 = Intersection(name="intersection_0")
-    intersect_1 = Intersection(name="intersection_1")
-
-    union_0 = Union(name="union_0")
-    hetero_lr_0 = HeteroLR(name="hetero_lr_0", max_iter=20, early_stop="weight_diff")
-
-    evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary", pos_label=1)
-    evaluation_0.get_party_instance(role='host', party_id=host).alogrithm_param(need_run=False)
+    union_0 = Union(name="union_0", allow_missing=False)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data), model=Model(dataio_0.output.model))
-    pipeline.add_component(intersect_0, data=Data(data=dataio_0.output.data))
-    pipeline.add_component(intersect_1, data=Data(data=dataio_1.output.data))
-    pipeline.add_component(union_0, data=Data(data=[intersect_0.output.data, intersect_1.output.data]))
-    pipeline.add_component(hetero_lr_0, data=Data(train_data=union_0.output.data))
-    pipeline.add_component(evaluation_0, data=Data(data=hetero_lr_0.output.data))
-
+    pipeline.add_component(union_0, data=Data(data=[dataio_0.output.data, dataio_1.output.data]))
     pipeline.compile()
 
     pipeline.fit(backend=backend, work_mode=work_mode)
 
     print(pipeline.get_component("union_0").get_summary())
-    print(pipeline.get_component("hetero_lr_0").get_summary())
-    print(pipeline.get_component("evaluation_0").get_summary())
 
 
 if __name__ == "__main__":

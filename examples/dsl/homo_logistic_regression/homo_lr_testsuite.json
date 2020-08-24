@@ -1,7 +1,7 @@
 {
     "data": [
         {
-            "file": "examples/data/breast_homo_guest.csv",
+            "file": "../data/breast_homo_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "breast_homo_guest",
@@ -9,7 +9,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/breast_homo_host.csv",
+            "file": "../data/breast_homo_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "breast_homo_host",
@@ -17,7 +17,7 @@
             "role": "host_0"
         },
         {
-            "file": "examples/data/breast_homo_host.csv",
+            "file": "../data/breast_homo_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "breast_homo_host",
@@ -25,7 +25,7 @@
             "role": "host_1"
         },
         {
-            "file": "examples/data/breast_homo_test.csv",
+            "file": "../data/breast_homo_test.csv",
             "head": 1,
             "partition": 16,
             "table_name": "homo_breast_test",
@@ -33,7 +33,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/breast_homo_test.csv",
+            "file": "../data/breast_homo_test.csv",
             "head": 1,
             "partition": 16,
             "table_name": "homo_breast_test",
@@ -41,7 +41,7 @@
             "role": "host_0"
         },
         {
-            "file": "examples/data/breast_homo_test.csv",
+            "file": "../data/breast_homo_test.csv",
             "head": 1,
             "partition": 16,
             "table_name": "homo_breast_test",
@@ -51,28 +51,39 @@
     ],
     "tasks": {
         "train": {
-            "conf": "./test_homolr_train_job_conf.json",
-            "dsl": "./test_homolr_train_job_dsl.json"
+            "conf": "../dsl/homo_logistic_regression/test_homolr_train_job_conf.json",
+            "dsl": "../dsl/homo_logistic_regression/test_homolr_train_job_dsl.json"
         },
         "train_eval": {
             "conf": "test_homolr_train_eval_job_conf.json",
             "dsl": "test_homolr_train_eval_job_dsl.json"
         },
         "cv": {
-            "conf": "./test_homolr_cv_job_conf.json",
-            "dsl": "./test_homolr_cv_job_dsl.json"
+            "conf": "../dsl/homo_logistic_regression/test_homolr_cv_job_conf.json",
+            "dsl": "../dsl/homo_logistic_regression/test_homolr_cv_job_dsl.json"
         },
         "evaluate": {
-            "conf": "./test_homolr_evaluate_job_conf.json",
-            "dsl": "./test_homolr_evaluate_job_dsl.json"
+            "conf": "../dsl/homo_logistic_regression/test_homolr_evaluate_job_conf.json",
+            "dsl": "../dsl/homo_logistic_regression/test_homolr_evaluate_job_dsl.json"
         },
         "multi_host": {
-            "conf": "./test_multi_host_job_conf.json",
-            "dsl": "./test_homolr_train_job_dsl.json"
+            "conf": "../dsl/homo_logistic_regression/test_multi_host_job_conf.json",
+            "dsl": "../dsl/homo_logistic_regression/test_homolr_train_job_dsl.json"
         },
         "lr-predict": {
             "conf": "test_predict_conf.json",
             "deps": "train"
+        }
+    },
+    "pipeline_tasks": {
+        "homo_lr": {
+            "script": "../pipeline/homo_lr/pipeline-homo-lr.py"
+        },
+        "cv": {
+            "script": "../pipeline/homo_lr/pipeline-homo-lr-cv.py"
+        },
+        "lr-fedprox": {
+            "script": "../pipeline/homo_lr/pipeline-homo-lr-fedprox.py"
         }
     }
 }

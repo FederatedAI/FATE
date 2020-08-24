@@ -28,7 +28,7 @@
     "tasks": {
         "linr": {
             "conf": "../dsl/hetero_linear_regression/test_hetero_linr_train_job_conf.json",
-            "dsl": "test_hetero_linr_train_job_dsl.json"
+            "dsl": "../dsl/hetero_linear_regression/test_hetero_linr_train_job_dsl.json"
         },
         "linr-predict": {
             "conf": "../dsl/hetero_linear_regression/test_predict_conf.json",
@@ -36,23 +36,23 @@
         },
         "linr-validate": {
             "conf": "../dsl/hetero_linear_regression/test_hetero_linr_validate_job_conf.json",
-            "dsl": "test_hetero_linr_validate_job_dsl.json"
+            "dsl": "../dsl/hetero_linear_regression/test_hetero_linr_validate_job_dsl.json"
         },
         "linr-cv": {
             "conf": "../dsl/hetero_linear_regression/test_hetero_linr_cv_job_conf.json",
-            "dsl": "test_hetero_linr_cv_job_dsl.json"
+            "dsl": "../dsl/hetero_linear_regression/test_hetero_linr_cv_job_dsl.json"
         },
         "linr-multi-host": {
             "conf": "../dsl/hetero_linear_regression/test_hetero_linr_multi_host_train_job_conf.json",
-            "dsl": "test_hetero_linr_train_job_dsl.json"
+            "dsl": "../dsl/hetero_linear_regression/test_hetero_linr_train_job_dsl.json"
         },
         "linr-multi-host-cv": {
             "conf": "../dsl/hetero_linear_regression/test_hetero_linr_multi_host_cv_job_conf.json",
-            "dsl": "test_hetero_linr_cv_job_dsl.json"
+            "dsl": "../dsl/hetero_linear_regression/test_hetero_linr_cv_job_dsl.json"
         },
         "linr_sparse": {
             "conf": "../dsl/hetero_linear_regression/test_hetero_linr_train_sparse_job_conf.json",
-            "dsl": "test_hetero_linr_train_job_dsl.json"
+            "dsl": "../dsl/hetero_linear_regression/test_hetero_linr_train_job_dsl.json"
         }
     },
     "pipeline_tasks": {

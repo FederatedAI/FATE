@@ -1,7 +1,22 @@
-import sys
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
 
-import yaml
+import argparse
 
+from fate_test.fate_test._config import Config
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
 from pipeline.component.homo_lr import HomoLR
@@ -9,34 +24,20 @@ from pipeline.component.evaluation import Evaluation
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
 
-try:
-    from yaml import CLoader as Loader, CDumper as Dumper
-except ImportError:
-    from yaml import Loader, Dumper
 
-
-def main(config="./config.yaml"):
-    """
-    parser = argparse.ArgumentParser("PIPELINE DEMO")
-    parser.add_argument("-config", default="./config.yaml", type=str,
-                        help="config file")
-    args = parser.parse_args()
-    file = args.config
-    """
+def main(config="../config.yaml", namespace=""):
     # obtain config
-    with open(config, "r") as f:
-        conf = yaml.load(f, Loader=Loader)
-        parties = conf.get("parties", {})
-        if len(parties) == 0:
-            raise ValueError(f"Parties id must be sepecified.")
-        host = parties["host"][0]
-        guest = parties["guest"][0]
-        arbiter = parties["arbiter"][0]
-        backend = conf.get("backend", 0)
-        work_mode = conf.get("work_mode", 0)
+    if isinstance(config, str):
+        config = Config.load(config)
+    parties = config.parties
+    guest = parties.guest[0]
+    host = parties.host[0]
+    arbiter = parties.arbiter[0]
+    backend = config.backend
+    work_mode = config.work_mode
 
-    guest_train_data = {"name": "breast_homo_guest", "namespace": "experiment"}
-    host_train_data = {"name": "breast_homo_host", "namespace": "experiment"}
+    guest_train_data = {"name": "breast_homo_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "breast_homo_host", "namespace": f"experiment{namespace}"}
 
     # initialize pipeline
     pipeline = PipeLine()
@@ -91,4 +92,11 @@ def main(config="./config.yaml"):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    parser = argparse.ArgumentParser("PIPELINE DEMO")
+    parser.add_argument("-config", type=str,
+                        help="config file")
+    args = parser.parse_args()
+    if args.config is not None:
+        main(args.config)
+    else:
+        main()
