@@ -40,7 +40,7 @@ class AdjustedRandScore(object):
         return adjusted_rand_score(labels, pred_scores)
 
 
-class DB_index(object):
+class Davies_Bouldin_index(object):
     """
         Compute dbi，as in dbi
     """

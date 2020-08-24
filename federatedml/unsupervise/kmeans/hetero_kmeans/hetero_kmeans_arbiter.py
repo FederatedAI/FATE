@@ -58,7 +58,7 @@ class HeteroKmeansArbiter(BaseKmeansModel):
 
             dist_table = self.cal_ave_dist(dist_sum, cluster_result, self.k)
             cluster_dist = self.cluster_dist_aggregator.sum_model(suffix=(self.n_iter_,))
-            self.DBI=clustering_metric.AdjustedRandScore.compute(dist_table, cluster_dist)
+            self.DBI=clustering_metric.Davies_Bouldin_index.compute(dist_table, cluster_dist)
 
             tol1 = self.transfer_variable.guest_tol.get(idx=0, suffix=(self.n_iter_,))
             tol2 = self.transfer_variable.host_tol.get(idx=-1, suffix=(self.n_iter_,))

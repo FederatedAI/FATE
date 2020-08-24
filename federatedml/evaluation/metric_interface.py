@@ -447,4 +447,4 @@ class MetricInterface(object):
         cluster_dist_dtable=list(v[3] for v in pred_output)
 
         ## process data from evaluation
-        return clustering_metric.AdjustedRandScore.compute(dist_table_dtable, cluster_dist_dtable)
+        return clustering_metric.Davies_Bouldin_index.compute(dist_table_dtable, cluster_dist_dtable)

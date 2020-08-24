@@ -108,7 +108,7 @@ class HeteroKmeansClient(BaseKmeansModel):
             self.cluster_dist_aggregator.send_model(cluster_dist, suffix=(self.n_iter_,))
             tol_tag = self.transfer_variable.arbiter_tol.get(idx=0, suffix=(self.n_iter_,))
             self.n_iter_ += 1
-            if tol_tag == 1:
+            if tol_tag:
                 break
 
     def predict(self, data_instances):
