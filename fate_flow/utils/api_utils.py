@@ -104,21 +104,6 @@ def local_api(job_id, method, endpoint, json_body, api_version=API_VERSION, try_
         raise Exception('local request error: {}'.format(exception))
 
 
-def request_execute_server(request, execute_host):
-    try:
-        endpoint = request.base_url.replace(request.host_url, '')
-        method = request.method
-        url = "http://{}/{}".format(execute_host, endpoint)
-        audit_logger().info('sub request: {}'.format(url))
-        action = getattr(requests, method.lower(), None)
-        response = action(url=url, json=request.json, headers=HEADERS)
-        return jsonify(response.json())
-    except requests.exceptions.ConnectionError as e:
-        return get_json_result(retcode=999, retmsg='please start fate flow server: {}'.format(execute_host))
-    except Exception as e:
-        raise Exception('local request error: {}'.format(e))
-
-
 def get_node_identity(json_body, src_party_id):
     params = {
         'partyId': int(src_party_id),

@@ -24,11 +24,10 @@ from fate_arch.common import WorkMode
 from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_flow.scheduler import DAGScheduler
 from fate_flow.scheduler import FederatedScheduler
-from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT, TEMP_DIRECTORY
+from fate_flow.settings import stat_logger, TEMP_DIRECTORY
 from fate_flow.utils import job_utils, detect_utils, schedule_utils
-from fate_flow.utils.api_utils import get_json_result, request_execute_server, error_response
+from fate_flow.utils.api_utils import get_json_result, error_response
 from fate_flow.entity.types import FederatedSchedulingStatusCode, RetCode
-from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation import Tracker
 from fate_flow.operation import JobSaver
 from fate_flow.operation import JobClean
@@ -46,22 +45,15 @@ def internal_server_error(e):
 def submit_job():
     work_mode = request.json.get('job_runtime_conf', {}).get('job_parameters', {}).get('work_mode', None)
     detect_utils.check_config({'work_mode': work_mode}, required_arguments=[('work_mode', (WorkMode.CLUSTER, WorkMode.STANDALONE))])
-    if work_mode == RuntimeConfig.WORK_MODE:
-        job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(request.json)
-        return get_json_result(retcode=0, retmsg='success',
-                               job_id=job_id,
-                               data={'job_dsl_path': job_dsl_path,
-                                     'job_runtime_conf_path': job_runtime_conf_path,
-                                     'model_info': model_info,
-                                     'board_url': board_url,
-                                     'logs_directory': logs_directory
-                                     })
-    else:
-        if RuntimeConfig.WORK_MODE == WorkMode.CLUSTER and work_mode == WorkMode.STANDALONE:
-            # use cluster standalone job server to execute standalone job
-            return request_execute_server(request=request, execute_host='{}:{}'.format(request.remote_addr, CLUSTER_STANDALONE_JOB_SERVER_PORT))
-        else:
-            raise Exception('server run on standalone can not support cluster mode job')
+    job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(request.json)
+    return get_json_result(retcode=0, retmsg='success',
+                           job_id=job_id,
+                           data={'job_dsl_path': job_dsl_path,
+                                 'job_runtime_conf_path': job_runtime_conf_path,
+                                 'model_info': model_info,
+                                 'board_url': board_url,
+                                 'logs_directory': logs_directory
+                                 })
 
 
 @manager.route('/stop', methods=['POST'])

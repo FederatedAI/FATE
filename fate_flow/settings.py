@@ -17,14 +17,12 @@
 import os
 
 from fate_arch.common import file_utils, log
-from fate_arch.common import Backend
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_arch.common.conf_utils import get_base_config
 import __main__
 
 
 WORK_MODE = get_base_config('work_mode', 0)
-BACKEND = Backend.EGGROLL
 USE_LOCAL_DATABASE = get_base_config('use_local_database', True)
 
 # upload data
@@ -64,7 +62,6 @@ API_VERSION = "v1"
 FATEFLOW_SERVICE_NAME = 'fateflow'
 MAIN_MODULE = os.path.relpath(__main__.__file__)
 SERVER_MODULE = 'fate_flow_server.py'
-TASK_EXECUTOR_MODULE = 'driver/task_executor.py'
 TEMP_DIRECTORY = os.path.join(file_utils.get_project_base_directory(), "fate_flow", "temp")
 HEADERS = {
     'Content-Type': 'application/json',
@@ -93,10 +90,6 @@ Services
 IP = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("host", "127.0.0.1")
 HTTP_PORT = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("http_port")
 GRPC_PORT = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("grpc_port")
-
-# standalone job will be send to the standalone job server when FATE-Flow work on cluster deploy mode,
-# but not the port for FATE-Flow on standalone deploy mode.
-CLUSTER_STANDALONE_JOB_SERVER_PORT = 9381
 
 # switch
 ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH = True
