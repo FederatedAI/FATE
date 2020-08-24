@@ -34,8 +34,8 @@ class PrivilegeAuth(object):
                       'privilege_component': []}
     command_whitelist = None
 
-    @staticmethod
-    def authentication_privilege(src_party_id, src_role, request_path, func_name):
+    @classmethod
+    def authentication_privilege(cls, src_party_id, src_role, request_path, func_name):
         if request.url_root.split(':')[-1].split('/')[0] == str(CLUSTER_STANDALONE_JOB_SERVER_PORT):
             return
         if not int(PrivilegeAuth.get_dest_party_id(request_path, func_name)) or \
@@ -61,22 +61,22 @@ class PrivilegeAuth(object):
         stat_logger.info('party {} role {} successful authenticated'.format(src_party_id, src_role))
         return True
 
-    @staticmethod
-    def get_permission_config(src_party_id, src_role, use_local=True):
+    @classmethod
+    def get_permission_config(cls, src_party_id, src_role, use_local=True):
         if PrivilegeAuth.USE_LOCAL_STORAGE:
             return PrivilegeAuth.read_local_storage(src_party_id, src_role)
         else:
             return PrivilegeAuth.read_cloud_config_center(src_party_id, src_role)
 
-    @staticmethod
-    def read_local_storage(src_party_id, src_role):
+    @classmethod
+    def read_local_storage(cls, src_party_id, src_role):
         with open(PrivilegeAuth.local_storage_file) as fp:
             local_storage_conf = json.load(fp)
             PrivilegeAuth.privilege_cache = local_storage_conf
         return local_storage_conf.get(src_party_id, {}).get(src_role, {})
 
-    @staticmethod
-    def get_new_permission_config(src_party_id, src_role, privilege_role, privilege_command, privilege_component, delete):
+    @classmethod
+    def get_new_permission_config(cls, src_party_id, src_role, privilege_role, privilege_command, privilege_component, delete):
         with open(PrivilegeAuth.local_storage_file) as f:
             stat_logger.info(
                 "add permissions: src_party_id {} src_role {} privilege_role {} privilege_command {} privilege_component {}".format(
@@ -131,39 +131,39 @@ class PrivilegeAuth(object):
             f.close()
             return local_storage
 
-    @staticmethod
-    def rewrite_local_storage(new_json):
+    @classmethod
+    def rewrite_local_storage(cls, new_json):
         with open(PrivilegeAuth.local_storage_file, 'w') as fp:
             PrivilegeAuth.privilege_cache = new_json
             json.dump(new_json, fp, indent=4, separators=(',', ': '))
             fp.close()
 
-    @staticmethod
-    def read_cloud_config_center(src_party_id, src_role):
+    @classmethod
+    def read_cloud_config_center(cls, src_party_id, src_role):
         pass
 
-    @staticmethod
-    def write_cloud_config_center():
+    @classmethod
+    def write_cloud_config_center(cls, ):
         pass
 
-    @staticmethod
-    def get_authentication_items(request_path, func_name):
+    @classmethod
+    def get_authentication_items(cls, request_path, func_name):
         dest_role = request_path.split('/')[2] if 'task' not in func_name else request_path.split('/')[4]
         component = request.json.get('module_name').lower() if 'run_task' in func_name else None
         return PrivilegeAuth.get_privilege_dic(dest_role, func_name, component)
 
-    @staticmethod
-    def get_dest_party_id(request_path, func_name):
+    @classmethod
+    def get_dest_party_id(cls, request_path, func_name):
         return request_path.split('/')[3] if 'task' not in func_name else request_path.split('/')[5]
 
-    @staticmethod
-    def get_privilege_dic(privilege_role, privilege_command, privilege_component):
+    @classmethod
+    def get_privilege_dic(cls, privilege_role, privilege_command, privilege_component):
         return {'privilege_role': privilege_role,
                 'privilege_command': privilege_command,
                 'privilege_component': privilege_component}
 
-    @staticmethod
-    def init():
+    @classmethod
+    def init(cls):
         if USE_AUTHENTICATION:
             # init local storage
             stat_logger.info('init local authorization library')

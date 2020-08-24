@@ -425,7 +425,3 @@ class Tracker(object):
     @classmethod
     def get_dynamic_tracking_table_index(cls, job_id):
         return job_id[:8]
-
-    @staticmethod
-    def job_view_table_name():
-        return '_'.join(['job', 'view'])

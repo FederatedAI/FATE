@@ -27,22 +27,22 @@ from fate_flow.settings import stat_logger, SERVICES_SUPPORT_REGISTRY, FATE_SERV
 class ServiceUtils(object):
     ZOOKEEPER_CLIENT = None
 
-    @staticmethod
-    def get(service_name, default=None):
+    @classmethod
+    def get(cls, service_name, default=None):
         if get_base_config("use_registry", False) and service_name in SERVICES_SUPPORT_REGISTRY:
             return ServiceUtils.get_from_registry(service_name)
         return ServiceUtils.get_from_file(service_name, default)
 
-    @staticmethod
-    def get_item(service_name, key, default=None):
+    @classmethod
+    def get_item(cls, service_name, key, default=None):
         return ServiceUtils.get(service_name, {}).get(key, default)
 
-    @staticmethod
-    def get_from_file(service_name, default=None):
+    @classmethod
+    def get_from_file(cls, service_name, default=None):
         return conf_utils.get_base_config(service_name, default)
 
-    @staticmethod
-    def get_zk():
+    @classmethod
+    def get_zk(cls, ):
         zk_config = get_base_config("zookeeper", {})
         if zk_config.get("use_acl", False):
             default_acl = make_digest_acl(zk_config.get("user", ""), zk_config.get("password", ""), all=True)
@@ -52,8 +52,8 @@ class ServiceUtils(object):
             zk = KazooClient(hosts=zk_config.get("hosts", []))
         return zk
 
-    @staticmethod
-    def get_from_registry(service_name):
+    @classmethod
+    def get_from_registry(cls, service_name):
         try:
             zk = ServiceUtils.get_zk()
             zk.start()
@@ -64,8 +64,8 @@ class ServiceUtils(object):
         except Exception as e:
             raise Exception('loading servings node  failed from zookeeper: {}'.format(e))
 
-    @staticmethod
-    def register():
+    @classmethod
+    def register(cls):
         if get_base_config("use_registry", False):
             zk = ServiceUtils.get_zk()
             zk.start()

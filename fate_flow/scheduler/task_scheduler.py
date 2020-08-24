@@ -107,8 +107,8 @@ class TaskScheduler(object):
                 JobSaver.update_task_status(task_info=party_response["data"])
                 JobSaver.update_task(task_info=party_response["data"])
 
-    @staticmethod
-    def align_task_parameters(job_id, job_parameters, job_initiator, job_args, component, task_id):
+    @classmethod
+    def align_task_parameters(cls, job_id, job_parameters, job_initiator, job_args, component, task_id):
         parameters = component.get_role_parameters()
         component_name = component.get_name()
         extra_task_parameters = {'input_data_partition': 0}  # Large integers are not used
