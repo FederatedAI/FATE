@@ -65,7 +65,7 @@ def load_model():
             try:
                 response = federated_api(job_id=_job_id,
                                          method='POST',
-                                         endpoint='/{}/model/load/do'.format(API_VERSION),
+                                         endpoint='/model/load/do',
                                          src_party_id=initiator_party_id,
                                          dest_party_id=_party_id,
                                          src_role = initiator_role,
@@ -139,7 +139,7 @@ def migrate_model_process():
             try:
                 response = federated_api(job_id=_job_id,
                                          method='POST',
-                                         endpoint='/{}/model/migrate/do'.format(API_VERSION),
+                                         endpoint='/model/migrate/do',
                                          src_party_id=initiator_party_id,
                                          dest_party_id=party_id,
                                          src_role=initiator_role,

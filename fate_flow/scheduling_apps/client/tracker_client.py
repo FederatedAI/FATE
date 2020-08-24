@@ -67,8 +67,7 @@ class TrackerClient(object):
         request_body['job_level'] = job_level
         response = api_utils.local_api(job_id=self.job_id,
                                        method='POST',
-                                       endpoint='/{}/tracker/{}/{}/{}/{}/{}/{}/metric_data/save'.format(
-                                           API_VERSION,
+                                       endpoint='/tracker/{}/{}/{}/{}/{}/{}/metric_data/save'.format(
                                            self.job_id,
                                            self.component_name,
                                            self.task_id,
@@ -101,8 +100,7 @@ class TrackerClient(object):
         request_body['job_level'] = job_level
         response = api_utils.local_api(job_id=self.job_id,
                                        method='POST',
-                                       endpoint='/{}/tracker/{}/{}/{}/{}/{}/{}/metric_meta/save'.format(
-                                           API_VERSION,
+                                       endpoint='/tracker/{}/{}/{}/{}/{}/{}/metric_meta/save'.format(
                                            self.job_id,
                                            self.component_name,
                                            self.task_id,
@@ -125,8 +123,7 @@ class TrackerClient(object):
         request_body["table_name"] = table_name
         response = api_utils.local_api(job_id=self.job_id,
                                        method='POST',
-                                       endpoint='/{}/tracker/{}/{}/{}/{}/{}/{}/output_data_info/save'.format(
-                                           API_VERSION,
+                                       endpoint='/tracker/{}/{}/{}/{}/{}/{}/output_data_info/save'.format(
                                            self.job_id,
                                            self.component_name,
                                            self.task_id,
@@ -147,8 +144,7 @@ class TrackerClient(object):
         request_body["data_name"] = data_name
         response = api_utils.local_api(job_id=self.job_id,
                                        method='POST',
-                                       endpoint='/{}/tracker/{}/{}/{}/{}/{}/{}/output_data_info/read'.format(
-                                           API_VERSION,
+                                       endpoint='/tracker/{}/{}/{}/{}/{}/{}/output_data_info/read'.format(
                                            self.job_id,
                                            self.component_name,
                                            self.task_id,
@@ -171,8 +167,7 @@ class TrackerClient(object):
         request_body["summary"] = summary_data
         response = api_utils.local_api(job_id=self.job_id,
                                        method='POST',
-                                       endpoint='/{}/tracker/{}/{}/{}/{}/{}/{}/summary/save'.format(
-                                           API_VERSION,
+                                       endpoint='/tracker/{}/{}/{}/{}/{}/{}/summary/save'.format(
                                            self.job_id,
                                            self.component_name,
                                            self.task_id,

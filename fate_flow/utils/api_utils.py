@@ -44,21 +44,22 @@ def error_response(response_code, retmsg):
     return Response(json.dumps({'retmsg': retmsg, 'retcode': response_code}), status=response_code, mimetype='application/json')
 
 
-def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, json_body, work_mode,
+def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, json_body, work_mode, api_version=API_VERSION,
                   overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
     if int(dest_party_id) == 0:
-        return local_api(job_id=job_id, method=method, endpoint=endpoint, json_body=json_body)
+        return local_api(job_id=job_id, method=method, endpoint=endpoint, json_body=json_body, api_version=api_version)
     if work_mode == WorkMode.STANDALONE:
-        return local_api(job_id=job_id, method=method, endpoint=endpoint, json_body=json_body)
+        return local_api(job_id=job_id, method=method, endpoint=endpoint, json_body=json_body, api_version=api_version)
     elif work_mode == WorkMode.CLUSTER:
         return remote_api(job_id=job_id, method=method, endpoint=endpoint, src_party_id=src_party_id, src_role=src_role,
-                          dest_party_id=dest_party_id, json_body=json_body, overall_timeout=overall_timeout)
+                          dest_party_id=dest_party_id, json_body=json_body, api_version=api_version, overall_timeout=overall_timeout)
     else:
         raise Exception('{} work mode is not supported'.format(work_mode))
 
 
-def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, json_body,
+def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, json_body, api_version=API_VERSION,
                overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT, try_times=3):
+    endpoint = f"/{api_version}{endpoint}"
     json_body['src_role'] = src_role
     if CHECK_NODES_IDENTITY:
         get_node_identity(json_body, src_party_id)
@@ -84,7 +85,8 @@ def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, 
         raise Exception('{}rpc request error: {}'.format(tips, exception))
 
 
-def local_api(method, endpoint, json_body, job_id=None, try_times=3):
+def local_api(job_id, method, endpoint, json_body, api_version=API_VERSION, try_times=3):
+    endpoint = f"/{api_version}{endpoint}"
     exception = None
     for t in range(try_times):
         try:

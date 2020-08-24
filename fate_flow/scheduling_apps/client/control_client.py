@@ -27,8 +27,7 @@ class ControllerClient(object):
         response = api_utils.local_api(
             job_id=job_info["job_id"],
             method='POST',
-            endpoint='/{}/party/{}/{}/{}/update'.format(
-                API_VERSION,
+            endpoint='/party/{}/{}/{}/update'.format(
                 job_info["job_id"],
                 job_info["role"],
                 job_info["party_id"]
@@ -44,8 +43,7 @@ class ControllerClient(object):
         response = api_utils.local_api(
             job_id=task_info["job_id"],
             method='POST',
-            endpoint='/{}/party/{}/{}/{}/{}/{}/{}/report'.format(
-                API_VERSION,
+            endpoint='/party/{}/{}/{}/{}/{}/{}/report'.format(
                 task_info["job_id"],
                 task_info["component_name"],
                 task_info["task_id"],

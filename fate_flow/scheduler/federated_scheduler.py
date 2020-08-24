@@ -133,8 +133,7 @@ class FederatedScheduler(object):
                 try:
                     response = federated_api(job_id=job.f_job_id,
                                              method='POST',
-                                             endpoint='/{}/{}/{}/{}/{}/{}'.format(
-                                                 API_VERSION,
+                                             endpoint='/{}/{}/{}/{}/{}'.format(
                                                  api_type,
                                                  job.f_job_id,
                                                  dest_role,
@@ -233,8 +232,7 @@ class FederatedScheduler(object):
                 try:
                     response = federated_api(job_id=task.f_job_id,
                                              method='POST',
-                                             endpoint='/{}/party/{}/{}/{}/{}/{}/{}/{}'.format(
-                                                 API_VERSION,
+                                             endpoint='/party/{}/{}/{}/{}/{}/{}/{}'.format(
                                                  task.f_job_id,
                                                  task.f_component_name,
                                                  task.f_task_id,
@@ -275,8 +273,7 @@ class FederatedScheduler(object):
                 try:
                     response = federated_api(job_id=task.f_job_id,
                                              method='POST',
-                                             endpoint='/{}/initiator/{}/{}/{}/{}/{}/{}/report'.format(
-                                                 API_VERSION,
+                                             endpoint='/initiator/{}/{}/{}/{}/{}/{}/report'.format(
                                                  task.f_job_id,
                                                  task.f_component_name,
                                                  task.f_task_id,

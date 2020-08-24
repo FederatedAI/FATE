@@ -123,8 +123,7 @@ class TaskScheduler(object):
                 if job_parameters.get('align_task_input_data_partition', ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH):
                     response = federated_api(job_id=job_id,
                                              method='POST',
-                                             endpoint='/{}/schedule/{}/{}/{}/{}/{}/input/args'.format(
-                                                 API_VERSION,
+                                             endpoint='/schedule/{}/{}/{}/{}/{}/input/args'.format(
                                                  job_id,
                                                  component_name,
                                                  task_id,
