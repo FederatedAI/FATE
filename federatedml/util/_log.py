@@ -14,6 +14,5 @@
 #  limitations under the License.
 #
 
-from federatedml.util._log import LOGGER
-
-__all__ = ["LOGGER"]
+from fate_arch.common.log import getLogger
+LOGGER = getLogger()
