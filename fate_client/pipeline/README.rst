@@ -39,6 +39,20 @@ constitute a model training job.
 Beyond the given mini demo, a job may include multiple data sets and
 models. For more pipeline examples, please refer to `demos <./demo/>`__.
 
+Install Pipeline
+----------------
+
+Pipeline CLI
+~~~~~~~~~~~~
+
+After successfully installed FATE Pipeline, user needs configure Pipeline.
+Pipeline provides a command line tool for quick setup. Run the following
+command for more information.
+
+.. code:: bash
+
+   pipeline config -h
+
 Interface of Pipeline
 ---------------------
 
