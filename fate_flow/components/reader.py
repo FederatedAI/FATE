@@ -57,7 +57,7 @@ class Reader(object):
                                           table_name=dest_table_meta.get_name())
         headers_str = dest_table_meta.get_schema().get('header')
         table_info = {}
-        if headers_str:
+        if dest_table_meta.get_schema() and headers_str:
             data_list = [headers_str.split(',')]
             for data in dest_table_meta.get_part_of_data():
                 data_list.append(data[1].split(','))
