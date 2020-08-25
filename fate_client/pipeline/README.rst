@@ -112,8 +112,8 @@ Model
 ``Model`` defines model input and output of components. There are two
 types of ``Model``: ``model`` and\ ``isometric_model``. When the current
 component is of the same class as the previous component, if receiving
-``model``, the current model will replicate all model parameters from
-the previous model.
+``model``, the current component will replicate all model parameters from
+the previous component.
 
 Check below for a case from mini demo, where ``model`` from ``dataio_0``
 is passed to ``dataio_1``.
@@ -129,6 +129,12 @@ is of different class from the previous component, ``isometric_model``
 is used. For instance, ``HeteroFeatureSelection`` can use
 ``isometric_model`` from ``HeteroFeatureBinning`` to select most
 important features.
+
+.. code:: python
+
+   pipeline.add_component(hetero_feature_selection_0,
+                          data=Data(data=intersection_0.output.data),
+                          isometric_model=Model(hetero_feature_binning_0.output.model))
 
 Output
 ~~~~~~
