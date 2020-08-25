@@ -36,27 +36,27 @@ class HeteroKmeansArbiter(BaseKmeansModel):
         self.DBI = 0
 
     def cal_ave_dist(self, dist_sum, cluster_result, k):
-        for i in range(0, k):
-            dist_list =[]
-            for j in range(len(dist_sum)):
-                sum = 0
-                count = 0
-                if cluster_result[j]== i:
-                    sum += dist_sum[j][i]
-                    count += 1
-                ave_dist = sum / count
-            dist_list.append(ave_dist)
+
         return dist_list
+
+    # def centroid_assign(self, dist_sum):
+    #     new_centroid= []
+    #     for row in dist_sum:
+    #         new_centroid.append(np.argmin(row))
+    #     return new_centroid
 
     def fit(self, data_instances=None):
         LOGGER.info("Enter hetero Kmeans arbiter fit")
         while self.n_iter_ < self.max_iter:
-            dist_sum = self.dist_aggregator.sum_model(suffix=(self.n_iter_,))
-            cluster_result = self.centroid_assign(dist_sum)
+            secure_dist_all_1 = self.transfer_variable.guest_dist.get(idx=0, suffix=(self.n_iter_,))
+            secure_dist_all_2 = self.transfer_variable.host_dist.get(idx=0, suffix=(self.n_iter_,))
+            dist_sum = secure_dist_all_1.join(secure_dist_all_2, lambda v1, v2: v1+v2)
+            #dist_sum = self.dist_aggregator.sum_model(suffix=(self.n_iter_,))
+            cluster_result = dist_sum.mapValues(lambda k, v: np.argmin(v))
             self.transfer_variable.cluster_result.remote(cluster_result, role=consts.GUEST, idx=0, suffix=(self.n_iter_,))
             self.transfer_variable.cluster_result.remote(cluster_result, role=consts.HOST, idx=-1, suffix=(self.n_iter_,))
 
-            dist_table = self.cal_ave_dist(dist_sum, cluster_result, self.k)
+            dist_table = self.cal_ave_dist(dist_sum, cluster_result, self.k)#ave dist in each cluster
             cluster_dist = self.cluster_dist_aggregator.sum_model(suffix=(self.n_iter_,))
             self.DBI=clustering_metric.Davies_Bouldin_index.compute(dist_table, cluster_dist)
 

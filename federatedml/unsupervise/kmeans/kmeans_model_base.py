@@ -72,12 +72,6 @@ class BaseKmeansModel(ModelBase):
         }
         return result
 
-    def centroid_assign(self, dist_sum):
-        new_centroid= []
-        for row in dist_sum:
-            new_centroid.append(np.argmin(row))
-        return new_centroid
-
     def _abnormal_detection(self, data_instances):
         """
         Make sure input data_instances is valid.

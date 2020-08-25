@@ -432,15 +432,9 @@ class MetricInterface(object):
 
     def davies_bouldin_index(labels, pred_labels):
         """
-        Compute the adjusted-rand score
+        Compute the davies_bouldin_index
         Parameters
-        ----------
-        labels: value list. The labels of data set.
-        pred_labels: value list. The predict results of model. It should be corresponding to labels each data.
-        Return
-        ----------
-        float
-            A positive floating point value
+
         """
         pred_output=list(pred_labels.first().collect())
         dist_table_dtable=list(v[2] for v in pred_output)
