@@ -77,7 +77,7 @@ An example of initializing a component with specified parameter values:
 Data
 ~~~~
 
-In most cases, data sets are wrapped into ``data`` when being past
+In most cases, data sets are wrapped into ``data`` when being passed
 between modules. For instance, in the mini demo, data output of
 ``dataio_0`` is set as data input to ``intersection_0``.
 
