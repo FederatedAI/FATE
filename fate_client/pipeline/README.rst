@@ -37,7 +37,7 @@ of the listed modules run a small task with the data, and together they
 constitute a model training job.
 
 Beyond the given mini demo, a job may include multiple data sets and
-models. For more pipeline examples, please refer to `demos <./demo/>`__.
+models. For more pipeline examples, please refer to `examples <../../examples/pipeline>`__.
 
 Install Pipeline
 ----------------
