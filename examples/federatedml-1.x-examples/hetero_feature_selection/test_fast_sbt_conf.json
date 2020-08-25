@@ -12,9 +12,6 @@
         ],
         "host": [
             10000
-        ],
-        "arbiter": [
-            10000
         ]
     },
     "role_parameters": {
@@ -22,12 +19,6 @@
             "args": {
                 "data": {
                     "train_data": [
-                        {
-                            "name": "breast_hetero_guest",
-                            "namespace": "experiment"
-                        }
-                    ],
-                    "eval_data": [
                         {
                             "name": "breast_hetero_guest",
                             "namespace": "experiment"
@@ -47,20 +38,6 @@
                 ],
                 "output_format": [
                     "dense"
-                ],
-                "missing_fill": [
-                    true
-                ],
-                "outlier_replace": [
-                    true
-                ]
-            },
-            "evaluation_0": {
-                "eval_type": [
-                    "binary"
-                ],
-                "pos_label": [
-                    1
                 ]
             }
         },
@@ -68,12 +45,6 @@
             "args": {
                 "data": {
                     "train_data": [
-                        {
-                            "name": "breast_hetero_host",
-                            "namespace": "experiment"
-                        }
-                    ],
-                    "eval_data": [
                         {
                             "name": "breast_hetero_host",
                             "namespace": "experiment"
@@ -87,48 +58,53 @@
                 ],
                 "output_format": [
                     "dense"
-                ],
-                "outlier_replace": [
-                    true
-                ]
-            },
-            "evaluation_0": {
-                "need_run": [
-                    false
                 ]
             }
         }
     },
     "algorithm_parameters": {
-        "hetero_lr_0": {
-            "penalty": "L2",
-            "optimizer": "nesterov_momentum_sgd",
+        "fast_secureboost_0": {
+            "task_type": "classification",
+            "learning_rate": 0.1,
+            "num_trees": 4,
+            "subsample_feature_rate": 1,
+            "n_iter_no_change": false,
+            "work_mode": "layered",
+            "guest_depth": 2,
+            "host_depth": 3,
             "tol": 0.0001,
-            "alpha": 0.01,
-            "max_iter": 30,
-            "early_stop": "weight_diff",
-            "batch_size": -1,
-            "learning_rate": 0.15,
-            "init_param": {
-                "init_method": "zeros"
+            "bin_num": 50,
+            "metrics": ["Recall", "ks", "auc", "roc"],
+            "objective_param": {
+                "objective": "cross_entropy"
             },
-            "sqn_param": {
-                "update_interval_L": 3,
-                "memory_M": 5,
-                "sample_size": 5000,
-                "random_seed": null
+            "encrypt_param": {
+                "method": "iterativeAffine"
+            },
+            "predict_param": {
+                "threshold": 0.5
             },
             "cv_param": {
                 "n_splits": 5,
                 "shuffle": false,
                 "random_seed": 103,
                 "need_cv": false
-            }
+            },
+            "validation_freqs": 1
         },
-        "intersect_0": {
-            "intersect_method": "rsa",
-            "sync_intersect_ids": true,
-            "only_output_key": false
+
+        "hetero_feature_selection_0": {
+            "select_col_indexes": -1,
+            "select_names": [],
+            "filter_methods": [
+                "hetero_fast_sbt_filter"
+            ],
+            "sbt_param": {
+                "metrics": "feature_importance",
+                "filter_type": "threshold",
+                "take_high": true,
+                "threshold": 0.03
+            }
         }
     }
 }

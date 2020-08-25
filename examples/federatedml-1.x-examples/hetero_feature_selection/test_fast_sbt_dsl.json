@@ -1,5 +1,5 @@
 {
-    "components" : {
+    "components": {
         "dataio_0": {
             "module": "DataIO",
             "input": {
@@ -14,8 +14,8 @@
                 "model": ["dataio"]
             }
          },
-        "feature_scale_0": {
-            "module": "FeatureScale",
+        "intersection_0": {
+            "module": "Intersection",
             "input": {
                 "data": {
                     "data": [
@@ -24,32 +24,38 @@
                 }
             },
             "output": {
-                "data": ["train"],
-                "model": ["feature_scale"]
+                "data": ["train"]
             }
         },
-        "homo_lr_0": {
-            "module": "HomoLR",
+        "fast_secureboost_0": {
+            "module": "HeteroFastSecureBoost",
             "input": {
                 "data": {
                     "train_data": [
-                        "feature_scale_0.train"
+                        "intersection_0.train"
                     ]
                 }
             },
             "output": {
                 "data": ["train"],
-                "model": ["homolr"]
+                "model": ["train"]
             }
         },
-        "evaluation_0": {
-            "module": "Evaluation",
+        "hetero_feature_selection_0": {
+            "module": "HeteroFeatureSelection",
             "input": {
                 "data": {
                     "data": [
-                        "homo_lr_0.train"
+                        "intersection_0.train"
                     ]
-                }
+                },
+                "isometric_model": [
+                    "fast_secureboost_0.train"
+                ]
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["model"]
             }
         }
     }
