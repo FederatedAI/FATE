@@ -248,10 +248,6 @@ class Component(object):
 
         return conf
 
-    def summary(self, *args):
-        """need to implement"""
-        pass
-
 
 class PlaceHolder(object):
     pass
