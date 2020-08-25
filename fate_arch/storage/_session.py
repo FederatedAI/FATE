@@ -53,6 +53,9 @@ class Session(object):
         elif storage_engine == StorageEngine.MYSQL:
             from fate_arch.storage.mysql import StorageSession
             storage_session = StorageSession(session_id=session_id, options=kwargs.get("options", {}))
+        elif storage_engine == StorageEngine.HDFS:
+            from fate_arch.storage.hdfs import StorageSession
+            storage_session = StorageSession(session_id=session_id, options=kwargs.get("options", {}))
         else:
             raise NotImplementedError(f"can not be initialized with storage engine: {storage_engine}")
         if kwargs.get("name") and kwargs.get("namespace"):
