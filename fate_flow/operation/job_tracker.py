@@ -106,44 +106,6 @@ class Tracker(object):
                 view_data[k] = v
             return view_data
 
-    def save_component_summary(self, summary_data: dict):
-        with DB.connection_context():
-            component_summary = ComponentSummary.select().where(ComponentSummary.f_job_id == self.job_id,
-                                                                ComponentSummary.f_role == self.role,
-                                                                ComponentSummary.f_party_id == self.party_id,
-                                                                ComponentSummary.f_component_name == self.component_name)
-            is_insert = True
-            if component_summary:
-                cpn_summary = component_summary[0]
-                is_insert = False
-            else:
-                cpn_summary = ComponentSummary()
-                cpn_summary.f_create_time = current_timestamp()
-            cpn_summary.f_job_id = self.job_id
-            cpn_summary.f_role = self.role
-            cpn_summary.f_party_id = self.party_id
-            cpn_summary.f_component_name = self.component_name
-            cpn_summary.f_update_time = current_timestamp()
-            cpn_summary.f_summary = serialize_b64(summary_data, to_str=True)
-
-            if is_insert:
-                cpn_summary.save(force_insert=True)
-            else:
-                cpn_summary.save()
-            return cpn_summary
-
-    def get_component_summary(self):
-        with DB.connection_context():
-            component_summary = ComponentSummary.select().where(ComponentSummary.f_job_id == self.job_id,
-                                                                ComponentSummary.f_role == self.role,
-                                                                ComponentSummary.f_party_id == self.party_id,
-                                                                ComponentSummary.f_component_name == self.component_name)
-            if component_summary:
-                cpn_summary = component_summary[0]
-                return deserialize_b64(cpn_summary.f_summary)
-            else:
-                return ""
-
     def save_output_data(self, computing_table, output_storage_engine=None):
         if computing_table:
             persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(
@@ -257,6 +219,61 @@ class Tracker(object):
                     metric_namespace,
                     e
                 ))
+
+    def insert_summary_into_db(self, summary_data: dict):
+        with DB.connection_context():
+            try:
+                summary_model = self.get_dynamic_db_model(ComponentSummary, self.job_id)
+                DB.create_tables([summary_model])
+                summary_obj = summary_model.get_or_none(
+                    summary_model.f_job_id == self.job_id,
+                    summary_model.f_component_name == self.component_name,
+                    summary_model.f_role == self.role,
+                    summary_model.f_party_id == self.party_id,
+                    summary_model.f_task_id == self.task_id,
+                    summary_model.f_task_version == self.task_version
+                )
+                if summary_obj:
+                    summary_obj.f_summary = serialize_b64(summary_data, to_str=True)
+                    summary_obj.f_update_time = current_timestamp()
+                    summary_obj.save()
+                else:
+                    self.get_dynamic_db_model(ComponentSummary, self.job_id).create(
+                        f_job_id=self.job_id,
+                        f_component_name=self.component_name,
+                        f_role=self.role,
+                        f_party_id=self.party_id,
+                        f_task_id=self.task_id,
+                        f_task_version=self.task_version,
+                        f_summary=serialize_b64(summary_data, to_str=True),
+                        f_create_time=current_timestamp()
+                    )
+            except Exception as e:
+                schedule_logger(self.job_id).exception("An exception where querying summary job id: {} "
+                                                       "component name: {} to database:\n{}".format(
+                    self.job_id, self.component_name, e)
+                )
+
+    def read_summary_from_db(self):
+        with DB.connection_context():
+            try:
+                summary_model = self.get_dynamic_db_model(ComponentSummary, self.job_id)
+                summary = summary_model.get_or_none(
+                    summary_model.f_job_id == self.job_id,
+                    summary_model.f_component_name == self.component_name,
+                    summary_model.f_role == self.role,
+                    summary_model.f_party_id == self.party_id,
+                    summary_model.f_task_id == self.task_id,
+                    summary_model.f_task_version == self.task_version
+                )
+                if summary:
+                    cpn_summary = deserialize_b64(summary.f_summary)
+                else:
+                    cpn_summary = ""
+            except Exception as e:
+                schedule_logger(self.job_id).exception(e)
+                raise e
+            return cpn_summary
 
     def log_output_data_info(self, data_name: str, table_namespace: str, table_name: str):
         self.insert_output_data_info_into_db(data_name=data_name, table_namespace=table_namespace, table_name=table_name)
