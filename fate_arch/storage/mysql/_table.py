@@ -78,8 +78,10 @@ class StorageTable(StorageTableBase):
     def count(self, **kwargs):
         sql = 'select count(*) from {}'.format(self._name)
         try:
-            count = self.execute(sql, select=False)
-            count = next(count)
+            self.cur.execute(sql)
+            self.con.commit()
+            ret = self.cur.fetchall()
+            count = ret[0][0]
         except:
             count = 0
         return count
