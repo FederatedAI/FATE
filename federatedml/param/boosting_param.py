@@ -240,7 +240,8 @@ class BoostingParam(BaseParam):
                  learning_rate=0.3, num_trees=5, subsample_feature_rate=0.8, n_iter_no_change=True,
                  tol=0.0001, bin_num=32,
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 validation_freqs=None, metrics=None, subsample_random_seed=None):
+                 validation_freqs=None, metrics=None, subsample_random_seed=None,
+                 binning_error=consts.DEFAULT_RELATIVE_ERROR):
 
         super(BoostingParam, self).__init__()
 
@@ -257,10 +258,11 @@ class BoostingParam(BaseParam):
         self.validation_freqs = validation_freqs
         self.metrics = metrics
         self.subsample_random_seed = subsample_random_seed
+        self.binning_error = binning_error
 
     def check(self):
 
-        descr = "boosting_core tree param's"
+        descr = "boosting tree param's"
 
         if self.task_type not in [consts.CLASSIFICATION, consts.REGRESSION]:
             raise ValueError("boosting_core tree param's task_type {} not supported, should be {} or {}".format(
@@ -302,6 +304,8 @@ class BoostingParam(BaseParam):
         if self.subsample_random_seed is not None:
             assert type(self.subsample_random_seed) == int and self.subsample_random_seed >= 0, 'random seed must be an integer >= 0'
 
+        self.check_decimal_float(self.binning_error, descr)
+
         return True
 
 
@@ -322,12 +326,13 @@ class HeteroBoostingParam(BoostingParam):
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, early_stopping_rounds=None, metrics=None, use_first_metric_only=False,
-                 subsample_random_seed=None):
+                 subsample_random_seed=None, binning_error=consts.DEFAULT_RELATIVE_ERROR):
 
         super(HeteroBoostingParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                   subsample_feature_rate, n_iter_no_change, tol, bin_num,
                                                   predict_param, cv_param, validation_freqs, metrics=metrics,
-                                                  subsample_random_seed=subsample_random_seed)
+                                                  subsample_random_seed=subsample_random_seed,
+                                                  binning_error=binning_error)
 
         self.encrypt_param = copy.deepcopy(encrypt_param)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
@@ -423,14 +428,16 @@ class HeteroSecureBoostParam(HeteroBoostingParam):
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(),
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, early_stopping_rounds=None, use_missing=False, zero_as_missing=False,
-                 complete_secure=False, metrics=None, use_first_metric_only=False, subsample_random_seed=None):
+                 complete_secure=False, metrics=None, use_first_metric_only=False, subsample_random_seed=None,
+                 binning_error=consts.DEFAULT_RELATIVE_ERROR):
 
         super(HeteroSecureBoostParam, self).__init__(task_type, objective_param, learning_rate, num_trees,
                                                      subsample_feature_rate, n_iter_no_change, tol, encrypt_param,
                                                      bin_num, encrypted_mode_calculator_param, predict_param, cv_param,
                                                      validation_freqs, early_stopping_rounds, metrics=metrics,
                                                      use_first_metric_only=use_first_metric_only,
-                                                     subsample_random_seed=subsample_random_seed)
+                                                     subsample_random_seed=subsample_random_seed,
+                                                     binning_error=binning_error)
 
         self.tree_param = tree_param
         self.zero_as_missing = zero_as_missing
@@ -460,7 +467,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                  predict_param=PredictParam(), cv_param=CrossValidationParam(),
                  validation_freqs=None, early_stopping=None, use_missing=False, zero_as_missing=False,
                  complete_secure=False, tree_num_per_party=1, guest_depth=1, host_depth=1, work_mode='mix', metrics=None,
-                 subsample_random_seed=None):
+                 subsample_random_seed=None, binning_error=consts.DEFAULT_RELATIVE_ERROR):
 
         """
         work_mode：
@@ -484,7 +491,8 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                                                          encrypt_param, bin_num, encrypted_mode_calculator_param,
                                                          predict_param, cv_param, validation_freqs, early_stopping,
                                                          use_missing, zero_as_missing, complete_secure, metrics=metrics,
-                                                         subsample_random_seed=subsample_random_seed)
+                                                         subsample_random_seed=subsample_random_seed,
+                                                         binning_error=binning_error)
 
         self.tree_num_per_party = tree_num_per_party
         self.guest_depth = guest_depth
@@ -496,7 +504,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
         super(HeteroFastSecureBoostParam, self).check()
         if type(self.guest_depth).__name__ not in ["int", "long"] or self.guest_depth <= 0:
             raise ValueError("guest_depth should be larger than 0")
-        if type(self.host_depth).__name__ not in ["int", "long"] or self.guest_depth <= 0:
+        if type(self.host_depth).__name__ not in ["int", "long"] or self.host_depth <= 0:
             raise ValueError("host_depth should be larger than 0")
         if type(self.tree_num_per_party).__name__ not in ["int", "long"] or self.tree_num_per_party <= 0:
             raise ValueError("tree_num_per_party should be larger than 0")
@@ -514,10 +522,9 @@ class HomoSecureBoostParam(BoostingParam):
     def __init__(self, tree_param: DecisionTreeParam = DecisionTreeParam(), task_type=consts.CLASSIFICATION,
                  objective_param=ObjectiveParam(),
                  learning_rate=0.3, num_trees=5, subsample_feature_rate=0.8, n_iter_no_change=True,
-                 tol=0.0001,
-                 bin_num=32,
-                 predict_param=PredictParam(), cv_param=CrossValidationParam(),
-                 validation_freqs=None, use_missing=False, zero_as_missing=False, subsample_random_seed=None
+                 tol=0.0001, bin_num=32, predict_param=PredictParam(), cv_param=CrossValidationParam(),
+                 validation_freqs=None, use_missing=False, zero_as_missing=False, subsample_random_seed=None,
+                 binning_error=consts.DEFAULT_RELATIVE_ERROR
                  ):
         super(HomoSecureBoostParam, self).__init__(task_type=task_type,
                                                    objective_param=objective_param,
@@ -530,7 +537,8 @@ class HomoSecureBoostParam(BoostingParam):
                                                    predict_param=predict_param,
                                                    cv_param=cv_param,
                                                    validation_freqs=validation_freqs,
-                                                   subsample_random_seed=subsample_random_seed
+                                                   subsample_random_seed=subsample_random_seed,
+                                                   binning_error=binning_error
                                                    )
         self.use_missing = use_missing
         self.zero_as_missing = zero_as_missing
