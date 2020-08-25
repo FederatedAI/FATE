@@ -26,6 +26,7 @@ from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.model_manager import pipelined_model
 from fate_arch import storage
 from fate_flow.utils import model_utils, job_utils
+from fate_arch import session
 
 
 class Tracker(object):
@@ -394,23 +395,22 @@ class Tracker(object):
             for role, party_ids in roles.items():
                 for party_id in party_ids:
                     # clean up temporary tables
-                    pass
-                    '''
                     namespace_clean = job_utils.generate_session_id(task_id=self.task_id,
                                                                     task_version=self.task_version,
                                                                     role=role,
-                                                                    party_id=party_id)
-                    session.clean_tables(namespace=namespace_clean, regex_string='*')
+                                                                    party_id=party_id,
+                                                                    suffix="computing")
+                    computing_session = session.get_latest_opened().computing
+                    computing_session.cleanup(namespace=namespace_clean, name="*")
                     schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
                                                                                                          self.role,
                                                                                                          self.party_id))
                     # clean up the last tables of the federation
                     namespace_clean = job_utils.generate_federated_id(self.task_id, self.task_version)
-                    session.clean_tables(namespace=namespace_clean, regex_string='*')
+                    computing_session.cleanup(namespace=namespace_clean, name="*")
                     schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
                                                                                                          self.role,
                                                                                                          self.party_id))
-                    '''
 
         except Exception as e:
             schedule_logger(self.job_id).exception(e)
