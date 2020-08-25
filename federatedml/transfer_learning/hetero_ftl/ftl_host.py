@@ -143,7 +143,7 @@ class FTLHost(FTL):
             rs = self.encrypter.recursive_decrypt(encrypted_loss)
             self.transfer_variable.decrypted_loss.remote(rs, suffix=(epoch_idx, 'get_loss'))
 
-    def fit(self, data_inst, validate_data):
+    def fit(self, data_inst, validate_data=None):
 
         LOGGER.info('start to fit a ftl model, '
                     'run mode is {},'

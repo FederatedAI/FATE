@@ -40,7 +40,7 @@ class FLOWClient(object):
 
     def upload_data(self, data: Data, callback=None) -> 'UploadDataResponse':
         try:
-            response = self._upload_data(conf=data.config, verbose=0, drop=2)
+            response = self._upload_data(conf=data.config, verbose=0, drop=1)
             if callback is not None:
                 callback(response)
             status = self._awaiting(response.job_id, "local")
@@ -160,9 +160,7 @@ class QueryJobResponse(object):
             raise RuntimeError(f"query job error, response: {response}") from e
         self.status = status
         self.progress = None
-        self.current_tasks = None
         try:
-            self.progress = response.get('data')[0]["f_progress"]
             self.current_tasks = response.get('data')[0]["f_current_tasks"]
         except KeyError:
             pass

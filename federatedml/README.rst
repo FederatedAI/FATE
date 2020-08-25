@@ -143,6 +143,13 @@ Alogorithm List
 |                              |                           |                       |            |                |             | and model-   |
 |                              |                           |                       |            |                |             | param        |
 +------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
+| `Homo OneHot Encoder`_       | HomoOneHotEncoder         | Build homo onehot     | DTable,    | \              | \           | Homo OneHot  |
+|                              |                           | encoder module        | values are |                |             | Model,       |
+|                              |                           | through multiple      | instances. |                |             | consists of  |
+|                              |                           | parties.              |            |                |             | model-meta   |
+|                              |                           |                       |            |                |             | and model-   |
+|                              |                           |                       |            |                |             | param        |
++------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
 | `Data Split`_                | Data Split                | Split one data table  | 3 Tables,  | \              | \           |              |
 |                              |                           | into 3 tables by      | values are |                |             |              |
 |                              |                           | given ratio or count. | instances. |                |             |              |
@@ -171,7 +178,7 @@ Alogorithm List
 .. _Hetero-NN: nn/hetero_nn/README.rst
 .. _Homo Secure Boosting: tree/README.rst
 .. _Data Split: model_selection/data_split/README.rst
-
+.. _Homo OneHot Encoder: feature/README.rst
 
 
 
@@ -224,3 +231,11 @@ Secure Protocol
 .. _Encode: secureprotol/README.rst#encode
 .. _Diffne Hellman Key Exchange: secureprotol/README.rst#diffne-hellman-key-exchange
 .. _SecretShare MPC Protocol(SPDZ): secureprotol/README.rst#secretshare-mpc-protocol-spdz
+
+
+Params
+-------
+
+.. automodule:: federatedml.param
+   :autosummary:
+   :members:

@@ -52,15 +52,19 @@ def _config(cmd):
 @cli.command(name="suite")
 @click.option('--namespace', default=time.strftime('%Y%m%d%H%M%S'), type=str,
               help="namespace to distinguish each run")
-@click.option('-i', '--include', required=True, type=click.Path(exists=True), multiple=True,
+@click.option('-i', '--include', required=True, type=click.Path(exists=True), multiple=True, metavar="<include>",
               help="include *testsuite.json under these paths")
 @click.option('-e', '--exclude', type=click.Path(exists=True), multiple=True,
               help="exclude *testsuite.json under these paths")
 @click.option('-c', '--config', default=priority_config().__str__(), type=click.Path(exists=True),
               help=f"config path, defaults to {priority_config()}")
 @click.option('-r', '--replace', default="{}", type=JSON_STRING,
-              help="a json string represents mapping for replacing fields in data/conf")
-def run_suite(replace, namespace, config, include, exclude):
+              help="a json string represents mapping for replacing fields in data/conf/dsl")
+@click.option("-g", '--glob', type=str,
+              help="glob string to filter sub-directory of path specified by <include>")
+@click.option("--yes", is_flag=True,
+              help="skip double check")
+def run_suite(replace, namespace, config, include, exclude, glob, yes):
     """
     process testsuite
     """
@@ -72,9 +76,12 @@ def run_suite(replace, namespace, config, include, exclude):
     config_inst = _parse_config(config)
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
     echo.echo("loading testsuites:")
-    suites = _load_testsuites(includes=include, excludes=exclude)
+    suites = _load_testsuites(includes=include, excludes=exclude, glob=glob)
     for suite in suites:
         echo.echo(f"\tdataset({len(suite.dataset)}) jobs({len(suite.jobs)}) {suite.path}")
+    if not yes and not click.confirm("running?"):
+        return
+
     echo.stdout_newline()
 
     with Clients(config_inst) as client:
@@ -130,7 +137,7 @@ def _prepare(namespace, replace):
     DSL_JSON_HOOK.add_replace_hook(replace)
 
 
-def _load_testsuites(includes, excludes):
+def _load_testsuites(includes, excludes, glob):
     def _find_testsuite_files(path):
         if isinstance(path, str):
             path = Path(path)
@@ -150,9 +157,18 @@ def _load_testsuites(includes, excludes):
 
     suite_paths = set()
     for include in includes:
-        for suite_path in _find_testsuite_files(include):
-            if suite_path not in excludes_set:
-                suite_paths.add(suite_path)
+        if isinstance(include, str):
+            include = Path(include)
+
+        # glob
+        if glob is not None and include.is_dir():
+            include_list = include.glob(glob)
+        else:
+            include_list = [include]
+        for include_path in include_list:
+            for suite_path in _find_testsuite_files(include_path):
+                if suite_path not in excludes_set:
+                    suite_paths.add(suite_path)
     suites = []
     for suite_path in suite_paths:
         suites.append(Testsuite.load(suite_path.resolve()))

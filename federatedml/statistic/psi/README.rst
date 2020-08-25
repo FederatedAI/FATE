@@ -7,7 +7,7 @@ Introduction
 Population stability index (PSI) is a metric to measure how much a
 feature has shifted in distribution between two sample sets. Usually,
 PSI is used to measure the stability of models or qualities of features.
-In FATE, PSI module is used to compute PSI value of a feature between
+In FATE, PSI module is used to compute PSI values of features between
 two tables.
 
 Given two data columns: expect & actual, PSI will be computed by the
@@ -32,4 +32,4 @@ Param
 How to use
 ^^^^^^^^^^
 
-An example is offered in folder.
+An example is offered in examples/federatedml-1.x-examples/psi folder.

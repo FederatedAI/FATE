@@ -120,6 +120,7 @@ class PSI(ModelBase):
         self.total_scores = None
         self.all_feature_list = None
         self.dense_missing_val = NoneType()
+        self.binning_error = consts.DEFAULT_RELATIVE_ERROR
 
         self.interval_perc1 = None
         self.interval_perc2 = None
@@ -131,6 +132,7 @@ class PSI(ModelBase):
         self.max_bin_num = model.max_bin_num
         self.need_run = model.need_run
         self.dense_missing_val = NoneType() if model.dense_missing_val is None else model.dense_missing_val
+        self.binning_error = model.binning_error
 
     @staticmethod
     def check_table_content(tb):
@@ -244,7 +246,8 @@ class PSI(ModelBase):
         if not(self.check_table_content(expect_table) and self.check_table_content(actual_table)):
             raise ValueError('contents of input table must be instances of class "Instance"')
 
-        param = FeatureBinningParam(method=consts.QUANTILE, bin_num=self.max_bin_num, local_only=True)
+        param = FeatureBinningParam(method=consts.QUANTILE, bin_num=self.max_bin_num, local_only=True,
+                                    error=self.binning_error)
         binning_obj = QuantileBinning(params=param, abnormal_list=[NoneType()], allow_duplicate=False)
         binning_obj.fit_split_points(expect_table)
 
