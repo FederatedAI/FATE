@@ -346,7 +346,7 @@ class FeatureSelectionParam(BaseParam):
 
     filter_methods: list, ["manually", "iv_filter", "statistic_filter",
                             "psi_filter", “hetero_sbt_filter", "homo_sbt_filter",
-                             "percentage_value"],
+                             "hetero_fast_sbt_filter", "percentage_value"],
                  default: ["manually"]
 
         The following methods will be deprecated in future version:
@@ -450,7 +450,7 @@ class FeatureSelectionParam(BaseParam):
                                                    consts.MANUALLY_FILTER, consts.PERCENTAGE_VALUE,
                                                    consts.IV_FILTER, consts.STATISTIC_FILTER, consts.IV_TOP_K,
                                                    consts.PSI_FILTER, consts.HETERO_SBT_FILTER,
-                                                   consts.HOMO_SBT_FILTER])
+                                                   consts.HOMO_SBT_FILTER, consts.HETERO_FAST_SBT_FILTER])
 
             self.filter_methods[idx] = method
 

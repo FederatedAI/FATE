@@ -76,7 +76,7 @@ def initialization(**kwargs):
 
     \b
     - USAGE:
-        flow init -c /data/projects/FATE/conf/server_conf.json
+        flow init -c /data/projects/FATE/conf/service_conf.yaml
         flow init --ip 10.1.2.3 --port 9380
     """
     with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "r") as fin:

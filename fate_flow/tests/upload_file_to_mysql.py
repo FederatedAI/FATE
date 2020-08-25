@@ -35,6 +35,7 @@ class MysqldbHelper(object):
 
 def create_db(namespace):
     conn = pymysql.connect(host=database_config.get('host'),
+                           port=database_config.get('port'),
                            user=database_config.get('user'),
                            password=database_config.get('passwd'))
     cursor = conn.cursor()

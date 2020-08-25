@@ -19,13 +19,13 @@ import shutil
 from flask import Flask, request
 
 from fate_arch.storage import StorageEngine
-from fate_flow.entity.constant import StatusSet
+from fate_flow.entity.types import StatusSet
 from fate_arch import storage
 from fate_flow.settings import stat_logger, USE_LOCAL_DATA, WORK_MODE
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils import detect_utils, job_utils
-from fate_flow.scheduler.dag_scheduler import DAGScheduler
-from fate_flow.utils.job_utils import get_job_configuration, generate_job_id, get_job_directory
+from fate_flow.scheduler import DAGScheduler
+from fate_flow.operation import JobSaver
 
 manager = Flask(__name__)
 
@@ -38,15 +38,15 @@ def internal_server_error(e):
 
 @manager.route('/<access_module>', methods=['post'])
 def download_upload(access_module):
-    job_id = generate_job_id()
+    job_id = job_utils.generate_job_id()
     if access_module == "upload" and USE_LOCAL_DATA and not (request.json and request.json.get("use_local_data") == 0):
         file = request.files['file']
-        filename = os.path.join(get_job_directory(job_id), 'fate_upload_tmp', file.filename)
+        filename = os.path.join(job_utils.get_job_directory(job_id), 'fate_upload_tmp', file.filename)
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         try:
             file.save(filename)
         except Exception as e:
-            shutil.rmtree(os.path.join(get_job_directory(job_id), 'tmp'))
+            shutil.rmtree(os.path.join(job_utils.get_job_directory(job_id), 'tmp'))
             raise e
         job_config = request.args.to_dict()
         job_config['file'] = filename
@@ -78,6 +78,8 @@ def download_upload(access_module):
                                               '1 means to upload again after deleting the table')
             elif data_table_meta and job_config.get('drop', 2) == 1:
                 job_config["destroy"] = True
+        else:
+            job_config["storage_engine"] = job_config.get("storage_engine", StorageEngine.STANDALONE)
     # compatibility
     if "table_name" in job_config:
         job_config["name"] = job_config["table_name"]
@@ -98,15 +100,15 @@ def upload_history():
 def get_upload_history():
     request_data = request.json
     if request_data.get('job_id'):
-        tasks = job_utils.query_task(component_name='upload_0', status=StatusSet.COMPLETE, job_id=request_data.get('job_id'))
+        tasks = JobSaver.query_task(component_name='upload_0', status=StatusSet.COMPLETE, job_id=request_data.get('job_id'), run_on=True)
     else:
-        tasks = job_utils.query_task(component_name='upload_0', status=StatusSet.COMPLETE)
+        tasks = JobSaver.query_task(component_name='upload_0', status=StatusSet.COMPLETE, run_on=True)
     limit= request_data.get('limit')
     if not limit:
         tasks = tasks[-1::-1]
     else:
         tasks = tasks[-1:-limit - 1:-1]
-    jobs_run_conf = get_job_configuration(None, None, None, tasks)
+    jobs_run_conf = job_utils.get_job_configuration(None, None, None, tasks)
     return get_upload_info(jobs_run_conf)
 
 

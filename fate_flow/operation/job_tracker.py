@@ -17,15 +17,16 @@ import uuid
 import operator
 from typing import List
 
+from fate_arch.computing import ComputingEngine
 from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64
 from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import DB, TrackingMetric, TrackingOutputDataInfo, ComponentSummary
-from fate_flow.entity.constant import Backend
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.manager.model_manager import pipelined_model
 from fate_arch import storage
-from fate_flow.utils import model_utils
+from fate_flow.utils import model_utils, job_utils
+from fate_arch import session
 
 
 class Tracker(object):
@@ -55,8 +56,8 @@ class Tracker(object):
             self.pipelined_model = pipelined_model.PipelinedModel(model_id=self.party_model_id,
                                                                   model_version=self.model_version)
 
-        self.component_name = component_name if component_name else self.job_virtual_component_name()
-        self.module_name = component_module_name if component_module_name else self.job_virtual_component_module_name()
+        self.component_name = component_name if component_name else job_utils.job_virtual_component_name()
+        self.module_name = component_module_name if component_module_name else job_utils.job_virtual_component_module_name()
         self.task_id = task_id
         self.task_version = task_version
 
@@ -233,7 +234,7 @@ class Tracker(object):
             try:
                 tracking_metric = self.get_dynamic_db_model(TrackingMetric, self.job_id)()
                 tracking_metric.f_job_id = self.job_id
-                tracking_metric.f_component_name = (self.component_name if not job_level else self.job_virtual_component_name())
+                tracking_metric.f_component_name = (self.component_name if not job_level else job_utils.job_virtual_component_name())
                 tracking_metric.f_task_id = self.task_id
                 tracking_metric.f_task_version = self.task_version
                 tracking_metric.f_role = self.role
@@ -305,7 +306,7 @@ class Tracker(object):
                 tracking_metric_model = self.get_dynamic_db_model(TrackingMetric, self.job_id)
                 tracking_metrics = tracking_metric_model.select(tracking_metric_model.f_key, tracking_metric_model.f_value).where(
                     tracking_metric_model.f_job_id == self.job_id,
-                    tracking_metric_model.f_component_name == (self.component_name if not job_level else self.job_virtual_component_name()),
+                    tracking_metric_model.f_component_name == (self.component_name if not job_level else job_utils.job_virtual_component_name()),
                     tracking_metric_model.f_role == self.role,
                     tracking_metric_model.f_party_id == self.party_id,
                     tracking_metric_model.f_metric_namespace == metric_namespace,
@@ -318,6 +319,17 @@ class Tracker(object):
                 schedule_logger(self.job_id).exception(e)
                 raise e
             return metrics
+
+    def clean_metrics(self):
+        with DB.connection_context():
+            tracking_metric_model = self.get_dynamic_db_model(TrackingMetric, self.job_id)
+            operate = tracking_metric_model.delete().where(
+                tracking_metric_model.f_task_id==self.task_id,
+                tracking_metric_model.f_task_version==self.task_version,
+                tracking_metric_model.f_role==self.role,
+                tracking_metric_model.f_party_id==self.party_id
+            )
+            return operate.execute() > 0
 
     def get_metric_list(self, job_level: bool = False):
         with DB.connection_context():
@@ -377,29 +389,28 @@ class Tracker(object):
         schedule_logger(self.job_id).info('clean task {} on {} {}'.format(self.task_id,
                                                                           self.role,
                                                                           self.party_id))
-        if Backend.EGGROLL != RuntimeConfig.BACKEND:
+        if RuntimeConfig.COMPUTING_ENGINE != ComputingEngine.EGGROLL:
             return
         try:
             for role, party_ids in roles.items():
                 for party_id in party_ids:
                     # clean up temporary tables
-                    pass
-                    '''
                     namespace_clean = job_utils.generate_session_id(task_id=self.task_id,
                                                                     task_version=self.task_version,
                                                                     role=role,
-                                                                    party_id=party_id)
-                    session.clean_tables(namespace=namespace_clean, regex_string='*')
+                                                                    party_id=party_id,
+                                                                    suffix="computing")
+                    computing_session = session.get_latest_opened().computing
+                    computing_session.cleanup(namespace=namespace_clean, name="*")
                     schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
                                                                                                          self.role,
                                                                                                          self.party_id))
                     # clean up the last tables of the federation
                     namespace_clean = job_utils.generate_federated_id(self.task_id, self.task_version)
-                    session.clean_tables(namespace=namespace_clean, regex_string='*')
+                    computing_session.cleanup(namespace=namespace_clean, name="*")
                     schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
                                                                                                          self.role,
                                                                                                          self.party_id))
-                    '''
 
         except Exception as e:
             schedule_logger(self.job_id).exception(e)
@@ -414,16 +425,3 @@ class Tracker(object):
     @classmethod
     def get_dynamic_tracking_table_index(cls, job_id):
         return job_id[:8]
-
-    @staticmethod
-    def job_view_table_name():
-        return '_'.join(['job', 'view'])
-
-    @classmethod
-    def job_virtual_component_name(cls):
-        return "pipeline"
-
-    @classmethod
-    def job_virtual_component_module_name(cls):
-        return "Pipeline"
-
