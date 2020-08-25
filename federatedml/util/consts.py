@@ -190,6 +190,7 @@ STATISTIC_FILTER = 'statistic_filter'
 PSI_FILTER = 'psi_filter'
 HETERO_SBT_FILTER = 'hetero_sbt_filter'
 HOMO_SBT_FILTER = 'homo_sbt_filter'
+HETERO_FAST_SBT_FILTER = 'hetero_fast_sbt_filter'
 IV = 'iv'
 
 # Selection Pre-model
