@@ -255,7 +255,10 @@ def query_job(**kwargs):
 
 def list_job(limit):
     with DB.connection_context():
-        jobs = Job.select().order_by(Job.f_create_time.desc()).limit(limit)
+        if limit > 0:
+            jobs = Job.select().order_by(Job.f_create_time.desc()).limit(limit)
+        else:
+            jobs = Job.select().order_by(Job.f_create_time.desc())
         return [job for job in jobs]
 
 
@@ -284,7 +287,10 @@ def query_task(**kwargs):
 
 def list_task(limit):
     with DB.connection_context():
-        tasks = Task.select().order_by(Task.f_create_time.desc()).limit(limit)
+        if limit > 0:
+            tasks = Task.select().order_by(Task.f_create_time.desc()).limit(limit)
+        else:
+            tasks = Task.select().order_by(Task.f_create_time.desc())
         return [task for task in tasks]
 
 
