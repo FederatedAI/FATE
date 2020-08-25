@@ -34,5 +34,7 @@ def adapter_factory(model_name):
         return tree_adapter.HeteroSBTAdapter()
     elif model_name == consts.HOMO_SBT:
         return tree_adapter.HomoSBTAdapter()
+    elif model_name in [consts.HETERO_FAST_SBT_MIX, consts.HETERO_FAST_SBT_LAYERED]:
+        return tree_adapter.HeteroFastSBTAdapter()
     else:
         raise ValueError(f"Cannot recognize model_name: {model_name}")

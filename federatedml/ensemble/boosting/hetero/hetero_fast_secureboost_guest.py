@@ -21,7 +21,7 @@ class HeteroFastSecureBoostGuest(HeteroSecureBoostGuest):
     def __init__(self):
         super(HeteroFastSecureBoostGuest, self).__init__()
 
-        self.k = 1
+        self.tree_num_per_party = 1
         self.guest_depth = 0
         self.host_depth = 0
         self.work_mode = consts.MIX_TREE
@@ -32,7 +32,7 @@ class HeteroFastSecureBoostGuest(HeteroSecureBoostGuest):
     def _init_model(self, param: HeteroFastSecureBoostParam):
         super(HeteroFastSecureBoostGuest, self)._init_model(param)
         LOGGER.debug('loss func is {}'.format(param.objective_param.objective))
-        self.k = param.k
+        self.tree_num_per_party = param.tree_num_per_party
         self.work_mode = param.work_mode
         self.guest_depth = param.guest_depth
         self.host_depth = param.host_depth
@@ -40,7 +40,7 @@ class HeteroFastSecureBoostGuest(HeteroSecureBoostGuest):
     def get_tree_plan(self, idx):
 
         if len(self.tree_plan) == 0:
-            self.tree_plan = plan.create_tree_plan(self.work_mode, k=self.k, tree_num=self.boosting_round,
+            self.tree_plan = plan.create_tree_plan(self.work_mode, k=self.tree_num_per_party, tree_num=self.boosting_round,
                                                    host_list=self.component_properties.host_party_idlist,
                                                    complete_secure=self.complete_secure)
             LOGGER.info('tree plan is {}'.format(self.tree_plan))
@@ -176,6 +176,8 @@ class HeteroFastSecureBoostGuest(HeteroSecureBoostGuest):
         _, model_param = super(HeteroFastSecureBoostGuest, self).get_model_param()
         param_name = "HeteroFastSecureBoostGuestParam"
         model_param.tree_plan.extend(plan.encode_plan(self.tree_plan))
+        model_param.model_name = consts.HETERO_FAST_SBT_MIX if self.work_mode == consts.MIX_TREE else \
+                                 consts.HETERO_FAST_SBT_LAYERED
 
         return param_name, model_param
 
