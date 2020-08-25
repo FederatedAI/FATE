@@ -112,6 +112,7 @@ class HeteroKmeansClient(BaseKmeansModel):
                 break
 
     def predict(self, data_instances):
+
         LOGGER.info("Start predict ...")
         d = functools.partial(self.educl_dist, centroid_list=self.centroid_list)
         dist_all_dtable = data_instances.mapValues(d)
@@ -123,7 +124,8 @@ class HeteroKmeansClient(BaseKmeansModel):
         self.cluster_dist_aggregator.send_model(cluster_dist, suffix='predict')
         dist_fake = [-1] * data_instances.count()
         sorted_key = list(sorted_dist_table.mapValues(lambda k: k[0]).collect())
-        predict_concat = session.parallelize(tuple(zip(sorted_key,sample_class,dist_fake,dist_fake)), partition=data_instances.patitions)
+        predict_concat = session.parallelize(tuple(zip(sorted_key, sample_class, dist_fake, dist_fake)),
+                                             partition=data_instances.patitions)
         predict_result = data_instances.join(predict_concat, lambda v1, v2: [v1.label, v2[0], v2[1], v2[2]])
         return predict_result
 

@@ -26,6 +26,7 @@ BINARY = 'binary'
 MULTY = 'multi'
 CLASSIFICATION = "classification"
 REGRESSION = 'regression'
+CLUSTERING = 'clustering'
 PAILLIER = 'Paillier'
 RANDOM_PADS = "RandomPads"
 NONE = "None"
@@ -71,7 +72,6 @@ JACCARD_SIMILARITY_SCORE = 'jaccard_similarity_score'
 FOWLKES_MALLOWS_SCORE = 'fowlkes_mallows_score'
 ADJUSTED_RAND_SCORE = 'adjusted_rand_score'
 DAVIES_BOULDIN_INDEX = 'davies_bouldin_index'
-
 
 
 # evaluation alias metric

@@ -41,7 +41,7 @@ class HeteroKmeansArbiter(BaseKmeansModel):
             for j in range(len(dist_sum)):
                 sum = 0
                 count = 0
-                if cluster_result[j]== i:
+                if cluster_result[j] == i:
                     sum += dist_sum[j][i]
                     count += 1
                 ave_dist = sum / count
@@ -72,15 +72,16 @@ class HeteroKmeansArbiter(BaseKmeansModel):
             self.n_iter_ += 1
 
     def predict(self, data_instances):
+
         LOGGER.info("Start predict ...")
         dist_sum = self.dist_aggregator.sum_model(suffix='predict')
         sample_class = self.centroid_assign(dist_sum)
         dist_table = self.cal_ave_dist(dist_sum, sample_class, self.k)
         cluster_dist = self.cluster_dist_aggregator.sum_model(suffix='predict')
-        self.transfer_variable.cluster_result.remote(sample_class, role=consts.Guest, idx=0)
-        result=[]
+        self.transfer_variable.cluster_result.remote(sample_class, role=consts.GUEST, idx=0)
+        result = []
         for i in range(len(dist_sum)):
-            item = tuple(i,[-1,sample_class[i],dist_table,cluster_dist])
+            item = tuple(i, [-1, sample_class[i], dist_table, cluster_dist])
             result.append(item)
         predict_result = session.parallelize(result)
         return predict_result

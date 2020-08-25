@@ -234,6 +234,7 @@ class Evaluation(ModelBase):
         return eval_result
 
     def fit(self, data, return_result=False):
+
         if len(data) <= 0:
             return
 
