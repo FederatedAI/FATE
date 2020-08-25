@@ -35,9 +35,27 @@ class HeteroKmeansArbiter(BaseKmeansModel):
         self.cluster_dist_aggregator = secure_sum_aggregator.Server(enable_secure_aggregate=True)
         self.DBI = 0
 
-    def cal_ave_dist(self, dist_sum, cluster_result, k):
+    def sum_in_cluster(self,iterator):
+        sum_result = dict()
+        result = []
+        for k,v in iterator:
+            if v[1] not in sum_result:
+                sum_result[v[1]] = np.sqrt(v[0][v[1]])
+            else:
+                sum_result[v[1]] += np.sqrt(v[0][v[1]])
+        for i in range(len(sum_result)):
+            result[i] = sum_result
+        return result
 
-        return dist_list
+    def cal_ave_dist(self, dist_cluster_dtable, cluster_result, k):
+        dist_centroid_dist_dtable = dist_cluster_dtable.mapPartitions(self.sum_in_cluster).reduce(self.sum_dict)
+        cluster_count = cluster_result.mapPartitions(self.count).reduce(self.sum_dict)
+        cal_ave_dist_list = []
+        for k in dist_centroid_dist_dtable:
+            count = cluster_count[k]
+            cal_ave_dist_list.append(dist_centroid_dist_dtable[k] / count)
+        return cal_ave_dist_list
+
 
     # def centroid_assign(self, dist_sum):
     #     new_centroid= []
@@ -56,7 +74,8 @@ class HeteroKmeansArbiter(BaseKmeansModel):
             self.transfer_variable.cluster_result.remote(cluster_result, role=consts.GUEST, idx=0, suffix=(self.n_iter_,))
             self.transfer_variable.cluster_result.remote(cluster_result, role=consts.HOST, idx=-1, suffix=(self.n_iter_,))
 
-            dist_table = self.cal_ave_dist(dist_sum, cluster_result, self.k)#ave dist in each cluster
+            dist_cluster_dtable = dist_sum.join(cluster_result, lambda v1, v2: [v1, v2])
+            dist_table = self.cal_ave_dist(dist_cluster_dtable, cluster_result, self.k)#ave dist in each cluster
             cluster_dist = self.cluster_dist_aggregator.sum_model(suffix=(self.n_iter_,))
             self.DBI=clustering_metric.Davies_Bouldin_index.compute(dist_table, cluster_dist)
 

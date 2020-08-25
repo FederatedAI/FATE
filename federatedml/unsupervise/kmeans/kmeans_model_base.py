@@ -78,3 +78,4 @@ class BaseKmeansModel(ModelBase):
         """
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
+
