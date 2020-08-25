@@ -95,12 +95,12 @@ class HeteroKmeansClient(BaseKmeansModel):
         while self.n_iter_ < self.max_iter:
             d = functools.partial(self.educl_dist, centroid_list=self.centroid_list)
             dist_all_dtable = data_instances.mapValues(d)
-            sorted_dist_table = sorted(list(dist_all_dtable.collect()), key=lambda k : k[0])
+            sorted_dist_table = sorted(list(dist_all_dtable.collect()), key=lambda k: k[0])
             dist_all = np.array([v[1] for v in sorted_dist_table])
             self.dist_aggregator.send_model(NumpyWeights(dist_all), suffix=(self.n_iter_,))
             cluster_result = self.transfer_variable.cluster_result.get(idx=0, suffix=(self.n_iter_,))
             centroid_new = self.centroid_cal(cluster_result, data_instances)
-            client_tol = np.sum(np.sum((np.array(self.centroid_list) - np.array(centroid_new))**2,axis=1))
+            client_tol = np.sum(np.sum((np.array(self.centroid_list) - np.array(centroid_new))**2, axis=1))
             self.centroid_list = centroid_new
             self.cluster_result = cluster_result
             self.client_tol.remote(client_tol, role=consts.ARBITER, idx=0, suffix=(self.n_iter_,))

@@ -172,6 +172,7 @@ class Evaluation(ModelBase):
         return split_result
 
     def evaluate_metrics(self, mode: str, data: list) -> dict:
+
         labels = []
         pred_scores = []
         pred_labels = []
