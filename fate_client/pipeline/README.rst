@@ -197,7 +197,7 @@ Run A Pipeline
 --------------
 
 Having added all components, user needs to first compile pipeline before
-running any job. After compilation, the pipeline can then be fit(run
+running the designed job. After compilation, the pipeline can then be fit(run
 train job) with appropriate ``Backend`` and ``WorkMode``.
 
 .. code:: python
@@ -208,9 +208,9 @@ train job) with appropriate ``Backend`` and ``WorkMode``.
 Query on Tasks
 --------------
 
-FATE Pipeline also provides API to query component information,
+FATE Pipeline provides API to query component information,
 including data, model, and metrics. All query API have matching name to
-`FlowPy <../fate_flow/doc>`__, while Pipeline retrieves and returns
+`FlowPy <../fate_sdk>`__, while Pipeline retrieves and returns
 query result directly to user.
 
 .. code:: python
@@ -222,7 +222,7 @@ Deploy Components
 
 Once fitting pipeline completes, prediction can be run on new data set.
 Before prediction, necessary components need to be first deployed. This
-step marks components that are used by prediction pipeline.
+step marks selected components to be used by prediction pipeline.
 
 .. code:: python
 
@@ -247,22 +247,23 @@ Prediction can then be initiated on the new pipeline.
 
    predict_pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE)
 
-In addition, since pipeline is modular, new components can be added to
+In addition, since pipeline is modular, user may add new components to
 the original pipeline when running prediction.
 
 Upload Data
 -----------
 
 Pipeline provides functionality to upload local data table. Please refer
-to `upload demo <./demo/pipeline-upload.py>`__ for a quick demo. Note
+to `upload demo <./demo/pipeline-upload.py>`__ for a quick example. Note
 that uploading data can be added all at once, and the pipeline used to
-perform upload can be either training or predict pipeline (or, a
+perform upload can be either training or prediction pipeline (or, a
 separate pipeline as in the demo).
 
 Pipeline vs. CLI
 ----------------
 
 In the past versions, user interacts with FATE through command line
-interface, often with manual-configured conf and dsl json files. Manual
-configuration can be tedious and error-prone. Pipeline forms task
-configure files automatically at compilation.
+interface, often with manually configured conf and dsl json files. Manual
+configuration can be tedious and error-prone. FATE Pipeline forms task
+configure files automatically at compilation, allowing quick experiment
+with task design.
