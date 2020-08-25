@@ -34,7 +34,6 @@ class Session(object):
     @classmethod
     def build(cls, session_id=None, storage_engine=None, computing_engine=None, **kwargs):
         session_id = session_id if session_id else fate_uuid()
-        address = kwargs.get('address', None)
         # Find the storage engine type
         if storage_engine is None and kwargs.get("name") and kwargs.get("namespace"):
             storage_engine, address, partitions = StorageSessionBase.get_storage_info(name=kwargs.get("name"),
@@ -47,15 +46,18 @@ class Session(object):
 
         if storage_engine == StorageEngine.EGGROLL:
             from fate_arch.storage.eggroll import StorageSession
-            return StorageSession(session_id=session_id, options=kwargs.get("options", {}))
-        if storage_engine == StorageEngine.STANDALONE:
+            storage_session = StorageSession(session_id=session_id, options=kwargs.get("options", {}))
+        elif storage_engine == StorageEngine.STANDALONE:
             from fate_arch.storage.standalone import StorageSession
-            return StorageSession(session_id=session_id, options=kwargs.get("options", {}))
-        if storage_engine == StorageEngine.MYSQL:
+            storage_session = StorageSession(session_id=session_id, options=kwargs.get("options", {}))
+        elif storage_engine == StorageEngine.MYSQL:
             from fate_arch.storage.mysql import StorageSession
-            return StorageSession(session_id=session_id, options=kwargs.get("options", {}))
+            storage_session = StorageSession(session_id=session_id, options=kwargs.get("options", {}))
         else:
             raise NotImplementedError(f"can not be initialized with storage engine: {storage_engine}")
+        if kwargs.get("name") and kwargs.get("namespace"):
+            storage_session.set_default(name=kwargs["name"], namespace=kwargs["namespace"])
+        return storage_session
 
     @classmethod
     def convert(cls, src_name, src_namespace, dest_name, dest_namespace,
@@ -112,6 +114,8 @@ class Session(object):
 class StorageSessionBase(StorageSessionABC):
     def __init__(self, session_id):
         self._session_id = session_id
+        self._default_name = None
+        self._default_namespace = None
 
     def create(self):
         raise NotImplementedError()
@@ -133,7 +137,14 @@ class StorageSessionBase(StorageSessionABC):
         table.count()
         return table
 
-    def get_table(self, name, namespace):
+    def set_default(self, name, namespace):
+        self._default_name = name
+        self._default_namespace = namespace
+
+    def get_table(self, name=None, namespace=None):
+        if not name or not namespace:
+            name = self._default_name
+            namespace = self._default_namespace
         meta = StorageTableMeta.build(name=name, namespace=namespace)
         if meta:
             table = self.table(name=meta.get_name(),

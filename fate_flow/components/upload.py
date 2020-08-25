@@ -20,7 +20,7 @@ import time
 from fate_arch.common import log, file_utils
 from fate_arch.storage import StorageEngine, EggRollStorageType
 from fate_flow.entity.metric import Metric, MetricMeta
-from fate_flow.utils.job_utils import generate_session_id
+from fate_flow.utils import job_utils
 from fate_flow.scheduling_apps.client import ControllerClient
 from fate_arch import storage
 
@@ -64,7 +64,7 @@ class Upload(object):
         partitions = self.parameters["partition"]
         if partitions <= 0 or partitions >= self.MAX_PARTITIONS:
             raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITIONS))
-        with storage.Session.build(session_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),
+        with storage.Session.build(session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),
                                    storage_engine=self.parameters["storage_engine"], options=self.parameters.get("options")) as storage_session:
             if self.parameters["storage_engine"] in [StorageEngine.EGGROLL, StorageEngine.STANDALONE]:
                 address_dict = {"name": name, "namespace": namespace, "storage_type": EggRollStorageType.ROLLPAIR_LMDB}

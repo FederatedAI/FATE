@@ -31,14 +31,8 @@ class StorageSession(StorageSessionBase):
 
     def table(self, address: AddressABC, name, namespace, partitions, storage_type=None, options=None, **kwargs):
         if isinstance(address, StandaloneAddress):
-            if not options:
-                options = {}
-            if storage_type:
-                options["store_type"] = storage_type
-            options["total_partitions"] = partitions
             from fate_arch.storage.standalone._table import StorageTable
-            return StorageTable(session=self._session, address=address, name=name, namespace=namespace,
-                                storage_type=storage_type, options=options)
+            return StorageTable(session=self._session, name=name, namespace=namespace, address=address, partitions=partitions, storage_type=storage_type, options=options)
         raise NotImplementedError(f"address type {type(address)} not supported with standalone storage")
 
     @log_elapsed

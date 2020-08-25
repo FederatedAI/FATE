@@ -20,18 +20,17 @@ import tarfile
 
 from flask import Flask, request, send_file
 
-import fate_flow.utils.clean_utils
+from fate_arch.common import WorkMode
 from fate_arch.common.base_utils import json_loads, json_dumps
-from fate_flow.operation.job_saver import JobSaver
-from fate_flow.scheduler.dag_scheduler import DAGScheduler
-from fate_flow.scheduler.federated_scheduler import FederatedScheduler
-from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT, TEMP_DIRECTORY
-from fate_flow.utils import job_utils, detect_utils
-from fate_flow.utils.job_utils import get_dsl_parser_by_version
-from fate_flow.utils.api_utils import get_json_result, request_execute_server, error_response
-from fate_flow.entity.constant import WorkMode, JobStatus, FederatedSchedulingStatusCode, RetCode
-from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.operation.job_tracker import Tracker
+from fate_flow.scheduler import DAGScheduler
+from fate_flow.scheduler import FederatedScheduler
+from fate_flow.settings import stat_logger, TEMP_DIRECTORY
+from fate_flow.utils import job_utils, detect_utils, schedule_utils
+from fate_flow.utils.api_utils import get_json_result, error_response
+from fate_flow.entity.types import FederatedSchedulingStatusCode, RetCode
+from fate_flow.operation import Tracker
+from fate_flow.operation import JobSaver
+from fate_flow.operation import JobClean
 
 manager = Flask(__name__)
 
@@ -46,29 +45,22 @@ def internal_server_error(e):
 def submit_job():
     work_mode = request.json.get('job_runtime_conf', {}).get('job_parameters', {}).get('work_mode', None)
     detect_utils.check_config({'work_mode': work_mode}, required_arguments=[('work_mode', (WorkMode.CLUSTER, WorkMode.STANDALONE))])
-    if work_mode == RuntimeConfig.WORK_MODE:
-        job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(request.json)
-        return get_json_result(retcode=0, retmsg='success',
-                               job_id=job_id,
-                               data={'job_dsl_path': job_dsl_path,
-                                     'job_runtime_conf_path': job_runtime_conf_path,
-                                     'model_info': model_info,
-                                     'board_url': board_url,
-                                     'logs_directory': logs_directory
-                                     })
-    else:
-        if RuntimeConfig.WORK_MODE == WorkMode.CLUSTER and work_mode == WorkMode.STANDALONE:
-            # use cluster standalone job server to execute standalone job
-            return request_execute_server(request=request, execute_host='{}:{}'.format(request.remote_addr, CLUSTER_STANDALONE_JOB_SERVER_PORT))
-        else:
-            raise Exception('server run on standalone can not support cluster mode job')
+    job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(request.json)
+    return get_json_result(retcode=0, retmsg='success',
+                           job_id=job_id,
+                           data={'job_dsl_path': job_dsl_path,
+                                 'job_runtime_conf_path': job_runtime_conf_path,
+                                 'model_info': model_info,
+                                 'board_url': board_url,
+                                 'logs_directory': logs_directory
+                                 })
 
 
 @manager.route('/stop', methods=['POST'])
 def stop_job():
     job_id = request.json.get('job_id')
     stop_status = request.json.get("stop_status", "canceled")
-    jobs = job_utils.query_job(job_id=job_id)
+    jobs = JobSaver.query_job(job_id=job_id)
     if jobs:
         status_code, response = FederatedScheduler.request_stop_job(job=jobs[0], stop_status=stop_status)
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
@@ -79,9 +71,23 @@ def stop_job():
         return get_json_result(retcode=RetCode.DATA_ERROR, retmsg="can not found job")
 
 
+@manager.route('/rerun', methods=['POST'])
+def rerun_job():
+    job_id = request.json.get("job_id")
+    jobs = JobSaver.query_job(job_id=job_id)
+    if jobs:
+        status_code, response = FederatedScheduler.request_rerun_job(job=jobs[0], command_body=request.json)
+        if status_code == FederatedSchedulingStatusCode.SUCCESS:
+            return get_json_result(retcode=RetCode.SUCCESS, retmsg="rerun job success")
+        else:
+            return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="rerun job failed:\n{}".format(json_dumps(response)))
+    else:
+        return get_json_result(retcode=RetCode.DATA_ERROR, retmsg="can not found job")
+
+
 @manager.route('/query', methods=['POST'])
 def query_job():
-    jobs = job_utils.query_job(**request.json)
+    jobs = JobSaver.query_job(**request.json)
     if not jobs:
         return get_json_result(retcode=101, retmsg='find job failed')
     return get_json_result(retcode=0, retmsg='success', data=[job.to_json() for job in jobs])
@@ -98,7 +104,7 @@ def list_job():
 @manager.route('/update', methods=['POST'])
 def update_job():
     job_info = request.json
-    jobs = job_utils.query_job(job_id=job_info['job_id'], party_id=job_info['party_id'], role=job_info['role'])
+    jobs = JobSaver.query_job(job_id=job_info['job_id'], party_id=job_info['party_id'], role=job_info['role'])
     if not jobs:
         return get_json_result(retcode=101, retmsg='find job failed')
     else:
@@ -109,7 +115,7 @@ def update_job():
 
 @manager.route('/config', methods=['POST'])
 def job_config():
-    jobs = job_utils.query_job(**request.json)
+    jobs = JobSaver.query_job(**request.json)
     if not jobs:
         return get_json_result(retcode=101, retmsg='find job failed')
     else:
@@ -143,7 +149,7 @@ def job_log():
 
 @manager.route('/task/query', methods=['POST'])
 def query_task():
-    tasks = job_utils.query_task(**request.json)
+    tasks = JobSaver.query_task(**request.json)
     if not tasks:
         return get_json_result(retcode=101, retmsg='find task failed')
     return get_json_result(retcode=0, retmsg='success', data=[task.to_json() for task in tasks])
@@ -167,7 +173,7 @@ def query_component_output_data_info():
 
 @manager.route('/clean', methods=['POST'])
 def clean_job():
-    fate_flow.utils.clean_utils.start_clean_job(**request.json)
+    JobClean.start_clean_job(**request.json)
     return get_json_result(retcode=0, retmsg='success')
 
 
@@ -192,7 +198,7 @@ def dsl_generator():
             cpn_str = cpn_str.replace(" ", "").replace("\n", "").strip(",[]")
             cpn_list = cpn_str.split(",")
         train_dsl = json_loads(data.get("train_dsl"))
-        parser = get_dsl_parser_by_version(data.get("version", "1"))
+        parser = schedule_utils.get_dsl_parser_by_version(data.get("version", "1"))
         predict_dsl = parser.deploy_component(cpn_list, train_dsl)
 
         if data.get("filename"):
