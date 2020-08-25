@@ -153,7 +153,7 @@ class ResourceManager(object):
         cores = run_parameters.task_cores_per_node * run_parameters.task_nodes * run_parameters.task_parallelism
         memory = run_parameters.task_memory_per_node * run_parameters.task_nodes * run_parameters.task_parallelism
         computing_backend_info = cls.get_backend_registration_info(engine_id=run_parameters.computing_backend)
-        if computing_backend_info.f_engine_name == ComputingEngine.EGGROLL:
+        if computing_backend_info.f_engine_name in {ComputingEngine.EGGROLL, ComputingEngine.STANDALONE}:
             memory = 0
         return run_parameters.computing_backend, cores, memory
 
@@ -166,7 +166,7 @@ class ResourceManager(object):
         cores_per_task = run_parameters.task_cores_per_node * run_parameters.task_nodes
         memory_per_task = run_parameters.task_memory_per_node * run_parameters.task_nodes
         computing_backend_info = cls.get_backend_registration_info(engine_id=run_parameters.computing_backend)
-        if computing_backend_info.f_engine_name == ComputingEngine.EGGROLL:
+        if computing_backend_info.f_engine_name in {ComputingEngine.EGGROLL, ComputingEngine.STANDALONE}:
             memory_per_task = 0
         return cores_per_task, memory_per_task
 

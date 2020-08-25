@@ -182,7 +182,7 @@ class ModelOperation(object):
 
 
 class ProcessRole(object):
-    SERVER = "server"
+    DRIVER = "driver"
     EXECUTOR = "executor"
 
 

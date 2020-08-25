@@ -24,6 +24,12 @@ computing:
       home: ./eggroll/python/eggroll
     cores_per_node: 20
     nodes: 1
+  DEFAULT_STANDALONE:
+    engine: STANDALONE
+    address:
+      home:
+    cores_per_node: 20
+    nodes: 1
   DEFAULT_SPARK:
     engine: SPARK
     address:
@@ -34,6 +40,8 @@ federation:
     address:
       host: 127.0.0.1
       port: 9370
+  DEFAULT_STANDALONE:
+    engine: STANDALONE
   DEFAULT_MQ:
     engine: MQ
     address:
@@ -51,7 +59,6 @@ command_federation:
   address:
     host: 127.0.0.1
     port: 9370
-  DEFAULT_MQ:
 model_store_address:
   storage: mysql
   name: model

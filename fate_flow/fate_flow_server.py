@@ -45,7 +45,7 @@ from fate_flow.scheduler import DAGScheduler
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.types import ProcessRole
 from fate_flow.manager import ResourceManager
-from fate_flow.settings import IP, GRPC_PORT, _ONE_DAY_IN_SECONDS, stat_logger, API_VERSION
+from fate_flow.settings import IP, HTTP_PORT, GRPC_PORT, _ONE_DAY_IN_SECONDS, stat_logger, API_VERSION
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import PrivilegeAuth
@@ -95,7 +95,7 @@ if __name__ == '__main__':
     parser.add_argument('--standalone_node', default=False, help="if standalone node mode or not ", action='store_true')
     args = parser.parse_args()
     RuntimeConfig.init_env()
-    RuntimeConfig.set_process_role(ProcessRole.SERVER)
+    RuntimeConfig.set_process_role(ProcessRole.DRIVER)
     # history_job_clean = job_controller.JobClean()
     # history_job_clean.start()
     PrivilegeAuth.init()
@@ -115,7 +115,7 @@ if __name__ == '__main__':
     server.start()
     # start http server
     try:
-        run_simple(hostname=IP, port=RuntimeConfig.HTTP_PORT, application=app, threaded=True)
+        run_simple(hostname=IP, port=HTTP_PORT, application=app, threaded=True)
         stat_logger.info("FATE Flow server start Successfully")
     except OSError as e:
         traceback.print_exc()
