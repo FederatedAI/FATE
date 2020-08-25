@@ -80,7 +80,8 @@ component, respectively.
 
 .. code:: python
 
-   pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data, validate_data=intersection_1.output.data))
+   pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data,
+                                                 validate_data=intersection_1.output.data))
 
 Another case of using keywords ``train_data``, ``validate_data``, and
 ``test_data`` is to select from ``DataSplit`` module’s multiple outputs:
@@ -105,7 +106,9 @@ is passed to ``dataio_1``.
 
 .. code:: python
 
-   pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data), model=Model(dataio_0.output.model))
+   pipeline.add_component(dataio_1,
+                          data=Data(data=reader_1.output.data),
+                          model=Model(dataio_0.output.model))
 
 When a model from previous component is used but the current component
 is of different class from the previous component, ``isometric_model``
@@ -215,7 +218,8 @@ prediction.
 
    predict_pipeline = PipeLine()
    predict_pipeline.add_component(reader_0)
-   predict_pipeline.add_component(pipeline, data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
+   predict_pipeline.add_component(pipeline,
+                                  data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
 
 Prediction can then be initiated on the new pipeline.
 
