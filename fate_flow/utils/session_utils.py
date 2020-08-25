@@ -20,8 +20,8 @@ from fate_arch.session import Session
 
 
 class SessionStop(object):
-    @staticmethod
-    def run():
+    @classmethod
+    def run(cls):
         parser = argparse.ArgumentParser()
         parser.add_argument('-j', '--job_id', required=True, type=str, help="job id")
         parser.add_argument('-w', '--work_mode', required=True, type=str, help="work mode")

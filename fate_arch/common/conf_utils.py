@@ -17,8 +17,19 @@
 import os
 from fate_arch.common import file_utils
 
+CONF_PATH = "conf/service_conf.yaml"
 
-# TODO: add config cache
+
+def conf_realpath():
+    return os.path.join(file_utils.get_project_base_directory(), CONF_PATH)
+
+
 def get_base_config(key, default=None):
-    base_config = file_utils.load_yaml_conf(os.path.join(file_utils.get_project_base_directory(), "conf/base_conf.yaml")) or dict()
+    base_config = file_utils.load_yaml_conf(conf_path=conf_realpath()) or dict()
     return base_config.get(key, default)
+
+
+def update_config(key, value):
+    config = file_utils.load_yaml_conf(conf_path=conf_realpath()) or dict()
+    config[key] = value
+    file_utils.rewrite_yaml_conf(conf_path=conf_realpath(), config=config)

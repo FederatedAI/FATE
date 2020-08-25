@@ -18,7 +18,7 @@ import os
 from fate_arch.common import log
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_arch import storage
-from fate_flow.utils.job_utils import generate_session_id
+from fate_flow.utils import job_utils
 from fate_flow.scheduling_apps.client import ControllerClient
 
 
@@ -37,10 +37,10 @@ class Download(object):
         self.parameters["local"] = component_parameters["local"]
         name, namespace = self.parameters.get("name"), self.parameters.get("namespace")
         with open(os.path.abspath(self.parameters["output_path"]), "w") as fout:
-            with storage.Session.build(session_id=generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),
+            with storage.Session.build(session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),
                                        name=name,
                                        namespace=namespace) as storage_session:
-                data_table = storage_session.get_table(namespace=namespace, name=name)
+                data_table = storage_session.get_table()
                 count = data_table.count()
                 LOGGER.info('===== begin to export data =====')
                 lines = 0
