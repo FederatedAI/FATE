@@ -17,7 +17,7 @@ from fate_arch.common import FederatedComm, FederatedMode
 from fate_arch.common.base_utils import json_loads, current_timestamp
 from fate_arch.common.log import schedule_logger
 from fate_arch.common import WorkMode, Backend
-from fate_arch.common import conf_utils
+from fate_arch.common import conf_utils, string_utils
 from fate_flow.db.db_models import Job
 from fate_flow.scheduler import FederatedScheduler
 from fate_flow.scheduler import TaskScheduler
@@ -135,6 +135,11 @@ class DAGScheduler(Cron):
             elif backend == Backend.SPARK:
                 job_parameters.computing_engine = ComputingEngine.SPARK
                 job_parameters.federation_engine = FederationEngine.MQ
+                # add mq info
+                federation_info = {}
+                federation_info['union_name'] = string_utils.RandomString(4) 
+                federation_info['policy_id'] = string_utils.RandomString(10)
+                job_parameters.federation_info = federation_info
             job_parameters.computing_backend = f"DEFAULT_{job_parameters.computing_engine}"
             job_parameters.federation_backend = f"DEFAULT_{job_parameters.federation_engine}"
         if job_parameters.federated_mode is None:

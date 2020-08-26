@@ -27,6 +27,7 @@ class RunParameters(object):
         self.federation_backend = None
         self.federation_engine = None
         self.federated_mode = None
+        self.federation_info = None
         self.task_parallelism = None
         self.task_nodes = None
         self.task_cores_per_node = None
