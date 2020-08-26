@@ -17,6 +17,7 @@
 #  limitations under the License.
 
 from arch.api.utils import log_utils
+from fate_arch.computing import is_table
 
 LOGGER = log_utils.getLogger()
 
@@ -214,14 +215,14 @@ class ComponentProperties(object):
         if validate_data or (self.has_train_data and self.has_eval_data):
             self.has_validate_data = True
 
-        if self.has_train_data and type(train_data) in ["DTable", "RDDTable"]:
+        if self.has_train_data and is_table(train_data):
             self.input_data_count = train_data.count()
         elif self.has_normal_input_data:
             for data_key, data_table in data.items():
-                if type(data_table) in ["DTable", "RDDTable"]:
+                if is_table(data_table):
                     self.input_data_count = data_table.count()
 
-        if self.has_validate_data and type(validate_data) in ["DTable", "RDDTable"]:
+        if self.has_validate_data and is_table(validate_data):
             self.input_eval_data_count = validate_data.count()
 
         self._abnormal_dsl_config_detect()
