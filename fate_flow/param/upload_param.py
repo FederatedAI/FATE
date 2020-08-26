@@ -17,7 +17,7 @@
 
 class UploadParam:
     def __init__(self, file="", head=1, partition=10,
-                 namespace="", name="", work_mode=0, storage_engine="", destroy=False):
+                 namespace="", name="", work_mode=0, storage_engine="", storage_address=None, destroy=False):
         self.file = file
         self.head = head
         self.partition = partition
@@ -25,6 +25,7 @@ class UploadParam:
         self.name = name
         self.work_mode = work_mode
         self.storage_engine = storage_engine
+        self.storage_address = storage_address
         self.destroy = destroy
 
     def check(self):

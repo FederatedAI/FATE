@@ -41,7 +41,7 @@ class StorageTable(StorageTableBase):
         self._name = name
         self._namespace = namespace
         self._partitions = partitions
-        self._type = storage_type
+        self._type = storage_type if storage_type else HDFSStorageType.DISK
         self._options = options if options else {}
         self._engine = StorageEngine.HDFS
 

@@ -163,6 +163,7 @@ def gen_data_access_job_config(config_data, access_module):
                 "namespace": [config_data["namespace"]],
                 "name": [config_data["name"]],
                 "storage_engine": [config_data.get("storage_engine", StorageEngine.EGGROLL)],
+                "storage_address": [config_data.get("storage_address", None)],
                 "destroy": [config_data.get("destroy", False)],
             }
         }

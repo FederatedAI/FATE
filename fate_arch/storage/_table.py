@@ -78,6 +78,10 @@ class StorageTableBase(StorageTableABC):
     def count(self):
         pass
 
+    def save_as(self, dest_name, dest_namespace, partitions=None, schema=None):
+        src_table_meta = self.get_meta()
+        pass
+
 
 class StorageTableMeta(StorageTableMetaABC):
     def __init__(self, name, namespace):
@@ -196,6 +200,7 @@ class StorageTableMeta(StorageTableMetaABC):
                 .where(StorageTableMetaModel.f_name == self.name,
                        StorageTableMetaModel.f_namespace == self.namespace) \
                 .execute()
+
 
     @classmethod
     def create_address(cls, storage_engine, address_dict):

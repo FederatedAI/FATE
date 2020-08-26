@@ -253,9 +253,8 @@ def check_process_by_keyword(keywords):
     return ret == 0
 
 
-def run_subprocess(config_dir, process_cmd, log_dir=None):
-    stat_logger.info('Starting process command: {}'.format(process_cmd))
-    stat_logger.info(' '.join(process_cmd))
+def run_subprocess(job_id, config_dir, process_cmd, log_dir=None):
+    schedule_logger(job_id=job_id).info('start process command: {}'.format(' '.join(process_cmd)))
 
     os.makedirs(config_dir, exist_ok=True)
     if log_dir:
@@ -278,6 +277,7 @@ def run_subprocess(config_dir, process_cmd, log_dir=None):
         f.truncate()
         f.write(str(p.pid) + "\n")
         f.flush()
+    schedule_logger(job_id=job_id).info('start process command: {} successfully, pid is {}'.format(' '.join(process_cmd), p.pid))
     return p
 
 
