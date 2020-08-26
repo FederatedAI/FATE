@@ -70,7 +70,7 @@ def _config(cmd):
 @click.option("--skip-pipeline-jobs", is_flag=True, default=False,
               help="skip pipeline jobs defined in testsuite")
 @click.option("--skip-data", is_flag=True, default=False,
-              help="skip pipeline jobs defined in testsuite")
+              help="skip uploading data specified in testsuite")
 def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
               skip_dsl_jobs, skip_pipeline_jobs, skip_data, yes):
     """
