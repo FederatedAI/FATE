@@ -43,7 +43,12 @@ class RunParameters(object):
                 setattr(self, k, v)
 
     def to_dict(self):
-        return self.__dict__
+        d = {}
+        for k, v in self.__dict__.items():
+            if v is None:
+                continue
+            d[k] = v
+        return d
 
 
 class RetCode(IntEnum):
