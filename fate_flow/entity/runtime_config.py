@@ -17,13 +17,15 @@ import os
 import dotenv
 
 from fate_arch.common.file_utils import get_project_base_directory
-from fate_flow.entity.constant import ProcessRole
+from fate_flow.entity.types import ProcessRole
 
 
 class RuntimeConfig(object):
     WORK_MODE = None
-    BACKEND = None
-    STORE_ENGINE = None
+    COMPUTING_ENGINE = None
+    FEDERATION_ENGINE = None
+    FEDERATED_MODE = None
+
     JOB_QUEUE = None
     USE_LOCAL_DATABASE = False
     HTTP_PORT = None
@@ -33,21 +35,21 @@ class RuntimeConfig(object):
     PROCESS_ROLE = None
     ENV = dict()
 
-    @staticmethod
-    def init_config(**kwargs):
+    @classmethod
+    def init_config(cls, **kwargs):
         for k, v in kwargs.items():
             if hasattr(RuntimeConfig, k):
                 setattr(RuntimeConfig, k, v)
 
-    @staticmethod
-    def init_env():
+    @classmethod
+    def init_env(cls):
         RuntimeConfig.ENV.update(dotenv.dotenv_values(dotenv_path=os.path.join(get_project_base_directory(), "fate.env")))
 
-    @staticmethod
-    def get_env(key):
+    @classmethod
+    def get_env(cls, key):
         return RuntimeConfig.ENV.get(key, None)
 
-    @staticmethod
-    def set_process_role(process_role: PROCESS_ROLE):
+    @classmethod
+    def set_process_role(cls, process_role: PROCESS_ROLE):
         RuntimeConfig.PROCESS_ROLE = process_role
 

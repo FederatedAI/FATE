@@ -12,8 +12,6 @@
 
 import argparse
 
-from pipeline.backend.config import Backend
-from pipeline.backend.config import WorkMode
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
 from pipeline.component.hetero_linr import HeteroLinR
@@ -63,9 +61,9 @@ def main(config="../config.yaml"):
 
     pipeline.compile()
 
-    pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE)
+    pipeline.fit(backend=backend, work_mode=work_mode)
 
-    print (pipeline.get_component("hetero_linr_0").get_summary())
+    print(pipeline.get_component("hetero_linr_0").get_summary())
 
 
     # predict

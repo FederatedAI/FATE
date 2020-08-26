@@ -475,7 +475,7 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                   the second k trees use host features, and so on
             layered: only support 2 party, when running layered mode, first 'host_depth' layer will use host features,
                      and then next 'guest_depth' will only use guest features
-        k: every party will alternate build k trees until reach max tree num, this param is valid when work_mode is
+        tree_num_per_party: every party will alternate build k trees until reach max tree num, this param is valid when work_mode is
             mix
         guest_depth: guest will build last guest_depth of a decision tree using guest features, is valid when work mode
             is layered

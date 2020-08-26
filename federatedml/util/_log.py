@@ -13,7 +13,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_arch.storage.simple._table import StorageTable
-from fate_arch.storage.simple._session import StorageSessionBase
 
-__all__ = ["StorageTable", "StorageSessionBase"]
+from fate_arch.common.log import getLogger
+LOGGER = getLogger()

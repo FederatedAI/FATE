@@ -167,7 +167,8 @@ class HeteroFastSecureBoostHost(HeteroSecureBoostHost):
         _, model_param = super(HeteroFastSecureBoostHost, self).get_model_param()
         param_name = "HeteroSecureBoostHostParam"
         model_param.tree_plan.extend(plan.encode_plan(self.tree_plan))
-
+        model_param.model_name = consts.HETERO_FAST_SBT_MIX if self.work_mode == consts.MIX_TREE else \
+                                 consts.HETERO_FAST_SBT_LAYERED
         # in mix mode, host can output feature importance
         feature_importances = list(self.feature_importances_.items())
         feature_importances = sorted(feature_importances, key=itemgetter(1), reverse=True)

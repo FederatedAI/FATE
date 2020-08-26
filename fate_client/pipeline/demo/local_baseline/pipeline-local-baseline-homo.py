@@ -47,7 +47,8 @@ def main(config="../config.yaml"):
 
     dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense",
                                                                               label_type="int", label_name="y")
-    dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
+    dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=True, output_format="dense",
+                                                                              label_type="int", label_name="y")
 
     homo_lr_0 = HomoLR(name="homo_lr_0", penalty="L2", optimizer="sgd",
                        tol=0.0001, alpha=0.01, max_iter=30, batch_size=-1,

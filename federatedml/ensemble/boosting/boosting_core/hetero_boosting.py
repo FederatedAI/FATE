@@ -87,7 +87,7 @@ class HeteroBoosting(Boosting, ABC):
 
             classes_ = sorted(classes_)
             if not range_from_zero:
-                class_mapping = dict(zip(self.classes_, range(self.num_classes)))
+                class_mapping = dict(zip(classes_, range(num_classes)))
                 self.y = self.y.mapValues(lambda _class: class_mapping[_class])
 
         else:

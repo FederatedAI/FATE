@@ -23,15 +23,20 @@ class Backend(IntEnum):
         return self.value == self.EGGROLL
 
 
-class FederationMode(IntEnum):
-    SINGLE = 0
-    MULTIPLE = 1
+class FederatedMode(object):
+    SINGLE = "SINGLE"
+    MULTIPLE = "MULTIPLE"
 
-    def is_single(self):
-        return self.value == self.SINGLE
+    def is_single(self, value):
+        return value == self.SINGLE
 
-    def is_multiple(self):
-        return self.value == self.MULTIPLE
+    def is_multiple(self, value):
+        return value == self.MULTIPLE
+
+
+class FederatedComm(object):
+    PUSH = "PUSH"
+    PULL = "PULL"
 
 
 class Party(object):
