@@ -396,7 +396,7 @@ class MetricInterface(object):
             A positive floating point value
         """
 
-        return clustering_metric.JaccardSimilarityScore.compute(labels, pred_labels)
+        return clustering_metric.JaccardSimilarityScore().compute(labels, pred_labels)
 
     @staticmethod
     def FowlkesMallowsScore(labels, pred_labels):
@@ -412,7 +412,7 @@ class MetricInterface(object):
             A positive floating point value
         """
 
-        return clustering_metric.FowlkesMallowsScore.compute(labels, pred_labels)
+        return clustering_metric.FowlkesMallowsScore().compute(labels, pred_labels)
 
     @staticmethod
     def AdjustedRandScore(labels, pred_labels):
@@ -428,23 +428,22 @@ class MetricInterface(object):
             A positive floating point value
         """
 
-        return clustering_metric.AdjustedRandScore.compute(labels, pred_labels)
+        return clustering_metric.AdjustedRandScore().compute(labels, pred_labels)
 
-    def Davies_Bouldin_index(labels, pred_labels):
+    @staticmethod
+    def Davies_Bouldin_index(dist_table, cluster_dist):
         """
         Compute the adjusted-rand score
         Parameters
         ----------
-        labels: value list. The labels of data set.
-        pred_labels: value list. The predict results of model. It should be corresponding to labels each data.
         Return
         ----------
         float
             A positive floating point value
         """
-        pred_output=list(pred_labels.first().collect())
-        dist_table_dtable=list(v[2] for v in pred_output)
-        cluster_dist_dtable=list(v[3] for v in pred_output)
+        # pred_output=list(pred_labels.first().collect())
+        # dist_table_dtable=list(v[2] for v in pred_output)
+        # cluster_dist_dtable=list(v[3] for v in pred_output)
 
         ## process data from evaluation
-        return clustering_metric.Davies_Bouldin_index.compute(dist_table_dtable, cluster_dist_dtable)
+        return clustering_metric.Davies_Bouldin_index().compute(dist_table, cluster_dist)
