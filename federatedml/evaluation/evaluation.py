@@ -122,18 +122,29 @@ class Evaluation(ModelBase):
 
     def _clustering_extract(self, data):
 
+        """
+        extract data according to data format
+        """
+
         true_cluster_index, predicted_cluster_index = [], []
         intra_cluster_avg_dist, inter_cluster_dist = [], []
-        return_format = 0
+        run_outer_metrics = False  # run intra metrics or outer metrics ?
+
+        if len(data[0][1]) == 3:  # this input format is not for metrics computation
+            return None, None, run_outer_metrics
+        if type(data[0][1][-1]) == list:  # the input format is for outer metrics
+            run_outer_metrics = True
 
         for d in data:
-            if len(d[1]) == 3:
-                pass
-            elif len(d[1]) == 2:
-                break
-            elif len(d[1]) == 4:
-                pass
+            if run_outer_metrics:
+                intra_cluster_avg_dist.append(d[1][1])
+                inter_cluster_dist.append(d[1][2])
+            else:
+                true_cluster_index.append(d[1][1])
+                predicted_cluster_index.append(d[1][2])
 
+        return (true_cluster_index, predicted_cluster_index, run_outer_metrics) if not run_outer_metrics else \
+               (intra_cluster_avg_dist, inter_cluster_dist, run_outer_metrics)
 
     def _evaluate_classification_and_regression_metrics(self, mode, data):
 
@@ -169,7 +180,7 @@ class Evaluation(ModelBase):
         return eval_result
 
     def _evaluate_clustering_metrics(self, mode, data):
-        return 114514
+        eval_result = defaultdict(list)
 
     def evaluate_metrics(self, mode: str, data: list) -> dict:
 
@@ -189,6 +200,8 @@ class Evaluation(ModelBase):
         self.eval_results.clear()
         for (key, eval_data) in data.items():
             eval_data_local = list(eval_data.collect())
+            if len(eval_data_local) == 0:
+                continue
             split_data_with_label = self.split_data_with_type(eval_data_local)
             for mode, data in split_data_with_label.items():
                 eval_result = self.evaluate_metrics(mode, data)
