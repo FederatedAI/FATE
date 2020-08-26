@@ -14,8 +14,9 @@
 #  limitations under the License.
 #
 import copy
-import pickle
 import json
+import pickle
+import time
 from types import SimpleNamespace
 
 from pipeline.backend.config import Backend, WorkMode
@@ -25,8 +26,8 @@ from pipeline.backend.config import VERSION
 from pipeline.backend.task_info import TaskInfo
 from pipeline.component.component_base import Component
 from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
-from pipeline.interface.model import Model
+from pipeline.interface import Data
+from pipeline.interface import Model
 from pipeline.utils import tools
 from pipeline.utils.invoker.job_submitter import JobInvoker
 from pipeline.utils.logger import LOGGER
@@ -34,6 +35,7 @@ from pipeline.utils.logger import LOGGER
 
 class PipeLine(object):
     def __init__(self):
+        self._create_time = time.asctime(time.localtime(time.time()))
         self._initiator = None
         self._roles = {}
         self._components = {}
@@ -244,7 +246,7 @@ class PipeLine(object):
         if not self._train_dsl:
             raise ValueError("there are no components to train")
 
-        #print("train_dsl: ", self._train_dsl)
+        # print("train_dsl: ", self._train_dsl)
         LOGGER.debug(f"train_dsl: {self._train_dsl}")
 
     def _construct_train_conf(self):
@@ -266,7 +268,7 @@ class PipeLine(object):
                 self._train_conf["role_parameters"] = tools.merge_dict(role_param_conf,
                                                                        self._train_conf["role_parameters"])
 
-        #pprint.pprint(self._train_conf)
+        # pprint.pprint(self._train_conf)
         LOGGER.debug(f"self._train_conf: \n {json.dumps(self._train_conf, indent=4, ensure_ascii=False)}")
         return self._train_conf
 
@@ -284,6 +286,16 @@ class PipeLine(object):
         upload_conf = copy.deepcopy(data_conf)
         upload_conf["work_mode"] = work_mode
         return upload_conf
+
+    def describe(self):
+        LOGGER.debug(f"Pipeline Stage is {self._stage}")
+        LOGGER.debug("DSL is:")
+        if self._stage == "train":
+            LOGGER.debug(f"{self._train_dsl}")
+        else:
+            LOGGER.debug(f"{self._predict_dsl}")
+
+        LOGGER.debug(f"Pipeline Create Time: {self._create_time}")
 
     def get_train_job_id(self):
         return self._train_job_id
@@ -340,7 +352,8 @@ class PipeLine(object):
                 if "role_parameters" not in self._train_conf:
                     self._train_conf["role_parameters"] = {}
 
-                self._train_conf["role_parameters"].update(predict_pipeline_conf["role_parameters"])
+                self._train_conf["role_parameters"] = tools.merge_dict(self._train_conf["role_parameters"],
+                                                                       predict_pipeline_conf["role_parameters"])
 
             self._predict_dsl = tools.merge_dict(predict_pipeline_dsl, self._train_dsl)
 
@@ -555,3 +568,4 @@ class PipeLine(object):
             raise ValueError("Pipeline does not has component }{}".format(item))
 
         return self._components[item]
+
