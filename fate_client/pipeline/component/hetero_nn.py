@@ -16,8 +16,8 @@
 
 from pipeline.component.component_base import Component
 from pipeline.component.nn.models.sequantial import Sequential
-from pipeline.interface.input import Input
-from pipeline.interface.output import Output
+from pipeline.interface import Input
+from pipeline.interface import Output
 from pipeline.utils.tools import extract_explicit_parameter
 
 
