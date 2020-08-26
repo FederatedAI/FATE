@@ -125,17 +125,15 @@ class StorageSessionBase(StorageSessionABC):
 
     def create_table(self, address, name, namespace, partitions=1, **kwargs):
         table = self.table(address=address, name=name, namespace=namespace, partitions=partitions, **kwargs)
-        meta_info = {}
-        meta_info.update(kwargs)
-        meta_info["name"] = name
-        meta_info["namespace"] = namespace
-        meta_info["address"] = table.get_address()
-        meta_info["partitions"] = table.get_partitions()
-        meta_info["engine"] = table.get_engine()
-        meta_info["type"] = table.get_type()
-        meta_info["options"] = table.get_options()
-        StorageTableMeta.create_metas(**meta_info)
-        table.set_meta(StorageTableMeta(name=name, namespace=namespace))
+        table_meta = StorageTableMeta(name=name, namespace=namespace, new=True)
+        table_meta.set_metas(**kwargs)
+        table_meta.address = table.get_address()
+        table_meta.partitions = table.get_partitions()
+        table_meta.engine = table.get_engine()
+        table_meta.type = table.get_type()
+        table_meta.options = table.get_options()
+        table_meta.create()
+        table.set_meta(table_meta)
         # update count on meta
         table.count()
         return table

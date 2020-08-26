@@ -166,24 +166,15 @@ class Tracker(object):
                 if part_of_limit == 0:
                     break
             table_count = computing_table.count()
-            meta_info = {}
-            meta_info["name"] = persistent_table_name
-            meta_info["namespace"] = persistent_table_namespace
-            meta_info["address"] = address
-            meta_info["partitions"] = computing_table.partitions
-            meta_info["engine"] = output_storage_engine
-            meta_info["type"] = storage.EggRollStorageType.ROLLPAIR_LMDB
-            meta_info["options"] = {}
-            meta_info["schema"] = schema
-            meta_info["part_of_data"] = part_of_data
-            meta_info["count"] = table_count
-            storage.StorageTableMeta.create_metas(**meta_info)
-            """
-            # The same table is read by two different sessions
-            with storage.Session.build(storage_engine=output_storage_engine) as storage_session:
-                table = storage_session.create_table(address=address, name=persistent_table_name, namespace=persistent_table_namespace, partitions=partitions)
-                table.get_meta().update_metas(schema=schema, part_of_data=part_of_data, count=computing_table.count(), partitions=partitions)
-            """
+            table_meta = storage.StorageTableMeta(name=persistent_table_name, namespace=persistent_table_namespace, new=True)
+            table_meta.address = address
+            table_meta.partitions = computing_table.partitions
+            table_meta.engine = output_storage_engine
+            table_meta.type = storage.EggRollStorageType.ROLLPAIR_LMDB
+            table_meta.schema = schema
+            table_meta.part_of_data = part_of_data
+            table_meta.count = table_count
+            table_meta.create()
             return persistent_table_namespace, persistent_table_name
         else:
             schedule_logger(self.job_id).info('task id {} output data table is none'.format(self.task_id))
