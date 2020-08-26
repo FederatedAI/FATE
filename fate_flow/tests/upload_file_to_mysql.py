@@ -50,7 +50,7 @@ def list_to_str(input_list):
 
 def write_to_db(conf, table_name, file_name, namespace, partitions, head):
     db = MysqldbHelper(**conf)
-    table_meta = storage.StorageTableMeta.build(name=table_name, namespace=namespace)
+    table_meta = storage.StorageTableMeta(name=table_name, namespace=namespace)
     create_table = 'create table {}(id varchar(50) NOT NULL, features LONGTEXT, PRIMARY KEY(id))'.format(table_name)
     db.execute(create_table.format(table_name))
     print('create table {}'.format(table_name))

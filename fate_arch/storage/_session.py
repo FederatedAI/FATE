@@ -66,7 +66,7 @@ class Session(object):
     def convert(cls, src_name, src_namespace, dest_name, dest_namespace,
                 computing_engine: ComputingEngine = ComputingEngine.EGGROLL, force=False):
         # The source and target may be different session types
-        src_table_meta = StorageTableMeta.build(name=src_name, namespace=src_namespace)
+        src_table_meta = StorageTableMeta(name=src_name, namespace=src_namespace)
         if not src_table_meta:
             raise RuntimeError(f"can not found table name: {src_name} namespace: {src_namespace}")
         dest_table_address = None
@@ -135,7 +135,7 @@ class StorageSessionBase(StorageSessionABC):
         meta_info["type"] = table.get_type()
         meta_info["options"] = table.get_options()
         StorageTableMeta.create_metas(**meta_info)
-        table.set_meta(StorageTableMeta.build(name=name, namespace=namespace))
+        table.set_meta(StorageTableMeta(name=name, namespace=namespace))
         # update count on meta
         table.count()
         return table
@@ -148,7 +148,7 @@ class StorageSessionBase(StorageSessionABC):
         if not name or not namespace:
             name = self._default_name
             namespace = self._default_namespace
-        meta = StorageTableMeta.build(name=name, namespace=namespace)
+        meta = StorageTableMeta(name=name, namespace=namespace)
         if meta:
             table = self.table(name=meta.get_name(),
                                namespace=meta.get_namespace(),

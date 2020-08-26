@@ -85,7 +85,7 @@ class Reader(object):
     def convert(self, src_name, src_namespace, dest_name, dest_namespace,
                 computing_engine: ComputingEngine = ComputingEngine.EGGROLL, force=False) -> (StorageTableMetaABC, AddressABC, StorageEngine):
         # The source and target may be different session types
-        src_table_meta = StorageTableMeta.build(name=src_name, namespace=src_namespace)
+        src_table_meta = StorageTableMeta(name=src_name, namespace=src_namespace)
         if not src_table_meta:
             raise RuntimeError(f"can not found table name: {src_name} namespace: {src_namespace}")
         dest_table_address = None

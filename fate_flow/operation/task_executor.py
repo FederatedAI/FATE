@@ -235,7 +235,7 @@ class TaskExecutor(object):
                         if search_component_name == 'args':
                             if job_args.get('data', {}).get(search_data_name).get('namespace', '') and job_args.get(
                                     'data', {}).get(search_data_name).get('name', ''):
-                                storage_table_meta = storage.StorageTableMeta.build(name=job_args['data'][search_data_name]['name'], namespace=job_args['data'][search_data_name]['namespace'])
+                                storage_table_meta = storage.StorageTableMeta(name=job_args['data'][search_data_name]['name'], namespace=job_args['data'][search_data_name]['namespace'])
                         else:
                             tracker_client = TrackerClient(job_id=job_id, role=role, party_id=party_id,
                                                            component_name=search_component_name)

@@ -69,7 +69,7 @@ def download_upload(access_module):
         data['namespace'] = job_config["namespace"]
         if WORK_MODE != 0:
             job_config["storage_engine"] = job_config.get("storage_engine", StorageEngine.EGGROLL)
-            data_table_meta = storage.StorageTableMeta.build(name=job_config["table_name"], namespace=job_config["namespace"])
+            data_table_meta = storage.StorageTableMeta(name=job_config["table_name"], namespace=job_config["namespace"])
             if data_table_meta and job_config.get('drop', 2) == 2:
                 return get_json_result(retcode=100,
                                        retmsg='The data table already exists.'
@@ -115,7 +115,7 @@ def get_upload_info(jobs_run_conf):
         info = {}
         table_name = job_run_conf["name"][0]
         namespace = job_run_conf["namespace"][0]
-        table_meta = storage.StorageTableMeta.build(name=table_name, namespace=namespace)
+        table_meta = storage.StorageTableMeta(name=table_name, namespace=namespace)
         if table_meta:
             partition = job_run_conf["partition"][0]
             info["upload_info"] = {

@@ -98,20 +98,23 @@ class StorageTableMeta(StorageTableMetaABC):
         self.description = None
         self.create_time = None
         self.update_time = None
+        self.build()
 
-    @classmethod
-    def build(cls, name, namespace):
+    def build(self):
+        for k, v in self.table_meta.__dict__["__data__"].items():
+            setattr(self, k.lstrip("f_"), v)
+        self.address = self.create_address(storage_engine=self.engine, address_dict=self.address)
+
+    def __new__(cls, *args, **kwargs):
+        name, namespace = kwargs.get("name"), kwargs.get("namespace")
         if not name or not namespace:
-            return
+            return None
         tables_meta = cls.query_table_meta(filter_fields=dict(name=name, namespace=namespace))
         if not tables_meta:
-            return
-        instance = StorageTableMeta(name=name, namespace=namespace)
-        table_meta = tables_meta[0]
-        for k, v in table_meta.__dict__["__data__"].items():
-            setattr(instance, k.lstrip("f_"), v)
-        instance.address = instance.create_address(storage_engine=instance.engine, address_dict=instance.address)
-        return instance
+            return None
+        self = super().__new__(cls)
+        setattr(self, "table_meta", tables_meta[0])
+        return self
 
     @classmethod
     def create_metas(cls, **kwargs):
