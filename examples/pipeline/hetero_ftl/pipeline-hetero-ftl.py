@@ -19,7 +19,7 @@ import argparse
 from tensorflow.keras import optimizers
 from tensorflow.keras.layers import Dense
 
-from fate_test.fate_test._parser import Config
+from fate_test.fate_test._config import Config
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
 from pipeline.component.hetero_ftl import HeteroFTL

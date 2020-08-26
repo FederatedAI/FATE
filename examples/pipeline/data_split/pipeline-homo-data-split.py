@@ -16,7 +16,7 @@
 
 import argparse
 
-from fate_test.fate_test._parser import Config
+from fate_test.fate_test._config import Config
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
 from pipeline.component.homo_data_split import HomoDataSplit

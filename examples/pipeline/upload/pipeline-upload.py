@@ -17,10 +17,10 @@
 import argparse
 import os
 
+from fate_test.fate_test._config import Config
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
 from pipeline.component.reader import Reader
-from pipeline.demo.util.demo_util import Config
 from pipeline.interface.data import Data
 
 # find python path
@@ -31,8 +31,9 @@ SITE_PATH = site.getsitepackages()[0]
 def main(config="../config.yaml"):
     # obtain config
     config = Config(config)
-    guest = config.guest
-    host = config.host[0]
+    parties = config.parties
+    guest = parties.guest[0]
+    host = parties.host[0]
     backend = config.backend
     work_mode = config.work_mode
 
