@@ -140,50 +140,6 @@ class Component(object):
 
         return algorithm_param_conf
 
-    def recursive_construct_role_parameters_v1(self, params, partys=None, all_party_ids=None):
-        ret_dict = {}
-        for param, value in params.items():
-            if not isinstance(value, dict) or len(value.keys()) == 1:
-                if partys is None:
-                    ret_dict[param] = [value] * len(all_party_ids)
-                else:
-                    ret_dict[param] = [PlaceHolder] * len(all_party_ids)
-                    for party in partys:
-                        ret_dict[param][all_party_ids.index(party)] = value
-            else:
-                attr = list(value.keys())[0]
-                if hasattr(self, attr):
-                    ret_dict[param] = self.recursive_construct_role_parameters_v1(value, partys, all_party_ids)
-                else:
-                    ret_dict[param] = [value]
-
-        return ret_dict
-
-    def flattern_role_parameters_v1(self, role_params):
-        ret_dict = {}
-        for param, value in role_params.items():
-            new_value = []
-            if not isinstance(value, dict) or len(value.keys()) == 1:
-                for val in value:
-                    if isinstance(val, PlaceHolder):
-                        new_value.append(getattr(self, param))
-                    else:
-                        new_value.append(val)
-                ret_dict[param] = new_value
-            else:
-                attr = list(value.keys())[0]
-                if hasattr(self, attr):
-                    ret_dict[param] = self.flattern_role_parameters_v1(value)
-                else:
-                    for val in value:
-                        if isinstance(val, PlaceHolder):
-                            new_value.append(getattr(self, param))
-                        else:
-                            new_value.append(val)
-                    ret_dict[param] = new_value
-
-        return ret_dict
-
     def get_role_param_conf(self, roles=None):
         role_param_conf = {}
 
