@@ -81,7 +81,7 @@ def list(ctx, **kwargs):
 
 @job.command("query", short_help="Query Job Command")
 @cli_args.JOBID
-@cli_args.ROLE
+@cli_args.FATEFLOW_SERVICE_NAME
 @cli_args.PARTYID
 @cli_args.COMPONENT_NAME
 @cli_args.STATUS
@@ -111,7 +111,7 @@ def query(ctx, **kwargs):
 
 @job.command("clean", short_help="Clean Job Command")
 @cli_args.JOBID_REQUIRED
-@cli_args.ROLE
+@cli_args.FATEFLOW_SERVICE_NAME
 @cli_args.PARTYID
 @cli_args.COMPONENT_NAME
 @click.pass_context
@@ -212,7 +212,7 @@ def log(ctx, **kwargs):
 
 @job.command("view", short_help="Query Job Data View Command")
 @cli_args.JOBID
-@cli_args.ROLE
+@cli_args.FATEFLOW_SERVICE_NAME
 @cli_args.PARTYID
 @cli_args.COMPONENT_NAME
 @cli_args.STATUS

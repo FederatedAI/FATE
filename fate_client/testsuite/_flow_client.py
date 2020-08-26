@@ -131,7 +131,7 @@ class FLOWClient(object):
         except json.decoder.JSONDecodeError:
             response = {'retcode': 100,
                         'retmsg': "Internal server error. Nothing in response. You may check out the configuration in "
-                                  "'FATE/arch/conf/server_conf.json' and restart fate flow server."}
+                                  "'FATE/conf/service_conf.yaml' and restart fate flow server."}
         return response
 
 

@@ -15,7 +15,7 @@
 #
 import typing
 
-from fate_arch.common import WorkMode, Backend, FederationMode
+from fate_arch.common import WorkMode, Backend, FederatedMode
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 
@@ -33,10 +33,10 @@ def backend_compatibility(work_mode: typing.Union[WorkMode, int] = WorkMode.STAN
             backend = Backend(backend)
         if backend == Backend.EGGROLL:
             if work_mode == WorkMode.CLUSTER:
-                return ComputingEngine.EGGROLL, FederationEngine.EGGROLL, FederationMode.MULTIPLE
+                return ComputingEngine.EGGROLL, FederationEngine.EGGROLL, FederatedMode.MULTIPLE
             else:
-                return ComputingEngine.STANDALONE, FederationEngine.STANDALONE, FederationMode.SINGLE
+                return ComputingEngine.STANDALONE, FederationEngine.STANDALONE, FederatedMode.SINGLE
         if backend == Backend.SPARK:
-            return ComputingEngine.SPARK, FederationEngine.MQ, FederationMode.MULTIPLE
+            return ComputingEngine.SPARK, FederationEngine.MQ, FederatedMode.MULTIPLE
     else:
-        return kwargs["computing_engine"], kwargs["federation_engine"], kwargs["federation_mode"]
+        return kwargs["computing_engine"], kwargs["federation_engine"], kwargs["federated_mode"]

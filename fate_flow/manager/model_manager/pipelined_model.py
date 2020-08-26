@@ -194,8 +194,8 @@ class PipelinedModel(object):
                 stat_logger.exception(e2)
                 raise e1
 
-    @staticmethod
-    def get_proto_buffer_class(buffer_name):
+    @classmethod
+    def get_proto_buffer_class(cls, buffer_name):
         package_path = os.path.join(file_utils.get_project_base_directory(), 'federatedml', 'protobuf', 'generated')
         package_python_path = 'federatedml.protobuf.generated'
         for f in os.listdir(package_path):

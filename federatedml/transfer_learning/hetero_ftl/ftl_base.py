@@ -216,6 +216,8 @@ class FTL(ModelBase):
         if overlap_samples.count() == 0:
             raise ValueError('no intersect samples')
 
+        LOGGER.debug('has {} overlap samples'.format(overlap_samples.count()))
+
         batch_size = self.batch_size
         if self.batch_size == -1:
             batch_size = data_inst.count() + 1  # make sure larger than sample number
