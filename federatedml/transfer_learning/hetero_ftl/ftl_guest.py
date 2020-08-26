@@ -282,7 +282,7 @@ class FTLGuest(FTL):
         # cache data_loader for faster validation
         self.cache_dataloader[self.get_dataset_key(data_inst)] = data_loader
 
-        self.partitions = self.partitions
+        self.partitions = data_inst.partitions
         LOGGER.debug('self partitions is {}'.format(self.partitions))
 
         self.initialize_nn(input_shape=self.x_shape)
