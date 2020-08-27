@@ -38,6 +38,7 @@ def get_features_shape(data_instances):
     else:
         return None
 
+
 def header_alignment(data_instances, pre_header):
     header = data_instances.schema["header"]
     if len((set(header) & set(pre_header))) != len(pre_header):
