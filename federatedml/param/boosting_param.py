@@ -47,7 +47,7 @@ class ObjectiveParam(BaseParam):
              first element of list should be a float-number in [1.0, 2.0) when objective is 'tweedie'
     """
 
-    def __init__(self, objective=None, params=None):
+    def __init__(self, objective="cross_entropy", params=None):
         self.objective = objective
         self.params = params
 
@@ -475,8 +475,8 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
                   the second k trees use host features, and so on
             layered: only support 2 party, when running layered mode, first 'host_depth' layer will use host features,
                      and then next 'guest_depth' will only use guest features
-        tree_num_per_party: every party will alternate build k trees until reach max tree num, this param is valid when work_mode is
-            mix
+        tree_num_per_party: every party will alternate build tree_num_per_party trees until reach max tree num, this
+                   param is valid when work_mode is mix
         guest_depth: guest will build last guest_depth of a decision tree using guest features, is valid when work mode
             is layered
         host depth: host will build first host_depth of a decision tree using host features, is valid when work mode is

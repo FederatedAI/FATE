@@ -31,11 +31,16 @@ class FTLParam(BaseParam):
 
     def __init__(self, alpha=1, tol=0.000001,
                  n_iter_no_change=False, validation_freqs=None, optimizer={'optimizer': 'Adam', 'learning_rate': 0.01},
-                 nn_define={}, epochs=1
-                 , intersect_param=IntersectParam(consts.RSA), config_type='keras', batch_size=-1,
+                 nn_define=None,
+                 epochs=1,
+                 intersect_param=IntersectParam(consts.RSA),
+                 config_type='keras',
+                 batch_size=-1,
                  encrypte_param=EncryptParam(),
                  encrypted_mode_calculator_param=EncryptedModeCalculatorParam(mode="confusion_opt"),
-                 predict_param=PredictParam(), mode='plain', communication_efficient=False,
+                 predict_param=PredictParam(),
+                 mode='plain',
+                 communication_efficient=False,
                  local_round=5,):
 
         """
