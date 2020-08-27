@@ -52,6 +52,7 @@ dataclasses = { version = "^0.7", python = "3.6", optional = true }
 [tool.poetry.scripts]
 flow = "flow_client.flow:flow_cli"
 testsuite = "testsuite.cli:cli"
+pipeline = "pipeline.pipeline_cli:cli"
 
 [build-system]
 requires = ["poetry>=0.12"]

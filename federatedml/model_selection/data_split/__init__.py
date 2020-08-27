@@ -14,18 +14,7 @@
 #  limitations under the License.
 #
 
-from pipeline.component.component_base import Component
-from pipeline.interface import Output
-from pipeline.param.reader_param import ReaderParam
+from federatedml.model_selection.k_fold import KFold
+from federatedml.model_selection.mini_batch import MiniBatch
 
-
-class Reader(Component, ReaderParam):
-    def __init__(self, **kwargs):
-        Component.__init__(self, **kwargs)
-
-        new_kwargs = self.erase_component_base_param(**kwargs)
-
-        ReaderParam.__init__(self, **new_kwargs)
-
-        self.output = Output(self.name, data_type='single', has_model=False)
-        self._module_name = "Reader"
+__all__ = ['MiniBatch', "KFold"]
