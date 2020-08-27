@@ -16,10 +16,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from federatedml.feature.feature_selection.model_adaptor.statistic_adapter import StatisticAdapter
-from federatedml.feature.feature_selection.model_adaptor.binning_adapter import BinningAdapter
-from federatedml.feature.feature_selection.model_adaptor.psi_adapter import PSIAdapter
-from federatedml.feature.feature_selection.model_adaptor import tree_adapter
+from federatedml.feature.feature_selection.model_adapter.statistic_adapter import StatisticAdapter
+from federatedml.feature.feature_selection.model_adapter.binning_adapter import BinningAdapter
+from federatedml.feature.feature_selection.model_adapter.psi_adapter import PSIAdapter
+from federatedml.feature.feature_selection.model_adapter import tree_adapter
 from federatedml.util import consts
 
 

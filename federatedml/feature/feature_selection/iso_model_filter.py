@@ -22,7 +22,7 @@ import numpy as np
 
 from arch.api.utils import log_utils
 from federatedml.feature.feature_selection.filter_base import BaseFilterMethod
-from federatedml.feature.feature_selection.model_adaptor.isometric_model import IsometricModel
+from federatedml.feature.feature_selection.model_adapter.isometric_model import IsometricModel
 from federatedml.framework.hetero.sync import selection_info_sync
 from federatedml.param.feature_selection_param import CommonFilterParam
 from federatedml.protobuf.generated import feature_selection_meta_pb2
