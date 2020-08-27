@@ -127,9 +127,6 @@ class SingleMetricInfo(object):
         return list(values)
 
 
-
-
-
 class IsometricModel(object):
     """
     Use to Store Metric values
