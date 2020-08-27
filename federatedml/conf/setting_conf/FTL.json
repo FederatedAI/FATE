@@ -1,6 +1,6 @@
 {
     "module_path":  "federatedml/transfer_learning/hetero_ftl",
-    "default_runtime_conf": "ftl_param.json",
+    "param_class" : "federatedml/param/ftl_param.py/FTLParam",
     "role":
     {
         "guest":
