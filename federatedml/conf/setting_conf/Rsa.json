@@ -1,6 +1,5 @@
 {
     "module_path":  "federatedml/util",
-    "default_runtime_conf": "rsa_param.json",
     "param_class" : "federatedml/param/rsa_param.py/RsaParam",
     "role":
     {

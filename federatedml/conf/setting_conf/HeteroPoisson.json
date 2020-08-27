@@ -1,6 +1,5 @@
 {
     "module_path":  "federatedml/linear_model/poisson_regression/hetero_poisson_regression",
-    "default_runtime_conf": "poisson_regression_param.json",
     "param_class" : "federatedml/param/poisson_regression_param.py/PoissonParam",
     "role":
     {
