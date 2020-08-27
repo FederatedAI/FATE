@@ -43,7 +43,7 @@ class BaseParameterUtil(object):
         return ret_dict
 
     @staticmethod
-    def _override_parameter(default_runtime_conf_prefix=None, setting_conf_prefix=None, submit_dict=None, module=None,
+    def _override_parameter(setting_conf_prefix=None, submit_dict=None, module=None,
                             module_alias=None, version=1):
 
         _module_setting = ParameterUtil.get_setting_conf(setting_conf_prefix, module, module_alias)
@@ -237,30 +237,13 @@ class BaseParameterUtil(object):
 
         return param_class, param_obj
 
-    @staticmethod
-    def get_default_runtime_conf(default_runtime_conf_prefix, default_runtime_conf_suf, module, module_alias):
-        if not os.path.isfile(os.path.join(default_runtime_conf_prefix, default_runtime_conf_suf)):
-            raise DefaultRuntimeConfNotExistError(component=module_alias, module=module)
-
-        try:
-            fin = open(os.path.join(default_runtime_conf_prefix, default_runtime_conf_suf))
-            default_runtime_conf_buf = json.loads(fin.read())
-        except Exception as e:
-            raise DefaultRuntimeConfNotJsonError(component=module_alias, module=module, other_info=e)
-
-        if default_runtime_conf_buf is None:
-            raise DefaultRuntimeConfNotJsonError(component=module_alias, module=module)
-
-        return default_runtime_conf_buf
-
 
 class ParameterUtil(BaseParameterUtil):
     @staticmethod
-    def override_parameter(default_runtime_conf_prefix=None, setting_conf_prefix=None, submit_dict=None, module=None,
+    def override_parameter(setting_conf_prefix=None, submit_dict=None, module=None,
                            module_alias=None):
 
-        return ParameterUtil()._override_parameter(default_runtime_conf_prefix=default_runtime_conf_prefix,
-                                                   setting_conf_prefix=setting_conf_prefix,
+        return ParameterUtil()._override_parameter(setting_conf_prefix=setting_conf_prefix,
                                                    submit_dict=submit_dict,
                                                    module=module,
                                                    module_alias=module_alias,
