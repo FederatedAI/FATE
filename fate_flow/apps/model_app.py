@@ -24,11 +24,10 @@ from fate_flow.db.db_models import MachineLearningModelMeta as MLModel
 from fate_flow.db.db_models import Tag, DB, ModelTag, ModelOperationLog as OperLog
 from flask import Flask, request, send_file
 
-from fate_flow.manager.model_manager.migrate_model import compare_roles
+from fate_flow.pipelined_model.migrate_model import compare_roles
 from fate_flow.scheduler import DAGScheduler
-from fate_flow.settings import stat_logger, API_VERSION, MODEL_STORE_ADDRESS, TEMP_DIRECTORY
-from fate_flow.manager.model_manager import publish_model, migrate_model
-from fate_flow.manager.model_manager import pipelined_model
+from fate_flow.settings import stat_logger, MODEL_STORE_ADDRESS, TEMP_DIRECTORY
+from fate_flow.pipelined_model import migrate_model, pipelined_model, publish_model
 from fate_flow.utils.api_utils import get_json_result, federated_api, error_response
 from fate_flow.utils import job_utils
 from fate_flow.utils.service_utils import ServiceUtils

@@ -18,8 +18,8 @@ import datetime
 from peewee import Model, CharField, BigIntegerField, TextField, CompositeKey, IntegerField
 from playhouse.pool import PooledMySQLDatabase
 
-from fate_flow.manager.model_manager.pipelined_model import PipelinedModel
-from fate_flow.manager.model_manager.model_storage_base import ModelStorageBase
+from fate_flow.pipelined_model.pipelined_model import PipelinedModel
+from fate_flow.pipelined_model.model_storage_base import ModelStorageBase
 from fate_arch.common import log
 from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64
 
