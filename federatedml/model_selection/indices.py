@@ -24,6 +24,6 @@ def collect_index(data_insts):
     data_sids = data_insts.mapValues(lambda data_inst: None)
     data_size = data_sids.count()  # Record data nums that left
     data_sids_iter = data_sids.collect()
-
+    data_sids_iter = sorted(data_sids_iter, key=lambda x: x[0])
     return data_sids_iter, data_size
 

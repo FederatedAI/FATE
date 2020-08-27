@@ -89,6 +89,32 @@
         "psi_0": {
             "max_bin_num": 20
         },
+        "secureboost_0": {
+            "task_type": "classification",
+            "learning_rate": 0.1,
+            "num_trees": 5,
+            "subsample_feature_rate": 1,
+            "n_iter_no_change": false,
+            "tol": 0.0001,
+            "bin_num": 50,
+            "objective_param": {
+                "objective": "cross_entropy"
+            },
+            "encrypt_param": {
+                "method": "paillier"
+            },
+            "predict_param": {
+                "threshold": 0.5
+            },
+            "cv_param": {
+                "n_splits": 5,
+                "shuffle": false,
+                "random_seed": 103,
+                "need_cv": false
+            },
+            "validation_freqs": 1
+        },
+
         "hetero_feature_selection_0": {
             "select_col_indexes": -1,
             "select_names": [],

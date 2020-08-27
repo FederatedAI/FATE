@@ -141,7 +141,9 @@ class OneVsRest(object):
             else:
                 LOGGER.info("start classifier fit")
                 classifier.fit_binary(data_instances, validate_data=validate_data)
-            summary_dict[label] = classifier.summary()
+            _summary = classifier.summary()
+            _summary['one_vs_rest'] = True
+            summary_dict[label] = _summary
             self.models.append(classifier)
             LOGGER.info("Finish model_{} training!".format(label_index))
         self.classifier.set_summary(summary_dict)

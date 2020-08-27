@@ -14,10 +14,9 @@
 #  limitations under the License.
 #
 import requests
-from fate_arch.common import file_utils
+from fate_arch.common import conf_utils
 
-from fate_flow.settings import CHECK_NODES_IDENTITY, FATE_MANAGER_NODE_CHECK_ENDPOINT, \
-    SERVER_CONF_PATH, SERVERS
+from fate_flow.settings import CHECK_NODES_IDENTITY, FATE_MANAGER_NODE_CHECK_ENDPOINT
 from fate_flow.utils.service_utils import ServiceUtils
 
 
@@ -29,7 +28,7 @@ def nodes_check(src_party_id, src_role, appKey, appSecret, dst_party_id):
             'appKey': appKey,
             'appSecret': appSecret,
             'dstPartyId': int(dst_party_id),
-            'federatedId': file_utils.load_json_conf_real_time(SERVER_CONF_PATH).get(SERVERS).get('fatemanager', {}).get('federatedId')
+            'federatedId': conf_utils.get_base_config("fatemanager", {}).get("federatedId")
         }
         try:
             response = requests.post(url="http://{}:{}{}".format(

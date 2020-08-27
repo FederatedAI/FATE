@@ -69,6 +69,10 @@
         "multi_iso_filter": {
             "conf": "test_hetero_feature_selection_multi_iso_model_conf.json",
             "dsl": "test_hetero_feature_multi_iso_model_selection_job_dsl.json"
+        },
+        "fast_sbt_filter": {
+            "conf": "test_fast_sbt_conf.json",
+            "dsl": "test_fast_sbt_dsl.json"
         }
     }
 }

@@ -24,12 +24,12 @@ from fate_flow.utils.dsl_exception import *
 
 
 class BaseParameterUtil(object):
-    @staticmethod
-    def override_parameter(**kwargs):
+    @classmethod
+    def override_parameter(cls, **kwargs):
         pass
 
-    @staticmethod
-    def change_object_to_dict(obj):
+    @classmethod
+    def change_object_to_dict(cls, obj):
         ret_dict = {}
 
         variable_dict = obj.__dict__
@@ -147,8 +147,8 @@ class BaseParameterUtil(object):
 
         return runtime_role_parameters
 
-    @staticmethod
-    def merge_parameters(runtime_dict, role_parameters, param_obj, idx=-1, role=None, role_num=0, component=None,
+    @classmethod
+    def merge_parameters(cls, runtime_dict, role_parameters, param_obj, idx=-1, role=None, role_num=0, component=None,
                          module=None, version=1):
         param_variables = param_obj.__dict__
         for key, val_list in role_parameters.items():
@@ -187,8 +187,8 @@ class BaseParameterUtil(object):
 
         return runtime_dict
 
-    @staticmethod
-    def get_param_class_name(setting_conf_prefix, module):
+    @classmethod
+    def get_param_class_name(cls, setting_conf_prefix, module):
         _module_setting_path = os.path.join(setting_conf_prefix, module + ".json")
         _module_setting = None
         with open(_module_setting_path, "r") as fin:
@@ -199,8 +199,8 @@ class BaseParameterUtil(object):
 
         return param_class
 
-    @staticmethod
-    def get_setting_conf(setting_conf_prefix, module, module_alias):
+    @classmethod
+    def get_setting_conf(cls, setting_conf_prefix, module, module_alias):
         _module_setting_path = os.path.join(setting_conf_prefix, module + ".json")
         if not os.path.isfile(_module_setting_path):
             raise ModuleNotExistError(component=module_alias, module=module)
@@ -218,8 +218,8 @@ class BaseParameterUtil(object):
 
         return _module_setting
 
-    @staticmethod
-    def get_param_object(param_class_path, module, module_alias):
+    @classmethod
+    def get_param_object(cls, param_class_path, module, module_alias):
         param_class = param_class_path.split("/", -1)[-1]
 
         param_module_path = ".".join(param_class_path.split("/", -1)[:-1]).replace(".py", "")
@@ -237,7 +237,6 @@ class BaseParameterUtil(object):
 
         return param_class, param_obj
 
-
 class ParameterUtil(BaseParameterUtil):
     @staticmethod
     def override_parameter(setting_conf_prefix=None, submit_dict=None, module=None,
@@ -249,8 +248,8 @@ class ParameterUtil(BaseParameterUtil):
                                                    module_alias=module_alias,
                                                    version=1)
 
-    @staticmethod
-    def get_args_input(submit_dict, module="args"):
+    @classmethod
+    def get_args_input(cls, submit_dict, module="args"):
         if "role_parameters" not in submit_dict:
             return {}
 
@@ -294,8 +293,8 @@ class ParameterUtil(BaseParameterUtil):
 
 
 class ParameterUtilV2(BaseParameterUtil):
-    @staticmethod
-    def override_parameter(setting_conf_prefix=None, submit_dict=None, module=None,
+    @classmethod
+    def override_parameter(cls, setting_conf_prefix=None, submit_dict=None, module=None,
                            module_alias=None):
         return ParameterUtil._override_parameter(setting_conf_prefix=setting_conf_prefix,
                                                  submit_dict=submit_dict,
@@ -303,8 +302,8 @@ class ParameterUtilV2(BaseParameterUtil):
                                                  module_alias=module_alias,
                                                  version=2)
 
-    @staticmethod
-    def get_input_parameters(submit_dict, components=None):
+    @classmethod
+    def get_input_parameters(cls, submit_dict, components=None):
         if "role_parameters" not in submit_dict or components is None:
             return {}
 

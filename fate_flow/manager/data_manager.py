@@ -43,7 +43,7 @@ def delete_tables_by_table_infos(output_data_table_infos):
         table_info = {'table_name': table_name, 'namespace': namespace}
         if table_name and namespace and table_info not in data:
             with storage.Session.build(name=table_name, namespace=namespace) as storage_session:
-                table = storage_session.get_table(name=table_name, namespace=namespace)
+                table = storage_session.get_table()
                 try:
                     table.destroy()
                     table.close()

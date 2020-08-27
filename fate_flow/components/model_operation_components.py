@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 from fate_arch.common import log
-from fate_flow.entity.constant import ModelStorage
+from fate_flow.entity.types import ModelStorage
 from fate_flow.manager.model_manager import redis_model_storage, mysql_model_storage
 from fate_flow.components.component_base import ComponentBase
 
