@@ -16,7 +16,7 @@
 
 import argparse
 
-# from fate_test.fate_test.utils import load_conf
+from fate_test.fate_test.utils import load_conf
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
 from pipeline.component.hetero_lr import HeteroLR
@@ -28,7 +28,7 @@ from pipeline.interface.data import Data
 
 def main(config="../config.yaml", param="./lr_config.yaml", namespace=""):
     # obtain config
-    """
+
     if isinstance(config, str):
         config = load_conf(config)
     parties = config.parties
@@ -47,8 +47,7 @@ def main(config="../config.yaml", param="./lr_config.yaml", namespace=""):
     backend = 0
     work_mode = 1
     param = {"penalty": "L2", "max_iter": 5}
-
-    #@TODO: load param config
+    """
 
     guest_train_data = {"name": "vehicle_scale_hetero_guest", "namespace": f"experiment{namespace}"}
     host_train_data = {"name": "vehicle_scale_hetero_host", "namespace": f"experiment{namespace}"}

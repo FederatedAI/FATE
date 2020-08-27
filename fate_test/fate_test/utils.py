@@ -56,6 +56,7 @@ def match_metrics(eval, **results):
     table.field_names = ["Model Name"] + common_metrics
     for model_name, result in filtered_results.items():
         table.add_row([model_name] + results)
+    print(table)
 
 
 def load_conf(path: typing.Union[str, Path]):
