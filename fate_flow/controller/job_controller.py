@@ -195,6 +195,8 @@ class JobController(object):
         pipeline.model_version = model_version
         tracker = Tracker(job_id=job_id, role=role, party_id=party_id, model_id=model_id, model_version=model_version)
         tracker.save_pipelined_model(pipelined_buffer_object=pipeline)
+        if role != 'local':
+            tracker.save_machine_learning_model_info()
         schedule_logger(job_id).info('job {} on {} {} save pipeline successfully'.format(job_id, role, party_id))
 
     @classmethod

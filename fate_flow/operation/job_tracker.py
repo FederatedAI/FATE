@@ -19,7 +19,8 @@ from typing import List
 
 from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64
 from fate_arch.common.log import schedule_logger
-from fate_flow.db.db_models import DB, TrackingMetric, TrackingOutputDataInfo, ComponentSummary
+from fate_flow.db.db_models import (DB, Job, TrackingMetric, TrackingOutputDataInfo,
+                                    ComponentSummary, MachineLearningModelInfo as MLModel)
 from fate_flow.entity.constant import Backend
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -423,6 +424,43 @@ class Tracker(object):
         schedule_logger(self.job_id).info('clean task {} on {} {} done'.format(self.task_id,
                                                                                self.role,
                                                                                self.party_id))
+
+    def save_machine_learning_model_info(self):
+        try:
+            record = MLModel.get_or_none(MLModel.f_model_version == self.job_id)
+            if not record:
+                job = Job.get_or_none(Job.f_job_id == self.job_id)
+                if job:
+                    job_data = job.to_json()
+                    MLModel.create(
+                        f_role=self.role,
+                        f_party_id=self.party_id,
+                        f_model_id=self.model_id,
+                        f_model_version=self.model_version,
+                        f_create_time=current_timestamp(),
+                        f_initiator_role=job_data.get('f_initiator_role'),
+                        f_initiator_party_id=job_data.get('f_initiator_party_id'),
+                        f_runtime_conf=job_data.get('f_runtime_conf'),
+                        f_work_mode=job_data.get('f_work_mode'),
+                        f_dsl=job_data.get('f_dsl'),
+                        f_train_runtime_conf=job_data.get('f_train_runtime_conf'),
+                    )
+
+                    schedule_logger(self.job_id).info(
+                        'save {} model info done. model id: {}, model version: {}.'.format(self.job_id,
+                                                                                           self.model_id,
+                                                                                           self.model_version))
+                else:
+                    schedule_logger(self.job_id).info(
+                        'save {} model info failed, no job found in db. '
+                        'model id: {}, model version: {}.'.format(self.job_id,
+                                                                  self.model_id,
+                                                                  self.model_version))
+
+            else:
+                schedule_logger(self.job_id).info('model {} info has already existed in database.'.format(self.job_id))
+        except Exception as e:
+            schedule_logger(self.job_id).exception(e)
 
     @classmethod
     def get_dynamic_db_model(cls, base, job_id):
