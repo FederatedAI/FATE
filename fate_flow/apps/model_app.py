@@ -21,7 +21,7 @@ import peewee
 from copy import deepcopy
 
 from fate_flow.db.db_models import MachineLearningModelInfo as MLModel
-from fate_flow.db.db_models import Tag, DB, ModelTag, ModelOperationLog as OperLog
+from fate_flow.db.db_models import Tag, DB, Job, ModelTag, ModelOperationLog as OperLog
 from flask import Flask, request, send_file
 
 from fate_flow.manager.model_manager.migrate_model import compare_roles
@@ -35,6 +35,7 @@ from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils.detect_utils import check_config
 from fate_flow.utils.model_utils import gen_party_model_id
 from fate_flow.entity.constant import ModelOperation, TagOperation
+from fate_arch.common import file_utils
 
 manager = Flask(__name__)
 
@@ -48,6 +49,23 @@ def internal_server_error(e):
 @manager.route('/load', methods=['POST'])
 def load_model():
     request_config = request.json
+    if request_config.get('model_version', None):
+        model = MLModel.get_or_none(
+            MLModel.f_model_version == request_config.get("model_version"),
+            MLModel.f_role == 'guest'
+        )
+        if model:
+            model_info = model.to_json()
+            request_config['initiator'] = {}
+            request_config['initiator']['party_id'] = model_info.get('f_initiator_party_id')
+            request_config['initiator']['role'] = model_info.get('f_initiator_role')
+            request_config['job_parameters'] = model_info.get('f_runtime_conf').get('job_parameters')
+            request_config['role'] = model_info.get('f_runtime_conf').get('role')
+            request_config.pop('model_version')
+        else:
+            return get_json_result(retcode=101,
+                                   retmsg="model {} can not be found in database. "
+                                          "Please check if the model version is valid.".format(request_config.get('model_version')))
     _job_id = generate_job_id()
     initiator_party_id = request_config['initiator']['party_id']
     initiator_role = request_config['initiator']['role']
@@ -183,9 +201,22 @@ def do_load_model():
                 if model:
                     count = model.f_loaded_times
                     model.f_loaded_times = count + 1
-                    model.save(force_insert=True)
+                    model.save()
     except Exception as modify_err:
         stat_logger.exception(modify_err)
+
+    try:
+        party_model_id = gen_party_model_id(role=request_data.get("initiator").get("role"),
+                                            party_id=request_data.get("initiator").get("party_id"),
+                                            model_id=request_data.get("job_parameters").get("model_id"))
+        src_model_path = os.path.join(file_utils.get_project_base_directory(), 'model_local_cache', party_model_id,
+                                      request_data.get("job_parameters").get("model_version"))
+        dst_model_path = os.path.join(file_utils.get_project_base_directory(), 'loaded_model_backup',
+                                      party_model_id, request_data.get("job_parameters").get("model_version"))
+        if not os.path.exists(dst_model_path):
+            shutil.copytree(src=src_model_path, dst=dst_model_path)
+    except Exception as copy_err:
+        stat_logger.exception(copy_err)
     operation_record(request_data, "load", "success" if not retcode else "failed")
     return get_json_result(retcode=retcode, retmsg=retmsg)
 
@@ -193,6 +224,23 @@ def do_load_model():
 @manager.route('/bind', methods=['POST'])
 def bind_model_service():
     request_config = request.json
+    if request_config.get('model_version', None):
+        model = MLModel.get_or_none(
+            MLModel.f_job_id == request_config.get("model_version"),
+            MLModel.f_role == 'guest'
+        )
+        if model:
+            model_info = model.to_json()
+            request_config['initiator'] = {}
+            request_config['initiator']['party_id'] = model_info.get('f_initiator_party_id')
+            request_config['initiator']['role'] = model_info.get('f_initiator_role')
+            request_config['job_parameters'] = model_info.get('f_runtime_conf').get('job_parameters')
+            request_config['role'] = model_info.get('f_runtime_conf').get('role')
+            request_config.pop('model_version')
+        else:
+            return get_json_result(retcode=101,
+                                   retmsg="model {} can not be found in database. "
+                                          "Please check if the model version is valid.".format(request_config.get('model_version')))
     if not request_config.get('servings'):
         # get my party all servings
         request_config['servings'] = ServiceUtils.get("servings", [])
@@ -224,9 +272,9 @@ def operate_model(model_operation):
             try:
                 file = request.files.get('file')
                 file_path = os.path.join(TEMP_DIRECTORY, file.filename)
-                if not os.path.exists(file_path):
-                    raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
-                                    'please check the path: {}'.format(file_path))
+                # if not os.path.exists(file_path):
+                #     raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
+                #                     'please check the path: {}'.format(file_path))
                 try:
                     os.makedirs(os.path.dirname(file_path), exist_ok=True)
                     file.save(file_path)

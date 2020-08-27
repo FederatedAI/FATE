@@ -34,7 +34,9 @@ def model(ctx):
 
 
 @model.command("load", short_help="Load Model Command")
-@cli_args.CONF_PATH
+@cli_args.MODEL_VERSION
+@click.option("-c", "--conf-path", type=click.Path(exists=True),
+              help="Configuration file path.")
 @click.pass_context
 def load(ctx, **kwargs):
     """
@@ -45,12 +47,32 @@ def load(ctx, **kwargs):
     \b
     - USAGE:
         flow model load -c fate_flow/examples/publish_load_model.json
+        flow model load -m $MODEL_VERSION
     """
-    config_data, dsl_data = preprocess(**kwargs)
-    access_server('post', ctx, 'model/load', config_data)
+    if not kwargs.get("conf_path") and not kwargs.get("model_version"):
+        prettify(
+            {
+                "retcode": 100,
+                "retmsg": "Load model failed. No arguments received, "
+                          "please provide one of arguments from model version and conf path."
+            }
+        )
+    else:
+        if kwargs.get("conf_path") and kwargs.get("model_version"):
+            prettify(
+                {
+                    "retcode": 100,
+                    "retmsg": "Load model failed. Please do not provide model version and "
+                              "conf path at the same time."
+                }
+            )
+        else:
+            config_data, dsl_data = preprocess(**kwargs)
+            access_server('post', ctx, 'model/load', config_data)
 
 
 @model.command("bind", short_help="Bind Model Command")
+@cli_args.MODEL_VERSION
 @cli_args.CONF_PATH
 @click.pass_context
 def bind(ctx, **kwargs):
@@ -62,6 +84,7 @@ def bind(ctx, **kwargs):
     \b
     - USAGE:
         flow model bind -c fate_flow/examples/bind_model_service.json
+        flow model bind -c fate_flow/examples/bind_model_service.json -m $MODEL_VERSION
     """
     config_data, dsl_data = preprocess(**kwargs)
     access_server('post', ctx, 'model/bind', config_data)
