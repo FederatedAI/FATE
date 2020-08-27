@@ -226,7 +226,7 @@ class PSI(ModelBase):
         header1 = expect_table.schema['header']
         header2 = actual_table.schema['header']
 
-        assert header1 == header2, 'table header must be the same while computing psi values'
+        assert set(header1) == set(header2), 'table header must be the same while computing psi values'
 
         self.all_feature_list = header1
 
