@@ -269,6 +269,7 @@ class FTLGuest(FTL):
 
     def fit(self, data_inst, validate_data=None):
 
+        LOGGER.debug('in training, partitions is {}'.format(data_inst.partitions))
         LOGGER.info('start to fit a ftl model, '
                     'run mode is {},'
                     'communication efficient mode is {}'.format(self.mode, self.comm_eff))
@@ -281,6 +282,7 @@ class FTLGuest(FTL):
         self.cache_dataloader[self.get_dataset_key(data_inst)] = data_loader
 
         self.partitions = data_inst.partitions
+        LOGGER.debug('self partitions is {}'.format(self.partitions))
 
         self.initialize_nn(input_shape=self.x_shape)
         self.feat_dim = self.nn._model.output_shape[1]
