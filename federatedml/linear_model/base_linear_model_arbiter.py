@@ -142,8 +142,8 @@ class HeteroBaseArbiter(BaseLinearModel):
                    "best_iteration": self.best_iteration}
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
             self.load_model(self.validation_strategy.cur_best_model)
-            if self.loss_history is not None and len(self.loss_history) > 0:
-                summary["best_iter_loss"] = self.loss_history[self.best_iteration]
+        if self.loss_history is not None and len(self.loss_history) > 0:
+            summary["best_iter_loss"] = self.loss_history[self.best_iteration]
 
         self.set_summary(summary)
         LOGGER.debug("finish running linear model arbiter")

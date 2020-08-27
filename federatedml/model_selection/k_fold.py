@@ -149,8 +149,9 @@ class KFold(BaseCrossValidator):
                 self.evaluate(pred_res, fold_name, model)
             LOGGER.debug("Finish fold: {}".format(fold_num))
 
-            summary_res[f"model_{fold_num}"] = model.summary()
+            summary_res[f"fold_{fold_num}"] = model.summary()
             fold_num += 1
+        summary_res['fold_num'] = fold_num
         LOGGER.debug("Finish all fold running")
         original_model.set_summary(summary_res)
         return
