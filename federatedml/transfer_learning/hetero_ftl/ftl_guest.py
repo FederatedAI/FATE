@@ -139,8 +139,7 @@ class FTLGuest(FTL):
 
         rand_0 = self.rng_generator.generate_random_number(encrypted_const.shape)
         encrypted_const = encrypted_const + rand_0
-        rand_1 = PaillierTensor(ori_data=self.rng_generator.generate_random_number(grad_a_overlap.shape),
-                                partitions=self.partitions)
+        rand_1 = PaillierTensor(ori_data=self.rng_generator.generate_random_number(grad_a_overlap.shape), partitions=self.partitions)
         grad_a_overlap = grad_a_overlap + rand_1
 
         self.transfer_variable.guest_side_const.remote(encrypted_const, suffix=(epoch_idx,

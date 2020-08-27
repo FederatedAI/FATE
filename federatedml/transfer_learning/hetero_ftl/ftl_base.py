@@ -60,7 +60,7 @@ class FTL(ModelBase):
         self.mode = 'plain'
         self.encrypt_calculators = []
         self.encrypter = None
-        self.partitions = 10
+        self.partitions = 16
         self.batch_size = None
         self.epochs = None
         self.store_header = None  # header of input data table

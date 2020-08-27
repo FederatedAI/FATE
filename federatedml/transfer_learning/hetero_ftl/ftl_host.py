@@ -100,8 +100,7 @@ class FTLHost(FTL):
 
     def decrypt_inter_result(self, loss_grad_b, epoch_idx, local_round=-1):
 
-        rand_0 = PaillierTensor(ori_data=self.rng_generator.generate_random_number(loss_grad_b.shape),
-                                partitions=self.partitions)
+        rand_0 = PaillierTensor(ori_data=self.rng_generator.generate_random_number(loss_grad_b.shape), partitions=self.partitions)
         grad_a_overlap = loss_grad_b + rand_0
         self.transfer_variable.host_side_gradients.remote(grad_a_overlap.get_obj(),
                                                           suffix=(epoch_idx, local_round, 'host_de_send'))
