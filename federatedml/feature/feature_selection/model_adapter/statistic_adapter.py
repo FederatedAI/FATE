@@ -16,8 +16,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from federatedml.feature.feature_selection.model_adaptor import isometric_model
-from federatedml.feature.feature_selection.model_adaptor.adapter_base import BaseAdapter
+from federatedml.feature.feature_selection.model_adapter import isometric_model
+from federatedml.feature.feature_selection.model_adapter.adapter_base import BaseAdapter
 
 
 class StatisticAdapter(BaseAdapter):

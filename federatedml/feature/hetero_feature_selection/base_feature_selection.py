@@ -22,7 +22,7 @@ from google.protobuf import json_format
 
 from arch.api.utils import log_utils
 from federatedml.feature.feature_selection import filter_factory
-from federatedml.feature.feature_selection.model_adaptor.adapter_factory import adapter_factory
+from federatedml.feature.feature_selection.model_adapter.adapter_factory import adapter_factory
 from federatedml.feature.feature_selection.selection_properties import SelectionProperties, CompletedSelectionResults
 from federatedml.model_base import ModelBase
 from federatedml.param.feature_selection_param import FeatureSelectionParam
