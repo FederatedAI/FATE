@@ -1,0 +1,30 @@
+{
+    "data": [
+        {
+            "file": "../data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "../data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "binary": {
+        "local": {
+            "script": "../match/lr-sklearn.py",
+            "conf": "../match/lr_config.yaml"
+        },
+        "pipeline": {
+            "script": "../match/pipeline-lr.py",
+            "conf": "../match/lr_config.yaml"
+        }
+    }
+}

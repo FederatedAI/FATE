@@ -1,0 +1,3 @@
+data: "examples/data/breast_all.csv"
+idx: "id"
+label_name: "y"
