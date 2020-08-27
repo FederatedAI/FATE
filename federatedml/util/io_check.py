@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 from arch.api.utils import log_utils
+from fate_arch.computing import is_table
 
 LOGGER = log_utils.getLogger()
 
@@ -25,13 +26,13 @@ def assert_io_num_rows_equal(func):
         all_args.extend(args)
         all_args.extend(kwargs.values())
         for arg in all_args:
-            if type(arg).__name__ in ["DTable", "RDDTable"]:
+            if is_table(arg):
                 input_count = arg.count()
                 break
 
         result = func(*args, **kwargs)
 
-        if input_count is not None and type(result).__name__ in ["DTable", "RDDTable"]:
+        if input_count is not None and is_table(result):
             output_count = result.count()
             LOGGER.debug(f"num row of input: {input_count} -> num row of output: {output_count}")
             if input_count != output_count:
