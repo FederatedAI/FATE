@@ -21,20 +21,19 @@ import peewee
 from copy import deepcopy
 
 from fate_flow.db.db_models import MachineLearningModelInfo as MLModel
-from fate_flow.db.db_models import Tag, DB, Job, ModelTag, ModelOperationLog as OperLog
+from fate_flow.db.db_models import Tag, DB, ModelTag, ModelOperationLog as OperLog
 from flask import Flask, request, send_file
 
-from fate_flow.manager.model_manager.migrate_model import compare_roles
-from fate_flow.scheduler.dag_scheduler import DAGScheduler
-from fate_flow.settings import stat_logger, API_VERSION, MODEL_STORE_ADDRESS, TEMP_DIRECTORY
-from fate_flow.manager.model_manager import publish_model, migrate_model
-from fate_flow.manager.model_manager import pipelined_model
+from fate_flow.pipelined_model.migrate_model import compare_roles
+from fate_flow.scheduler import DAGScheduler
+from fate_flow.settings import stat_logger, MODEL_STORE_ADDRESS, TEMP_DIRECTORY
+from fate_flow.pipelined_model import migrate_model, pipelined_model, publish_model
 from fate_flow.utils.api_utils import get_json_result, federated_api, error_response
-from fate_flow.utils.job_utils import generate_job_id, runtime_conf_basic
+from fate_flow.utils import job_utils
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils.detect_utils import check_config
 from fate_flow.utils.model_utils import gen_party_model_id
-from fate_flow.entity.constant import ModelOperation, TagOperation
+from fate_flow.entity.types import ModelOperation, TagOperation
 from fate_arch.common import file_utils
 
 manager = Flask(__name__)
@@ -66,7 +65,7 @@ def load_model():
             return get_json_result(retcode=101,
                                    retmsg="model {} can not be found in database. "
                                           "Please check if the model version is valid.".format(request_config.get('model_version')))
-    _job_id = generate_job_id()
+    _job_id = job_utils.generate_job_id()
     initiator_party_id = request_config['initiator']['party_id']
     initiator_role = request_config['initiator']['role']
     publish_model.generate_publish_model_info(request_config)
@@ -83,7 +82,7 @@ def load_model():
             try:
                 response = federated_api(job_id=_job_id,
                                          method='POST',
-                                         endpoint='/{}/model/load/do'.format(API_VERSION),
+                                         endpoint='/model/load/do',
                                          src_party_id=initiator_party_id,
                                          dest_party_id=_party_id,
                                          src_role = initiator_role,
@@ -110,7 +109,7 @@ def load_model():
 @manager.route('/migrate', methods=['POST'])
 def migrate_model_process():
     request_config = request.json
-    _job_id = generate_job_id()
+    _job_id = job_utils.generate_job_id()
     initiator_party_id = request_config['migrate_initiator']['party_id']
     initiator_role = request_config['migrate_initiator']['role']
     request_config["unify_model_version"] = _job_id
@@ -157,7 +156,7 @@ def migrate_model_process():
             try:
                 response = federated_api(job_id=_job_id,
                                          method='POST',
-                                         endpoint='/{}/model/migrate/do'.format(API_VERSION),
+                                         endpoint='/model/migrate/do',
                                          src_party_id=initiator_party_id,
                                          dest_party_id=party_id,
                                          src_role=initiator_role,
@@ -261,7 +260,7 @@ def transfer_model():
 @manager.route('/<model_operation>', methods=['post', 'get'])
 def operate_model(model_operation):
     request_config = request.json or request.form.to_dict()
-    job_id = generate_job_id()
+    job_id = job_utils.generate_job_id()
     if model_operation not in [ModelOperation.STORE, ModelOperation.RESTORE, ModelOperation.EXPORT, ModelOperation.IMPORT]:
         raise Exception('Can not support this operating now: {}'.format(model_operation))
     required_arguments = ["model_id", "model_version", "role", "party_id"]
@@ -461,7 +460,7 @@ def operate_tag(tag_operation):
 
 
 def gen_model_operation_job_config(config_data: dict, model_operation: ModelOperation):
-    job_runtime_conf = runtime_conf_basic(if_local=True)
+    job_runtime_conf = job_utils.runtime_conf_basic(if_local=True)
     initiator_role = "local"
     job_dsl = {
         "components": {}

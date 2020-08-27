@@ -16,7 +16,6 @@
 import datetime
 import functools
 import errno
-import json
 import operator
 import os
 import subprocess
@@ -26,21 +25,18 @@ import typing
 import uuid
 
 import psutil
-from fate_flow.entity.constant import JobStatus
+from fate_flow.entity.types import JobStatus
 
 from fate_arch.common import file_utils
 from fate_arch.common.base_utils import json_loads, json_dumps, fate_uuid, current_timestamp
 from fate_arch.common.log import schedule_logger
-from fate_flow.scheduler.dsl_parser import DSLParser, DSLParserV2
 from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE
 from fate_flow.utils import detect_utils
-from fate_flow.utils import api_utils
 from fate_flow.utils import session_utils
-from flask import request, redirect, url_for
-from fate_flow.operation.job_saver import JobSaver
-from fate_flow.entity.constant import TaskStatus
+from fate_flow.operation import JobSaver
+from fate_flow.entity.types import TaskStatus
 
 
 class IdCounter(object):
@@ -173,50 +169,6 @@ def get_job_conf(job_id):
     return conf_dict
 
 
-def get_job_dsl_parser_by_job_id(job_id):
-    with DB.connection_context():
-        jobs = Job.select(Job.f_dsl, Job.f_runtime_conf, Job.f_train_runtime_conf).where(Job.f_job_id == job_id)
-        if jobs:
-            job = jobs[0]
-            job_dsl_parser = get_job_dsl_parser(dsl=job.f_dsl, runtime_conf=job.f_runtime_conf,
-                                                train_runtime_conf=job.f_train_runtime_conf)
-            return job_dsl_parser
-        else:
-            return None
-
-
-def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, train_runtime_conf=None):
-    # dsl_parser = DSLParser()
-    parser_version = str(runtime_conf.get('job_parameters', {}).get('dsl_version', '1'))
-    dsl_parser = get_dsl_parser_by_version(parser_version)
-    default_runtime_conf_path = os.path.join(file_utils.get_project_base_directory(),
-                                             *['federatedml', 'conf', 'default_runtime_conf'])
-    setting_conf_path = os.path.join(file_utils.get_project_base_directory(), *['federatedml', 'conf', 'setting_conf'])
-    job_type = runtime_conf.get('job_parameters', {}).get('job_type', 'train')
-    dsl_parser.run(dsl=dsl,
-                   runtime_conf=runtime_conf,
-                   pipeline_dsl=pipeline_dsl,
-                   pipeline_runtime_conf=train_runtime_conf,
-                   default_runtime_conf_prefix=default_runtime_conf_path,
-                   setting_conf_prefix=setting_conf_path,
-                   mode=job_type)
-    return dsl_parser
-
-
-def get_parser_version_mapping():
-    return {
-        "1": DSLParser(),
-        "2": DSLParserV2()
-    }
-
-
-def get_dsl_parser_by_version(version: str = "1"):
-    mapping = get_parser_version_mapping()
-    if version not in mapping:
-        raise Exception("{} version of dsl parser is not currently supported.".format(version))
-    return mapping[version]
-
-
 def get_job_configuration(job_id, role, party_id, tasks=None):
     with DB.connection_context():
         if tasks:
@@ -238,19 +190,12 @@ def get_job_configuration(job_id, role, party_id, tasks=None):
             return {}, {}, {}
 
 
-def query_job(**kwargs):
-    with DB.connection_context():
-        filters = []
-        for f_n, f_v in kwargs.items():
-            attr_name = 'f_%s' % f_n
-            if hasattr(Job, attr_name):
-                filters.append(operator.attrgetter('f_%s' % f_n)(Job) == f_v)
-        if filters:
-            jobs = Job.select().where(*filters)
-            return [job for job in jobs]
-        else:
-            # not allow query all job
-            return []
+def job_virtual_component_name():
+    return "pipeline"
+
+
+def job_virtual_component_module_name():
+    return "Pipeline"
 
 
 def list_job(limit):
@@ -271,20 +216,6 @@ def show_job_queue():
     pass
 
 
-def query_task(**kwargs):
-    with DB.connection_context():
-        filters = []
-        for f_n, f_v in kwargs.items():
-            attr_name = 'f_%s' % f_n
-            if hasattr(Task, attr_name):
-                filters.append(operator.attrgetter('f_%s' % f_n)(Task) == f_v)
-        if filters:
-            tasks = Task.select().where(*filters)
-        else:
-            tasks = Task.select()
-        return [task for task in tasks]
-
-
 def list_task(limit):
     with DB.connection_context():
         if limit > 0:
@@ -292,30 +223,6 @@ def list_task(limit):
         else:
             tasks = Task.select().order_by(Task.f_create_time.desc())
         return [task for task in tasks]
-
-
-def success_task_count(job_id):
-    count = 0
-    tasks = query_task(job_id=job_id)
-    job_component_status = {}
-    for task in tasks:
-        job_component_status[task.f_component_name] = job_component_status.get(task.f_component_name, set())
-        job_component_status[task.f_component_name].add(task.f_status)
-    for component_name, role_status in job_component_status.items():
-        if len(role_status) == 1 and JobStatus.COMPLETE in role_status:
-            count += 1
-    return count
-
-
-def update_job_progress(job_id, dag, current_task_id):
-    role, party_id = query_job_info(job_id)
-    component_count = len(dag.get_dependency(role=role, party_id=int(party_id))['component_list'])
-    success_count = success_task_count(job_id=job_id)
-    job = Job()
-    job.f_progress = float(success_count) / component_count * 100
-    job.f_update_time = current_timestamp()
-    job.f_current_tasks = json_dumps([current_task_id])
-    return job
 
 
 def gen_status_id():
@@ -352,9 +259,8 @@ def check_process_by_keyword(keywords):
     return ret == 0
 
 
-def run_subprocess(config_dir, process_cmd, log_dir=None):
-    stat_logger.info('Starting process command: {}'.format(process_cmd))
-    stat_logger.info(' '.join(process_cmd))
+def run_subprocess(job_id, config_dir, process_cmd, log_dir=None):
+    schedule_logger(job_id=job_id).info('start process command: {}'.format(' '.join(process_cmd)))
 
     os.makedirs(config_dir, exist_ok=True)
     if log_dir:
@@ -377,6 +283,7 @@ def run_subprocess(config_dir, process_cmd, log_dir=None):
         f.truncate()
         f.write(str(p.pid) + "\n")
         f.flush()
+    schedule_logger(job_id=job_id).info('start process command: {} successfully, pid is {}'.format(' '.join(process_cmd), p.pid))
     return p
 
 
@@ -465,7 +372,7 @@ def kill_task_executor_process(task: Task, only_child=False):
 
 def start_clean_queue():
     schedule_logger().info('get clean queue command')
-    jobs = JobSaver.query_job(is_initiator=1, status=JobStatus.WAITING)
+    jobs = JobSaver.query_job(is_initiator=True, status=JobStatus.WAITING)
     if jobs:
         for job in jobs:
             schedule_logger(job.f_job_id).info(
@@ -534,28 +441,6 @@ def gen_all_party_key(all_party):
     return all_party_key
 
 
-# TODO: support task executor routing
-def job_server_routing(routing_type=0):
-    def _out_wrapper(func):
-        @functools.wraps(func)
-        def _wrapper(*args, **kwargs):
-            job_server = set()
-            jobs = query_job(job_id=request.json.get('job_id', None))
-            for job in jobs:
-                if job.f_run_ip:
-                    job_server.add(job.f_run_ip)
-            if len(job_server) == 1:
-                execute_host = job_server.pop()
-                if execute_host != RuntimeConfig.JOB_SERVER_HOST:
-                    if routing_type == 0:
-                        return api_utils.request_execute_server(request=request, execute_host=execute_host)
-                    else:
-                        return redirect('http://{}{}'.format(execute_host, url_for(request.endpoint)), code=307)
-            return func(*args, **kwargs)
-        return _wrapper
-    return _out_wrapper
-
-
 def get_timeout(job_id, timeout, runtime_conf, dsl):
     try:
         if timeout > 0:
@@ -598,23 +483,13 @@ def get_task_info(job_id, role, party_id, component_name):
     return task_info
 
 
-def query_job_info(job_id):
-    jobs = query_job(job_id=job_id, is_initiator=1)
-    party_id = None
-    role = None
-    if jobs:
-        job = jobs[0]
-        role = job.f_role
-        party_id = job.f_party_id
-    return role, party_id
-
-
 def cleaning(signum, frame):
     sys.exit(0)
 
 
 def federation_cleanup(job, task):
-    from fate_flow.entity.constant import Backend, StoreEngine
+    from fate_arch.common import Backend
+    from fate_arch.storage import StorageEngine
     from fate_arch.common import Party
 
     runtime_conf = json_loads(job.f_runtime_conf)

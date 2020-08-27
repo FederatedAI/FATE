@@ -17,6 +17,7 @@
 #  limitations under the License.
 
 import functools
+import copy
 
 from arch.api.utils import log_utils
 from federatedml.framework.homo.procedure import aggregator
@@ -87,6 +88,7 @@ class HomoLRHost(HomoLRBase):
         LOGGER.debug("Current data count: {}".format(total_data_num))
 
         model_weights = self.model_weights
+        self.prev_round_weights = copy.deepcopy(model_weights)
         degree = 0
         while self.n_iter_ < self.max_iter + 1:
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
@@ -100,7 +102,7 @@ class HomoLRHost(HomoLRBase):
                 #     weight.unboxed))
                 self.model_weights = LogisticRegressionWeights(weight.unboxed, self.fit_intercept)
                 if not self.use_encrypt:
-                    loss = self._compute_loss(data_instances)
+                    loss = self._compute_loss(data_instances, self.prev_round_weights)
                     self.aggregator.send_loss(loss, degree=degree, suffix=(self.n_iter_,))
                     LOGGER.info("n_iters: {}, loss: {}".format(self.n_iter_, loss))
                 degree = 0
@@ -121,7 +123,15 @@ class HomoLRHost(HomoLRBase):
                                       fit_intercept=self.fit_intercept)
                 grad = batch_data.mapPartitions(f).reduce(fate_operator.reduce_add)
                 grad /= n
-                model_weights = self.optimizer.update_model(model_weights, grad, has_applied=False)
+                if self.use_proximal: # use additional proximal term 
+                    model_weights = self.optimizer.update_model(model_weights, 
+                                                                grad = grad, 
+                                                                has_applied = False,                                                                
+                                                                prev_round_weights = self.prev_round_weights)
+                else:
+                    model_weights = self.optimizer.update_model(model_weights, 
+                                                                grad = grad, 
+                                                                has_applied=False)
 
                 if self.use_encrypt and batch_num % self.re_encrypt_batches == 0:
                     LOGGER.debug("Before accept re_encrypted_model, batch_iter_num: {}".format(batch_num))

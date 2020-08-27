@@ -65,6 +65,9 @@
       		"transform_col_names": [],
       		"need_alignment": true
       	},
+        "feature_scale_0": {
+            "method": "standard_scale"
+        },
         "homo_lr_0": {
             "penalty": "L2",
             "optimizer": "sgd",

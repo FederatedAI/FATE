@@ -40,7 +40,7 @@ class FLOWClient(object):
 
     def upload_data(self, data: Data, callback=None) -> 'UploadDataResponse':
         try:
-            response = self._upload_data(conf=data.config, verbose=0, drop=2)
+            response = self._upload_data(conf=data.config, verbose=0, drop=1)
             if callback is not None:
                 callback(response)
             status = self._awaiting(response.job_id, "local")
@@ -131,7 +131,7 @@ class FLOWClient(object):
         except json.decoder.JSONDecodeError:
             response = {'retcode': 100,
                         'retmsg': "Internal server error. Nothing in response. You may check out the configuration in "
-                                  "'FATE/arch/conf/server_conf.json' and restart fate flow server."}
+                                  "'FATE/conf/service_conf.yaml' and restart fate flow server."}
         return response
 
 
@@ -160,9 +160,7 @@ class QueryJobResponse(object):
             raise RuntimeError(f"query job error, response: {response}") from e
         self.status = status
         self.progress = None
-        self.current_tasks = None
         try:
-            self.progress = response.get('data')[0]["f_progress"]
             self.current_tasks = response.get('data')[0]["f_current_tasks"]
         except KeyError:
             pass

@@ -17,9 +17,10 @@
 from flask import Flask, request
 
 from fate_arch.common.base_utils import deserialize_b64
-from fate_flow.operation.job_tracker import Tracker
+from fate_flow.operation import Tracker
 from fate_flow.settings import stat_logger
 from fate_flow.utils.api_utils import get_json_result
+from fate_arch.common import log
 
 manager = Flask(__name__)
 
@@ -27,7 +28,7 @@ manager = Flask(__name__)
 @manager.errorhandler(500)
 def internal_server_error(e):
     stat_logger.exception(e)
-    return get_json_result(retcode=100, retmsg=str(e))
+    return get_json_result(retcode=100, retmsg=log.exception_to_trace_string(e))
 
 
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/metric_data/save',

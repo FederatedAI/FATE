@@ -41,8 +41,8 @@ class Proxy(object):
 
     @staticmethod
     def from_conf(conf):
-        host = conf.get('servers').get('proxy').get("host")
-        port = conf.get('servers').get('proxy').get("port")
+        host = conf.get('address').get("host")
+        port = conf.get('address').get("port")
         return Proxy(host, int(port))
 
 

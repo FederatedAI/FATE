@@ -26,9 +26,9 @@ from fate_arch.common.base_utils import fate_uuid
 from fate_arch import storage
 from fate_flow.db.db_models import Job, DB
 from fate_flow.manager.data_manager import delete_metric_data
-from fate_flow.operation.job_tracker import Tracker
+from fate_flow.operation import Tracker
 from fate_flow.settings import stat_logger, TEMP_DIRECTORY
-from fate_flow.utils import job_utils, data_utils, detect_utils
+from fate_flow.utils import job_utils, data_utils, detect_utils, schedule_utils
 from fate_flow.utils.api_utils import get_json_result, error_response
 from federatedml.feature.instance import Instance
 
@@ -82,7 +82,7 @@ def component_metric_all():
                 all_metric_data[metric_namespace][metric_name]['meta'] = metric_meta
         return get_json_result(retcode=0, retmsg='success', data=all_metric_data)
     else:
-        return get_json_result(retcode=100, retmsg='no data matched, please check if parameters are correct', data={})
+        return get_json_result(retcode=0, retmsg='no data', data={})
 
 
 @manager.route('/component/metrics', methods=['post'])
@@ -95,7 +95,7 @@ def component_metrics():
     if metrics:
         return get_json_result(retcode=0, retmsg='success', data=metrics)
     else:
-        return get_json_result(retcode=100, retmsg='no data matched, please check if parameters are correct', data={})
+        return get_json_result(retcode=0, retmsg='no data', data={})
 
 
 @manager.route('/component/metric_data', methods=['post'])
@@ -137,7 +137,7 @@ def component_parameters():
     request_data = request.json
     check_request_parameters(request_data)
     job_id = request_data.get('job_id', '')
-    job_dsl_parser = job_utils.get_job_dsl_parser_by_job_id(job_id=job_id)
+    job_dsl_parser = schedule_utils.get_job_dsl_parser_by_job_id(job_id=job_id)
     if job_dsl_parser:
         component = job_dsl_parser.get_component_info(request_data['component_name'])
         parameters = component.get_role_parameters()
@@ -169,7 +169,7 @@ def component_output_model():
     tracker = Tracker(job_id=request_data['job_id'], component_name=request_data['component_name'],
                       role=request_data['role'], party_id=request_data['party_id'], model_id=model_id,
                       model_version=model_version)
-    dag = job_utils.get_job_dsl_parser(dsl=job_dsl, runtime_conf=job_runtime_conf,
+    dag = schedule_utils.get_job_dsl_parser(dsl=job_dsl, runtime_conf=job_runtime_conf,
                                        train_runtime_conf=train_runtime_conf)
     component = dag.get_component_info(request_data['component_name'])
     output_model_json = {}
@@ -249,7 +249,7 @@ def component_output_data_download():
         os.makedirs(os.path.dirname(output_data_file_path), exist_ok=True)
         with open(output_data_file_path, 'w') as fw:
             with storage.Session.build(name=output_table_meta.get_name(), namespace=output_table_meta.get_namespace()) as storage_session:
-                output_table = storage_session.get_table(name=output_table_meta.get_name(), namespace=output_table_meta.get_namespace())
+                output_table = storage_session.get_table()
                 for k, v in output_table.collect():
                     data_line, have_data_label, is_str = get_component_output_data_line(src_key=k, src_value=v)
                     fw.write('{}\n'.format(','.join(map(lambda x: str(x), data_line))))
@@ -327,7 +327,7 @@ def get_component_summary():
 @manager.route('/component/list', methods=['POST'])
 def component_list():
     request_data = request.json
-    parser = job_utils.get_job_dsl_parser_by_job_id(job_id=request_data.get('job_id'))
+    parser = schedule_utils.get_job_dsl_parser_by_job_id(job_id=request_data.get('job_id'))
     if parser:
         return get_json_result(data={'components': list(parser.get_dsl().get('components').keys())})
     else:
@@ -338,7 +338,7 @@ def get_component_output_tables_meta(task_data):
     check_request_parameters(task_data)
     tracker = Tracker(job_id=task_data['job_id'], component_name=task_data['component_name'],
                       role=task_data['role'], party_id=task_data['party_id'])
-    job_dsl_parser = job_utils.get_job_dsl_parser_by_job_id(job_id=task_data['job_id'])
+    job_dsl_parser = schedule_utils.get_job_dsl_parser_by_job_id(job_id=task_data['job_id'])
     if not job_dsl_parser:
         raise Exception('can not get dag parser, please check if the parameters are correct')
     component = job_dsl_parser.get_component_info(task_data['component_name'])
@@ -375,6 +375,8 @@ def get_component_output_data_schema(output_table_meta, have_data_label, is_str=
     if have_data_label:
         header.append(schema.get('label_name'))
     if is_str:
+        if not schema.get('header'):
+            return None
         header.extend([feature for feature in schema.get('header').split(',')])
     else:
         header.extend(schema.get('header', []))
@@ -385,7 +387,7 @@ def check_request_parameters(request_data):
     with DB.connection_context():
         if 'role' not in request_data and 'party_id' not in request_data:
             jobs = Job.select(Job.f_runtime_conf).where(Job.f_job_id == request_data.get('job_id', ''),
-                                                        Job.f_is_initiator == 1)
+                                                        Job.f_is_initiator == True)
             if jobs:
                 job = jobs[0]
                 job_runtime_conf = job.f_runtime_conf

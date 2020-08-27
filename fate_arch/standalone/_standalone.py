@@ -32,7 +32,6 @@ import numpy as np
 from cachetools import LRUCache
 from cachetools import cached
 
-from fate_arch.abc import GarbageCollectionABC
 from fate_arch.common import file_utils, Party
 from fate_arch.common.log import getLogger
 from fate_arch.standalone import _cloudpickle as f_pickle
@@ -63,7 +62,6 @@ class Table(object):
         return self._namespace
 
     def __del__(self):
-        return
         if self._need_cleanup:
             self.destroy()
 
@@ -268,8 +266,9 @@ class Session(object):
     def load(self, name, namespace):
         return _load_table(session=self, name=name, namespace=namespace)
 
-    def create_table(self, name, namespace, partitions):
-        return _create_table(session=self, name=name, namespace=namespace, partitions=partitions)
+    def create_table(self, name, namespace, partitions, need_cleanup, error_if_exist):
+        return _create_table(session=self, name=name, namespace=namespace, partitions=partitions,
+                             need_cleanup=need_cleanup, error_if_exist=error_if_exist)
 
     # noinspection PyUnusedLocal
     def parallelize(self, data: Iterable, partition: int, include_key: bool = False, **kwargs):
@@ -278,9 +277,6 @@ class Session(object):
         table = _create_table(session=self, name=str(uuid.uuid1()), namespace=self.session_id, partitions=partition)
         table.put_all(data)
         return table
-
-    def __getstate__(self):
-        pass
 
     def cleanup(self, name, namespace):
         data_path = _get_data_dir()
@@ -335,10 +331,10 @@ class Federation(object):
         self._session = session
 
         self._federation_status_table = _create_table(session=session,
-                                                      name="__federation_status__",
+                                                      name=f"__federation_status__",
                                                       namespace=self._session_id,
-                                                      partitions=10,
-                                                      need_cleanup=False,
+                                                      partitions=1,
+                                                      need_cleanup=True,
                                                       error_if_exist=False)
         self._federation_object_table = _create_table(session=session,
                                                       name="__federation_object__",
@@ -364,7 +360,7 @@ class Federation(object):
         return self._federation_status_table.get(_tagged_key)
 
     # noinspection PyUnusedLocal
-    def remote(self, v, name: str, tag: str, parties: typing.List[Party], gc: GarbageCollectionABC):
+    def remote(self, v, name: str, tag: str, parties: typing.List[Party]):
         log_str = f"federation.remote(name={name}, tag={tag}, parties={parties})"
 
         assert v is not None, \
@@ -373,7 +369,7 @@ class Federation(object):
 
         if isinstance(v, Table):
             # noinspection PyProtectedMember
-            v = v.save_as(name=str(uuid.uuid1()), namespace=v._namespace)
+            v = v.save_as(name=str(uuid.uuid1()), namespace=v._namespace, need_cleanup=False)
 
         for party in parties:
             _tagged_key = self._federation_object_key(name, tag, self._party, party)
@@ -386,7 +382,7 @@ class Federation(object):
             LOGGER.debug("[REMOTE] Sent {}".format(_tagged_key))
 
     # noinspection PyProtectedMember
-    def get(self, name: str, tag: str, parties: typing.List[Party], gc: GarbageCollectionABC) -> typing.List:
+    def get(self, name: str, tag: str, parties: typing.List[Party]) -> typing.List:
         log_str = f"federation.get(name={name}, tag={tag}, party={parties})"
         LOGGER.debug(f"[{log_str}]")
         tasks = []
@@ -402,15 +398,15 @@ class Federation(object):
 
             if isinstance(r, tuple):
                 # noinspection PyTypeChecker
-                table: Table = _load_table(session=self._session, name=r[0], namespace=r[1])
+                table: Table = _load_table(session=self._session, name=r[0], namespace=r[1], need_cleanup=True)
                 rtn.append(table)
-                gc.add_gc_action(tag, table, '_destroy', {})
             else:
                 obj = self._get_object(r)
                 if obj is None:
                     raise EnvironmentError(f"federation get None from {parties} with name {name}, tag {tag}")
                 rtn.append(obj)
-                gc.add_gc_action(tag, self._federation_object_table, '_delete', {'k': r})
+                self._federation_object_table.delete(k=r)
+            self._federation_status_table.delete(r)
         return rtn
 
 
@@ -472,12 +468,12 @@ def _create_table(session: 'Session', name: str, namespace: str, partitions: int
     return Table(session=session, namespace=namespace, name=name, partitions=partitions, need_cleanup=need_cleanup)
 
 
-def _load_table(session, name, namespace):
+def _load_table(session, name, namespace, need_cleanup=False):
     _table_key = ".".join([namespace, name])
     partitions = _get_from_meta_table(_table_key)
     if partitions is None:
         raise RuntimeError(f"table not exist: name={name}, namespace={namespace}")
-    return Table(session=session, namespace=namespace, name=name, partitions=partitions, need_cleanup=False)
+    return Table(session=session, namespace=namespace, name=name, partitions=partitions, need_cleanup=need_cleanup)
 
 
 class _TaskInfo:

@@ -48,10 +48,10 @@ class Federation(FederationABC):
     def from_conf(federation_session_id: str,
                   party: Party,
                   runtime_conf: dict,
-                  server_conf: dict):
+                  service_conf: dict):
 
-        mq_conf = server_conf.get('rabbitmq')
-        rabbitmq_conf = mq_conf.get("self")
+        mq_address = service_conf.get('address')
+        rabbitmq_conf = mq_address.get("self")
 
         host = rabbitmq_conf.get("host")
         port = rabbitmq_conf.get("port")
@@ -64,8 +64,9 @@ class Federation(FederationABC):
         policy_id = federation_info.get("policy_id")
 
         rabbit_manager = RabbitManager(base_user, base_password, f"{host}:{mng_port}")
-        rabbit_manager.create_user(union_name, policy_id)
-        mq = MQ(host, port, union_name, policy_id, mq_conf)
+        #rabbit_manager.create_user(union_name, policy_id)
+        rabbit_manager.create_user(base_user, base_password)
+        mq = MQ(host, port, union_name, policy_id, mq_address)
         return Federation(federation_session_id, party, mq, rabbit_manager)
 
     def __init__(self, session_id, party: Party, mq: MQ, rabbit_manager: RabbitManager):

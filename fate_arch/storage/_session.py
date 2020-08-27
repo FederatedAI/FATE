@@ -46,18 +46,27 @@ class Session(object):
 
         if storage_engine == StorageEngine.EGGROLL:
             from fate_arch.storage.eggroll import StorageSession
-            return StorageSession(session_id=session_id, options=kwargs.get("options", {}))
-        if storage_engine == StorageEngine.STANDALONE:
+            storage_session = StorageSession(session_id=session_id, options=kwargs.get("options", {}))
+        elif storage_engine == StorageEngine.STANDALONE:
             from fate_arch.storage.standalone import StorageSession
-            return StorageSession(session_id=session_id, options=kwargs.get("options", {}))
+            storage_session = StorageSession(session_id=session_id, options=kwargs.get("options", {}))
+        elif storage_engine == StorageEngine.MYSQL:
+            from fate_arch.storage.mysql import StorageSession
+            storage_session = StorageSession(session_id=session_id, options=kwargs.get("options", {}))
+        elif storage_engine == StorageEngine.HDFS:
+            from fate_arch.storage.hdfs import StorageSession
+            storage_session = StorageSession(session_id=session_id, options=kwargs.get("options", {}))
         else:
             raise NotImplementedError(f"can not be initialized with storage engine: {storage_engine}")
+        if kwargs.get("name") and kwargs.get("namespace"):
+            storage_session.set_default(name=kwargs["name"], namespace=kwargs["namespace"])
+        return storage_session
 
     @classmethod
     def convert(cls, src_name, src_namespace, dest_name, dest_namespace,
                 computing_engine: ComputingEngine = ComputingEngine.EGGROLL, force=False):
         # The source and target may be different session types
-        src_table_meta = StorageTableMeta.build(name=src_name, namespace=src_namespace)
+        src_table_meta = StorageTableMeta(name=src_name, namespace=src_namespace)
         if not src_table_meta:
             raise RuntimeError(f"can not found table name: {src_name} namespace: {src_namespace}")
         dest_table_address = None
@@ -69,6 +78,7 @@ class Session(object):
                                                                      address_dict=dict(name=dest_name,
                                                                                        namespace=dest_namespace,
                                                                                        storage_type=EggRollStorageType.ROLLPAIR_LMDB))
+                dest_table_engine = StorageEngine.STANDALONE
             elif computing_engine == ComputingEngine.EGGROLL:
                 from fate_arch.storage.eggroll import StorageSession
                 from fate_arch.storage import EggRollStorageType
@@ -107,29 +117,36 @@ class Session(object):
 class StorageSessionBase(StorageSessionABC):
     def __init__(self, session_id):
         self._session_id = session_id
+        self._default_name = None
+        self._default_namespace = None
 
     def create(self):
         raise NotImplementedError()
 
     def create_table(self, address, name, namespace, partitions=1, **kwargs):
         table = self.table(address=address, name=name, namespace=namespace, partitions=partitions, **kwargs)
-        meta_info = {}
-        meta_info.update(kwargs)
-        meta_info["name"] = name
-        meta_info["namespace"] = namespace
-        meta_info["address"] = table.get_address()
-        meta_info["partitions"] = table.get_partitions()
-        meta_info["engine"] = table.get_engine()
-        meta_info["type"] = table.get_type()
-        meta_info["options"] = table.get_options()
-        StorageTableMeta.create_metas(**meta_info)
-        table.set_meta(StorageTableMeta.build(name=name, namespace=namespace))
+        table_meta = StorageTableMeta(name=name, namespace=namespace, new=True)
+        table_meta.set_metas(**kwargs)
+        table_meta.address = table.get_address()
+        table_meta.partitions = table.get_partitions()
+        table_meta.engine = table.get_engine()
+        table_meta.type = table.get_type()
+        table_meta.options = table.get_options()
+        table_meta.create()
+        table.set_meta(table_meta)
         # update count on meta
         table.count()
         return table
 
-    def get_table(self, name, namespace):
-        meta = StorageTableMeta.build(name=name, namespace=namespace)
+    def set_default(self, name, namespace):
+        self._default_name = name
+        self._default_namespace = namespace
+
+    def get_table(self, name=None, namespace=None):
+        if not name or not namespace:
+            name = self._default_name
+            namespace = self._default_namespace
+        meta = StorageTableMeta(name=name, namespace=namespace)
         if meta:
             table = self.table(name=meta.get_name(),
                                namespace=meta.get_namespace(),

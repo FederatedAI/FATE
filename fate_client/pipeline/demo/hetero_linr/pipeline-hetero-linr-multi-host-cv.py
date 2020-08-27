@@ -57,8 +57,8 @@ def main(config="../config.yaml"):
                                learning_rate=0.15, decay=0.0, decay_sqrt=False,
                                init_param={"init_method": "zeros"},
                                encrypted_mode_calculator_param={"mode": "fast"},
-                               cv_param={"n_splits": 5,
-                                         "shuffle": False,
+                               cv_param={"n_splits": 3,
+                                         "shuffle": True,
                                          "need_cv": True
                                          }
                                )
@@ -72,22 +72,7 @@ def main(config="../config.yaml"):
 
     pipeline.fit(backend=backend, work_mode=work_mode)
 
-    print (pipeline.get_component("hetero_linr_0").get_summary())
-
-
-    # predict
-    # deploy required components
-    pipeline.deploy_component([dataio_0, hetero_linr_0])
-
-    predict_pipeline = PipeLine()
-    # add data reader onto predict pipeline
-    predict_pipeline.add_component(reader_0)
-    # add selected components from train pipeline onto predict pipeline
-    # specify data source
-    predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
-    # run predict model
-    predict_pipeline.predict(backend=backend, work_mode=work_mode)
+    print(pipeline.get_component("hetero_linr_0").get_summary())
 
 
 if __name__ == "__main__":
