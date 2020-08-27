@@ -71,7 +71,7 @@ class StorageTable(StorageTableBase):
         if fs.exists(path):
             out = fs.append(path)
         else:
-            out = fs.create_table(path)
+            out = fs.create(path)
 
         counter = 0
         for k, v in kv_list:
