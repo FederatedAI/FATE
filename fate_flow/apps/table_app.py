@@ -56,7 +56,7 @@ def dtable(table_func):
         if config.get('create', False):
             pass
         else:
-            table_meta = storage.StorageTableMeta.build(name=table_name, namespace=namespace)
+            table_meta = storage.StorageTableMeta(name=table_name, namespace=namespace)
             if table_meta:
                 table_key_count = table_meta.get_count()
                 table_partition = table_meta.get_partitions()

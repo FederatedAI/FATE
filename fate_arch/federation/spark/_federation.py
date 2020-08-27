@@ -64,7 +64,8 @@ class Federation(FederationABC):
         policy_id = federation_info.get("policy_id")
 
         rabbit_manager = RabbitManager(base_user, base_password, f"{host}:{mng_port}")
-        rabbit_manager.create_user(union_name, policy_id)
+        #rabbit_manager.create_user(union_name, policy_id)
+        rabbit_manager.create_user(base_user, base_password)
         mq = MQ(host, port, union_name, policy_id, mq_address)
         return Federation(federation_session_id, party, mq, rabbit_manager)
 

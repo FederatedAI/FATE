@@ -19,7 +19,7 @@ import shutil
 from datetime import datetime
 
 from federatedml.protobuf.generated import pipeline_pb2
-from fate_flow.manager.model_manager import pipelined_model
+from fate_flow.pipelined_model import pipelined_model
 from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_arch.common.file_utils import get_project_base_directory
 from fate_flow.utils import model_utils

@@ -29,6 +29,7 @@ class StorageTable(StorageTableBase):
                  partitions: int = 1,
                  storage_type: MySQLStorageType = None,
                  options=None):
+        super(StorageTable, self).__init__(name=name, namespace=namespace)
         self.cur = cur
         self.con = con
         self._address = address

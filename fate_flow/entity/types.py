@@ -27,6 +27,7 @@ class RunParameters(object):
         self.federation_backend = None
         self.federation_engine = None
         self.federated_mode = None
+        self.federation_info = None
         self.task_parallelism = None
         self.task_nodes = None
         self.task_cores_per_node = None
@@ -43,7 +44,12 @@ class RunParameters(object):
                 setattr(self, k, v)
 
     def to_dict(self):
-        return self.__dict__
+        d = {}
+        for k, v in self.__dict__.items():
+            if v is None:
+                continue
+            d[k] = v
+        return d
 
 
 class RetCode(IntEnum):
