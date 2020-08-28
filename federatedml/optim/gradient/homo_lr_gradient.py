@@ -16,10 +16,8 @@
 
 import numpy as np
 
-from arch.api.utils import log_utils
+from federatedml.util import LOGGER
 from federatedml.util import fate_operator
-
-LOGGER = log_utils.getLogger()
 
 
 def load_data(data_instance):

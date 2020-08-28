@@ -19,16 +19,15 @@ import copy
 import numpy as np
 from sklearn.model_selection import KFold as sk_KFold
 
-from arch.api import session
-from arch.api.utils import log_utils
+# from arch.api import session
+from fate_arch.session import computing_session as session
 from federatedml.evaluation.evaluation import Evaluation
 from federatedml.model_selection.cross_validate import BaseCrossValidator
 from federatedml.model_selection.indices import collect_index
 from federatedml.transfer_variable.transfer_class.cross_validation_transfer_variable import \
     CrossValidationTransferVariable
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class KFold(BaseCrossValidator):
@@ -222,4 +221,3 @@ class KFold(BaseCrossValidator):
         validate_data = {fold_name: validate_data}
         eval_obj.fit(validate_data)
         eval_obj.save_data()
-

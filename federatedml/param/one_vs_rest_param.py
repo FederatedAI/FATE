@@ -17,6 +17,7 @@
 #  limitations under the License.
 #
 from federatedml.param.base_param import BaseParam
+
 from federatedml.util import LOGGER
 
 

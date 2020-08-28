@@ -5,7 +5,6 @@
 # added by jsweng
 # param class for OHE with alignment
 #
-
 from federatedml.param.base_param import BaseParam
 
 
