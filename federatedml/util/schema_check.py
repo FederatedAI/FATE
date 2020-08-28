@@ -13,9 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_arch.computing import is_table
 
+from fate_arch.computing import is_table
 from federatedml.util import LOGGER
+
 
 def check_schema(input_schema, output_schema):
     LOGGER.debug(f"input schema: {input_schema} -> output schema: {output_schema}")
