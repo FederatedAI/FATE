@@ -118,50 +118,6 @@ class Reader(object):
         else:
             return src_table_meta, dest_table_address, dest_table_engine
 
-    def save_data_table(self, job_id, dst_table_name, dst_table_namespace, head=True):
-        input_file = self.parameters["file"]
-        count = self.get_count(input_file)
-        with open(input_file, 'r') as fin:
-            lines_count = 0
-            if head is True:
-                data_head = fin.readline()
-                count -= 1
-                self.save_data_header(data_head)
-            n = 0
-            while True:
-                data = list()
-                lines = fin.readlines(self.MAX_BYTES)
-                if lines:
-                    for line in lines:
-                        values = line.replace("\n", "").replace("\t", ",").split(",")
-                        data.append((values[0], self.list_to_str(values[1:])))
-                    lines_count += len(data)
-                    save_progress = lines_count/count*100//1
-                    job_info = {'progress': save_progress, "job_id": job_id, "role": self.parameters["local"]['role'], "party_id": self.parameters["local"]['party_id']}
-                    ControllerClient.update_job(job_info=job_info)
-                    self.table.put_all(data)
-                    if n == 0:
-                        self.table.get_meta().update_metas(part_of_data=data)
-                else:
-                    self.table.get_meta().update_metas(count=self.table.count(), partitions=self.parameters["partition"])
-                    count_actual = self.table.count()
-                    self.tracker.log_output_data_info(data_name='upload',
-                                                      table_namespace=dst_table_namespace,
-                                                      table_name=dst_table_name)
-
-                    self.tracker.log_metric_data(metric_namespace="upload",
-                                                 metric_name="data_access",
-                                                 metrics=[Metric("count", count_actual)])
-                    self.tracker.set_metric_meta(metric_namespace="upload",
-                                                 metric_name="data_access",
-                                                 metric_meta=MetricMeta(name='upload', metric_type='UPLOAD'))
-                    return count_actual
-                n += 1
-
-    def save_data_header(self, header_source):
-        header_source_item = header_source.split(',')
-        self.table.get_meta().update_metas(schema={'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]})
-
     def copy_table(self, src_table: StorageTableABC, dest_table: StorageTableABC):
         count = 0
         data = []
