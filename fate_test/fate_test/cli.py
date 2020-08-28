@@ -134,6 +134,69 @@ def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
     echo.farewell()
 
 
+@LOGGER.catch
+@cli.command(name="match")
+@click.option('--data-namespace-mangling', type=bool, is_flag=True, default=False,
+              help="mangling data namespace")
+@click.option('-i', '--include', required=True, type=click.Path(exists=True), multiple=True, metavar="<include>",
+              help="include *match.json under these paths")
+@click.option('-e', '--exclude', type=click.Path(exists=True), multiple=True,
+              help="exclude *match.json under these paths")
+@click.option('-c', '--config', default=priority_config().__str__(), type=click.Path(exists=True),
+              help=f"config path, defaults to {priority_config()}")
+@click.option("-g", '--glob', type=str,
+              help="glob string to filter sub-directory of path specified by <include>")
+@click.option("-t", '--tol', type=float,
+              help="absolute tolerance error for metrics to be considered almost equal")
+@click.option("--yes", is_flag=True,
+              help="skip double check")
+@click.option("--skip-data", is_flag=True, default=False,
+              help="skip uploading data specified in match")
+def run_match(replace, data_namespace_mangling, config, include, exclude, glob, skip_data, yes):
+    """
+    process testsuite
+    """
+    namespace = time.strftime('%Y%m%d%H%M%S')
+    # prepare output dir and json hooks
+    _prepare(data_namespace_mangling, namespace, replace)
+
+    echo.welcome()
+    config_inst = _parse_config(config)
+    echo.echo(f"testsuite namespace: {namespace}", fg='red')
+    echo.echo("loading testsuites:")
+    suites = _load_testsuites(includes=include, excludes=exclude, glob=glob)
+    for suite in suites:
+        echo.echo(f"\tdataset({len(suite.dataset)}) jobs({len(suite.jobs)}) {suite.path}")
+    if not yes and not click.confirm("running?"):
+        return
+    with Clients(config_inst) as client:
+        for i, suite in enumerate(suites):
+            # noinspection PyBroadException
+            try:
+                start = time.time()
+                echo.echo(f"[{i + 1}/{len(suites)}]start at {time.strftime('%Y-%m-%d %X')} {suite.path}", fg='red')
+                suite.reflash_configs(config_inst)
+
+                if not skip_data:
+                    try:
+                        _upload_data(client, suite)
+                    except Exception as e:
+                        raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
+                # @TODO: run match tasks
+
+                if not skip_data:
+                    _delete_data(client, suite)
+
+            except Exception:
+                exception_id = uuid.uuid1()
+                echo.echo(f"exception in {suite.path}, exception_id={exception_id}")
+                LOGGER.exception(f"exception id: {exception_id}")
+            finally:
+                echo.stdout_newline()
+
+    echo.farewell()
+
+
 def _parse_config(config):
     try:
         config_inst = Config.load(config)
@@ -156,18 +219,18 @@ def _prepare(data_namespace_mangling, namespace, replace):
     DSL_JSON_HOOK.add_replace_hook(replace)
 
 
-def _load_testsuites(includes, excludes, glob):
+def _load_testsuites(includes, excludes, glob, suffix="testsuite.json"):
     def _find_testsuite_files(path):
         if isinstance(path, str):
             path = Path(path)
         if path.is_file():
-            if path.name.endswith("testsuite.json"):
+            if path.name.endswith(suffix):
                 paths = [path]
             else:
-                LOGGER.warning(f"{path} is file, but not end with `testsuite.json`, skip")
+                LOGGER.warning(f"{path} is file, but not end with `{suffix}`, skip")
                 paths = []
         else:
-            paths = path.glob(f"**/*testsuite.json")
+            paths = path.glob(f"**/*{suffix}")
         return [p.resolve() for p in paths]
 
     excludes_set = set()

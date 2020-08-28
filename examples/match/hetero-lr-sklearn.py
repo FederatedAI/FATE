@@ -44,7 +44,7 @@ def main(param="./match_config.yaml"):
     recall = recall_score(y, y_pred, average=None)
     pr = precision_score(y, y_pred, average=None)
     acc = accuracy_score(y, y_pred)
-    result = {"auc": auc_score, "recall": recall, "precision": pr, "acc": acc}
+    result = {"auc": auc_score, "recall": recall, "precision": pr, "accuracy": acc}
     return result
 
 
