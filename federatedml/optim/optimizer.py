@@ -18,11 +18,9 @@
 
 import numpy as np
 
-from arch.api.utils import log_utils
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class _Optimizer(object):

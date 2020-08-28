@@ -20,14 +20,12 @@ import copy
 
 import numpy as np
 
-from arch.api.utils import log_utils
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.optim.gradient import hetero_linear_model_gradient
 from federatedml.optim.gradient import sqn_sync
 from federatedml.param.sqn_param import StochasticQuasiNewtonParam
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class HeteroStochasticQuansiNewton(hetero_linear_model_gradient.HeteroGradientBase):
