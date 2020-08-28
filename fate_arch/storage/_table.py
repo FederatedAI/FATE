@@ -115,7 +115,7 @@ class StorageTableMeta(StorageTableMetaABC):
         self.address = self.create_address(storage_engine=self.engine, address_dict=self.address)
 
     def __new__(cls, *args, **kwargs):
-        if kwargs.get("auto_build", True):
+        if not kwargs.get("new", False):
             name, namespace = kwargs.get("name"), kwargs.get("namespace")
             if not name or not namespace:
                 return None
