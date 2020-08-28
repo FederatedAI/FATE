@@ -15,8 +15,8 @@
 #
 
 from federatedml.model_selection.data_split.data_split import DataSplitter
-
 from federatedml.util import LOGGER
+
 
 class HomoDataSplitHost(DataSplitter):
     def __init__(self):
