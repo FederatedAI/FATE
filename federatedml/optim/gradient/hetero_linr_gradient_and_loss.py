@@ -18,12 +18,10 @@
 
 import numpy as np
 
-from arch.api.utils import log_utils
 from federatedml.framework.hetero.sync import loss_sync
 from federatedml.optim.gradient import hetero_linear_model_gradient
+from federatedml.util import LOGGER
 from federatedml.util.fate_operator import reduce_add, vec_dot
-
-LOGGER = log_utils.getLogger()
 
 
 class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):

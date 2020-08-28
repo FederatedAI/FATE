@@ -14,11 +14,9 @@
 #  limitations under the License.
 #
 
-from arch.api.utils import log_utils
 from federatedml.model_selection.data_split.data_split import DataSplitter
 
-LOGGER = log_utils.getLogger()
-
+from federatedml.util import LOGGER
 
 class HomoDataSplitHost(DataSplitter):
     def __init__(self):

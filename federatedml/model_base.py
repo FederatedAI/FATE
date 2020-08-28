@@ -20,15 +20,13 @@ import copy
 
 import numpy as np
 
-from arch.api.utils import log_utils
 from fate_arch.computing import is_table
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.statistic.data_overview import header_alignment
+from federatedml.util import LOGGER
 from federatedml.util import abnormal_detection
 from federatedml.util.component_properties import ComponentProperties
 from federatedml.util.param_extract import ParamExtract
-
-LOGGER = log_utils.getLogger()
 
 
 class ModelBase(object):

@@ -16,13 +16,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.utils import log_utils
 from federatedml.linear_model.linear_regression.base_linear_regression import BaseLinearRegression
 from federatedml.optim.gradient.hetero_sqn_gradient import sqn_factory
 from federatedml.transfer_variable.transfer_class.hetero_linr_transfer_variable import HeteroLinRTransferVariable
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class HeteroLinRBase(BaseLinearRegression):

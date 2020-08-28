@@ -14,15 +14,13 @@
 #  limitations under the License.
 #
 
-from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
 from federatedml.linear_model.linear_model_base import BaseLinearModel
+from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util import fate_operator
 from federatedml.util.validation_strategy import ValidationStrategy
-
-LOGGER = log_utils.getLogger()
 
 
 class HeteroBaseArbiter(BaseLinearModel):
