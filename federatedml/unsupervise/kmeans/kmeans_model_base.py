@@ -41,6 +41,7 @@ class BaseKmeansModel(ModelBase):
         self.model_name = 'toSet'
         self.model_param_name = 'toSet'
         self.model_meta_name = 'toSet'
+        self.header = None
 
     def _init_model(self, params):
         self.model_param = params
@@ -53,6 +54,11 @@ class BaseKmeansModel(ModelBase):
                                                           tol=self.model_param.tol,
                                                           max_iter=self.max_iter)
         return meta_protobuf_obj
+
+    def get_header(self, data_instances):
+        if self.header is not None:
+            return self.header
+        return data_instances.schema.get("header")
 
     def _get_param(self):
         header = self.header

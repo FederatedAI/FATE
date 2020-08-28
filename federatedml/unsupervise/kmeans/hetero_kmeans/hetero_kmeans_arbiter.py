@@ -23,7 +23,6 @@ from federatedml.framework.homo.blocks import secure_sum_aggregator
 from arch.api import session
 from federatedml.evaluation.metrics import clustering_metric
 
-
 LOGGER = log_utils.getLogger()
 
 
@@ -35,9 +34,9 @@ class HeteroKmeansArbiter(BaseKmeansModel):
         self.cluster_dist_aggregator = secure_sum_aggregator.Server(enable_secure_aggregate=True)
         self.DBI = 0
 
-    def sum_in_cluster(self,iterator):
+    def sum_in_cluster(self, iterator):
         sum_result = dict()
-        for k,v in iterator:
+        for k, v in iterator:
             if v[1] not in sum_result:
                 sum_result[v[1]] = np.sqrt(v[0][v[1]])
             else:
@@ -50,7 +49,7 @@ class HeteroKmeansArbiter(BaseKmeansModel):
         cal_ave_dist_list = []
         for i in range(self.k):
             count = cluster_count[i]
-            cal_ave_dist_list.append([i,count,dist_centroid_dist_dtable[i] / count])
+            cal_ave_dist_list.append([i, count, dist_centroid_dist_dtable[i] / count])
         return cal_ave_dist_list
 
     def fit(self, data_instances=None):
@@ -58,19 +57,21 @@ class HeteroKmeansArbiter(BaseKmeansModel):
         while self.n_iter_ < self.max_iter:
             secure_dist_all_1 = self.transfer_variable.guest_dist.get(idx=0, suffix=(self.n_iter_,))
             secure_dist_all_2 = self.transfer_variable.host_dist.get(idx=0, suffix=(self.n_iter_,))
-            dist_sum = secure_dist_all_1.join(secure_dist_all_2, lambda v1, v2: v1+v2)
+            dist_sum = secure_dist_all_1.join(secure_dist_all_2, lambda v1, v2: v1 + v2)
             cluster_result = dist_sum.mapValues(lambda v: np.argmin(v))
-            self.transfer_variable.cluster_result.remote(cluster_result, role=consts.GUEST, idx=0, suffix=(self.n_iter_,))
-            self.transfer_variable.cluster_result.remote(cluster_result, role=consts.HOST, idx=0, suffix=(self.n_iter_,))
+            self.transfer_variable.cluster_result.remote(cluster_result, role=consts.GUEST, idx=0,
+                                                         suffix=(self.n_iter_,))
+            self.transfer_variable.cluster_result.remote(cluster_result, role=consts.HOST, idx=0,
+                                                         suffix=(self.n_iter_,))
 
             dist_cluster_dtable = dist_sum.join(cluster_result, lambda v1, v2: [v1, v2])
-            dist_table = self.cal_ave_dist(dist_cluster_dtable, cluster_result, self.k)#ave dist in each cluster
+            dist_table = self.cal_ave_dist(dist_cluster_dtable, cluster_result, self.k)  # ave dist in each cluster
             cluster_dist = self.cluster_dist_aggregator.sum_model(suffix=(self.n_iter_,))
-            #self.DBI=clustering_metric.Davies_Bouldin_index.compute(dist_table, cluster_dist)
+            # self.DBI=clustering_metric.Davies_Bouldin_index.compute(dist_table, cluster_dist)
 
             tol1 = self.transfer_variable.guest_tol.get(idx=0, suffix=(self.n_iter_,))
-            tol2 = self.transfer_variable.host_tol.get(idx=1, suffix=(self.n_iter_,))
-            tol_final = tol1+tol2
+            tol2 = self.transfer_variable.host_tol.get(idx=0, suffix=(self.n_iter_,))
+            tol_final = tol1 + tol2
             tol_tag = 0 if tol_final > self.tol else 1
             self.transfer_variable.arbiter_tol.remote(tol_tag, role=consts.HOST, idx=0, suffix=(self.n_iter_,))
             self.transfer_variable.arbiter_tol.remote(tol_tag, role=consts.GUEST, idx=0, suffix=(self.n_iter_,))
@@ -79,7 +80,7 @@ class HeteroKmeansArbiter(BaseKmeansModel):
 
             self.n_iter_ += 1
 
-    def predict(self, data_instances):
+    def predict(self, data_instances=None):
         LOGGER.info("Start predict ...")
         secure_dist_all_1 = self.transfer_variable.guest_dist.get(idx=0, suffix='predict')
         secure_dist_all_2 = self.transfer_variable.host_dist.get(idx=0, suffix='predict')
@@ -91,5 +92,9 @@ class HeteroKmeansArbiter(BaseKmeansModel):
         dist_cluster_dtable = dist_sum.join(cluster_result, lambda v1, v2: [v1, v2])
         dist_table = self.cal_ave_dist(dist_cluster_dtable, cluster_result, self.k)  # ave dist in each cluster
         cluster_dist = self.cluster_dist_aggregator.sum_model(suffix='predict')
-        predict_result = [v.append(cluster_dist) for v in dist_table]
-        return predict_result
+        result= []
+        for v in dist_table:
+            result.append(tuple([v[0],[v[1],v[2],cluster_dist]]))
+        predict_result1 = session.parallelize(result, partition=dist_sum.partitions, include_key=True)
+        predict_result2 = dist_cluster_dtable
+        return predict_result1, predict_result2

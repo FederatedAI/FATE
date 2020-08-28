@@ -87,6 +87,7 @@ class HeteroKmeansClient(BaseKmeansModel):
 
     def fit(self, data_instances):
         LOGGER.info("Enter hetero_kmenas_client fit")
+        self.header = self.get_header(data_instances)
         self._abnormal_detection(data_instances)
         np.random.seed(data_instances.count())
         if self.role == consts.GUEST:
@@ -96,8 +97,8 @@ class HeteroKmeansClient(BaseKmeansModel):
         else:
             self.first_centroid_key = self.transfer_variable.centroid_list.get(idx=0)
             rand = -np.random.rand(data_instances.count())
-        key_dtable = session.parallelize(tuple(zip(self.first_centroid_key, self.first_centroid_key)), partition=1,
-                                         include_key=True)
+        key_dtable = session.parallelize(tuple(zip(self.first_centroid_key, self.first_centroid_key)),
+                                         partition=data_instances.partitions,include_key=True)
         centroid_list = list(key_dtable.join(data_instances, lambda v1, v2: v2.features).collect())
         self.centroid_list = [v[1] for v in centroid_list]
         while self.n_iter_ < self.max_iter:
@@ -139,7 +140,7 @@ class HeteroKmeansClient(BaseKmeansModel):
         self.client_dist.remote(secure_dist_all, role=consts.ARBITER, idx=0, suffix='predict')
         cluster_result = self.transfer_variable.cluster_result.get(idx=0, suffix='predict')
         cluster_dist = self.centroid_dist(self.centroid_list)
-        self.cluster_dist_aggregator.send_model(cluster_dist, suffix='predict')
+        self.cluster_dist_aggregator.send_model(NumpyWeights(np.array(cluster_dist)), suffix='predict')
         predict_result = data_instances.join(cluster_result, lambda v1, v2: [v1.features, v1.label, v2])
         return predict_result
 
