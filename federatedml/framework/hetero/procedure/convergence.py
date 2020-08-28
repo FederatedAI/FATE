@@ -14,10 +14,7 @@
 #  limitations under the License.
 #
 
-from arch.api.utils import log_utils
 from federatedml.framework.hetero.sync import converge_sync
-
-LOGGER = log_utils.getLogger()
 
 
 class Host(converge_sync.Host):
@@ -36,4 +33,3 @@ class Arbiter(converge_sync.Arbiter):
 
     def register_convergence(self, transfer_variables):
         self._register_convergence(is_stopped_transfer=transfer_variables.converge_flag)
-

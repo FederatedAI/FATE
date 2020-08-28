@@ -17,11 +17,8 @@
 #  limitations under the License.
 #
 import numpy as np
-
-from arch.api import session
-from arch.api.utils import log_utils
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
+from fate_arch.session import computing_session
 
 
 class PaillierTensor(object):
@@ -29,9 +26,9 @@ class PaillierTensor(object):
         if ori_data is not None:
             self._ori_data = ori_data
             self._partitions = partitions
-            self._obj = session.parallelize(ori_data,
-                                            include_key=False,
-                                            partition=partitions)
+            self._obj = computing_session.parallelize(ori_data,
+                                                      include_key=False,
+                                                      partition=partitions)
         else:
             self._ori_data = None
             self._partitions = tb_obj.partitions
@@ -141,11 +138,11 @@ class PaillierTensor(object):
     #         return PaillierTensor(tb_obj=self._obj.mapValues(lambda x: x.sum(axis=axis-1)))
 
     def reduce_sum(self):
-        return self._obj.reduce(lambda t1, t2: t1+t2)
+        return self._obj.reduce(lambda t1, t2: t1 + t2)
 
     def map_ndarray_product(self, other):
         if isinstance(other, np.ndarray):
-            return PaillierTensor(tb_obj=self._obj.mapValues(lambda val: val*other))
+            return PaillierTensor(tb_obj=self._obj.mapValues(lambda val: val * other))
         else:
             raise ValueError('only support numpy array')
 
@@ -225,4 +222,4 @@ class PaillierTensor(object):
         if axis == 0:
             return PaillierTensor(ori_data=list(self._obj.collect())[0][1], partitions=self.partitions)
         else:
-            return PaillierTensor(tb_obj=self._obj.mapValues(lambda val: np.squeeze(val, axis=axis-1)))
+            return PaillierTensor(tb_obj=self._obj.mapValues(lambda val: np.squeeze(val, axis=axis - 1)))

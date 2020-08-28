@@ -13,14 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils import log_utils
 from federatedml.framework.homo.blocks import model_broadcaster, model_scatter
 from federatedml.framework.homo.blocks.base import HomoTransferBase
 from federatedml.framework.homo.blocks.model_broadcaster import ModelBroadcasterTransVar
 from federatedml.framework.homo.blocks.model_scatter import ModelScatterTransVar
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class AggregatorTransVar(HomoTransferBase):

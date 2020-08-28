@@ -25,12 +25,9 @@ from torch.autograd import Variable
 import torchvision.transforms as transforms
 import torch.utils.data as data
 from torch.utils.data import DataLoader
-from arch.api.utils import log_utils
 from federatedml.framework.weights import OrderDictWeights, Weights
 from federatedml.nn.homo_nn.nn_model import NNModel, DataConverter
 from sklearn.metrics import accuracy_score, precision_score, roc_auc_score, recall_score, f1_score, fbeta_score
-
-Logger = log_utils.getLogger()
 
 
 def layers(layer, config, type):
