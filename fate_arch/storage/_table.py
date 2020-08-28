@@ -78,9 +78,13 @@ class StorageTableBase(StorageTableABC):
     def count(self):
         pass
 
+    def save_as(self, dest_name, dest_namespace, partitions=None, schema=None):
+        src_table_meta = self.get_meta()
+        pass
+
 
 class StorageTableMeta(StorageTableMetaABC):
-    def __init__(self, name, namespace):
+    def __init__(self, name, namespace, new=False):
         self.name = name
         self.namespace = namespace
         self.address = None
@@ -94,29 +98,41 @@ class StorageTableMeta(StorageTableMetaABC):
         self.description = None
         self.create_time = None
         self.update_time = None
+        if self.options is None:
+            self.options = {}
+        if self.schema is None:
+            self.schema = {}
+        if self.part_of_data is None:
+            self.part_of_data = []
+        if not new:
+            self.build()
 
-    @classmethod
-    def build(cls, name, namespace):
-        if not name or not namespace:
-            return
-        tables_meta = cls.query_table_meta(filter_fields=dict(name=name, namespace=namespace))
-        if not tables_meta:
-            return
-        instance = StorageTableMeta(name=name, namespace=namespace)
-        table_meta = tables_meta[0]
-        for k, v in table_meta.__dict__["__data__"].items():
-            setattr(instance, k.lstrip("f_"), v)
-        instance.address = instance.create_address(storage_engine=instance.engine, address_dict=instance.address)
-        return instance
+    def build(self):
+        for k, v in self.table_meta.__dict__["__data__"].items():
+            setattr(self, k.lstrip("f_"), v)
+        self.address = self.create_address(storage_engine=self.engine, address_dict=self.address)
 
-    @classmethod
-    def create_metas(cls, **kwargs):
+    def __new__(cls, *args, **kwargs):
+        if not kwargs.get("new", False):
+            name, namespace = kwargs.get("name"), kwargs.get("namespace")
+            if not name or not namespace:
+                return None
+            tables_meta = cls.query_table_meta(filter_fields=dict(name=name, namespace=namespace))
+            if not tables_meta:
+                return None
+            self = super().__new__(cls)
+            setattr(self, "table_meta", tables_meta[0])
+            return self
+        else:
+            return super().__new__(cls)
+
+    def create(self):
         with DB.connection_context():
             table_meta = StorageTableMetaModel()
             table_meta.f_create_time = current_timestamp()
             table_meta.f_schema = {}
-            table_meta.f_part_of_data = {}
-            for k, v in kwargs.items():
+            table_meta.f_part_of_data = []
+            for k, v in self.to_dict().items():
                 attr_name = 'f_%s' % k
                 if hasattr(StorageTableMetaModel, attr_name):
                     setattr(table_meta, attr_name, v if not issubclass(type(v), AddressABC) else v.__dict__)
@@ -132,6 +148,11 @@ class StorageTableMeta(StorageTableMetaABC):
                     raise e
             except Exception as e:
                 raise e
+
+    def set_metas(self, **kwargs):
+        for k, v in kwargs.items():
+            if hasattr(self, k):
+                setattr(self, k, v)
 
     @classmethod
     def query_table_meta(cls, filter_fields, query_fields=None):
@@ -233,3 +254,11 @@ class StorageTableMeta(StorageTableMetaABC):
 
     def get_description(self):
         return self.description
+
+    def to_dict(self) -> dict:
+        d = {}
+        for k, v in self.__dict__.items():
+            if v is None or k == "table_meta":
+                continue
+            d[k] = v
+        return d

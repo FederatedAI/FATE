@@ -39,10 +39,10 @@ class JobController(object):
             authentication_check(src_role=job_info.get('src_role', None), src_party_id=job_info.get('src_party_id', None),
                                  dsl=dsl, runtime_conf=runtime_conf, role=role, party_id=party_id)
         job_utils.save_job_conf(job_id=job_id,
-                      job_dsl=dsl,
-                      job_runtime_conf=runtime_conf,
-                      train_runtime_conf=train_runtime_conf,
-                      pipeline_dsl=None)
+                                job_dsl=dsl,
+                                job_runtime_conf=runtime_conf,
+                                train_runtime_conf=train_runtime_conf,
+                                pipeline_dsl=None)
         job_parameters = runtime_conf['job_parameters']
         job_initiator = runtime_conf['initiator']
 
@@ -212,6 +212,8 @@ class JobController(object):
         pipeline.model_version = model_version
         tracker = Tracker(job_id=job_id, role=role, party_id=party_id, model_id=model_id, model_version=model_version)
         tracker.save_pipelined_model(pipelined_buffer_object=pipeline)
+        if role != 'local':
+            tracker.save_machine_learning_model_info()
         schedule_logger(job_id).info('job {} on {} {} save pipeline successfully'.format(job_id, role, party_id))
 
     @classmethod

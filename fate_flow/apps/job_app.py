@@ -134,17 +134,20 @@ def job_config():
 @manager.route('/log', methods=['get'])
 def job_log():
     job_id = request.json.get('job_id', '')
-    memory_file = io.BytesIO()
-    tar = tarfile.open(fileobj=memory_file, mode='w:gz')
     job_log_dir = job_utils.get_job_log_directory(job_id=job_id)
-    for root, dir, files in os.walk(job_log_dir):
-        for file in files:
-            full_path = os.path.join(root, file)
-            rel_path = os.path.relpath(full_path, job_log_dir)
-            tar.add(full_path, rel_path)
-    tar.close()
-    memory_file.seek(0)
-    return send_file(memory_file, attachment_filename='job_{}_log.tar.gz'.format(job_id), as_attachment=True)
+    if os.path.exists(job_log_dir):
+        memory_file = io.BytesIO()
+        tar = tarfile.open(fileobj=memory_file, mode='w:gz')
+        for root, dir, files in os.walk(job_log_dir):
+            for file in files:
+                full_path = os.path.join(root, file)
+                rel_path = os.path.relpath(full_path, job_log_dir)
+                tar.add(full_path, rel_path)
+        tar.close()
+        memory_file.seek(0)
+        return send_file(memory_file, attachment_filename='job_{}_log.tar.gz'.format(job_id), as_attachment=True)
+    else:
+        return error_response(500, "Log file path: {} not found. Please check if the job id is valid.".format(job_log_dir))
 
 
 @manager.route('/task/query', methods=['POST'])
@@ -159,7 +162,7 @@ def query_task():
 def list_task():
     tasks = job_utils.list_task(request.json.get('limit'))
     if not tasks:
-        return get_json_result(retcode=101, retmsg='No task found')
+        return get_json_result(retcode=100, retmsg='No task found')
     return get_json_result(retcode=0, retmsg='success', data=[task.to_json() for task in tasks])
 
 

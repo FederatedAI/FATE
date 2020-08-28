@@ -18,10 +18,11 @@ import datetime
 from peewee import Model, CharField, BigIntegerField, TextField, CompositeKey, IntegerField
 from playhouse.pool import PooledMySQLDatabase
 
-from fate_flow.manager.model_manager.pipelined_model import PipelinedModel
-from fate_flow.manager.model_manager.model_storage_base import ModelStorageBase
+from fate_flow.pipelined_model.pipelined_model import PipelinedModel
+from fate_flow.pipelined_model.model_storage_base import ModelStorageBase
 from fate_arch.common import log
 from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64
+from fate_arch.storage.metastore.db_models import LongTextField
 
 LOGGER = log.getLogger()
 DB = PooledMySQLDatabase(None)
@@ -151,7 +152,7 @@ class MachineLearningModel(DataBaseModel):
     f_create_time = BigIntegerField(default=0)
     f_update_time = BigIntegerField(default=0)
     f_description = TextField(null=True, default='')
-    f_content = TextField(default='')
+    f_content = LongTextField(default='')
     f_slice_index = IntegerField(default=0, index=True)
 
     class Meta:

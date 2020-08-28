@@ -1,6 +1,5 @@
 {
     "module_path":  "federatedml/model_selection/data_split",
-    "default_runtime_conf": "data_split_param.json",
     "param_class" : "federatedml/param/data_split_param.py/DataSplitParam",
     "role":
     {

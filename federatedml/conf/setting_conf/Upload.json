@@ -1,6 +1,5 @@
 {
     "module_path":  "fate_flow/components",
-    "default_runtime_conf": "upload_param.json",
     "param_class" : "fate_flow/param/upload_param.py/UploadParam",
     "role":
     {
