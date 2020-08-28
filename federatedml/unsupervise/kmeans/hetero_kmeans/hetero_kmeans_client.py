@@ -44,27 +44,27 @@ class HeteroKmeansClient(BaseKmeansModel):
             result.append(np.sqrt(np.sum(np.power(np.array(c) - u.features, 2))))
         return result
 
-    def get_centroid(self,data_instances):
+    def get_centroid(self, data_instances):
         random.seed(self.k)
         random_list = list()
         v_list = list()
-        for r in range(0,self.k):
-            random_list.append(math.ceil(random.random()*data_instances.count()))
+        for r in range(0, self.k):
+            random_list.append(math.ceil(random.random() * data_instances.count()))
         n = 0
-        key = list(data_instances.mapValues(lambda data_instance:None).collect())
+        key = list(data_instances.mapValues(lambda data_instance: None).collect())
         for k in key:
             if n in random_list:
                 v_list.append(k[0])
             n += 1
         return v_list
 
-    def f(self,iterator):
+    def f(self, iterator):
         cluster_result = dict()
-        for k,v in iterator:
+        for k, v in iterator:
             if v[1] not in cluster_result:
                 cluster_result[v[1]] = v[0]
             else:
-                cluster_result[v[1]] +=v[0]
+                cluster_result[v[1]] += v[0]
         return cluster_result
 
     def centroid_cal(self, cluster_result, data_instances):
@@ -73,16 +73,16 @@ class HeteroKmeansClient(BaseKmeansModel):
         cluster_count = cluster_result.mapPartitions(self.count).reduce(self.sum_dict)
         centroid_list = []
         for k in centroid_feature_sum:
-            count=cluster_count[k]
-            centroid_list.append(centroid_feature_sum[k]/count)
+            count = cluster_count[k]
+            centroid_list.append(centroid_feature_sum[k] / count)
         return centroid_list
 
     def centroid_dist(self, centroid_list):
-        cluster_dist_list =[]
+        cluster_dist_list = []
         for i in range(0, len(centroid_list)):
             for j in range(0, len(centroid_list)):
-                if j!=i:
-                    cluster_dist_list.append(np.sum((np.array(centroid_list[i])-np.array(centroid_list[j]))**2))
+                if j != i:
+                    cluster_dist_list.append(np.sum((np.array(centroid_list[i]) - np.array(centroid_list[j])) ** 2))
         return cluster_dist_list
 
     def fit(self, data_instances):
@@ -96,20 +96,22 @@ class HeteroKmeansClient(BaseKmeansModel):
         else:
             self.first_centroid_key = self.transfer_variable.centroid_list.get(idx=0)
             rand = -np.random.rand(data_instances.count())
-        key_dtable = session.parallelize(tuple(zip(self.first_centroid_key,self.first_centroid_key)),partition=1, include_key=True)
-        centroid_list = list(key_dtable.join(data_instances, lambda v1,v2: v2.features).collect())
+        key_dtable = session.parallelize(tuple(zip(self.first_centroid_key, self.first_centroid_key)), partition=1,
+                                         include_key=True)
+        centroid_list = list(key_dtable.join(data_instances, lambda v1, v2: v2.features).collect())
         self.centroid_list = [v[1] for v in centroid_list]
         while self.n_iter_ < self.max_iter:
             d = functools.partial(self.educl_dist, centroid_list=self.centroid_list)
             dist_all_dtable = data_instances.mapValues(d)
-            sorted_key = sorted(list(dist_all_dtable.mapValues(lambda v: None).collect()),key=lambda k: k[0])
+            sorted_key = sorted(list(dist_all_dtable.mapValues(lambda v: None).collect()), key=lambda k: k[0])
             key = [k[0] for k in sorted_key]
-            key_secureagg = session.parallelize(tuple(zip(key, rand)), partition=data_instances.partitions,include_key=True)
-            secure_dist_all = key_secureagg.join(dist_all_dtable, lambda v1, v2: v1+v2)
+            key_secureagg = session.parallelize(tuple(zip(key, rand)), partition=data_instances.partitions,
+                                                include_key=True)
+            secure_dist_all = key_secureagg.join(dist_all_dtable, lambda v1, v2: v1 + v2)
             self.client_dist.remote(secure_dist_all, role=consts.ARBITER, idx=0, suffix=(self.n_iter_,))
             cluster_result = self.transfer_variable.cluster_result.get(idx=0, suffix=(self.n_iter_,))
             centroid_new = self.centroid_cal(cluster_result, data_instances)
-            client_tol = np.sum(np.sum((np.array(self.centroid_list) - np.array(centroid_new))**2,axis=1))
+            client_tol = np.sum(np.sum((np.array(self.centroid_list) - np.array(centroid_new)) ** 2, axis=1))
             self.centroid_list = centroid_new
             self.cluster_result = cluster_result
             self.client_tol.remote(client_tol, role=consts.ARBITER, idx=0, suffix=(self.n_iter_,))
@@ -131,7 +133,8 @@ class HeteroKmeansClient(BaseKmeansModel):
         dist_all_dtable = data_instances.mapValues(d)
         sorted_key = sorted(list(dist_all_dtable.mapValues(lambda v: None).collect()), key=lambda k: k[0])
         key = [k[0] for k in sorted_key]
-        key_secureagg = session.parallelize(tuple(zip(key, rand)), partition=data_instances.partitions,include_key=True)
+        key_secureagg = session.parallelize(tuple(zip(key, rand)), partition=data_instances.partitions,
+                                            include_key=True)
         secure_dist_all = key_secureagg.join(dist_all_dtable, lambda v1, v2: v1 + v2)
         self.client_dist.remote(secure_dist_all, role=consts.ARBITER, idx=0, suffix='predict')
         cluster_result = self.transfer_variable.cluster_result.get(idx=0, suffix='predict')
