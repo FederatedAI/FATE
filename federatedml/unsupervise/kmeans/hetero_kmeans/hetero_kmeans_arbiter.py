@@ -92,9 +92,9 @@ class HeteroKmeansArbiter(BaseKmeansModel):
         dist_cluster_dtable = dist_sum.join(cluster_result, lambda v1, v2: [v1, v2])
         dist_table = self.cal_ave_dist(dist_cluster_dtable, cluster_result, self.k)  # ave dist in each cluster
         cluster_dist = self.cluster_dist_aggregator.sum_model(suffix='predict')
-        result= []
+        result = []
         for v in dist_table:
-            result.append(tuple([v[0],[v[1],v[2],cluster_dist]]))
+            result.append(tuple([v[0], [v[1], v[2], cluster_dist._weights]]))
         predict_result1 = session.parallelize(result, partition=dist_sum.partitions, include_key=True)
         predict_result2 = dist_cluster_dtable
         return predict_result1, predict_result2
