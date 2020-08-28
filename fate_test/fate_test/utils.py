@@ -41,25 +41,31 @@ def _filter_results(metrics, **results):
     return filtered_results
 
 
-def evaluate_almost_equal(metrics, results):
+def evaluate_almost_equal(metrics, results, abs_tol=None):
     """
     Evaluate for each given metric if values results in are equal
     Parameters
     ----------
-    metrics: list of str, metrics names
+    metrics: List of str, metrics names
     results: dict, results to be evaluated
+    abs_tol: float, absolute error tolerance
 
     Returns
     -------
     bool, return True if all metrics in results are almost equal
 
     """
+    # return False if empty
+    if len(metrics) == 0:
+        return False
     eval_summary = {}
     for i, metric in enumerate(metrics):
         v_eval = [res[i] for res in results]
-        for v in v_eval:
-            pass
-
+        first_v = v_eval[0]
+        if abs_tol is not None:
+            eval_summary[metric] = all(math.isclose(v, first_v, abs_tol=abs_tol) for v in v_eval)
+        else:
+            eval_summary[metric] = all(math.isclose(v, first_v) for v in v_eval)
     return eval_summary
 
 
@@ -89,7 +95,7 @@ def match_metrics(evaluate, **results):
     if evaluate:
         eval_summary = evaluate_almost_equal(common_metrics, filtered_results)
         eval_table = PrettyTable()
-        eval_table.field_names = ["Metric", "All Equal"]
+        eval_table.field_names = ["Metric", "All Match"]
         for metric, v in eval_summary.items():
             row = [metric, v]
             eval_table.add_row(row)
