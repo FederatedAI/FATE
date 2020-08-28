@@ -16,11 +16,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils import log_utils
-from federatedml.util import consts
 from federatedml.param.base_param import BaseParam
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class UnionParam(BaseParam):
@@ -44,7 +41,6 @@ class UnionParam(BaseParam):
         self.need_run = need_run
         self.allow_missing = allow_missing
         self.keep_duplicate = keep_duplicate
-
 
     def check(self):
         descr = "union param's "

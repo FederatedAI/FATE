@@ -18,10 +18,8 @@
 #
 ################################################################################
 
-from arch.api.utils import log_utils
 from federatedml.param.base_param import BaseParam
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class PredictParam(BaseParam):
@@ -38,7 +36,6 @@ class PredictParam(BaseParam):
         self.threshold = threshold
 
     def check(self):
-
         if type(self.threshold).__name__ not in ["float", "int"]:
             raise ValueError("predict param's predict_param {} not supported, should be float or int".format(
                 self.threshold))

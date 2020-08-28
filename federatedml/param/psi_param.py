@@ -1,13 +1,11 @@
 from federatedml.param.base_param import BaseParam
 from federatedml.util import consts
-from arch.api.utils import log_utils
-
-LOGGER = log_utils.getLogger()
 
 
 class PSIParam(BaseParam):
 
-    def __init__(self, max_bin_num=20, need_run=True, dense_missing_val=None, binning_error=consts.DEFAULT_RELATIVE_ERROR):
+    def __init__(self, max_bin_num=20, need_run=True, dense_missing_val=None,
+                 binning_error=consts.DEFAULT_RELATIVE_ERROR):
         super(PSIParam, self).__init__()
         self.max_bin_num = max_bin_num
         self.need_run = need_run

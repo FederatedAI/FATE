@@ -16,13 +16,9 @@
 #  limitations under the License.
 #
 import copy
-import math
 
-from arch.api.utils import log_utils
 from federatedml.param.base_param import BaseParam
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class TransformParam(BaseParam):

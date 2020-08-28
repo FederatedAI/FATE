@@ -16,10 +16,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils import log_utils
-from federatedml.param.base_param import BaseParam
 
-LOGGER = log_utils.getLogger()
+from federatedml.param.base_param import BaseParam
 
 
 class DataSplitParam(BaseParam):

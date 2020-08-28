@@ -26,10 +26,6 @@ from federatedml.util import consts
 import copy
 import collections
 
-from arch.api.utils import log_utils
-
-LOGGER = log_utils.getLogger()
-
 
 class ObjectiveParam(BaseParam):
     """
