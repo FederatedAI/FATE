@@ -72,6 +72,22 @@ class BaseKmeansModel(ModelBase):
         }
         return result
 
+    def count(self, iterator):
+        count_result = dict()
+        for k, v in iterator:
+            if v not in count_result:
+                count_result[v] = 1
+            else:
+                count_result[v] += 1
+        return count_result
+
+    @staticmethod
+    def sum_dict(d1,d2):
+        temp = dict()
+        for key in d1.keys() | d2.keys():
+            temp[key] = sum([d.get(key, 0) for d in (d1, d2)])
+        return temp
+
     def _abnormal_detection(self, data_instances):
         """
         Make sure input data_instances is valid.

@@ -23,7 +23,6 @@ from arch.api.utils import log_utils
 from federatedml.unsupervise.kmeans.kmeans_model_base import BaseKmeansModel
 from federatedml.param.hetero_kmeans_param import KmeansParam
 from federatedml.util import consts
-from federatedml.util import fate_operator
 from federatedml.framework.homo.blocks import secure_sum_aggregator
 from federatedml.framework.weights import NumpyWeights
 
@@ -42,13 +41,12 @@ class HeteroKmeansClient(BaseKmeansModel):
     def educl_dist(u, centroid_list):
         result = []
         for c in centroid_list:
-            result.append(np.sqrt(np.sum(np.power(c - u.features, 2))))
+            result.append(np.sqrt(np.sum(np.power(np.array(c) - u.features, 2))))
         return result
 
     def get_centroid(self,data_instances):
         random.seed(self.k)
         random_list = list()
-        feature_list = list()
         v_list = list()
         for r in range(0,self.k):
             random_list.append(math.ceil(random.random()*data_instances.count()))
@@ -58,48 +56,19 @@ class HeteroKmeansClient(BaseKmeansModel):
             if n in random_list:
                 v_list.append(k[0])
             n += 1
-        for target in v_list:
-            feature_list.append(data_instances.filter(lambda k, v: k == target).features)
-        return feature_list
+        return v_list
 
     def f(self,iterator):
-        result = dict()
         cluster_result = dict()
         for k,v in iterator:
             if v[1] not in cluster_result:
                 cluster_result[v[1]] = v[0]
             else:
                 cluster_result[v[1]] +=v[0]
-        for i in range(len(cluster_result)):
-            result[i] = cluster_result
-        return result
-
-    def count(self, iterator):
-        count_result = dict()
-        for k, v in iterator:
-            if v not in count_result:
-                count_result[v] = 1
-            else:
-                count_result[v] += 1
-        return count_result
-
-    @staticmethod
-    def sum_dict(d1,d2):
-        temp = dict()
-        for key in d1.keys() | d2.keys():
-            temp[key] = sum([d.get(key, 0) for d in (d1, d2)])
-        return temp
+        return cluster_result
 
     def centroid_cal(self, cluster_result, data_instances):
-        # sorted_k = sorted(list(data_instances.mapValues(lambda data_instance: None).collect()), key=lambda k: k[0])
-        # cluster_result_dtable = session.parallelize(zip(np.array(sorted_k)[:, 0], cluster_result), include_key=True, partition=data_instances._partitions)
-        # get_sum = functools.partial(self.get_sum)
-        # centroid_list = list()
-        # for kk in range(0, self.k):
-        #     a = cluster_result_dtable.filter(lambda k1, v1: v1 == kk)
-        #     centroid_k = a.join(data_instances, lambda v1, v2: v2).mapValues(lambda v: v.features).reduce(get_sum) / a.count()
-        #     centroid_list.append(centroid_k)
-        cluster_result_dtable = data_instances.join(cluster_result, lambda v1, v2: [v1, v2])
+        cluster_result_dtable = data_instances.join(cluster_result, lambda v1, v2: [v1.features, v2])
         centroid_feature_sum = cluster_result_dtable.mapPartitions(self.f).reduce(self.sum_dict)
         cluster_count = cluster_result.mapPartitions(self.count).reduce(self.sum_dict)
         centroid_list = []
@@ -119,25 +88,25 @@ class HeteroKmeansClient(BaseKmeansModel):
     def fit(self, data_instances):
         LOGGER.info("Enter hetero_kmenas_client fit")
         self._abnormal_detection(data_instances)
-        self.centroid_list = self.get_centroid(data_instances)
-        random.seed(data_instances.count())
-        if self.role == consts.GUEST :
-            self.transfer_variable.centroid_list.remote(self.centroid_list, role=consts.HOST, idx=0)
-            rand = [random.rand()] * data_instances.count()
+        np.random.seed(data_instances.count())
+        if self.role == consts.GUEST:
+            self.first_centroid_key = self.get_centroid(data_instances)
+            self.transfer_variable.centroid_list.remote(self.first_centroid_key, role=consts.HOST, idx=0)
+            rand = np.random.rand(data_instances.count())
         else:
-            self.transfer_variable.centroid_list.get(self.centroid_list, role=consts.GUEST, idx=-1)
-            rand = [-random.rand()] * data_instances.count()
+            self.first_centroid_key = self.transfer_variable.centroid_list.get(idx=0)
+            rand = -np.random.rand(data_instances.count())
+        key_dtable = session.parallelize(tuple(zip(self.first_centroid_key,self.first_centroid_key)),partition=1, include_key=True)
+        centroid_list = list(key_dtable.join(data_instances, lambda v1,v2: v2.features).collect())
+        self.centroid_list = [v[1] for v in centroid_list]
         while self.n_iter_ < self.max_iter:
             d = functools.partial(self.educl_dist, centroid_list=self.centroid_list)
             dist_all_dtable = data_instances.mapValues(d)
             sorted_key = sorted(list(dist_all_dtable.mapValues(lambda v: None).collect()),key=lambda k: k[0])
-            key = list(sorted_key)
-            key_secureagg = session.parallelize(tuple(zip(key, rand)), partition=data_instances.patitions)
-            secure_dist_all = key_secureagg.join(data_instances, lambda v1, v2: v1+v2)
+            key = [k[0] for k in sorted_key]
+            key_secureagg = session.parallelize(tuple(zip(key, rand)), partition=data_instances.partitions,include_key=True)
+            secure_dist_all = key_secureagg.join(dist_all_dtable, lambda v1, v2: v1+v2)
             self.client_dist.remote(secure_dist_all, role=consts.ARBITER, idx=0, suffix=(self.n_iter_,))
-            #sorted_dist_table = sorted(list(dist_all_dtable.collect()), key=lambda k : k[0])
-            #dist_all = np.array([v[1] for v in sorted_dist_table])
-            #self.dist_aggregator.send_model(NumpyWeights(dist_all), suffix=(self.n_iter_,))
             cluster_result = self.transfer_variable.cluster_result.get(idx=0, suffix=(self.n_iter_,))
             centroid_new = self.centroid_cal(cluster_result, data_instances)
             client_tol = np.sum(np.sum((np.array(self.centroid_list) - np.array(centroid_new))**2,axis=1))
@@ -145,7 +114,7 @@ class HeteroKmeansClient(BaseKmeansModel):
             self.cluster_result = cluster_result
             self.client_tol.remote(client_tol, role=consts.ARBITER, idx=0, suffix=(self.n_iter_,))
             cluster_dist = self.centroid_dist(self.centroid_list)
-            self.cluster_dist_aggregator.send_model(cluster_dist, suffix=(self.n_iter_,))
+            self.cluster_dist_aggregator.send_model(NumpyWeights(np.array(cluster_dist)), suffix=(self.n_iter_,))
             tol_tag = self.transfer_variable.arbiter_tol.get(idx=0, suffix=(self.n_iter_,))
             self.n_iter_ += 1
             if tol_tag:
@@ -153,18 +122,22 @@ class HeteroKmeansClient(BaseKmeansModel):
 
     def predict(self, data_instances):
         LOGGER.info("Start predict ...")
+        np.random.seed(data_instances.count())
+        if self.role == consts.GUEST:
+            rand = np.random.rand(data_instances.count())
+        else:
+            rand = -np.random.rand(data_instances.count())
         d = functools.partial(self.educl_dist, centroid_list=self.centroid_list)
         dist_all_dtable = data_instances.mapValues(d)
-        sorted_dist_table = sorted(list(dist_all_dtable.collect()), key=lambda k: k[0])
-        dist_all = np.array([v[1] for v in sorted_dist_table])
-        self.dist_aggregator.send_model(NumpyWeights(dist_all), suffix='predict')
-        sample_class = self.transfer_variable.cluster_result.get(idx=0)
+        sorted_key = sorted(list(dist_all_dtable.mapValues(lambda v: None).collect()), key=lambda k: k[0])
+        key = [k[0] for k in sorted_key]
+        key_secureagg = session.parallelize(tuple(zip(key, rand)), partition=data_instances.partitions,include_key=True)
+        secure_dist_all = key_secureagg.join(dist_all_dtable, lambda v1, v2: v1 + v2)
+        self.client_dist.remote(secure_dist_all, role=consts.ARBITER, idx=0, suffix='predict')
+        cluster_result = self.transfer_variable.cluster_result.get(idx=0, suffix='predict')
         cluster_dist = self.centroid_dist(self.centroid_list)
         self.cluster_dist_aggregator.send_model(cluster_dist, suffix='predict')
-        dist_fake = [-1] * data_instances.count()
-        sorted_key = list(sorted_dist_table.mapValues(lambda k: k[0]).collect())
-        predict_concat = session.parallelize(tuple(zip(sorted_key,sample_class,dist_fake,dist_fake)), partition=data_instances.patitions)
-        predict_result = data_instances.join(predict_concat, lambda v1, v2: [v1.label, v2[1], v2[2], v2[3]])
+        predict_result = data_instances.join(cluster_result, lambda v1, v2: [v1.features, v1.label, v2])
         return predict_result
 
 
