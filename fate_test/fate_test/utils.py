@@ -14,9 +14,11 @@
 #  limitations under the License.
 #
 
-import typing
+import math
 import json
+import typing
 from pathlib import Path
+
 from prettytable import PrettyTable
 from ruamel import yaml
 
@@ -30,33 +32,68 @@ def _get_common_metrics(**results):
             common_metrics = common_metrics & result.keys()
     return list(common_metrics)
 
+
 def _filter_results(metrics, **results):
     filtered_results = {}
     for model_name, result in results.items():
-        model_result = {metric: result[metric] for metric in metrics}
+        model_result = [result[metric] for metric in metrics]
         filtered_results[model_name] = model_result
     return filtered_results
 
 
-def match_metrics(eval, **results):
+def evaluate_almost_equal(metrics, results):
     """
-        Get metrics
-        Parameters
-        ----------
-        eval: bool, whether to evaluate metrics of models are almost equal, and include compare results in output report
-        results: dict of model name: metrics
+    Evaluate for each given metric if values results in are equal
+    Parameters
+    ----------
+    metrics: list of str, metrics names
+    results: dict, results to be evaluated
 
-        Returns
-        -------
+    Returns
+    -------
+    bool, return True if all metrics in results are almost equal
 
-        """
+    """
+    eval_summary = {}
+    for i, metric in enumerate(metrics):
+        v_eval = [res[i] for res in results]
+        for v in v_eval:
+            pass
+
+    return eval_summary
+
+
+def match_metrics(evaluate, **results):
+    """
+    Get metrics
+    Parameters
+    ----------
+    evaluate: bool, whether to evaluate metrics are almost equal, and include compare results in output report
+    results: dict of model name: metrics
+
+    Returns
+    -------
+    match result
+
+    """
     common_metrics = _get_common_metrics(**results)
     filtered_results = _filter_results(common_metrics, **results)
     table = PrettyTable()
+    model_names = list(filtered_results.keys())
     table.field_names = ["Model Name"] + common_metrics
-    for model_name, result in filtered_results.items():
-        table.add_row([model_name] + results)
-    print(table)
+    for model_name in model_names:
+        row = [model_name] + filtered_results[model_name]
+        table.add_row(row)
+    print(table.get_string(title="Match Results"))
+
+    if evaluate:
+        eval_summary = evaluate_almost_equal(common_metrics, filtered_results)
+        eval_table = PrettyTable()
+        eval_table.field_names = ["Metric", "All Equal"]
+        for metric, v in eval_summary.items():
+            row = [metric, v]
+            eval_table.add_row(row)
+        print(eval_table)
 
 
 def load_conf(path: typing.Union[str, Path]):
