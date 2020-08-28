@@ -43,7 +43,7 @@ def _filter_results(metrics, **results):
 
 def evaluate_almost_equal(metrics, results, abs_tol=None):
     """
-    Evaluate for each given metric if values results in are equal
+    Evaluate for each given metric if values in results are equal
     Parameters
     ----------
     metrics: List of str, metrics names
