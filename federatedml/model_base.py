@@ -19,8 +19,8 @@
 import copy
 
 import numpy as np
-
 from fate_arch.computing import is_table
+
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.statistic.data_overview import header_alignment
 from federatedml.util import LOGGER
@@ -117,7 +117,8 @@ class ModelBase(object):
         if not is_table(self.data_output):
             return
         if self.component_properties.input_data_count + self.component_properties.input_eval_data_count != \
-                self.data_output.count():
+                self.data_output.count() and \
+                self.component_properties.input_data_count != self.component_properties.input_eval_data_count:
             raise ValueError("Input data count does not match with output data count")
 
     def predict(self, data_inst):
