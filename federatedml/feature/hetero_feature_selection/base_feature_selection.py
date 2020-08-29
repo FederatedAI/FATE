@@ -22,7 +22,7 @@ from google.protobuf import json_format
 
 from arch.api.utils import log_utils
 from federatedml.feature.feature_selection import filter_factory
-from federatedml.feature.feature_selection.model_adaptor.adapter_factory import adapter_factory
+from federatedml.feature.feature_selection.model_adapter.adapter_factory import adapter_factory
 from federatedml.feature.feature_selection.selection_properties import SelectionProperties, CompletedSelectionResults
 from federatedml.model_base import ModelBase
 from federatedml.param.feature_selection_param import FeatureSelectionParam
@@ -304,14 +304,14 @@ class BaseHeteroFeatureSelection(ModelBase):
         else:
             for filter_idx, method in enumerate(self.filter_methods):
                 if method in [consts.STATISTIC_FILTER, consts.IV_FILTER, consts.PSI_FILTER,
-                              consts.HETERO_SBT_FILTER, consts.HOMO_SBT_FILTER]:
+                              consts.HETERO_SBT_FILTER, consts.HOMO_SBT_FILTER, consts.HETERO_FAST_SBT_FILTER]:
                     if method == consts.STATISTIC_FILTER:
                         metrics = self.model_param.statistic_param.metrics
                     elif method == consts.IV_FILTER:
                         metrics = self.model_param.iv_param.metrics
                     elif method == consts.PSI_FILTER:
                         metrics = self.model_param.psi_param.metrics
-                    elif method in [consts.HETERO_SBT_FILTER, consts.HOMO_SBT_FILTER]:
+                    elif method in [consts.HETERO_SBT_FILTER, consts.HOMO_SBT_FILTER, consts.HETERO_FAST_SBT_FILTER]:
                         metrics = self.model_param.sbt_param.metrics
                     else:
                         raise ValueError(f"method: {method} is not supported")

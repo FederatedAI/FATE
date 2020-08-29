@@ -176,6 +176,8 @@ class HeteroFastSecureBoostGuest(HeteroSecureBoostGuest):
         _, model_param = super(HeteroFastSecureBoostGuest, self).get_model_param()
         param_name = "HeteroFastSecureBoostGuestParam"
         model_param.tree_plan.extend(plan.encode_plan(self.tree_plan))
+        model_param.model_name = consts.HETERO_FAST_SBT_MIX if self.work_mode == consts.MIX_TREE else \
+                                 consts.HETERO_FAST_SBT_LAYERED
 
         return param_name, model_param
 

@@ -16,8 +16,8 @@
 
 from pipeline.param.onehot_encoder_param import OneHotEncoderParam
 from pipeline.component.component_base import Component
-from pipeline.interface.input import Input
-from pipeline.interface.output import Output
+from pipeline.interface import Input
+from pipeline.interface import Output
 from pipeline.utils.logger import LOGGER
 
 
@@ -32,7 +32,7 @@ class OneHotEncoder(Component, OneHotEncoderParam):
 
         OneHotEncoderParam.__init__(self, **new_kwargs)
         self.input = Input(self.name)
-        self.output = Output(self.name, has_model=False)
+        self.output = Output(self.name)
         self._module_name = "OneHotEncoder"
 
 

@@ -60,7 +60,7 @@ class FTL(ModelBase):
         self.mode = 'plain'
         self.encrypt_calculators = []
         self.encrypter = None
-        self.partitions = 10
+        self.partitions = 16
         self.batch_size = None
         self.epochs = None
         self.store_header = None  # header of input data table
@@ -203,6 +203,12 @@ class FTL(ModelBase):
 
         overlap_samples = intersect_obj.run(data_inst)  # find intersect ids
         non_overlap_samples = data_inst.subtractByKey(overlap_samples)
+
+        LOGGER.debug('num of overlap/non-overlap sampels: {}/{}'.format(overlap_samples.count(),
+                                                                        non_overlap_samples.count()))
+
+        assert overlap_samples.count() > 0 and non_overlap_samples.count() > 0, 'overlap samples number and non overlap samples' \
+                                                                        'number should be larger than 0'
 
         self.store_header = data_inst.schema['header']
         LOGGER.debug('data inst header is {}'.format(self.store_header))

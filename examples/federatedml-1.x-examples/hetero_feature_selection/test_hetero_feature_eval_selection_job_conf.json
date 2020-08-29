@@ -142,6 +142,9 @@
                 "percentile": 0.95,
                 "upper_threshold": 2.0
             }
+        },
+        "sample_0": {
+            "fractions": 0.9
         }
     }
 }

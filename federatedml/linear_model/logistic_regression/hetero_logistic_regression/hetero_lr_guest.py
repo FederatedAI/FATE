@@ -77,6 +77,8 @@ class HeteroLRGuest(HeteroLRBase):
         else:
             self.need_one_vs_rest = False
             self.fit_binary(data_instances, validate_data)
+        LOGGER.debug(f"Final summary: {self.summary()}")
+
 
     def fit_binary(self, data_instances, validate_data=None):
         LOGGER.info("Enter hetero_lr_guest fit")
@@ -153,7 +155,6 @@ class HeteroLRGuest(HeteroLRBase):
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
             self.load_model(self.validation_strategy.cur_best_model)
         self.set_summary(self.get_model_summary())
-        LOGGER.debug(f"Final summary: {self.summary()}")
 
     @assert_io_num_rows_equal
     def predict(self, data_instances):
