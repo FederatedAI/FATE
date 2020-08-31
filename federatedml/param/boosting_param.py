@@ -35,7 +35,7 @@ class ObjectiveParam(BaseParam):
     ----------
     objective : None or str, accepted None,'cross_entropy','lse','lae','log_cosh','tweedie','fair','huber' only,
                 None in host's config, should be str in guest'config.
-                when task_type is classification, only support cross_enctropy,
+                when task_type is classification, only support cross_entropy,
                 other 6 types support in regression task. default: None
 
     params : None or list, should be non empty list when objective is 'tweedie','fair','huber',
