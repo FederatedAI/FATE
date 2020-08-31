@@ -106,7 +106,7 @@ class ModelBase(object):
             self.data_output = saved_result[0]
             # LOGGER.debug("One data: {}".format(self.data_output.first()[1].features))
         LOGGER.debug("saved_result is : {}, data_output: {}".format(saved_result, self.data_output))
-        self.check_consistency()
+        # self.check_consistency()
         self.save_summary()
 
     def get_metrics_param(self):
