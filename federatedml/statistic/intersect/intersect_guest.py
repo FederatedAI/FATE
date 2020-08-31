@@ -18,7 +18,7 @@ from collections import Iterable
 import gmpy2
 import random
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 from federatedml.secureprotol import gmpy_math
 from federatedml.statistic.intersect import RawIntersect
 from federatedml.statistic.intersect import RsaIntersect

@@ -21,7 +21,7 @@ import unittest
 
 class TestEncryptModeCalculator(unittest.TestCase):
     def setUp(self):
-        from arch.api import session
+        from fate_arch.session import computing_session as session
         session.init("test_encrypt_mode_calculator")
 
         self.list_data = []

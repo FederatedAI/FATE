@@ -18,7 +18,7 @@ import random
 
 from sklearn.utils import resample
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 from federatedml.model_base import ModelBase

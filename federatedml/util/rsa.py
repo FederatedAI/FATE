@@ -19,7 +19,7 @@ from federatedml.model_base import ModelBase
 from federatedml.param.rsa_param import RsaParam
 from federatedml.secureprotol import gmpy_math
 from federatedml.util import LOGGER
-from arch.api import session
+from fate_arch.session import computing_session as session
 import datetime
 
 

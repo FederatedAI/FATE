@@ -2,7 +2,7 @@ import json
 import unittest
 import uuid
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 from federatedml.feature.homo_onehot.OHE_alignment_arbiter import OHEAlignmentArbiter
 
 
