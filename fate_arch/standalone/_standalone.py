@@ -22,6 +22,7 @@ import typing
 import uuid
 from collections import Iterable
 from concurrent.futures import ProcessPoolExecutor as Executor
+from contextlib import ExitStack
 from functools import partial
 from heapq import heapify, heappop, heapreplace
 from operator import is_not
@@ -29,8 +30,6 @@ from pathlib import Path
 
 import lmdb
 import numpy as np
-from cachetools import LRUCache
-from cachetools import cached
 
 from fate_arch.common import file_utils, Party
 from fate_arch.common.log import getLogger
@@ -73,10 +72,10 @@ class Table(object):
 
     def destroy(self):
         for p in range(self._partitions):
-            env = self._get_env_for_partition(p, write=True)
-            db = env.open_db()
-            with env.begin(write=True) as txn:
-                txn.drop(db)
+            with self._get_env_for_partition(p, write=True) as env:
+                db = env.open_db()
+                with env.begin(write=True) as txn:
+                    txn.drop(db)
 
         table_key = f"{self._namespace}.{self._name}"
         _get_meta_table().delete(table_key)
@@ -86,36 +85,34 @@ class Table(object):
     def count(self):
         cnt = 0
         for p in range(self._partitions):
-            env = self._get_env_for_partition(p)
-            cnt += env.stat()['entries']
+            with self._get_env_for_partition(p) as env:
+                cnt += env.stat()['entries']
         return cnt
 
     # noinspection PyUnusedLocal
     def collect(self, **kwargs):
         iterators = []
-        for p in range(self._partitions):
-            env = self._get_env_for_partition(p)
-            txn = env.begin()
-            iterators.append(txn.cursor())
+        with ExitStack() as s:
+            for p in range(self._partitions):
+                env = s.enter_context(self._get_env_for_partition(p))
+                txn = s.enter_context(env.begin())
+                iterators.append(s.enter_context(txn.cursor()))
 
-        # Merge sorted
-        entries = []
-        for _id, it in enumerate(iterators):
-            if it.next():
-                key, value = it.item()
-                entries.append([key, value, _id, it])
-            else:
-                it.close()
-        heapify(entries)
-        while entries:
-            key, value, _, it = entry = entries[0]
-            yield c_pickle.loads(key), c_pickle.loads(value)
-            if it.next():
-                entry[0], entry[1] = it.item()
-                heapreplace(entries, entry)
-            else:
-                _, _, _, it = heappop(entries)
-                it.close()
+            # Merge sorted
+            entries = []
+            for _id, it in enumerate(iterators):
+                if it.next():
+                    key, value = it.item()
+                    entries.append([key, value, _id, it])
+            heapify(entries)
+            while entries:
+                key, value, _, it = entry = entries[0]
+                yield c_pickle.loads(key), c_pickle.loads(value)
+                if it.next():
+                    entry[0], entry[1] = it.item()
+                    heapreplace(entries, entry)
+                else:
+                    _, _, _, it = heappop(entries)
 
     def reduce(self, func):
         # noinspection PyProtectedMember
@@ -210,46 +207,46 @@ class Table(object):
     def put(self, k, v):
         k_bytes, v_bytes = _kv_to_bytes(k=k, v=v)
         p = _hash_key_to_partition(k_bytes, self._partitions)
-        env = self._get_env_for_partition(p, write=True)
-        with env.begin(write=True) as txn:
-            return txn.put(k_bytes, v_bytes)
+        with self._get_env_for_partition(p, write=True) as env:
+            with env.begin(write=True) as txn:
+                return txn.put(k_bytes, v_bytes)
 
     def put_all(self, kv_list: Iterable):
         txn_map = {}
         is_success = True
-        for p in range(self._partitions):
-            env = self._get_env_for_partition(p, write=True)
-            txn = env.begin(write=True)
-            txn_map[p] = env, txn
-        for k, v in kv_list:
-            try:
-                k_bytes, v_bytes = _kv_to_bytes(k=k, v=v)
-                p = _hash_key_to_partition(k_bytes, self._partitions)
-                is_success = is_success and txn_map[p][1].put(k_bytes, v_bytes)
-            except Exception as e:
-                is_success = False
-                LOGGER.exception(f"put_all for k={k} v={v} fail. exception: {e}")
-                break
-        for p, (env, txn) in txn_map.items():
-            txn.commit() if is_success else txn.abort()
+        with ExitStack() as s:
+            for p in range(self._partitions):
+                env = s.enter_context(self._get_env_for_partition(p, write=True))
+                txn_map[p] = env, env.begin(write=True)
+            for k, v in kv_list:
+                try:
+                    k_bytes, v_bytes = _kv_to_bytes(k=k, v=v)
+                    p = _hash_key_to_partition(k_bytes, self._partitions)
+                    is_success = is_success and txn_map[p][1].put(k_bytes, v_bytes)
+                except Exception as e:
+                    is_success = False
+                    LOGGER.exception(f"put_all for k={k} v={v} fail. exception: {e}")
+                    break
+            for p, (env, txn) in txn_map.items():
+                txn.commit() if is_success else txn.abort()
 
     def get(self, k):
         k_bytes = _k_to_bytes(k=k)
         p = _hash_key_to_partition(k_bytes, self._partitions)
-        env = self._get_env_for_partition(p)
-        with env.begin(write=True) as txn:
-            old_value_bytes = txn.get(k_bytes)
-            return None if old_value_bytes is None else c_pickle.loads(old_value_bytes)
+        with self._get_env_for_partition(p) as env:
+            with env.begin(write=True) as txn:
+                old_value_bytes = txn.get(k_bytes)
+                return None if old_value_bytes is None else c_pickle.loads(old_value_bytes)
 
     def delete(self, k):
         k_bytes = _k_to_bytes(k=k)
         p = _hash_key_to_partition(k_bytes, self._partitions)
-        env = self._get_env_for_partition(p, write=True)
-        with env.begin(write=True) as txn:
-            old_value_bytes = txn.get(k_bytes)
-            if txn.delete(k_bytes):
-                return None if old_value_bytes is None else c_pickle.loads(old_value_bytes)
-            return None
+        with self._get_env_for_partition(p, write=True) as env:
+            with env.begin(write=True) as txn:
+                old_value_bytes = txn.get(k_bytes)
+                if txn.delete(k_bytes):
+                    return None if old_value_bytes is None else c_pickle.loads(old_value_bytes)
+                return None
 
 
 # noinspection PyMethodMayBeStatic
@@ -554,23 +551,11 @@ class _BinaryProcess:
         return self.info.get_func()
 
 
-class _EvictLRUCache(LRUCache):
-
-    def __init__(self, maxsize):
-        LRUCache.__init__(self, maxsize, None)
-
-    def popitem(self):
-        key, val = LRUCache.popitem(self)
-        val.close()
-        return key, val
-
-
 def _get_env(*args, write=False):
     _path = _get_storage_dir(*args)
     return _open_env(_path, write=write)
 
 
-@cached(cache=_EvictLRUCache(maxsize=64))
 def _open_env(path, write=False):
     path.mkdir(parents=True, exist_ok=True)
     return lmdb.open(path.as_posix(), create=True, max_dbs=1, max_readers=1024, lock=write, sync=True,
@@ -591,264 +576,256 @@ def _hash_key_to_partition(key, partitions):
     return int(b)
 
 
+serialize = c_pickle.dumps
+deserialize = c_pickle.loads
+
+
 def _do_map(p: _UnaryProcess):
-    _mapper = p.get_func()
-    op = p.operand
     rtn = p.output_operand()
-    source_env = p.operand.as_env()
-    serialize = c_pickle.dumps
-    deserialize = c_pickle.loads
-    _table_key = ".".join([op.namespace, op.name])
-    txn_map = {}
-    partitions = _get_from_meta_table(_table_key)
-    for p in range(partitions):
-        env = _get_env(rtn.namespace, rtn.name, str(p), write=True)
-        txn = env.begin(write=True)
-        txn_map[p] = txn
-    with source_env.begin() as source_txn:
-        cursor = source_txn.cursor()
+    with ExitStack() as s:
+        source_env = s.enter_context(p.operand.as_env())
+        partitions = _get_from_meta_table(f"{p.operand.namespace}.{p.operand.name}")
+        txn_map = {}
+        for p in range(partitions):
+            env = s.enter_context(_get_env(rtn.namespace, rtn.name, str(p), write=True))
+            txn_map[p] = s.enter_context(env.begin(write=True))
+        source_txn = s.enter_context(source_env.begin())
+        cursor = s.enter_context(source_txn.cursor())
         for k_bytes, v_bytes in cursor:
             k, v = deserialize(k_bytes), deserialize(v_bytes)
-            k1, v1 = _mapper(k, v)
+            k1, v1 = p.get_func()(k, v)
             k1_bytes, v1_bytes = serialize(k1), serialize(v1)
             p = _hash_key_to_partition(k1_bytes, partitions)
             dest_txn = txn_map[p]
             dest_txn.put(k1_bytes, v1_bytes)
-        cursor.close()
-    for p, txn in txn_map.items():
-        txn.commit()
     return rtn
 
 
 def _generator_from_cursor(cursor):
-    deserialize = c_pickle.loads
     for k, v in cursor:
         yield deserialize(k), deserialize(v)
 
 
 def _do_map_partitions(p: _UnaryProcess):
-    _mapper = p.get_func()
-    rtn = p.output_operand()
-    source_env = p.operand.as_env()
-    dst_env = rtn.as_env(write=True)
-    serialize = c_pickle.dumps
-    with source_env.begin() as source_txn:
-        with dst_env.begin(write=True) as dst_txn:
-            cursor = source_txn.cursor()
-            v = _mapper(_generator_from_cursor(cursor))
-            if cursor.last():
-                k_bytes = cursor.key()
-                dst_txn.put(k_bytes, serialize(v))
-            cursor.close()
+    with ExitStack() as s:
+        rtn = p.output_operand()
+        source_env = s.enter_context(p.operand.as_env())
+        dst_env = s.enter_context(rtn.as_env(write=True))
+
+        source_txn = s.enter_context(source_env.begin())
+        dst_txn = s.enter_context(dst_env.begin(write=True))
+
+        cursor = s.enter_context(source_txn.cursor())
+        v = p.get_func()(_generator_from_cursor(cursor))
+        if cursor.last():
+            k_bytes = cursor.key()
+            dst_txn.put(k_bytes, serialize(v))
     return rtn
 
 
 def _do_map_partitions2(p: _UnaryProcess):
-    _mapper = p.get_func()
-    rtn = p.output_operand()
-    source_env = p.operand.as_env()
-    dst_env = rtn.as_env(write=True)
-    serialize = c_pickle.dumps
-    with source_env.begin() as source_txn:
-        with dst_env.begin(write=True) as dst_txn:
-            cursor = source_txn.cursor()
-            v = _mapper(_generator_from_cursor(cursor))
-            if cursor.last():
-                if isinstance(v, Iterable):
-                    for k1, v1 in v:
-                        dst_txn.put(serialize(k1), serialize(v1))
-                else:
-                    k_bytes = cursor.key()
-                    dst_txn.put(k_bytes, serialize(v))
-            cursor.close()
+    with ExitStack() as s:
+        rtn = p.output_operand()
+        source_env = s.enter_context(p.operand.as_env())
+        dst_env = s.enter_context(rtn.as_env(write=True))
+
+        source_txn = s.enter_context(source_env.begin())
+        dst_txn = s.enter_context(dst_env.begin(write=True))
+
+        cursor = s.enter_context(source_txn.cursor())
+        v = p.get_func()(_generator_from_cursor(cursor))
+        if cursor.last():
+            if isinstance(v, Iterable):
+                for k1, v1 in v:
+                    dst_txn.put(serialize(k1), serialize(v1))
+            else:
+                k_bytes = cursor.key()
+                dst_txn.put(k_bytes, serialize(v))
     return rtn
 
 
 def _do_map_values(p: _UnaryProcess):
-    _mapper = p.get_func()
     rtn = p.output_operand()
-    source_env = p.operand.as_env()
-    dst_env = rtn.as_env(write=True)
-    serialize = c_pickle.dumps
-    deserialize = c_pickle.loads
-    with source_env.begin() as source_txn:
-        with dst_env.begin(write=True) as dst_txn:
-            cursor = source_txn.cursor()
-            for k_bytes, v_bytes in cursor:
-                v = deserialize(v_bytes)
-                v1 = _mapper(v)
-                dst_txn.put(k_bytes, serialize(v1))
-            cursor.close()
+    with ExitStack() as s:
+        source_env = s.enter_context(p.operand.as_env())
+        dst_env = s.enter_context(rtn.as_env(write=True))
+
+        source_txn = s.enter_context(source_env.begin())
+        dst_txn = s.enter_context(dst_env.begin(write=True))
+
+        cursor = s.enter_context(source_txn.cursor())
+        for k_bytes, v_bytes in cursor:
+            v = deserialize(v_bytes)
+            v1 = p.get_func()(v)
+            dst_txn.put(k_bytes, serialize(v1))
     return rtn
 
 
 def _do_flat_map(p: _UnaryProcess):
-    _func = p.get_func()
     rtn = p.output_operand()
-    source_env = p.operand.as_env()
-    dst_env = rtn.as_env(write=True)
-    serialize = c_pickle.dumps
-    deserialize = c_pickle.loads
-    with source_env.begin() as source_txn:
-        with dst_env.begin(write=True) as dst_txn:
-            cursor = source_txn.cursor()
-            for k_bytes, v_bytes in cursor:
-                k = deserialize(k_bytes)
-                v = deserialize(v_bytes)
-                map_result = _func(k, v)
-                for result_k, result_v in map_result:
-                    dst_txn.put(serialize(result_k), serialize(result_v))
-            cursor.close()
+    with ExitStack() as s:
+        source_env = s.enter_context(p.operand.as_env())
+        dst_env = s.enter_context(rtn.as_env(write=True))
+
+        source_txn = s.enter_context(source_env.begin())
+        dst_txn = s.enter_context(dst_env.begin(write=True))
+
+        cursor = s.enter_context(source_txn.cursor())
+        for k_bytes, v_bytes in cursor:
+            k = deserialize(k_bytes)
+            v = deserialize(v_bytes)
+            map_result = p.get_func()(k, v)
+            for result_k, result_v in map_result:
+                dst_txn.put(serialize(result_k), serialize(result_v))
     return rtn
 
 
 def _do_reduce(p: _UnaryProcess):
-    _reducer = p.get_func()
-    source_env = p.operand.as_env()
-    deserialize = c_pickle.loads
     value = None
-    with source_env.begin() as source_txn:
-        cursor = source_txn.cursor()
+    with ExitStack() as s:
+        source_env = s.enter_context(p.operand.as_env())
+        source_txn = s.enter_context(source_env.begin())
+        cursor = s.enter_context(source_txn.cursor())
         for k_bytes, v_bytes in cursor:
             v = deserialize(v_bytes)
             if value is None:
                 value = v
             else:
-                value = _reducer(value, v)
+                value = p.get_func()(value, v)
     return value
 
 
 def _do_glom(p: _UnaryProcess):
     rtn = p.output_operand()
-    source_env = p.operand.as_env()
-    dst_env = rtn.as_env(write=True)
-    serialize = c_pickle.dumps
-    deserialize = c_pickle.loads
-    with source_env.begin() as source_txn:
-        with dst_env.begin(write=True) as dest_txn:
-            cursor = source_txn.cursor()
-            v_list = []
-            k_bytes = None
-            for k, v in cursor:
-                v_list.append((deserialize(k), deserialize(v)))
-                k_bytes = k
-            if k_bytes is not None:
-                dest_txn.put(k_bytes, serialize(v_list))
+    with ExitStack() as s:
+        source_env = s.enter_context(p.operand.as_env())
+        dst_env = s.enter_context(rtn.as_env(write=True))
+
+        source_txn = s.enter_context(source_env.begin())
+        dest_txn = s.enter_context(dst_env.begin(write=True))
+
+        cursor = s.enter_context(source_txn.cursor())
+        v_list = []
+        k_bytes = None
+        for k, v in cursor:
+            v_list.append((deserialize(k), deserialize(v)))
+            k_bytes = k
+        if k_bytes is not None:
+            dest_txn.put(k_bytes, serialize(v_list))
     return rtn
 
 
 def _do_sample(p: _UnaryProcess):
     rtn = p.output_operand()
-    source_env = p.operand.as_env()
-    dst_env = rtn.as_env(write=True)
-    deserialize = c_pickle.loads
     fraction, seed = deserialize(p.info.function_bytes)
-    with source_env.begin() as source_txn:
-        with dst_env.begin(write=True) as dst_txn:
-            cursor = source_txn.cursor()
-            cursor.first()
-            random_state = np.random.RandomState(seed)
-            for k, v in cursor:
-                # noinspection PyArgumentList
-                if random_state.rand() < fraction:
-                    dst_txn.put(k, v)
+    with ExitStack() as s:
+        source_env = s.enter_context(p.operand.as_env())
+        dst_env = s.enter_context(rtn.as_env(write=True))
+
+        source_txn = s.enter_context(source_env.begin())
+        dst_txn = s.enter_context(dst_env.begin(write=True))
+
+        cursor = s.enter_context(source_txn.cursor())
+        cursor.first()
+        random_state = np.random.RandomState(seed)
+        for k, v in cursor:
+            # noinspection PyArgumentList
+            if random_state.rand() < fraction:
+                dst_txn.put(k, v)
     return rtn
 
 
 def _do_filter(p: _UnaryProcess):
-    _func = p.get_func()
     rtn = p.output_operand()
-    source_env = p.operand.as_env()
-    dst_env = rtn.as_env(write=True)
-    with source_env.begin() as source_txn:
-        with dst_env.begin(write=True) as dst_txn:
-            cursor = source_txn.cursor()
-            for k_bytes, v_bytes in cursor:
-                k = c_pickle.loads(k_bytes)
-                v = c_pickle.loads(v_bytes)
-                if _func(k, v):
-                    dst_txn.put(k_bytes, v_bytes)
-            cursor.close()
+    with ExitStack() as s:
+        source_env = s.enter_context(p.operand.as_env())
+        dst_env = s.enter_context(rtn.as_env(write=True))
+
+        source_txn = s.enter_context(source_env.begin())
+        dst_txn = s.enter_context(dst_env.begin(write=True))
+
+        cursor = s.enter_context(source_txn.cursor())
+        for k_bytes, v_bytes in cursor:
+            k = c_pickle.loads(k_bytes)
+            v = c_pickle.loads(v_bytes)
+            if p.get_func()(k, v):
+                dst_txn.put(k_bytes, v_bytes)
     return rtn
 
 
 def _do_subtract_by_key(p: _BinaryProcess):
-    left_op = p.left
-    right_op = p.right
     rtn = p.output_operand()
-    right_env = right_op.as_env()
-    left_env = left_op.as_env()
-    dst_env = rtn.as_env(write=True)
-    with left_env.begin() as left_txn:
-        with right_env.begin() as right_txn:
-            with dst_env.begin(write=True) as dst_txn:
-                cursor = left_txn.cursor()
-                for k_bytes, left_v_bytes in cursor:
-                    right_v_bytes = right_txn.get(k_bytes)
-                    if right_v_bytes is None:
-                        dst_txn.put(k_bytes, left_v_bytes)
-                cursor.close()
+    with ExitStack() as s:
+        left_op = p.left
+        right_op = p.right
+        right_env = s.enter_context(right_op.as_env())
+        left_env = s.enter_context(left_op.as_env())
+        dst_env = s.enter_context(rtn.as_env(write=True))
+
+        left_txn = s.enter_context(left_env.begin())
+        right_txn = s.enter_context(right_env.begin())
+        dst_txn = s.enter_context(dst_env.begin(write=True))
+
+        cursor = s.enter_context(left_txn.cursor())
+        for k_bytes, left_v_bytes in cursor:
+            right_v_bytes = right_txn.get(k_bytes)
+            if right_v_bytes is None:
+                dst_txn.put(k_bytes, left_v_bytes)
     return rtn
 
 
 def _do_join(p: _BinaryProcess):
-    _joiner = p.get_func()
-    left_op = p.left
-    right_op = p.right
     rtn = p.output_operand()
-    right_env = right_op.as_env()
-    left_env = left_op.as_env()
-    dst_env = rtn.as_env(write=True)
-    serialize = c_pickle.dumps
-    deserialize = c_pickle.loads
-    with left_env.begin() as left_txn:
-        with right_env.begin() as right_txn:
-            with dst_env.begin(write=True) as dst_txn:
-                cursor = left_txn.cursor()
-                for k_bytes, v1_bytes in cursor:
-                    v2_bytes = right_txn.get(k_bytes)
-                    if v2_bytes is None:
-                        continue
-                    v1 = deserialize(v1_bytes)
-                    v2 = deserialize(v2_bytes)
-                    v3 = _joiner(v1, v2)
-                    dst_txn.put(k_bytes, serialize(v3))
+    with ExitStack() as s:
+        right_env = s.enter_context(p.right.as_env())
+        left_env = s.enter_context(p.left.as_env())
+        dst_env = s.enter_context(rtn.as_env(write=True))
+
+        left_txn = s.enter_context(left_env.begin())
+        right_txn = s.enter_context(right_env.begin())
+        dst_txn = s.enter_context(dst_env.begin(write=True))
+
+        cursor = s.enter_context(left_txn.cursor())
+        for k_bytes, v1_bytes in cursor:
+            v2_bytes = right_txn.get(k_bytes)
+            if v2_bytes is None:
+                continue
+            v1 = deserialize(v1_bytes)
+            v2 = deserialize(v2_bytes)
+            v3 = p.get_func()(v1, v2)
+            dst_txn.put(k_bytes, serialize(v3))
     return rtn
 
 
 def _do_union(p: _BinaryProcess):
-    _func = p.get_func()
-    left_op = p.left
-    right_op = p.right
     rtn = p.output_operand()
-    right_env = right_op.as_env()
-    left_env = left_op.as_env()
-    dst_env = rtn.as_env(write=True)
-    serialize = c_pickle.dumps
-    deserialize = c_pickle.loads
-    with left_env.begin() as left_txn:
-        with right_env.begin() as right_txn:
-            with dst_env.begin(write=True) as dst_txn:
-                # process left op
-                left_cursor = left_txn.cursor()
-                for k_bytes, left_v_bytes in left_cursor:
-                    right_v_bytes = right_txn.get(k_bytes)
-                    if right_v_bytes is None:
-                        dst_txn.put(k_bytes, left_v_bytes)
-                    else:
-                        left_v = deserialize(left_v_bytes)
-                        right_v = deserialize(right_v_bytes)
-                        final_v = _func(left_v, right_v)
-                        dst_txn.put(k_bytes, serialize(final_v))
-                left_cursor.close()
+    with ExitStack() as s:
+        left_env = s.enter_context(p.left.as_env())
+        right_env = s.enter_context(p.right.as_env())
+        dst_env = s.enter_context(rtn.as_env(write=True))
 
-                # process right op
-                right_cursor = right_txn.cursor()
-                for k_bytes, right_v_bytes in right_cursor:
-                    final_v_bytes = dst_txn.get(k_bytes)
-                    if final_v_bytes is None:
-                        dst_txn.put(k_bytes, right_v_bytes)
-                right_cursor.close()
+        left_txn = s.enter_context(left_env.begin())
+        right_txn = s.enter_context(right_env.begin())
+        dst_txn = s.enter_context(dst_env.begin(write=True))
+
+        # process left op
+        with left_txn.cursor() as left_cursor:
+            for k_bytes, left_v_bytes in left_cursor:
+                right_v_bytes = right_txn.get(k_bytes)
+                if right_v_bytes is None:
+                    dst_txn.put(k_bytes, left_v_bytes)
+                else:
+                    left_v = deserialize(left_v_bytes)
+                    right_v = deserialize(right_v_bytes)
+                    final_v = p.get_func()(left_v, right_v)
+                    dst_txn.put(k_bytes, serialize(final_v))
+
+        # process right op
+        with right_txn.cursor() as right_cursor:
+            for k_bytes, right_v_bytes in right_cursor:
+                final_v_bytes = dst_txn.get(k_bytes)
+                if final_v_bytes is None:
+                    dst_txn.put(k_bytes, right_v_bytes)
     return rtn
 
 
