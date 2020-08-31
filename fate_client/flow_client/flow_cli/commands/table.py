@@ -51,7 +51,7 @@ def info(ctx, **kwargs):
 @cli_args.NAMESPACE
 @cli_args.TABLE_NAME
 @cli_args.JOBID
-@cli_args.FATEFLOW_SERVICE_NAME
+@cli_args.ROLE
 @cli_args.PARTYID
 @cli_args.COMPONENT_NAME
 @click.pass_context
