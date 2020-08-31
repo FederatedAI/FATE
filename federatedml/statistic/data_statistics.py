@@ -16,17 +16,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from federatedml.statistic import statics
 from federatedml.model_base import ModelBase
 from federatedml.param.statistics_param import StatisticsParam
-from arch.api.utils import log_utils
+from federatedml.protobuf.generated import statistic_meta_pb2, statistic_param_pb2
 from federatedml.statistic.data_overview import get_header
 from federatedml.statistic.statics import MultivariateStatisticalSummary
-from federatedml.protobuf.generated import statistic_meta_pb2, statistic_param_pb2
-from federatedml.util import consts
+from federatedml.util import LOGGER
 from federatedml.util import abnormal_detection
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import consts
 
 MODEL_PARAM_NAME = 'StatisticParam'
 MODEL_META_NAME = 'StatisticMeta'

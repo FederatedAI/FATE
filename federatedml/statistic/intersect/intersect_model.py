@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 from arch.api import session
-from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.feature.instance import Instance
 from federatedml.model_base import ModelBase
@@ -25,8 +24,7 @@ from federatedml.statistic.intersect.repeat_id_process import RepeatedIDIntersec
 from federatedml.transfer_variable.transfer_class.intersection_func_transfer_variable import \
     IntersectionFuncTransferVariable
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class IntersectModelBase(ModelBase):

@@ -20,9 +20,6 @@
 import math
 
 from federatedml.util import consts
-from arch.api.utils import log_utils
-
-LOGGER = log_utils.getLogger()
 
 
 class Stats(object):
@@ -91,7 +88,7 @@ class QuantileSummaries(object):
 
             # If it is the first one to insert or if it is the last one
             if not new_sampled or (sample_idx == len(self.sampled) and
-                                           ops_idx == len(sorted_head) - 1):
+                                   ops_idx == len(sorted_head) - 1):
                 delta = 0
             else:
                 # delta = math.floor(2 * self.error * current_count) - 1
@@ -275,7 +272,7 @@ class SparseQuantileSummaries(QuantileSummaries):
             return (self._total_count / self.count) * quantile
 
         return (quantile - self.zero_upper_bound + self.zero_lower_bound) / (
-            1 - self.zero_upper_bound + self.zero_lower_bound)
+                1 - self.zero_upper_bound + self.zero_lower_bound)
 
     @property
     def zero_lower_bound(self):
@@ -296,4 +293,3 @@ def quantile_summary_factory(is_sparse, param_dict):
         return SparseQuantileSummaries(**param_dict)
     else:
         return QuantileSummaries(**param_dict)
-

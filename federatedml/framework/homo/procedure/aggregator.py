@@ -13,13 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import typing
-
 import functools
 import types
+import typing
 from functools import reduce
 
-from arch.api.utils import log_utils
 from federatedml.framework.homo.blocks import has_converged, loss_scatter, model_scatter, model_broadcaster
 from federatedml.framework.homo.blocks import random_padding_cipher
 from federatedml.framework.homo.blocks.base import HomoTransferBase
@@ -30,9 +28,8 @@ from federatedml.framework.homo.blocks.model_scatter import ModelScatterTransVar
 from federatedml.framework.homo.blocks.random_padding_cipher import RandomPaddingCipherTransVar
 from federatedml.framework.weights import Weights, NumericWeights, TransferableWeights
 from federatedml.transfer_variable.base_transfer_variable import BaseTransferVariables
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class LegacyAggregatorTransVar(HomoTransferBase):
@@ -86,7 +83,7 @@ class Arbiter(object):
     def get_models_for_aggregate(self, ciphers_dict=None, suffix=tuple()):
         models = self._model_scatter.get_models(suffix=suffix)
         guest_model = models[0]
-        yield (guest_model.weights, guest_model.get_degree() or 1.0)
+        yield guest_model.weights, guest_model.get_degree() or 1.0
 
         # host model
         index = 0
@@ -94,7 +91,7 @@ class Arbiter(object):
             weights = model.weights
             if ciphers_dict and ciphers_dict.get(index, None):
                 weights = weights.decrypted(ciphers_dict[index])
-            yield (weights, model.get_degree() or 1.0)
+            yield weights, model.get_degree() or 1.0
             index += 1
 
     def send_aggregated_model(self, model: Weights,

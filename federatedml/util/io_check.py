@@ -13,10 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils import log_utils
 from fate_arch.computing import is_table
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 def assert_io_num_rows_equal(func):

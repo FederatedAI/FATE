@@ -14,17 +14,15 @@
 #  limitations under the License.
 #
 
-from arch.api.utils import log_utils
 from fate_flow.entity.metric import MetricMeta
 from federatedml.feature.feature_scale.min_max_scale import MinMaxScale
 from federatedml.feature.feature_scale.standard_scale import StandardScale
 from federatedml.model_base import ModelBase
 from federatedml.param.scale_param import ScaleParam
 from federatedml.util import consts
+from federatedml.util import LOGGER
 from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.util.schema_check import assert_schema_consistent
-
-LOGGER = log_utils.getLogger()
 
 
 class Scale(ModelBase):
