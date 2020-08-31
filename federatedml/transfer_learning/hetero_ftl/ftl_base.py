@@ -348,10 +348,3 @@ class FTL(ModelBase):
         self.nn.restore_model(model_param.model_bytes)
         self.store_header = list(model_param.header)
         LOGGER.debug('stored header load, is {}'.format(self.store_header))
-
-
-
-
-
-
-
