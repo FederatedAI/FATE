@@ -15,16 +15,18 @@
 #
 
 import argparse
+
 import pandas
 from sklearn.linear_model.logistic import LogisticRegression
 from sklearn.metrics import roc_auc_score, precision_score, accuracy_score, recall_score
-from fate_test.fate_test.utils import load_conf
+
+from examples.util.config import Config
 
 
 def main(param="./match_config.yaml"):
     # obtain config
     #
-    param = load_conf(param)
+    param = Config.load_from_file(param)
     data = param["data"]
     idx = param["idx"]
     label_name = param["label_name"]

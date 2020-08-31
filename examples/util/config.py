@@ -14,6 +14,8 @@
 #  limitations under the License.
 #
 
+import json
+import typing
 from pathlib import Path
 
 from ruamel import yaml
@@ -21,8 +23,6 @@ from ruamel import yaml
 
 class Parties(object):
     def __init__(self, parties):
-        if len(parties) == 0:
-            raise ValueError(f"Parties id must be specified.")
         self.host = parties.get("host", None)
         self.guest = parties.get("guest", None)
         self.arbiter = parties.get("arbiter", None)
@@ -35,11 +35,33 @@ class Config(object):
         self.work_mode = config.get("work_mode", 0)
 
     @staticmethod
-    def load(path):
+    def load(path: typing.Union[str, Path]):
+        conf = Config.load_from_file(path)
+        return Config(conf)
+
+    @staticmethod
+    def load_from_file(path: typing.Union[str, Path]):
+        """
+        Loads conf content from json or yaml file. Used to read in parameter configuration
+        Parameters
+        ----------
+        path: str, path to conf file, should be absolute path
+
+        Returns
+        -------
+        dict, parameter configuration in dictionary format
+
+        """
         if isinstance(path, str):
             path = Path(path)
-        conf = {}
+        config = {}
         if path is not None:
-            with open(path, "r") as f:
-                conf.update(yaml.safe_load(f))
-        return Config(conf)
+            file_type = path.suffix
+            with path.open("r") as f:
+                if file_type == ".yaml":
+                    config.update(yaml.safe_load(f))
+                elif file_type == ".json":
+                    config.update(json.load(f))
+                else:
+                    raise ValueError(f"Cannot load conf from file type {file_type}")
+        return config

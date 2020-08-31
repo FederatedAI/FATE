@@ -16,21 +16,22 @@
 
 import argparse
 
-from fate_test.fate_test.utils import load_conf
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
+from pipeline.component.evaluation import Evaluation
 from pipeline.component.hetero_lr import HeteroLR
 from pipeline.component.intersection import Intersection
-from pipeline.component.evaluation import Evaluation
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
+
+from examples.util.config import Config
 
 
 def main(config="../config.yaml", param="./lr_config.yaml", namespace=""):
     # obtain config
 
     if isinstance(config, str):
-        config = load_conf(config)
+        config = Config.load(config)
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
@@ -39,7 +40,7 @@ def main(config="../config.yaml", param="./lr_config.yaml", namespace=""):
     work_mode = config.work_mode
 
     if isinstance(param, str):
-        param = load_conf(config)
+        param = Config.load_from_file(param)
     """
     guest = 9999
     host = 10000

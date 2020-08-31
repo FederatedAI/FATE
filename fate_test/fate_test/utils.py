@@ -15,12 +15,8 @@
 #
 
 import math
-import json
-import typing
-from pathlib import Path
 
 from prettytable import PrettyTable
-from ruamel import yaml
 
 
 def _get_common_metrics(**results):
@@ -100,30 +96,3 @@ def match_metrics(evaluate, **results):
             row = [metric, v]
             eval_table.add_row(row)
         print(eval_table)
-
-
-def load_conf(path: typing.Union[str, Path]):
-    """
-    Loads conf content from json or yaml file. Used by match to read in parameter configuration
-    Parameters
-    ----------
-    path: str, path to conf file, should be absolute path
-
-    Returns
-    -------
-    dict, parameter configuration in dictionary format
-
-    """
-    if isinstance(path, str):
-        path = Path(path)
-    config = {}
-    if path is not None:
-        file_type = path.suffix
-        with path.open("r") as f:
-            if file_type == "yaml":
-                config.update(yaml.safe_load(f))
-            elif file_type == "json":
-                config.update(json.load(f))
-            else:
-                raise ValueError(f"Cannot load conf from file type {file_type}")
-    return config
