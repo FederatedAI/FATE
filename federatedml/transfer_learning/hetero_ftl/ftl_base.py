@@ -205,14 +205,14 @@ class FTL(ModelBase):
         LOGGER.debug('num of overlap/non-overlap sampels: {}/{}'.format(overlap_samples.count(),
                                                                         non_overlap_samples.count()))
 
-        assert overlap_samples.count() > 0 and non_overlap_samples.count() > 0, 'overlap samples number and non overlap samples' \
-                                                                        'number should be larger than 0'
+        if overlap_samples.count() == 0:
+            raise ValueError('no overlap samples')
+
+        if guest_side and non_overlap_samples == 0:
+            raise ValueError('overlap samples are required in guest side')
 
         self.store_header = data_inst.schema['header']
         LOGGER.debug('data inst header is {}'.format(self.store_header))
-
-        if overlap_samples.count() == 0:
-            raise ValueError('no intersect samples')
 
         LOGGER.debug('has {} overlap samples'.format(overlap_samples.count()))
 
