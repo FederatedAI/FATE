@@ -16,13 +16,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.utils import log_utils
 from federatedml.feature.feature_selection.selection_properties import SelectionProperties
 from federatedml.transfer_variable.transfer_class.hetero_feature_selection_transfer_variable import \
     HeteroFeatureSelectionTransferVariable
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class Guest(object):
@@ -72,4 +70,3 @@ class Host(object):
             selection_param.add_left_col_name(col_name)
         LOGGER.debug("Received host selected result, original left_cols: {},"
                      " left_col_names: {}".format(left_cols_names, selection_param.left_col_names))
-

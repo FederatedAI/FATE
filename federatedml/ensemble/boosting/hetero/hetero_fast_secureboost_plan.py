@@ -1,10 +1,7 @@
-from typing import Tuple, List, Dict
-
-from arch.api.utils import log_utils
-
+from typing import Tuple, List
+from federatedml.util import LOGGER
 from federatedml.util import consts
 
-LOGGER = log_utils.getLogger()
 
 tree_type_dict = {
     'guest_feat_only': 0,  # use only guest feature to build this tree

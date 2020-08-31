@@ -17,15 +17,12 @@
 #  limitations under the License.
 #
 
-from arch.api.utils import log_utils
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class HeteroNNTopModel(object):
     def __init__(self, input_shape=None, loss=None, optimizer="SGD", metrics=None, model_builder=None,
                  layer_config=None):
-
         self._model = model_builder(input_shape=input_shape,
                                     nn_define=layer_config,
                                     optimizer=optimizer,

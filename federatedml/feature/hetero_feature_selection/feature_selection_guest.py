@@ -17,10 +17,7 @@
 #  limitations under the License.
 
 
-from arch.api.utils import log_utils
 from federatedml.feature.hetero_feature_selection.base_feature_selection import BaseHeteroFeatureSelection
-
-LOGGER = log_utils.getLogger()
 
 
 class HeteroFeatureSelectionGuest(BaseHeteroFeatureSelection):

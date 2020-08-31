@@ -21,7 +21,7 @@ from pyspark import SparkContext
 
 from fate_arch.abc import AddressABC
 from fate_arch.abc import CSessionABC
-from fate_arch.computing.spark import from_hdfs, from_rdd
+from fate_arch.computing.spark._table import from_hdfs, from_rdd
 
 
 class CSession(CSessionABC):

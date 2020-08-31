@@ -1,17 +1,12 @@
 from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeHost
-
 from federatedml.ensemble.boosting.hetero import hetero_fast_secureboost_plan as plan
 from federatedml.util import consts
-
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter import SplitInfo
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.node import Node
 from federatedml.feature.fate_element_type import NoneType
-
-from arch.api.utils import log_utils
+from federatedml.util import LOGGER
 import functools
 import copy
-
-LOGGER = log_utils.getLogger()
 
 
 class HeteroFastDecisionTreeHost(HeteroDecisionTreeHost):

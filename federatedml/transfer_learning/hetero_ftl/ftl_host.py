@@ -1,18 +1,12 @@
+import numpy as np
 from federatedml.transfer_learning.hetero_ftl.ftl_base import FTL
 from federatedml.statistic.intersect import intersect_host
-from arch.api.utils import log_utils
+from federatedml.util import LOGGER
 from federatedml.transfer_learning.hetero_ftl.ftl_dataloder import FTLDataLoader
 from federatedml.util import consts
-
 from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
-
 from federatedml.util.io_check import assert_io_num_rows_equal
-
 from federatedml.statistic import data_overview
-
-import numpy as np
-
-LOGGER = log_utils.getLogger()
 
 
 class FTLHost(FTL):
@@ -65,35 +59,48 @@ class FTLHost(FTL):
         if self.mode == 'encrypted':
             comp_to_send = self.encrypt_tensor(comp_to_send)
 
-        self.transfer_variable.host_components.remote(comp_to_send, suffix=(epoch_idx, 'exchange_host_comp'))
-        guest_components = self.transfer_variable.guest_components.get(idx=0, suffix=(epoch_idx, 'exchange_guest_comp'))
+        # receiving guest components
+        y_overlap_2_phi_2 = self.transfer_variable.y_overlap_2_phi_2.get(idx=0, suffix=(epoch_idx, ))
+        y_overlap_phi = self.transfer_variable.y_overlap_phi.get(idx=0, suffix=(epoch_idx, ))
+        mapping_comp_a = self.transfer_variable.mapping_comp_a.get(idx=0, suffix=(epoch_idx, ))
+        guest_components = [y_overlap_2_phi_2, y_overlap_phi, mapping_comp_a]
+
+        # sending host components
+        self.transfer_variable.overlap_ub.remote(comp_to_send[0], suffix=(epoch_idx, ))
+        self.transfer_variable.overlap_ub_2.remote(comp_to_send[1], suffix=(epoch_idx, ))
+        self.transfer_variable.mapping_comp_b.remote(comp_to_send[2], suffix=(epoch_idx, ))
 
         if self.mode == 'encrypted':
-            guest_paillier_tensors = [PaillierTensor(tb_obj=tb) for tb in guest_components]
+            guest_paillier_tensors = [PaillierTensor(tb_obj=tb, partitions=self.partitions) for tb in guest_components]
             return guest_paillier_tensors
         else:
             return guest_components
 
     def decrypt_guest_data(self, epoch_idx, local_round=-1):
 
-        encrypted_guest_data = self.transfer_variable.guest_side_gradients.\
-                                    get(suffix=(epoch_idx, local_round, 'guest_de_send'), idx=0)
-        encrypted_consts, grad_table = encrypted_guest_data[0], encrypted_guest_data[1]
-        inter_grad = PaillierTensor(tb_obj=grad_table, )
+        encrypted_consts = self.transfer_variable.guest_side_const.get(suffix=(epoch_idx, local_round, ),
+                                                                       idx=0)
+        grad_table = self.transfer_variable.guest_side_gradients.get(suffix=(epoch_idx, local_round, ),
+                                                                     idx=0)
+
+        inter_grad = PaillierTensor(tb_obj=grad_table, partitions=self.partitions)
         decrpyted_grad = inter_grad.decrypt(self.encrypter)
         decrypted_const = self.encrypter.recursive_decrypt(encrypted_consts)
-        self.transfer_variable.decrypted_guest_gradients.remote([decrypted_const, decrpyted_grad.get_obj()],
-                                                                suffix=(epoch_idx, local_round, 'guest_de_get'))
+
+        self.transfer_variable.decrypted_guest_const.remote(decrypted_const,
+                                                            suffix=(epoch_idx, local_round, ))
+        self.transfer_variable.decrypted_guest_gradients.remote(decrpyted_grad.get_obj(),
+                                                                suffix=(epoch_idx, local_round, ))
 
     def decrypt_inter_result(self, loss_grad_b, epoch_idx, local_round=-1):
 
-        rand_0 = PaillierTensor(ori_data=self.rng_generator.generate_random_number(loss_grad_b.shape))
+        rand_0 = PaillierTensor(ori_data=self.rng_generator.generate_random_number(loss_grad_b.shape), partitions=self.partitions)
         grad_a_overlap = loss_grad_b + rand_0
         self.transfer_variable.host_side_gradients.remote(grad_a_overlap.get_obj(),
                                                           suffix=(epoch_idx, local_round, 'host_de_send'))
         de_loss_grad_b = self.transfer_variable.decrypted_host_gradients\
                                                .get(suffix=(epoch_idx, local_round, 'host_de_get'), idx=0)
-        de_loss_grad_b = PaillierTensor(tb_obj=de_loss_grad_b) - rand_0
+        de_loss_grad_b = PaillierTensor(tb_obj=de_loss_grad_b, partitions=self.partitions) - rand_0
 
         return de_loss_grad_b
 

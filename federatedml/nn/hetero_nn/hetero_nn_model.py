@@ -14,10 +14,6 @@
 #  limitations under the License.
 #
 
-from arch.api.utils import log_utils
-
-LOGGER = log_utils.getLogger()
-
 
 class HeteroNNModel(object):
     def __init__(self):

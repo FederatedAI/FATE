@@ -14,21 +14,20 @@
 #  limitations under the License.
 #
 
-from arch.api.utils import log_utils
+import json
+
+from federatedml.nn.hetero_nn.backend.tf_keras.data_generator import KerasSequenceDataConverter
 from federatedml.nn.hetero_nn.hetero_nn_model import HeteroNNGuestModel
 from federatedml.nn.hetero_nn.hetero_nn_model import HeteroNNHostModel
+from federatedml.nn.hetero_nn.model.hetero_nn_bottom_model import HeteroNNBottomModel
+from federatedml.nn.hetero_nn.model.hetero_nn_top_model import HeteroNNTopModel
 from federatedml.nn.hetero_nn.model.interactive_layer import InterActiveGuestDenseLayer
 from federatedml.nn.hetero_nn.model.interactive_layer import InteractiveHostDenseLayer
 from federatedml.nn.homo_nn import nn_model
-from federatedml.nn.hetero_nn.backend.tf_keras.data_generator import KerasSequenceDataConverter
-from federatedml.nn.hetero_nn.model.hetero_nn_bottom_model import HeteroNNBottomModel
-from federatedml.nn.hetero_nn.model.hetero_nn_top_model import HeteroNNTopModel
 from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import HeteroNNModelMeta
 from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import OptimizerParam
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import HeteroNNModelParam
-import json
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class HeteroNNKerasGuestModel(HeteroNNGuestModel):

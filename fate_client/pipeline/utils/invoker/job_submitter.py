@@ -44,7 +44,7 @@ class JobFunc:
 
 class JobInvoker(object):
     def __init__(self):
-        self.client = FlowClient()
+        self.client = FlowClient(ip=conf.FlowConfig.IP, port=conf.FlowConfig.PORT)
 
     @classmethod
     def _run_cmd(cls, cmd, output_while_running=False):
@@ -135,7 +135,9 @@ class JobInvoker(object):
             status = data["f_status"]
             if status == JobStatus.COMPLETE:
                 # print("job is success!!!")
+                elapse_seconds = timedelta(seconds=int(time.time() - start_time))
                 LOGGER.info(f"Job is success!!! Job id is {job_id}")
+                LOGGER.info(f"Total time: {elapse_seconds}")
                 return StatusCode.SUCCESS
 
             if status == JobStatus.FAILED:
@@ -166,7 +168,7 @@ class JobInvoker(object):
                         cpn.append(cpn_data["f_component_name"])
 
                 if cpn != pre_cpn:
-                    print("\n", end="\r")
+                    # print("\n", end="\r")
                     sys.stdout.write(f"\n \r")
                     pre_cpn = cpn
                 """

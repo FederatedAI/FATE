@@ -1,12 +1,9 @@
 from abc import ABC
 import abc
-
 from numpy import random
 import numpy as np
-
 from federatedml.param.boosting_param import BoostingParam
 from federatedml.param.feature_binning_param import FeatureBinningParam
-
 from federatedml.model_selection.k_fold import KFold
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
@@ -15,7 +12,6 @@ from federatedml.feature.sparse_vector import SparseVector
 from federatedml.model_base import ModelBase
 from federatedml.feature.fate_element_type import NoneType
 from federatedml.ensemble.basic_algorithms import BasicAlgorithms
-
 from federatedml.loss import FairLoss
 from federatedml.loss import HuberLoss
 from federatedml.loss import LeastAbsoluteErrorLoss
@@ -24,21 +20,14 @@ from federatedml.loss import LogCoshLoss
 from federatedml.loss import SigmoidBinaryCrossEntropyLoss
 from federatedml.loss import SoftmaxCrossEntropyLoss
 from federatedml.loss import TweedieLoss
-
 from federatedml.param.evaluation_param import EvaluateParam
-
 from federatedml.ensemble.boosting.boosting_core.predict_cache import PredictDataCache
-
 from federatedml.statistic import data_overview
-
 from federatedml.optim.convergence import converge_func_factory
-
-from arch.api.utils import log_utils
+from federatedml.util import LOGGER
 
 import functools
 import typing
-
-LOGGER = log_utils.getLogger()
 
 
 class Boosting(ModelBase, ABC):

@@ -1,13 +1,11 @@
-from arch.api.utils import log_utils
-
 import functools
+from federatedml.util import LOGGER
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import CriterionMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import DecisionTreeModelMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import DecisionTreeModelParam
 from federatedml.transfer_variable.transfer_class.homo_decision_tree_transfer_variable import \
     HomoDecisionTreeTransferVariable
 from federatedml.util import consts
-
 from federatedml.ensemble import FeatureHistogram
 from federatedml.ensemble import DecisionTree
 from federatedml.ensemble import Splitter
@@ -15,16 +13,11 @@ from federatedml.ensemble import Node
 from federatedml.ensemble import HistogramBag
 from federatedml.ensemble import SplitInfo
 from federatedml.ensemble import DecisionTreeClientAggregator
-
 from federatedml.feature.fate_element_type import NoneType
-
 from federatedml.feature.instance import Instance
 from federatedml.param import DecisionTreeParam
-
 import numpy as np
-from typing import List, Tuple
-
-LOGGER = log_utils.getLogger()
+from typing import List
 
 
 class HomoDecisionTreeClient(DecisionTree):

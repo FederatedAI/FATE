@@ -18,16 +18,12 @@ from collections import defaultdict
 import math
 import numpy as np
 import logging
-
-from arch.api.utils import log_utils
+from federatedml.util import LOGGER
 from fate_flow.entity.metric import Metric, MetricMeta
-
 from federatedml.param import EvaluateParam
 from federatedml.util import consts
 from federatedml.model_base import ModelBase
 from federatedml.evaluation.metric_interface import MetricInterface
-
-LOGGER = log_utils.getLogger()
 
 
 class PerformanceRecorder(object):

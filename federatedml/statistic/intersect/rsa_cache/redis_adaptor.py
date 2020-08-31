@@ -14,10 +14,9 @@
 #  limitations under the License.
 #
 import os
-from arch.api.utils import log_utils, conf_utils
+from arch.api.utils import conf_utils
 import redis
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 def singleton(cls, *args, **kw):

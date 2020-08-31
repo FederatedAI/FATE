@@ -14,10 +14,7 @@
 #  limitations under the License.
 #
 
-from arch.api.utils import log_utils
 from federatedml.framework.homo.blocks import random_padding_cipher
-
-LOGGER = log_utils.getLogger()
 
 
 class Arbiter(random_padding_cipher.Server):

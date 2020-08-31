@@ -100,6 +100,8 @@ class StorageTableMetaModel(DataBaseModel):
     f_engine = CharField(max_length=100, index=True)  # 'EGGROLL', 'MYSQL'
     f_type = CharField(max_length=50, index=True)  # storage type
     f_options = JSONField()
+    f_is_kv_storage = IntegerField(default=1)
+    f_is_serialize = IntegerField(default=1)
 
     f_partitions = IntegerField(null=True)
     f_schema = SerializedField()
