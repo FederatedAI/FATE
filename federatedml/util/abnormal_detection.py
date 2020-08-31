@@ -15,9 +15,9 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
 import numpy as np
 import functools
+import copy
 from federatedml.statistic import data_overview
 
 
@@ -33,22 +33,21 @@ def empty_feature_detection(data_instances):
         raise ValueError(f"Number of features of DTable is 0: {data_instances}")
 
 
-def sparse_vector_column_gathering(iterable, is_sparse=True):
+def column_gathering(iterable, ):
 
-    appeared_columns = set()
+    lost_columns = set()
     for k, v in iterable:
-        if is_sparse:
-            feature_dict = v.features.sparse_vec
-            appeared_columns.update(feature_dict.keys())
-        else:
-            features = v.features
-            appeared_columns.update(np.where(~np.isnan(features))[0])
+        features = v.features
+        lost_columns.update(np.where(~np.isnan(features))[0])
 
-    return appeared_columns
+    return lost_columns
 
 
 def merge_column_sets(v1: set, v2: set):
-    return v1.update(v2)
+    v1_copy = copy.deepcopy(v1)
+    v2_copy = copy.deepcopy(v2)
+    v1_copy.update(v2_copy)
+    return v1_copy
 
 
 def empty_column_detection(data_instance):
@@ -56,14 +55,15 @@ def empty_column_detection(data_instance):
     contains_empty_columns = False
     lost_feat = []
     is_sparse = data_overview.is_sparse_data(data_instance)
-    map_func = functools.partial(sparse_vector_column_gathering, is_sparse=is_sparse)
+    if is_sparse:
+        raise ValueError('sparse format empty column detection is not supported for now')
+    map_func = functools.partial(column_gathering, )
     map_rs = data_instance.mapPartitions(map_func)
     reduce_rs = map_rs.reduce(merge_column_sets)
 
-    if not is_sparse:
-        # select col name by index and transform it to set
-        reduce_rs = np.array(data_instance.schema['header'])[list(reduce_rs)]
-        reduce_rs = set(reduce_rs)
+    # transform col index to col name
+    reduce_rs = np.array(data_instance.schema['header'])[list(reduce_rs)]
+    reduce_rs = set(reduce_rs)
 
     if reduce_rs != set(data_instance.schema['header']):
         lost_feat = list(set(data_instance.schema['header']).difference(reduce_rs))
