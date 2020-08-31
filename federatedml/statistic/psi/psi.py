@@ -1,3 +1,6 @@
+import functools
+import copy
+import numpy as np
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.util import consts
@@ -6,18 +9,9 @@ from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.model_base import ModelBase
 from federatedml.param.psi_param import PSIParam
-
-import functools
-import copy
-
-import numpy as np
-
-from arch.api.utils import log_utils
-
+from federatedml.util import LOGGER
 from federatedml.protobuf.generated.psi_model_param_pb2 import PsiSummary, FeaturePsi
 from federatedml.protobuf.generated.psi_model_meta_pb2 import PSIMeta
-
-LOGGER = log_utils.getLogger()
 
 ROUND_NUM = 6
 

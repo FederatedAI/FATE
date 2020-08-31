@@ -1,9 +1,7 @@
 import numpy as np
 
 import tensorflow as tf
-from arch.api.utils import log_utils
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class FTLDataLoader(tf.keras.utils.Sequence):

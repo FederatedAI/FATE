@@ -1,25 +1,17 @@
+from typing import List
+import numpy as np
+import functools
 from operator import itemgetter
-
 from federatedml.ensemble.boosting.hetero.hetero_secureboost_host import HeteroSecureBoostHost
 from federatedml.param.boosting_param import HeteroFastSecureBoostParam
 from federatedml.ensemble.basic_algorithms import HeteroFastDecisionTreeHost
 from federatedml.ensemble.boosting.hetero import hetero_fast_secureboost_plan as plan
 from federatedml.ensemble import HeteroSecureBoostGuest
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
-
-from arch.api.utils import log_utils
-
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
 from federatedml.util.io_check import assert_io_num_rows_equal
 
-from typing import List
-
-import numpy as np
-
-import functools
-
-LOGGER = log_utils.getLogger()
 
 make_readable_feature_importance = HeteroSecureBoostGuest.make_readable_feature_importance
 
@@ -159,11 +151,11 @@ class HeteroFastSecureBoostHost(HeteroSecureBoostHost):
         _, model_meta = super(HeteroFastSecureBoostHost, self).get_model_meta()
         meta_name = "HeteroFastSecureBoostHostMeta"
         model_meta.work_mode = self.work_mode
-        
+
         return meta_name, model_meta
 
     def get_model_param(self):
-       
+
         _, model_param = super(HeteroFastSecureBoostHost, self).get_model_param()
         param_name = "HeteroSecureBoostHostParam"
         model_param.tree_plan.extend(plan.encode_plan(self.tree_plan))

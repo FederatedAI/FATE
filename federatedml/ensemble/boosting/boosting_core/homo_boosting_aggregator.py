@@ -1,8 +1,5 @@
-from arch.api.utils import log_utils
+from federatedml.util import LOGGER
 from federatedml.framework.homo.blocks import secure_sum_aggregator, loss_scatter, has_converged
-
-
-LOGGER = log_utils.getLogger()
 
 
 class HomoBoostArbiterAggregator(object):
