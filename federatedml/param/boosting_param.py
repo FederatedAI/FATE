@@ -35,7 +35,7 @@ class ObjectiveParam(BaseParam):
     ----------
     objective : None or str, accepted None,'cross_entropy','lse','lae','log_cosh','tweedie','fair','huber' only,
                 None in host's config, should be str in guest'config.
-                when task_type is classification, only support cross_enctropy,
+                when task_type is classification, only support cross_entropy,
                 other 6 types support in regression task. default: None
 
     params : None or list, should be non empty list when objective is 'tweedie','fair','huber',
@@ -43,7 +43,7 @@ class ObjectiveParam(BaseParam):
              first element of list should be a float-number in [1.0, 2.0) when objective is 'tweedie'
     """
 
-    def __init__(self, objective=None, params=None):
+    def __init__(self, objective='cross_entropy', params=None):
         self.objective = objective
         self.params = params
 
@@ -467,11 +467,11 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
 
         """
         work_mode：
-            mix:  alternate using guest/host features to build trees. For example, the first k trees use guest features,
+            mix:  alternate using guest/host features to build trees. For example, the first 'tree_num_per_party' trees use guest features,
                   the second k trees use host features, and so on
             layered: only support 2 party, when running layered mode, first 'host_depth' layer will use host features,
                      and then next 'guest_depth' will only use guest features
-        tree_num_per_party: every party will alternate build k trees until reach max tree num, this param is valid when work_mode is
+        tree_num_per_party: every party will alternate build 'tree_num_per_party' trees until reach max tree num, this param is valid when work_mode is
             mix
         guest_depth: guest will build last guest_depth of a decision tree using guest features, is valid when work mode
             is layered
