@@ -467,11 +467,11 @@ class HeteroFastSecureBoostParam(HeteroSecureBoostParam):
 
         """
         work_mode：
-            mix:  alternate using guest/host features to build trees. For example, the first k trees use guest features,
+            mix:  alternate using guest/host features to build trees. For example, the first 'tree_num_per_party' trees use guest features,
                   the second k trees use host features, and so on
             layered: only support 2 party, when running layered mode, first 'host_depth' layer will use host features,
                      and then next 'guest_depth' will only use guest features
-        tree_num_per_party: every party will alternate build k trees until reach max tree num, this param is valid when work_mode is
+        tree_num_per_party: every party will alternate build 'tree_num_per_party' trees until reach max tree num, this param is valid when work_mode is
             mix
         guest_depth: guest will build last guest_depth of a decision tree using guest features, is valid when work mode
             is layered
