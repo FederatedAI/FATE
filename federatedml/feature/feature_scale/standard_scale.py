@@ -21,11 +21,9 @@ import numpy as np
 from federatedml.protobuf.generated.feature_scale_meta_pb2 import ScaleMeta
 from federatedml.protobuf.generated.feature_scale_param_pb2 import ScaleParam
 from federatedml.protobuf.generated.feature_scale_param_pb2 import ColumnScaleParam
-from arch.api.utils import log_utils
 from federatedml.feature.feature_scale.base_scale import BaseScale
 from federatedml.statistic.statics import MultivariateStatisticalSummary
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class StandardScale(BaseScale):

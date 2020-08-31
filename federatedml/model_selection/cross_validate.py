@@ -15,10 +15,9 @@
 #
 
 import numpy as np
-from federatedml.util import consts
-from arch.api.utils import log_utils
 
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
+from federatedml.util import consts
 
 
 class BaseCrossValidator(object):
@@ -27,7 +26,8 @@ class BaseCrossValidator(object):
         self.mode = None
         self.role = None
 
-    def split(self, data_inst): pass
+    def split(self, data_inst):
+        pass
 
     def display_cv_result(self, cv_results):
         LOGGER.debug("cv_result: {}".format(cv_results))

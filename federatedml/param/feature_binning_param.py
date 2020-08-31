@@ -16,13 +16,9 @@
 #  limitations under the License.
 #
 import copy
-import math
 
-from arch.api.utils import log_utils
 from federatedml.param.base_param import BaseParam
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class TransformParam(BaseParam):
@@ -90,6 +86,7 @@ class OptimalBinningParam(BaseParam):
         Init bucket methods. Accept quantile and bucket.
 
     """
+
     def __init__(self, metric_method='iv', min_bin_pct=0.05, max_bin_pct=1.0,
                  init_bin_nums=1000, mixture=True, init_bucket_method='quantile'):
         super().__init__()

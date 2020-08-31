@@ -16,20 +16,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import bisect
 import functools
 import math
 import random
-import bisect
 
-from arch.api.utils import log_utils
 from federatedml.feature.binning.bin_inner_param import BinInnerParam
 from federatedml.feature.binning.bin_result import BinColResults, BinResults
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.statistic import data_overview
 
-# from federatedml.statistic import statics
 
-LOGGER = log_utils.getLogger()
+# from federatedml.statistic import statics
 
 
 class BaseBinning(object):

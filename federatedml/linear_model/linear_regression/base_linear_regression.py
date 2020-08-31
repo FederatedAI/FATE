@@ -19,7 +19,6 @@
 
 import numpy as np
 
-from arch.api.utils import log_utils
 from federatedml.linear_model.linear_model_base import BaseLinearModel
 from federatedml.linear_model.linear_model_weight import LinearModelWeights as LinearRegressionWeights
 from federatedml.optim.initialize import Initializer
@@ -27,9 +26,8 @@ from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.param.linear_regression_param import LinearParam
 from federatedml.protobuf.generated import linr_model_param_pb2, linr_model_meta_pb2
 from federatedml.secureprotol import PaillierEncrypt
+from federatedml.util import LOGGER
 from federatedml.util.fate_operator import vec_dot
-
-LOGGER = log_utils.getLogger()
 
 
 class BaseLinearRegression(BaseLinearModel):

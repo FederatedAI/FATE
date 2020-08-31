@@ -22,13 +22,9 @@ from federatedml.param.encrypt_param import EncryptParam
 from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
 from federatedml.param.cross_validation_param import CrossValidationParam
 from federatedml.param.predict_param import PredictParam
-from federatedml.util import consts
+from federatedml.util import consts, LOGGER
 import copy
 import collections
-
-from arch.api.utils import log_utils
-
-LOGGER = log_utils.getLogger()
 
 
 class ObjectiveParam(BaseParam):

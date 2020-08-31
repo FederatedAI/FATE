@@ -16,11 +16,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.utils import log_utils
-from federatedml.protobuf.generated import feature_binning_param_pb2
-
 import numpy as np
-LOGGER = log_utils.getLogger()
+
+from federatedml.protobuf.generated import feature_binning_param_pb2
+from federatedml.util import LOGGER
 
 
 class BinColResults(object):
@@ -110,7 +109,7 @@ class BinColResults(object):
 
 class BinResults(object):
     def __init__(self):
-        self.all_cols_results = {}   # {col_name: BinColResult}
+        self.all_cols_results = {}  # {col_name: BinColResult}
         self.role = ''
         self.party_id = ''
 
@@ -187,4 +186,3 @@ class BinResults(object):
             col_bin_obj.reconstruct(col_bin_result)
             self.all_cols_results[col_name] = col_bin_obj
         return self
-
