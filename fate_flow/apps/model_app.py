@@ -192,7 +192,7 @@ def do_load_model():
     retcode, retmsg = publish_model.load_model(config_data=request_data)
     try:
         if not retcode:
-            with DB.atomic():
+            with DB.connection_context():
                 model = MLModel.get_or_none(MLModel.f_role == request_data.get("initiator").get("role"),
                                             MLModel.f_party_id == request_data.get("initiator").get("party_id"),
                                             MLModel.f_model_id == request_data.get("job_parameters").get("model_id"),
@@ -379,10 +379,8 @@ def operate_tag(tag_operation):
     tag_desc = request_data.get('tag_desc')
 
     if tag_operation == TagOperation.CREATE:
-        # if Tag.get_or_none(Tag.f_name == tag_name):
-        #     raise
         try:
-            with DB.atomic():
+            with DB.connection_context():
                 Tag.create(f_name=tag_name, f_desc=tag_desc)
         except peewee.IntegrityError:
             raise Exception("'{}' has already exists in database.".format(tag_name))
@@ -452,7 +450,7 @@ def operate_tag(tag_operation):
                 return get_json_result(retmsg="Infomation of '{}' tag has been updated successfully.".format(tag_name))
 
         else:
-            with DB.atomic():
+            with DB.connection_context():
                 delete_query = ModelTag.delete().where(ModelTag.f_t_id == tag.f_id)
                 delete_query.execute()
                 Tag.delete_instance(tag)
@@ -485,21 +483,22 @@ def gen_model_operation_job_config(config_data: dict, model_operation: ModelOper
 
 def operation_record(data: dict, oper_type, oper_status):
     try:
-        if oper_type == 'migrate':
-            OperLog.create(f_operation_type=oper_type,
-                           f_operation_status=oper_status,
-                           f_initiator_role=data.get("migrate_initiator", {}).get("role"),
-                           f_initiator_party_id=data.get("migrate_initiator", {}).get("party_id"),
-                           f_request_ip=request.remote_addr,
-                           f_model_id=data.get("model_id"),
-                           f_model_version=data.get("model_version"))
-        else:
-            OperLog.create(f_operation_type=oper_type,
-                           f_operation_status=oper_status,
-                           f_initiator_role=data.get("role") if data.get("role") else data.get("initiator").get("role"),
-                           f_initiator_party_id=data.get("party_id") if data.get("party_id") else data.get("initiator").get("party_id"),
-                           f_request_ip=request.remote_addr,
-                           f_model_id=data.get("model_id") if data.get("model_id") else data.get("job_parameters").get("model_id"),
-                           f_model_version=data.get("model_version") if data.get("model_version") else data.get("job_parameters").get("model_version"))
+        with DB.connection_context():
+            if oper_type == 'migrate':
+                OperLog.create(f_operation_type=oper_type,
+                               f_operation_status=oper_status,
+                               f_initiator_role=data.get("migrate_initiator", {}).get("role"),
+                               f_initiator_party_id=data.get("migrate_initiator", {}).get("party_id"),
+                               f_request_ip=request.remote_addr,
+                               f_model_id=data.get("model_id"),
+                               f_model_version=data.get("model_version"))
+            else:
+                OperLog.create(f_operation_type=oper_type,
+                               f_operation_status=oper_status,
+                               f_initiator_role=data.get("role") if data.get("role") else data.get("initiator").get("role"),
+                               f_initiator_party_id=data.get("party_id") if data.get("party_id") else data.get("initiator").get("party_id"),
+                               f_request_ip=request.remote_addr,
+                               f_model_id=data.get("model_id") if data.get("model_id") else data.get("job_parameters").get("model_id"),
+                               f_model_version=data.get("model_version") if data.get("model_version") else data.get("job_parameters").get("model_version"))
     except Exception:
         stat_logger.error(traceback.format_exc())
