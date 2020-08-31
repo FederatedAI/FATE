@@ -16,15 +16,15 @@
 
 import argparse
 
-from tensorflow.keras import optimizers
-from tensorflow.keras.layers import Dense
-
-from fate_test.fate_test._config import Config
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
 from pipeline.component.homo_nn import HomoNN
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
+from tensorflow.keras import optimizers
+from tensorflow.keras.layers import Dense
+
+from examples.util.config import Config
 
 
 def main(config="../config.yaml", namespace=""):

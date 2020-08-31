@@ -16,18 +16,20 @@
 
 import argparse
 
-from fate_test.fate_test._config import Config
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
 from pipeline.component.evaluation import Evaluation
 from pipeline.component.hetero_lr import HeteroLR
 from pipeline.component.hetero_secureboost import HeteroSecureBoost
 from pipeline.component.intersection import Intersection
-from pipeline.component.reader import Reader
 from pipeline.component.one_hot_encoder import OneHotEncoder
+from pipeline.component.reader import Reader
 from pipeline.component.sampler import FederatedSample
 from pipeline.component.scale import FeatureScale
 from pipeline.interface.data import Data
+
+from examples.util.config import Config
+
 
 def main(config="../config.yaml", namespace=""):
     # obtain config

@@ -16,7 +16,6 @@
 
 import argparse
 
-from fate_test.fate_test._config import Config
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
 from pipeline.component.hetero_linr import HeteroLinR
@@ -24,6 +23,8 @@ from pipeline.component.intersection import Intersection
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
 from pipeline.interface.model import Model
+
+from examples.util.config import Config
 
 
 def main(config="../config.yaml", namespace=""):

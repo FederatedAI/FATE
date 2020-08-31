@@ -16,15 +16,16 @@
 
 import argparse
 import os
+# find python path
+import site
 
-from fate_test.fate_test._config import Config
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
 
-# find python path
-import site
+from examples.util.config import Config
+
 SITE_PATH = site.getsitepackages()[0]
 
 

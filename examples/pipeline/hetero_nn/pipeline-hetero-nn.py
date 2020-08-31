@@ -16,18 +16,19 @@
 
 import argparse
 
-from fate_test.fate_test._config import Config
-from tensorflow.keras import optimizers
-from tensorflow.keras.layers import Dense
 from pipeline.backend.config import Backend
 from pipeline.backend.config import WorkMode
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
 from pipeline.component.hetero_nn import HeteroNN
 from pipeline.component.intersection import Intersection
+from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
 from pipeline.interface.model import Model
-from pipeline.component.reader import Reader
+from tensorflow.keras import optimizers
+from tensorflow.keras.layers import Dense
+
+from examples.util.config import Config
 
 
 def main(config="../config.yaml", namespace=""):
