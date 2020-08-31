@@ -28,7 +28,7 @@ from pipeline.interface.model import Model
 from examples.util.config import Config
 
 
-def main(config="../config.yaml", namespace=""):
+def main(config="../../config.yaml", namespace=""):
     # obtain config
     config = Config(config)
     parties = config.parties

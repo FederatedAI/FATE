@@ -29,7 +29,7 @@ from examples.util.config import Config
 SITE_PATH = site.getsitepackages()[0]
 
 
-def main(config="../config.yaml"):
+def main(config="../../config.yaml"):
     # obtain config
     config = Config(config)
     parties = config.parties

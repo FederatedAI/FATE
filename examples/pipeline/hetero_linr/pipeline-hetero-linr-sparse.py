@@ -29,7 +29,7 @@ from pipeline.interface.data import Data
 from examples.util.config import Config
 
 
-def main(config="../config.yaml", namespace=""):
+def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
         config = Config.load(config)
