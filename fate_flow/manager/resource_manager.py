@@ -16,57 +16,85 @@
 
 import operator
 from fate_arch.computing import ComputingEngine
+from fate_arch.federation import FederationEngine
 from fate_arch.common import base_utils
 from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import DB, BackendEngine, Job
 from fate_flow.entity.types import ResourceOperation, RunParameters
-from fate_flow.settings import stat_logger
+from fate_flow.settings import stat_logger, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE
 from fate_flow.utils import job_utils
 
 
 class ResourceManager(object):
     @classmethod
     def initialize(cls):
-        # initialize default
         with DB.connection_context():
-            for engine_type in ["computing"]:
-                for engine_id, engine_info in get_base_config(engine_type, {}).items():
-                    nodes = engine_info.get("nodes", 1)
-                    cores = engine_info.get("cores_per_node", 0) * nodes
-                    memory = engine_info.get("memory_per_node", 0) * nodes
-                    resources = BackendEngine.select().where(BackendEngine.f_engine_id == engine_id)
-                    if resources:
-                        resource = resources[0]
-                        update_fields = {}
-                        update_fields[BackendEngine.f_cores] = cores
-                        update_fields[BackendEngine.f_memory] = memory
-                        update_fields[BackendEngine.f_remaining_cores] = BackendEngine.f_remaining_cores + (cores - resource.f_cores)
-                        update_fields[BackendEngine.f_remaining_memory] = BackendEngine.f_remaining_memory + (memory - resource.f_memory)
-                        update_fields[BackendEngine.f_nodes] = nodes
-                        operate = BackendEngine.update(update_fields).where(BackendEngine.f_engine_id == engine_id)
-                        update_status = operate.execute() > 0
-                        if update_status:
-                            stat_logger.info(f"update default {engine_type} engine {engine_id} registration information")
-                        else:
-                            stat_logger.info(f"update default {engine_type} engine {engine_id} registration information takes no effect")
-                    else:
-                        resource = BackendEngine()
-                        resource.f_create_time = base_utils.current_timestamp()
-                        resource.f_engine_id = engine_id
-                        resource.f_engine_name = engine_info.get("engine", {})
-                        resource.f_engine_type = engine_type
-                        resource.f_engine_address = engine_info.get("address", {})
-                        resource.f_cores = cores
-                        resource.f_memory = memory
-                        resource.f_remaining_cores = cores
-                        resource.f_remaining_memory = memory
-                        resource.f_nodes = nodes
-                        try:
-                            resource.save(force_insert=True)
-                        except Exception as e:
-                            stat_logger.warning(e)
-                        stat_logger.info(f"create default {engine_type} engine {engine_id} registration information")
+            # initialize default backend
+            default_backends = {
+                "computing": [ComputingEngine.EGGROLL, ComputingEngine.SPARK],
+                "federation": [FederationEngine.EGGROLL, FederationEngine.MQ],
+            }
+            for engine_type, engines_name in default_backends.items():
+                for engine_name in engines_name:
+                    engine_info = get_base_config(engine_name, {})
+                    engine_info["engine"] = engine_name
+                    cls._initialize_backend(engine_type=engine_type, engine_id=f"DEFAULT_{engine_name}", engine_info=engine_info)
+            # initialize standalone backend
+            for engine_type in default_backends.keys():
+                engine_name = "STANDALONE"
+                engine_info = {
+                    "engine": engine_name,
+                    "nodes": 1,
+                    "cores_per_node": STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE,
+                }
+                cls._initialize_backend(engine_type=engine_type, engine_id=f"DEFAULT_{engine_name}", engine_info=engine_info)
+            if get_base_config("multi_backend", False):
+                # initialize multi backend
+                for engine_type in ["computing", "federation"]:
+                    for engine_id, engine_info in get_base_config(engine_type, {}, conf_name="multi_backend").items():
+                        cls._initialize_backend(engine_type=engine_type, engine_id=engine_id, engine_info=engine_info)
+
+    @classmethod
+    def _initialize_backend(cls, engine_type, engine_id, engine_info):
+        nodes = engine_info.get("nodes", 1)
+        cores = engine_info.get("cores_per_node", 0) * nodes
+        memory = engine_info.get("memory_per_node", 0) * nodes
+        engine_name = engine_info.get("engine", "UNKNOWN"),
+        engine_address = engine_info.get("address", {}),
+        filters = [BackendEngine.f_engine_id == engine_id, BackendEngine.f_engine_type == engine_type]
+        resources = BackendEngine.select().where(*filters)
+        if resources:
+            resource = resources[0]
+            update_fields = {}
+            update_fields[BackendEngine.f_cores] = cores
+            update_fields[BackendEngine.f_memory] = memory
+            update_fields[BackendEngine.f_remaining_cores] = BackendEngine.f_remaining_cores + (cores - resource.f_cores)
+            update_fields[BackendEngine.f_remaining_memory] = BackendEngine.f_remaining_memory + (memory - resource.f_memory)
+            update_fields[BackendEngine.f_nodes] = nodes
+            operate = BackendEngine.update(update_fields).where(*filters)
+            update_status = operate.execute() > 0
+            if update_status:
+                stat_logger.info(f"update {engine_type} engine {engine_id} registration information")
+            else:
+                stat_logger.info(f"update {engine_type} engine {engine_id} registration information takes no effect")
+        else:
+            resource = BackendEngine()
+            resource.f_create_time = base_utils.current_timestamp()
+            resource.f_engine_id = engine_id
+            resource.f_engine_name = engine_name
+            resource.f_engine_type = engine_type
+            resource.f_engine_address = engine_address
+            resource.f_cores = cores
+            resource.f_memory = memory
+            resource.f_remaining_cores = cores
+            resource.f_remaining_memory = memory
+            resource.f_nodes = nodes
+            try:
+                resource.save(force_insert=True)
+            except Exception as e:
+                stat_logger.warning(e)
+            stat_logger.info(f"create {engine_type} engine {engine_id} registration information")
 
     @classmethod
     def apply_for_job_resource(cls, job_id, role, party_id):
@@ -75,6 +103,7 @@ class ResourceManager(object):
                                                                               cores=cores,
                                                                               memory=memory,
                                                                               operation_type=ResourceOperation.APPLY,
+                                                                              engine_type="computing",
                                                                               engine_id=engine_id,
                                                                               )
         if apply_status:
@@ -132,6 +161,7 @@ class ResourceManager(object):
                                                                                    cores=cores,
                                                                                    memory=memory,
                                                                                    operation_type=ResourceOperation.RETURN,
+                                                                                   engine_type="computing",
                                                                                    engine_id=engine_id,
                                                                                    )
             if return_status:
@@ -205,32 +235,32 @@ class ResourceManager(object):
         return update_status
 
     @classmethod
+    @DB.connection_context()
     def update_resource(cls, model, cores, memory, operation_type, **kwargs):
         filters = []
         primary_filters = []
         for p_k in model.get_primary_keys_name():
             primary_filters.append(operator.attrgetter(p_k)(model) == kwargs[p_k.lstrip("f").lstrip("_")])
-        with DB.connection_context():
-            filters.extend(primary_filters)
-            if operation_type == ResourceOperation.APPLY:
-                filters.append(model.f_remaining_cores >= cores)
-                filters.append(model.f_remaining_memory >= memory)
-                operate = model.update({model.f_remaining_cores: model.f_remaining_cores - cores,
-                                        model.f_remaining_memory: model.f_remaining_memory - memory}
-                                       ).where(*filters)
-            elif operation_type == ResourceOperation.RETURN:
-                operate = model.update({model.f_remaining_cores: model.f_remaining_cores + cores,
-                                        model.f_remaining_memory: model.f_remaining_memory + memory}
-                                       ).where(*filters)
-            else:
-                raise RuntimeError(f"can not support {operation_type} resource operation type")
-            update_status = operate.execute() > 0
-            if not update_status:
-                objs = model.select(model.f_remaining_cores, model.f_remaining_memory).where(*primary_filters)
-                remaining_cores, remaining_memory = objs[0].f_remaining_cores, objs[0].f_remaining_memory
-            else:
-                remaining_cores, remaining_memory = None, None
-            return update_status, remaining_cores, remaining_memory
+        filters.extend(primary_filters)
+        if operation_type == ResourceOperation.APPLY:
+            filters.append(model.f_remaining_cores >= cores)
+            filters.append(model.f_remaining_memory >= memory)
+            operate = model.update({model.f_remaining_cores: model.f_remaining_cores - cores,
+                                    model.f_remaining_memory: model.f_remaining_memory - memory}
+                                   ).where(*filters)
+        elif operation_type == ResourceOperation.RETURN:
+            operate = model.update({model.f_remaining_cores: model.f_remaining_cores + cores,
+                                    model.f_remaining_memory: model.f_remaining_memory + memory}
+                                   ).where(*filters)
+        else:
+            raise RuntimeError(f"can not support {operation_type} resource operation type")
+        update_status = operate.execute() > 0
+        if not update_status:
+            objs = model.select(model.f_remaining_cores, model.f_remaining_memory).where(*primary_filters)
+            remaining_cores, remaining_memory = objs[0].f_remaining_cores, objs[0].f_remaining_memory
+        else:
+            remaining_cores, remaining_memory = None, None
+        return update_status, remaining_cores, remaining_memory
 
     @classmethod
     def get_backend_registration_info(cls, engine_id):

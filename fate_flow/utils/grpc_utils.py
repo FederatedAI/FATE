@@ -28,8 +28,9 @@ from fate_arch.common import conf_utils
 
 
 def get_command_federation_channel():
-    engine = conf_utils.get_base_config("command_federation").get("engine")
-    address = conf_utils.get_base_config("command_federation").get("address")
+    # TODO: Get the engine according to the job configuration
+    engine = "EGGROLL"
+    address = conf_utils.get_base_config(engine).get("address")
     channel = grpc.insecure_channel('{}:{}'.format(address.get("host"), address.get("port")))
     stub = proxy_pb2_grpc.DataTransferServiceStub(channel)
     return engine, channel, stub

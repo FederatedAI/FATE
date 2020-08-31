@@ -361,8 +361,8 @@ class ModelOperationLog(DataBaseModel):
 
 
 class BackendEngine(DataBaseModel):
-    f_engine_id = CharField(max_length=150, null=False, primary_key=True)
-    f_engine_name = CharField(max_length=10, index=True)
+    f_engine_id = CharField(max_length=150, null=False)
+    f_engine_name = CharField(max_length=50, index=True)
     f_engine_type = CharField(max_length=10, index=True)
     f_engine_address = JSONField()
     f_cores = IntegerField(index=True)
@@ -375,6 +375,7 @@ class BackendEngine(DataBaseModel):
 
     class Meta:
         db_table = "t_backend_engine"
+        primary_key = CompositeKey('f_engine_id', 'f_engine_type')
 
 
 class DBQueue(DataBaseModel):
