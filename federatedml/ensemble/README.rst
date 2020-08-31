@@ -202,7 +202,8 @@ while building decision trees.
 
 MIX mode
 ^^^^^^^^
-In mix mode, we offer a new parameter k. Every participated party will build k trees using their local features, and this
+In mix mode, we offer a new parameter 'tree_num_per_party'. Every participated party will build 'tree_num_per_party'
+trees using their local features, and this
 procedure will be repeated until reach the max tree number. Figure 5 illustrates the mix mode.
 
 While building a guest tree, the guest party side simply computes g/h and finds the best split points, other host parties will
@@ -224,7 +225,7 @@ guests and the guest retrieves leaf weights from received leaf id. The predictio
           :align: center
           :width: 500
 
-          Figure 6: mix mode training (k=1) and predicting
+          Figure 6: mix mode training ('tree_num_per_party'=1) and predicting
 
 LAYERED mode
 ^^^^^^^^^^^^

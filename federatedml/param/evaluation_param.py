@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from federatedml.param.base_param import BaseParam
 #
 #  Copyright 2019 The FATE Authors. All Rights Reserved.
 #
@@ -16,11 +17,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils import log_utils
-from federatedml.util import consts
-from federatedml.param.base_param import BaseParam
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import consts, LOGGER
 
 
 class EvaluateParam(BaseParam):

@@ -14,11 +14,12 @@
 #  limitations under the License.
 #
 
-import sys
-import json
 import inspect
-import requests
+import json
+import sys
 import traceback
+
+import requests
 from flow_sdk.client.api.base import BaseFlowAPI
 
 
@@ -78,7 +79,7 @@ class BaseFlowClient:
         except json.decoder.JSONDecodeError:
             res = {'retcode': 100,
                         'retmsg': "Internal server error. Nothing in response. You may check out the configuration in "
-                                  "'FATE/arch/conf/server_conf.json' and restart fate flow server."}
+                                  "'FATE/conf/service_conf.yaml' and restart fate flow server."}
             return res
 
     def get(self, url, **kwargs):

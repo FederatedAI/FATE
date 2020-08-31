@@ -13,17 +13,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import os
-import sys
-import json
-import time
-import click
-import socket
-import typing
-import tarfile
-import requests
-import traceback
 import configparser
+import json
+import os
+import socket
+import sys
+import tarfile
+import traceback
+import typing
+
+import click
+import requests
 from flask import Response
 
 
@@ -46,7 +46,17 @@ def check_config(config: typing.Dict, required_arguments: typing.List):
 
 def prettify(response, verbose=True):
     if verbose:
-        click.echo(json.dumps(response, indent=4, ensure_ascii=False))
+        if isinstance(response, requests.models.Response):
+            try:
+                response_dict = response.json()
+            except TypeError:
+                response_dict = response.json
+        else:
+            response_dict = response
+        try:
+            click.echo(json.dumps(response_dict, indent=4, ensure_ascii=False))
+        except TypeError:
+            click.echo(json.dumps(response_dict.json, indent=4, ensure_ascii=False))
         click.echo('')
     return response
 
@@ -61,7 +71,7 @@ def access_server(method, ctx, postfix, json_data=None, echo=True, **kwargs):
             elif method == 'post':
                 response = requests.post(url=url, json=json_data, **kwargs)
             if echo:
-                prettify(response.json() if isinstance(response, requests.models.Response) else response)
+                prettify(response)
                 return
             else:
                 return response
@@ -79,7 +89,7 @@ def access_server(method, ctx, postfix, json_data=None, echo=True, **kwargs):
                                                                   os.pardir, os.pardir, 'settings.yaml')))
                 del response['traceback']
             if echo:
-                prettify(response.json() if isinstance(response, requests.models.Response) else response)
+                prettify(response)
                 return
             else:
                 return Response(json.dumps(response), status=500, mimetype='application/json')
@@ -137,12 +147,6 @@ def download_from_request(http_response, tar_file_name, extract_dir):
         tar.extract(file_name, extract_dir)
     tar.close()
     os.remove(tar_file_name)
-
-
-def start_cluster_standalone_job_server():
-    click.echo('use service.sh to start standalone node server....')
-    os.system('sh service.sh start --standalone_node')
-    time.sleep(5)
 
 
 def check_abs_path(path):

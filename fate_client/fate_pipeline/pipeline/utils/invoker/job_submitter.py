@@ -44,7 +44,7 @@ class JobFunc:
 
 class JobInvoker(object):
     def __init__(self):
-        self.client = FlowClient()
+        self.client = FlowClient(ip=conf.FlowConfig.IP, port=conf.FlowConfig.PORT)
 
     @classmethod
     def _run_cmd(cls, cmd, output_while_running=False):
@@ -135,7 +135,9 @@ class JobInvoker(object):
             status = data["f_status"]
             if status == JobStatus.COMPLETE:
                 # print("job is success!!!")
+                elapse_seconds = timedelta(seconds=int(time.time() - start_time))
                 LOGGER.info(f"Job is success!!! Job id is {job_id}")
+                LOGGER.info(f"Total time: {elapse_seconds}")
                 return StatusCode.SUCCESS
 
             if status == JobStatus.FAILED:
@@ -146,9 +148,9 @@ class JobInvoker(object):
             if status == JobStatus.WAITING:
                 elapse_seconds = timedelta(seconds=int(time.time() - start_time))
                 # print("job is still waiting, time elapse: {}".format(elapse_seconds), end="\r", flush=True)
-                sys.stdout.write("Job is still waiting, time elapse: {}\r".format(elapse_seconds))
+                sys.stdout.write(f"Job is still waiting, time elapse: {elapse_seconds}\r")
                 sys.stdout.flush()
-                #LOGGER.info(f"job is still waiting, time elapse:{elapse_seconds}")
+                # LOGGER.trace(f"Job is still waiting, time elapse: {elapse_seconds}")
 
             if status == JobStatus.RUNNING:
                 ret_code, _, data = self.query_task(job_id=job_id, role=role, party_id=party_id,
@@ -166,7 +168,7 @@ class JobInvoker(object):
                         cpn.append(cpn_data["f_component_name"])
 
                 if cpn != pre_cpn:
-                    print("\n", end="\r")
+                    # print("\n", end="\r")
                     sys.stdout.write(f"\n \r")
                     pre_cpn = cpn
                 """
@@ -176,6 +178,7 @@ class JobInvoker(object):
                 """
                 sys.stdout.write(f"Running component {cpn}, time elapse: {elapse_seconds}\r")
                 sys.stdout.flush()
+                # LOGGER.trace(f"Running component {cpn}, time elapse: {elapse_seconds}")
 
             time.sleep(conf.TIME_QUERY_FREQS)
 

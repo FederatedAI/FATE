@@ -32,7 +32,6 @@ import numpy as np
 from cachetools import LRUCache
 from cachetools import cached
 
-from fate_arch.abc import GarbageCollectionABC
 from fate_arch.common import file_utils, Party
 from fate_arch.common.log import getLogger
 from fate_arch.standalone import _cloudpickle as f_pickle
@@ -63,15 +62,14 @@ class Table(object):
         return self._namespace
 
     def __del__(self):
-        return
         if self._need_cleanup:
             self.destroy()
 
     def __str__(self):
-        return f"need_cleanup: {self._need_cleanup}, " \
-               f"namespace: {self._namespace}," \
-               f"name: {self._name}," \
-               f"partitions: {self._partitions}"
+        return f"<Table {self._namespace}|{self._name}|{self._partitions}|{self._need_cleanup}>"
+
+    def __repr__(self):
+        return self.__str__()
 
     def destroy(self):
         for p in range(self._partitions):
@@ -331,27 +329,52 @@ class Federation(object):
         self._party: Party = party
         self._loop = asyncio.get_event_loop()
         self._session = session
-
         self._federation_status_table = _create_table(session=session,
-                                                      name="__federation_status__",
+                                                      name=self._get_status_table_name(self._party),
                                                       namespace=self._session_id,
-                                                      partitions=10,
-                                                      need_cleanup=False,
+                                                      partitions=1,
+                                                      need_cleanup=True,
                                                       error_if_exist=False)
         self._federation_object_table = _create_table(session=session,
-                                                      name="__federation_object__",
+                                                      name=self._get_object_table_name(self._party),
                                                       namespace=self._session_id,
-                                                      partitions=10,
-                                                      need_cleanup=False,
+                                                      partitions=1,
+                                                      need_cleanup=True,
                                                       error_if_exist=False)
+        self._other_status_tables = {}
+        self._other_object_tables = {}
+
+    @staticmethod
+    def _get_status_table_name(party):
+        return f"__federation_status__.{party.role}_{party.party_id}"
+
+    @staticmethod
+    def _get_object_table_name(party):
+        return f"__federation_object__.{party.role}_{party.party_id}"
+
+    def _get_other_status_table(self, party):
+        if party in self._other_status_tables:
+            return self._other_status_tables[party]
+        table = _create_table(self._session, name=self._get_status_table_name(party), namespace=self._session_id,
+                              partitions=1, need_cleanup=False, error_if_exist=False)
+        self._other_status_tables[party] = table
+        return table
+
+    def _get_other_object_table(self, party):
+        if party in self._other_object_tables:
+            return self._other_object_tables[party]
+        table = _create_table(self._session, name=self._get_object_table_name(party), namespace=self._session_id,
+                              partitions=1, need_cleanup=False, error_if_exist=False)
+        self._other_object_tables[party] = table
+        return table
 
     # noinspection PyProtectedMember
-    def _put_status(self, _tagged_key, value):
-        self._federation_status_table.put(_tagged_key, value)
+    def _put_status(self, party, _tagged_key, value):
+        self._get_other_status_table(party).put(_tagged_key, value)
 
     # noinspection PyProtectedMember
-    def _put_object(self, _tagged_key, value):
-        self._federation_object_table.put(_tagged_key, value)
+    def _put_object(self, party, _tagged_key, value):
+        self._get_other_object_table(party).put(_tagged_key, value)
 
     # noinspection PyProtectedMember
     def _get_object(self, _tagged_key):
@@ -362,7 +385,7 @@ class Federation(object):
         return self._federation_status_table.get(_tagged_key)
 
     # noinspection PyUnusedLocal
-    def remote(self, v, name: str, tag: str, parties: typing.List[Party], gc: GarbageCollectionABC):
+    def remote(self, v, name: str, tag: str, parties: typing.List[Party]):
         log_str = f"federation.remote(name={name}, tag={tag}, parties={parties})"
 
         assert v is not None, \
@@ -371,20 +394,20 @@ class Federation(object):
 
         if isinstance(v, Table):
             # noinspection PyProtectedMember
-            v = v.save_as(name=str(uuid.uuid1()), namespace=v._namespace)
+            v = v.save_as(name=str(uuid.uuid1()), namespace=v._namespace, need_cleanup=False)
 
         for party in parties:
             _tagged_key = self._federation_object_key(name, tag, self._party, party)
             if isinstance(v, Table):
                 # noinspection PyProtectedMember
-                self._put_status(_tagged_key, (v._name, v._namespace))
+                self._put_status(party, _tagged_key, (v._name, v._namespace))
             else:
-                self._put_object(_tagged_key, v)
-                self._put_status(_tagged_key, _tagged_key)
+                self._put_object(party, _tagged_key, v)
+                self._put_status(party, _tagged_key, _tagged_key)
             LOGGER.debug("[REMOTE] Sent {}".format(_tagged_key))
 
     # noinspection PyProtectedMember
-    def get(self, name: str, tag: str, parties: typing.List[Party], gc: GarbageCollectionABC) -> typing.List:
+    def get(self, name: str, tag: str, parties: typing.List[Party]) -> typing.List:
         log_str = f"federation.get(name={name}, tag={tag}, party={parties})"
         LOGGER.debug(f"[{log_str}]")
         tasks = []
@@ -400,15 +423,15 @@ class Federation(object):
 
             if isinstance(r, tuple):
                 # noinspection PyTypeChecker
-                table: Table = _load_table(session=self._session, name=r[0], namespace=r[1])
+                table: Table = _load_table(session=self._session, name=r[0], namespace=r[1], need_cleanup=True)
                 rtn.append(table)
-                gc.add_gc_action(tag, table, '_destroy', {})
             else:
                 obj = self._get_object(r)
                 if obj is None:
                     raise EnvironmentError(f"federation get None from {parties} with name {name}, tag {tag}")
                 rtn.append(obj)
-                gc.add_gc_action(tag, self._federation_object_table, '_delete', {'k': r})
+                self._federation_object_table.delete(k=r)
+            self._federation_status_table.delete(r)
         return rtn
 
 
@@ -470,12 +493,17 @@ def _create_table(session: 'Session', name: str, namespace: str, partitions: int
     return Table(session=session, namespace=namespace, name=name, partitions=partitions, need_cleanup=need_cleanup)
 
 
-def _load_table(session, name, namespace):
+def _exist(name: str, namespace: str):
+    _table_key = ".".join([namespace, name])
+    return _get_from_meta_table(_table_key) is not None
+
+
+def _load_table(session, name, namespace, need_cleanup=False):
     _table_key = ".".join([namespace, name])
     partitions = _get_from_meta_table(_table_key)
     if partitions is None:
         raise RuntimeError(f"table not exist: name={name}, namespace={namespace}")
-    return Table(session=session, namespace=namespace, name=name, partitions=partitions, need_cleanup=False)
+    return Table(session=session, namespace=namespace, name=name, partitions=partitions, need_cleanup=need_cleanup)
 
 
 class _TaskInfo:

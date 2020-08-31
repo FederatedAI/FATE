@@ -13,21 +13,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import sys
-from collections import defaultdict
 import math
+from collections import defaultdict
+
 import numpy as np
-import logging
 
-from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric, MetricMeta
-
-from federatedml.param import EvaluateParam
-from federatedml.util import consts
-from federatedml.model_base import ModelBase
 from federatedml.evaluation.metric_interface import MetricInterface
-
-LOGGER = log_utils.getLogger()
+from federatedml.model_base import ModelBase
+from federatedml.param import EvaluateParam
+from federatedml.util import LOGGER
+from federatedml.util import consts
 
 
 class PerformanceRecorder(object):

@@ -18,12 +18,10 @@
 
 import numpy as np
 
-from arch.api.utils import log_utils
 from federatedml.framework.hetero.sync import loss_sync
 from federatedml.optim.gradient import hetero_linear_model_gradient
+from federatedml.util import LOGGER
 from federatedml.util.fate_operator import reduce_add, vec_dot
-
-LOGGER = log_utils.getLogger()
 
 
 class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
@@ -88,7 +86,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
             wx_square = wx_squares[0]
             wxg_wxh = self.forwards.join(host_forward, lambda wxg, wxh: wxg * wxh).reduce(reduce_add)
             loss = np.log(2) - 0.5 * (1 / n) * ywx + 0.125 * (1 / n) * \
-                                                     (self_wx_square + wx_square + 2 * wxg_wxh)
+                   (self_wx_square + wx_square + 2 * wxg_wxh)
             if loss_norm is not None:
                 loss += loss_norm
                 loss += host_loss_regular[0]
@@ -179,4 +177,3 @@ class Arbiter(hetero_linear_model_gradient.Arbiter, loss_sync.Arbiter):
         loss_list = self.sync_loss_info(suffix=current_suffix)
         de_loss_list = cipher.decrypt_list(loss_list)
         return de_loss_list
-

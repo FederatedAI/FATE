@@ -18,7 +18,6 @@
 
 import numpy as np
 
-from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 from federatedml.feature.sparse_vector import SparseVector
@@ -29,11 +28,10 @@ from federatedml.optim.convergence import converge_func_factory
 from federatedml.optim.initialize import Initializer
 from federatedml.optim.optimizer import optimizer_factory
 from federatedml.statistic import data_overview
+from federatedml.util import LOGGER
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
 from federatedml.util.validation_strategy import ValidationStrategy
-
-LOGGER = log_utils.getLogger()
 
 
 class BaseLinearModel(ModelBase):
@@ -226,4 +224,3 @@ class BaseLinearModel(ModelBase):
             raise OverflowError("The input data is too large for GLM, please have "
                                 "a check for input data")
         LOGGER.info("Check for abnormal value passed")
-

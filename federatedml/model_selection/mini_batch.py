@@ -14,11 +14,10 @@
 #  limitations under the License.
 #
 
-from arch.api import session
-from arch.api.utils import log_utils
+from fate_arch.session import computing_session as session
 from federatedml.model_selection import indices
 
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class MiniBatch:

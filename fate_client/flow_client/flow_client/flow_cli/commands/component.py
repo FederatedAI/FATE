@@ -14,11 +14,10 @@
 #  limitations under the License.
 #
 import os
-import requests
+from contextlib import closing
 from datetime import datetime
 
 import click
-from contextlib import closing
 from flow_client.flow_cli.utils import cli_args
 from flow_client.flow_cli.utils.cli_utils import (prettify, preprocess, download_from_request,
                                                   access_server, check_abs_path)
@@ -142,7 +141,8 @@ def parameters(ctx, **kwargs):
 @cli_args.PARTYID_REQUIRED
 @cli_args.COMPONENT_NAME_REQUIRED
 @cli_args.OUTPUT_PATH_REQUIRED
-@click.option('-l', '--limit', metavar="[LIMIT]", default=10, help='limit count, defaults is 10')
+@click.option('-l', '--limit', type=click.INT, default=-1,
+              help='limit count, defaults is -1 (download all output data)')
 @click.pass_context
 def output_data(ctx, **kwargs):
     """
@@ -165,15 +165,15 @@ def output_data(ctx, **kwargs):
         if response.status_code == 200:
             try:
                 download_from_request(http_response=response, tar_file_name=tar_file_name, extract_dir=extract_dir)
-                response = {'retcode': 0,
-                            'directory': extract_dir,
-                            'retmsg': 'download successfully, please check {} directory'.format(extract_dir)}
+                res = {'retcode': 0,
+                       'directory': os.path.abspath(extract_dir),
+                       'retmsg': 'Download successfully, please check {} directory'.format(os.path.abspath(extract_dir))}
             except:
-                response = {'retcode': 100,
-                            'retmsg': 'download failed, please check if the parameters are correct'}
+                res = {'retcode': 100,
+                       'retmsg': 'Download failed, please check if the parameters are correct.'}
         else:
-            response = response.json
-    prettify(response.json() if isinstance(response, requests.models.Response) else response)
+            res = response
+    prettify(res)
 
 
 @component.command("output-model", short_help="Component Output Model Command")
@@ -237,7 +237,7 @@ def download_summary(ctx, **kwargs):
     config_data, dsl_data = preprocess(**kwargs)
     if config_data.get("output_path"):
         if not os.path.isdir(config_data.get("output_path")):
-            response = {
+            res = {
                 "retcode": 100,
                 "retmsg": "Please input a valid directory path."
             }
@@ -252,14 +252,14 @@ def download_summary(ctx, **kwargs):
                         for chunk in response.iter_content(1024):
                             if chunk:
                                 fout.write(chunk)
-                    response = {
+                    res = {
                         "retcode": 0,
                         "retmsg": "The summary of component <{}> has been stored successfully. "
                                   "File path is: {}.".format(config_data["component_name"],
                                                              config_data["output_path"])
                     }
                 else:
-                    response = response.json
-        prettify(response.json() if isinstance(response, requests.models.Response) else response)
+                    res = response
+        prettify(res)
     else:
         access_server("post", ctx, "tracking/component/summary/download", config_data)

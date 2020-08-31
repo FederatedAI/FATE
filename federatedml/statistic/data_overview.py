@@ -18,10 +18,8 @@
 
 import functools
 
-from arch.api.utils import log_utils
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 def get_features_shape(data_instances):
@@ -37,6 +35,7 @@ def get_features_shape(data_instances):
             return one_feature[1].features.shape[0]
     else:
         return None
+
 
 def header_alignment(data_instances, pre_header):
     header = data_instances.schema["header"]
@@ -61,7 +60,6 @@ def header_alignment(data_instances, pre_header):
             continue
         header_correct[i] = header_idx_mapping[col]
 
-
     def align_header(inst, header_pos=None):
         if type(inst.features).__name__ == consts.SPARSE_VECTOR:
             shape = len(header_pos)
@@ -81,8 +79,10 @@ def header_alignment(data_instances, pre_header):
 
         return inst
 
+    correct_schema = data_instances.schema
+    correct_schema["header"] = header_correct
     data_instances = data_instances.mapValues(lambda inst: align_header(inst, header_pos=header_correct))
-
+    data_instances.schema = correct_schema
     return data_instances
 
 

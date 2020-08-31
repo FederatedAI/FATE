@@ -17,13 +17,11 @@
 import functools
 from collections import Iterable
 
-from arch.api.utils import log_utils
 from federatedml.statistic import data_overview
 from federatedml.statistic.data_overview import get_header
 from federatedml.statistic.statics import MultivariateStatisticalSummary
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class BaseScale(object):
@@ -235,6 +233,21 @@ class BaseScale(object):
             LOGGER.info("feat_lower is None and feat_upper is None, do not need to fit feature range!")
             return data
 
+    def get_model_summary(self):
+        cols_info = self._get_param().col_scale_param
+        return {
+        col_name: {"column_upper": col.column_upper, "column_lower": col.column_lower, "mean": col.mean, "std": col.std} for
+        col_name, col in cols_info.items()}
+
+    def export_model(self, need_run):
+        meta_obj = self._get_meta(need_run)
+        param_obj = self._get_param()
+        result = {
+            self.model_meta_name: meta_obj,
+            self.model_param_name: param_obj
+        }
+        return result
+
     def fit(self, data):
         pass
 
@@ -245,4 +258,10 @@ class BaseScale(object):
         pass
 
     def save_model(self, name, namespace):
+        pass
+
+    def _get_param(self):
+        pass
+
+    def _get_meta(self, need_run):
         pass

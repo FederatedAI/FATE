@@ -14,12 +14,11 @@
 #  limitations under the License.
 #
 import os
-import json
-import click
-from ruamel import yaml
-from flow_client.flow_cli.utils.cli_utils import prettify, get_lan_ip
-from flow_client.flow_cli.commands import (component, data, job, model, queue, task, table, tag)
 
+import click
+from flow_client.flow_cli.commands import (component, data, job, model, queue, task, table, tag)
+from flow_client.flow_cli.utils.cli_utils import prettify, get_lan_ip
+from ruamel import yaml
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -41,11 +40,11 @@ def flow_cli(ctx):
     if is_server_conf_exist:
         try:
             with open(config.get("server_conf_path")) as server_conf_fp:
-                server_conf = json.load(server_conf_fp)
-            ip = server_conf.get(config.get("server")).get(config.get("role")).get("host")
+                server_conf = yaml.safe_load(server_conf_fp)
+            ip = server_conf.get("fateflow", {}).get("host")
             if ip in ["localhost", "127.0.0.1"]:
                 ip = get_lan_ip()
-            ctx.obj["http_port"] = server_conf.get(config.get("server", None)).get(config.get("role", None)).get("http.port", None)
+            ctx.obj["http_port"] = server_conf.get("fateflow", {}).get("http_port")
             ctx.obj["server_url"] = "http://{}:{}/{}".format(ip, ctx.obj["http_port"], config.get("api_version"))
         except Exception:
             return
@@ -76,7 +75,7 @@ def initialization(**kwargs):
 
     \b
     - USAGE:
-        flow init -c /data/projects/FATE/conf/server_conf.json
+        flow init -c /data/projects/FATE/conf/service_conf.yaml
         flow init --ip 10.1.2.3 --port 9380
     """
     with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "r") as fin:

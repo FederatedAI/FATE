@@ -17,18 +17,15 @@ import inspect
 import os
 import sys
 
-import __main__
-from peewee import Model, CharField, IntegerField, BigIntegerField, TextField, CompositeKey
-from playhouse.pool import PooledMySQLDatabase
+from peewee import Model, CharField, BigIntegerField, TextField, CompositeKey
 from playhouse.apsw_ext import APSWDatabase
+from playhouse.pool import PooledMySQLDatabase
 
-from arch.api.utils import log_utils
 from arch.api.utils.core_utils import current_timestamp
-from fate_flow.entity.constant import WorkMode
-from fate_flow.settings import DATABASE, USE_LOCAL_DATABASE, WORK_MODE, stat_logger
+from fate_arch.common import WorkMode
 from fate_flow.entity.runtime_config import RuntimeConfig
-
-LOGGER = log_utils.getLogger()
+from fate_flow.settings import DATABASE, USE_LOCAL_DATABASE, WORK_MODE, stat_logger
+from federatedml.util import LOGGER
 
 
 def singleton(cls, *args, **kw):

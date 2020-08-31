@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 from fate_arch.common import log
-from fate_flow.settings import API_VERSION
 from fate_flow.utils import api_utils
 
 LOGGER = log.getLogger()
@@ -23,12 +22,11 @@ LOGGER = log.getLogger()
 class ControllerClient(object):
     @classmethod
     def update_job(cls, job_info):
-        LOGGER.info("Request update job {} on {} {}".format(job_info["job_id"], job_info["role"], job_info["party_id"]))
+        LOGGER.info("request update job {} on {} {}".format(job_info["job_id"], job_info["role"], job_info["party_id"]))
         response = api_utils.local_api(
             job_id=job_info["job_id"],
             method='POST',
-            endpoint='/{}/controller/{}/{}/{}/update'.format(
-                API_VERSION,
+            endpoint='/party/{}/{}/{}/update'.format(
                 job_info["job_id"],
                 job_info["role"],
                 job_info["party_id"]
@@ -37,15 +35,14 @@ class ControllerClient(object):
         return response
 
     @classmethod
-    def update_task(cls, task_info):
-        LOGGER.info("Request update job {} task {} {} on {} {}".format(task_info["job_id"], task_info["task_id"],
+    def report_task(cls, task_info):
+        LOGGER.info("request update job {} task {} {} on {} {}".format(task_info["job_id"], task_info["task_id"],
                                                                        task_info["task_version"], task_info["role"],
                                                                        task_info["party_id"]))
         response = api_utils.local_api(
             job_id=task_info["job_id"],
             method='POST',
-            endpoint='/{}/controller/{}/{}/{}/{}/{}/{}/update'.format(
-                API_VERSION,
+            endpoint='/party/{}/{}/{}/{}/{}/{}/report'.format(
                 task_info["job_id"],
                 task_info["component_name"],
                 task_info["task_id"],

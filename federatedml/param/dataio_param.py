@@ -46,7 +46,7 @@ class DataIOParam(BaseParam):
     tag_value_delimitor: str, use if input_format is 'tag' and 'tag_with_value' is True,
                          delimitor of tag[delimitor]value column value.
 
-    missing_fill : bool, need to fill missing value or not, accepted only True/False, default: True
+    missing_fill : bool, need to fill missing value or not, accepted only True/False, default: False
 
     default_value : None or single object type or list, the value to replace missing value.
                     if None, it will use default value define in federatedml/feature/imputer.py,
@@ -88,7 +88,7 @@ class DataIOParam(BaseParam):
     def __init__(self, input_format="dense", delimitor=',', data_type='float64',
                  exclusive_data_type=None,
                  tag_with_value=False, tag_value_delimitor=":",
-                 missing_fill=True, default_value=0, missing_fill_method=None,
+                 missing_fill=False, default_value=0, missing_fill_method=None,
                  missing_impute=None, outlier_replace=True, outlier_replace_method=None,
                  outlier_impute=None, outlier_replace_value=0,
                  with_label=False, label_name='y',

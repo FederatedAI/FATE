@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 
-from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
@@ -22,11 +21,9 @@ from federatedml.linear_model.logistic_regression.hetero_logistic_regression.het
 from federatedml.optim import activation
 from federatedml.optim.gradient import hetero_lr_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
-
+from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
-
-LOGGER = log_utils.getLogger()
 
 
 class HeteroLRGuest(HeteroLRBase):
@@ -77,6 +74,7 @@ class HeteroLRGuest(HeteroLRBase):
         else:
             self.need_one_vs_rest = False
             self.fit_binary(data_instances, validate_data)
+        LOGGER.debug(f"Final summary: {self.summary()}")
 
     def fit_binary(self, data_instances, validate_data=None):
         LOGGER.info("Enter hetero_lr_guest fit")
@@ -153,7 +151,6 @@ class HeteroLRGuest(HeteroLRBase):
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
             self.load_model(self.validation_strategy.cur_best_model)
         self.set_summary(self.get_model_summary())
-        LOGGER.debug(f"Final summary: {self.summary()}")
 
     @assert_io_num_rows_equal
     def predict(self, data_instances):

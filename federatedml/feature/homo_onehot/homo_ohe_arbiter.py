@@ -22,12 +22,9 @@
 
 from collections import defaultdict
 
-from arch.api.utils import log_utils
 from federatedml.feature.homo_onehot.homo_ohe_base import HomoOneHotBase
-from federatedml.framework.homo.procedure import paillier_cipher
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class HomoOneHotArbiter(HomoOneHotBase):

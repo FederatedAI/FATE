@@ -20,14 +20,12 @@
 import numpy as np
 
 from arch.api import session
-from arch.api.utils import log_utils
 from federatedml.model_base import ModelBase
 from federatedml.param.secure_add_example_param import SecureAddExampleParam
 from federatedml.transfer_variable.transfer_class.secure_add_example_transfer_variable import \
     SecureAddExampleTransferVariable
 from federatedml.util.param_extract import ParamExtract
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class SecureAddHost(ModelBase):

@@ -14,13 +14,11 @@
 #  limitations under the License.
 #
 
-from arch.api.utils import log_utils
 from federatedml.model_selection.data_split.data_split import DataSplitter
 from federatedml.transfer_variable.transfer_class.data_split_transfer_variable import \
     DataSplitTransferVariable
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class HeteroDataSplitHost(DataSplitter):
@@ -65,9 +63,9 @@ class HeteroDataSplitGuest(DataSplitter):
                                                                            test_size=self.test_size + self.validate_size,
                                                                            train_size=self.train_size)
 
-        validate_size, test_size = DataSplitter.get_train_test_size(self.test_size, self.validate_size)
-        id_test, id_validate, y_test, y_validate = self._split(id_test_validate, y_test_validate,
-                                                 test_size=validate_size, train_size=test_size)
+        validate_size, test_size = DataSplitter.get_train_test_size(self.validate_size, self.test_size)
+        id_validate, id_test, y_validate, y_test = self._split(id_test_validate, y_test_validate,
+                                                 test_size=test_size, train_size=validate_size)
 
         self.transfer_variable.id_train.remote(obj=id_train, role=consts.HOST, idx=-1)
         self.transfer_variable.id_test.remote(obj=id_test, role=consts.HOST, idx=-1)

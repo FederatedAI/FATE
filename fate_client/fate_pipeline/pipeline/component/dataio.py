@@ -14,10 +14,10 @@
 #  limitations under the License.
 #
 
-from pipeline.param.dataio_param import DataIOParam
 from pipeline.component.component_base import Component
-from pipeline.interface.input import Input
-from pipeline.interface.output import Output
+from pipeline.interface import Input
+from pipeline.interface import Output
+from pipeline.param.dataio_param import DataIOParam
 from pipeline.utils.logger import LOGGER
 
 

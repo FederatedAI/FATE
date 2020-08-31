@@ -24,6 +24,7 @@ from enum import Enum
 from eggroll.core.meta_model import ErEndpoint
 from eggroll.roll_pair.roll_pair import RollPair, RollPairContext
 from eggroll.roll_site.roll_site import RollSiteContext
+
 from fate_arch.abc import FederationABC
 from fate_arch.abc import GarbageCollectionABC
 from fate_arch.common import Party
@@ -41,8 +42,8 @@ class Proxy(object):
 
     @staticmethod
     def from_conf(conf):
-        host = conf.get('servers').get('proxy').get("host")
-        port = conf.get('servers').get('proxy').get("port")
+        host = conf.get('address').get("host")
+        port = conf.get('address').get("port")
         return Proxy(host, int(port))
 
 

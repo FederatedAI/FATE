@@ -25,7 +25,11 @@ LOGGER = getLogger()
 
 class StorageTableMetaABC(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def create_metas(self, **kwargs):
+    def create(self):
+        ...
+
+    @abc.abstractmethod
+    def set_metas(self, **kwargs):
         ...
 
     @abc.abstractmethod
@@ -83,6 +87,10 @@ class StorageTableMetaABC(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_description(self):
+        ...
+
+    @abc.abstractmethod
+    def to_dict(self) -> dict:
         ...
 
 

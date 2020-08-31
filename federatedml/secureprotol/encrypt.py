@@ -14,21 +14,18 @@
 #  limitations under the License.
 #
 
+from collections import Iterable
+
 import numpy as np
 import torch
-from collections import Iterable
 from Cryptodome import Random
 from Cryptodome.PublicKey import RSA
 
-# from arch.api.utils import log_utils
 from federatedml.secureprotol import gmpy_math
 from federatedml.secureprotol.affine import AffineCipher
 from federatedml.secureprotol.fate_paillier import PaillierKeypair
-from federatedml.secureprotol.random import RandomPads
-
-
-# LOGGER = log_utils.getLogger()
 from federatedml.secureprotol.iterative_affine import IterativeAffineCipher
+from federatedml.secureprotol.random import RandomPads
 
 
 class Encrypt(object):

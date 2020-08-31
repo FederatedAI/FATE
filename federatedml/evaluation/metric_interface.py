@@ -1,17 +1,12 @@
+import numpy as np
+import logging
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
-
-import numpy as np
 from federatedml.util import consts
-import logging
-from arch.api.utils import log_utils
-
+from federatedml.util import LOGGER
 from federatedml.evaluation.metrics import classification_metric
-from federatedml.evaluation.metrics import regression_metric
-
+from federatedml.evaluation.metrics import regression_metric\
 from functools import wraps
-
-LOGGER = log_utils.getLogger()
 
 
 class MetricInterface(object):
@@ -20,6 +15,14 @@ class MetricInterface(object):
 
         self.pos_label = pos_label
         self.eval_type = eval_type
+
+    @staticmethod
+    def binary_label_convertor(labels, pos_label=1):
+        # convert label to standard format
+        new_labels = np.array(labels)
+        new_labels[new_labels == pos_label] = 1
+        new_labels[new_labels != pos_label] = 0
+        return new_labels
 
     def auc(self, labels, pred_scores):
         """
@@ -36,7 +39,8 @@ class MetricInterface(object):
             The AUC
         """
         if self.eval_type == consts.BINARY:
-            return roc_auc_score(labels, pred_scores)
+            labels = self.binary_label_convertor(labels, self.pos_label)
+            return roc_auc_score(labels, pred_scores,)
         else:
             logging.warning("auc is just suppose Binary Classification! return None as results")
             return None
@@ -148,6 +152,7 @@ class MetricInterface(object):
 
     def roc(self, labels, pred_scores):
         if self.eval_type == consts.BINARY:
+            labels = self.binary_label_convertor(labels, self.pos_label)
             fpr, tpr, thresholds = roc_curve(np.array(labels), np.array(pred_scores), drop_intermediate=1)
             fpr, tpr, thresholds = list(map(float, fpr)), list(map(float, tpr)), list(map(float, thresholds))
 
@@ -185,7 +190,7 @@ class MetricInterface(object):
         fpr:
         """
 
-        return classification_metric.KS().compute(labels, pred_scores)
+        return classification_metric.KS().compute(labels, pred_scores, pos_label=self.pos_label)
 
     def lift(self, labels, pred_scores):
         """
@@ -202,7 +207,7 @@ class MetricInterface(object):
             The lift
         """
         if self.eval_type == consts.BINARY:
-            return classification_metric.Lift().compute(labels, pred_scores)
+            return classification_metric.Lift(pos_label=self.pos_label).compute(labels, pred_scores)
         else:
             logging.warning("lift is just suppose Binary Classification! return None as results")
             return None
@@ -223,7 +228,7 @@ class MetricInterface(object):
         """
 
         if self.eval_type == consts.BINARY:
-            return classification_metric.Gain().compute(labels, pred_scores)
+            return classification_metric.Gain(pos_label=self.pos_label).compute(labels, pred_scores)
         else:
             logging.warning("gain is just suppose Binary Classification! return None as results")
             return None
@@ -244,7 +249,7 @@ class MetricInterface(object):
             The key is threshold and the value is another dic, which key is label in parameter labels, and value is the label's precision.
         """
         if self.eval_type == consts.BINARY:
-            precision_operator = classification_metric.BiClassPrecision()
+            precision_operator = classification_metric.BiClassPrecision(pos_label=self.pos_label)
             metric_scores, score_threshold, cuts = precision_operator.compute(labels, pred_scores)
             return metric_scores, cuts, score_threshold
         elif self.eval_type == consts.MULTY:
@@ -268,7 +273,7 @@ class MetricInterface(object):
             label's recall.
         """
         if self.eval_type == consts.BINARY:
-            recall_operator = classification_metric.BiClassRecall()
+            recall_operator = classification_metric.BiClassRecall(pos_label=self.pos_label)
             recall_res, thresholds, cuts = recall_operator.compute(labels, pred_scores)
             return recall_res, cuts, thresholds
         elif self.eval_type == consts.MULTY:
@@ -292,7 +297,7 @@ class MetricInterface(object):
         """
 
         if self.eval_type == consts.BINARY:
-            acc_operator = classification_metric.BiClassAccuracy()
+            acc_operator = classification_metric.BiClassAccuracy(pos_label=self.pos_label)
             acc_res, thresholds, cuts = acc_operator.compute(labels, pred_scores, normalize)
             return acc_res, cuts, thresholds
         elif self.eval_type == consts.MULTY:
@@ -308,7 +313,8 @@ class MetricInterface(object):
         """
 
         if self.eval_type == consts.BINARY:
-            f1_scores, score_threshold, cuts = classification_metric.FScore().compute(labels, pred_scores)
+            f1_scores, score_threshold, cuts = classification_metric.FScore().compute(labels, pred_scores,
+                                                                                      pos_label=self.pos_label)
             return list(f1_scores), list(cuts), list(score_threshold)
         else:
             logging.warning('error: f-score metric is for binary classification only')
@@ -326,7 +332,8 @@ class MetricInterface(object):
             score_threshold.append(0)
             confusion_mat = classification_metric.ConfusionMatrix.compute(sorted_labels, sorted_scores,
                                                                           score_threshold,
-                                                                          ret=['tp', 'fp', 'fn', 'tn'])
+                                                                          ret=['tp', 'fp', 'fn', 'tn'],
+                                                                          pos_label=self.pos_label)
 
             confusion_mat['tp'] = self.__to_int_list(confusion_mat['tp'])
             confusion_mat['fp'] = self.__to_int_list(confusion_mat['fp'])
@@ -352,9 +359,10 @@ class MetricInterface(object):
             psi_computer = classification_metric.PSI()
             psi_scores, total_psi, expected_interval, expected_percentage, actual_interval, actual_percentage, \
             train_pos_perc, validate_pos_perc, intervals = psi_computer.compute(train_scores, validate_scores,
-                                                                                  debug=debug, str_intervals=True,
-                                                                                  round_num=6, train_labels=train_labels
-                                                                                  , validate_labels=validate_labels)
+                                                                                debug=debug, str_intervals=True,
+                                                                                round_num=6, train_labels=train_labels
+                                                                                , validate_labels=validate_labels,
+                                                                                pos_label=self.pos_label)
 
             len_list = np.array([len(psi_scores), len(expected_interval), len(expected_percentage), len(actual_interval)
                                  , len(actual_percentage), len(intervals)])
@@ -370,8 +378,10 @@ class MetricInterface(object):
 
     def quantile_pr(self, labels, pred_scores):
         if self.eval_type == consts.BINARY:
-            p = classification_metric.BiClassPrecision(cut_method='quantile', remove_duplicate=False)
-            r = classification_metric.BiClassRecall(cut_method='quantile', remove_duplicate=False)
+            p = classification_metric.BiClassPrecision(cut_method='quantile', remove_duplicate=False,
+                                                       pos_label=self.pos_label)
+            r = classification_metric.BiClassRecall(cut_method='quantile', remove_duplicate=False,
+                                                    pos_label=self.pos_label)
             p_scores, score_threshold, cuts = p.compute(labels, pred_scores)
             r_scores, score_threshold, cuts = r.compute(labels, pred_scores)
             p_scores = list(map(list, np.flip(p_scores, axis=0)))

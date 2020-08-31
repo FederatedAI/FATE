@@ -15,13 +15,11 @@
 #
 from typing import Union
 
-from arch.api.utils import log_utils
 from federatedml.framework.homo.blocks.base import HomoTransferBase
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.secureprotol.fate_paillier import PaillierPublicKey
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class PaillierCipherTransVar(HomoTransferBase):

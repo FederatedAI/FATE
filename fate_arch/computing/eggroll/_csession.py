@@ -15,15 +15,15 @@
 #
 
 
-from eggroll.core.constants import StoreTypes
 from eggroll.core.session import session_init
 from eggroll.roll_pair.roll_pair import RollPairContext
+
 from fate_arch.abc import AddressABC, CSessionABC
 from fate_arch.common import WorkMode
+from fate_arch.common.base_utils import fate_uuid
 from fate_arch.common.log import getLogger
 from fate_arch.common.profile import log_elapsed
 from fate_arch.computing.eggroll import Table
-from fate_arch.common.base_utils import fate_uuid
 
 LOGGER = getLogger()
 
@@ -39,7 +39,6 @@ class CSession(CSessionABC):
         self._rp_session = session_init(session_id=session_id, options=options)
         self._rpc = RollPairContext(session=self._rp_session)
         self._session_id = self._rp_session.get_session_id()
-        self._default_storage_type = options.get("store_type", StoreTypes.ROLLPAIR_IN_MEMORY)
 
     def get_rpc(self):
         return self._rpc
@@ -52,6 +51,7 @@ class CSession(CSessionABC):
     def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
 
         from fate_arch.common.address import EggRollAddress
+        from fate_arch.storage import EggRollStorageType
         if isinstance(address, EggRollAddress):
             options = kwargs.get("option", {})
             options["total_partitions"] = partitions
@@ -61,9 +61,9 @@ class CSession(CSessionABC):
             if rp is None or rp.get_partitions() == 0:
                 raise RuntimeError(f"no exists: {address.name}, {address.namespace}, {address.storage_type}")
 
-            if address.storage_type != StoreTypes.ROLLPAIR_IN_MEMORY:
+            if address.storage_type != EggRollStorageType.ROLLPAIR_IN_MEMORY:
                 rp = rp.save_as(name=f"{address.name}_{fate_uuid()}", namespace=address.namespace, partition=partitions,
-                                options={'store_type': StoreTypes.ROLLPAIR_IN_MEMORY})
+                                options={'store_type': EggRollStorageType.ROLLPAIR_IN_MEMORY})
 
             table = Table(rp=rp)
             table.schema = schema

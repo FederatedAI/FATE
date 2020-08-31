@@ -1,6 +1,5 @@
 {
     "module_path":  "federatedml/toy_example",
-    "default_runtime_conf": "secure_add_example_param.json",
     "param_class" : "federatedml/param/secure_add_example_param/SecureAddExampleParam",
     "role":
     {

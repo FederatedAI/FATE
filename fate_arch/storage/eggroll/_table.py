@@ -15,6 +15,7 @@
 #
 
 from typing import Iterable
+
 from fate_arch.common.profile import log_elapsed
 from fate_arch.storage import StorageTableBase, StorageEngine, EggRollStorageType
 
@@ -25,14 +26,14 @@ class StorageTable(StorageTableBase):
                  name,
                  namespace,
                  address,
-                 partitions: int = 1,
-                 storage_type: EggRollStorageType = EggRollStorageType.ROLLPAIR_LMDB,
+                 partitions: int = None,
+                 storage_type: EggRollStorageType = None,
                  options=None):
         super(StorageTable, self).__init__(name=name, namespace=namespace)
         self._context = context
         self._address = address
-        self._partitions = partitions
-        self._type = storage_type
+        self._partitions = partitions if partitions else 1
+        self._type = storage_type if storage_type else EggRollStorageType.ROLLPAIR_LMDB
         self._options = options if options else {}
         self._engine = StorageEngine.EGGROLL
 

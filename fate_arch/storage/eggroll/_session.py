@@ -14,10 +14,10 @@
 #  limitations under the License.
 #
 
-from fate_arch.common.profile import log_elapsed
-from fate_arch.storage import StorageSessionBase, EggRollStorageType
 from fate_arch.abc import AddressABC
 from fate_arch.common.address import EggRollAddress
+from fate_arch.common.profile import log_elapsed
+from fate_arch.storage import StorageSessionBase, EggRollStorageType
 
 
 class StorageSession(StorageSessionBase):
@@ -37,13 +37,8 @@ class StorageSession(StorageSessionBase):
 
     def table(self, name, namespace, address: AddressABC, partitions, storage_type: EggRollStorageType = EggRollStorageType.ROLLPAIR_LMDB, options=None, **kwargs):
         if isinstance(address, EggRollAddress):
-            if not options:
-                options = {}
-            if storage_type:
-                options["store_type"] = storage_type
-            options["total_partitions"] = partitions
             from fate_arch.storage.eggroll._table import StorageTable
-            return StorageTable(context=self._rpc, address=address, name=name, namespace=namespace, storage_type=storage_type, options=options)
+            return StorageTable(context=self._rpc, name=name, namespace=namespace, address=address, partitions=partitions, storage_type=storage_type, options=options)
         raise NotImplementedError(f"address type {type(address)} not supported with eggroll storage")
 
     @log_elapsed

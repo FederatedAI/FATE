@@ -17,13 +17,12 @@ import datetime
 import time
 
 from arch.api import session
+from arch.api.utils import version_control
 from arch.api.utils.core_utils import current_timestamp
-from arch.api.utils import log_utils, version_control
 from arch.api.utils.dtable_utils import get_table_info, gen_party_version
 from federatedml.statistic.intersect.rsa_cache.db_models import DB, IdLibraryCacheInfo, init_database_tables
 from federatedml.statistic.intersect.rsa_cache.redis_adaptor import RedisAdaptor
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 '''
 ################################################################################

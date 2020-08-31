@@ -21,24 +21,15 @@
 # DecisionTree Base Class
 # =============================================================================
 import abc
+from typing import List
 
 from federatedml.ensemble.basic_algorithms.algorithm_prototype import BasicAlgorithms
-from arch.api.utils import log_utils
-
-from federatedml.feature.instance import Instance
-from federatedml.param import DecisionTreeParam
-
-from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter import \
-    SplitInfo, Splitter
-from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.node import Node
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_histogram import \
     HistogramBag, FeatureHistogram
-
-from federatedml.util import consts
-
-from typing import Tuple, Dict, List
-
-LOGGER = log_utils.getLogger()
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.node import Node
+from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.splitter import \
+    SplitInfo, Splitter
+from federatedml.util import LOGGER
 
 
 class DecisionTree(BasicAlgorithms):

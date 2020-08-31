@@ -21,15 +21,13 @@ import copy
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 
-from arch.api.utils import log_utils
 from federatedml.model_base import ModelBase
 from federatedml.param.local_baseline_param import LocalBaselineParam
 from federatedml.protobuf.generated import lr_model_meta_pb2, lr_model_param_pb2
 from federatedml.statistic import data_overview
+from federatedml.util import LOGGER
 from federatedml.util import abnormal_detection
 from federatedml.util.io_check import assert_io_num_rows_equal
-
-LOGGER = log_utils.getLogger()
 
 
 class LocalBaseline(ModelBase):
@@ -216,6 +214,7 @@ class LocalBaseline(ModelBase):
         if not self.need_run:
             return
         # check if empty table
+        LOGGER.info("Enter Local Baseline fit")
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
         # get model

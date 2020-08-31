@@ -14,10 +14,7 @@
 #  limitations under the License.
 #
 
-from arch.api.utils import log_utils
 from federatedml.framework.hetero.sync import paillier_keygen_sync
-
-LOGGER = log_utils.getLogger()
 
 
 class Host(paillier_keygen_sync.Host):
@@ -36,4 +33,3 @@ class Arbiter(paillier_keygen_sync.Arbiter):
 
     def register_paillier_cipher(self, transfer_variables):
         self._register_paillier_keygen(pubkey_transfer=transfer_variables.paillier_pubkey)
-

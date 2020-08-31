@@ -13,33 +13,34 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import requests
 import json
 
+import grpc
+import requests
+
+from fate_arch.common import conf_utils
 from fate_arch.common.log import audit_logger
+from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.settings import FATEFLOW_SERVICE_NAME, IP, GRPC_PORT, HEADERS, DEFAULT_GRPC_OVERALL_TIMEOUT
+from fate_flow.utils.node_check_utils import nodes_check
 from fate_flow.utils.proto_compatibility import basic_meta_pb2
 from fate_flow.utils.proto_compatibility import proxy_pb2, proxy_pb2_grpc
-import grpc
-
-from fate_flow.settings import ROLE, IP, GRPC_PORT, HEADERS, DEFAULT_GRPC_OVERALL_TIMEOUT
-from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.utils.node_check_utils import nodes_check
-from fate_flow.utils.service_utils import ServiceUtils
 
 
-def get_proxy_data_channel():
-    channel = grpc.insecure_channel('{}:{}'.format(ServiceUtils.get_item("proxy", "host"),
-                                                   ServiceUtils.get_item("proxy", "port")))
+def get_command_federation_channel():
+    engine = conf_utils.get_base_config("command_federation").get("engine")
+    address = conf_utils.get_base_config("command_federation").get("address")
+    channel = grpc.insecure_channel('{}:{}'.format(address.get("host"), address.get("port")))
     stub = proxy_pb2_grpc.DataTransferServiceStub(channel)
-    return channel, stub
+    return engine, channel, stub
 
 
 def wrap_grpc_packet(_json_body, _method, _url, _src_party_id, _dst_party_id, job_id=None, overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
     _src_end_point = basic_meta_pb2.Endpoint(ip=IP, port=GRPC_PORT)
-    _src = proxy_pb2.Topic(name=job_id, partyId="{}".format(_src_party_id), role=ROLE, callback=_src_end_point)
-    _dst = proxy_pb2.Topic(name=job_id, partyId="{}".format(_dst_party_id), role=ROLE, callback=None)
+    _src = proxy_pb2.Topic(name=job_id, partyId="{}".format(_src_party_id), role=FATEFLOW_SERVICE_NAME, callback=_src_end_point)
+    _dst = proxy_pb2.Topic(name=job_id, partyId="{}".format(_dst_party_id), role=FATEFLOW_SERVICE_NAME, callback=None)
     _task = proxy_pb2.Task(taskId=job_id)
-    _command = proxy_pb2.Command(name=ROLE)
+    _command = proxy_pb2.Command(name=FATEFLOW_SERVICE_NAME)
     _conf = proxy_pb2.Conf(overallTimeout=overall_timeout)
     _meta = proxy_pb2.Metadata(src=_src, dst=_dst, task=_task, command=_command, operator=_method, conf=_conf)
     _data = proxy_pb2.Data(key=_url, value=bytes(json.dumps(_json_body), 'utf-8'))

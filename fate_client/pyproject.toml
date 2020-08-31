@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "fate_client"
 version = "0.1.0"
-description = "Clients for FATE, including flow_client, flow_sdk, fate_pipeline and fate_testsuite"
+description = "Clients for FATE, including flow_client and pipeline"
 authors = ["FederatedAI <contact@FedAI.org>"]
 license = "Apache-2.0"
 readme = "README.rst"
@@ -22,19 +22,37 @@ classifiers = [
 ]
 
 packages = [
+    { include = "flow_client" },
+    { include = "flow_sdk" },
+    { include = "testsuite" },
+    { include = "pipeline" }
 ]
 
 [tool.poetry.dependencies]
 python = "^3.6"
-flow_client = "^0.1.0"
-flow_sdk = "^0.1.0"
-fate_pipeline = "^0.1.0"
-fate_testsuite = "^0.1.0"
-
+requests_toolbelt = "^0.9.1"
+requests = "^2.24.0"
+click = "^7.1.2"
+six = "^1.15.0"
+"ruamel.yaml" = "^0.16.10"
+cachetools = "^4.1.1"
+python-dotenv = "^0.14.0"
+kazoo = "^2.8.0"
+loguru = "^0.5.1"
+prettytable = "^0.7.2"
+sshtunnel = "^0.1.5"
+tensorflow = "1.15.2"
+torch = "1.4.0"
+flask = "^1.0.2"
+pyyaml = "^5.3.1"
+dataclasses = { version = "^0.7", python = "3.6", optional = true }
 
 [tool.poetry.dev-dependencies]
 
 [tool.poetry.scripts]
+flow = "flow_client.flow:flow_cli"
+testsuite = "testsuite.cli:cli"
+pipeline = "pipeline.pipeline_cli:cli"
 
 [build-system]
 requires = ["poetry>=0.12"]

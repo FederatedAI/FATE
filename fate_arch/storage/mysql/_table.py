@@ -14,9 +14,6 @@
 #  limitations under the License.
 #
 
-
-import pymysql
-
 from fate_arch.common.profile import log_elapsed
 from fate_arch.storage import StorageEngine, MySQLStorageType
 from fate_arch.storage import StorageTableBase
@@ -24,14 +21,17 @@ from fate_arch.storage import StorageTableBase
 
 class StorageTable(StorageTableBase):
     def __init__(self,
-                 context,
+                 cur,
+                 con,
                  address=None,
                  name: str = None,
                  namespace: str = None,
                  partitions: int = 1,
                  storage_type: MySQLStorageType = None,
                  options=None):
-        self._context = context
+        super(StorageTable, self).__init__(name=name, namespace=namespace)
+        self.cur = cur
+        self.con = con
         self._address = address
         self._name = name
         self._namespace = namespace
@@ -39,18 +39,7 @@ class StorageTable(StorageTableBase):
         self._storage_type = storage_type
         self._options = options if options else {}
         self._storage_engine = StorageEngine.MYSQL
-
-        try:
-            self.con = pymysql.connect(host=self._address.host,
-                                       user=self._address.user,
-                                       passwd=self._address.passwd,
-                                       port=self._address.port,
-                                       db=self._address.db)
-            self.cur = self.con.cursor()
-        except:
-            raise Exception(
-                "DataBase connect error,please check the db config:host {}, user {}, passwd {}, port {}, db {}".format(
-                    self._address.host, self._address.user, self._address.passwd, self._address.port, self._address.db))
+        self._type = storage_type if storage_type else MySQLStorageType.InnoDB
 
     def execute(self, sql, select=True):
         self.cur.execute(sql)
@@ -80,26 +69,41 @@ class StorageTable(StorageTableBase):
     def get_address(self):
         return self._address
 
+    def get_type(self):
+        return self._type
+
+    def get_options(self):
+        return self._options
+
+    @log_elapsed
+    def count(self, **kwargs):
+        sql = 'select count(*) from {}'.format(self._name)
+        try:
+            self.cur.execute(sql)
+            self.con.commit()
+            ret = self.cur.fetchall()
+            count = ret[0][0]
+        except:
+            count = 0
+        return count
+
     @log_elapsed
     def collect(self, **kwargs) -> list:
         sql = 'select * from {}'.format(self._name)
         data = self.execute(sql)
         return data
 
-    def save_as(self, name, namespace, partitions=None, schema=None, **kwargs):
-        pass
-
     def put_all(self, kv_list, **kwargs):
-        pass
+        create_table = 'create table if not exists {}(id varchar(50) NOT NULL, features LONGTEXT, PRIMARY KEY(id))'.format(self._address.name)
+        self.cur.execute(create_table)
+        sql = 'REPLACE INTO {}(id, features)  VALUES'.format(self._address.name)
+        for kv in kv_list:
+            sql += '("{}", "{}"),'.format(kv[0], kv[1])
+        sql = ','.join(sql.split(',')[:-1]) + ';'
+        self.cur.execute(sql)
+        self.con.commit()
 
     def destroy(self):
         super().destroy()
         sql = 'drop table {}'.format(self._name)
         return self.execute(sql)
-
-    @log_elapsed
-    def count(self, **kwargs):
-        pass
-
-    def close(self):
-        self.con.close()

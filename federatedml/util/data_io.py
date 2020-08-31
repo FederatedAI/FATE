@@ -25,7 +25,6 @@ import functools
 
 import numpy as np
 
-from arch.api.utils import log_utils
 from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.model_base import ModelBase
@@ -36,11 +35,10 @@ from federatedml.protobuf.generated.data_io_param_pb2 import DataIOParam
 from federatedml.protobuf.generated.data_io_param_pb2 import ImputerParam
 from federatedml.protobuf.generated.data_io_param_pb2 import OutlierParam
 from federatedml.statistic import data_overview
+from federatedml.util import LOGGER
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
-
-LOGGER = log_utils.getLogger()
 
 
 # =============================================================================

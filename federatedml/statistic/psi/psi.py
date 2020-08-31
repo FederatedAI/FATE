@@ -1,3 +1,6 @@
+import functools
+import copy
+import numpy as np
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.util import consts
@@ -6,18 +9,9 @@ from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.model_base import ModelBase
 from federatedml.param.psi_param import PSIParam
-
-import functools
-import copy
-
-import numpy as np
-
-from arch.api.utils import log_utils
-
+from federatedml.util import LOGGER
 from federatedml.protobuf.generated.psi_model_param_pb2 import PsiSummary, FeaturePsi
 from federatedml.protobuf.generated.psi_model_meta_pb2 import PSIMeta
-
-LOGGER = log_utils.getLogger()
 
 ROUND_NUM = 6
 
@@ -120,6 +114,7 @@ class PSI(ModelBase):
         self.total_scores = None
         self.all_feature_list = None
         self.dense_missing_val = NoneType()
+        self.binning_error = consts.DEFAULT_RELATIVE_ERROR
 
         self.interval_perc1 = None
         self.interval_perc2 = None
@@ -131,6 +126,7 @@ class PSI(ModelBase):
         self.max_bin_num = model.max_bin_num
         self.need_run = model.need_run
         self.dense_missing_val = NoneType() if model.dense_missing_val is None else model.dense_missing_val
+        self.binning_error = model.binning_error
 
     @staticmethod
     def check_table_content(tb):
@@ -224,7 +220,7 @@ class PSI(ModelBase):
         header1 = expect_table.schema['header']
         header2 = actual_table.schema['header']
 
-        assert header1 == header2, 'table header must be the same while computing psi values'
+        assert set(header1) == set(header2), 'table header must be the same while computing psi values'
 
         self.all_feature_list = header1
 
@@ -244,7 +240,8 @@ class PSI(ModelBase):
         if not(self.check_table_content(expect_table) and self.check_table_content(actual_table)):
             raise ValueError('contents of input table must be instances of class "Instance"')
 
-        param = FeatureBinningParam(method=consts.QUANTILE, bin_num=self.max_bin_num, local_only=True)
+        param = FeatureBinningParam(method=consts.QUANTILE, bin_num=self.max_bin_num, local_only=True,
+                                    error=self.binning_error)
         binning_obj = QuantileBinning(params=param, abnormal_list=[NoneType()], allow_duplicate=False)
         binning_obj.fit_split_points(expect_table)
 
