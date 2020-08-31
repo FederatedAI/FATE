@@ -18,7 +18,7 @@ import numpy as np
 import unittest
 import uuid
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 from federatedml.feature.instance import Instance
 from federatedml.local_baseline.local_baseline import LocalBaseline
 from sklearn.linear_model import LogisticRegression

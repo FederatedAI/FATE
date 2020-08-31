@@ -16,7 +16,7 @@
 
 import hashlib
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 from federatedml.secureprotol import gmpy_math
 from federatedml.secureprotol.encrypt import RsaEncrypt
 #from federatedml.statistic.intersect.rsa_cache import cache_utils

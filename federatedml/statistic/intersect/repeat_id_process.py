@@ -18,7 +18,7 @@ from collections import defaultdict
 import functools
 import numpy as np
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 from federatedml.feature.instance import Instance
 from federatedml.transfer_variable.transfer_class.repeated_id_intersect_transfer_variable import \
     RepeatedIDIntersectTransferVariable

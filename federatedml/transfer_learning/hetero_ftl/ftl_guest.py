@@ -1,4 +1,5 @@
 import numpy as np
+from fate_arch.session import computing_session as session
 from federatedml.util import consts
 from federatedml.transfer_learning.hetero_ftl.ftl_base import FTL
 from federatedml.statistic.intersect import intersect_guest
@@ -8,7 +9,6 @@ from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
-from arch.api import session
 from federatedml.optim.activation import sigmoid
 from federatedml.statistic import data_overview
 

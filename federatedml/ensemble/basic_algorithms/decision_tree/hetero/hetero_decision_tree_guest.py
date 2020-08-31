@@ -1,6 +1,6 @@
 import copy
 import functools
-from arch.api import session
+from fate_arch.session import computing_session as session
 from federatedml.util import LOGGER
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.decision_tree import DecisionTree
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.node import Node
