@@ -109,6 +109,7 @@ class Table(CTableABC):
         if isinstance(address, HDFSAddress):
             save_as_hdfs(rdd=self._rdd, paths=address.path, partitions=partitions)
             schema.update(self.schema)
+            return
         raise NotImplementedError(f"address type {type(address)} not supported with spark backend")
 
     """binary transform
