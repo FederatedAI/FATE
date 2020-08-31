@@ -53,6 +53,8 @@ class Evaluation(ModelBase):
 
         self.special_metric_list = [consts.PSI]
 
+        self.clustering_intra_metric_list = [consts.DAVIES_BOULDIN_INDEX]
+
         self.metrics = None
         self.round_num = 6
 
@@ -128,23 +130,23 @@ class Evaluation(ModelBase):
 
         true_cluster_index, predicted_cluster_index = [], []
         intra_cluster_avg_dist, inter_cluster_dist = [], []
-        run_outer_metrics = False  # run intra metrics or outer metrics ?
+        run_intra_metrics = False  # run intra metrics or outer metrics ?
 
         if len(data[0][1]) == 3:  # this input format is not for metrics computation
-            return None, None, run_outer_metrics
-        if type(data[0][1][-1]) == list:  # the input format is for outer metrics
-            run_outer_metrics = True
+            return None, None, run_intra_metrics
+        if type(data[0][1][-1]) == list:  # the input format is for intra metrics
+            run_intra_metrics = True
 
         for d in data:
-            if run_outer_metrics:
+            if run_intra_metrics:
                 intra_cluster_avg_dist.append(d[1][1])
                 inter_cluster_dist.append(d[1][2])
             else:
                 true_cluster_index.append(d[1][1])
                 predicted_cluster_index.append(d[1][2])
 
-        return (true_cluster_index, predicted_cluster_index, run_outer_metrics) if not run_outer_metrics else \
-               (intra_cluster_avg_dist, inter_cluster_dist, run_outer_metrics)
+        return (true_cluster_index, predicted_cluster_index, run_intra_metrics) if not run_intra_metrics else \
+               (intra_cluster_avg_dist, inter_cluster_dist, run_intra_metrics)
 
     def _evaluate_classification_and_regression_metrics(self, mode, data):
 
@@ -180,7 +182,25 @@ class Evaluation(ModelBase):
         return eval_result
 
     def _evaluate_clustering_metrics(self, mode, data):
+
         eval_result = defaultdict(list)
+        rs0, rs1, run_outer_metric = self._clustering_extract(data)
+
+        if rs0 is None and rs1 is None:  # skip evaluation computation of this input format
+            return eval_result
+
+        for eval_metric in self.metrics:
+
+            # if input format and required metrics matches ? XNOR
+            if (eval_metric in self.clustering_intra_metric_list and run_outer_metric) + \
+               (not (eval_metric in self.clustering_intra_metric_list) and not run_outer_metric):
+                raise ValueError('input data format does not match current clustering metric {}'.format(eval_metric))
+
+            res = getattr(self.metric_interface, eval_metric)(rs0, rs1)
+            eval_result[eval_metric].append(mode)
+            eval_result[eval_metric].append(res)
+
+        return eval_result
 
     def evaluate_metrics(self, mode: str, data: list) -> dict:
 

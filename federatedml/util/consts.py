@@ -86,7 +86,11 @@ ALIAS = {
     ('l2_root', 'rmse'): ROOT_MEAN_SQUARED_ERROR,
     ('msle', ): MEAN_SQUARED_LOG_ERROR,
     ('r2', ): R2_SCORE,
-    ('acc', ): ACCURACY
+    ('acc', ): ACCURACY,
+    ('DBI', ): DAVIES_BOULDIN_INDEX,
+    ('FMI', ): FOWLKES_MALLOWS_SCORE,
+    ('RI', ): ADJUSTED_RAND_SCORE,
+    ('jaccard', ): JACCARD_SIMILARITY_SCORE
 }
 
 # default evaluation metrics
