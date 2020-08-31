@@ -24,9 +24,7 @@
 # =============================================================================
 # Criterion
 # =============================================================================
-from arch.api.utils import log_utils
 
-LOGGER = log_utils.getLogger()
 
 class Criterion(object):
     def __init__(self, criterion_params):
