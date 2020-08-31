@@ -43,7 +43,7 @@ class ObjectiveParam(BaseParam):
              first element of list should be a float-number in [1.0, 2.0) when objective is 'tweedie'
     """
 
-    def __init__(self, objective=None, params=None):
+    def __init__(self, objective='cross_entropy', params=None):
         self.objective = objective
         self.params = params
 
