@@ -1,3 +1,4 @@
+from typing import List
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import DecisionTreeModelParam
 from federatedml.transfer_variable.transfer_class.homo_decision_tree_transfer_variable import \
     HomoDecisionTreeTransferVariable
@@ -6,13 +7,8 @@ from federatedml.ensemble import DecisionTree
 from federatedml.ensemble import Splitter
 from federatedml.ensemble import HistogramBag
 from federatedml.ensemble import SplitInfo
-
-from typing import List
-from arch.api.utils import log_utils
+from federatedml.util import LOGGER
 from federatedml.ensemble import DecisionTreeArbiterAggregator
-
-
-LOGGER = log_utils.getLogger()
 
 
 class HomoDecisionTreeArbiter(DecisionTree):

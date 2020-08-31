@@ -6,7 +6,7 @@ import unittest
 
 from sklearn.preprocessing import StandardScaler as SSL
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 from federatedml.feature.feature_scale.standard_scale import StandardScale
 from federatedml.feature.instance import Instance
 from federatedml.param.scale_param import ScaleParam

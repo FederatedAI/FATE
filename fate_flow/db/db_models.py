@@ -26,7 +26,7 @@ from playhouse.pool import PooledMySQLDatabase
 
 from fate_arch.common import log
 from fate_arch.common.base_utils import current_timestamp
-from fate_arch.storage.metastore.base_model import JSONField, SerializedField, BaseModel
+from fate_arch.storage.metastore.base_model import JSONField, SerializedField, BaseModel, LongTextField
 from fate_arch.common import WorkMode
 from fate_flow.settings import DATABASE, WORK_MODE, stat_logger, USE_LOCAL_DATABASE
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -269,6 +269,29 @@ class MachineLearningModelMeta(DataBaseModel):
         db_table = "t_machine_learning_model_meta"
 
 
+class MachineLearningModelInfo(DataBaseModel):
+    f_id = BigAutoField(primary_key=True)
+    f_role = CharField(max_length=50, index=True)
+    f_party_id = CharField(max_length=10, index=True)
+    f_roles = JSONField()
+    f_model_id = CharField(max_length=100, index=True)
+    f_model_version = CharField(max_length=100, index=True)
+    f_loaded_times = IntegerField(default=0)
+    f_size = BigIntegerField(default=0)
+    f_create_time = BigIntegerField(default=0)
+    f_update_time = BigIntegerField(default=0)
+    f_description = TextField(null=True, default='')
+    f_initiator_role = CharField(max_length=50, index=True)
+    f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
+    f_runtime_conf = JSONField()
+    f_work_mode = IntegerField()
+    f_dsl = JSONField()
+    f_train_runtime_conf = JSONField(null=True)
+
+    class Meta:
+        db_table = "t_machine_learning_model_info"
+
+
 class ModelTag(DataBaseModel):
     f_id = BigAutoField(primary_key=True)
     f_m_id = BigIntegerField(null=False)
@@ -290,17 +313,36 @@ class Tag(DataBaseModel):
 
 
 class ComponentSummary(DataBaseModel):
+    _mapper = {}
+
+    @classmethod
+    def model(cls, table_index=None, date=None):
+        if not table_index:
+            table_index = date.strftime(
+                '%Y%m%d') if date else datetime.datetime.now().strftime(
+                '%Y%m%d')
+        class_name = 'ComponentSummary_%s' % table_index
+
+        ModelClass = TrackingMetric._mapper.get(class_name, None)
+        if ModelClass is None:
+            class Meta:
+                db_table = '%s_%s' % ('t_component_summary', table_index)
+
+            attrs = {'__module__': cls.__module__, 'Meta': Meta}
+            ModelClass = type("%s_%s" % (cls.__name__, table_index), (cls,), attrs)
+            ComponentSummary._mapper[class_name] = ModelClass
+        return ModelClass()
+
     f_id = BigAutoField(primary_key=True)
     f_job_id = CharField(max_length=25)
-    f_role = CharField(max_length=50, index=True)
+    f_role = CharField(max_length=25, index=True)
     f_party_id = CharField(max_length=10, index=True)
     f_component_name = TextField()
-    f_summary = TextField()
+    f_task_id = CharField(max_length=50, null=True)
+    f_task_version = CharField(max_length=50, null=True)
+    f_summary = LongTextField()
     f_create_time = BigIntegerField(default=0)
     f_update_time = BigIntegerField(default=0)
-
-    class Meta:
-        db_table = "t_component_summary"
 
 
 class ModelOperationLog(DataBaseModel):

@@ -19,9 +19,8 @@
 import operator
 import random
 
-from arch.api.utils import log_utils
 from federatedml.feature.feature_selection.selection_properties import SelectionProperties
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class BaseFilterMethod(object):

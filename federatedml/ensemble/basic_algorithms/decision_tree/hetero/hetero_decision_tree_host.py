@@ -1,6 +1,5 @@
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.node import Node
-
-from arch.api.utils import log_utils
+from federatedml.util import LOGGER
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import DecisionTreeModelMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import DecisionTreeModelParam
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.decision_tree import DecisionTree
@@ -10,8 +9,6 @@ from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_
 from federatedml.util import consts
 from federatedml.feature.fate_element_type import NoneType
 import functools
-
-LOGGER = log_utils.getLogger()
 
 
 class HeteroDecisionTreeHost(DecisionTree):

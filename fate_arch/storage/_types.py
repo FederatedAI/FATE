@@ -1,5 +1,5 @@
 from fate_arch.computing import ComputingEngine
-from fate_arch.common.address import StandaloneAddress, EggRollAddress, HDFSAddress, MysqlAddress
+from fate_arch.common.address import StandaloneAddress, EggRollAddress, HDFSAddress, MysqlAddress, FileAddress
 
 
 class StorageEngine(object):
@@ -8,6 +8,7 @@ class StorageEngine(object):
     HDFS = 'HDFS'
     MYSQL = 'MYSQL'
     SIMPLE = 'SIMPLE'
+    FILE = 'FILE'
 
 
 class StandaloneStorageType(object):
@@ -37,6 +38,10 @@ class HDFSStorageType(object):
     DEFAULT = None
 
 
+class FileStorageType(object):
+    CSV = 'CSV'
+
+
 class MySQLStorageType(object):
     InnoDB = "InnoDB"
     MyISAM = "MyISAM"
@@ -64,5 +69,6 @@ class Relationship(object):
         StorageEngine.STANDALONE: StandaloneAddress,
         StorageEngine.EGGROLL: EggRollAddress,
         StorageEngine.HDFS: HDFSAddress,
-        StorageEngine.MYSQL: MysqlAddress
+        StorageEngine.MYSQL: MysqlAddress,
+        StorageEngine.FILE: FileAddress
     }

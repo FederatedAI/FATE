@@ -5,7 +5,7 @@ import uuid
 
 import numpy as np
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 from federatedml.util import consts
 
 session.init("123")

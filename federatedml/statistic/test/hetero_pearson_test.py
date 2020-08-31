@@ -16,7 +16,7 @@
 import unittest
 import uuid
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 import numpy as np
 
 

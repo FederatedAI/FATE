@@ -23,7 +23,7 @@ from fate_flow.operation.job_tracker import Tracker
 
 
 from federatedml.util.data_io import DataIO
-from arch.api import session
+from fate_arch.session import computing_session as session
 from federatedml.util import consts
 
 

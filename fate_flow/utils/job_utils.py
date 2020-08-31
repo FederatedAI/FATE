@@ -200,7 +200,10 @@ def job_virtual_component_module_name():
 
 def list_job(limit):
     with DB.connection_context():
-        jobs = Job.select().order_by(Job.f_create_time.desc()).limit(limit)
+        if limit > 0:
+            jobs = Job.select().order_by(Job.f_create_time.desc()).limit(limit)
+        else:
+            jobs = Job.select().order_by(Job.f_create_time.desc())
         return [job for job in jobs]
 
 
@@ -215,7 +218,10 @@ def show_job_queue():
 
 def list_task(limit):
     with DB.connection_context():
-        tasks = Task.select().order_by(Task.f_create_time.desc()).limit(limit)
+        if limit > 0:
+            tasks = Task.select().order_by(Task.f_create_time.desc()).limit(limit)
+        else:
+            tasks = Task.select().order_by(Task.f_create_time.desc())
         return [task for task in tasks]
 
 
@@ -253,9 +259,8 @@ def check_process_by_keyword(keywords):
     return ret == 0
 
 
-def run_subprocess(config_dir, process_cmd, log_dir=None):
-    stat_logger.info('Starting process command: {}'.format(process_cmd))
-    stat_logger.info(' '.join(process_cmd))
+def run_subprocess(job_id, config_dir, process_cmd, log_dir=None):
+    schedule_logger(job_id=job_id).info('start process command: {}'.format(' '.join(process_cmd)))
 
     os.makedirs(config_dir, exist_ok=True)
     if log_dir:
@@ -278,6 +283,7 @@ def run_subprocess(config_dir, process_cmd, log_dir=None):
         f.truncate()
         f.write(str(p.pid) + "\n")
         f.flush()
+    schedule_logger(job_id=job_id).info('start process command: {} successfully, pid is {}'.format(' '.join(process_cmd), p.pid))
     return p
 
 
@@ -406,7 +412,7 @@ def start_session_stop(task):
         '-b', str(runtime_conf.get('job_parameters').get('backend', 0)),
         '-c', 'stop' if task.f_status == JobStatus.COMPLETE else 'kill'
     ]
-    p = run_subprocess(config_dir=task_dir, process_cmd=process_cmd, log_dir=None)
+    p = run_subprocess(job_id=task.f_job_id, config_dir=task_dir, process_cmd=process_cmd, log_dir=None)
 
 
 def gen_all_party_key(all_party):

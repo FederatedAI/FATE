@@ -82,10 +82,10 @@ def read_output_data_info(job_id, component_name, task_version, task_id, role, p
 
 @manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/summary/save',
                methods=['POST'])
-def save_component_summary(job_id, component_name, task_version, task_id, role, party_id):
+def save_component_summary(job_id: str, component_name: str, task_version: int, task_id: str, role: str, party_id: int):
     request_data = request.json
     tracker = Tracker(job_id=job_id, component_name=component_name, task_id=task_id, task_version=task_version,
                       role=role, party_id=party_id)
     summary_data = request_data['summary']
-    tracker.save_component_summary(summary_data)
+    tracker.insert_summary_into_db(summary_data)
     return get_json_result()

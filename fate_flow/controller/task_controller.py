@@ -26,10 +26,11 @@ from fate_flow.utils import job_utils
 import os
 from fate_flow.operation import JobSaver
 from fate_arch.common.base_utils import json_dumps
-from fate_arch.common import base_utils, Backend
+from fate_arch.common import base_utils
 from fate_flow.entity.types import RunParameters
 from fate_flow.manager import ResourceManager
 from fate_flow.operation import Tracker
+from fate_arch.computing import ComputingEngine
 
 
 class TaskController(object):
@@ -84,11 +85,9 @@ class TaskController(object):
             with open(task_parameters_path, 'w') as fw:
                 fw.write(json_dumps(task_parameters))
 
-            backend = task_parameters.get("backend", Backend.EGGROLL)
-            schedule_logger(job_id=job_id).info("use backend {}".format(Backend.EGGROLL))
-            backend = Backend(backend)
+            schedule_logger(job_id=job_id).info(f"use computing engine {run_parameters.computing_engine}")
 
-            if backend.is_eggroll():
+            if run_parameters.computing_engine in {ComputingEngine.EGGROLL, ComputingEngine.STANDALONE}:
                 process_cmd = [
                     sys.executable,  # the python executable path
                     sys.modules[TaskExecutor.__module__].__file__,
@@ -103,7 +102,7 @@ class TaskController(object):
                     '--run_ip', RuntimeConfig.JOB_SERVER_HOST,
                     '--job_server', '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT),
                 ]
-            elif backend.is_spark():
+            elif run_parameters.computing_engine == ComputingEngine.SPARK:
                 if "SPARK_HOME" not in os.environ:
                     raise EnvironmentError("SPARK_HOME not found")
                 spark_home = os.environ["SPARK_HOME"]
@@ -136,13 +135,19 @@ class TaskController(object):
                     '--run_ip', RuntimeConfig.JOB_SERVER_HOST,
                     '--job_server', '{}:{}'.format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT),
                 ])
+                if run_parameters.task_nodes:
+                    process_cmd.extend(["--num-executors", str(run_parameters.task_nodes)])
+                if run_parameters.task_cores_per_node:
+                    process_cmd.extend(["--executor-cores", str(run_parameters.task_cores_per_node)])
+                if run_parameters.task_memory_per_node:
+                    process_cmd.extend(["--executor-memory", f"{run_parameters.task_memory_per_node}m"])
             else:
-                raise ValueError(f"${backend} supported")
+                raise ValueError(f"${run_parameters.computing_engine} is not supported")
 
             task_log_dir = os.path.join(job_utils.get_job_log_directory(job_id=job_id), role, party_id, component_name)
             schedule_logger(job_id).info(
                 'job {} task {} {} on {} {} executor subprocess is ready'.format(job_id, task_id, task_version, role, party_id))
-            p = job_utils.run_subprocess(config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir)
+            p = job_utils.run_subprocess(job_id=job_id, config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir)
             if p:
                 task_executor_process_start_status = True
         except Exception as e:

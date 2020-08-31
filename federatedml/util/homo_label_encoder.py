@@ -1,10 +1,7 @@
 from federatedml.transfer_variable.transfer_class.homo_label_encoder_transfer_variable \
     import HomoLabelEncoderTransferVariable
-
 from federatedml.util import consts
-from arch.api.utils import log_utils
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class HomoLabelEncoderClient(object):

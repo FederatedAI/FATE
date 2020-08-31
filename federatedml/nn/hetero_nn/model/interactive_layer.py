@@ -21,7 +21,6 @@ import pickle
 
 import numpy as np
 
-from arch.api.utils import log_utils
 from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
 from federatedml.nn.hetero_nn.backend.tf_keras.interactive.dense_model import GuestDenseModel
 from federatedml.nn.hetero_nn.backend.tf_keras.interactive.dense_model import HostDenseModel
@@ -29,9 +28,7 @@ from federatedml.nn.hetero_nn.util import random_number_generator
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import InteractiveLayerParam
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
-from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import consts, LOGGER
 
 
 class InterActiveGuestDenseLayer(object):

@@ -21,11 +21,9 @@ import numpy as np
 from federatedml.protobuf.generated.feature_scale_meta_pb2 import ScaleMeta
 from federatedml.protobuf.generated.feature_scale_param_pb2 import ScaleParam
 from federatedml.protobuf.generated.feature_scale_param_pb2 import ColumnScaleParam
-from arch.api.utils import log_utils
 from federatedml.feature.feature_scale.base_scale import BaseScale
 from federatedml.statistic.statics import MultivariateStatisticalSummary
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class StandardScale(BaseScale):
@@ -136,7 +134,7 @@ class StandardScale(BaseScale):
 
         return transform_data
 
-    def __get_meta(self, need_run):
+    def _get_meta(self, need_run):
         if self.header:
             scale_column = [self.header[i] for i in self.scale_column_idx]
         else:
@@ -156,7 +154,7 @@ class StandardScale(BaseScale):
                                    )
         return meta_proto_obj
 
-    def __get_param(self):
+    def _get_param(self):
         column_scale_param_dict = {}
         if self.header:
             for i, header in enumerate(self.header):
@@ -170,12 +168,3 @@ class StandardScale(BaseScale):
         param_proto_obj = ScaleParam(col_scale_param=column_scale_param_dict,
                                      header=self.header)
         return param_proto_obj
-
-    def export_model(self, need_run):
-        meta_obj = self.__get_meta(need_run)
-        param_obj = self.__get_param()
-        result = {
-            self.model_meta_name: meta_obj,
-            self.model_param_name: param_obj
-        }
-        return result

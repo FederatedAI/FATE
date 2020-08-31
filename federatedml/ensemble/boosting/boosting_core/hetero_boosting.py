@@ -1,32 +1,20 @@
 from abc import ABC
 import abc
-
 from federatedml.ensemble.boosting.boosting_core import Boosting
-
 from federatedml.param.boosting_param import HeteroBoostingParam
 from federatedml.secureprotol import IterativeAffineEncrypt
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.secureprotol.encrypt_mode import EncryptModeCalculator
 from federatedml.util import consts
-
 from federatedml.feature.binning.quantile_binning import QuantileBinning
-
 from federatedml.util.classify_label_checker import ClassifyLabelChecker
 from federatedml.util.classify_label_checker import RegressionLabelChecker
-
-from arch.api.utils import log_utils
-
+from federatedml.util import LOGGER
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
-
 from federatedml.transfer_variable.transfer_class.hetero_boosting_transfer_variable import \
     HeteroBoostingTransferVariable
-
 from federatedml.util.io_check import assert_io_num_rows_equal
-
-import time
-
-LOGGER = log_utils.getLogger()
 
 
 class HeteroBoosting(Boosting, ABC):
