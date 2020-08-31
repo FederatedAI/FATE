@@ -54,8 +54,12 @@ class Table(CTableABC):
         return from_rdd(_map_value(self._rdd, func))
 
     @log_elapsed
-    def mapPartitions(self, func, **kwargs):
+    def mapPartitions2(self, func, **kwargs):
         return from_rdd(self._rdd.mapPartitions(func))
+
+    @log_elapsed
+    def mapPartitions(self, func, **kwargs):
+        return from_rdd(_map_partitions(self._rdd, func))
 
     @log_elapsed
     def glom(self, **kwargs):
@@ -77,8 +81,11 @@ class Table(CTableABC):
     """
 
     @log_elapsed
-    def reduce(self, func, **kwargs):
-        return self._rdd.values().reduce(func)
+    def reduce(self, func, key_func=None, **kwargs):
+        if key_func is None:
+            return self._rdd.values().reduce(func)
+
+        return dict(self._rdd.map(lambda x: (key_func(x[0]), x[1])).reduceByKey(func).collect())
 
     @log_elapsed
     def collect(self, **kwargs):
