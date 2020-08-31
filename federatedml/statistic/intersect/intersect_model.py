@@ -83,7 +83,7 @@ class IntersectModelBase(ModelBase):
     def get_model_summary(self):
         return {"intersect_num": self.intersect_num, "intersect_rate": self.intersect_rate}
 
-    def __share_info(self, data: session.table) -> session.table:
+    def __share_info(self, data):
         LOGGER.info("Start to share information with another role")
         info_share = self.transfer_variable.info_share_from_guest if self.model_param.info_owner == consts.GUEST else \
             self.transfer_variable.info_share_from_host

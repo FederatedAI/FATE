@@ -40,7 +40,7 @@ class RsaIntersectionHost(RsaIntersect):
         self.is_version_match = False
         self.has_cache_version = True
 
-    def cal_host_ids_process_pair(self, data_instances: session.table) -> session.table:
+    def cal_host_ids_process_pair(self, data_instances):
         return data_instances.map(
             lambda k, v: (
                 RsaIntersectionHost.hash(gmpy_math.powmod(int(RsaIntersectionHost.hash(k), 16), self.d, self.n)), k)

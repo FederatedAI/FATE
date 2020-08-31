@@ -36,7 +36,7 @@ class RepeatedIDIntersect(object):
         self.transfer_variable = RepeatedIDIntersectTransferVariable()
         self.role = role
 
-    def __generate_id_map(self, data: session.table) -> dict:
+    def __generate_id_map(self, data) -> dict:
         if not self.repeated_id_owner:
             LOGGER.warning("Not a repeated id owner, will not generate id map")
             return {}
