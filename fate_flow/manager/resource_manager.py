@@ -20,6 +20,7 @@ from fate_arch.federation import FederationEngine
 from fate_arch.common import base_utils
 from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common.log import schedule_logger
+from fate_arch.common import EngineType
 from fate_flow.db.db_models import DB, BackendEngine, Job
 from fate_flow.entity.types import ResourceOperation, RunParameters
 from fate_flow.settings import stat_logger, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE
@@ -32,8 +33,8 @@ class ResourceManager(object):
         with DB.connection_context():
             # initialize default backend
             default_backends = {
-                "computing": [ComputingEngine.EGGROLL, ComputingEngine.SPARK],
-                "federation": [FederationEngine.EGGROLL, FederationEngine.MQ],
+                EngineType.COMPUTING: [ComputingEngine.EGGROLL, ComputingEngine.SPARK],
+                EngineType.FEDERATION: [FederationEngine.EGGROLL, FederationEngine.MQ],
             }
             for engine_type, engines_name in default_backends.items():
                 for engine_name in engines_name:
@@ -51,7 +52,7 @@ class ResourceManager(object):
                 cls._initialize_backend(engine_type=engine_type, engine_id=f"DEFAULT_{engine_name}", engine_info=engine_info)
             if get_base_config("multi_backend", False):
                 # initialize multi backend
-                for engine_type in ["computing", "federation"]:
+                for engine_type in [EngineType.COMPUTING, EngineType.FEDERATION]:
                     for engine_id, engine_info in get_base_config(engine_type, {}, conf_name="multi_backend").items():
                         cls._initialize_backend(engine_type=engine_type, engine_id=engine_id, engine_info=engine_info)
 
@@ -60,8 +61,8 @@ class ResourceManager(object):
         nodes = engine_info.get("nodes", 1)
         cores = engine_info.get("cores_per_node", 0) * nodes
         memory = engine_info.get("memory_per_node", 0) * nodes
-        engine_name = engine_info.get("engine", "UNKNOWN"),
-        engine_address = engine_info.get("address", {}),
+        engine_name = engine_info.get("engine", "UNKNOWN")
+        engine_address = engine_info.get("address", {})
         filters = [BackendEngine.f_engine_id == engine_id, BackendEngine.f_engine_type == engine_type]
         resources = BackendEngine.select().where(*filters)
         if resources:
@@ -103,7 +104,7 @@ class ResourceManager(object):
                                                                               cores=cores,
                                                                               memory=memory,
                                                                               operation_type=ResourceOperation.APPLY,
-                                                                              engine_type="computing",
+                                                                              engine_type=EngineType.COMPUTING,
                                                                               engine_id=engine_id,
                                                                               )
         if apply_status:
@@ -161,7 +162,7 @@ class ResourceManager(object):
                                                                                    cores=cores,
                                                                                    memory=memory,
                                                                                    operation_type=ResourceOperation.RETURN,
-                                                                                   engine_type="computing",
+                                                                                   engine_type=EngineType.COMPUTING,
                                                                                    engine_id=engine_id,
                                                                                    )
             if return_status:
@@ -182,7 +183,7 @@ class ResourceManager(object):
         run_parameters = RunParameters(**runtime_conf["job_parameters"])
         cores = run_parameters.task_cores_per_node * run_parameters.task_nodes * run_parameters.task_parallelism
         memory = run_parameters.task_memory_per_node * run_parameters.task_nodes * run_parameters.task_parallelism
-        computing_backend_info = cls.get_backend_registration_info(engine_id=run_parameters.computing_backend)
+        computing_backend_info = cls.get_backend_registration_info(engine_type=EngineType.COMPUTING, engine_id=run_parameters.computing_backend)
         if computing_backend_info.f_engine_name in {ComputingEngine.EGGROLL, ComputingEngine.STANDALONE}:
             memory = 0
         return run_parameters.computing_backend, cores, memory
@@ -195,7 +196,7 @@ class ResourceManager(object):
         run_parameters = RunParameters(**runtime_conf["job_parameters"])
         cores_per_task = run_parameters.task_cores_per_node * run_parameters.task_nodes
         memory_per_task = run_parameters.task_memory_per_node * run_parameters.task_nodes
-        computing_backend_info = cls.get_backend_registration_info(engine_id=run_parameters.computing_backend)
+        computing_backend_info = cls.get_backend_registration_info(engine_type=EngineType.COMPUTING, engine_id=run_parameters.computing_backend)
         if computing_backend_info.f_engine_name in {ComputingEngine.EGGROLL, ComputingEngine.STANDALONE}:
             memory_per_task = 0
         return cores_per_task, memory_per_task
@@ -263,8 +264,8 @@ class ResourceManager(object):
         return update_status, remaining_cores, remaining_memory
 
     @classmethod
-    def get_backend_registration_info(cls, engine_id):
-        engines = BackendEngine.select().where(BackendEngine.f_engine_id == engine_id)
+    def get_backend_registration_info(cls, engine_type, engine_id):
+        engines = BackendEngine.select().where(BackendEngine.f_engine_type == engine_type, BackendEngine.f_engine_id == engine_id)
         if engines:
             return engines[0]
         else:

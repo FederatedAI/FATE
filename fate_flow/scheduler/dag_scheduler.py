@@ -16,7 +16,7 @@
 from fate_arch.common import FederatedComm, FederatedMode
 from fate_arch.common.base_utils import json_loads, current_timestamp
 from fate_arch.common.log import schedule_logger
-from fate_arch.common import WorkMode, Backend
+from fate_arch.common import WorkMode, Backend, EngineType
 from fate_arch.common import conf_utils, string_utils
 from fate_flow.db.db_models import Job
 from fate_flow.scheduler import FederatedScheduler
@@ -47,6 +47,7 @@ class DAGScheduler(Cron):
         job_initiator = job_runtime_conf['initiator']
         job_parameters = RunParameters(**job_runtime_conf['job_parameters'])
         cls.backend_compatibility(job_parameters=job_parameters)
+        cls.get_job_engines_address(job_parameters=job_parameters)
         cls.set_default_job_parameters(job_parameters=job_parameters)
 
         job_utils.check_pipeline_job_runtime_conf(job_runtime_conf)
@@ -149,10 +150,17 @@ class DAGScheduler(Cron):
                 job_parameters.federated_mode = FederatedMode.SINGLE
 
     @classmethod
+    def get_job_engines_address(cls, job_parameters: RunParameters):
+        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.COMPUTING, engine_id=job_parameters.computing_backend)
+        job_parameters.engines_address[EngineType.COMPUTING] = backend_info.f_engine_address
+        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.FEDERATION, engine_id=job_parameters.federation_backend)
+        job_parameters.engines_address[EngineType.FEDERATION] = backend_info.f_engine_address
+
+    @classmethod
     def set_default_job_parameters(cls, job_parameters: RunParameters):
         if job_parameters.task_parallelism is None:
             job_parameters.task_parallelism = DEFAULT_TASK_PARALLELISM
-        computing_backend_info = ResourceManager.get_backend_registration_info(engine_id=job_parameters.computing_backend)
+        computing_backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.COMPUTING, engine_id=job_parameters.computing_backend)
         if job_parameters.task_nodes is None:
             job_parameters.task_nodes = computing_backend_info.f_nodes
         if job_parameters.task_cores_per_node is None:

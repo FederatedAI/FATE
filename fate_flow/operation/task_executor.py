@@ -17,7 +17,7 @@ import argparse
 import importlib
 import os
 import traceback
-from fate_arch.common import file_utils, log
+from fate_arch.common import file_utils, log, EngineType
 from fate_arch.common.base_utils import current_timestamp, timestamp_to_date
 from fate_arch.common.log import schedule_logger
 from fate_arch import session
@@ -87,10 +87,10 @@ class TaskExecutor(object):
             job_runtime_conf = job_conf["job_runtime_conf_path"]
             job_parameters = RunParameters(**job_runtime_conf['job_parameters'])
             dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
-                                                      runtime_conf=job_runtime_conf,
-                                                      train_runtime_conf=job_conf["train_runtime_conf_path"],
-                                                      pipeline_dsl=job_conf["pipeline_dsl_path"]
-                                                      )
+                                                           runtime_conf=job_runtime_conf,
+                                                           train_runtime_conf=job_conf["train_runtime_conf_path"],
+                                                           pipeline_dsl=job_conf["pipeline_dsl_path"]
+                                                           )
             party_index = job_runtime_conf["role"][role].index(party_id)
             job_args = dsl_parser.get_args_input()
             job_args_on_party = job_args[role][party_index].get('args') if role in job_args else {}
@@ -152,7 +152,7 @@ class TaskExecutor(object):
             federation_session_id = job_utils.generate_federated_id(task_id, task_version)
             sess.init_federation(federation_session_id=federation_session_id,
                                  runtime_conf=component_parameters_on_party,
-                                 service_conf=conf_utils.get_base_config("federation", {}).get(job_parameters.federation_backend))
+                                 service_conf=job_parameters.engines_address.get(EngineType.FEDERATION, {}))
             sess.as_default()
 
             schedule_logger().info('Run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
