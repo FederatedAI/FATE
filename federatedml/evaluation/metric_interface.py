@@ -5,7 +5,7 @@ from sklearn.metrics import roc_curve
 from federatedml.util import consts
 from federatedml.util import LOGGER
 from federatedml.evaluation.metrics import classification_metric
-from federatedml.evaluation.metrics import regression_metric\
+from federatedml.evaluation.metrics import regression_metric
 from functools import wraps
 
 
