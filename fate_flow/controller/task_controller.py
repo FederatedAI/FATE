@@ -87,7 +87,7 @@ class TaskController(object):
 
             schedule_logger(job_id=job_id).info(f"use computing engine {run_parameters.computing_engine}")
 
-            if run_parameters.computing_engine == ComputingEngine.EGGROLL:
+            if run_parameters.computing_engine in {ComputingEngine.EGGROLL, ComputingEngine.STANDALONE}:
                 process_cmd = [
                     sys.executable,  # the python executable path
                     sys.modules[TaskExecutor.__module__].__file__,

@@ -412,7 +412,7 @@ def start_session_stop(task):
         '-b', str(runtime_conf.get('job_parameters').get('backend', 0)),
         '-c', 'stop' if task.f_status == JobStatus.COMPLETE else 'kill'
     ]
-    p = run_subprocess(config_dir=task_dir, process_cmd=process_cmd, log_dir=None)
+    p = run_subprocess(job_id=task.f_job_id, config_dir=task_dir, process_cmd=process_cmd, log_dir=None)
 
 
 def gen_all_party_key(all_party):

@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 from fate_arch import storage
+from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.settings import stat_logger
 from flask import Flask, request
@@ -25,6 +26,20 @@ manager = Flask(__name__)
 def internal_server_error(e):
     stat_logger.exception(e)
     return get_json_result(retcode=100, retmsg=str(e))
+
+
+@manager.route('/registry')
+def table_registry():
+    request_data = request.json
+    address_dict = request_data.get('address')
+    storage_engine = request_data.get('storage_engine')
+    table_name = request_data.get('table_name')
+    namespace = request_data.get('namespace')
+    address = storage.StorageTableMeta.create_address(storage_engine=storage_engine, address_dict=address_dict)
+    with storage.Session.build(storage_engine=storage_engine, options=request_data.get("options")) as storage_session:
+        storage_session.create_table(address=address, name=table_name, namespace=namespace, partitions=request_data.get('partitions'),
+                                     is_kv_storage=request_data.get('is_kv_storage', 0), is_serialize=request_data.get('is_serialize', 0))
+    return get_json_result(data={"table_name": table_name, "namespace": namespace})
 
 
 @manager.route('/delete', methods=['post'])

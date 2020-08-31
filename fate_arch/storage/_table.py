@@ -98,6 +98,8 @@ class StorageTableMeta(StorageTableMetaABC):
         self.description = None
         self.create_time = None
         self.update_time = None
+        self.is_kv_storage = None
+        self.is_serialize = None
         if self.options is None:
             self.options = {}
         if self.schema is None:
