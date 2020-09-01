@@ -438,6 +438,7 @@ class Tracker(object):
                         MLModel.create(
                             f_role=self.role,
                             f_party_id=self.party_id,
+                            f_roles=job_data.get("f_roles"),
                             f_model_id=self.model_id,
                             f_model_version=self.model_version,
                             f_create_time=current_timestamp(),
