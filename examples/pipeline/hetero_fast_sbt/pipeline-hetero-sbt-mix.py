@@ -53,7 +53,7 @@ def main(config="../../config.yaml", namespace=""):
 
     intersect_0 = Intersection(name="intersection_0")
     hetero_fast_secure_boost_0 = HeteroFastSecureBoost(name="hetero_fast_secure_boost_0",
-                                                       num_trees=4, k=1, task_type='classification',
+                                                       num_trees=4, tree_num_per_party=1, task_type='classification',
                                                        objective_param={"objective": "cross_entropy"},
                                                        encrypt_param={"method": "iterativeAffine"},
                                                        validation_freqs=1,

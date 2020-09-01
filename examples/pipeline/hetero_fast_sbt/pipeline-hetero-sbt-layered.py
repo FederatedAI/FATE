@@ -39,7 +39,7 @@ def main(config="../../config.yaml", namespace=""):
     # prepare
 
     guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = [{"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}]
+    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
 
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
 

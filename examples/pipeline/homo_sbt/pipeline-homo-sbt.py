@@ -52,7 +52,6 @@ def main(config="../../config.yaml", namespace=""):
     homo_secureboost_0 = HomoSecureBoost(name="homo_secureboost_0",
                                          num_trees=5, task_type='classification',
                                          objective_param={"objective": "cross_entropy"},
-                                         encrypt_param={"method": "iterativeAffine"},
                                          validation_freqs=1,
                                          )
 
