@@ -26,7 +26,7 @@ from pyspark import SparkContext, RDD
 from fate_arch.abc import FederationABC, GarbageCollectionABC
 from fate_arch.common import Party
 from fate_arch.common.log import getLogger
-from fate_arch.computing.spark import get_storage_level
+from fate_arch.computing.spark import get_storage_level, Table
 from fate_arch.federation.spark._mq_channel import MQChannel
 from fate_arch.federation.spark._rabbit_manager import RabbitManager
 
@@ -96,7 +96,7 @@ class Federation(FederationABC):
             obj = _receive(info, name, tag)
             LOGGER.info(f'federation got data. name: {name}, tag: {tag}')
             if isinstance(obj, RDD):
-                rtn.append(obj)
+                rtn.append(Table(obj))
             else:
                 rtn.append(obj)
         LOGGER.debug("finish get obj, name={}, tag={}, parties={}.".format(name, tag, parties))
@@ -107,13 +107,13 @@ class Federation(FederationABC):
         LOGGER.debug("start to remote obj, name={}, tag={}, parties={}.".format(name, tag, parties))
         mq_names = self._get_mq_names(parties)
 
-        if isinstance(v, RDD):
+        if isinstance(v, Table):
             total_size = v.count()
-            partitions = v.getNumPartitions()
+            partitions = v.partitions()
             LOGGER.debug("start to remote RDD, total_size={}, partitions={}.".format(total_size, partitions))
             send_func = partial(_partition_send, name=name, tag=tag,
-                                total_size=total_size, partitions=partitions, mq_names=mq_names, self_mq=self._mq)
-            v.mapPartitions(send_func).collect()
+                                total_size=total_size, partitions=partitions, mq_names=mq_names, mq=self._mq)
+            v._rdd.mapPartitions(send_func).collect()
         else:
             channel_infos = self._get_channels(mq_names=mq_names)
             _send_obj(name=name, tag=tag, data=p_dumps(v), channel_infos=channel_infos)
