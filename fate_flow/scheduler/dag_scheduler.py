@@ -311,9 +311,12 @@ class DAGScheduler(Cron):
         if should_rerun:
             if EndStatus.contains(job.f_status):
                 job.f_status = JobStatus.WAITING
+                job.f_end_time = None
+                job.f_elapsed = None
                 schedule_logger(job_id=job_id).info(f"job {job_id} has been finished, set waiting to rerun")
                 status, response = FederatedScheduler.sync_job_status(job=job)
                 if status == FederatedSchedulingStatusCode.SUCCESS:
+                    FederatedScheduler.sync_job(job=job, update_fields=["end_time", "elapsed"])
                     JobQueue.set_event(job_id=job_id, initiator_role=initiator_role, initiator_party_id=initiator_party_id)
                     schedule_logger(job_id=job_id).info(f"job {job_id} set waiting to rerun successfully")
                 else:
