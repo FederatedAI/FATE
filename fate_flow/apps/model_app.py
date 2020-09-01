@@ -48,9 +48,9 @@ def internal_server_error(e):
 @manager.route('/load', methods=['POST'])
 def load_model():
     request_config = request.json
-    if request_config.get('model_version', None):
+    if request_config.get('job_id', None):
         model = MLModel.get_or_none(
-            MLModel.f_model_version == request_config.get("model_version"),
+            MLModel.f_job_id == request_config.get("job_id"),
             MLModel.f_role == 'guest'
         )
         if model:
@@ -60,11 +60,11 @@ def load_model():
             request_config['initiator']['role'] = model_info.get('f_initiator_role')
             request_config['job_parameters'] = model_info.get('f_runtime_conf').get('job_parameters')
             request_config['role'] = model_info.get('f_runtime_conf').get('role')
-            request_config.pop('model_version')
+            request_config.pop('job_id')
         else:
             return get_json_result(retcode=101,
-                                   retmsg="model {} can not be found in database. "
-                                          "Please check if the model version is valid.".format(request_config.get('model_version')))
+                                   retmsg="model with version {} can not be found in database. "
+                                          "Please check if the model version is valid.".format(request_config.get('job_id')))
     _job_id = job_utils.generate_job_id()
     initiator_party_id = request_config['initiator']['party_id']
     initiator_role = request_config['initiator']['role']
@@ -223,9 +223,9 @@ def do_load_model():
 @manager.route('/bind', methods=['POST'])
 def bind_model_service():
     request_config = request.json
-    if request_config.get('model_version', None):
+    if request_config.get('job_id', None):
         model = MLModel.get_or_none(
-            MLModel.f_job_id == request_config.get("model_version"),
+            MLModel.f_job_id == request_config.get("job_id"),
             MLModel.f_role == 'guest'
         )
         if model:
@@ -235,11 +235,11 @@ def bind_model_service():
             request_config['initiator']['role'] = model_info.get('f_initiator_role')
             request_config['job_parameters'] = model_info.get('f_runtime_conf').get('job_parameters')
             request_config['role'] = model_info.get('f_runtime_conf').get('role')
-            request_config.pop('model_version')
+            request_config.pop('job_id')
         else:
             return get_json_result(retcode=101,
                                    retmsg="model {} can not be found in database. "
-                                          "Please check if the model version is valid.".format(request_config.get('model_version')))
+                                          "Please check if the model version is valid.".format(request_config.get('job_id')))
     if not request_config.get('servings'):
         # get my party all servings
         request_config['servings'] = ServiceUtils.get("servings", [])

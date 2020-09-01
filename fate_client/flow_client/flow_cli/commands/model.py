@@ -34,7 +34,7 @@ def model(ctx):
 
 
 @model.command("load", short_help="Load Model Command")
-@cli_args.MODEL_VERSION
+@cli_args.JOBID
 @click.option("-c", "--conf-path", type=click.Path(exists=True),
               help="Configuration file path.")
 @click.pass_context
@@ -47,22 +47,22 @@ def load(ctx, **kwargs):
     \b
     - USAGE:
         flow model load -c fate_flow/examples/publish_load_model.json
-        flow model load -m $MODEL_VERSION
+        flow model load -j $JOB_ID
     """
-    if not kwargs.get("conf_path") and not kwargs.get("model_version"):
+    if not kwargs.get("conf_path") and not kwargs.get("job_id"):
         prettify(
             {
                 "retcode": 100,
                 "retmsg": "Load model failed. No arguments received, "
-                          "please provide one of arguments from model version and conf path."
+                          "please provide one of arguments from job id and conf path."
             }
         )
     else:
-        if kwargs.get("conf_path") and kwargs.get("model_version"):
+        if kwargs.get("conf_path") and kwargs.get("job_id"):
             prettify(
                 {
                     "retcode": 100,
-                    "retmsg": "Load model failed. Please do not provide model version and "
+                    "retmsg": "Load model failed. Please do not provide job id and "
                               "conf path at the same time."
                 }
             )
@@ -72,7 +72,7 @@ def load(ctx, **kwargs):
 
 
 @model.command("bind", short_help="Bind Model Command")
-@cli_args.MODEL_VERSION
+@cli_args.JOBID
 @cli_args.CONF_PATH
 @click.pass_context
 def bind(ctx, **kwargs):
@@ -84,7 +84,7 @@ def bind(ctx, **kwargs):
     \b
     - USAGE:
         flow model bind -c fate_flow/examples/bind_model_service.json
-        flow model bind -c fate_flow/examples/bind_model_service.json -m $MODEL_VERSION
+        flow model bind -c fate_flow/examples/bind_model_service.json -j $JOB_ID
     """
     config_data, dsl_data = preprocess(**kwargs)
     access_server('post', ctx, 'model/bind', config_data)
