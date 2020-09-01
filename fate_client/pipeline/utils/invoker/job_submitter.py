@@ -21,6 +21,7 @@ import sys
 import tempfile
 import time
 from datetime import timedelta
+from pathlib import Path
 
 from flow_sdk.client import FlowClient
 from pipeline.backend import config as conf
@@ -344,18 +345,21 @@ class JobInvoker(object):
                 if file.endswith("csv"):
                     n += 1
             # single output data
-            if n == 1:
-                data_dict = JobInvoker.create_data_meta_dict(IODataType.SINGLE, output_dir, limits)
+            #if n == 1:
+            #    data_dict = JobInvoker.create_data_meta_dict(IODataType.SINGLE, output_dir, limits)
             # multiple output data
-            elif n > 1:
+            if n > 0:
                 data_dict = {}
-                for data_name in [IODataType.TRAIN, IODataType.VALIDATE, IODataType.TEST]:
+                for data_name in [IODataType.SINGLE, IODataType.TRAIN, IODataType.VALIDATE, IODataType.TEST]:
                     curr_data_dict = JobInvoker.create_data_meta_dict(data_name, output_dir, limits)
-                    data_dict[data_name] = curr_data_dict
+                    if curr_data_dict is not None:
+                        data_dict[data_name] = curr_data_dict
             # no output data obtained
             else:
                 LOGGER.error(f"No output data found in directory{output_dir}")
                 # print(f"No output data found in directory {output_dir}.")
+            if len(data_dict) == 1:
+                return list(data_dict.values())[0]
             return data_dict
 
     @staticmethod
@@ -365,10 +369,13 @@ class JobInvoker(object):
 
         output_data = os.path.join(output_dir, data_file)
         output_meta = os.path.join(output_dir, meta_file)
+        if not Path(output_data).resolve().exists():
+            return
         data = JobInvoker.extract_output_data(output_data, limits)
         meta = JobInvoker.extract_output_meta(output_meta)
         data_dict = {"data": data, "meta": meta}
         return data_dict
+
 
     @staticmethod
     def extract_output_data(output_data, limits):

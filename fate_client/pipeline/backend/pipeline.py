@@ -288,14 +288,14 @@ class PipeLine(object):
         return upload_conf
 
     def describe(self):
-        LOGGER.debug(f"Pipeline Stage is {self._stage}")
-        LOGGER.debug("DSL is:")
-        if self._stage == "train":
-            LOGGER.debug(f"{self._train_dsl}")
+        LOGGER.info(f"Pipeline Stage is {self._stage}")
+        LOGGER.info("DSL is:")
+        if self._stage == "fit":
+            LOGGER.info(f"{self._train_dsl}")
         else:
-            LOGGER.debug(f"{self._predict_dsl}")
+            LOGGER.info(f"{self._predict_dsl}")
 
-        LOGGER.debug(f"Pipeline Create Time: {self._create_time}")
+        LOGGER.info(f"Pipeline Create Time: {self._create_time}")
 
     def get_train_job_id(self):
         return self._train_job_id
