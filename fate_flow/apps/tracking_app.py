@@ -306,11 +306,11 @@ def component_output_data_table():
 @manager.route('/component/summary/download', methods=['POST'])
 def get_component_summary():
     request_data = request.json
-    required_params = ["job_id", "component_name", "task_id", "task_version", "role", "party_id"]
+    required_params = ["job_id", "component_name", "role", "party_id"]
     detect_utils.check_config(request_data, required_params)
     tracker = Tracker(job_id=request_data["job_id"], component_name=request_data["component_name"],
                       role=request_data["role"], party_id=request_data["party_id"],
-                      task_id=request_data["task_id"], task_version=request_data["task_version"])
+                      task_id=request_data.get("task_id", None), task_version=request_data.get("task_version", None))
     summary = tracker.read_summary_from_db()
     if summary:
         if request_data.get("filename"):

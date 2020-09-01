@@ -41,6 +41,12 @@ class MQ(object):
         self.policy_id = policy_id
         self.mq_conf = mq_conf
 
+    def __str__(self):
+        return f"MQ(host={self.host}, port={self.port}, union_name={self.union_name}, policy_id={self.policy_id}, mq_conf={self.mq_conf})"
+
+    def __repr__(self):
+        return self.__str__()
+
 
 class Federation(FederationABC):
 
@@ -51,6 +57,7 @@ class Federation(FederationABC):
                   service_conf: dict):
 
         mq_address = service_conf
+        LOGGER.debug(f'mq_address: {mq_address}')
         rabbitmq_conf = mq_address.get("self")
 
         host = rabbitmq_conf.get("host")
@@ -64,8 +71,7 @@ class Federation(FederationABC):
         policy_id = federation_info.get("policy_id")
 
         rabbit_manager = RabbitManager(base_user, base_password, f"{host}:{mng_port}")
-        #rabbit_manager.create_user(union_name, policy_id)
-        rabbit_manager.create_user(base_user, base_password)
+        rabbit_manager.create_user(union_name, policy_id)
         mq = MQ(host, port, union_name, policy_id, mq_address)
         return Federation(federation_session_id, party, mq, rabbit_manager)
 
