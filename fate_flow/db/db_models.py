@@ -274,6 +274,7 @@ class MachineLearningModelInfo(DataBaseModel):
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
     f_roles = JSONField()
+    f_job_id = CharField(max_length=25)
     f_model_id = CharField(max_length=100, index=True)
     f_model_version = CharField(max_length=100, index=True)
     f_loaded_times = IntegerField(default=0)
