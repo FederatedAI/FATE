@@ -83,7 +83,6 @@ def list(ctx, **kwargs):
 @cli_args.JOBID
 @cli_args.ROLE
 @cli_args.PARTYID
-@cli_args.COMPONENT_NAME
 @cli_args.STATUS
 @click.pass_context
 def query(ctx, **kwargs):
