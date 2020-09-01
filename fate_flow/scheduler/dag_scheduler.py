@@ -296,6 +296,8 @@ class DAGScheduler(Cron):
                 FederatedScheduler.clean_task(job=job, task=task, content_type="metrics")
                 # create new version task
                 task.f_task_version = task.f_task_version + 1
+                task.f_run_pid = None
+                task.f_run_ip = None
                 FederatedScheduler.create_task(job=job, task=task)
                 # Save the status information of all participants in the initiator for scheduling
                 schedule_logger(job_id=job_id).info(f"create task {task.f_task_id} new version {task.f_task_version}")

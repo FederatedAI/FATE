@@ -68,17 +68,6 @@ class TaskController(object):
         task_executor_process_start_status = False
         run_parameters = RunParameters(**task_parameters)
         try:
-            task_info = {
-                "job_id": job_id,
-                "task_id": task_id,
-                "task_version": task_version,
-                "role": role,
-                "party_id": party_id,
-                "status": TaskStatus.RUNNING,
-                "party_status": TaskStatus.RUNNING,
-            }
-            cls.update_task(task_info=task_info)
-            cls.update_task_status(task_info=task_info)
             task_dir = os.path.join(job_utils.get_job_directory(job_id=job_id), role, party_id, component_name, task_id, task_version)
             os.makedirs(task_dir, exist_ok=True)
             task_parameters_path = os.path.join(task_dir, 'task_parameters.json')
@@ -150,6 +139,18 @@ class TaskController(object):
             p = job_utils.run_subprocess(job_id=job_id, config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir)
             if p:
                 task_executor_process_start_status = True
+                task_info = {
+                    "job_id": job_id,
+                    "task_id": task_id,
+                    "task_version": task_version,
+                    "role": role,
+                    "party_id": party_id,
+                    "status": TaskStatus.RUNNING,
+                    "party_status": TaskStatus.RUNNING,
+                    "run_pid": p.pid,
+                }
+                cls.update_task(task_info=task_info)
+                cls.update_task_status(task_info=task_info)
         except Exception as e:
             schedule_logger(job_id).exception(e)
             raise e
