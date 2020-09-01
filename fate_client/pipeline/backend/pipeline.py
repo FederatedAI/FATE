@@ -449,7 +449,7 @@ class PipeLine(object):
             with open(file_path, "w") as fout:
                 fout.write(pkl)
 
-        return pickle
+        return pkl
 
     @classmethod
     def load(cls, pipeline_bytes):
@@ -569,3 +569,8 @@ class PipeLine(object):
 
         return self._components[item]
 
+    def __getstate__(self):
+        return vars(self)
+
+    def __setstate__(self, state):
+        vars(self).update(state)

@@ -16,7 +16,7 @@
 from fate_arch.common import FederatedComm, FederatedMode
 from fate_arch.common.base_utils import json_loads, current_timestamp
 from fate_arch.common.log import schedule_logger
-from fate_arch.common import WorkMode, Backend
+from fate_arch.common import WorkMode, Backend, EngineType
 from fate_arch.common import conf_utils, string_utils
 from fate_flow.db.db_models import Job
 from fate_flow.scheduler import FederatedScheduler
@@ -99,7 +99,7 @@ class DAGScheduler(Cron):
                 for party_id in party_ids:
                     if role == job_initiator['role'] and party_id == job_initiator['party_id']:
                         continue
-                    JobController.initialize_tasks(job_id, role, party_id, False, job_initiator, job_parameters.to_dict(), dsl_parser)
+                    JobController.initialize_tasks(job_id, role, party_id, False, job_initiator, job_parameters, dsl_parser)
 
         # push into queue
         try:
@@ -137,8 +137,8 @@ class DAGScheduler(Cron):
                 job_parameters.federation_engine = FederationEngine.MQ
                 # add mq info
                 federation_info = {}
-                federation_info['union_name'] = string_utils.RandomString(4) 
-                federation_info['policy_id'] = string_utils.RandomString(10)
+                federation_info['union_name'] = string_utils.random_string(4) 
+                federation_info['policy_id'] = string_utils.random_string(10)
                 job_parameters.federation_info = federation_info
             job_parameters.computing_backend = f"DEFAULT_{job_parameters.computing_engine}"
             job_parameters.federation_backend = f"DEFAULT_{job_parameters.federation_engine}"
@@ -152,7 +152,7 @@ class DAGScheduler(Cron):
     def set_default_job_parameters(cls, job_parameters: RunParameters):
         if job_parameters.task_parallelism is None:
             job_parameters.task_parallelism = DEFAULT_TASK_PARALLELISM
-        computing_backend_info = ResourceManager.get_backend_registration_info(engine_id=job_parameters.computing_backend)
+        computing_backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.COMPUTING, engine_id=job_parameters.computing_backend)
         if job_parameters.task_nodes is None:
             job_parameters.task_nodes = computing_backend_info.f_nodes
         if job_parameters.task_cores_per_node is None:
@@ -296,6 +296,8 @@ class DAGScheduler(Cron):
                 FederatedScheduler.clean_task(job=job, task=task, content_type="metrics")
                 # create new version task
                 task.f_task_version = task.f_task_version + 1
+                task.f_run_pid = None
+                task.f_run_ip = None
                 FederatedScheduler.create_task(job=job, task=task)
                 # Save the status information of all participants in the initiator for scheduling
                 schedule_logger(job_id=job_id).info(f"create task {task.f_task_id} new version {task.f_task_version}")
@@ -303,7 +305,7 @@ class DAGScheduler(Cron):
                     for _party_id in _party_ids:
                         if _role == initiator_role and _party_id == initiator_party_id:
                             continue
-                        JobController.initialize_tasks(job_id, _role, _party_id, False, job.f_runtime_conf["initiator"], job.f_runtime_conf["job_parameters"], dsl_parser, component_name=task.f_component_name, task_version=task.f_task_version)
+                        JobController.initialize_tasks(job_id, _role, _party_id, False, job.f_runtime_conf["initiator"], RunParameters(**job.f_runtime_conf["job_parameters"]), dsl_parser, component_name=task.f_component_name, task_version=task.f_task_version)
                 schedule_logger(job_id=job_id).info(f"create task {task.f_task_id} new version {task.f_task_version} successfully")
                 should_rerun = True
             else:
@@ -311,9 +313,12 @@ class DAGScheduler(Cron):
         if should_rerun:
             if EndStatus.contains(job.f_status):
                 job.f_status = JobStatus.WAITING
+                job.f_end_time = None
+                job.f_elapsed = None
                 schedule_logger(job_id=job_id).info(f"job {job_id} has been finished, set waiting to rerun")
                 status, response = FederatedScheduler.sync_job_status(job=job)
                 if status == FederatedSchedulingStatusCode.SUCCESS:
+                    FederatedScheduler.sync_job(job=job, update_fields=["end_time", "elapsed"])
                     JobQueue.set_event(job_id=job_id, initiator_role=initiator_role, initiator_party_id=initiator_party_id)
                     schedule_logger(job_id=job_id).info(f"job {job_id} set waiting to rerun successfully")
                 else:

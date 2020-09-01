@@ -16,7 +16,8 @@
 from fate_flow.utils.authentication_utils import authentication_check
 from federatedml.protobuf.generated import pipeline_pb2
 from fate_arch.common.log import schedule_logger
-from fate_flow.entity.types import JobStatus, TaskStatus, EndStatus
+from fate_arch.common import EngineType
+from fate_flow.entity.types import JobStatus, EndStatus, RunParameters
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation import Tracker
 from fate_flow.settings import USE_AUTHENTICATION
@@ -38,12 +39,7 @@ class JobController(object):
         if USE_AUTHENTICATION:
             authentication_check(src_role=job_info.get('src_role', None), src_party_id=job_info.get('src_party_id', None),
                                  dsl=dsl, runtime_conf=runtime_conf, role=role, party_id=party_id)
-        job_utils.save_job_conf(job_id=job_id,
-                                job_dsl=dsl,
-                                job_runtime_conf=runtime_conf,
-                                train_runtime_conf=train_runtime_conf,
-                                pipeline_dsl=None)
-        job_parameters = runtime_conf['job_parameters']
+        job_parameters = RunParameters(**runtime_conf['job_parameters'])
         job_initiator = runtime_conf['initiator']
 
         # save new job into db
@@ -58,7 +54,15 @@ class JobController(object):
         job_info["party_id"] = party_id
         job_info["is_initiator"] = is_initiator
         job_info["progress"] = 0
+        cls.get_job_engines_address(job_parameters=job_parameters)
+        runtime_conf["job_parameters"] = job_parameters.to_dict()
+
         JobSaver.create_job(job_info=job_info)
+        job_utils.save_job_conf(job_id=job_id,
+                                job_dsl=dsl,
+                                job_runtime_conf=runtime_conf,
+                                train_runtime_conf=train_runtime_conf,
+                                pipeline_dsl=None)
 
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=dsl,
                                                        runtime_conf=runtime_conf,
@@ -68,14 +72,21 @@ class JobController(object):
         cls.initialize_job_tracker(job_id=job_id, role=role, party_id=party_id, job_info=job_info, is_initiator=is_initiator, dsl_parser=dsl_parser)
 
     @classmethod
-    def initialize_tasks(cls, job_id, role, party_id, run_on, job_initiator, job_parameters, dsl_parser, component_name=None, task_version=None):
+    def get_job_engines_address(cls, job_parameters: RunParameters):
+        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.COMPUTING, engine_id=job_parameters.computing_backend)
+        job_parameters.engines_address[EngineType.COMPUTING] = backend_info.f_engine_address
+        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.FEDERATION, engine_id=job_parameters.federation_backend)
+        job_parameters.engines_address[EngineType.FEDERATION] = backend_info.f_engine_address
+
+    @classmethod
+    def initialize_tasks(cls, job_id, role, party_id, run_on, job_initiator, job_parameters: RunParameters, dsl_parser, component_name=None, task_version=None):
         base_task_info = {}
         base_task_info["job_id"] = job_id
         base_task_info["initiator_role"] = job_initiator['role']
         base_task_info["initiator_party_id"] = job_initiator['party_id']
         base_task_info["role"] = role
         base_task_info["party_id"] = party_id
-        base_task_info["federated_comm"] = job_parameters["federated_comm"]
+        base_task_info["federated_comm"] = job_parameters.federated_comm
         if task_version:
             base_task_info["task_version"] = task_version
         if not component_name:
