@@ -41,6 +41,12 @@ class MQ(object):
         self.policy_id = policy_id
         self.mq_conf = mq_conf
 
+    def __str__(self):
+        return f"MQ(host={self.host}, port={self.port}, union_name={self.union_name}, policy_id={self.policy_id}, mq_conf={self.mq_conf})"
+
+    def __repr__(self):
+        return self.__str__()
+
 
 class Federation(FederationABC):
 
@@ -51,6 +57,7 @@ class Federation(FederationABC):
                   service_conf: dict):
 
         mq_address = service_conf.get('address')
+        LOGGER.debug(f'mq_address: {mq_address}')
         rabbitmq_conf = mq_address.get("self")
 
         host = rabbitmq_conf.get("host")
@@ -95,21 +102,21 @@ class Federation(FederationABC):
         LOGGER.debug("finish get obj, name={}, tag={}, parties={}.".format(name, tag, parties))
         return rtn
 
-    def remote(self, obj, name: str, tag: str, parties: typing.List[Party],
+    def remote(self, v, name: str, tag: str, parties: typing.List[Party],
                gc: GarbageCollectionABC) -> typing.NoReturn:
         LOGGER.debug("start to remote obj, name={}, tag={}, parties={}.".format(name, tag, parties))
         mq_names = self._get_mq_names(parties)
 
-        if isinstance(obj, RDD):
-            total_size = obj.count()
-            partitions = obj.getNumPartitions()
+        if isinstance(v, RDD):
+            total_size = v.count()
+            partitions = v.getNumPartitions()
             LOGGER.debug("start to remote RDD, total_size={}, partitions={}.".format(total_size, partitions))
             send_func = partial(_partition_send, name=name, tag=tag,
                                 total_size=total_size, partitions=partitions, mq_names=mq_names, self_mq=self._mq)
-            obj.mapPartitions(send_func).collect()
+            v.mapPartitions(send_func).collect()
         else:
             channel_infos = self._get_channels(mq_names=mq_names)
-            _send_obj(name=name, tag=tag, data=p_dumps(obj), channel_infos=channel_infos)
+            _send_obj(name=name, tag=tag, data=p_dumps(v), channel_infos=channel_infos)
         LOGGER.debug("finish remote obj, name={}, tag={}, parties={}.".format(name, tag, parties))
 
     def cleanup(self):
