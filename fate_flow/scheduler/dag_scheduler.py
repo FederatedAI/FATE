@@ -137,8 +137,8 @@ class DAGScheduler(Cron):
                 job_parameters.federation_engine = FederationEngine.MQ
                 # add mq info
                 federation_info = {}
-                federation_info['union_name'] = string_utils.RandomString(4) 
-                federation_info['policy_id'] = string_utils.RandomString(10)
+                federation_info['union_name'] = string_utils.random_string(4) 
+                federation_info['policy_id'] = string_utils.random_string(10)
                 job_parameters.federation_info = federation_info
             job_parameters.computing_backend = f"DEFAULT_{job_parameters.computing_engine}"
             job_parameters.federation_backend = f"DEFAULT_{job_parameters.federation_engine}"
