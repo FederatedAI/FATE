@@ -19,7 +19,7 @@ import os
 import traceback
 from fate_arch.common import file_utils, log, EngineType
 from fate_arch.common.base_utils import current_timestamp, timestamp_to_date
-from fate_arch.common.log import schedule_logger
+from fate_arch.common.log import schedule_logger, getLogger
 from fate_arch import session
 from fate_flow.entity.types import TaskStatus, ProcessRole, RunParameters
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -30,7 +30,8 @@ from fate_flow.scheduling_apps.client import ControllerClient
 from fate_flow.scheduling_apps.client import TrackerClient
 from fate_flow.db.db_models import TrackingOutputDataInfo, fill_db_model_object
 from fate_arch.computing import ComputingEngine
-from fate_arch.common import conf_utils
+
+LOGGER = getLogger()
 
 
 class TaskExecutor(object):
@@ -147,7 +148,7 @@ class TaskExecutor(object):
                 session_options = {}
 
             sess = session.Session(computing_type=job_parameters.computing_engine, federation_type=job_parameters.federation_engine)
-            computing_session_id = job_utils.generate_session_id(task_id, task_version, role, party_id, "computing")
+            computing_session_id = job_utils.generate_session_id(task_id, task_version, role, party_id, EngineType.COMPUTING)
             sess.init_computing(computing_session_id=computing_session_id, options=session_options)
             federation_session_id = job_utils.generate_federated_id(task_id, task_version)
             sess.init_federation(federation_session_id=federation_session_id,

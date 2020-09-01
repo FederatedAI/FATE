@@ -47,7 +47,6 @@ class DAGScheduler(Cron):
         job_initiator = job_runtime_conf['initiator']
         job_parameters = RunParameters(**job_runtime_conf['job_parameters'])
         cls.backend_compatibility(job_parameters=job_parameters)
-        cls.get_job_engines_address(job_parameters=job_parameters)
         cls.set_default_job_parameters(job_parameters=job_parameters)
 
         job_utils.check_pipeline_job_runtime_conf(job_runtime_conf)
@@ -100,7 +99,7 @@ class DAGScheduler(Cron):
                 for party_id in party_ids:
                     if role == job_initiator['role'] and party_id == job_initiator['party_id']:
                         continue
-                    JobController.initialize_tasks(job_id, role, party_id, False, job_initiator, job_parameters.to_dict(), dsl_parser)
+                    JobController.initialize_tasks(job_id, role, party_id, False, job_initiator, job_parameters, dsl_parser)
 
         # push into queue
         try:
@@ -148,13 +147,6 @@ class DAGScheduler(Cron):
                 job_parameters.federated_mode = FederatedMode.MULTIPLE
             elif job_parameters.computing_engine in [ComputingEngine.STANDALONE]:
                 job_parameters.federated_mode = FederatedMode.SINGLE
-
-    @classmethod
-    def get_job_engines_address(cls, job_parameters: RunParameters):
-        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.COMPUTING, engine_id=job_parameters.computing_backend)
-        job_parameters.engines_address[EngineType.COMPUTING] = backend_info.f_engine_address
-        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.FEDERATION, engine_id=job_parameters.federation_backend)
-        job_parameters.engines_address[EngineType.FEDERATION] = backend_info.f_engine_address
 
     @classmethod
     def set_default_job_parameters(cls, job_parameters: RunParameters):
@@ -311,7 +303,7 @@ class DAGScheduler(Cron):
                     for _party_id in _party_ids:
                         if _role == initiator_role and _party_id == initiator_party_id:
                             continue
-                        JobController.initialize_tasks(job_id, _role, _party_id, False, job.f_runtime_conf["initiator"], job.f_runtime_conf["job_parameters"], dsl_parser, component_name=task.f_component_name, task_version=task.f_task_version)
+                        JobController.initialize_tasks(job_id, _role, _party_id, False, job.f_runtime_conf["initiator"], RunParameters(**job.f_runtime_conf["job_parameters"]), dsl_parser, component_name=task.f_component_name, task_version=task.f_task_version)
                 schedule_logger(job_id=job_id).info(f"create task {task.f_task_id} new version {task.f_task_version} successfully")
                 should_rerun = True
             else:
