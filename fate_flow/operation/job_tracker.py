@@ -262,9 +262,7 @@ class Tracker(object):
                     summary_model.f_job_id == self.job_id,
                     summary_model.f_component_name == self.component_name,
                     summary_model.f_role == self.role,
-                    summary_model.f_party_id == self.party_id,
-                    summary_model.f_task_id == self.task_id,
-                    summary_model.f_task_version == self.task_version
+                    summary_model.f_party_id == self.party_id
                 )
                 if summary:
                     cpn_summary = deserialize_b64(summary.f_summary)

@@ -26,7 +26,7 @@ from pyspark import SparkContext, RDD
 from fate_arch.abc import FederationABC, GarbageCollectionABC
 from fate_arch.common import Party
 from fate_arch.common.log import getLogger
-from fate_arch.computing.spark import get_storage_level
+from fate_arch.computing.spark import get_storage_level, Table
 from fate_arch.federation.spark._mq_channel import MQChannel
 from fate_arch.federation.spark._rabbit_manager import RabbitManager
 
@@ -56,7 +56,7 @@ class Federation(FederationABC):
                   runtime_conf: dict,
                   service_conf: dict):
 
-        mq_address = service_conf
+        mq_address = service_conf.get('address')
         LOGGER.debug(f'mq_address: {mq_address}')
         rabbitmq_conf = mq_address.get("self")
 
@@ -96,27 +96,27 @@ class Federation(FederationABC):
             obj = _receive(info, name, tag)
             LOGGER.info(f'federation got data. name: {name}, tag: {tag}')
             if isinstance(obj, RDD):
-                rtn.append(obj)
+                rtn.append(Table(obj))
             else:
                 rtn.append(obj)
         LOGGER.debug("finish get obj, name={}, tag={}, parties={}.".format(name, tag, parties))
         return rtn
 
-    def remote(self, obj, name: str, tag: str, parties: typing.List[Party],
+    def remote(self, v, name: str, tag: str, parties: typing.List[Party],
                gc: GarbageCollectionABC) -> typing.NoReturn:
         LOGGER.debug("start to remote obj, name={}, tag={}, parties={}.".format(name, tag, parties))
         mq_names = self._get_mq_names(parties)
 
-        if isinstance(obj, RDD):
-            total_size = obj.count()
-            partitions = obj.getNumPartitions()
+        if isinstance(v, Table):
+            total_size = v.count()
+            partitions = v.partitions()
             LOGGER.debug("start to remote RDD, total_size={}, partitions={}.".format(total_size, partitions))
             send_func = partial(_partition_send, name=name, tag=tag,
-                                total_size=total_size, partitions=partitions, mq_names=mq_names, self_mq=self._mq)
-            obj.mapPartitions(send_func).collect()
+                                total_size=total_size, partitions=partitions, mq_names=mq_names, mq=self._mq)
+            v._rdd.mapPartitions(send_func).collect()
         else:
             channel_infos = self._get_channels(mq_names=mq_names)
-            _send_obj(name=name, tag=tag, data=p_dumps(obj), channel_infos=channel_infos)
+            _send_obj(name=name, tag=tag, data=p_dumps(v), channel_infos=channel_infos)
         LOGGER.debug("finish remote obj, name={}, tag={}, parties={}.".format(name, tag, parties))
 
     def cleanup(self):
