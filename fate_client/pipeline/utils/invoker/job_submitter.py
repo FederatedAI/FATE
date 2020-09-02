@@ -21,6 +21,7 @@ import sys
 import tempfile
 import time
 from datetime import timedelta
+from pathlib import Path
 
 from flow_sdk.client import FlowClient
 from pipeline.backend import config as conf
@@ -238,23 +239,19 @@ class JobInvoker(object):
         party_id = str(party_id)
         result = self.client.component.output_data_table(job_id=job_id, role=role,
                                                          party_id=party_id, component_name=cpn_name)
-        #print(f"in get_output_data_table, component {cpn_name} result is {result}")
         data = {}
         try:
             if 'retcode' not in result or result["retcode"] != 0:
                 raise ValueError
-                # LOGGER.opt(exception=True).error(f"get output data table failed")
 
             if "data" not in result:
                 raise ValueError
-                # LOGGER.opt(exception=True).error(f"data not in result: {result}")
 
             all_data = result["data"]
             n = len(all_data)
             # single data table
             if n == 1:
                 single_data = all_data[0]
-                # data_name = single_data["data_name"]
                 del single_data["data_name"]
                 data = single_data
             # multiple data table
@@ -265,12 +262,9 @@ class JobInvoker(object):
                     data[data_name] = single_data
             # no data table obtained
             else:
-                # print(f"No output data table found in {result}.")
-                LOGGER.info(f"No output data table fount in {result}")
+                LOGGER.info(f"No output data table found in {result}")
 
         except ValueError:
-            # LOGGER.opt(exception=True).error(f"job submit failed, err msg: {result}")
-            # raise
             raise ValueError("Job submit failed, err msg: {}".format(result))
         return data
 
@@ -282,7 +276,6 @@ class JobInvoker(object):
         try:
             if 'retcode' not in result:
                 raise ValueError("Cannot query task status of job {}".format(job_id))
-                # LOGGER.opt(exception=True).error(f"can not query task status of job {job_id}")
 
             ret_code = result["retcode"]
             ret_msg = result["retmsg"]
@@ -343,19 +336,18 @@ class JobInvoker(object):
             for file in os.listdir(output_dir):
                 if file.endswith("csv"):
                     n += 1
-            # single output data
-            if n == 1:
-                data_dict = JobInvoker.create_data_meta_dict(IODataType.SINGLE, output_dir, limits)
-            # multiple output data
-            elif n > 1:
+
+            if n > 0:
                 data_dict = {}
-                for data_name in [IODataType.TRAIN, IODataType.VALIDATE, IODataType.TEST]:
+                for data_name in [IODataType.SINGLE, IODataType.TRAIN, IODataType.VALIDATE, IODataType.TEST]:
                     curr_data_dict = JobInvoker.create_data_meta_dict(data_name, output_dir, limits)
-                    data_dict[data_name] = curr_data_dict
+                    if curr_data_dict is not None:
+                        data_dict[data_name] = curr_data_dict
             # no output data obtained
             else:
                 LOGGER.error(f"No output data found in directory{output_dir}")
-                # print(f"No output data found in directory {output_dir}.")
+            if len(data_dict) == 1:
+                return list(data_dict.values())[0]
             return data_dict
 
     @staticmethod
@@ -365,10 +357,13 @@ class JobInvoker(object):
 
         output_data = os.path.join(output_dir, data_file)
         output_meta = os.path.join(output_dir, meta_file)
+        if not Path(output_data).resolve().exists():
+            return
         data = JobInvoker.extract_output_data(output_data, limits)
         meta = JobInvoker.extract_output_meta(output_meta)
         data_dict = {"data": data, "meta": meta}
         return data_dict
+
 
     @staticmethod
     def extract_output_data(output_data, limits):
@@ -378,7 +373,6 @@ class JobInvoker(object):
                 if i == limits:
                     break
                 data.append(line.strip())
-        #print(f"{output_data}: {data[:10]}")
         return data
 
     @staticmethod
@@ -388,11 +382,9 @@ class JobInvoker(object):
                 meta_dict = json.load(fin)
                 meta = meta_dict["header"]
             except ValueError:
-                # print("Can not get output data meta.")
                 LOGGER.error(f"Cannot get output data meta. err msg: ")
                 # raise
 
-        # print(f"{output_meta}: {meta}")
         return meta
 
     def get_model_param(self, job_id, cpn_name, role, party_id):
@@ -402,12 +394,10 @@ class JobInvoker(object):
             result = self.client.component.output_model(job_id=job_id, role=role,
                                                         party_id=party_id, component_name=cpn_name)
             if "data" not in result:
-                # print("job {}, component {} has no output model param".format(job_id, cpn_name))
                 LOGGER.error(f"job {job_id}, component {cpn_name} has no output model param")
                 return
             return result["data"]
         except:
-            # print("Can not get output model, err msg is {}".format(result))
             LOGGER.error("Cannot get output model, err msg: ")
             # raise
 
@@ -418,12 +408,10 @@ class JobInvoker(object):
             result = self.client.component.metric_all(job_id=job_id, role=role,
                                                       party_id=party_id, component_name=cpn_name)
             if "data" not in result:
-                # print("job {}, component {} has no output metric".format(job_id, cpn_name))
                 LOGGER.error(f"job {job_id}, component {cpn_name} has no output metric")
                 return
             return result["data"]
         except:
-            # print("Can not get output model, err msg is {}".format(result))
             LOGGER.error("Cannot get ouput model, err msg: ")
             # raise
 
@@ -439,7 +427,6 @@ class JobInvoker(object):
                 return
             return result["data"]
         except:
-            # print("Can not get output model, err msg is {}".format(result))
             LOGGER.error("Cannot get output model, err msg: ")
             # raise
 
@@ -454,10 +441,8 @@ class JobInvoker(object):
             result = self.client.job.generate_dsl(train_dsl_path=train_dsl_path, cpn_list=cpn_list, version=version)
 
         if result is None or 'retcode' not in result:
-            # LOGGER.opt(exception=True).error(f"call flow generate dsl is failed, check if fate_flow server is start!")
             raise ValueError("Call flow generate dsl is failed, check if fate_flow server is start!")
         elif result["retcode"] != 0:
-            # LOGGER.opt(exception=True).error(f"Cannot generate predict dsl, error msg is {result['retmsg']}")
             raise ValueError("Cannot generate predict dsl, error msg is {}".format(result["retmsg"]))
         else:
             return result["data"]

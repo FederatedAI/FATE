@@ -4,7 +4,7 @@ import numpy as np
 import time
 import uuid
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 from federatedml.param.intersect_param import IntersectParam
 
 class TestRsaIntersectHost(unittest.TestCase):

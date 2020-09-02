@@ -5,11 +5,7 @@
 # added by jsweng
 # param class for OHE with alignment
 #
-from arch.api.utils import log_utils
 from federatedml.param.base_param import BaseParam
-from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class HomoOneHotParam(BaseParam):

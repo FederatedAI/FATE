@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 from federatedml.statistic.data_statistics import DataStatistics
 from federatedml.param.statistics_param import StatisticsParam
 import uuid

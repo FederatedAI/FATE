@@ -15,14 +15,12 @@
 #
 
 import hashlib
-from arch.api.utils import log_utils, version_control
 from federatedml.model_base import ModelBase
 from federatedml.param.rsa_param import RsaParam
 from federatedml.secureprotol import gmpy_math
-from arch.api import session
+from federatedml.util import LOGGER
+from fate_arch.session import computing_session as session
 import datetime
-
-LOGGER = log_utils.getLogger()
 
 
 class RsaModel(ModelBase):

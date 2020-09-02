@@ -25,9 +25,7 @@ import tensorflow as tf
 from tensorflow.python.keras.backend import gradients
 from tensorflow.python.keras.backend import set_session
 
-from arch.api.utils import log_utils
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 def _init_session():
@@ -233,5 +231,3 @@ class HostDenseModel(DenseModel):
 
     def update_bias(self, delta):
         self.bias -= np.mean(delta, axis=0) * self.lr
-
-

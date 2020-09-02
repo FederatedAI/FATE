@@ -15,14 +15,11 @@
 #
 import functools
 
-from arch.api.utils import log_utils
 from federatedml.framework.homo.blocks import secure_aggregator
 from federatedml.framework.homo.blocks.aggregator import AggregatorTransVar
 from federatedml.framework.homo.blocks.random_padding_cipher import RandomPaddingCipherTransVar
 from federatedml.framework.homo.blocks.secure_aggregator import SecureAggregatorTransVar
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class SecureSumAggregatorTransVar(SecureAggregatorTransVar):

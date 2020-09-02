@@ -3,8 +3,7 @@ from federatedml.ensemble.boosting.boosting_core.homo_boosting import HomoBoosti
 from federatedml.param.boosting_param import HomoSecureBoostParam
 from federatedml.ensemble.basic_algorithms.decision_tree.homo.homo_decision_tree_arbiter import HomoDecisionTreeArbiter
 from numpy import random
-from arch.api.utils import log_utils
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class HomoSecureBoostArbiter(HomoBoostingArbiter):

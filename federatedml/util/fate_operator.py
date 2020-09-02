@@ -19,12 +19,9 @@ from collections import Iterable
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from arch.api.utils import log_utils
 from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
-
-LOGGER = log_utils.getLogger()
 
 
 def _one_dimension_dot(X, w):

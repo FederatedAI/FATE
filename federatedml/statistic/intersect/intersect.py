@@ -15,12 +15,10 @@
 #
 import hashlib
 
-from arch.api.utils import log_utils
 from federatedml.secureprotol.encode import Encode
 from federatedml.util import consts
+from federatedml.util import LOGGER
 from federatedml.transfer_variable.transfer_class.raw_intersect_transfer_variable import RawIntersectTransferVariable
-
-LOGGER = log_utils.getLogger()
 
 
 class Intersect(object):

@@ -18,7 +18,7 @@ import unittest
 
 import numpy as np
 import random
-from arch.api import session
+from fate_arch.session import computing_session as session
 import uuid
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.feature.instance import Instance

@@ -6,7 +6,7 @@ from federatedml.evaluation.metric_interface import MetricInterface
 import numpy as np
 import pandas as pd
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 
 import time
 

@@ -14,15 +14,13 @@
 #  limitations under the License.
 #
 
-from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.feature.instance import Instance
 from federatedml.model_base import ModelBase
 from federatedml.param.union_param import UnionParam
 from federatedml.statistic import data_overview
+from federatedml.util import LOGGER
 from federatedml.util.schema_check import assert_schema_consistent
-
-LOGGER = log_utils.getLogger()
 
 
 class Union(ModelBase):

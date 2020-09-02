@@ -18,13 +18,10 @@
 
 import operator
 
-from arch.api.utils import log_utils
 from federatedml.feature.feature_selection.iv_percentile_filter import IVPercentileFilter
 from federatedml.framework.hetero.sync import selection_info_sync
 from federatedml.param.feature_selection_param import IVPercentileSelectionParam
 from federatedml.protobuf.generated import feature_selection_meta_pb2
-
-LOGGER = log_utils.getLogger()
 
 
 class Guest(IVPercentileFilter):

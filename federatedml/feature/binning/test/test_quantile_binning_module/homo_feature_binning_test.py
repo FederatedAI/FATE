@@ -20,7 +20,7 @@ import argparse
 
 import numpy as np
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 from fate_arch.computing import ComputingType
 from fate_arch.session import Session
 from federatedml.feature.homo_feature_binning import homo_split_points
