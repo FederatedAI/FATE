@@ -58,6 +58,14 @@
       "dst": [
         "arbiter"
       ]
+    },
+    "centroid_list": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
     }
 
   }

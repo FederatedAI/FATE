@@ -37,4 +37,3 @@ class HeteroKmeansTransferVariable(BaseTransferVariables):
         self.guest_tol = self._create_variable(name='guest_tol', src=['guest'], dst=['arbiter'])
         self.host_dist = self._create_variable(name='host_dist', src=['host'], dst=['arbiter'])
         self.host_tol = self._create_variable(name='host_tol', src=['host'], dst=['arbiter'])
-        self.centroid_list = self._create_variable(name='centroid_list', src=['guest'], dst=['host'])

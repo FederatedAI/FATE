@@ -16,20 +16,20 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import numpy as np
 from arch.api.utils import log_utils
 from federatedml.model_base import ModelBase
-from federatedml.transfer_variable.transfer_class.hetero_kmeans_transfer_variable import HeteroKmeansTransferVariable
-from federatedml.util import abnormal_detection
 from federatedml.param.hetero_kmeans_param import KmeansParam
 from federatedml.protobuf.generated import hetero_kmeans_meta_pb2, hetero_kmeans_param_pb2
+from federatedml.transfer_variable.transfer_class.hetero_kmeans_transfer_variable import HeteroKmeansTransferVariable
+from federatedml.util import abnormal_detection
 
 LOGGER = log_utils.getLogger()
+
 
 class BaseKmeansModel(ModelBase):
     def __init__(self):
         super(BaseKmeansModel, self).__init__()
-        self.model_param=KmeansParam()
+        self.model_param = KmeansParam()
         self.n_iter_ = 0
         self.k = 0
         self.max_iter = 0
@@ -41,6 +41,11 @@ class BaseKmeansModel(ModelBase):
         self.model_name = 'toSet'
         self.model_param_name = 'toSet'
         self.model_meta_name = 'toSet'
+        self.header = None
+        self.reset_union()
+        self.is_converged = False
+        self.cluster_detail = None
+        self.cluster_count = None
 
     def _init_model(self, params):
         self.model_param = params
@@ -50,8 +55,8 @@ class BaseKmeansModel(ModelBase):
 
     def _get_meta(self):
         meta_protobuf_obj = hetero_kmeans_meta_pb2.KmeansModelMeta(k=self.model_param.k,
-                                                          tol=self.model_param.tol,
-                                                          max_iter=self.max_iter)
+                                                                   tol=self.model_param.tol,
+                                                                   max_iter=self.max_iter)
         return meta_protobuf_obj
 
     def _get_param(self):
@@ -60,7 +65,11 @@ class BaseKmeansModel(ModelBase):
         if header is None:
             param_protobuf_obj = hetero_kmeans_param_pb2.KmeansModelParam()
             return param_protobuf_obj
-        param_protobuf_obj = hetero_kmeans_param_pb2.KmeansModelParam(iters=self.n_iter_)
+        param_protobuf_obj = hetero_kmeans_param_pb2.KmeansModelParam(count_of_clusters=self.k,
+                                                                      max_interation=self.n_iter_,
+                                                                      converged=self.is_converged,
+                                                                      cluster_detail=self.cluster_detail,
+                                                                      centroid_detail=self.centroid_list)
         return param_protobuf_obj
 
     def export_model(self):
@@ -72,6 +81,22 @@ class BaseKmeansModel(ModelBase):
         }
         return result
 
+    def count(self, iterator):
+        count_result = dict()
+        for k, v in iterator:
+            if v not in count_result:
+                count_result[v] = 1
+            else:
+                count_result[v] += 1
+        return count_result
+
+    @staticmethod
+    def sum_dict(d1, d2):
+        temp = dict()
+        for key in d1.keys() | d2.keys():
+            temp[key] = sum([d.get(key, 0) for d in (d1, d2)])
+        return temp
+
     def _abnormal_detection(self, data_instances):
         """
         Make sure input data_instances is valid.
@@ -79,3 +104,29 @@ class BaseKmeansModel(ModelBase):
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
 
+    def load_model(self, model_dict):
+        param_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
+        meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
+        self.k = meta_obj.k
+        self.centroid_list= param_obj.centroid_detail
+        #self.header = list(result_obj.header)
+        #if self.header is None:
+        #    return
+
+    def reset_union(self):
+        def my_union(previews_data, name_list):
+            return previews_data
+
+        self.component_properties.set_union_func(my_union)
+
+    def set_predict_data_schema(self, predict_datas, schemas):
+        if predict_datas is None:
+            return predict_datas
+
+        data_output = predict_datas[0]
+        schema = schemas[0]
+        if data_output is not None:
+            data_output.schema = {"header": ["label", "predict_result", "predict_score", "predict_detail", "type"],
+                                  "sid_name": schema.get('sid_name')}
+        predict_datas[0] = data_output
+        return predict_datas

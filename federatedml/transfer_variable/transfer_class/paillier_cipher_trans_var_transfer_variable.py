@@ -27,10 +27,11 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 
 
 # noinspection PyAttributeOutsideInit
-class HeteroFeatureBinningTransferVariable(BaseTransferVariables):
+class PaillierCipherTransVar(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.bucket_idx = self._create_variable(name='bucket_idx', src=['guest'], dst=['host'])
-        self.encrypted_bin_sum = self._create_variable(name='encrypted_bin_sum', src=['host'], dst=['guest'])
-        self.encrypted_label = self._create_variable(name='encrypted_label', src=['guest'], dst=['host'])
-        self.paillier_pubkey = self._create_variable(name='paillier_pubkey', src=['guest'], dst=['host'])
+        self.use_encrypt = self._create_variable(name='use_encrypt', src=['host'], dst=['arbiter'])
+        self.pailler_pubkey = self._create_variable(name='pailler_pubkey', src=['arbiter'], dst=['host'])
+        self.re_encrypt_times = self._create_variable(name='re_encrypt_times', src=['host'], dst=['arbiter'])
+        self.model_to_re_encrypt = self._create_variable(name='model_to_re_encrypt', src=['host'], dst=['arbiter'])
+        self.model_re_encrypted = self._create_variable(name='model_re_encrypted', src=['arbiter'], dst=['host'])

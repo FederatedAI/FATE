@@ -271,3 +271,8 @@ class ComponentProperties(object):
             # LOGGER.debug("before out loop, one data: {}".format(result_data.first()))
 
         return result_data
+
+    def set_union_func(self, func):
+        self.union_data = func
+
+
