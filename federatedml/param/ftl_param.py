@@ -131,6 +131,8 @@ class FTLParam(BaseParam):
         assert self.mode in ['encrypted', 'plain'], 'mode options: encrpyted or plain, but {} is offered'.format(self.mode)
         assert type(self.epochs) == int and self.epochs > 0
 
+        self.check_positive_number(self.alpha, 'alpha should be a number larger than 0')
+
     @staticmethod
     def _parse_optimizer(opt):
         """
