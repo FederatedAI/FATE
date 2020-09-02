@@ -59,8 +59,12 @@ def data_upload(submitter, upload_config, check_interval, fate_home):
         check_data_count(submitter, fate_home, data["table_name"], data["namespace"], data["count"])
 
 
-def read_data(fate_home):
-    config_file = os.path.join(fate_home, "scripts/config.json")
+def read_data(fate_home, config_type):
+    if config_type == 'min-test':
+        config_file = os.path.join(fate_home, "scripts/min_test_config.json")
+    else:
+        config_file = os.path.join(fate_home, "scripts/config.json")
+
     with open(config_file, 'r', encoding='utf-8') as f:
         json_info = json.loads(f.read())
     return json_info
@@ -87,13 +91,16 @@ def main():
                             default=1)
 
     arg_parser.add_argument("-b", "--backend", type=int, help="backend", choices=[0, 1], default=0)
+    arg_parser.add_argument("-c", "--config_file", type=str, help="config file",
+                            choices=["all", "min-test"], default="min-test")
+
     args = arg_parser.parse_args()
 
     work_mode = args.mode
     existing_strategy = args.force
     backend = args.backend
     interval = args.interval
-
+    config_file = args.config_file
     spark_submit_config = {}
     submitter = submit.Submitter(fate_home=fate_home,
                                  work_mode=work_mode,
@@ -101,7 +108,7 @@ def main():
                                  existing_strategy=existing_strategy,
                                  spark_submit_config=spark_submit_config)
 
-    upload_data = read_data(fate_home)
+    upload_data = read_data(fate_home, config_file)
 
     data_upload(submitter, upload_data, interval, fate_home)
 

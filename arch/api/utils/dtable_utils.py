@@ -13,8 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils.version_control import get_latest_commit
 from arch.api.utils.core_utils import get_commit_id
+
 gen_namespace_separator = '#'
 
 
@@ -30,11 +30,9 @@ def get_table_info(config, create=False):
     if not namespace:
         namespace = gen_party_namespace(all_party=all_party, data_type=data_type, role=role, party_id=party_id)
     if not table_name:
-        if create:
-            table_name = get_commit_id()
-        else:
-            table_name = get_latest_commit(data_table_namespace=namespace, branch='master')
+        table_name = get_commit_id()
     return table_name, namespace
+
 
 def gen_party_version(namespace, branch='master', create=False):
     if create:
@@ -44,8 +42,10 @@ def gen_party_version(namespace, branch='master', create=False):
 
     return table_name
 
+
 def gen_party_namespace(all_party, data_type, role, party_id):
     return gen_namespace_separator.join([role, str(party_id), all_party_key(all_party), data_type])
+
 
 def gen_party_namespace_by_federated_namespace(federated_namespace, role, party_id):
     return gen_namespace_separator.join([role, str(party_id), federated_namespace])

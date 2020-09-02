@@ -20,14 +20,13 @@
 
 import numpy as np
 
-from arch.api.utils import log_utils
+from federatedml.util import consts, LOGGER
 from federatedml.framework.hetero.procedure import batch_generator
 from federatedml.nn.hetero_nn.backend.model_builder import model_builder
 from federatedml.nn.hetero_nn.hetero_nn_base import HeteroNNBase
 from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import HeteroNNMeta
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import HeteroNNParam
 
-LOGGER = log_utils.getLogger()
 MODELMETA = "HeteroNNHostMeta"
 MODELPARAM = "HeteroNNHostParam"
 
@@ -38,6 +37,7 @@ class HeteroNNHost(HeteroNNBase):
 
         self.batch_generator = batch_generator.Host()
         self.model = None
+        self.role = consts.HOST
 
         self.input_shape = None
         self.validation_strategy = None
@@ -66,6 +66,7 @@ class HeteroNNHost(HeteroNNBase):
         self.model.set_transfer_variable(self.transfer_variable)
 
     def predict(self, data_inst):
+        data_inst = self.align_data_header(data_inst, self._header)
         test_x = self._load_data(data_inst)
         self.set_partition(data_inst)
 
@@ -105,6 +106,7 @@ class HeteroNNHost(HeteroNNBase):
             self.load_model(self.validation_strategy.cur_best_model)
 
     def prepare_batch_data(self, batch_generator, data_inst):
+        self._header = data_inst.schema["header"]
         batch_generator.initialize_batch_generator(data_inst)
         batch_data_generator = batch_generator.generate_batch_data()
 
@@ -139,6 +141,7 @@ class HeteroNNHost(HeteroNNBase):
 
     def _get_model_param(self):
         model_param = HeteroNNParam()
+        model_param.header.extend(self._header)
         model_param.hetero_nn_model_param.CopyFrom(self.model.get_hetero_nn_model_param())
         model_param.best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
 

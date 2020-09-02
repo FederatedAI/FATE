@@ -54,6 +54,10 @@
             "conf": "./test_hetero_binning_job_conf.json",
             "dsl": "./test_hetero_binning_add_onehot_job_dsl.json"
         },
+        "skip_statics": {
+            "conf": "./test_hetero_binning_skip_statics_job_conf.json",
+            "dsl": "./test_hetero_binning_add_onehot_job_dsl.json"
+        },
         "large_bin_nums_quantile": {
             "conf": "./test_hetero_binning_big_bin_job_conf.json",
             "dsl": "./test_hetero_binning_job_dsl.json"

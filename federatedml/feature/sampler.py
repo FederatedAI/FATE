@@ -14,18 +14,19 @@
 #  limitations under the License.
 #
 
-from arch.api import session
-from arch.api.utils import log_utils
-from sklearn.utils import resample
-from fate_flow.entity.metric import Metric
-from fate_flow.entity.metric import MetricMeta
-from federatedml.param.sample_param import SampleParam
-from federatedml.util import consts
-from federatedml.transfer_variable.transfer_class.sample_transfer_variable import SampleTransferVariable
-from federatedml.model_base import ModelBase
 import random
 
-LOGGER = log_utils.getLogger()
+from sklearn.utils import resample
+
+from fate_arch.session import computing_session as session
+from fate_flow.entity.metric import Metric
+from fate_flow.entity.metric import MetricMeta
+from federatedml.model_base import ModelBase
+from federatedml.param.sample_param import SampleParam
+from federatedml.transfer_variable.transfer_class.sample_transfer_variable import SampleTransferVariable
+from federatedml.util import consts
+from federatedml.util.schema_check import assert_schema_consistent
+from federatedml.util import LOGGER
 
 
 class RandomSampler(object):
@@ -47,6 +48,7 @@ class RandomSampler(object):
         self.random_state = random_state
         self.method = method
         self.tracker = None
+        self._summary_buf = {}
 
     def set_tracker(self, tracker):
         self.tracker = tracker
@@ -125,10 +127,10 @@ class RandomSampler(object):
 
             sample_dtable = session.parallelize(zip(sample_ids, range(len(sample_ids))),
                                                 include_key=True,
-                                                partition=data_inst._partitions)
+                                                partition=data_inst.partitions)
             new_data_inst = data_inst.join(sample_dtable, lambda v1, v2: v1)
 
-            callback(self.tracker, "random", [Metric("count", new_data_inst.count())])
+            callback(self.tracker, "random", [Metric("count", new_data_inst.count())], summary_dict=self._summary_buf)
 
             if return_sample_ids:
                 return new_data_inst, sample_ids
@@ -158,9 +160,9 @@ class RandomSampler(object):
 
             new_data_inst = session.parallelize(new_data,
                                                 include_key=True,
-                                                partition=data_inst._partitions)
+                                                partition=data_inst.partitions)
 
-            callback(self.tracker, "random", [Metric("count", new_data_inst.count())])
+            callback(self.tracker, "random", [Metric("count", new_data_inst.count())], summary_dict=self._summary_buf)
 
             if return_sample_ids:
                 return new_data_inst, sample_ids
@@ -169,6 +171,9 @@ class RandomSampler(object):
 
         else:
             raise ValueError("random sampler not support method {} yet".format(self.method))
+
+    def get_summary(self):
+        return self._summary_buf
 
 
 class StratifiedSampler(object):
@@ -202,6 +207,7 @@ class StratifiedSampler(object):
         self.random_state = random_state
         self.method = method
         self.tracker = None
+        self._summary_buf = {}
 
     def set_tracker(self, tracker):
         self.tracker = tracker
@@ -307,11 +313,11 @@ class StratifiedSampler(object):
 
                 random.shuffle(sample_ids)
 
-                callback(self.tracker, "stratified", callback_sample_metrics, callback_original_metrics)
+                callback(self.tracker, "stratified", callback_sample_metrics, callback_original_metrics, self._summary_buf)
 
             sample_dtable = session.parallelize(zip(sample_ids, range(len(sample_ids))),
                                                 include_key=True,
-                                                partition=data_inst._partitions)
+                                                partition=data_inst.partitions)
             new_data_inst = data_inst.join(sample_dtable, lambda v1, v2: v1)
 
             if return_sample_ids:
@@ -364,7 +370,7 @@ class StratifiedSampler(object):
 
                 random.shuffle(sample_ids)
 
-                callback(self.tracker, "stratified", callback_sample_metrics, callback_original_metrics)
+                callback(self.tracker, "stratified", callback_sample_metrics, callback_original_metrics, self._summary_buf)
 
             new_data = []
             for i in range(len(sample_ids)):
@@ -373,7 +379,7 @@ class StratifiedSampler(object):
 
             new_data_inst = session.parallelize(new_data,
                                                 include_key=True,
-                                                partition=data_inst._partitions)
+                                                partition=data_inst.partitions)
 
             if return_sample_ids:
                 return new_data_inst, sample_ids
@@ -382,6 +388,9 @@ class StratifiedSampler(object):
 
         else:
             raise ValueError("Stratified sampler not support method {} yet".format(self.method))
+
+    def get_summary(self):
+        return self._summary_buf
 
 
 class Sampler(ModelBase):
@@ -445,6 +454,7 @@ class Sampler(ModelBase):
         """
         ori_schema = data_inst.schema
         sample_data = self.sampler.sample(data_inst, sample_ids)
+        self.set_summary(self.sampler.get_summary())
 
         try:
             if len(sample_data) == 2:
@@ -520,6 +530,7 @@ class Sampler(ModelBase):
 
             return sample_data_inst
 
+    @assert_schema_consistent
     def fit(self, data_inst):
         return self.run_sample(data_inst, self.task_type, self.role)
 
@@ -544,7 +555,7 @@ class Sampler(ModelBase):
         return self.data_output
 
 
-def callback(tracker, method, callback_metrics, other_metrics=None):
+def callback(tracker, method, callback_metrics, other_metrics=None, summary_dict=None):
     LOGGER.debug("callback: method is {}".format(method))
     if method == "random":
         tracker.log_metric_data("sample_count",
@@ -555,6 +566,8 @@ def callback(tracker, method, callback_metrics, other_metrics=None):
                                 "random",
                                 MetricMeta(name="sample_count",
                                            metric_type="SAMPLE_TEXT"))
+
+        summary_dict["sample_count"] = callback_metrics[0].value
 
     else:
         LOGGER.debug(
@@ -577,3 +590,13 @@ def callback(tracker, method, callback_metrics, other_metrics=None):
                                 "stratified",
                                 MetricMeta(name="original_count",
                                            metric_type="SAMPLE_TABLE"))
+
+        summary_dict["sample_count"] = {}
+        for sample_metric in callback_metrics:
+            summary_dict["sample_count"][sample_metric.key] = sample_metric.value
+
+        summary_dict["original_count"] = {}
+        for sample_metric in other_metrics:
+            summary_dict["original_count"][sample_metric.key] = sample_metric.value
+
+

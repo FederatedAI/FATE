@@ -18,10 +18,8 @@
 
 import functools
 
-from arch.api.utils import log_utils
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 def get_features_shape(data_instances):
@@ -52,7 +50,7 @@ def header_alignment(data_instances, pre_header):
             "header in prediction stage is super-set training stage, predict size is {}, training header size is {}".format(
                 len(header), len(pre_header)))
     else:
-        LOGGER.warning("header in prediction stage will be shuffle to match the header of training stage")
+        LOGGER.warning("header in prediction stage will be shuffled to match the header of training stage")
 
     header_idx_mapping = dict(zip(pre_header, [i for i in range(len(pre_header))]))
     header_correct = {}
@@ -77,12 +75,14 @@ def header_alignment(data_instances, pre_header):
             col_order = [None] * len(header_pos)
             for k, v in header_pos.items():
                 col_order[v] = k
-            inst.features = inst.features[:, col_order]
+            inst.features = inst.features[col_order]
 
         return inst
 
+    correct_schema = data_instances.schema
+    correct_schema["header"] = header_correct
     data_instances = data_instances.mapValues(lambda inst: align_header(inst, header_pos=header_correct))
-
+    data_instances.schema = correct_schema
     return data_instances
 
 

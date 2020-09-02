@@ -1,0 +1,18 @@
+{
+  "migrate_initiator": {
+    "role": "guest",
+    "party_id": 99
+  },
+  "role": {
+    "guest": [9999],
+    "arbiter": [10000],
+    "host": [10000]
+  },
+  "migrate_role": {
+    "guest": [99],
+    "arbiter": [100],
+    "host": [100]
+  },
+  "model_id": "arbiter-10000#guest-9999#host-10000#model",
+  "model_version": "202006171904247702041"
+}

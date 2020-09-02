@@ -1,0 +1,93 @@
+{
+  "initiator": {
+    "role": "guest",
+    "party_id": 10000
+  },
+  "job_parameters": {
+    "work_mode": 0
+  },
+  "role": {
+    "guest": [
+      10000
+    ],
+    "host": [
+      10000
+    ],
+    "arbiter": [
+      10000
+    ]
+  },
+  "role_parameters": {
+    "guest": {
+      "args": {
+        "data": {
+          "train_data": [
+            {
+              "name": "motor_hetero_guest",
+              "namespace": "experiment"
+            }
+          ]
+        }
+      },
+      "dataio_0": {
+        "with_label": [
+          true
+        ],
+        "label_name": [
+          "motor_speed"
+        ],
+        "label_type": [
+          "float"
+        ],
+        "output_format": [
+          "dense"
+        ]
+      }
+    },
+    "host": {
+      "args": {
+        "data": {
+          "train_data": [
+            {
+              "name": "motor_hetero_host",
+              "namespace": "experiment"
+            }
+          ]
+        }
+      },
+      "dataio_0": {
+        "with_label": [
+          false
+        ],
+        "output_format": [
+          "dense"
+        ]
+      }
+    }
+  },
+  "algorithm_parameters": {
+    "hetero_data_split_0": {
+      "test_size": 0.3,
+      "stratified": true,
+      "split_points": [0, 0.2]
+    },
+    "hetero_linr_0": {
+            "penalty": "L2",
+            "optimizer": "sgd",
+            "tol": 0.001,
+            "alpha": 0.01,
+            "max_iter": 10,
+            "early_stop": "weight_diff",
+            "batch_size": -1,
+            "learning_rate": 0.15,
+            "decay": 0.0,
+            "decay_sqrt": false,
+            "init_param": {
+                "init_method": "zeros"
+            },
+            "encrypted_mode_calculator_param": {
+                "mode": "fast"
+            }
+        }
+  }
+}

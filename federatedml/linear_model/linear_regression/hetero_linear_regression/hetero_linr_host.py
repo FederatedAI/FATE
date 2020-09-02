@@ -14,17 +14,14 @@
 #  limitations under the License.
 #
 
-from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.linear_regression.hetero_linear_regression.hetero_linr_base import HeteroLinRBase
 from federatedml.optim.gradient import hetero_linr_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
+from federatedml.util import LOGGER
 from federatedml.util import consts
-from federatedml.util.io_check import assert_io_num_rows_equal
-
-LOGGER = log_utils.getLogger()
 
 
 class HeteroLinRHost(HeteroLinRBase):
@@ -112,8 +109,9 @@ class HeteroLinRHost(HeteroLinRBase):
             LOGGER.info("Reach max iter {}, train model finish!".format(self.max_iter))
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
             self.load_model(self.validation_strategy.cur_best_model)
+        self.set_summary(self.get_model_summary())
+        # LOGGER.debug(f"summary content is: {self.summary()}")
 
-    @assert_io_num_rows_equal
     def predict(self, data_instances):
         """
         Prediction of linR
@@ -122,8 +120,11 @@ class HeteroLinRHost(HeteroLinRBase):
         data_instances:DTable of Instance, input data
         """
         self.transfer_variable.host_partial_prediction.disable_auto_clean()
+
         LOGGER.info("Start predict ...")
 
+        self._abnormal_detection(data_instances)
+        data_instances = self.align_data_header(data_instances, self.header)
         data_features = self.transform(data_instances)
 
         pred_host = self.compute_wx(data_features, self.model_weights.coef_, self.model_weights.intercept_)

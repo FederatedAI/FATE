@@ -19,16 +19,14 @@
 
 import numpy as np
 
-from arch.api.utils import log_utils
 from federatedml.linear_model.linear_model_base import BaseLinearModel
 from federatedml.linear_model.linear_model_weight import LinearModelWeights as PoissonRegressionWeights
+from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.param.poisson_regression_param import PoissonParam
 from federatedml.protobuf.generated import poisson_model_meta_pb2, poisson_model_param_pb2
 from federatedml.secureprotol import PaillierEncrypt
-from federatedml.param.evaluation_param import EvaluateParam
+from federatedml.util import LOGGER
 from federatedml.util.fate_operator import vec_dot
-
-LOGGER = log_utils.getLogger()
 
 
 class BasePoissonRegression(BaseLinearModel):
@@ -121,7 +119,7 @@ class BasePoissonRegression(BaseLinearModel):
         header = self.header
         LOGGER.debug("In get_param, header: {}".format(header))
         if header is None:
-            param_protobuf_obj = poisson_model_param_pb2.PoissonModelParam()
+            param_protobuf_obj = poisson_model_param_pb2.PoissonModelParam(best_iteration=-1)
             return param_protobuf_obj
 
         weight_dict = {}

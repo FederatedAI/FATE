@@ -16,9 +16,9 @@
 import sys
 from collections import defaultdict
 import math
+import numpy as np
 import logging
-
-from arch.api.utils import log_utils
+from federatedml.util import LOGGER
 from fate_flow.entity.metric import Metric, MetricMeta
 
 from federatedml.param import EvaluateParam
@@ -26,9 +26,84 @@ from federatedml.util import consts
 from federatedml.model_base import ModelBase
 from federatedml.evaluation.metric_interface import MetricInterface
 
-import numpy as np
-
 LOGGER = log_utils.getLogger()
+
+
+class PerformanceRecorder(object):
+
+    """
+    This class record performance(single value metrics during the training process)
+    """
+
+    def __init__(self):
+
+        # all of them are single value metrics
+        self.allowed_metric = [consts.AUC,
+                              consts.EXPLAINED_VARIANCE,
+                              consts.MEAN_ABSOLUTE_ERROR,
+                              consts.MEAN_SQUARED_ERROR,
+                              consts.MEAN_SQUARED_LOG_ERROR,
+                              consts.MEDIAN_ABSOLUTE_ERROR,
+                              consts.R2_SCORE,
+                              consts.ROOT_MEAN_SQUARED_ERROR,
+                              consts.PRECISION,
+                              consts.RECALL,
+                              consts.ACCURACY,
+                              consts.KS
+                            ]
+
+        self.larger_is_better = [consts.AUC,
+                                 consts.R2_SCORE,
+                                 consts.PRECISION,
+                                 consts.RECALL,
+                                 consts.EXPLAINED_VARIANCE,
+                                 consts.ACCURACY,
+                                 consts.KS
+                                 ]
+
+        self.smaller_is_better = [consts.ROOT_MEAN_SQUARED_ERROR,
+                                  consts.MEAN_ABSOLUTE_ERROR,
+                                  consts.MEAN_SQUARED_ERROR,
+                                  consts.MEAN_SQUARED_LOG_ERROR]
+
+        self.cur_best_performance = {}
+
+        self.no_improvement_round = {}  # record no improvement round of all metrics
+
+    def has_improved(self, val: float, metric: str, cur_best: dict):
+
+        if metric not in cur_best:
+            return True
+
+        if metric in self.larger_is_better and val > cur_best[metric]:
+            return True
+
+        elif metric in self.smaller_is_better and val < cur_best[metric]:
+            return True
+
+        return False
+
+    def update(self, eval_dict: dict):
+        """
+
+        Parameters
+        ----------
+        eval_dict dict, {metric_name:metric_val}, e.g. {'auc':0.99}
+
+        Returns stop flag, if should stop return True, else False
+        -------
+        """
+        if len(eval_dict) == 0:
+            return
+
+        for metric in eval_dict:
+            if metric not in self.allowed_metric:
+                continue
+            if self.has_improved(eval_dict[metric], metric, self.cur_best_performance):
+                self.cur_best_performance[metric] = eval_dict[metric]
+                self.no_improvement_round[metric] = 0
+            else:
+                self.no_improvement_round[metric] += 1
 
 
 class Evaluation(ModelBase):
@@ -39,7 +114,6 @@ class Evaluation(ModelBase):
         self.eval_results = defaultdict(list)
 
         self.save_single_value_metric_list = [consts.AUC,
-
                                               consts.EXPLAINED_VARIANCE,
                                               consts.MEAN_ABSOLUTE_ERROR,
                                               consts.MEAN_SQUARED_ERROR,
@@ -55,8 +129,6 @@ class Evaluation(ModelBase):
                                               ]
 
         self.special_metric_list = [consts.PSI]
-
-        self.clustering_intra_metric_list = [consts.DAVIES_BOULDIN_INDEX]
 
         self.metrics = None
         self.round_num = 6
@@ -100,66 +172,37 @@ class Evaluation(ModelBase):
 
         return split_result
 
-    def _classification_and_regression_extract(self, data):
-
-        """
-        extract labels and predict results from data in classification/regression type format
-        """
-
+    def evaluate_metrics(self, mode: str, data: list) -> dict:
         labels = []
         pred_scores = []
         pred_labels = []
+
         for d in data:
             labels.append(d[1][0])
             pred_labels.append(d[1][1])
             pred_scores.append(d[1][2])
+
         if self.eval_type == consts.BINARY or self.eval_type == consts.REGRESSION:
+
             if self.pos_label and self.eval_type == consts.BINARY:
-                labels_arr = np.array(labels)
-                labels_arr[labels_arr == self.pos_label] = 1
-                labels_arr[labels_arr != self.pos_label] = 0
-                labels = list(labels_arr)
+                new_labels = []
+                for label in labels:
+                    if self.pos_label == label:
+                        new_labels.append(1)
+                    else:
+                        new_labels.append(0)
+                labels = new_labels
+
             pred_results = pred_scores
         else:
             pred_results = pred_labels
 
-        return labels, pred_results
-
-    def _clustering_extract(self, data):
-
-        """
-        extract data according to data format
-        """
-
-        true_cluster_index, predicted_cluster_index = [], []
-        intra_cluster_avg_dist, inter_cluster_dist = [], []
-        run_intra_metrics = False  # run intra metrics or outer metrics ?
-
-        if len(data[0][1]) == 2:
-            # [int int] -> [true_label, predicted label] -> outer metric
-            # [int np.array] - > [predicted label, distance] -> need no metric computation
-            if not (type(data[0][1][0]) == int and type(data[0][1][1]) == int):
-                return None, None, run_intra_metrics
-
-        if len(data[0][1]) == 3:  # the input format is for intra metrics
-            run_intra_metrics = True
-
-        for d in data:
-            if run_intra_metrics:
-                intra_cluster_avg_dist.append(d[1][1])
-                inter_cluster_dist.append(d[1][2])
-            else:
-                true_cluster_index.append(d[1][1])
-                predicted_cluster_index.append(d[1][2])
-
-        return (true_cluster_index, predicted_cluster_index, run_intra_metrics) if not run_intra_metrics else \
-               (intra_cluster_avg_dist, inter_cluster_dist, run_intra_metrics)
-
-    def _evaluate_classification_and_regression_metrics(self, mode, data):
-
-        labels, pred_results = self._classification_and_regression_extract(data)
         eval_result = defaultdict(list)
-        for eval_metric in self.metrics:
+
+        metrics = self.metrics
+
+        for eval_metric in metrics:
+
             if eval_metric not in self.special_metric_list:
                 res = getattr(self.metric_interface, eval_metric)(labels, pred_results)
                 if res is not None:
@@ -169,8 +212,10 @@ class Evaluation(ModelBase):
                             LOGGER.info("res is inf, set to {}".format(res))
                     except:
                         pass
+
                     eval_result[eval_metric].append(mode)
                     eval_result[eval_metric].append(res)
+
             elif eval_metric == consts.PSI:
                 if mode == 'train':
                     self.psi_train_scores = pred_results
@@ -180,55 +225,22 @@ class Evaluation(ModelBase):
                     self.psi_validate_labels = labels
 
                 if self.psi_train_scores is not None and self.psi_validate_scores is not None:
-                    res = self.metric_interface.psi(self.psi_train_scores, self.psi_validate_scores,
-                                                    self.psi_train_labels, self.psi_validate_labels)
+                    res = self.metric_interface.psi(self.psi_train_scores, self.psi_validate_scores, self.psi_train_labels, self.psi_validate_labels)
                     eval_result[eval_metric].append(mode)
                     eval_result[eval_metric].append(res)
                     # delete saved scores after computing a psi pair
+
                     self.psi_train_scores, self.psi_validate_scores = None, None
-        return eval_result
-
-    def _evaluate_clustering_metrics(self, mode, data):
-
-        eval_result = defaultdict(list)
-        rs0, rs1, run_outer_metric = self._clustering_extract(data)
-
-        if rs0 is None and rs1 is None:  # skip evaluation computation of this input format
-            return eval_result
-
-        for eval_metric in self.metrics:
-
-            # if input format and required metrics matches ? XNOR
-            if (eval_metric in self.clustering_intra_metric_list and run_outer_metric) + \
-               (not (eval_metric in self.clustering_intra_metric_list) and not run_outer_metric):
-                raise ValueError('input data format does not match current clustering metric {}'.format(eval_metric))
-
-            res = getattr(self.metric_interface, eval_metric)(rs0, rs1)
-            eval_result[eval_metric].append(mode)
-            eval_result[eval_metric].append(res)
-
-        return eval_result
-
-    def evaluate_metrics(self, mode: str, data: list) -> dict:
-
-        eval_result = None
-        if self.eval_type != consts.CLUSTERING:
-            eval_result = self._evaluate_classification_and_regression_metrics(mode, data)
-        elif self.eval_type == consts.CLUSTERING:
-            eval_result = self._evaluate_clustering_metrics(mode, data)
 
         return eval_result
 
     def fit(self, data, return_result=False):
-
         if len(data) <= 0:
             return
 
         self.eval_results.clear()
         for (key, eval_data) in data.items():
             eval_data_local = list(eval_data.collect())
-            if len(eval_data_local) == 0:
-                continue
             split_data_with_label = self.split_data_with_type(eval_data_local)
             for mode, data in split_data_with_label.items():
                 eval_result = self.evaluate_metrics(mode, data)

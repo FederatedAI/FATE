@@ -18,13 +18,10 @@
 
 import operator
 
-from arch.api.utils import log_utils
 from federatedml.feature.feature_selection.iv_percentile_filter import IVPercentileFilter
 from federatedml.framework.hetero.sync import selection_info_sync
 from federatedml.param.feature_selection_param import IVPercentileSelectionParam
 from federatedml.protobuf.generated import feature_selection_meta_pb2
-
-LOGGER = log_utils.getLogger()
 
 
 class Guest(IVPercentileFilter):
@@ -84,11 +81,15 @@ class Guest(IVPercentileFilter):
         result = sorted(all_iv_map.items(), key=operator.itemgetter(1), reverse=True)
         return result
 
-    def get_meta_obj(self, meta_dicts):
-        result = feature_selection_meta_pb2.IVTopKSelectionMeta(k=self.k,
-                                                                local_only=self.local_only)
-        meta_dicts['iv_top_k_meta'] = result
-        return meta_dicts
+    # def get_meta_obj(self, meta_dicts):
+    #     result = feature_selection_meta_pb2.IVTopKSelectionMeta(k=self.k,
+    #                                                             local_only=self.local_only)
+    #     meta_dicts['iv_top_k_meta'] = result
+    #     return meta_dicts
+
+    def get_meta_obj(self):
+        result = feature_selection_meta_pb2.FilterMeta()
+        return result
 
 
 class Host(IVPercentileFilter):
@@ -108,7 +109,11 @@ class Host(IVPercentileFilter):
                                           suffix=suffix)
         return self
 
-    def get_meta_obj(self, meta_dicts):
-        result = feature_selection_meta_pb2.IVTopKSelectionMeta(local_only=self.local_only)
-        meta_dicts['iv_top_k_meta'] = result
-        return meta_dicts
+    # def get_meta_obj(self, meta_dicts):
+    #     result = feature_selection_meta_pb2.IVTopKSelectionMeta(local_only=self.local_only)
+    #     meta_dicts['iv_top_k_meta'] = result
+    #     return meta_dicts
+
+    def get_meta_obj(self):
+        result = feature_selection_meta_pb2.FilterMeta()
+        return result

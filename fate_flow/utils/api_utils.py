@@ -16,15 +16,15 @@
 import json
 
 import requests
-from arch.api.utils import file_utils
 from flask import jsonify
 from flask import Response
 
-from arch.api.utils.log_utils import audit_logger
-from fate_flow.entity.constant_config import WorkMode
+from fate_arch.common.log import audit_logger
+from fate_arch.common import WorkMode
+from fate_arch.common import conf_utils
 from fate_flow.settings import DEFAULT_GRPC_OVERALL_TIMEOUT, CHECK_NODES_IDENTITY,\
-    FATE_MANAGER_GET_NODE_INFO_ENDPOINT, HEADERS, SERVER_CONF_PATH, SERVERS
-from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_proxy_data_channel
+    FATE_MANAGER_GET_NODE_INFO_ENDPOINT, HEADERS, API_VERSION
+from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_command_federation_channel
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.entity.runtime_config import RuntimeConfig
 
@@ -44,75 +44,70 @@ def error_response(response_code, retmsg):
     return Response(json.dumps({'retmsg': retmsg, 'retcode': response_code}), status=response_code, mimetype='application/json')
 
 
-def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, json_body, work_mode,
+def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, json_body, work_mode, api_version=API_VERSION,
                   overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
     if int(dest_party_id) == 0:
-        return local_api(job_id=job_id, method=method, endpoint=endpoint, json_body=json_body)
+        return local_api(job_id=job_id, method=method, endpoint=endpoint, json_body=json_body, api_version=api_version)
     if work_mode == WorkMode.STANDALONE:
-        return local_api(job_id=job_id, method=method, endpoint=endpoint, json_body=json_body)
+        return local_api(job_id=job_id, method=method, endpoint=endpoint, json_body=json_body, api_version=api_version)
     elif work_mode == WorkMode.CLUSTER:
         return remote_api(job_id=job_id, method=method, endpoint=endpoint, src_party_id=src_party_id, src_role=src_role,
-                          dest_party_id=dest_party_id, json_body=json_body, overall_timeout=overall_timeout)
+                          dest_party_id=dest_party_id, json_body=json_body, api_version=api_version, overall_timeout=overall_timeout)
     else:
         raise Exception('{} work mode is not supported'.format(work_mode))
 
 
-def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, json_body,
-               overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
+def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, json_body, api_version=API_VERSION,
+               overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT, try_times=3):
+    endpoint = f"/{api_version}{endpoint}"
     json_body['src_role'] = src_role
     if CHECK_NODES_IDENTITY:
         get_node_identity(json_body, src_party_id)
     _packet = wrap_grpc_packet(json_body, method, endpoint, src_party_id, dest_party_id, job_id,
                                overall_timeout=overall_timeout)
-    try:
-        channel, stub = get_proxy_data_channel()
-        _return = stub.unaryCall(_packet)
-        audit_logger(job_id).info("grpc api response: {}".format(_return))
-        channel.close()
-        json_body = json.loads(_return.body.value)
-        return json_body
-    except Exception as e:
+    exception = None
+    for t in range(try_times):
+        try:
+            engine, channel, stub = get_command_federation_channel()
+            _return = stub.unaryCall(_packet)
+            audit_logger(job_id).info("grpc api response: {}".format(_return))
+            channel.close()
+            response = json.loads(_return.body.value)
+            return response
+        except Exception as e:
+            exception = e
+    else:
         tips = ''
-        if 'Error received from peer' in str(e):
+        if 'Error received from peer' in str(exception):
             tips = 'Please check if the fate flow server of the other party is started. '
-        if 'failed to connect to all addresses' in str(e):
+        if 'failed to connect to all addresses' in str(exception):
             tips = 'Please check whether the rollsite service(port: 9370) is started. '
-        raise Exception('{}rpc request error: {}'.format(tips,e))
+        raise Exception('{}rpc request error: {}'.format(tips, exception))
 
 
-def local_api(method, endpoint, json_body, job_id=None):
-    try:
-        url = "http://{}{}".format(RuntimeConfig.JOB_SERVER_HOST, endpoint)
-        audit_logger(job_id).info('local api request: {}'.format(url))
-        action = getattr(requests, method.lower(), None)
-        response = action(url=url, json=json_body, headers=HEADERS)
-        audit_logger(job_id).info(response.text)
-        response_json_body = response.json()
-        audit_logger(job_id).info('local api response: {} {}'.format(endpoint, response_json_body))
-        return response_json_body
-    except Exception as e:
-        raise Exception('local request error: {}'.format(e))
-
-
-def request_execute_server(request, execute_host):
-    try:
-        endpoint = request.base_url.replace(request.host_url, '')
-        method = request.method
-        url = "http://{}/{}".format(execute_host, endpoint)
-        audit_logger().info('sub request: {}'.format(url))
-        action = getattr(requests, method.lower(), None)
-        response = action(url=url, json=request.json, headers=HEADERS)
-        return jsonify(response.json())
-    except requests.exceptions.ConnectionError as e:
-        return get_json_result(retcode=999, retmsg='please start fate flow server: {}'.format(execute_host))
-    except Exception as e:
-        raise Exception('local request error: {}'.format(e))
+def local_api(job_id, method, endpoint, json_body, api_version=API_VERSION, try_times=3):
+    endpoint = f"/{api_version}{endpoint}"
+    exception = None
+    for t in range(try_times):
+        try:
+            url = "http://{}:{}{}".format(RuntimeConfig.JOB_SERVER_HOST, RuntimeConfig.HTTP_PORT, endpoint)
+            audit_logger(job_id).info('local api request: {}'.format(url))
+            action = getattr(requests, method.lower(), None)
+            http_response = action(url=url, json=json_body, headers=HEADERS)
+            audit_logger(job_id).info(http_response.text)
+            response = http_response.json()
+            audit_logger(job_id).info('local api response: {} {}'.format(endpoint, response))
+            return response
+        except Exception as e:
+            exception = e
+    else:
+        raise Exception('local request error: {}'.format(exception))
 
 
 def get_node_identity(json_body, src_party_id):
     params = {
         'partyId': int(src_party_id),
-        'federatedId': file_utils.load_json_conf_real_time(SERVER_CONF_PATH).get(SERVERS).get('fatemanager', {}).get('federatedId')
+        'federatedId': conf_utils.get_base_config("fatemanager", {}).get("federatedId")
     }
     try:
         response = requests.post(url="http://{}:{}{}".format(

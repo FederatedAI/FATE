@@ -16,12 +16,10 @@
 
 import functools
 
-from arch.api.utils import log_utils
 # from federatedml.feature.binning.base_binning import IVAttributes
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
@@ -37,6 +35,12 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
 
         # Calculates split points of datas in self party
         split_points = self.binning_obj.fit_split_points(data_instances)
+        if self.model_param.skip_static:
+            if self.transform_type != 'woe':
+                data_instances = self.transform(data_instances)
+            self.set_schema(data_instances)
+            self.data_output = data_instances
+            return data_instances
 
         if not self.model_param.local_only:
             self._sync_init_bucket(data_instances, split_points)
@@ -64,14 +68,16 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         encrypted_bin_sum = self.__static_encrypted_bin_label(data_bin_table, encrypted_label_table,
                                                               self.bin_inner_param.bin_cols_map, split_points)
         # LOGGER.debug("encrypted_bin_sum: {}".format(encrypted_bin_sum))
-
         if need_shuffle:
             encrypted_bin_sum = self.binning_obj.shuffle_static_counts(encrypted_bin_sum)
 
-        encrypted_bin_sum = self.bin_inner_param.encode_col_name_dict(encrypted_bin_sum)
+        encrypted_bin_sum = self.bin_inner_param.encode_col_name_dict(encrypted_bin_sum, self)
+        self.header_anonymous = self.bin_inner_param.encode_col_name_list(self.header, self)
+        LOGGER.debug(f"encrypted_bin_sum: {encrypted_bin_sum.keys()}, cols_map: {self.bin_inner_param.col_name_maps}")
         send_result = {
             "encrypted_bin_sum": encrypted_bin_sum,
-            "category_names": self.bin_inner_param.encode_col_name_list(self.bin_inner_param.category_names),
+            "category_names": self.bin_inner_param.encode_col_name_list(
+                self.bin_inner_param.category_names, self),
             "bin_method": self.model_param.method,
             "optimal_params": {
                 "metric_method": self.model_param.optimal_binning_param.metric_method,
@@ -94,6 +100,10 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
                               cols_dict=cols_dict)
         result_sum = data_bin_with_label.mapPartitions(f)
         encrypted_bin_sum = result_sum.reduce(self.binning_obj.aggregate_partition_label)
+
+        for col_name, bin_results in encrypted_bin_sum.items():
+            for b in bin_results:
+                b[1] = b[1] - b[0]
         return encrypted_bin_sum
 
     def optimal_binning_sync(self):

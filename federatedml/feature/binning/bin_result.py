@@ -16,11 +16,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.utils import log_utils
-from federatedml.protobuf.generated import feature_binning_param_pb2
-
 import numpy as np
-LOGGER = log_utils.getLogger()
+
+from federatedml.protobuf.generated import feature_binning_param_pb2
+from federatedml.util import LOGGER
 
 
 class BinColResults(object):
@@ -110,7 +109,7 @@ class BinColResults(object):
 
 class BinResults(object):
     def __init__(self):
-        self.all_cols_results = {}
+        self.all_cols_results = {}  # {col_name: BinColResult}
         self.role = ''
         self.party_id = ''
 
@@ -143,6 +142,23 @@ class BinResults(object):
             results[col_name] = col_result.get_split_points()
         return results
 
+    @property
+    def all_ivs(self):
+        return [(col_name, x.iv) for col_name, x in self.all_cols_results.items()]
+
+    @property
+    def all_woes(self):
+        return {col_name: x.woe_array for col_name, x in self.all_cols_results.items()}
+
+    @property
+    def all_monotonic(self):
+        return {col_name: x.is_woe_monotonic for col_name, x in self.all_cols_results.items()}
+
+    def summary(self):
+        return {"iv": self.all_ivs,
+                "woe": self.all_woes,
+                "monotonic": self.all_monotonic}
+
     def get_split_points_array(self, bin_names):
         split_points_result = []
         for bin_name in bin_names:
@@ -170,4 +186,3 @@ class BinResults(object):
             col_bin_obj.reconstruct(col_bin_result)
             self.all_cols_results[col_name] = col_bin_obj
         return self
-

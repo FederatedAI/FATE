@@ -1,0 +1,13 @@
+{
+  "federatedml.framework.homo.blocks.loss_scatter.LossScatterTransVar": {
+    "loss": {
+      "src": [
+        "guest",
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    }
+  }
+}

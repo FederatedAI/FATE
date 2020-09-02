@@ -15,12 +15,13 @@
 #
 import numpy as np
 
-from arch.api import federation
+from fate_arch import session
 from fate_flow.entity.metric import MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.pearson_param import PearsonParam
 from federatedml.secureprotol.spdz import SPDZ
 from federatedml.secureprotol.spdz.tensor.fixedpoint_table import FixedPointTensor, table_dot
+from federatedml.util.fate_operator import generate_anonymous
 
 MODEL_META_NAME = "HeteroPearsonModelMeta"
 MODEL_PARAM_NAME = "HeteroPearsonModelParam"
@@ -42,18 +43,20 @@ class HeteroPearson(ModelBase):
         self.other_party = None
         self._set_parties()
 
+        self._summary = {}
+
     def _set_parties(self):
         # since multi-host not supported yet, we assume parties are one from guest and one from host
         parties = []
-        guest_parties = federation.roles_to_parties(["guest"])
-        host_parties = federation.roles_to_parties(["host"])
+        guest_parties = session.get_latest_opened().parties.roles_to_parties(["guest"])
+        host_parties = session.get_latest_opened().parties.roles_to_parties(["host"])
         if len(guest_parties) != 1 or len(host_parties) != 1:
             raise ValueError(f"one guest and one host required, "
                              f"while {len(guest_parties)} guest and {len(host_parties)} host provided")
         parties.extend(guest_parties)
         parties.extend(host_parties)
 
-        local_party = federation.local_party()
+        local_party = session.get_latest_opened().parties.local_party
         other_party = parties[0] if parties[0] != local_party else parties[1]
 
         self.parties = parties
@@ -111,6 +114,8 @@ class HeteroPearson(ModelBase):
         n, normed = self._standardized(data)
         self.local_corr = table_dot(normed, normed)
         self.local_corr /= n
+        self._summary["local_corr"] = self.local_corr.tolist()
+        self._summary["num_local_features"] = n
 
         if self.model_param.cross_parties:
             with SPDZ("pearson", local_party=self.local_party, all_parties=self.parties,
@@ -126,11 +131,14 @@ class HeteroPearson(ModelBase):
                 self.shapes.append(m2)
 
                 self.corr = spdz.dot(x, y, "corr").get() / n
+                self._summary["corr"] = self.corr.tolist()
+                self._summary["num_remote_features"] = m2 if self.local_party.role == "guest" else m1
         else:
             self.shapes.append(self.local_corr.shape[0])
             self.parties = [self.local_party]
 
         self._callback()
+        self.set_summary(self._summary)
 
     @staticmethod
     def _build_model_dict(meta, param):
@@ -156,7 +164,8 @@ class HeteroPearson(ModelBase):
             param_pb.names.append(name)
             anonymous = param_pb.anonymous_map.add()
             anonymous.name = name
-            anonymous.anonymous = f"{self.local_party.role}_{self.local_party.party_id}_{idx}"
+            anonymous.anonymous = generate_anonymous(fid=idx, party_id=self.local_party.party_id,
+                                                     role=self.local_party.role)
 
         # global
         for shape, party in zip(self.shapes, self.parties):

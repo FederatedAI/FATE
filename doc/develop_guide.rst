@@ -21,6 +21,8 @@ To develop a module, the following 5 steps are needed.
 
 5. define your module which should inherit model_base class.
 
+6. (optional) define Pipeline component for your module.
+
 In the following sections we will describe the 5 steps in detail, with toy_example.
 
 Step 1. Define the parameter object this module will use
@@ -280,6 +282,21 @@ In this section, we describe how to do 3-5. Many common interfaces are provided 
           return result
 
 
+Step 6. Define Pipeline component for your module
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+One wrapped into a component, module can be used with FATE Pipeline API.
+To define a Pipeline component, follow these guidelines:
+
+1. all components reside in ``fate_client/pipeline/component`` directory
+2. components should inherit common base ``Component``
+3. as a good practice, components should have the same names as their corresponding modules
+4. components take in module parameters at initialization
+5. set attributes of component input and output,
+   including whether module has output model, or type of data output('single' vs. 'multi')
+
+Then you may use Pipeline to construct and initiate a job with the newly defined component.
+For guide on Pipeline usage, please refer to `fate_client/pipeline`.
+
 Start a modeling task
 ---------------------
 
@@ -306,4 +323,4 @@ After finished developing, here is a simple example for starting a modeling task
 :3. Check log files:
    Now you can check out the log in the following path: `${your_install_path}/logs/{your jobid}`.
 
-For more detailed information about dsl configure file and parameter configure files, please check out `examples/federatedml-1.x-examples`.
+For more detailed information about dsl configure file and parameter configure files, please check out `examples/dsl`.

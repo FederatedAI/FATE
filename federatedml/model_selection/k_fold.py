@@ -14,18 +14,20 @@
 #  limitations under the License.
 #
 
+import copy
+
 import numpy as np
 from sklearn.model_selection import KFold as sk_KFold
-import copy
-from arch.api import session
-from arch.api.utils import log_utils
+
+# from arch.api import session
+from fate_arch.session import computing_session as session
+from federatedml.evaluation.evaluation import Evaluation
 from federatedml.model_selection.cross_validate import BaseCrossValidator
 from federatedml.model_selection.indices import collect_index
+from federatedml.transfer_variable.transfer_class.cross_validation_transfer_variable import \
+    CrossValidationTransferVariable
+from federatedml.util import LOGGER
 from federatedml.util import consts
-from federatedml.evaluation.evaluation import Evaluation
-from federatedml.transfer_variable.transfer_class.cross_validation_transfer_variable import CrossValidationTransferVariable
-
-LOGGER = log_utils.getLogger()
 
 
 class KFold(BaseCrossValidator):
@@ -74,12 +76,12 @@ class KFold(BaseCrossValidator):
             # print(train_sids_table)
             train_table = session.parallelize(train_sids_table,
                                               include_key=True,
-                                              partition=data_inst._partitions)
+                                              partition=data_inst.partitions)
             train_data = data_inst.join(train_table, lambda x, y: x)
 
             test_table = session.parallelize(test_sids_table,
                                              include_key=True,
-                                             partition=data_inst._partitions)
+                                             partition=data_inst.partitions)
             test_data = data_inst.join(test_table, lambda x, y: x)
             train_data.schema['header'] = header
             test_data.schema['header'] = header
@@ -98,6 +100,8 @@ class KFold(BaseCrossValidator):
         else:
             data_generator = [(data_inst, data_inst)] * self.n_splits
         fold_num = 0
+
+        summary_res = {}
         for train_data, test_data in data_generator:
             model = copy.deepcopy(original_model)
             LOGGER.debug("In CV, set_flowid flowid is : {}".format(fold_num))
@@ -143,9 +147,12 @@ class KFold(BaseCrossValidator):
                 pred_res = pred_res.mapValues(lambda value: value + ['validate'])
                 self.evaluate(pred_res, fold_name, model)
             LOGGER.debug("Finish fold: {}".format(fold_num))
-            fold_num += 1
-        LOGGER.debug("Finish all fold running")
 
+            summary_res[f"fold_{fold_num}"] = model.summary()
+            fold_num += 1
+        summary_res['fold_num'] = fold_num
+        LOGGER.debug("Finish all fold running")
+        original_model.set_summary(summary_res)
         return
 
     def _arbiter_run(self, original_model):
@@ -198,9 +205,9 @@ class KFold(BaseCrossValidator):
             join_data_insts.schema['header'] = header
             return join_data_insts
 
-    def evaluate(self, eval_data, fold_name, model):
+    def evaluate(self, validate_data, fold_name, model):
 
-        if eval_data is None:
+        if validate_data is None:
             return
 
         eval_obj = Evaluation()
@@ -211,7 +218,6 @@ class KFold(BaseCrossValidator):
         eval_param.check_single_value_default_metric()
         eval_obj._init_model(eval_param)
         eval_obj.set_tracker(model.tracker)
-        eval_data = {fold_name: eval_data}
-        eval_obj.fit(eval_data)
+        validate_data = {fold_name: validate_data}
+        eval_obj.fit(validate_data)
         eval_obj.save_data()
-

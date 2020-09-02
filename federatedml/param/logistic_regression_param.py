@@ -63,6 +63,8 @@ class LogisticParam(BaseParam):
             b)  weight_diff: Use difference between weights of two consecutive iterations
             c)	abs: Use the absolute value of loss to judge whether converge. i.e. if loss < eps, it is converged.
 
+            Please note that for hetero-lr multi-host situation, this parameter support "weight_diff" only.
+
     decay: int or float, default: 1
         Decay rate for learning rate. learning rate will follow the following decay schedule.
         lr = lr0/(1+decay*t) if decay_sqrt is False. If decay_sqrt is True, lr = lr0 / sqrt(1+decay*t)
@@ -93,6 +95,9 @@ class LogisticParam(BaseParam):
 
     use_first_metric_only: bool, default: False
         Indicate whether use the first metric only for early stopping judgement.
+
+
+
 
     """
 
@@ -238,6 +243,12 @@ class HomoLogisticParam(LogisticParam):
     aggregate_iters : int, default: 1
         Indicate how many iterations are aggregated once.
 
+    use_proximal: bool, default: False
+        Whether to turn on additional proximial term.
+
+    mu: float, default 0.1
+        To scale the proximal term
+
     """
     def __init__(self, penalty='L2',
                  tol=1e-5, alpha=1.0, optimizer='sgd',
@@ -249,7 +260,9 @@ class HomoLogisticParam(LogisticParam):
                  aggregate_iters=1, multi_class='ovr', validation_freqs=None,
                  early_stopping_rounds=None,
                  metrics=['auc', 'ks'],
-                 use_first_metric_only=False
+                 use_first_metric_only=False,
+                 use_proximal=False,
+                 mu=0.1
                  ):
         super(HomoLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                 batch_size=batch_size,
@@ -263,6 +276,8 @@ class HomoLogisticParam(LogisticParam):
                                                 metrics=metrics, use_first_metric_only=use_first_metric_only)
         self.re_encrypt_batches = re_encrypt_batches
         self.aggregate_iters = aggregate_iters
+        self.use_proximal = use_proximal
+        self.mu = mu
 
     def check(self):
         super().check()
@@ -302,7 +317,7 @@ class HeteroLogisticParam(LogisticParam):
                  decay=1, decay_sqrt=True, sqn_param=StochasticQuasiNewtonParam(),
                  multi_class='ovr', validation_freqs=None, early_stopping_rounds=None,
                  metrics=['auc', 'ks'],
-                 use_first_metric_only=False
+                 use_first_metric_only=False, stepwise_param=StepwiseParam()
                  ):
         super(HeteroLogisticParam, self).__init__(penalty=penalty, tol=tol, alpha=alpha, optimizer=optimizer,
                                                   batch_size=batch_size,
@@ -314,7 +329,8 @@ class HeteroLogisticParam(LogisticParam):
                                                   validation_freqs=validation_freqs,
                                                   early_stopping_rounds=early_stopping_rounds,
                                                   metrics=metrics,
-                                                  use_first_metric_only=use_first_metric_only)
+                                                  use_first_metric_only=use_first_metric_only,
+                                                  stepwise_param=stepwise_param)
         self.encrypted_mode_calculator_param = copy.deepcopy(encrypted_mode_calculator_param)
         self.sqn_param = copy.deepcopy(sqn_param)
 

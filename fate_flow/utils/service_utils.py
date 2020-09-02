@@ -18,33 +18,31 @@ from urllib import parse
 from kazoo.client import KazooClient
 from kazoo.security import make_digest_acl
 
-from arch.api.utils import file_utils
-from arch.api.utils.core_utils import get_lan_ip
-from arch.api.utils.conf_utils import get_base_config
-from fate_flow.settings import FATE_FLOW_MODEL_TRANSFER_ENDPOINT, HTTP_PORT
-from fate_flow.settings import stat_logger, SERVER_CONF_PATH, SERVICES_SUPPORT_REGISTRY, FATE_SERVICES_REGISTERED_PATH
+from fate_arch.common import conf_utils
+from fate_arch.common.conf_utils import get_base_config
+from fate_flow.settings import FATE_FLOW_MODEL_TRANSFER_ENDPOINT, IP, HTTP_PORT, FATEFLOW_SERVICE_NAME
+from fate_flow.settings import stat_logger, SERVICES_SUPPORT_REGISTRY, FATE_SERVICES_REGISTERED_PATH
 
 
 class ServiceUtils(object):
     ZOOKEEPER_CLIENT = None
 
-    @staticmethod
-    def get(service_name, default=None):
+    @classmethod
+    def get(cls, service_name, default=None):
         if get_base_config("use_registry", False) and service_name in SERVICES_SUPPORT_REGISTRY:
             return ServiceUtils.get_from_registry(service_name)
         return ServiceUtils.get_from_file(service_name, default)
 
-    @staticmethod
-    def get_item(service_name, key, default=None):
+    @classmethod
+    def get_item(cls, service_name, key, default=None):
         return ServiceUtils.get(service_name, {}).get(key, default)
 
-    @staticmethod
-    def get_from_file(service_name, default=None):
-        server_conf = file_utils.load_json_conf(SERVER_CONF_PATH)
-        return server_conf.get("servers").get(service_name, default)
+    @classmethod
+    def get_from_file(cls, service_name, default=None):
+        return conf_utils.get_base_config(service_name, default)
 
-    @staticmethod
-    def get_zk():
+    @classmethod
+    def get_zk(cls, ):
         zk_config = get_base_config("zookeeper", {})
         if zk_config.get("use_acl", False):
             default_acl = make_digest_acl(zk_config.get("user", ""), zk_config.get("password", ""), all=True)
@@ -54,8 +52,8 @@ class ServiceUtils(object):
             zk = KazooClient(hosts=zk_config.get("hosts", []))
         return zk
 
-    @staticmethod
-    def get_from_registry(service_name):
+    @classmethod
+    def get_from_registry(cls, service_name):
         try:
             zk = ServiceUtils.get_zk()
             zk.start()
@@ -66,13 +64,13 @@ class ServiceUtils(object):
         except Exception as e:
             raise Exception('loading servings node  failed from zookeeper: {}'.format(e))
 
-    @staticmethod
-    def register():
+    @classmethod
+    def register(cls):
         if get_base_config("use_registry", False):
             zk = ServiceUtils.get_zk()
             zk.start()
-            model_transfer_url = 'http://{}:{}{}'.format(get_lan_ip(), HTTP_PORT, FATE_FLOW_MODEL_TRANSFER_ENDPOINT)
-            fate_flow_model_transfer_service = '{}/{}'.format(FATE_SERVICES_REGISTERED_PATH.get("fateflow", ""), parse.quote(model_transfer_url, safe=' '))
+            model_transfer_url = 'http://{}:{}{}'.format(IP, HTTP_PORT, FATE_FLOW_MODEL_TRANSFER_ENDPOINT)
+            fate_flow_model_transfer_service = '{}/{}'.format(FATE_SERVICES_REGISTERED_PATH.get(FATEFLOW_SERVICE_NAME, ""), parse.quote(model_transfer_url, safe=' '))
             try:
                 zk.create(fate_flow_model_transfer_service, makepath=True, ephemeral=True)
                 stat_logger.info("register path {} to {}".format(fate_flow_model_transfer_service, ";".join(get_base_config("zookeeper", {}).get("hosts"))))

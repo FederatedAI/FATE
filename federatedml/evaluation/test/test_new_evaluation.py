@@ -7,22 +7,30 @@ from federatedml.evaluation.metrics import classification_metric
 
 import numpy as np
 
-from federatedml.evaluation.backup.evaluation import BiClassPrecision as BiClassPrecision2
-
 
 scores = np.random.random(100)
 labels = (scores > 0.5) + 0
+labels2 = (scores > 0.5) + 1
 
 interface = MetricInterface(1, 'binary')
-mat = interface.confusion_mat(labels, scores)
+interface2 = MetricInterface(2, 'binary')
 
-rs = classification_metric.ThresholdCutter.cut_by_quantile(scores,)
-rs2 = classification_metric.BiClassRecall(cut_method='quantile').compute(labels, scores)
-rs3 = classification_metric.BiClassPrecision(cut_method='quantile').compute(labels, scores)
+rs1 = interface.ks(labels, scores)
+rs2 = interface2.ks(labels2, scores)
 
-rs4 = BiClassPrecision2().compute(labels, scores, rs2[1])
+mat1 = interface.confusion_mat(labels, scores)
+mat2 = interface2.confusion_mat(labels2, scores)
 
-comp1 = [i[1] for i in rs3[0]]
-comp2 = [i[1] for i in rs4[0]]
+rs3 = interface.lift(labels, scores)
+rs4 = interface2.lift(labels2, scores)
 
-print(comp1 == comp2)
+rs5 = interface.accuracy(labels, scores)
+rs6 = interface2.accuracy(labels2, scores)
+
+rs7 = interface.f1_score(labels, scores)
+rs8 = interface2.f1_score(labels2, scores)
+
+# mat = interface.confusion_mat(labels, scores)
+# rs = classification_metric.ThresholdCutter.cut_by_quantile(scores,)
+# rs2 = classification_metric.BiClassRecall(cut_method='quantile').compute(labels, scores)
+# rs3 = classification_metric.BiClassPrecision(cut_method='quantile').compute(labels, scores)

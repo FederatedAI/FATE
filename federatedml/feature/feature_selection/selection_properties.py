@@ -17,11 +17,10 @@
 #  limitations under the License.
 
 
-from arch.api.utils import log_utils
-from federatedml.protobuf.generated import feature_selection_param_pb2
 import operator
 
-LOGGER = log_utils.getLogger()
+from federatedml.protobuf.generated import feature_selection_param_pb2
+from federatedml.util import LOGGER
 
 
 class SelectionProperties(object):
@@ -74,6 +73,7 @@ class SelectionProperties(object):
     def add_left_col_name(self, left_col_name):
         idx = self.col_name_maps.get(left_col_name)
         if idx is None:
+            LOGGER.debug(f"left_col_name: {left_col_name}, col_name_maps: {self.col_name_maps}")
             LOGGER.warning("Adding a col_name that is not exist in header")
             return
         if idx not in self.left_col_indexes:
@@ -177,6 +177,7 @@ class CompletedSelectionResults(object):
 
         left_cols_pb = feature_selection_param_pb2.LeftCols(original_cols=select_properties.last_left_col_names,
                                                             left_cols=select_properties.left_col_dicts)
+
         this_filter_result = {
             'feature_values': select_properties.feature_values,
             'host_feature_values': host_feature_values,
@@ -196,4 +197,7 @@ class CompletedSelectionResults(object):
         for pass_name_dict in self.__host_pass_filter_nums_list:
             sorted_list = sorted(pass_name_dict.items(), key=operator.itemgetter(1), reverse=True)
             result.append([x for x, _ in sorted_list])
+        LOGGER.debug(f"In get_host_sorted_col_names,"
+                     f" pass_counter: {self.__host_pass_filter_nums_list},"
+                     f"result: {result}")
         return result

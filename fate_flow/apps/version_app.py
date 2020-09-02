@@ -13,13 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.settings import stat_logger, SERVER_CONF_PATH, SERVERS
 from flask import Flask, request
 
-from arch.api.utils.file_utils import set_server_conf
+from fate_arch.common import conf_utils
+from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.settings import stat_logger
 from fate_flow.utils.api_utils import get_json_result
-
 
 manager = Flask(__name__)
 
@@ -38,6 +37,9 @@ def get_fate_version_info():
 
 @manager.route('/set', methods=['POST'])
 def set_fate_server_info():
-    data = set_server_conf(request.json, SERVER_CONF_PATH, SERVERS)
-    return get_json_result(data=data)
-
+    # manager
+    federated_id = request.json.get("federatedId")
+    manager_conf = conf_utils.get_base_config("fatemanager", {})
+    manager_conf["federatedId"] = federated_id
+    conf_utils.update_config("fatemanager", manager_conf)
+    return get_json_result(data={"federatedId": federated_id})

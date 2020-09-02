@@ -17,6 +17,8 @@ import unittest
 import uuid
 from multiprocessing import Pool
 
+from fate_arch.computing import ComputingType
+from fate_arch.session import Session
 from federatedml.util import consts
 from federatedml.transfer_variable.transfer_class.homo_transfer_variable import HomoTransferVariable
 import time
@@ -24,33 +26,8 @@ import time
 
 class TestSyncBase(unittest.TestCase):
 
-    @classmethod
-    def init_table_manager_and_federation(cls, job_id, role, num_hosts, host_ind=0):
-        from arch.api import session
-        from arch.api import federation
-
-        role_id = {
-            "host": [
-                10000 + i for i in range(num_hosts)
-            ],
-            "guest": [
-                9999
-            ],
-            "arbiter": [
-                9999
-            ]
-        }
-        session.init(job_id)
-        federation.init(job_id,
-                        {"local": {
-                            "role": role,
-                            "party_id": role_id[role][0] if role != "host" else role_id[role][host_ind]
-                        },
-                            "role": role_id
-                        })
-
     def clean_tables(self):
-        from arch.api import session
+        from fate_arch.session import computing_session as session
         session.init(job_id=self.job_id)
         try:
             session.cleanup("*", self.job_id, True)
@@ -72,8 +49,29 @@ class TestSyncBase(unittest.TestCase):
 
     @classmethod
     def _call(cls, job_id, role, transfer_variable, num_hosts, ind, *args):
-        cls.init_table_manager_and_federation(job_id, role, num_hosts, ind)
-        return cls.call(role, transfer_variable, ind, *args)
+        role_id = {
+            "host": [
+                10000 + i for i in range(num_hosts)
+            ],
+            "guest": [
+                9999
+            ],
+            "arbiter": [
+                9999
+            ]
+        }
+        with Session() as session:
+            session.init_computing(job_id, computing_type=ComputingType.STANDALONE)
+            session.init_federation(job_id,
+                                    runtime_conf={
+                                        "local": {
+                                            "role": role,
+                                            "party_id": role_id[role][0] if role != "host" else role_id[role][ind]
+                                        },
+                                        "role": role_id
+                                    })
+
+            return cls.call(role, transfer_variable, ind, *args)
 
     @classmethod
     def call(cls, role, transfer_variable, ind, *args):
@@ -84,9 +82,9 @@ class TestSyncBase(unittest.TestCase):
         tasks = []
         with Pool(num_hosts + 2) as p:
             tasks.append(p.apply_async(func=cls._call,
-                                        args=(job_id, consts.ARBITER, transfer_variable, num_hosts, 0, *args)))
+                                       args=(job_id, consts.ARBITER, transfer_variable, num_hosts, 0, *args)))
             tasks.append(p.apply_async(func=cls._call,
-                                        args=(job_id, consts.GUEST, transfer_variable, num_hosts, 0, *args)))
+                                       args=(job_id, consts.GUEST, transfer_variable, num_hosts, 0, *args)))
             for i in range(num_hosts):
                 tasks.append(
                     p.apply_async(func=cls._call,

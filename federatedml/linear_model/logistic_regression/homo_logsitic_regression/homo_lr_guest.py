@@ -16,19 +16,20 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import copy
 import functools
 
-from arch.api.utils import log_utils
 from federatedml.framework.homo.procedure import aggregator
 from federatedml.linear_model.linear_model_weight import LinearModelWeights as LogisticRegressionWeights
 from federatedml.linear_model.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.model_selection import MiniBatch
+from federatedml.optim import activation
 from federatedml.optim.gradient.homo_lr_gradient import LogisticGradient
+from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util import fate_operator
+from federatedml.util.fate_operator import vec_dot
 from federatedml.util.io_check import assert_io_num_rows_equal
-
-LOGGER = log_utils.getLogger()
 
 
 class HomoLRGuest(HomoLRBase):
@@ -45,6 +46,7 @@ class HomoLRGuest(HomoLRBase):
     def fit(self, data_instances, validate_data=None):
 
         self._abnormal_detection(data_instances)
+        self.check_abnormal_values(data_instances)
         self.init_schema(data_instances)
 
         validation_strategy = self.init_validation_strategy(data_instances, validate_data)
@@ -56,6 +58,8 @@ class HomoLRGuest(HomoLRBase):
         model_weights = self.model_weights
 
         degree = 0
+        self.prev_round_weights = copy.deepcopy(model_weights)
+
         while self.n_iter_ < max_iter + 1:
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
 
@@ -69,7 +73,11 @@ class HomoLRGuest(HomoLRBase):
                 #     weight.unboxed))
 
                 self.model_weights = LogisticRegressionWeights(weight.unboxed, self.fit_intercept)
-                loss = self._compute_loss(data_instances)
+
+                # store prev_round_weights after aggregation
+                self.prev_round_weights = copy.deepcopy(self.model_weights)
+                # send loss to arbiter
+                loss = self._compute_loss(data_instances, self.prev_round_weights)
                 self.aggregator.send_loss(loss, degree=degree, suffix=(self.n_iter_,))
                 degree = 0
 
@@ -92,21 +100,35 @@ class HomoLRGuest(HomoLRBase):
                 # LOGGER.debug('iter: {}, batch_index: {}, grad: {}, n: {}'.format(
                 #     self.n_iter_, batch_num, grad, n))
                 model_weights = self.optimizer.update_model(model_weights, grad, has_applied=False)
+                LOGGER.debug('iter: {}, batch_index: {}, grad: {}, n: {}'.format(
+                    self.n_iter_, batch_num, grad, n))
+                if self.use_proximal:  # use proximal term
+                    model_weights = self.optimizer.update_model(model_weights, grad=grad,
+                                                                has_applied=False,
+                                                                prev_round_weights=self.prev_round_weights)
+                else:
+                    model_weights = self.optimizer.update_model(model_weights, grad=grad,
+                                                                has_applied=False)
+
                 batch_num += 1
                 degree += n
 
             validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
+        self.set_summary(self.get_model_summary())
 
     @assert_io_num_rows_equal
     def predict(self, data_instances):
+
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)
-        predict_wx = self.compute_wx(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
 
-        pred_table = self.classify(predict_wx, self.model_param.predict_param.threshold)
+        data_instances = self.align_data_header(data_instances, self.header)
+        # predict_wx = self.compute_wx(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
+        pred_prob = data_instances.mapValues(lambda v: activation.sigmoid(vec_dot(v.features, self.model_weights.coef_)
+                                                                          + self.model_weights.intercept_))
 
-        predict_result = data_instances.mapValues(lambda x: x.label)
-        predict_result = pred_table.join(predict_result, lambda x, y: [y, x[1], x[0],
-                                                                       {"1": x[0], "0": 1 - x[0]}])
+        predict_result = self.predict_score_to_output(data_instances, pred_prob, classes=[0, 1],
+                                                      threshold=self.model_param.predict_param.threshold)
+
         return predict_result

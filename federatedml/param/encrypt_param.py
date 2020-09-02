@@ -16,11 +16,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils import log_utils
 from federatedml.param.base_param import BaseParam
-from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import consts, LOGGER
 
 
 class EncryptParam(BaseParam):
@@ -31,7 +28,7 @@ class EncryptParam(BaseParam):
     ----------
     method : str, default: 'Paillier'
         If method is 'Paillier', Paillier encryption will be used for federated ml.
-        To use non-encryption version in HomoLR, just set this parameter to be any other str.
+        To use non-encryption version in HomoLR, set this to None.
         For detail of Paillier encryption, please check out the paper mentioned in README file.
 
     key_length : int, default: 1024

@@ -15,19 +15,18 @@
 #  limitations under the License.
 
 import functools
-
-import numpy as np
 import math
 
-from arch.api.utils import log_utils
+import numpy as np
+
 from federatedml.model_base import ModelBase
 from federatedml.param.onehot_encoder_param import OneHotEncoderParam
 from federatedml.protobuf.generated import onehot_param_pb2, onehot_meta_pb2
 from federatedml.statistic.data_overview import get_header
+from federatedml.util import LOGGER
+from federatedml.util import abnormal_detection
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
-
-LOGGER = log_utils.getLogger()
 
 MODEL_PARAM_NAME = 'OneHotParam'
 MODEL_META_NAME = 'OneHotMeta'
@@ -93,6 +92,7 @@ class TransferPair(object):
                              .format(consts.ONE_HOT_LIMIT))
 
         self._transformed_headers[value] = self.__encode_new_header(value)
+        LOGGER.debug(f"transformed_header: {self._transformed_headers}")
 
     @property
     def values(self):
@@ -124,9 +124,17 @@ class OneHotEncoder(ModelBase):
         self.model_param = model_param
         # self.cols_index = model_param.cols
 
+    def _abnormal_detection(self, data_instances):
+        """
+        Make sure input data_instances is valid.
+        """
+        abnormal_detection.empty_table_detection(data_instances)
+        abnormal_detection.empty_feature_detection(data_instances)
+        self.check_schema_content(data_instances.schema)
+
     def fit(self, data_instances):
         self._init_params(data_instances)
-
+        self._abnormal_detection(data_instances)
         f1 = functools.partial(self.record_new_header,
                                inner_param=self.inner_param)
 
@@ -156,7 +164,8 @@ class OneHotEncoder(ModelBase):
 
         new_data = data_instances.mapValues(f)
         self.set_schema(new_data)
-
+        self.add_summary('transferred_dimension', len(self.inner_param.result_header))
+        LOGGER.debug(f"Final summary: {self.summary()}")
         # one_data = new_data.first()[1].features
         # LOGGER.debug("transfered data is : {}".format(one_data))
 
@@ -177,7 +186,8 @@ class OneHotEncoder(ModelBase):
             result_header.extend(new_headers)
 
         self.inner_param.set_result_header(result_header)
-        LOGGER.debug("[Result][OneHotEncoder]After one-hot, data_instances schema is : {}".format(header))
+        LOGGER.debug("[Result][OneHotEncoder]After one-hot, data_instances schema is :"
+                     " {}".format(header))
 
     def _init_params(self, data_instances):
         if len(self.schema) == 0:
@@ -189,6 +199,7 @@ class OneHotEncoder(ModelBase):
         # self.schema = data_instances.schema
         LOGGER.debug("In _init_params, schema is : {}".format(self.schema))
         header = get_header(data_instances)
+        self.add_summary("original_dimension", len(header))
         self.inner_param.set_header(header)
 
         if self.model_param.transform_col_indexes == -1:
@@ -219,10 +230,11 @@ class OneHotEncoder(ModelBase):
             feature = instance.features
             for col_idx, col_name in zip(inner_param.transform_indexes, inner_param.transform_names):
                 pair_obj = col_maps.get(col_name)
-                int_feature = math.ceil(feature[col_idx])
-                if int_feature != feature[col_idx]:
-                    raise ValueError("Onehot input data support integer only")
-                feature_value = int_feature
+                feature_value = feature[col_idx]
+                if not isinstance(feature_value, str):
+                    feature_value = math.ceil(feature_value)
+                    if feature_value != feature[col_idx]:
+                        raise ValueError("Onehot input data support integer or string only")
                 pair_obj.add_value(feature_value)
         return col_maps
 
@@ -273,7 +285,7 @@ class OneHotEncoder(ModelBase):
 
         new_feature = [_transformed_value[x] if x in _transformed_value else 0 for x in result_header]
 
-        feature_array = np.array(new_feature)
+        feature_array = np.array(new_feature, dtype='float64')
         instance.features = feature_array
         return instance
 

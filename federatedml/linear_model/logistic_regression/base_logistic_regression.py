@@ -15,19 +15,16 @@
 #
 
 import numpy as np
-from google.protobuf import json_format
 
-from arch.api.utils import log_utils
 from federatedml.linear_model.linear_model_base import BaseLinearModel
 from federatedml.linear_model.linear_model_weight import LinearModelWeights as LogisticRegressionWeights
 from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
 from federatedml.optim.initialize import Initializer
+from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.param.logistic_regression_param import InitParam
 from federatedml.protobuf.generated import lr_model_param_pb2
+from federatedml.util import LOGGER
 from federatedml.util.fate_operator import vec_dot
-from federatedml.param.evaluation_param import EvaluateParam
-
-LOGGER = log_utils.getLogger()
 
 
 class BaseLogisticRegression(BaseLinearModel):
@@ -81,7 +78,7 @@ class BaseLogisticRegression(BaseLinearModel):
         if self.need_one_vs_rest:
             # one_vs_rest_class = list(map(str, self.one_vs_rest_obj.classes))
             one_vs_rest_result = self.one_vs_rest_obj.save(lr_model_param_pb2.SingleModel)
-            single_result = {'header': header, 'need_one_vs_rest': True}
+            single_result = {'header': header, 'need_one_vs_rest': True, "best_iteration": -1}
         else:
             one_vs_rest_result = None
             single_result = self.get_single_model_param()
@@ -136,7 +133,7 @@ class BaseLogisticRegression(BaseLinearModel):
     def one_vs_rest_fit(self, train_data=None, validate_data=None):
         LOGGER.debug("Class num larger than 2, need to do one_vs_rest")
         self.one_vs_rest_obj.fit(data_instances=train_data, validate_data=validate_data)
+        LOGGER.debug(f"Final summary: {self.summary()}")
 
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary", metrics=self.metrics)
-

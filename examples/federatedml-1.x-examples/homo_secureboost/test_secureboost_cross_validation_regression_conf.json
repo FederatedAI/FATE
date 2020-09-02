@@ -26,12 +26,6 @@
                             "name": "homo_student_guest",
                             "namespace": "experiment"
                         }
-                    ],
-                    "eval_data": [
-                        {
-                            "name": "homo_student_test",
-                            "namespace": "experiment"
-                        }
                     ]
                 }
             },
@@ -56,12 +50,6 @@
                     "train_data": [
                         {
                             "name": "homo_student_host",
-                            "namespace": "experiment"
-                        }
-                    ],
-                    "eval_data": [
-                        {
-                            "name": "homo_student_test",
                             "namespace": "experiment"
                         }
                     ]
@@ -92,7 +80,6 @@
             "n_iter_no_change": true,
             "tol": 0.0001,
             "bin_num": 50,
-            "early_stopping_round": -1,
             "use_missing": true,
             "zero_as_missing": false,
             "tree_param": {
@@ -102,7 +89,6 @@
                 "objective": "lse"
             },
             "predict_param": {
-                "with_proba": true,
                 "threshold": 0.5
             },
             "cv_param": {

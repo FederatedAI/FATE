@@ -16,12 +16,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.utils import log_utils
 from federatedml.feature.feature_selection.filter_base import BaseFilterMethod
 from federatedml.param.feature_selection_param import ManuallyFilterParam
 from federatedml.protobuf.generated import feature_selection_meta_pb2
 
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class ManuallyFilter(BaseFilterMethod):
@@ -71,7 +70,11 @@ class ManuallyFilter(BaseFilterMethod):
         self.filter_out_names = all_filter_out_names
         return self
 
-    def get_meta_obj(self, meta_dicts):
-        result = feature_selection_meta_pb2.ManuallyFilterMeta(filter_out_names=self.filter_out_names)
-        meta_dicts['manually_meta'] = result
-        return meta_dicts
+    # def get_meta_obj(self, meta_dicts):
+    #     result = feature_selection_meta_pb2.ManuallyFilterMeta(filter_out_names=self.filter_out_names)
+    #     meta_dicts['manually_meta'] = result
+    #     return meta_dicts
+
+    def get_meta_obj(self):
+        result = feature_selection_meta_pb2.FilterMeta()
+        return result

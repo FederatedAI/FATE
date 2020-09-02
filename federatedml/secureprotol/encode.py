@@ -1,9 +1,7 @@
 import base64
 import hashlib
 
-from arch.api.utils import log_utils
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class Encode:

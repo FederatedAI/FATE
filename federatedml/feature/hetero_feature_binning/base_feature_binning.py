@@ -16,7 +16,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.utils import log_utils
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.bin_inner_param import BinInnerParam
 from federatedml.feature.binning.bucket_binning import BucketBinning
@@ -28,11 +27,11 @@ from federatedml.protobuf.generated import feature_binning_meta_pb2, feature_bin
 from federatedml.statistic.data_overview import get_header
 from federatedml.transfer_variable.transfer_class.hetero_feature_binning_transfer_variable import \
     HeteroFeatureBinningTransferVariable
-from federatedml.util.io_check import assert_io_num_rows_equal
+from federatedml.util import LOGGER
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
+from federatedml.util.io_check import assert_io_num_rows_equal
+from federatedml.util.schema_check import assert_schema_consistent
 
 MODEL_PARAM_NAME = 'FeatureBinningParam'
 MODEL_META_NAME = 'FeatureBinningMeta'
@@ -49,6 +48,7 @@ class BaseHeteroFeatureBinning(ModelBase):
         self.transfer_variable = HeteroFeatureBinningTransferVariable()
         self.binning_obj: BaseBinning = None
         self.header = None
+        self.header_anonymous = None
         self.schema = None
         self.host_results = []
         self.transform_type = None
@@ -105,6 +105,7 @@ class BaseHeteroFeatureBinning(ModelBase):
         LOGGER.debug("After _setup_bin_inner_param, header: {}".format(self.header))
 
     @assert_io_num_rows_equal
+    @assert_schema_consistent
     def transform(self, data_instances):
         self._setup_bin_inner_param(data_instances, self.model_param)
         data_instances = self.binning_obj.transform(data_instances, self.transform_type)
@@ -130,7 +131,8 @@ class BaseHeteroFeatureBinning(ModelBase):
             adjustment_factor=self.model_param.adjustment_factor,
             local_only=self.model_param.local_only,
             need_run=self.need_run,
-            transform_param=transform_param
+            transform_param=transform_param,
+            skip_static=self.model_param.skip_static
         )
         return meta_protobuf_obj
 
@@ -138,12 +140,13 @@ class BaseHeteroFeatureBinning(ModelBase):
         binning_result_obj = self.binning_obj.bin_results.generated_pb()
         # binning_result_obj = self.bin_results.generated_pb()
         host_results = [x.bin_results.generated_pb() for x in self.host_results]
+        result_obj = feature_binning_param_pb2. \
+            FeatureBinningParam(binning_result=binning_result_obj,
+                                host_results=host_results,
+                                header=self.header,
+                                header_anonymous=self.header_anonymous,
+                                model_name=consts.BINNING_MODEL)
 
-        result_obj = feature_binning_param_pb2.FeatureBinningParam(binning_result=binning_result_obj,
-                                                                   host_results=host_results,
-                                                                   header=self.header)
-        # json_result = json_format.MessageToJson(result_obj)
-        # LOGGER.debug("json_result: {}".format(json_result))
         return result_obj
 
     def load_model(self, model_dict):
@@ -205,3 +208,4 @@ class BaseHeteroFeatureBinning(ModelBase):
         """
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
+        self.check_schema_content(data_instances.schema)

@@ -1,6 +1,5 @@
 {
     "module_path":  "federatedml/statistic/intersect",
-    "default_runtime_conf": "intersect_param.json",
     "param_class" : "federatedml/param/intersect_param.py/IntersectParam",
     "role":
     {

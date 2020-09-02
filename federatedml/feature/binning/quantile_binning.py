@@ -16,16 +16,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import copy
 import functools
 import uuid
-from arch.api.utils import log_utils
 
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.quantile_summaries import quantile_summary_factory
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.statistic import data_overview
 from federatedml.util import consts
-LOGGER = log_utils.getLogger()
 
 
 class QuantileBinning(BaseBinning):
@@ -83,7 +82,6 @@ class QuantileBinning(BaseBinning):
         percentile_rate.append(1.0)
         is_sparse = data_overview.is_sparse_data(data_instances)
         # LOGGER.debug("in _fit_split_point, cols_map: {}".format(self.bin_inner_param.bin_cols_map))
-
         # self._fit_split_point_deprecate(data_instances, is_sparse, percentile_rate)
         self._fit_split_point(data_instances, is_sparse, percentile_rate)
 
@@ -120,6 +118,11 @@ class QuantileBinning(BaseBinning):
                     split_point.append(s_p)
             self.bin_results.put_col_split_points(col_name, split_point)
 
+    @staticmethod
+    def copy_merge(s1, s2):
+        new_s1 = copy.deepcopy(s1)
+        return new_s1.merge(s2)
+
     def _fit_split_point(self, data_instances, is_sparse, percentile_rate):
         if self.summary_dict is None:
             f = functools.partial(self.feature_summary,
@@ -130,7 +133,8 @@ class QuantileBinning(BaseBinning):
                                   is_sparse=is_sparse)
             # LOGGER.debug("in _fit_split_point, cols_map: {}".format(self.bin_inner_param.bin_cols_map))
             summary_dict = data_instances.mapPartitions2(f)
-            summary_dict = summary_dict.reduce(lambda s1, s2: s1.merge(s2), key_func=lambda key: key[1])
+
+            summary_dict = summary_dict.reduce(self.copy_merge, key_func=lambda key: key[1])
             if is_sparse:
                 total_count = data_instances.count()
                 for _, summary_obj in summary_dict.items():
@@ -139,6 +143,7 @@ class QuantileBinning(BaseBinning):
             self.summary_dict = summary_dict
         else:
             summary_dict = self.summary_dict
+
         for col_name, summary in summary_dict.items():
             split_point = []
             for percen_rate in percentile_rate:
@@ -275,6 +280,9 @@ class QuantileBinning(BaseBinning):
         if s_dict2 is None:
             return s_dict1
 
+        s_dict1 = copy.deepcopy(s_dict1)
+        s_dict2 = copy.deepcopy(s_dict2)
+
         new_dict = {}
         for col_name, summary1 in s_dict1.items():
             summary2 = s_dict2.get(col_name)
@@ -282,27 +290,21 @@ class QuantileBinning(BaseBinning):
             new_dict[col_name] = summary1
         return new_dict
 
-    def query_quantile_point(self, data_instances, cols, query_points):
+    def query_quantile_point(self, query_points, col_names=None):
         # self.cols = cols
         # self._init_cols(data_instances)
 
-        is_sparse = data_overview.is_sparse_data(data_instances)
         if self.summary_dict is None:
-            f = functools.partial(self.approxi_quantile,
-                                  cols_dict=self.bin_inner_param.bin_cols_map,
-                                  params=self.params,
-                                  header=self.header,
-                                  abnormal_list=self.abnormal_list,
-                                  is_sparse=is_sparse)
-            summary_dict = data_instances.mapPartitions(f)
-            summary_dict = summary_dict.reduce(self.merge_summary_dict)
-            self.summary_dict = summary_dict
-        else:
-            summary_dict = self.summary_dict
+            raise RuntimeError("Bin object should be fit before query quantile points")
+
+        if col_names is None:
+            col_names = self.bin_inner_param.bin_names
+
+        summary_dict = self.summary_dict
 
         if isinstance(query_points, (int, float)):
             query_dict = {}
-            for col_name in cols:
+            for col_name in col_names:
                 query_dict[col_name] = query_points
         elif isinstance(query_points, dict):
             query_dict = query_points

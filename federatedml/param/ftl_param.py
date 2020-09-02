@@ -16,174 +16,142 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import collections
+
+from federatedml.param.intersect_param import IntersectParam
+from types import SimpleNamespace
 from federatedml.param.base_param import BaseParam
+from federatedml.util import consts
+from federatedml.param.encrypt_param import EncryptParam
+from federatedml.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
+from federatedml.param.predict_param import PredictParam
 
 
-class FTLModelParam(BaseParam):
-    """
-    Defines parameters for FTL model
+class FTLParam(BaseParam):
 
-    Parameters
-    ----------
-    max_iteration: integer, default: 10
-        The number of passes over the training data (aka epochs), must be positive integer
+    def __init__(self, alpha=1, tol=0.000001,
+                 n_iter_no_change=False, validation_freqs=None, optimizer={'optimizer': 'Adam', 'learning_rate': 0.01},
+                 nn_define={}, epochs=1
+                 , intersect_param=IntersectParam(consts.RSA), config_type='keras', batch_size=-1,
+                 encrypte_param=EncryptParam(),
+                 encrypted_mode_calculator_param=EncryptedModeCalculatorParam(mode="confusion_opt"),
+                 predict_param=PredictParam(), mode='plain', communication_efficient=False,
+                 local_round=5,):
 
-    eps: numeric, default: 1e-3
-        The converge threshold, must be positive number
+        """
+        Args:
+            alpha: float, a loss coefficient defined in paper, it defines the importance of alignment loss
+            tol:  float, loss tolerance
+            n_iter_no_change: bool, check loss convergence or not
+            validation_freqs: None or positive integer or container object in python. Do validation in training process or Not.
+                if equals None, will not do validation in train process;
+                if equals positive integer, will validate data every validation_freqs epochs passes;
+                if container object in python, will validate data if epochs belong to this container.
+                e.g. validation_freqs = [10, 15], will validate data when epoch equals to 10 and 15.
+                Default: None
+                The default value is None, 1 is suggested. You can set it to a number larger than 1 in order to
+                speed up training by skipping validation rounds. When it is larger than 1, a number which is
+                divisible by "epochs" is recommended, otherwise, you will miss the validation scores
+                of last training epoch.
+            optimizer: optimizer method, accept following types:
+                1. a string, one of "Adadelta", "Adagrad", "Adam", "Adamax", "Nadam", "RMSprop", "SGD"
+                2. a dict, with a required key-value pair keyed by "optimizer",
+                    with optional key-value pairs such as learning rate.
+                defaults to "SGD"
+            nn_define:  dict, a dict represents the structure of neural network, it can be output by tf-keras
+            epochs: int, epochs num
+            intersect_param: define the intersect method
+            config_type: now only 'tf-keras' is supported
+            batch_size: batch size when computing transformed feature embedding, -1 use full data.
+            encrypte_param: encrypted param
+            encrypted_mode_calculator_param:
+            predict_param: predict param
+            mode:
+                plain: will not use any encrypt algorithms, data exchanged in plaintext
+                encrypted: use paillier to encrypt gradients
+            communication_efficient:
+                bool, will use communication efficient or not. when communication efficient is enabled, FTL model will
+                update gradients by several local rounds using intermediate data
+            local_round: local update round when using communication efficient
+        """
 
-    alpha: numeric, default: 100
-        The weight for objective function loss, must be positive number
-
-    is_encrypt: bool, default; True
-        The indicator indicating whether we use encrypted version of ftl or plain version, must be bool
-
-    enc_ftl: str default "dct_enc_ftl"
-        The name for encrypted federated transfer learning algorithm
-
-    """
-
-    def __init__(self, max_iteration=10, batch_size=64, eps=1e-5,
-                 alpha=100, lr_decay=0.001, l2_para=1, is_encrypt=True, enc_ftl="dct_enc_ftl"):
-        self.max_iter = max_iteration
-        self.batch_size = batch_size
-        self.eps = eps
+        super(FTLParam, self).__init__()
         self.alpha = alpha
-        self.lr_decay = lr_decay
-        self.l2_para = l2_para
-        self.is_encrypt = is_encrypt
-        self.enc_ftl = enc_ftl
+        self.tol = tol
+        self.n_iter_no_change = n_iter_no_change
+        self.validation_freqs = validation_freqs
+        self.optimizer = optimizer
+        self.nn_define = nn_define
+        self.epochs = epochs
+        self.intersect_param = intersect_param
+        self.config_type = config_type
+        self.batch_size = batch_size
+        self.encrypted_mode_calculator_param = encrypted_mode_calculator_param
+        self.encrypt_param = encrypte_param
+        self.predict_param = predict_param
+        self.mode = mode
+        self.communication_efficient = communication_efficient
+        self.local_round = local_round
 
     def check(self):
-        model_param_descr = "ftl model param's "
-        self.check_positive_integer(self.max_iter, model_param_descr + "max_iter")
-        self.check_positive_number(self.eps, model_param_descr + "eps")
-        self.check_positive_number(self.alpha, model_param_descr + "alpha")
-        self.check_boolean(self.is_encrypt, model_param_descr + "is_encrypt")
-        return True
+        self.intersect_param.check()
+        self.encrypt_param.check()
+        self.encrypted_mode_calculator_param.check()
 
+        self.optimizer = self._parse_optimizer(self.optimizer)
 
-class LocalModelParam(BaseParam):
-    """
-    Defines parameters for FTL model
+        supported_config_type = ["keras"]
+        if self.config_type not in supported_config_type:
+            raise ValueError(f"config_type should be one of {supported_config_type}")
 
-    Parameters
-    ----------
-    input_dim: integer, default: None
-        The dimension of input samples, must be positive integer
+        if not isinstance(self.tol, (int, float)):
+            raise ValueError("tol should be numeric")
 
-    encode_dim: integer, default: 5
-        The dimension of the encoded representation of input samples, must be positive integer
+        if not isinstance(self.epochs, int) or self.epochs <= 0:
+            raise ValueError("epochs should be a positive integer")
 
-    learning_rate: float, default: 0.001
-        The learning rate for training model, must between 0 and 1 exclusively
+        if self.nn_define and not isinstance(self.nn_define, dict):
+            raise ValueError("bottom_nn_define should be a dict defining the structure of neural network")
 
+        if self.batch_size != -1:
+            if not isinstance(self.batch_size, int) \
+                    or self.batch_size < consts.MIN_BATCH_SIZE:
+                raise ValueError(
+                    " {} not supported, should be larger than 10 or -1 represent for all data".format(self.batch_size))
 
-    """
+        if self.validation_freqs is None:
+            pass
+        elif isinstance(self.validation_freqs, int):
+            if self.validation_freqs < 1:
+                raise ValueError("validation_freqs should be larger than 0 when it's integer")
+        elif not isinstance(self.validation_freqs, collections.Container):
+            raise ValueError("validation_freqs should be None or positive integer or container")
 
-    def __init__(self, input_dim=None, encode_dim=5, learning_rate=0.001):
-        self.input_dim = input_dim
-        self.encode_dim = encode_dim
-        self.learning_rate = learning_rate
+        assert type(self.communication_efficient) is bool, 'communication efficient must be a boolean'
+        assert self.mode in ['encrypted', 'plain'], 'mode options: encrpyted or plain, but {} is offered'.format(self.mode)
+        assert type(self.epochs) == int and self.epochs > 0
 
-    def check(self):
-        model_param_descr = "local model param's "
-        if self.input_dim is not None:
-            self.check_positive_integer(self.input_dim, model_param_descr + "input_dim")
-        self.check_positive_integer(self.encode_dim, model_param_descr + "encode_dim")
-        self.check_open_unit_interval(self.learning_rate, model_param_descr + "learning_rate")
-        return True
+    @staticmethod
+    def _parse_optimizer(opt):
+        """
+        Examples:
 
+            1. "optimize": "SGD"
+            2. "optimize": {
+                "optimizer": "SGD",
+                "learning_rate": 0.05
+            }
+        """
 
-class FTLDataParam(BaseParam):
-    """
-    Defines parameters for FTL data model
-
-    Parameters
-    ----------
-    file_path: str, default: None
-        The file path to FTL data configuration JSON file, must be string or None
-
-    n_feature_guest: integer, default: 10
-        The number of features at guest side, must be positive integer
-
-    n_feature_host: integer, default: 23
-        The number of features at host side, must be positive integer
-
-    overlap_ratio: float, default: 0.1
-        The ratio of overlapping samples between guest and host, must between 0 and 1 exclusively
-
-    guest_split_ratio: float, default: 0.9
-        The ratio of number of samples excluding overlapping samples at guest side, must between 0 and 1 exclusively
-
-    num_samples: numeric, default: None
-        The total number of samples used for train/validation/test, must be positive integer or None. If None, all samples
-        would be used.
-
-    balanced: bool, default; True
-        The indicator indicating whether balance samples, must be bool
-
-    is_read_table: bool, default; False
-        The indicator indicating whether read data from dtable, must be bool
-
-    """
-
-    def __init__(self, file_path=None, n_feature_guest=10, n_feature_host=23, overlap_ratio=0.1, guest_split_ratio=0.9,
-                 num_samples=None, balanced=True, is_read_table=False):
-        self.file_path = file_path
-        self.n_feature_guest = n_feature_guest
-        self.n_feature_host = n_feature_host
-        self.overlap_ratio = overlap_ratio
-        self.guest_split_ratio = guest_split_ratio
-        self.num_samples = num_samples
-        self.balanced = balanced
-        self.is_read_table = is_read_table
-
-    def check(self):
-        model_param_descr = "ftl data model param's "
-        if self.file_path is not None:
-            self.check_string(self.file_path, model_param_descr + "file_path")
-        if self.num_samples is not None:
-            self.check_positive_integer(self.num_samples, model_param_descr + "num_samples")
-
-        self.check_positive_integer(self.n_feature_guest, model_param_descr + "n_feature_guest")
-        self.check_positive_integer(self.n_feature_host, model_param_descr + "n_feature_host")
-        self.check_boolean(self.balanced, model_param_descr + "balanced")
-        self.check_boolean(self.is_read_table, model_param_descr + "is_read_table")
-        self.check_open_unit_interval(self.overlap_ratio, model_param_descr + "overlap_ratio")
-        self.check_open_unit_interval(self.guest_split_ratio, model_param_descr + "guest_split_ratio")
-        return True
-
-
-class FTLValidDataParam(BaseParam):
-    """
-    Defines parameters for FTL validation data model
-
-    Parameters
-    ----------
-    file_path: str, default: None
-        The file path to FTL data configuration JSON file, must be string or None
-
-    num_samples: numeric, default: None
-        The total number of samples used for validation, must be positive integer or None. If None, all samples
-        would be used.
-
-    is_read_table: bool, default; False
-        The indicator indicating whether read data from dtable, must be bool
-
-    """
-
-    def __init__(self, file_path=None, num_samples=None, is_read_table=False):
-        self.file_path = file_path
-        self.num_samples = num_samples
-        self.is_read_table = is_read_table
-
-    def check(self):
-        model_param_descr = "ftl validation data model param's "
-        if self.file_path is not None:
-            self.check_string(self.file_path, model_param_descr + "file_path")
-        if self.num_samples is not None:
-            self.check_positive_integer(self.num_samples, model_param_descr + "num_samples")
-
-        self.check_boolean(self.is_read_table, model_param_descr + "is_read_table")
-        return True
+        kwargs = {}
+        if isinstance(opt, str):
+            return SimpleNamespace(optimizer=opt, kwargs=kwargs)
+        elif isinstance(opt, dict):
+            optimizer = opt.get("optimizer", kwargs)
+            if not optimizer:
+                raise ValueError(f"optimizer config: {opt} invalid")
+            kwargs = {k: v for k, v in opt.items() if k != "optimizer"}
+            return SimpleNamespace(optimizer=optimizer, kwargs=kwargs)
+        else:
+            raise ValueError(f"invalid type for optimize: {type(opt)}")
 

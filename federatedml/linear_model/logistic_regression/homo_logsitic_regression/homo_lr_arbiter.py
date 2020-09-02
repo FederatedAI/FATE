@@ -18,15 +18,13 @@
 
 import numpy as np
 
-from arch.api.utils import log_utils
 from federatedml.framework.homo.procedure import aggregator
 from federatedml.framework.homo.procedure import paillier_cipher
 from federatedml.linear_model.linear_model_weight import LinearModelWeights as LogisticRegressionWeights
 from federatedml.linear_model.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.optim import activation
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class HomoLRArbiter(HomoLRBase):
@@ -85,7 +83,7 @@ class HomoLRArbiter(HomoLRBase):
                                   re_encrypt_times=self.re_encrypt_times,
                                   host_ciphers_dict=host_ciphers,
                                   re_encrypt_batches=self.re_encrypt_batches)
-            
+
             # validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
 
@@ -123,4 +121,3 @@ class HomoLRArbiter(HomoLRBase):
                                                          idx=idx,
                                                          suffix=current_suffix)
             self.host_predict_results.append((prob_table, predict_table))
-

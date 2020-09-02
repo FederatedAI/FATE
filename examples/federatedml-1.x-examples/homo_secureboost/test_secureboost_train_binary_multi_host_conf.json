@@ -92,30 +92,30 @@
             },
             "dataio_0": {
                 "with_label": [
-                    true
+                    true, true
                 ],
                 "label_name": [
-                    "y"
+                    "y", "y"
                 ],
                 "label_type": [
-                    "int"
+                    "int", "int"
                 ],
                 "output_format": [
-                    "dense"
+                    "dense", "dense"
                 ]
             },
             "dataio_1": {
                 "with_label": [
-                    true
+                    true, true
                 ],
                 "label_name": [
-                    "y"
+                    "y", "y"
                 ],
                 "label_type": [
-                    "int"
+                    "int", "int"
                 ],
                 "output_format": [
-                    "dense"
+                    "dense", "dense"
                 ]
             }
         }
@@ -137,7 +137,6 @@
                 "objective": "cross_entropy"
             },
             "predict_param": {
-                "with_proba": true,
                 "threshold": 0.5
             },
             "cv_param": {
@@ -146,9 +145,9 @@
                 "random_seed": 103,
                 "need_cv": false
             }
+        },
+        "evaluation_0": {
+            "eval_type": "binary"
         }
-    },
-    "evaluation_0": {
-        "eval_type": "binary"
     }
 }

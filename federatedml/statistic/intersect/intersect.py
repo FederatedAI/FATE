@@ -15,12 +15,10 @@
 #
 import hashlib
 
-from arch.api.utils import log_utils
 from federatedml.secureprotol.encode import Encode
 from federatedml.util import consts
+from federatedml.util import LOGGER
 from federatedml.transfer_variable.transfer_class.raw_intersect_transfer_variable import RawIntersectTransferVariable
-
-LOGGER = log_utils.getLogger()
 
 
 class Intersect(object):
@@ -254,11 +252,11 @@ class RawIntersect(Intersect):
         if not self.only_output_key:
             intersect_ids = self._get_value_from_data(intersect_ids, data_instances)
 
-        if self.task_id is not None:
-            namespace = "#".join([str(self.guest_party_id), str(self.host_party_id), "mountain"])
-            for k, v in enumerate(recv_ids_list):
-                table_name = '_'.join([self.task_id, str(k)])
-                v.save_as(table_name, namespace)
-                LOGGER.info("save guest_{}'s id in name:{}, namespace:{}".format(k, table_name, namespace))
+        # if self.task_id is not None:
+        #     namespace = "#".join([str(self.guest_party_id), str(self.host_party_id), "mountain"])
+        #     for k, v in enumerate(recv_ids_list):
+        #         table_name = '_'.join([self.task_id, str(k)])
+        #         v.save_as(table_name, namespace)
+        #         LOGGER.info("save guest_{}'s id in name:{}, namespace:{}".format(k, table_name, namespace))
 
         return intersect_ids

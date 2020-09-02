@@ -22,14 +22,13 @@ import tarfile
 from flask import Flask, request, send_file
 from google.protobuf import json_format
 
-from arch.api.utils.core_utils import deserialize_b64
-from arch.api.utils.core_utils import fate_uuid
-from arch.api.utils.core_utils import json_loads
+from fate_arch.common.base_utils import fate_uuid
+from fate_arch import storage
 from fate_flow.db.db_models import Job, DB
-from fate_flow.manager.data_manager import query_data_view, delete_metric_data
-from fate_flow.manager.tracking_manager import Tracking
-from fate_flow.settings import stat_logger
-from fate_flow.utils import job_utils, data_utils
+from fate_flow.manager.data_manager import delete_metric_data
+from fate_flow.operation import Tracker
+from fate_flow.settings import stat_logger, TEMP_DIRECTORY
+from fate_flow.utils import job_utils, data_utils, detect_utils, schedule_utils
 from fate_flow.utils.api_utils import get_json_result, error_response
 from federatedml.feature.instance import Instance
 
@@ -46,7 +45,7 @@ def internal_server_error(e):
 def job_view():
     request_data = request.json
     check_request_parameters(request_data)
-    job_tracker = Tracking(job_id=request_data['job_id'], role=request_data['role'], party_id=request_data['party_id'])
+    job_tracker = Tracker(job_id=request_data['job_id'], role=request_data['role'], party_id=request_data['party_id'])
     job_view_data = job_tracker.get_job_view()
     if job_view_data:
         job_metric_list = job_tracker.get_metric_list(job_level=True)
@@ -68,8 +67,8 @@ def job_view():
 def component_metric_all():
     request_data = request.json
     check_request_parameters(request_data)
-    tracker = Tracking(job_id=request_data['job_id'], component_name=request_data['component_name'],
-                       role=request_data['role'], party_id=request_data['party_id'])
+    tracker = Tracker(job_id=request_data['job_id'], component_name=request_data['component_name'],
+                      role=request_data['role'], party_id=request_data['party_id'])
     metrics = tracker.get_metric_list()
     all_metric_data = {}
     if metrics:
@@ -90,8 +89,8 @@ def component_metric_all():
 def component_metrics():
     request_data = request.json
     check_request_parameters(request_data)
-    tracker = Tracking(job_id=request_data['job_id'], component_name=request_data['component_name'],
-                       role=request_data['role'], party_id=request_data['party_id'])
+    tracker = Tracker(job_id=request_data['job_id'], component_name=request_data['component_name'],
+                      role=request_data['role'], party_id=request_data['party_id'])
     metrics = tracker.get_metric_list()
     if metrics:
         return get_json_result(retcode=0, retmsg='success', data=metrics)
@@ -103,8 +102,8 @@ def component_metrics():
 def component_metric_data():
     request_data = request.json
     check_request_parameters(request_data)
-    tracker = Tracking(job_id=request_data['job_id'], component_name=request_data['component_name'],
-                       role=request_data['role'], party_id=request_data['party_id'])
+    tracker = Tracker(job_id=request_data['job_id'], component_name=request_data['component_name'],
+                      role=request_data['role'], party_id=request_data['party_id'])
     metric_data, metric_meta = get_metric_all_data(tracker=tracker, metric_namespace=request_data['metric_namespace'],
                                                    metric_name=request_data['metric_name'])
     if metric_data or metric_meta:
@@ -138,7 +137,7 @@ def component_parameters():
     request_data = request.json
     check_request_parameters(request_data)
     job_id = request_data.get('job_id', '')
-    job_dsl_parser = job_utils.get_job_dsl_parser_by_job_id(job_id=job_id)
+    job_dsl_parser = schedule_utils.get_job_dsl_parser_by_job_id(job_id=job_id)
     if job_dsl_parser:
         component = job_dsl_parser.get_component_info(request_data['component_name'])
         parameters = component.get_role_parameters()
@@ -159,7 +158,6 @@ def component_parameters():
 
 
 @manager.route('/component/output/model', methods=['post'])
-@job_utils.job_server_routing()
 def component_output_model():
     request_data = request.json
     check_request_parameters(request_data)
@@ -168,10 +166,10 @@ def component_output_model():
                                                                                     party_id=request_data['party_id'])
     model_id = job_runtime_conf['job_parameters']['model_id']
     model_version = job_runtime_conf['job_parameters']['model_version']
-    tracker = Tracking(job_id=request_data['job_id'], component_name=request_data['component_name'],
-                       role=request_data['role'], party_id=request_data['party_id'], model_id=model_id,
-                       model_version=model_version)
-    dag = job_utils.get_job_dsl_parser(dsl=job_dsl, runtime_conf=job_runtime_conf,
+    tracker = Tracker(job_id=request_data['job_id'], component_name=request_data['component_name'],
+                      role=request_data['role'], party_id=request_data['party_id'], model_id=model_id,
+                      model_version=model_version)
+    dag = schedule_utils.get_job_dsl_parser(dsl=job_dsl, runtime_conf=job_runtime_conf,
                                        train_runtime_conf=train_runtime_conf)
     component = dag.get_component_info(request_data['component_name'])
     output_model_json = {}
@@ -194,74 +192,96 @@ def component_output_model():
 
 
 @manager.route('/component/output/data', methods=['post'])
-@job_utils.job_server_routing()
 def component_output_data():
     request_data = request.json
-    output_data_table = get_component_output_data_table(task_data=request_data)
-    if not output_data_table:
+    output_tables_meta = get_component_output_tables_meta(task_data=request_data)
+    if not output_tables_meta:
         return get_json_result(retcode=0, retmsg='no data', data=[])
-    output_data = []
-    num = 100
-    have_data_label = False
-    if output_data_table:
-        for k, v in output_data_table.collect():
-            if num == 0:
-                break
-            data_line, have_data_label = get_component_output_data_line(src_key=k, src_value=v)
-            output_data.append(data_line)
-            num -= 1
-        total = output_data_table.count()
-    if output_data:
-        header = get_component_output_data_meta(output_data_table=output_data_table, have_data_label=have_data_label)
-        return get_json_result(retcode=0, retmsg='success', data=output_data, meta={'header': header, 'total': total})
-    else:
+    output_data_list = []
+    headers = []
+    totals = []
+    data_names = []
+    for output_name, output_table_meta in output_tables_meta.items():
+        output_data = []
+        num = 100
+        have_data_label = False
+        is_str = False
+        if output_table_meta:
+            # part_of_data format: [(k, v)]
+            for k, v in output_table_meta.get_part_of_data():
+                if num == 0:
+                    break
+                data_line, have_data_label, is_str = get_component_output_data_line(src_key=k, src_value=v)
+                output_data.append(data_line)
+                num -= 1
+            total = output_table_meta.get_count()
+            output_data_list.append(output_data)
+            data_names.append(output_name)
+            totals.append(total)
+        if output_data:
+            header = get_component_output_data_schema(output_table_meta=output_table_meta, have_data_label=have_data_label, is_str=is_str)
+            headers.append(header)
+        else:
+            headers.append(None)
+    if len(output_data_list) == 1 and not output_data_list[0]:
         return get_json_result(retcode=0, retmsg='no data', data=[])
+    return get_json_result(retcode=0, retmsg='success', data=output_data_list, meta={'header': headers, 'total': totals, 'names':data_names})
 
 
 @manager.route('/component/output/data/download', methods=['get'])
-@job_utils.job_server_routing(307)
 def component_output_data_download():
     request_data = request.json
-    output_data_table = get_component_output_data_table(task_data=request_data)
+    output_tables_meta = get_component_output_tables_meta(task_data=request_data)
     limit = request_data.get('limit', -1)
-    if not output_data_table:
+    if not output_tables_meta:
         return error_response(response_code=500, retmsg='no data')
     if limit == 0:
         return error_response(response_code=500, retmsg='limit is 0')
-    output_data_count = 0
     have_data_label = False
-    output_tmp_dir = os.path.join(os.getcwd(), 'tmp/{}'.format(fate_uuid()))
-    output_file_path = '{}/output_%s'.format(output_tmp_dir)
-    output_data_file_path = output_file_path % 'data.csv'
-    os.makedirs(os.path.dirname(output_data_file_path), exist_ok=True)
-    with open(output_data_file_path, 'w') as fw:
-        for k, v in output_data_table.collect():
-            data_line, have_data_label = get_component_output_data_line(src_key=k, src_value=v)
-            fw.write('{}\n'.format(','.join(map(lambda x: str(x), data_line))))
-            output_data_count += 1
-            if output_data_count == limit:
-                break
 
-    if output_data_count:
-        # get meta
-        header = get_component_output_data_meta(output_data_table=output_data_table, have_data_label=have_data_label)
-        output_data_meta_file_path = output_file_path % 'data_meta.json'
-        with open(output_data_meta_file_path, 'w') as fw:
-            json.dump({'header': header}, fw, indent=4)
-        if request_data.get('head', True):
-            with open(output_data_file_path, 'r+') as f:
-                content = f.read()
-                f.seek(0, 0)
-                f.write('{}\n'.format(','.join(header)) + content)
-        # tar
-        memory_file = io.BytesIO()
-        tar = tarfile.open(fileobj=memory_file, mode='w:gz')
-        tar.add(output_data_file_path, os.path.relpath(output_data_file_path, output_tmp_dir))
-        tar.add(output_data_meta_file_path, os.path.relpath(output_data_meta_file_path, output_tmp_dir))
-        tar.close()
-        memory_file.seek(0)
+    output_data_file_list = []
+    output_data_meta_file_list = []
+    output_tmp_dir = os.path.join(os.getcwd(), 'tmp/{}'.format(fate_uuid()))
+    for output_name, output_table_meta in output_tables_meta.items():
+        output_data_count = 0
+        is_str = False
+        output_data_file_path = "{}/{}.csv".format(output_tmp_dir, output_name)
+        os.makedirs(os.path.dirname(output_data_file_path), exist_ok=True)
+        with open(output_data_file_path, 'w') as fw:
+            with storage.Session.build(name=output_table_meta.get_name(), namespace=output_table_meta.get_namespace()) as storage_session:
+                output_table = storage_session.get_table()
+                for k, v in output_table.collect():
+                    data_line, have_data_label, is_str = get_component_output_data_line(src_key=k, src_value=v)
+                    fw.write('{}\n'.format(','.join(map(lambda x: str(x), data_line))))
+                    output_data_count += 1
+                    if output_data_count == limit:
+                        break
+
+        if output_data_count:
+            # get meta
+            output_data_file_list.append(output_data_file_path)
+            header = get_component_output_data_schema(output_table_meta=output_table_meta, have_data_label=have_data_label, is_str=is_str)
+            output_data_meta_file_path = "{}/{}.meta".format(output_tmp_dir, output_name)
+            output_data_meta_file_list.append(output_data_meta_file_path)
+            with open(output_data_meta_file_path, 'w') as fw:
+                json.dump({'header': header}, fw, indent=4)
+            if request_data.get('head', True) and header:
+                with open(output_data_file_path, 'r+') as f:
+                    content = f.read()
+                    f.seek(0, 0)
+                    f.write('{}\n'.format(','.join(header)) + content)
+    # tar
+    memory_file = io.BytesIO()
+    tar = tarfile.open(fileobj=memory_file, mode='w:gz')
+    for index in range(0, len(output_data_file_list)):
+        tar.add(output_data_file_list[index], os.path.relpath(output_data_file_list[index], output_tmp_dir))
+        tar.add(output_data_meta_file_list[index], os.path.relpath(output_data_meta_file_list[index], output_tmp_dir))
+    tar.close()
+    memory_file.seek(0)
+    output_data_file_list.extend(output_data_meta_file_list)
+    for path in output_data_file_list:
         try:
-            shutil.rmtree(os.path.dirname(output_data_file_path))
+            shutil.rmtree(os.path.dirname(path))
         except Exception as e:
             # warning
             stat_logger.warning(e)
@@ -272,76 +292,94 @@ def component_output_data_download():
 
 
 @manager.route('/component/output/data/table', methods=['post'])
-@job_utils.job_server_routing()
 def component_output_data_table():
-    request_data = request.json
-    data_views = query_data_view(**request_data)
-    if data_views:
-        return get_json_result(retcode=0, retmsg='success', data={'table_name': data_views[0].f_table_name,
-                                                                  'table_namespace': data_views[0].f_table_namespace})
+    output_data_infos = Tracker.query_output_data_infos(**request.json)
+    if output_data_infos:
+        return get_json_result(retcode=0, retmsg='success', data=[{'table_name': output_data_info.f_table_name,
+                                                                  'table_namespace': output_data_info.f_table_namespace,
+                                                                   "data_name": output_data_info.f_data_name
+                                                                   } for output_data_info in output_data_infos])
     else:
         return get_json_result(retcode=100, retmsg='No found table, please check if the parameters are correct')
 
 
-# api using by task executor
-@manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/metric_data/save', methods=['POST'])
-def save_metric_data(job_id, component_name, task_id, role, party_id):
+@manager.route('/component/summary/download', methods=['POST'])
+def get_component_summary():
     request_data = request.json
-    tracker = Tracking(job_id=job_id, component_name=component_name, task_id=task_id, role=role, party_id=party_id)
-    metrics = [deserialize_b64(metric) for metric in request_data['metrics']]
-    tracker.save_metric_data(metric_namespace=request_data['metric_namespace'], metric_name=request_data['metric_name'],
-                             metrics=metrics, job_level=request_data['job_level'])
-    return get_json_result()
+    required_params = ["job_id", "component_name", "role", "party_id"]
+    detect_utils.check_config(request_data, required_params)
+    tracker = Tracker(job_id=request_data["job_id"], component_name=request_data["component_name"],
+                      role=request_data["role"], party_id=request_data["party_id"],
+                      task_id=request_data.get("task_id", None), task_version=request_data.get("task_version", None))
+    summary = tracker.read_summary_from_db()
+    if summary:
+        if request_data.get("filename"):
+            temp_filepath = os.path.join(TEMP_DIRECTORY, request_data.get("filename"))
+            with open(temp_filepath, "w") as fout:
+                fout.write(json.dumps(summary, indent=4))
+            return send_file(open(temp_filepath, "rb"), as_attachment=True,
+                             attachment_filename=request_data.get("filename"))
+        else:
+            return get_json_result(data=summary)
+    return error_response(500, "No component summary found, please check if arguments are specified correctly.")
 
 
-@manager.route('/<job_id>/<component_name>/<task_id>/<role>/<party_id>/metric_meta/save', methods=['POST'])
-def save_metric_meta(job_id, component_name, task_id, role, party_id):
+@manager.route('/component/list', methods=['POST'])
+def component_list():
     request_data = request.json
-    tracker = Tracking(job_id=job_id, component_name=component_name, task_id=task_id, role=role, party_id=party_id)
-    metric_meta = deserialize_b64(request_data['metric_meta'])
-    tracker.save_metric_meta(metric_namespace=request_data['metric_namespace'], metric_name=request_data['metric_name'],
-                             metric_meta=metric_meta, job_level=request_data['job_level'])
-    return get_json_result()
+    parser = schedule_utils.get_job_dsl_parser_by_job_id(job_id=request_data.get('job_id'))
+    if parser:
+        return get_json_result(data={'components': list(parser.get_dsl().get('components').keys())})
+    else:
+        return get_json_result(retcode=100, retmsg='No job matched, please make sure the job id is valid.')
 
 
-def get_component_output_data_table(task_data):
+def get_component_output_tables_meta(task_data):
     check_request_parameters(task_data)
-    tracker = Tracking(job_id=task_data['job_id'], component_name=task_data['component_name'],
-                       role=task_data['role'], party_id=task_data['party_id'])
-    job_dsl_parser = job_utils.get_job_dsl_parser_by_job_id(job_id=task_data['job_id'])
+    tracker = Tracker(job_id=task_data['job_id'], component_name=task_data['component_name'],
+                      role=task_data['role'], party_id=task_data['party_id'])
+    job_dsl_parser = schedule_utils.get_job_dsl_parser_by_job_id(job_id=task_data['job_id'])
     if not job_dsl_parser:
         raise Exception('can not get dag parser, please check if the parameters are correct')
     component = job_dsl_parser.get_component_info(task_data['component_name'])
     if not component:
         raise Exception('can not found component, please check if the parameters are correct')
-    output_dsl = component.get_output()
-    output_data_dsl = output_dsl.get('data', [])
-    # The current version will only have one data output.
-    output_data_table = tracker.get_output_data_table(output_data_dsl[0] if output_data_dsl else 'component')
-    return output_data_table
+    output_data_table_infos = tracker.get_output_data_info()
+    output_tables_meta = tracker.get_output_data_table(output_data_infos=output_data_table_infos)
+    return output_tables_meta
 
 
 def get_component_output_data_line(src_key, src_value):
     have_data_label = False
     data_line = [src_key]
+    is_str = False
     if isinstance(src_value, Instance):
         if src_value.label is not None:
             data_line.append(src_value.label)
             have_data_label = True
         data_line.extend(data_utils.dataset_to_list(src_value.features))
+    elif isinstance(src_value, str):
+        data_line.extend([value for value in src_value.split(',')])
+        is_str = True
     else:
         data_line.extend(data_utils.dataset_to_list(src_value))
-    return data_line, have_data_label
+    return data_line, have_data_label, is_str
 
 
-def get_component_output_data_meta(output_data_table, have_data_label):
-    # get meta
-    output_data_meta = output_data_table.get_metas()
-    schema = output_data_meta.get('schema', {})
+def get_component_output_data_schema(output_table_meta, have_data_label, is_str=False):
+    # get schema
+    schema = output_table_meta.get_schema()
+    if not schema:
+         return None
     header = [schema.get('sid_name', 'sid')]
     if have_data_label:
         header.append(schema.get('label_name'))
-    header.extend(schema.get('header', []))
+    if is_str:
+        if not schema.get('header'):
+            return None
+        header.extend([feature for feature in schema.get('header').split(',')])
+    else:
+        header.extend(schema.get('header', []))
     return header
 
 
@@ -349,10 +387,10 @@ def check_request_parameters(request_data):
     with DB.connection_context():
         if 'role' not in request_data and 'party_id' not in request_data:
             jobs = Job.select(Job.f_runtime_conf).where(Job.f_job_id == request_data.get('job_id', ''),
-                                                        Job.f_is_initiator == 1)
+                                                        Job.f_is_initiator == True)
             if jobs:
                 job = jobs[0]
-                job_runtime_conf = json_loads(job.f_runtime_conf)
+                job_runtime_conf = job.f_runtime_conf
                 job_initiator = job_runtime_conf.get('initiator', {})
                 role = job_initiator.get('role', '')
                 party_id = job_initiator.get('party_id', 0)

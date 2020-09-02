@@ -33,6 +33,7 @@ class HeteroNNBase(ModelBase):
 
         self.epochs = None
         self.batch_size = None
+        self._header = []
 
         self.predict_param = None
         self.hetero_nn_param = None
@@ -70,7 +71,10 @@ class HeteroNNBase(ModelBase):
         self.predict_param = hetero_nn_param.predict_param
         self.hetero_nn_param = hetero_nn_param
 
-        self.batch_generator.register_batch_generator(self.transfer_variable)
+        if self.role == consts.GUEST:
+            self.batch_generator.register_batch_generator(self.transfer_variable, has_arbiter=False)
+        else:
+            self.batch_generator.register_batch_generator(self.transfer_variable)
 
     def reset_flowid(self):
         new_flowid = ".".join([self.flowid, "evaluate"])
@@ -111,9 +115,10 @@ class HeteroNNBase(ModelBase):
 
     def _restore_model_param(self, param):
         self.model.set_hetero_nn_model_param(param.hetero_nn_model_param)
+        self._header = list(param.header)
 
     def set_partition(self, data_inst):
-        self.partition = data_inst._partitions
+        self.partition = data_inst.partitions
         self.model.set_partition(self.partition)
 
     def cross_validation(self, data_instances):

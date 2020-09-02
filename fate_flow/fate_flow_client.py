@@ -26,12 +26,10 @@ import re
 import requests
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
-from arch.api.utils import file_utils
-from arch.api.utils.core_utils import get_lan_ip
-from fate_flow.settings import SERVERS, ROLE, API_VERSION
+from fate_arch.common import file_utils, conf_utils
+from fate_flow.settings import FATEFLOW_SERVICE_NAME, API_VERSION
 from fate_flow.utils import detect_utils
 
-server_conf = file_utils.load_json_conf("arch/conf/server_conf.json")
 JOB_OPERATE_FUNC = ["submit_job", "stop_job", "query_job", "data_view_query", "clean_job", "clean_queue"]
 JOB_FUNC = ["job_config", "job_log"]
 TASK_OPERATE_FUNC = ["query_task"]
@@ -51,10 +49,8 @@ def prettify(response, verbose=True):
 
 
 def call_fun(func, config_data, dsl_path, config_path):
-    ip = server_conf.get(SERVERS).get(ROLE).get('host')
-    if ip in ['localhost', '127.0.0.1']:
-        ip = get_lan_ip()
-    http_port = server_conf.get(SERVERS).get(ROLE).get('http.port')
+    ip = conf_utils.get_base_config(FATEFLOW_SERVICE_NAME).get("host")
+    http_port = conf_utils.get_base_config(FATEFLOW_SERVICE_NAME).get("http_port")
     server_url = "http://{}:{}/{}".format(ip, http_port, API_VERSION)
 
     if func in JOB_OPERATE_FUNC:
