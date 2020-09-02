@@ -15,13 +15,13 @@
 #
 from fate_arch.common.address import StandaloneAddress
 from fate_arch.common.profile import log_elapsed
-from fate_arch.storage import StorageSessionBase
+from fate_arch.storage import StorageSessionBase, StorageEngine
 from fate_arch.abc import AddressABC
 
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(session_id=session_id)
+        super(StorageSession, self).__init__(session_id=session_id, engine_name=StorageEngine.STANDALONE)
         self._options = options if options else {}
         self._session = None
 

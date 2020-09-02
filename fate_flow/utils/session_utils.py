@@ -24,16 +24,15 @@ class SessionStop(object):
     def run(cls):
         parser = argparse.ArgumentParser()
         parser.add_argument('-j', '--job_id', required=True, type=str, help="job id")
-        parser.add_argument('-w', '--work_mode', required=True, type=str, help="work mode")
-        parser.add_argument('-b', '--backend', required=True, type=str, help="backend")
+        parser.add_argument('--computing', help="computing engine", type=str)
+        parser.add_argument('--federation', help="federation engine", type=str)
+        parser.add_argument('--storage', help="storage engine", type=str)
         parser.add_argument('-c', '--command', required=True, type=str, help="command")
         args = parser.parse_args()
         session_job_id = args.job_id
         fate_job_id = session_job_id.split('_')[0]
-        work_mode = int(args.work_mode)
-        backend = int(args.backend)
         command = args.command
-        with Session.create(backend=backend, work_mode=work_mode) as session:
+        with Session(computing_type=args.computing, federation_type=args.federation) as session:
             session.init_computing(computing_session_id=session_job_id)
             try:
                 schedule_logger(fate_job_id).info('start {} session {}'.format(command, session.computing.session_id))

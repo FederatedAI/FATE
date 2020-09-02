@@ -34,6 +34,7 @@ from fate_flow.utils.cron import Cron
 from fate_flow.manager import ResourceManager
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
+from fate_arch.storage import StorageEngine
 
 
 class DAGScheduler(Cron):
@@ -129,12 +130,15 @@ class DAGScheduler(Cron):
                 if work_mode == WorkMode.CLUSTER:
                     job_parameters.computing_engine = ComputingEngine.EGGROLL
                     job_parameters.federation_engine = FederationEngine.EGGROLL
+                    job_parameters.storage_engine = StorageEngine.EGGROLL
                 else:
                     job_parameters.computing_engine = ComputingEngine.STANDALONE
                     job_parameters.federation_engine = FederationEngine.STANDALONE
+                    job_parameters.storage_engine = StorageEngine.STANDALONE
             elif backend == Backend.SPARK:
                 job_parameters.computing_engine = ComputingEngine.SPARK
                 job_parameters.federation_engine = FederationEngine.MQ
+                job_parameters.storage_engine = StorageEngine.HDFS
                 # add mq info
                 federation_info = {}
                 federation_info['union_name'] = string_utils.random_string(4) 
@@ -142,6 +146,7 @@ class DAGScheduler(Cron):
                 job_parameters.federation_info = federation_info
             job_parameters.computing_backend = f"DEFAULT_{job_parameters.computing_engine}"
             job_parameters.federation_backend = f"DEFAULT_{job_parameters.federation_engine}"
+            job_parameters.storage_backend = f"DEFAULT_{job_parameters.storage_engine}"
         if job_parameters.federated_mode is None:
             if job_parameters.computing_engine in [ComputingEngine.EGGROLL, ComputingEngine.SPARK]:
                 job_parameters.federated_mode = FederatedMode.MULTIPLE
