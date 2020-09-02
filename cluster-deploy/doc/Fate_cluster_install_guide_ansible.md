@@ -297,12 +297,12 @@ cd ansible-nfate-*
 #init.sh文件不需要修改，主要是辅助生成一些配置文件
 
 #测试环境加test参数执行
- sh ./init.sh test
+ sh ./tools/init.sh test
  
 #生产环境加prod参数执行
- sh ./init.sh prod
+ sh ./tools/init.sh prod
  
->sh ./init.sh prod
+>sh ./tools/init.sh prod
 clean old config
 init environments/prod
 init var_files/prod
