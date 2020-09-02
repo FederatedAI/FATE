@@ -11,18 +11,18 @@ from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import Objectiv
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
-from federatedml.ensemble import HeteroSecureBoostGuest
+from federatedml.ensemble import HeteroSecureBoostingTreeGuest
 from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.util import LOGGER
 
 
-make_readable_feature_importance = HeteroSecureBoostGuest.make_readable_feature_importance
+make_readable_feature_importance = HeteroSecureBoostingTreeGuest.make_readable_feature_importance
 
 
-class HomoSecureBoostClient(HomoBoostingClient):
+class HomoSecureBoostingTreeClient(HomoBoostingClient):
 
     def __init__(self):
-        super(HomoSecureBoostClient, self).__init__()
+        super(HomoSecureBoostingTreeClient, self).__init__()
         self.tree_param = None  # decision tree param
         self.use_missing = False
         self.zero_as_missing = False
@@ -32,7 +32,7 @@ class HomoSecureBoostClient(HomoBoostingClient):
         self.model_param = HomoSecureBoostParam()
 
     def _init_model(self, boosting_param: HomoSecureBoostParam):
-        super(HomoSecureBoostClient, self)._init_model(boosting_param)
+        super(HomoSecureBoostingTreeClient, self)._init_model(boosting_param)
         self.use_missing = boosting_param.use_missing
         self.zero_as_missing = boosting_param.zero_as_missing
         self.tree_param = boosting_param.tree_param
