@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 from fate_arch import storage
-from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.settings import stat_logger
 from flask import Flask, request
@@ -47,17 +46,18 @@ def table_delete():
     request_data = request.json
     table_name = request_data.get('table_name')
     namespace = request_data.get('namespace')
-    table = get_table(name=table_name, namespace=namespace)
-    if table:
-        table.destroy()
-        data = {'table_name': table_name, 'namespace': namespace}
-        try:
-            table.close()
-        except Exception as e:
-            stat_logger.exception(e)
-    else:
-        return get_json_result(retcode=101, retmsg='no find table')
-    return get_json_result(data=data)
+    with storage.Session.build(name=table_name, namespace=namespace) as storage_session:
+        table = storage_session.get_table()
+        if table:
+            table.destroy()
+            data = {'table_name': table_name, 'namespace': namespace}
+            try:
+                table.close()
+            except Exception as e:
+                stat_logger.exception(e)
+            return get_json_result(data=data)
+        else:
+            return get_json_result(retcode=101, retmsg='no find table')
 
 
 @manager.route('/<table_func>', methods=['post'])
