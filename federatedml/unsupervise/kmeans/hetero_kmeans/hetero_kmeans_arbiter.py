@@ -72,10 +72,10 @@ class HeteroKmeansArbiter(BaseKmeansModel):
             tol1 = self.transfer_variable.guest_tol.get(idx=0, suffix=(self.n_iter_,))
             tol2 = self.transfer_variable.host_tol.get(idx=0, suffix=(self.n_iter_,))
             tol_final = tol1 + tol2
-            tol_tag = 0 if tol_final > self.tol else 1
-            self.transfer_variable.arbiter_tol.remote(tol_tag, role=consts.HOST, idx=0, suffix=(self.n_iter_,))
-            self.transfer_variable.arbiter_tol.remote(tol_tag, role=consts.GUEST, idx=0, suffix=(self.n_iter_,))
-            if tol_tag:
+            self.is_converged = True if tol_final > self.tol else False
+            self.transfer_variable.arbiter_tol.remote(self.is_converged, role=consts.HOST, idx=0, suffix=(self.n_iter_,))
+            self.transfer_variable.arbiter_tol.remote(self.is_converged, role=consts.GUEST, idx=0, suffix=(self.n_iter_,))
+            if self.is_converged:
                 break
 
             self.n_iter_ += 1
@@ -89,7 +89,7 @@ class HeteroKmeansArbiter(BaseKmeansModel):
         self.transfer_variable.cluster_result.remote(cluster_result, role=consts.GUEST, idx=0, suffix='predict')
         self.transfer_variable.cluster_result.remote(cluster_result, role=consts.HOST, idx=0, suffix='predict')
 
-        dist_cluster_dtable = dist_sum.join(cluster_result, lambda v1, v2: [v1, v2])
+        dist_cluster_dtable = dist_sum.join(cluster_result, lambda v1, v2: [v2, v1])
         dist_table = self.cal_ave_dist(dist_cluster_dtable, cluster_result, self.k)  # ave dist in each cluster
         cluster_dist = self.cluster_dist_aggregator.sum_model(suffix='predict')
         result = []

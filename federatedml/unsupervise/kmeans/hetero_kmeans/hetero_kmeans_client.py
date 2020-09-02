@@ -41,7 +41,7 @@ class HeteroKmeansClient(BaseKmeansModel):
     def educl_dist(u, centroid_list):
         result = []
         for c in centroid_list:
-            result.append(np.sqrt(np.sum(np.power(np.array(c) - u.features, 2))))
+            result.append(np.sum(np.power(np.array(c) - u.features, 2)))
         return result
 
     def get_centroid(self, data_instances):
@@ -72,10 +72,13 @@ class HeteroKmeansClient(BaseKmeansModel):
         centroid_feature_sum = cluster_result_dtable.mapPartitions(self.f).reduce(self.sum_dict)
         cluster_count = cluster_result.mapPartitions(self.count).reduce(self.sum_dict)
         centroid_list = []
+        cluster_count_list = []
+        count_all = data_instances.count()
         for k in centroid_feature_sum:
             count = cluster_count[k]
             centroid_list.append(centroid_feature_sum[k] / count)
-        return centroid_list
+            cluster_count_list.append([k, count, str(100* count / count_all)+'%'])
+        return centroid_list, cluster_count_list
 
     def centroid_dist(self, centroid_list):
         cluster_dist_list = []
@@ -98,7 +101,7 @@ class HeteroKmeansClient(BaseKmeansModel):
             self.first_centroid_key = self.transfer_variable.centroid_list.get(idx=0)
             rand = -np.random.rand(data_instances.count())
         key_dtable = session.parallelize(tuple(zip(self.first_centroid_key, self.first_centroid_key)),
-                                         partition=data_instances.partitions,include_key=True)
+                                         partition=data_instances.partitions, include_key=True)
         centroid_list = list(key_dtable.join(data_instances, lambda v1, v2: v2.features).collect())
         self.centroid_list = [v[1] for v in centroid_list]
         while self.n_iter_ < self.max_iter:
@@ -111,16 +114,17 @@ class HeteroKmeansClient(BaseKmeansModel):
             secure_dist_all = key_secureagg.join(dist_all_dtable, lambda v1, v2: v1 + v2)
             self.client_dist.remote(secure_dist_all, role=consts.ARBITER, idx=0, suffix=(self.n_iter_,))
             cluster_result = self.transfer_variable.cluster_result.get(idx=0, suffix=(self.n_iter_,))
-            centroid_new = self.centroid_cal(cluster_result, data_instances)
+            centroid_new, self.cluster_count = self.centroid_cal(cluster_result, data_instances)
             client_tol = np.sum(np.sum((np.array(self.centroid_list) - np.array(centroid_new)) ** 2, axis=1))
             self.centroid_list = centroid_new
             self.cluster_result = cluster_result
             self.client_tol.remote(client_tol, role=consts.ARBITER, idx=0, suffix=(self.n_iter_,))
             cluster_dist = self.centroid_dist(self.centroid_list)
             self.cluster_dist_aggregator.send_model(NumpyWeights(np.array(cluster_dist)), suffix=(self.n_iter_,))
-            tol_tag = self.transfer_variable.arbiter_tol.get(idx=0, suffix=(self.n_iter_,))
+            self.is_converged = self.transfer_variable.arbiter_tol.get(idx=0, suffix=(self.n_iter_,))
             self.n_iter_ += 1
-            if tol_tag:
+
+            if self.is_converged:
                 break
 
     def predict(self, data_instances):
