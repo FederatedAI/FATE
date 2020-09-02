@@ -14,6 +14,6 @@
 #  limitations under the License.
 #
 from fate_arch.storage.hdfs._table import StorageTable
-from fate_arch.storage.hdfs._session import StorageSessionBase
+from fate_arch.storage.hdfs._session import StorageSession
 
-__all__ = ["StorageTable", "StorageSessionBase"]
+__all__ = ["StorageTable", "StorageSession"]

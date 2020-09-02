@@ -1,16 +1,10 @@
 import functools
+import numpy as np
 from collections import Counter
-
 from federatedml.feature.sparse_vector import SparseVector
-
 from federatedml.model_base import ModelBase
 from federatedml.feature.instance import Instance
-
-from arch.api.utils import log_utils
-
-import numpy as np
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 def count_miss_feat(feat_set: set, all_feat: set, important_feat: set = None):

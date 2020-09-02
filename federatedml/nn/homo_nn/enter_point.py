@@ -15,7 +15,6 @@
 #
 
 from fate_arch.abc import CTableABC
-from fate_arch.common import log
 from fate_arch.session import computing_session
 from fate_flow.entity.metric import MetricMeta, Metric
 from federatedml.framework.homo.blocks import secure_mean_aggregator, loss_scatter, has_converged
@@ -28,10 +27,9 @@ from federatedml.nn.homo_nn import nn_model
 from federatedml.nn.homo_nn.nn_model import restore_nn_model
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.param.homo_nn_param import HomoNNParam
-from federatedml.util import consts
+from federatedml.util import consts, LOGGER
 from federatedml.util.io_check import assert_io_num_rows_equal
 
-Logger = log.getLogger()
 
 MODEL_META_NAME = "HomoNNModelMeta"
 MODEL_PARAM_NAME = "HomoNNModelParam"
@@ -100,7 +98,7 @@ class HomoNNServer(HomoNNBase):
 
     def _is_converged(self):
         loss = self.loss_scatter.weighted_loss_mean(suffix=self._suffix())
-        Logger.info(f"loss at iter {self.aggregate_iteration_num}: {loss}")
+        LOGGER.info(f"loss at iter {self.aggregate_iteration_num}: {loss}")
         self.callback_loss(self.aggregate_iteration_num, loss)
         if self.loss_consumed:
             is_converged = self.converge_func(loss)
@@ -116,11 +114,11 @@ class HomoNNServer(HomoNNBase):
             self.aggregator.send_aggregated_model(model=self.model, suffix=self._suffix())
 
             if self._is_converged():
-                Logger.info(f"early stop at iter {self.aggregate_iteration_num}")
+                LOGGER.info(f"early stop at iter {self.aggregate_iteration_num}")
                 break
             self.aggregate_iteration_num += 1
         else:
-            Logger.warn(f"reach max iter: {self.aggregate_iteration_num}, not converged")
+            LOGGER.warn(f"reach max iter: {self.aggregate_iteration_num}, not converged")
         self.set_summary(self._summary)
 
     def save_model(self):
@@ -155,7 +153,7 @@ class HomoNNClient(HomoNNBase):
 
     def _is_converged(self, data, epoch_degree):
         metrics = self.nn_model.evaluate(data)
-        Logger.info(f"metrics at iter {self.aggregate_iteration_num}: {metrics}")
+        LOGGER.info(f"metrics at iter {self.aggregate_iteration_num}: {metrics}")
         loss = metrics["loss"]
         self.loss_scatter.send_loss(loss=(loss, epoch_degree), suffix=self._suffix())
         is_converged = self.has_converged.get_converge_status(suffix=self._suffix())
@@ -187,7 +185,7 @@ class HomoNNClient(HomoNNBase):
         epoch_degree = float(len(data)) * self.aggregate_every_n_epoch
 
         while self.aggregate_iteration_num < self.max_aggregate_iteration_num:
-            Logger.info(f"start {self.aggregate_iteration_num}_th aggregation")
+            LOGGER.info(f"start {self.aggregate_iteration_num}_th aggregation")
 
             # train
             self.nn_model.train(data, aggregate_every_n_epoch=self.aggregate_every_n_epoch)
@@ -201,13 +199,13 @@ class HomoNNClient(HomoNNBase):
 
             # calc loss and check convergence
             if self._is_converged(data, epoch_degree):
-                Logger.info(f"early stop at iter {self.aggregate_iteration_num}")
+                LOGGER.info(f"early stop at iter {self.aggregate_iteration_num}")
                 break
 
-            Logger.info(f"role {self.role} finish {self.aggregate_iteration_num}_th aggregation")
+            LOGGER.info(f"role {self.role} finish {self.aggregate_iteration_num}_th aggregation")
             self.aggregate_iteration_num += 1
         else:
-            Logger.warn(f"reach max iter: {self.aggregate_iteration_num}, not converged")
+            LOGGER.warn(f"reach max iter: {self.aggregate_iteration_num}, not converged")
 
         self.set_summary(self._summary)
 

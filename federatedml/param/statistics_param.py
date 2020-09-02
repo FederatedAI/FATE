@@ -84,7 +84,8 @@ class StatisticsParam(BaseParam):
                     consts.MISSING_COUNT, consts.SKEWNESS, consts.KURTOSIS,
                     consts.COEFFICIENT_OF_VARIATION]
         if statistic_name == "describe":
-            return [consts.COUNT, consts.MEAN, consts.STANDARD_DEVIATION, consts.MIN, consts.MAX]
+            return [consts.COUNT, consts.MEAN, consts.STANDARD_DEVIATION,
+                    consts.MIN, consts.MAX]
 
     @staticmethod
     def find_stat_name_match(stat_name):

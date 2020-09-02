@@ -19,15 +19,14 @@
 import copy
 
 import numpy as np
+from fate_arch.computing import is_table
 
-from arch.api.utils import log_utils
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.statistic.data_overview import header_alignment
+from federatedml.util import LOGGER
 from federatedml.util import abnormal_detection
 from federatedml.util.component_properties import ComponentProperties
 from federatedml.util.param_extract import ParamExtract
-
-LOGGER = log_utils.getLogger()
 
 
 class ModelBase(object):
@@ -107,7 +106,7 @@ class ModelBase(object):
             self.data_output = saved_result[0]
             # LOGGER.debug("One data: {}".format(self.data_output.first()[1].features))
         LOGGER.debug("saved_result is : {}, data_output: {}".format(saved_result, self.data_output))
-        self.check_consistency()
+        # self.check_consistency()
         self.save_summary()
 
     def get_metrics_param(self):
@@ -115,10 +114,11 @@ class ModelBase(object):
                              pos_label=1)
 
     def check_consistency(self):
-        if not type(self.data_output) in ["DTable", "RDDTable"]:
+        if not is_table(self.data_output):
             return
         if self.component_properties.input_data_count + self.component_properties.input_eval_data_count != \
-                self.data_output.count():
+                self.data_output.count() and \
+                self.component_properties.input_data_count != self.component_properties.input_eval_data_count:
             raise ValueError("Input data count does not match with output data count")
 
     def predict(self, data_inst):
@@ -226,7 +226,8 @@ class ModelBase(object):
             classes = [str(val) for val in classes]
             predict_result = data_instances.mapValues(lambda x: x.label)
             predict_result = predict_result.join(predict_score, lambda x, y: [x, int(classes[np.argmax(y)]),
-                                                                              float(np.max(y)), dict(zip(classes, list(y)))])
+                                                                              float(np.max(y)),
+                                                                              dict(zip(classes, list(y)))])
         else:
             raise ValueError(f"Model's classes type is {type(classes)}, classes must be None or list.")
 

@@ -18,14 +18,12 @@ from collections import defaultdict
 import functools
 import numpy as np
 
-from arch.api import session
-from arch.api.utils import log_utils
+from fate_arch.session import computing_session as session
 from federatedml.feature.instance import Instance
 from federatedml.transfer_variable.transfer_class.repeated_id_intersect_transfer_variable import \
     RepeatedIDIntersectTransferVariable
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class RepeatedIDIntersect(object):
@@ -38,7 +36,7 @@ class RepeatedIDIntersect(object):
         self.transfer_variable = RepeatedIDIntersectTransferVariable()
         self.role = role
 
-    def __generate_id_map(self, data: session.table) -> dict:
+    def __generate_id_map(self, data) -> dict:
         if not self.repeated_id_owner:
             LOGGER.warning("Not a repeated id owner, will not generate id map")
             return {}

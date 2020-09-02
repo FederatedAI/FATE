@@ -1,19 +1,12 @@
+from typing import List
+import numpy as np
+import functools
 from federatedml.ensemble.boosting.hetero.hetero_secureboost_guest import HeteroSecureBoostGuest
 from federatedml.param.boosting_param import HeteroFastSecureBoostParam
 from federatedml.ensemble.basic_algorithms import HeteroFastDecisionTreeGuest
 from federatedml.ensemble.boosting.hetero import hetero_fast_secureboost_plan as plan
-
-from arch.api.utils import log_utils
-
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-from typing import List
-
-import numpy as np
-
-import functools
-
-LOGGER = log_utils.getLogger()
 
 
 class HeteroFastSecureBoostGuest(HeteroSecureBoostGuest):
@@ -176,6 +169,8 @@ class HeteroFastSecureBoostGuest(HeteroSecureBoostGuest):
         _, model_param = super(HeteroFastSecureBoostGuest, self).get_model_param()
         param_name = "HeteroFastSecureBoostGuestParam"
         model_param.tree_plan.extend(plan.encode_plan(self.tree_plan))
+        model_param.model_name = consts.HETERO_FAST_SBT_MIX if self.work_mode == consts.MIX_TREE else \
+                                 consts.HETERO_FAST_SBT_LAYERED
 
         return param_name, model_param
 

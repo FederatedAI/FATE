@@ -1,9 +1,9 @@
+import numpy as np
 from federatedml.ensemble.boosting.boosting_core.homo_boosting import HomoBoostingArbiter
 from federatedml.param.boosting_param import HomoSecureBoostParam
 from federatedml.ensemble.basic_algorithms.decision_tree.homo.homo_decision_tree_arbiter import HomoDecisionTreeArbiter
 from numpy import random
-from arch.api.utils import log_utils
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class HomoSecureBoostArbiter(HomoBoostingArbiter):
@@ -28,6 +28,12 @@ class HomoSecureBoostArbiter(HomoBoostingArbiter):
         self.transfer_inst.valid_features.remote(valid_features, idx=-1, suffix=('valid_features', epoch_idx, b_idx))
 
     def sample_valid_features(self):
+
+        LOGGER.info("sample valid features")
+
+        if not self._set_random_seed and self.subsample_random_seed is not None:
+            np.random.seed(self.subsample_random_seed)
+            self._set_random_seed = True
 
         chosen_feature = random.choice(range(0, self.feature_num),
                                        max(1, int(self.subsample_feature_rate * self.feature_num)), replace=False)

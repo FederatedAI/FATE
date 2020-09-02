@@ -5,7 +5,7 @@ from fate_flow.db.db_models import BaseDataBase
 from fate_flow.entity.constant_config import WorkMode
 
 from fate_flow.settings import WORK_MODE
-from fate_flow.utils.job_utils import generate_job_id
+from fate_flow.utils import job_utils
 
 from fate_flow.manager.queue_manager import MysqlQueue, ListQueue
 
@@ -18,7 +18,7 @@ elif WORK_MODE == WorkMode.STANDALONE:
 
 class TestQueueUtil(unittest.TestCase):
     def test_queue_put(self):
-        job_id = generate_job_id()
+        job_id = job_utils.generate_job_id()
         event = {
             'job_id': job_id,
             "initiator_role": 'loacl',
