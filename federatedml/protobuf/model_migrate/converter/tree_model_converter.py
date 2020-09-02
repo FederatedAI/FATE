@@ -1,6 +1,7 @@
 from federatedml.protobuf.model_migrate.converter.converter_base import ProtoConverterBase
 from typing import List
 
+
 class HeteroSBTConverter(ProtoConverterBase):
 
     def convert(self, model_contents: dict,
