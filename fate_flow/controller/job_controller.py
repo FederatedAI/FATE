@@ -80,25 +80,26 @@ class JobController(object):
 
     @classmethod
     def initialize_tasks(cls, job_id, role, party_id, run_on, job_initiator, job_parameters: RunParameters, dsl_parser, component_name=None, task_version=None):
-        base_task_info = {}
-        base_task_info["job_id"] = job_id
-        base_task_info["initiator_role"] = job_initiator['role']
-        base_task_info["initiator_party_id"] = job_initiator['party_id']
-        base_task_info["role"] = role
-        base_task_info["party_id"] = party_id
-        base_task_info["federated_comm"] = job_parameters.federated_comm
+        common_task_info = {}
+        common_task_info["job_id"] = job_id
+        common_task_info["initiator_role"] = job_initiator['role']
+        common_task_info["initiator_party_id"] = job_initiator['party_id']
+        common_task_info["role"] = role
+        common_task_info["party_id"] = party_id
+        common_task_info["federated_mode"] = job_parameters.federated_mode
+        common_task_info["federated_comm"] = job_parameters.federated_comm
         if task_version:
-            base_task_info["task_version"] = task_version
+            common_task_info["task_version"] = task_version
         if not component_name:
             components = dsl_parser.get_topology_components()
         else:
             components = [dsl_parser.get_component_info(component_name=component_name)]
         for component in components:
             component_parameters = component.get_role_parameters()
-            for parameters_on_party in component_parameters.get(base_task_info["role"], []):
-                if parameters_on_party.get('local', {}).get('party_id') == base_task_info["party_id"]:
+            for parameters_on_party in component_parameters.get(common_task_info["role"], []):
+                if parameters_on_party.get('local', {}).get('party_id') == common_task_info["party_id"]:
                     task_info = {}
-                    task_info.update(base_task_info)
+                    task_info.update(common_task_info)
                     task_info["component_name"] = component.get_name()
                     TaskController.create_task(role=role, party_id=party_id, run_on=run_on, task_info=task_info)
 

@@ -34,7 +34,7 @@ from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils.detect_utils import check_config
 from fate_flow.utils.model_utils import gen_party_model_id
 from fate_flow.entity.types import ModelOperation, TagOperation
-from fate_arch.common import file_utils
+from fate_arch.common import file_utils, WorkMode, FederatedMode
 
 manager = Flask(__name__)
 
@@ -73,6 +73,11 @@ def load_model():
     load_status_info = {}
     load_status_msg = 'success'
     load_status_info['detail'] = {}
+    if "federated_mode" not in request_config['job_parameters']:
+        if request_config["job_parameters"]["work_mode"] == WorkMode.STANDALONE:
+            request_config['job_parameters']["federated_mode"] = FederatedMode.SINGLE
+        elif request_config["job_parameters"]["work_mode"] == WorkMode.CLUSTER:
+            request_config['job_parameters']["federated_mode"] = FederatedMode.MULTIPLE
     for role_name, role_partys in request_config.get("role").items():
         if role_name == 'arbiter':
             continue
@@ -87,7 +92,7 @@ def load_model():
                                          dest_party_id=_party_id,
                                          src_role = initiator_role,
                                          json_body=request_config,
-                                         work_mode=request_config['job_parameters']['work_mode'])
+                                         federated_mode=request_config['job_parameters']['federated_mode'])
                 load_status_info[role_name][_party_id] = response['retcode']
                 load_status_info['detail'][role_name] = {}
                 detail = {_party_id: {}}
@@ -161,7 +166,7 @@ def migrate_model_process():
                                          dest_party_id=party_id,
                                          src_role=initiator_role,
                                          json_body=request_config,
-                                         work_mode=1)
+                                         federated_mode=1)
                 migrate_status_info[role_name][party_id] = response['retcode']
                 migrate_status_info['detail'][role_name] = {}
                 detail = {party_id: {}}
