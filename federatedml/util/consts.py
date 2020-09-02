@@ -26,6 +26,7 @@ BINARY = 'binary'
 MULTY = 'multi'
 CLASSIFICATION = "classification"
 REGRESSION = 'regression'
+CLUSTERING = 'clustering'
 PAILLIER = 'Paillier'
 RANDOM_PADS = "RandomPads"
 NONE = "None"
@@ -73,7 +74,6 @@ ADJUSTED_RAND_SCORE = 'adjusted_rand_score'
 DAVIES_BOULDIN_INDEX = 'davies_bouldin_index'
 
 
-
 # evaluation alias metric
 ALL_METRIC_NAME = [AUC, KS, LIFT, GAIN, PRECISION, RECALL, ACCURACY, EXPLAINED_VARIANCE, MEAN_ABSOLUTE_ERROR,
                    MEAN_SQUARED_ERROR, MEAN_SQUARED_LOG_ERROR, MEDIAN_ABSOLUTE_ERROR, R2_SCORE, ROOT_MEAN_SQUARED_ERROR,
@@ -86,7 +86,11 @@ ALIAS = {
     ('l2_root', 'rmse'): ROOT_MEAN_SQUARED_ERROR,
     ('msle', ): MEAN_SQUARED_LOG_ERROR,
     ('r2', ): R2_SCORE,
-    ('acc', ): ACCURACY
+    ('acc', ): ACCURACY,
+    ('DBI', ): DAVIES_BOULDIN_INDEX,
+    ('FMI', ): FOWLKES_MALLOWS_SCORE,
+    ('RI', ): ADJUSTED_RAND_SCORE,
+    ('jaccard', ): JACCARD_SIMILARITY_SCORE
 }
 
 # default evaluation metrics

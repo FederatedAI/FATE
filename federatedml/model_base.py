@@ -99,8 +99,6 @@ class ModelBase(object):
         LOGGER.debug("saved_result is : {}, data_output: {}".format(saved_result, self.data_output))
         self.check_consistency()
 
-
-
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary",
                              pos_label=1)
