@@ -39,17 +39,20 @@ class Evaluation(ModelBase):
         self.eval_results = defaultdict(list)
 
         self.save_single_value_metric_list = [consts.AUC,
+
                                               consts.EXPLAINED_VARIANCE,
                                               consts.MEAN_ABSOLUTE_ERROR,
                                               consts.MEAN_SQUARED_ERROR,
                                               consts.MEAN_SQUARED_LOG_ERROR,
                                               consts.MEDIAN_ABSOLUTE_ERROR,
                                               consts.R2_SCORE,
-                                              consts.ROOT_MEAN_SQUARED_ERROR]
+                                              consts.ROOT_MEAN_SQUARED_ERROR,
 
-        self.save_curve_metric_list = [consts.KS, consts.ROC, consts.LIFT, consts.GAIN, consts.PRECISION,
-                                       consts.RECALL,
-                                       consts.ACCURACY]
+                                              consts.JACCARD_SIMILARITY_SCORE,
+                                              consts.ADJUSTED_RAND_SCORE,
+                                              consts.FOWLKES_MALLOWS_SCORE,
+                                              consts.DAVIES_BOULDIN_INDEX
+                                              ]
 
         self.special_metric_list = [consts.PSI]
 
@@ -132,9 +135,13 @@ class Evaluation(ModelBase):
         intra_cluster_avg_dist, inter_cluster_dist = [], []
         run_intra_metrics = False  # run intra metrics or outer metrics ?
 
-        if len(data[0][1]) == 3:  # this input format is not for metrics computation
-            return None, None, run_intra_metrics
-        if type(data[0][1][-1]) == list:  # the input format is for intra metrics
+        if len(data[0][1]) == 2:
+            # [int int] -> [true_label, predicted label] -> outer metric
+            # [int np.array] - > [predicted label, distance] -> need no metric computation
+            if not (type(data[0][1][0]) == int and type(data[0][1][1]) == int):
+                return None, None, run_intra_metrics
+
+        if len(data[0][1]) == 3:  # the input format is for intra metrics
             run_intra_metrics = True
 
         for d in data:
