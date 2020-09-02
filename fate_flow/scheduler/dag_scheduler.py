@@ -287,8 +287,8 @@ class DAGScheduler(Cron):
             tasks = JobSaver.query_task(job_id=job_id, role=initiator_role, party_id=initiator_party_id)
         should_rerun = False
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl,
-                                        runtime_conf=job.f_runtime_conf,
-                                        train_runtime_conf=job.f_train_runtime_conf)
+                                                       runtime_conf=job.f_runtime_conf,
+                                                       train_runtime_conf=job.f_train_runtime_conf)
         for task in tasks:
             if task.f_status != TaskStatus.COMPLETE and task.f_party_status != TaskStatus.COMPLETE:
                 # stop old version task
