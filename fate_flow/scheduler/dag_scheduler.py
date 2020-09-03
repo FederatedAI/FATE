@@ -50,7 +50,7 @@ class DAGScheduler(Cron):
         cls.backend_compatibility(job_parameters=job_parameters)
         cls.set_default_job_parameters(job_parameters=job_parameters)
 
-        job_utils.check_pipeline_job_runtime_conf(job_runtime_conf)
+        job_utils.check_job_runtime_conf(job_runtime_conf)
         if job_parameters.job_type != 'predict':
             # generate job model info
             job_parameters.model_id = model_utils.gen_model_id(job_runtime_conf['role'])
