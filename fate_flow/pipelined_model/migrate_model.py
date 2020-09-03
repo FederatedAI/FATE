@@ -22,6 +22,7 @@ from fate_flow.pipelined_model import pipelined_model
 from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_arch.common.file_utils import get_project_base_directory
 from fate_flow.utils import model_utils
+from federatedml.protobuf.model_migrate.model_migrate import model_migration
 
 
 def gen_model_file_path(model_id, model_version):
@@ -107,13 +108,18 @@ def migration(config_data: dict):
         shutil.copyfile(os.path.join(migrate_model.model_path, "pipeline.pb"),
                         os.path.join(migrate_model.model_path, "variables", "data", "pipeline", "pipeline", "Pipeline"))
 
+        # modify proto
         secureboost_dict = migrate_model.read_component_model('secureboost_0', 'train')
 
-        modify_secureboost(model=migrate_model, buffer=secureboost_dict, src_role=config_data["role"],
-                           dst_role=config_data["migrate_role"])
+        modified_buffer = model_migration(model_contents=secureboost_dict,
+                                          module_name='HeteroSecureBoost',
+                                          old_guest_list=config_data['role']['guest'],
+                                          new_guest_list=config_data['migrate_role']['guest'],
+                                          old_host_list=config_data['role']['host'],
+                                          new_host_list=config_data['migrate_role']['host'])
 
-        # with open('/Users/izhfeng/PycharmProjects/FATE/result/3_modified_secure_boost_dict_out_of_func.json', 'w') as fout:
-        #     fout.write(str(migrate_model.read_component_model('secureboost_0', 'train')['HeteroSecureBoostingTreeGuestParam']))
+        migrate_model.save_component_model('secureboost_0', 'HeteroSecureBoostingTreeGuestParam',
+                                           'train', modified_buffer)
 
         with DB.connection_context():
             MLModel.create(
