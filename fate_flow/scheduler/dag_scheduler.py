@@ -29,7 +29,7 @@ from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT, DEFAULT_TASK_PARAL
 from fate_flow.utils import detect_utils, job_utils, schedule_utils
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils import model_utils
-from fate_flow.scheduler import JobQueue
+from fate_flow.operation import JobQueue
 from fate_flow.utils.cron import Cron
 from fate_flow.manager import ResourceManager
 from fate_arch.computing import ComputingEngine

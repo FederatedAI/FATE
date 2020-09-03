@@ -14,29 +14,24 @@
 #  limitations under the License.
 #
 import datetime
-import functools
 import errno
-import operator
 import os
 import subprocess
 import sys
 import threading
 import typing
-import uuid
 
 import psutil
-from fate_flow.entity.types import JobStatus
 
 from fate_arch.common import file_utils
-from fate_arch.common.base_utils import json_loads, json_dumps, fate_uuid, current_timestamp
+from fate_arch.common.base_utils import json_loads, json_dumps, fate_uuid
 from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import DB, Job, Task
-from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.entity.types import JobStatus
+from fate_flow.entity.types import TaskStatus, RunParameters
 from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE
 from fate_flow.utils import detect_utils
 from fate_flow.utils import session_utils
-from fate_flow.operation import JobSaver
-from fate_flow.entity.types import TaskStatus, RunParameters
 
 
 class IdCounter(object):
@@ -206,15 +201,6 @@ def list_job(limit):
         return [job for job in jobs]
 
 
-def job_queue_size():
-    return RuntimeConfig.JOB_QUEUE.qsize()
-
-
-def show_job_queue():
-    # TODO
-    pass
-
-
 def list_task(limit):
     with DB.connection_context():
         if limit > 0:
@@ -222,10 +208,6 @@ def list_task(limit):
         else:
             tasks = Task.select().order_by(Task.f_create_time.desc())
         return [task for task in tasks]
-
-
-def gen_status_id():
-    return uuid.uuid1().hex
 
 
 def check_job_process(pid):
@@ -287,7 +269,6 @@ def run_subprocess(job_id, config_dir, process_cmd, log_dir=None):
 
 
 def wait_child_process(signum, frame):
-    child_pid = None
     try:
         while True:
             child_pid, status = os.waitpid(-1, os.WNOHANG)
@@ -369,29 +350,6 @@ def kill_task_executor_process(task: Task, only_child=False):
         raise e
 
 
-def start_clean_queue():
-    schedule_logger().info('get clean queue command')
-    jobs = JobSaver.query_job(is_initiator=True, status=JobStatus.WAITING)
-    if jobs:
-        for job in jobs:
-            schedule_logger(job.f_job_id).info(
-                'start send {} job {} command success'.format(JobStatus.CANCELED, job.f_job_id))
-            job_info = {'f_job_id': job.f_job_id, 'f_status': JobStatus.CANCELED}
-            JobSaver.update_job(job_info=job_info)
-            job_runtime_conf = json_loads(job.f_runtime_conf)
-            event = job_event(job.f_job_id,
-                              job_runtime_conf['initiator']['role'],
-                              job_runtime_conf['initiator']['party_id'])
-            try:
-                RuntimeConfig.JOB_QUEUE.del_event(event)
-                schedule_logger(job.f_job_id).info(
-                    'send {} job {} command success'.format(JobStatus.CANCELED, job.f_job_id))
-            except Exception as e:
-                schedule_logger(job.f_job_id).error(e)
-    else:
-        raise Exception('There are no jobs in the queue')
-
-
 def start_session_stop(task):
     job_conf_dict = get_job_conf(task.f_job_id)
     job_parameters = RunParameters(**job_conf_dict['job_runtime_conf_path']["job_parameters"])
@@ -413,32 +371,6 @@ def start_session_stop(task):
         '-c', 'stop' if task.f_status == JobStatus.COMPLETE else 'kill'
     ]
     p = run_subprocess(job_id=task.f_job_id, config_dir=task_dir, process_cmd=process_cmd, log_dir=None)
-
-
-def gen_all_party_key(all_party):
-    """
-    Join all party as party key
-    :param all_party:
-        "role": {
-            "guest": [9999],
-            "host": [10000],
-            "arbiter": [10000]
-         }
-    :return:
-    """
-    if not all_party:
-        all_party_key = 'all'
-    elif isinstance(all_party, dict):
-        sorted_role_name = sorted(all_party.keys())
-        all_party_key = '#'.join([
-            ('%s-%s' % (
-                role_name,
-                '_'.join([str(p) for p in sorted(set(all_party[role_name]))]))
-             )
-            for role_name in sorted_role_name])
-    else:
-        all_party_key = None
-    return all_party_key
 
 
 def get_timeout(job_id, timeout, runtime_conf, dsl):
@@ -464,32 +396,12 @@ def job_default_timeout(runtime_conf, dsl):
     return timeout
 
 
-def job_event(job_id, initiator_role,  initiator_party_id):
-    event = {'job_id': job_id,
-             "initiator_role": initiator_role,
-             "initiator_party_id": initiator_party_id
-             }
-    return event
-
-
-def get_task_info(job_id, role, party_id, component_name):
-    task_info = {
-        'job_id': job_id,
-        'role': role,
-        'party_id': party_id
-    }
-    if component_name:
-        task_info['component_name'] = component_name
-    return task_info
-
-
 def cleaning(signum, frame):
     sys.exit(0)
 
 
 def federation_cleanup(job, task):
     from fate_arch.common import Backend
-    from fate_arch.storage import StorageEngine
     from fate_arch.common import Party
 
     runtime_conf = json_loads(job.f_runtime_conf)

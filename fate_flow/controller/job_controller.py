@@ -26,7 +26,7 @@ from fate_flow.operation import JobSaver
 from fate_arch.common.base_utils import json_dumps, current_timestamp
 from fate_flow.controller import TaskController
 from fate_flow.manager import ResourceManager
-from fate_flow.scheduler import JobQueue
+from fate_flow.operation import JobQueue
 
 
 class JobController(object):
