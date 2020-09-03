@@ -83,6 +83,7 @@ stat_logger = log.getLogger("fate_flow_stat")
 detect_logger = log.getLogger("fate_flow_detect")
 access_logger = log.getLogger("fate_flow_access")
 data_manager_logger = log.getLogger("fate_flow_data_manager")
+peewee_logger = log.getLogger("peewee")
 
 
 """
