@@ -356,7 +356,7 @@ class DAGScheduler(Cron):
                 job.f_status = new_job_status
                 if EndStatus.contains(job.f_status):
                     FederatedScheduler.save_pipelined_model(job=job)
-                status, response = FederatedScheduler.sync_job_status(job=job)
+                FederatedScheduler.sync_job_status(job=job)
                 cls.update_job_on_initiator(initiator_job=job, update_fields=["status"])
         if EndStatus.contains(job.f_status):
             cls.finish(job=job, end_status=job.f_status)
