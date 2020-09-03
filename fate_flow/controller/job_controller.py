@@ -157,10 +157,14 @@ class JobController(object):
 
     @classmethod
     def apply_resource(cls, job_id, role, party_id):
+        if role == "arbiter":
+            return True
         return ResourceManager.apply_for_job_resource(job_id=job_id, role=role, party_id=party_id)
 
     @classmethod
     def return_resource(cls, job_id, role, party_id):
+        if role == "arbiter":
+            return True
         return ResourceManager.return_job_resource(job_id=job_id, role=role, party_id=party_id)
 
     @classmethod
