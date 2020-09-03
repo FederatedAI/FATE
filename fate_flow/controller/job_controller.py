@@ -42,6 +42,10 @@ class JobController(object):
         job_parameters = RunParameters(**runtime_conf['job_parameters'])
         job_initiator = runtime_conf['initiator']
 
+        dsl_parser = schedule_utils.get_job_dsl_parser(dsl=dsl,
+                                                       runtime_conf=runtime_conf,
+                                                       train_runtime_conf=train_runtime_conf)
+
         # save new job into db
         if role == job_initiator['role'] and party_id == job_initiator['party_id']:
             is_initiator = True
@@ -63,10 +67,6 @@ class JobController(object):
                                 job_runtime_conf=runtime_conf,
                                 train_runtime_conf=train_runtime_conf,
                                 pipeline_dsl=None)
-
-        dsl_parser = schedule_utils.get_job_dsl_parser(dsl=dsl,
-                                                       runtime_conf=runtime_conf,
-                                                       train_runtime_conf=train_runtime_conf)
 
         cls.initialize_tasks(job_id, role, party_id, True, job_initiator, job_parameters, dsl_parser)
         cls.initialize_job_tracker(job_id=job_id, role=role, party_id=party_id, job_info=job_info, is_initiator=is_initiator, dsl_parser=dsl_parser)
