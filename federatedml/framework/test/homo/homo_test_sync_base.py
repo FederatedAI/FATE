@@ -27,7 +27,7 @@ import time
 class TestSyncBase(unittest.TestCase):
 
     def clean_tables(self):
-        from arch.api import session
+        from fate_arch.session import computing_session as session
         session.init(job_id=self.job_id)
         try:
             session.cleanup("*", self.job_id, True)

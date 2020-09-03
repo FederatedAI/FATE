@@ -20,13 +20,12 @@ import copy
 import functools
 import math
 import operator
+import time
 import uuid
 
 import numpy as np
-import time
 
-from arch.api import session
-from arch.api.utils import log_utils
+from fate_arch.session import computing_session as session
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.bucket_binning import BucketBinning
 from federatedml.feature.binning.optimal_binning import bucket_info
@@ -35,9 +34,8 @@ from federatedml.feature.binning.quantile_binning import QuantileBinningTool
 from federatedml.param.feature_binning_param import FeatureBinningParam, OptimalBinningParam
 from federatedml.statistic import data_overview
 from federatedml.statistic import statics
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class OptimalBinning(BaseBinning):

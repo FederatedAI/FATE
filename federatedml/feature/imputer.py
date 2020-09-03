@@ -1,13 +1,11 @@
 import functools
 import numpy as np
 
-from arch.api.utils import log_utils
 from federatedml.statistic.data_overview import get_header
 from federatedml.statistic.statics import MultivariateStatisticalSummary
 from federatedml.util import consts
+from federatedml.util import LOGGER
 from federatedml.statistic import data_overview
-
-LOGGER = log_utils.getLogger()
 
 
 class Imputer(object):

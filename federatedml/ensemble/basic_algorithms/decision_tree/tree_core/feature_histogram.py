@@ -30,7 +30,7 @@ import uuid
 from operator import add, sub
 from typing import List
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 from fate_arch.common import log
 from federatedml.feature.fate_element_type import NoneType
 from federatedml.framework.weights import Weights

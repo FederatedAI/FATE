@@ -16,12 +16,10 @@
 
 import functools
 
-from arch.api.utils import log_utils
 # from federatedml.feature.binning.base_binning import IVAttributes
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):

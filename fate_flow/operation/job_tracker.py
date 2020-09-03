@@ -18,6 +18,7 @@ import operator
 from typing import List
 
 from fate_arch.computing import ComputingEngine
+from fate_arch.storage import StorageEngine
 from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64
 from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import (DB, Job, TrackingMetric, TrackingOutputDataInfo,
@@ -117,7 +118,15 @@ class Tracker(object):
                                                                                   persistent_table_name))
             partitions = computing_table.partitions
             schedule_logger(self.job_id).info('output data table partitions is {}'.format(partitions))
-            address = storage.StorageTableMeta.create_address(storage_engine=output_storage_engine, address_dict={"name": persistent_table_name, "namespace": persistent_table_namespace, "storage_type": storage.EggRollStorageType.ROLLPAIR_LMDB})
+            if output_storage_engine == StorageEngine.EGGROLL:
+                address_dict = {"name": persistent_table_name, "namespace": persistent_table_namespace, "storage_type": storage.EggRollStorageType.ROLLPAIR_LMDB}
+            elif output_storage_engine == StorageEngine.STANDALONE:
+                address_dict = {"name": persistent_table_name, "namespace": persistent_table_namespace, "storage_type": storage.StandaloneStorageType.ROLLPAIR_LMDB}
+            elif output_storage_engine == StorageEngine.HDFS:
+                address_dict = {"path": f"/fate/temp/component_output_data/{persistent_table_namespace}/{persistent_table_name}"}
+            else:
+                raise RuntimeError(f"{output_storage_engine} storage is not supported")
+            address = storage.StorageTableMeta.create_address(storage_engine=output_storage_engine, address_dict=address_dict)
             schema = {}
             # persistent table
             computing_table.save(address, schema=schema, partitions=partitions)

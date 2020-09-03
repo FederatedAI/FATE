@@ -153,6 +153,7 @@ class Task(DataBaseModel):
     f_task_version = BigIntegerField()
     f_initiator_role = CharField(max_length=50, index=True)
     f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
+    f_federated_mode = CharField(max_length=10, index=True)
     f_federated_comm = CharField(max_length=10, index=True)
     f_status = CharField(max_length=50)
     # this party configuration
@@ -363,8 +364,8 @@ class ModelOperationLog(DataBaseModel):
 
 
 class BackendEngine(DataBaseModel):
-    f_engine_id = CharField(max_length=150, null=False, primary_key=True)
-    f_engine_name = CharField(max_length=10, index=True)
+    f_engine_id = CharField(max_length=150, null=False)
+    f_engine_name = CharField(max_length=50, index=True)
     f_engine_type = CharField(max_length=10, index=True)
     f_engine_address = JSONField()
     f_cores = IntegerField(index=True)
@@ -377,6 +378,7 @@ class BackendEngine(DataBaseModel):
 
     class Meta:
         db_table = "t_backend_engine"
+        primary_key = CompositeKey('f_engine_id', 'f_engine_type')
 
 
 class DBQueue(DataBaseModel):

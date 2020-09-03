@@ -16,10 +16,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.utils import log_utils
 from federatedml.model_selection.k_fold import KFold
 
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 def _get_cv_param(model):
@@ -36,4 +35,3 @@ def run(model, data_instances, host_do_evaluate=False):
     kflod_obj.run(cv_param, data_instances, model, host_do_evaluate)
     LOGGER.info("Finish KFold run")
     return data_instances
-

@@ -18,14 +18,12 @@ import copy
 import functools
 import time
 
-from arch.api.utils import log_utils
 from federatedml.protobuf.generated import one_vs_rest_param_pb2
 from federatedml.transfer_variable.transfer_class.one_vs_rest_transfer_variable import OneVsRestTransferVariable
 from federatedml.util import consts
 from federatedml.util.classify_label_checker import ClassifyLabelChecker
 from federatedml.util.io_check import assert_io_num_rows_equal
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class OneVsRest(object):

@@ -27,7 +27,7 @@
 
 import warnings
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 from fate_arch.common import log
 from fate_arch.federation import segment_transfer_enabled
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.criterion import XgboostCriterion

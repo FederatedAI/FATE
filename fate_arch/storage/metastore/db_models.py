@@ -119,6 +119,7 @@ class StorageTableMetaModel(DataBaseModel):
 
 class SessionRecord(DataBaseModel):
     f_session_id = CharField(max_length=150, null=False, primary_key=True)
+    f_engine_name = CharField(max_length=50, index=True)
     f_engine_type = CharField(max_length=10, index=True)
     f_engine_address = JSONField()
     f_create_time = BigIntegerField(index=True)

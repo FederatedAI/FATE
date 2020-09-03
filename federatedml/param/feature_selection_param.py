@@ -199,6 +199,7 @@ class CommonFilterParam(BaseParam):
         the host id setting.
 
     """
+
     def __init__(self, metrics, filter_type='threshold', take_high=True, threshold=1,
                  host_thresholds=None, select_federated=True):
         super().__init__()
@@ -326,7 +327,7 @@ class ManuallyFilterParam(BaseParam):
         self.check_defined_type(self.left_col_names, descr, ['list', 'NoneType'])
 
         if (self.filter_out_indexes or self.filter_out_names) is not None and \
-                        (self.left_col_names or self.left_col_indexes) is not None:
+                (self.left_col_names or self.left_col_indexes) is not None:
             raise ValueError("(left_col_indexes & left_col_names) cannot use with"
                              " (filter_out_indexes & filter_out_names) simultaneously")
         return True

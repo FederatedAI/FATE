@@ -20,7 +20,7 @@ from flask import jsonify
 from flask import Response
 
 from fate_arch.common.log import audit_logger
-from fate_arch.common import WorkMode
+from fate_arch.common import WorkMode, FederatedMode
 from fate_arch.common import conf_utils
 from fate_flow.settings import DEFAULT_GRPC_OVERALL_TIMEOUT, CHECK_NODES_IDENTITY,\
     FATE_MANAGER_GET_NODE_INFO_ENDPOINT, HEADERS, API_VERSION
@@ -44,17 +44,17 @@ def error_response(response_code, retmsg):
     return Response(json.dumps({'retmsg': retmsg, 'retcode': response_code}), status=response_code, mimetype='application/json')
 
 
-def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, json_body, work_mode, api_version=API_VERSION,
+def federated_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, json_body, federated_mode, api_version=API_VERSION,
                   overall_timeout=DEFAULT_GRPC_OVERALL_TIMEOUT):
     if int(dest_party_id) == 0:
+        federated_mode = FederatedMode.SINGLE
+    if federated_mode == FederatedMode.SINGLE:
         return local_api(job_id=job_id, method=method, endpoint=endpoint, json_body=json_body, api_version=api_version)
-    if work_mode == WorkMode.STANDALONE:
-        return local_api(job_id=job_id, method=method, endpoint=endpoint, json_body=json_body, api_version=api_version)
-    elif work_mode == WorkMode.CLUSTER:
+    elif federated_mode == FederatedMode.MULTIPLE:
         return remote_api(job_id=job_id, method=method, endpoint=endpoint, src_party_id=src_party_id, src_role=src_role,
                           dest_party_id=dest_party_id, json_body=json_body, api_version=api_version, overall_timeout=overall_timeout)
     else:
-        raise Exception('{} work mode is not supported'.format(work_mode))
+        raise Exception('{} work mode is not supported'.format(federated_mode))
 
 
 def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, json_body, api_version=API_VERSION,

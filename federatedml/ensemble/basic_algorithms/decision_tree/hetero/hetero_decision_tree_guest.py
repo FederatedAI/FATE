@@ -1,8 +1,7 @@
 import copy
 import functools
-
-from arch.api import session
-from fate_arch.common import log
+from fate_arch.session import computing_session as session
+from federatedml.util import LOGGER
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.decision_tree import DecisionTree
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.node import Node
 from federatedml.feature.fate_element_type import NoneType
@@ -12,8 +11,6 @@ from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import Decisio
 from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_variable import \
     HeteroDecisionTreeTransferVariable
 from federatedml.util import consts
-
-LOGGER = log.getLogger()
 
 
 class HeteroDecisionTreeGuest(DecisionTree):

@@ -2,14 +2,14 @@ from abc import ABC
 import abc
 from federatedml.ensemble.boosting.boosting_core import Boosting
 from federatedml.feature.homo_feature_binning.homo_split_points import HomoFeatureBinningClient, \
-                                                                       HomoFeatureBinningServer
+                                                                      HomoFeatureBinningServer
 from federatedml.util.classify_label_checker import ClassifyLabelChecker, RegressionLabelChecker
 from federatedml.util import consts
 from federatedml.util.homo_label_encoder import HomoLabelEncoderClient, HomoLabelEncoderArbiter
 from federatedml.transfer_variable.transfer_class.homo_boosting_transfer_variable import HomoBoostingTransferVariable
-from typing import List, Tuple
+from typing import List
 from federatedml.feature.fate_element_type import NoneType
-from arch.api.utils import log_utils
+from federatedml.util import LOGGER
 from federatedml.ensemble.boosting.boosting_core.homo_boosting_aggregator import HomoBoostArbiterAggregator, \
     HomoBoostClientAggregator
 from federatedml.optim.convergence import converge_func_factory
@@ -18,9 +18,6 @@ from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.param.feature_binning_param import FeatureBinningParam
-
-
-LOGGER = log_utils.getLogger()
 
 
 class HomoBoostingClient(Boosting, ABC):

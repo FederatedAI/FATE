@@ -16,10 +16,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import functools
 import copy
+import functools
 
-from arch.api.utils import log_utils
 from federatedml.framework.homo.procedure import aggregator
 from federatedml.framework.homo.procedure import paillier_cipher
 from federatedml.linear_model.linear_model_weight import LinearModelWeights as LogisticRegressionWeights
@@ -27,11 +26,10 @@ from federatedml.linear_model.logistic_regression.homo_logsitic_regression.homo_
 from federatedml.model_selection import MiniBatch
 from federatedml.optim.gradient.homo_lr_gradient import LogisticGradient, TaylorLogisticGradient
 from federatedml.protobuf.generated import lr_model_param_pb2
+from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util import fate_operator
 from federatedml.util.io_check import assert_io_num_rows_equal
-
-LOGGER = log_utils.getLogger()
 
 
 class HomoLRHost(HomoLRBase):
@@ -123,14 +121,14 @@ class HomoLRHost(HomoLRBase):
                                       fit_intercept=self.fit_intercept)
                 grad = batch_data.mapPartitions(f).reduce(fate_operator.reduce_add)
                 grad /= n
-                if self.use_proximal: # use additional proximal term 
-                    model_weights = self.optimizer.update_model(model_weights, 
-                                                                grad = grad, 
-                                                                has_applied = False,                                                                
-                                                                prev_round_weights = self.prev_round_weights)
+                if self.use_proximal:  # use additional proximal term
+                    model_weights = self.optimizer.update_model(model_weights,
+                                                                grad=grad,
+                                                                has_applied=False,
+                                                                prev_round_weights=self.prev_round_weights)
                 else:
-                    model_weights = self.optimizer.update_model(model_weights, 
-                                                                grad = grad, 
+                    model_weights = self.optimizer.update_model(model_weights,
+                                                                grad=grad,
                                                                 has_applied=False)
 
                 if self.use_encrypt and batch_num % self.re_encrypt_batches == 0:
@@ -183,7 +181,7 @@ class HomoLRHost(HomoLRBase):
             self.transfer_variable.predict_wx.remote(wx, consts.ARBITER, 0, suffix=suffix)
             predict_result = self.transfer_variable.predict_result.get(idx=0, suffix=suffix)
             predict_result = predict_result.join(data_instances, lambda p, d: [d.label, p, None,
-                                                                                     {"0": None, "1": None}])
+                                                                               {"0": None, "1": None}])
 
         else:
             predict_wx = self.compute_wx(data_instances, self.model_weights.coef_, self.model_weights.intercept_)

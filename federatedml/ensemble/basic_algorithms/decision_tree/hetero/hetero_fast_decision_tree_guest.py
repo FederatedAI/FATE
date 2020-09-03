@@ -1,14 +1,9 @@
 import functools
-
 from federatedml.ensemble.basic_algorithms import HeteroDecisionTreeGuest
 from federatedml.ensemble.boosting.hetero import hetero_fast_secureboost_plan as plan
 from federatedml.util import consts
-
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.node import Node
-
-from arch.api.utils import log_utils
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class HeteroFastDecisionTreeGuest(HeteroDecisionTreeGuest):

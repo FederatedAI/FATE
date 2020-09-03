@@ -17,11 +17,10 @@
 #  limitations under the License.
 
 
-from arch.api.utils import log_utils
-from federatedml.protobuf.generated import feature_selection_param_pb2
 import operator
 
-LOGGER = log_utils.getLogger()
+from federatedml.protobuf.generated import feature_selection_param_pb2
+from federatedml.util import LOGGER
 
 
 class SelectionProperties(object):

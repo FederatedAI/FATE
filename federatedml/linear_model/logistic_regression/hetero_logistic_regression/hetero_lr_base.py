@@ -16,16 +16,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.utils import log_utils
 from federatedml.linear_model.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.optim.gradient.hetero_sqn_gradient import sqn_factory
 from federatedml.param.logistic_regression_param import HeteroLogisticParam
 from federatedml.protobuf.generated import lr_model_meta_pb2
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.transfer_variable.transfer_class.hetero_lr_transfer_variable import HeteroLRTransferVariable
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class HeteroLRBase(BaseLogisticRegression):

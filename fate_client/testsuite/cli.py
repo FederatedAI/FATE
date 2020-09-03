@@ -251,10 +251,10 @@ def _submit_job(clients: Clients, suite: Testsuite):
                 if isinstance(resp, SubmitJobResponse):
                     job_progress.submitted(resp.job_id)
                     echo.file(f"[jobs] {resp.job_id} ", nl=False)
-                    suite.update_status(job_name=job.job_name, job_id=resp.job_id)
+                    suite.update_status(job_name=job.job_name, job_id=resp.job_id, status="submitted")
 
                 if isinstance(resp, QueryJobResponse):
-                    job_progress.running(resp.status, resp.progress, resp.current_tasks)
+                    job_progress.running(resp.status, resp.progress)
 
                 update_bar(0)
 

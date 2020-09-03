@@ -1,3 +1,6 @@
+import functools
+import copy
+import numpy as np
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.util import consts
@@ -6,18 +9,10 @@ from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.model_base import ModelBase
 from federatedml.param.psi_param import PSIParam
-
-import functools
-import copy
-
-import numpy as np
-
-from arch.api.utils import log_utils
-
+from federatedml.util import LOGGER
 from federatedml.protobuf.generated.psi_model_param_pb2 import PsiSummary, FeaturePsi
 from federatedml.protobuf.generated.psi_model_meta_pb2 import PSIMeta
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import abnormal_detection
 
 ROUND_NUM = 6
 
@@ -226,7 +221,11 @@ class PSI(ModelBase):
         header1 = expect_table.schema['header']
         header2 = actual_table.schema['header']
 
-        assert header1 == header2, 'table header must be the same while computing psi values'
+        if not set(header1) == set(header2):
+            raise ValueError('table header must be the same while computing psi values')
+
+        # baseline table should not contain empty columns
+        abnormal_detection.empty_column_detection(expect_table)
 
         self.all_feature_list = header1
 
@@ -311,6 +310,9 @@ class PSI(ModelBase):
         return {'psi_scores': self.total_scores}
 
     def export_model(self):
+
+        if not self.need_run:
+            return None
 
         psi_summary = PsiSummary()
         psi_summary.total_score.update(self.total_scores)

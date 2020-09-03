@@ -163,8 +163,8 @@ class Federation(FederationABC):
                 # initial receive queue, the name is receive-${vhost}
                 self._rabbit_manager.create_queue(names["vhost"], names["receive"])
 
-                host = self._mq.mq_conf.get(party_id).get("host")
-                port = self._mq.mq_conf.get(party_id).get("port")
+                host = self._mq.mq_conf.get(int(party_id)).get("host")
+                port = self._mq.mq_conf.get(int(party_id)).get("port")
 
                 upstream_uri = f"amqp://{self._mq.union_name}:{self._mq.policy_id}@{host}:{port}"
                 self._rabbit_manager.federate_queue(upstream_host=upstream_uri, vhost=names["vhost"],
