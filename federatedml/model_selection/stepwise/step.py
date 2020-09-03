@@ -14,14 +14,13 @@
 #  limitations under the License.
 #
 
-from arch.api.utils import log_utils
-from federatedml.util import consts
-from federatedml.util.data_io import make_schema, set_schema
-
 import copy
+
 import numpy as np
 
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
+from federatedml.util import consts
+from federatedml.util.data_io import make_schema, set_schema
 
 
 class Step(object):

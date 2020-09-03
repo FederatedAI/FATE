@@ -22,7 +22,7 @@
                 "with_label": [true],
                 "label_name": ["y"],
                 "label_type": ["int"],
-                "output_format": ["sparse"]
+                "output_format": ["dense"]
             }
         },
         "host": {
@@ -36,7 +36,7 @@
                 "with_label": [true],
                 "label_name": ["y"],
                 "label_type": ["int"],
-                "output_format": ["sparse"]
+                "output_format": ["dense"]
             }
         }
     },

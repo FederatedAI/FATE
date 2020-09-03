@@ -20,7 +20,6 @@ import functools
 
 from google.protobuf import json_format
 
-from arch.api.utils import log_utils
 from federatedml.feature.feature_selection import filter_factory
 from federatedml.feature.feature_selection.model_adapter.adapter_factory import adapter_factory
 from federatedml.feature.feature_selection.selection_properties import SelectionProperties, CompletedSelectionResults
@@ -30,12 +29,11 @@ from federatedml.protobuf.generated import feature_selection_param_pb2, feature_
 from federatedml.statistic.data_overview import get_header
 from federatedml.transfer_variable.transfer_class.hetero_feature_selection_transfer_variable import \
     HeteroFeatureSelectionTransferVariable
+from federatedml.util import LOGGER
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.util.schema_check import assert_schema_consistent
-
-LOGGER = log_utils.getLogger()
 
 MODEL_PARAM_NAME = 'FeatureSelectionParam'
 MODEL_META_NAME = 'FeatureSelectionMeta'

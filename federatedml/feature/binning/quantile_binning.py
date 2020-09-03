@@ -20,14 +20,11 @@ import copy
 import functools
 import uuid
 
-from arch.api.utils import log_utils
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.quantile_summaries import quantile_summary_factory
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.statistic import data_overview
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class QuantileBinning(BaseBinning):

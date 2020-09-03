@@ -18,7 +18,7 @@
 
 import unittest
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 import numpy as np
 from federatedml.feature.feature_selection.filter_factory import get_filter
 from federatedml.param.feature_selection_param import FeatureSelectionParam

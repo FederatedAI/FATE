@@ -16,7 +16,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.utils import log_utils
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.bin_inner_param import BinInnerParam
 from federatedml.feature.binning.bucket_binning import BucketBinning
@@ -28,12 +27,11 @@ from federatedml.protobuf.generated import feature_binning_meta_pb2, feature_bin
 from federatedml.statistic.data_overview import get_header
 from federatedml.transfer_variable.transfer_class.hetero_feature_binning_transfer_variable import \
     HeteroFeatureBinningTransferVariable
+from federatedml.util import LOGGER
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.util.schema_check import assert_schema_consistent
-
-LOGGER = log_utils.getLogger()
 
 MODEL_PARAM_NAME = 'FeatureBinningParam'
 MODEL_META_NAME = 'FeatureBinningMeta'

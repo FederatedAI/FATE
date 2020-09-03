@@ -17,13 +17,11 @@
 import functools
 from collections import Iterable
 
-from arch.api.utils import log_utils
 from federatedml.statistic import data_overview
 from federatedml.statistic.data_overview import get_header
 from federatedml.statistic.statics import MultivariateStatisticalSummary
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class BaseScale(object):

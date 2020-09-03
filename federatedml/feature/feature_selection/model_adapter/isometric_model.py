@@ -20,9 +20,7 @@ import copy
 
 import numpy as np
 
-from arch.api.utils import log_utils
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class SingleMetricInfo(object):

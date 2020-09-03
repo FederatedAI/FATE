@@ -18,21 +18,19 @@
 #
 import numpy as np
 
-from arch.api import session
-from arch.api.utils import log_utils
+from fate_arch.session import computing_session as session
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 from federatedml.framework.hetero.procedure import batch_generator
 from federatedml.nn.hetero_nn.backend.model_builder import model_builder
 from federatedml.nn.hetero_nn.hetero_nn_base import HeteroNNBase
 from federatedml.optim.convergence import converge_func_factory
+from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import HeteroNNMeta
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import HeteroNNParam
-from federatedml.util import consts
-from federatedml.param.evaluation_param import EvaluateParam
+from federatedml.util import consts, LOGGER
 from federatedml.util.io_check import assert_io_num_rows_equal
 
-LOGGER = log_utils.getLogger()
 MODELMETA = "HeteroNNGuestMeta"
 MODELPARAM = "HeteroNNGuestParam"
 

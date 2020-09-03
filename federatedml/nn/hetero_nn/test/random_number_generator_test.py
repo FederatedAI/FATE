@@ -1,14 +1,14 @@
 from federatedml.nn.hetero_nn.util.random_number_generator import RandomNumberGenerator
 from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
-from arch.api import session
 import numpy as np
+from fate_arch.session import Session
 import random
 import unittest
 
 
 class TestRandomNumberGenerator(unittest.TestCase):
     def setUp(self):
-        session.init(str(random.randint(0, 10000000)), 0)
+        Session.create(0, 0).init_computing(str(random.randint(0, 10000000)))
         self.rng_gen = RandomNumberGenerator()
 
     def test_generate_random_number(self):
@@ -27,5 +27,3 @@ class TestRandomNumberGenerator(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-

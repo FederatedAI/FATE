@@ -14,20 +14,18 @@
 #  limitations under the License.
 #
 
+import copy
 import functools
 
-from arch.api.utils import log_utils
-import copy
-from federatedml.statistic import statics
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.optimal_binning.optimal_binning import OptimalBinning
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
 from federatedml.statistic import data_overview
+from federatedml.statistic import statics
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
@@ -127,7 +125,6 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
     #     return cipher.encrypt(x), cipher.encrypt(1 - x)
     @staticmethod
     def _merge_summary(summary_1, summary_2):
-        import operator
         summary_1['iv'].extend(summary_2['iv'])
         all_ivs = summary_1['iv']
         all_ivs = sorted(all_ivs, key=lambda p: p[1], reverse=True)
@@ -141,7 +138,7 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
         return {"iv": all_ivs,
                 "woe": all_woes,
                 "monotonic": all_monotonic}
-    
+
     @staticmethod
     def encrypt(x, cipher):
         return cipher.encrypt(x)

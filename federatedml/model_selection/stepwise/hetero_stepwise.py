@@ -22,16 +22,14 @@ from google.protobuf.json_format import MessageToDict
 from sklearn import metrics
 from sklearn.linear_model import LogisticRegression, LinearRegression
 
-from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.evaluation.metrics.regression_metric import IC, IC_Approx
 from federatedml.model_selection.stepwise.step import Step
 from federatedml.statistic import data_overview
 from federatedml.transfer_variable.transfer_class.stepwise_transfer_variable import StepwiseTransferVariable
+from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util import fate_operator
-
-LOGGER = log_utils.getLogger()
 
 
 class ModelInfo(object):

@@ -18,11 +18,8 @@
 #
 import copy
 
-from arch.api.utils.log_utils import getLogger
 from federatedml.param.base_param import BaseParam
-from federatedml.util import consts
-
-LOGGER = getLogger()
+from federatedml.util import consts, LOGGER
 
 
 class EncodeParam(BaseParam):
