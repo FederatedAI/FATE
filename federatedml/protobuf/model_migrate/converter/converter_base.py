@@ -1,16 +1,13 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import Dict, Tuple
 
 
 class ProtoConverterBase(ABC):
 
     @abstractmethod
-    def convert(self, model_contents: dict,
-                old_guest_list: List[int],
-                new_guest_list: List[int],
-                old_host_list: List[int],
-                new_host_list: List[int],
-                old_arbiter_list: List[int] = None,
-                new_arbiter_list: List[int] = None,
-                ):
+    def convert(self, param, meta,
+                guest_id_mapping: Dict,
+                host_id_mapping: Dict,
+                arbiter_id_mapping: Dict
+                ) -> Tuple:
         raise NotImplementedError('this interface is not implemented')
