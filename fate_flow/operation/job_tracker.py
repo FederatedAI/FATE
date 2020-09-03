@@ -109,7 +109,7 @@ class Tracker(object):
                 view_data[k] = v
             return view_data
 
-    def save_output_data(self, computing_table, output_storage_engine=None):
+    def save_output_data(self, computing_table, output_storage_engine):
         if computing_table:
             persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(
                 self.task_id), uuid.uuid1().hex
