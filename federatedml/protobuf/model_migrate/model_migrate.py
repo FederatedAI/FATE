@@ -3,11 +3,26 @@ from federatedml.protobuf.model_migrate.converter_factory import converter_facto
 import copy
 
 
-def check_party_ids(new_id_list, old_id_list):
+def generate_id_mapping(old_id, new_id):
 
-    for id0, id1 in zip(new_id_list, old_id_list):
+    if old_id is None and new_id is None:
+        return {}
+    elif not (type(old_id) == list and type(new_id) == list):
+        raise ValueError('illegal input format: id lists type should be list, however got: \n'
+                         'content: {}/ type: {} \n'
+                         'content: {}/ type: {}'.format(old_id, type(old_id), new_id, type(new_id)))
+
+    if len(old_id) != len(new_id):
+        raise ValueError('id lists length does not match: len({}) != len({})'.format(old_id, new_id))
+
+    mapping = {}
+    for id0, id1 in zip(old_id, new_id):
         if type(id0) != int or type(id1) != int:
-            raise ValueError('party id must be an integer')
+            raise ValueError('party id must be an integer, got {}:{} and {}:{}'.format(id0, type(id0),
+                                                                                       id1, type(id1)))
+        mapping[id0] = id1
+
+    return mapping
 
 
 def model_migration(model_contents: dict,
@@ -20,22 +35,15 @@ def model_migration(model_contents: dict,
                     new_arbiter_list=None,
                     ):
 
-    # check
-    check_party_ids(old_guest_list, new_guest_list)
-    check_party_ids(old_host_list, new_host_list)
-    if old_arbiter_list is not None and new_arbiter_list is not None:
-        check_party_ids(old_arbiter_list, new_arbiter_list)
-    else:
-        if not (old_arbiter_list is None and new_arbiter_list is None):
-            raise ValueError('arbiter lists should be all lists or all None')
-
     converter = converter_factory(module_name)
-    if converter is None:
-        raise ValueError('module {} is not found in converter list'.format(module_name))
 
     # replace old id with new id using converter
+    guest_mapping_dict = generate_id_mapping(old_guest_list, new_guest_list)
+    host_mapping_dict = generate_id_mapping(old_host_list, new_host_list)
+    arbiter_mapping_dict = generate_id_mapping(old_arbiter_list, new_arbiter_list)
+
     model_contents_cpy = copy.deepcopy(model_contents)
-    result = converter.convert(model_contents_cpy, old_guest_list, new_guest_list, old_host_list, new_host_list,
-                               old_arbiter_list, new_arbiter_list)
+    result = converter.convert(model_contents_cpy['param'], model_contents_cpy['meta'], guest_mapping_dict,
+                               host_mapping_dict, arbiter_mapping_dict)
 
     return result
