@@ -22,7 +22,7 @@ from fate_flow.pipelined_model import pipelined_model
 from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_arch.common.file_utils import get_project_base_directory
 from fate_flow.utils import model_utils
-from federatedml.protobuf.model_migrate.model_migrate import model_migration
+# from federatedml.protobuf.model_migrate.model_migrate import model_migration
 
 
 def gen_model_file_path(model_id, model_version):
