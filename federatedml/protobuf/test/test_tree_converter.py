@@ -37,5 +37,5 @@ tree_2 = DecisionTreeModelParam(tree_=[NodeParam(sitename='host:9999'), NodePara
 tree_3 = DecisionTreeModelParam()
 
 param.trees_.extend([tree_0, tree_1, tree_2, tree_3])
-rs = model_migration({'param': param, 'meta': None}, 'HeteroSecureBoost', old_guest_list=guest_old,
+rs = model_migration({'HelloParam': param, 'HelloMeta': {}}, 'HeteroSecureBoost', old_guest_list=guest_old,
                      new_guest_list=guest_new, old_host_list=host_old, new_host_list=host_new, )

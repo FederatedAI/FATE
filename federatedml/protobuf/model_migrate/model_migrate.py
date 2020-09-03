@@ -43,7 +43,21 @@ def model_migration(model_contents: dict,
     arbiter_mapping_dict = generate_id_mapping(old_arbiter_list, new_arbiter_list)
 
     model_contents_cpy = copy.deepcopy(model_contents)
-    result = converter.convert(model_contents_cpy['param'], model_contents_cpy['meta'], guest_mapping_dict,
+    keys = model_contents.keys()
+    param, meta = None, None
+    param_key, meta_key = None, None
+    for key in keys:
+        if 'Param' in key:
+            param_key = key
+            param = model_contents_cpy[key]
+        if 'Meta' in key:
+            meta_key = key
+            meta = model_contents_cpy[key]
+
+    if param is None or meta is None:
+        raise ValueError('param or meta is None')
+
+    result = converter.convert(param, meta, guest_mapping_dict,
                                host_mapping_dict, arbiter_mapping_dict)
 
-    return result
+    return {param_key: result[0], meta_key: result[1]}
