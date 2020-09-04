@@ -20,6 +20,7 @@ from arch.api import session
 from arch.api.utils import log_utils
 from federatedml.util import consts
 from federatedml.model_base import ModelBase
+from federatedml.param.column_expand_param import ColumnExpandParam
 from federatedml.protobuf.generated import column_expand_meta_pb2, column_expand_param_pb2
 
 DELIMITER = ", "
@@ -56,6 +57,7 @@ class FeatureGenerator(object):
 class ColumnExpand(ModelBase):
     def __init__(self):
         super(ColumnExpand, self).__init__()
+        self.model_param = ColumnExpandParam()
         self.need_run = None
         self.append_header = None
         self.method = None
@@ -66,6 +68,7 @@ class ColumnExpand(ModelBase):
 
         self.model_param_name = 'ColumnExpandParam'
         self.model_meta_name = 'ColumnExpandMeta'
+
 
     def _init_model(self, params):
         self.model_param = params

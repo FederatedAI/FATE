@@ -1,0 +1,54 @@
+{
+  "initiator": {
+    "role": "guest",
+    "party_id": 10000
+  },
+  "job_parameters": {
+    "work_mode": 0
+  },
+  "role": {
+    "guest": [
+      10000
+    ]
+  },
+  "role_parameters": {
+    "guest": {
+      "args": {
+        "data": {
+          "data": [
+            {
+              "name": "single_label",
+              "namespace": "experiment"
+            }
+          ]
+        }
+      },
+      "column_expand_0": {
+        "need_run": [
+          true
+        ],
+        "method": [
+          "manual"
+        ],
+        "append_header": [
+          ["x0", "x1", "x2", "x3"]
+        ],
+        "fill_value": [
+          [0, 0.2, 0.5, 1]
+        ]
+      },
+      "dataio_0": {
+        "input_format": [
+          "dense"
+        ],
+        "with_label": [
+          true
+        ],
+        "output_format": [
+          "dense"
+        ]
+      }
+    }
+  }
+}
+
