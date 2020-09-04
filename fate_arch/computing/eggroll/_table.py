@@ -17,25 +17,21 @@
 
 import typing
 
-from eggroll.roll_pair.roll_pair import RollPair
-from fate_arch.abc import AddressABC, CTableABC
+from fate_arch.abc import CTableABC
 from fate_arch.common.profile import log_elapsed
 
 
 class Table(CTableABC):
 
-    def __init__(self, rp: RollPair):
+    def __init__(self, rp):
         self._rp = rp
-
-    def _as_federation_format(self):
-        return self._rp
 
     @property
     def partitions(self):
         return self._rp.get_partitions()
 
     @log_elapsed
-    def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
+    def save(self, address, partitions, schema: dict, **kwargs):
         options = kwargs.get("options", {})
         from fate_arch.common.address import EggRollAddress
         if isinstance(address, EggRollAddress):
