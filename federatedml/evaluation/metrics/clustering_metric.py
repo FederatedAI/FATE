@@ -86,7 +86,7 @@ class DistanceMeasure(object):
         return distance_measure_result
 
 
-class Davies_Bouldin_index(object):
+class DaviesBouldinIndex(object):
     """
         Compute dbi，as in dbi
     """
