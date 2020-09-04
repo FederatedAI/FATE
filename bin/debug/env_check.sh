@@ -21,5 +21,5 @@ LogLevel=$EGGROLL_LOG_LEVEL
 export EGGROLL_LOG_LEVEL=INFO
 python env_check.py -p $nodes > result_env.log
 export EGGROLL_LOG_LEVEL=$LogLevel
-
+echo "The check result has saved in $cwd/result_env.log, please check it."
 

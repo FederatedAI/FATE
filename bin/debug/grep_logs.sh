@@ -16,9 +16,11 @@
 #
 cwd=$(cd `dirname $0`; pwd)
 source ./check_iplist.sh
+session=$1
 
 for ip in ${iplist[@]};do
-	mkdir -p $1/$ip
-	scp -r $user@$ip:$EGGROLL_HOME/logs/*$1* $1/$ip
+	mkdir -p $session/$ip
+	scp -r $user@$ip:$EGGROLL_HOME/logs/*$session* $session/$ip
+	echo "The $session logs from $ip has saved in $cwd/$session/$ip, please check it."
 done
 cd $cwd
