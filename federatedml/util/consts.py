@@ -206,3 +206,6 @@ SHA256 = 'sha256'
 INTERSECT_CACHE_TAG = 'Za'
 
 SHARE_INFO_COL_NAME = "share_info"
+
+# column_expand
+MANUAL = 'manual'
