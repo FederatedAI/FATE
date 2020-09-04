@@ -25,7 +25,7 @@ export SPARK_HOME=/data/projects/common/spark/spark-2.4.1-bin-hadoop2.7
 echo "PYTHONPATH: "${PYTHONPATH}
 echo "EGGROLL_HOME: "${EGGROLL_HOME}
 log_dir=${PROJECT_BASE}/logs
-venv=/Users/jarviszeng/Work/common/venv/fate
+venv=/data/projects/fate/common/python/venv
 echo "venv: "${venv}
 
 module=fate_flow_server.py
