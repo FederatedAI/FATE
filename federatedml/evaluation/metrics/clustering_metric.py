@@ -40,7 +40,7 @@ class AdjustedRandScore(object):
         return adjusted_rand_score(labels, pred_scores)
 
 
-class contengincy_matrix(object):
+class ContengincyMatrix(object):
     """
     Compute contengincy_matrix
     """
@@ -56,7 +56,7 @@ class contengincy_matrix(object):
         return result_array
 
 
-class distance_measure(object):
+class DistanceMeasure(object):
     """
     Compute distance_measure
     """

@@ -440,3 +440,19 @@ class MetricInterface(object):
         ## process data from evaluation
 
         return clustering_metric.Davies_Bouldin_index.compute(cluster_avg_intra_dist, cluster_inter_dist)
+
+    @staticmethod
+    def contengincy_matrix(labels, pred_labels):
+        """
+
+        """
+
+        return clustering_metric.ContengincyMatrix.compute(labels, pred_labels)
+
+    @staticmethod
+    def distance_measure(cluster_avg_intra_dist, cluster_inter_dist):
+        """
+
+        """
+
+        return clustering_metric.DistanceMeasure.compute(cluster_avg_intra_dist, cluster_inter_dist)
