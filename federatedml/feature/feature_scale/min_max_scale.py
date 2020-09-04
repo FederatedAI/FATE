@@ -20,10 +20,8 @@ import numpy as np
 from federatedml.protobuf.generated.feature_scale_meta_pb2 import ScaleMeta
 from federatedml.protobuf.generated.feature_scale_param_pb2 import ScaleParam
 from federatedml.protobuf.generated.feature_scale_param_pb2 import ColumnScaleParam
-from arch.api.utils import log_utils
 from federatedml.feature.feature_scale.base_scale import BaseScale
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class MinMaxScale(BaseScale):
@@ -115,7 +113,7 @@ class MinMaxScale(BaseScale):
 
         return transform_data
 
-    def __get_meta(self, need_run):
+    def _get_meta(self, need_run):
         if self.header:
             scale_column = [self.header[i] for i in self.scale_column_idx]
         else:
@@ -134,7 +132,7 @@ class MinMaxScale(BaseScale):
                                    )
         return meta_proto_obj
 
-    def __get_param(self):
+    def _get_param(self):
         min_max_scale_param_dict = {}
         if self.header:
             for i, header in enumerate(self.header):
@@ -146,12 +144,3 @@ class MinMaxScale(BaseScale):
         param_proto_obj = ScaleParam(col_scale_param=min_max_scale_param_dict,
                                      header=self.header)
         return param_proto_obj
-
-    def export_model(self, need_run):
-        meta_obj = self.__get_meta(need_run)
-        param_obj = self.__get_param()
-        result = {
-            self.model_meta_name: meta_obj,
-            self.model_param_name: param_obj
-        }
-        return result

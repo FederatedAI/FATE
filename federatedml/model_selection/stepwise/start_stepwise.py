@@ -16,11 +16,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.utils import log_utils
 from federatedml.model_selection.stepwise.hetero_stepwise import HeteroStepwise
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 def _get_stepwise_param(model):

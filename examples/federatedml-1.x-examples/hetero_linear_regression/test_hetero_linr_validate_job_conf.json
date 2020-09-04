@@ -142,8 +142,8 @@
             "learning_rate": 0.15,
             "decay": 0.0,
             "decay_sqrt": false,
-            "early_stopping_rounds": 3,
-            "validation_freqs": 3,
+            "early_stopping_rounds": 1,
+            "validation_freqs": 5,
             "metrics": [
                 "mean_absolute_error",
                 "root_mean_squared_error"
@@ -154,15 +154,6 @@
             },
             "encrypted_mode_calculator_param": {
                 "mode": "fast"
-            },
-            "cv_param": {
-                "n_splits": 5,
-                "shuffle": false,
-                "random_seed": 103,
-                "need_cv": false,
-                "evaluate_param": {
-                    "eval_type": "regression"
-                }
             }
         }
     }

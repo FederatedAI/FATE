@@ -15,13 +15,10 @@
 #
 import typing
 
-from arch.api.utils import log_utils
 from federatedml.framework.homo.blocks import paillier_cipher
 from federatedml.framework.homo.blocks.paillier_cipher import PaillierCipherTransVar
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.secureprotol.fate_paillier import PaillierPublicKey
-
-LOGGER = log_utils.getLogger()
 
 
 class Host(object):

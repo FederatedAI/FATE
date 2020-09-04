@@ -16,7 +16,6 @@
 
 import numpy as np
 
-from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
@@ -24,9 +23,8 @@ from federatedml.linear_model.logistic_regression.hetero_logistic_regression.het
 from federatedml.optim.gradient import hetero_lr_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.statistic.data_overview import rubbish_clear
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class HeteroLRHost(HeteroLRBase):
@@ -93,7 +91,8 @@ class HeteroLRHost(HeteroLRBase):
 
     def fit_binary(self, data_instances, validate_data):
         self._abnormal_detection(data_instances)
-
+        self.check_abnormal_values(data_instances)
+        self.check_abnormal_values(validate_data)
         self.validation_strategy = self.init_validation_strategy(data_instances, validate_data)
         LOGGER.debug(f"MODEL_STEP Start fin_binary, data count: {data_instances.count()}")
 
@@ -156,12 +155,15 @@ class HeteroLRHost(HeteroLRBase):
                 break
         if self.validation_strategy and self.validation_strategy.has_saved_best_model():
             self.load_model(self.validation_strategy.cur_best_model)
+        self.set_summary(self.get_model_summary())
 
         # LOGGER.debug("Final lr weights: {}".format(self.model_weights.unboxed))
 
     def predict(self, data_instances):
         self.transfer_variable.host_prob.disable_auto_clean()
         LOGGER.info("Start predict ...")
+        self._abnormal_detection(data_instances)
+        data_instances = self.align_data_header(data_instances, self.header)
         if self.need_one_vs_rest:
             self.one_vs_rest_obj.predict(data_instances)
             return

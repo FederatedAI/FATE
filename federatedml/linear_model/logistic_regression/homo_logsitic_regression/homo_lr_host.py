@@ -16,21 +16,20 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import copy
 import functools
 
-from arch.api.utils import log_utils
 from federatedml.framework.homo.procedure import aggregator
 from federatedml.framework.homo.procedure import paillier_cipher
-from federatedml.linear_model.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.linear_model.linear_model_weight import LinearModelWeights as LogisticRegressionWeights
+from federatedml.linear_model.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.model_selection import MiniBatch
 from federatedml.optim.gradient.homo_lr_gradient import LogisticGradient, TaylorLogisticGradient
 from federatedml.protobuf.generated import lr_model_param_pb2
+from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util import fate_operator
 from federatedml.util.io_check import assert_io_num_rows_equal
-
-LOGGER = log_utils.getLogger()
 
 
 class HomoLRHost(HomoLRBase):
@@ -59,6 +58,7 @@ class HomoLRHost(HomoLRBase):
         LOGGER.debug("Start data count: {}".format(data_instances.count()))
 
         self._abnormal_detection(data_instances)
+        self.check_abnormal_values(data_instances)
         self.init_schema(data_instances)
         # validation_strategy = self.init_validation_strategy(data_instances, validate_data)
 
@@ -86,6 +86,7 @@ class HomoLRHost(HomoLRBase):
         LOGGER.debug("Current data count: {}".format(total_data_num))
 
         model_weights = self.model_weights
+        self.prev_round_weights = copy.deepcopy(model_weights)
         degree = 0
         while self.n_iter_ < self.max_iter + 1:
             batch_data_generator = mini_batch_obj.mini_batch_data_generator()
@@ -99,7 +100,7 @@ class HomoLRHost(HomoLRBase):
                 #     weight.unboxed))
                 self.model_weights = LogisticRegressionWeights(weight.unboxed, self.fit_intercept)
                 if not self.use_encrypt:
-                    loss = self._compute_loss(data_instances)
+                    loss = self._compute_loss(data_instances, self.prev_round_weights)
                     self.aggregator.send_loss(loss, degree=degree, suffix=(self.n_iter_,))
                     LOGGER.info("n_iters: {}, loss: {}".format(self.n_iter_, loss))
                 degree = 0
@@ -120,7 +121,15 @@ class HomoLRHost(HomoLRBase):
                                       fit_intercept=self.fit_intercept)
                 grad = batch_data.mapPartitions(f).reduce(fate_operator.reduce_add)
                 grad /= n
-                model_weights = self.optimizer.update_model(model_weights, grad, has_applied=False)
+                if self.use_proximal:  # use additional proximal term
+                    model_weights = self.optimizer.update_model(model_weights,
+                                                                grad=grad,
+                                                                has_applied=False,
+                                                                prev_round_weights=self.prev_round_weights)
+                else:
+                    model_weights = self.optimizer.update_model(model_weights,
+                                                                grad=grad,
+                                                                has_applied=False)
 
                 if self.use_encrypt and batch_num % self.re_encrypt_batches == 0:
                     LOGGER.debug("Before accept re_encrypted_model, batch_iter_num: {}".format(batch_num))
@@ -133,7 +142,25 @@ class HomoLRHost(HomoLRBase):
             # validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
 
+        self.set_summary(self.get_model_summary())
         LOGGER.info("Finish Training task, total iters: {}".format(self.n_iter_))
+
+    def get_model_summary(self):
+        header = self.header
+        if header is None:
+            return {}
+        if not self.use_encrypt:
+            weight_dict, intercept_ = self.get_weight_intercept_dict(header)
+        else:
+            weight_dict = {}
+            intercept_ = None
+        best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
+
+        summary = {"coef": weight_dict,
+                   "intercept": intercept_,
+                   "is_converged": self.is_converged,
+                   "best_iteration": best_iteration}
+        return summary
 
     @assert_io_num_rows_equal
     def predict(self, data_instances):
@@ -141,6 +168,7 @@ class HomoLRHost(HomoLRBase):
         LOGGER.info(f'Start predict task')
         self._abnormal_detection(data_instances)
         self.init_schema(data_instances)
+        data_instances = self.align_data_header(data_instances, self.header)
         suffix = ('predict',)
         pubkey = self.cipher.gen_paillier_pubkey(enable=self.use_encrypt, suffix=suffix)
         if self.use_encrypt:
@@ -153,7 +181,7 @@ class HomoLRHost(HomoLRBase):
             self.transfer_variable.predict_wx.remote(wx, consts.ARBITER, 0, suffix=suffix)
             predict_result = self.transfer_variable.predict_result.get(idx=0, suffix=suffix)
             predict_result = predict_result.join(data_instances, lambda p, d: [d.label, p, None,
-                                                                                     {"0": None, "1": None}])
+                                                                               {"0": None, "1": None}])
 
         else:
             predict_wx = self.compute_wx(data_instances, self.model_weights.coef_, self.model_weights.intercept_)

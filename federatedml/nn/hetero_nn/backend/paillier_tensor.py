@@ -17,11 +17,8 @@
 #  limitations under the License.
 #
 import numpy as np
-
-from arch.api import session
-from arch.api.utils import log_utils
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
+from fate_arch.session import computing_session
 
 
 class PaillierTensor(object):
@@ -29,12 +26,12 @@ class PaillierTensor(object):
         if ori_data is not None:
             self._ori_data = ori_data
             self._partitions = partitions
-            self._obj = session.parallelize(ori_data,
-                                            include_key=False,
-                                            partition=partitions)
+            self._obj = computing_session.parallelize(ori_data,
+                                                      include_key=False,
+                                                      partition=partitions)
         else:
             self._ori_data = None
-            self._partitions = tb_obj._partitions
+            self._partitions = tb_obj.partitions
             self._obj = tb_obj
 
         LOGGER.debug("tensor's partition is {}".format(self._partitions))
@@ -71,6 +68,16 @@ class PaillierTensor(object):
         ret = self.numpy() * _other
 
         return PaillierTensor(ori_data=ret, partitions=max(self.partitions, other.partitions))
+
+    # def element_wise_product(self, other, multiplication='left'):
+    #
+    #     assert multiplication in ['left', 'right']
+    #     if isinstance(other, PaillierTensor):
+    #         return self * other if multiplication == 'left' else other * self
+    #     if isinstance(other, np.ndarray):
+    #         return self * PaillierTensor(ori_data=other) if multiplication == 'left' else PaillierTensor(other) * self
+    #     else:
+    #         raise ValueError('only PaillierTensor and ndarray are supported for element-wise product')
 
     def multiply(self, other):
         if not isinstance(other, PaillierTensor):
@@ -120,6 +127,25 @@ class PaillierTensor(object):
 
             return PaillierTensor(tb_obj=ret_obj)
 
+    # def sum(self, axis=0):
+    #     assert axis < len(self.shape)
+    #     if axis == 0:
+    #         if len(self.shape) == 2:
+    #             return PaillierTensor(ori_data=np.array([self._obj.reduce(lambda t1, t2: t1 + t2)]))
+    #         else:
+    #             return PaillierTensor(ori_data=self._obj.reduce(lambda t1, t2: t1+t2))
+    #     else:
+    #         return PaillierTensor(tb_obj=self._obj.mapValues(lambda x: x.sum(axis=axis-1)))
+
+    def reduce_sum(self):
+        return self._obj.reduce(lambda t1, t2: t1 + t2)
+
+    def map_ndarray_product(self, other):
+        if isinstance(other, np.ndarray):
+            return PaillierTensor(tb_obj=self._obj.mapValues(lambda val: val * other))
+        else:
+            raise ValueError('only support numpy array')
+
     def numpy(self):
         if self._ori_data is not None:
             return self._ori_data
@@ -166,3 +192,34 @@ class PaillierTensor(object):
             lambda mat1, mat2: mat1 + mat2)
 
         return ret_mat
+
+    def matmul_3d(self, other, multiply='left'):
+
+        assert multiply in ['left', 'right']
+        if isinstance(other, PaillierTensor):
+            mat = other
+        elif isinstance(other, np.ndarray):
+            mat = PaillierTensor(ori_data=other, partitions=self.partitions)
+        else:
+            raise ValueError('only support numpy array and Paillier Tensor')
+
+        if multiply == 'left':
+            return PaillierTensor(tb_obj=self._obj.join(mat._obj, lambda val1, val2: np.tensordot(val1, val2, (1, 0))),
+                                  partitions=self._partitions)
+
+        if multiply == 'right':
+            return PaillierTensor(tb_obj=mat._obj.join(self._obj, lambda val1, val2: np.tensordot(val1, val2, (1, 0))),
+                                  partitions=self._partitions)
+
+    def element_wise_product(self, other):
+        if isinstance(other, np.ndarray):
+            mat = PaillierTensor(ori_data=other, partitions=self.partitions)
+        else:
+            mat = other
+        return PaillierTensor(tb_obj=self._obj.join(mat._obj, lambda val1, val2: val1 * val2))
+
+    def squeeze(self, axis):
+        if axis == 0:
+            return PaillierTensor(ori_data=list(self._obj.collect())[0][1], partitions=self.partitions)
+        else:
+            return PaillierTensor(tb_obj=self._obj.mapValues(lambda val: np.squeeze(val, axis=axis - 1)))

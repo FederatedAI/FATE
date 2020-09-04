@@ -19,16 +19,14 @@
 import abc
 import math
 
-from arch.api.utils import log_utils
 from federatedml.feature.feature_selection.filter_base import BaseFilterMethod
 from federatedml.feature.feature_selection.iv_value_select_filter import fit_iv_values
 from federatedml.feature.hetero_feature_binning.base_feature_binning import BaseHeteroFeatureBinning
 from federatedml.framework.hetero.sync import selection_info_sync
 from federatedml.param.feature_selection_param import IVPercentileSelectionParam
 from federatedml.protobuf.generated import feature_selection_meta_pb2
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class IVPercentileFilter(BaseFilterMethod, metaclass=abc.ABCMeta):
@@ -101,11 +99,15 @@ class Guest(IVPercentileFilter):
         thres_idx = int(math.floor(self.percentile_threshold * len(sorted_value) - consts.FLOAT_ZERO))
         return sorted_value[thres_idx]
 
-    def get_meta_obj(self, meta_dicts):
-        result = feature_selection_meta_pb2.IVPercentileSelectionMeta(percentile_threshold=self.percentile_threshold,
-                                                                      local_only=self.local_only)
-        meta_dicts['iv_percentile_meta'] = result
-        return meta_dicts
+    # def get_meta_obj(self, meta_dicts):
+    #     result = feature_selection_meta_pb2.IVPercentileSelectionMeta(percentile_threshold=self.percentile_threshold,
+    #                                                                   local_only=self.local_only)
+    #     meta_dicts['iv_percentile_meta'] = result
+    #     return meta_dicts
+
+    def get_meta_obj(self):
+        result = feature_selection_meta_pb2.FilterMeta()
+        return result
 
 
 class Host(IVPercentileFilter):
@@ -125,7 +127,11 @@ class Host(IVPercentileFilter):
                                           suffix=suffix)
         return self
 
-    def get_meta_obj(self, meta_dicts):
-        result = feature_selection_meta_pb2.IVPercentileSelectionMeta(local_only=self.local_only)
-        meta_dicts['iv_percentile_meta'] = result
-        return meta_dicts
+    # def get_meta_obj(self, meta_dicts):
+    #     result = feature_selection_meta_pb2.IVPercentileSelectionMeta(local_only=self.local_only)
+    #     meta_dicts['iv_percentile_meta'] = result
+    #     return meta_dicts
+
+    def get_meta_obj(self):
+        result = feature_selection_meta_pb2.FilterMeta()
+        return result

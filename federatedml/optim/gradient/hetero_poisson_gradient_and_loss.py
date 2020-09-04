@@ -18,12 +18,9 @@
 
 import numpy as np
 
-from arch.api.utils import log_utils
 from federatedml.framework.hetero.sync import loss_sync
 from federatedml.optim.gradient import hetero_linear_model_gradient
 from federatedml.util.fate_operator import reduce_add, vec_dot
-
-LOGGER = log_utils.getLogger()
 
 
 class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
@@ -81,7 +78,9 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         current_suffix = (n_iter_, batch_index)
         n = data_instances.count()
         guest_wx_y = data_instances.join(offset,
-            lambda v, m: (vec_dot(v.features, model_weights.coef_) + model_weights.intercept_ + m, v.label))
+                                         lambda v, m: (
+                                         vec_dot(v.features, model_weights.coef_) + model_weights.intercept_ + m,
+                                         v.label))
         loss_list = []
         host_wxs = self.get_host_loss_intermediate(current_suffix)
         if loss_norm is not None:
@@ -142,7 +141,8 @@ class Host(hetero_linear_model_gradient.Host, loss_sync.Host):
 
         '''
         current_suffix = (n_iter_, batch_index)
-        self_wx = data_instances.mapValues(lambda v: vec_dot(v.features, model_weights.coef_) + model_weights.intercept_)
+        self_wx = data_instances.mapValues(
+            lambda v: vec_dot(v.features, model_weights.coef_) + model_weights.intercept_)
         en_wx = encrypted_calculator[batch_index].encrypt(self_wx)
         self.remote_loss_intermediate(en_wx, suffix=current_suffix)
 

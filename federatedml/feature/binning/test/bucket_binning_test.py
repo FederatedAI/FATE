@@ -18,8 +18,7 @@ import unittest
 
 import numpy as np
 
-from arch.api import session
-
+from fate_arch.session import computing_session as session
 session.init("123")
 
 from federatedml.feature.binning.bucket_binning import BucketBinning

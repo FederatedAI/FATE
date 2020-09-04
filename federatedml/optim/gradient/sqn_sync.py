@@ -18,10 +18,7 @@
 
 import numpy as np
 
-from arch.api.utils import log_utils
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class SqnSyncBase(object):

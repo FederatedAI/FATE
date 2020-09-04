@@ -25,125 +25,185 @@ FederatedML includes implementation of many common machine learning algorithms o
 Alogorithm List
 ---------------
 
+.. list-table:: Algorithm
+   :widths: 10 10 40 10 10 10 10
+   :header-rows: 1
 
-+------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
-| Algorithm                    | Module Name               | Description           | Data Input | Data Output    | Model Input | Model Output |
-+==============================+===========================+=======================+============+================+=============+==============+
-| `DataIO`_                    | DataIO                    | This component is     | DTable,    | Transformed    |             |              |
-|                              |                           | typically the first   | values are | DTable, values |             |              |
-|                              |                           | component of a        | raw data.  | are data       |             |              |
-|                              |                           | modeling task. It     |            | instance       |             |              |
-|                              |                           | will transform user-  |            | define in f    |             |              |
-|                              |                           | uploaded date into    |            | ederatedml/    |             |              |
-|                              |                           | Instance object which |            | feature/ins    |             |              |
-|                              |                           | can be used for the   |            | tance.py       |             |              |
-|                              |                           | following components. |            |                |             |              |
-+------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
-| `Intersect`_                 | Intersection              | Compute intersect     | DTable     | DTable which   |             |              |
-|                              |                           | data set of two       |            | keys are       |             |              |
-|                              |                           | parties without       |            | occurred in    |             |              |
-|                              |                           | leakage of difference |            | both parties.  |             |              |
-|                              |                           | set information.      |            |                |             |              |
-|                              |                           | Mainly used in hetero |            |                |             |              |
-|                              |                           | scenario task.        |            |                |             |              |
-+------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
-| `Federated Sampling`_        | FederatedSample           | Federated Sampling    | DTable     | the sampled    |             |              |
-|                              |                           | data so that its      |            | data, supports |             |              |
-|                              |                           | distribution become   |            | both random    |             |              |
-|                              |                           | balance in each       |            | and stratified |             |              |
-|                              |                           | party.This module     |            | sampling.      |             |              |
-|                              |                           | support both          |            |                |             |              |
-|                              |                           | federated and         |            |                |             |              |
-|                              |                           | standalone version.   |            |                |             |              |
-+------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
-| `Feature Scale`_             | FeatureScale              | Module for feature    | DTable,    | Transformed    |             | Transform    |
-|                              |                           | scaling and           | whose      | DTable.        |             | factors like |
-|                              |                           | standardization.      | values are |                |             | min/max,     |
-|                              |                           |                       | instances. |                |             | mean/std.    |
-+------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
-| `Hetero Feature Binning`_    | HeteroFeatureBinning      | With binning input    | DTable     | Transformed    |             | iv/woe,      |
-|                              |                           | data, calculates each | with y in  | DTable.        |             | split        |
-|                              |                           | column's iv and woe   | guest and  |                |             | points,      |
-|                              |                           | and transform data    | without y  |                |             | event        |
-|                              |                           | according to the      | in host.   |                |             | counts, non- |
-|                              |                           | binned information.   |            |                |             | event counts |
-|                              |                           |                       |            |                |             | etc. of each |
-|                              |                           |                       |            |                |             | column.      |
-+------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
-| `OneHot Encoder`_            | OneHotEncoder             | Transfer a column     | Input      | Transformed    |             | Original     |
-|                              |                           | into one-hot format.  | DTable.    | DTable with    |             | header and   |
-|                              |                           |                       |            | new headers.   |             | feature      |
-|                              |                           |                       |            |                |             | values to    |
-|                              |                           |                       |            |                |             | new header   |
-|                              |                           |                       |            |                |             | map.         |
-+------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
-| `Hetero Feature Selection`_  | HeteroFeatureSelection    | Provide 5 types of    | Input      | Transformed    | If iv       | Whether left |
-|                              |                           | filters. Each filters | DTable.    | DTable with    | filters     | or not for   |
-|                              |                           | can select columns    |            | new headers    | used, heter | each column. |
-|                              |                           | according to user     |            | and filtered   | o_binning   |              |
-|                              |                           | config.               |            | data instance. | model is    |              |
-|                              |                           |                       |            |                | needed.     |              |
-+------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
-| `Union`_                     | Union                     | Combine multiple data | Input      | one DTable     |             |              |
-|                              |                           | tables into one.      | DTable(s). | with combined  |             |              |
-|                              |                           |                       |            | values from    |             |              |
-|                              |                           |                       |            | input DTables. |             |              |
-+------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
-| `Hetero-LR`_                 | HeteroLR                  | Build hetero logistic | Input      |                |             | Logistic     |
-|                              |                           | regression module     | DTable.    |                |             | Regression   |
-|                              |                           | through multiple      |            |                |             | model.       |
-|                              |                           | parties.              |            |                |             |              |
-+------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
-| `Local Baseline`_            | LocalBaseline             | Wrapper that runs     | Input      |                |             | Logistic     |
-|                              |                           | sklearn Logistic      | DTable.    |                |             | Regression.  |
-|                              |                           | Regression model with |            |                |             | model.       |
-|                              |                           | local data.           |            |                |             |              |
-+------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
-| `Hetero-LinR`_               | HeteroLinR                | Build hetero linear   | Input      | \              | \           | Linear       |
-|                              |                           | regression module     | DTable.    |                |             | Regression   |
-|                              |                           | through multiple      |            |                |             | model.       |
-|                              |                           | parties.              |            |                |             |              |
-+------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
-| `Hetero-Poisson`_            | HeteroPoisson             | Build hetero poisson  | Input      | \              | \           | Poisson      |
-|                              |                           | regression module     | DTable.    |                |             | Regression   |
-|                              |                           | through multiple      |            |                |             | model.       |
-|                              |                           | parties.              |            |                |             |              |
-+------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
-| `Homo-LR`_                   | HomoLR                    | Build homo logistic   | Input      | \              | \           | Logistic     |
-|                              |                           | regression module     | DTable.    |                |             | Regression   |
-|                              |                           | through multiple      |            |                |             | model.       |
-|                              |                           | parties.              |            |                |             |              |
-+------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
-| `Homo-NN`_                   | HomoNN                    | Build homo neural     | Input      | \              | \           | Neural       |
-|                              |                           | network module        | Dtable.    |                |             | Network      |
-|                              |                           | through multiple      |            |                |             | model.       |
-|                              |                           | parties.              |            |                |             |              |
-+------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
-| `Hetero Secure Boosting`_    | HeteroSecureBoost         | Build hetero secure   | DTable,    | \              | \           | SecureBoost  |
-|                              |                           | boosting module       | values are |                |             | Model,       |
-|                              |                           | through multiple      | instances. |                |             | consists of  |
-|                              |                           | parties.              |            |                |             | model-meta   |
-|                              |                           |                       |            |                |             | and model-   |
-|                              |                           |                       |            |                |             | param        |
-+------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
-| `Evaluation`_                | Evaluation                |                       |            |                |             |              |
-+------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
-| `Hetero Pearson`_            | HeteroPearson             |                       |            |                |             |              |
-+------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
-| `Hetero-NN`_                 | HeteroNN                  | Build hetero neural   | Input      | \              | \           | Model        |
-|                              |                           | network module.       | Dtable.    |                |             | Output:      |
-|                              |                           |                       |            |                |             | heero neural |
-|                              |                           |                       |            |                |             | network      |
-|                              |                           |                       |            |                |             | model.       |
-+------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
-| `Homo Secure Boosting`_      | HomoSecureBoost           | Build homo secure     | DTable,    | \              | \           | SecureBoost  |
-|                              |                           | boosting module       | values are |                |             | Model,       |
-|                              |                           | through multiple      | instances. |                |             | consists of  |
-|                              |                           | parties.              |            |                |             | model-meta   |
-|                              |                           |                       |            |                |             | and model-   |
-|                              |                           |                       |            |                |             | param        |
-+------------------------------+---------------------------+-----------------------+------------+----------------+-------------+--------------+
+   * - Algorithm
+     - Module Name
+     - Description
+     - Data Input
+     - Data Output
+     - Model Input
+     - Model Output
 
+   * - `DataIO`_
+     - DataIO
+     - This component is  typically the first component of a modeling task. It will transform user-uploaded date into Instance object which can be used for the following components.
+     - DTable，values are raw data
+     - Transformed DTable, values are data instance define in `federatedml/feature/instance.py`
+     -
+     -
+
+   * - `Intersect`_
+     - Intersection
+     - Compute intersect data set of two parties without leakage of difference set information. Mainly used in hetero scenario task.
+     - DTable
+     - DTable which keys are occurred in both parties
+     -
+     -
+
+   * - `Federated Sampling`_
+     - FederatedSample
+     - Federated Sampling data so that its distribution become balance in each party.This module support both federated and standalone version
+     - DTable
+     - the sampled data, supports both random and stratified sampling.
+     -
+     -
+
+   * - `Feature Scale`_
+     - FeatureScale
+     - Module for feature scaling and standardization.
+     - DTable，DTable, whose values are instances.
+     - Transformed DTable.
+     - Transform factors like min/max, mean/std.
+     -
+
+   * - `Hetero Feature Binning`_
+     - Hetero Feature Binning
+     - With binning input data, calculates each column's iv and woe and transform data according to the binned information.
+     - DTable with y in guest and without y in host.
+     - Transformed DTable.
+     -
+     - iv/woe, split points, event counts, non-event counts etc. of each column.
+
+   * - `OneHot Encoder`_
+     - OneHotEncoder
+     - Transfer a column into one-hot format.
+     - Input DTable.
+     - Transformed DTable with new headers.
+     -
+     - Original header and feature values to new header map.
+
+   * - `Hetero Feature Selection`_
+     - HeteroFeatureSelection
+     - Provide 5 types of filters. Each filters can select columns according to user config
+     - DTable
+     - Transformed DTable with new headers and filtered data instance.
+     - If iv filters used, hetero_binning model is needed.
+     - Whether left or not for each column.
+
+   * - `Union`_
+     - Union
+     - Combine multiple data tables into one.
+     - Input DTable(s).
+     - one DTable with combined values from input DTables.
+     -
+     -
+
+   * - `Hetero-LR`_
+     - HeteroLR
+     - Build hetero logistic regression module through multiple parties.
+     - DTable
+     -
+     -
+     - Logistic Regression model.
+
+   * - `Local Baseline`_
+     - LocalBaseline
+     - Wrapper that runs sklearn Logistic Regression model with local data.
+     - DTable
+     -
+     -
+     -  Logistic Regression.
+
+   * - `Hetero-LinR`_
+     - HeteroLinR
+     - Build hetero linear regression module through multiple parties.
+     - DTable
+     -
+     -
+     - Linear Regression model.
+
+   * - `Hetero-Poisson`_
+     - HeteroPoisson
+     - Build hetero poisson regression module through multiple parties.
+     - Input DTable.
+     -
+     -
+     - Poisson Regression model.
+
+   * - `Homo-LR`_
+     - HomoLR
+     - Build homo logistic regression module through multiple parties.
+     - Input DTable.
+     -
+     -
+     - Logistic Regression Model
+
+   * - `Homo-NN`_
+     - HomoNN
+     - Build homo neural network module through multiple parties.
+     - Input DTable
+     -
+     -
+     - Neural Network model.
+
+   * - `Hetero Secure Boosting`_
+     - HeteroSecureBoost
+     - Build hetero secure boosting module through multiple parties
+     - DTable, values are instances.
+     -
+     -
+     - SecureBoost Model, consists of model-meta and model-param
+
+   * - `Evaluation`_
+     - Evaluation
+     - Output the model evaluation metrics for user.
+     -
+     -
+     -
+     -
+
+   * - `Hetero Pearson`_
+     - HeteroPearson
+     - Calculate hetero correlation of features from different parties.
+     - DTable
+     -
+     -
+     -
+
+   * - `Hetero-NN`_
+     - HeteroNN
+     - Build hetero neural network module.
+     - DTable
+     -
+     -
+     - hetero neural network model.
+
+   * - `Homo Secure Boosting`_
+     - HomoSecureBoost
+     - Build homo secure boosting module through multiple parties
+     - DTable, values are instance.
+     -
+     -
+     - SecureBoost Model, consists of model-meta and model-param
+
+   * - `Homo OneHot Encoder`_
+     - HomoOneHotEncoder
+     - Build homo onehot encoder module through multiple parties.
+     - DTable, values are instance.
+     -
+     -
+     - Homo OneHot Model, consists of model-meta and model-param
+
+   * - `Data Split`_
+     - Data Split
+     - Split one data table into 3 tables by given ratio or count
+     - 3 Tables, values are instance.
+     -
+     -
+     -
 
 
 
@@ -166,29 +226,8 @@ Alogorithm List
 .. _Hetero Pearson: statistic/correlation/README.rst
 .. _Hetero-NN: nn/hetero_nn/README.rst
 .. _Homo Secure Boosting: tree/README.rst
-
-
-
-
-.. toctree::
-   :maxdepth: 2
-
-   util/README
-   statistic/intersect/README
-   feature/README
-   statistic/union/README
-   linear_model/logistic_regression/README
-   local_baseline/README
-   linear_model/linear_regression/README
-   linear_model/poisson_regression/README
-   nn/homo_nn/README
-   tree/README
-   evaluation/README
-   statistic/correlation/README
-   nn/hetero_nn/README
-   model_selection/stepwise/README
-
-
+.. _Data Split: model_selection/data_split/README.rst
+.. _Homo OneHot Encoder: feature/README.rst
 
 
 Secure Protocol
@@ -218,3 +257,12 @@ Secure Protocol
 .. _Encode: secureprotol/README.rst#encode
 .. _Diffne Hellman Key Exchange: secureprotol/README.rst#diffne-hellman-key-exchange
 .. _SecretShare MPC Protocol(SPDZ): secureprotol/README.rst#secretshare-mpc-protocol-spdz
+
+
+
+Params
+-------
+
+.. automodule:: federatedml.param
+   :autosummary:
+   :members:

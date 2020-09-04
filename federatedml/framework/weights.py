@@ -15,15 +15,12 @@
 #
 
 import abc
+import numpy as np
 import operator
 
-import numpy as np
-
-from arch.api.utils import log_utils
-from arch.api.utils.splitable import segment_transfer_enabled
+from fate_arch.federation import segment_transfer_enabled
 from federatedml.secureprotol.encrypt import Encrypt
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class TransferableWeights(metaclass=segment_transfer_enabled()):

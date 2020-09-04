@@ -18,20 +18,18 @@
 
 import functools
 
-from arch.api.utils import log_utils
+from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.linear_model.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.optim import activation
-from federatedml.linear_model.linear_model_weight import LinearModelWeights
 from federatedml.optim.optimizer import optimizer_factory
 from federatedml.param.logistic_regression_param import HomoLogisticParam
 from federatedml.protobuf.generated import lr_model_meta_pb2
 from federatedml.secureprotol import PaillierEncrypt, FakeEncrypt
 from federatedml.statistic import data_overview
 from federatedml.transfer_variable.transfer_class.homo_lr_transfer_variable import HomoLRTransferVariable
+from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util import fate_operator
-
-LOGGER = log_utils.getLogger()
 
 
 class HomoLRBase(BaseLogisticRegression):
@@ -57,6 +55,8 @@ class HomoLRBase(BaseLogisticRegression):
         self.aggregator.register_aggregator(self.transfer_variable)
         self.optimizer = optimizer_factory(params)
         self.aggregate_iters = params.aggregate_iters
+        self.use_proximal = params.use_proximal
+        self.mu = params.mu
 
     @property
     def use_loss(self):
@@ -68,6 +68,7 @@ class HomoLRBase(BaseLogisticRegression):
         """
         convert a probability table into a predicted class table.
         """
+
         # predict_wx = self.compute_wx(data_instances, self.model_weights.coef_, self.model_weights.intercept_)
 
         def predict(x):
@@ -84,16 +85,21 @@ class HomoLRBase(BaseLogisticRegression):
         LOGGER.info("Initialized model shape is {}".format(model_shape))
 
         w = self.initializer.init_model(model_shape, init_params=self.init_param_obj,
-                                                 data_instance=data_instances)
+                                        data_instance=data_instances)
         model_weights = LinearModelWeights(w, fit_intercept=self.fit_intercept)
         return model_weights
 
-    def _compute_loss(self, data_instances):
+    def _compute_loss(self, data_instances, prev_round_weights):
         f = functools.partial(self.gradient_operator.compute_loss,
                               coef=self.model_weights.coef_,
                               intercept=self.model_weights.intercept_)
         loss = data_instances.mapPartitions(f).reduce(fate_operator.reduce_add)
-        loss_norm = self.optimizer.loss_norm(self.model_weights)
+        if self.use_proximal:  # use additional proximal term
+            loss_norm = self.optimizer.loss_norm(self.model_weights,
+                                                 prev_round_weights)
+        else:
+            loss_norm = self.optimizer.loss_norm(self.model_weights)
+
         if loss_norm is not None:
             loss += loss_norm
         loss /= data_instances.count()

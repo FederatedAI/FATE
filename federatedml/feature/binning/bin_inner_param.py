@@ -16,10 +16,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.utils import log_utils
 import copy
 
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
+from federatedml.util import fate_operator
 
 
 class BinInnerParam(object):
@@ -143,23 +143,32 @@ class BinInnerParam(object):
         assert len(self.bin_indexes) == len(self.bin_names)
         return dict(zip(self.bin_names, self.bin_indexes))
 
-    def encode_col_name_dict(self, col_name_dict: dict):
-        return {self.__encode_col_name(x): y for x, y in col_name_dict.items()}
+    def encode_col_name_dict(self, col_name_dict: dict, model):
+        result = {}
+        for x, y in col_name_dict.items():
+            col_index = self.col_name_maps.get(x)
+            result[fate_operator.generate_anonymous(col_index, model=model)] = y
+        return result
 
-    def encode_col_name_list(self, col_name_list: list):
-        return [self.__encode_col_name(x) for x in col_name_list]
+    def encode_col_name_list(self, col_name_list: list, model):
+        result = []
+        for x in col_name_list:
+            col_index = self.col_name_maps.get(x)
+            result.append(fate_operator.generate_anonymous(col_index, model=model))
+        return result
 
-    def __encode_col_name(self, col_name):
-        col_index = self.col_name_maps.get(col_name)
-        if col_index is None:
-            LOGGER.warning("Encoding a non-exist column name")
-            return None
-        return '.'.join(['host', str(col_index)])
+    # def __encode_col_name(self, col_name):
+    #     col_index = self.col_name_maps.get(col_name)
+    #     if col_index is None:
+    #         LOGGER.warning("Encoding a non-exist column name")
+    #         return None
+    #     return '.'.join(['host', str(col_index)])
 
     def decode_col_name(self, encoded_name: str):
-        try:
-            col_index = int(encoded_name.split('.')[1])
-        except IndexError or ValueError:
-            raise RuntimeError("Bin inner param is trying to decode an invalid col_name.")
-        return self.header[col_index]
+        col_index = fate_operator.reconstruct_fid(encoded_name)
 
+        # try:
+        #     col_index = int(encoded_name.split('.')[1])
+        # except IndexError or ValueError:
+        #     raise RuntimeError("Bin inner param is trying to decode an invalid col_name.")
+        return self.header[col_index]

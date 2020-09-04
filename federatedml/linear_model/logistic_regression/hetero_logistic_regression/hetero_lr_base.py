@@ -16,16 +16,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.utils import log_utils
 from federatedml.linear_model.logistic_regression.base_logistic_regression import BaseLogisticRegression
 from federatedml.optim.gradient.hetero_sqn_gradient import sqn_factory
 from federatedml.param.logistic_regression_param import HeteroLogisticParam
 from federatedml.protobuf.generated import lr_model_meta_pb2
 from federatedml.secureprotol import PaillierEncrypt
 from federatedml.transfer_variable.transfer_class.hetero_lr_transfer_variable import HeteroLRTransferVariable
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class HeteroLRBase(BaseLogisticRegression):
@@ -116,3 +114,22 @@ class HeteroLRBase(BaseLogisticRegression):
                                                           fit_intercept=self.fit_intercept,
                                                           need_one_vs_rest=self.need_one_vs_rest)
         return meta_protobuf_obj
+
+    def get_model_summary(self):
+        header = self.header
+        if header is None:
+            return {}
+        weight_dict, intercept_ = self.get_weight_intercept_dict(header)
+        best_iteration = -1 if self.validation_strategy is None else self.validation_strategy.best_iteration
+
+        summary = {"coef": weight_dict,
+                   "intercept": intercept_,
+                   "is_converged": self.is_converged,
+                   "one_vs_rest": self.need_one_vs_rest,
+                   "best_iteration": best_iteration}
+
+        if self.validation_strategy:
+            validation_summary = self.validation_strategy.summary()
+            if validation_summary:
+                summary["validation_metrics"] = validation_summary
+        return summary

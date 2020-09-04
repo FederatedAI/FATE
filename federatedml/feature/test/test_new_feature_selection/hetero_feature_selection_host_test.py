@@ -20,10 +20,13 @@
 import unittest
 
 import numpy as np
-from arch.api import session
+from fate_arch.session import computing_session as session
 from arch.api import federation
+from fate_arch.computing import ComputingType
+from fate_arch.session import Session
 from federatedml.feature.hetero_feature_selection.feature_selection_host import HeteroFeatureSelectionHost
 from federatedml.feature.instance import Instance
+
 np.random.seed(1)
 
 
@@ -103,22 +106,24 @@ class TestHeteroFeatureSelection():
 
 if __name__ == '__main__':
     import sys
+
     job_id = str(sys.argv[1])
 
-    session.init(job_id)
-    federation.init(job_id,
-                    {"local": {
-                        "role": "host",
-                        "party_id": 10000
-                    },
-                        "role": {
-                            "host": [
-                                10000
-                            ],
-                            "guest": [
-                                9999
-                            ]
-                        }
-                    })
-    selection_obj = TestHeteroFeatureSelection()
-    selection_obj.test_feature_selection()
+    with Session() as session:
+        session.init_computing(job_id, computing_type=ComputingType.STANDALONE)
+        session.init_federation(job_id,
+                                runtime_conf={"local": {
+                                    "role": "host",
+                                    "party_id": 10000
+                                },
+                                    "role": {
+                                        "host": [
+                                            10000
+                                        ],
+                                        "guest": [
+                                            9999
+                                        ]
+                                    }
+                                })
+        selection_obj = TestHeteroFeatureSelection()
+        selection_obj.test_feature_selection()

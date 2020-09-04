@@ -16,19 +16,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.utils import log_utils
 from federatedml.feature.feature_selection.filter_base import BaseFilterMethod
-from federatedml.statistic.statics import MultivariateStatisticalSummary
 from federatedml.param.feature_selection_param import OutlierColsSelectionParam
 from federatedml.protobuf.generated import feature_selection_meta_pb2
-
-LOGGER = log_utils.getLogger()
+from federatedml.statistic.statics import MultivariateStatisticalSummary
 
 
 class OutlierFilter(BaseFilterMethod):
     """
     Filter the columns if coefficient of variance is less than a threshold.
     """
+
     def __init__(self, filter_param: OutlierColsSelectionParam):
         super().__init__(filter_param)
         self.statics_obj = None
@@ -54,8 +52,12 @@ class OutlierFilter(BaseFilterMethod):
         self._keep_one_feature(pick_high=True)
         return self
 
-    def get_meta_obj(self, meta_dicts):
-        result = feature_selection_meta_pb2.OutlierColsSelectionMeta(percentile=self.percentile,
-                                                                     upper_threshold=self.upper_threshold)
-        meta_dicts['outlier_meta'] = result
-        return meta_dicts
+    # def get_meta_obj(self, meta_dicts):
+    #     result = feature_selection_meta_pb2.OutlierColsSelectionMeta(percentile=self.percentile,
+    #                                                                  upper_threshold=self.upper_threshold)
+    #     meta_dicts['outlier_meta'] = result
+    #     return meta_dicts
+
+    def get_meta_obj(self):
+        result = feature_selection_meta_pb2.FilterMeta()
+        return result

@@ -14,16 +14,15 @@
 #  limitations under the License.
 #
 
-from arch.api.utils import log_utils
 from fate_flow.entity.metric import MetricMeta
 from federatedml.feature.feature_scale.min_max_scale import MinMaxScale
 from federatedml.feature.feature_scale.standard_scale import StandardScale
 from federatedml.model_base import ModelBase
 from federatedml.param.scale_param import ScaleParam
 from federatedml.util import consts
+from federatedml.util import LOGGER
 from federatedml.util.io_check import assert_io_num_rows_equal
-
-LOGGER = log_utils.getLogger()
+from federatedml.util.schema_check import assert_schema_consistent
 
 
 class Scale(ModelBase):
@@ -75,6 +74,11 @@ class Scale(ModelBase):
             self.callback_meta(metric_name="scale", metric_namespace="train",
                                metric_meta=MetricMeta(name="scale", metric_type="SCALE",
                                                       extra_metas={"method": self.model_param.method}))
+            
+            LOGGER.info("start to get model summary ...")
+            self.set_summary(self.scale_obj.get_model_summary())
+            LOGGER.info("Finish getting model summary.")
+
         else:
             fit_data = data
 
@@ -82,6 +86,7 @@ class Scale(ModelBase):
         return fit_data
 
     @assert_io_num_rows_equal
+    @assert_schema_consistent
     def transform(self, data, fit_config=None):
         """
         Transform input data using scale with fit results
@@ -114,6 +119,7 @@ class Scale(ModelBase):
             self.callback_meta(metric_name="scale", metric_namespace="train",
                                metric_meta=MetricMeta(name="scale", metric_type="SCALE",
                                                       extra_metas={"method": self.model_param.method}))
+
         else:
             transform_data = data
 

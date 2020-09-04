@@ -1,19 +1,11 @@
-import numpy as np
-
+import copy
 import sys
 
+import numpy as np
+import pandas as pd
+from sklearn.metrics import accuracy_score
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
-from sklearn.metrics import accuracy_score
-
-from arch.api import session
-from federatedml.feature.instance import Instance
-from federatedml.feature.sparse_vector import SparseVector
-
-import copy
-
-import pandas as pd
-
 
 ROUND_NUM = 6
 
@@ -35,26 +27,18 @@ def sort_score_and_label(labels: np.ndarray, pred_scores: np.ndarray):
     return sorted_labels, sorted_scores
 
 
-def map_ndarray_to_dtable(arr, partitions=10):
-
-    instances = [Instance(features=SparseVector(indices=[0], data=[arr[i]])) for i in arr]
-    dt = session.parallelize(instances, partition=partitions)
-    dt.schema['header'] = ['scores']
-
-    return dt
-
-
 class ConfusionMatrix(object):
 
     @staticmethod
-    def compute(sorted_labels: list, sorted_pred_scores: list, score_thresholds: list, ret: list):
+    def compute(sorted_labels: list, sorted_pred_scores: list, score_thresholds: list, ret: list, pos_label=1):
 
         for ret_type in ret:
             assert ret_type in ['tp', 'tn', 'fp', 'fn']
 
         sorted_labels = np.array(sorted_labels)
-        sorted_scores = sorted_pred_scores
-
+        sorted_scores = np.array(sorted_pred_scores)
+        sorted_labels[sorted_labels != pos_label] = 0
+        sorted_labels[sorted_labels == pos_label] = 1
         score_thresholds = np.array([score_thresholds]).transpose()
         pred_labels = (sorted_scores > score_thresholds) + 0
 
@@ -135,7 +119,8 @@ class KS(object):
 
         score_threshold, cuts = ThresholdCutter.cut_by_index(sorted_scores)
 
-        confusion_mat = ConfusionMatrix.compute(sorted_labels, sorted_scores, score_threshold, ret=['tp', 'fp'])
+        confusion_mat = ConfusionMatrix.compute(sorted_labels, sorted_scores, score_threshold, ret=['tp', 'fp'],
+                                                pos_label=pos_label)
 
         pos_num, neg_num = neg_pos_count(sorted_labels, pos_label=pos_label)
 
@@ -157,10 +142,11 @@ class KS(object):
 
 class BiClassMetric(object):
 
-    def __init__(self, cut_method='step', remove_duplicate=False):
+    def __init__(self, cut_method='step', remove_duplicate=False, pos_label=1):
         assert cut_method in ['step', 'quantile']
         self.cut_method = cut_method
         self.remove_duplicate = remove_duplicate  # available when cut_method is quantile
+        self.pos_label = pos_label
 
     def prepare_confusion_mat(self, labels, scores, add_to_end=True, ):
         sorted_labels, sorted_scores = sort_score_and_label(labels, scores)
@@ -178,12 +164,12 @@ class BiClassMetric(object):
             score_threshold = list(np.flip(score_threshold))
 
         confusion_mat = ConfusionMatrix.compute(sorted_labels, sorted_scores, score_threshold,
-                                                ret=['tp', 'fp', 'fn', 'tn'])
+                                                ret=['tp', 'fp', 'fn', 'tn'], pos_label=self.pos_label)
 
         return confusion_mat, score_threshold, cuts
 
-    def compute(self, labels, scores,):
-        confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(labels, scores)
+    def compute(self, labels, scores, ):
+        confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(labels, scores,)
         metric_scores = self.compute_metric_from_confusion_mat(confusion_mat)
         return list(metric_scores), score_threshold, cuts
 
@@ -232,9 +218,9 @@ class Lift(BiClassMetric):
 
         return lift_x_type, lift_y_type
 
-    def compute(self, labels, pred_scores):
+    def compute(self, labels, pred_scores, pos_label=1):
 
-        confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(labels, pred_scores, add_to_end=False)
+        confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(labels, pred_scores, add_to_end=False, )
 
         lifts_y, lifts_x = self.compute_metric_from_confusion_mat(confusion_mat, len(labels),)
 
@@ -288,9 +274,9 @@ class Gain(BiClassMetric):
 
         return gain_x_type, gain_y_type
 
-    def compute(self, labels, pred_scores):
+    def compute(self, labels, pred_scores, pos_label=1):
 
-        confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(labels, pred_scores, add_to_end=False)
+        confusion_mat, score_threshold, cuts = self.prepare_confusion_mat(labels, pred_scores, add_to_end=False, )
 
         gain_y, gain_x = self.compute_metric_from_confusion_mat(confusion_mat, len(labels))
 
@@ -400,14 +386,14 @@ class FScore(object):
     Compute F score from bi-class confusion mat
     """
     @staticmethod
-    def compute(labels, pred_scores, beta=1):
+    def compute(labels, pred_scores, beta=1, pos_label=1):
 
         sorted_labels, sorted_scores = sort_score_and_label(labels, pred_scores)
         score_threshold, cuts = ThresholdCutter.cut_by_step(sorted_scores, steps=0.01)
         score_threshold.append(0)
         confusion_mat = ConfusionMatrix.compute(sorted_labels, sorted_scores,
-                                                                      score_threshold,
-                                                                      ret=['tp', 'fp', 'fn', 'tn'])
+                                                score_threshold,
+                                                ret=['tp', 'fp', 'fn', 'tn'], pos_label=pos_label)
 
         precision_computer = BiClassPrecision()
         recall_computer = BiClassRecall()

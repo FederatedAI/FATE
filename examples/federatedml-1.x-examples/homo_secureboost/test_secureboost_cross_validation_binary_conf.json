@@ -26,12 +26,6 @@
                             "name": "breast_homo_guest",
                             "namespace": "experiment"
                         }
-                    ],
-                    "eval_data": [
-                        {
-                            "name": "homo_breast_test",
-                            "namespace": "experiment"
-                        }
                     ]
                 }
             },
@@ -56,12 +50,6 @@
                     "train_data": [
                         {
                             "name": "breast_homo_host",
-                            "namespace": "experiment"
-                        }
-                    ],
-                    "eval_data": [
-                        {
-                            "name": "homo_breast_test",
                             "namespace": "experiment"
                         }
                     ]
@@ -99,7 +87,6 @@
                 "objective": "cross_entropy"
             },
             "predict_param": {
-                "with_proba": true,
                 "threshold": 0.5
             },
             "cv_param": {

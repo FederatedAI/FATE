@@ -20,12 +20,12 @@ import copy
 import functools
 import math
 import operator
+import time
 import uuid
 
 import numpy as np
 
-from arch.api import session
-from arch.api.utils import log_utils
+from fate_arch.session import computing_session as session
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.bucket_binning import BucketBinning
 from federatedml.feature.binning.optimal_binning import bucket_info
@@ -34,9 +34,8 @@ from federatedml.feature.binning.quantile_binning import QuantileBinningTool
 from federatedml.param.feature_binning_param import FeatureBinningParam, OptimalBinningParam
 from federatedml.statistic import data_overview
 from federatedml.statistic import statics
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class OptimalBinning(BaseBinning):
@@ -116,6 +115,7 @@ class OptimalBinning(BaseBinning):
 
         bucket_dict = dict()
         for col_name, sps in init_split_points.items():
+
             # bucket_list = [bucket_info.Bucket(idx, self.adjustment_factor, right_bound=sp)
             #                for idx, sp in enumerate(sps)]
             bucket_list = []
@@ -131,6 +131,8 @@ class OptimalBinning(BaseBinning):
                 bucket_list.append(bucket)
             bucket_list[-1].set_right_neighbor(None)
             bucket_dict[col_name] = bucket_list
+            LOGGER.debug(f"col_name: {col_name}, length of sps: {len(sps)}, "
+                         f"length of list: {len(bucket_list)}")
 
         convert_func = functools.partial(self.convert_data_to_bucket,
                                          split_points=init_split_points,
@@ -140,10 +142,15 @@ class OptimalBinning(BaseBinning):
                                          get_bin_num_func=self.get_bin_num)
         bucket_table = data_instances.mapPartitions2(convert_func)
         bucket_table = bucket_table.reduce(self.merge_bucket_list, key_func=lambda key: key[1])
+        for k, v in bucket_table.items():
+            LOGGER.debug(f"[feature] {k}, length of list: {len(v)}")
+
         LOGGER.debug("bucket_table: {}, length: {}".format(type(bucket_table), len(bucket_table)))
         bucket_table = [(k, v) for k, v in bucket_table.items()]
         LOGGER.debug("bucket_table: {}, length: {}".format(type(bucket_table), len(bucket_table)))
-        bucket_table = session.parallelize(bucket_table, include_key=True, partition=data_instances._partitions)
+
+        bucket_table = session.parallelize(bucket_table, include_key=True, partition=data_instances.partitions)
+
         return bucket_table
 
     @staticmethod
@@ -204,7 +211,7 @@ class OptimalBinning(BaseBinning):
 
     @staticmethod
     def merge_optimal_binning(bucket_list, optimal_param: OptimalBinningParam, sample_count):
-
+        t0 = time.time()
         max_item_num = math.floor(optimal_param.max_bin_pct * sample_count)
         min_item_num = math.ceil(optimal_param.min_bin_pct * sample_count)
         bucket_dict = {idx: bucket for idx, bucket in enumerate(bucket_list)}
@@ -452,7 +459,7 @@ class OptimalBinning(BaseBinning):
                      "min_heap size: {}".format(non_mixture_num, small_size_num, min_heap.size))
 
         LOGGER.debug("Before return, dick length: {}".format(len(bucket_dict)))
-
+        LOGGER.info(f"Consume time: {time.time() - t0}")
         return bucket_res, non_mixture_num, small_size_num
 
     @staticmethod

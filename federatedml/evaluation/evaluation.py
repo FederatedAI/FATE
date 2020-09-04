@@ -95,7 +95,7 @@ class Evaluation(ModelBase):
 
         split_result = defaultdict(list)
         for value in data:
-            mode = value[1][4]
+            mode = value[1][-1]
             split_result[mode].append(value)
 
         return split_result
@@ -134,10 +134,12 @@ class Evaluation(ModelBase):
         true_cluster_index, predicted_cluster_index = [], []
         intra_cluster_avg_dist, inter_cluster_dist = [], []
         run_intra_metrics = False  # run intra metrics or outer metrics ?
-
+        LOGGER.debug('data is {}'.format(data))
         if len(data[0][1]) == 2:
+            LOGGER.debug('len is 2')
             # [int int] -> [true_label, predicted label] -> outer metric
             # [int np.array] - > [predicted label, distance] -> need no metric computation
+            LOGGER.debug('type is {} {}'.format(type(data[0][1][0]), type(data[0][1][1])))
             if not (type(data[0][1][0]) == int and type(data[0][1][1]) == int):
                 return None, None, run_intra_metrics
 
@@ -149,8 +151,8 @@ class Evaluation(ModelBase):
                 intra_cluster_avg_dist.append(d[1][1])
                 inter_cluster_dist.append(d[1][2])
             else:
-                true_cluster_index.append(d[1][1])
-                predicted_cluster_index.append(d[1][2])
+                true_cluster_index.append(d[1][0])
+                predicted_cluster_index.append(d[1][1])
 
         return (true_cluster_index, predicted_cluster_index, run_intra_metrics) if not run_intra_metrics else \
                (intra_cluster_avg_dist, inter_cluster_dist, run_intra_metrics)
@@ -192,17 +194,19 @@ class Evaluation(ModelBase):
 
         eval_result = defaultdict(list)
         rs0, rs1, run_outer_metric = self._clustering_extract(data)
-
         if rs0 is None and rs1 is None:  # skip evaluation computation of this input format
+            LOGGER.debug('skip computing, this clustering format is not for metric computation')
             return eval_result
 
         for eval_metric in self.metrics:
 
             # if input format and required metrics matches ? XNOR
-            if (eval_metric in self.clustering_intra_metric_list and run_outer_metric) + \
-               (not (eval_metric in self.clustering_intra_metric_list) and not run_outer_metric):
-                raise ValueError('input data format does not match current clustering metric {}'.format(eval_metric))
+            if not((not (eval_metric in self.clustering_intra_metric_list) and not run_outer_metric) + \
+               ((eval_metric in self.clustering_intra_metric_list) and run_outer_metric)):
+                LOGGER.warning('input data format does not match current clustering metric: {}'.format(eval_metric))
+                continue
 
+            LOGGER.debug('clustering_metrics is {}'.format(eval_metric))
             res = getattr(self.metric_interface, eval_metric)(rs0, rs1)
             eval_result[eval_metric].append(mode)
             eval_result[eval_metric].append(res)
@@ -215,6 +219,7 @@ class Evaluation(ModelBase):
         if self.eval_type != consts.CLUSTERING:
             eval_result = self._evaluate_classification_and_regression_metrics(mode, data)
         elif self.eval_type == consts.CLUSTERING:
+            LOGGER.debug('running clustering')
             eval_result = self._evaluate_clustering_metrics(mode, data)
 
         return eval_result
@@ -223,13 +228,15 @@ class Evaluation(ModelBase):
 
         if len(data) <= 0:
             return
-
+        LOGGER.debug('running eval')
         self.eval_results.clear()
         for (key, eval_data) in data.items():
+            LOGGER.debug('key is {}, eval data is {}'.format(key, eval_data))
             eval_data_local = list(eval_data.collect())
             if len(eval_data_local) == 0:
                 continue
             split_data_with_label = self.split_data_with_type(eval_data_local)
+            LOGGER.debug('split data is {}'.format(split_data_with_label))
             for mode, data in split_data_with_label.items():
                 eval_result = self.evaluate_metrics(mode, data)
                 self.eval_results[key].append(eval_result)
@@ -488,6 +495,17 @@ class Evaluation(ModelBase):
         self.tracker.set_metric_meta(metric_namespace, metric_name,
                                      MetricMeta(name=metric_name, metric_type=metric.upper(), extra_metas=extra_metas))
 
+    def __save_contingency_matrix(self, metric, metric_res, metric_name, metric_namespace):
+        pass
+
+    def __save_distance_measure(self, metric, metric_res, metric_name, metric_namespace):
+
+        extra_metas = {}
+
+        self.tracker.set_metric_meta(metric_namespace, metric_name,
+                                     MetricMeta(name=metric_name, metric_type=metric.upper(), extra_metas=extra_metas))
+
+
     def callback_metric_data(self, return_single_val_metrics=False):
 
         collect_dict = {}
@@ -553,6 +571,12 @@ class Evaluation(ModelBase):
                     elif metric == consts.QUANTILE_PR:
                         LOGGER.debug('pr quantile called')
                         self.__save_pr_table(metric, metric_res, metric_name, metric_namespace)
+
+                    elif metric == consts.CONTINGENCY_MATRIX:
+                        pass
+
+                    elif metric == consts.DISTANCE_MEASURE:
+                        pass
 
         if return_single_val_metrics:
             if len(self.validate_metric) != 0:

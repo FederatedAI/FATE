@@ -13,12 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils import log_utils
-from fate_flow.entity.constant_config import ModelStorage
-from fate_flow.manager.model_manager import redis_model_storage, mysql_model_storage
+from fate_arch.common import log
+from fate_flow.entity.types import ModelStorage
+from fate_flow.pipelined_model import mysql_model_storage, redis_model_storage
 from fate_flow.components.component_base import ComponentBase
 
-LOGGER = log_utils.getLogger()
+LOGGER = log.getLogger()
 
 
 ModelStorageClassMap = {

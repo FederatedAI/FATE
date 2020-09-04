@@ -122,10 +122,7 @@
                 "n_splits": 5,
                 "shuffle": false,
                 "random_seed": 103,
-                "need_cv": false,
-                "evaluate_param": {
-                    "eval_type": "binary"
-                }
+                "need_cv": false
             }
         },
         "intersect_0": {

@@ -27,25 +27,11 @@
                  "data": ["train"]
              }
          },
-        "feature_scale_0": {
-            "module": "FeatureScale",
-            "input": {
-                "data": {
-                    "data": [
-                        "intersection_0.train"
-                    ]
-                }
-            },
-            "output": {
-                "data": ["train"],
-                "model": ["feature_scale"]
-            }
-        },
         "hetero_poisson_0": {
             "module": "HeteroPoisson",
             "input": {
                 "data": {
-                    "train_data": ["feature_scale_0.train"]
+                    "train_data": ["intersection_0.train"]
                 }
             },
             "output": {

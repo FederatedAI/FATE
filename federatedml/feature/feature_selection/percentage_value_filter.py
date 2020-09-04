@@ -16,17 +16,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.utils import log_utils
+import functools
+import math
+import operator
+
+from federatedml.feature.fate_element_type import NoneType
 from federatedml.feature.feature_selection.filter_base import BaseFilterMethod
 from federatedml.param.feature_selection_param import PercentageValueParam
 from federatedml.protobuf.generated import feature_selection_meta_pb2
 from federatedml.statistic.data_overview import is_sparse_data
-from federatedml.feature.fate_element_type import NoneType
-import operator
-import math
-import functools
-
-LOGGER = log_utils.getLogger()
 
 
 class PercentageValueFilter(BaseFilterMethod):
@@ -200,7 +198,11 @@ class PercentageValueFilter(BaseFilterMethod):
 
         return result
 
-    def get_meta_obj(self, meta_dicts):
-        result = feature_selection_meta_pb2.PercentageValueFilterMeta(upper_pct=self.upper_pct)
-        meta_dicts['pencentage_value_meta'] = result
-        return meta_dicts
+    # def get_meta_obj(self, meta_dicts):
+    #     result = feature_selection_meta_pb2.PercentageValueFilterMeta(upper_pct=self.upper_pct)
+    #     meta_dicts['pencentage_value_meta'] = result
+    #     return meta_dicts
+
+    def get_meta_obj(self):
+        result = feature_selection_meta_pb2.FilterMeta()
+        return result

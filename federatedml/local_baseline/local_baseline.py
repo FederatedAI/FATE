@@ -16,25 +16,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.utils import log_utils
-from arch.api import session
-
 import copy
+
+import numpy as np
+from sklearn.linear_model import LogisticRegression
 
 from federatedml.model_base import ModelBase
 from federatedml.param.local_baseline_param import LocalBaselineParam
-from federatedml.protobuf.generated import lr_model_meta_pb2
-from federatedml.protobuf.generated import lr_model_param_pb2
+from federatedml.protobuf.generated import lr_model_meta_pb2, lr_model_param_pb2
 from federatedml.statistic import data_overview
+from federatedml.util import LOGGER
 from federatedml.util import abnormal_detection
 from federatedml.util.io_check import assert_io_num_rows_equal
-
-from sklearn.linear_model import LogisticRegression
-
-import numpy as np
-
-LOGGER = log_utils.getLogger()
-session.init("baseline")
 
 
 class LocalBaseline(ModelBase):
@@ -54,6 +47,7 @@ class LocalBaseline(ModelBase):
     def _init_model(self, params):
         self.model_name = params.model_name
         self.model_opts = params.model_opts
+        self.predict_param = params.predict_param
         self.model = None
         self.model_fit = None
         self.header = None
@@ -67,13 +61,13 @@ class LocalBaseline(ModelBase):
 
     def _get_model_param(self):
         model = self.model_fit
-        n_iter = model.n_iter_[0]
-        is_converged = n_iter < model.max_iter
+        n_iter = int(model.n_iter_[0])
+        is_converged = bool(n_iter < model.max_iter)
 
         coef = model.coef_[0]
-        LOGGER.debug(f"model coef len {coef.shape[0]}, value: {coef}")
-        weight_dict = dict(zip(self.header, list(coef)))
-        LOGGER.debug(f"model weight dict {weight_dict}")
+        #LOGGER.debug(f"model coef len {coef.shape[0]}, value: {coef}")
+        weight_dict = dict(zip(self.header, [float(i) for i in coef]))
+        #LOGGER.debug(f"model weight dict {weight_dict}")
         # intercept is in array format if fit_intercept
         intercept = model.intercept_[0] if model.fit_intercept else model.intercept_
 
@@ -88,8 +82,8 @@ class LocalBaseline(ModelBase):
 
     def _get_model_param_ovr(self):
         model = self.model_fit
-        n_iter = model.n_iter_[0]
-        is_converged = n_iter < model.max_iter
+        n_iter = int(model.n_iter_[0])
+        is_converged = bool(n_iter < model.max_iter)
         classes = model.classes_
         coef_all = model.coef_
         intercept_all = model.intercept_
@@ -122,7 +116,7 @@ class LocalBaseline(ModelBase):
 
     def _get_param(self):
         header = self.header
-        LOGGER.debug("In get_param, header: {}".format(header))
+        #LOGGER.debug("In get_param, header: {}".format(header))
         if header is None:
             param_protobuf_obj = lr_model_param_pb2.LRModelParam()
             return param_protobuf_obj
@@ -134,18 +128,20 @@ class LocalBaseline(ModelBase):
             result = self._get_model_param()
             param_protobuf_obj = lr_model_param_pb2.LRModelParam(**result)
 
-        LOGGER.debug("in _get_param, result: {}".format(result))
+        #LOGGER.debug("in _get_param, result: {}".format(result))
 
         return param_protobuf_obj
 
     def _get_meta(self):
         model = self.model_fit
+        predict_param = lr_model_meta_pb2.PredictMeta(**{"threshold": self.predict_param.threshold})
         result = {'penalty': model.penalty,
                   'tol': model.tol,
                   'fit_intercept': model.fit_intercept,
                   'optimizer': model.solver,
                   'need_one_vs_rest': self.need_one_vs_rest,
-                  'max_iter': model.max_iter
+                  'max_iter': model.max_iter,
+                  'predict_param': predict_param
                   }
         meta_protobuf_obj = lr_model_meta_pb2.LRModelMeta(**result)
 
@@ -162,30 +158,63 @@ class LocalBaseline(ModelBase):
         }
         return result
 
+    def get_model_summary(self):
+        header = self.header
+        if header is None:
+            return {}
+        if not self.need_one_vs_rest:
+            param = self._get_model_param()
+            summary = {
+                'coef': param['weight'],
+                'intercept': param['intercept'],
+                'is_converged': param['is_converged'],
+                'iters': param['iters'],
+                'one_vs_rest': False
+            }
+        else:
+            model = self.model_fit
+            n_iter = int(model.n_iter_[0])
+            is_converged = bool(n_iter < model.max_iter)
+            classes = model.classes_
+            coef_all = model.coef_
+            intercept_all = model.intercept_
+            summary = {}
+
+            for i, label in enumerate(classes):
+                coef = coef_all[i,]
+                weight_dict = dict(zip(self.header, [float(i) for i in coef]))
+                intercept = float(intercept_all[i]) if model.fit_intercept else float(intercept_all)
+                single_summary = {
+                    'coef': weight_dict,
+                    'intercept': intercept,
+                    'is_converged': is_converged,
+                    'iters': n_iter
+                    }
+                single_key = f"{label}"
+                summary[single_key] = single_summary
+                summary['one_vs_rest'] = True
+        return summary
+
     @assert_io_num_rows_equal
     def predict(self, data_instances):
         if not self.need_run:
             return
         model_fit = self.model_fit
         classes = [int(x) for x in model_fit.classes_]
-        pred_label = data_instances.mapValues(lambda v: model_fit.predict(v.features[None,:])[0])
-        pred_prob = data_instances.mapValues(lambda v: model_fit.predict_proba(v.features[None,:])[0])
+        if self.need_one_vs_rest:
+            pred_prob = data_instances.mapValues(lambda v: model_fit.predict_proba(v.features[None, :])[0])
 
-        predict_result = data_instances.mapValues(lambda x: x.label)
-        predict_result = predict_result.join(pred_prob, lambda x, y: (x, y))
-        if len(classes) > 2:
-            predict_result = predict_result.join(pred_label, lambda x, y: [x[0], int(y), x[1][classes.index(y)],
-                                                                           dict(zip(classes, list(x[1])))])
         else:
-            predict_result = predict_result.join(pred_label, lambda x, y: [x[0], int(y), x[1][1],
-                                                                           dict(zip(classes, list(x[1])))])
-
+            pred_prob = data_instances.mapValues(lambda v: model_fit.predict_proba(v.features[None, :])[0][1])
+        predict_result = self.predict_score_to_output(data_instances=data_instances, predict_score=pred_prob,
+                                                      classes=classes, threshold=self.predict_param.threshold)
         return predict_result
 
     def fit(self, data_instances, validate_data=None):
         if not self.need_run:
             return
         # check if empty table
+        LOGGER.info("Enter Local Baseline fit")
         abnormal_detection.empty_table_detection(data_instances)
         abnormal_detection.empty_feature_detection(data_instances)
         # get model
@@ -201,3 +230,4 @@ class LocalBaseline(ModelBase):
 
         self.model_fit = model.fit(X, y)
         self.need_one_vs_rest = len(self.model_fit.classes_) > 2
+        self.set_summary(self.get_model_summary())

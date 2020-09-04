@@ -18,16 +18,14 @@ from collections import Iterable
 import gmpy2
 import random
 
-from arch.api import session
-from arch.api.utils import log_utils
+from fate_arch.session import computing_session as session
 from federatedml.secureprotol import gmpy_math
 from federatedml.statistic.intersect import RawIntersect
 from federatedml.statistic.intersect import RsaIntersect
-from federatedml.statistic.intersect.rsa_cache import cache_utils
+#from federatedml.statistic.intersect.rsa_cache import cache_utils
 from federatedml.util import consts
+from federatedml.util import LOGGER
 from federatedml.transfer_variable.transfer_class.rsa_intersect_transfer_variable import RsaIntersectTransferVariable
-
-LOGGER = log_utils.getLogger()
 
 
 class RsaIntersectionGuest(RsaIntersect):

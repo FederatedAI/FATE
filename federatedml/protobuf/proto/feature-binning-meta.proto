@@ -36,4 +36,5 @@ message FeatureBinningMeta {
     double adjustment_factor = 7;
     bool local_only = 8;
     TransformMeta transform_param = 9;
+    bool skip_static = 11;
 }

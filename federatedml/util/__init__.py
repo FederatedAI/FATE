@@ -13,3 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
+from federatedml.util._log import LOGGER
+
+__all__ = ["LOGGER"]

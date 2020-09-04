@@ -13,8 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api import session
-from arch.api.utils import log_utils
+from fate_arch.session import computing_session as session
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.feature.instance import Instance
 from federatedml.model_base import ModelBase
@@ -25,8 +24,7 @@ from federatedml.statistic.intersect.repeat_id_process import RepeatedIDIntersec
 from federatedml.transfer_variable.transfer_class.intersection_func_transfer_variable import \
     IntersectionFuncTransferVariable
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class IntersectModelBase(ModelBase):
@@ -82,7 +80,10 @@ class IntersectModelBase(ModelBase):
         self.intersection_obj.guest_party_id = self.guest_party_id
         self.intersection_obj.host_party_id_list = self.host_party_id_list
 
-    def __share_info(self, data: session.table) -> session.table:
+    def get_model_summary(self):
+        return {"intersect_num": self.intersect_num, "intersect_rate": self.intersect_rate}
+
+    def __share_info(self, data):
         LOGGER.info("Start to share information with another role")
         info_share = self.transfer_variable.info_share_from_guest if self.model_param.info_owner == consts.GUEST else \
             self.transfer_variable.info_share_from_host
@@ -150,6 +151,8 @@ class IntersectModelBase(ModelBase):
         if self.intersect_ids:
             self.intersect_num = self.intersect_ids.count()
             self.intersect_rate = self.intersect_num * 1.0 / data.count()
+
+        self.set_summary(self.get_model_summary())
 
         self.callback_metric(metric_name=self.metric_name,
                              metric_namespace=self.metric_namespace,

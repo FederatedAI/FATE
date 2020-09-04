@@ -1,6 +1,5 @@
 {
   "module_path": "federatedrec/svdpp/hetero_svdpp",
-  "default_runtime_conf": "svdpp_param.json",
   "param_class": "federatedrec/param/svdpp_param.py/HeteroSVDppParam",
   "role": {
     "guest": {

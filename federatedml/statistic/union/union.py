@@ -14,16 +14,13 @@
 #  limitations under the License.
 #
 
-from arch.api.utils import log_utils
-from arch.api import session
-
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.feature.instance import Instance
-from federatedml.param.union_param import UnionParam
 from federatedml.model_base import ModelBase
+from federatedml.param.union_param import UnionParam
 from federatedml.statistic import data_overview
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
+from federatedml.util.schema_check import assert_schema_consistent
 
 
 class Union(ModelBase):
@@ -58,13 +55,9 @@ class Union(ModelBase):
         return result
 
     def check_id(self, local_table, combined_table):
-        if not self.is_data_instance:
-            local_sid_name = local_table.get_meta("sid")
-            combined_sid_name = combined_table.get_meta("sid")
-        else:
-            local_schema, combined_schema = local_table.schema, combined_table.schema
-            local_sid_name = local_schema.get("sid")
-            combined_sid_name = combined_schema.get("sid")
+        local_schema, combined_schema = local_table.schema, combined_table.schema
+        local_sid_name = local_schema.get("sid")
+        combined_sid_name = combined_schema.get("sid")
         if local_sid_name != combined_sid_name:
             raise ValueError(f"Id names {local_sid_name} and {combined_sid_name} do not match! Please check id column names.")
 
@@ -84,13 +77,9 @@ class Union(ModelBase):
                                  "Please check label column names.")
 
     def check_header(self, local_table, combined_table):
-        if not self.is_data_instance:
-            local_header = local_table.get_meta("header")
-            combined_header = combined_table.get_meta("header")
-        else:
-            local_schema, combined_schema = local_table.schema, combined_table.schema
-            local_header = local_schema.get("header")
-            combined_header = combined_schema.get("header")
+        local_schema, combined_schema = local_table.schema, combined_table.schema
+        local_header = local_schema.get("header")
+        combined_header = combined_schema.get("header")
         if local_header != combined_header:
             raise ValueError("Table headers do not match! Please check header.")
 
@@ -100,10 +89,13 @@ class Union(ModelBase):
         if len(data_instance.features) != self.feature_count:
             raise ValueError("Feature length {} mismatch with header length {}.".format(len(data_instance.features), self.feature_count))
 
-    def check_is_data_instance(self, table):
+    @staticmethod
+    def check_is_data_instance(table):
         entry = table.first()
-        self.is_data_instance = isinstance(entry[1], Instance)
+        is_data_instance = isinstance(entry[1], Instance)
+        return is_data_instance
 
+    @assert_schema_consistent
     def fit(self, data):
         LOGGER.debug(f"fit receives data is {data}")
         if not isinstance(data, dict):
@@ -118,26 +110,35 @@ class Union(ModelBase):
             num_data = local_table.count()
             LOGGER.debug("table count: {}".format(num_data))
             metrics.append(Metric(key, num_data))
+            self.add_summary(key, num_data)
 
             if num_data == 0:
                 LOGGER.warning("Table {} is empty.".format(key))
+                if combined_table is None:
+                    combined_table = local_table
+                    combined_schema = local_table.schema
                 empty_count += 1
                 continue
+
+            local_is_data_instance = self.check_is_data_instance(local_table)
             if combined_table is None:
-                self.check_is_data_instance(local_table)
+                self.is_data_instance = local_is_data_instance
+            LOGGER.debug(f"self.is_data_instance is {self.is_data_instance}, "
+                         f"local_is_data_instance is {local_is_data_instance}")
+            if self.is_data_instance != local_is_data_instance:
+                raise ValueError(f"Cannot combine DataInstance and non-DataInstance object. Union aborted.")
+
             if self.is_data_instance:
                 self.is_empty_feature = data_overview.is_empty_feature(local_table)
                 if self.is_empty_feature:
                     LOGGER.warning("Table {} has empty feature.".format(key))
+                else:
+                    self.check_schema_content(local_table.schema)
 
             if combined_table is None:
                 # first table to combine
                 combined_table = local_table
-                if self.is_data_instance:
-                    combined_schema = combined_table.schema
-                else:
-                    combined_metas = combined_table.get_metas()
-
+                combined_schema = local_table.schema
             else:
                 self.check_id(local_table, combined_table)
                 self.check_label_name(local_table, combined_table)
@@ -150,12 +151,7 @@ class Union(ModelBase):
 
                 combined_table = combined_table.union(local_table, self._keep_first)
 
-                if self.is_data_instance:
-                    combined_table.schema = combined_schema
-                else:
-                    combined_metas["namespace"] = combined_table.get_namespace()
-                    session.save_data_table_meta(combined_metas, combined_table.get_name(),
-                                                 combined_table.get_namespace())
+                combined_table.schema = combined_schema
 
             # only check feature length if not empty
             if self.is_data_instance and not self.is_empty_feature:
@@ -163,13 +159,13 @@ class Union(ModelBase):
                 LOGGER.debug("feature count: {}".format(self.feature_count))
                 combined_table.mapValues(self.check_feature_length)
 
-
         if combined_table is None:
             num_data = 0
             LOGGER.warning("All tables provided are empty or have empty features.")
         else:
             num_data = combined_table.count()
         metrics.append(Metric("Total", num_data))
+        self.add_summary("Total", num_data)
 
         self.callback_metric(metric_name=self.metric_name,
                              metric_namespace=self.metric_namespace,
@@ -179,10 +175,12 @@ class Union(ModelBase):
                                      metric_meta=MetricMeta(name=self.metric_name, metric_type=self.metric_type))
 
         LOGGER.info("Union operation finished. Total {} empty tables encountered.".format(empty_count))
-        # if not self.is_data_instance:
-        #   LOGGER.debug(f"output dtable's metas is {combined_table.get_metas()}")
+
         return combined_table
 
     def check_consistency(self):
         pass
+
+    def obtain_data(self, data_list):
+        return data_list
 

@@ -21,15 +21,13 @@
 #
 ################################################################################
 
-from arch.api.utils import log_utils
+from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.evaluation.evaluation import Evaluation
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.evaluation.performance_recorder import PerformanceRecorder
 from federatedml.transfer_variable.transfer_class.validation_strategy_transfer_variable import  \
     ValidationStrategyVariable
-
-LOGGER = log_utils.getLogger()
 
 
 class ValidationStrategy(object):
@@ -69,6 +67,7 @@ class ValidationStrategy(object):
         self.use_first_metric_only = use_first_metric_only
         self.first_metric = None
         self.best_iteration = -1
+        self._evaluation_summary = {}
 
         if early_stopping_rounds is not None:
             if early_stopping_rounds <= 0:
@@ -167,6 +166,17 @@ class ValidationStrategy(object):
         else:
             return None
 
+    def summary(self):
+        return self._evaluation_summary
+
+    def update_metric_summary(self, metric_dict):
+        if len(self._evaluation_summary) == 0:
+            self._evaluation_summary = {metric_name: [] for metric_name in metric_dict}
+
+        for metric_name in metric_dict:
+            epoch_metric = metric_dict[metric_name]
+            self._evaluation_summary[metric_name].append(epoch_metric)
+
     def evaluate(self, predicts, model, epoch):
 
         evaluate_param: EvaluateParam = model.get_metrics_param()
@@ -197,12 +207,34 @@ class ValidationStrategy(object):
         data_set_name = self.make_data_set_name(model.need_cv, model.flowid,  epoch)
         eval_data = {data_set_name: predicts}
         eval_result_dict = eval_obj.fit(eval_data, return_result=True)
+        epoch_summary = eval_obj.summary()
+        self.update_metric_summary(epoch_summary)
         eval_obj.save_data()
         LOGGER.debug("end to eval")
 
         return eval_result_dict
 
-    def evaluate_data(self, model, epoch, data, data_type):
+    @staticmethod
+    def add_data_type(predicts, data_type: str):
+        """
+        predict data add data_type
+        """
+        predicts = predicts.mapValues(lambda value: value + [data_type])
+        return predicts
+
+    def handle_precompute_scores(self, precompute_scores, data_type):
+
+        if self.mode == consts.HETERO and self.role == consts.HOST:
+            return None
+        if self.role == consts.ARBITER:
+            return None
+
+        LOGGER.debug('using precompute scores')
+
+        return self.add_data_type(precompute_scores, data_type)
+
+    def get_predict_result(self, model, epoch, data, data_type: str):
+
         if not data:
             return
 
@@ -219,21 +251,47 @@ class ValidationStrategy(object):
         elif self.mode == consts.HETERO and self.role == consts.HOST:
             pass
         else:
-            predicts = predicts.mapValues(lambda value: value + [data_type])
+            predicts = self.add_data_type(predicts, data_type)
 
         return predicts
 
-    def validate(self, model, epoch):
+    def validate(self, model, epoch,
+                 use_precomputed_train=False,
+                 use_precomputed_validate=False,
+                 train_scores=None,
+                 validate_scores=None):
+
+        """
+        :param model: model instance, which has predict function
+        :param epoch: int, epoch idx for generating flow id
+        :param use_precomputed_validate: bool, use precomputed train scores or not, if True, check validate_scores
+        :param use_precomputed_train: bool, use precomputed validate scores or not, if True, check train_scores
+        :param validate_scores: dtable, key is sample id, value is a list contains precomputed predict scores.
+                                             once offered, skip calling
+                                             model.predict(self.validate_data) and use this as validate_predicts
+        :param train_scores: dtable, key is sample id, value is a list contains precomputed predict scores.
+                                             once offered, skip calling
+                                             model.predict(self.train_data) and use this as validate_predicts
+        :return:
+        """
 
         LOGGER.debug("begin to check validate status, need_run_validation is {}".format(self.need_run_validation(epoch)))
+
         if not self.need_run_validation(epoch):
             return
 
         if self.mode == consts.HOMO and self.role == consts.ARBITER:
             return
 
-        train_predicts = self.evaluate_data(model, epoch, self.train_data, "train")
-        validate_predicts = self.evaluate_data(model, epoch, self.validate_data, "validate")
+        if not use_precomputed_train:  # call model.predict()
+            train_predicts = self.get_predict_result(model, epoch, self.train_data, "train")
+        else:  # use precomputed scores
+            train_predicts = self.handle_precompute_scores(train_scores, 'train')
+
+        if not use_precomputed_validate:  # call model.predict()
+            validate_predicts = self.get_predict_result(model, epoch, self.validate_data, "validate")
+        else:  # use precomputed scores
+            validate_predicts = self.handle_precompute_scores(validate_scores, 'validate')
 
         if train_predicts is not None or validate_predicts is not None:
 
@@ -241,6 +299,7 @@ class ValidationStrategy(object):
             if validate_predicts:
                 predicts = predicts.union(validate_predicts)
 
+            # running evaluation
             eval_result_dict = self.evaluate(predicts, model, epoch)
             LOGGER.debug('showing eval_result_dict here')
             LOGGER.debug(eval_result_dict)

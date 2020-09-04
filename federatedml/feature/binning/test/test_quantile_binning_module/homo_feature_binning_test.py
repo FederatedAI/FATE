@@ -20,8 +20,9 @@ import argparse
 
 import numpy as np
 
-from arch.api import federation
-from arch.api import session
+from fate_arch.session import computing_session as session
+from fate_arch.computing import ComputingType
+from fate_arch.session import Session
 from federatedml.feature.homo_feature_binning import homo_split_points
 from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
@@ -41,7 +42,8 @@ class TestHomoFeatureBinning():
         self.args = None
         self.table_list = []
 
-    def _gen_data(self, data_num, feature_num, partition, expect_split_points, is_sparse=False, use_random=False):
+    def _gen_data(self, data_num, feature_num, partition,
+                  expect_split_points, is_sparse=False, use_random=False):
         data = []
         shift_iter = 0
         header = [str(i) for i in range(feature_num)]
@@ -113,6 +115,29 @@ class TestHomoFeatureBinning():
 
         return
 
+    def test_query_quantiles(self, is_sparse=False):
+        if self.role == consts.ARBITER:
+            binning_obj = homo_split_points.HomoFeatureBinningServer()
+        else:
+            binning_obj = homo_split_points.HomoFeatureBinningClient()
+
+        guest_split_points = (1, 2, 3)
+        host_split_points = [(4, 5, 6), (7, 8, 9), (10, 11, 12)]
+
+        if self.role == GUEST:
+            data_inst = self._gen_data(1000, 10, 16, expect_split_points=guest_split_points,
+                                       is_sparse=is_sparse, use_random=True)
+        elif self.role == ARBITER:
+            data_inst = None
+        else:
+            host_idx = host_id_list.index(self.party_id)
+            data_inst = self._gen_data(1000, 10, 16,
+                                       expect_split_points=host_split_points[host_idx],
+                                       is_sparse=is_sparse,
+                                       use_random=True)
+        query_points = binning_obj.query_quantile_points(data_inst, 0.2)
+        print(query_points)
+
     def tearDown(self):
         for table in self.table_list:
             table.destroy()
@@ -132,23 +157,26 @@ if __name__ == '__main__':
     own_party_id = args.pid
     role = args.role
     print("args: {}".format(args))
-    session.init(job_id)
-    federation.init(job_id,
-                    {"local": {
-                        "role": role,
-                        "party_id": own_party_id
-                    },
-                        "role": {
-                            "host": [str(x) for x in host_id_list],
-                            "guest": [
-                                '9999'
-                            ],
-                            "arbiter": ['9998']
-                        }
-                    })
 
-    test_obj = TestHomoFeatureBinning(role, own_party_id)
-    # homo_obj.test_homo_lr()
-    test_obj.test_homo_split_points()
-    test_obj.test_homo_split_points(is_sparse=True)
-    test_obj.tearDown()
+    with Session() as session:
+        session.init_computing(job_id, computing_type=ComputingType.STANDALONE)
+        session.init_federation(job_id,
+                                runtime_conf={"local": {
+                                    "role": role,
+                                    "party_id": own_party_id
+                                },
+                                    "role": {
+                                        "host": [str(x) for x in host_id_list],
+                                        "guest": [
+                                            '9999'
+                                        ],
+                                        "arbiter": ['9998']
+                                    }
+                                })
+
+        test_obj = TestHomoFeatureBinning(role, own_party_id)
+        # homo_obj.test_homo_lr()
+        test_obj.test_query_quantiles()
+        # test_obj.test_homo_split_points()
+        # test_obj.test_homo_split_points(is_sparse=True)
+        test_obj.tearDown()

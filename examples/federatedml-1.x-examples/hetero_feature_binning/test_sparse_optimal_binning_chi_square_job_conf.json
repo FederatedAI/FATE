@@ -36,9 +36,6 @@
                 "input_format": [
                     "tag"
                 ],
-                "with_value": [
-                    true
-                ],
                 "label_type": [
                     "int"
                 ],

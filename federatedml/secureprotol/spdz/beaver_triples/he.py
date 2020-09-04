@@ -15,7 +15,7 @@
 #
 import numpy as np
 
-from arch.api.base.table import Table
+from fate_arch.session import is_table
 from federatedml.secureprotol.spdz.communicator import Communicator
 from federatedml.secureprotol.spdz.utils.random_utils import rand_tensor, urand_tensor
 
@@ -24,7 +24,7 @@ def encrypt_tensor(tensor, public_key):
     encrypted_zero = public_key.encrypt(0)
     if isinstance(tensor, np.ndarray):
         return np.vectorize(lambda e: encrypted_zero + e)(tensor)
-    elif isinstance(tensor, Table):
+    elif is_table(tensor):
         return tensor.mapValues(lambda x: np.vectorize(lambda e: encrypted_zero + e)(x))
     else:
         raise NotImplementedError(f"type={type(tensor)}")
@@ -33,7 +33,7 @@ def encrypt_tensor(tensor, public_key):
 def decrypt_tensor(tensor, private_key, otypes):
     if isinstance(tensor, np.ndarray):
         return np.vectorize(private_key.decrypt, otypes)(tensor)
-    elif isinstance(tensor, Table):
+    elif is_table(tensor):
         return tensor.mapValues(lambda x: np.vectorize(private_key.decrypt, otypes)(x))
     else:
         raise NotImplementedError(f"type={type(tensor)}")
