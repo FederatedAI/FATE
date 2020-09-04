@@ -495,6 +495,17 @@ class Evaluation(ModelBase):
         self.tracker.set_metric_meta(metric_namespace, metric_name,
                                      MetricMeta(name=metric_name, metric_type=metric.upper(), extra_metas=extra_metas))
 
+    def __save_contingency_matrix(self, metric, metric_res, metric_name, metric_namespace):
+        pass
+
+    def __save_distance_measure(self, metric, metric_res, metric_name, metric_namespace):
+
+        extra_metas = {}
+
+        self.tracker.set_metric_meta(metric_namespace, metric_name,
+                                     MetricMeta(name=metric_name, metric_type=metric.upper(), extra_metas=extra_metas))
+
+
     def callback_metric_data(self, return_single_val_metrics=False):
 
         collect_dict = {}
@@ -560,6 +571,12 @@ class Evaluation(ModelBase):
                     elif metric == consts.QUANTILE_PR:
                         LOGGER.debug('pr quantile called')
                         self.__save_pr_table(metric, metric_res, metric_name, metric_namespace)
+
+                    elif metric == consts.CONTINGENCY_MATRIX:
+                        pass
+
+                    elif metric == consts.DISTANCE_MEASURE:
+                        pass
 
         if return_single_val_metrics:
             if len(self.validate_metric) != 0:

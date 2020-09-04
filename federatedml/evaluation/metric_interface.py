@@ -441,7 +441,7 @@ class MetricInterface(object):
         return clustering_metric.DaviesBouldinIndex().compute(cluster_avg_intra_dist, cluster_inter_dist)
 
     @staticmethod
-    def contengincy_matrix(labels, pred_labels):
+    def contingency_matrix(labels, pred_labels):
         """
 
         """
