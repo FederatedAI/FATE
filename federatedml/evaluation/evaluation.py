@@ -474,6 +474,36 @@ class Evaluation(ModelBase):
         self.tracker.set_metric_meta(metric_namespace, metric_name,
                                      MetricMeta(name=metric_name, metric_type=metric.upper(), extra_metas=extra_metas))
 
+    def __save_contingency_matrix(self, metric, metric_res, metrics_name, metric_namespace):
+
+        true_labels = np.array([0, 1, ])
+        cluster_labels = np.array([0, 1, 2, 3])
+        display_contents = np.array([[10, 10, 10, 10],
+                                     [10, 10, 10, 10]])
+        extra_meta = {
+            'true_labels': list(true_labels),
+            'cluster_labels': list(cluster_labels),
+            'display_contents': list(display_contents)
+        }
+
+        self.tracker.set_metric_meta(metric_namespace, metrics_name, MetricMeta(name=metrics_name,
+                                                                                metric_type=metric.upper(),
+                                                                                extra_metas=extra_meta))
+
+    def __save_distance_measure(self, metric, metric_res, metrics_name, metric_namespace):
+
+        cluster_label, nearest_label, max_radius = [], [], []
+
+        extra_metas = {
+            'cluster_label': cluster_label,
+            'nearest_label': nearest_label,
+            'max_radius': max_radius
+        }
+
+        self.tracker.set_metric_meta(metric_namespace, metrics_name, MetricMeta(name=metrics_name,
+                                                                                metric_type=metric.upper(),
+                                                                                extra_metas=extra_metas))
+
     def __save_psi_table(self, metric, metric_res, metric_name, metric_namespace):
 
         psi_scores, total_psi, expected_interval, expected_percentage, actual_interval, actual_percentage, \
