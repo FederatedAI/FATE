@@ -251,25 +251,6 @@ class TrackingOutputDataInfo(DataBaseModel):
     f_description = TextField(null=True, default='')
 
 
-class MachineLearningModelMeta(DataBaseModel):
-    f_id = BigIntegerField(primary_key=True)
-    f_role = CharField(max_length=50, index=True)
-    f_party_id = CharField(max_length=10, index=True)
-    f_roles = TextField()
-    f_job_id = CharField(max_length=25)
-    f_model_id = CharField(max_length=100, index=True)
-    f_model_version = CharField(max_length=100, index=True)
-    f_loaded_times = IntegerField(default=0)
-    f_size = BigIntegerField(default=0)
-    f_create_time = BigIntegerField(default=0)
-    f_update_time = BigIntegerField(default=0)
-    f_description = TextField(null=True, default='')
-    # f_tag = CharField(max_length=50, null=True, index=True, default='')
-
-    class Meta:
-        db_table = "t_machine_learning_model_meta"
-
-
 class MachineLearningModelInfo(DataBaseModel):
     f_id = BigAutoField(primary_key=True)
     f_role = CharField(max_length=50, index=True)

@@ -264,6 +264,7 @@ class ResourceManager(object):
         return update_status, remaining_cores, remaining_memory
 
     @classmethod
+    @DB.connection_context()
     def get_backend_registration_info(cls, engine_type, engine_id):
         engines = BackendEngine.select().where(BackendEngine.f_engine_type == engine_type, BackendEngine.f_engine_id == engine_id)
         if engines:
