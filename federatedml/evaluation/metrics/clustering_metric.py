@@ -22,7 +22,7 @@ class JaccardSimilarityScore(object):
         return jaccard_similarity_score(labels, pred_scores)
 
 
-class fowlkes_mallows_score(object):
+class FowlkesMallowsScore(object):
     """
     Compute fowlkes_mallows_score, as in FMI
     """
@@ -40,7 +40,7 @@ class AdjustedRandScore(object):
         return adjusted_rand_score(labels, pred_scores)
 
 
-class Davies_Bouldin_index(object):
+class DaviesBouldinIndex(object):
     """
         Compute dbi，as in dbi
     """

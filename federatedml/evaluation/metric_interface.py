@@ -396,7 +396,7 @@ class MetricInterface(object):
             A positive floating point value
         """
 
-        return clustering_metric.JaccardSimilarityScore.compute(labels, pred_labels)
+        return clustering_metric.JaccardSimilarityScore().compute(labels, pred_labels)
 
     @staticmethod
     def fowlkes_mallows_score(labels, pred_labels):
@@ -412,7 +412,7 @@ class MetricInterface(object):
             A positive floating point value
         """
 
-        return clustering_metric.FowlkesMallowsScore.compute(labels, pred_labels)
+        return clustering_metric.FowlkesMallowsScore().compute(labels, pred_labels)
 
     @staticmethod
     def adjusted_rand_score(labels, pred_labels):
@@ -428,7 +428,7 @@ class MetricInterface(object):
             A positive floating point value
         """
 
-        return clustering_metric.AdjustedRandScore.compute(labels, pred_labels)
+        return clustering_metric.AdjustedRandScore().compute(labels, pred_labels)
 
     @staticmethod
     def davies_bouldin_index(cluster_avg_intra_dist, cluster_inter_dist):
@@ -439,4 +439,4 @@ class MetricInterface(object):
         """
         ## process data from evaluation
 
-        return clustering_metric.Davies_Bouldin_index.compute(cluster_avg_intra_dist, cluster_inter_dist)
+        return clustering_metric.DaviesBouldinIndex().compute(cluster_avg_intra_dist, cluster_inter_dist)
