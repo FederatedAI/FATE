@@ -40,7 +40,7 @@ class AdjustedRandScore(object):
         return adjusted_rand_score(labels, pred_scores)
 
 
-class ContingencyMatrix(object):
+class ContengincyMatrix(object):
     """
     Compute contengincy_matrix
     """
@@ -86,7 +86,7 @@ class DistanceMeasure(object):
         return distance_measure_result
 
 
-class DaviesBouldinIndex(object):
+class Davies_Bouldin_index(object):
     """
         Compute dbi，as in dbi
     """
