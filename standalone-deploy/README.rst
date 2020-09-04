@@ -36,11 +36,11 @@ possibility of encountering problems.
    ::
 
       #Get code
-      wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.4.3.tar.gz
-      tar -xzvf docker_standalone-fate-1.4.3.tar.gz
+      wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.4.4.tar.gz
+      tar -xzvf docker_standalone-fate-1.4.4.tar.gz
 
       #Execute the command
-      cd docker_standalone-fate-1.4.3
+      cd docker_standalone-fate-1.4.4
       bash install_standalone_docker.sh
 
 
@@ -98,14 +98,14 @@ Http://hostip:8080.
 
    ::
 
-      wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.4.3.tar.gz
-      tar -xzvf  standalone-fate-master-1.4.3.tar.gz
+      wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.4.4.tar.gz
+      tar -xzvf  standalone-fate-master-1.4.4.tar.gz
 
 3. Enter FATE directory and execute the init.sh.
 
    ::
 
-      cd standalone-fate-master-1.4.3
+      cd standalone-fate-master-1.4.4
       source init.sh init
 
 4. Test
@@ -114,7 +114,7 @@ Http://hostip:8080.
 
    ::
 
-      cd standalone-fate-master-1.4.3
+      cd standalone-fate-master-1.4.4
       bash ./federatedml/test/run_test.sh
 
    If success,  the screen shows like blow:
@@ -127,7 +127,7 @@ Http://hostip:8080.
 
    ::
 
-        cd standalone-fate-master-1.4.3
+        cd standalone-fate-master-1.4.4
         python ./examples/toy_example/run_toy_example.py 10000 10000 0
 
    If success,  the screen shows like blow:
