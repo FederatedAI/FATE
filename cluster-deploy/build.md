@@ -13,7 +13,7 @@
 
 ## 3. Build
 ```bash
-git clone https://github.com/FederatedAI/FATE.git -b v1.4.3 --depth=1
+git clone https://github.com/FederatedAI/FATE.git -b v1.4.4 --depth=1
 cd FATE/cluster-deploy
 bash build.sh release 
 ```
@@ -22,13 +22,13 @@ The **release** is the version tag, which you can modify.
 
 ## 4. Output
 ```bash
-ls -l FATE_install_1.4.3-release.tar.gz
+ls -l FATE_install_1.4.4-release.tar.gz
 ```
 
 ## 5. Check packages
 ```bash
-tar xzf FATE_install_1.4.3-release.tar.gz
-ls -lrt FATE_install_1.4.3
+tar xzf FATE_install_1.4.4-release.tar.gz
+ls -lrt FATE_install_1.4.4
 ```
 You can see the following package:
 - bin

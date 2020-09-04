@@ -76,7 +76,7 @@ HEADERS = {
     'Content-Type': 'application/json',
     'Connection': 'close'
 }
-DETECT_TABLE = ("fate_flow_detect_table_namespace", "fate_flow_detect_table_name", 16)
+DETECT_TABLE = ("fate_flow_detect_table_namespace", "fate_flow_detect_table_name", 2)
 
 # endpoint
 FATE_FLOW_MODEL_TRANSFER_ENDPOINT = '/v1/model/transfer'

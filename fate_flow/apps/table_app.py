@@ -61,15 +61,20 @@ def dtable(table_func):
         if config.get('create', False):
             table_key_count = 0
             table_partition = None
+            headers = {}
         else:
             table = session.get_data_table(name=table_name, namespace=namespace)
+            headers = {}
             if table:
                 table_key_count = table.count()
                 table_partition = table.get_partitions()
+                headers = table.get_metas()
+
             else:
                 table_key_count = 0
                 table_partition = None
-        return get_json_result(data={'table_name': table_name, 'namespace': namespace, 'count': table_key_count, 'partition': table_partition})
+        return get_json_result(data={'table_name': table_name, 'namespace': namespace, 'count': table_key_count,
+                                     'partition': table_partition, 'schema': headers})
     else:
         return get_json_result()
 
