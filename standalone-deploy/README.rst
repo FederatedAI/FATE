@@ -5,11 +5,11 @@ The stand-alone version provides 2 deployment methods, which can be
 selected according to your actual situation:
 
 -  Install FATE using Docker `Chinese
-   guide <./doc/Fate-standalone_deployment_guide_zh.md>`__
+   guide <https://github.com/FederatedAI/FATE/blob/master/standalone-deploy/doc/Fate-standalone_deployment_guide_zh.md>`__
    *(Recommended)*
 
 -  Install FATE in Host `Chinese
-   guide <./doc/Fate-standalone_deployment_guide_zh.md>`__
+   guide <https://github.com/FederatedAI/FATE/blob/master/standalone-deploy/doc/Fate-standalone_deployment_guide_zh.md>`__
 
 1) Install FATE using Docker\ *(Recommended)*
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
