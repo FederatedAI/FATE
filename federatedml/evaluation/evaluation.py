@@ -56,7 +56,7 @@ class Evaluation(ModelBase):
 
         self.special_metric_list = [consts.PSI]
 
-        self.clustering_intra_metric_list = [consts.DAVIES_BOULDIN_INDEX]
+        self.clustering_intra_metric_list = [consts.DAVIES_BOULDIN_INDEX, consts.DISTANCE_MEASURE]
 
         self.metrics = None
         self.round_num = 6
@@ -496,15 +496,35 @@ class Evaluation(ModelBase):
                                      MetricMeta(name=metric_name, metric_type=metric.upper(), extra_metas=extra_metas))
 
     def __save_contingency_matrix(self, metric, metric_res, metric_name, metric_namespace):
-        pass
 
-    def __save_distance_measure(self, metric, metric_res, metric_name, metric_namespace):
+        result_array, unique_predicted_label, unique_true_label = metric_res
+        true_labels = list(map(int, unique_true_label))
+        predicted_label = list(map(int, unique_predicted_label))
+        result_table = []
+        for l_ in result_array:
+            result_table.append(list(map(int, l_)))
 
-        extra_metas = {}
+        extra_metas = {'true_labels': true_labels, 'predicte_labels': predicted_label, 'result_table': result_table}
 
         self.tracker.set_metric_meta(metric_namespace, metric_name,
                                      MetricMeta(name=metric_name, metric_type=metric.upper(), extra_metas=extra_metas))
 
+    def __save_distance_measure(self, metric, metric_res: dict, metric_name, metric_namespace):
+
+        extra_metas = {}
+
+        cluster_index = [k for k in metric_res.keys()]
+        radius, neareast_idx = [], []
+        for k in metric_res:
+            radius.append(metric_res[k][0])
+            neareast_idx.append(neareast_idx[k][1])
+
+        extra_metas['cluster_index'] = cluster_index
+        extra_metas['radius'] = radius
+        extra_metas['nearest_idx'] = neareast_idx
+
+        self.tracker.set_metric_meta(metric_namespace, metric_name,
+                                     MetricMeta(name=metric_name, metric_type=metric.upper(), extra_metas=extra_metas))
 
     def callback_metric_data(self, return_single_val_metrics=False):
 
