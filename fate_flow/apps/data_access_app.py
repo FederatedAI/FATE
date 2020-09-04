@@ -26,6 +26,7 @@ from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils import detect_utils, job_utils
 from fate_flow.scheduler import DAGScheduler
 from fate_flow.operation import JobSaver
+from fate_arch.common import WorkMode, Backend
 
 manager = Flask(__name__)
 
@@ -67,19 +68,28 @@ def download_upload(access_module):
     if access_module == "upload":
         data['table_name'] = job_config["table_name"]
         data['namespace'] = job_config["namespace"]
-        if WORK_MODE != 0:
-            job_config["storage_engine"] = job_config.get("storage_engine", StorageEngine.EGGROLL)
-            data_table_meta = storage.StorageTableMeta(name=job_config["table_name"], namespace=job_config["namespace"])
-            if data_table_meta and job_config.get('drop', 2) == 2:
-                return get_json_result(retcode=100,
-                                       retmsg='The data table already exists.'
-                                              'If you still want to continue uploading, please add the parameter -drop.'
-                                              ' 0 means not to delete and continue uploading, '
-                                              '1 means to upload again after deleting the table')
-            elif data_table_meta and job_config.get('drop', 2) == 1:
-                job_config["destroy"] = True
-        else:
-            job_config["storage_engine"] = job_config.get("storage_engine", StorageEngine.STANDALONE)
+        if "storage_engine" not in job_config:
+            if job_config["work_mode"] == WorkMode.CLUSTER:
+                if job_config["backend"] == Backend.EGGROLL:
+                    job_config["storage_engine"] = StorageEngine.EGGROLL
+                elif job_config["backend"] == Backend.SPARK:
+                    job_config["storage_engine"] = StorageEngine.HDFS
+                else:
+                    raise RuntimeError("can not found storage engine")
+            elif job_config["work_mode"] == WorkMode.STANDALONE:
+                if job_config["backend"] == Backend.EGGROLL:
+                    job_config["storage_engine"] = StorageEngine.STANDALONE
+                else:
+                    raise RuntimeError("can not found storage engine")
+        data_table_meta = storage.StorageTableMeta(name=job_config["table_name"], namespace=job_config["namespace"])
+        if data_table_meta and job_config.get('drop', 2) == 2:
+            return get_json_result(retcode=100,
+                                   retmsg='The data table already exists.'
+                                          'If you still want to continue uploading, please add the parameter -drop.'
+                                          ' 0 means not to delete and continue uploading, '
+                                          '1 means to upload again after deleting the table')
+        elif data_table_meta and job_config.get('drop', 2) == 1:
+            job_config["destroy"] = True
     # compatibility
     if "table_name" in job_config:
         job_config["name"] = job_config["table_name"]

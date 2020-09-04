@@ -120,6 +120,8 @@ class Tracker(object):
             schedule_logger(self.job_id).info('output data table partitions is {}'.format(partitions))
             if output_storage_engine == StorageEngine.EGGROLL:
                 address_dict = {"name": persistent_table_name, "namespace": persistent_table_namespace, "storage_type": storage.EggRollStorageType.ROLLPAIR_LMDB}
+            elif output_storage_engine == StorageEngine.STANDALONE:
+                address_dict = {"name": persistent_table_name, "namespace": persistent_table_namespace, "storage_type": storage.StandaloneStorageType.ROLLPAIR_LMDB}
             elif output_storage_engine == StorageEngine.HDFS:
                 address_dict = {"path": f"/fate/temp/component_output_data/{persistent_table_namespace}/{persistent_table_name}"}
             else:

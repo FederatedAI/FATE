@@ -163,6 +163,10 @@ class StorageSessionABC(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
+    def query_expired_sessions_record(self, ttl) -> []:
+        ...
+
+    @abc.abstractmethod
     def stop(self):
         ...
 

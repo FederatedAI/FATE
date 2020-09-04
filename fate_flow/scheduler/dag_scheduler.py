@@ -34,6 +34,7 @@ from fate_flow.utils.cron import Cron
 from fate_flow.manager import ResourceManager
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
+from fate_arch.storage import StorageEngine
 
 
 class DAGScheduler(Cron):
@@ -49,7 +50,7 @@ class DAGScheduler(Cron):
         cls.backend_compatibility(job_parameters=job_parameters)
         cls.set_default_job_parameters(job_parameters=job_parameters)
 
-        job_utils.check_pipeline_job_runtime_conf(job_runtime_conf)
+        job_utils.check_job_runtime_conf(job_runtime_conf)
         if job_parameters.job_type != 'predict':
             # generate job model info
             job_parameters.model_id = model_utils.gen_model_id(job_runtime_conf['role'])
@@ -129,12 +130,15 @@ class DAGScheduler(Cron):
                 if work_mode == WorkMode.CLUSTER:
                     job_parameters.computing_engine = ComputingEngine.EGGROLL
                     job_parameters.federation_engine = FederationEngine.EGGROLL
+                    job_parameters.storage_engine = StorageEngine.EGGROLL
                 else:
                     job_parameters.computing_engine = ComputingEngine.STANDALONE
                     job_parameters.federation_engine = FederationEngine.STANDALONE
+                    job_parameters.storage_engine = StorageEngine.STANDALONE
             elif backend == Backend.SPARK:
                 job_parameters.computing_engine = ComputingEngine.SPARK
                 job_parameters.federation_engine = FederationEngine.MQ
+                job_parameters.storage_engine = StorageEngine.HDFS
                 # add mq info
                 federation_info = {}
                 federation_info['union_name'] = string_utils.random_string(4) 
@@ -142,6 +146,7 @@ class DAGScheduler(Cron):
                 job_parameters.federation_info = federation_info
             job_parameters.computing_backend = f"DEFAULT_{job_parameters.computing_engine}"
             job_parameters.federation_backend = f"DEFAULT_{job_parameters.federation_engine}"
+            job_parameters.storage_backend = f"DEFAULT_{job_parameters.storage_engine}"
         if job_parameters.federated_mode is None:
             if job_parameters.computing_engine in [ComputingEngine.EGGROLL, ComputingEngine.SPARK]:
                 job_parameters.federated_mode = FederatedMode.MULTIPLE
@@ -351,7 +356,7 @@ class DAGScheduler(Cron):
                 job.f_status = new_job_status
                 if EndStatus.contains(job.f_status):
                     FederatedScheduler.save_pipelined_model(job=job)
-                status, response = FederatedScheduler.sync_job_status(job=job)
+                FederatedScheduler.sync_job_status(job=job)
                 cls.update_job_on_initiator(initiator_job=job, update_fields=["status"])
         if EndStatus.contains(job.f_status):
             cls.finish(job=job, end_status=job.f_status)
