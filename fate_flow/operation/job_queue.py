@@ -94,9 +94,8 @@ class JobQueue(object):
 
     @DB.connection_context()
     def qsize(self, job_status=None):
-        with DB.connection_context():
-            if job_status:
-                events = DBQueue.select(DBQueue.f_job_id).where(DBQueue.f_job_status == job_status)
-            else:
-                events = DBQueue.select(DBQueue.f_job_id)
-            return len(events)
+        if job_status:
+            events = DBQueue.select(DBQueue.f_job_id).where(DBQueue.f_job_status == job_status)
+        else:
+            events = DBQueue.select(DBQueue.f_job_id)
+        return len(events)

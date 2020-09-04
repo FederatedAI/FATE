@@ -163,25 +163,25 @@ def get_job_conf(job_id):
     return conf_dict
 
 
+@DB.connection_context()
 def get_job_configuration(job_id, role, party_id, tasks=None):
-    with DB.connection_context():
-        if tasks:
-            jobs_run_conf = {}
-            for task in tasks:
-                jobs = Job.select(Job.f_job_id, Job.f_runtime_conf, Job.f_description).where(Job.f_job_id == task.f_job_id)
-                job = jobs[0]
-                jobs_run_conf[job.f_job_id] = job.f_runtime_conf["role_parameters"]["local"]["upload_0"]
-                jobs_run_conf[job.f_job_id]["notes"] = job.f_description
-            return jobs_run_conf
-        else:
-            jobs = Job.select(Job.f_dsl, Job.f_runtime_conf, Job.f_train_runtime_conf).where(Job.f_job_id == job_id,
-                                                                                             Job.f_role == role,
-                                                                                             Job.f_party_id == party_id)
-        if jobs:
+    if tasks:
+        jobs_run_conf = {}
+        for task in tasks:
+            jobs = Job.select(Job.f_job_id, Job.f_runtime_conf, Job.f_description).where(Job.f_job_id == task.f_job_id)
             job = jobs[0]
-            return job.f_dsl, job.f_runtime_conf, job.f_train_runtime_conf
-        else:
-            return {}, {}, {}
+            jobs_run_conf[job.f_job_id] = job.f_runtime_conf["role_parameters"]["local"]["upload_0"]
+            jobs_run_conf[job.f_job_id]["notes"] = job.f_description
+        return jobs_run_conf
+    else:
+        jobs = Job.select(Job.f_dsl, Job.f_runtime_conf, Job.f_train_runtime_conf).where(Job.f_job_id == job_id,
+                                                                                         Job.f_role == role,
+                                                                                         Job.f_party_id == party_id)
+    if jobs:
+        job = jobs[0]
+        return job.f_dsl, job.f_runtime_conf, job.f_train_runtime_conf
+    else:
+        return {}, {}, {}
 
 
 def job_virtual_component_name():
@@ -192,22 +192,22 @@ def job_virtual_component_module_name():
     return "Pipeline"
 
 
+@DB.connection_context()
 def list_job(limit):
-    with DB.connection_context():
-        if limit > 0:
-            jobs = Job.select().order_by(Job.f_create_time.desc()).limit(limit)
-        else:
-            jobs = Job.select().order_by(Job.f_create_time.desc())
-        return [job for job in jobs]
+    if limit > 0:
+        jobs = Job.select().order_by(Job.f_create_time.desc()).limit(limit)
+    else:
+        jobs = Job.select().order_by(Job.f_create_time.desc())
+    return [job for job in jobs]
 
 
+@DB.connection_context()
 def list_task(limit):
-    with DB.connection_context():
-        if limit > 0:
-            tasks = Task.select().order_by(Task.f_create_time.desc()).limit(limit)
-        else:
-            tasks = Task.select().order_by(Task.f_create_time.desc())
-        return [task for task in tasks]
+    if limit > 0:
+        tasks = Task.select().order_by(Task.f_create_time.desc()).limit(limit)
+    else:
+        tasks = Task.select().order_by(Task.f_create_time.desc())
+    return [task for task in tasks]
 
 
 def check_job_process(pid):

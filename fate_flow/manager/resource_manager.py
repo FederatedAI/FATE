@@ -30,33 +30,33 @@ from fate_flow.utils import job_utils
 class ResourceManager(object):
     @classmethod
     def initialize(cls):
-        with DB.connection_context():
-            # initialize default backend
-            default_backends = {
-                EngineType.COMPUTING: [ComputingEngine.EGGROLL, ComputingEngine.SPARK],
-                EngineType.FEDERATION: [FederationEngine.EGGROLL, FederationEngine.MQ],
-            }
-            for engine_type, engines_name in default_backends.items():
-                for engine_name in engines_name:
-                    engine_info = get_base_config(engine_name, {})
-                    engine_info["engine"] = engine_name
-                    cls._initialize_backend(engine_type=engine_type, engine_id=f"DEFAULT_{engine_name}", engine_info=engine_info)
-            # initialize standalone backend
-            for engine_type in default_backends.keys():
-                engine_name = "STANDALONE"
-                engine_info = {
-                    "engine": engine_name,
-                    "nodes": 1,
-                    "cores_per_node": STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE,
-                }
+        # initialize default backend
+        default_backends = {
+            EngineType.COMPUTING: [ComputingEngine.EGGROLL, ComputingEngine.SPARK],
+            EngineType.FEDERATION: [FederationEngine.EGGROLL, FederationEngine.MQ],
+        }
+        for engine_type, engines_name in default_backends.items():
+            for engine_name in engines_name:
+                engine_info = get_base_config(engine_name, {})
+                engine_info["engine"] = engine_name
                 cls._initialize_backend(engine_type=engine_type, engine_id=f"DEFAULT_{engine_name}", engine_info=engine_info)
-            if get_base_config("multi_backend", False):
-                # initialize multi backend
-                for engine_type in [EngineType.COMPUTING, EngineType.FEDERATION]:
-                    for engine_id, engine_info in get_base_config(engine_type, {}, conf_name="multi_backend").items():
-                        cls._initialize_backend(engine_type=engine_type, engine_id=engine_id, engine_info=engine_info)
+        # initialize standalone backend
+        for engine_type in default_backends.keys():
+            engine_name = "STANDALONE"
+            engine_info = {
+                "engine": engine_name,
+                "nodes": 1,
+                "cores_per_node": STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE,
+            }
+            cls._initialize_backend(engine_type=engine_type, engine_id=f"DEFAULT_{engine_name}", engine_info=engine_info)
+        if get_base_config("multi_backend", False):
+            # initialize multi backend
+            for engine_type in [EngineType.COMPUTING, EngineType.FEDERATION]:
+                for engine_id, engine_info in get_base_config(engine_type, {}, conf_name="multi_backend").items():
+                    cls._initialize_backend(engine_type=engine_type, engine_id=engine_id, engine_info=engine_info)
 
     @classmethod
+    @DB.connection_context()
     def _initialize_backend(cls, engine_type, engine_id, engine_info):
         nodes = engine_info.get("nodes", 1)
         cores = engine_info.get("cores_per_node", 0) * nodes
@@ -98,6 +98,7 @@ class ResourceManager(object):
             stat_logger.info(f"create {engine_type} engine {engine_id} registration information")
 
     @classmethod
+    @DB.connection_context()
     def apply_for_job_resource(cls, job_id, role, party_id):
         engine_id, cores, memory = cls.calculate_job_resource(job_id=job_id, role=role, party_id=party_id)
         apply_status, remaining_cores, remaining_memory = cls.update_resource(model=BackendEngine,
@@ -122,9 +123,8 @@ class ResourceManager(object):
                 Job.f_cores == 0,
                 Job.f_memory == 0
             ]
-            with DB.connection_context():
-                operate = Job.update(update_fields).where(*filter_fields)
-                update_status = operate.execute() > 0
+            operate = Job.update(update_fields).where(*filter_fields)
+            update_status = operate.execute() > 0
             if update_status:
                 schedule_logger(job_id=job_id).info(f"apply job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} successfully")
                 return True
@@ -138,6 +138,7 @@ class ResourceManager(object):
             return False
 
     @classmethod
+    @DB.connection_context()
     def return_job_resource(cls, job_id, role, party_id):
         engine_id, cores, memory = cls.calculate_job_resource(job_id=job_id, role=role, party_id=party_id)
         update_fields = {
@@ -154,9 +155,8 @@ class ResourceManager(object):
             Job.f_cores == cores,
             Job.f_memory == memory
         ]
-        with DB.connection_context():
-            operate = Job.update(update_fields).where(*filter_fields)
-            update_status = operate.execute() > 0
+        operate = Job.update(update_fields).where(*filter_fields)
+        update_status = operate.execute() > 0
         if update_status:
             return_status, remaining_cores, remaining_memory = cls.update_resource(model=BackendEngine,
                                                                                    cores=cores,

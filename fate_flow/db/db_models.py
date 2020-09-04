@@ -92,14 +92,14 @@ class DataBaseModel(BaseModel):
         database = DB
 
 
+@DB.connection_context()
 def init_database_tables():
-    with DB.connection_context():
-        members = inspect.getmembers(sys.modules[__name__], inspect.isclass)
-        table_objs = []
-        for name, obj in members:
-            if obj != DataBaseModel and issubclass(obj, DataBaseModel):
-                table_objs.append(obj)
-        DB.create_tables(table_objs)
+    members = inspect.getmembers(sys.modules[__name__], inspect.isclass)
+    table_objs = []
+    for name, obj in members:
+        if obj != DataBaseModel and issubclass(obj, DataBaseModel):
+            table_objs.append(obj)
+    DB.create_tables(table_objs)
 
 
 def fill_db_model_object(model_object, human_model_dict):
