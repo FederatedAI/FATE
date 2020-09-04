@@ -145,7 +145,7 @@ class HeteroKmeansClient(BaseKmeansModel):
         cluster_result = self.transfer_variable.cluster_result.get(idx=0, suffix='predict')
         cluster_dist = self.centroid_dist(self.centroid_list)
         self.cluster_dist_aggregator.send_model(NumpyWeights(np.array(cluster_dist)), suffix='predict')
-        predict_result = data_instances.join(cluster_result, lambda v1, v2: [v1.label, v2])
+        predict_result = data_instances.join(cluster_result, lambda v1, v2: [v1.label, int(v2)])
         return predict_result
 
 

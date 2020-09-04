@@ -22,6 +22,7 @@ from federatedml.param.hetero_kmeans_param import KmeansParam
 from federatedml.protobuf.generated import hetero_kmeans_meta_pb2, hetero_kmeans_param_pb2
 from federatedml.transfer_variable.transfer_class.hetero_kmeans_transfer_variable import HeteroKmeansTransferVariable
 from federatedml.util import abnormal_detection
+from federatedml.util import consts
 
 LOGGER = log_utils.getLogger()
 
@@ -108,9 +109,9 @@ class BaseKmeansModel(ModelBase):
         param_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
         meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
         self.k = meta_obj.k
-        self.centroid_list= param_obj.centroid_detail
-        #self.header = list(result_obj.header)
-        #if self.header is None:
+        self.centroid_list = param_obj.centroid_detail
+        # self.header = list(result_obj.header)
+        # if self.header is None:
         #    return
 
     def reset_union(self):
@@ -121,12 +122,25 @@ class BaseKmeansModel(ModelBase):
 
     def set_predict_data_schema(self, predict_datas, schemas):
         if predict_datas is None:
+            return None, None
             return predict_datas
 
-        data_output = predict_datas[0]
+        predict_data = predict_datas[0][0]
         schema = schemas[0]
-        if data_output is not None:
-            data_output.schema = {"header": ["label", "predict_result", "predict_score", "predict_detail", "type"],
-                                  "sid_name": schema.get('sid_name')}
-        predict_datas[0] = data_output
+        if self.role == consts.ARBITER:
+            data_output1 = predict_data[0]
+            data_output2 = predict_data[1]
+            if data_output1 is not None:
+                data_output1.schema = {
+                    "header": ["cluster_sample_count", "cluster_inner_dist", "inter_cluster_dist"],
+                    "sid_name": "cluster_index"}
+            if data_output2 is not None:
+                data_output2.schema = {"header": ["predicted_cluster_index", "distance"],
+                                       "sid_name": "id"}
+            predict_datas[0][0] = tuple([data_output1, data_output2])
+        else:
+            data_output = predict_data
+            if data_output is not None:
+                data_output.schema = {"header": ["label", "predict_result"], "sid_name": schema.get('sid_name')}
+            predict_datas[0][0] = data_output
         return predict_datas
