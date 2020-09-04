@@ -48,12 +48,12 @@ class ContengincyMatrix(object):
     def compute(self, labels, pred_scores):
         total_count = len(labels)
         label_predict = list(zip(labels, pred_scores))
-        axis_x = len(np.unique(pred_scores))
-        axis_y = len(np.unique(labels))
-        result_array = np.zeros([axis_y, axis_x])
+        unique_predicted_label = np.unique(pred_scores)
+        unique_true_label = np.unique(labels)
+        result_array = np.zeros([len(unique_true_label), len(unique_predicted_label)])
         for v1, v2 in label_predict:
             result_array[v1][v2] += 1
-        return result_array
+        return result_array, unique_predicted_label, unique_true_label
 
 
 class DistanceMeasure(object):
