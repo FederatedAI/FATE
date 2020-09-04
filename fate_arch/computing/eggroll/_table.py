@@ -65,27 +65,15 @@ class Table(CTableABC):
     def mapValues(self, func: typing.Callable[[typing.Any], typing.Any], **kwargs):
         return Table(self._rp.map_values(func))
 
-    @log_elapsed
-    def mapPartitions(self, func, **kwargs):
+    def applyPartitions(self, func):
         return Table(self._rp.collapse_partitions(func))
 
-    def mapPartitions2(self, func, **kwargs):
+    def mapPartitions(self, func, **kwargs):
         return Table(self._rp.map_partitions(func))
 
     @log_elapsed
-    def reduce(self, func, key_func=None, **kwargs):
-        if key_func is None:
-            return self._rp.reduce(func)
-
-        it = self._rp.get_all()
-        ret = {}
-        for k, v in it:
-            agg_key = key_func(k)
-            if agg_key in ret:
-                ret[agg_key] = func(ret[agg_key], v)
-            else:
-                ret[agg_key] = v
-        return ret
+    def reduce(self, func, **kwargs):
+        return self._rp.reduce(func)
 
     @log_elapsed
     def join(self, other: 'Table', func, **kwargs):

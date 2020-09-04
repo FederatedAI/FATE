@@ -134,11 +134,11 @@ class Table(object):
     def flatMap(self, func):
         return self._unary(func, _do_flat_map)
 
-    def mapPartitions(self, func):
-        return self._unary(func, _do_map_partitions)
+    def applyPartitions(self, func):
+        return self._unary(func, _apply_partitions)
 
-    def mapPartitions2(self, func):
-        un_shuffled = self._unary(func, _do_map_partitions2)
+    def mapPartitions(self, func):
+        un_shuffled = self._unary(func, _do_map_partitions)
         return un_shuffled.save_as(name=str(uuid.uuid1()),
                                    namespace=un_shuffled.namespace,
                                    partition=self._partitions,
@@ -605,7 +605,7 @@ def _generator_from_cursor(cursor):
         yield deserialize(k), deserialize(v)
 
 
-def _do_map_partitions(p: _UnaryProcess):
+def _apply_partitions(p: _UnaryProcess):
     with ExitStack() as s:
         rtn = p.output_operand()
         source_env = s.enter_context(p.operand.as_env())
@@ -622,7 +622,7 @@ def _do_map_partitions(p: _UnaryProcess):
     return rtn
 
 
-def _do_map_partitions2(p: _UnaryProcess):
+def _do_map_partitions(p: _UnaryProcess):
     with ExitStack() as s:
         rtn = p.output_operand()
         source_env = s.enter_context(p.operand.as_env())
