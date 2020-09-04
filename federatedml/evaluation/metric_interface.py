@@ -430,15 +430,13 @@ class MetricInterface(object):
 
         return clustering_metric.AdjustedRandScore.compute(labels, pred_labels)
 
-    def davies_bouldin_index(labels, pred_labels):
+    @staticmethod
+    def davies_bouldin_index(cluster_avg_intra_dist, cluster_inter_dist):
         """
         Compute the davies_bouldin_index
         Parameters
 
         """
-        pred_output=list(pred_labels.first().collect())
-        dist_table_dtable=list(v[2] for v in pred_output)
-        cluster_dist_dtable=list(v[3] for v in pred_output)
-
         ## process data from evaluation
-        return clustering_metric.Davies_Bouldin_index.compute(dist_table_dtable, cluster_dist_dtable)
+
+        return clustering_metric.Davies_Bouldin_index.compute(cluster_avg_intra_dist, cluster_inter_dist)

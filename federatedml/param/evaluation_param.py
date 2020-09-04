@@ -37,23 +37,27 @@ class EvaluateParam(BaseParam):
         Indicate if this module needed to be run
     """
 
-    def __init__(self, eval_type="binary", pos_label=1, need_run=True, metrics=None):
+    def __init__(self, eval_type="binary", pos_label=1, need_run=True, metrics=None,
+                 run_clustering_arbiter_metric=False):
         super().__init__()
         self.eval_type = eval_type
         self.pos_label = pos_label
         self.need_run = need_run
         self.metrics = metrics
+        self.run_clustering_arbiter_metric = run_clustering_arbiter_metric
 
         self.default_metrics = {
             consts.BINARY: consts.ALL_BINARY_METRICS,
             consts.MULTY: consts.ALL_MULTI_METRICS,
-            consts.REGRESSION: consts.ALL_REGRESSION_METRICS
+            consts.REGRESSION: consts.ALL_REGRESSION_METRICS,
+            consts.CLUSTERING: consts.ALL_CLUSTER_METRICS
         }
 
         self.allowed_metrics = {
             consts.BINARY: consts.ALL_BINARY_METRICS,
             consts.MULTY: consts.ALL_MULTI_METRICS,
-            consts.REGRESSION: consts.ALL_REGRESSION_METRICS
+            consts.REGRESSION: consts.ALL_REGRESSION_METRICS,
+            consts.CLUSTERING: consts.ALL_CLUSTER_METRICS
         }
 
     def _use_single_value_default_metrics(self):
@@ -61,7 +65,8 @@ class EvaluateParam(BaseParam):
         self.default_metrics = {
             consts.BINARY: consts.DEFAULT_BINARY_METRIC,
             consts.MULTY: consts.DEFAULT_MULTI_METRIC,
-            consts.REGRESSION: consts.DEFAULT_REGRESSION_METRIC
+            consts.REGRESSION: consts.DEFAULT_REGRESSION_METRIC,
+            consts.CLUSTERING: consts.DEFAULT_CLUSTER_METRIC
         }
 
     def _check_valid_metric(self, metrics_list):
@@ -109,7 +114,8 @@ class EvaluateParam(BaseParam):
 
         descr = "evaluate param's "
         self.eval_type = self.check_and_change_lower(self.eval_type,
-                                                       [consts.BINARY, consts.MULTY, consts.REGRESSION],
+                                                       [consts.BINARY, consts.MULTY, consts.REGRESSION,
+                                                        consts.CLUSTERING],
                                                        descr)
 
         if type(self.pos_label).__name__ not in ["str", "float", "int"]:
