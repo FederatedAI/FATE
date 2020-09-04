@@ -137,10 +137,10 @@ class BaseKmeansModel(ModelBase):
             if data_output2 is not None:
                 data_output2.schema = {"header": ["predicted_cluster_index", "distance"],
                                        "sid_name": "id"}
-            predict_datas[0][0] = tuple([data_output1, data_output2])
+            predict_datas = [data_output1, data_output2]
         else:
             data_output = predict_data
             if data_output is not None:
                 data_output.schema = {"header": ["label", "predict_result"], "sid_name": schema.get('sid_name')}
-            predict_datas[0][0] = data_output
+            predict_datas = [data_output, None]
         return predict_datas
