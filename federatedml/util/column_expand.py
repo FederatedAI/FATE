@@ -145,11 +145,11 @@ class ColumnExpand(ModelBase):
         # return original value if no fill value provided
         if self.method == consts.MANUAL and len(self.fill_value) == 0:
             return data
-        new_data, self.header = self._append_column(data)
+        new_data, self.header = self._append_column_deprecated(data)
         return new_data
 
     def predict(self, data):
         if self.method == consts.MANUAL and len(self.fill_value) == 0:
             return data
-        new_data, _ = self._append_column(data)
+        new_data, _ = self._append_column_deprecated(data)
         return new_data
