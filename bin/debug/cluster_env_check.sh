@@ -23,10 +23,10 @@ for ip in ${iplist[@]};do
 		mkdir -p ${EGGROLL_HOME}/bin/debug
 	fi
 
-	if ! ssh -tt app@$ip test -e ${EGGROLL_HOME}/bin/debug/check_env.sh;then
+	if ! ssh -tt $user@$ip test -e ${EGGROLL_HOME}/bin/debug/check_env.sh;then
 		echo "${EGGROLL_HOME}/bin/debug/check_env.sh in $ip is not exist, scp check_env.sh to $ip:${EGGROLL_HOME}/bin/debug"
 		scp ./check_env.sh $user@$ip:${EGGROLL_HOME}/bin/debug
 	fi
-	ssh app@$ip "sh ${EGGROLL_HOME}/bin/debug/check_env.sh" >> $ip
+	ssh $user@$ip "sh ${EGGROLL_HOME}/bin/debug/check_env.sh" >> $ip
 	echo "The check result from $ip has saved in $cwd/$ip, please check it."
 done
