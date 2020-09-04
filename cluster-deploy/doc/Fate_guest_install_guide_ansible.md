@@ -203,6 +203,8 @@ ssh app\@192.168.0.2
 
 生产环境使用时，因内存计算需要增加128G虚拟内存，执行前需检查存储空间是否足够。
 
+注意：dd执行时间较长，请耐心等待
+
 ```
 cd /data
 dd if=/dev/zero of=/data/swapfile128G bs=1024 count=134217728
@@ -307,6 +309,25 @@ init var_files/prod
 init project_prod.yml
 ```
 
+### 4.4.2 证书部署前配置(可选)
+
+1）联系webank获取guest端部署证书文件。
+
+2）放置到部署目录
+
+```
+cd /data/projects/ansible-nfate-*
+mkdir -p roles/eggroll/files/keys/guest
+cd roles/eggroll/files/keys/guest
+把获取到证书文件解压缩并放置到此目录下，如下：
+-rw-r--r-- 1 app apps 1371 Sep  4 18:07 guest-ca.pem
+-rw-r--r-- 1 app apps  241 Sep  4 18:07 guest-server.key
+-rw-r--r-- 1 app apps 1151 Sep  4 18:07 guest-server.pem
+-rw-r--r-- 1 app apps 1371 Sep  4 18:07 host-client-ca.pem
+-rw-r--r-- 1 app apps  241 Sep  4 18:07 host-client.key
+-rw-r--r-- 1 app apps 1143 Sep  4 18:07 host-client.pem
+```
+
 ### 4.4.2 修改配置文件
 
 **1）修改初始化主机IP**
@@ -315,9 +336,12 @@ init project_prod.yml
 vi /data/projects/ansible-nfate-1.*/environments/prod/hosts
 
 #ansible格式配置文件
-[init]   ---把需要部署的主机IP填入init组
+[fate]   ---把需要部署的主机IP填入fate组
 192.168.0.1  
 192.168.0.2
+
+[deploy_check] ---把执行ansible的本机IP填入deploy_check组
+192.168.0.1 
 
 [all:vars]
 ansible_connection=ssh
@@ -352,13 +376,17 @@ guest:
       enable: True ---是否部署rollsite模块，True为部署，False为否
       ips: ---IP列表，目前rollsite只支持部署到一台服务器
       - 192.168.0.1
-      port: 9370 ---rollsite端口
+      port: 9370 ---rollsite grpc端口
+      secure_port: 9371 ---rollsite grpcs端口
       pool_size: 600 ---线程池大小
-      max_memory: 8G   ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如8G
+      max_memory: 8G   ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如12G，如果是rollsite专用的机器，配置成物理内存的75%。
+      server_secure: False ---作为服务端，开启安全证书验证，不使用安全证书默认即可
+      client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
       default_rules:  ---默认路由，本party指向exchange或者其他party的IP，端口
       - name: default ---名称，默认即可
-        ip: 192.168.0.3 ---exchange或者对端party rollsite IP，和webank确认后修改
-        port: 9370 ---exchange或者对端party rollsite 端口，一般默认9370，和webank确认后修改
+        ip: 192.168.0.3 ---exchange或者对端party rollsite IP，和webank确认后修改。
+        port: 9370 ---exchange或者对端party rollsite 端口，一般默认9370，和webank确认后修改。
+        is_secure: False ---server_secure或者client_secure为true，指向的下一跳rollsite也开启了安全认证，此参数需要设置为true，上一个参数port需设置为9371，不使用安全证书默认即可。
       rules:  ---本party自身路由配置
       - name: default ---本party rollsite所在主机IP和端口
         ip: 192.168.0.1
@@ -491,6 +519,8 @@ source /data/projects/fate/init_env.sh
 cd /data/projects/fate/python/examples/toy_example/
 python run_toy_example.py 9999 9999 1
 ```
+
+注意：如果超过1分钟没输出，表示部署有问题，需要看日志进行问题定位。
 
 类似如下结果表示成功：
 

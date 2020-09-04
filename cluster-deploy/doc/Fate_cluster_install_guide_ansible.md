@@ -206,6 +206,8 @@ ssh app\@192.168.0.2
 
 生产环境使用时，因内存计算需要增加128G虚拟内存，执行前需检查存储空间是否足够。
 
+注意：dd执行时间较长，请耐心等待
+
 ```
 cd /data
 dd if=/dev/zero of=/data/swapfile128G bs=1024 count=134217728
@@ -309,6 +311,35 @@ init var_files/prod
 init project_prod.yml
 ```
 
+### 4.4.2 证书制作配置(可选)
+
+```
+#证书制作
+vi /data/projects/ansible-nfate-1.*/tools/make.sh
+#1、自定义证书需同时部署两端，只部署一端需要手工处理证书，手工处理部分暂不介绍。
+#2、如果同时部署host和guest，则修改guest_host和host_host对应IP，exchange_host不需修改。同时部署host和exchange或者同时部署guest和exchange也是同理。
+#3、如果都需要部署，则都需要修改。
+
+guest_host="192.168.0.1" ---根据实际IP修改
+host_host="192.168.0.2" ---根据实际IP修改
+exchange_host="192.168.0.3" ---根据实际IP修改
+
+#执行脚本制作证书
+cd tools
+sh ./make.sh
+
+在keys/host，guest，exchange下会产生证书文件。
+
+#拷贝证书到部署目录
+sh cp-keys.sh host guest
+
+证书文件会拷贝到roles/eggroll/files/keys目录
+
+特别说明：
+1、cp-keys.sh的两个参数可以取值为host、guest和exchange。
+2、目前脚本部署只支持2方设置证书认证。（host&guest、host&exchange、guest&exchange)
+```
+
 #### 4.4.2 修改配置文件
 
 **1）修改初始化主机IP**
@@ -317,9 +348,12 @@ init project_prod.yml
 vi /data/projects/ansible-nfate-1.*/environments/prod/hosts
 
 #ansible格式配置文件
-[init]   ---把需要部署的主机IP填入init组
+[fate]   ---把需要部署的主机IP填入fate组
 192.168.0.1  
 192.168.0.2
+
+[deploy_check] ---把执行ansible的本机IP填入deploy_check组
+192.168.0.1 
 
 [all:vars]
 ansible_connection=ssh
@@ -355,13 +389,17 @@ host:
       enable: True
       ips: ---IP列表，目前rollsite只支持部署到一台服务器
       - 192.168.0.1  
-      port: 9370
+      port: 9370 ---grpc端口
+      secure_port: 9371 ---grpcs端口
       pool_size: 600 ---线程池大小
-      max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如8G
+      max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如12G，如果是rollsite专用的机器，配置成物理内存的75%。
+      server_secure: False ---作为服务端，开启安全证书验证，不使用安全证书默认即可
+      client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
       default_rules: ---本party指向exchange或者其他party的IP，端口路由配置
       - name: default
         ip: 192.168.0.3 ---exchange或者对端party rollsite IP
         port: 9370 ---exchange或者对端party rollsite 端口，一般默认9370
+        is_secure: False ---server_secure或者client_secure为true，指向的下一跳rollsite也开启了安全认证，此参数需要设置为true，上一个参数port需设置为9371，不使用安全证书默认即可
       rules: ---本party自身路由配置
       - name: default
         ip: 192.168.0.1
@@ -426,13 +464,17 @@ guest:
       enable: True
       ips: ---IP列表，目前rollsite只支持部署到一台服务器
       - 192.168.0.2
-      port: 9370
+      port: 9370 ---grpc端口
+      secure_port: 9371 ---grpcs端口
       pool_size: 600 ---线程池大小
-      max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如8G
+      max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如12G，如果是rollsite专用的机器，配置成物理内存的75%。
+      server_secure: False ---作为服务端，开启安全证书验证，不使用安全证书默认即可
+      client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
       default_rules:  ---本party指向exchange或者其他party的IP，端口路由配置
       - name: default
         ip: 192.168.0.3 ---exchange或者对端party rollsite IP
         port: 9370 ---exchange或者对端party rollsite 端口，一般默认9370
+        is_secure: False ---server_secure或者client_secure为true，指向的下一跳rollsite也开启了安全认证，此参数需要设置为true，上一个参数port需设置为9371，不使用安全证书默认即可
       rules:  ---本party自身路由配置
       - name: default
         ip: 192.168.0.2
@@ -491,24 +533,29 @@ guest:
 vi /data/projects/ansible-nfate-1.*/var_files/prod/fate_exchange
 
 exchange:
-  enable: True
+  enable: False
   rollsite: 
     ips:
     - 192.168.0.3
     port: 9370
+    secure_port: 9371 ---grpcs端口
     pool_size: 600
-    max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如8G
+    max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如12G，如果是rollsite专用的机器，配置成物理内存的75%。
+    server_secure: False ---作为服务端，开启安全证书验证，不使用安全证书默认即可
+    client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
   partys:  ---指向各party的路由配置
   - id: 10000
     rules:
     - name: default
       ip: 192.168.0.1
       port: 9367
+      is_secure: False ---server_secure或者client_secure为true，指向的下一跳rollsite也开启了安全认证，此参数需要设置为true，上一个参数port需设置为9371，不使用安全证书默认即可
   - id: 9999
     rules:
     - name: default
       ip: 192.168.0.2
       port: 9370
+      is_secure: False ---server_secure或者client_secure为true，指向的下一跳rollsite也开启了安全认证，此参数需要设置为true，上一个参数port需设置为9371，不使用安全证书默认即可
 ```
 
 
@@ -593,6 +640,8 @@ cd /data/projects/fate/python/examples/toy_example/
 python run_toy_example.py 10000 10000 1
 ```
 
+注意：如果超过1分钟没输出，表示部署有问题，需要看日志进行问题定位。
+
 类似如下结果表示成功：
 
 "2020-04-28 18:26:20,789 - secure_add_guest.py[line:126] - INFO: success to calculate secure_sum, it is 1999.9999999999998"
@@ -604,6 +653,8 @@ source /data/projects/fate/init_env.sh
 cd /data/projects/fate/python/examples/toy_example/
 python run_toy_example.py 9999 9999 1
 ```
+
+注意：如果超过1分钟没输出，表示部署有问题，需要看日志进行问题定位。
 
 类似如下结果表示成功：
 
