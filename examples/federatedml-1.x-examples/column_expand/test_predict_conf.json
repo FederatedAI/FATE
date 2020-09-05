@@ -1,0 +1,31 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "job_parameters": {
+        "work_mode": 0,
+        "job_type": "predict",
+        "model_id": "guest-10000#model",
+        "model_version": ""
+    },
+    "role": {
+        "guest": [
+            10000
+        ]
+    },
+    "role_parameters": {
+        "guest": {
+            "args": {
+                "data": {
+                    "eval_data": [
+                        {
+                            "name": "single_label",
+                            "namespace": "experiment"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

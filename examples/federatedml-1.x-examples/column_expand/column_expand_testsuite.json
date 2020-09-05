@@ -1,0 +1,22 @@
+{
+    "data": [
+        {
+            "file": "examples/data/single_label.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "single_label",
+            "namespace": "experiment",
+            "role": "guest_0"
+        }
+    ],
+    "tasks": {
+        "column-expand": {
+            "conf": "test_column_expand_job_conf.json",
+            "dsl": "test_column_expand_job_dsl.json"
+        },
+        "column-expand-predict": {
+            "conf": "test_predict_conf.json",
+            "deps": "column-expand"
+        }
+    }
+}
