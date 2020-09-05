@@ -61,28 +61,22 @@ class DistanceMeasure(object):
     Compute distance_measure
     """
 
-    def compute(self, dist_table, inter_cluster_dist):
-        max_radius_result = []
-        for i in range(0, len(dist_table)):
-            dist_list = []
-            for v in dist_list:
-                if v[1][0] == i:
-                    dist_list.append(v[1][0])
-            max_radius_result.append(max(dist_list))
+    def compute(self, dist_table, inter_cluster_dist, max_radius):
+        max_radius_result = max_radius
         cluster_nearest_result = []
         for j in range(0, len(dist_table)):
             arr = inter_cluster_dist[j * len(dist_table), j * 2 * len(dist_table)]
+            smallest = np.inf
             for k in range(0, len(arr)):
-                smallest = np.inf
-                if arr[i] < smallest:
-                    smallest = arr[i]
-                    smallest_index = i
+                if arr[k] < smallest:
+                    smallest = arr[k]
+                    smallest_index = k
                 if smallest_index >= j:
                     smallest_index += 1
             cluster_nearest_result.append(smallest_index)
         distance_measure_result = dict()
         for n in range(0, len(dist_table)):
-            distance_measure_result[n] = [max_radius_result, cluster_nearest_result]
+            distance_measure_result[n] = [max_radius_result[n], cluster_nearest_result[n]]
         return distance_measure_result
 
 
