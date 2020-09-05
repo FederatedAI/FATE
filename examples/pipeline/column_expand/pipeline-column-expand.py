@@ -44,7 +44,7 @@ def main(config="../../config.yaml", namespace=""):
     # initialize pipeline
     pipeline = PipeLine()
     # set job initiator
-    pipeline.set_initiator(role=guest, party_id=guest)
+    pipeline.set_initiator(role="guest", party_id=guest)
     # set participants information
     pipeline.set_roles(guest=guest, host=host, arbiter=arbiter)
 
@@ -61,7 +61,7 @@ def main(config="../../config.yaml", namespace=""):
                                                                                      method="manual",
                                                                                      append_header=["x_0", "x_1", "x_2", "x_3"],
                                                                                      fill_value=[0, 0.2, 0.5, 1])
-    column_expand_0.get_party_instance(role="host", party_id=host).algorithm_param(nee_run=False)
+    column_expand_0.get_party_instance(role="host", party_id=host).algorithm_param(need_run=False)
 
     # define DataIO components
     dataio_0 = DataIO(name="dataio_0")  # start component numbering at 0
@@ -126,7 +126,7 @@ def main(config="../../config.yaml", namespace=""):
     # add selected components from train pipeline onto predict pipeline
     # specify data source
     predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
+                                   data=Data(predict_input={pipeline.column_expand_0.input.data: reader_0.output.data}))
     # run predict model
     predict_pipeline.predict(backend=backend, work_mode=work_mode)
 
