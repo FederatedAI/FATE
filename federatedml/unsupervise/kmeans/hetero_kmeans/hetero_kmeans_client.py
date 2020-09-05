@@ -77,7 +77,7 @@ class HeteroKmeansClient(BaseKmeansModel):
         for k in centroid_feature_sum:
             count = cluster_count[k]
             centroid_list.append(centroid_feature_sum[k] / count)
-            cluster_count_list.append([k, count, str(100* count / count_all)+'%'])
+            cluster_count_list.append([k, count, count / count_all])
         return centroid_list, cluster_count_list
 
     def centroid_dist(self, centroid_list):
