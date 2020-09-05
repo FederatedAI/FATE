@@ -143,6 +143,6 @@ class ColumnExpand(ModelBase):
         if self.method == consts.MANUAL and len(self.fill_value) == 0:
             LOGGER.info(f"Finish Column Expand predict. Original data returned.")
             return data
-        new_data, _ = self._append_column(data)
+        new_data, self.header = self._append_column(data)
         LOGGER.info(f"Finish Column Expand predict")
         return new_data
