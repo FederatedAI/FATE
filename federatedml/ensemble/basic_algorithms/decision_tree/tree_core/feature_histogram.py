@@ -176,10 +176,14 @@ class FeatureHistogram(object):
 
         agg_histogram = functools.partial(FeatureHistogram.aggregate_histogram, node_map=node_map)
 
-        batch_histogram = data_bin.join(grad_and_hess, \
-                                        lambda data_inst, g_h: (data_inst, g_h)).mapPartitions2(batch_histogram_cal)
+        # batch_histogram = data_bin.join(grad_and_hess, \
+        #                                 lambda data_inst, g_h: (data_inst, g_h)).mapPartitions2(batch_histogram_cal)
 
-        histograms_dict = batch_histogram.reduce(agg_histogram, key_func=lambda key: (key[1], key[2]))
+        batch_histogram_intermediate_rs = data_bin.join(grad_and_hess, lambda data_inst, g_h: (data_inst, g_h))
+        histograms_dict = batch_histogram_intermediate_rs.mapReducePartitions(batch_histogram_cal, agg_histogram)
+        histograms_dict = histograms_dict.map(lambda k, v: ((k[1], k[2]), v))
+
+        # histograms_dict = batch_histogram.reduce(agg_histogram, key_func=lambda key: (key[1], key[2]))
 
         if ret == "tensor":
             feature_num = bin_split_points.shape[0]
