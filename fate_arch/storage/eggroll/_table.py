@@ -39,6 +39,7 @@ class StorageTable(StorageTableBase):
         if self._type:
             self._options["store_type"] = self._type
         self._options["total_partitions"] = partitions
+        self._options["create_if_missing"] = True
         self._table = self._context.load(namespace=self._namespace, name=self._name, options=self._options)
 
     def get_name(self):
