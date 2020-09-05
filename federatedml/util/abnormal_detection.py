@@ -94,3 +94,7 @@ def check_legal_schema(schema):
     label_name = schema.get("label_name", None)
     if label_name is not None and not label_name.isprintable():
         raise ValueError(f"non-printable char found in label_name {label_name}, please check.")
+
+    if len(set(header) & {sid_name, label_name}) != len(header) + len([sid_name, label_name]):
+        raise ValueError(f"Repeated values found in (header, sid_name, label_name), please check.")
+
