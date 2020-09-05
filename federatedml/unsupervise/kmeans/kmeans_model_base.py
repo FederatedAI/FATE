@@ -40,8 +40,8 @@ class BaseKmeansModel(ModelBase):
         self.cluster_result = None
         self.transfer_variable = HeteroKmeansTransferVariable()
         self.model_name = 'toSet'
-        self.model_param_name = 'toSet'
-        self.model_meta_name = 'toSet'
+        self.model_param_name = 'HeteroKmeansParam'
+        self.model_meta_name = 'HeteroKmeansMeta'
         self.header = None
         self.reset_union()
         self.is_converged = False
@@ -53,6 +53,11 @@ class BaseKmeansModel(ModelBase):
         self.k = params.k
         self.max_iter = params.max_iter
         self.tol = params.tol
+
+    def get_header(self, data_instances):
+        if self.header is not None:
+            return self.header
+        return data_instances.schema.get("header")
 
     def _get_meta(self):
         meta_protobuf_obj = hetero_kmeans_meta_pb2.KmeansModelMeta(k=self.model_param.k,
@@ -66,11 +71,13 @@ class BaseKmeansModel(ModelBase):
         if header is None:
             param_protobuf_obj = hetero_kmeans_param_pb2.KmeansModelParam()
             return param_protobuf_obj
+        cluster_detail = [hetero_kmeans_param_pb2.Clusterdetail(cluster=cluster) for cluster in self.cluster_count]
+        centroid_detail = [hetero_kmeans_param_pb2.Centroiddetail(centroid=centroid) for centroid in self.centroid_list]
         param_protobuf_obj = hetero_kmeans_param_pb2.KmeansModelParam(count_of_clusters=self.k,
                                                                       max_interation=self.n_iter_,
                                                                       converged=self.is_converged,
-                                                                      cluster_detail=self.cluster_detail,
-                                                                      centroid_detail=self.centroid_list)
+                                                                      cluster_detail=cluster_detail,
+                                                                      centroid_detail=centroid_detail)
         return param_protobuf_obj
 
     def export_model(self):
@@ -116,7 +123,41 @@ class BaseKmeansModel(ModelBase):
 
     def reset_union(self):
         def my_union(previews_data, name_list):
-            return previews_data
+            LOGGER.debug("mgq-debug, previews_data is {}, name_list is {}".format(previews_data, name_list))
+            if len(previews_data) == 0:
+                return None
+
+            if any([x is None for x in previews_data]):
+                return None
+
+            # assert len(previews_data) == len(name_list)
+
+            if self.role == consts.ARBITER:
+                data_outputs = []
+                for data_output, name in zip(previews_data, name_list):
+                    data_output1 = data_output[0].mapValues(lambda value: value + [name])
+                    data_output2 = data_output[1].mapValues(lambda value: value + [name])
+                    data_outputs.append([data_output1, data_output2])
+            else:
+                data_output1 = sub_union(previews_data, name_list)
+                data_outputs = [data_output1, None]
+            return data_outputs
+
+        def sub_union(data_output, name_list):
+            result_data = None
+            for data, name in zip(data_output, name_list):
+                # LOGGER.debug("before mapValues, one data: {}".format(data.first()))
+                data = data.mapValues(lambda value: value + [name])
+                # LOGGER.debug("after mapValues, one data: {}".format(data.first()))
+
+                if result_data is None:
+                    result_data = data
+                else:
+                    LOGGER.debug(f"Before union, t1 count: {result_data.count()}, t2 count: {data.count()}")
+                    result_data = result_data.union(data)
+                    LOGGER.debug(f"After union, result count: {result_data.count()}")
+                # LOGGER.debug("before out loop, one data: {}".format(result_data.first()))
+            return result_data
 
         self.component_properties.set_union_func(my_union)
 

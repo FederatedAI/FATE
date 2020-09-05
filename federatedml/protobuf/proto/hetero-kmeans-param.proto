@@ -20,10 +20,19 @@ package com.webank.ai.fate.core.mlmodel.buffer;
 option java_outer_classname = "KmeansModelParamProto";
 
 message KmeansModelParam {
-    int32 iters = 1;
-    bool is_converged = 2;
-    int32 k = 3;
-    repeated string header = 4;
+  int64 count_of_clusters = 1;
+  int64 max_interation = 2;
+  bool converged = 3;
+  repeated Clusterdetail cluster_detail = 4;
+  repeated Centroiddetail centroid_detail = 5;
 
+}
+
+message Clusterdetail{
+  repeated double cluster = 1;
+}
+
+message Centroiddetail{
+  repeated double centroid = 1;
 }
 
