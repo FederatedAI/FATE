@@ -7,4 +7,5 @@ message ColumnExpandMeta{
     repeated string append_header = 1;
     string method = 2;
     repeated string fill_value = 3;
+    bool need_run = 4;
 }

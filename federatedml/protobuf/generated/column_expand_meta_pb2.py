@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
   serialized_options=_b('B\025ColumnExpandMetaProto'),
-  serialized_pb=_b('\n\x18\x63olumn-expand-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"M\n\x10\x43olumnExpandMeta\x12\x15\n\rappend_header\x18\x01 \x03(\t\x12\x0e\n\x06method\x18\x02 \x01(\t\x12\x12\n\nfill_value\x18\x03 \x03(\tB\x17\x42\x15\x43olumnExpandMetaProtob\x06proto3')
+  serialized_pb=_b('\n\x18\x63olumn-expand-meta.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"_\n\x10\x43olumnExpandMeta\x12\x15\n\rappend_header\x18\x01 \x03(\t\x12\x0e\n\x06method\x18\x02 \x01(\t\x12\x12\n\nfill_value\x18\x03 \x03(\t\x12\x10\n\x08need_run\x18\x04 \x01(\x08\x42\x17\x42\x15\x43olumnExpandMetaProtob\x06proto3')
 )
 
 
@@ -54,6 +54,13 @@ _COLUMNEXPANDMETA = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='need_run', full_name='com.webank.ai.fate.core.mlmodel.buffer.ColumnExpandMeta.need_run', index=3,
+      number=4, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -67,7 +74,7 @@ _COLUMNEXPANDMETA = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=68,
-  serialized_end=145,
+  serialized_end=163,
 )
 
 DESCRIPTOR.message_types_by_name['ColumnExpandMeta'] = _COLUMNEXPANDMETA
