@@ -355,7 +355,7 @@ class MetricInterface(object):
             train_pos_perc, validate_pos_perc, intervals = psi_computer.compute(train_scores, validate_scores,
                                                                                   debug=debug, str_intervals=True,
                                                                                   round_num=6, train_labels=train_labels
-                                                                                  , validate_labels=validate_labels)
+                                                                                  ,validate_labels=validate_labels)
 
             len_list = np.array([len(psi_scores), len(expected_interval), len(expected_percentage), len(actual_interval)
                                  , len(actual_percentage), len(intervals)])
