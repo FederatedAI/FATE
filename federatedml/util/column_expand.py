@@ -89,8 +89,11 @@ class ColumnExpand(ModelBase):
         new_data = data.mapValues(lambda v: ColumnExpand._append_feature(v, append_value))
 
         new_schema = copy.deepcopy(data.schema)
-        header = new_schema["header"]
-        new_header = DELIMITER.join([header, DELIMITER.join(self.append_header)])
+        header = new_schema.get("header", "")
+        if len(header) == 0:
+            new_header = DELIMITER.join(self.append_header)
+        else:
+            new_header = DELIMITER.join(header.split(DELIMITER) + self.append_header)
         new_schema["header"] = new_header
         new_data.schema = new_schema
 
