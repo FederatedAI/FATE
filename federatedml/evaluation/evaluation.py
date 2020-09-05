@@ -135,15 +135,14 @@ class Evaluation(ModelBase):
         intra_cluster_avg_dist, inter_cluster_dist = [], []
         run_intra_metrics = False  # run intra metrics or outer metrics ?
         LOGGER.debug('data is {}'.format(data))
-        if len(data[0][1]) == 2:
-            LOGGER.debug('len is 2')
+        if len(data[0][1]) == 3:
             # [int int] -> [true_label, predicted label] -> outer metric
             # [int np.array] - > [predicted label, distance] -> need no metric computation
             LOGGER.debug('type is {} {}'.format(type(data[0][1][0]), type(data[0][1][1])))
             if not (type(data[0][1][0]) == int and type(data[0][1][1]) == int):
                 return None, None, run_intra_metrics
 
-        if len(data[0][1]) == 3:  # the input format is for intra metrics
+        if len(data[0][1]) == 4:  # the input format is for intra metrics
             run_intra_metrics = True
 
         for d in data:
