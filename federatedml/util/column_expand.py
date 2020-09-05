@@ -90,7 +90,7 @@ class ColumnExpand(ModelBase):
 
         new_schema = copy.deepcopy(data.schema)
         header = new_schema["header"]
-        new_header = header + DELIMITER + DELIMITER.join(self.append_header)
+        new_header = DELIMITER.join([header, DELIMITER.join(self.append_header)])
         new_schema["header"] = new_header
         new_data.schema = new_schema
 
