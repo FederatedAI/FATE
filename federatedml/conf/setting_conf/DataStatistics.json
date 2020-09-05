@@ -1,6 +1,5 @@
 {
     "module_path":  "federatedml/statistic",
-    "default_runtime_conf": "statistic_param.json",
     "param_class" : "federatedml/param/statistics_param.py/StatisticsParam",
     "role":
     {

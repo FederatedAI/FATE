@@ -13,15 +13,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils import log_utils
 from federatedml.framework.homo.blocks import uuid_generator, diffie_hellman
 from federatedml.framework.homo.blocks.base import HomoTransferBase
 from federatedml.framework.homo.blocks.diffie_hellman import DHTransVar
 from federatedml.framework.homo.blocks.uuid_generator import UUIDTransVar
 from federatedml.secureprotol.encrypt import PadsCipher
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class RandomPaddingCipherTransVar(HomoTransferBase):

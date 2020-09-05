@@ -97,6 +97,10 @@ def check_output_path(path):
     return path
 
 
+def string_to_bytes(string):
+    return string if isinstance(string, bytes) else string.encode(encoding="utf-8")
+
+
 def get_lan_ip():
     if os.name != "nt":
         import fcntl

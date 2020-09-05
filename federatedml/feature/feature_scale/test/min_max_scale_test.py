@@ -6,7 +6,7 @@ import unittest
 
 from sklearn.preprocessing import MinMaxScaler as MMS
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 from federatedml.feature.feature_scale.min_max_scale import MinMaxScale
 from federatedml.feature.instance import Instance
 from federatedml.param.scale_param import ScaleParam

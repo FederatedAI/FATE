@@ -1,18 +1,12 @@
+import numpy as np
 from federatedml.transfer_learning.hetero_ftl.ftl_base import FTL
 from federatedml.statistic.intersect import intersect_host
-from arch.api.utils import log_utils
+from federatedml.util import LOGGER
 from federatedml.transfer_learning.hetero_ftl.ftl_dataloder import FTLDataLoader
 from federatedml.util import consts
-
 from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
-
 from federatedml.util.io_check import assert_io_num_rows_equal
-
 from federatedml.statistic import data_overview
-
-import numpy as np
-
-LOGGER = log_utils.getLogger()
 
 
 class FTLHost(FTL):

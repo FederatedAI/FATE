@@ -23,6 +23,12 @@ class Backend(IntEnum):
         return self.value == self.EGGROLL
 
 
+class EngineType(object):
+    COMPUTING = "computing"
+    FEDERATION = "federation"
+    STORAGE = "storage"
+
+
 class FederatedMode(object):
     SINGLE = "SINGLE"
     MULTIPLE = "MULTIPLE"

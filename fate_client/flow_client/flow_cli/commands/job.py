@@ -81,9 +81,8 @@ def list(ctx, **kwargs):
 
 @job.command("query", short_help="Query Job Command")
 @cli_args.JOBID
-@cli_args.FATEFLOW_SERVICE_NAME
+@cli_args.ROLE
 @cli_args.PARTYID
-@cli_args.COMPONENT_NAME
 @cli_args.STATUS
 @click.pass_context
 def query(ctx, **kwargs):
@@ -106,12 +105,12 @@ def query(ctx, **kwargs):
         for i in range(len(response['data'])):
             del response['data'][i]['f_runtime_conf']
             del response['data'][i]['f_dsl']
-    prettify(response.json() if isinstance(response, requests.models.Response) else response)
+    prettify(response)
 
 
 @job.command("clean", short_help="Clean Job Command")
 @cli_args.JOBID_REQUIRED
-@cli_args.FATEFLOW_SERVICE_NAME
+@cli_args.ROLE
 @cli_args.PARTYID
 @cli_args.COMPONENT_NAME
 @click.pass_context
@@ -178,7 +177,7 @@ def config(ctx, **kwargs):
         del response['data']['runtime_conf']
         response['directory'] = download_directory
         response['retmsg'] = 'download successfully, please check {} directory'.format(download_directory)
-    prettify(response.json() if isinstance(response, requests.models.Response) else response)
+    prettify(response)
 
 
 @job.command("log", short_help="Log Job Command")
@@ -202,19 +201,18 @@ def log(ctx, **kwargs):
     with closing(access_server('get', ctx, 'job/log', config_data, False, stream=True)) as response:
         if response.status_code == 200:
             download_from_request(http_response=response, tar_file_name=tar_file_name, extract_dir=extract_dir)
-            response_dict = {'retcode': 0,
-                             'directory': extract_dir,
-                             'retmsg': 'download successfully, please check {} directory'.format(extract_dir)}
+            res = {'retcode': 0,
+                   'directory': extract_dir,
+                   'retmsg': 'download successfully, please check {} directory'.format(extract_dir)}
         else:
-            response_dict = response.json() if isinstance(response, requests.models.Response) else response.json
-    prettify(response_dict)
+            res = response
+    prettify(res)
 
 
 @job.command("view", short_help="Query Job Data View Command")
 @cli_args.JOBID
-@cli_args.FATEFLOW_SERVICE_NAME
+@cli_args.ROLE
 @cli_args.PARTYID
-@cli_args.COMPONENT_NAME
 @cli_args.STATUS
 @click.pass_context
 def view(ctx, **kwargs):
@@ -292,11 +290,11 @@ def dsl_generator(ctx, **kwargs):
                     for chunk in response.iter_content(1024):
                         if chunk:
                             fw.write(chunk)
-                response_dict = {'retcode': 0,
-                                 'retmsg': "New predict dsl file has been generated successfully. "
-                                           "File path is: {}".format(output_path)}
+                res = {'retcode': 0,
+                       'retmsg': "New predict dsl file has been generated successfully. "
+                                 "File path is: {}".format(output_path)}
             else:
-                response_dict = response.json() if isinstance(response, requests.models.Response) else response.json
-        prettify(response_dict)
+                res = response
+        prettify(res)
     else:
         access_server('post', ctx, 'job/dsl/generate', config_data)

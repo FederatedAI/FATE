@@ -20,7 +20,7 @@ import unittest
 import numpy as np
 from sklearn import metrics
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 from federatedml.loss import LeastSquaredErrorLoss
 from federatedml.loss.regression_loss import LeastAbsoluteErrorLoss
 from federatedml.loss.regression_loss import HuberLoss

@@ -2,13 +2,13 @@ import numpy as np
 import unittest
 from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
 from federatedml.util import consts
-from arch.api import session
+from fate_arch.session import Session
 import random
 
 
 class TestPaillierTensor(unittest.TestCase):
     def setUp(self):
-        session.init(str(random.randint(0, 10000000)), 0)
+        Session.create(0, 0).init_computing(str(random.randint(0, 10000000)))
         self.data1 = np.ones((1000, 10))
         self.data2 = np.ones((1000, 10))
         self.paillier_tensor1 = PaillierTensor(ori_data=self.data1, partitions=10)
@@ -82,9 +82,3 @@ class TestPaillierTensor(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-
-
-
-
-

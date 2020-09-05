@@ -18,14 +18,12 @@
 
 import abc
 
-from arch.api.utils import log_utils
 from federatedml.feature.feature_selection.filter_base import BaseFilterMethod
+from federatedml.feature.feature_selection.selection_properties import SelectionProperties
 from federatedml.framework.hetero.sync import selection_info_sync
 from federatedml.param.feature_selection_param import IVValueSelectionParam
 from federatedml.protobuf.generated import feature_selection_meta_pb2
-from federatedml.feature.feature_selection.selection_properties import SelectionProperties
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 def fit_iv_values(binning_model, threshold, selection_param: SelectionProperties):

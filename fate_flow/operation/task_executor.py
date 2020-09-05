@@ -17,9 +17,9 @@ import argparse
 import importlib
 import os
 import traceback
-from fate_arch.common import file_utils, log
+from fate_arch.common import file_utils, log, EngineType
 from fate_arch.common.base_utils import current_timestamp, timestamp_to_date
-from fate_arch.common.log import schedule_logger
+from fate_arch.common.log import schedule_logger, getLogger
 from fate_arch import session
 from fate_flow.entity.types import TaskStatus, ProcessRole, RunParameters
 from fate_flow.entity.runtime_config import RuntimeConfig
@@ -30,7 +30,8 @@ from fate_flow.scheduling_apps.client import ControllerClient
 from fate_flow.scheduling_apps.client import TrackerClient
 from fate_flow.db.db_models import TrackingOutputDataInfo, fill_db_model_object
 from fate_arch.computing import ComputingEngine
-from fate_arch.common import conf_utils
+
+LOGGER = getLogger()
 
 
 class TaskExecutor(object):
@@ -49,9 +50,12 @@ class TaskExecutor(object):
             parser.add_argument('-r', '--role', required=True, type=str, help="role")
             parser.add_argument('-p', '--party_id', required=True, type=int, help="party id")
             parser.add_argument('-c', '--config', required=True, type=str, help="task parameters")
-            parser.add_argument('--processors_per_node', help="processors_per_node", type=int)
             parser.add_argument('--run_ip', help="run ip", type=str)
             parser.add_argument('--job_server', help="job server", type=str)
+            parser.add_argument('--processors_per_node', help="processors_per_node", type=int)
+            parser.add_argument('--num-executors', help="spark num executors", type=int)
+            parser.add_argument('--executor-cores', help="spark executor cores", type=int)
+            parser.add_argument('--executor-memory', help="spark executor memory", type=str)
             args = parser.parse_args()
             schedule_logger(args.job_id).info('enter task process')
             schedule_logger(args.job_id).info(args)
@@ -84,10 +88,10 @@ class TaskExecutor(object):
             job_runtime_conf = job_conf["job_runtime_conf_path"]
             job_parameters = RunParameters(**job_runtime_conf['job_parameters'])
             dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
-                                                      runtime_conf=job_runtime_conf,
-                                                      train_runtime_conf=job_conf["train_runtime_conf_path"],
-                                                      pipeline_dsl=job_conf["pipeline_dsl_path"]
-                                                      )
+                                                           runtime_conf=job_runtime_conf,
+                                                           train_runtime_conf=job_conf["train_runtime_conf_path"],
+                                                           pipeline_dsl=job_conf["pipeline_dsl_path"]
+                                                           )
             party_index = job_runtime_conf["role"][role].index(party_id)
             job_args = dsl_parser.get_args_input()
             job_args_on_party = job_args[role][party_index].get('args') if role in job_args else {}
@@ -144,12 +148,12 @@ class TaskExecutor(object):
                 session_options = {}
 
             sess = session.Session(computing_type=job_parameters.computing_engine, federation_type=job_parameters.federation_engine)
-            computing_session_id = job_utils.generate_session_id(task_id, task_version, role, party_id, "computing")
+            computing_session_id = job_utils.generate_session_id(task_id, task_version, role, party_id, EngineType.COMPUTING)
             sess.init_computing(computing_session_id=computing_session_id, options=session_options)
             federation_session_id = job_utils.generate_federated_id(task_id, task_version)
             sess.init_federation(federation_session_id=federation_session_id,
                                  runtime_conf=component_parameters_on_party,
-                                 service_conf=conf_utils.get_base_config("federation", {}).get(job_parameters.federation_backend))
+                                 service_conf=job_parameters.engines_address.get(EngineType.FEDERATION, {}))
             sess.as_default()
 
             schedule_logger().info('Run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
@@ -232,7 +236,7 @@ class TaskExecutor(object):
                         if search_component_name == 'args':
                             if job_args.get('data', {}).get(search_data_name).get('namespace', '') and job_args.get(
                                     'data', {}).get(search_data_name).get('name', ''):
-                                storage_table_meta = storage.StorageTableMeta.build(name=job_args['data'][search_data_name]['name'], namespace=job_args['data'][search_data_name]['namespace'])
+                                storage_table_meta = storage.StorageTableMeta(name=job_args['data'][search_data_name]['name'], namespace=job_args['data'][search_data_name]['namespace'])
                         else:
                             tracker_client = TrackerClient(job_id=job_id, role=role, party_id=party_id,
                                                            component_name=search_component_name)

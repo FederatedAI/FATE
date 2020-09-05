@@ -1,4 +1,4 @@
-from arch.api.utils import log_utils
+from federatedml.util import LOGGER
 from federatedml.util import consts
 from typing import List
 import functools
@@ -13,9 +13,6 @@ from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict
 from federatedml.util.io_check import assert_io_num_rows_equal
 # from federatedml.util.fate_operator import generate_anonymous
 from federatedml.util.anonymous_generator import generate_anonymous
-
-LOGGER = log_utils.getLogger()
-
 
 class HeteroSecureBoostHost(HeteroBoostingHost):
 

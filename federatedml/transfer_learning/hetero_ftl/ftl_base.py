@@ -2,7 +2,7 @@ import copy
 import json
 import functools
 import numpy as np
-from arch.api.utils import log_utils
+from federatedml.util import LOGGER
 from federatedml.nn.homo_nn.nn_model import get_nn_builder
 from federatedml.model_base import ModelBase
 from federatedml.param.ftl_param import FTLParam
@@ -20,8 +20,6 @@ from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
 from federatedml.protobuf.generated.ftl_model_param_pb2 import FTLModelParam
 from federatedml.protobuf.generated.ftl_model_meta_pb2 import FTLModelMeta, FTLPredictParam, FTLOptimizerParam
 from federatedml.util.validation_strategy import ValidationStrategy
-
-LOGGER = log_utils.getLogger()
 
 
 class FTL(ModelBase):
@@ -204,11 +202,17 @@ class FTL(ModelBase):
         overlap_samples = intersect_obj.run(data_inst)  # find intersect ids
         non_overlap_samples = data_inst.subtractByKey(overlap_samples)
 
-        self.store_header = data_inst.schema['header']
-        LOGGER.debug('data inst header is {}'.format(self.store_header))
+        LOGGER.debug('num of overlap/non-overlap sampels: {}/{}'.format(overlap_samples.count(),
+                                                                        non_overlap_samples.count()))
 
         if overlap_samples.count() == 0:
-            raise ValueError('no intersect samples')
+            raise ValueError('no overlap samples')
+
+        if guest_side and non_overlap_samples == 0:
+            raise ValueError('overlap samples are required in guest side')
+
+        self.store_header = data_inst.schema['header']
+        LOGGER.debug('data inst header is {}'.format(self.store_header))
 
         LOGGER.debug('has {} overlap samples'.format(overlap_samples.count()))
 
@@ -344,10 +348,3 @@ class FTL(ModelBase):
         self.nn.restore_model(model_param.model_bytes)
         self.store_header = list(model_param.header)
         LOGGER.debug('stored header load, is {}'.format(self.store_header))
-
-
-
-
-
-
-

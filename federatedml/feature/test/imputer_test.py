@@ -2,7 +2,7 @@ import numpy as np
 import time
 import unittest
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 from federatedml.feature.imputer import Imputer
 
 

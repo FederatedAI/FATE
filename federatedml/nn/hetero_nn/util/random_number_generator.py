@@ -21,7 +21,7 @@ import random
 
 import numpy as np
 
-from arch.api import session
+from fate_arch.session import computing_session
 from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
 
 BITS = 10
@@ -42,11 +42,11 @@ class RandomNumberGenerator(object):
 
     def generate_random_number(self, shape):
         size = self.get_size_by_shape(shape)
-        return np.reshape([random.SystemRandom().uniform(self.lower_bound, self.upper_bound) for idx in range(size)],
+        return np.reshape([random.SystemRandom().uniform(self.lower_bound, self.upper_bound) for _ in range(size)],
                           shape)
 
     def fast_generate_random_number(self, shape, partition=10):
-        tb = session.parallelize([None for i in range(shape[0])], include_key=False, partition=partition)
+        tb = computing_session.parallelize([None for _ in range(shape[0])], include_key=False, partition=partition)
 
         tb = tb.mapValues(lambda val: self.generate_random_number(shape[1:]))
 

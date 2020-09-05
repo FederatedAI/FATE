@@ -16,10 +16,7 @@
 
 import typing
 
-from fate_arch.common import log
 from federatedml.framework.weights import Weights
-
-LOGGER = log.getLogger()
 
 
 class NNModel(object):

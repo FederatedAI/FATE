@@ -21,15 +21,13 @@
 #
 ################################################################################
 
-from arch.api.utils import log_utils
+from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.evaluation.evaluation import Evaluation
 from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.evaluation.evaluation import PerformanceRecorder
 from federatedml.transfer_variable.transfer_class.validation_strategy_transfer_variable import  \
     ValidationStrategyVariable
-
-LOGGER = log_utils.getLogger()
 
 
 class ValidationStrategy(object):

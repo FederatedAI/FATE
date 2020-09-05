@@ -45,7 +45,8 @@ FATE_SERVICES_REGISTERED_PATH = {
 # job maximum number  of the initiator
 DEFAULT_TASK_PARALLELISM = 1
 DEFAULT_TASK_CORES_PER_NODE = 5
-DEFAULT_TASK_MEMORY_PER_NODE = 0
+DEFAULT_TASK_MEMORY_PER_NODE = 0  # mb
+STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE = 20
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000 * 60  # ms
@@ -82,6 +83,7 @@ stat_logger = log.getLogger("fate_flow_stat")
 detect_logger = log.getLogger("fate_flow_detect")
 access_logger = log.getLogger("fate_flow_access")
 data_manager_logger = log.getLogger("fate_flow_data_manager")
+peewee_logger = log.getLogger("peewee")
 
 
 """

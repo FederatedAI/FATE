@@ -36,7 +36,7 @@ from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE
 from fate_flow.utils import detect_utils
 from fate_flow.utils import session_utils
 from fate_flow.operation import JobSaver
-from fate_flow.entity.types import TaskStatus
+from fate_flow.entity.types import TaskStatus, RunParameters
 
 
 class IdCounter(object):
@@ -101,10 +101,9 @@ def check_config(config: typing.Dict, required_parameters: typing.List):
         return True, 'ok'
 
 
-def check_pipeline_job_runtime_conf(runtime_conf: typing.Dict):
+def check_job_runtime_conf(runtime_conf: typing.Dict):
     detect_utils.check_config(runtime_conf, ['initiator', 'job_parameters', 'role'])
     detect_utils.check_config(runtime_conf['initiator'], ['role', 'party_id'])
-    detect_utils.check_config(runtime_conf['job_parameters'], [('work_mode', RuntimeConfig.WORK_MODE)])
     # deal party id
     runtime_conf['initiator']['party_id'] = int(runtime_conf['initiator']['party_id'])
     for r in runtime_conf['role'].keys():
@@ -200,7 +199,10 @@ def job_virtual_component_module_name():
 
 def list_job(limit):
     with DB.connection_context():
-        jobs = Job.select().order_by(Job.f_create_time.desc()).limit(limit)
+        if limit > 0:
+            jobs = Job.select().order_by(Job.f_create_time.desc()).limit(limit)
+        else:
+            jobs = Job.select().order_by(Job.f_create_time.desc())
         return [job for job in jobs]
 
 
@@ -215,7 +217,10 @@ def show_job_queue():
 
 def list_task(limit):
     with DB.connection_context():
-        tasks = Task.select().order_by(Task.f_create_time.desc()).limit(limit)
+        if limit > 0:
+            tasks = Task.select().order_by(Task.f_create_time.desc()).limit(limit)
+        else:
+            tasks = Task.select().order_by(Task.f_create_time.desc())
         return [task for task in tasks]
 
 
@@ -253,9 +258,8 @@ def check_process_by_keyword(keywords):
     return ret == 0
 
 
-def run_subprocess(config_dir, process_cmd, log_dir=None):
-    stat_logger.info('Starting process command: {}'.format(process_cmd))
-    stat_logger.info(' '.join(process_cmd))
+def run_subprocess(job_id, config_dir, process_cmd, log_dir=None):
+    schedule_logger(job_id=job_id).info('start process command: {}'.format(' '.join(process_cmd)))
 
     os.makedirs(config_dir, exist_ok=True)
     if log_dir:
@@ -278,6 +282,7 @@ def run_subprocess(config_dir, process_cmd, log_dir=None):
         f.truncate()
         f.write(str(p.pid) + "\n")
         f.flush()
+    schedule_logger(job_id=job_id).info('start process command: {} successfully, pid is {}'.format(' '.join(process_cmd), p.pid))
     return p
 
 
@@ -389,7 +394,7 @@ def start_clean_queue():
 
 def start_session_stop(task):
     job_conf_dict = get_job_conf(task.f_job_id)
-    runtime_conf = job_conf_dict['job_runtime_conf_path']
+    job_parameters = RunParameters(**job_conf_dict['job_runtime_conf_path']["job_parameters"])
     computing_session_id = generate_session_id(task.f_task_id, task.f_task_version, task.f_role, task.f_party_id, suffix="computing")
     if task.f_status != TaskStatus.WAITING:
         schedule_logger(task.f_job_id).info(f'start run subprocess to stop task session {computing_session_id}')
@@ -402,11 +407,12 @@ def start_session_stop(task):
     process_cmd = [
         'python3', sys.modules[session_utils.SessionStop.__module__].__file__,
         '-j', computing_session_id,
-        '-w', str(runtime_conf.get('job_parameters').get('work_mode')),
-        '-b', str(runtime_conf.get('job_parameters').get('backend', 0)),
+        '--computing', job_parameters.computing_engine,
+        '--federation', job_parameters.federation_engine,
+        '--storage', job_parameters.storage_engine,
         '-c', 'stop' if task.f_status == JobStatus.COMPLETE else 'kill'
     ]
-    p = run_subprocess(config_dir=task_dir, process_cmd=process_cmd, log_dir=None)
+    p = run_subprocess(job_id=task.f_job_id, config_dir=task_dir, process_cmd=process_cmd, log_dir=None)
 
 
 def gen_all_party_key(all_party):

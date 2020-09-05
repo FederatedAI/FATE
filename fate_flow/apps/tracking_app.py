@@ -28,7 +28,7 @@ from fate_flow.db.db_models import Job, DB
 from fate_flow.manager.data_manager import delete_metric_data
 from fate_flow.operation import Tracker
 from fate_flow.settings import stat_logger, TEMP_DIRECTORY
-from fate_flow.utils import job_utils, data_utils, schedule_utils
+from fate_flow.utils import job_utils, data_utils, detect_utils, schedule_utils
 from fate_flow.utils.api_utils import get_json_result, error_response
 from federatedml.feature.instance import Instance
 
@@ -237,13 +237,13 @@ def component_output_data_download():
         return error_response(response_code=500, retmsg='no data')
     if limit == 0:
         return error_response(response_code=500, retmsg='limit is 0')
-    output_data_count = 0
     have_data_label = False
 
     output_data_file_list = []
     output_data_meta_file_list = []
     output_tmp_dir = os.path.join(os.getcwd(), 'tmp/{}'.format(fate_uuid()))
     for output_name, output_table_meta in output_tables_meta.items():
+        output_data_count = 0
         is_str = False
         output_data_file_path = "{}/{}.csv".format(output_tmp_dir, output_name)
         os.makedirs(os.path.dirname(output_data_file_path), exist_ok=True)
@@ -306,9 +306,12 @@ def component_output_data_table():
 @manager.route('/component/summary/download', methods=['POST'])
 def get_component_summary():
     request_data = request.json
-    tracker = Tracker(job_id=request_data['job_id'], component_name=request_data['component_name'],
-                      role=request_data['role'], party_id=request_data['party_id'])
-    summary = tracker.get_component_summary()
+    required_params = ["job_id", "component_name", "role", "party_id"]
+    detect_utils.check_config(request_data, required_params)
+    tracker = Tracker(job_id=request_data["job_id"], component_name=request_data["component_name"],
+                      role=request_data["role"], party_id=request_data["party_id"],
+                      task_id=request_data.get("task_id", None), task_version=request_data.get("task_version", None))
+    summary = tracker.read_summary_from_db()
     if summary:
         if request_data.get("filename"):
             temp_filepath = os.path.join(TEMP_DIRECTORY, request_data.get("filename"))

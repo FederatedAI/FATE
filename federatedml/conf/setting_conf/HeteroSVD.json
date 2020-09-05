@@ -1,6 +1,5 @@
 {
   "module_path": "federatedrec/svd/hetero_svd",
-  "default_runtime_conf": "svd_param.json",
   "param_class": "federatedrec/param/svd_param.py/HeteroSVDParam",
   "role": {
     "guest": {

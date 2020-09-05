@@ -24,12 +24,9 @@ import tensorflow as tf
 from tensorflow.keras.backend import gradients
 from tensorflow.keras.backend import set_session
 
-from arch.api.utils import log_utils
 from federatedml.framework.weights import OrderDictWeights, Weights
 from federatedml.nn.backend.tf_keras import losses
 from federatedml.nn.homo_nn.nn_model import NNModel, DataConverter
-
-LOGGER = log_utils.getLogger()
 
 
 def _zip_dir_as_bytes(path):
@@ -83,8 +80,9 @@ def _modify_model_input_shape(nn_struct, input_shape):
         input_shape = list(input_shape)
 
     struct = copy.deepcopy(nn_struct)
-    if not struct.get("config") or not struct["config"].get("layers") or not struct["config"]["layers"][
-        0].get("config"):
+    if not struct.get("config") or \
+            not struct["config"].get("layers") or \
+            not struct["config"]["layers"][0].get("config"):
         return json.dumps(struct)
 
     if struct["config"]["layers"][0].get("config"):
@@ -275,7 +273,7 @@ class KerasSequenceData(tf.keras.utils.Sequence):
             if num_label >= 2:
                 self.y_shape = (1,)
             else:
-                 raise ValueError(f"num_label is {num_label}")
+                raise ValueError(f"num_label is {num_label}")
             self.x = np.zeros((self.size, *self.x_shape))
             self.y = np.zeros((self.size, *self.y_shape))
             index = 0

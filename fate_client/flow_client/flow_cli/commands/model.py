@@ -34,7 +34,9 @@ def model(ctx):
 
 
 @model.command("load", short_help="Load Model Command")
-@cli_args.CONF_PATH
+@cli_args.JOBID
+@click.option("-c", "--conf-path", type=click.Path(exists=True),
+              help="Configuration file path.")
 @click.pass_context
 def load(ctx, **kwargs):
     """
@@ -45,12 +47,32 @@ def load(ctx, **kwargs):
     \b
     - USAGE:
         flow model load -c fate_flow/examples/publish_load_model.json
+        flow model load -j $JOB_ID
     """
-    config_data, dsl_data = preprocess(**kwargs)
-    access_server('post', ctx, 'model/load', config_data)
+    if not kwargs.get("conf_path") and not kwargs.get("job_id"):
+        prettify(
+            {
+                "retcode": 100,
+                "retmsg": "Load model failed. No arguments received, "
+                          "please provide one of arguments from job id and conf path."
+            }
+        )
+    else:
+        if kwargs.get("conf_path") and kwargs.get("job_id"):
+            prettify(
+                {
+                    "retcode": 100,
+                    "retmsg": "Load model failed. Please do not provide job id and "
+                              "conf path at the same time."
+                }
+            )
+        else:
+            config_data, dsl_data = preprocess(**kwargs)
+            access_server('post', ctx, 'model/load', config_data)
 
 
 @model.command("bind", short_help="Bind Model Command")
+@cli_args.JOBID
 @cli_args.CONF_PATH
 @click.pass_context
 def bind(ctx, **kwargs):
@@ -62,6 +84,7 @@ def bind(ctx, **kwargs):
     \b
     - USAGE:
         flow model bind -c fate_flow/examples/bind_model_service.json
+        flow model bind -c fate_flow/examples/bind_model_service.json -j $JOB_ID
     """
     config_data, dsl_data = preprocess(**kwargs)
     access_server('post', ctx, 'model/bind', config_data)
@@ -69,14 +92,14 @@ def bind(ctx, **kwargs):
 
 @model.command("import", short_help="Import Model Command")
 @cli_args.CONF_PATH
-@click.option("--force", is_flag=True, default=False,
-              help="If specified, the existing model file which is named the same as current model's, "
-                   "older version of model files would be renamed. Otherwise, importing progress would be rejected.")
+# @click.option("--force", is_flag=True, default=False,
+#               help="If specified, the existing model file which is named the same as current model's, "
+#                    "older version of model files would be renamed. Otherwise, importing progress would be rejected.")
 @click.option('--from-database', is_flag=True, default=False,
               help="If specified and there is a valid database environment, fate flow will import model from database "
                    "which you specified in configuration file.")
 @click.pass_context
-def imp(ctx, **kwargs):
+def import_model(ctx, **kwargs):
     """
     \b
     - DESCRIPTION:
@@ -84,20 +107,27 @@ def imp(ctx, **kwargs):
 
     \b
     - USAGE:
-        flow model import -c fate_flow/examples/import_model.json --force
+        flow model import -c fate_flow/examples/import_model.json
         flow model import -c fate_flow/examples/restore_model.json --from-database
     """
     config_data, dsl_data = preprocess(**kwargs)
     if not config_data.pop('from_database'):
-        file_path = config_data["file"]
-        if not os.path.isabs(file_path):
-            file_path = os.path.join(get_project_base_directory(), file_path)
-        if os.path.exists(file_path):
-            files = {'file': open(file_path, 'rb')}
-            access_server('post', ctx, 'model/import', data=config_data, files=files)
+        file_path = config_data.get("file", None)
+        if file_path:
+            if not os.path.isabs(file_path):
+                file_path = os.path.join(get_project_base_directory(), file_path)
+            if os.path.exists(file_path):
+                files = {'file': open(file_path, 'rb')}
+                access_server('post', ctx, 'model/import', data=config_data, files=files)
+            else:
+                prettify({'retcode': 100,
+                          'retmsg': 'Import model failed. The file is obtained from the fate flow client machine, '
+                                    'but it does not exist, please check the path: {}'.format(file_path)})
         else:
-            prettify({'retcode':100, 'retmsg': 'The file is obtained from the fate flow client machine, but it does not exist, '
-                      'please check the path: {}'.format(file_path)})
+            prettify({
+                'retcode': 100,
+                'retmsg': "Import model failed. Please specify the valid model file path and try again."
+            })
     else:
         access_server('post', ctx, 'model/restore', config_data)
 
@@ -108,7 +138,7 @@ def imp(ctx, **kwargs):
               help="If specified and there is a valid database environment, fate flow will export model to database "
                    "which you specified in configuration file.")
 @click.pass_context
-def export(ctx, **kwargs):
+def export_model(ctx, **kwargs):
     """
     \b
     - DESCRIPTION:

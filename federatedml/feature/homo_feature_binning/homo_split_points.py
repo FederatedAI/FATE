@@ -18,15 +18,12 @@
 
 import numpy as np
 
-from arch.api.utils import log_utils
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.framework.homo.blocks import secure_mean_aggregator
 from federatedml.framework.weights import DictWeights
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class HomoFeatureBinningServer(object):
@@ -105,10 +102,10 @@ class HomoFeatureBinningClient(object):
     def fit(self, data_instances):
         if self.bin_obj is not None:
             return self
-        
+
         if self.bin_param is None:
             self.bin_param = FeatureBinningParam()
-        
+
         self.bin_obj = QuantileBinning(params=self.bin_param, abnormal_list=self.abnormal_list,
                                        allow_duplicate=True)
         self.bin_obj.fit_split_points(data_instances)
@@ -122,11 +119,9 @@ class HomoFeatureBinningClient(object):
         query_result = self.bin_obj.query_quantile_point(quantile_points)
 
         query_points = DictWeights(d=query_result)
-        
+
         suffix = tuple(list(self.suffix) + [str(quantile_points)])
         self.aggregator.send_model(query_points, suffix)
         query_points = self.aggregator.get_aggregated_model(suffix)
         query_points = {k: v for k, v in query_points.unboxed.items()}
         return query_points
-
-

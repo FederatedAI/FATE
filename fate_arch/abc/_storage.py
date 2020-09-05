@@ -25,7 +25,11 @@ LOGGER = getLogger()
 
 class StorageTableMetaABC(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def create_metas(self, **kwargs):
+    def create(self):
+        ...
+
+    @abc.abstractmethod
+    def set_metas(self, **kwargs):
         ...
 
     @abc.abstractmethod
@@ -83,6 +87,10 @@ class StorageTableMetaABC(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_description(self):
+        ...
+
+    @abc.abstractmethod
+    def to_dict(self) -> dict:
         ...
 
 
@@ -152,6 +160,10 @@ class StorageSessionABC(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_storage_info(self, name, namespace):
+        ...
+
+    @abc.abstractmethod
+    def query_expired_sessions_record(self, ttl) -> []:
         ...
 
     @abc.abstractmethod

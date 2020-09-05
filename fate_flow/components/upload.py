@@ -64,21 +64,29 @@ class Upload(object):
         partitions = self.parameters["partition"]
         if partitions <= 0 or partitions >= self.MAX_PARTITIONS:
             raise Exception("Error number of partition, it should between %d and %d" % (0, self.MAX_PARTITIONS))
+        with storage.Session.build(session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True), namespace=namespace, name=name) as storage_session:
+            if self.parameters.get("destroy", False):
+                table = storage_session.get_table()
+                if table:
+                    LOGGER.info(f"destroy table {name} {namespace}")
+                    table.destroy()
+                else:
+                    LOGGER.info(f"can not found table {name} {namespace}, pass destroy")
+        storage_engine = self.parameters["storage_engine"]
         with storage.Session.build(session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),
-                                   storage_engine=self.parameters["storage_engine"], options=self.parameters.get("options")) as storage_session:
-            if self.parameters["storage_engine"] in [StorageEngine.EGGROLL, StorageEngine.STANDALONE]:
+                                   storage_engine=storage_engine, options=self.parameters.get("options")) as storage_session:
+            if storage_engine in {StorageEngine.EGGROLL, StorageEngine.STANDALONE}:
                 address_dict = {"name": name, "namespace": namespace, "storage_type": EggRollStorageType.ROLLPAIR_LMDB}
-            elif self.parameters["storage_engine"] in [StorageEngine.MYSQL]:
+            elif storage_engine in {StorageEngine.MYSQL}:
                 from fate_arch.common.conf_utils import get_base_config
                 address_dict = get_base_config("data_storage_address", {})
                 address_dict['db'] = namespace
                 address_dict['name'] = name
-            address = storage.StorageTableMeta.create_address(storage_engine=self.parameters["storage_engine"], address_dict=address_dict)
+            elif storage_engine in {StorageEngine.HDFS}:
+                address_dict = self.parameters["storage_address"]
+            address = storage.StorageTableMeta.create_address(storage_engine=storage_engine, address_dict=address_dict)
             self.parameters["partitions"] = partitions
             self.parameters["name"] = name
-            if self.parameters.get("destroy", False):
-                LOGGER.info(f"destroy table {name} {namespace}")
-                storage_session.get_table(name=name, namespace=namespace).destroy()
             self.table = storage_session.create_table(address=address, **self.parameters)
             data_table_count = self.save_data_table(job_id, name, namespace, head)
         LOGGER.info("------------load data finish!-----------------")

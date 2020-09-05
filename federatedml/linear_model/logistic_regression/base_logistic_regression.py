@@ -15,19 +15,16 @@
 #
 
 import numpy as np
-from google.protobuf import json_format
 
-from arch.api.utils import log_utils
 from federatedml.linear_model.linear_model_base import BaseLinearModel
 from federatedml.linear_model.linear_model_weight import LinearModelWeights as LogisticRegressionWeights
 from federatedml.one_vs_rest.one_vs_rest import one_vs_rest_factory
 from federatedml.optim.initialize import Initializer
+from federatedml.param.evaluation_param import EvaluateParam
 from federatedml.param.logistic_regression_param import InitParam
 from federatedml.protobuf.generated import lr_model_param_pb2
+from federatedml.util import LOGGER
 from federatedml.util.fate_operator import vec_dot
-from federatedml.param.evaluation_param import EvaluateParam
-
-LOGGER = log_utils.getLogger()
 
 
 class BaseLogisticRegression(BaseLinearModel):
@@ -140,4 +137,3 @@ class BaseLogisticRegression(BaseLinearModel):
 
     def get_metrics_param(self):
         return EvaluateParam(eval_type="binary", metrics=self.metrics)
-

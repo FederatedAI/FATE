@@ -16,12 +16,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.utils import log_utils
-from federatedml.util import fate_operator
-from federatedml.util import anonymous_generator
+
 import copy
 
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
+from federatedml.util import anonymous_generator
 
 
 class BinInnerParam(object):
@@ -174,4 +173,3 @@ class BinInnerParam(object):
         # except IndexError or ValueError:
         #     raise RuntimeError("Bin inner param is trying to decode an invalid col_name.")
         return self.header[col_index]
-

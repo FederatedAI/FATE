@@ -20,11 +20,9 @@ import math
 
 import numpy as np
 
-from arch.api.utils import log_utils
 from federatedml.feature.binning.optimal_binning.bucket_info import Bucket
 from federatedml.param.feature_binning_param import OptimalBinningParam
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class HeapNode(object):

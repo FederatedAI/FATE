@@ -18,12 +18,14 @@ import operator
 from typing import List
 
 from fate_arch.computing import ComputingEngine
+from fate_arch.storage import StorageEngine
 from fate_arch.common.base_utils import current_timestamp, serialize_b64, deserialize_b64
 from fate_arch.common.log import schedule_logger
-from fate_flow.db.db_models import DB, TrackingMetric, TrackingOutputDataInfo, ComponentSummary
+from fate_flow.db.db_models import (DB, Job, TrackingMetric, TrackingOutputDataInfo,
+                                    ComponentSummary, MachineLearningModelInfo as MLModel)
 from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.manager.model_manager import pipelined_model
+from fate_flow.pipelined_model import pipelined_model
 from fate_arch import storage
 from fate_flow.utils import model_utils, job_utils
 from fate_arch import session
@@ -107,44 +109,6 @@ class Tracker(object):
                 view_data[k] = v
             return view_data
 
-    def save_component_summary(self, summary_data: dict):
-        with DB.connection_context():
-            component_summary = ComponentSummary.select().where(ComponentSummary.f_job_id == self.job_id,
-                                                                ComponentSummary.f_role == self.role,
-                                                                ComponentSummary.f_party_id == self.party_id,
-                                                                ComponentSummary.f_component_name == self.component_name)
-            is_insert = True
-            if component_summary:
-                cpn_summary = component_summary[0]
-                is_insert = False
-            else:
-                cpn_summary = ComponentSummary()
-                cpn_summary.f_create_time = current_timestamp()
-            cpn_summary.f_job_id = self.job_id
-            cpn_summary.f_role = self.role
-            cpn_summary.f_party_id = self.party_id
-            cpn_summary.f_component_name = self.component_name
-            cpn_summary.f_update_time = current_timestamp()
-            cpn_summary.f_summary = serialize_b64(summary_data, to_str=True)
-
-            if is_insert:
-                cpn_summary.save(force_insert=True)
-            else:
-                cpn_summary.save()
-            return cpn_summary
-
-    def get_component_summary(self):
-        with DB.connection_context():
-            component_summary = ComponentSummary.select().where(ComponentSummary.f_job_id == self.job_id,
-                                                                ComponentSummary.f_role == self.role,
-                                                                ComponentSummary.f_party_id == self.party_id,
-                                                                ComponentSummary.f_component_name == self.component_name)
-            if component_summary:
-                cpn_summary = component_summary[0]
-                return deserialize_b64(cpn_summary.f_summary)
-            else:
-                return ""
-
     def save_output_data(self, computing_table, output_storage_engine=None):
         if computing_table:
             persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(
@@ -154,7 +118,15 @@ class Tracker(object):
                                                                                   persistent_table_name))
             partitions = computing_table.partitions
             schedule_logger(self.job_id).info('output data table partitions is {}'.format(partitions))
-            address = storage.StorageTableMeta.create_address(storage_engine=output_storage_engine, address_dict={"name": persistent_table_name, "namespace": persistent_table_namespace, "storage_type": storage.EggRollStorageType.ROLLPAIR_LMDB})
+            if output_storage_engine == StorageEngine.EGGROLL:
+                address_dict = {"name": persistent_table_name, "namespace": persistent_table_namespace, "storage_type": storage.EggRollStorageType.ROLLPAIR_LMDB}
+            elif output_storage_engine == StorageEngine.STANDALONE:
+                address_dict = {"name": persistent_table_name, "namespace": persistent_table_namespace, "storage_type": storage.StandaloneStorageType.ROLLPAIR_LMDB}
+            elif output_storage_engine == StorageEngine.HDFS:
+                address_dict = {"path": f"/fate/temp/component_output_data/{persistent_table_namespace}/{persistent_table_name}"}
+            else:
+                raise RuntimeError(f"{output_storage_engine} storage is not supported")
+            address = storage.StorageTableMeta.create_address(storage_engine=output_storage_engine, address_dict=address_dict)
             schema = {}
             # persistent table
             computing_table.save(address, schema=schema, partitions=partitions)
@@ -166,24 +138,15 @@ class Tracker(object):
                 if part_of_limit == 0:
                     break
             table_count = computing_table.count()
-            meta_info = {}
-            meta_info["name"] = persistent_table_name
-            meta_info["namespace"] = persistent_table_namespace
-            meta_info["address"] = address
-            meta_info["partitions"] = computing_table.partitions
-            meta_info["engine"] = output_storage_engine
-            meta_info["type"] = storage.EggRollStorageType.ROLLPAIR_LMDB
-            meta_info["options"] = {}
-            meta_info["schema"] = schema
-            meta_info["part_of_data"] = part_of_data
-            meta_info["count"] = table_count
-            storage.StorageTableMeta.create_metas(**meta_info)
-            """
-            # The same table is read by two different sessions
-            with storage.Session.build(storage_engine=output_storage_engine) as storage_session:
-                table = storage_session.create_table(address=address, name=persistent_table_name, namespace=persistent_table_namespace, partitions=partitions)
-                table.get_meta().update_metas(schema=schema, part_of_data=part_of_data, count=computing_table.count(), partitions=partitions)
-            """
+            table_meta = storage.StorageTableMeta(name=persistent_table_name, namespace=persistent_table_namespace, new=True)
+            table_meta.address = address
+            table_meta.partitions = computing_table.partitions
+            table_meta.engine = output_storage_engine
+            table_meta.type = storage.EggRollStorageType.ROLLPAIR_LMDB
+            table_meta.schema = schema
+            table_meta.part_of_data = part_of_data
+            table_meta.count = table_count
+            table_meta.create()
             return persistent_table_namespace, persistent_table_name
         else:
             schedule_logger(self.job_id).info('task id {} output data table is none'.format(self.task_id))
@@ -199,7 +162,7 @@ class Tracker(object):
         if output_data_infos:
             for output_data_info in output_data_infos:
                 schedule_logger(self.job_id).info("Get task {} {} output table {} {}".format(output_data_info.f_task_id, output_data_info.f_task_version, output_data_info.f_table_namespace, output_data_info.f_table_name))
-                data_table_meta = storage.StorageTableMeta.build(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace)
+                data_table_meta = storage.StorageTableMeta(name=output_data_info.f_table_name, namespace=output_data_info.f_table_namespace)
                 output_tables_meta[output_data_info.f_data_name] = data_table_meta
         return output_tables_meta
 
@@ -258,6 +221,59 @@ class Tracker(object):
                     metric_namespace,
                     e
                 ))
+
+    def insert_summary_into_db(self, summary_data: dict):
+        with DB.connection_context():
+            try:
+                summary_model = self.get_dynamic_db_model(ComponentSummary, self.job_id)
+                DB.create_tables([summary_model])
+                summary_obj = summary_model.get_or_none(
+                    summary_model.f_job_id == self.job_id,
+                    summary_model.f_component_name == self.component_name,
+                    summary_model.f_role == self.role,
+                    summary_model.f_party_id == self.party_id,
+                    summary_model.f_task_id == self.task_id,
+                    summary_model.f_task_version == self.task_version
+                )
+                if summary_obj:
+                    summary_obj.f_summary = serialize_b64(summary_data, to_str=True)
+                    summary_obj.f_update_time = current_timestamp()
+                    summary_obj.save()
+                else:
+                    self.get_dynamic_db_model(ComponentSummary, self.job_id).create(
+                        f_job_id=self.job_id,
+                        f_component_name=self.component_name,
+                        f_role=self.role,
+                        f_party_id=self.party_id,
+                        f_task_id=self.task_id,
+                        f_task_version=self.task_version,
+                        f_summary=serialize_b64(summary_data, to_str=True),
+                        f_create_time=current_timestamp()
+                    )
+            except Exception as e:
+                schedule_logger(self.job_id).exception("An exception where querying summary job id: {} "
+                                                       "component name: {} to database:\n{}".format(
+                    self.job_id, self.component_name, e)
+                )
+
+    def read_summary_from_db(self):
+        with DB.connection_context():
+            try:
+                summary_model = self.get_dynamic_db_model(ComponentSummary, self.job_id)
+                summary = summary_model.get_or_none(
+                    summary_model.f_job_id == self.job_id,
+                    summary_model.f_component_name == self.component_name,
+                    summary_model.f_role == self.role,
+                    summary_model.f_party_id == self.party_id
+                )
+                if summary:
+                    cpn_summary = deserialize_b64(summary.f_summary)
+                else:
+                    cpn_summary = ""
+            except Exception as e:
+                schedule_logger(self.job_id).exception(e)
+                raise e
+            return cpn_summary
 
     def log_output_data_info(self, data_name: str, table_namespace: str, table_name: str):
         self.insert_output_data_info_into_db(data_name=data_name, table_namespace=table_namespace, table_name=table_name)
@@ -417,6 +433,46 @@ class Tracker(object):
         schedule_logger(self.job_id).info('clean task {} on {} {} done'.format(self.task_id,
                                                                                self.role,
                                                                                self.party_id))
+
+    def save_machine_learning_model_info(self):
+        try:
+            with DB.connection_context():
+                record = MLModel.get_or_none(MLModel.f_model_version == self.job_id)
+                if not record:
+                    job = Job.get_or_none(Job.f_job_id == self.job_id)
+                    if job:
+                        job_data = job.to_json()
+                        MLModel.create(
+                            f_role=self.role,
+                            f_party_id=self.party_id,
+                            f_roles=job_data.get("f_roles"),
+                            f_model_id=self.model_id,
+                            f_model_version=self.model_version,
+                            f_job_id=job_data.get("f_job_id"),
+                            f_create_time=current_timestamp(),
+                            f_initiator_role=job_data.get('f_initiator_role'),
+                            f_initiator_party_id=job_data.get('f_initiator_party_id'),
+                            f_runtime_conf=job_data.get('f_runtime_conf'),
+                            f_work_mode=job_data.get('f_work_mode'),
+                            f_dsl=job_data.get('f_dsl'),
+                            f_train_runtime_conf=job_data.get('f_train_runtime_conf'),
+                        )
+
+                        schedule_logger(self.job_id).info(
+                            'save {} model info done. model id: {}, model version: {}.'.format(self.job_id,
+                                                                                               self.model_id,
+                                                                                               self.model_version))
+                    else:
+                        schedule_logger(self.job_id).info(
+                            'save {} model info failed, no job found in db. '
+                            'model id: {}, model version: {}.'.format(self.job_id,
+                                                                      self.model_id,
+                                                                      self.model_version))
+
+                else:
+                    schedule_logger(self.job_id).info('model {} info has already existed in database.'.format(self.job_id))
+        except Exception as e:
+            schedule_logger(self.job_id).exception(e)
 
     @classmethod
     def get_dynamic_db_model(cls, base, job_id):

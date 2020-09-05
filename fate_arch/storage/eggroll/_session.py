@@ -15,14 +15,14 @@
 #
 
 from fate_arch.common.profile import log_elapsed
-from fate_arch.storage import StorageSessionBase, EggRollStorageType
+from fate_arch.storage import StorageSessionBase, StorageEngine, EggRollStorageType
 from fate_arch.abc import AddressABC
 from fate_arch.common.address import EggRollAddress
 
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(session_id=session_id)
+        super(StorageSession, self).__init__(session_id=session_id, engine_name=StorageEngine.EGGROLL)
         self._options = options if options else {}
         self._rp_session = None
         self._rpc = None

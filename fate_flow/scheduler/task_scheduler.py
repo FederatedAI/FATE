@@ -65,7 +65,6 @@ class TaskScheduler(object):
                 # can start task
                 scheduling_status_code = SchedulingStatusCode.HAVE_NEXT
                 status_code = cls.start_task(job=job, task=waiting_task)
-                #initiator_tasks_group[JobSaver.task_key(waiting_task.f_task_id, role=waiting_task.f_role, party_id=waiting_task.f_party_id)] = waiting_task
                 if status_code == SchedulingStatusCode.NO_RESOURCE:
                     # Wait for the next round of scheduling
                     break
@@ -135,7 +134,7 @@ class TaskScheduler(object):
                                              json_body={'job_parameters': job_parameters,
                                                         'job_args': party_job_args,
                                                         'input': component.get_input()},
-                                             work_mode=job_parameters['work_mode'])
+                                             federated_mode=job_parameters['federated_mode'])
                     if response['retcode'] == 0:
                         for input_data in response.get('data', {}).get('data', {}).values():
                             for data_table_info in input_data.values():

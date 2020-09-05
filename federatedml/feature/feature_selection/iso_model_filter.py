@@ -20,18 +20,16 @@ import math
 
 import numpy as np
 
-from arch.api.utils import log_utils
 from federatedml.feature.feature_selection.filter_base import BaseFilterMethod
 from federatedml.feature.feature_selection.model_adapter.isometric_model import IsometricModel
 from federatedml.framework.hetero.sync import selection_info_sync
 from federatedml.param.feature_selection_param import CommonFilterParam
 from federatedml.protobuf.generated import feature_selection_meta_pb2
+from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util import fate_operator
 from federatedml.util import anonymous_generator
 from federatedml.util.component_properties import ComponentProperties
-
-LOGGER = log_utils.getLogger()
 
 
 class IsoModelFilter(BaseFilterMethod):
@@ -73,7 +71,7 @@ class IsoModelFilter(BaseFilterMethod):
         m = self.metrics
         metric_info = self.iso_model.get_metric_info(m)
         all_feature_values = metric_info.get_partial_values(
-                self.selection_properties.select_col_names)
+            self.selection_properties.select_col_names)
         col_names = [x for x in self.selection_properties.select_col_names]
 
         # all_feature_values = np.array(metric_info.values)

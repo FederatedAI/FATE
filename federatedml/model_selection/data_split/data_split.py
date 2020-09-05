@@ -18,15 +18,14 @@ import collections
 
 from sklearn.model_selection import train_test_split
 
-from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.model_base import ModelBase
 from federatedml.param.data_split_param import DataSplitParam
+from federatedml.util import LOGGER
 from federatedml.util import data_io
 from federatedml.util.consts import FLOAT_ZERO
 
-LOGGER = log_utils.getLogger()
 ROUND_NUM = 3
 
 
