@@ -71,7 +71,7 @@ class HomoOneHotBase(one_hot_encoder.OneHotEncoder):
         # obtain the individual column headers with their values
         f1 = functools.partial(self.record_new_header,
                                inner_param=self.inner_param)
-        self.col_maps = data_instances.mapPartitions(f1).reduce(self.merge_col_maps)
+        self.col_maps = data_instances.applyPartitions(f1).reduce(self.merge_col_maps)
         col_maps = {}
         for col_name, pair_obj in self.col_maps.items():
             values = [x for x in pair_obj.values]

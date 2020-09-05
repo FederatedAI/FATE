@@ -95,7 +95,7 @@ class HomoLRGuest(HomoLRBase):
                                       coef=model_weights.coef_,
                                       intercept=model_weights.intercept_,
                                       fit_intercept=self.fit_intercept)
-                grad = batch_data.mapPartitions(f).reduce(fate_operator.reduce_add)
+                grad = batch_data.applyPartitions(f).reduce(fate_operator.reduce_add)
                 grad /= n
                 # LOGGER.debug('iter: {}, batch_index: {}, grad: {}, n: {}'.format(
                 #     self.n_iter_, batch_num, grad, n))
