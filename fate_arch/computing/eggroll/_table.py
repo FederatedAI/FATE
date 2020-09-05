@@ -71,6 +71,9 @@ class Table(CTableABC):
     def mapPartitions(self, func, **kwargs):
         return Table(self._rp.map_partitions(func))
 
+    def mapReducePartitions(self, mapper, reducer, **kwargs):
+        return Table(self._rp.map_partitions(func=mapper, reduce_op=reducer))
+
     @log_elapsed
     def reduce(self, func, **kwargs):
         return self._rp.reduce(func)
