@@ -23,7 +23,7 @@ from federatedml.model_base import ModelBase
 from federatedml.param.column_expand_param import ColumnExpandParam
 from federatedml.protobuf.generated import column_expand_meta_pb2, column_expand_param_pb2
 
-DELIMITER = ", "
+DELIMITER = ","
 LOGGER = log_utils.getLogger()
 
 
@@ -64,6 +64,7 @@ class ColumnExpand(ModelBase):
         self.fill_value = None
 
         self.summary_obj = None
+        self.header = None
         self.new_feature_generator = None
 
         self.model_param_name = 'ColumnExpandParam'
