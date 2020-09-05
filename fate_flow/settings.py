@@ -86,9 +86,6 @@ data_manager_logger = log.getLogger("fate_flow_data_manager")
 peewee_logger = log.getLogger("peewee")
 
 
-"""
-Services 
-"""
 IP = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("host", "127.0.0.1")
 HTTP_PORT = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("http_port")
 GRPC_PORT = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("grpc_port")
