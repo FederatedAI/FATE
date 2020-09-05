@@ -16,13 +16,13 @@
 
 import copy
 
-from federatedml.util import consts
-from federatedml.util import LOGGER
 from federatedml.model_base import ModelBase
 from federatedml.param.column_expand_param import ColumnExpandParam
 from federatedml.protobuf.generated import column_expand_meta_pb2, column_expand_param_pb2
+from federatedml.util import LOGGER
+from federatedml.util import consts
 
-DELIMITER = ", "
+DELIMITER = ","
 
 
 class FeatureGenerator(object):
@@ -62,11 +62,11 @@ class ColumnExpand(ModelBase):
         self.fill_value = None
 
         self.summary_obj = None
+        self.header = None
         self.new_feature_generator = None
 
         self.model_param_name = 'ColumnExpandParam'
         self.model_meta_name = 'ColumnExpandMeta'
-
 
     def _init_model(self, params):
         self.model_param = params
@@ -97,16 +97,14 @@ class ColumnExpand(ModelBase):
 
     def _get_meta(self):
         meta = column_expand_meta_pb2.ColumnExpandMeta(
-            append_header = self.append_header,
-            method = self.method,
-            fill_value = [str(v) for v in self.fill_value]
+            append_header=self.append_header,
+            method=self.method,
+            fill_value=[str(v) for v in self.fill_value]
         )
         return meta
 
     def _get_param(self):
-        param = column_expand_param_pb2.ColumnExpandParam(
-            header = self.header
-        )
+        param = column_expand_param_pb2.ColumnExpandParam(header=self.header)
         return param
 
     def export_model(self):
@@ -121,10 +119,12 @@ class ColumnExpand(ModelBase):
 
     def load_model(self, model_dict):
         meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
+        param_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
+
         self.new_feature_generator = FeatureGenerator(meta_obj.method,
                                                       meta_obj.append_header,
                                                       meta_obj.fill_value)
-
+        self.header = param_obj.header
         return
 
     def fit(self, data):
@@ -132,6 +132,7 @@ class ColumnExpand(ModelBase):
         # return original value if no fill value provided
         if self.method == consts.MANUAL and len(self.fill_value) == 0:
             LOGGER.info(f"Finish Column Expand fit. Original data returned.")
+            self.header = data.schema["header"]
             return data
         new_data, self.header = self._append_column(data)
         LOGGER.info(f"Finish Column Expand fit")
