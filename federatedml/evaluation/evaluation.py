@@ -148,7 +148,8 @@ class Evaluation(ModelBase):
         for d in data:
             if run_intra_metrics:
                 intra_cluster_avg_dist.append(d[1][1])
-                inter_cluster_dist.append(d[1][2])
+                if len(inter_cluster_dist) == 0:
+                    inter_cluster_dist += d[1][2]
             else:
                 true_cluster_index.append(d[1][0])
                 predicted_cluster_index.append(d[1][1])
@@ -503,7 +504,7 @@ class Evaluation(ModelBase):
         for l_ in result_array:
             result_table.append(list(map(int, l_)))
 
-        extra_metas = {'true_labels': true_labels, 'predicte_labels': predicted_label, 'result_table': result_table}
+        extra_metas = {'true_labels': true_labels, 'predicted_labels': predicted_label, 'result_table': result_table}
 
         self.tracker.set_metric_meta(metric_namespace, metric_name,
                                      MetricMeta(name=metric_name, metric_type=metric.upper(), extra_metas=extra_metas))
@@ -588,14 +589,15 @@ class Evaluation(ModelBase):
                         self.__save_f1_score_table(metric, f1_scores, score_threshold, metric_name, metric_namespace)
 
                     elif metric == consts.QUANTILE_PR:
-                        LOGGER.debug('pr quantile called')
                         self.__save_pr_table(metric, metric_res, metric_name, metric_namespace)
 
                     elif metric == consts.CONTINGENCY_MATRIX:
-                        pass
+                        LOGGER.debug('contingency mat quantile called')
+                        self.__save_contingency_matrix(metric, metric_res, metric_name, metric_namespace)
 
                     elif metric == consts.DISTANCE_MEASURE:
-                        pass
+                        LOGGER.debug('distance measure called')
+                        self.__save_distance_measure(metric, metric_res, metric_name, metric_namespace)
 
         if return_single_val_metrics:
             if len(self.validate_metric) != 0:
