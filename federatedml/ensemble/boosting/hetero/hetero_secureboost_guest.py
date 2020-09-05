@@ -16,7 +16,7 @@ from federatedml.transfer_variable.transfer_class.hetero_secure_boosting_predict
     HeteroSecureBoostTransferVariable
 from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.util.fate_operator import generate_anonymous
-
+import copy
 
 
 class HeteroSecureBoostGuest(HeteroBoostingGuest):
@@ -240,9 +240,10 @@ class HeteroSecureBoostGuest(HeteroBoostingGuest):
     @staticmethod
     def mask_leaf_pos(v):
 
-        reach_leaf_idx = v['reach_leaf_node']
-        v['node_pos'][reach_leaf_idx] = -1
-        return v
+        v_ = copy.deepcopy(v)
+        reach_leaf_idx = v_['reach_leaf_node']
+        v_['node_pos'][reach_leaf_idx] = -1
+        return v_
 
     def save_leaf_pos_and_mask_leaf_pos(self, node_pos_tb, final_leaf_pos):
 
