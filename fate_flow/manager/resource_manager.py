@@ -71,6 +71,7 @@ class ResourceManager(object):
         if resources:
             resource = resources[0]
             update_fields = {}
+            update_fields[BackendRegistry.f_engine_address] = engine_address
             update_fields[BackendRegistry.f_cores] = cores
             update_fields[BackendRegistry.f_memory] = memory
             update_fields[BackendRegistry.f_remaining_cores] = BackendRegistry.f_remaining_cores + (cores - resource.f_cores)
