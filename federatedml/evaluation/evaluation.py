@@ -486,7 +486,7 @@ class Evaluation(ModelBase):
 
     def __save_pr_table(self, metric, metric_res, metric_name, metric_namespace):
 
-        p_scores, r_scores, score_threshold = metric_res[1]
+        p_scores, r_scores, score_threshold = metric_res
 
         extra_metas = {'p_scores': list(map(list, np.round(p_scores, self.round_num))),
                        'r_scores': list(map(list, np.round(r_scores, self.round_num))),
@@ -589,15 +589,15 @@ class Evaluation(ModelBase):
                         self.__save_f1_score_table(metric, f1_scores, score_threshold, metric_name, metric_namespace)
 
                     elif metric == consts.QUANTILE_PR:
-                        self.__save_pr_table(metric, metric_res, metric_name, metric_namespace)
+                        self.__save_pr_table(metric, metric_res[1], metric_name, metric_namespace)
 
                     elif metric == consts.CONTINGENCY_MATRIX:
                         LOGGER.debug('contingency mat quantile called')
-                        self.__save_contingency_matrix(metric, metric_res, metric_name, metric_namespace)
+                        self.__save_contingency_matrix(metric, metric_res[1], metric_name, metric_namespace)
 
                     elif metric == consts.DISTANCE_MEASURE:
                         LOGGER.debug('distance measure called')
-                        self.__save_distance_measure(metric, metric_res, metric_name, metric_namespace)
+                        self.__save_distance_measure(metric, metric_res[1], metric_name, metric_namespace)
 
         if return_single_val_metrics:
             if len(self.validate_metric) != 0:
