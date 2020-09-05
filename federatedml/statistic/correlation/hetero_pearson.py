@@ -21,7 +21,8 @@ from federatedml.model_base import ModelBase
 from federatedml.param.pearson_param import PearsonParam
 from federatedml.secureprotol.spdz import SPDZ
 from federatedml.secureprotol.spdz.tensor.fixedpoint_table import FixedPointTensor, table_dot
-from federatedml.util.fate_operator import generate_anonymous
+# from federatedml.util.fate_operator import generate_anonymous
+from federatedml.util.anonymous_generator import generate_anonymous
 
 MODEL_META_NAME = "HeteroPearsonModelMeta"
 MODEL_PARAM_NAME = "HeteroPearsonModelParam"
