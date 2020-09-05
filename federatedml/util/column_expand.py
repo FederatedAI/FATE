@@ -145,14 +145,20 @@ class ColumnExpand(ModelBase):
         return
 
     def fit(self, data):
+        LOGGER.info(f"Enter Column Expand fit")
         # return original value if no fill value provided
         if self.method == consts.MANUAL and len(self.fill_value) == 0:
+            LOGGER.info(f"Finish Column Expand fit. Original data returned.")
             return data
         new_data, self.header = self._append_column_deprecated(data)
+        LOGGER.info(f"Finish Column Expand fit")
         return new_data
 
     def predict(self, data):
+        LOGGER.info(f"Enter Column Expand predict")
         if self.method == consts.MANUAL and len(self.fill_value) == 0:
+            LOGGER.info(f"Finish Column Expand predict. Original data returned.")
             return data
         new_data, _ = self._append_column_deprecated(data)
+        LOGGER.info(f"Finish Column Expand predict.")
         return new_data
