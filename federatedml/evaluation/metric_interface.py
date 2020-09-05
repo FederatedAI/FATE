@@ -437,7 +437,7 @@ class MetricInterface(object):
         Parameters
 
         """
-        ## process data from evaluation
+        # process data from evaluation
         return clustering_metric.DaviesBouldinIndex().compute(cluster_avg_intra_dist, cluster_inter_dist)
 
     @staticmethod
