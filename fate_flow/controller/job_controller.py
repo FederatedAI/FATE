@@ -87,7 +87,7 @@ class JobController(object):
         common_task_info["role"] = role
         common_task_info["party_id"] = party_id
         common_task_info["federated_mode"] = job_parameters.federated_mode
-        common_task_info["federated_comm"] = job_parameters.federated_comm
+        common_task_info["federated_status_collect_type"] = job_parameters.federated_status_collect_type
         if task_version:
             common_task_info["task_version"] = task_version
         if not component_name:
@@ -254,7 +254,8 @@ class JobController(object):
         if jobs:
             job = jobs[0]
             try:
-                status = JobQueue.delete_event(job_id=job.f_job_id, initiator_role=job.f_initiator_role, initiator_party_id=job.f_initiator_party_id, job_status=JobStatus.WAITING)
+                # You cannot delete an event directly, otherwise the status might not be updated
+                status = JobQueue.update_event(job_id=job.f_job_id, initiator_role=job.f_initiator_role, initiator_party_id=job.f_initiator_party_id, job_status=JobStatus.CANCELED)
                 if not status:
                     return False
             except:
