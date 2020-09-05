@@ -149,14 +149,14 @@ class ColumnExpand(ModelBase):
         meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
         param_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
 
-        self.new_feature_generator = FeatureGenerator(meta_obj.method,
-                                                      meta_obj.append_header,
-                                                      meta_obj.fill_value)
-        self.append_header = meta_obj.append_header
+        self.append_header = list(meta_obj.append_header)
         self.method = meta_obj.method
-        self.fill_value = meta_obj.fill_value
+        self.fill_value = list(meta_obj.fill_value)
         self.need_run = meta_obj.need_run
 
+        self.new_feature_generator = FeatureGenerator(self.method,
+                                                      self.append_header,
+                                                      self.fill_value)
         self.header = param_obj.header
         return
 
