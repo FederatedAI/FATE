@@ -139,10 +139,12 @@ class ColumnExpand(ModelBase):
 
     def load_model(self, model_dict):
         meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
+        param_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
+
         self.new_feature_generator = FeatureGenerator(meta_obj.method,
                                                       meta_obj.append_header,
                                                       meta_obj.fill_value)
-
+        self.header = param_obj.header
         return
 
     def fit(self, data):
@@ -150,6 +152,7 @@ class ColumnExpand(ModelBase):
         # return original value if no fill value provided
         if self.method == consts.MANUAL and len(self.fill_value) == 0:
             LOGGER.info(f"Finish Column Expand fit. Original data returned.")
+            self.header = data.get_meta("header")
             return data
         new_data, self.header = self._append_column_deprecated(data)
         LOGGER.info(f"Finish Column Expand fit")
@@ -160,6 +163,6 @@ class ColumnExpand(ModelBase):
         if self.method == consts.MANUAL and len(self.fill_value) == 0:
             LOGGER.info(f"Finish Column Expand predict. Original data returned.")
             return data
-        new_data, _ = self._append_column_deprecated(data)
+        new_data, self.header = self._append_column_deprecated(data)
         LOGGER.info(f"Finish Column Expand predict.")
         return new_data
