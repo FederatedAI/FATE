@@ -136,7 +136,7 @@ class ColumnExpand(ModelBase):
 
     def fit(self, data):
         LOGGER.info(f"Enter Column Expand fit")
-        # return original value if no fill value provided
+        # return original value if no append header provided
         if self.method == consts.MANUAL and len(self.append_header) == 0:
             LOGGER.info(f"Finish Column Expand fit. Original data returned.")
             self.header = data.schema["header"]
