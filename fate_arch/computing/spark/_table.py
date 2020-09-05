@@ -58,6 +58,10 @@ class Table(CTableABC):
         return from_rdd(self._rdd.mapPartitions(func))
 
     @log_elapsed
+    def mapReducePartitions(self, mapper, reducer, **kwargs):
+        return from_rdd(self._rdd.mapPartitions(mapper).reduceByKey(reducer))
+
+    @log_elapsed
     def applyPartitions(self, func, **kwargs):
         return from_rdd(_map_partitions(self._rdd, func))
 

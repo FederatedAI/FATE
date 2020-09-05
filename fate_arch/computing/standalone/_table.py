@@ -71,6 +71,9 @@ class Table(CTableABC):
     def mapPartitions(self, func):
         return Table(self._table.mapPartitions(func))
 
+    def mapReducePartitions(self, mapper, reducer, **kwargs):
+        return Table(self._table.mapReducePartitions(mapper, reducer))
+
     def glom(self):
         return Table(self._table.glom())
 

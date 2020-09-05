@@ -144,6 +144,9 @@ class Table(object):
                                    partition=self._partitions,
                                    need_cleanup=True)
 
+    def mapReducePartitions(self, mapper, reducer):
+        return self._map_reduce(mapper, reducer)
+
     def glom(self):
         return self._unary(None, _do_glom)
 
@@ -162,6 +165,16 @@ class Table(object):
 
     def union(self, other: 'Table', func=lambda v1, v2: v1):
         return self._binary(other, func, _do_union)
+
+    # noinspection PyProtectedMember
+    def _map_reduce(self, mapper, reducer):
+        results = self._session._submit_map_reduce(mapper, reducer, self._partitions, self._name, self._namespace)
+        result = results[0]
+        # noinspection PyProtectedMember
+        return _create_table(session=self._session,
+                             name=result.name,
+                             namespace=result.namespace,
+                             partitions=self._partitions)
 
     def _unary(self, func, do_func):
         # noinspection PyProtectedMember
@@ -300,6 +313,18 @@ class Session(object):
         futures = []
         for p in range(partitions):
             futures.append(self._pool.submit(_do_func, _UnaryProcess(task_info, _Operand(namespace, name, p))))
+        results = [r.result() for r in futures]
+        return results
+
+    def _submit_map_reduce(self, mapper, reducer, partitions, name, namespace):
+        task_info = _MapReduceTaskInfo(self.session_id,
+                                       function_id=str(uuid.uuid1()),
+                                       map_function_bytes=f_pickle.dumps(mapper),
+                                       reduce_function_bytes=f_pickle.dumps(reducer))
+        futures = []
+        for p in range(partitions):
+            futures.append(self._pool.submit(_do_map_reduce_partitions,
+                                             _MapReduceProcess(task_info, _Operand(namespace, name, p))))
         results = [r.result() for r in futures]
         return results
 
@@ -512,8 +537,19 @@ class _TaskInfo:
     def get_func(self):
         return f_pickle.loads(self.function_bytes)
 
-    def output_operand(self, partitions):
-        return _Operand(self.task_id, self.function_id, partitions)
+
+class _MapReduceTaskInfo:
+    def __init__(self, task_id, function_id, map_function_bytes, reduce_function_bytes):
+        self.task_id = task_id
+        self.function_id = function_id
+        self.map_function_bytes = map_function_bytes
+        self.reduce_function_bytes = reduce_function_bytes
+
+    def get_mapper(self):
+        return f_pickle.loads(self.map_function_bytes)
+
+    def get_reducer(self):
+        return f_pickle.loads(self.reduce_function_bytes)
 
 
 class _Operand:
@@ -536,6 +572,21 @@ class _UnaryProcess:
 
     def get_func(self):
         return self.info.get_func()
+
+
+class _MapReduceProcess:
+    def __init__(self, task_info: _MapReduceTaskInfo, operand: _Operand):
+        self.info = task_info
+        self.operand = operand
+
+    def output_operand(self):
+        return _Operand(self.info.task_id, self.info.function_id, self.operand.partition)
+
+    def get_mapper(self):
+        return self.info.get_mapper()
+
+    def get_reducer(self):
+        return self.info.get_reducer()
 
 
 class _BinaryProcess:
@@ -640,6 +691,33 @@ def _do_map_partitions(p: _UnaryProcess):
             else:
                 k_bytes = cursor.key()
                 dst_txn.put(k_bytes, serialize(v))
+    return rtn
+
+
+def _do_map_reduce_partitions(p: _MapReduceProcess):
+    rtn = p.output_operand()
+    with ExitStack() as s:
+        source_env = s.enter_context(p.operand.as_env())
+        partitions = _get_from_meta_table(f"{p.operand.namespace}.{p.operand.name}")
+        txn_map = {}
+        for partition in range(partitions):
+            env = s.enter_context(_get_env(rtn.namespace, rtn.name, str(partition), write=True))
+            txn_map[partition] = s.enter_context(env.begin(write=True))
+        source_txn = s.enter_context(source_env.begin())
+        cursor = s.enter_context(source_txn.cursor())
+        mapped = p.get_mapper()(_generator_from_cursor(cursor))
+        if not isinstance(mapped, Iterable):
+            raise ValueError(f"mapper function should return a iterable of pair")
+        reducer = p.get_reducer()
+        for k, v in mapped:
+            k_bytes = serialize(k)
+            partition = _hash_key_to_partition(k_bytes, partitions)
+            # todo: not atomic, fix me
+            pre_v = txn_map[partition].get(k_bytes, None)
+            if pre_v is None:
+                txn_map[partition].put(k_bytes, serialize(v))
+            else:
+                txn_map[partition].put(k_bytes, serialize(reducer(deserialize(pre_v), v)))
     return rtn
 
 
