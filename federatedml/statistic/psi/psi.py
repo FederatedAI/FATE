@@ -92,9 +92,11 @@ def np_nan_to_nonetype(inst):
 
     arr = inst.features
     index = np.isnan(arr)
-    arr = arr.astype(object)
-    arr[index] = NoneType()
-    inst.features = arr
+    if index.any():
+        inst = copy.deepcopy(inst)
+        arr = arr.astype(object)
+        arr[index] = NoneType()
+        inst.features = arr
     return inst
 
 
