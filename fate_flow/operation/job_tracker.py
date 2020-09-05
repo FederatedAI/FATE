@@ -109,7 +109,7 @@ class Tracker(object):
             view_data[k] = v
         return view_data
 
-    def save_output_data(self, computing_table, output_storage_engine):
+    def save_output_data(self, computing_table, output_storage_engine, output_storage_address: dict):
         if computing_table:
             persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(
                 self.task_id), uuid.uuid1().hex
@@ -118,12 +118,13 @@ class Tracker(object):
                                                                                   persistent_table_name))
             partitions = computing_table.partitions
             schedule_logger(self.job_id).info('output data table partitions is {}'.format(partitions))
+            address_dict = output_storage_address.copy()
             if output_storage_engine == StorageEngine.EGGROLL:
-                address_dict = {"name": persistent_table_name, "namespace": persistent_table_namespace, "storage_type": storage.EggRollStorageType.ROLLPAIR_LMDB}
+                address_dict.update({"name": persistent_table_name, "namespace": persistent_table_namespace, "storage_type": storage.EggRollStorageType.ROLLPAIR_LMDB})
             elif output_storage_engine == StorageEngine.STANDALONE:
-                address_dict = {"name": persistent_table_name, "namespace": persistent_table_namespace, "storage_type": storage.StandaloneStorageType.ROLLPAIR_LMDB}
+                address_dict.update({"name": persistent_table_name, "namespace": persistent_table_namespace, "storage_type": storage.StandaloneStorageType.ROLLPAIR_LMDB})
             elif output_storage_engine == StorageEngine.HDFS:
-                address_dict = {"path": f"/fate/temp/component_output_data/{persistent_table_namespace}/{persistent_table_name}"}
+                address_dict.update({"path": f"/fate/temp/component_output_data/{persistent_table_namespace}/{persistent_table_name}"})
             else:
                 raise RuntimeError(f"{output_storage_engine} storage is not supported")
             address = storage.StorageTableMeta.create_address(storage_engine=output_storage_engine, address_dict=address_dict)

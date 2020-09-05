@@ -17,6 +17,7 @@
 import operator
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
+from fate_arch.storage import StorageEngine
 from fate_arch.common import base_utils
 from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common.log import schedule_logger
@@ -31,15 +32,18 @@ class ResourceManager(object):
     @classmethod
     def initialize(cls):
         # initialize default backend
+        # storage backend is for component output data
         default_backends = {
             EngineType.COMPUTING: [ComputingEngine.EGGROLL, ComputingEngine.SPARK],
             EngineType.FEDERATION: [FederationEngine.EGGROLL, FederationEngine.MQ],
+            EngineType.STORAGE: [StorageEngine.EGGROLL, StorageEngine.HDFS]
         }
         for engine_type, engines_name in default_backends.items():
             for engine_name in engines_name:
                 engine_info = get_base_config(engine_name, {})
-                engine_info["engine"] = engine_name
-                cls._initialize_backend(engine_type=engine_type, engine_id=f"DEFAULT_{engine_name}", engine_info=engine_info)
+                if engine_info:
+                    engine_info["engine"] = engine_name
+                    cls._initialize_backend(engine_type=engine_type, engine_id=f"DEFAULT_{engine_name}", engine_info=engine_info)
         # initialize standalone backend
         for engine_type in default_backends.keys():
             engine_name = "STANDALONE"
@@ -50,7 +54,7 @@ class ResourceManager(object):
             }
             cls._initialize_backend(engine_type=engine_type, engine_id=f"DEFAULT_{engine_name}", engine_info=engine_info)
         # initialize multi backend if has
-        for engine_type in [EngineType.COMPUTING, EngineType.FEDERATION]:
+        for engine_type in [EngineType.COMPUTING, EngineType.FEDERATION, EngineType.STORAGE]:
             for engine_id, engine_info in get_base_config(engine_type, {}).items():
                 cls._initialize_backend(engine_type=engine_type, engine_id=engine_id, engine_info=engine_info)
 

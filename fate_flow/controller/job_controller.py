@@ -77,6 +77,8 @@ class JobController(object):
         job_parameters.engines_address[EngineType.COMPUTING] = backend_info.f_engine_address
         backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.FEDERATION, engine_id=job_parameters.federation_backend)
         job_parameters.engines_address[EngineType.FEDERATION] = backend_info.f_engine_address
+        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.STORAGE, engine_id=job_parameters.storage_backend)
+        job_parameters.engines_address[EngineType.STORAGE] = backend_info.f_engine_address
 
     @classmethod
     def initialize_tasks(cls, job_id, role, party_id, run_on, job_initiator, job_parameters: RunParameters, dsl_parser, component_name=None, task_version=None):
