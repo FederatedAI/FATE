@@ -84,11 +84,11 @@ class ColumnExpand(ModelBase):
 
     def _append_column(self, data):
         # uses for FATE v.1.5.x
-        new_feature_generator = self.new_feature_generator
-        new_data = data.mapValues(lambda v: ColumnExpand._append_feature(v, new_feature_generator))
+        append_value = self.new_feature_generator.generate()
+        new_data = data.mapValues(lambda v: ColumnExpand._append_feature(v, append_value))
 
         new_schema = copy.deepcopy(data.schema)
-        header = data.get_meta("header")
+        header = new_schema["header"]
         new_header = header + DELIMITER + DELIMITER.join(self.append_header)
         new_schema["header"] = new_header
         new_data.schema = new_schema
