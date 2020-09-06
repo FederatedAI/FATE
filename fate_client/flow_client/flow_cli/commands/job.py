@@ -64,7 +64,7 @@ def submit(ctx, **kwargs):
 @job.command("list", short_help="List Job Command")
 @cli_args.LIMIT
 @click.pass_context
-def list(ctx, **kwargs):
+def list_job(ctx, **kwargs):
     """
     - DESCRIPTION:
 
@@ -205,7 +205,7 @@ def log(ctx, **kwargs):
                    'directory': extract_dir,
                    'retmsg': 'download successfully, please check {} directory'.format(extract_dir)}
         else:
-            res = response
+            res = response.json() if isinstance(response, requests.models.Response) else response
     prettify(res)
 
 
@@ -294,7 +294,12 @@ def dsl_generator(ctx, **kwargs):
                        'retmsg': "New predict dsl file has been generated successfully. "
                                  "File path is: {}".format(output_path)}
             else:
-                res = response
+                try:
+                    res = response.json() if isinstance(response, requests.models.Response) else response
+                except Exception:
+                    res = {'retcode': 100,
+                           'retmsg': "New predict dsl file generated failed."
+                                     "For more details, please check logs/fate_flow/fate_flow_stat.log"}
         prettify(res)
     else:
         access_server('post', ctx, 'job/dsl/generate', config_data)
