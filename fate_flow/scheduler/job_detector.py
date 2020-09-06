@@ -26,6 +26,7 @@ from fate_flow.operation import JobSaver
 class JobDetector(cron.Cron):
     def run_do(self):
         self.detect_running_task()
+        self.detect_running_job()
 
     def detect_running_task(self):
         try:
@@ -62,6 +63,28 @@ class JobDetector(cron.Cron):
                 if jobs:
                     status_code, response = FederatedScheduler.request_stop_job(job=jobs[0], stop_status=JobStatus.FAILED)
                     schedule_logger(job_id=job_id).info(f"detector request stop job success")
+        except Exception as e:
+            detect_logger.exception(e)
+        finally:
+            detect_logger.info('finish detect running job')
+
+    def detect_running_job(self):
+        try:
+            running_jobs = JobSaver.query_job(status=JobStatus.RUNNING, is_initiator=True)
+            stop_jobs = set()
+            for job in running_jobs:
+                try:
+                    is_timeout = job_utils.check_job_is_timeout(job)
+                    if is_timeout:
+                        detect_logger.info('job {} timeout detected'.format(job.f_job_id))
+                        schedule_logger(job_id=job.f_job_id).info('job {} timeout detected'.format(job.f_job_id))
+                        stop_jobs.add(job)
+                except Exception as e:
+                    detect_logger.exception(e)
+            for job in stop_jobs:
+                schedule_logger().info('start to stop job {}'.format(job.f_job_id))
+                status_code, response = FederatedScheduler.request_stop_job(job=job, stop_status=JobStatus.TIMEOUT)
+                schedule_logger(job_id=job.f_job_id).info(f"detector request stop job success")
         except Exception as e:
             detect_logger.exception(e)
         finally:
