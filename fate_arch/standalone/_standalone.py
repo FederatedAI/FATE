@@ -586,18 +586,17 @@ def _do_map(p: _UnaryProcess):
         source_env = s.enter_context(p.operand.as_env())
         partitions = _get_from_meta_table(f"{p.operand.namespace}.{p.operand.name}")
         txn_map = {}
-        for p in range(partitions):
-            env = s.enter_context(_get_env(rtn.namespace, rtn.name, str(p), write=True))
-            txn_map[p] = s.enter_context(env.begin(write=True))
+        for partition in range(partitions):
+            env = s.enter_context(_get_env(rtn.namespace, rtn.name, str(partition), write=True))
+            txn_map[partition] = s.enter_context(env.begin(write=True))
         source_txn = s.enter_context(source_env.begin())
         cursor = s.enter_context(source_txn.cursor())
         for k_bytes, v_bytes in cursor:
             k, v = deserialize(k_bytes), deserialize(v_bytes)
             k1, v1 = p.get_func()(k, v)
             k1_bytes, v1_bytes = serialize(k1), serialize(v1)
-            p = _hash_key_to_partition(k1_bytes, partitions)
-            dest_txn = txn_map[p]
-            dest_txn.put(k1_bytes, v1_bytes)
+            partition = _hash_key_to_partition(k1_bytes, partitions)
+            txn_map[partition].put(k1_bytes, v1_bytes)
     return rtn
 
 
