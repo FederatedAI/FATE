@@ -456,6 +456,8 @@ class Tracker(object):
                             f_work_mode=job_data.get('f_work_mode'),
                             f_dsl=job_data.get('f_dsl'),
                             f_train_runtime_conf=job_data.get('f_train_runtime_conf'),
+                            f_size=self.get_model_size(),
+                            f_job_status=job_data.get('f_status')
                         )
 
                         schedule_logger(self.job_id).info(
@@ -481,3 +483,6 @@ class Tracker(object):
     @classmethod
     def get_dynamic_tracking_table_index(cls, job_id):
         return job_id[:8]
+
+    def get_model_size(self):
+        return self.pipelined_model.calculate_model_file_size()
