@@ -140,8 +140,12 @@ class OptimalBinning(BaseBinning):
                                          bucket_dict=copy.deepcopy(bucket_dict),
                                          is_sparse=is_sparse,
                                          get_bin_num_func=self.get_bin_num)
-        bucket_table = data_instances.mapPartitions2(convert_func)
-        bucket_table = bucket_table.reduce(self.merge_bucket_list, key_func=lambda key: key[1])
+        # bucket_table = data_instances.mapPartitions2(convert_func)
+        # bucket_table = bucket_table.reduce(self.merge_bucket_list, key_func=lambda key: key[1])
+
+        bucket_table = data_instances.mapReducePartitions(convert_func, self.merge_bucket_list)
+        bucket_table = dict(bucket_table.collect())
+
         for k, v in bucket_table.items():
             LOGGER.debug(f"[feature] {k}, length of list: {len(v)}")
 
@@ -206,7 +210,8 @@ class OptimalBinning(BaseBinning):
                 bucket.add(label, col_value)
         result = []
         for col_name, bucket_list in bucket_dict.items():
-            result.append(((data_key, col_name), bucket_list))
+            # result.append(((data_key, col_name), bucket_list))
+            result.append((col_name, bucket_list))
         return result
 
     @staticmethod

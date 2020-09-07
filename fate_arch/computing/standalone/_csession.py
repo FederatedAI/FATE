@@ -50,7 +50,7 @@ class CSession(CSessionABC):
             return address
         raise NotImplementedError(f"address type {type(address)} not supported with standalone backend")
 
-    def parallelize(self, data: Iterable, partition: int, include_key: bool = False, **kwargs):
+    def parallelize(self, data: Iterable, partition: int, include_key: bool, **kwargs):
         table = self._session.parallelize(data=data, partition=partition, include_key=include_key, **kwargs)
         return Table(table)
 

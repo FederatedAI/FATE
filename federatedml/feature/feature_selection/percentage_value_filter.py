@@ -183,11 +183,11 @@ class PercentageValueFilter(BaseFilterMethod):
 
         find_func = functools.partial(find_mode_candidate,
                                       select_cols=self.selection_properties.select_col_indexes)
-        all_candidates = data_instances.mapPartitions(find_func).reduce(merge_mode_candidate)
+        all_candidates = data_instances.applyPartitions(find_func).reduce(merge_mode_candidate)
         static_func = functools.partial(static_candidates_num,
                                         select_cols=self.selection_properties.select_col_indexes,
                                         all_candidates=all_candidates)
-        mode_candidate_statics = data_instances.mapPartitions(static_func).reduce(merge_candidates_num)
+        mode_candidate_statics = data_instances.applyPartitions(static_func).reduce(merge_candidates_num)
         result = {}
         for col_index, candidate_dict in mode_candidate_statics.items():
             if len(candidate_dict) > 0:

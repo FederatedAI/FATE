@@ -200,7 +200,7 @@ class Imputer(object):
         return np.array(impute_num_list)
 
     def __get_impute_rate_from_replace_data(self, data):
-        impute_number_statics = data.mapPartitions(self.__get_impute_number).reduce(lambda x, y: x + y)
+        impute_number_statics = data.applyPartitions(self.__get_impute_number).reduce(lambda x, y: x + y)
         cols_impute_rate = impute_number_statics[:-1] / impute_number_statics[-1]
 
         return cols_impute_rate

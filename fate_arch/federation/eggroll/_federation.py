@@ -18,15 +18,11 @@ import concurrent.futures
 import functools
 import os
 import signal
-import typing
 from enum import Enum
 
-from eggroll.core.meta_model import ErEndpoint
-from eggroll.roll_pair.roll_pair import RollPair, RollPairContext
+from eggroll.roll_pair.roll_pair import RollPair
 from eggroll.roll_site.roll_site import RollSiteContext
 from fate_arch.abc import FederationABC
-from fate_arch.abc import GarbageCollectionABC
-from fate_arch.common import Party
 from fate_arch.common.log import getLogger
 from fate_arch.computing.eggroll import Table
 from fate_arch.federation._split import _is_split_head, _split_get, _is_splitable_obj, _get_splits
@@ -34,48 +30,33 @@ from fate_arch.federation._split import _is_split_head, _split_get, _is_splitabl
 LOGGER = getLogger()
 
 
-class Proxy(object):
-    def __init__(self, host: str, port: int):
-        self.host = host
-        self.port = port
-
-    @staticmethod
-    def from_conf(conf):
-        host = conf.get("host")
-        port = conf.get("port")
-        return Proxy(host, int(port))
-
-
 class Federation(FederationABC):
 
-    def __init__(self, rp_ctx: RollPairContext, rs_session_id: str, party: Party, proxy: Proxy):
+    def __init__(self, rp_ctx, rs_session_id, party, proxy_endpoint):
+        LOGGER.debug(f"init eggroll federation: rp_session_id={rp_ctx.session_id}, rs_session_id={rs_session_id},"
+                     f"party={party}, proxy_endpoint={proxy_endpoint}")
         options = {
             'self_role': party.role,
             'self_party_id': party.party_id,
-            'proxy_endpoint': ErEndpoint(proxy.host, proxy.port)
+            'proxy_endpoint': proxy_endpoint
         }
-        self.rsc = RollSiteContext(rs_session_id, rp_ctx=rp_ctx, options=options)
-        LOGGER.debug(f"init roll site context done: {self.rsc.__dict__}")
+        self._rsc = RollSiteContext(rs_session_id, rp_ctx=rp_ctx, options=options)
+        LOGGER.debug(f"init eggroll federation context done")
 
-    def get(self, name: str, tag: str, parties: typing.List[Party], gc: GarbageCollectionABC) -> typing.List:
+    def get(self, name, tag, parties, gc):
         parties = [(party.role, party.party_id) for party in parties]
-        raw_result = _get(name, tag, parties, self.rsc, gc)
+        raw_result = _get(name, tag, parties, self._rsc, gc)
         return [Table(v) if isinstance(v, RollPair) else v for v in raw_result]
 
-    def remote(self, v, name: str, tag: str, parties: typing.List[Party], gc: GarbageCollectionABC) -> typing.NoReturn:
+    def remote(self, v, name, tag, parties, gc):
         if isinstance(v, Table):
             # noinspection PyProtectedMember
-            v = v._as_federation_format()
+            v = v._rp
         parties = [(party.role, party.party_id) for party in parties]
-        _remote(v, name, tag, parties, self.rsc, gc)
+        _remote(v, name, tag, parties, self._rsc, gc)
 
 
-def _remote(v,
-            name: str,
-            tag: str,
-            parties: typing.List[typing.Tuple[str, str]],
-            rsc: RollSiteContext,
-            gc: GarbageCollectionABC) -> typing.NoReturn:
+def _remote(v, name, tag, parties, rsc, gc):
     log_str = f"federation.remote(name={name}, tag={tag}, parties={parties})"
     assert v is not None, \
         f"[{log_str}]remote `None`"
@@ -105,11 +86,7 @@ def _remote(v,
     raise NotImplementedError(f"t={t}")
 
 
-def _get(name: str,
-         tag: str,
-         parties: typing.List[typing.Tuple[str, str]],
-         rsc: RollSiteContext,
-         gc: GarbageCollectionABC) -> typing.List:
+def _get(name, tag, parties, rsc, gc):
     rs = rsc.load(name=name, tag=tag)
     future_map = dict(zip(rs.pull(parties=parties), parties))
     rtn = {}
@@ -129,7 +106,7 @@ class _FederationValueType(Enum):
 _remote_history = set()
 
 
-def _remote_tag_not_duplicate(name: str, tag: str, parties: typing.List[typing.Tuple[str, str]]):
+def _remote_tag_not_duplicate(name, tag, parties):
     for party in parties:
         if (name, tag, party) in _remote_history:
             return False
@@ -166,24 +143,17 @@ def _push_with_exception_handle(rsc, v, name, tag, parties):
     return rs
 
 
-def _count(v: RollPair, log_str):
-    n = v.count()
-    LOGGER.debug(f"[{log_str}]count is {n}")
-    return n
-
-
 _get_history = set()
 
 
-def _get_tag_not_duplicate(name: str, tag: str, party: typing.Tuple[str, str]):
+def _get_tag_not_duplicate(name, tag, party):
     if (name, tag, party) in _get_history:
         return False
     _get_history.add((name, tag, party))
     return True
 
 
-def _get_value_post_process(v, name: str, tag: str, party: typing.Tuple[str, str], rsc: RollSiteContext,
-                            gc: GarbageCollectionABC):
+def _get_value_post_process(v, name, tag, party, rsc, gc):
     log_str = f"federation.get(name={name}, tag={tag}, party={party})"
     assert v is not None, \
         f"[{log_str}]get None"
@@ -193,7 +163,6 @@ def _get_value_post_process(v, name: str, tag: str, party: typing.Tuple[str, str
 
     # got a roll pair
     if isinstance(v, RollPair):
-        # assert _count(v, log_str) > 0, f"[{log_str}]count is 0"
         gc.add_gc_action(tag, v, 'destroy', {})
         return v
 

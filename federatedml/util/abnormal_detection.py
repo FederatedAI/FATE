@@ -58,7 +58,7 @@ def empty_column_detection(data_instance):
     if is_sparse:
         raise ValueError('sparse format empty column detection is not supported for now')
     map_func = functools.partial(column_gathering, )
-    map_rs = data_instance.mapPartitions(map_func)
+    map_rs = data_instance.applyPartitions(map_func)
     reduce_rs = map_rs.reduce(merge_column_sets)
 
     # transform col index to col name
