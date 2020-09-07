@@ -1,5 +1,5 @@
+from typing import Dict, Tuple
 from federatedml.protobuf.model_migrate.converter.converter_base import ProtoConverterBase
-from typing import Dict
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
 from federatedml.util import consts
