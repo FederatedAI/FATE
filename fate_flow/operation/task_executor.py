@@ -159,14 +159,14 @@ class TaskExecutor(object):
             schedule_logger().info('Run {} {} {} {} {} task'.format(job_id, component_name, task_id, role, party_id))
             schedule_logger().info("Component parameters on party {}".format(component_parameters_on_party))
             schedule_logger().info("Task input dsl {}".format(task_input_dsl))
-            task_run_args, output_storage_engine = cls.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
-                                                                         task_id=task_id,
-                                                                         task_version=task_version,
-                                                                         job_args=job_args_on_party,
-                                                                         job_parameters=job_parameters,
-                                                                         task_parameters=task_parameters,
-                                                                         input_dsl=task_input_dsl,
-                                                                         )
+            task_run_args = cls.get_task_run_args(job_id=job_id, role=role, party_id=party_id,
+                                                  task_id=task_id,
+                                                  task_version=task_version,
+                                                  job_args=job_args_on_party,
+                                                  job_parameters=job_parameters,
+                                                  task_parameters=task_parameters,
+                                                  input_dsl=task_input_dsl,
+                                                  )
             print(task_run_args)
             run_object = getattr(importlib.import_module(run_class_package), run_class_name)()
             run_object.set_tracker(tracker=tracker_client)
@@ -179,7 +179,8 @@ class TaskExecutor(object):
                 data_name = task_output_dsl.get('data')[index] if task_output_dsl.get('data') else '{}'.format(index)
                 persistent_table_namespace, persistent_table_name = tracker.save_output_data(
                     computing_table=output_data[index],
-                    output_storage_engine=output_storage_engine if output_storage_engine else None)
+                    output_storage_engine=job_parameters.storage_engine,
+                    output_storage_address=job_parameters.engines_address.get(EngineType.STORAGE, {}))
                 if persistent_table_namespace and persistent_table_name:
                     tracker.log_output_data_info(data_name=data_name,
                                                  table_namespace=persistent_table_namespace,
@@ -218,7 +219,6 @@ class TaskExecutor(object):
     def get_task_run_args(cls, job_id, role, party_id, task_id, task_version, job_args, job_parameters: RunParameters, task_parameters: RunParameters,
                           input_dsl, filter_type=None, filter_attr=None):
         task_run_args = {}
-        output_storage_engine = None
         for input_type, input_detail in input_dsl.items():
             if filter_type and input_type not in filter_type:
                 continue
@@ -259,7 +259,6 @@ class TaskExecutor(object):
                                                        name=storage_table_meta.get_name(), namespace=storage_table_meta.get_namespace()) as storage_session:
                                 storage_table = storage_session.get_table()
                                 partitions = task_parameters.input_data_partition if task_parameters.input_data_partition else storage_table.get_partitions()
-                                output_storage_engine = storage_table.get_engine()
                             computing_table = session.get_latest_opened().computing.load(
                                 storage_table_meta.get_address(),
                                 schema=storage_table_meta.get_schema(),
@@ -288,7 +287,7 @@ class TaskExecutor(object):
                                      model_version=job_parameters.model_version).get_output_model(
                         model_alias=search_model_alias)
                     this_type_args[search_component_name] = models
-        return task_run_args, output_storage_engine
+        return task_run_args
 
     @classmethod
     def report_task_update_to_driver(cls, task_info):

@@ -23,7 +23,6 @@ import __main__
 
 
 WORK_MODE = get_base_config('work_mode', 0)
-USE_LOCAL_DATABASE = get_base_config('use_local_database', True)
 
 # upload data
 USE_LOCAL_DATA = True
@@ -86,15 +85,13 @@ data_manager_logger = log.getLogger("fate_flow_data_manager")
 peewee_logger = log.getLogger("peewee")
 
 
-"""
-Services 
-"""
 IP = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("host", "127.0.0.1")
 HTTP_PORT = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("http_port")
 GRPC_PORT = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("grpc_port")
 
 # switch
 ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH = True
+FEDERATED_STATUS_COLLECT_TYPE = "PUSH"
 
 # init
 RuntimeConfig.init_config(WORK_MODE=WORK_MODE)
