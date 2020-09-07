@@ -24,19 +24,22 @@ from pipeline.interface.data import Data
 
 # find python path
 import site
-SITE_PATH = site.getsitepackages()[0]
+# SITE_PATH = site.getsitepackages()[0]
+SITE_PATH = "/data/projects/fate_spark/python"
 
 
 def main():
     # parties config
     guest = 9999
-    host = 10000
+    host = 9999
     # 0 for eggroll, 1 for spark
-    backend = Backend.EGGROLL
+    backend = Backend.SPARK
     # 0 for standalone, 1 for cluster
-    work_mode = WorkMode.STANDALONE
+    # work_mode = WorkMode.STANDALONE
     # use the work mode below for cluster deployment
-    # work_mode = WorkMode.CLUSTER
+    work_mode = WorkMode.CLUSTER
+    # storage engine for uploaded data
+    storage_engine = "HDFS"
 
     # partition for data storage
     partition = 8
@@ -51,12 +54,14 @@ def main():
     pipeline_upload.add_upload_data(file=os.path.join(SITE_PATH, "examples/data/breast_hetero_guest.csv"),
                                     table_name=dense_data["name"],             # table name
                                     namespace=dense_data["namespace"],         # namespace
-                                    head=1, partition=partition)               # data info
+                                    head=1, partition=partition,               # data info
+                                    storage_path="hdfs://mfate-cluster/data")  # storage path
 
     pipeline_upload.add_upload_data(file=os.path.join(SITE_PATH, "examples/data/tag_value_1000_140.csv"),
                                     table_name=tag_data["name"],
                                     namespace=tag_data["namespace"],
-                                    head=0, partition=partition)
+                                    head=0, partition=partition,
+                                    storage_path="hdfs://mfate-cluster/data")
     # upload all data
     pipeline_upload.upload(work_mode=work_mode, backend=backend, drop=1)
 

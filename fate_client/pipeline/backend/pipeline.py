@@ -17,6 +17,7 @@ import copy
 import json
 import pickle
 import time
+from pathlib import Path
 from types import SimpleNamespace
 
 from pipeline.backend.config import Backend, WorkMode
@@ -189,12 +190,15 @@ class PipeLine(object):
                 else:
                     self._components_input[component.name][attr.strip("_")] = [val]
 
-    def add_upload_data(self, file, table_name, namespace, head=1, partition=16):
+    def add_upload_data(self, file, table_name, namespace, head=1, partition=16, storage_path=None):
         data_conf = {"file": file,
                      "table_name": table_name,
                      "namespace": namespace,
                      "head": head,
                      "partition": partition}
+        if storage_path is not None:
+            file_name = Path(file).name
+            data_conf["storage_address"] = {"path": f"{Path(storage_path).joinpath(file_name)}"}
         self._upload_conf.append(data_conf)
 
     def _get_task_inst(self, job_id, name, init_role, party_id):
@@ -282,8 +286,9 @@ class PipeLine(object):
 
         return job_parameters
 
-    def _construct_upload_conf(self, data_conf, work_mode):
+    def _construct_upload_conf(self, data_conf, backend, work_mode):
         upload_conf = copy.deepcopy(data_conf)
+        upload_conf["backend"] = backend
         upload_conf["work_mode"] = work_mode
         return upload_conf
 
@@ -433,9 +438,9 @@ class PipeLine(object):
                                              self._initiator.party_id)
 
     @LOGGER.catch
-    def upload(self, work_mode=WorkMode.STANDALONE, drop=0):
+    def upload(self, backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, drop=0):
         for data_conf in self._upload_conf:
-            upload_conf = self._construct_upload_conf(data_conf, work_mode)
+            upload_conf = self._construct_upload_conf(data_conf, backend, work_mode)
             self._train_job_id, detail_info = self._job_invoker.upload_data(upload_conf, int(drop))
             self._train_board_url = detail_info["board_url"]
             self._job_invoker.monitor_job_status(self._train_job_id,
