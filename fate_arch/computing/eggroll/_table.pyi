@@ -13,7 +13,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from eggroll.roll_pair.roll_pair import RollPair
+from fate_arch.abc import AddressABC, CTableABC
 
-from fate_arch.federation.eggroll._federation import Federation
 
-__all__ = ['Federation']
+class Table(CTableABC):
+
+    def __init__(self, rp: RollPair):
+        self._rp: RollPair = ...
+        ...
+
+    def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs): ...

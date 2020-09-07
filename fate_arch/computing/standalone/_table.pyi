@@ -1,5 +1,5 @@
 #
-#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#  Copyright 2019 The Eggroll Authors. All Rights Reserved.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -14,6 +14,14 @@
 #  limitations under the License.
 #
 
-from fate_arch.federation.eggroll._federation import Federation
 
-__all__ = ['Federation']
+from fate_arch.abc import AddressABC, CTableABC
+from fate_arch.standalone import Table as StandaloneTable
+
+
+class Table(CTableABC):
+    def __init__(self, table: StandaloneTable):
+        self._table = table
+        ...
+
+    def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs): ...

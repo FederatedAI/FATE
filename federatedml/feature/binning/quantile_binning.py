@@ -97,7 +97,7 @@ class QuantileBinning(BaseBinning):
                                   cols_dict=self.bin_inner_param.bin_cols_map,
                                   header=self.header,
                                   is_sparse=is_sparse)
-            summary_dict = data_instances.mapPartitions(f)
+            summary_dict = data_instances.applyPartitions(f)
             summary_dict = summary_dict.reduce(self.merge_summary_dict)
             if is_sparse:
                 total_count = data_instances.count()

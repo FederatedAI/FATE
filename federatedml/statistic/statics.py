@@ -272,7 +272,7 @@ class MultivariateStatisticalSummary(object):
                                           cols_index=self.cols_index,
                                           summary_statistics=copy.deepcopy(self.summary_statistics),
                                           is_sparse=is_sparse)
-        self.summary_statistics = self.data_instances.mapPartitions(partition_cal). \
+        self.summary_statistics = self.data_instances.applyPartitions(partition_cal). \
             reduce(lambda x, y: x.merge(y))
         # self.summary_statistics = summary_statistic_dict.reduce(self.aggregate_statics)
         self.finish_fit_statics = True
@@ -503,5 +503,5 @@ class MultivariateStatisticalSummary(object):
         return dict_a
 
     def get_label_histogram(self):
-        label_histogram = self.data_instances.mapPartitions(self.get_label_static_dict).reduce(self.merge_result_dict)
+        label_histogram = self.data_instances.applyPartitions(self.get_label_static_dict).reduce(self.merge_result_dict)
         return label_histogram

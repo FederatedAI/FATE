@@ -72,7 +72,7 @@ def reduce_count_rs(arr1, arr2):
 def count_feature_ratio(tb, tag_id_mapping, dense_input, missing_val=None):
     func = functools.partial(map_partitions_count, tag_id_mapping=tag_id_mapping, dense_input=dense_input,
                              missing_val=missing_val)
-    rs = tb.mapPartitions(func)
+    rs = tb.applyPartitions(func)
     return rs.reduce(reduce_count_rs)
 
 
