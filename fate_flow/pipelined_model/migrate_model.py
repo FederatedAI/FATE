@@ -15,6 +15,7 @@
 #
 import os
 import shutil
+from ruamel import yaml
 from datetime import datetime
 
 from fate_flow.db.db_models import DB, MachineLearningModelInfo as MLModel
@@ -109,17 +110,25 @@ def migration(config_data: dict):
                         os.path.join(migrate_model.model_path, "variables", "data", "pipeline", "pipeline", "Pipeline"))
 
         # modify proto
-        secureboost_dict = migrate_model.read_component_model('secureboost_0', 'train')
+        with open(os.path.join(migrate_model.model_path, 'define', 'define.yaml'), 'r') as fin:
+            define_yaml = yaml.safe_load(fin)
 
-        modified_buffer = model_migration(model_contents=secureboost_dict,
-                                          module_name='HeteroSecureBoost',
-                                          old_guest_list=config_data['role']['guest'],
-                                          new_guest_list=config_data['migrate_role']['guest'],
-                                          old_host_list=config_data['role']['host'],
-                                          new_host_list=config_data['migrate_role']['host'])
-
-        migrate_model.save_component_model('secureboost_0', 'HeteroSecureBoostingTreeGuestParam',
-                                           'train', modified_buffer)
+        for key, value in define_yaml['model_proto'].items():
+            if key == 'pipeline':
+                continue
+            for v in value.keys():
+                buffer_obj = migrate_model.read_component_model(key, v)
+                module_name = define_yaml['component_define'].get(key, {}).get('module_name')
+                modified_buffer = model_migration(model_contents=buffer_obj,
+                                                  module_name=module_name,
+                                                  old_guest_list=config_data['role']['guest'],
+                                                  new_guest_list=config_data['migrate_role']['guest'],
+                                                  old_host_list=config_data['role']['host'],
+                                                  new_host_list=config_data['migrate_role']['host'],
+                                                  old_arbiter_list=config_data.get('role', {}).get('arbiter', None),
+                                                  new_arbiter_list=config_data.get('migrate_role', {}).get('arbiter', None))
+                migrate_model.save_component_model(component_name=key, component_module_name=module_name,
+                                                   model_alias=v, model_buffers=modified_buffer)
 
         with DB.connection_context():
             MLModel.create(
@@ -134,7 +143,8 @@ def migration(config_data: dict):
                 f_runtime_conf=train_runtime_conf,
                 f_work_mode=train_runtime_conf["job_parameters"]["work_mode"],
                 f_dsl=json_loads(pipeline.train_dsl),
-                f_migrated=1
+                f_migrated=1,
+                f_job_status='complete'
             )
 
         return (0, "Migrating model successfully. " \
