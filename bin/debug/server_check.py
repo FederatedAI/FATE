@@ -14,6 +14,7 @@
 #
 #
 import re
+import os
 import sys
 import json
 import time
@@ -33,6 +34,7 @@ arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument("-t","--time", type=int, help="Sleep time wait, default value 0s", default=0)
 arg_parser.add_argument("-n","--nodes", type=int, help="Eggroll session processors per node, default value 1", default=1)
 arg_parser.add_argument("-p","--partitions", type=int, help="Total partitions, default value 1", default=1)
+arg_parser.add_argument("-d","--partyid", type=int, help="host partyid", default=0)
 args = arg_parser.parse_args()
 
 def str_generator(include_key=True, row_limit=10, key_suffix_size=0, value_suffix_size=0):
@@ -71,9 +73,14 @@ def check_actual_max_threads():
         fate_flow_client = "/data/projects/fate/python/fate_flow/fate_flow_client.py"
         mem_info = {}
         mem_info["Ip"] = get_host_ip()
-        mem_info["route_table"] = query_cmd("if [ -f $EGGROLL_HOME/conf/route_table.json ];then array=(`cat $EGGROLL_HOME/conf/route_table.json |grep -E 'ip|port'`); echo ${array[@]}; else echo 0; fi")
+        eggroll_home = query_cmd("echo $EGGROLL_HOME")
+        route_file = eggroll_home + "/conf/route_table.json"
+        f = open(route_file, encoding='utf-8')
+        mem_info["route_table"] = json.load(f)
         mem_info["data_access"] = query_cmd("ps aux |grep data_access_server |grep -v grep |wc -l")
-        mem_info["data_test"] = query_cmd("curl -X POST --header 'Content-Type: application/json' -d '{\"local\": {\"role\": \"host\", \"party_id\": 10000}, \"id_type\":\"phone\", \"encrypt_type\":\"md5\"}' 'http://127.0.0.1:9350/v1/data/query_imported_id_library_info'")
+        if args.partyid != 0:
+            mem_info["data_test"] = query_cmd("curl -X POST --header 'Content-Type: application/json' -d '{\"local\": {\"role\": \"host\", \"party_id\": %s}, \"id_type\":\"phone\", \"encrypt_type\":\"md5\"}' 'http://127.0.0.1:9350/v1/data/query_imported_id_library_info'" %(args.partyid))
+            mem_info["data_num"] = mem_info["data_test"].split(':')[-1].split('}')[0]
         mem_info["directory"] = query_cmd("if [ -d /data/projects/fdn/FDN-DataAcces ];then echo 1; else echo 0; fi")
         mem_info["services"] = ['ClusterManagerBootstrap','NodeManagerBootstrap','rollsite','fate_flow_server.py','fateboard','mysql']
         mem_info["job_run"] = query_cmd("if [ -f %s ];then python %s -f query_job -s running | grep f_job_id |wc -l; else echo -1; fi" %(fate_flow_client,fate_flow_client))
@@ -81,7 +88,6 @@ def check_actual_max_threads():
         mem_info["job_thread"] = []
         mem_info["jobs"] = query_cmd("array=(`python %s -f query_job -s running | grep f_job_id |awk -F: '{print $2}' |awk -F '\"' '{print $2}'`);echo ${array[@]}" %(fate_flow_client))
         mem_info["job_mem"] = []
-        mem_info["data_num"] = mem_info["data_test"].split(':')[-1].split('}')[0]
         for job_id in mem_info["jobs"]:
             mem_info["job_thread"] = query_cmd("ps -ef |grep egg_pair |grep -v grep |grep %s |wc -l" %(job_id))
             mem_info["job_mem"] = query_cmd("ps aux |grep egg_pair |grep %s |awk '{sum+=$6};END {print sum}'" %(job_id))
@@ -101,24 +107,30 @@ def check_actual_max_threads():
         for node in result:
             print_green("==============This is node " + str(node[0]) + ":" + node[1]["Ip"] + "===========================================")
             print_green("-------------default route check-------------------------------------------------------")
-            if node[1]["route_table"] == 0:
-                print_red("[ERROR] eggroll route is not configured, please check data/projects/fate/eggroll/conf/route_table.json file if it is existed!")
+            route_table_dict = node[1]["route_table"]
+            if 'default' not in route_table_dict['route_table']:
+                print_red("[ERROR] eggroll exchange route is not configured, please check data/projects/fate/eggroll/conf/route_table.json file if it is existed!")
             else:
-                print_green("[OK] eggroll route configured!")
-                print_green(node[1]["route_table"])
+                try:
+                    ip = route_table_dict['route_table']['default']['default'][0]['ip']
+                    port = route_table_dict['route_table']['default']['default'][0]['port']
+                    print_green("[OK] eggroll route configured!")
+                    print_green("exchange ip:{}, exchange port:{}".format(ip, port))
+                except KeyError:
+                    print_red("[ERROR] eggroll exchange route is not configured, please check data/projects/fate/eggroll/conf/route_table.json file if it is existed!")            
 
             print_green("--------------data_access service check-------------------------------------------------")
             if int(node[1]["data_access"]) == 0:
                 if int(node[1]["directory"]) == 0:
                     print_red("[ERROR] data_access service and directory not found, please check if it is installed!")
                 else:
-                    print_yellow("[WARNING] data_access not running or check /data/projects/fdn/FDN-DataAcces directory") 
+                    print_yellow("[WARNING] data_access not running or check /data/projects/fdn/FDN-DataAcces directory")
             else:
+                 print_green("[OK] Installed and running data_access service!")
+            if args.partyid != 0:
                 if int(node[1]["data_num"]) == 0 or int(node[1]["data_num"]) == 201:
-                    print_green(node[1]["data_test"])
-                    print_green("[OK] Installed and running data_access service!")
+                    print_green("[OK] Route verification success!")
                 else:
-                    print_yellow(node[1]["data_test"])
                     print_yellow("[WARNING] data_access service not available, please check host and host route!")
 
             print_green("--------------fate service check-------------------------------------------------------")
@@ -136,7 +148,7 @@ def check_actual_max_threads():
                 print_green("[OK] Number of tasks waiting is " + node[1]["job_wait"])
                 if int(node[1]["job_run"]) > 0:
                     for job_id in node[1]["jobs"].split(" "):
-                        print_green("[OK] running task job_id : " + job_id + " run " + str(node[1]["job_thread"]) + " processes; used memory : " + str(node[1]["job_mem"]) + "KB.")
+                        print_green("[OK] running task job_id : " + job_id + ", number of egg_pair processes is : " + str(node[1]["job_thread"]) + "; used memory : " + str(node[1]["job_mem"]) + "KB.")
 
             print("\n")
     finally:
@@ -150,8 +162,5 @@ if __name__ == '__main__':
         while 1:
             check_actual_max_threads()
             time.sleep(args.time)
-s()
-    else:
-        while 1:
-            check_actual_max_threads()
+eads()
             time.sleep(args.time)
