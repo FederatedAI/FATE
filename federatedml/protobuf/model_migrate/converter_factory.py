@@ -10,5 +10,5 @@ def converter_factory(module_name: str) -> ProtoConverterBase:
     elif module_name == 'HeteroFastSecureBoost':
         return HeteroSBTConverter()
     else:
-        raise ValueError('this module has no converter')
+        return None
 

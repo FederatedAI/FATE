@@ -36,6 +36,9 @@ def model_migration(model_contents: dict,
                     ):
 
     converter = converter_factory(module_name)
+    if converter is None:
+        # no supported converter, return
+        return None, None
 
     # replace old id with new id using converter
     guest_mapping_dict = generate_id_mapping(old_guest_list, new_guest_list)
