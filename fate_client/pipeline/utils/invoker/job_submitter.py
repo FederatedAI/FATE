@@ -64,7 +64,6 @@ class JobInvoker(object):
                     # print(line.strip())
                     LOGGER.debug(f"{line.strip()}")
 
-    @LOGGER.catch
     def submit_job(self, dsl=None, submit_conf=None):
         dsl_path = None
         with tempfile.TemporaryDirectory() as job_dir:
@@ -98,7 +97,6 @@ class JobInvoker(object):
 
         return job_id, data
 
-    @LOGGER.catch
     def upload_data(self, submit_conf=None, drop=0):
         with tempfile.TemporaryDirectory() as job_dir:
             submit_path = os.path.join(job_dir, "job_runtime_conf.json")
@@ -124,7 +122,6 @@ class JobInvoker(object):
 
         return job_id, data
 
-    @LOGGER.catch
     def monitor_job_status(self, job_id, role, party_id):
         party_id = str(party_id)
         start_time = time.time()
@@ -143,8 +140,9 @@ class JobInvoker(object):
 
             if status == JobStatus.FAILED:
                 # print("job is failed, please check out job {} by fate board or fate_flow cli".format(job_id))
-                LOGGER.error(f"Job is failed, please check out job {job_id} by fate board or fate_flow cli")
-                return StatusCode.FAIL
+                # LOGGER.error(f"Job is failed, please check out job {job_id} by fate board or fate_flow cli")
+                # return StatusCode.FAIL
+                raise ValueError(f"Job is failed, please check out job {job_id} by fate board or fate_flow cli")
 
             if status == JobStatus.WAITING:
                 elapse_seconds = timedelta(seconds=int(time.time() - start_time))
@@ -183,7 +181,6 @@ class JobInvoker(object):
 
             time.sleep(conf.TIME_QUERY_FREQS)
 
-    @LOGGER.catch
     def query_job(self, job_id, role, party_id):
         party_id = str(party_id)
         result = self.client.job.query(job_id=job_id, role=role, party_id=party_id)
@@ -200,7 +197,6 @@ class JobInvoker(object):
             raise ValueError("query job result is {}, can not parse useful info".format(result))
             # LOGGER.opt(exception=True).error(f"query job result is {result}, can not parse useful info. err msg: ")
 
-    @LOGGER.catch
     def get_output_data_table(self, job_id, cpn_name, role, party_id):
         """
 
@@ -268,7 +264,6 @@ class JobInvoker(object):
             raise ValueError("Job submit failed, err msg: {}".format(result))
         return data
 
-    @LOGGER.catch
     def query_task(self, job_id, role, party_id, status=None):
         party_id = str(party_id)
         result = self.client.task.query(job_id=job_id, role=role,
@@ -290,7 +285,6 @@ class JobInvoker(object):
             # raise
             raise ValueError("Query task result is {}, cannot parse useful info".format(result))
 
-    @LOGGER.catch
     def get_output_data(self, job_id, cpn_name, role, party_id, limits=None):
         """
 
@@ -430,7 +424,6 @@ class JobInvoker(object):
             LOGGER.error("Cannot get output model, err msg: ")
             # raise
 
-    @LOGGER.catch
     def get_predict_dsl(self, train_dsl, cpn_list, version):
         result = None
         with tempfile.TemporaryDirectory() as job_dir:

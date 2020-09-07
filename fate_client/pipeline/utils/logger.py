@@ -42,7 +42,7 @@ LOGGER.configure(handlers=[{"sink": sys.stderr, "level": "INFO"}])
 LOGGER.add(Path(info_log_path).resolve(), level="INFO", rotation="500MB",
            colorize=True, format=LogFormat.NORMAL, filter=runtime_log_only)
 LOGGER.add(Path(debug_log_path).resolve(), level="DEBUG", rotation="500MB", colorize=True,
-           format=LogFormat.NORMAL,filter=runtime_log_only)
+           format=LogFormat.NORMAL, filter=runtime_log_only)
 LOGGER.add(Path(error_log_path).resolve(), level="ERROR", rotation="500MB", colorize=True,
            format=LogFormat.NORMAL, backtrace=True, filter=runtime_log_only)
 LOGGER = LOGGER.bind(log_type=RUNTIME_LOG)
