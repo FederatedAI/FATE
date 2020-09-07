@@ -132,7 +132,8 @@ class Evaluation(ModelBase):
         """
 
         true_cluster_index, predicted_cluster_index = [], []
-        intra_cluster_avg_dist, inter_cluster_dist = [], []
+        intra_cluster_data, inter_cluster_dist = {'avg_dist': [], 'max_radius': []}, []
+
         run_intra_metrics = False  # run intra metrics or outer metrics ?
         LOGGER.debug('data is {}'.format(data))
         if len(data[0][1]) == 3:
@@ -142,20 +143,21 @@ class Evaluation(ModelBase):
             if not (type(data[0][1][0]) == int and type(data[0][1][1]) == int):
                 return None, None, run_intra_metrics
 
-        if len(data[0][1]) == 4:  # the input format is for intra metrics
+        if len(data[0][1]) == 5:  # the input format is for intra metrics
             run_intra_metrics = True
 
         for d in data:
             if run_intra_metrics:
-                intra_cluster_avg_dist.append(d[1][1])
+                intra_cluster_data['avg_dist'].append(d[1][1])
+                intra_cluster_data['max_radius'].append(d[1][2])
                 if len(inter_cluster_dist) == 0:
-                    inter_cluster_dist += d[1][2]
+                    inter_cluster_dist += d[1][3]
             else:
                 true_cluster_index.append(d[1][0])
                 predicted_cluster_index.append(d[1][1])
 
         return (true_cluster_index, predicted_cluster_index, run_intra_metrics) if not run_intra_metrics else \
-               (intra_cluster_avg_dist, inter_cluster_dist, run_intra_metrics)
+               (intra_cluster_data, inter_cluster_dist, run_intra_metrics)
 
     def _evaluate_classification_and_regression_metrics(self, mode, data):
 
@@ -207,7 +209,14 @@ class Evaluation(ModelBase):
                 continue
 
             LOGGER.debug('clustering_metrics is {}'.format(eval_metric))
-            res = getattr(self.metric_interface, eval_metric)(rs0, rs1)
+
+            if run_outer_metric:
+                if eval_result == consts.DISTANCE_MEASURE:
+                    res = getattr(self.metric_interface, eval_metric)(rs0['avg_dist'], rs1, rs0['max_radius'])
+                else:
+                    res = getattr(self.metric_interface, eval_metric)(rs0['avg_dist'], rs1)
+            else:
+                res = getattr(self.metric_interface, eval_metric)(rs0, rs1)
             eval_result[eval_metric].append(mode)
             eval_result[eval_metric].append(res)
 
