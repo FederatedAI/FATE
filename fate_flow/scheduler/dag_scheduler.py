@@ -13,6 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import traceback
+
 from fate_arch.common import FederatedComm, FederatedMode
 from fate_arch.common.base_utils import json_loads, current_timestamp
 from fate_arch.common.log import schedule_logger
@@ -25,7 +27,8 @@ from fate_flow.operation import JobSaver
 from fate_flow.entity.types import JobStatus, TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, ResourceOperation, FederatedSchedulingStatusCode, RunParameters
 from fate_flow.operation import Tracker
 from fate_flow.controller import JobController
-from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT, DEFAULT_TASK_PARALLELISM, DEFAULT_TASK_CORES_PER_NODE, DEFAULT_TASK_MEMORY_PER_NODE
+from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT, DEFAULT_TASK_PARALLELISM, DEFAULT_TASK_CORES_PER_NODE, \
+    DEFAULT_TASK_MEMORY_PER_NODE, ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH
 from fate_flow.utils import detect_utils, job_utils, schedule_utils
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils import model_utils
@@ -273,10 +276,43 @@ class DAGScheduler(Cron):
         jobs = JobSaver.query_job(job_id=job_id, role=initiator_role, party_id=initiator_party_id)
         if jobs:
             job = jobs[0]
-            FederatedScheduler.start_job(job=job)
+            runtime_conf = job.f_runtime_conf
+            command_body = {}
+            try:
+                job_parameters = job.f_runtime_conf.get("job_parameters")
+                if job_parameters.get('align_task_input_data_partition', ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH) and \
+                        int(runtime_conf['initiator']['party_id']) != 0:
+                    dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl,
+                                                                   runtime_conf=job.f_runtime_conf,
+                                                                   train_runtime_conf=job.f_train_runtime_conf)
+                    job_args = dsl_parser.get_args_input()
+                    dataset = JobController.get_dataset(is_initiator=True, role=initiator_role, party_id=initiator_party_id, roles=job.f_roles, job_args=job_args)
+                    extra_job_parameters = cls.align_input_data_partition(job_id=job_id, dataset=dataset,
+                                                                          job_parameters=job_parameters)
+                    runtime_conf["job_parameters"].update(extra_job_parameters)
+                    command_body = {'runtime_conf': runtime_conf}
+                    schedule_logger(job_id=job_id).info("extra job info:{}".format(extra_job_parameters))
+            except Exception as e:
+                schedule_logger(job_id=job_id).error(traceback.format_exc())
+            FederatedScheduler.start_job(job=job, command_body=command_body)
             schedule_logger(job_id=job_id).info("start job {} on initiator {} {}".format(job_id, initiator_role, initiator_party_id))
         else:
             schedule_logger(job_id=job_id).error("can not found job {} on initiator {} {}".format(job_id, initiator_role, initiator_party_id))
+
+    @classmethod
+    def align_input_data_partition(cls, job_id, job_parameters, dataset):
+        extra_job_parameters = {'input_data_partition': 0}  # Large integers are not used
+        job = JobSaver.query_job(is_initiator=True, job_id=job_id)[0]
+        status, partys_response = FederatedScheduler.align_args(job=job, command_body=dataset)
+        schedule_logger(job_id=job_id).info("align partition partys response: {}".format(partys_response))
+        for role, party_args in partys_response.items():
+            for party_id, response in party_args.items():
+                if not response["retcode"]:
+                    partitions = response.get('data').get('min_input_data_partition')
+                    if partitions:
+                        if extra_job_parameters['input_data_partition'] == 0 or partitions < extra_job_parameters['input_data_partition']:
+                            extra_job_parameters['input_data_partition'] = partitions
+        return extra_job_parameters
 
     @classmethod
     def rerun_job(cls, job_id, initiator_role, initiator_party_id, component_name):
