@@ -55,6 +55,7 @@ class StatisticsParam(BaseParam):
     LEGAL_STAT = [consts.COUNT, consts.SUM, consts.MEAN, consts.STANDARD_DEVIATION,
                   consts.MEDIAN, consts.MIN, consts.MAX, consts.VARIANCE,
                   consts.COEFFICIENT_OF_VARIATION, consts.MISSING_COUNT,
+                  consts.MISSING_RATIO,
                   consts.SKEWNESS, consts.KURTOSIS]
     LEGAL_QUANTILE = re.compile("^(100)|([1-9]?[0-9])%$")
 
@@ -80,7 +81,7 @@ class StatisticsParam(BaseParam):
     def extend_statistics(statistic_name):
         if statistic_name == "summary":
             return [consts.SUM, consts.MEAN, consts.STANDARD_DEVIATION,
-                    consts.MEDIAN, consts.MIN, consts.MAX,
+                    consts.MEDIAN, consts.MIN, consts.MAX, consts.MISSING_RATIO,
                     consts.MISSING_COUNT, consts.SKEWNESS, consts.KURTOSIS,
                     consts.COEFFICIENT_OF_VARIATION]
         if statistic_name == "describe":
