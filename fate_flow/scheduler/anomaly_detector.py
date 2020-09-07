@@ -23,7 +23,7 @@ from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation import JobSaver
 
 
-class JobDetector(cron.Cron):
+class AnomalyDetector(cron.Cron):
     def run_do(self):
         self.detect_running_task()
 
