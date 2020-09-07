@@ -74,6 +74,10 @@ class StorageTableMetaABC(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
+    def get_in_serialized(self):
+        ...
+
+    @abc.abstractmethod
     def get_schema(self):
         ...
 

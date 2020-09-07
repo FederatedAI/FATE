@@ -17,7 +17,7 @@ import inspect
 import os
 import sys
 
-from peewee import CharField, IntegerField, BigIntegerField, TextField, CompositeKey
+from peewee import CharField, IntegerField, BigIntegerField, TextField, CompositeKey, BooleanField
 from playhouse.apsw_ext import APSWDatabase
 from playhouse.pool import PooledMySQLDatabase
 
@@ -91,7 +91,7 @@ class StorageTableMetaModel(DataBaseModel):
     f_type = CharField(max_length=50, index=True)  # storage type
     f_options = JSONField()
     f_is_kv_storage = IntegerField(default=1)
-    f_is_serialize = IntegerField(default=1)
+    f_in_serialized = BooleanField(default=True)
 
     f_partitions = IntegerField(null=True)
     f_schema = SerializedField()

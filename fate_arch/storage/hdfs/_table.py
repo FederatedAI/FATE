@@ -22,6 +22,7 @@ from pyspark import SparkContext
 from fate_arch.common.log import getLogger
 from fate_arch.storage import StorageEngine, HDFSStorageType
 from fate_arch.storage import StorageTableBase
+from fate_arch.storage._types import DEFAULT_DELIMITER
 
 LOGGER = getLogger()
 
@@ -67,6 +68,7 @@ class StorageTable(StorageTableBase):
         return self._options
 
     def put_all(self, kv_list: Iterable, **kwargs):
+        delimiter = kwargs.get("delimiter", DEFAULT_DELIMITER)
         path, fs = StorageTable.get_hadoop_fs(sc=self._context, address=self._address)
         if fs.exists(path):
             out = fs.append(path)
@@ -75,7 +77,7 @@ class StorageTable(StorageTableBase):
 
         counter = 0
         for k, v in kv_list:
-            content = u"{}{}{}\n".format(k, StorageTable.delimiter, pickle.dumps(v).hex())
+            content = u"{}{}{}\n".format(k, delimiter, pickle.dumps(v).hex())
             out.write(bytearray(content, "utf-8"))
             counter = counter + 1
         out.flush()
@@ -83,6 +85,8 @@ class StorageTable(StorageTableBase):
         self._meta.update_metas(count=counter)
 
     def collect(self, **kwargs) -> list:
+        delimiter = kwargs.get("delimiter", DEFAULT_DELIMITER)
+        deserialized = kwargs.get("deserialized", True)
         hdfs_path = StorageTable.generate_hdfs_path(self._address)
         path = StorageTable.get_path(self._context, hdfs_path)
         fs = StorageTable.get_file_system(self._context)
@@ -91,8 +95,8 @@ class StorageTable(StorageTableBase):
         while True:
             line = reader.readLine()
             if line is not None:
-                fields = line.strip().partition(StorageTable.delimiter)
-                yield fields[0], pickle.loads(bytes.fromhex(fields[2]))
+                fields = line.strip().partition(delimiter)
+                yield fields[0], pickle.loads(bytes.fromhex(fields[2])) if deserialized else fields[2]
             else:
                 break
         istream.close()
@@ -114,8 +118,6 @@ class StorageTable(StorageTableBase):
         fs = StorageTable.get_file_system(sc)
         fs.rename(src_path, dst_path)
         return StorageTable(address=address, partitions=partitions, name=name, namespace=namespace, **kwargs)
-
-    delimiter = '\t'
 
     @classmethod
     def generate_hdfs_path(cls, address):
