@@ -73,6 +73,7 @@ class ColumnExpand(ModelBase):
 
     def _init_model(self, params):
         self.model_param = params
+        self.need_run = params.need_run
         self.append_header = params.append_header
         self.method = params.method
         self.fill_value = params.fill_value
@@ -92,7 +93,10 @@ class ColumnExpand(ModelBase):
 
         new_metas = data.get_metas()
         header = data.get_meta("header")
-        new_header = header + DELIMITER + DELIMITER.join(self.append_header)
+        if header is None or len(header) == 0:
+            new_header = DELIMITER.join(self.append_header)
+        else:
+            new_header = DELIMITER.join(header.split(DELIMITER) + self.append_header)
         new_metas["header"] = new_header
         new_metas["namespace"] = new_data.get_namespace()
         session.save_data_table_meta(new_metas, new_data.get_name(),
@@ -106,8 +110,11 @@ class ColumnExpand(ModelBase):
         new_data = data.mapValues(lambda v: ColumnExpand._append_feature(v, append_value))
 
         new_schema = copy.deepcopy(data.schema)
-        header = new_schema["header"]
-        new_header = header + DELIMITER + DELIMITER.join(self.append_header)
+        header = new_schema.get("header", "")
+        if len(header) == 0:
+            new_header = DELIMITER.join(self.append_header)
+        else:
+            new_header = DELIMITER.join(header.split(DELIMITER) + self.append_header)
         new_schema["header"] = new_header
         new_data.schema = new_schema
 
@@ -117,7 +124,8 @@ class ColumnExpand(ModelBase):
         meta = column_expand_meta_pb2.ColumnExpandMeta(
             append_header = self.append_header,
             method = self.method,
-            fill_value = [str(v) for v in self.fill_value]
+            fill_value = [str(v) for v in self.fill_value],
+            need_run = self.need_run
         )
         return meta
 
@@ -141,16 +149,21 @@ class ColumnExpand(ModelBase):
         meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
         param_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
 
-        self.new_feature_generator = FeatureGenerator(meta_obj.method,
-                                                      meta_obj.append_header,
-                                                      meta_obj.fill_value)
+        self.append_header = list(meta_obj.append_header)
+        self.method = meta_obj.method
+        self.fill_value = list(meta_obj.fill_value)
+        self.need_run = meta_obj.need_run
+
+        self.new_feature_generator = FeatureGenerator(self.method,
+                                                      self.append_header,
+                                                      self.fill_value)
         self.header = param_obj.header
         return
 
     def fit(self, data):
         LOGGER.info(f"Enter Column Expand fit")
-        # return original value if no fill value provided
-        if self.method == consts.MANUAL and len(self.fill_value) == 0:
+        # return original value if no append header provided
+        if self.method == consts.MANUAL and len(self.append_header) == 0:
             LOGGER.info(f"Finish Column Expand fit. Original data returned.")
             self.header = data.get_meta("header")
             return data
@@ -158,11 +171,11 @@ class ColumnExpand(ModelBase):
         LOGGER.info(f"Finish Column Expand fit")
         return new_data
 
-    def predict(self, data):
-        LOGGER.info(f"Enter Column Expand predict")
-        if self.method == consts.MANUAL and len(self.fill_value) == 0:
-            LOGGER.info(f"Finish Column Expand predict. Original data returned.")
+    def transform(self, data):
+        LOGGER.info(f"Enter Column Expand transform")
+        if self.method == consts.MANUAL and len(self.append_header) == 0:
+            LOGGER.info(f"Finish Column Expand transform. Original data returned.")
             return data
         new_data, self.header = self._append_column_deprecated(data)
-        LOGGER.info(f"Finish Column Expand predict.")
+        LOGGER.info(f"Finish Column Expand transform.")
         return new_data
