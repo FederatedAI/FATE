@@ -236,6 +236,7 @@ CORRELATION = 'corr'
 VARIANCE = 'variance'
 COEFFICIENT_OF_VARIATION = 'coefficient_of_variance'
 MISSING_COUNT = "missing_count"
+MISSING_RATIO = "missing_ratio"
 SKEWNESS = 'skewness'
 KURTOSIS = 'kurtosis'
 
