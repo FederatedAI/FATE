@@ -18,9 +18,9 @@ import time
 import typing
 from typing import Union
 
-from fate_arch.common import Party
+from fate_arch.common import Party, profile
 from fate_arch.common.log import getLogger
-from fate_arch.common.profile import is_meta_remote_enable, remote_meta_tag, profile_logger
+from fate_arch.common.profile import is_profile_remote_enable, profile_remote_tag, profile_logger
 from fate_arch.federation.transfer_variable._auth import _check_variable_auth_conf
 from fate_arch.federation.transfer_variable._cleaner import IterationGC
 from fate_arch.federation.transfer_variable._namespace import FederationTagNamespace
@@ -118,12 +118,10 @@ class Variable(object):
 
         name = self._short_name if self._use_short_name else self._name
 
-        start_time = time.time()
-        profile_logger.info(f"remote by name={name}, tag={tag} at {start_time}")
+        timer = profile.federation_remote_timer(name, tag, local, parties)
         session.federation.remote(v=obj, name=name, tag=tag, parties=parties, gc=self._remote_gc)
-        if is_meta_remote_enable():
-            session.federation.remote(v=time.time(), name=name, tag=remote_meta_tag(tag), parties=parties,
-                                      gc=self._remote_gc)
+        timer.done(session.federation)
+
         self._remote_gc.gc()
 
     def get_parties(self,
@@ -144,13 +142,10 @@ class Variable(object):
             raise RuntimeError(f"not allowed to get object to {local} using {self._name}")
 
         name = self._short_name if self._use_short_name else self._name
-        profile_logger.info(f"start get by name={name}, tag={tag} at {time.time()}")
+        timer = profile.federation_get_timer(name, tag, local, parties)
         rtn = session.federation.get(name=name, tag=tag, parties=parties, gc=self._get_gc)
-        profile_logger.info(f"got by name={name}, tag={tag} at {time.time()}")
-        if is_meta_remote_enable():
-            remote_meta = session.federation.get(name=name, tag=remote_meta_tag(tag), parties=parties, gc=self._get_gc)
-            for party, meta in zip(parties, remote_meta):
-                profile_logger.info(f"[remote meta]{party} remote by name={name}, tag = {tag}, at {meta}")
+        timer.done(session.federation)
+
         self._get_gc.gc()
 
         return rtn
