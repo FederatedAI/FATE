@@ -88,10 +88,12 @@ class HeteroKmeansClient(BaseKmeansModel):
                     cluster_dist_list.append(np.sum((np.array(centroid_list[i]) - np.array(centroid_list[j])) ** 2))
         return cluster_dist_list
 
-    def fit(self, data_instances):
+    def fit(self, data_instances, validate_data=None):
         LOGGER.info("Enter hetero_kmenas_client fit")
         self.header = self.get_header(data_instances)
         self._abnormal_detection(data_instances)
+        if self.k > data_instances.count():
+            raise ValueError('K is too larger for current data')
         np.random.seed(data_instances.count())
         if self.role == consts.GUEST:
             self.first_centroid_key = self.get_centroid(data_instances)
