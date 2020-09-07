@@ -26,7 +26,7 @@ from fate_flow.operation import JobSaver
 from fate_arch.common.base_utils import json_dumps, current_timestamp
 from fate_flow.controller import TaskController
 from fate_flow.manager import ResourceManager
-from fate_flow.scheduler import JobQueue
+from fate_flow.operation import JobQueue
 
 
 class JobController(object):
@@ -41,6 +41,10 @@ class JobController(object):
                                  dsl=dsl, runtime_conf=runtime_conf, role=role, party_id=party_id)
         job_parameters = RunParameters(**runtime_conf['job_parameters'])
         job_initiator = runtime_conf['initiator']
+
+        dsl_parser = schedule_utils.get_job_dsl_parser(dsl=dsl,
+                                                       runtime_conf=runtime_conf,
+                                                       train_runtime_conf=train_runtime_conf)
 
         # save new job into db
         if role == job_initiator['role'] and party_id == job_initiator['party_id']:
@@ -64,10 +68,6 @@ class JobController(object):
                                 train_runtime_conf=train_runtime_conf,
                                 pipeline_dsl=None)
 
-        dsl_parser = schedule_utils.get_job_dsl_parser(dsl=dsl,
-                                                       runtime_conf=runtime_conf,
-                                                       train_runtime_conf=train_runtime_conf)
-
         cls.initialize_tasks(job_id, role, party_id, True, job_initiator, job_parameters, dsl_parser)
         cls.initialize_job_tracker(job_id=job_id, role=role, party_id=party_id, job_info=job_info, is_initiator=is_initiator, dsl_parser=dsl_parser)
 
@@ -77,6 +77,8 @@ class JobController(object):
         job_parameters.engines_address[EngineType.COMPUTING] = backend_info.f_engine_address
         backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.FEDERATION, engine_id=job_parameters.federation_backend)
         job_parameters.engines_address[EngineType.FEDERATION] = backend_info.f_engine_address
+        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.STORAGE, engine_id=job_parameters.storage_backend)
+        job_parameters.engines_address[EngineType.STORAGE] = backend_info.f_engine_address
 
     @classmethod
     def initialize_tasks(cls, job_id, role, party_id, run_on, job_initiator, job_parameters: RunParameters, dsl_parser, component_name=None, task_version=None):
@@ -87,7 +89,7 @@ class JobController(object):
         common_task_info["role"] = role
         common_task_info["party_id"] = party_id
         common_task_info["federated_mode"] = job_parameters.federated_mode
-        common_task_info["federated_comm"] = job_parameters.federated_comm
+        common_task_info["federated_status_collect_type"] = job_parameters.federated_status_collect_type
         if task_version:
             common_task_info["task_version"] = task_version
         if not component_name:
@@ -254,7 +256,8 @@ class JobController(object):
         if jobs:
             job = jobs[0]
             try:
-                status = JobQueue.delete_event(job_id=job.f_job_id, initiator_role=job.f_initiator_role, initiator_party_id=job.f_initiator_party_id, job_status=JobStatus.WAITING)
+                # You cannot delete an event directly, otherwise the status might not be updated
+                status = JobQueue.update_event(job_id=job.f_job_id, initiator_role=job.f_initiator_role, initiator_party_id=job.f_initiator_party_id, job_status=JobStatus.CANCELED)
                 if not status:
                     return False
             except:

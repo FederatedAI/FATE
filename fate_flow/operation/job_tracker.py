@@ -78,12 +78,12 @@ class Tracker(object):
     def get_metric_data(self, metric_namespace: str, metric_name: str):
         return self.read_metric_data(metric_namespace=metric_namespace, metric_name=metric_name, job_level=False)
 
+    @DB.connection_context()
     def read_metric_data(self, metric_namespace: str, metric_name: str, job_level=False):
-        with DB.connection_context():
-            metrics = []
-            for k, v in self.read_metrics_from_db(metric_namespace, metric_name, 1, job_level):
-                metrics.append(Metric(key=k, value=v))
-            return metrics
+        metrics = []
+        for k, v in self.read_metrics_from_db(metric_namespace, metric_name, 1, job_level):
+            metrics.append(Metric(key=k, value=v))
+        return metrics
 
     def save_metric_meta(self, metric_namespace: str, metric_name: str, metric_meta: MetricMeta,
                          job_level: bool = False):
@@ -92,24 +92,24 @@ class Tracker(object):
                                                                          self.party_id, metric_namespace, metric_name))
         self.insert_metrics_into_db(metric_namespace, metric_name, 0, metric_meta.to_dict().items(), job_level)
 
+    @DB.connection_context()
     def get_metric_meta(self, metric_namespace: str, metric_name: str, job_level: bool = False):
-        with DB.connection_context():
-            kv = dict()
-            for k, v in self.read_metrics_from_db(metric_namespace, metric_name, 0, job_level):
-                kv[k] = v
-            return MetricMeta(name=kv.get('name'), metric_type=kv.get('metric_type'), extra_metas=kv)
+        kv = dict()
+        for k, v in self.read_metrics_from_db(metric_namespace, metric_name, 0, job_level):
+            kv[k] = v
+        return MetricMeta(name=kv.get('name'), metric_type=kv.get('metric_type'), extra_metas=kv)
 
     def log_job_view(self, view_data: dict):
         self.insert_metrics_into_db('job', 'job_view', 2, view_data.items(), job_level=True)
 
+    @DB.connection_context()
     def get_job_view(self):
-        with DB.connection_context():
-            view_data = {}
-            for k, v in self.read_metrics_from_db('job', 'job_view', 2, job_level=True):
-                view_data[k] = v
-            return view_data
+        view_data = {}
+        for k, v in self.read_metrics_from_db('job', 'job_view', 2, job_level=True):
+            view_data[k] = v
+        return view_data
 
-    def save_output_data(self, computing_table, output_storage_engine=None):
+    def save_output_data(self, computing_table, output_storage_engine, output_storage_address: dict):
         if computing_table:
             persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(
                 self.task_id), uuid.uuid1().hex
@@ -118,12 +118,13 @@ class Tracker(object):
                                                                                   persistent_table_name))
             partitions = computing_table.partitions
             schedule_logger(self.job_id).info('output data table partitions is {}'.format(partitions))
+            address_dict = output_storage_address.copy()
             if output_storage_engine == StorageEngine.EGGROLL:
-                address_dict = {"name": persistent_table_name, "namespace": persistent_table_namespace, "storage_type": storage.EggRollStorageType.ROLLPAIR_LMDB}
+                address_dict.update({"name": persistent_table_name, "namespace": persistent_table_namespace, "storage_type": storage.EggRollStorageType.ROLLPAIR_LMDB})
             elif output_storage_engine == StorageEngine.STANDALONE:
-                address_dict = {"name": persistent_table_name, "namespace": persistent_table_namespace, "storage_type": storage.StandaloneStorageType.ROLLPAIR_LMDB}
+                address_dict.update({"name": persistent_table_name, "namespace": persistent_table_namespace, "storage_type": storage.StandaloneStorageType.ROLLPAIR_LMDB})
             elif output_storage_engine == StorageEngine.HDFS:
-                address_dict = {"path": f"/fate/temp/component_output_data/{persistent_table_namespace}/{persistent_table_name}"}
+                address_dict.update({"path": f"/fate/temp/component_output_data/{persistent_table_namespace}/{persistent_table_name}"})
             else:
                 raise RuntimeError(f"{output_storage_engine} storage is not supported")
             address = storage.StorageTableMeta.create_address(storage_engine=output_storage_engine, address_dict=address_dict)
@@ -192,174 +193,174 @@ class Tracker(object):
     def get_component_define(self):
         return self.pipelined_model.get_component_define(component_name=self.component_name)
 
+    @DB.connection_context()
     def insert_metrics_into_db(self, metric_namespace: str, metric_name: str, data_type: int, kv, job_level=False):
-        with DB.connection_context():
-            try:
-                tracking_metric = self.get_dynamic_db_model(TrackingMetric, self.job_id)()
-                tracking_metric.f_job_id = self.job_id
-                tracking_metric.f_component_name = (self.component_name if not job_level else job_utils.job_virtual_component_name())
-                tracking_metric.f_task_id = self.task_id
-                tracking_metric.f_task_version = self.task_version
-                tracking_metric.f_role = self.role
-                tracking_metric.f_party_id = self.party_id
-                tracking_metric.f_metric_namespace = metric_namespace
-                tracking_metric.f_metric_name = metric_name
-                tracking_metric.f_type = data_type
-                default_db_source = tracking_metric.to_json()
-                tracking_metric_data_source = []
-                for k, v in kv:
-                    db_source = default_db_source.copy()
-                    db_source['f_key'] = serialize_b64(k)
-                    db_source['f_value'] = serialize_b64(v)
-                    db_source['f_create_time'] = current_timestamp()
-                    tracking_metric_data_source.append(db_source)
-                self.bulk_insert_into_db(self.get_dynamic_db_model(TrackingMetric, self.job_id),
-                                         tracking_metric_data_source)
-            except Exception as e:
-                schedule_logger(self.job_id).exception("An exception where inserted metric {} of metric namespace: {} to database:\n{}".format(
-                    metric_name,
-                    metric_namespace,
-                    e
-                ))
+        try:
+            tracking_metric = self.get_dynamic_db_model(TrackingMetric, self.job_id)()
+            tracking_metric.f_job_id = self.job_id
+            tracking_metric.f_component_name = (self.component_name if not job_level else job_utils.job_virtual_component_name())
+            tracking_metric.f_task_id = self.task_id
+            tracking_metric.f_task_version = self.task_version
+            tracking_metric.f_role = self.role
+            tracking_metric.f_party_id = self.party_id
+            tracking_metric.f_metric_namespace = metric_namespace
+            tracking_metric.f_metric_name = metric_name
+            tracking_metric.f_type = data_type
+            default_db_source = tracking_metric.to_json()
+            tracking_metric_data_source = []
+            for k, v in kv:
+                db_source = default_db_source.copy()
+                db_source['f_key'] = serialize_b64(k)
+                db_source['f_value'] = serialize_b64(v)
+                db_source['f_create_time'] = current_timestamp()
+                tracking_metric_data_source.append(db_source)
+            self.bulk_insert_into_db(self.get_dynamic_db_model(TrackingMetric, self.job_id),
+                                     tracking_metric_data_source)
+        except Exception as e:
+            schedule_logger(self.job_id).exception("An exception where inserted metric {} of metric namespace: {} to database:\n{}".format(
+                metric_name,
+                metric_namespace,
+                e
+            ))
 
+    @DB.connection_context()
     def insert_summary_into_db(self, summary_data: dict):
-        with DB.connection_context():
-            try:
-                summary_model = self.get_dynamic_db_model(ComponentSummary, self.job_id)
-                DB.create_tables([summary_model])
-                summary_obj = summary_model.get_or_none(
-                    summary_model.f_job_id == self.job_id,
-                    summary_model.f_component_name == self.component_name,
-                    summary_model.f_role == self.role,
-                    summary_model.f_party_id == self.party_id,
-                    summary_model.f_task_id == self.task_id,
-                    summary_model.f_task_version == self.task_version
+        try:
+            summary_model = self.get_dynamic_db_model(ComponentSummary, self.job_id)
+            DB.create_tables([summary_model])
+            summary_obj = summary_model.get_or_none(
+                summary_model.f_job_id == self.job_id,
+                summary_model.f_component_name == self.component_name,
+                summary_model.f_role == self.role,
+                summary_model.f_party_id == self.party_id,
+                summary_model.f_task_id == self.task_id,
+                summary_model.f_task_version == self.task_version
+            )
+            if summary_obj:
+                summary_obj.f_summary = serialize_b64(summary_data, to_str=True)
+                summary_obj.f_update_time = current_timestamp()
+                summary_obj.save()
+            else:
+                self.get_dynamic_db_model(ComponentSummary, self.job_id).create(
+                    f_job_id=self.job_id,
+                    f_component_name=self.component_name,
+                    f_role=self.role,
+                    f_party_id=self.party_id,
+                    f_task_id=self.task_id,
+                    f_task_version=self.task_version,
+                    f_summary=serialize_b64(summary_data, to_str=True),
+                    f_create_time=current_timestamp()
                 )
-                if summary_obj:
-                    summary_obj.f_summary = serialize_b64(summary_data, to_str=True)
-                    summary_obj.f_update_time = current_timestamp()
-                    summary_obj.save()
-                else:
-                    self.get_dynamic_db_model(ComponentSummary, self.job_id).create(
-                        f_job_id=self.job_id,
-                        f_component_name=self.component_name,
-                        f_role=self.role,
-                        f_party_id=self.party_id,
-                        f_task_id=self.task_id,
-                        f_task_version=self.task_version,
-                        f_summary=serialize_b64(summary_data, to_str=True),
-                        f_create_time=current_timestamp()
-                    )
-            except Exception as e:
-                schedule_logger(self.job_id).exception("An exception where querying summary job id: {} "
-                                                       "component name: {} to database:\n{}".format(
-                    self.job_id, self.component_name, e)
-                )
+        except Exception as e:
+            schedule_logger(self.job_id).exception("An exception where querying summary job id: {} "
+                                                   "component name: {} to database:\n{}".format(
+                self.job_id, self.component_name, e)
+            )
 
+    @DB.connection_context()
     def read_summary_from_db(self):
-        with DB.connection_context():
-            try:
-                summary_model = self.get_dynamic_db_model(ComponentSummary, self.job_id)
-                summary = summary_model.get_or_none(
-                    summary_model.f_job_id == self.job_id,
-                    summary_model.f_component_name == self.component_name,
-                    summary_model.f_role == self.role,
-                    summary_model.f_party_id == self.party_id
-                )
-                if summary:
-                    cpn_summary = deserialize_b64(summary.f_summary)
-                else:
-                    cpn_summary = ""
-            except Exception as e:
-                schedule_logger(self.job_id).exception(e)
-                raise e
-            return cpn_summary
+        try:
+            summary_model = self.get_dynamic_db_model(ComponentSummary, self.job_id)
+            summary = summary_model.get_or_none(
+                summary_model.f_job_id == self.job_id,
+                summary_model.f_component_name == self.component_name,
+                summary_model.f_role == self.role,
+                summary_model.f_party_id == self.party_id
+            )
+            if summary:
+                cpn_summary = deserialize_b64(summary.f_summary)
+            else:
+                cpn_summary = ""
+        except Exception as e:
+            schedule_logger(self.job_id).exception(e)
+            raise e
+        return cpn_summary
 
     def log_output_data_info(self, data_name: str, table_namespace: str, table_name: str):
         self.insert_output_data_info_into_db(data_name=data_name, table_namespace=table_namespace, table_name=table_name)
 
+    @DB.connection_context()
     def insert_output_data_info_into_db(self, data_name: str, table_namespace: str, table_name: str):
-        with DB.connection_context():
-            try:
-                tracking_output_data_info = self.get_dynamic_db_model(TrackingOutputDataInfo, self.job_id)()
-                tracking_output_data_info.f_job_id = self.job_id
-                tracking_output_data_info.f_component_name = self.component_name
-                tracking_output_data_info.f_task_id = self.task_id
-                tracking_output_data_info.f_task_version = self.task_version
-                tracking_output_data_info.f_data_name = data_name
-                tracking_output_data_info.f_role = self.role
-                tracking_output_data_info.f_party_id = self.party_id
-                tracking_output_data_info.f_table_namespace = table_namespace
-                tracking_output_data_info.f_table_name = table_name
-                tracking_output_data_info.f_create_time = current_timestamp()
-                self.bulk_insert_into_db(self.get_dynamic_db_model(TrackingOutputDataInfo, self.job_id),
-                                         [tracking_output_data_info.to_json()])
-            except Exception as e:
-                schedule_logger(self.job_id).exception("An exception where inserted output data info {} {} {} to database:\n{}".format(
-                    data_name,
-                    table_namespace,
-                    table_name,
-                    e
-                ))
+        try:
+            tracking_output_data_info = self.get_dynamic_db_model(TrackingOutputDataInfo, self.job_id)()
+            tracking_output_data_info.f_job_id = self.job_id
+            tracking_output_data_info.f_component_name = self.component_name
+            tracking_output_data_info.f_task_id = self.task_id
+            tracking_output_data_info.f_task_version = self.task_version
+            tracking_output_data_info.f_data_name = data_name
+            tracking_output_data_info.f_role = self.role
+            tracking_output_data_info.f_party_id = self.party_id
+            tracking_output_data_info.f_table_namespace = table_namespace
+            tracking_output_data_info.f_table_name = table_name
+            tracking_output_data_info.f_create_time = current_timestamp()
+            self.bulk_insert_into_db(self.get_dynamic_db_model(TrackingOutputDataInfo, self.job_id),
+                                     [tracking_output_data_info.to_json()])
+        except Exception as e:
+            schedule_logger(self.job_id).exception("An exception where inserted output data info {} {} {} to database:\n{}".format(
+                data_name,
+                table_namespace,
+                table_name,
+                e
+            ))
 
+    @DB.connection_context()
     def bulk_insert_into_db(self, model, data_source):
-        with DB.connection_context():
-            try:
-                DB.create_tables([model])
-                batch_size = 50 if RuntimeConfig.USE_LOCAL_DATABASE else 1000
-                for i in range(0, len(data_source), batch_size):
-                    with DB.atomic():
-                        model.insert_many(data_source[i:i+batch_size]).execute()
-                return len(data_source)
-            except Exception as e:
-                schedule_logger(self.job_id).exception(e)
-                return 0
+        try:
+            DB.create_tables([model])
+            batch_size = 50 if RuntimeConfig.USE_LOCAL_DATABASE else 1000
+            for i in range(0, len(data_source), batch_size):
+                with DB.atomic():
+                    model.insert_many(data_source[i:i+batch_size]).execute()
+            return len(data_source)
+        except Exception as e:
+            schedule_logger(self.job_id).exception(e)
+            return 0
 
+    @DB.connection_context()
     def read_metrics_from_db(self, metric_namespace: str, metric_name: str, data_type, job_level=False):
-        with DB.connection_context():
-            metrics = []
-            try:
-                tracking_metric_model = self.get_dynamic_db_model(TrackingMetric, self.job_id)
-                tracking_metrics = tracking_metric_model.select(tracking_metric_model.f_key, tracking_metric_model.f_value).where(
-                    tracking_metric_model.f_job_id == self.job_id,
-                    tracking_metric_model.f_component_name == (self.component_name if not job_level else job_utils.job_virtual_component_name()),
-                    tracking_metric_model.f_role == self.role,
-                    tracking_metric_model.f_party_id == self.party_id,
-                    tracking_metric_model.f_metric_namespace == metric_namespace,
-                    tracking_metric_model.f_metric_name == metric_name,
-                    tracking_metric_model.f_type == data_type
-                )
-                for tracking_metric in tracking_metrics:
-                    yield deserialize_b64(tracking_metric.f_key), deserialize_b64(tracking_metric.f_value)
-            except Exception as e:
-                schedule_logger(self.job_id).exception(e)
-                raise e
-            return metrics
-
-    def clean_metrics(self):
-        with DB.connection_context():
+        metrics = []
+        try:
             tracking_metric_model = self.get_dynamic_db_model(TrackingMetric, self.job_id)
-            operate = tracking_metric_model.delete().where(
-                tracking_metric_model.f_task_id==self.task_id,
-                tracking_metric_model.f_task_version==self.task_version,
-                tracking_metric_model.f_role==self.role,
-                tracking_metric_model.f_party_id==self.party_id
+            tracking_metrics = tracking_metric_model.select(tracking_metric_model.f_key, tracking_metric_model.f_value).where(
+                tracking_metric_model.f_job_id == self.job_id,
+                tracking_metric_model.f_component_name == (self.component_name if not job_level else job_utils.job_virtual_component_name()),
+                tracking_metric_model.f_role == self.role,
+                tracking_metric_model.f_party_id == self.party_id,
+                tracking_metric_model.f_metric_namespace == metric_namespace,
+                tracking_metric_model.f_metric_name == metric_name,
+                tracking_metric_model.f_type == data_type
             )
-            return operate.execute() > 0
-
-    def get_metric_list(self, job_level: bool = False):
-        with DB.connection_context():
-            metrics = dict()
-            tracking_metric_model = self.get_dynamic_db_model(TrackingMetric, self.job_id)
-            tracking_metrics = tracking_metric_model.select(tracking_metric_model.f_metric_namespace, tracking_metric_model.f_metric_name).where(
-                                    tracking_metric_model.f_job_id==self.job_id,
-                                    tracking_metric_model.f_component_name==(self.component_name if not job_level else 'dag'),
-                                    tracking_metric_model.f_role==self.role,
-                                    tracking_metric_model.f_party_id==self.party_id).distinct()
             for tracking_metric in tracking_metrics:
-                metrics[tracking_metric.f_metric_namespace] = metrics.get(tracking_metric.f_metric_namespace, [])
-                metrics[tracking_metric.f_metric_namespace].append(tracking_metric.f_metric_name)
-            return metrics
+                yield deserialize_b64(tracking_metric.f_key), deserialize_b64(tracking_metric.f_value)
+        except Exception as e:
+            schedule_logger(self.job_id).exception(e)
+            raise e
+        return metrics
+
+    @DB.connection_context()
+    def clean_metrics(self):
+        tracking_metric_model = self.get_dynamic_db_model(TrackingMetric, self.job_id)
+        operate = tracking_metric_model.delete().where(
+            tracking_metric_model.f_task_id==self.task_id,
+            tracking_metric_model.f_task_version==self.task_version,
+            tracking_metric_model.f_role==self.role,
+            tracking_metric_model.f_party_id==self.party_id
+        )
+        return operate.execute() > 0
+
+    @DB.connection_context()
+    def get_metric_list(self, job_level: bool = False):
+        metrics = dict()
+        tracking_metric_model = self.get_dynamic_db_model(TrackingMetric, self.job_id)
+        tracking_metrics = tracking_metric_model.select(tracking_metric_model.f_metric_namespace, tracking_metric_model.f_metric_name).where(
+                                tracking_metric_model.f_job_id==self.job_id,
+                                tracking_metric_model.f_component_name==(self.component_name if not job_level else 'dag'),
+                                tracking_metric_model.f_role==self.role,
+                                tracking_metric_model.f_party_id==self.party_id).distinct()
+        for tracking_metric in tracking_metrics:
+            metrics[tracking_metric.f_metric_namespace] = metrics.get(tracking_metric.f_metric_namespace, [])
+            metrics[tracking_metric.f_metric_namespace].append(tracking_metric.f_metric_name)
+        return metrics
 
     def get_output_data_info(self, data_name=None):
         return self.read_output_data_info_from_db(data_name=data_name)
@@ -375,27 +376,27 @@ class Tracker(object):
         return self.query_output_data_infos(**filter_dict)
 
     @classmethod
+    @DB.connection_context()
     def query_output_data_infos(cls, **kwargs):
-        with DB.connection_context():
-            tracking_output_data_info_model = cls.get_dynamic_db_model(TrackingOutputDataInfo, kwargs.get("job_id"))
-            filters = []
-            for f_n, f_v in kwargs.items():
-                attr_name = 'f_%s' % f_n
-                if hasattr(tracking_output_data_info_model, attr_name):
-                    filters.append(operator.attrgetter('f_%s' % f_n)(tracking_output_data_info_model) == f_v)
-            if filters:
-                output_data_infos_tmp = tracking_output_data_info_model.select().where(*filters)
-            else:
-                output_data_infos_tmp = tracking_output_data_info_model.select()
-            output_data_infos_group = {}
-            # Only the latest version of the task output data is retrieved
-            for output_data_info in output_data_infos_tmp:
-                group_key = cls.get_output_data_group_key(output_data_info.f_task_id, output_data_info.f_data_name)
-                if group_key not in output_data_infos_group:
-                    output_data_infos_group[group_key] = output_data_info
-                elif output_data_info.f_task_version > output_data_infos_group[group_key].f_task_version:
-                    output_data_infos_group[group_key] = output_data_info
-            return output_data_infos_group.values()
+        tracking_output_data_info_model = cls.get_dynamic_db_model(TrackingOutputDataInfo, kwargs.get("job_id"))
+        filters = []
+        for f_n, f_v in kwargs.items():
+            attr_name = 'f_%s' % f_n
+            if hasattr(tracking_output_data_info_model, attr_name):
+                filters.append(operator.attrgetter('f_%s' % f_n)(tracking_output_data_info_model) == f_v)
+        if filters:
+            output_data_infos_tmp = tracking_output_data_info_model.select().where(*filters)
+        else:
+            output_data_infos_tmp = tracking_output_data_info_model.select()
+        output_data_infos_group = {}
+        # Only the latest version of the task output data is retrieved
+        for output_data_info in output_data_infos_tmp:
+            group_key = cls.get_output_data_group_key(output_data_info.f_task_id, output_data_info.f_data_name)
+            if group_key not in output_data_infos_group:
+                output_data_infos_group[group_key] = output_data_info
+            elif output_data_info.f_task_version > output_data_infos_group[group_key].f_task_version:
+                output_data_infos_group[group_key] = output_data_info
+        return output_data_infos_group.values()
 
     @classmethod
     def get_output_data_group_key(cls, task_id, data_name):
@@ -434,43 +435,42 @@ class Tracker(object):
                                                                                self.role,
                                                                                self.party_id))
 
+    @DB.connection_context()
     def save_machine_learning_model_info(self):
         try:
-            with DB.connection_context():
-                record = MLModel.get_or_none(MLModel.f_model_version == self.job_id)
-                if not record:
-                    job = Job.get_or_none(Job.f_job_id == self.job_id)
-                    if job:
-                        job_data = job.to_json()
-                        MLModel.create(
-                            f_role=self.role,
-                            f_party_id=self.party_id,
-                            f_roles=job_data.get("f_roles"),
-                            f_model_id=self.model_id,
-                            f_model_version=self.model_version,
-                            f_job_id=job_data.get("f_job_id"),
-                            f_create_time=current_timestamp(),
-                            f_initiator_role=job_data.get('f_initiator_role'),
-                            f_initiator_party_id=job_data.get('f_initiator_party_id'),
-                            f_runtime_conf=job_data.get('f_runtime_conf'),
-                            f_work_mode=job_data.get('f_work_mode'),
-                            f_dsl=job_data.get('f_dsl'),
-                            f_train_runtime_conf=job_data.get('f_train_runtime_conf'),
-                        )
+            record = MLModel.get_or_none(MLModel.f_model_version == self.job_id)
+            if not record:
+                job = Job.get_or_none(Job.f_job_id == self.job_id)
+                if job:
+                    job_data = job.to_json()
+                    MLModel.create(
+                        f_role=self.role,
+                        f_party_id=self.party_id,
+                        f_roles=job_data.get("f_roles"),
+                        f_model_id=self.model_id,
+                        f_model_version=self.model_version,
+                        f_job_id=job_data.get("f_job_id"),
+                        f_create_time=current_timestamp(),
+                        f_initiator_role=job_data.get('f_initiator_role'),
+                        f_initiator_party_id=job_data.get('f_initiator_party_id'),
+                        f_runtime_conf=job_data.get('f_runtime_conf'),
+                        f_work_mode=job_data.get('f_work_mode'),
+                        f_dsl=job_data.get('f_dsl'),
+                        f_train_runtime_conf=job_data.get('f_train_runtime_conf'),
+                    )
 
-                        schedule_logger(self.job_id).info(
-                            'save {} model info done. model id: {}, model version: {}.'.format(self.job_id,
-                                                                                               self.model_id,
-                                                                                               self.model_version))
-                    else:
-                        schedule_logger(self.job_id).info(
-                            'save {} model info failed, no job found in db. '
-                            'model id: {}, model version: {}.'.format(self.job_id,
-                                                                      self.model_id,
-                                                                      self.model_version))
-
+                    schedule_logger(self.job_id).info(
+                        'save {} model info done. model id: {}, model version: {}.'.format(self.job_id,
+                                                                                           self.model_id,
+                                                                                           self.model_version))
                 else:
-                    schedule_logger(self.job_id).info('model {} info has already existed in database.'.format(self.job_id))
+                    schedule_logger(self.job_id).info(
+                        'save {} model info failed, no job found in db. '
+                        'model id: {}, model version: {}.'.format(self.job_id,
+                                                                  self.model_id,
+                                                                  self.model_version))
+            else:
+                schedule_logger(self.job_id).info('model {} info has already existed in database.'.format(self.job_id))
         except Exception as e:
             schedule_logger(self.job_id).exception(e)
 

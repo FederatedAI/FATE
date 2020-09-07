@@ -17,11 +17,12 @@
 import operator
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
+from fate_arch.storage import StorageEngine
 from fate_arch.common import base_utils
 from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common.log import schedule_logger
 from fate_arch.common import EngineType
-from fate_flow.db.db_models import DB, BackendEngine, Job
+from fate_flow.db.db_models import DB, BackendRegistry, Job
 from fate_flow.entity.types import ResourceOperation, RunParameters
 from fate_flow.settings import stat_logger, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE
 from fate_flow.utils import job_utils
@@ -30,57 +31,60 @@ from fate_flow.utils import job_utils
 class ResourceManager(object):
     @classmethod
     def initialize(cls):
-        with DB.connection_context():
-            # initialize default backend
-            default_backends = {
-                EngineType.COMPUTING: [ComputingEngine.EGGROLL, ComputingEngine.SPARK],
-                EngineType.FEDERATION: [FederationEngine.EGGROLL, FederationEngine.MQ],
-            }
-            for engine_type, engines_name in default_backends.items():
-                for engine_name in engines_name:
-                    engine_info = get_base_config(engine_name, {})
+        # initialize default backend
+        # storage backend is for component output data
+        default_backends = {
+            EngineType.COMPUTING: [ComputingEngine.EGGROLL, ComputingEngine.SPARK],
+            EngineType.FEDERATION: [FederationEngine.EGGROLL, FederationEngine.MQ],
+            EngineType.STORAGE: [StorageEngine.EGGROLL, StorageEngine.HDFS]
+        }
+        for engine_type, engines_name in default_backends.items():
+            for engine_name in engines_name:
+                engine_info = get_base_config(engine_name, {})
+                if engine_info:
                     engine_info["engine"] = engine_name
                     cls._initialize_backend(engine_type=engine_type, engine_id=f"DEFAULT_{engine_name}", engine_info=engine_info)
-            # initialize standalone backend
-            for engine_type in default_backends.keys():
-                engine_name = "STANDALONE"
-                engine_info = {
-                    "engine": engine_name,
-                    "nodes": 1,
-                    "cores_per_node": STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE,
-                }
-                cls._initialize_backend(engine_type=engine_type, engine_id=f"DEFAULT_{engine_name}", engine_info=engine_info)
-            if get_base_config("multi_backend", False):
-                # initialize multi backend
-                for engine_type in [EngineType.COMPUTING, EngineType.FEDERATION]:
-                    for engine_id, engine_info in get_base_config(engine_type, {}, conf_name="multi_backend").items():
-                        cls._initialize_backend(engine_type=engine_type, engine_id=engine_id, engine_info=engine_info)
+        # initialize standalone backend
+        for engine_type in default_backends.keys():
+            engine_name = "STANDALONE"
+            engine_info = {
+                "engine": engine_name,
+                "nodes": 1,
+                "cores_per_node": STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE,
+            }
+            cls._initialize_backend(engine_type=engine_type, engine_id=f"DEFAULT_{engine_name}", engine_info=engine_info)
+        # initialize multi backend if has
+        for engine_type in [EngineType.COMPUTING, EngineType.FEDERATION, EngineType.STORAGE]:
+            for engine_id, engine_info in get_base_config(engine_type, {}).items():
+                cls._initialize_backend(engine_type=engine_type, engine_id=engine_id, engine_info=engine_info)
 
     @classmethod
+    @DB.connection_context()
     def _initialize_backend(cls, engine_type, engine_id, engine_info):
         nodes = engine_info.get("nodes", 1)
         cores = engine_info.get("cores_per_node", 0) * nodes
         memory = engine_info.get("memory_per_node", 0) * nodes
         engine_name = engine_info.get("engine", "UNKNOWN")
         engine_address = engine_info.get("address", {})
-        filters = [BackendEngine.f_engine_id == engine_id, BackendEngine.f_engine_type == engine_type]
-        resources = BackendEngine.select().where(*filters)
+        filters = [BackendRegistry.f_engine_id == engine_id, BackendRegistry.f_engine_type == engine_type]
+        resources = BackendRegistry.select().where(*filters)
         if resources:
             resource = resources[0]
             update_fields = {}
-            update_fields[BackendEngine.f_cores] = cores
-            update_fields[BackendEngine.f_memory] = memory
-            update_fields[BackendEngine.f_remaining_cores] = BackendEngine.f_remaining_cores + (cores - resource.f_cores)
-            update_fields[BackendEngine.f_remaining_memory] = BackendEngine.f_remaining_memory + (memory - resource.f_memory)
-            update_fields[BackendEngine.f_nodes] = nodes
-            operate = BackendEngine.update(update_fields).where(*filters)
+            update_fields[BackendRegistry.f_engine_address] = engine_address
+            update_fields[BackendRegistry.f_cores] = cores
+            update_fields[BackendRegistry.f_memory] = memory
+            update_fields[BackendRegistry.f_remaining_cores] = BackendRegistry.f_remaining_cores + (cores - resource.f_cores)
+            update_fields[BackendRegistry.f_remaining_memory] = BackendRegistry.f_remaining_memory + (memory - resource.f_memory)
+            update_fields[BackendRegistry.f_nodes] = nodes
+            operate = BackendRegistry.update(update_fields).where(*filters)
             update_status = operate.execute() > 0
             if update_status:
                 stat_logger.info(f"update {engine_type} engine {engine_id} registration information")
             else:
                 stat_logger.info(f"update {engine_type} engine {engine_id} registration information takes no effect")
         else:
-            resource = BackendEngine()
+            resource = BackendRegistry()
             resource.f_create_time = base_utils.current_timestamp()
             resource.f_engine_id = engine_id
             resource.f_engine_name = engine_name
@@ -98,9 +102,10 @@ class ResourceManager(object):
             stat_logger.info(f"create {engine_type} engine {engine_id} registration information")
 
     @classmethod
+    @DB.connection_context()
     def apply_for_job_resource(cls, job_id, role, party_id):
         engine_id, cores, memory = cls.calculate_job_resource(job_id=job_id, role=role, party_id=party_id)
-        apply_status, remaining_cores, remaining_memory = cls.update_resource(model=BackendEngine,
+        apply_status, remaining_cores, remaining_memory = cls.update_resource(model=BackendRegistry,
                                                                               cores=cores,
                                                                               memory=memory,
                                                                               operation_type=ResourceOperation.APPLY,
@@ -122,9 +127,8 @@ class ResourceManager(object):
                 Job.f_cores == 0,
                 Job.f_memory == 0
             ]
-            with DB.connection_context():
-                operate = Job.update(update_fields).where(*filter_fields)
-                update_status = operate.execute() > 0
+            operate = Job.update(update_fields).where(*filter_fields)
+            update_status = operate.execute() > 0
             if update_status:
                 schedule_logger(job_id=job_id).info(f"apply job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} successfully")
                 return True
@@ -138,6 +142,7 @@ class ResourceManager(object):
             return False
 
     @classmethod
+    @DB.connection_context()
     def return_job_resource(cls, job_id, role, party_id):
         engine_id, cores, memory = cls.calculate_job_resource(job_id=job_id, role=role, party_id=party_id)
         update_fields = {
@@ -154,11 +159,10 @@ class ResourceManager(object):
             Job.f_cores == cores,
             Job.f_memory == memory
         ]
-        with DB.connection_context():
-            operate = Job.update(update_fields).where(*filter_fields)
-            update_status = operate.execute() > 0
+        operate = Job.update(update_fields).where(*filter_fields)
+        update_status = operate.execute() > 0
         if update_status:
-            return_status, remaining_cores, remaining_memory = cls.update_resource(model=BackendEngine,
+            return_status, remaining_cores, remaining_memory = cls.update_resource(model=BackendRegistry,
                                                                                    cores=cores,
                                                                                    memory=memory,
                                                                                    operation_type=ResourceOperation.RETURN,
@@ -264,8 +268,9 @@ class ResourceManager(object):
         return update_status, remaining_cores, remaining_memory
 
     @classmethod
+    @DB.connection_context()
     def get_backend_registration_info(cls, engine_type, engine_id):
-        engines = BackendEngine.select().where(BackendEngine.f_engine_type == engine_type, BackendEngine.f_engine_id == engine_id)
+        engines = BackendRegistry.select().where(BackendRegistry.f_engine_type == engine_type, BackendRegistry.f_engine_id == engine_id)
         if engines:
             return engines[0]
         else:

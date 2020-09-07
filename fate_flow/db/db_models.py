@@ -26,9 +26,9 @@ from playhouse.pool import PooledMySQLDatabase
 
 from fate_arch.common import log
 from fate_arch.common.base_utils import current_timestamp
-from fate_arch.storage.metastore.base_model import JSONField, SerializedField, BaseModel, LongTextField
+from fate_arch.storage.metastore.base_model import JSONField, BaseModel, LongTextField
 from fate_arch.common import WorkMode
-from fate_flow.settings import DATABASE, WORK_MODE, stat_logger, USE_LOCAL_DATABASE
+from fate_flow.settings import DATABASE, WORK_MODE, stat_logger
 from fate_flow.entity.runtime_config import RuntimeConfig
 
 
@@ -53,14 +53,9 @@ class BaseDataBase(object):
         database_config = DATABASE.copy()
         db_name = database_config.pop("name")
         if WORK_MODE == WorkMode.STANDALONE:
-            if USE_LOCAL_DATABASE:
-                self.database_connection = APSWDatabase('fate_flow_sqlite.db')
-                RuntimeConfig.init_config(USE_LOCAL_DATABASE=True)
-                stat_logger.info('init sqlite database on standalone mode successfully')
-            else:
-                self.database_connection = PooledMySQLDatabase(db_name, **database_config)
-                stat_logger.info('init mysql database on standalone mode successfully')
-                RuntimeConfig.init_config(USE_LOCAL_DATABASE=False)
+            self.database_connection = APSWDatabase('fate_flow_sqlite.db')
+            RuntimeConfig.init_config(USE_LOCAL_DATABASE=True)
+            stat_logger.info('init sqlite database on standalone mode successfully')
         elif WORK_MODE == WorkMode.CLUSTER:
             self.database_connection = PooledMySQLDatabase(db_name, **database_config)
             stat_logger.info('init mysql database on cluster mode successfully')
@@ -92,14 +87,14 @@ class DataBaseModel(BaseModel):
         database = DB
 
 
+@DB.connection_context()
 def init_database_tables():
-    with DB.connection_context():
-        members = inspect.getmembers(sys.modules[__name__], inspect.isclass)
-        table_objs = []
-        for name, obj in members:
-            if obj != DataBaseModel and issubclass(obj, DataBaseModel):
-                table_objs.append(obj)
-        DB.create_tables(table_objs)
+    members = inspect.getmembers(sys.modules[__name__], inspect.isclass)
+    table_objs = []
+    for name, obj in members:
+        if obj != DataBaseModel and issubclass(obj, DataBaseModel):
+            table_objs.append(obj)
+    DB.create_tables(table_objs)
 
 
 def fill_db_model_object(model_object, human_model_dict):
@@ -154,7 +149,7 @@ class Task(DataBaseModel):
     f_initiator_role = CharField(max_length=50, index=True)
     f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
     f_federated_mode = CharField(max_length=10, index=True)
-    f_federated_comm = CharField(max_length=10, index=True)
+    f_federated_status_collect_type = CharField(max_length=10, index=True)
     f_status = CharField(max_length=50)
     # this party configuration
     f_role = CharField(max_length=50, index=True)
@@ -251,25 +246,6 @@ class TrackingOutputDataInfo(DataBaseModel):
     f_description = TextField(null=True, default='')
 
 
-class MachineLearningModelMeta(DataBaseModel):
-    f_id = BigIntegerField(primary_key=True)
-    f_role = CharField(max_length=50, index=True)
-    f_party_id = CharField(max_length=10, index=True)
-    f_roles = TextField()
-    f_job_id = CharField(max_length=25)
-    f_model_id = CharField(max_length=100, index=True)
-    f_model_version = CharField(max_length=100, index=True)
-    f_loaded_times = IntegerField(default=0)
-    f_size = BigIntegerField(default=0)
-    f_create_time = BigIntegerField(default=0)
-    f_update_time = BigIntegerField(default=0)
-    f_description = TextField(null=True, default='')
-    # f_tag = CharField(max_length=50, null=True, index=True, default='')
-
-    class Meta:
-        db_table = "t_machine_learning_model_meta"
-
-
 class MachineLearningModelInfo(DataBaseModel):
     f_id = BigAutoField(primary_key=True)
     f_role = CharField(max_length=50, index=True)
@@ -363,7 +339,7 @@ class ModelOperationLog(DataBaseModel):
         db_table = "t_model_operation_log"
 
 
-class BackendEngine(DataBaseModel):
+class BackendRegistry(DataBaseModel):
     f_engine_id = CharField(max_length=150, null=False)
     f_engine_name = CharField(max_length=50, index=True)
     f_engine_type = CharField(max_length=10, index=True)
@@ -377,7 +353,7 @@ class BackendEngine(DataBaseModel):
     f_update_time = BigIntegerField(null=True)
 
     class Meta:
-        db_table = "t_backend_engine"
+        db_table = "t_backend_registry"
         primary_key = CompositeKey('f_engine_id', 'f_engine_type')
 
 

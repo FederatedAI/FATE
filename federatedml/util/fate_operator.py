@@ -115,24 +115,24 @@ def norm(vector, p=2):
     return np.linalg.norm(vector, p)
 
 
-def generate_anonymous(fid, party_id=None, role=None, model=None):
-    if model is None:
-        if party_id is None or role is None:
-            raise ValueError("party_id or role should be provided when generating"
-                             "anonymous.")
-    if party_id is None:
-        party_id = model.component_properties.local_partyid
-    if role is None:
-        role = model.role
-
-    party_id = str(party_id)
-    fid = str(fid)
-    return "_".join([role, party_id, fid])
-
-
-def reconstruct_fid(encoded_name):
-    try:
-        col_index = int(encoded_name.split('_')[-1])
-    except IndexError or ValueError:
-        raise RuntimeError(f"Decode name: {encoded_name} is not a valid value")
-    return col_index
+# def generate_anonymous(fid, party_id=None, role=None, model=None):
+#     if model is None:
+#         if party_id is None or role is None:
+#             raise ValueError("party_id or role should be provided when generating"
+#                              "anonymous.")
+#     if party_id is None:
+#         party_id = model.component_properties.local_partyid
+#     if role is None:
+#         role = model.role
+#
+#     party_id = str(party_id)
+#     fid = str(fid)
+#     return "_".join([role, party_id, fid])
+#
+#
+# def reconstruct_fid(encoded_name):
+#     try:
+#         col_index = int(encoded_name.split('_')[-1])
+#     except IndexError or ValueError:
+#         raise RuntimeError(f"Decode name: {encoded_name} is not a valid value")
+#     return col_index

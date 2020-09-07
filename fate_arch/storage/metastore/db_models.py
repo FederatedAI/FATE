@@ -24,12 +24,11 @@ from playhouse.pool import PooledMySQLDatabase
 from fate_arch.storage.metastore.base_model import JSONField, SerializedField, BaseModel
 from fate_arch.common.conf_utils import get_base_config
 from fate_arch.common import WorkMode
-from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_arch.common import log
 
 DATABASE = get_base_config("database", {})
-USE_LOCAL_DATABASE = get_base_config('use_local_database', True)
 WORK_MODE = get_base_config('work_mode', 0)
+
 LOGGER = log.getLogger()
 
 
@@ -51,18 +50,9 @@ class BaseDataBase(object):
         database_config = DATABASE.copy()
         db_name = database_config.pop("name")
         if WORK_MODE == WorkMode.STANDALONE:
-            if USE_LOCAL_DATABASE:
-                self.database_connection = APSWDatabase('fate_flow_sqlite.db')
-                RuntimeConfig.init_config(USE_LOCAL_DATABASE=True)
-                #LOGGER.info('init sqlite database on standalone mode successfully')
-            else:
-                self.database_connection = PooledMySQLDatabase(db_name, **database_config)
-                #LOGGER.info('init mysql database on standalone mode successfully')
-                RuntimeConfig.init_config(USE_LOCAL_DATABASE=False)
+            self.database_connection = APSWDatabase('fate_flow_sqlite.db')
         elif WORK_MODE == WorkMode.CLUSTER:
             self.database_connection = PooledMySQLDatabase(db_name, **database_config)
-            #LOGGER.info('init mysql database on cluster mode successfully')
-            RuntimeConfig.init_config(USE_LOCAL_DATABASE=False)
         else:
             raise Exception('can not init database')
 
@@ -83,14 +73,14 @@ class DataBaseModel(BaseModel):
         database = DB
 
 
+@DB.connection_context()
 def init_database_tables():
-    with DB.connection_context():
-        members = inspect.getmembers(sys.modules[__name__], inspect.isclass)
-        table_objs = []
-        for name, obj in members:
-            if obj != DataBaseModel and issubclass(obj, DataBaseModel):
-                table_objs.append(obj)
-        DB.create_tables(table_objs)
+    members = inspect.getmembers(sys.modules[__name__], inspect.isclass)
+    table_objs = []
+    for name, obj in members:
+        if obj != DataBaseModel and issubclass(obj, DataBaseModel):
+            table_objs.append(obj)
+    DB.create_tables(table_objs)
 
 
 class StorageTableMetaModel(DataBaseModel):
