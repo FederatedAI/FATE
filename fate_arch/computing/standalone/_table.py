@@ -17,6 +17,9 @@
 import itertools
 
 from fate_arch.abc import CTableABC
+from fate_arch.common import log
+
+LOGGER = log.getLogger()
 
 
 class Table(CTableABC):
@@ -68,7 +71,12 @@ class Table(CTableABC):
     def applyPartitions(self, func):
         return Table(self._table.applyPartitions(func))
 
-    def mapPartitions(self, func):
+    def mapPartitions(self, func, use_previous_behavior=True):
+        if use_previous_behavior is True:
+            LOGGER.warning(f"please use `applyPartitions` instead of `mapPartitions` "
+                           f"if the previous behavior was expected. "
+                           f"The previous behavior will not work in future")
+            return self.applyPartitions(func)
         return Table(self._table.mapPartitions(func))
 
     def mapReducePartitions(self, mapper, reducer, **kwargs):

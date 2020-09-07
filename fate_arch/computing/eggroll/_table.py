@@ -18,7 +18,10 @@
 import typing
 
 from fate_arch.abc import CTableABC
+from fate_arch.common import log
 from fate_arch.common.profile import log_elapsed
+
+LOGGER = log.getLogger()
 
 
 class Table(CTableABC):
@@ -68,7 +71,13 @@ class Table(CTableABC):
     def applyPartitions(self, func):
         return Table(self._rp.collapse_partitions(func))
 
-    def mapPartitions(self, func, **kwargs):
+    def mapPartitions(self, func, use_previous_behavior=True, **kwargs):
+        if use_previous_behavior is True:
+            LOGGER.warning(f"please use `applyPartitions` instead of `mapPartitions` "
+                           f"if the previous behavior was expected. "
+                           f"The previous behavior will not work in future")
+            return self.applyPartitions(func)
+
         return Table(self._rp.map_partitions(func))
 
     def mapReducePartitions(self, mapper, reducer, **kwargs):
