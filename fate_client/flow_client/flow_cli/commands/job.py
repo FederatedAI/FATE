@@ -18,6 +18,7 @@ import json
 from datetime import datetime
 
 import click
+import flask
 import requests
 from contextlib import closing
 
@@ -101,6 +102,8 @@ def query(ctx, **kwargs):
     response = access_server('post', ctx, "job/query", config_data, False)
     if isinstance(response, requests.models.Response):
         response = response.json()
+    if isinstance(response, flask.wrappers.Response):
+        response = response.json
     if response['retcode'] == 0:
         for i in range(len(response['data'])):
             del response['data'][i]['f_runtime_conf']
@@ -163,10 +166,14 @@ def config(ctx, **kwargs):
         flow job config -j $JOB_ID -r host -p 10000 --output-path ./examples/
     """
     config_data, dsl_data = preprocess(**kwargs)
-    response = access_server('post', ctx, 'job/config', config_data, False).json()
+    response = access_server('post', ctx, 'job/config', config_data, False)
+    if isinstance(response, requests.models.Response):
+        response = response.json()
+    if isinstance(response, flask.wrappers.Response):
+        response = response.json
     if response['retcode'] == 0:
         job_id = response['data']['job_id']
-        download_directory = os.path.join(config_data['output_path'], 'job_{}_config'.format(job_id))
+        download_directory = os.path.join(os.path.abspath(config_data['output_path']), 'job_{}_config'.format(job_id))
         os.makedirs(download_directory, exist_ok=True)
         for k, v in response['data'].items():
             if k == 'job_id':
