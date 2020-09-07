@@ -253,10 +253,14 @@ class Evaluation(ModelBase):
         return self.callback_metric_data(return_single_val_metrics=return_result)
 
     def __save_single_value(self, result, metric_name, metric_namespace, eval_name):
+
+        metric_type = "EVALUATION_SUMMARY"
+        if metric_name in consts.ALL_CLUSTER_METRICS:
+            metric_type = 'CLUSTERING_EVALUATION_SUMMARY'
         self.tracker.log_metric_data(metric_namespace, metric_name,
                                      [Metric(eval_name, np.round(result, self.round_num))])
         self.tracker.set_metric_meta(metric_namespace, metric_name,
-                                     MetricMeta(name=metric_name, metric_type="EVALUATION_SUMMARY"))
+                                     MetricMeta(name=metric_name, metric_type=metric_type))
 
     def __save_curve_data(self, x_axis_list, y_axis_list, metric_name, metric_namespace):
         points = []
@@ -526,7 +530,7 @@ class Evaluation(ModelBase):
         radius, neareast_idx = [], []
         for k in metric_res:
             radius.append(metric_res[k][0])
-            neareast_idx.append(neareast_idx[k][1])
+            neareast_idx.append(metric_res[k][1])
 
         extra_metas['cluster_index'] = cluster_index
         extra_metas['radius'] = radius
