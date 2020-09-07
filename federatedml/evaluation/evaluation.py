@@ -255,7 +255,7 @@ class Evaluation(ModelBase):
     def __save_single_value(self, result, metric_name, metric_namespace, eval_name):
 
         metric_type = "EVALUATION_SUMMARY"
-        if metric_name in consts.ALL_CLUSTER_METRICS:
+        if eval_name in consts.ALL_CLUSTER_METRICS:
             metric_type = 'CLUSTERING_EVALUATION_SUMMARY'
         self.tracker.log_metric_data(metric_namespace, metric_name,
                                      [Metric(eval_name, np.round(result, self.round_num))])
