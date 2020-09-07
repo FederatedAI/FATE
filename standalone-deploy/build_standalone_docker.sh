@@ -81,10 +81,7 @@ cd ${fatepath}
 init() {
     cd ${fatepath}
     mkdir -p ${basepath}/arch
-    cp -r arch/conf ${basepath}/arch
     cp -r arch/api ${basepath}/arch
-    cp -r arch/transfer_variables ${basepath}/arch
-    cp -r arch/standalone ${basepath}/arch
     cp fate.env requirements.txt RELEASE.md ${basepath}
     cp -r  federatedml examples fate_flow  ${basepath}
     #docker run -v ${fatepath}/fateboard:/data/projects/fate/fateboard  --entrypoint="" maven:3.6-jdk-8 /bin/bash -c "cd /data/projects/fate/fateboard && mvn clean package -DskipTests"
