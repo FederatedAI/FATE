@@ -162,5 +162,3 @@ if __name__ == '__main__':
         while 1:
             check_actual_max_threads()
             time.sleep(args.time)
-eads()
-            time.sleep(args.time)
