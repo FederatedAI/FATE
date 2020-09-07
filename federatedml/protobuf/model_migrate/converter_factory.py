@@ -8,6 +8,8 @@ def converter_factory(module_name: str) -> ProtoConverterBase:
 
     if module_name == 'HeteroSecureBoost':
         return HeteroSBTConverter()
+    if module_name == "HeteroPearson":
+        return HeteroPearsonConverter()
     elif module_name == 'HeteroFastSecureBoost':
         return HeteroSBTConverter()
     elif module_name == 'HeteroFeatureBinning':
