@@ -96,6 +96,7 @@ class ColumnExpand(ModelBase):
             new_header = DELIMITER.join(header.split(DELIMITER) + self.append_header)
         new_schema["header"] = new_header
         new_data.schema = new_schema
+        LOGGER.debug(f"new_data schema: {new_schema}")
 
         return new_data, new_header
 
