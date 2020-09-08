@@ -72,6 +72,7 @@ class Reader(object):
                 table_info[data[0]] = ','.join(list(set(data[1:]))[:5])
         data_info = {
             "table_name": self.parameters[table_key]['name'],
+            "namespace": self.parameters[table_key]['namespace'],
             "table_info": table_info,
             "partitions": dest_table_meta.get_partitions(),
             "storage_engine": dest_table_meta.get_engine(),
