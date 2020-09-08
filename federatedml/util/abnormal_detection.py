@@ -97,8 +97,9 @@ def check_legal_schema(schema):
 
     if sum([x is None for x in [header, sid_name, label_name]]) > 1:
         return
-    if header is None:
-        header = []
-    if len(set(header) | {sid_name, label_name}) != len(header) + len([sid_name, label_name]):
-        raise ValueError(f"Repeated values found in (header, sid_name, label_name), please check.")
-
+    if header is not None:
+        if len(set(header) | {sid_name, label_name}) != len(header) + len([sid_name, label_name]):
+            raise ValueError(f"Repeated values found in (header, sid_name, label_name), please check.")
+    else:
+        if sid_name == label_name:
+            raise ValueError(f"Same names given for sid_name and label_name, please check.")
