@@ -15,7 +15,6 @@
 #
 
 from typing import Iterable
-from fate_arch.common.profile import log_elapsed
 from fate_arch.storage import StorageTableBase, StorageEngine, EggRollStorageType
 
 
@@ -66,7 +65,6 @@ class StorageTable(StorageTableBase):
     def put_all(self, kv_list: Iterable, **kwargs):
         return self._table.put_all(kv_list)
 
-    @log_elapsed
     def collect(self, **kwargs) -> list:
         return self._table.get_all(**kwargs)
 
@@ -74,7 +72,6 @@ class StorageTable(StorageTableBase):
         super().destroy()
         return self._table.destroy()
 
-    @log_elapsed
     def count(self, **kwargs):
         count = self._table.count()
         self.get_meta().update_metas(count=count)

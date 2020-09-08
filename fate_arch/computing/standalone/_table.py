@@ -34,6 +34,7 @@ class Table(CTableABC):
     def partitions(self):
         return self._table.partitions
 
+    @computing_profile
     def save(self, address, partitions, schema, **kwargs):
         from fate_arch.common.address import StandaloneAddress
         if isinstance(address, StandaloneAddress):

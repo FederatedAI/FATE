@@ -19,7 +19,7 @@ import typing
 
 from fate_arch.abc import CTableABC
 from fate_arch.common import log
-from fate_arch.common.profile import log_elapsed, computing_profile
+from fate_arch.common.profile import computing_profile
 
 LOGGER = log.getLogger()
 
@@ -33,6 +33,7 @@ class Table(CTableABC):
     def partitions(self):
         return self._rp.get_partitions()
 
+    @computing_profile
     def save(self, address, partitions, schema: dict, **kwargs):
         options = kwargs.get("options", {})
         from fate_arch.common.address import EggRollAddress

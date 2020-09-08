@@ -20,12 +20,12 @@ from itertools import chain
 # noinspection PyPackageRequirements
 from pyspark import rddsampler, RDD, SparkContext, util
 
-from fate_arch.computing.spark._util import materialize
-from fate_arch.computing.spark._kv_serdes import save_as_hdfs, load_from_hdfs
-from fate_arch.common import log
-from fate_arch.common.profile import log_elapsed
 from fate_arch.abc import AddressABC
 from fate_arch.abc import CTableABC
+from fate_arch.common import log
+from fate_arch.common.profile import computing_profile
+from fate_arch.computing.spark._kv_serdes import save_as_hdfs, load_from_hdfs
+from fate_arch.computing.spark._util import materialize
 
 LOGGER = log.getLogger()
 
@@ -38,78 +38,7 @@ class Table(CTableABC):
     def __getstate__(self):
         pass
 
-    """unary transform
-    """
-
-    @property
-    def partitions(self):
-        return self._rdd.getNumPartitions()
-
-    @log_elapsed
-    def map(self, func, **kwargs):
-        return from_rdd(_map(self._rdd, func))
-
-    @log_elapsed
-    def mapValues(self, func, **kwargs):
-        return from_rdd(_map_value(self._rdd, func))
-
-    @log_elapsed
-    def mapPartitions(self, func, **kwargs):
-        return from_rdd(self._rdd.mapPartitions(func))
-
-    @log_elapsed
-    def mapReducePartitions(self, mapper, reducer, **kwargs):
-        return from_rdd(self._rdd.mapPartitions(mapper).reduceByKey(reducer))
-
-    @log_elapsed
-    def applyPartitions(self, func, use_previous_behavior=True, **kwargs):
-        if use_previous_behavior is True:
-            LOGGER.warning(f"please use `applyPartitions` instead of `mapPartitions` "
-                           f"if the previous behavior was expected. "
-                           f"The previous behavior will not work in future")
-            return self.applyPartitions(func)
-        return from_rdd(_map_partitions(self._rdd, func))
-
-    @log_elapsed
-    def glom(self, **kwargs):
-        return from_rdd(_glom(self._rdd))
-
-    @log_elapsed
-    def sample(self, fraction, seed=None, **kwargs):
-        return from_rdd(_sample(self._rdd, fraction, seed))
-
-    @log_elapsed
-    def filter(self, func, **kwargs):
-        return from_rdd(_filter(self._rdd, func))
-
-    @log_elapsed
-    def flatMap(self, func, **kwargs):
-        return from_rdd(_flat_map(self._rdd, func))
-
-    """action
-    """
-
-    @log_elapsed
-    def reduce(self, func, **kwargs):
-        return self._rdd.values().reduce(func)
-
-    @log_elapsed
-    def collect(self, **kwargs):
-        return iter(self._rdd.collect())
-
-    @log_elapsed
-    def take(self, n=1, **kwargs):
-        return self._rdd.take(n)
-
-    @log_elapsed
-    def first(self, **kwargs):
-        return self.take(1)[0]
-
-    @log_elapsed
-    def count(self, **kwargs):
-        return self._rdd.count()
-
-    @log_elapsed
+    @computing_profile
     def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
         from fate_arch.common.address import HDFSAddress
         if isinstance(address, HDFSAddress):
@@ -118,18 +47,80 @@ class Table(CTableABC):
             return
         raise NotImplementedError(f"address type {type(address)} not supported with spark backend")
 
-    """binary transform
-    """
+    @property
+    def partitions(self):
+        return self._rdd.getNumPartitions()
 
-    @log_elapsed
+    @computing_profile
+    def map(self, func, **kwargs):
+        return from_rdd(_map(self._rdd, func))
+
+    @computing_profile
+    def mapValues(self, func, **kwargs):
+        return from_rdd(_map_value(self._rdd, func))
+
+    @computing_profile
+    def mapPartitions(self, func, **kwargs):
+        return from_rdd(self._rdd.mapPartitions(func))
+
+    @computing_profile
+    def mapReducePartitions(self, mapper, reducer, **kwargs):
+        return from_rdd(self._rdd.mapPartitions(mapper).reduceByKey(reducer))
+
+    @computing_profile
+    def applyPartitions(self, func, use_previous_behavior=True, **kwargs):
+        if use_previous_behavior is True:
+            LOGGER.warning(f"please use `applyPartitions` instead of `mapPartitions` "
+                           f"if the previous behavior was expected. "
+                           f"The previous behavior will not work in future")
+            return self.applyPartitions(func)
+        return from_rdd(_map_partitions(self._rdd, func))
+
+    @computing_profile
+    def glom(self, **kwargs):
+        return from_rdd(_glom(self._rdd))
+
+    @computing_profile
+    def sample(self, fraction, seed=None, **kwargs):
+        return from_rdd(_sample(self._rdd, fraction, seed))
+
+    @computing_profile
+    def filter(self, func, **kwargs):
+        return from_rdd(_filter(self._rdd, func))
+
+    @computing_profile
+    def flatMap(self, func, **kwargs):
+        return from_rdd(_flat_map(self._rdd, func))
+
+    @computing_profile
+    def reduce(self, func, **kwargs):
+        return self._rdd.values().reduce(func)
+
+    @computing_profile
+    def collect(self, **kwargs):
+        return iter(self._rdd.collect())
+
+    @computing_profile
+    def take(self, n=1, **kwargs):
+        return self._rdd.take(n)
+
+    @computing_profile
+    def first(self, **kwargs):
+        return self.take(1)[0]
+
+    @computing_profile
+    def count(self, **kwargs):
+        return self._rdd.count()
+
+    @computing_profile
     def join(self, other: 'Table', func=None, **kwargs):
         return from_rdd(_join(self._rdd, other._rdd, func=func))
 
-    @log_elapsed
+    @computing_profile
     def subtractByKey(self, other: 'Table', **kwargs):
         return from_rdd(_subtract_by_key(self._rdd, other._rdd))
 
-    @log_elapsed
+    @computing_profile
     def union(self, other: 'Table', func=lambda v1, v2: v1, **kwargs):
         return from_rdd(_union(self._rdd, other._rdd, func))
 
