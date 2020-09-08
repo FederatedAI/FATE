@@ -80,23 +80,25 @@ class Upload(object):
                     table.destroy()
                 else:
                     LOGGER.info(f"can not found table {name} {namespace}, pass destroy")
+        address_dict = storage_address.copy()
         with storage.Session.build(session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),
                                    storage_engine=storage_engine, options=self.parameters.get("options")) as storage_session:
             if storage_engine in {StorageEngine.EGGROLL, StorageEngine.STANDALONE}:
-                address_dict = {"name": name, "namespace": namespace, "storage_type": EggRollStorageType.ROLLPAIR_LMDB}
+                upload_address = {"name": name, "namespace": namespace, "storage_type": EggRollStorageType.ROLLPAIR_LMDB}
             elif storage_engine in {StorageEngine.MYSQL}:
-                address_dict = {"db": namespace, "name": name}
+                upload_address = {"db": namespace, "name": name}
             elif storage_engine in {StorageEngine.HDFS}:
-                address_dict = {"path": data_utils.default_input_path(name=name, namespace=namespace)}
+                upload_address = {"path": data_utils.default_input_path(name=name, namespace=namespace)}
             else:
                 raise RuntimeError(f"can not support this storage engine: {storage_engine}")
-            address_dict.update(storage_address)
+            address_dict.update(upload_address)
             LOGGER.info(f"upload to {storage_engine} storage, address: {address_dict}")
             address = storage.StorageTableMeta.create_address(storage_engine=storage_engine, address_dict=address_dict)
             self.parameters["partitions"] = partitions
             self.parameters["name"] = name
             self.table = storage_session.create_table(address=address, **self.parameters)
             data_table_count = self.save_data_table(job_id, name, namespace, head)
+            self.table.get_meta().update_metas(in_serialized=True)
         LOGGER.info("------------load data finish!-----------------")
         # rm tmp file
         try:
@@ -123,15 +125,15 @@ class Upload(object):
             if head is True:
                 data_head = fin.readline()
                 count -= 1
-                self.table.get_meta().update_metas(schema=data_utils.get_header_schema(header_line=data_head))
+                self.table.get_meta().update_metas(schema=data_utils.get_header_schema(header_line=data_head, id_delimiter=self.parameters["id_delimiter"]))
             n = 0
             while True:
                 data = list()
                 lines = fin.readlines(self.MAX_BYTES)
                 if lines:
                     for line in lines:
-                        values = line.rstrip("\n").split(self.parameters["delimiter"])
-                        data.append((values[0], self.list_to_str(values[1:])))
+                        values = line.rstrip().split(self.parameters["id_delimiter"])
+                        data.append((values[0], data_utils.list_to_str(values[1:], id_delimiter=self.parameters["id_delimiter"])))
                     lines_count += len(data)
                     save_progress = lines_count/count*100//1
                     job_info = {'progress': save_progress, "job_id": job_id, "role": self.parameters["local"]['role'], "party_id": self.parameters["local"]['party_id']}
@@ -161,9 +163,6 @@ class Upload(object):
             for line in fp:
                 count += 1
         return count
-
-    def list_to_str(self, input_list):
-        return ','.join(list(map(str, input_list)))
 
     def generate_table_name(self, input_file_path):
         str_time = time.strftime("%Y%m%d%H%M%S", time.localtime())

@@ -20,10 +20,10 @@ import numpy as np
 
 from fate_arch.computing import ComputingEngine
 from fate_flow.entity.metric import MetricMeta
-from fate_arch.common import log
-from fate_arch.storage import StorageTableMeta, StorageEngine, Relationship
+from fate_arch.common import log, EngineType
+from fate_arch.storage import StorageTableMeta, StorageEngine, Relationship, DEFAULT_ID_DELIMITER
 from fate_arch import storage
-from fate_flow.utils import job_utils
+from fate_flow.utils import job_utils, data_utils
 from fate_arch.abc import StorageTableABC, StorageTableMetaABC, AddressABC
 
 LOGGER = log.getLogger()
@@ -39,20 +39,24 @@ class Reader(object):
 
     def run(self, component_parameters=None, args=None):
         self.parameters = component_parameters["ReaderParam"]
+        output_storage_address = args["job_parameters"].engines_address[EngineType.STORAGE]
         table_key = [key for key in self.parameters.keys()][0]
-        persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(self.task_id), uuid.uuid1().hex
-        src_table_meta, dest_table_address, dest_table_engine = self.convert(src_name=self.parameters[table_key]['name'],
-                                                                             src_namespace=self.parameters[table_key]['namespace'],
-                                                                             dest_name=persistent_table_name,
-                                                                             dest_namespace=persistent_table_namespace,
-                                                                             computing_engine=component_parameters.get('job_parameters').get('computing_engine', ComputingEngine.EGGROLL),
-                                                                             force=True)
+        output_table_namespace, output_table_name = data_utils.default_output_table_info(task_id=self.task_id, task_version=self.tracker.task_version)
+        src_table_meta, dest_table_address, dest_table_engine = self.convert_check(src_name=self.parameters[table_key]['name'],
+                                                                                   src_namespace=self.parameters[table_key]['namespace'],
+                                                                                   dest_name=output_table_name,
+                                                                                   dest_namespace=output_table_namespace,
+                                                                                   computing_engine=component_parameters.get('job_parameters').get('computing_engine', ComputingEngine.EGGROLL),
+                                                                                   output_storage_address=output_storage_address)
         if dest_table_address:
+            # Table replication is required
             with storage.Session.build(session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),
-                                       storage_engine=dest_table_engine) as storage_session:
-                dest_table = storage_session.create_table(address=dest_table_address, name=persistent_table_name, namespace=persistent_table_namespace, partitions=src_table_meta.partitions)
-                src_table = storage_session.get_table(name=src_table_meta.get_name(), namespace=src_table_meta.get_namespace())
-                self.copy_table(src_table=src_table, dest_table=dest_table)
+                                       storage_engine=dest_table_engine) as dest_storage_session:
+                dest_table = dest_storage_session.create_table(address=dest_table_address, name=output_table_name, namespace=output_table_namespace, partitions=src_table_meta.partitions)
+                with storage.Session.build(session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),
+                                           storage_engine=src_table_meta.get_engine()) as src_storage_session:
+                    src_table = src_storage_session.get_table(name=src_table_meta.get_name(), namespace=src_table_meta.get_namespace())
+                    self.copy_table(src_table=src_table, dest_table=dest_table)
                 dest_table.count()
                 dest_table_meta = dest_table.get_meta()
         else:
@@ -82,58 +86,76 @@ class Reader(object):
                                      metric_name="reader_name",
                                      metric_meta=MetricMeta(name='reader', metric_type='data_info', extra_metas=data_info))
 
-    def convert(self, src_name, src_namespace, dest_name, dest_namespace,
-                computing_engine: ComputingEngine = ComputingEngine.EGGROLL, force=False) -> (StorageTableMetaABC, AddressABC, StorageEngine):
-        # The source and target may be different session types
+    def convert_check(self, src_name, src_namespace, dest_name, dest_namespace,
+                      computing_engine: ComputingEngine = ComputingEngine.EGGROLL, output_storage_address={}) -> (StorageTableMetaABC, AddressABC, StorageEngine):
         src_table_meta = StorageTableMeta(name=src_name, namespace=src_namespace)
         if not src_table_meta:
             raise RuntimeError(f"can not found table name: {src_name} namespace: {src_namespace}")
         dest_table_address = None
         dest_table_engine = None
-        if src_table_meta.get_engine() not in Relationship.CompToStore.get(computing_engine, []):
+        if src_table_meta.get_engine() not in Relationship.CompToStore.get(computing_engine, []) or not src_table_meta.get_in_serialized():
+            address_dict = output_storage_address.copy()
             if computing_engine == ComputingEngine.STANDALONE:
-                from fate_arch.storage import EggRollStorageType
+                from fate_arch.storage import StandaloneStorageType
+                address_dict["name"] = dest_name
+                address_dict["namespace"] = dest_namespace
+                address_dict["storage_type"] = StandaloneStorageType.ROLLPAIR_LMDB
                 dest_table_address = StorageTableMeta.create_address(storage_engine=StorageEngine.STANDALONE,
-                                                                     address_dict=dict(name=dest_name,
-                                                                                       namespace=dest_namespace,
-                                                                                       storage_type=EggRollStorageType.ROLLPAIR_LMDB))
+                                                                     address_dict=address_dict)
                 dest_table_engine = StorageEngine.STANDALONE
             elif computing_engine == ComputingEngine.EGGROLL:
                 from fate_arch.storage import EggRollStorageType
+                address_dict["name"] = dest_name
+                address_dict["namespace"] = dest_namespace
+                address_dict["storage_type"] = EggRollStorageType.ROLLPAIR_LMDB
                 dest_table_address = StorageTableMeta.create_address(storage_engine=StorageEngine.EGGROLL,
-                                                                     address_dict=dict(name=dest_name,
-                                                                                       namespace=dest_namespace,
-                                                                                       storage_type=EggRollStorageType.ROLLPAIR_LMDB))
+                                                                     address_dict=address_dict)
                 dest_table_engine = StorageEngine.EGGROLL
             elif computing_engine == ComputingEngine.SPARK:
-                pass
+                address_dict["path"] = data_utils.default_output_path(name=dest_name, namespace=dest_namespace)
+                dest_table_address = StorageTableMeta.create_address(storage_engine=StorageEngine.HDFS,
+                                                                     address_dict=address_dict)
+                dest_table_engine = StorageEngine.HDFS
             else:
                 raise RuntimeError(f"can not support computing engine {computing_engine}")
-            return src_table_meta, dest_table_address, dest_table_engine
-        elif src_table_meta.get_engine() == StorageEngine.HDFS:
-            dest_table_address = StorageTableMeta.create_address(storage_engine=StorageEngine.HDFS,
-                                                                 address_dict=dict(path=f"{src_table_meta.get_address().path}_fate_{self.task_id}"))
-            dest_table_engine = StorageEngine.HDFS
             return src_table_meta, dest_table_address, dest_table_engine
         else:
             return src_table_meta, dest_table_address, dest_table_engine
 
     def copy_table(self, src_table: StorageTableABC, dest_table: StorageTableABC):
         count = 0
-        data = []
+        data_temp = []
         part_of_data = []
-        for k, v in src_table.collect():
-            data.append((k, v))
-            count += 1
-            if count < 100:
-                part_of_data.append((k, v))
-            if len(data) == MAX_NUM:
-                dest_table.put_all(data)
-                data = []
-        if data:
-            dest_table.put_all(data)
-        dest_table.get_meta().update_metas(schema=src_table.get_meta().get_schema(), count=src_table.count(),
+        src_table_meta = src_table.get_meta()
+        if not src_table_meta.get_in_serialized():
+            if src_table_meta.get_have_head():
+                get_head = False
+            else:
+                get_head = True
+            for line in src_table.read():
+                if not get_head:
+                    dest_table.get_meta().update_metas(schema=data_utils.get_header_schema(header_line=line, id_delimiter=src_table_meta.get_id_delimiter()))
+                    get_head = True
+                    continue
+                values = line.rstrip().split(self.parameters["id_delimiter"])
+                k, v = values[0], data_utils.list_to_str(values[1:], id_delimiter=self.parameters["id_delimiter"])
+                count = self.put_in_table(table=dest_table, k=k, v=v, temp=data_temp, count=count, part_of_data=part_of_data)
+        else:
+            for k, v in src_table.collect():
+                count = self.put_in_table(table=dest_table, k=k, v=v, temp=data_temp, count=count, part_of_data=part_of_data)
+        if data_temp:
+            dest_table.put_all(data_temp)
+        dest_table.get_meta().update_metas(schema=src_table.get_meta().get_schema(), count=count,
                                            part_of_data=part_of_data)
+
+    def put_in_table(self, table: StorageTableABC, k, v, temp, count, part_of_data):
+        temp.append((k, v))
+        if count < 100:
+            part_of_data.append((k, v))
+        if len(temp) == MAX_NUM:
+            table.put_all(temp)
+            temp.clear()
+        return count + 1
 
     def set_taskid(self, taskid):
         self.task_id = taskid

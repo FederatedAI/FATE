@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from fate_arch.common import base_utils
 import numpy
 from federatedml.feature.sparse_vector import SparseVector
 
@@ -31,9 +32,17 @@ def dataset_to_list(src):
         return [src]
 
 
-def get_header_schema(header_line):
-    header_source_item = header_line.split(',')
-    return {'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]}
+def get_header_schema(header_line, id_delimiter):
+    header_source_item = header_line.split(id_delimiter)
+    return {'header': id_delimiter.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]}
+
+
+def list_to_str(input_list, id_delimiter):
+    return id_delimiter.join(list(map(str, input_list)))
+
+
+def default_output_table_info(task_id, task_version):
+    return f"output_data_{task_id}_{task_version}", base_utils.fate_uuid()
 
 
 def default_output_path(name, namespace):

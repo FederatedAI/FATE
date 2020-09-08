@@ -1,6 +1,6 @@
 {
     "file": "examples/data/breast_hetero_guest.csv",
-    "delimiter": ",",
+    "id_delimiter": ",",
     "head": 1,
     "partition": 4,
     "work_mode": 1,

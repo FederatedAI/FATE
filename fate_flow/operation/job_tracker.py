@@ -111,20 +111,19 @@ class Tracker(object):
 
     def save_output_data(self, computing_table, output_storage_engine, output_storage_address: dict):
         if computing_table:
-            persistent_table_namespace, persistent_table_name = 'output_data_{}'.format(
-                self.task_id), uuid.uuid1().hex
+            output_table_namespace, output_table_name = data_utils.default_output_table_info(task_id=self.task_id, task_version=self.task_version)
             schedule_logger(self.job_id).info(
-                'persisting the component output temporary table to {} {}'.format(persistent_table_namespace,
-                                                                                  persistent_table_name))
+                'persisting the component output temporary table to {} {}'.format(output_table_namespace,
+                                                                                  output_table_name))
             partitions = computing_table.partitions
             schedule_logger(self.job_id).info('output data table partitions is {}'.format(partitions))
             address_dict = output_storage_address.copy()
             if output_storage_engine == StorageEngine.EGGROLL:
-                address_dict.update({"name": persistent_table_name, "namespace": persistent_table_namespace, "storage_type": storage.EggRollStorageType.ROLLPAIR_LMDB})
+                address_dict.update({"name": output_table_name, "namespace": output_table_namespace, "storage_type": storage.EggRollStorageType.ROLLPAIR_LMDB})
             elif output_storage_engine == StorageEngine.STANDALONE:
-                address_dict.update({"name": persistent_table_name, "namespace": persistent_table_namespace, "storage_type": storage.StandaloneStorageType.ROLLPAIR_LMDB})
+                address_dict.update({"name": output_table_name, "namespace": output_table_namespace, "storage_type": storage.StandaloneStorageType.ROLLPAIR_LMDB})
             elif output_storage_engine == StorageEngine.HDFS:
-                address_dict.update({"path": data_utils.default_output_path(name=persistent_table_name, namespace=persistent_table_namespace)})
+                address_dict.update({"path": data_utils.default_output_path(name=output_table_name, namespace=output_table_namespace)})
             else:
                 raise RuntimeError(f"{output_storage_engine} storage is not supported")
             address = storage.StorageTableMeta.create_address(storage_engine=output_storage_engine, address_dict=address_dict)
@@ -139,7 +138,7 @@ class Tracker(object):
                 if part_of_limit == 0:
                     break
             table_count = computing_table.count()
-            table_meta = storage.StorageTableMeta(name=persistent_table_name, namespace=persistent_table_namespace, new=True)
+            table_meta = storage.StorageTableMeta(name=output_table_name, namespace=output_table_namespace, new=True)
             table_meta.address = address
             table_meta.partitions = computing_table.partitions
             table_meta.engine = output_storage_engine
@@ -148,7 +147,7 @@ class Tracker(object):
             table_meta.part_of_data = part_of_data
             table_meta.count = table_count
             table_meta.create()
-            return persistent_table_namespace, persistent_table_name
+            return output_table_namespace, output_table_name
         else:
             schedule_logger(self.job_id).info('task id {} output data table is none'.format(self.task_id))
             return None, None
