@@ -32,5 +32,5 @@ class ColumnExpand(Component, ColumnExpandParam):
         ColumnExpandParam.__init__(self, **new_kwargs)
 
         self.input = Input(self.name)
-        self.output = Output(self.name, data_type='single')
+        self.output = Output(self.name, data_type='single', has_model=True)
         self._module_name = "ColumnExpand"
