@@ -236,6 +236,7 @@ CORRELATION = 'corr'
 VARIANCE = 'variance'
 COEFFICIENT_OF_VARIATION = 'coefficient_of_variance'
 MISSING_COUNT = "missing_count"
+MISSING_RATIO = "missing_ratio"
 SKEWNESS = 'skewness'
 KURTOSIS = 'kurtosis'
 
@@ -245,3 +246,6 @@ HOMO_SBT = 'homo_sbt'
 HETERO_SBT = 'hetero_sbt'
 HETERO_FAST_SBT_MIX = 'hetero_fast_sbt_mix'
 HETERO_FAST_SBT_LAYERED = 'hetero_fast_sbt_layered'
+
+# column_expand
+MANUAL = 'manual'

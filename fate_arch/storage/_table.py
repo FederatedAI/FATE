@@ -205,7 +205,7 @@ class StorageTableMeta(StorageTableMetaABC):
             if hasattr(StorageTableMetaModel, attr_name) and attr_name not in primary_keys:
                 if k == "part_of_data":
                     if len(v) < 100:
-                        tmp = table_meta.f_part_of_data[- (100 - len(v)):] + v
+                        tmp = v
                     else:
                         tmp = v[:100]
                     update_fields[operator.attrgetter(attr_name)(StorageTableMetaModel)] = tmp

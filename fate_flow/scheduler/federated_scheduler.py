@@ -18,7 +18,6 @@ from fate_flow.settings import API_VERSION, DEFAULT_FEDERATED_COMMAND_TRYS
 from fate_flow.utils.api_utils import federated_api
 from fate_arch.common.log import schedule_logger
 from fate_flow.entity.types import RetCode, FederatedSchedulingStatusCode
-from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.db.db_models import Job, Task
 from fate_flow.utils import schedule_utils
 
@@ -47,8 +46,12 @@ class FederatedScheduler(object):
         return status_code, response
 
     @classmethod
-    def start_job(cls, job):
-        return cls.job_command(job=job, command="start")
+    def start_job(cls, job, command_body=None):
+        return cls.job_command(job=job, command="start", command_body=command_body)
+
+    @classmethod
+    def align_args(cls, job, command_body):
+        return cls.job_command(job=job, command="align", command_body=command_body)
 
     @classmethod
     def sync_job(cls, job, update_fields):

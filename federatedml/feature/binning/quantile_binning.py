@@ -19,6 +19,7 @@
 import copy
 import functools
 import uuid
+from federatedml.util import LOGGER
 
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.quantile_summaries import quantile_summary_factory
@@ -96,7 +97,7 @@ class QuantileBinning(BaseBinning):
                                   cols_dict=self.bin_inner_param.bin_cols_map,
                                   header=self.header,
                                   is_sparse=is_sparse)
-            summary_dict = data_instances.mapPartitions(f)
+            summary_dict = data_instances.applyPartitions(f)
             summary_dict = summary_dict.reduce(self.merge_summary_dict)
             if is_sparse:
                 total_count = data_instances.count()
@@ -132,9 +133,13 @@ class QuantileBinning(BaseBinning):
                                   header=self.header,
                                   is_sparse=is_sparse)
             # LOGGER.debug("in _fit_split_point, cols_map: {}".format(self.bin_inner_param.bin_cols_map))
-            summary_dict = data_instances.mapPartitions2(f)
+            # summary_dict = data_instances.mapPartitions2(f)
+            #
+            # summary_dict = summary_dict.reduce(self.copy_merge, key_func=lambda key: key[1])
 
-            summary_dict = summary_dict.reduce(self.copy_merge, key_func=lambda key: key[1])
+            summary_dict = data_instances.mapReducePartitions(f, self.copy_merge)
+            summary_dict = dict(summary_dict.collect())
+            LOGGER.debug(f"new summary_dict: {summary_dict}")
             if is_sparse:
                 total_count = data_instances.count()
                 for _, summary_obj in summary_dict.items():
@@ -189,7 +194,9 @@ class QuantileBinning(BaseBinning):
         result = []
         for features_name, summary_obj in summary_dict.items():
             summary_obj.compress()
-            result.append(((_, features_name), summary_obj))
+            # result.append(((_, features_name), summary_obj))
+            result.append((features_name, summary_obj))
+
         return result
 
     @staticmethod
