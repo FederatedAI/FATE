@@ -13,10 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_arch.common import FederatedCommunicationType, FederatedMode
 import traceback
 
-from fate_arch.common import FederatedComm, FederatedMode
+from fate_arch.common import FederatedCommunicationType, FederatedMode
 from fate_arch.common.base_utils import json_loads, current_timestamp
 from fate_arch.common.log import schedule_logger
 from fate_arch.common import WorkMode, Backend, EngineType
