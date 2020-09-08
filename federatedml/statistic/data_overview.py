@@ -80,7 +80,7 @@ def header_alignment(data_instances, pre_header):
         return inst
 
     correct_schema = data_instances.schema
-    correct_schema["header"] = header_correct
+    correct_schema["header"] = pre_header
     data_instances = data_instances.mapValues(lambda inst: align_header(inst, header_pos=header_correct))
     data_instances.schema = correct_schema
     return data_instances
