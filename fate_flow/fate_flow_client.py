@@ -36,7 +36,7 @@ TASK_OPERATE_FUNC = ["query_task"]
 TRACKING_FUNC = ["component_parameters", "component_metric_all", "component_metric_delete", "component_metrics",
                  "component_output_model", "component_output_data", "component_output_data_table"]
 DATA_FUNC = ["download", "upload", "upload_history"]
-TABLE_FUNC = ["table_info", "table_delete"]
+TABLE_FUNC = ["table_info", "table_delete", "table_add"]
 MODEL_FUNC = ["load", "bind", "store", "restore", "export", "import"]
 PERMISSION_FUNC = ["grant_privilege", "delete_privilege", "query_privilege"]
 
@@ -190,7 +190,7 @@ def call_fun(func, config_data, dsl_path, config_path):
             detect_utils.check_config(config=config_data, required_arguments=['namespace', 'table_name'])
             response = requests.post("/".join([server_url, "table", func]), json=config_data)
         else:
-            response = requests.post("/".join([server_url, "table", func.lstrip('table_')]), json=config_data)
+            response = requests.post("/".join([server_url, func.replace('_', '/')]), json=config_data)
     elif func in MODEL_FUNC:
         if func == "import":
             file_path = config_data["file"]

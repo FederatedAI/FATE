@@ -75,6 +75,9 @@ class StorageTableBase(StorageTableABC):
     def collect(self, **kwargs) -> list:
         pass
 
+    def read(self) -> list:
+        pass
+
     def count(self):
         pass
 
@@ -84,6 +87,7 @@ class StorageTableBase(StorageTableABC):
 
 
 class StorageTableMeta(StorageTableMetaABC):
+
     def __init__(self, name, namespace, new=False):
         self.name = name
         self.namespace = namespace
@@ -92,14 +96,15 @@ class StorageTableMeta(StorageTableMetaABC):
         self.type = None
         self.options = None
         self.partitions = None
+        self.in_serialized = None
+        self.have_head = None
+        self.id_delimiter = None
         self.schema = None
         self.count = None
         self.part_of_data = None
         self.description = None
         self.create_time = None
         self.update_time = None
-        self.is_kv_storage = None
-        self.is_serialize = None
         if self.options is None:
             self.options = {}
         if self.schema is None:
@@ -181,7 +186,7 @@ class StorageTableMeta(StorageTableMetaABC):
             return []
 
     @DB.connection_context()
-    def update_metas(self, schema=None, count=None, part_of_data=None, description=None, partitions=None, **kwargs):
+    def update_metas(self, schema=None, count=None, part_of_data=None, description=None, partitions=None, in_serialized=None, **kwargs):
         meta_info = {}
         for k, v in locals().items():
             if k not in ["self", "kwargs", "meta_info"] and v is not None:
@@ -200,7 +205,7 @@ class StorageTableMeta(StorageTableMetaABC):
             if hasattr(StorageTableMetaModel, attr_name) and attr_name not in primary_keys:
                 if k == "part_of_data":
                     if len(v) < 100:
-                        tmp = table_meta.f_part_of_data[- (100 - len(v)):] + v
+                        tmp = v
                     else:
                         tmp = v[:100]
                     update_fields[operator.attrgetter(attr_name)(StorageTableMetaModel)] = tmp
@@ -244,6 +249,15 @@ class StorageTableMeta(StorageTableMetaABC):
 
     def get_partitions(self):
         return self.partitions
+
+    def get_in_serialized(self):
+        return self.in_serialized
+
+    def get_id_delimiter(self):
+        return self.id_delimiter
+
+    def get_have_head(self):
+        return self.have_head
 
     def get_schema(self):
         return self.schema

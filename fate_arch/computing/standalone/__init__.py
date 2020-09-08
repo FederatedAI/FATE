@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from fate_arch.computing.standalone._table import Table
 from fate_arch.computing.standalone._csession import CSession
+from fate_arch.computing.standalone._table import Table
 
 __all__ = ['Table', 'CSession']

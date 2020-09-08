@@ -266,6 +266,7 @@ class MachineLearningModelInfo(DataBaseModel):
     f_dsl = JSONField()
     f_train_runtime_conf = JSONField(default={})
     f_migrated = IntegerField(default=0)
+    f_job_status = CharField(max_length=50)
 
     class Meta:
         db_table = "t_machine_learning_model_info"

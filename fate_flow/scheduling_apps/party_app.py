@@ -62,8 +62,14 @@ def return_resource(job_id, role, party_id):
 
 @manager.route('/<job_id>/<role>/<party_id>/start', methods=['POST'])
 def start_job(job_id, role, party_id):
-    JobController.start_job(job_id=job_id, role=role, party_id=int(party_id))
+    JobController.start_job(job_id=job_id, role=role, party_id=int(party_id), extra_info=request.json)
     return get_json_result(retcode=0, retmsg='success')
+
+
+@manager.route('/<job_id>/<role>/<party_id>/align', methods=['POST'])
+def query_task_input_args(job_id, role, party_id):
+    job_input_args = JobController.query_job_input_args(input_data=request.json, role=role, party_id=party_id)
+    return get_json_result(retcode=0, retmsg='success', data=job_input_args)
 
 
 @manager.route('/<job_id>/<role>/<party_id>/update', methods=['POST'])
@@ -215,12 +221,3 @@ def clean_task(job_id, component_name, task_id, task_version, role, party_id, co
     return get_json_result(retcode=0, retmsg='success')
 
 
-@manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/input/args', methods=['POST'])
-def query_task_input_args(job_id, component_name, task_id, task_version, role, party_id):
-    task_input_args = TaskController.query_task_input_args(job_id, task_id, role, party_id,
-                                                          job_args=request.json.get('job_args', {}),
-                                                          job_parameters=request.json.get('job_parameters', {}),
-                                                          input_dsl=request.json.get('input', {}),
-                                                          filter_type=['data'],
-                                                          filter_attr={'data': ['partitions']})
-    return get_json_result(retcode=0, retmsg='success', data=task_input_args)
