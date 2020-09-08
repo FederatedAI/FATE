@@ -18,15 +18,14 @@ import os
 import sys
 
 import __main__
-from peewee import Model, CharField, IntegerField, BigIntegerField, TextField, CompositeKey
+from peewee import Model, CharField, BigIntegerField, TextField, CompositeKey
 from playhouse.pool import PooledMySQLDatabase
 from playhouse.apsw_ext import APSWDatabase
 
 from federatedml.util import LOGGER
 from arch.api.utils.core_utils import current_timestamp
 from fate_arch.common import WorkMode
-from fate_flow.settings import DATABASE, USE_LOCAL_DATABASE, WORK_MODE, stat_logger
-from fate_flow.entity.runtime_config import RuntimeConfig
+from fate_flow.settings import DATABASE, WORK_MODE, stat_logger
 
 
 def singleton(cls, *args, **kw):
@@ -47,18 +46,11 @@ class BaseDataBase(object):
         database_config = DATABASE.copy()
         db_name = database_config.pop("name")
         if WORK_MODE == WorkMode.STANDALONE:
-            if USE_LOCAL_DATABASE:
-                self.database_connection = APSWDatabase('fate_flow_sqlite.db')
-                RuntimeConfig.init_config(USE_LOCAL_DATABASE=True)
-                stat_logger.info('init sqlite database on standalone mode successfully')
-            else:
-                self.database_connection = PooledMySQLDatabase(db_name, **database_config)
-                stat_logger.info('init mysql database on standalone mode successfully')
-                RuntimeConfig.init_config(USE_LOCAL_DATABASE=False)
+            self.database_connection = APSWDatabase('fate_flow_sqlite.db')
+            stat_logger.info('init sqlite database on standalone mode successfully')
         elif WORK_MODE == WorkMode.CLUSTER:
             self.database_connection = PooledMySQLDatabase(db_name, **database_config)
             stat_logger.info('init mysql database on cluster mode successfully')
-            RuntimeConfig.init_config(USE_LOCAL_DATABASE=False)
         else:
             raise Exception('can not init database')
 

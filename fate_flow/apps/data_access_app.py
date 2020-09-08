@@ -21,7 +21,7 @@ from flask import Flask, request
 from fate_arch.storage import StorageEngine
 from fate_flow.entity.types import StatusSet
 from fate_arch import storage
-from fate_flow.settings import stat_logger, USE_LOCAL_DATA, WORK_MODE
+from fate_flow.settings import stat_logger, USE_LOCAL_DATA
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils import detect_utils, job_utils
 from fate_flow.scheduler import DAGScheduler
@@ -62,6 +62,11 @@ def download_upload(access_module):
         raise Exception('can not support this operating: {}'.format(access_module))
     detect_utils.check_config(job_config, required_arguments=required_arguments)
     data = {}
+    # compatibility
+    if "table_name" in job_config:
+        job_config["name"] = job_config["table_name"]
+    if "backend" not in job_config:
+        job_config["backend"] = 0
     for _ in ["work_mode", "backend", "drop"]:
         if _ in job_config:
             job_config[_] = int(job_config[_])
@@ -90,9 +95,6 @@ def download_upload(access_module):
                                           '1 means to upload again after deleting the table')
         elif data_table_meta and job_config.get('drop', 2) == 1:
             job_config["destroy"] = True
-    # compatibility
-    if "table_name" in job_config:
-        job_config["name"] = job_config["table_name"]
     job_dsl, job_runtime_conf = gen_data_access_job_config(job_config, access_module)
     job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(
         {'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)

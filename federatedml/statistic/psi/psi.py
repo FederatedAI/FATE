@@ -265,7 +265,7 @@ class PSI(ModelBase):
                                         missing_val=self.dense_missing_val,
                                         is_sparse=self.is_sparse(self.data_bin1))
 
-        map_rs1 = self.data_bin1.mapPartitions(count_func1)
+        map_rs1 = self.data_bin1.applyPartitions(count_func1)
         count1 = count_rs_to_dict(map_rs1.reduce(map_partition_reduce))
 
         data_bin2, bin_split_points2, bin_sparse_points2 = binning_obj.convert_feature_to_bin(actual_table)
@@ -278,7 +278,7 @@ class PSI(ModelBase):
                                         missing_val=self.dense_missing_val,
                                         is_sparse=self.is_sparse(self.data_bin2))
 
-        map_rs2 = self.data_bin2.mapPartitions(count_func2)
+        map_rs2 = self.data_bin2.applyPartitions(count_func2)
         count2 = count_rs_to_dict(map_rs2.reduce(map_partition_reduce))
 
         self.count1, self.count2 = count1, count2

@@ -16,27 +16,25 @@
 
 import itertools
 
-from fate_arch.abc import AddressABC, CTableABC
+from fate_arch.abc import CTableABC
+from fate_arch.common import log
 from fate_arch.common.profile import computing_profile
-from fate_arch.standalone import Table as RawTable
+
+LOGGER = log.getLogger()
 
 
 class Table(CTableABC):
-    def __init__(self, table: RawTable):
+    def __init__(self, table):
         self._table = table
 
     def __getstate__(self):
         pass
 
-    def as_federation_format(self):
-        return self._table
-
     @property
     def partitions(self):
         return self._table.partitions
 
-    @computing_profile
-    def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
+    def save(self, address, partitions, schema, **kwargs):
         from fate_arch.common.address import StandaloneAddress
         if isinstance(address, StandaloneAddress):
             self._table.save_as(name=address.name, namespace=address.namespace, partition=partitions,
@@ -67,19 +65,8 @@ class Table(CTableABC):
         return resp[0]
 
     @computing_profile
-    def reduce(self, func, key_func=None, **kwargs):
-        if key_func is None:
-            return self._table.reduce(func)
-
-        it = self._table.collect()
-        ret = {}
-        for k, v in it:
-            agg_key = key_func(k)
-            if agg_key in ret:
-                ret[agg_key] = func(ret[agg_key], v)
-            else:
-                ret[agg_key] = v
-        return ret
+    def reduce(self, func, **kwargs):
+        return self._table.reduce(func)
 
     @computing_profile
     def map(self, func):
@@ -94,12 +81,21 @@ class Table(CTableABC):
         return Table(self._table.flatMap(func))
 
     @computing_profile
-    def mapPartitions(self, func):
+    def applyPartitions(self, func):
+        return Table(self._table.applyPartitions(func))
+
+    @computing_profile
+    def mapPartitions(self, func, use_previous_behavior=True):
+        if use_previous_behavior is True:
+            LOGGER.warning(f"please use `applyPartitions` instead of `mapPartitions` "
+                           f"if the previous behavior was expected. "
+                           f"The previous behavior will not work in future")
+            return self.applyPartitions(func)
         return Table(self._table.mapPartitions(func))
 
     @computing_profile
-    def mapPartitions2(self, func):
-        return Table(self._table.mapPartitions2(func))
+    def mapReducePartitions(self, mapper, reducer, **kwargs):
+        return Table(self._table.mapReducePartitions(mapper, reducer))
 
     @computing_profile
     def glom(self):

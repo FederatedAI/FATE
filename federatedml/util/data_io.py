@@ -672,7 +672,7 @@ class SparseTagReader(object):
                                            with_label=self.with_label,
                                            tag_with_value=self.tag_with_value,
                                            tag_value_delimitor=self.tag_value_delimitor)
-        tags_set_list = list(input_data.mapPartitions(tag_aggregator).collect())
+        tags_set_list = list(input_data.applyPartitions(tag_aggregator).collect())
         tags_set = set()
         for _, _tags_set in tags_set_list:
             tags_set |= _tags_set

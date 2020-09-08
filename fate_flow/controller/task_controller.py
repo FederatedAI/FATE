@@ -15,7 +15,7 @@
 #
 import sys
 
-from fate_arch.common import FederatedComm
+from fate_arch.common import FederatedCommunicationType
 from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import Task
 from fate_flow.operation.task_executor import TaskExecutor
@@ -188,7 +188,7 @@ class TaskController(object):
                                     task_version=task_info["task_version"],
                                     role=task_info["role"],
                                     party_id=task_info["party_id"])
-        if tasks[0].f_federated_comm == FederatedComm.PUSH:
+        if tasks[0].f_federated_status_collect_type == FederatedCommunicationType.PUSH:
             FederatedScheduler.report_task_to_initiator(task=tasks[0])
 
     @classmethod

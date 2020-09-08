@@ -40,7 +40,7 @@ class FederatedMode(object):
         return value == self.MULTIPLE
 
 
-class FederatedComm(object):
+class FederatedCommunicationType(object):
     PUSH = "PUSH"
     PULL = "PULL"
 

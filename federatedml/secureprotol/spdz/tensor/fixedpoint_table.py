@@ -56,13 +56,13 @@ def _table_dot_func(it):
 
 def table_dot(a_table, b_table):
     return a_table.join(b_table, lambda x, y: [x, y]) \
-        .mapPartitions(lambda it: _table_dot_func(it)) \
+        .applyPartitions(lambda it: _table_dot_func(it)) \
         .reduce(lambda x, y: x + y)
 
 
 def table_dot_mod(a_table, b_table, q_field):
     return a_table.join(b_table, lambda x, y: [x, y]) \
-        .mapPartitions(lambda it: _table_dot_mod_func(it, q_field)) \
+        .applyPartitions(lambda it: _table_dot_mod_func(it, q_field)) \
         .reduce(lambda x, y: x if y is None else y if x is None else x + y)
 
 

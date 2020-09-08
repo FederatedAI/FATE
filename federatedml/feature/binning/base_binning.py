@@ -331,7 +331,7 @@ class BaseBinning(object):
                               split_points=split_points,
                               cols_dict=self.bin_inner_param.bin_cols_map)
 
-        result_sum = data_bin_with_label.mapPartitions(f)
+        result_sum = data_bin_with_label.applyPartitions(f)
         result_counts = result_sum.reduce(self.aggregate_partition_label)
         for col_name, bin_results in result_counts.items():
             for b in bin_results:

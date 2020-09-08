@@ -23,9 +23,10 @@ import numpy as np
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.feature.binning.quantile_summaries import QuantileSummaries
 from federatedml.feature.instance import Instance
+from federatedml.feature.sparse_vector import SparseVector
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.statistic import data_overview
-from federatedml.statistic.feature_statistic import feature_statistic
+# from federatedml.statistic.feature_statistic import feature_statistic
 from federatedml.util import LOGGER
 from federatedml.util import consts
 
@@ -226,6 +227,93 @@ class SummaryStatistics(object):
         return result - 3
 
 
+class MissingStatistic(object):
+
+    def __init__(self, missing_val=None):
+        super(MissingStatistic, self).__init__()
+
+        self.missing_val = None
+        self.feature_summary = {}
+        self.missing_feature = []
+        self.all_feature_list = []
+        self.tag_id_mapping, self.id_tag_mapping = {}, {}
+        self.dense_missing_val = missing_val
+
+    @staticmethod
+    def is_sparse(tb):
+        return type(tb.take(1)[0][1].features) == SparseVector
+
+    @staticmethod
+    def check_table_content(tb):
+
+        if not tb.count() > 0:
+            raise ValueError('input table must contains at least 1 sample')
+        first_ = tb.take(1)[0][1]
+        if type(first_) == Instance:
+            return True
+        else:
+            raise ValueError('unknown input format')
+
+    def fit(self, tb):
+
+        LOGGER.debug('start to compute feature lost ratio')
+
+        if not self.check_table_content(tb):
+            raise ValueError('contents of input table must be instances of class “Instance"')
+
+        header = tb.schema['header']
+        self.all_feature_list = header
+
+        self.tag_id_mapping = {v: k for k, v in enumerate(header)}
+        self.id_tag_mapping = {k: v for k, v in enumerate(header)}
+
+        feature_count_rs = self.count_feature_ratio(tb, self.tag_id_mapping, not self.is_sparse(tb),
+                                                    missing_val=self.missing_val)
+        for idx, count_val in enumerate(feature_count_rs):
+            self.feature_summary[self.id_tag_mapping[idx]] = 1 - (count_val / tb.count())
+            if (count_val / tb.count()) == 0:
+                self.missing_feature.append(self.id_tag_mapping[idx])
+
+        return self.feature_summary
+
+    @staticmethod
+    def count_feature_ratio(tb, tag_id_mapping, dense_input, missing_val=None):
+        func = functools.partial(MissingStatistic.map_partitions_count, tag_id_mapping=tag_id_mapping,
+                                 dense_input=dense_input,
+                                 missing_val=missing_val)
+        rs = tb.applyPartitions(func)
+        return rs.reduce(MissingStatistic.reduce_count_rs)
+
+    @staticmethod
+    def map_partitions_count(iterable, tag_id_mapping, dense_input=True, missing_val=None):
+
+        count_arr = np.zeros(len(tag_id_mapping))
+        for k, v in iterable:
+
+            # in dense input, missing feature is set as np.nan
+            if dense_input:
+                feature = v.features  # a numpy array
+                arr = np.array(list(feature))
+                if missing_val is None:
+                    idx_arr = np.argwhere(~np.isnan(arr)).flatten()
+                else:
+                    idx_arr = np.argwhere(~(arr == missing_val)).flatten()
+
+            # in sparse input, missing features have no key in the dict
+            else:
+                feature = v.features.sparse_vec  # a dict
+                idx_arr = np.array(list(feature.keys()))
+
+            if len(idx_arr) != 0:
+                count_arr[idx_arr] += 1
+
+        return count_arr
+
+    @staticmethod
+    def reduce_count_rs(arr1, arr2):
+        return arr1 + arr2
+
+
 class MultivariateStatisticalSummary(object):
     """
 
@@ -272,7 +360,7 @@ class MultivariateStatisticalSummary(object):
                                           cols_index=self.cols_index,
                                           summary_statistics=copy.deepcopy(self.summary_statistics),
                                           is_sparse=is_sparse)
-        self.summary_statistics = self.data_instances.mapPartitions(partition_cal). \
+        self.summary_statistics = self.data_instances.applyPartitions(partition_cal). \
             reduce(lambda x, y: x.merge(y))
         # self.summary_statistics = summary_statistic_dict.reduce(self.aggregate_statics)
         self.finish_fit_statics = True
@@ -472,7 +560,7 @@ class MultivariateStatisticalSummary(object):
 
     @property
     def missing_ratio(self):
-        missing_static_obj = feature_statistic.FeatureStatistic()
+        missing_static_obj = MissingStatistic()
         all_missing_ratio = missing_static_obj.fit(self.data_instances)
         return np.array([all_missing_ratio[self.header[idx]] for idx in self.cols_index])
 
@@ -503,5 +591,5 @@ class MultivariateStatisticalSummary(object):
         return dict_a
 
     def get_label_histogram(self):
-        label_histogram = self.data_instances.mapPartitions(self.get_label_static_dict).reduce(self.merge_result_dict)
+        label_histogram = self.data_instances.applyPartitions(self.get_label_static_dict).reduce(self.merge_result_dict)
         return label_histogram

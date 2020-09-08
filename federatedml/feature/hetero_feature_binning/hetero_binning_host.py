@@ -98,7 +98,7 @@ class HeteroFeatureBinningHost(BaseHeteroFeatureBinning):
         f = functools.partial(self.binning_obj.add_label_in_partition,
                               split_points=split_points,
                               cols_dict=cols_dict)
-        result_sum = data_bin_with_label.mapPartitions(f)
+        result_sum = data_bin_with_label.applyPartitions(f)
         encrypted_bin_sum = result_sum.reduce(self.binning_obj.aggregate_partition_label)
 
         for col_name, bin_results in encrypted_bin_sum.items():
