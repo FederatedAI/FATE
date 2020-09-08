@@ -30,8 +30,7 @@ class FeatureBinningConverter(ProtoConverterBase):
                 ) -> Tuple:
         header_anonymous_list = list(param.header_anonymous)
         replacer = AutoReplace(guest_id_mapping, host_id_mapping, arbiter_id_mapping)
-        new_header = []
-        for h in header_anonymous_list:
-            new_header.append(replacer.replace(h))
-        param.header_anonymous = new_header
+
+        for idx, h in enumerate(header_anonymous_list):
+            param.header_anonymous[idx] = replacer.replace(h)
         return param, meta
