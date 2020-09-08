@@ -24,8 +24,7 @@ from pipeline.interface.data import Data
 
 # find python path
 import site
-# SITE_PATH = site.getsitepackages()[0]
-SITE_PATH = "/data/projects/fate_spark/python"
+SITE_PATH = site.getsitepackages()[0]
 
 
 def main():
@@ -63,7 +62,7 @@ def main():
                                     head=0, partition=partition,
                                     storage_path="hdfs://mfate-cluster/data")
     # upload all data
-    pipeline_upload.upload(work_mode=work_mode, backend=backend, drop=1)
+    pipeline_upload.upload(work_mode=work_mode, backend=backend, drop=1, storage_engine=storage_engine)
 
     pipeline = PipeLine().set_initiator(role="guest", party_id=guest).set_roles(guest=guest)
 

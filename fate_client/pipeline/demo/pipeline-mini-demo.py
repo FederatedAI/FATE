@@ -104,7 +104,7 @@ def main():
 
     # predict
     # deploy required components
-    pipeline.deploy_component([dataio_0, hetero_lr_0])
+    pipeline.deploy_component([dataio_0, intersection_0, hetero_lr_0])
 
     # initiate predict pipeline
     predict_pipeline = PipeLine()

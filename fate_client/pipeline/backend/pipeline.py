@@ -285,17 +285,20 @@ class PipeLine(object):
     def _get_job_parameters(self, job_type="train", backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, version=2):
         job_parameters = {
             "job_type": job_type,
-            "backend": backend.value,
-            "work_mode": work_mode.value,
+            "backend": backend,
+            "work_mode": work_mode,
             "dsl_version": version
         }
 
         return job_parameters
 
-    def _construct_upload_conf(self, data_conf, backend, work_mode):
+    def _construct_upload_conf(self, data_conf, backend, work_mode, storage_engine):
         upload_conf = copy.deepcopy(data_conf)
         upload_conf["backend"] = backend
         upload_conf["work_mode"] = work_mode
+        if storage_engine is not None:
+            upload_conf["storage_engine"] = storage_engine
+            upload_conf["use_local_data"] = 0
         return upload_conf
 
     def describe(self):
@@ -382,10 +385,10 @@ class PipeLine(object):
         # print("submit conf' type {}".format(type(submit_conf)))
         LOGGER.debug(f"submit conf type is {type(submit_conf)}")
 
-        if not isinstance(work_mode, int):
-            work_mode = work_mode.value
-        if not isinstance(backend, int):
-            backend = backend.value
+        #if not isinstance(work_mode, int):
+        #    work_mode = work_mode.value
+        #if not isinstance(backend, int):
+        #    backend = backend.value
 
         submit_conf["job_parameters"] = {
             "work_mode": work_mode,
@@ -444,9 +447,14 @@ class PipeLine(object):
                                              self._initiator.party_id)
 
     @LOGGER.catch(onerror=lambda _: sys.exit(1))
-    def upload(self, backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, drop=0):
+    def upload(self, backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, drop=0, storage_engine=None):
         for data_conf in self._upload_conf:
-            upload_conf = self._construct_upload_conf(data_conf, backend, work_mode)
+            #if not isinstance(work_mode, int):
+            #    work_mode = work_mode.value
+            #if not isinstance(backend, int):
+            #    backend = backend.value
+            upload_conf = self._construct_upload_conf(data_conf, backend, work_mode, storage_engine)
+            LOGGER.debug(f"upload_conf is {upload_conf}")
             self._train_job_id, detail_info = self._job_invoker.upload_data(upload_conf, int(drop))
             self._train_board_url = detail_info["board_url"]
             self._job_invoker.monitor_job_status(self._train_job_id,
