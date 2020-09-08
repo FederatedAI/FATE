@@ -49,7 +49,8 @@ class KFold(BaseCrossValidator):
         # np.random.seed(self.random_seed)
 
     def split(self, data_inst):
-        header = data_inst.schema.get('header')
+        # header = data_inst.schema.get('header')
+        schema = data_inst.schema
 
         data_sids_iter, data_size = collect_index(data_inst)
         data_sids = []
@@ -83,8 +84,8 @@ class KFold(BaseCrossValidator):
                                              include_key=True,
                                              partition=data_inst.partitions)
             test_data = data_inst.join(test_table, lambda x, y: x)
-            train_data.schema['header'] = header
-            test_data.schema['header'] = header
+            train_data.schema = schema
+            test_data.schema = schema
             yield train_data, test_data
 
     def run(self, component_parameters, data_inst, original_model, host_do_evaluate):
@@ -173,7 +174,7 @@ class KFold(BaseCrossValidator):
             model.predict(None)
 
     def _align_data_index(self, data_instance, flowid, data_application=None):
-        header = data_instance.schema.get('header')
+        schema = data_instance.schema
 
         if data_application is None:
             # LOGGER.warning("not data_application!")
@@ -202,7 +203,7 @@ class KFold(BaseCrossValidator):
 
             LOGGER.info("get {} from guest".format(data_application))
             join_data_insts = data_sid.join(data_instance, lambda s, d: d)
-            join_data_insts.schema['header'] = header
+            join_data_insts.schema = schema
             return join_data_insts
 
     def evaluate(self, validate_data, fold_name, model):
