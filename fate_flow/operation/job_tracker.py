@@ -27,7 +27,7 @@ from fate_flow.entity.metric import Metric, MetricMeta
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.pipelined_model import pipelined_model
 from fate_arch import storage
-from fate_flow.utils import model_utils, job_utils
+from fate_flow.utils import model_utils, job_utils, data_utils
 from fate_arch import session
 
 
@@ -124,7 +124,7 @@ class Tracker(object):
             elif output_storage_engine == StorageEngine.STANDALONE:
                 address_dict.update({"name": persistent_table_name, "namespace": persistent_table_namespace, "storage_type": storage.StandaloneStorageType.ROLLPAIR_LMDB})
             elif output_storage_engine == StorageEngine.HDFS:
-                address_dict.update({"path": f"/fate/temp/component_output_data/{persistent_table_namespace}/{persistent_table_name}"})
+                address_dict.update({"path": data_utils.default_output_path(name=persistent_table_name, namespace=persistent_table_namespace)})
             else:
                 raise RuntimeError(f"{output_storage_engine} storage is not supported")
             address = storage.StorageTableMeta.create_address(storage_engine=output_storage_engine, address_dict=address_dict)

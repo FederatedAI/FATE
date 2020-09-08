@@ -92,14 +92,13 @@ class StorageTableMeta(StorageTableMetaABC):
         self.type = None
         self.options = None
         self.partitions = None
+        self.in_serialized = None
         self.schema = None
         self.count = None
         self.part_of_data = None
         self.description = None
         self.create_time = None
         self.update_time = None
-        self.is_kv_storage = None
-        self.is_serialize = None
         if self.options is None:
             self.options = {}
         if self.schema is None:
@@ -244,6 +243,9 @@ class StorageTableMeta(StorageTableMetaABC):
 
     def get_partitions(self):
         return self.partitions
+
+    def get_in_serialized(self):
+        return self.in_serialized
 
     def get_schema(self):
         return self.schema

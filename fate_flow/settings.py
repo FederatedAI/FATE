@@ -53,7 +53,6 @@ DEFAULT_FEDERATED_COMMAND_TRYS = 3
 JOB_DEFAULT_TIMEOUT = 7 * 24 * 60 * 60
 DATABASE = get_base_config("database", {})
 MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
-HDFS_ADDRESS= ''
 
 '''
 Constants

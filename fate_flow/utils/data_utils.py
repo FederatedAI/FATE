@@ -13,11 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import uuid
-
 import numpy
-
-from fate_flow.settings import HDFS_ADDRESS
 from federatedml.feature.sparse_vector import SparseVector
 
 
@@ -35,5 +31,14 @@ def dataset_to_list(src):
         return [src]
 
 
-def generate_hdfs_address():
-    return "/{}/fate/{}".format(HDFS_ADDRESS, uuid.uuid1().hex)
+def get_header_schema(header_line):
+    header_source_item = header_line.split(',')
+    return {'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]}
+
+
+def default_output_path(name, namespace):
+    return f"/fate/output_data/{namespace}/{name}"
+
+
+def default_input_path(name, namespace):
+    return f"/fate/input_data/{namespace}/{name}"

@@ -17,10 +17,10 @@ import os
 import shutil
 import time
 
-from fate_arch.common import log, file_utils
+from fate_arch.common import log, file_utils, EngineType
 from fate_arch.storage import StorageEngine, EggRollStorageType
 from fate_flow.entity.metric import Metric, MetricMeta
-from fate_flow.utils import job_utils
+from fate_flow.utils import job_utils, data_utils
 from fate_flow.scheduling_apps.client import ControllerClient
 from fate_arch import storage
 
@@ -39,8 +39,16 @@ class Upload(object):
     def run(self, component_parameters=None, args=None):
         self.parameters = component_parameters["UploadParam"]
         LOGGER.info(self.parameters)
+        LOGGER.info(args)
         self.parameters["role"] = component_parameters["role"]
         self.parameters["local"] = component_parameters["local"]
+        storage_engine = self.parameters["storage_engine"]
+        storage_address = self.parameters["storage_address"]
+        # if not set storage, use job storage as default
+        if not storage_engine:
+            storage_engine = args["job_parameters"].storage_engine
+        if not storage_address:
+            storage_address = args["job_parameters"].engines_address[EngineType.STORAGE]
         job_id = self.taskid.split("_")[0]
         if not os.path.isabs(self.parameters.get("file", "")):
             self.parameters["file"] = os.path.join(file_utils.get_project_base_directory(), self.parameters["file"])
@@ -72,18 +80,18 @@ class Upload(object):
                     table.destroy()
                 else:
                     LOGGER.info(f"can not found table {name} {namespace}, pass destroy")
-        storage_engine = self.parameters["storage_engine"]
         with storage.Session.build(session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),
                                    storage_engine=storage_engine, options=self.parameters.get("options")) as storage_session:
             if storage_engine in {StorageEngine.EGGROLL, StorageEngine.STANDALONE}:
                 address_dict = {"name": name, "namespace": namespace, "storage_type": EggRollStorageType.ROLLPAIR_LMDB}
             elif storage_engine in {StorageEngine.MYSQL}:
-                from fate_arch.common.conf_utils import get_base_config
-                address_dict = get_base_config("data_storage_address", {})
-                address_dict['db'] = namespace
-                address_dict['name'] = name
+                address_dict = {"db": namespace, "name": name}
             elif storage_engine in {StorageEngine.HDFS}:
-                address_dict = self.parameters["storage_address"]
+                address_dict = {"path": data_utils.default_input_path(name=name, namespace=namespace)}
+            else:
+                raise RuntimeError(f"can not support this storage engine: {storage_engine}")
+            address_dict.update(storage_address)
+            LOGGER.info(f"upload to {storage_engine} storage, address: {address_dict}")
             address = storage.StorageTableMeta.create_address(storage_engine=storage_engine, address_dict=address_dict)
             self.parameters["partitions"] = partitions
             self.parameters["name"] = name
@@ -115,14 +123,14 @@ class Upload(object):
             if head is True:
                 data_head = fin.readline()
                 count -= 1
-                self.save_data_header(data_head)
+                self.table.get_meta().update_metas(schema=data_utils.get_header_schema(header_line=data_head))
             n = 0
             while True:
                 data = list()
                 lines = fin.readlines(self.MAX_BYTES)
                 if lines:
                     for line in lines:
-                        values = line.replace("\n", "").replace("\t", ",").split(",")
+                        values = line.rstrip("\n").split(self.parameters["delimiter"])
                         data.append((values[0], self.list_to_str(values[1:])))
                     lines_count += len(data)
                     save_progress = lines_count/count*100//1
@@ -146,10 +154,6 @@ class Upload(object):
                                                  metric_meta=MetricMeta(name='upload', metric_type='UPLOAD'))
                     return count_actual
                 n += 1
-
-    def save_data_header(self, header_source):
-        header_source_item = header_source.split(',')
-        self.table.get_meta().update_metas(schema={'header': ','.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]})
 
     def get_count(self, input_file):
         with open(input_file, 'r', encoding='utf-8') as fp:
