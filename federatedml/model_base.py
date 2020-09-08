@@ -30,6 +30,7 @@ from federatedml.util.param_extract import ParamExtract
 
 
 class ModelBase(object):
+
     def __init__(self):
         self.model_output = None
         self.mode = None

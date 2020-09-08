@@ -27,9 +27,11 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 
 
 # noinspection PyAttributeOutsideInit
-class HeteroSecureBoostingTreeTransferVariable(BaseTransferVariables):
+class PaillierCipherTransVar(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.stop_flag = self._create_variable(name='stop_flag', src=['guest'], dst=['host'])
-        self.tree_dim = self._create_variable(name='tree_dim', src=['guest'], dst=['host'])
-        self.predict_start_round = self._create_variable(name='predict_start_round', src=['guest'], dst=['host'])
+        self.use_encrypt = self._create_variable(name='use_encrypt', src=['host'], dst=['arbiter'])
+        self.pailler_pubkey = self._create_variable(name='pailler_pubkey', src=['arbiter'], dst=['host'])
+        self.re_encrypt_times = self._create_variable(name='re_encrypt_times', src=['host'], dst=['arbiter'])
+        self.model_to_re_encrypt = self._create_variable(name='model_to_re_encrypt', src=['host'], dst=['arbiter'])
+        self.model_re_encrypted = self._create_variable(name='model_re_encrypted', src=['arbiter'], dst=['host'])

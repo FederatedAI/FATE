@@ -27,10 +27,13 @@ from federatedml.transfer_variable.base_transfer_variable import BaseTransferVar
 
 
 # noinspection PyAttributeOutsideInit
-class HeteroFeatureBinningTransferVariable(BaseTransferVariables):
+class HeteroKmeansTransferVariable(BaseTransferVariables):
     def __init__(self, flowid=0):
         super().__init__(flowid)
-        self.bucket_idx = self._create_variable(name='bucket_idx', src=['guest'], dst=['host'])
-        self.encrypted_bin_sum = self._create_variable(name='encrypted_bin_sum', src=['host'], dst=['guest'])
-        self.encrypted_label = self._create_variable(name='encrypted_label', src=['guest'], dst=['host'])
-        self.paillier_pubkey = self._create_variable(name='paillier_pubkey', src=['guest'], dst=['host'])
+        self.arbiter_tol = self._create_variable(name='arbiter_tol', src=['arbiter'], dst=['host', 'guest'])
+        self.cluster_result = self._create_variable(name='cluster_result', src=['arbiter'], dst=['host', 'guest'])
+        self.cluster_evaluation = self._create_variable(name='cluster_evaluation', src=['arbiter'], dst=['host', 'guest'])
+        self.guest_dist = self._create_variable(name='guest_dist', src=['guest'], dst=['arbiter'])
+        self.guest_tol = self._create_variable(name='guest_tol', src=['guest'], dst=['arbiter'])
+        self.host_dist = self._create_variable(name='host_dist', src=['host'], dst=['arbiter'])
+        self.host_tol = self._create_variable(name='host_tol', src=['host'], dst=['arbiter'])

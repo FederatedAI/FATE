@@ -16,91 +16,19 @@
 import sys
 from collections import defaultdict
 import math
-import numpy as np
 import logging
-from federatedml.util import LOGGER
+
+from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric, MetricMeta
+
 from federatedml.param import EvaluateParam
 from federatedml.util import consts
 from federatedml.model_base import ModelBase
 from federatedml.evaluation.metric_interface import MetricInterface
 
+import numpy as np
 
-class PerformanceRecorder(object):
-
-    """
-    This class record performance(single value metrics during the training process)
-    """
-
-    def __init__(self):
-
-        # all of them are single value metrics
-        self.allowed_metric = [consts.AUC,
-                              consts.EXPLAINED_VARIANCE,
-                              consts.MEAN_ABSOLUTE_ERROR,
-                              consts.MEAN_SQUARED_ERROR,
-                              consts.MEAN_SQUARED_LOG_ERROR,
-                              consts.MEDIAN_ABSOLUTE_ERROR,
-                              consts.R2_SCORE,
-                              consts.ROOT_MEAN_SQUARED_ERROR,
-                              consts.PRECISION,
-                              consts.RECALL,
-                              consts.ACCURACY,
-                              consts.KS
-                            ]
-
-        self.larger_is_better = [consts.AUC,
-                                 consts.R2_SCORE,
-                                 consts.PRECISION,
-                                 consts.RECALL,
-                                 consts.EXPLAINED_VARIANCE,
-                                 consts.ACCURACY,
-                                 consts.KS
-                                 ]
-
-        self.smaller_is_better = [consts.ROOT_MEAN_SQUARED_ERROR,
-                                  consts.MEAN_ABSOLUTE_ERROR,
-                                  consts.MEAN_SQUARED_ERROR,
-                                  consts.MEAN_SQUARED_LOG_ERROR]
-
-        self.cur_best_performance = {}
-
-        self.no_improvement_round = {}  # record no improvement round of all metrics
-
-    def has_improved(self, val: float, metric: str, cur_best: dict):
-
-        if metric not in cur_best:
-            return True
-
-        if metric in self.larger_is_better and val > cur_best[metric]:
-            return True
-
-        elif metric in self.smaller_is_better and val < cur_best[metric]:
-            return True
-
-        return False
-
-    def update(self, eval_dict: dict):
-        """
-
-        Parameters
-        ----------
-        eval_dict dict, {metric_name:metric_val}, e.g. {'auc':0.99}
-
-        Returns stop flag, if should stop return True, else False
-        -------
-        """
-        if len(eval_dict) == 0:
-            return
-
-        for metric in eval_dict:
-            if metric not in self.allowed_metric:
-                continue
-            if self.has_improved(eval_dict[metric], metric, self.cur_best_performance):
-                self.cur_best_performance[metric] = eval_dict[metric]
-                self.no_improvement_round[metric] = 0
-            else:
-                self.no_improvement_round[metric] += 1
+LOGGER = log_utils.getLogger()
 
 
 class Evaluation(ModelBase):
@@ -111,19 +39,24 @@ class Evaluation(ModelBase):
         self.eval_results = defaultdict(list)
 
         self.save_single_value_metric_list = [consts.AUC,
+
                                               consts.EXPLAINED_VARIANCE,
                                               consts.MEAN_ABSOLUTE_ERROR,
                                               consts.MEAN_SQUARED_ERROR,
                                               consts.MEAN_SQUARED_LOG_ERROR,
                                               consts.MEDIAN_ABSOLUTE_ERROR,
                                               consts.R2_SCORE,
-                                              consts.ROOT_MEAN_SQUARED_ERROR]
+                                              consts.ROOT_MEAN_SQUARED_ERROR,
 
-        self.save_curve_metric_list = [consts.KS, consts.ROC, consts.LIFT, consts.GAIN, consts.PRECISION,
-                                       consts.RECALL,
-                                       consts.ACCURACY]
+                                              consts.JACCARD_SIMILARITY_SCORE,
+                                              consts.ADJUSTED_RAND_SCORE,
+                                              consts.FOWLKES_MALLOWS_SCORE,
+                                              consts.DAVIES_BOULDIN_INDEX
+                                              ]
 
         self.special_metric_list = [consts.PSI]
+
+        self.clustering_intra_metric_list = [consts.DAVIES_BOULDIN_INDEX, consts.DISTANCE_MEASURE]
 
         self.metrics = None
         self.round_num = 6
@@ -162,42 +95,73 @@ class Evaluation(ModelBase):
 
         split_result = defaultdict(list)
         for value in data:
-            mode = value[1][4]
+            mode = value[1][-1]
             split_result[mode].append(value)
 
         return split_result
 
-    def evaluate_metrics(self, mode: str, data: list) -> dict:
+    def _classification_and_regression_extract(self, data):
+
+        """
+        extract labels and predict results from data in classification/regression type format
+        """
+
         labels = []
         pred_scores = []
         pred_labels = []
-
         for d in data:
             labels.append(d[1][0])
             pred_labels.append(d[1][1])
             pred_scores.append(d[1][2])
-
         if self.eval_type == consts.BINARY or self.eval_type == consts.REGRESSION:
-
             if self.pos_label and self.eval_type == consts.BINARY:
-                new_labels = []
-                for label in labels:
-                    if self.pos_label == label:
-                        new_labels.append(1)
-                    else:
-                        new_labels.append(0)
-                labels = new_labels
-
+                labels_arr = np.array(labels)
+                labels_arr[labels_arr == self.pos_label] = 1
+                labels_arr[labels_arr != self.pos_label] = 0
+                labels = list(labels_arr)
             pred_results = pred_scores
         else:
             pred_results = pred_labels
 
+        return labels, pred_results
+
+    def _clustering_extract(self, data):
+
+        """
+        extract data according to data format
+        """
+
+        true_cluster_index, predicted_cluster_index = [], []
+        intra_cluster_avg_dist, inter_cluster_dist = [], []
+        run_intra_metrics = False  # run intra metrics or outer metrics ?
+        LOGGER.debug('data is {}'.format(data))
+        if len(data[0][1]) == 3:
+            # [int int] -> [true_label, predicted label] -> outer metric
+            # [int np.array] - > [predicted label, distance] -> need no metric computation
+            LOGGER.debug('type is {} {}'.format(type(data[0][1][0]), type(data[0][1][1])))
+            if not (type(data[0][1][0]) == int and type(data[0][1][1]) == int):
+                return None, None, run_intra_metrics
+
+        if len(data[0][1]) == 4:  # the input format is for intra metrics
+            run_intra_metrics = True
+
+        for d in data:
+            if run_intra_metrics:
+                intra_cluster_avg_dist.append(d[1][1])
+                if len(inter_cluster_dist) == 0:
+                    inter_cluster_dist += d[1][2]
+            else:
+                true_cluster_index.append(d[1][0])
+                predicted_cluster_index.append(d[1][1])
+
+        return (true_cluster_index, predicted_cluster_index, run_intra_metrics) if not run_intra_metrics else \
+               (intra_cluster_avg_dist, inter_cluster_dist, run_intra_metrics)
+
+    def _evaluate_classification_and_regression_metrics(self, mode, data):
+
+        labels, pred_results = self._classification_and_regression_extract(data)
         eval_result = defaultdict(list)
-
-        metrics = self.metrics
-
-        for eval_metric in metrics:
-
+        for eval_metric in self.metrics:
             if eval_metric not in self.special_metric_list:
                 res = getattr(self.metric_interface, eval_metric)(labels, pred_results)
                 if res is not None:
@@ -207,10 +171,8 @@ class Evaluation(ModelBase):
                             LOGGER.info("res is inf, set to {}".format(res))
                     except:
                         pass
-
                     eval_result[eval_metric].append(mode)
                     eval_result[eval_metric].append(res)
-
             elif eval_metric == consts.PSI:
                 if mode == 'train':
                     self.psi_train_scores = pred_results
@@ -220,25 +182,61 @@ class Evaluation(ModelBase):
                     self.psi_validate_labels = labels
 
                 if self.psi_train_scores is not None and self.psi_validate_scores is not None:
-                    res = self.metric_interface.psi(self.psi_train_scores, self.psi_validate_scores, self.psi_train_labels, self.psi_validate_labels)
+                    res = self.metric_interface.psi(self.psi_train_scores, self.psi_validate_scores,
+                                                    self.psi_train_labels, self.psi_validate_labels)
                     eval_result[eval_metric].append(mode)
                     eval_result[eval_metric].append(res)
                     # delete saved scores after computing a psi pair
-
                     self.psi_train_scores, self.psi_validate_scores = None, None
+        return eval_result
+
+    def _evaluate_clustering_metrics(self, mode, data):
+
+        eval_result = defaultdict(list)
+        rs0, rs1, run_outer_metric = self._clustering_extract(data)
+        if rs0 is None and rs1 is None:  # skip evaluation computation of this input format
+            LOGGER.debug('skip computing, this clustering format is not for metric computation')
+            return eval_result
+
+        for eval_metric in self.metrics:
+
+            # if input format and required metrics matches ? XNOR
+            if not((not (eval_metric in self.clustering_intra_metric_list) and not run_outer_metric) + \
+               ((eval_metric in self.clustering_intra_metric_list) and run_outer_metric)):
+                LOGGER.warning('input data format does not match current clustering metric: {}'.format(eval_metric))
+                continue
+
+            LOGGER.debug('clustering_metrics is {}'.format(eval_metric))
+            res = getattr(self.metric_interface, eval_metric)(rs0, rs1)
+            eval_result[eval_metric].append(mode)
+            eval_result[eval_metric].append(res)
+
+        return eval_result
+
+    def evaluate_metrics(self, mode: str, data: list) -> dict:
+
+        eval_result = None
+        if self.eval_type != consts.CLUSTERING:
+            eval_result = self._evaluate_classification_and_regression_metrics(mode, data)
+        elif self.eval_type == consts.CLUSTERING:
+            LOGGER.debug('running clustering')
+            eval_result = self._evaluate_clustering_metrics(mode, data)
 
         return eval_result
 
     def fit(self, data, return_result=False):
+
         if len(data) <= 0:
             return
-
+        LOGGER.debug('running eval')
         self.eval_results.clear()
-        for (key, validate_data) in data.items():
-            if validate_data is None:
+        for (key, eval_data) in data.items():
+            LOGGER.debug('key is {}, eval data is {}'.format(key, eval_data))
+            eval_data_local = list(eval_data.collect())
+            if len(eval_data_local) == 0:
                 continue
-            validate_data_local = list(validate_data.collect())
-            split_data_with_label = self.split_data_with_type(validate_data_local)
+            split_data_with_label = self.split_data_with_type(eval_data_local)
+            LOGGER.debug('split data is {}'.format(split_data_with_label))
             for mode, data in split_data_with_label.items():
                 eval_result = self.evaluate_metrics(mode, data)
                 self.eval_results[key].append(eval_result)
@@ -305,7 +303,7 @@ class Evaluation(ModelBase):
         single_val_metric = None
 
         if metric in self.save_single_value_metric_list or \
-           (metric == consts.ACCURACY and self.eval_type == consts.MULTY):
+           (metric is consts.ACCURACY and self.eval_type == consts.MULTY):
 
             single_val_metric = metric_res[1]
 
@@ -488,11 +486,42 @@ class Evaluation(ModelBase):
 
     def __save_pr_table(self, metric, metric_res, metric_name, metric_namespace):
 
-        p_scores, r_scores, score_threshold = metric_res[1]
+        p_scores, r_scores, score_threshold = metric_res
 
         extra_metas = {'p_scores': list(map(list, np.round(p_scores, self.round_num))),
                        'r_scores': list(map(list, np.round(r_scores, self.round_num))),
                        'thresholds': list(np.round(score_threshold, self.round_num))}
+
+        self.tracker.set_metric_meta(metric_namespace, metric_name,
+                                     MetricMeta(name=metric_name, metric_type=metric.upper(), extra_metas=extra_metas))
+
+    def __save_contingency_matrix(self, metric, metric_res, metric_name, metric_namespace):
+
+        result_array, unique_predicted_label, unique_true_label = metric_res
+        true_labels = list(map(int, unique_true_label))
+        predicted_label = list(map(int, unique_predicted_label))
+        result_table = []
+        for l_ in result_array:
+            result_table.append(list(map(int, l_)))
+
+        extra_metas = {'true_labels': true_labels, 'predicted_labels': predicted_label, 'result_table': result_table}
+
+        self.tracker.set_metric_meta(metric_namespace, metric_name,
+                                     MetricMeta(name=metric_name, metric_type=metric.upper(), extra_metas=extra_metas))
+
+    def __save_distance_measure(self, metric, metric_res: dict, metric_name, metric_namespace):
+
+        extra_metas = {}
+
+        cluster_index = [k for k in metric_res.keys()]
+        radius, neareast_idx = [], []
+        for k in metric_res:
+            radius.append(metric_res[k][0])
+            neareast_idx.append(neareast_idx[k][1])
+
+        extra_metas['cluster_index'] = cluster_index
+        extra_metas['radius'] = radius
+        extra_metas['nearest_idx'] = neareast_idx
 
         self.tracker.set_metric_meta(metric_namespace, metric_name,
                                      MetricMeta(name=metric_name, metric_type=metric.upper(), extra_metas=extra_metas))
@@ -560,13 +589,15 @@ class Evaluation(ModelBase):
                         self.__save_f1_score_table(metric, f1_scores, score_threshold, metric_name, metric_namespace)
 
                     elif metric == consts.QUANTILE_PR:
-                        LOGGER.debug('pr quantile called')
-                        self.__save_pr_table(metric, metric_res, metric_name, metric_namespace)
+                        self.__save_pr_table(metric, metric_res[1], metric_name, metric_namespace)
 
-        if len(self.validate_metric) != 0:
-            self.set_summary(self.validate_metric)
-        else:
-            self.set_summary(self.train_metric)
+                    elif metric == consts.CONTINGENCY_MATRIX:
+                        LOGGER.debug('contingency mat quantile called')
+                        self.__save_contingency_matrix(metric, metric_res[1], metric_name, metric_namespace)
+
+                    elif metric == consts.DISTANCE_MEASURE:
+                        LOGGER.debug('distance measure called')
+                        self.__save_distance_measure(metric, metric_res[1], metric_name, metric_namespace)
 
         if return_single_val_metrics:
             if len(self.validate_metric) != 0:
