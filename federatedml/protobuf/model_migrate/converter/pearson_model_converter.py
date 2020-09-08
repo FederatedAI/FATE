@@ -13,12 +13,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from federatedml.protobuf.generated.pearson_model_param_pb2 import PearsonModelParam
+from typing import Dict
 
 from federatedml.protobuf.generated.pearson_model_meta_pb2 import PearsonModelMeta
-
+from federatedml.protobuf.generated.pearson_model_param_pb2 import PearsonModelParam
 from federatedml.protobuf.model_migrate.converter.converter_base import ProtoConverterBase
-from typing import Dict
 from federatedml.util import consts
 
 
