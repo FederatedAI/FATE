@@ -118,7 +118,7 @@ def main(config="../../config.yaml", namespace=""):
 
     # predict
     # deploy required components
-    pipeline.deploy_component([column_expand_0, dataio_0, hetero_lr_0])
+    pipeline.deploy_component([column_expand_0, dataio_0, intersection_0, hetero_lr_0])
 
     predict_pipeline = PipeLine()
     # add data reader onto predict pipeline
