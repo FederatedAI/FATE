@@ -95,6 +95,13 @@ def check_legal_schema(schema):
     if label_name is not None and not label_name.isprintable():
         raise ValueError(f"non-printable char found in label_name {label_name}, please check.")
 
-    if len(set(header) | {sid_name, label_name}) != len(header) + len([sid_name, label_name]):
-        raise ValueError(f"Repeated values found in (header, sid_name, label_name), please check.")
-
+    if header is not None:
+        if sid_name is None and label_name is None:
+            if len(set(header)) != len(header):
+                raise ValueError(f"Repeated names found in 'header', please check.")
+        else:
+            if len(set(header) | {sid_name, label_name}) != len(header) + len([sid_name, label_name]):
+                raise ValueError(f"Repeated names found in ('header', 'sid_name', 'label_name'), please check.")
+    else:
+        if sid_name == label_name:
+            raise ValueError(f"Same names given for 'sid_name' and 'label_name', please check.")
