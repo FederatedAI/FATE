@@ -58,7 +58,7 @@ def empty_column_detection(data_instance):
     if is_sparse:
         raise ValueError('sparse format empty column detection is not supported for now')
     map_func = functools.partial(column_gathering, )
-    map_rs = data_instance.mapPartitions(map_func)
+    map_rs = data_instance.applyPartitions(map_func)
     reduce_rs = map_rs.reduce(merge_column_sets)
 
     # transform col index to col name
@@ -94,3 +94,7 @@ def check_legal_schema(schema):
     label_name = schema.get("label_name", None)
     if label_name is not None and not label_name.isprintable():
         raise ValueError(f"non-printable char found in label_name {label_name}, please check.")
+
+    if len(set(header) | {sid_name, label_name}) != len(header) + len([sid_name, label_name]):
+        raise ValueError(f"Repeated values found in (header, sid_name, label_name), please check.")
+

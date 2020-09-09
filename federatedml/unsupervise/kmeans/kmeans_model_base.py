@@ -47,12 +47,14 @@ class BaseKmeansModel(ModelBase):
         self.is_converged = False
         self.cluster_detail = None
         self.cluster_count = None
+        self.aggregator = None
 
     def _init_model(self, params):
         self.model_param = params
         self.k = params.k
         self.max_iter = params.max_iter
         self.tol = params.tol
+        self.aggregator.register_aggregator(self.transfer_variable)
 
     def get_header(self, data_instances):
         if self.header is not None:

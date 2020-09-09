@@ -17,7 +17,7 @@ import unittest
 import uuid
 from multiprocessing import Pool
 
-from fate_arch.computing import ComputingType
+# from fate_arch.computing import ComputingType
 from fate_arch.session import Session
 from federatedml.util import consts
 from federatedml.transfer_variable.transfer_class.homo_transfer_variable import HomoTransferVariable
@@ -60,8 +60,8 @@ class TestSyncBase(unittest.TestCase):
                 9999
             ]
         }
-        with Session() as session:
-            session.init_computing(job_id, computing_type=ComputingType.STANDALONE)
+        with Session.create(0, 0) as session:
+            session.init_computing(job_id)
             session.init_federation(job_id,
                                     runtime_conf={
                                         "local": {

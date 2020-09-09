@@ -20,16 +20,16 @@ from fate_flow.db.db_models import DB, Job
 from fate_flow.scheduler.dsl_parser import DSLParser, DSLParserV2
 
 
+@DB.connection_context()
 def get_job_dsl_parser_by_job_id(job_id):
-    with DB.connection_context():
-        jobs = Job.select(Job.f_dsl, Job.f_runtime_conf, Job.f_train_runtime_conf).where(Job.f_job_id == job_id)
-        if jobs:
-            job = jobs[0]
-            job_dsl_parser = get_job_dsl_parser(dsl=job.f_dsl, runtime_conf=job.f_runtime_conf,
-                                                train_runtime_conf=job.f_train_runtime_conf)
-            return job_dsl_parser
-        else:
-            return None
+    jobs = Job.select(Job.f_dsl, Job.f_runtime_conf, Job.f_train_runtime_conf).where(Job.f_job_id == job_id)
+    if jobs:
+        job = jobs[0]
+        job_dsl_parser = get_job_dsl_parser(dsl=job.f_dsl, runtime_conf=job.f_runtime_conf,
+                                            train_runtime_conf=job.f_train_runtime_conf)
+        return job_dsl_parser
+    else:
+        return None
 
 
 def get_job_dsl_parser(dsl=None, runtime_conf=None, pipeline_dsl=None, train_runtime_conf=None):

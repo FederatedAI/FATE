@@ -13,17 +13,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from fate_arch.storage import DEFAULT_DELIMITER
 
 
 class UploadParam:
-    def __init__(self, file="", head=1, partition=10,
-                 namespace="", name="", work_mode=0, storage_engine="", storage_address=None, destroy=False):
+    def __init__(self, file="", head=1, delimiter=DEFAULT_DELIMITER, partition=10,
+                 namespace="", name="", storage_engine="", storage_address=None, destroy=False):
         self.file = file
         self.head = head
+        self.delimiter = delimiter
         self.partition = partition
         self.namespace = namespace
         self.name = name
-        self.work_mode = work_mode
         self.storage_engine = storage_engine
         self.storage_address = storage_address
         self.destroy = destroy

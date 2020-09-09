@@ -93,7 +93,7 @@ class HomoLRBase(BaseLogisticRegression):
         f = functools.partial(self.gradient_operator.compute_loss,
                               coef=self.model_weights.coef_,
                               intercept=self.model_weights.intercept_)
-        loss = data_instances.mapPartitions(f).reduce(fate_operator.reduce_add)
+        loss = data_instances.applyPartitions(f).reduce(fate_operator.reduce_add)
         if self.use_proximal:  # use additional proximal term
             loss_norm = self.optimizer.loss_norm(self.model_weights,
                                                  prev_round_weights)

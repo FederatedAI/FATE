@@ -198,6 +198,7 @@ DEFAULT_HEAD_SIZE = 10000
 DEFAULT_RELATIVE_ERROR = 0.001
 ONE_HOT_LIMIT = 1024   # No more than 10 possible values
 PERCENTAGE_VALUE_LIMIT = 0.1
+SECURE_AGG_AMPLIFY_FACTOR = 1000
 
 QUANTILE = 'quantile'
 BUCKET = 'bucket'
@@ -264,6 +265,7 @@ CORRELATION = 'corr'
 VARIANCE = 'variance'
 COEFFICIENT_OF_VARIATION = 'coefficient_of_variance'
 MISSING_COUNT = "missing_count"
+MISSING_RATIO = "missing_ratio"
 SKEWNESS = 'skewness'
 KURTOSIS = 'kurtosis'
 

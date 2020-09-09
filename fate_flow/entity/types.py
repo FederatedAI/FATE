@@ -26,6 +26,8 @@ class RunParameters(object):
         self.computing_engine = None
         self.federation_backend = None
         self.federation_engine = None
+        self.storage_backend = None
+        self.storage_engine = None
         self.engines_address = {}
         self.federated_mode = None
         self.federation_info = None
@@ -33,7 +35,8 @@ class RunParameters(object):
         self.task_nodes = None
         self.task_cores_per_node = None
         self.task_memory_per_node = None
-        self.federated_comm = None
+        self.federated_status_collect_type = None
+        self.federated_data_exchange_type = None  # not use in v1.5.0
         self.align_task_input_data_partition = None
         self.model_id = None
         self.model_version = None

@@ -88,8 +88,8 @@ class DataIOParam(BaseParam):
     def __init__(self, input_format="dense", delimitor=',', data_type='float64',
                  exclusive_data_type=None,
                  tag_with_value=False, tag_value_delimitor=":",
-                 missing_fill=True, default_value=0, missing_fill_method=None,
-                 missing_impute=None, outlier_replace=True, outlier_replace_method=None,
+                 missing_fill=False, default_value=0, missing_fill_method=None,
+                 missing_impute=None, outlier_replace=False, outlier_replace_method=None,
                  outlier_impute=None, outlier_replace_value=0,
                  with_label=False, label_name='y',
                  label_type='int', output_format='dense', need_run=True):
