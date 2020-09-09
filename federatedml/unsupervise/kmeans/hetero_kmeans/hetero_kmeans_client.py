@@ -136,7 +136,7 @@ class HeteroKmeansClient(BaseKmeansModel):
         LOGGER.info("Start predict ...")
         d = functools.partial(self.educl_dist, centroid_list=self.centroid_list)
         dist_all_dtable = data_instances.mapValues(d)
-        cluster_result = self.aggregator.aggregate_then_get(dist_all_dtable, suffix=(self.n_iter_,))
+        cluster_result = self.aggregator.aggregate_then_get(dist_all_dtable, suffix='predict')
         cluster_dist = self.centroid_dist(self.centroid_list)
         self.cluster_dist_aggregator.send_model(NumpyWeights(np.array(cluster_dist)), suffix='predict')
         predict_result = data_instances.join(cluster_result, lambda v1, v2: [v1.label, int(v2)])
