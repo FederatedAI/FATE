@@ -125,7 +125,7 @@ class DAGScheduler(Cron):
     @classmethod
     def backend_compatibility(cls, job_parameters: RunParameters):
         # Compatible with previous 1.5 versions
-        if job_parameters.computing_backend is None or job_parameters.federation_backend is None:
+        if job_parameters.computing_engine is None or job_parameters.federation_engine is None:
             if job_parameters.work_mode is None or job_parameters.backend is None:
                 raise RuntimeError("unable to find compatible backend engines")
             work_mode = WorkMode(job_parameters.work_mode)
@@ -148,9 +148,6 @@ class DAGScheduler(Cron):
                 federation_info['union_name'] = string_utils.random_string(4) 
                 federation_info['policy_id'] = string_utils.random_string(10)
                 job_parameters.federation_info = federation_info
-            job_parameters.computing_backend = f"DEFAULT_{job_parameters.computing_engine}"
-            job_parameters.federation_backend = f"DEFAULT_{job_parameters.federation_engine}"
-            job_parameters.storage_backend = f"DEFAULT_{job_parameters.storage_engine}"
         if job_parameters.federated_mode is None:
             if job_parameters.computing_engine in [ComputingEngine.EGGROLL, ComputingEngine.SPARK]:
                 job_parameters.federated_mode = FederatedMode.MULTIPLE
@@ -161,9 +158,9 @@ class DAGScheduler(Cron):
     def set_default_job_parameters(cls, job_parameters: RunParameters):
         if job_parameters.task_parallelism is None:
             job_parameters.task_parallelism = DEFAULT_TASK_PARALLELISM
-        computing_backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.COMPUTING, engine_id=job_parameters.computing_backend)
+        computing_engine_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.COMPUTING, engine_name=job_parameters.computing_engine)
         if job_parameters.task_nodes is None:
-            job_parameters.task_nodes = computing_backend_info.f_nodes
+            job_parameters.task_nodes = computing_engine_info.f_nodes
         if job_parameters.task_cores_per_node is None:
             job_parameters.task_cores_per_node = DEFAULT_TASK_CORES_PER_NODE
         if job_parameters.task_memory_per_node is None:
