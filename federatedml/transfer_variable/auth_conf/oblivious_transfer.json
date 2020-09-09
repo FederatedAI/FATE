@@ -1,0 +1,22 @@
+{
+  "ObliviousTransferTransferVariable": {
+    "s": {
+      "src": "host",
+      "dst": [
+        "guest"
+      ]
+    },
+    "s_legal": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    },
+    "r": {
+      "src": "guest",
+      "dst": [
+        "host"
+      ]
+    }
+  }
+}

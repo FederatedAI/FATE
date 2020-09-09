@@ -1,0 +1,62 @@
+{
+    "initiator": {
+			"role": "guest",
+			"party_id": 10000
+    },
+    "job_parameters": {
+        "work_mode": 0
+    },
+    "role": {
+        "guest": [10000],
+        "host": [10000]
+    },
+    "role_parameters": {
+        "guest": {
+            "args": {
+                "data": {
+                    "train_data": [
+                        {
+                            "name": "breast_a",
+                            "namespace": "experiment"
+                        }
+                    ]
+                }
+            },
+            "dataio_0": {
+                "with_label": [false],
+                "output_format": ["dense"]
+            }
+        },
+        "host": {
+            "args": {
+                "data": {
+                    "train_data": [
+                        {
+                            "name": "breast_b",
+                            "namespace": "experiment"
+                        }
+                    ]
+                }
+            },
+            "dataio_0": {
+                "with_label": [true],
+                "label_idx": [0],
+                "label_type": ["str"],
+                "output_format": ["dense"]
+            }
+        }
+    },
+    "algorithm_parameters": {
+        "sir_0": {
+            "security_level": 0.5,
+            "oblivious_transfer_protocol": "OT_Hauck",
+            "commutative_encryption": "CommutativeEncryptionPohligHellman",
+            "non_committing_encryption": "aes",
+            "key_size": 1024,
+            "raw_retrieval": false,
+            "cv_param": {
+                "need_cv": false
+            }
+        }
+    }
+}
