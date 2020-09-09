@@ -125,14 +125,10 @@ class HeteroKmeansArbiter(BaseKmeansModel):
 
     def predict(self, data_instances=None):
         LOGGER.info("Start predict ...")
-        res_dict = self.transfer_variable.guest_dist.get(idx=0, suffix='predict')
-        host_dicts = self.transfer_variable.host_dist.get(idx=-1, suffix='predict')
-        for host_dict in host_dicts:
-            res_dict = res_dict.join(host_dict, lambda v1, v2: v1 + v2)
+        res_dict = self.aggregator.aggregate_tables(suffix=(self.n_iter_,))
         cluster_result = res_dict.mapValues(lambda v: np.argmin(v))
         cluster_dist_result = res_dict.mapValues(lambda v: min(v))
-        self.transfer_variable.cluster_result.remote(cluster_result, role=consts.GUEST, idx=0, suffix='predict')
-        self.transfer_variable.cluster_result.remote(cluster_result, role=consts.HOST, idx=-1, suffix='predict')
+        self.aggregator.send_aggregated_tables(cluster_result, suffix=(self.n_iter_,))
 
         dist_cluster_dtable = res_dict.join(cluster_result, lambda v1, v2: [v1, v2])
         dist_table = self.cal_ave_dist(dist_cluster_dtable, cluster_result, self.k)  # ave dist in each cluster

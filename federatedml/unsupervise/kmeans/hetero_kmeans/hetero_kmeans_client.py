@@ -114,8 +114,10 @@ class HeteroKmeansClient(BaseKmeansModel):
             d = functools.partial(self.educl_dist, centroid_list=self.centroid_list)
             dist_all_dtable = data_instances.mapValues(d)
 
-            self.aggregator.send_table(dist_all_dtable, suffix=(self.n_iter_,))
-            cluster_result = self.aggregator.get_aggregated_table(suffix=(self.n_iter_,))
+            # self.aggregator.send_table(dist_all_dtable, suffix=(self.n_iter_,))
+            # cluster_result = self.aggregator.get_aggregated_table(suffix=(self.n_iter_,))
+
+            cluster_result = self.aggregator.aggregate_then_get(dist_all_dtable, suffix=(self.n_iter_, ))
 
             centroid_new, self.cluster_count = self.centroid_cal(cluster_result, data_instances)
             self.centroid_list = centroid_new
@@ -132,20 +134,9 @@ class HeteroKmeansClient(BaseKmeansModel):
 
     def predict(self, data_instances):
         LOGGER.info("Start predict ...")
-        np.random.seed(data_instances.count())
-        if self.role == consts.GUEST:
-            rand = np.random.rand(data_instances.count())
-        else:
-            rand = -np.random.rand(data_instances.count())
         d = functools.partial(self.educl_dist, centroid_list=self.centroid_list)
         dist_all_dtable = data_instances.mapValues(d)
-        sorted_key = sorted(list(dist_all_dtable.mapValues(lambda v: None).collect()), key=lambda k: k[0])
-        key = [k[0] for k in sorted_key]
-        key_secureagg = session.parallelize(tuple(zip(key, rand)), partition=data_instances.partitions,
-                                            include_key=True)
-        secure_dist_all = key_secureagg.join(dist_all_dtable, lambda v1, v2: v1 + v2)
-        self.client_dist.remote(secure_dist_all, role=consts.ARBITER, idx=0, suffix='predict')
-        cluster_result = self.transfer_variable.cluster_result.get(idx=0, suffix='predict')
+        cluster_result = self.aggregator.aggregate_then_get(dist_all_dtable, suffix=(self.n_iter_,))
         cluster_dist = self.centroid_dist(self.centroid_list)
         self.cluster_dist_aggregator.send_model(NumpyWeights(np.array(cluster_dist)), suffix='predict')
         predict_result = data_instances.join(cluster_result, lambda v1, v2: [v1.label, int(v2)])
