@@ -133,7 +133,7 @@ class Evaluation(ModelBase):
 
         true_cluster_index, predicted_cluster_index = [], []
         intra_cluster_data, inter_cluster_dist = {'avg_dist': [], 'max_radius': []}, []
-
+        
         run_intra_metrics = False  # run intra metrics or outer metrics ?
         LOGGER.debug('data is {}'.format(data))
         if len(data[0][1]) == 3:
@@ -209,9 +209,10 @@ class Evaluation(ModelBase):
                 continue
 
             LOGGER.debug('clustering_metrics is {}'.format(eval_metric))
-
+            
             if run_outer_metric:
-                if eval_result == consts.DISTANCE_MEASURE:
+     
+                if eval_metric == consts.DISTANCE_MEASURE:
                     res = getattr(self.metric_interface, eval_metric)(rs0['avg_dist'], rs1, rs0['max_radius'])
                 else:
                     res = getattr(self.metric_interface, eval_metric)(rs0['avg_dist'], rs1)
@@ -253,10 +254,12 @@ class Evaluation(ModelBase):
         return self.callback_metric_data(return_single_val_metrics=return_result)
 
     def __save_single_value(self, result, metric_name, metric_namespace, eval_name):
-
-        metric_type = "EVALUATION_SUMMARY"
+        
+        metric_type = 'EVALUATION_SUMMARY'
+        LOGGER.debug('metric name is {} {}'.format(metric_name, eval_name))
         if eval_name in consts.ALL_CLUSTER_METRICS:
-            metric_type = 'CLUSTERING_EVALUATION_SUMMARY'
+            metric_type='CLUSTERING_EVALUATION_SUMMARY'
+
         self.tracker.log_metric_data(metric_namespace, metric_name,
                                      [Metric(eval_name, np.round(result, self.round_num))])
         self.tracker.set_metric_meta(metric_namespace, metric_name,
@@ -525,7 +528,7 @@ class Evaluation(ModelBase):
     def __save_distance_measure(self, metric, metric_res: dict, metric_name, metric_namespace):
 
         extra_metas = {}
-
+        LOGGER.debug('metric res is {}'.format(metric_res))
         cluster_index = [k for k in metric_res.keys()]
         radius, neareast_idx = [], []
         for k in metric_res:
