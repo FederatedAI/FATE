@@ -1,6 +1,5 @@
 {
-    "module_path":  "federatedml/util",
-    "default_runtime_conf": "column_expand_param.json",
+    "module_path":  "federatedml/feature",
     "param_class" : "federatedml/param/column_expand_param.py/ColumnExpandParam",
     "role":
     {
