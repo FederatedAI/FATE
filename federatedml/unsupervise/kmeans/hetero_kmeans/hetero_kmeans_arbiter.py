@@ -20,7 +20,10 @@ from federatedml.unsupervise.kmeans.kmeans_model_base import BaseKmeansModel
 from federatedml.param.hetero_kmeans_param import KmeansParam
 from federatedml.util import consts
 from federatedml.framework.homo.blocks import secure_sum_aggregator
-from arch.api import session
+# from arch.api import session
+from fate_arch.session import computing_session as session
+from federatedml.framework.homo.procedure import table_aggregator
+
 from federatedml.evaluation.metrics import clustering_metric
 
 LOGGER = log_utils.getLogger()
@@ -33,6 +36,7 @@ class HeteroKmeansArbiter(BaseKmeansModel):
         self.dist_aggregator = secure_sum_aggregator.Server(enable_secure_aggregate=True)
         self.cluster_dist_aggregator = secure_sum_aggregator.Server(enable_secure_aggregate=True)
         self.DBI = 0
+        self.aggregator = table_aggregator.Arbiter()
 
     def sum_in_cluster(self, iterator):
         sum_result = dict()
@@ -72,14 +76,18 @@ class HeteroKmeansArbiter(BaseKmeansModel):
     def fit(self, data_instances=None):
         LOGGER.info("Enter hetero Kmeans arbiter fit")
         while self.n_iter_ < self.max_iter:
-            secure_dist_all_1 = self.transfer_variable.guest_dist.get(idx=0, suffix=(self.n_iter_,))
-            secure_dist_all_2 = self.transfer_variable.host_dist.get(idx=0, suffix=(self.n_iter_,))
-            dist_sum = secure_dist_all_1.join(secure_dist_all_2, lambda v1, v2: v1 + v2)
+            # secure_dist_all_1 = self.transfer_variable.guest_dist.get(idx=0, suffix=(self.n_iter_,))
+            # secure_dist_all_2 = self.transfer_variable.host_dist.get(idx=0, suffix=(self.n_iter_,))
+            # dist_sum = secure_dist_all_1.join(secure_dist_all_2, lambda v1, v2: v1 + v2)
+
+            dist_sum = self.aggregator.aggregate_tables(suffix=(self.n_iter_,))
             cluster_result = dist_sum.mapValues(lambda v: np.argmin(v))
-            self.transfer_variable.cluster_result.remote(cluster_result, role=consts.GUEST, idx=0,
-                                                         suffix=(self.n_iter_,))
-            self.transfer_variable.cluster_result.remote(cluster_result, role=consts.HOST, idx=0,
-                                                         suffix=(self.n_iter_,))
+            self.aggregator.send_aggregated_tables(cluster_result, suffix=(self.n_iter_,))
+
+            # self.transfer_variable.cluster_result.remote(cluster_result, role=consts.GUEST, idx=0,
+            #                                              suffix=(self.n_iter_,))
+            # self.transfer_variable.cluster_result.remote(cluster_result, role=consts.HOST, idx=0,
+            #                                              suffix=(self.n_iter_,))
 
             dist_cluster_dtable = dist_sum.join(cluster_result, lambda v1, v2: [v1, v2])
             dist_table = self.cal_ave_dist(dist_cluster_dtable, cluster_result, self.k)  # ave dist in each cluster
@@ -90,14 +98,16 @@ class HeteroKmeansArbiter(BaseKmeansModel):
             tol2 = self.transfer_variable.host_tol.get(idx=0, suffix=(self.n_iter_,))
             tol_final = tol1 + tol2
             self.is_converged = True if tol_final > self.tol else False
-            self.transfer_variable.arbiter_tol.remote(self.is_converged, role=consts.HOST, idx=0,
+            self.transfer_variable.arbiter_tol.remote(self.is_converged, role=consts.HOST, idx=-1,
                                                       suffix=(self.n_iter_,))
             self.transfer_variable.arbiter_tol.remote(self.is_converged, role=consts.GUEST, idx=0,
                                                       suffix=(self.n_iter_,))
+
+            self.n_iter_ += 1
+
             if self.is_converged:
                 break
 
-            self.n_iter_ += 1
 
     def predict(self, data_instances=None):
         LOGGER.info("Start predict ...")
