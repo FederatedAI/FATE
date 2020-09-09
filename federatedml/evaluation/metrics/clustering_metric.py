@@ -65,8 +65,9 @@ class DistanceMeasure(object):
         max_radius_result = max_radius
         cluster_nearest_result = []
         for j in range(0, len(dist_table)):
-            arr = inter_cluster_dist[j * len(dist_table), j * 2 * len(dist_table)]
+            arr = inter_cluster_dist[j * len(dist_table): j * 2 * len(dist_table)]
             smallest = np.inf
+            smallest_index = 0
             for k in range(0, len(arr)):
                 if arr[k] < smallest:
                     smallest = arr[k]

@@ -91,10 +91,12 @@ class HeteroKmeansClient(BaseKmeansModel):
                     cluster_dist_list.append(np.sum((np.array(centroid_list[i]) - np.array(centroid_list[j])) ** 2))
         return cluster_dist_list
 
-    def fit(self, data_instances):
+    def fit(self, data_instances, validate_data=None):
         LOGGER.info("Enter hetero_kmenas_client fit")
         self.header = self.get_header(data_instances)
         self._abnormal_detection(data_instances)
+        if self.k > data_instances.count() or self.k <2:
+            raise ValueError('K is too larger or too samll for current data')
 
         # Get initialized centroid
         np.random.seed(data_instances.count())
@@ -125,12 +127,12 @@ class HeteroKmeansClient(BaseKmeansModel):
             # cluster_result = self.transfer_variable.cluster_result.get(idx=0, suffix=(self.n_iter_,))
 
             centroid_new, self.cluster_count = self.centroid_cal(cluster_result, data_instances)
-            client_tol = np.sum(np.sum((np.array(self.centroid_list) - np.array(centroid_new)) ** 2, axis=1))
             self.centroid_list = centroid_new
             self.cluster_result = cluster_result
-            self.client_tol.remote(client_tol, role=consts.ARBITER, idx=0, suffix=(self.n_iter_,))
             cluster_dist = self.centroid_dist(self.centroid_list)
             self.cluster_dist_aggregator.send_model(NumpyWeights(np.array(cluster_dist)), suffix=(self.n_iter_,))
+            client_tol = np.sum(np.sum((np.array(self.centroid_list) - np.array(centroid_new)) ** 2, axis=1))
+            self.client_tol.remote(client_tol, role=consts.ARBITER, idx=0, suffix=(self.n_iter_,))
             self.is_converged = self.transfer_variable.arbiter_tol.get(idx=0, suffix=(self.n_iter_,))
             self.n_iter_ += 1
 

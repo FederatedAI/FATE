@@ -353,12 +353,12 @@ class MetricInterface(object):
             psi_computer = classification_metric.PSI()
             psi_scores, total_psi, expected_interval, expected_percentage, actual_interval, actual_percentage, \
             train_pos_perc, validate_pos_perc, intervals = psi_computer.compute(train_scores, validate_scores,
-                                                                                  debug=debug, str_intervals=True,
-                                                                                  round_num=6, train_labels=train_labels
-                                                                                  ,validate_labels=validate_labels)
+                                                                                debug=debug, str_intervals=True,
+                                                                                round_num=6, train_labels=train_labels
+                                                                                , validate_labels=validate_labels)
 
             len_list = np.array([len(psi_scores), len(expected_interval), len(expected_percentage), len(actual_interval)
-                                 , len(actual_percentage), len(intervals)])
+                                    , len(actual_percentage), len(intervals)])
 
             assert (len_list == len(psi_scores)).all()
 
@@ -449,8 +449,8 @@ class MetricInterface(object):
         return clustering_metric.ContengincyMatrix().compute(labels, pred_labels)
 
     @staticmethod
-    def distance_measure(cluster_avg_intra_dist, cluster_inter_dist):
+    def distance_measure(cluster_avg_intra_dist, cluster_inter_dist,max_radius):
         """
 
         """
-        return clustering_metric.DistanceMeasure().compute(cluster_avg_intra_dist, cluster_inter_dist)
+        return clustering_metric.DistanceMeasure().compute(cluster_avg_intra_dist, cluster_inter_dist, max_radius)

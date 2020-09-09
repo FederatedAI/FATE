@@ -16,6 +16,7 @@
 
 import numpy as np
 from arch.api.utils import log_utils
+from fate_flow.entity.metric import Metric
 from federatedml.unsupervise.kmeans.kmeans_model_base import BaseKmeansModel
 from federatedml.param.hetero_kmeans_param import KmeansParam
 from federatedml.util import consts
@@ -25,6 +26,7 @@ from fate_arch.session import computing_session as session
 from federatedml.framework.homo.procedure import table_aggregator
 
 from federatedml.evaluation.metrics import clustering_metric
+from fate_flow.entity.metric import MetricMeta
 
 LOGGER = log_utils.getLogger()
 
@@ -37,6 +39,18 @@ class HeteroKmeansArbiter(BaseKmeansModel):
         self.cluster_dist_aggregator = secure_sum_aggregator.Server(enable_secure_aggregate=True)
         self.DBI = 0
         self.aggregator = table_aggregator.Arbiter()
+
+    def callback_dbi(self, iter_num, dbi):
+        metric_meta = MetricMeta(name='train',
+                                 metric_type="DBI",
+                                 extra_metas={
+                                     "unit_name": "iters",
+                                 })
+
+        self.callback_meta(metric_name='DBI', metric_namespace='train', metric_meta=metric_meta)
+        self.callback_metric(metric_name='DBI',
+                             metric_namespace='train',
+                             metric_data=[Metric(iter_num, dbi)])
 
     def sum_in_cluster(self, iterator):
         sum_result = dict()
@@ -92,13 +106,17 @@ class HeteroKmeansArbiter(BaseKmeansModel):
             dist_cluster_dtable = dist_sum.join(cluster_result, lambda v1, v2: [v1, v2])
             dist_table = self.cal_ave_dist(dist_cluster_dtable, cluster_result, self.k)  # ave dist in each cluster
             cluster_dist = self.cluster_dist_aggregator.sum_model(suffix=(self.n_iter_,))
-            # self.DBI = clustering_metric.Davies_Bouldin_index.compute(self, dist_table, cluster_dist._weights)
-
+            cluster_avg_intra_dist = []
+            for i in range(len(dist_table)):
+                cluster_avg_intra_dist.append(dist_table[i][2])
+            self.DBI = clustering_metric.DaviesBouldinIndex.compute(self, cluster_avg_intra_dist,
+                                                                    list(cluster_dist._weights))
+            self.callback_dbi(self.n_iter_, self.DBI)
             tol1 = self.transfer_variable.guest_tol.get(idx=0, suffix=(self.n_iter_,))
             tol2 = self.transfer_variable.host_tol.get(idx=0, suffix=(self.n_iter_,))
             tol_final = tol1 + tol2
-            self.is_converged = True if tol_final > self.tol else False
-            self.transfer_variable.arbiter_tol.remote(self.is_converged, role=consts.HOST, idx=-1,
+            self.is_converged = True if tol_final < self.tol else False
+            self.transfer_variable.arbiter_tol.remote(self.is_converged, role=consts.HOST, idx=0,
                                                       suffix=(self.n_iter_,))
             self.transfer_variable.arbiter_tol.remote(self.is_converged, role=consts.GUEST, idx=0,
                                                       suffix=(self.n_iter_,))
