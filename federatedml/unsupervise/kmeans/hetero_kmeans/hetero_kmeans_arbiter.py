@@ -84,7 +84,7 @@ class HeteroKmeansArbiter(BaseKmeansModel):
             rs[k1] = max(v1[k1], v2[k1])
         return rs
 
-    def fit(self, data_instances=None):
+    def fit(self, data_instances=None, validate_data=None):
         LOGGER.info("Enter hetero Kmeans arbiter fit")
         while self.n_iter_ < self.max_iter:
             # secure_dist_all_1 = self.transfer_variable.guest_dist.get(idx=0, suffix=(self.n_iter_,))

@@ -238,7 +238,7 @@ class Evaluation(ModelBase):
 
         if len(data) <= 0:
             return
-        LOGGER.debug('running eval')
+        LOGGER.debug(f'running eval, data: {data}')
         self.eval_results.clear()
         for (key, eval_data) in data.items():
             LOGGER.debug('key is {}, eval data is {}'.format(key, eval_data))

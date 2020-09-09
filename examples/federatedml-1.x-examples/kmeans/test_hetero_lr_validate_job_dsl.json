@@ -1,0 +1,143 @@
+{
+  "components": {
+    "reader_0": {
+      "module": "Reader",
+      "output": {
+        "data": [
+          "table"
+        ]
+      }
+    },
+    "dataio_0": {
+      "module": "DataIO",
+      "input": {
+        "data": {
+          "data": [
+            "reader_0.table"
+          ]
+        }
+      },
+      "output": {
+        "data": [
+          "train"
+        ],
+        "model": [
+          "dataio"
+        ]
+      },
+      "need_deploy": true
+    },
+    "reader_1": {
+      "module": "Reader",
+      "output": {
+        "data": [
+          "table"
+        ]
+      },
+      "need_deploy": true
+    },
+    "dataio_1": {
+      "module": "DataIO",
+      "input": {
+        "data": {
+          "data": [
+            "reader_1.table"
+          ]
+        },
+        "model": [
+          "dataio_0.dataio"
+        ]
+      },
+      "output": {
+        "data": [
+          "eval_data"
+        ]
+      },
+      "need_deploy": false
+    },
+    "intersection_0": {
+      "module": "Intersection",
+      "input": {
+        "data": {
+          "data": [
+            "dataio_0.train"
+          ]
+        }
+      },
+      "output": {
+        "data": [
+          "train"
+        ]
+      }
+    },
+    "intersection_1": {
+      "module": "Intersection",
+      "input": {
+        "data": {
+          "data": [
+            "dataio_1.eval_data"
+          ]
+        }
+      },
+      "output": {
+        "data": [
+          "eval_data"
+        ]
+      },
+      "need_deploy": false
+    },
+    "hetero_kmeans_0": {
+      "module": "HeteroKmeans",
+      "input": {
+        "data": {
+          "train_data": [
+            "intersection_0.train"
+          ],
+          "validate_data": ["intersection_1.eval_data"]
+        }
+      },
+      "output": {
+        "data": [
+          "train_1",
+          "train_2"
+        ],
+        "model": [
+          "hetero_kmeans"
+        ]
+      }
+    },
+    "hetero_kmeans_1": {
+      "module": "HeteroKmeans",
+      "input": {
+        "data": {
+          "test_data": [
+            "intersection_1.eval_data"
+          ]
+        },
+        "model": ["hetero_kmeans_0.hetero_kmeans"]
+      },
+      "output": {
+        "data": [
+          "train_1",
+          "train_2"
+        ],
+        "model": [
+          "hetero_kmeans"
+        ]
+      }
+    },
+    "evaluation_0": {
+      "module": "Evaluation",
+      "input": {
+        "data": {
+          "data": [
+            "hetero_kmeans_0.train_1",
+            "hetero_kmeans_0.train_2",
+            "hetero_kmeans_1.train_1",
+            "hetero_kmeans_1.train_2"
+          ]
+        }
+      }
+    }
+  }
+}
