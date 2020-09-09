@@ -402,6 +402,7 @@ class DAGScheduler(Cron):
                 job.f_status = JobStatus.WAITING
                 job.f_end_time = None
                 job.f_elapsed = None
+                job.f_progress = 0
                 schedule_logger(job_id=job_id).info(f"job {job_id} has been finished, set waiting to rerun")
                 status, response = FederatedScheduler.sync_job_status(job=job)
                 if status == FederatedSchedulingStatusCode.SUCCESS:
