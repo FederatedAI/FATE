@@ -36,6 +36,12 @@ L2_PENALTY = 'L2'
 
 FLOAT_ZERO = 1e-8
 OVERFLOW_THRESHOLD = 1e8
+OT_HAUCK = 'OT_Hauck'
+CE_PH = 'CommutativeEncryptionPohligHellman'
+XOR = 'xor'
+AES = 'aes'
+
+FLOAT_ZERO = 1e-6
 
 PARAM_MAXDEPTH = 5
 MAX_CLASSNUM = 1000
