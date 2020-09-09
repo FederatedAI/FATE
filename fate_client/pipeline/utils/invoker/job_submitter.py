@@ -45,7 +45,7 @@ class JobFunc:
 
 class JobInvoker(object):
     def __init__(self):
-        self.client = FlowClient(ip=conf.FlowConfig.IP, port=conf.FlowConfig.PORT)
+        self.client = FlowClient(ip=conf.FlowConfig.IP, port=conf.FlowConfig.PORT, version=2)
 
     @classmethod
     def _run_cmd(cls, cmd, output_while_running=False):
