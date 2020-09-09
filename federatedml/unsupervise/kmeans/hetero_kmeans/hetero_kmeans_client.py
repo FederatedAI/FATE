@@ -14,21 +14,19 @@
 #  limitations under the License.
 #
 
-import random
 import functools
-import numpy as np
 import math
-# from arch.api import session
-from fate_arch.session import computing_session as session
-from arch.api.utils import log_utils
-from federatedml.unsupervise.kmeans.kmeans_model_base import BaseKmeansModel
-from federatedml.framework.homo.procedure import table_aggregator
-from federatedml.param.hetero_kmeans_param import KmeansParam
-from federatedml.util import consts
-from federatedml.framework.homo.blocks import secure_sum_aggregator
-from federatedml.framework.weights import NumpyWeights
+import random
 
-LOGGER = log_utils.getLogger()
+import numpy as np
+
+from fate_arch.session import computing_session as session
+from federatedml.framework.homo.blocks import secure_sum_aggregator
+from federatedml.framework.homo.procedure import table_aggregator
+from federatedml.framework.weights import NumpyWeights
+from federatedml.unsupervise.kmeans.kmeans_model_base import BaseKmeansModel
+from federatedml.util import LOGGER
+from federatedml.util import consts
 
 
 class HeteroKmeansClient(BaseKmeansModel):
@@ -95,7 +93,7 @@ class HeteroKmeansClient(BaseKmeansModel):
         LOGGER.info("Enter hetero_kmenas_client fit")
         self.header = self.get_header(data_instances)
         self._abnormal_detection(data_instances)
-        if self.k > data_instances.count() or self.k <2:
+        if self.k > data_instances.count() or self.k < 2:
             raise ValueError('K is too larger or too samll for current data')
 
         # Get initialized centroid
@@ -115,16 +113,9 @@ class HeteroKmeansClient(BaseKmeansModel):
         while self.n_iter_ < self.max_iter:
             d = functools.partial(self.educl_dist, centroid_list=self.centroid_list)
             dist_all_dtable = data_instances.mapValues(d)
-            self.aggregator.send_table(dist_all_dtable, suffix=(self.n_iter_,))
-            cluster_result = self.aggregator.get_aggregated_table(suffix=(self.n_iter_, ))
 
-            # sorted_key = sorted(list(dist_all_dtable.mapValues(lambda v: None).collect()), key=lambda k: k[0])
-            # key = [k[0] for k in sorted_key]
-            # key_secureagg = session.parallelize(tuple(zip(key, rand)), partition=data_instances.partitions,
-            #                                     include_key=True)
-            # secure_dist_all = key_secureagg.join(dist_all_dtable, lambda v1, v2: v1 + v2)
-            # self.client_dist.remote(secure_dist_all, role=consts.ARBITER, idx=0, suffix=(self.n_iter_,))
-            # cluster_result = self.transfer_variable.cluster_result.get(idx=0, suffix=(self.n_iter_,))
+            self.aggregator.send_table(dist_all_dtable, suffix=(self.n_iter_,))
+            cluster_result = self.aggregator.get_aggregated_table(suffix=(self.n_iter_,))
 
             centroid_new, self.cluster_count = self.centroid_cal(cluster_result, data_instances)
             self.centroid_list = centroid_new
