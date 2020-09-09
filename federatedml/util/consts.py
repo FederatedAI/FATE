@@ -241,7 +241,7 @@ SKEWNESS = 'skewness'
 KURTOSIS = 'kurtosis'
 
 
-# converter model name
+# adapters model name
 HOMO_SBT = 'homo_sbt'
 HETERO_SBT = 'hetero_sbt'
 HETERO_FAST_SBT_MIX = 'hetero_fast_sbt_mix'

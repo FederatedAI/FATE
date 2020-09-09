@@ -49,7 +49,7 @@ def _config(config_path, ip, port, log_directory):
             pipeline config -c /data/projects/FATE/fate_client/pipeline/config.yaml
             pipeline config --ip 10.1.2.3 --port 9380 --log-directory /data/projects/FATE/fate_client/pipeline/logs
     """
-    if config_path is None and (ip is None or port is None or log_directory is None):
+    if config_path is None and (ip is None or port is None):
         print(
             {
                 "retcode": 100,
