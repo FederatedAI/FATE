@@ -31,6 +31,7 @@ RANDOM_PADS = "RandomPads"
 NONE = "None"
 AFFINE = 'Affine'
 ITERATIVEAFFINE = 'IterativeAffine'
+RANDOM_ITERATIVEAFFINE = 'Random_IterativeAffine'
 L1_PENALTY = 'L1'
 L2_PENALTY = 'L2'
 
@@ -40,8 +41,6 @@ OT_HAUCK = 'OT_Hauck'
 CE_PH = 'CommutativeEncryptionPohligHellman'
 XOR = 'xor'
 AES = 'aes'
-
-FLOAT_ZERO = 1e-6
 
 PARAM_MAXDEPTH = 5
 MAX_CLASSNUM = 1000
