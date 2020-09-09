@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 
-from fate_arch.common.profile import log_elapsed
 from fate_arch.storage import StorageEngine, MySQLStorageType
 from fate_arch.storage import StorageTableBase
 
@@ -75,7 +74,6 @@ class StorageTable(StorageTableBase):
     def get_options(self):
         return self._options
 
-    @log_elapsed
     def count(self, **kwargs):
         sql = 'select count(*) from {}'.format(self._name)
         try:
@@ -87,14 +85,14 @@ class StorageTable(StorageTableBase):
             count = 0
         return count
 
-    @log_elapsed
     def collect(self, **kwargs) -> list:
         sql = 'select * from {}'.format(self._name)
         data = self.execute(sql)
         return data
 
     def put_all(self, kv_list, **kwargs):
-        create_table = 'create table if not exists {}(id varchar(50) NOT NULL, features LONGTEXT, PRIMARY KEY(id))'.format(self._address.name)
+        create_table = 'create table if not exists {}(id varchar(50) NOT NULL, features LONGTEXT, PRIMARY KEY(id))'.format(
+            self._address.name)
         self.cur.execute(create_table)
         sql = 'REPLACE INTO {}(id, features)  VALUES'.format(self._address.name)
         for kv in kv_list:

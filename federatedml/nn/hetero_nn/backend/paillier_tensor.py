@@ -188,7 +188,7 @@ class PaillierTensor(object):
             return self.fast_matmul_2d(mat_tensor)
 
         func = self._vector_mul
-        ret_mat = self._obj.join(other.get_obj(), lambda vec1, vec2: (vec1, vec2)).mapPartitions(func).reduce(
+        ret_mat = self._obj.join(other.get_obj(), lambda vec1, vec2: (vec1, vec2)).applyPartitions(func).reduce(
             lambda mat1, mat2: mat1 + mat2)
 
         return ret_mat

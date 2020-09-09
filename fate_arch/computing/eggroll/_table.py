@@ -17,25 +17,24 @@
 
 import typing
 
-from eggroll.roll_pair.roll_pair import RollPair
-from fate_arch.abc import AddressABC, CTableABC
-from fate_arch.common.profile import log_elapsed, computing_profile
+from fate_arch.abc import CTableABC
+from fate_arch.common import log
+from fate_arch.common.profile import computing_profile
+
+LOGGER = log.getLogger()
 
 
 class Table(CTableABC):
 
-    def __init__(self, rp: RollPair):
+    def __init__(self, rp):
         self._rp = rp
-
-    def _as_federation_format(self):
-        return self._rp
 
     @property
     def partitions(self):
         return self._rp.get_partitions()
 
     @computing_profile
-    def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
+    def save(self, address, partitions, schema: dict, **kwargs):
         options = kwargs.get("options", {})
         from fate_arch.common.address import EggRollAddress
         if isinstance(address, EggRollAddress):
@@ -72,27 +71,26 @@ class Table(CTableABC):
         return Table(self._rp.map_values(func))
 
     @computing_profile
-    def mapPartitions(self, func, **kwargs):
+    def applyPartitions(self, func):
         return Table(self._rp.collapse_partitions(func))
 
     @computing_profile
-    def mapPartitions2(self, func, **kwargs):
+    def mapPartitions(self, func, use_previous_behavior=True, **kwargs):
+        if use_previous_behavior is True:
+            LOGGER.warning(f"please use `applyPartitions` instead of `mapPartitions` "
+                           f"if the previous behavior was expected. "
+                           f"The previous behavior will not work in future")
+            return self.applyPartitions(func)
+
         return Table(self._rp.map_partitions(func))
 
     @computing_profile
-    def reduce(self, func, key_func=None, **kwargs):
-        if key_func is None:
-            return self._rp.reduce(func)
+    def mapReducePartitions(self, mapper, reducer, **kwargs):
+        return Table(self._rp.map_partitions(func=mapper, reduce_op=reducer))
 
-        it = self._rp.get_all()
-        ret = {}
-        for k, v in it:
-            agg_key = key_func(k)
-            if agg_key in ret:
-                ret[agg_key] = func(ret[agg_key], v)
-            else:
-                ret[agg_key] = v
-        return ret
+    @computing_profile
+    def reduce(self, func, **kwargs):
+        return self._rp.reduce(func)
 
     @computing_profile
     def join(self, other: 'Table', func, **kwargs):

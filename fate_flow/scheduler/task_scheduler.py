@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_arch.common import FederatedComm
+from fate_arch.common import FederatedCommunicationType
 from fate_flow.entity.types import TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, FederatedSchedulingStatusCode
 from fate_flow.utils import job_utils
 from fate_flow.scheduler import FederatedScheduler
@@ -30,7 +30,7 @@ class TaskScheduler(object):
         waiting_tasks = []
         for initiator_task in initiator_tasks_group.values():
             # collect all party task party status
-            if job.f_runtime_conf["job_parameters"]["federated_comm"] == FederatedComm.PULL:
+            if job.f_runtime_conf["job_parameters"]["federated_status_collect_type"] == FederatedCommunicationType.PULL:
                 tasks_on_all_party = JobSaver.query_task(task_id=initiator_task.f_task_id, task_version=initiator_task.f_task_version)
                 tasks_status_on_all = set([task.f_status for task in tasks_on_all_party])
                 if len(tasks_status_on_all) > 1 or TaskStatus.RUNNING in tasks_status_on_all:

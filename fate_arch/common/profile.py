@@ -134,26 +134,6 @@ def profile_ends():
     _PROFILE_LOG_ENABLED = False
 
 
-def log_elapsed(func):
-    func_name = func.__name__
-
-    @wraps(func)
-    def _fn(*args, **kwargs):
-        t = time.time()
-        name = f"{func_name}#{kwargs['func_tag']}" if 'func_tag' in kwargs else func_name
-        rtn = func(*args, **kwargs)
-        frame = inspect.getouterframes(inspect.currentframe(), 2)
-        profile_logger.debug(
-            f"{frame[1].filename.split('/')[-1]}:{frame[1].lineno} call {name}, takes {time.time() - t}s")
-        try:
-            profile_logger.debug("call %s partitions %d" % (name, rtn.partitions))
-        except:
-            profile_logger.debug("")
-        return rtn
-
-    return _fn
-
-
 def _pretty_table_str(v):
     if isinstance(v, CTableABC):
         return f"Table(partition={v.partitions})"

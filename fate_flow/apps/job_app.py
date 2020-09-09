@@ -27,7 +27,7 @@ from fate_flow.scheduler import FederatedScheduler
 from fate_flow.settings import stat_logger, TEMP_DIRECTORY
 from fate_flow.utils import job_utils, detect_utils, schedule_utils
 from fate_flow.utils.api_utils import get_json_result, error_response
-from fate_flow.entity.types import FederatedSchedulingStatusCode, RetCode
+from fate_flow.entity.types import FederatedSchedulingStatusCode, RetCode, JobStatus
 from fate_flow.operation import Tracker
 from fate_flow.operation import JobSaver
 from fate_flow.operation import JobClean
@@ -182,8 +182,12 @@ def clean_job():
 
 @manager.route('/clean/queue', methods=['POST'])
 def clean_queue():
-    job_utils.start_clean_queue()
-    return get_json_result(retcode=0, retmsg='success')
+    jobs = JobSaver.query_job(is_initiator=True, status=JobStatus.WAITING)
+    clean_status = {}
+    for job in jobs:
+        status_code, response = FederatedScheduler.request_stop_job(job=job, stop_status=JobStatus.CANCELED)
+        clean_status[job.f_job_id] = status_code
+    return get_json_result(retcode=0, retmsg='success', data=clean_status)
 
 
 @manager.route('/dsl/generate', methods=['POST'])

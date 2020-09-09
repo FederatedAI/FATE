@@ -71,7 +71,7 @@ def layers(layer, config, type):
         print("layer not support!")
 
 
-def build_pytorch(nn_define, optimizer, loss, metrics):
+def build_pytorch(nn_define, optimizer, loss, metrics, **kwargs):
     model = torch.nn.Sequential()
     for config in nn_define:
         layer = layers(config.get("layer"), config.get("config"), config.get("type"))
@@ -272,8 +272,9 @@ class PytorchNNModel(NNModel):
         f.close()
         return PytorchNNModel(model)
 
+
 class PytorchData(data.Dataset):
-    def __init__(self, data_instances, batch_size, encode_label):
+    def __init__(self, data_instances, batch_size, encode_label, label_mapping):
         self.size = data_instances.count()
         if self.size <= 0:
             raise ValueError("empty data")
@@ -284,7 +285,7 @@ class PytorchData(data.Dataset):
         _, one_data = data_instances.first()
         self.x_shape = one_data.features.shape
 
-        num_label = len(data_instances.map(lambda x, y: [x, {y.label}]).reduce(lambda x, y: x | y))
+        num_label = len(label_mapping)
         # encoding label in one-hot
         if encode_label:
             self.use_one_hot = True
@@ -298,7 +299,7 @@ class PytorchData(data.Dataset):
                 for k, inst in data_instances.collect():
                     self._keys.append(k)
                     self.x[index] = inst.features
-                    self.y[index][inst.label] = 1
+                    self.y[index][label_mapping[inst.label]] = 1
                     index += 1
             else:
                 raise ValueError(f"num_label is {num_label}")
@@ -318,7 +319,7 @@ class PytorchData(data.Dataset):
             for k, inst in data_instances.collect():
                 self._keys.append(k)
                 self.x[index] = inst.features
-                self.y[index] = inst.label
+                self.y[index] = label_mapping[inst.label]
                 index += 1
 
     def __getitem__(self, index):

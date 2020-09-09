@@ -80,7 +80,7 @@ def header_alignment(data_instances, pre_header):
         return inst
 
     correct_schema = data_instances.schema
-    correct_schema["header"] = header_correct
+    correct_schema["header"] = pre_header
     data_instances = data_instances.mapValues(lambda inst: align_header(inst, header_pos=header_correct))
     data_instances.schema = correct_schema
     return data_instances
@@ -126,7 +126,7 @@ def count_labels(data_instance):
             labels.add(label)
         return labels
 
-    label_set = data_instance.mapPartitions(_count_labels)
+    label_set = data_instance.applyPartitions(_count_labels)
     label_set = label_set.reduce(lambda x1, x2: x1.union(x2))
     return len(label_set)
     # if len(label_set) != 2:
@@ -161,7 +161,7 @@ class DataStatistics(object):
         else:
             f = functools.partial(self.__sparse_values_set,
                                   static_col_indexes=static_col_indexes)
-        result_sets = data_instances.mapPartitions(f).reduce(self.__reduce_set_results)
+        result_sets = data_instances.applyPartitions(f).reduce(self.__reduce_set_results)
         result = [sorted(list(x)) for x in result_sets]
         return result
 

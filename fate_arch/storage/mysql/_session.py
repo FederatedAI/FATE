@@ -15,7 +15,6 @@
 #
 import pymysql
 
-from fate_arch.common.profile import log_elapsed
 from fate_arch.storage import StorageSessionBase, StorageEngine, MySQLStorageType
 from fate_arch.abc import AddressABC
 from fate_arch.common.address import MysqlAddress
@@ -31,7 +30,8 @@ class StorageSession(StorageSessionBase):
     def create(self):
         pass
 
-    def table(self, name, namespace, address: AddressABC, partitions, storage_type: MySQLStorageType = MySQLStorageType.InnoDB, options=None, **kwargs):
+    def table(self, name, namespace, address: AddressABC, partitions,
+              storage_type: MySQLStorageType = MySQLStorageType.InnoDB, options=None, **kwargs):
         self.address = address
         if isinstance(address, MysqlAddress):
             from fate_arch.storage.mysql._table import StorageTable
@@ -42,18 +42,16 @@ class StorageSession(StorageSessionBase):
                                        port=address.port,
                                        db=address.db)
             self.cur = self.con.cursor()
-            return StorageTable(cur=self.cur, con=self.con, address=address, name=name, namespace=namespace, storage_type=storage_type, partitions=partitions, options=options)
+            return StorageTable(cur=self.cur, con=self.con, address=address, name=name, namespace=namespace,
+                                storage_type=storage_type, partitions=partitions, options=options)
         raise NotImplementedError(f"address type {type(address)} not supported with eggroll storage")
 
-    @log_elapsed
     def cleanup(self, name, namespace):
         pass
 
-    @log_elapsed
     def stop(self):
         return self.con.close()
 
-    @log_elapsed
     def kill(self):
         return self.con.close()
 

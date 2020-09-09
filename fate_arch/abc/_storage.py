@@ -74,6 +74,18 @@ class StorageTableMetaABC(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
+    def get_in_serialized(self):
+        ...
+
+    @abc.abstractmethod
+    def get_id_delimiter(self):
+        ...
+
+    @abc.abstractmethod
+    def get_have_head(self):
+        ...
+
+    @abc.abstractmethod
     def get_schema(self):
         ...
 
@@ -137,6 +149,10 @@ class StorageTableABC(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def collect(self, **kwargs) -> list:
+        ...
+
+    @abc.abstractmethod
+    def read(self) -> list:
         ...
 
     @abc.abstractmethod

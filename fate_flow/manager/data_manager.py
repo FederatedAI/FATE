@@ -20,18 +20,18 @@ from fate_flow.settings import stat_logger
 from fate_flow.db.db_models import DB, TrackingMetric
 
 
+@DB.connection_context()
 def query_data_view(**kwargs):
-    with DB.connection_context():
-        filters = []
-        for f_n, f_v in kwargs.items():
-            attr_name = 'f_%s' % f_n
-            if hasattr(DataView, attr_name):
-                filters.append(operator.attrgetter('f_%s' % f_n)(DataView) == f_v)
-        if filters:
-            data_views = DataView.select().where(*filters)
-        else:
-            data_views = []
-        return [data_view for data_view in data_views]
+    filters = []
+    for f_n, f_v in kwargs.items():
+        attr_name = 'f_%s' % f_n
+        if hasattr(DataView, attr_name):
+            filters.append(operator.attrgetter('f_%s' % f_n)(DataView) == f_v)
+    if filters:
+        data_views = DataView.select().where(*filters)
+    else:
+        data_views = []
+    return [data_view for data_view in data_views]
 
 
 def delete_tables_by_table_infos(output_data_table_infos):
@@ -62,31 +62,31 @@ def delete_metric_data(metric_info):
     return sql
 
 
+@DB.connection_context()
 def drop_metric_data_mode(model):
-    with DB.connection_context():
-        try:
-            drop_sql = 'drop table t_tracking_metric_{}'.format(model)
-            DB.execute_sql(drop_sql)
-            stat_logger.info(drop_sql)
-            return drop_sql
-        except Exception as e:
-            stat_logger.exception(e)
-            raise e
+    try:
+        drop_sql = 'drop table t_tracking_metric_{}'.format(model)
+        DB.execute_sql(drop_sql)
+        stat_logger.info(drop_sql)
+        return drop_sql
+    except Exception as e:
+        stat_logger.exception(e)
+        raise e
 
 
+@DB.connection_context()
 def delete_metric_data_from_db(metric_info):
-    with DB.connection_context():
-        try:
-            job_id = metric_info['job_id']
-            metric_info.pop('job_id')
-            delete_sql = 'delete from t_tracking_metric_{}  where f_job_id="{}"'.format(job_id[:8], job_id)
-            for k, v in metric_info.items():
-                if hasattr(TrackingMetric, "f_" + k):
-                    connect_str = " and f_"
-                    delete_sql = delete_sql + connect_str + k + '="{}"'.format(v)
-            DB.execute_sql(delete_sql)
-            stat_logger.info(delete_sql)
-            return delete_sql
-        except Exception as e:
-            stat_logger.exception(e)
-            raise e
+    try:
+        job_id = metric_info['job_id']
+        metric_info.pop('job_id')
+        delete_sql = 'delete from t_tracking_metric_{}  where f_job_id="{}"'.format(job_id[:8], job_id)
+        for k, v in metric_info.items():
+            if hasattr(TrackingMetric, "f_" + k):
+                connect_str = " and f_"
+                delete_sql = delete_sql + connect_str + k + '="{}"'.format(v)
+        DB.execute_sql(delete_sql)
+        stat_logger.info(delete_sql)
+        return delete_sql
+    except Exception as e:
+        stat_logger.exception(e)
+        raise e
