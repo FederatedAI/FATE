@@ -27,9 +27,8 @@ from federatedml.evaluation.metrics.regression_metric import IC, IC_Approx
 from federatedml.model_selection.stepwise.step import Step
 from federatedml.statistic import data_overview
 from federatedml.transfer_variable.transfer_class.stepwise_transfer_variable import StepwiseTransferVariable
+from federatedml.util import consts, anonymous_generator
 from federatedml.util import LOGGER
-from federatedml.util import consts
-from federatedml.util import fate_operator
 
 
 class ModelInfo(object):
@@ -313,12 +312,8 @@ class HeteroStepwise(object):
         metas["direction"] = self.direction
         metas["n_count"] = int(self.n_count)
 
-        #host_party_id = model.component_properties.host_party_idlist[0]
-        #guest_party_id = model.component_properties.guest_partyid
-        #host_anonym = [f"host_{host_party_id}_{i}" for i in range(len(host_mask))]
-        host_anonym = [fate_operator.generate_anonymous(fid=i, role='host', model=model) for i in range(len(host_mask))]
-        #guest_anonym = [f"guest_{guest_party_id}_{i}" for i in range(len(guest_mask))]
-        guest_anonym = [fate_operator.generate_anonymous(fid=i, role='guest', model=model) for i in range(len(guest_mask))]
+        host_anonym = [anonymous_generator.generate_anonymous(fid=i, role='host', model=model) for i in range(len(host_mask))]
+        guest_anonym = [anonymous_generator.generate_anonymous(fid=i, role='guest', model=model) for i in range(len(guest_mask))]
         metas["host_features_anonym"] = host_anonym
         metas["guest_features_anonym"] = guest_anonym
 

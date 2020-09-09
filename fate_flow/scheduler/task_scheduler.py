@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_arch.common import FederatedComm
+from fate_arch.common import FederatedCommunicationType
 from fate_flow.entity.types import TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, FederatedSchedulingStatusCode
 from fate_flow.settings import API_VERSION, ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH
 from fate_flow.utils import job_utils
@@ -32,7 +32,7 @@ class TaskScheduler(object):
         waiting_tasks = []
         for initiator_task in initiator_tasks_group.values():
             # collect all party task party status
-            if job.f_runtime_conf["job_parameters"]["federated_comm"] == FederatedComm.PULL:
+            if job.f_runtime_conf["job_parameters"]["federated_status_collect_type"] == FederatedCommunicationType.PULL:
                 tasks_on_all_party = JobSaver.query_task(task_id=initiator_task.f_task_id, task_version=initiator_task.f_task_version)
                 tasks_status_on_all = set([task.f_status for task in tasks_on_all_party])
                 if len(tasks_status_on_all) > 1 or TaskStatus.RUNNING in tasks_status_on_all:
@@ -65,7 +65,6 @@ class TaskScheduler(object):
                 # can start task
                 scheduling_status_code = SchedulingStatusCode.HAVE_NEXT
                 status_code = cls.start_task(job=job, task=waiting_task)
-                #initiator_tasks_group[JobSaver.task_key(waiting_task.f_task_id, role=waiting_task.f_role, party_id=waiting_task.f_party_id)] = waiting_task
                 if status_code == SchedulingStatusCode.NO_RESOURCE:
                     # Wait for the next round of scheduling
                     break
@@ -135,7 +134,7 @@ class TaskScheduler(object):
                                              json_body={'job_parameters': job_parameters,
                                                         'job_args': party_job_args,
                                                         'input': component.get_input()},
-                                             work_mode=job_parameters['work_mode'])
+                                             federated_mode=job_parameters['federated_mode'])
                     if response['retcode'] == 0:
                         for input_data in response.get('data', {}).get('data', {}).values():
                             for data_table_info in input_data.values():

@@ -21,19 +21,19 @@ from fate_flow.entity.types import JobStatus
 
 class JobQueue(object):
     @classmethod
+    @DB.connection_context()
     def set_event(cls, job_id, initiator_role, initiator_party_id):
-        with DB.connection_context():
-            events = cls.query_event(job_id=job_id, initiator_role=initiator_role,
-                                     initiator_party_id=initiator_party_id)
-            if events:
-                raise RuntimeError(f"job {job_id} {initiator_role} {initiator_party_id} already exists")
-            event = DBQueue()
-            event.f_job_id = job_id
-            event.f_initiator_role = initiator_role
-            event.f_initiator_party_id = initiator_party_id
-            event.f_job_status = JobStatus.WAITING
-            event.f_create_time = base_utils.current_timestamp()
-            event.save(force_insert=True)
+        events = cls.query_event(job_id=job_id, initiator_role=initiator_role,
+                                 initiator_party_id=initiator_party_id)
+        if events:
+            raise RuntimeError(f"job {job_id} {initiator_role} {initiator_party_id} already exists")
+        event = DBQueue()
+        event.f_job_id = job_id
+        event.f_initiator_role = initiator_role
+        event.f_initiator_party_id = initiator_party_id
+        event.f_job_status = JobStatus.WAITING
+        event.f_create_time = base_utils.current_timestamp()
+        event.save(force_insert=True)
 
     @classmethod
     def get_event(cls, job_status):
@@ -41,6 +41,7 @@ class JobQueue(object):
         return events
 
     @classmethod
+    @DB.connection_context()
     def update_event(cls, job_id, initiator_role, initiator_party_id, job_status, ttl=None):
         events = cls.query_event(job_id=job_id, initiator_role=initiator_role, initiator_party_id=initiator_party_id)
         if not events:
@@ -70,17 +71,18 @@ class JobQueue(object):
             raise RuntimeError(f"can not update job status {event.f_job_status} to {job_status} on queue")
 
     @classmethod
+    @DB.connection_context()
     def query_event(cls, **kwargs):
-        with DB.connection_context():
-            query_filters = []
-            for k, v in kwargs.items():
-                attr_name = 'f_%s' % k
-                if hasattr(DBQueue, attr_name):
-                    query_filters.append(operator.attrgetter(attr_name)(DBQueue) == v)
-            events = DBQueue.select().where(*query_filters)
-            return [event for event in events]
+        query_filters = []
+        for k, v in kwargs.items():
+            attr_name = 'f_%s' % k
+            if hasattr(DBQueue, attr_name):
+                query_filters.append(operator.attrgetter(attr_name)(DBQueue) == v)
+        events = DBQueue.select().where(*query_filters)
+        return [event for event in events]
 
     @classmethod
+    @DB.connection_context()
     def delete_event(cls, job_id, initiator_role, initiator_party_id, job_status=None):
         if job_status:
             operate = DBQueue.delete().where(DBQueue.f_job_id == job_id, DBQueue.f_initiator_role == initiator_role,
@@ -90,10 +92,10 @@ class JobQueue(object):
                                              DBQueue.f_initiator_party_id == initiator_party_id)
         return operate.execute() > 0
 
+    @DB.connection_context()
     def qsize(self, job_status=None):
-        with DB.connection_context():
-            if job_status:
-                events = DBQueue.select(DBQueue.f_job_id).where(DBQueue.f_job_status == job_status)
-            else:
-                events = DBQueue.select(DBQueue.f_job_id)
-            return len(events)
+        if job_status:
+            events = DBQueue.select(DBQueue.f_job_id).where(DBQueue.f_job_status == job_status)
+        else:
+            events = DBQueue.select(DBQueue.f_job_id)
+        return len(events)

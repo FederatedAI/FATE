@@ -18,10 +18,9 @@ import shutil
 
 from flask import Flask, request
 
-from fate_arch.storage import StorageEngine
 from fate_flow.entity.types import StatusSet
 from fate_arch import storage
-from fate_flow.settings import stat_logger, USE_LOCAL_DATA, WORK_MODE
+from fate_flow.settings import stat_logger, USE_LOCAL_DATA
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils import detect_utils, job_utils
 from fate_flow.scheduler import DAGScheduler
@@ -61,28 +60,26 @@ def download_upload(access_module):
         raise Exception('can not support this operating: {}'.format(access_module))
     detect_utils.check_config(job_config, required_arguments=required_arguments)
     data = {}
-    for _ in ["work_mode", "backend", "drop"]:
+    # compatibility
+    if "table_name" in job_config:
+        job_config["name"] = job_config["table_name"]
+    if "backend" not in job_config:
+        job_config["backend"] = 0
+    for _ in ["work_mode", "backend", "head", "partition", "drop"]:
         if _ in job_config:
             job_config[_] = int(job_config[_])
     if access_module == "upload":
         data['table_name'] = job_config["table_name"]
         data['namespace'] = job_config["namespace"]
-        if WORK_MODE != 0:
-            job_config["storage_engine"] = job_config.get("storage_engine", StorageEngine.EGGROLL)
-            data_table_meta = storage.StorageTableMeta(name=job_config["table_name"], namespace=job_config["namespace"])
-            if data_table_meta and job_config.get('drop', 2) == 2:
-                return get_json_result(retcode=100,
-                                       retmsg='The data table already exists.'
-                                              'If you still want to continue uploading, please add the parameter -drop.'
-                                              ' 0 means not to delete and continue uploading, '
-                                              '1 means to upload again after deleting the table')
-            elif data_table_meta and job_config.get('drop', 2) == 1:
-                job_config["destroy"] = True
-        else:
-            job_config["storage_engine"] = job_config.get("storage_engine", StorageEngine.STANDALONE)
-    # compatibility
-    if "table_name" in job_config:
-        job_config["name"] = job_config["table_name"]
+        data_table_meta = storage.StorageTableMeta(name=job_config["table_name"], namespace=job_config["namespace"])
+        if data_table_meta and job_config.get('drop', 2) == 2:
+            return get_json_result(retcode=100,
+                                   retmsg='The data table already exists.'
+                                          'If you still want to continue uploading, please add the parameter -drop.'
+                                          ' 0 means not to delete and continue uploading, '
+                                          '1 means to upload again after deleting the table')
+        elif data_table_meta and job_config.get('drop', 2) == 1:
+            job_config["destroy"] = True
     job_dsl, job_runtime_conf = gen_data_access_job_config(job_config, access_module)
     job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(
         {'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)
@@ -135,7 +132,7 @@ def gen_data_access_job_config(config_data, access_module):
         "initiator": {},
         "job_parameters": {},
         "role": {},
-        "role_parameters": {}
+        "role_parameters": {"local": {"0": {}}}
     }
     initiator_role = "local"
     initiator_party_id = config_data.get('party_id', 0)
@@ -151,44 +148,37 @@ def gen_data_access_job_config(config_data, access_module):
 
     if access_module == 'upload':
         parameters = {
-            "upload_0": {
-                "work_mode": [int(config_data["work_mode"])],
-                "head": [int(config_data["head"])],
-                "partition": [int(config_data["partition"])],
-                "file": [config_data["file"]],
-                "namespace": [config_data["namespace"]],
-                "name": [config_data["name"]],
-                "storage_engine": [config_data.get("storage_engine", StorageEngine.EGGROLL)],
-                "storage_address": [config_data.get("storage_address", None)],
-                "destroy": [config_data.get("destroy", False)],
+                "head",
+                "partition",
+                "file",
+                "namespace",
+                "name",
+                "delimiter",
+                "storage_engine",
+                "storage_address",
+                "destroy",
             }
-        }
-        if int(config_data.get('dsl_version', 1)) == 2:
-            job_runtime_conf['algorithm_parameters'] = parameters
-            job_runtime_conf['job_parameters']['dsl_version'] = 2
-        else:
-            job_runtime_conf["role_parameters"][initiator_role] = parameters
-            job_runtime_conf['job_parameters']['dsl_version'] = 1
+        job_runtime_conf["role_parameters"][initiator_role]["0"]["upload_0"] = {}
+        for p in parameters:
+            if p in config_data:
+                job_runtime_conf["role_parameters"][initiator_role]["0"]["upload_0"][p] = config_data[p]
+        job_runtime_conf['job_parameters']['dsl_version'] = 2
         job_dsl["components"]["upload_0"] = {
             "module": "Upload"
         }
 
     if access_module == 'download':
         parameters = {
-            "download_0": {
-                "work_mode": [config_data["work_mode"]],
-                "delimitor": [config_data.get("delimitor", ",")],
-                "output_path": [config_data["output_path"]],
-                "namespace": [config_data["namespace"]],
-                "name": [config_data["name"]]
-            }
+                "delimiter",
+                "output_path",
+                "namespace",
+                "name"
         }
-        if int(config_data.get('dsl_version', 1)) == 2:
-            job_runtime_conf['algorithm_parameters'] = parameters
-            job_runtime_conf['job_parameters']['dsl_version'] = 2
-        else:
-            job_runtime_conf["role_parameters"][initiator_role] = parameters
-            job_runtime_conf['job_parameters']['dsl_version'] = 1
+        job_runtime_conf["role_parameters"][initiator_role]["0"]["download_0"] = {}
+        for p in parameters:
+            if p in config_data:
+                job_runtime_conf["role_parameters"][initiator_role]["0"]["download_0"][p] = config_data[p]
+        job_runtime_conf['job_parameters']['dsl_version'] = 2
         job_dsl["components"]["download_0"] = {
             "module": "Download"
         }

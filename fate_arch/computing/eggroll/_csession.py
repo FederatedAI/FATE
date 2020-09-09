@@ -16,13 +16,13 @@
 
 
 from eggroll.core.session import session_init
-from eggroll.roll_pair.roll_pair import RollPairContext
+from eggroll.roll_pair.roll_pair import runtime_init
 from fate_arch.abc import AddressABC, CSessionABC
 from fate_arch.common import WorkMode
+from fate_arch.common.base_utils import fate_uuid
 from fate_arch.common.log import getLogger
 from fate_arch.common.profile import log_elapsed
 from fate_arch.computing.eggroll import Table
-from fate_arch.common.base_utils import fate_uuid
 
 LOGGER = getLogger()
 
@@ -36,7 +36,7 @@ class CSession(CSessionABC):
         elif work_mode == WorkMode.CLUSTER:
             options['eggroll.session.deploy.mode'] = "cluster"
         self._rp_session = session_init(session_id=session_id, options=options)
-        self._rpc = RollPairContext(session=self._rp_session)
+        self._rpc = runtime_init(session=self._rp_session)
         self._session_id = self._rp_session.get_session_id()
 
     def get_rpc(self):

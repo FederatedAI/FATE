@@ -34,7 +34,7 @@ class FederatedScheduler(object):
     def create_job(cls, job: Job):
         status_code, response = cls.job_command(job=job, command="create", command_body=job.to_human_model_dict())
         if status_code != FederatedSchedulingStatusCode.SUCCESS:
-            raise Exception("Create job failed: {}".format(response))
+            raise Exception("create job failed: {}".format(response))
 
     @classmethod
     def resource_for_job(cls, job, operation_type, specific_dest=None):
@@ -117,7 +117,7 @@ class FederatedScheduler(object):
     @classmethod
     def job_command(cls, job, command, command_body=None, dest_only_initiator=False, specific_dest=None):
         federated_response = {}
-        roles, job_initiator = job.f_runtime_conf["role"], job.f_runtime_conf['initiator']
+        roles, job_initiator, job_parameters = job.f_runtime_conf["role"], job.f_runtime_conf['initiator'], job.f_runtime_conf['job_parameters']
         if dest_only_initiator:
             dest_partys = [(job_initiator["role"], [job_initiator["party_id"]])]
             api_type = "initiator"
@@ -144,7 +144,7 @@ class FederatedScheduler(object):
                                              dest_party_id=dest_party_id,
                                              src_role=job_initiator['role'],
                                              json_body=command_body if command_body else {},
-                                             work_mode=job.f_work_mode)
+                                             federated_mode=job_parameters["federated_mode"])
                     federated_response[dest_role][dest_party_id] = response
                 except Exception as e:
                     schedule_logger(job_id=job.f_job_id).exception(e)
@@ -221,7 +221,7 @@ class FederatedScheduler(object):
     @classmethod
     def task_command(cls, job, task, command, command_body=None):
         federated_response = {}
-        roles, job_initiator = job.f_runtime_conf["role"], job.f_runtime_conf['initiator']
+        roles, job_initiator, job_parameters = job.f_runtime_conf["role"], job.f_runtime_conf['initiator'], job.f_runtime_conf['job_parameters']
         dsl_parser = schedule_utils.get_job_dsl_parser(dsl=job.f_dsl, runtime_conf=job.f_runtime_conf, train_runtime_conf=job.f_train_runtime_conf)
         component = dsl_parser.get_component_info(component_name=task.f_component_name)
         component_parameters = component.get_role_parameters()
@@ -245,7 +245,7 @@ class FederatedScheduler(object):
                                              dest_party_id=dest_party_id,
                                              src_role=job_initiator['role'],
                                              json_body=command_body if command_body else {},
-                                             work_mode=RuntimeConfig.WORK_MODE)
+                                             federated_mode=job_parameters["federated_mode"])
                     federated_response[dest_role][dest_party_id] = response
                 except Exception as e:
                     federated_response[dest_role][dest_party_id] = {
@@ -284,7 +284,7 @@ class FederatedScheduler(object):
                                              dest_party_id=task.f_initiator_party_id,
                                              src_role=task.f_role,
                                              json_body=task.to_human_model_dict(only_primary_with=cls.REPORT_TO_INITIATOR_FIELDS),
-                                             work_mode=RuntimeConfig.WORK_MODE)
+                                             federated_mode=task.f_federated_mode)
                 except Exception as e:
                     exception = e
                     continue

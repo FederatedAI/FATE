@@ -15,9 +15,8 @@
 #
 
 
-import peewee
 from fate_arch.abc import StorageSessionABC, StorageTableABC
-from fate_arch.common import compatibility_utils
+from fate_arch.common import compatibility_utils, EngineType
 from fate_arch.common.base_utils import fate_uuid, current_timestamp
 from fate_arch.common.log import getLogger
 from fate_arch.computing import ComputingEngine
@@ -118,8 +117,9 @@ class Session(object):
 
 
 class StorageSessionBase(StorageSessionABC):
-    def __init__(self, session_id):
+    def __init__(self, session_id, engine_name):
         self._session_id = session_id
+        self._engine_name = engine_name
         self._default_name = None
         self._default_namespace = None
 
@@ -166,25 +166,26 @@ class StorageSessionBase(StorageSessionABC):
         raise NotImplementedError()
 
     @classmethod
+    @DB.connection_context()
     def get_storage_info(cls, name, namespace):
-        with DB.connection_context():
-            metas = StorageTableMetaModel.select().where(StorageTableMetaModel.f_name == name,
-                                                         StorageTableMetaModel.f_namespace == namespace)
-            if metas:
-                meta = metas[0]
-                engine = meta.f_engine
-                address_dict = meta.f_address
-                address = StorageTableMeta.create_address(storage_engine=engine, address_dict=address_dict)
-                partitions = meta.f_partitions
-            else:
-                return None, None, None
-        return engine, address, partitions
+        metas = StorageTableMetaModel.select().where(StorageTableMetaModel.f_name == name,
+                                                     StorageTableMetaModel.f_namespace == namespace)
+        if metas:
+            meta = metas[0]
+            engine = meta.f_engine
+            address_dict = meta.f_address
+            address = StorageTableMeta.create_address(storage_engine=engine, address_dict=address_dict)
+            partitions = meta.f_partitions
+            return engine, address, partitions
+        else:
+            return None, None, None
 
     def __enter__(self):
         with DB.connection_context():
             session_record = SessionRecord()
             session_record.f_session_id = self._session_id
-            session_record.f_engine_type = "storage"
+            session_record.f_engine_name = self._engine_name
+            session_record.f_engine_type = EngineType.STORAGE
             # TODO: engine address
             session_record.f_engine_address = {}
             session_record.f_create_time = current_timestamp()
@@ -203,6 +204,11 @@ class StorageSessionBase(StorageSessionABC):
                 LOGGER.info(f"delete session {self._session_id} record")
             else:
                 LOGGER.warning(f"failed delete session {self._session_id} record")
+
+    @DB.connection_context()
+    def query_expired_sessions_record(self, ttl) -> [SessionRecord]:
+        sessions_record = SessionRecord.select().where(SessionRecord.f_create_time < (current_timestamp() - ttl))
+        return [session_record for session_record in sessions_record]
 
     def close(self):
         try:

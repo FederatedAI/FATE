@@ -15,7 +15,7 @@
 #
 
 from fate_arch.common.profile import log_elapsed
-from fate_arch.storage import StorageSessionBase
+from fate_arch.storage import StorageSessionBase, StorageEngine
 from fate_arch.abc import AddressABC
 from fate_arch.common.address import HDFSAddress
 from pyspark import SparkContext
@@ -23,7 +23,7 @@ from pyspark import SparkContext
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(session_id=session_id)
+        super(StorageSession, self).__init__(session_id=session_id, engine_name=StorageEngine.HDFS)
         self._spark_context = None
 
     def create(self):

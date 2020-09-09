@@ -13,13 +13,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from fate_arch.storage import DEFAULT_DELIMITER
 
 
 class DownloadParam:
-    def __init__(self, output_path="", delimitor=",",
+    def __init__(self, output_path="", delimiter=DEFAULT_DELIMITER,
                  namespace="", name="", work_mode=0):
         self.output_path = output_path
-        self.delimitor = delimitor
+        self.delimiter = delimiter
         self.namespace = namespace
         self.name = name
         self.work_mode = work_mode

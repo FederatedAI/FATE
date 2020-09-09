@@ -16,14 +16,14 @@
 import pymysql
 
 from fate_arch.common.profile import log_elapsed
-from fate_arch.storage import StorageSessionBase, MySQLStorageType
+from fate_arch.storage import StorageSessionBase, StorageEngine, MySQLStorageType
 from fate_arch.abc import AddressABC
 from fate_arch.common.address import MysqlAddress
 
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(session_id=session_id)
+        super(StorageSession, self).__init__(session_id=session_id, engine_name=StorageEngine.MYSQL)
         self.con = None
         self.cur = None
         self.address = None
