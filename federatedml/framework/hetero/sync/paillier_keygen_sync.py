@@ -14,7 +14,7 @@
 #
 
 
-from federatedml.secureprotol.encrypt import PaillierEncrypt
+from federatedml.secureprotol.he.encrypt import PaillierEncrypt
 from federatedml.util import consts
 
 

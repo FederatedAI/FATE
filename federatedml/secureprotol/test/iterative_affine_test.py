@@ -17,7 +17,7 @@
 import numpy as np
 import unittest
 
-from federatedml.secureprotol.iterative_affine import IterativeAffineCipher
+from federatedml.secureprotol.he.iterative_affine import IterativeAffineCipher
 
 
 class TestAffine(unittest.TestCase):
@@ -51,7 +51,7 @@ class TestAffine(unittest.TestCase):
             de_en_res = self.randomized_key.decrypt(en_res)
             self.assertAlmostEqual(de_en_res, res)
 
-    def test_add_randomized(self):
+    def test_add_deterministic(self):
         x_li = np.ones(100) * np.random.randint(100)
         y_li = np.ones(100) * np.random.randint(1000)
         z_li = np.ones(100) * np.random.rand()

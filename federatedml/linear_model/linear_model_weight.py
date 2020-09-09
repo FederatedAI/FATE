@@ -20,7 +20,7 @@
 import numpy as np
 
 from federatedml.framework.weights import ListWeights, TransferableWeights
-from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
+from federatedml.secureprotol.he.fate_paillier import PaillierEncryptedNumber
 
 
 class LinearModelWeights(ListWeights):

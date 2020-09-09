@@ -17,7 +17,7 @@ from typing import Union
 
 from federatedml.framework.homo.blocks.base import HomoTransferBase
 from federatedml.secureprotol import PaillierEncrypt
-from federatedml.secureprotol.fate_paillier import PaillierPublicKey
+from federatedml.secureprotol.he.fate_paillier import PaillierPublicKey
 from federatedml.util import LOGGER
 from federatedml.util import consts
 

@@ -20,7 +20,7 @@ from federatedml.framework.homo.blocks import random_padding_cipher
 from federatedml.framework.homo.blocks.aggregator import AggregatorTransVar
 from federatedml.framework.homo.blocks.base import HomoTransferBase
 from federatedml.framework.homo.blocks.random_padding_cipher import RandomPaddingCipherTransVar
-from federatedml.secureprotol.encrypt import PadsCipher
+from federatedml.secureprotol.he.encrypt import PadsCipher
 from federatedml.util import consts
 
 

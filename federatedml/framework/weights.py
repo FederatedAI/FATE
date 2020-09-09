@@ -19,7 +19,7 @@ import numpy as np
 import operator
 
 from fate_arch.federation import segment_transfer_enabled
-from federatedml.secureprotol.encrypt import Encrypt
+from federatedml.secureprotol.he.encrypt import Encrypt
 from federatedml.util import LOGGER
 
 

@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 
-import copy
 import numpy as np
 import unittest
 

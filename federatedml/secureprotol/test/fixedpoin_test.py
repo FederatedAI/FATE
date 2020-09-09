@@ -16,7 +16,7 @@
 
 import numpy as np
 import unittest
-from federatedml.secureprotol.fixedpoint import FixedPointNumber
+from federatedml.secureprotol.he.fixedpoint import FixedPointNumber
 
 class TestFixedPointNumber(unittest.TestCase):
     def setUp(self):

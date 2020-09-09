@@ -18,7 +18,7 @@ import typing
 from federatedml.framework.homo.blocks import paillier_cipher
 from federatedml.framework.homo.blocks.paillier_cipher import PaillierCipherTransVar
 from federatedml.secureprotol import PaillierEncrypt
-from federatedml.secureprotol.fate_paillier import PaillierPublicKey
+from federatedml.secureprotol.he.fate_paillier import PaillierPublicKey
 
 
 class Host(object):

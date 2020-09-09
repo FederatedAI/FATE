@@ -17,7 +17,7 @@
 import random
 import math
 
-from federatedml.secureprotol.affine_encoder import AffineEncoder
+from federatedml.secureprotol.he.affine_encoder import AffineEncoder
 from federatedml.secureprotol import gmpy_math
 
 

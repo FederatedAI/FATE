@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 
-from federatedml.secureprotol.fate_paillier import PaillierKeypair
+from federatedml.secureprotol.he.fate_paillier import PaillierKeypair
 from federatedml.secureprotol.spdz.communicator import Communicator
 from federatedml.secureprotol.spdz.utils import NamingService
 from federatedml.secureprotol.spdz.utils import naming

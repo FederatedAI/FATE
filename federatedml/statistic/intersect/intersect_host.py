@@ -14,11 +14,9 @@
 #  limitations under the License.
 #
 
-import hashlib
-
 from fate_arch.session import computing_session as session
 from federatedml.secureprotol import gmpy_math
-from federatedml.secureprotol.encrypt import RsaEncrypt
+from federatedml.secureprotol.he.encrypt import RsaEncrypt
 #from federatedml.statistic.intersect.rsa_cache import cache_utils
 from federatedml.statistic.intersect import RawIntersect
 from federatedml.statistic.intersect import RsaIntersect

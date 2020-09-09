@@ -21,7 +21,7 @@ from scipy.sparse import csr_matrix
 
 from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
-from federatedml.secureprotol.fate_paillier import PaillierEncryptedNumber
+from federatedml.secureprotol.he.fate_paillier import PaillierEncryptedNumber
 
 
 def _one_dimension_dot(X, w):

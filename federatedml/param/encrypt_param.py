@@ -34,12 +34,17 @@ class EncryptParam(BaseParam):
     key_length : int, default: 1024
         Used to specify the length of key in this encryption method. Only needed when method is 'Paillier'
 
+    randomized : bool, default: False
+        Used for iterative affine encryption. If set to True, used randomized iterative affine cipher.
+        Only needed when method is 'iterativeaffine'
+
     """
 
-    def __init__(self, method=consts.PAILLIER, key_length=1024):
+    def __init__(self, method=consts.PAILLIER, key_length=1024, randomized=False):
         super(EncryptParam, self).__init__()
         self.method = method
         self.key_length = key_length
+        self.randomized = randomized
 
     def check(self):
         if self.method is not None and type(self.method).__name__ != "str":
@@ -64,6 +69,8 @@ class EncryptParam(BaseParam):
         elif self.key_length <= 0:
             raise ValueError(
                 "encrypt_param's key_length must be greater or equal to 1")
+
+        BaseParam.check_boolean(self.randomized, "encrypt param's randomized ")
 
         LOGGER.debug("Finish encrypt parameter check!")
         return True

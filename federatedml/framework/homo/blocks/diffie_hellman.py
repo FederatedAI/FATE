@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 from federatedml.framework.homo.blocks.base import HomoTransferBase
-from federatedml.secureprotol.diffie_hellman import DiffieHellman
+from federatedml.secureprotol.he.diffie_hellman import DiffieHellman
 from federatedml.util import consts
 
 

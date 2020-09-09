@@ -17,7 +17,7 @@
 import numpy as np
 import unittest
 
-from federatedml.secureprotol.affine import AffineCipher
+from federatedml.secureprotol.he.affine import AffineCipher
 
 
 class TestAffine(unittest.TestCase):
