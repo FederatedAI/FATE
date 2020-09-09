@@ -101,6 +101,7 @@ class ColumnExpand(ModelBase):
         new_metas["namespace"] = new_data.get_namespace()
         session.save_data_table_meta(new_metas, new_data.get_name(),
                                      new_data.get_namespace())
+        LOGGER.debug(f"new_data metas: {new_metas}")
 
         return new_data, new_header
 
