@@ -1,0 +1,41 @@
+{
+    "components" : {
+        "reader_0": {
+            "module": "Reader",
+            "output": {
+                "data": ["table"]
+            }
+         },
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                         "reader_0.table"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["dataio"]
+            },
+			"need_deploy": true
+         },
+        "hetero_kmeans_0": {
+            "module": "HeteroKmeans",
+            "input": {
+                "data": {
+                    "train_data": ["dataio_0.train"]
+                }
+            },
+            "output": {
+                "data": ["train_1", "train_2"],
+                "model": ["hetero_kmeans"]
+            }
+        },
+        "evaluation_0":{
+            "module":"Evaluation",
+            "input":{"data":{"data":["hetero_kmeans_0.train_1", "hetero_kmeans_0.train_2"]}}
+        }
+   }
+}

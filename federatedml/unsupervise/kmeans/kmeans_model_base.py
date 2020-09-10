@@ -47,12 +47,14 @@ class BaseKmeansModel(ModelBase):
         self.is_converged = False
         self.cluster_detail = None
         self.cluster_count = None
+        self.aggregator = None
 
     def _init_model(self, params):
         self.model_param = params
         self.k = params.k
         self.max_iter = params.max_iter
         self.tol = params.tol
+        self.aggregator.register_aggregator(self.transfer_variable)
 
     def get_header(self, data_instances):
         if self.header is not None:
@@ -116,7 +118,9 @@ class BaseKmeansModel(ModelBase):
         param_obj = list(model_dict.get('model').values())[0].get(self.model_param_name)
         meta_obj = list(model_dict.get('model').values())[0].get(self.model_meta_name)
         self.k = meta_obj.k
-        self.centroid_list = param_obj.centroid_detail
+        self.centroid_list = list(param_obj.centroid_detail)
+        for idx, c in enumerate(self.centroid_list):
+            self.centroid_list[idx] = list(c.centroid)
         # self.header = list(result_obj.header)
         # if self.header is None:
         #    return

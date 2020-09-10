@@ -71,7 +71,8 @@ class Arbiter(aggregator.Arbiter):
         result = tables[0]
         for table in tables[1:]:
             result = result.join(table, lambda x1, x2: x1 + x2)
-        return tables
+        LOGGER.debug(f"aggregate_result: {list(result.collect())[0]}")
+        return result
 
     def send_aggregated_tables(self, table, suffix=tuple()):
         for party in self._client_parties:
@@ -95,7 +96,13 @@ class Client(aggregator.Client):
 
     def __init__(self):
         super().__init__()
-        self._table_sync = TableTransferServer()
+        self._table_sync = TableTransferClient()
+
+    def register_aggregator(self, transfer_variables, enable_secure_aggregate=True):
+        super(Client, self).register_aggregator(transfer_variables, enable_secure_aggregate)
+        if self._enable_secure_aggregate:
+            self._cipher.set_amplify_factor(consts.SECURE_AGG_AMPLIFY_FACTOR)
+        return self
 
     def secure_aggregate(self, send_func, table, degree: float = None, enable_secure_aggregate=True):
         """
@@ -116,18 +123,23 @@ class Client(aggregator.Client):
             LOGGER.debug("Before cipher encrypted")
 
             rand_table = self._cipher.encrypt(zeros_table)
-            LOGGER.debug("Before cipher encrypted")
-
-            rand_table = computing_session.parallelize(list(zip(list_key, rand_table)),
+            LOGGER.debug(f"rand_table: {rand_table}")
+            rand_table = computing_session.parallelize(tuple(zip(list_key, rand_table)),
                                                        include_key=True,
                                                        partition=table.partitions)
+            LOGGER.debug(f"Before_join, table: {list(table.collect())[0]}")
             table = table.join(rand_table, lambda x, y: x + y)
+            LOGGER.debug(f"After_join, table: {list(table.collect())[0]}")
+
             LOGGER.debug("Finish add random numbers")
+
         send_func(table)
 
     def send_table(self, table, suffix=tuple()):
         def _func(_table):
+            LOGGER.debug(f"cipher table content: {list(_table.collect())[0]}")
             self._table_sync.send_tables(_table, suffix=suffix)
+        LOGGER.debug(f"plantext table content: {list(table.collect())[0]}")
 
         return self.secure_aggregate(send_func=_func,
                                      table=table,
