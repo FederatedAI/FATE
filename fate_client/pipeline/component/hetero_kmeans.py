@@ -33,6 +33,6 @@ class HeteroKmeasn(Component, KmeansParam):
         KmeansParam.__init__(self, **new_kwargs)
         self.input = Input(self.name, data_type="multi")
         self.output = Output(self.name)
-        self._module_name = "HeteroLR"
+        self._module_name = "HeteroKmeans"
 
 
