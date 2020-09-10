@@ -43,8 +43,8 @@
     ],
     "tasks": {
         "kmeans": {
-            "conf": "test_hetero_kmeans_train_job_conf.json",
-            "dsl": "test_hetero_kmeans_train_job_dsl.json"
+            "conf": "test_hetero_kmeans_job_conf.json",
+            "dsl": "test_hetero_kmeans_job_dsl.json"
         },
         "kmeans_validate": {
             "conf": "test_hetero_kmeans_validate_job_conf.json",
@@ -55,8 +55,8 @@
             "dsl": "test_kmeans_with_feature_engineering_dsl.json"
         },
         "kmeans_multi_host": {
-            "conf": "test_multi_host_job_conf.json",
-            "dsl": "test_hetero_kmeans_train_job_dsl.json"
+            "conf": "test_hetero_kmeans_job_multi_host_conf.json",
+            "dsl": "test_hetero_kmeans_job_dsl.json"
         },
         "kmeans-predict": {
             "conf": "test_predict_conf.json",

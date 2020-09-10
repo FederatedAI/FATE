@@ -59,8 +59,8 @@ class HeteroKmeansArbiter(BaseKmeansModel):
         return sum_result
 
     def cal_ave_dist(self, dist_cluster_dtable, cluster_result, k):
-        dist_centroid_dist_dtable = dist_cluster_dtable.mapPartitions(self.sum_in_cluster).reduce(self.sum_dict)
-        cluster_count = cluster_result.mapPartitions(self.count).reduce(self.sum_dict)
+        dist_centroid_dist_dtable = dist_cluster_dtable.applyPartitions(self.sum_in_cluster).reduce(self.sum_dict)
+        cluster_count = cluster_result.applyPartitions(self.count).reduce(self.sum_dict)
         cal_ave_dist_list = []
         for i in range(self.k):
             count = cluster_count[i]
@@ -125,6 +125,7 @@ class HeteroKmeansArbiter(BaseKmeansModel):
         dist_sum = self.aggregator.aggregate_tables(suffix=(self.n_iter_,))
         cluster_result = dist_sum.mapValues(lambda v: np.argmin(v))
         self.cal_dbi(dist_sum, cluster_result)
+        self.set_summary(self.get_model_summary())
 
     def predict(self, data_instances=None):
         LOGGER.info("Start predict ...")

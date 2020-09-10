@@ -43,8 +43,11 @@ class HeteroKmeansClient(BaseKmeansModel):
         return np.sum(np.square(u.features - centroid_list), axis=1)
 
     def get_centroid(self, data_instances):
+        random_key = []
         key = list(data_instances.mapValues(lambda data_instance: None).collect())
-        random_key = np.random.choice(key, self.k, replace=False)
+        random_list = list(np.random.choice(data_instances.count(), self.k, replace=False))
+        for k in random_list:
+            random_key.append(key[k][0])
         return random_key
 
     def cluster_count(self, iterator):
@@ -58,8 +61,8 @@ class HeteroKmeansClient(BaseKmeansModel):
 
     def centroid_cal(self, cluster_result, data_instances):
         cluster_result_dtable = data_instances.join(cluster_result, lambda v1, v2: [v1.features, v2])
-        centroid_feature_sum = cluster_result_dtable.mapPartitions(self.cluster_count).reduce(self.sum_dict)
-        cluster_count = cluster_result.mapPartitions(self.count).reduce(self.sum_dict)
+        centroid_feature_sum = cluster_result_dtable.applyPartitions(self.cluster_count).reduce(self.sum_dict)
+        cluster_count = cluster_result.applyPartitions(self.count).reduce(self.sum_dict)
         centroid_list = []
         cluster_count_list = []
         count_all = data_instances.count()
@@ -127,6 +130,7 @@ class HeteroKmeansClient(BaseKmeansModel):
         self.send_cluster_dist()
 
         LOGGER.debug(f"Final centroid list: {self.centroid_list}")
+        self.set_summary(self.get_model_summary())
 
     def send_cluster_dist(self):
         cluster_dist = self.centroid_dist(self.centroid_list)

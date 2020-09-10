@@ -197,3 +197,15 @@ class BaseKmeansModel(ModelBase):
                 data_output.schema = {"header": ["label", "predict_result"], "sid_name": schema.get('sid_name')}
             predict_datas = [data_output, None]
         return predict_datas
+
+    def get_model_summary(self):
+        header = self.header
+        if header is None:
+            summary = {"DBI": self.DBI}
+        else:
+            summary = {"k": self.k,
+                       "max_iter": self.n_iter_,
+                       "is_converged": self.is_converged,
+                       "centroid_list": self.centroid_list,
+                       "cluster_count": cluster_count}
+        return summary
