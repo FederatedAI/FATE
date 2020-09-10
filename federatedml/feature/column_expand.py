@@ -88,7 +88,7 @@ class ColumnExpand(ModelBase):
         return new_entry
 
     def _append_column(self, data):
-        # uses for FATE v.1.5.x
+        # uses for FATE v1.5.x
         append_value = self.new_feature_generator.generate()
         new_data = data.mapValues(lambda v: ColumnExpand._append_feature(v, append_value))
 

@@ -43,7 +43,7 @@ class ColumnExpandParam(BaseParam):
 
     """
 
-    def __init__(self,append_header=None, method="manual",
+    def __init__(self, append_header=None, method="manual",
                  fill_value=consts.FLOAT_ZERO, need_run=True):
         super(ColumnExpandParam, self).__init__()
         self.append_header = [] if append_header is None else append_header
