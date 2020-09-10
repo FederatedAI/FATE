@@ -207,5 +207,5 @@ class BaseKmeansModel(ModelBase):
                        "max_iter": self.n_iter_,
                        "is_converged": self.is_converged,
                        "centroid_list": self.centroid_list,
-                       "cluster_count": cluster_count}
+                       "cluster_count": self.cluster_count}
         return summary
