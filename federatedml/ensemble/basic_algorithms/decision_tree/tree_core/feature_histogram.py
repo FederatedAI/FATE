@@ -154,14 +154,14 @@ class FeatureHistogram(object):
         pass
 
     @staticmethod
-    def guest_accumulate_histogram(histograms, ):
+    def guest_accumulate_histogram(histograms):
         for i in range(1, len(histograms)):
             for j in range(len(histograms[i])):
                 histograms[i][j] += histograms[i - 1][j]
         return histograms
 
     @staticmethod
-    def host_accumulate_histogram_0(histograms, ):
+    def host_accumulate_histogram_0(histograms):
         new_hist = copy.deepcopy(histograms)
         for i in range(1, len(new_hist)):
             for j in range(len(new_hist[i])):
@@ -169,7 +169,7 @@ class FeatureHistogram(object):
         return new_hist
 
     @staticmethod
-    def host_accumulate_histogram_1(histograms, ):
+    def host_accumulate_histogram_1(histograms):
 
         new_hist = [[0, 0, 0] for i in range(len(histograms))]
         new_hist[0][0] = copy.deepcopy(histograms[0][0])
@@ -194,7 +194,8 @@ class FeatureHistogram(object):
                             bin_split_points, bin_sparse_points,
                             valid_features=None, node_map=None,
                             use_missing=False, zero_as_missing=False, ret="tensor"):
-        LOGGER.info("bin_shape is {}, node num is {}".format(bin_split_points.shape, len(node_map)),)
+
+        LOGGER.info("bin_shape is {}, node num is {}".format(bin_split_points.shape, len(node_map)))
 
         batch_histogram_cal = functools.partial(
             FeatureHistogram.batch_calculate_histogram,
