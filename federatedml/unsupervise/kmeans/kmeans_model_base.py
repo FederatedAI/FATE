@@ -73,6 +73,7 @@ class BaseKmeansModel(ModelBase):
         if header is None:
             param_protobuf_obj = hetero_kmeans_param_pb2.KmeansModelParam()
             return param_protobuf_obj
+
         cluster_detail = [hetero_kmeans_param_pb2.Clusterdetail(cluster=cluster) for cluster in self.cluster_count]
         centroid_detail = [hetero_kmeans_param_pb2.Centroiddetail(centroid=centroid) for centroid in self.centroid_list]
         param_protobuf_obj = hetero_kmeans_param_pb2.KmeansModelParam(count_of_clusters=self.k,
@@ -121,6 +122,11 @@ class BaseKmeansModel(ModelBase):
         self.centroid_list = list(param_obj.centroid_detail)
         for idx, c in enumerate(self.centroid_list):
             self.centroid_list[idx] = list(c.centroid)
+
+        self.cluster_count = list(param_obj.cluster_detail)
+        for idx, c in enumerate(self.cluster_count):
+            self.cluster_count[idx] = list(c.cluster)
+
         # self.header = list(result_obj.header)
         # if self.header is None:
         #    return

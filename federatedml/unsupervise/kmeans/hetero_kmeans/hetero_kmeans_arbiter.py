@@ -84,35 +84,33 @@ class HeteroKmeansArbiter(BaseKmeansModel):
             rs[k1] = max(v1[k1], v2[k1])
         return rs
 
+    def cal_dbi(self, dist_sum, cluster_result):
+        dist_cluster_dtable = dist_sum.join(cluster_result, lambda v1, v2: [v1, v2])
+        dist_table = self.cal_ave_dist(dist_cluster_dtable, cluster_result, self.k)  # ave dist in each cluster
+        cluster_dist = self.cluster_dist_aggregator.sum_model(suffix=(self.n_iter_,))
+        cluster_avg_intra_dist = []
+        for i in range(len(dist_table)):
+            cluster_avg_intra_dist.append(dist_table[i][2])
+        self.DBI = clustering_metric.DaviesBouldinIndex.compute(self, cluster_avg_intra_dist,
+                                                                list(cluster_dist._weights))
+        self.callback_dbi(self.n_iter_, self.DBI)
+
     def fit(self, data_instances=None, validate_data=None):
         LOGGER.info("Enter hetero Kmeans arbiter fit")
         while self.n_iter_ < self.max_iter:
-            # secure_dist_all_1 = self.transfer_variable.guest_dist.get(idx=0, suffix=(self.n_iter_,))
-            # secure_dist_all_2 = self.transfer_variable.host_dist.get(idx=0, suffix=(self.n_iter_,))
-            # dist_sum = secure_dist_all_1.join(secure_dist_all_2, lambda v1, v2: v1 + v2)
 
             dist_sum = self.aggregator.aggregate_tables(suffix=(self.n_iter_,))
             cluster_result = dist_sum.mapValues(lambda v: np.argmin(v))
             self.aggregator.send_aggregated_tables(cluster_result, suffix=(self.n_iter_,))
 
-            # self.transfer_variable.cluster_result.remote(cluster_result, role=consts.GUEST, idx=0,
-            #                                              suffix=(self.n_iter_,))
-            # self.transfer_variable.cluster_result.remote(cluster_result, role=consts.HOST, idx=0,
-            #                                              suffix=(self.n_iter_,))
+            self.cal_dbi(dist_sum, cluster_result)
 
-            dist_cluster_dtable = dist_sum.join(cluster_result, lambda v1, v2: [v1, v2])
-            dist_table = self.cal_ave_dist(dist_cluster_dtable, cluster_result, self.k)  # ave dist in each cluster
-            cluster_dist = self.cluster_dist_aggregator.sum_model(suffix=(self.n_iter_,))
-            cluster_avg_intra_dist = []
-            for i in range(len(dist_table)):
-                cluster_avg_intra_dist.append(dist_table[i][2])
-            self.DBI = clustering_metric.DaviesBouldinIndex.compute(self, cluster_avg_intra_dist,
-                                                                    list(cluster_dist._weights))
-            self.callback_dbi(self.n_iter_, self.DBI)
             tol1 = self.transfer_variable.guest_tol.get(idx=0, suffix=(self.n_iter_,))
             tol2 = self.transfer_variable.host_tol.get(idx=0, suffix=(self.n_iter_,))
             tol_final = tol1 + tol2
             self.is_converged = True if tol_final < self.tol else False
+            LOGGER.debug(f"iter: {self.n_iter_}, tol_final: {tol_final}, tol: {self.tol},"
+                         f" is_converge: {self.is_converged}")
             self.transfer_variable.arbiter_tol.remote(self.is_converged, role=consts.HOST, idx=-1,
                                                       suffix=(self.n_iter_,))
             self.transfer_variable.arbiter_tol.remote(self.is_converged, role=consts.GUEST, idx=0,
@@ -122,6 +120,11 @@ class HeteroKmeansArbiter(BaseKmeansModel):
 
             if self.is_converged:
                 break
+
+        # Synchronize final model
+        dist_sum = self.aggregator.aggregate_tables(suffix=(self.n_iter_,))
+        cluster_result = dist_sum.mapValues(lambda v: np.argmin(v))
+        self.cal_dbi(dist_sum, cluster_result)
 
     def predict(self, data_instances=None):
         LOGGER.info("Start predict ...")

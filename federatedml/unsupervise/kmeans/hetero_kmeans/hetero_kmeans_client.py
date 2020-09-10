@@ -114,26 +114,41 @@ class HeteroKmeansClient(BaseKmeansModel):
             d = functools.partial(self.educl_dist, centroid_list=self.centroid_list)
             dist_all_dtable = data_instances.mapValues(d)
 
-            # self.aggregator.send_table(dist_all_dtable, suffix=(self.n_iter_,))
-            # cluster_result = self.aggregator.get_aggregated_table(suffix=(self.n_iter_,))
-
             cluster_result = self.aggregator.aggregate_then_get(dist_all_dtable, suffix=(self.n_iter_, ))
+            self.send_cluster_dist()
 
             centroid_new, self.cluster_count = self.centroid_cal(cluster_result, data_instances)
-            self.centroid_list = centroid_new
-            self.cluster_result = cluster_result
-            cluster_dist = self.centroid_dist(self.centroid_list)
-            self.cluster_dist_aggregator.send_model(NumpyWeights(np.array(cluster_dist)), suffix=(self.n_iter_,))
+
+            # cluster_dist = self.centroid_dist(self.centroid_list)
+            # self.cluster_dist_aggregator.send_model(NumpyWeights(np.array(cluster_dist)), suffix=(self.n_iter_,))
             client_tol = np.sum(np.sum((np.array(self.centroid_list) - np.array(centroid_new)) ** 2, axis=1))
             self.client_tol.remote(client_tol, role=consts.ARBITER, idx=0, suffix=(self.n_iter_,))
             self.is_converged = self.transfer_variable.arbiter_tol.get(idx=0, suffix=(self.n_iter_,))
+
+            self.centroid_list = centroid_new
+            self.cluster_result = cluster_result
+
             self.n_iter_ += 1
 
             if self.is_converged:
                 break
+        # Synchronize final model
+        d = functools.partial(self.educl_dist, centroid_list=self.centroid_list)
+        dist_all_dtable = data_instances.mapValues(d)
+        self.aggregator.send_table(dist_all_dtable, suffix=(self.n_iter_,))
+        self.send_cluster_dist()
+
+        LOGGER.debug(f"Final centroid list: {self.centroid_list}")
+
+    def send_cluster_dist(self):
+        cluster_dist = self.centroid_dist(self.centroid_list)
+        self.cluster_dist_aggregator.send_model(NumpyWeights(np.array(cluster_dist)), suffix=(self.n_iter_,))
 
     def predict(self, data_instances):
         LOGGER.info("Start predict ...")
+        self.header = self.get_header(data_instances)
+        self._abnormal_detection(data_instances)
+        LOGGER.debug(f"centroid_list: {self.centroid_list}")
         d = functools.partial(self.educl_dist, centroid_list=self.centroid_list)
         dist_all_dtable = data_instances.mapValues(d)
         cluster_result = self.aggregator.aggregate_then_get(dist_all_dtable, suffix='predict')
