@@ -1,5 +1,5 @@
 {
-  "SecureInformationRetrievalTransferVariable": {
+  "federatedml.transfer_variable.transfer_class.secure_information_retrieval_transfer_variable.SecureInformationRetrievalTransferVariable": {
     "commutative_cipher_public_knowledge": {
       "src": "guest",
       "dst": [

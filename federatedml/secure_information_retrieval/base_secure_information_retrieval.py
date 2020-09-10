@@ -19,15 +19,12 @@
 import functools
 
 from federatedml.protobuf.generated import sir_meta_pb2, sir_param_pb2
-from arch.api.utils import log_utils
 from fate_flow.entity.metric import Metric, MetricMeta
 from federatedml.model_base import ModelBase
 from federatedml.param.sir_param import SecureInformationRetrievalParam
-from federatedml.util import abnormal_detection
+from federatedml.util import abnormal_detection, LOGGER
 from federatedml.transfer_variable.transfer_class.secure_information_retrieval_transfer_variable import \
     SecureInformationRetrievalTransferVariable
-
-LOGGER = log_utils.getLogger()
 
 
 MODEL_PARAM_NAME = 'SecureInformationRetrievalParam'

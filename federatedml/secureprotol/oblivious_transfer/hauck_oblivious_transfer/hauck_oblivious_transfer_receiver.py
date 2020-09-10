@@ -16,14 +16,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils import log_utils
+
 from federatedml.secureprotol.number_theory.group.twisted_edwards_curve_group import TwistedEdwardsCurveElement
 from federatedml.secureprotol.oblivious_transfer.base_oblivious_transfer import ObliviousTransferKey
 from federatedml.secureprotol.oblivious_transfer.hauck_oblivious_transfer.hauck_oblivious_transfer import \
     HauckObliviousTransfer
-from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import consts, LOGGER
 
 
 class HauckObliviousTransferReceiver(HauckObliviousTransfer):

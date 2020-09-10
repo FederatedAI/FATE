@@ -16,16 +16,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils import log_utils
+
 from federatedml.secure_information_retrieval.base_secure_information_retrieval import \
     BaseSecureInformationRetrieval, CryptoExecutor
 from federatedml.param.sir_param import SecureInformationRetrievalParam
 from federatedml.secureprotol.oblivious_transfer.hauck_oblivious_transfer.hauck_oblivious_transfer_sender import \
     HauckObliviousTransferSender
 from federatedml.secureprotol.symmetric_encryption.py_aes_encryption import AESEncryptKey
-from federatedml.util import consts, abnormal_detection
+from federatedml.util import consts, abnormal_detection, LOGGER
 
-LOGGER = log_utils.getLogger()
 
 MODEL_PARAM_NAME = 'SecureInformationRetrievalParam'
 MODEL_META_NAME = 'SecureInformationRetrievalMeta'

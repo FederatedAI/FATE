@@ -20,7 +20,6 @@ import random
 
 import numpy as np
 
-from arch.api.utils import log_utils
 from federatedml.feature.instance import Instance
 from federatedml.secure_information_retrieval.base_secure_information_retrieval import \
     BaseSecureInformationRetrieval, CryptoExecutor
@@ -29,9 +28,8 @@ from federatedml.secureprotol.oblivious_transfer.hauck_oblivious_transfer.hauck_
     HauckObliviousTransferReceiver
 from federatedml.secureprotol.symmetric_encryption.py_aes_encryption import AESDecryptKey
 from federatedml.secureprotol.symmetric_encryption.pohlig_hellman_encryption import PohligHellmanCipherKey
-from federatedml.util import consts, abnormal_detection
+from federatedml.util import consts, abnormal_detection, LOGGER
 
-LOGGER = log_utils.getLogger()
 
 MODEL_PARAM_NAME = 'SecureInformationRetrievalParam'
 MODEL_META_NAME = 'SecureInformationRetrievalMeta'
@@ -420,7 +418,13 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
     def _compensate_set_difference(self, original_data, data_output):
         self.coverage = data_output.count() / original_data.count()
         original_data = original_data.mapValues(lambda v: Instance(label="unretrieved", features=[]))
+        # LOGGER.debug(f"original data features is {list(original_data.collect())[0][1].features}")
+        # LOGGER.debug(f"original data label is {list(original_data.collect())[0][1].label}")
+
         data_output = original_data.union(data_output, lambda v, u: u)
+        # LOGGER.debug(f"data_output features after union is {list(data_output.collect())[0][1].features}")
+        # LOGGER.debug(f"data_output label after union is {list(data_output.collect())[0][1].label}")
+
         data_output = self._set_schema(data_output, id_name='id', label_name='retrieved_value')
         self._sync_coverage(original_data)
         return data_output
@@ -447,11 +451,11 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
             id_block = self._transmit_value_ciphertext(time=i)     # List[(Ei, Eval)]
             nonce_inst = self._sync_nonce_list(time=i)
 
-            if i != self.target_block_index:
-                id_block.destroy()
-            else:
-                id_block_ciphertext = id_block
-                nonce = nonce_inst
+            #if i != self.target_block_index:
+            #    id_block.destroy()
+            #else:
+            id_block_ciphertext = id_block
+            nonce = nonce_inst
 
             self.transfer_variable.block_confirm.remote(True,
                                                         suffix=(i,),
