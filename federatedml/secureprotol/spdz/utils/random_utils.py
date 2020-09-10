@@ -74,7 +74,9 @@ def _mix_rand_func(it, q_field):
 def urand_tensor(q_field, tensor, use_mix=False):
     if is_table(tensor):
         if use_mix:
-            return tensor.mapPartitions(functools.partial(_mix_rand_func, q_field=q_field), preserves_partitioning=True)
+            return tensor.mapPartitions(functools.partial(_mix_rand_func, q_field=q_field),
+                                        use_previous_behavior=False,
+                                        preserves_partitioning=True)
         return tensor.mapValues(
             lambda x: np.array([random.SystemRandom().randint(1, q_field) for _ in x], dtype=object))
     if isinstance(tensor, np.ndarray):
