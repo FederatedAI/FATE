@@ -27,41 +27,36 @@ class Data(BaseFlowAPI):
         kwargs['drop'] = int(kwargs['drop']) if int(kwargs['drop']) else 2
         kwargs['verbose'] = int(kwargs['verbose'])
         config_data, dsl_data = preprocess(**kwargs)
-        file_name = config_data.get('file')
-        if not os.path.isabs(file_name):
-            file_name = os.path.join(get_project_base_directory(), file_name)
-        if os.path.exists(file_name):
-            with open(file_name, 'rb') as fp:
-                data = MultipartEncoder(
-                    fields={'file': (os.path.basename(file_name), fp, 'application/octet-stream')}
-                )
-                tag = [0]
+        if config_data.get('use_local_data', 1):
+            file_name = config_data.get('file')
+            if not os.path.isabs(file_name):
+                file_name = os.path.join(get_project_base_directory(), file_name)
+            if os.path.exists(file_name):
+                with open(file_name, 'rb') as fp:
+                    data = MultipartEncoder(
+                        fields={'file': (os.path.basename(file_name), fp, 'application/octet-stream')}
+                    )
+                    tag = [0]
 
-                def read_callback(monitor):
-                    if config_data.get('verbose') == 1:
-                        sys.stdout.write(
-                            "\r UPLOADING:{0}{1}".format("|" * (monitor.bytes_read * 100 // monitor.len),
-                                                         '%.2f%%' % (monitor.bytes_read * 100 // monitor.len)))
-                        sys.stdout.flush()
-                        if monitor.bytes_read / monitor.len == 1:
-                            tag[0] += 1
-                            if tag[0] == 2:
-                                sys.stdout.write('\n')
+                    def read_callback(monitor):
+                        if config_data.get('verbose') == 1:
+                            sys.stdout.write(
+                                "\r UPLOADING:{0}{1}".format("|" * (monitor.bytes_read * 100 // monitor.len),
+                                                             '%.2f%%' % (monitor.bytes_read * 100 // monitor.len)))
+                            sys.stdout.flush()
+                            if monitor.bytes_read / monitor.len == 1:
+                                tag[0] += 1
+                                if tag[0] == 2:
+                                    sys.stdout.write('\n')
 
-                data = MultipartEncoderMonitor(data, read_callback)
-                response = self._post(url='data/upload', data=data,
+                    data = MultipartEncoderMonitor(data, read_callback)
+                    return self._post(url='data/upload', data=data,
                                       params=config_data, headers={'Content-Type': data.content_type})
-        else:
-            raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
-                            'please check the path: {}'.format(file_name))
-        try:
-            if response['retcode'] == 999:
-                start_cluster_standalone_job_server()
-                return self._post(url='data/upload', json=config_data)
             else:
-                return response
-        except:
-            pass
+                raise Exception('The file is obtained from the fate flow client machine, but it does not exist, '
+                                'please check the path: {}'.format(file_name))
+        else:
+            return self._post(url='data/upload', json=config_data)
 
     def download(self, conf_path):
         kwargs = locals()

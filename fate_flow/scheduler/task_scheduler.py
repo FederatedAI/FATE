@@ -13,11 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from fate_arch.common import FederatedComm
+from fate_arch.common import FederatedCommunicationType
 from fate_flow.entity.types import TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, FederatedSchedulingStatusCode
-from fate_flow.settings import API_VERSION, ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH
 from fate_flow.utils import job_utils
-from fate_flow.utils.api_utils import federated_api
 from fate_flow.scheduler import FederatedScheduler
 from fate_flow.operation import JobSaver
 from fate_arch.common.log import schedule_logger
@@ -32,7 +30,7 @@ class TaskScheduler(object):
         waiting_tasks = []
         for initiator_task in initiator_tasks_group.values():
             # collect all party task party status
-            if job.f_runtime_conf["job_parameters"]["federated_comm"] == FederatedComm.PULL:
+            if job.f_runtime_conf["job_parameters"]["federated_status_collect_type"] == FederatedCommunicationType.PULL:
                 tasks_on_all_party = JobSaver.query_task(task_id=initiator_task.f_task_id, task_version=initiator_task.f_task_version)
                 tasks_status_on_all = set([task.f_status for task in tasks_on_all_party])
                 if len(tasks_status_on_all) > 1 or TaskStatus.RUNNING in tasks_status_on_all:
@@ -65,7 +63,6 @@ class TaskScheduler(object):
                 # can start task
                 scheduling_status_code = SchedulingStatusCode.HAVE_NEXT
                 status_code = cls.start_task(job=job, task=waiting_task)
-                #initiator_tasks_group[JobSaver.task_key(waiting_task.f_task_id, role=waiting_task.f_role, party_id=waiting_task.f_party_id)] = waiting_task
                 if status_code == SchedulingStatusCode.NO_RESOURCE:
                     # Wait for the next round of scheduling
                     break
@@ -106,49 +103,6 @@ class TaskScheduler(object):
             for _party_id, party_response in federated_response[_role].items():
                 JobSaver.update_task_status(task_info=party_response["data"])
                 JobSaver.update_task(task_info=party_response["data"])
-
-    @classmethod
-    def align_task_parameters(cls, job_id, job_parameters, job_initiator, job_args, component, task_id):
-        parameters = component.get_role_parameters()
-        component_name = component.get_name()
-        extra_task_parameters = {'input_data_partition': 0}  # Large integers are not used
-        for role, partys_parameters in parameters.items():
-            for party_index in range(len(partys_parameters)):
-                party_parameters = partys_parameters[party_index]
-                if role in job_args:
-                    party_job_args = job_args[role][party_index]['args']
-                else:
-                    party_job_args = {}
-                dest_party_id = party_parameters.get('local', {}).get('party_id')
-                if job_parameters.get('align_task_input_data_partition', ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH):
-                    response = federated_api(job_id=job_id,
-                                             method='POST',
-                                             endpoint='/schedule/{}/{}/{}/{}/{}/input/args'.format(
-                                                 job_id,
-                                                 component_name,
-                                                 task_id,
-                                                 role,
-                                                 dest_party_id),
-                                             src_party_id=job_initiator['party_id'],
-                                             dest_party_id=dest_party_id,
-                                             src_role=job_initiator['role'],
-                                             json_body={'job_parameters': job_parameters,
-                                                        'job_args': party_job_args,
-                                                        'input': component.get_input()},
-                                             work_mode=job_parameters['work_mode'])
-                    if response['retcode'] == 0:
-                        for input_data in response.get('data', {}).get('data', {}).values():
-                            for data_table_info in input_data.values():
-                                if data_table_info and not isinstance(data_table_info, list):
-                                    partitions = data_table_info['partitions']
-                                    if extra_task_parameters['input_data_partition'] == 0 or partitions < extra_task_parameters['input_data_partition']:
-                                        extra_task_parameters['input_data_partition'] = partitions
-                    else:
-                        raise Exception('job {} component {} align task parameters failed on {} {}'.format(job_id,
-                                                                                                           component_name,
-                                                                                                           role,
-                                                                                                           dest_party_id))
-        return extra_task_parameters
 
     @classmethod
     def federated_task_status(cls, job_id, task_id, task_version):

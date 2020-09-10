@@ -14,14 +14,13 @@
 #  limitations under the License.
 #
 from fate_arch.common.address import StandaloneAddress
-from fate_arch.common.profile import log_elapsed
-from fate_arch.storage import StorageSessionBase
+from fate_arch.storage import StorageSessionBase, StorageEngine
 from fate_arch.abc import AddressABC
 
 
 class StorageSession(StorageSessionBase):
     def __init__(self, session_id, options=None):
-        super(StorageSession, self).__init__(session_id=session_id)
+        super(StorageSession, self).__init__(session_id=session_id, engine_name=StorageEngine.STANDALONE)
         self._options = options if options else {}
         self._session = None
 
@@ -32,17 +31,15 @@ class StorageSession(StorageSessionBase):
     def table(self, address: AddressABC, name, namespace, partitions, storage_type=None, options=None, **kwargs):
         if isinstance(address, StandaloneAddress):
             from fate_arch.storage.standalone._table import StorageTable
-            return StorageTable(session=self._session, name=name, namespace=namespace, address=address, partitions=partitions, storage_type=storage_type, options=options)
+            return StorageTable(session=self._session, name=name, namespace=namespace, address=address,
+                                partitions=partitions, storage_type=storage_type, options=options)
         raise NotImplementedError(f"address type {type(address)} not supported with standalone storage")
 
-    @log_elapsed
     def cleanup(self, name, namespace):
         self._session.cleanup(name=name, namespace=namespace)
 
-    @log_elapsed
     def stop(self):
         self._session.stop()
 
-    @log_elapsed
     def kill(self):
         self._session.kill()

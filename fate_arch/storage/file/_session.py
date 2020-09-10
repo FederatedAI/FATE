@@ -14,11 +14,9 @@
 #  limitations under the License.
 #
 
-from fate_arch.common.profile import log_elapsed
 from fate_arch.storage import StorageSessionBase
 from fate_arch.abc import AddressABC
 from fate_arch.common.address import FileAddress
-
 
 
 class StorageSession(StorageSessionBase):
@@ -34,17 +32,15 @@ class StorageSession(StorageSessionBase):
             from fate_arch.storage.file._table import StorageTable
             if not options:
                 options = self.options
-            return StorageTable(address=address, name=name, namespace=namespace, partitions=partitions, storage_type=storage_type, options=options)
+            return StorageTable(address=address, name=name, namespace=namespace, partitions=partitions,
+                                storage_type=storage_type, options=options)
         raise NotImplementedError(f"address type {type(address)} not supported with hdfs storage")
 
-    @log_elapsed
     def cleanup(self, name, namespace):
         pass
 
-    @log_elapsed
     def stop(self):
         pass
 
-    @log_elapsed
     def kill(self):
         pass

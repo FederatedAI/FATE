@@ -16,13 +16,14 @@
 
 
 from eggroll.core.session import session_init
-from eggroll.roll_pair.roll_pair import RollPairContext
+from eggroll.roll_pair.roll_pair import runtime_init
+
 from fate_arch.abc import AddressABC, CSessionABC
 from fate_arch.common import WorkMode
-from fate_arch.common.log import getLogger
-from fate_arch.common.profile import log_elapsed
-from fate_arch.computing.eggroll import Table
 from fate_arch.common.base_utils import fate_uuid
+from fate_arch.common.log import getLogger
+from fate_arch.common.profile import computing_profile
+from fate_arch.computing.eggroll import Table
 
 LOGGER = getLogger()
 
@@ -36,7 +37,7 @@ class CSession(CSessionABC):
         elif work_mode == WorkMode.CLUSTER:
             options['eggroll.session.deploy.mode'] = "cluster"
         self._rp_session = session_init(session_id=session_id, options=options)
-        self._rpc = RollPairContext(session=self._rp_session)
+        self._rpc = runtime_init(session=self._rp_session)
         self._session_id = self._rp_session.get_session_id()
 
     def get_rpc(self):
@@ -46,7 +47,7 @@ class CSession(CSessionABC):
     def session_id(self):
         return self._session_id
 
-    @log_elapsed
+    @computing_profile
     def load(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
 
         from fate_arch.common.address import EggRollAddress
@@ -74,7 +75,7 @@ class CSession(CSessionABC):
 
         raise NotImplementedError(f"address type {type(address)} not supported with eggroll backend")
 
-    @log_elapsed
+    @computing_profile
     def parallelize(self, data, partition: int, include_key: bool, **kwargs) -> Table:
         options = dict()
         options["total_partitions"] = partition
@@ -82,14 +83,11 @@ class CSession(CSessionABC):
         rp = self._rpc.parallelize(data=data, options=options)
         return Table(rp)
 
-    @log_elapsed
     def cleanup(self, name, namespace):
         self._rpc.cleanup(name=name, namespace=namespace)
 
-    @log_elapsed
     def stop(self):
         return self._rp_session.stop()
 
-    @log_elapsed
     def kill(self):
         return self._rp_session.kill()

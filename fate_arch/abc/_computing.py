@@ -68,6 +68,13 @@ class CTableABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
+    def mapReducePartitions(self, mapper, reducer, **kwargs):
+        ...
+
+    def applyPartitions(self, func):
+        ...
+
+    @abc.abstractmethod
     def flatMap(self, func):
         ...
 

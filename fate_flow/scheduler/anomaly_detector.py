@@ -13,17 +13,22 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from fate_arch.storage import StorageSessionBase
 from fate_arch.common.log import schedule_logger
 from fate_flow.scheduler import FederatedScheduler
 from fate_flow.entity.types import JobStatus, TaskStatus
-from fate_flow.settings import detect_logger, API_VERSION
-from fate_flow.utils import cron, job_utils, api_utils
+from fate_flow.settings import detect_logger
+from fate_flow.utils import cron, job_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation import JobSaver
 
 
-class JobDetector(cron.Cron):
+class AnomalyDetector(cron.Cron):
     def run_do(self):
+        self.detect_running_task()
+        self.detect_running_job()
+
+    def detect_running_task(self):
         try:
             running_tasks = JobSaver.query_task(party_status=TaskStatus.RUNNING, run_on=True, run_ip=RuntimeConfig.JOB_SERVER_HOST, only_latest=False)
             stop_job_ids = set()
@@ -62,3 +67,30 @@ class JobDetector(cron.Cron):
             detect_logger.exception(e)
         finally:
             detect_logger.info('finish detect running job')
+
+    def detect_running_job(self):
+        try:
+            running_jobs = JobSaver.query_job(status=JobStatus.RUNNING, is_initiator=True)
+            stop_jobs = set()
+            for job in running_jobs:
+                try:
+                    is_timeout = job_utils.check_job_is_timeout(job)
+                    if is_timeout:
+                        detect_logger.info('job {} timeout detected'.format(job.f_job_id))
+                        schedule_logger(job_id=job.f_job_id).info('job {} timeout detected'.format(job.f_job_id))
+                        stop_jobs.add(job)
+                except Exception as e:
+                    detect_logger.exception(e)
+            for job in stop_jobs:
+                schedule_logger().info('start to stop job {}'.format(job.f_job_id))
+                status_code, response = FederatedScheduler.request_stop_job(job=job, stop_status=JobStatus.TIMEOUT)
+                schedule_logger(job_id=job.f_job_id).info(f"detector request stop job success")
+        except Exception as e:
+            detect_logger.exception(e)
+        finally:
+            detect_logger.info('finish detect running job')
+
+    def detect_expired_session(self):
+        sessions_record = StorageSessionBase.query_expired_sessions_record(ttl=30 * 60 * 1000)
+        for session_record in sessions_record:
+            job_utils.start_session_stop()

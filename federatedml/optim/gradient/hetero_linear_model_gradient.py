@@ -112,7 +112,7 @@ def compute_gradient(data_instances, fore_gradient, fit_intercept):
     f = functools.partial(__compute_partition_gradient,
                           fit_intercept=fit_intercept,
                           is_sparse=is_sparse)
-    gradient_partition = feat_join_grad.mapPartitions(f)
+    gradient_partition = feat_join_grad.applyPartitions(f)
     gradient_partition = gradient_partition.reduce(lambda x, y: x + y)
 
     gradient = gradient_partition / data_instances.count()

@@ -28,6 +28,7 @@ from federatedml.protobuf.generated import feature_selection_meta_pb2
 from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util import fate_operator
+from federatedml.util import anonymous_generator
 from federatedml.util.component_properties import ComponentProperties
 
 
@@ -267,7 +268,7 @@ class FederatedIsoModelFilter(IsoModelFilter):
         return self
 
     def decode_func(self, encoded_name):
-        fid = fate_operator.reconstruct_fid(encoded_name)
+        fid = anonymous_generator.reconstruct_fid(encoded_name)
         return self.selection_properties.header[fid]
 
     def _sync_select_info(self, suffix):
@@ -280,7 +281,7 @@ class FederatedIsoModelFilter(IsoModelFilter):
             encoded_names = []
             for col_name in self.selection_properties.select_col_names:
                 fid = self.selection_properties.col_name_maps[col_name]
-                encoded_names.append(fate_operator.generate_anonymous(
+                encoded_names.append(anonymous_generator.generate_anonymous(
                     fid=fid, role=self.role, party_id=self.party_id
                 ))
             LOGGER.debug(f"Before send, encoded_names: {encoded_names},"

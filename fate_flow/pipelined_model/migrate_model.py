@@ -14,15 +14,16 @@
 #  limitations under the License.
 #
 import os
-import base64
 import shutil
+from ruamel import yaml
 from datetime import datetime
 
-from federatedml.protobuf.generated import pipeline_pb2
+from fate_flow.db.db_models import DB, MachineLearningModelInfo as MLModel
 from fate_flow.pipelined_model import pipelined_model
 from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_arch.common.file_utils import get_project_base_directory
 from fate_flow.utils import model_utils
+# from federatedml.protobuf.model_migrate.model_migrate import model_migration
 
 
 def gen_model_file_path(model_id, model_version):
@@ -71,46 +72,90 @@ def migration(config_data: dict):
         if not model.exists():
             raise Exception("Can not found {} {} model local cache".format(config_data["model_id"],
                                                                            config_data["model_version"]))
+        with DB.connection_context():
+            if MLModel.get_or_none(MLModel.f_model_version == config_data["unify_model_version"]):
+                raise Exception("Unify model version {} has been occupied in database. "
+                                "Please choose another unify model version and try again.".format(
+                    config_data["unify_model_version"]))
+
         model_data = model.collect_models(in_bytes=True)
         if "pipeline.pipeline:Pipeline" not in model_data:
             raise Exception("Can not found pipeline file in model.")
 
-        buffer_object_bytes = base64.b64decode(model_data["pipeline.pipeline:Pipeline"].encode())
-        pipeline = pipeline_pb2.Pipeline()
-        pipeline.ParseFromString(buffer_object_bytes)
-        train_runtime_conf = json_loads(pipeline.train_runtime_conf)
-    except Exception as e:
-        return 100, str(e), {}
-    else:
-        # Generate 1. new job_id as new model version, 2. new model id (file path)
-        previous_model_path = model.model_path
+        migrate_model = pipelined_model.PipelinedModel(model_id=model_utils.gen_party_model_id(model_id=model_utils.gen_model_id(config_data["migrate_role"]),
+                                                                                               role=config_data["local"]["role"],
+                                                                                               party_id=config_data["local"]["migrate_party_id"]),
+                                                       model_version=config_data["unify_model_version"])
 
-        model.model_id = model_utils.gen_party_model_id(model_id=model_utils.gen_model_id(config_data["migrate_role"]),
-                                                        role=config_data["local"]["role"],
-                                                        party_id=config_data["local"]["migrate_party_id"])
-        model.model_version = config_data["unify_model_version"]
+        # migrate_model.create_pipelined_model()
+        shutil.copytree(src=model.model_path, dst=migrate_model.model_path)
 
-        # Copy the older version of files of models to the new dirpath
-        model.set_model_path()
-        shutil.copytree(src=previous_model_path, dst=model.model_path)
+        pipeline = migrate_model.read_component_model('pipeline', 'pipeline')['Pipeline']
 
         # Utilize Pipeline_model collect model data. And modify related inner information of model
+        train_runtime_conf = json_loads(pipeline.train_runtime_conf)
         train_runtime_conf["role"] = config_data["migrate_role"]
         train_runtime_conf["job_parameters"]["model_id"] = model_utils.gen_model_id(train_runtime_conf["role"])
-        train_runtime_conf["job_parameters"]["model_version"] = model.model_version
+        train_runtime_conf["job_parameters"]["model_version"] = migrate_model.model_version
+        train_runtime_conf["initiator"] = config_data["migrate_initiator"]
 
+        # update pipeline.pb file
         pipeline.train_runtime_conf = json_dumps(train_runtime_conf, byte=True)
         pipeline.model_id = bytes(train_runtime_conf["job_parameters"]["model_id"], "utf-8")
         pipeline.model_version = bytes(train_runtime_conf["job_parameters"]["model_version"], "utf-8")
-        model.save_pipeline(pipeline)
-        shutil.copyfile(os.path.join(model.model_path, "pipeline.pb"),
-                        os.path.join(model.model_path, "variables", "data", "pipeline", "pipeline", "Pipeline"))
 
-        return 0, "Migrating model successfully. " \
+        # save updated pipeline.pb file
+        migrate_model.save_pipeline(pipeline)
+        shutil.copyfile(os.path.join(migrate_model.model_path, "pipeline.pb"),
+                        os.path.join(migrate_model.model_path, "variables", "data", "pipeline", "pipeline", "Pipeline"))
+
+        # modify proto
+        with open(os.path.join(migrate_model.model_path, 'define', 'define.yaml'), 'r') as fin:
+            define_yaml = yaml.safe_load(fin)
+
+        for key, value in define_yaml['model_proto'].items():
+            if key == 'pipeline':
+                continue
+            for v in value.keys():
+                buffer_obj = migrate_model.read_component_model(key, v)
+                module_name = define_yaml['component_define'].get(key, {}).get('module_name')
+                modified_buffer = model_migration(model_contents=buffer_obj,
+                                                  module_name=module_name,
+                                                  old_guest_list=config_data['role']['guest'],
+                                                  new_guest_list=config_data['migrate_role']['guest'],
+                                                  old_host_list=config_data['role']['host'],
+                                                  new_host_list=config_data['migrate_role']['host'],
+                                                  old_arbiter_list=config_data.get('role', {}).get('arbiter', None),
+                                                  new_arbiter_list=config_data.get('migrate_role', {}).get('arbiter', None))
+                migrate_model.save_component_model(component_name=key, component_module_name=module_name,
+                                                   model_alias=v, model_buffers=modified_buffer)
+
+        with DB.connection_context():
+            MLModel.create(
+                f_role=config_data["local"]["role"],
+                f_party_id=config_data["local"]["migrate_party_id"],
+                f_roles=config_data["migrate_role"],
+                f_job_id=train_runtime_conf["job_parameters"]["model_version"],
+                f_model_id=train_runtime_conf["job_parameters"]["model_id"],
+                f_model_version=train_runtime_conf["job_parameters"]["model_version"],
+                f_initiator_role=config_data["migrate_initiator"]["role"],
+                f_initiator_party_id=config_data["migrate_initiator"]["party_id"],
+                f_runtime_conf=train_runtime_conf,
+                f_work_mode=train_runtime_conf["job_parameters"]["work_mode"],
+                f_dsl=json_loads(pipeline.train_dsl),
+                f_migrated=1,
+                f_job_status='complete'
+            )
+
+        return (0, "Migrating model successfully. " \
                   "The configuration of model has been modified automatically. " \
                   "New model id is: {}, model version is: {}. " \
-                  "Model files can be found at '{}'.".format(
-            train_runtime_conf["job_parameters"]["model_id"],
-            model.model_version, model.model_path), {"model_id": model.model_id,
-                                                     "model_version": model.model_version,
-                                                     "path": model.model_path}
+                  "Model files can be found at '{}'.".format(train_runtime_conf["job_parameters"]["model_id"],
+                                                             migrate_model.model_version,
+                                                             migrate_model.model_path),
+                {"model_id": migrate_model.model_id,
+                 "model_version": migrate_model.model_version,
+                 "path": migrate_model.model_path})
+
+    except Exception as e:
+        return 100, str(e), {}

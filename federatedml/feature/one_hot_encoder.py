@@ -138,7 +138,7 @@ class OneHotEncoder(ModelBase):
         f1 = functools.partial(self.record_new_header,
                                inner_param=self.inner_param)
 
-        self.col_maps = data_instances.mapPartitions(f1).reduce(self.merge_col_maps)
+        self.col_maps = data_instances.applyPartitions(f1).reduce(self.merge_col_maps)
         LOGGER.debug("Before set_schema in fit, schema is : {}, header: {}".format(self.schema,
                                                                                    self.inner_param.header))
         self._transform_schema()

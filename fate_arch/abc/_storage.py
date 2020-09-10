@@ -74,6 +74,18 @@ class StorageTableMetaABC(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
+    def get_in_serialized(self):
+        ...
+
+    @abc.abstractmethod
+    def get_id_delimiter(self):
+        ...
+
+    @abc.abstractmethod
+    def get_have_head(self):
+        ...
+
+    @abc.abstractmethod
     def get_schema(self):
         ...
 
@@ -140,6 +152,10 @@ class StorageTableABC(metaclass=abc.ABCMeta):
         ...
 
     @abc.abstractmethod
+    def read(self) -> list:
+        ...
+
+    @abc.abstractmethod
     def count(self):
         ...
 
@@ -160,6 +176,10 @@ class StorageSessionABC(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_storage_info(self, name, namespace):
+        ...
+
+    @abc.abstractmethod
+    def query_expired_sessions_record(self, ttl) -> []:
         ...
 
     @abc.abstractmethod

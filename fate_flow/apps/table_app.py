@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 from fate_arch import storage
-from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.settings import stat_logger
 from flask import Flask, request
@@ -28,18 +27,18 @@ def internal_server_error(e):
     return get_json_result(retcode=100, retmsg=str(e))
 
 
-@manager.route('/registry')
-def table_registry():
+@manager.route('/add', methods=['post'])
+def table_add():
     request_data = request.json
     address_dict = request_data.get('address')
-    storage_engine = request_data.get('storage_engine')
-    table_name = request_data.get('table_name')
+    engine = request_data.get('engine')
+    name = request_data.get('name')
     namespace = request_data.get('namespace')
-    address = storage.StorageTableMeta.create_address(storage_engine=storage_engine, address_dict=address_dict)
-    with storage.Session.build(storage_engine=storage_engine, options=request_data.get("options")) as storage_session:
-        storage_session.create_table(address=address, name=table_name, namespace=namespace, partitions=request_data.get('partitions'),
-                                     is_kv_storage=request_data.get('is_kv_storage', 0), is_serialize=request_data.get('is_serialize', 0))
-    return get_json_result(data={"table_name": table_name, "namespace": namespace})
+    address = storage.StorageTableMeta.create_address(storage_engine=engine, address_dict=address_dict)
+    with storage.Session.build(storage_engine=engine, options=request_data.get("options")) as storage_session:
+        storage_session.create_table(address=address, name=name, namespace=namespace, partitions=request_data.get('partitions', None),
+                                     hava_head=request_data.get('head', 1), in_serialized=False)
+    return get_json_result(data={"table_name": name, "namespace": namespace})
 
 
 @manager.route('/delete', methods=['post'])
@@ -47,17 +46,18 @@ def table_delete():
     request_data = request.json
     table_name = request_data.get('table_name')
     namespace = request_data.get('namespace')
-    table = get_table(name=table_name, namespace=namespace)
-    if table:
-        table.destroy()
-        data = {'table_name': table_name, 'namespace': namespace}
-        try:
-            table.close()
-        except Exception as e:
-            stat_logger.exception(e)
-    else:
-        return get_json_result(retcode=101, retmsg='no find table')
-    return get_json_result(data=data)
+    with storage.Session.build(name=table_name, namespace=namespace) as storage_session:
+        table = storage_session.get_table()
+        if table:
+            table.destroy()
+            data = {'table_name': table_name, 'namespace': namespace}
+            try:
+                table.close()
+            except Exception as e:
+                stat_logger.exception(e)
+            return get_json_result(data=data)
+        else:
+            return get_json_result(retcode=101, retmsg='no find table')
 
 
 @manager.route('/<table_func>', methods=['post'])

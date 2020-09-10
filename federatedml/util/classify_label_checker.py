@@ -51,7 +51,7 @@ class ClassifyLabelChecker(object):
         labels : list, the distince labels
 
         """
-        class_set = data_inst.mapPartitions(ClassifyLabelChecker.get_all_class).reduce(lambda x, y: x | y)
+        class_set = data_inst.applyPartitions(ClassifyLabelChecker.get_all_class).reduce(lambda x, y: x | y)
 
         num_class = len(class_set)
         if len(class_set) > consts.MAX_CLASSNUM:

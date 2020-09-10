@@ -3,7 +3,8 @@ import numpy as np
 from federatedml.feature.feature_selection.model_adapter import isometric_model
 from federatedml.feature.feature_selection.model_adapter.adapter_base import BaseAdapter
 from federatedml.util import consts
-from federatedml.util.fate_operator import generate_anonymous
+# from federatedml.util.fate_operator import generate_anonymous
+from federatedml.util.anonymous_generator import generate_anonymous
 
 
 def feature_importance_converter(model_meta, model_param):

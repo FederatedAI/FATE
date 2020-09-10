@@ -49,7 +49,6 @@ def stop_job(job_id, role, party_id, stop_status):
         job.f_status = stop_status
         status_code, response = FederatedScheduler.stop_job(job=jobs[0], stop_status=stop_status)
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
-            FederatedScheduler.sync_job_status(job=job)
             return get_json_result(retcode=0, retmsg='success')
         else:
             return get_json_result(retcode=RetCode.FEDERATED_ERROR, retmsg=json_dumps(response))
