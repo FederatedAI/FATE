@@ -76,10 +76,10 @@ class Upload(object):
             if self.parameters.get("destroy", False):
                 table = storage_session.get_table()
                 if table:
-                    LOGGER.info(f"destroy table {name} {namespace}")
+                    LOGGER.info(f"destroy table name: {name} namespace: {namespace}")
                     table.destroy()
                 else:
-                    LOGGER.info(f"can not found table {name} {namespace}, pass destroy")
+                    LOGGER.info(f"can not found table name: {name} namespace: {namespace}, pass destroy")
         address_dict = storage_address.copy()
         with storage.Session.build(session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version, self.tracker.role, self.tracker.party_id, suffix="storage", random_end=True),
                                    storage_engine=storage_engine, options=self.parameters.get("options")) as storage_session:
