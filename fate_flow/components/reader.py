@@ -141,7 +141,7 @@ class Reader(object):
                                                                        address_dict=address_dict)
                 output_table_engine = StorageEngine.EGGROLL
             elif computing_engine == ComputingEngine.SPARK:
-                address_dict["path"] = data_utils.default_output_path(name=output_name, namespace=output_namespace)
+                address_dict["path"] = data_utils.default_output_fs_path(name=output_name, namespace=output_namespace, prefix=address_dict.get("path_prefix"))
                 output_table_address = StorageTableMeta.create_address(storage_engine=StorageEngine.HDFS,
                                                                        address_dict=address_dict)
                 output_table_engine = StorageEngine.HDFS

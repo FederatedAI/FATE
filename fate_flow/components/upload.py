@@ -88,7 +88,7 @@ class Upload(object):
             elif storage_engine in {StorageEngine.MYSQL}:
                 upload_address = {"db": namespace, "name": name}
             elif storage_engine in {StorageEngine.HDFS}:
-                upload_address = {"path": data_utils.default_input_path(name=name, namespace=namespace)}
+                upload_address = {"path": data_utils.default_input_fs_path(name=name, namespace=namespace, prefix=address_dict.get("path_prefix"))}
             else:
                 raise RuntimeError(f"can not support this storage engine: {storage_engine}")
             address_dict.update(upload_address)

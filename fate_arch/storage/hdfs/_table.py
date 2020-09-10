@@ -153,7 +153,7 @@ class StorageTable(StorageTableBase):
 
     @classmethod
     def generate_hdfs_path(cls, address: HDFSAddress):
-        hdfs_path = "/".join([address.name_node, address.path_prefix, address.path]) if address.path_prefix else "/".join([address.name_node, address.path])
+        hdfs_path = f"{address.name_node}/{address.path}"
         LOGGER.info(f"hdfs path is {hdfs_path}")
         return hdfs_path
 
