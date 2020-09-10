@@ -72,7 +72,7 @@ class StorageTable(StorageTableBase):
         path, fs = StorageTable.get_hadoop_fs(sc=self._context, address=self._address)
         if fs.exists(path):
             if destroy_if_exists:
-                self.destroy()
+                fs.delete(path)
                 out = fs.create(path)
             else:
                 raise RuntimeError(f"file {path} already exists")
