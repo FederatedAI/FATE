@@ -86,13 +86,13 @@ class Table(CTableABC):
         return Table(self._table.applyPartitions(func))
 
     @computing_profile
-    def mapPartitions(self, func, use_previous_behavior=True):
+    def mapPartitions(self, func, use_previous_behavior=True, preserves_partitioning=False):
         if use_previous_behavior is True:
             LOGGER.warning(f"please use `applyPartitions` instead of `mapPartitions` "
                            f"if the previous behavior was expected. "
                            f"The previous behavior will not work in future")
             return self.applyPartitions(func)
-        return Table(self._table.mapPartitions(func))
+        return Table(self._table.mapPartitions(func, preserves_partitioning=preserves_partitioning))
 
     @computing_profile
     def mapReducePartitions(self, mapper, reducer, **kwargs):
