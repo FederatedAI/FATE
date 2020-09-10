@@ -118,7 +118,8 @@ class ColumnExpand(ModelBase):
         header = data.get_meta("header")
         if header is None or len(header) == 0:
             new_header = DELIMITER.join(self.append_header)
-            new_metas["sid"] = data.get_meta("sid").strip()
+            if data.get_meta("sid") is not None:
+                new_metas["sid"] = data.get_meta("sid").strip()
         else:
             new_header = DELIMITER.join(header.split(DELIMITER) + self.append_header)
         new_metas["header"] = new_header
