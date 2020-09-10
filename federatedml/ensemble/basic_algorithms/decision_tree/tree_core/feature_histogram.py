@@ -215,7 +215,7 @@ class FeatureHistogram(object):
             return FeatureHistogram.construct_table(histograms_table)
 
     @staticmethod
-    def aggregate_histogram(fid_histogram1, fid_histogram2):
+    def aggregate_histogram(fid_histogram1, fid_histogram2, node_map):
 
         fid_1, histogram1 = fid_histogram1
         fid_2, histogram2 = fid_histogram2
