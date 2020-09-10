@@ -80,7 +80,11 @@ class ColumnExpand(ModelBase):
 
     @staticmethod
     def _append_feature(entry, append_value):
-        new_entry = entry + DELIMITER + append_value
+        # empty content
+        if len(entry) == 0:
+            new_entry = append_value
+        else:
+            new_entry = entry + DELIMITER + append_value
         return new_entry
 
     def _append_column(self, data):
@@ -92,6 +96,8 @@ class ColumnExpand(ModelBase):
         header = new_schema.get("header", "")
         if len(header) == 0:
             new_header = DELIMITER.join(self.append_header)
+            if new_schema.get("sid", None) is not None:
+                new_schema["sid"] = new_schema.get("sid").strip()
         else:
             new_header = DELIMITER.join(header.split(DELIMITER) + self.append_header)
         new_schema["header"] = new_header
