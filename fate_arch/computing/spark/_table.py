@@ -22,10 +22,9 @@ from pyspark import rddsampler, RDD, SparkContext, util
 
 from fate_arch.abc import AddressABC
 from fate_arch.abc import CTableABC
-from fate_arch.common import log
+from fate_arch.common import log, hdfs_utils
 from fate_arch.common.profile import computing_profile
-from fate_arch.computing.spark._kv_serdes import save_as_hdfs, load_from_hdfs
-from fate_arch.computing.spark._util import materialize
+from fate_arch.computing.spark._materialize import materialize
 
 LOGGER = log.getLogger()
 
@@ -42,7 +41,9 @@ class Table(CTableABC):
     def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
         from fate_arch.common.address import HDFSAddress
         if isinstance(address, HDFSAddress):
-            save_as_hdfs(rdd=self._rdd, paths=address.path, partitions=partitions)
+            self._rdd.map(lambda x: hdfs_utils.serialize(x[0], x[1])) \
+                .repartition(partitions) \
+                .saveAsTextFile(address.path)
             schema.update(self.schema)
             return
         raise NotImplementedError(f"address type {type(address)} not supported with spark backend")
@@ -127,7 +128,7 @@ class Table(CTableABC):
 
 def from_hdfs(paths: str, partitions):
     sc = SparkContext.getOrCreate()
-    rdd = materialize(load_from_hdfs(sc, paths, partitions))
+    rdd = materialize(sc.textFile(paths, partitions).map(hdfs_utils.deserialize).repartition(partitions))
     return Table(rdd=rdd)
 
 

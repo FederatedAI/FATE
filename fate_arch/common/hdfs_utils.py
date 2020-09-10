@@ -14,9 +14,16 @@
 #  limitations under the License.
 #
 
-from fate_arch.computing.spark._csession import CSession
-from fate_arch.computing.spark._table import Table, from_hdfs, from_rdd
-from fate_arch.computing.spark._materialize import get_storage_level, materialize
+import pickle
 
-__all__ = ['Table', 'CSession', 'from_hdfs', 'from_rdd',
-           'get_storage_level', 'materialize']
+_DELIMITER = '\t'
+NEWLINE = '\n'
+
+
+def deserialize(m):
+    fields = m.partition(_DELIMITER)
+    return fields[0], pickle.loads(bytes.fromhex(fields[2]))
+
+
+def serialize(k, v):
+    return f"{k}{_DELIMITER}{pickle.dumps(v).hex()}"
