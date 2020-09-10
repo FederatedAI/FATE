@@ -274,9 +274,9 @@ class JobController(object):
                     return False
             except:
                 return False
-            schedule_logger(job_id).info('cancel waiting job successfully, job id is {}'.format(job.f_job_id))
+            schedule_logger(job_id).info('cancel {} job successfully, job id is {}'.format(job.f_status, job.f_job_id))
             return True
         else:
-            schedule_logger(job_id).warning('role {} party id {} cancel waiting job failed, no find jod {}'.format(role, party_id, job_id))
-            raise Exception('role {} party id {} cancel waiting job failed, no find jod {}'.format(role, party_id, job_id))
+            schedule_logger(job_id).warning('role {} party id {} cancel job failed, no find jod {}'.format(role, party_id, job_id))
+            raise Exception('role {} party id {} cancel job failed, no find jod {}'.format(role, party_id, job_id))
 

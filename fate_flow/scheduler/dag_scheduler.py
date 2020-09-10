@@ -231,7 +231,10 @@ class DAGScheduler(Cron):
         status_code, federated_response = FederatedScheduler.resource_for_job(job=job, operation_type=ResourceOperation.APPLY)
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
             cls.start_job(job_id=job_id, initiator_role=initiator_role, initiator_party_id=initiator_party_id)
-            JobQueue.delete_event(job_id=job_id, initiator_role=initiator_role, initiator_party_id=initiator_party_id)
+            JobQueue.update_event(job_id=job_id,
+                                  initiator_role=initiator_role,
+                                  initiator_party_id=initiator_party_id,
+                                  job_status=JobStatus.RUNNING)
         else:
             # rollback resource
             rollback_party = {}

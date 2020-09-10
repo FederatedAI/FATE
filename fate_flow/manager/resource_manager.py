@@ -130,7 +130,17 @@ class ResourceManager(object):
             else:
                 schedule_logger(job_id=job_id).info(
                     f"save apply job {job_id} resource on {role} {party_id} record failed, rollback...")
-                cls.return_job_resource(job_id=job_id, role=role, party_id=party_id)
+                return_status, remaining_cores, remaining_memory = cls.update_resource(model=BackendRegistry,
+                                                                                       cores=cores,
+                                                                                       memory=memory,
+                                                                                       operation_type=ResourceOperation.RETURN,
+                                                                                       engine_type=EngineType.COMPUTING,
+                                                                                       engine_name=engine_name,
+                                                                                       )
+                if return_status:
+                    schedule_logger(job_id=job_id).info(f"return job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} successfully")
+                else:
+                    schedule_logger(job_id=job_id).info(f"return job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} failed, remaining_cores: {remaining_cores}, remaining_memory: {remaining_memory}")
                 return False
         else:
             schedule_logger(job_id=job_id).info(f"apply job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} failed, remaining_cores: {remaining_cores}, remaining_memory: {remaining_memory}")

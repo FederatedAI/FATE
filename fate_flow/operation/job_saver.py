@@ -192,6 +192,12 @@ class JobSaver(object):
 
     @classmethod
     @DB.connection_context()
+    def query_start_timeout_job(cls, timeout):
+        jobs = Job.select().where(Job.f_status == JobStatus.WAITING, Job.f_cores > 0, Job.f_update_time < current_timestamp() - timeout)
+        return [job for job in jobs]
+
+    @classmethod
+    @DB.connection_context()
     def get_tasks_asc(cls, job_id, role, party_id):
         tasks = Task.select().where(Task.f_job_id == job_id, Task.f_role == role, Task.f_party_id == party_id).order_by(Task.f_create_time.asc())
         tasks_group = cls.get_latest_tasks(tasks=tasks)

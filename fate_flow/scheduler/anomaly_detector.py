@@ -17,7 +17,7 @@ from fate_arch.storage import StorageSessionBase
 from fate_arch.common.log import schedule_logger
 from fate_flow.scheduler import FederatedScheduler
 from fate_flow.entity.types import JobStatus, TaskStatus
-from fate_flow.settings import detect_logger
+from fate_flow.settings import detect_logger, JOB_START_TIMEOUT
 from fate_flow.utils import cron, job_utils
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation import JobSaver
@@ -81,6 +81,10 @@ class AnomalyDetector(cron.Cron):
                         stop_jobs.add(job)
                 except Exception as e:
                     detect_logger.exception(e)
+            start_timeout_jobs = JobSaver.query_start_timeout_job(timeout=JOB_START_TIMEOUT)
+            for job in start_timeout_jobs:
+                detect_logger.info('job {} start timeout detected'.format(job.f_job_id))
+                stop_jobs.add(job)
             for job in stop_jobs:
                 schedule_logger().info('start to stop job {}'.format(job.f_job_id))
                 status_code, response = FederatedScheduler.request_stop_job(job=job, stop_status=JobStatus.TIMEOUT)

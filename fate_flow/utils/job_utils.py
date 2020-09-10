@@ -24,7 +24,7 @@ import typing
 import psutil
 
 from fate_arch.common import file_utils
-from fate_arch.common.base_utils import json_loads, json_dumps, fate_uuid
+from fate_arch.common.base_utils import json_loads, json_dumps, fate_uuid, current_timestamp
 from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.entity.types import JobStatus

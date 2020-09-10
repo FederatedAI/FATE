@@ -23,6 +23,8 @@ import __main__
 
 
 WORK_MODE = get_base_config('work_mode', 0)
+DATABASE = get_base_config("database", {})
+MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
 
 # upload data
 USE_LOCAL_DATA = True
@@ -48,11 +50,12 @@ DEFAULT_TASK_MEMORY_PER_NODE = 0  # mb
 STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE = 20
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
+
+# abnormal condition parameter
 DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000 * 60  # ms
 DEFAULT_FEDERATED_COMMAND_TRYS = 3
 JOB_DEFAULT_TIMEOUT = 7 * 24 * 60 * 60
-DATABASE = get_base_config("database", {})
-MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
+JOB_START_TIMEOUT = 60 * 1000  # ms
 
 '''
 Constants
