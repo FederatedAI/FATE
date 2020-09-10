@@ -147,7 +147,7 @@ def job_log():
         memory_file.seek(0)
         return send_file(memory_file, attachment_filename='job_{}_log.tar.gz'.format(job_id), as_attachment=True)
     else:
-        return error_response(500, "Log file path: {} not found. Please check if the job id is valid.".format(job_log_dir))
+        return error_response(210, "Log file path: {} not found. Please check if the job id is valid.".format(job_log_dir))
 
 
 @manager.route('/task/query', methods=['POST'])
@@ -217,6 +217,7 @@ def dsl_generator():
         return get_json_result(data=predict_dsl)
     except Exception as e:
         stat_logger.exception(e)
-        return error_response(500, "DSL generating failed. For more details, please checkout fate_flow_stat.log.")
+        return error_response(210, "DSL generating failed. For more details, "
+                                   "please check logs/fate_flow/fate_flow_stat.log.")
 
 

@@ -19,11 +19,18 @@ syntax = "proto3";
 package com.webank.ai.fate.core.mlmodel.buffer;
 option java_outer_classname = "NNModelParamProto";
 
+
+message LabelMapping {
+  string label = 1;
+  string mapped = 2;
+}
+
 message NNModelParam {
-    int32 aggregate_iter = 1;
-    bytes saved_model_bytes = 2;
-    repeated double loss_history = 3;
-    bool is_converged = 4;
-    repeated string header = 5;
+  int32 aggregate_iter = 1;
+  bytes saved_model_bytes = 2;
+  repeated double loss_history = 3;
+  bool is_converged = 4;
+  repeated string header = 5;
+  repeated LabelMapping label_mapping = 6;
 }
 

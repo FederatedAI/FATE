@@ -18,6 +18,8 @@ from datetime import datetime
 
 import click
 from contextlib import closing
+
+import requests
 from flow_client.flow_cli.utils import cli_args
 from flow_client.flow_cli.utils.cli_utils import (prettify, preprocess, download_from_request,
                                                   access_server, check_abs_path)
@@ -172,7 +174,11 @@ def output_data(ctx, **kwargs):
                 res = {'retcode': 100,
                        'retmsg': 'Download failed, please check if the parameters are correct.'}
         else:
-            res = response
+            try:
+                res = response.json() if isinstance(response, requests.models.Response) else response
+            except Exception:
+                res = {'retcode': 100,
+                       'retmsg': 'Download failed, for more details please check logs/fate_flow/fate_flow_stat.log.'}
     prettify(res)
 
 
@@ -259,7 +265,12 @@ def download_summary(ctx, **kwargs):
                                                              config_data["output_path"])
                     }
                 else:
-                    res = response
+                    try:
+                        res = response.json() if isinstance(response, requests.models.Response) else response
+                    except Exception:
+                        res = {"retcode": 100,
+                               "retmsg": "Download component summary failed, "
+                                         "for more details, please check logs/fate_flow/fate_flow_stat.log."}
         prettify(res)
     else:
         access_server("post", ctx, "tracking/component/summary/download", config_data)

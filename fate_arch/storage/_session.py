@@ -126,7 +126,7 @@ class StorageSessionBase(StorageSessionABC):
     def create(self):
         raise NotImplementedError()
 
-    def create_table(self, address, name, namespace, partitions=1, **kwargs):
+    def create_table(self, address, name, namespace, partitions=None, **kwargs):
         table = self.table(address=address, name=name, namespace=namespace, partitions=partitions, **kwargs)
         table_meta = StorageTableMeta(name=name, namespace=namespace, new=True)
         table_meta.set_metas(**kwargs)

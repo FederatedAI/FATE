@@ -20,6 +20,7 @@ import traceback
 import peewee
 from copy import deepcopy
 
+from fate_arch.common.base_utils import json_loads
 from fate_flow.db.db_models import MachineLearningModelInfo as MLModel
 from fate_flow.db.db_models import Tag, DB, ModelTag, ModelOperationLog as OperLog
 from flask import Flask, request, send_file
@@ -49,10 +50,11 @@ def internal_server_error(e):
 def load_model():
     request_config = request.json
     if request_config.get('job_id', None):
-        model = MLModel.get_or_none(
-            MLModel.f_job_id == request_config.get("job_id"),
-            MLModel.f_role == 'guest'
-        )
+        with DB.connection_context():
+            model = MLModel.get_or_none(
+                MLModel.f_job_id == request_config.get("job_id"),
+                MLModel.f_role == 'guest'
+            )
         if model:
             model_info = model.to_json()
             request_config['initiator'] = {}
@@ -117,13 +119,15 @@ def migrate_model_process():
     _job_id = job_utils.generate_job_id()
     initiator_party_id = request_config['migrate_initiator']['party_id']
     initiator_role = request_config['migrate_initiator']['role']
-    request_config["unify_model_version"] = _job_id
+    if not request_config.get("unify_model_version"):
+        request_config["unify_model_version"] = _job_id
     migrate_status = True
     migrate_status_info = {}
     migrate_status_msg = 'success'
     migrate_status_info['detail'] = {}
 
-    require_arguments = ["migrate_initiator", "role", "migrate_role", "model_id", "model_version"]
+    require_arguments = ["migrate_initiator", "role", "migrate_role", "model_id",
+                         "model_version", "execute_party", "job_parameters"]
     check_config(request_config, require_arguments)
 
     try:
@@ -143,18 +147,20 @@ def migrate_model_process():
     res_dict = {}
 
     for role_name, role_partys in request_config.get("migrate_role").items():
-        if role_name == 'arbiter':
-            continue
+        # if role_name == 'arbiter':
+        #     continue
         for offset, party_id in enumerate(role_partys):
             local_res = deepcopy(local_template)
             local_res["role"] = role_name
             local_res["party_id"] = request_config.get("role").get(role_name)[offset]
             local_res["migrate_party_id"] = party_id
-            res_dict[party_id] = local_res
+            # res_dict[party_id] = local_res
+            res_dict[local_res["party_id"]] = local_res
 
-    for role_name, role_partys in request_config.get("migrate_role").items():
-        if role_name == 'arbiter':
-            continue
+    # for role_name, role_partys in request_config.get("migrate_role").items():
+    for role_name, role_partys in request_config.get("execute_party").items():
+        # if role_name == 'arbiter':
+        #     continue
         migrate_status_info[role_name] = migrate_status_info.get(role_name, {})
         for party_id in role_partys:
             request_config["local"] = res_dict.get(party_id)
@@ -166,7 +172,7 @@ def migrate_model_process():
                                          dest_party_id=party_id,
                                          src_role=initiator_role,
                                          json_body=request_config,
-                                         federated_mode=1)
+                                         federated_mode=request_config['job_parameters']['federated_mode'])
                 migrate_status_info[role_name][party_id] = response['retcode']
                 migrate_status_info['detail'][role_name] = {}
                 detail = {party_id: {}}
@@ -229,10 +235,11 @@ def do_load_model():
 def bind_model_service():
     request_config = request.json
     if request_config.get('job_id', None):
-        model = MLModel.get_or_none(
-            MLModel.f_job_id == request_config.get("job_id"),
-            MLModel.f_role == 'guest'
-        )
+        with DB.connection_context():
+            model = MLModel.get_or_none(
+                MLModel.f_job_id == request_config.get("job_id"),
+                MLModel.f_role == 'guest'
+            )
         if model:
             model_info = model.to_json()
             request_config['initiator'] = {}
@@ -288,6 +295,38 @@ def operate_model(model_operation):
                 request_config['file'] = file_path
                 model = pipelined_model.PipelinedModel(model_id=request_config["model_id"], model_version=request_config["model_version"])
                 model.unpack_model(file_path)
+
+                pipeline = model.read_component_model('pipeline', 'pipeline')['Pipeline']
+                train_runtime_conf = json_loads(pipeline.train_runtime_conf)
+                permitted_party_id = []
+                for key, value in train_runtime_conf.get('role', {}).items():
+                    for v in value:
+                        permitted_party_id.extend([v, str(v)])
+                if request_config["party_id"] not in permitted_party_id:
+                    shutil.rmtree(model.model_path)
+                    raise Exception("party id {} is not in model roles, please check if the party id is valid.")
+                try:
+                    with DB.connection_context():
+                        MLModel.create(
+                            f_role=request_config["role"],
+                            f_party_id=request_config["party_id"],
+                            f_roles=train_runtime_conf["role"],
+                            f_job_id=train_runtime_conf["job_parameters"]["model_version"],
+                            f_model_id=train_runtime_conf["job_parameters"]["model_id"],
+                            f_model_version=train_runtime_conf["job_parameters"]["model_version"],
+                            f_initiator_role=train_runtime_conf["initiator"]["role"],
+                            f_initiator_party_id=train_runtime_conf["initiator"]["party_id"],
+                            f_runtime_conf=train_runtime_conf,
+                            f_work_mode=train_runtime_conf["job_parameters"]["work_mode"],
+                            f_dsl=json_loads(pipeline.train_dsl),
+                            f_imported=1,
+                            f_job_status='complete'
+                        )
+                except peewee.IntegrityError as e:
+                    if "1062" in str(e):
+                        pass
+                    else:
+                        stat_logger.exception(e)
                 operation_record(request_config, "import", "success")
                 return get_json_result()
             except Exception:
@@ -302,14 +341,14 @@ def operate_model(model_operation):
                     return send_file(archive_file_path, attachment_filename=os.path.basename(archive_file_path), as_attachment=True)
                 else:
                     operation_record(request_config, "export", "failed")
-                    res = error_response(response_code=500,
+                    res = error_response(response_code=210,
                                          retmsg="Model {} {} is not exist.".format(request_config.get("model_id"),
                                                                                     request_config.get("model_version")))
                     return res
-            except Exception:
+            except Exception as e:
                 operation_record(request_config, "export", "failed")
-                raise
-
+                stat_logger.exception(e)
+                return error_response(response_code=210, retmsg=str(e))
     else:
         data = {}
         job_dsl, job_runtime_conf = gen_model_operation_job_config(request_config, model_operation)
@@ -322,12 +361,12 @@ def operate_model(model_operation):
 
 
 @manager.route('/model_tag/<operation>', methods=['POST'])
+@DB.connection_context()
 def tag_model(operation):
     if operation not in ['retrieve', 'create', 'remove']:
         return get_json_result(100, "'{}' is not currently supported.".format(operation))
 
     request_data = request.json
-
     model = MLModel.get_or_none(MLModel.f_job_id == request_data.get("job_id"))
     if not model:
         raise Exception("Can not found model by job id: '{}'.".format(request_data.get("job_id")))
@@ -348,32 +387,32 @@ def tag_model(operation):
             raise Exception("Model {} {} does not have tag '{}'.".format(model.f_model_id,
                                                                          model.f_model_version,
                                                                          tag.f_name))
-        # model.tags.remove(tag)
         delete_query = ModelTag.delete().where(ModelTag.f_m_id == model.f_id, ModelTag.f_t_id == tag.f_id)
         delete_query.execute()
         return get_json_result(retmsg="'{}' tag has been removed from tag list of model {} {}.".format(request_data.get('tag_name'),
                                                                                                        model.f_model_id,
                                                                                                        model.f_model_version))
     else:
-        with DB.connection_context():
-            tag = Tag.get_or_none(Tag.f_name == request_data.get('tag_name'))
-            if not tag:
-                tag = Tag()
-                tag.f_name = request_data.get('tag_name')
-                tag.save(force_insert=True)
-            else:
-                tags = (Tag.select().join(ModelTag, on=ModelTag.f_t_id == Tag.f_id).where(ModelTag.f_m_id == model.f_id))
-                if tag.f_name in [t.f_name for t in tags]:
-                    raise Exception("Model {} {} already been tagged as tag '{}'.".format(model.f_model_id,
-                                                                                          model.f_model_version,
-                                                                                          tag.f_name))
-            # tag.f_model.add(model)
-            ModelTag.create(f_t_id=tag.f_id, f_m_id=model.f_id)
+        if not str(request_data.get('tag_name')):
+            raise Exception("Tag name should not be an empty string.")
+        tag = Tag.get_or_none(Tag.f_name == request_data.get('tag_name'))
+        if not tag:
+            tag = Tag()
+            tag.f_name = request_data.get('tag_name')
+            tag.save(force_insert=True)
+        else:
+            tags = (Tag.select().join(ModelTag, on=ModelTag.f_t_id == Tag.f_id).where(ModelTag.f_m_id == model.f_id))
+            if tag.f_name in [t.f_name for t in tags]:
+                raise Exception("Model {} {} already been tagged as tag '{}'.".format(model.f_model_id,
+                                                                                      model.f_model_version,
+                                                                                      tag.f_name))
+        ModelTag.create(f_t_id=tag.f_id, f_m_id=model.f_id)
         return get_json_result(retmsg="Adding {} tag for model with job id: {} successfully.".format(request_data.get('tag_name'),
                                                                                                      request_data.get('job_id')))
 
 
 @manager.route('/tag/<tag_operation>', methods=['POST'])
+@DB.connection_context()
 def operate_tag(tag_operation):
     request_data = request.json
     if tag_operation not in [TagOperation.CREATE, TagOperation.RETRIEVE, TagOperation.UPDATE,
@@ -382,10 +421,11 @@ def operate_tag(tag_operation):
 
     tag_name = request_data.get('tag_name')
     tag_desc = request_data.get('tag_desc')
-
     if tag_operation == TagOperation.CREATE:
         try:
-            with DB.connection_context():
+            if not tag_name:
+                return get_json_result(100, "'{}' tag created failed. Please input a valid tag name.".format(tag_name))
+            else:
                 Tag.create(f_name=tag_name, f_desc=tag_desc)
         except peewee.IntegrityError:
             raise Exception("'{}' has already exists in database.".format(tag_name))
@@ -402,7 +442,6 @@ def operate_tag(tag_operation):
         else:
             count = limit
         for tag in tags[:count]:
-            # res['tags'].append({'name': tag.f_name, 'description': tag.f_desc, 'model_count': len(tag.f_model)})
             res['tags'].append({'name': tag.f_name, 'description': tag.f_desc,
                                 'model_count': ModelTag.filter(ModelTag.f_t_id == tag.f_id).count()})
         return get_json_result(data=res)
@@ -418,7 +457,6 @@ def operate_tag(tag_operation):
             if request_data.get('with_model', False):
                 res = {'models': []}
                 models = (MLModel.select().join(ModelTag, on=ModelTag.f_m_id == MLModel.f_id).where(ModelTag.f_t_id == tag.f_id))
-                # for model in tag.f_model:
                 for model in models:
                         res["models"].append({
                         "model_id": model.f_model_id,
@@ -439,26 +477,23 @@ def operate_tag(tag_operation):
         elif tag_operation == TagOperation.UPDATE:
             new_tag_name = request_data.get('new_tag_name', None)
             new_tag_desc = request_data.get('new_tag_desc', None)
-            if not new_tag_name and not new_tag_desc:
+            if (tag.f_name == new_tag_name) and (tag.f_desc == new_tag_desc):
                 return get_json_result(100, "Nothing to be updated.")
             else:
-                with DB.connection_context():
-                    if request_data.get('new_tag_name'):
-                        if not Tag.get(Tag.f_name == new_tag_name):
-                            tag.f_name = new_tag_name
-                        else:
-                            return get_json_result(100, retmsg="'{}' tag already exists.".format(new_tag_name))
+                if request_data.get('new_tag_name'):
+                    if not Tag.get_or_none(Tag.f_name == new_tag_name):
+                        tag.f_name = new_tag_name
+                    else:
+                        return get_json_result(100, retmsg="'{}' tag already exists.".format(new_tag_name))
 
-                    if new_tag_desc:
-                        tag.f_desc = new_tag_desc
-                    tag.save()
+                tag.f_desc = new_tag_desc
+                tag.save()
                 return get_json_result(retmsg="Infomation of '{}' tag has been updated successfully.".format(tag_name))
 
         else:
-            with DB.connection_context():
-                delete_query = ModelTag.delete().where(ModelTag.f_t_id == tag.f_id)
-                delete_query.execute()
-                Tag.delete_instance(tag)
+            delete_query = ModelTag.delete().where(ModelTag.f_t_id == tag.f_id)
+            delete_query.execute()
+            Tag.delete_instance(tag)
             return get_json_result(retmsg="'{}' tag has been deleted successfully.".format(tag_name))
 
 
@@ -486,24 +521,24 @@ def gen_model_operation_job_config(config_data: dict, model_operation: ModelOper
     return job_dsl, job_runtime_conf
 
 
+@DB.connection_context()
 def operation_record(data: dict, oper_type, oper_status):
     try:
-        with DB.connection_context():
-            if oper_type == 'migrate':
-                OperLog.create(f_operation_type=oper_type,
-                               f_operation_status=oper_status,
-                               f_initiator_role=data.get("migrate_initiator", {}).get("role"),
-                               f_initiator_party_id=data.get("migrate_initiator", {}).get("party_id"),
-                               f_request_ip=request.remote_addr,
-                               f_model_id=data.get("model_id"),
-                               f_model_version=data.get("model_version"))
-            else:
-                OperLog.create(f_operation_type=oper_type,
-                               f_operation_status=oper_status,
-                               f_initiator_role=data.get("role") if data.get("role") else data.get("initiator").get("role"),
-                               f_initiator_party_id=data.get("party_id") if data.get("party_id") else data.get("initiator").get("party_id"),
-                               f_request_ip=request.remote_addr,
-                               f_model_id=data.get("model_id") if data.get("model_id") else data.get("job_parameters").get("model_id"),
-                               f_model_version=data.get("model_version") if data.get("model_version") else data.get("job_parameters").get("model_version"))
+        if oper_type == 'migrate':
+            OperLog.create(f_operation_type=oper_type,
+                           f_operation_status=oper_status,
+                           f_initiator_role=data.get("migrate_initiator", {}).get("role"),
+                           f_initiator_party_id=data.get("migrate_initiator", {}).get("party_id"),
+                           f_request_ip=request.remote_addr,
+                           f_model_id=data.get("model_id"),
+                           f_model_version=data.get("model_version"))
+        else:
+            OperLog.create(f_operation_type=oper_type,
+                           f_operation_status=oper_status,
+                           f_initiator_role=data.get("role") if data.get("role") else data.get("initiator").get("role"),
+                           f_initiator_party_id=data.get("party_id") if data.get("party_id") else data.get("initiator").get("party_id"),
+                           f_request_ip=request.remote_addr,
+                           f_model_id=data.get("model_id") if data.get("model_id") else data.get("job_parameters").get("model_id"),
+                           f_model_version=data.get("model_version") if data.get("model_version") else data.get("job_parameters").get("model_version"))
     except Exception:
         stat_logger.error(traceback.format_exc())

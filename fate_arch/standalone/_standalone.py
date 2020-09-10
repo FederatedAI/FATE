@@ -135,10 +135,12 @@ class Table(object):
         return self._unary(func, _do_flat_map)
 
     def applyPartitions(self, func):
-        return self._unary(func, _apply_partitions)
+        return self._unary(func, _do_apply_partitions)
 
-    def mapPartitions(self, func):
+    def mapPartitions(self, func, preserves_partitioning=False):
         un_shuffled = self._unary(func, _do_map_partitions)
+        if preserves_partitioning:
+            return un_shuffled
         return un_shuffled.save_as(name=str(uuid.uuid1()),
                                    namespace=un_shuffled.namespace,
                                    partition=self._partitions,
@@ -656,7 +658,7 @@ def _generator_from_cursor(cursor):
         yield deserialize(k), deserialize(v)
 
 
-def _apply_partitions(p: _UnaryProcess):
+def _do_apply_partitions(p: _UnaryProcess):
     with ExitStack() as s:
         rtn = p.output_operand()
         source_env = s.enter_context(p.operand.as_env())

@@ -446,7 +446,7 @@ class PipeLine(object):
         pkl = pickle.dumps(self)
 
         if file_path is not None:
-            with open(file_path, "w") as fout:
+            with open(file_path, "wb") as fout:
                 fout.write(pkl)
 
         return pkl
@@ -456,8 +456,8 @@ class PipeLine(object):
         return pickle.loads(pipeline_bytes)
 
     @classmethod
-    def load_model_from_file(cls, file):
-        with open(file, "w") as fin:
+    def load_model_from_file(cls, file_path):
+        with open(file_path, "rb") as fin:
             return pickle.loads(fin.read())
 
     @LOGGER.catch

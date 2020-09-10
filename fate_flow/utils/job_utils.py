@@ -232,6 +232,21 @@ def check_job_process(pid):
         return True
 
 
+def check_job_is_timeout(job):
+    job_dsl, job_runtime_conf, train_runtime_conf = get_job_configuration(job_id=job.f_job_id,
+                                                                          role=job.f_initiator_role,
+                                                                          party_id=job.f_initiator_party_id)
+    job_parameters = job_runtime_conf.get('job_parameters', {})
+    timeout = get_timeout(job.f_job_id, job_parameters.get("timeout", None), job_runtime_conf, job_dsl)
+    now_time = current_timestamp()
+    running_time = (now_time - job.f_start_time)/1000
+    if running_time > timeout:
+        schedule_logger(job_id=job.f_job_id).info('job {}  run time {}s timeout'.format(job.f_job_id, running_time))
+        return True
+    else:
+        return False
+
+
 def check_process_by_keyword(keywords):
     if not keywords:
         return True

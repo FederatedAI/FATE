@@ -263,7 +263,8 @@ class FTLGuest(FTL):
     def check_host_number(self):
         host_num = len(self.component_properties.host_party_idlist)
         LOGGER.info('host number is {}'.format(host_num))
-        assert host_num == 1, 'only 1 host party is allowed'
+        if host_num != 1:
+            raise ValueError('only 1 host party is allowed')
 
     def fit(self, data_inst, validate_data=None):
 

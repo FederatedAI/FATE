@@ -123,7 +123,7 @@ class Job(DataBaseModel):
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
     f_is_initiator = BooleanField(null=True, index=True, default=False)
-    f_engine_id = CharField(max_length=150, null=True)
+    f_engine_name = CharField(max_length=150, null=True)
     f_cores = IntegerField(index=True, default=0)
     f_memory = IntegerField(index=True, default=0)  # MB
     f_remaining_cores = IntegerField(index=True, default=0)
@@ -265,7 +265,8 @@ class MachineLearningModelInfo(DataBaseModel):
     f_work_mode = IntegerField()
     f_dsl = JSONField()
     f_train_runtime_conf = JSONField(default={})
-    f_migrated = IntegerField(default=0)
+    f_imported = IntegerField(default=0)
+    f_job_status = CharField(max_length=50)
 
     class Meta:
         db_table = "t_machine_learning_model_info"
@@ -340,7 +341,6 @@ class ModelOperationLog(DataBaseModel):
 
 
 class BackendRegistry(DataBaseModel):
-    f_engine_id = CharField(max_length=150, null=False)
     f_engine_name = CharField(max_length=50, index=True)
     f_engine_type = CharField(max_length=10, index=True)
     f_engine_address = JSONField()
@@ -354,7 +354,7 @@ class BackendRegistry(DataBaseModel):
 
     class Meta:
         db_table = "t_backend_registry"
-        primary_key = CompositeKey('f_engine_id', 'f_engine_type')
+        primary_key = CompositeKey('f_engine_name', 'f_engine_type')
 
 
 class DBQueue(DataBaseModel):

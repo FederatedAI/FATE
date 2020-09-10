@@ -74,4 +74,4 @@ class Relationship(object):
     }
 
 
-DEFAULT_DELIMITER = ","
+DEFAULT_ID_DELIMITER = ","

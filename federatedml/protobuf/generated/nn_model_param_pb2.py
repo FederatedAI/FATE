@@ -20,10 +20,48 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
   serialized_options=_b('B\021NNModelParamProto'),
-  serialized_pb=_b('\n\x14nn-model-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"}\n\x0cNNModelParam\x12\x16\n\x0e\x61ggregate_iter\x18\x01 \x01(\x05\x12\x19\n\x11saved_model_bytes\x18\x02 \x01(\x0c\x12\x14\n\x0closs_history\x18\x03 \x03(\x01\x12\x14\n\x0cis_converged\x18\x04 \x01(\x08\x12\x0e\n\x06header\x18\x05 \x03(\tB\x13\x42\x11NNModelParamProtob\x06proto3')
+  serialized_pb=_b('\n\x14nn-model-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"-\n\x0cLabelMapping\x12\r\n\x05label\x18\x01 \x01(\t\x12\x0e\n\x06mapped\x18\x02 \x01(\t\"\xca\x01\n\x0cNNModelParam\x12\x16\n\x0e\x61ggregate_iter\x18\x01 \x01(\x05\x12\x19\n\x11saved_model_bytes\x18\x02 \x01(\x0c\x12\x14\n\x0closs_history\x18\x03 \x03(\x01\x12\x14\n\x0cis_converged\x18\x04 \x01(\x08\x12\x0e\n\x06header\x18\x05 \x03(\t\x12K\n\rlabel_mapping\x18\x06 \x03(\x0b\x32\x34.com.webank.ai.fate.core.mlmodel.buffer.LabelMappingB\x13\x42\x11NNModelParamProtob\x06proto3')
 )
 
 
+
+
+_LABELMAPPING = _descriptor.Descriptor(
+  name='LabelMapping',
+  full_name='com.webank.ai.fate.core.mlmodel.buffer.LabelMapping',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='label', full_name='com.webank.ai.fate.core.mlmodel.buffer.LabelMapping.label', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='mapped', full_name='com.webank.ai.fate.core.mlmodel.buffer.LabelMapping.mapped', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=64,
+  serialized_end=109,
+)
 
 
 _NNMODELPARAM = _descriptor.Descriptor(
@@ -68,6 +106,13 @@ _NNMODELPARAM = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='label_mapping', full_name='com.webank.ai.fate.core.mlmodel.buffer.NNModelParam.label_mapping', index=5,
+      number=6, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -80,12 +125,21 @@ _NNMODELPARAM = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=64,
-  serialized_end=189,
+  serialized_start=112,
+  serialized_end=314,
 )
 
+_NNMODELPARAM.fields_by_name['label_mapping'].message_type = _LABELMAPPING
+DESCRIPTOR.message_types_by_name['LabelMapping'] = _LABELMAPPING
 DESCRIPTOR.message_types_by_name['NNModelParam'] = _NNMODELPARAM
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
+
+LabelMapping = _reflection.GeneratedProtocolMessageType('LabelMapping', (_message.Message,), {
+  'DESCRIPTOR' : _LABELMAPPING,
+  '__module__' : 'nn_model_param_pb2'
+  # @@protoc_insertion_point(class_scope:com.webank.ai.fate.core.mlmodel.buffer.LabelMapping)
+  })
+_sym_db.RegisterMessage(LabelMapping)
 
 NNModelParam = _reflection.GeneratedProtocolMessageType('NNModelParam', (_message.Message,), {
   'DESCRIPTOR' : _NNMODELPARAM,

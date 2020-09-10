@@ -19,7 +19,7 @@ import typing
 
 from fate_arch.abc import CTableABC
 from fate_arch.common import log
-from fate_arch.common.profile import log_elapsed
+from fate_arch.common.profile import computing_profile
 
 LOGGER = log.getLogger()
 
@@ -33,7 +33,7 @@ class Table(CTableABC):
     def partitions(self):
         return self._rp.get_partitions()
 
-    @log_elapsed
+    @computing_profile
     def save(self, address, partitions, schema: dict, **kwargs):
         options = kwargs.get("options", {})
         from fate_arch.common.address import EggRollAddress
@@ -44,74 +44,79 @@ class Table(CTableABC):
             return
         raise NotImplementedError(f"address type {type(address)} not supported with eggroll backend")
 
-    @log_elapsed
+    @computing_profile
     def collect(self, **kwargs) -> list:
         return self._rp.get_all()
 
-    @log_elapsed
+    @computing_profile
     def count(self, **kwargs) -> int:
         return self._rp.count()
 
+    @computing_profile
     def take(self, n=1, **kwargs):
         options = dict(keys_only=False)
         return self._rp.take(n=n, options=options)
 
+    @computing_profile
     def first(self):
         options = dict(keys_only=False)
         return self._rp.first(options=options)
 
-    @log_elapsed
+    @computing_profile
     def map(self, func, **kwargs):
         return Table(self._rp.map(func))
 
-    @log_elapsed
+    @computing_profile
     def mapValues(self, func: typing.Callable[[typing.Any], typing.Any], **kwargs):
         return Table(self._rp.map_values(func))
 
+    @computing_profile
     def applyPartitions(self, func):
         return Table(self._rp.collapse_partitions(func))
 
-    def mapPartitions(self, func, use_previous_behavior=True, **kwargs):
+    @computing_profile
+    def mapPartitions(self, func, use_previous_behavior=True, preserves_partitioning=False, **kwargs):
         if use_previous_behavior is True:
             LOGGER.warning(f"please use `applyPartitions` instead of `mapPartitions` "
                            f"if the previous behavior was expected. "
                            f"The previous behavior will not work in future")
             return self.applyPartitions(func)
 
-        return Table(self._rp.map_partitions(func))
+        return Table(self._rp.map_partitions(func, options={"shuffle": not preserves_partitioning}))
 
+    @computing_profile
     def mapReducePartitions(self, mapper, reducer, **kwargs):
         return Table(self._rp.map_partitions(func=mapper, reduce_op=reducer))
 
-    @log_elapsed
+    @computing_profile
     def reduce(self, func, **kwargs):
         return self._rp.reduce(func)
 
-    @log_elapsed
+    @computing_profile
     def join(self, other: 'Table', func, **kwargs):
         return Table(self._rp.join(other._rp, func=func))
 
-    @log_elapsed
+    @computing_profile
     def glom(self, **kwargs):
         return Table(self._rp.glom())
 
-    @log_elapsed
+    @computing_profile
     def sample(self, fraction, seed=None, **kwargs):
         return Table(self._rp.sample(fraction=fraction, seed=seed))
 
-    @log_elapsed
+    @computing_profile
     def subtractByKey(self, other: 'Table', **kwargs):
         return Table(self._rp.subtract_by_key(other._rp))
 
-    @log_elapsed
+    @computing_profile
     def filter(self, func, **kwargs):
         return Table(self._rp.filter(func))
 
-    @log_elapsed
+    @computing_profile
     def union(self, other: 'Table', func=lambda v1, v2: v1, **kwargs):
         return Table(self._rp.union(other._rp, func=func))
 
-    @log_elapsed
+    @computing_profile
     def flatMap(self, func, **kwargs):
         flat_map = self._rp.flat_map(func)
         shuffled = flat_map.map(lambda k, v: (k, v))  # trigger shuffle

@@ -18,7 +18,7 @@ from collections import Iterable
 from fate_arch.abc import AddressABC, CSessionABC
 from fate_arch.common.base_utils import fate_uuid
 from fate_arch.common.log import getLogger
-from fate_arch.computing.standalone import Table
+from fate_arch.computing.standalone._table import Table
 from fate_arch.standalone import Session
 
 LOGGER = getLogger()
