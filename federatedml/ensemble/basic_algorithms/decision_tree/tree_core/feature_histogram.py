@@ -155,6 +155,7 @@ class FeatureHistogram(object):
 
     @staticmethod
     def guest_accumulate_histogram(histograms):
+
         for i in range(1, len(histograms)):
             for j in range(len(histograms[i])):
                 histograms[i][j] += histograms[i - 1][j]
@@ -182,12 +183,11 @@ class FeatureHistogram(object):
         return new_hist
 
     @staticmethod
-    def host_accumulate_histogram_map_func(k, v):
+    def host_accumulate_histogram_map_func(v):
 
-        nid, fid = k
-        histograms = v
+        fid, histograms = v
         new_value = (fid, FeatureHistogram.host_accumulate_histogram_0(histograms))
-        return k, new_value
+        return new_value
 
     @staticmethod
     def calculate_histogram(data_bin, grad_and_hess,
@@ -215,12 +215,15 @@ class FeatureHistogram(object):
             return FeatureHistogram.construct_table(histograms_table)
 
     @staticmethod
-    def aggregate_histogram(histogram1, histogram2):
+    def aggregate_histogram(fid_histogram1, fid_histogram2):
+
+        fid_1, histogram1 = fid_histogram1
+        fid_2, histogram2 = fid_histogram2
         for i in range(len(histogram1)):
             for j in range(len(histogram1[i])):
                 histogram1[i][j] += histogram2[i][j]
 
-        return histogram1
+        return fid_1, histogram1
 
     @staticmethod
     def batch_calculate_histogram(kv_iterator, bin_split_points=None,
@@ -311,7 +314,7 @@ class FeatureHistogram(object):
         ret = []
         for nid in range(node_num):
             for fid in range(bin_split_points.shape[0]):
-                ret.append(((nid, fid), node_histograms[nid][fid]))
+                ret.append(((nid, fid), (fid, node_histograms[nid][fid])))
 
         return ret
 
@@ -322,13 +325,12 @@ class FeatureHistogram(object):
         histogram_list = list(histograms_table.collect())
         for tuple_ in histogram_list:
             nid, fid = tuple_[0]
+            histograms[int(nid)][int(fid)] = FeatureHistogram.guest_accumulate_histogram(tuple_[1][1])
         return histograms
 
     @staticmethod
     def construct_table(histograms_table):
-        histograms_table = histograms_table.map(FeatureHistogram.host_accumulate_histogram_map_func)
+        histograms_table = histograms_table.mapValues(FeatureHistogram.host_accumulate_histogram_map_func)
         return histograms_table
-
-
 
 
