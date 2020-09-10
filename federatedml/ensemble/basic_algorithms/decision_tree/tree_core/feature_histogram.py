@@ -208,11 +208,7 @@ class FeatureHistogram(object):
         #                                 lambda data_inst, g_h: (data_inst, g_h)).mapPartitions2(batch_histogram_cal)
 
         batch_histogram_intermediate_rs = data_bin.join(grad_and_hess, lambda data_inst, g_h: (data_inst, g_h))
-        import time
-        s = time.time()
         histograms_table = batch_histogram_intermediate_rs.mapReducePartitions(batch_histogram_cal, agg_histogram)
-        e = time.time()
-        LOGGER.debug('map reduce takes {}'.format(e-s))
         # histograms_dict = batch_histogram.reduce(agg_histogram, key_func=lambda key: (key[1], key[2]))
 
         if ret == "tensor":
