@@ -32,10 +32,15 @@ class HomoSecureBoostClient(HomoBoostingClient):
         self.model_param = HomoSecureBoostParam()
 
     def _init_model(self, boosting_param: HomoSecureBoostParam):
+
         super(HomoSecureBoostClient, self)._init_model(boosting_param)
         self.use_missing = boosting_param.use_missing
         self.zero_as_missing = boosting_param.zero_as_missing
         self.tree_param = boosting_param.tree_param
+
+        if self.use_missing:
+            self.tree_param.use_missing = self.use_missing
+            self.tree_param.zero_as_missing = self.zero_as_missing
 
     def get_valid_features(self, epoch_idx, b_idx):
         valid_feature = self.transfer_inst.valid_features.get(idx=0, suffix=('valid_features', epoch_idx, b_idx))
@@ -108,7 +113,7 @@ class HomoSecureBoostClient(HomoBoostingClient):
 
         if class_num > 1:
             weights = weights.reshape((-1, class_num))
-        return np.sum(weights * learning_rate, axis=0) + init_score
+        return float(np.sum(weights * learning_rate, axis=0) + init_score)
 
     def fast_homo_tree_predict(self, data_inst):
 
