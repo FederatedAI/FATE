@@ -82,7 +82,7 @@ class Table(CTableABC):
                            f"The previous behavior will not work in future")
             return self.applyPartitions(func)
 
-        return Table(self._rp.map_partitions(func, options={"need_shuffle": not preserves_partitioning}))
+        return Table(self._rp.map_partitions(func, options={"shuffle": not preserves_partitioning}))
 
     @computing_profile
     def mapReducePartitions(self, mapper, reducer, **kwargs):
