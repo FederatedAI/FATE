@@ -15,10 +15,12 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
 import numpy as np
 import functools
 import copy
 from federatedml.statistic import data_overview
+from federatedml.util import LOGGER
 
 
 def empty_table_detection(data_instances):
@@ -76,9 +78,11 @@ def empty_column_detection(data_instance):
 def check_legal_schema(schema):
     # check for repeated header & illegal/non-printable chars except for space
     # allow non-ascii chars
+    LOGGER.debug(f"schema is {schema}")
     if schema is None:
         return
     header = schema.get("header", None)
+    LOGGER.debug(f"header is {header}")
     if header is not None:
         for col_name in header:
             if not col_name.isprintable():
@@ -88,20 +92,18 @@ def check_legal_schema(schema):
             raise ValueError(f"data header contains repeated values, please check.")
 
     sid_name = schema.get("sid_name", None)
+    LOGGER.debug(f"sid_name is {sid_name}")
     if sid_name is not None and not sid_name.isprintable():
         raise ValueError(f"non-printable char found in sid_name {sid_name}, please check.")
 
     label_name = schema.get("label_name", None)
+    LOGGER.debug(f"label_name is {label_name}")
     if label_name is not None and not label_name.isprintable():
         raise ValueError(f"non-printable char found in label_name {label_name}, please check.")
 
     if header is not None:
-        if sid_name is None and label_name is None:
-            if len(set(header)) != len(header):
-                raise ValueError(f"Repeated names found in 'header', please check.")
-        else:
-            if len(set(header) | {sid_name, label_name}) != len(header) + len([sid_name, label_name]):
-                raise ValueError(f"Repeated names found in ('header', 'sid_name', 'label_name'), please check.")
+        if len(set(header) | {sid_name}) != len(header) + len([sid_name]):
+            raise ValueError(f"Repeated names found in ('header', 'sid_name'), please check.")
     else:
         if sid_name == label_name:
             raise ValueError(f"Same names given for 'sid_name' and 'label_name', please check.")
