@@ -72,11 +72,11 @@ class JobController(object):
 
     @classmethod
     def get_job_engines_address(cls, job_parameters: RunParameters):
-        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.COMPUTING, engine_id=job_parameters.computing_backend)
+        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.COMPUTING, engine_name=job_parameters.computing_engine)
         job_parameters.engines_address[EngineType.COMPUTING] = backend_info.f_engine_address
-        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.FEDERATION, engine_id=job_parameters.federation_backend)
+        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.FEDERATION, engine_name=job_parameters.federation_engine)
         job_parameters.engines_address[EngineType.FEDERATION] = backend_info.f_engine_address
-        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.STORAGE, engine_id=job_parameters.storage_backend)
+        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.STORAGE, engine_name=job_parameters.storage_engine)
         job_parameters.engines_address[EngineType.STORAGE] = backend_info.f_engine_address
 
     @classmethod
