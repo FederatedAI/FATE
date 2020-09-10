@@ -40,26 +40,14 @@ class HeteroKmeansClient(BaseKmeansModel):
 
     @staticmethod
     def educl_dist(u, centroid_list):
-        result = []
-        for c in centroid_list:
-            result.append(np.sum(np.power(np.array(c) - u.features, 2)))
-        return result
+        return np.sum(np.square(u.features - centroid_list), axis=1)
 
     def get_centroid(self, data_instances):
-        random.seed(self.k)
-        random_list = list()
-        v_list = list()
-        for r in range(0, self.k):
-            random_list.append(math.ceil(random.random() * data_instances.count()))
-        n = 0
         key = list(data_instances.mapValues(lambda data_instance: None).collect())
-        for k in key:
-            if n in random_list:
-                v_list.append(k[0])
-            n += 1
-        return v_list
+        random_key = np.random.choice(key, self.k, replace=False)
+        return random_key
 
-    def f(self, iterator):
+    def cluster_count(self, iterator):
         cluster_result = dict()
         for k, v in iterator:
             if v[1] not in cluster_result:
@@ -70,7 +58,7 @@ class HeteroKmeansClient(BaseKmeansModel):
 
     def centroid_cal(self, cluster_result, data_instances):
         cluster_result_dtable = data_instances.join(cluster_result, lambda v1, v2: [v1.features, v2])
-        centroid_feature_sum = cluster_result_dtable.mapPartitions(self.f).reduce(self.sum_dict)
+        centroid_feature_sum = cluster_result_dtable.mapPartitions(self.cluster_count).reduce(self.sum_dict)
         cluster_count = cluster_result.mapPartitions(self.count).reduce(self.sum_dict)
         centroid_list = []
         cluster_count_list = []
@@ -114,7 +102,7 @@ class HeteroKmeansClient(BaseKmeansModel):
             d = functools.partial(self.educl_dist, centroid_list=self.centroid_list)
             dist_all_dtable = data_instances.mapValues(d)
 
-            cluster_result = self.aggregator.aggregate_then_get(dist_all_dtable, suffix=(self.n_iter_, ))
+            cluster_result = self.aggregator.aggregate_then_get(dist_all_dtable, suffix=(self.n_iter_,))
             self.send_cluster_dist()
 
             centroid_new, self.cluster_count = self.centroid_cal(cluster_result, data_instances)

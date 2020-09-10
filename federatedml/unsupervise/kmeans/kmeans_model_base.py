@@ -70,17 +70,19 @@ class BaseKmeansModel(ModelBase):
     def _get_param(self):
         header = self.header
         LOGGER.debug("In get_param, header: {}".format(header))
-        if header is None:
-            param_protobuf_obj = hetero_kmeans_param_pb2.KmeansModelParam()
-            return param_protobuf_obj
-
-        cluster_detail = [hetero_kmeans_param_pb2.Clusterdetail(cluster=cluster) for cluster in self.cluster_count]
-        centroid_detail = [hetero_kmeans_param_pb2.Centroiddetail(centroid=centroid) for centroid in self.centroid_list]
+        if self.cluster_count is None or self.centroid_list is None:
+            cluster_detail = []
+            centroid_detail = []
+        else:
+            cluster_detail = [hetero_kmeans_param_pb2.Clusterdetail(cluster=cluster) for cluster in self.cluster_count]
+            centroid_detail = [hetero_kmeans_param_pb2.Centroiddetail(centroid=centroid) for centroid in
+                               self.centroid_list]
         param_protobuf_obj = hetero_kmeans_param_pb2.KmeansModelParam(count_of_clusters=self.k,
                                                                       max_interation=self.n_iter_,
                                                                       converged=self.is_converged,
                                                                       cluster_detail=cluster_detail,
-                                                                      centroid_detail=centroid_detail)
+                                                                      centroid_detail=centroid_detail,
+                                                                      header=header)
         return param_protobuf_obj
 
     def export_model(self):
@@ -132,8 +134,8 @@ class BaseKmeansModel(ModelBase):
         #    return
 
     def reset_union(self):
-        def my_union(previews_data, name_list):
-            LOGGER.debug("mgq-debug, previews_data is {}, name_list is {}".format(previews_data, name_list))
+        def _union(previews_data, name_list):
+            LOGGER.debug("previews_data is {}, name_list is {}".format(previews_data, name_list))
             if len(previews_data) == 0:
                 return None
 
@@ -169,7 +171,7 @@ class BaseKmeansModel(ModelBase):
                 # LOGGER.debug("before out loop, one data: {}".format(result_data.first()))
             return result_data
 
-        self.component_properties.set_union_func(my_union)
+        self.component_properties.set_union_func(_union)
 
     def set_predict_data_schema(self, predict_datas, schemas):
         if predict_datas is None:
