@@ -16,7 +16,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
 from arch.api.utils import log_utils
+
 from federatedml.param.base_param import BaseParam
 from federatedml.util import consts
 
@@ -66,7 +68,7 @@ class ColumnExpandParam(BaseParam):
         BaseParam.check_boolean(self.need_run, descr=descr)
 
         if not isinstance(self.append_header, list):
-            raise ValueError(f"{descr} append_header must be list of None. "
+            raise ValueError(f"{descr} append_header must be None or list of str. "
                              f"Received {type(self.append_header)} instead.")
         for feature_name in self.append_header:
             BaseParam.check_string(feature_name, descr+"append_header values")
@@ -75,7 +77,7 @@ class ColumnExpandParam(BaseParam):
             if len(self.append_header) != len(self.fill_value):
                 raise ValueError(
                     f"{descr} `fill value` is set to be list, "
-                    f"param `append header` must also be list of the same length.")
+                    f"and param `append_header` must also be list of the same length.")
         else:
             self.fill_value = [self.fill_value]
         for value in self.fill_value:
