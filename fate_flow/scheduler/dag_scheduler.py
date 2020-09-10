@@ -108,7 +108,7 @@ class DAGScheduler(Cron):
 
         # push into queue
         try:
-            JobQueue.set_event(job_id=job_id, initiator_role=initiator_role, initiator_party_id=initiator_party_id)
+            JobQueue.create_event(job_id=job_id, initiator_role=initiator_role, initiator_party_id=initiator_party_id)
         except Exception as e:
             raise Exception(f'push job into queue failed:\n{e}')
 
@@ -410,7 +410,7 @@ class DAGScheduler(Cron):
                 status, response = FederatedScheduler.sync_job_status(job=job)
                 if status == FederatedSchedulingStatusCode.SUCCESS:
                     FederatedScheduler.sync_job(job=job, update_fields=["end_time", "elapsed"])
-                    JobQueue.set_event(job_id=job_id, initiator_role=initiator_role, initiator_party_id=initiator_party_id)
+                    JobQueue.create_event(job_id=job_id, initiator_role=initiator_role, initiator_party_id=initiator_party_id)
                     schedule_logger(job_id=job_id).info(f"job {job_id} set waiting to rerun successfully")
                 else:
                     schedule_logger(job_id=job_id).info(f"job {job_id} set waiting to rerun failed")

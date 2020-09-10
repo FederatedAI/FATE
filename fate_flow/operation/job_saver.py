@@ -46,7 +46,7 @@ class JobSaver(object):
                 new_job_info["tag"] = "job_end"
                 cls.update_job_family_entity(Job, new_job_info)
         else:
-            schedule_logger(job_id=job_info["job_id"]).info("update job {} status failed".format(job_info["job_id"]))
+            schedule_logger(job_id=job_info["job_id"]).info("update job {} status does not take effect".format(job_info["job_id"]))
         return update_status
 
     @classmethod
