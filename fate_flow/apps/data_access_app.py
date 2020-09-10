@@ -69,17 +69,19 @@ def download_upload(access_module):
         if _ in job_config:
             job_config[_] = int(job_config[_])
     if access_module == "upload":
+        if job_config.get('drop', 0) == 1:
+            job_config["destroy"] = True
+        else:
+            job_config["destroy"] = False
         data['table_name'] = job_config["table_name"]
         data['namespace'] = job_config["namespace"]
         data_table_meta = storage.StorageTableMeta(name=job_config["table_name"], namespace=job_config["namespace"])
-        if data_table_meta and job_config.get('drop', 2) == 2:
+        if data_table_meta and not job_config["destroy"]:
             return get_json_result(retcode=100,
                                    retmsg='The data table already exists.'
                                           'If you still want to continue uploading, please add the parameter -drop.'
                                           ' 0 means not to delete and continue uploading, '
                                           '1 means to upload again after deleting the table')
-        elif data_table_meta and job_config.get('drop', 2) == 1:
-            job_config["destroy"] = True
     job_dsl, job_runtime_conf = gen_data_access_job_config(job_config, access_module)
     job_id, job_dsl_path, job_runtime_conf_path, logs_directory, model_info, board_url = DAGScheduler.submit(
         {'job_dsl': job_dsl, 'job_runtime_conf': job_runtime_conf}, job_id=job_id)

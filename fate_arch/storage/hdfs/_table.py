@@ -22,6 +22,7 @@ from pyspark import SparkContext
 from fate_arch.common.log import getLogger
 from fate_arch.storage import StorageEngine, HDFSStorageType
 from fate_arch.storage import StorageTableBase
+from fate_arch.common.address import HDFSAddress
 
 LOGGER = getLogger()
 _ID_DELIMITER = "\t"
@@ -67,10 +68,14 @@ class StorageTable(StorageTableBase):
     def get_options(self):
         return self._options
 
-    def put_all(self, kv_list: Iterable, **kwargs):
+    def put_all(self, kv_list: Iterable, destroy_if_exists=False, **kwargs):
         path, fs = StorageTable.get_hadoop_fs(sc=self._context, address=self._address)
         if fs.exists(path):
-            out = fs.append(path)
+            if destroy_if_exists:
+                self.destroy()
+                out = fs.create(path)
+            else:
+                raise RuntimeError(f"file {path} already exists")
         else:
             out = fs.create(path)
 
@@ -119,7 +124,23 @@ class StorageTable(StorageTableBase):
             fs.delete(path)
 
     def count(self):
-        pass
+        hdfs_path = StorageTable.generate_hdfs_path(self._address)
+        path = StorageTable.get_path(self._context, hdfs_path)
+        fs = StorageTable.get_file_system(self._context)
+        if not fs.exists(path):
+            return 0
+        istream = fs.open(path)
+        reader = self._context._gateway.jvm.java.io.BufferedReader(self._context._jvm.java.io.InputStreamReader(istream))
+        count = 0
+        while True:
+            line = reader.readLine()
+            if line is not None:
+                count += 1
+            else:
+                break
+        istream.close()
+        self.get_meta().update_metas(count=count)
+        return count
 
     def save_as(self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs):
         super().save_as(name, namespace, partitions=partitions, schema=schema)
@@ -131,9 +152,11 @@ class StorageTable(StorageTableBase):
         return StorageTable(address=address, partitions=partitions, name=name, namespace=namespace, **kwargs)
 
     @classmethod
-    def generate_hdfs_path(cls, address):
-        return address.path
-    
+    def generate_hdfs_path(cls, address: HDFSAddress):
+        hdfs_path = "/".join([address.name_node, address.path_prefix, address.path]) if address.path_prefix else "/".join([address.name_node, address.path])
+        LOGGER.info(f"hdfs path is {hdfs_path}")
+        return hdfs_path
+
     @classmethod
     def get_path(cls, sc, hdfs_path):
         path_class = sc._gateway.jvm.org.apache.hadoop.fs.Path
@@ -151,6 +174,3 @@ class StorageTable(StorageTableBase):
         path = StorageTable.get_path(sc, hdfs_path)
         fs = StorageTable.get_file_system(sc)
         return path, fs
-
-    def close(self):
-        pass

@@ -56,7 +56,7 @@ class Federation(FederationABC):
                   runtime_conf: dict,
                   service_conf: dict):
 
-        mq_address = service_conf.get('address')
+        mq_address = service_conf
         LOGGER.debug(f'mq_address: {mq_address}')
         rabbitmq_conf = mq_address.get("self")
 

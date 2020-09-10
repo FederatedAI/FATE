@@ -76,7 +76,7 @@ class Upload(object):
             if self.parameters.get("destroy", False):
                 table = storage_session.get_table()
                 if table:
-                    LOGGER.info(f"destroy table name: {name} namespace: {namespace}")
+                    LOGGER.info(f"destroy table name: {name} namespace: {namespace} engine: {table.get_engine()}")
                     table.destroy()
                 else:
                     LOGGER.info(f"can not found table name: {name} namespace: {namespace}, pass destroy")
@@ -119,12 +119,12 @@ class Upload(object):
 
     def save_data_table(self, job_id, dst_table_name, dst_table_namespace, head=True):
         input_file = self.parameters["file"]
-        count = self.get_count(input_file)
+        input_feature_count = self.get_count(input_file)
         with open(input_file, 'r') as fin:
             lines_count = 0
             if head is True:
                 data_head = fin.readline()
-                count -= 1
+                input_feature_count -= 1
                 self.table.get_meta().update_metas(schema=data_utils.get_header_schema(header_line=data_head, id_delimiter=self.parameters["id_delimiter"]))
             n = 0
             while True:
@@ -135,26 +135,26 @@ class Upload(object):
                         values = line.rstrip().split(self.parameters["id_delimiter"])
                         data.append((values[0], data_utils.list_to_str(values[1:], id_delimiter=self.parameters["id_delimiter"])))
                     lines_count += len(data)
-                    save_progress = lines_count/count*100//1
+                    save_progress = lines_count/input_feature_count*100//1
                     job_info = {'progress': save_progress, "job_id": job_id, "role": self.parameters["local"]['role'], "party_id": self.parameters["local"]['party_id']}
                     ControllerClient.update_job(job_info=job_info)
-                    self.table.put_all(data)
+                    self.table.put_all(data, destroy_if_exists=self.parameters.get("destroy", False))
                     if n == 0:
                         self.table.get_meta().update_metas(part_of_data=data)
                 else:
-                    self.table.get_meta().update_metas(count=self.table.count(), partitions=self.parameters["partition"])
-                    count_actual = self.table.count()
+                    table_count = self.table.count()
+                    self.table.get_meta().update_metas(count=table_count, partitions=self.parameters["partition"])
                     self.tracker.log_output_data_info(data_name='upload',
                                                       table_namespace=dst_table_namespace,
                                                       table_name=dst_table_name)
 
                     self.tracker.log_metric_data(metric_namespace="upload",
                                                  metric_name="data_access",
-                                                 metrics=[Metric("count", count_actual)])
+                                                 metrics=[Metric("count", table_count)])
                     self.tracker.set_metric_meta(metric_namespace="upload",
                                                  metric_name="data_access",
                                                  metric_meta=MetricMeta(name='upload', metric_type='UPLOAD'))
-                    return count_actual
+                    return table_count
                 n += 1
 
     def get_count(self, input_file):

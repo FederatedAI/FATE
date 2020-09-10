@@ -50,35 +50,40 @@ class Reader(object):
             output_namespace=output_table_namespace,
             computing_engine=computing_engine,
             output_storage_address=output_storage_address)
-        if output_table_address:
-            # Table replication is required
-            if input_table_meta.get_engine() != output_table_engine:
-                LOGGER.info(
-                    f"the {input_table_meta.get_engine()} engine input table needs to be converted to {output_table_engine} engine to support computing engine {computing_engine}")
-            else:
-                LOGGER.info(f"the {input_table_meta.get_engine()} input table needs to be transform format")
-            with storage.Session.build(
-                    session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version,
-                                                             self.tracker.role, self.tracker.party_id, suffix="storage",
-                                                             random_end=True),
-                    storage_engine=output_table_engine) as dest_storage_session:
-                output_table = dest_storage_session.create_table(address=output_table_address, name=output_table_name,
-                                                                 namespace=output_table_namespace,
-                                                                 partitions=input_table_meta.partitions)
+        with storage.Session.build(
+                session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version,
+                                                         self.tracker.role, self.tracker.party_id,
+                                                         suffix="storage", random_end=True),
+                storage_engine=input_table_meta.get_engine()) as input_table_session:
+            input_table = input_table_session.get_table(name=input_table_meta.get_name(),
+                                                        namespace=input_table_meta.get_namespace())
+            # update real count to meta info
+            input_table.count()
+            if output_table_address:
+                # Table replication is required
+                if input_table_meta.get_engine() != output_table_engine:
+                    LOGGER.info(
+                        f"the {input_table_meta.get_engine()} engine input table needs to be converted to {output_table_engine} engine to support computing engine {computing_engine}")
+                else:
+                    LOGGER.info(f"the {input_table_meta.get_engine()} input table needs to be transform format")
                 with storage.Session.build(
                         session_id=job_utils.generate_session_id(self.tracker.task_id, self.tracker.task_version,
                                                                  self.tracker.role, self.tracker.party_id,
-                                                                 suffix="storage", random_end=True),
-                        storage_engine=input_table_meta.get_engine()) as src_storage_session:
-                    src_table = src_storage_session.get_table(name=input_table_meta.get_name(),
-                                                              namespace=input_table_meta.get_namespace())
-                    self.copy_table(src_table=src_table, dest_table=output_table)
-                output_table.count()
-                output_table_meta = output_table.get_meta()
-        else:
-            LOGGER.info(
-                f"the {input_table_meta.get_engine()} engine input table does not require conversion to support computing engine {computing_engine}")
-            output_table_meta = input_table_meta
+                                                                 suffix="storage",
+                                                                 random_end=True),
+                        storage_engine=output_table_engine) as output_table_session:
+                    output_table = output_table_session.create_table(address=output_table_address,
+                                                                     name=output_table_name,
+                                                                     namespace=output_table_namespace,
+                                                                     partitions=input_table_meta.partitions)
+                    self.copy_table(src_table=input_table, dest_table=output_table)
+                    # update real count to meta info
+                    output_table.count()
+                    output_table_meta = output_table.get_meta()
+            else:
+                LOGGER.info(
+                    f"the {input_table_meta.get_engine()} engine input table does not require conversion to support computing engine {computing_engine}")
+                output_table_meta = input_table_meta
         self.tracker.log_output_data_info(
             data_name=component_parameters.get('output_data_name')[0] if component_parameters.get(
                 'output_data_name') else table_key,
@@ -110,7 +115,7 @@ class Reader(object):
 
     def convert_check(self, input_name, input_namespace, output_name, output_namespace,
                       computing_engine: ComputingEngine = ComputingEngine.EGGROLL, output_storage_address={}) -> (
-    StorageTableMetaABC, AddressABC, StorageEngine):
+            StorageTableMetaABC, AddressABC, StorageEngine):
         input_table_meta = StorageTableMeta(name=input_name, namespace=input_namespace)
         if not input_table_meta:
             raise RuntimeError(f"can not found table name: {input_name} namespace: {input_namespace}")
@@ -167,8 +172,9 @@ class Reader(object):
                                                                                            id_delimiter=src_table_meta.get_id_delimiter()))
                     get_head = True
                     continue
-                values = line.rstrip().split(self.parameters["id_delimiter"])
-                k, v = values[0], data_utils.list_to_str(values[1:], id_delimiter=self.parameters["id_delimiter"])
+                values = line.rstrip().split(src_table.get_meta().get_id_delimiter())
+                k, v = values[0], data_utils.list_to_str(values[1:],
+                                                         id_delimiter=src_table.get_meta().get_id_delimiter())
                 count = self.put_in_table(table=dest_table, k=k, v=v, temp=data_temp, count=count,
                                           part_of_data=part_of_data)
         else:
@@ -178,8 +184,7 @@ class Reader(object):
         if data_temp:
             dest_table.put_all(data_temp)
         LOGGER.info("copy successfully")
-        dest_table.get_meta().update_metas(schema=src_table.get_meta().get_schema(), count=count,
-                                           part_of_data=part_of_data)
+        dest_table.get_meta().update_metas(schema=src_table.get_meta().get_schema(), part_of_data=part_of_data)
 
     def put_in_table(self, table: StorageTableABC, k, v, temp, count, part_of_data):
         temp.append((k, v))
