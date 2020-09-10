@@ -203,24 +203,18 @@ class FeatureHistogram(object):
             use_missing=use_missing, zero_as_missing=zero_as_missing)
 
         agg_histogram = functools.partial(FeatureHistogram.aggregate_histogram, node_map=node_map)
-
-        # batch_histogram = data_bin.join(grad_and_hess, \
-        #                                 lambda data_inst, g_h: (data_inst, g_h)).mapPartitions2(batch_histogram_cal)
-
         batch_histogram_intermediate_rs = data_bin.join(grad_and_hess, lambda data_inst, g_h: (data_inst, g_h))
         histograms_table = batch_histogram_intermediate_rs.mapReducePartitions(batch_histogram_cal, agg_histogram)
-        # histograms_dict = batch_histogram.reduce(agg_histogram, key_func=lambda key: (key[1], key[2]))
 
         if ret == "tensor":
             feature_num = bin_split_points.shape[0]
             rs = FeatureHistogram.recombine_histograms(histograms_table, node_map, feature_num)
             return rs
         else:
-            return FeatureHistogram.construct_table(histograms_table, )
-
+            return FeatureHistogram.construct_table(histograms_table)
 
     @staticmethod
-    def aggregate_histogram(histogram1, histogram2, node_map=None):
+    def aggregate_histogram(histogram1, histogram2):
         for i in range(len(histogram1)):
             for j in range(len(histogram1[i])):
                 histogram1[i][j] += histogram2[i][j]
@@ -327,12 +321,10 @@ class FeatureHistogram(object):
         histogram_list = list(histograms_table.collect())
         for tuple_ in histogram_list:
             nid, fid = tuple_[0]
-            histograms[int(nid)][int(fid)] = FeatureHistogram.guest_accumulate_histogram(tuple_[1])
-        LOGGER.debug('hist table is {}'.format(histograms))
         return histograms
 
     @staticmethod
-    def construct_table(histograms_table,):
+    def construct_table(histograms_table):
         histograms_table = histograms_table.map(FeatureHistogram.host_accumulate_histogram_map_func)
         return histograms_table
 
