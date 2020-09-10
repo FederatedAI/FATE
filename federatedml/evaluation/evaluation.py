@@ -634,3 +634,6 @@ class Evaluation(ModelBase):
         for k, v in data.items():
             result[".".join(k.split(".")[:-1])] = v
         return result
+
+    def obtain_data(self, data_list):
+        return data_list

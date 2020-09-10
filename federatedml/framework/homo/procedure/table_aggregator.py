@@ -127,9 +127,7 @@ class Client(aggregator.Client):
             rand_table = computing_session.parallelize(tuple(zip(list_key, rand_table)),
                                                        include_key=True,
                                                        partition=table.partitions)
-            LOGGER.debug(f"Before_join, table: {list(table.collect())[0]}")
             table = table.join(rand_table, lambda x, y: x + y)
-            LOGGER.debug(f"After_join, table: {list(table.collect())[0]}")
 
             LOGGER.debug("Finish add random numbers")
 

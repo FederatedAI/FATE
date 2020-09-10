@@ -16,9 +16,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-from pipeline.param import consts
-from pipeline.param.base_param import BaseParam
+from federatedml.util import consts, LOGGER
+from federatedml.param.base_param import BaseParam
 
 
 class EvaluateParam(BaseParam):
@@ -35,23 +34,27 @@ class EvaluateParam(BaseParam):
         Indicate if this module needed to be run
     """
 
-    def __init__(self, eval_type="binary", pos_label=1, need_run=True, metrics=None):
+    def __init__(self, eval_type="binary", pos_label=1, need_run=True, metrics=None,
+                 run_clustering_arbiter_metric=False):
         super().__init__()
         self.eval_type = eval_type
         self.pos_label = pos_label
         self.need_run = need_run
         self.metrics = metrics
+        self.run_clustering_arbiter_metric = run_clustering_arbiter_metric
 
         self.default_metrics = {
             consts.BINARY: consts.ALL_BINARY_METRICS,
             consts.MULTY: consts.ALL_MULTI_METRICS,
-            consts.REGRESSION: consts.ALL_REGRESSION_METRICS
+            consts.REGRESSION: consts.ALL_REGRESSION_METRICS,
+            consts.CLUSTERING: consts.ALL_CLUSTER_METRICS
         }
 
         self.allowed_metrics = {
             consts.BINARY: consts.ALL_BINARY_METRICS,
             consts.MULTY: consts.ALL_MULTI_METRICS,
-            consts.REGRESSION: consts.ALL_REGRESSION_METRICS
+            consts.REGRESSION: consts.ALL_REGRESSION_METRICS,
+            consts.CLUSTERING: consts.ALL_CLUSTER_METRICS
         }
 
     def _use_single_value_default_metrics(self):
@@ -59,7 +62,8 @@ class EvaluateParam(BaseParam):
         self.default_metrics = {
             consts.BINARY: consts.DEFAULT_BINARY_METRIC,
             consts.MULTY: consts.DEFAULT_MULTI_METRIC,
-            consts.REGRESSION: consts.DEFAULT_REGRESSION_METRIC
+            consts.REGRESSION: consts.DEFAULT_REGRESSION_METRIC,
+            consts.CLUSTERING: consts.DEFAULT_CLUSTER_METRIC
         }
 
     def _check_valid_metric(self, metrics_list):
@@ -107,7 +111,8 @@ class EvaluateParam(BaseParam):
 
         descr = "evaluate param's "
         self.eval_type = self.check_and_change_lower(self.eval_type,
-                                                       [consts.BINARY, consts.MULTY, consts.REGRESSION],
+                                                       [consts.BINARY, consts.MULTY, consts.REGRESSION,
+                                                        consts.CLUSTERING],
                                                        descr)
 
         if type(self.pos_label).__name__ not in ["str", "float", "int"]:
@@ -122,9 +127,11 @@ class EvaluateParam(BaseParam):
 
         if self.metrics is None or len(self.metrics) == 0:
             self.metrics = self.default_metrics[self.eval_type]
+            LOGGER.warning('use default metric {} for eval type {}'.format(self.metrics, self.eval_type)) 
 
         self.metrics = self._check_valid_metric(self.metrics)
 
+        LOGGER.info("Finish evaluation parameter check!")
 
         return True
 
@@ -134,6 +141,7 @@ class EvaluateParam(BaseParam):
         # in validation strategy, psi f1-score and confusion-mat pr-quantile are not supported in cur version
         if self.metrics is None or len(self.metrics) == 0:
             self.metrics = self.default_metrics[self.eval_type]
+            LOGGER.warning('use default metric {} for eval type {}'.format(self.metrics, self.eval_type))
 
         ban_metric = [consts.PSI, consts.F1_SCORE, consts.CONFUSION_MAT, consts.QUANTILE_PR]
         for metric in self.metrics:

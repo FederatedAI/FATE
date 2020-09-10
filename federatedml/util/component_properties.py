@@ -99,6 +99,7 @@ class ComponentProperties(object):
         if "isometric_model" in args:
             self.has_isometric_model = True
         data_sets = args.get("data")
+        LOGGER.debug(f"parse_dsl_args data_sets: {data_sets}")
         if data_sets is None:
             return self
         for data_key, data_dicts in data_sets.items():
@@ -185,6 +186,7 @@ class ComponentProperties(object):
                     del data_dict[data_type]
 
             if len(data_dict) > 0:
+                LOGGER.debug(f'data_dict: {data_dict}')
                 for k, v in data_dict.items():
                     data_list = model.obtain_data(v)
                     if isinstance(data_list, list):
