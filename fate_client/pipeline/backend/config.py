@@ -19,10 +19,11 @@ from pathlib import Path
 from pipeline.backend import get_default_config
 from pipeline.constant import Backend, JobStatus, WorkMode
 
-__all__ = ["Backend", "WorkMode", "JobStatus", "VERSION", "TIME_QUERY_FREQS", "Role", "StatusCode",
+__all__ = ["Backend", "WorkMode", "JobStatus", "VERSION", "SERVER_VERSION", "TIME_QUERY_FREQS", "Role", "StatusCode",
            "LogPath", "LogFormat", "IODataType", "FlowConfig"]
 
 VERSION = 2
+SERVER_VERSION = "v1"
 TIME_QUERY_FREQS = 0.01
 
 
