@@ -208,7 +208,7 @@ class HeteroSecureBoostGuest(HeteroBoostingGuest):
         for leaf_idx, tree in zip(leaf_pos, trees):
             weights.append(tree.tree_node[leaf_idx].weight)
         weights = np.array(weights)
-        if multi_class_num is not None:
+        if multi_class_num > 2:
             weights = weights.reshape((-1, multi_class_num))
             return np.sum(weights * learning_rate, axis=0) + init_score
         else:
