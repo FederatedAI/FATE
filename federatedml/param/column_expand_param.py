@@ -35,7 +35,7 @@ class ColumnExpandParam(BaseParam):
     method : str, default: 'manual'
         If method is 'manual', use user-specified `fill_value` to fill in new features.
 
-    fill_value : int, float, str, List[int], List[float], List[str] default: 1e-6
+    fill_value : int, float, str, List[int], List[float], List[str] default: 1e-8
         Used for filling expanded feature columns. If given a list, length of the list must match that of `append_header`
 
     need_run: bool, default: True
