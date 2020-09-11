@@ -323,7 +323,7 @@ class Evaluation(ModelBase):
         single_val_metric = None
 
         if metric in self.save_single_value_metric_list or \
-           (metric is consts.ACCURACY and self.eval_type == consts.MULTY):
+           (metric == consts.ACCURACY and self.eval_type == consts.MULTY):
 
             single_val_metric = metric_res[1]
 
