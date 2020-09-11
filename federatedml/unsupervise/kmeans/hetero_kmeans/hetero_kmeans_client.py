@@ -32,8 +32,8 @@ from federatedml.util import consts
 class HeteroKmeansClient(BaseKmeansModel):
     def __init__(self):
         super(HeteroKmeansClient, self).__init__()
-        self.dist_aggregator = secure_sum_aggregator.Client(enable_secure_aggregate=True)
-        self.cluster_dist_aggregator = secure_sum_aggregator.Client(enable_secure_aggregate=True)
+        self.dist_aggregator = secure_sum_aggregator.Client(enable_secure_aggregate=False)
+        self.cluster_dist_aggregator = secure_sum_aggregator.Client(enable_secure_aggregate=False)
         self.client_dist = None
         self.client_tol = None
         self.aggregator = table_aggregator.Client()

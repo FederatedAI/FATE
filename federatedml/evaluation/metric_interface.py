@@ -455,5 +455,3 @@ class MetricInterface(object):
         """
         return clustering_metric.DistanceMeasure().compute(cluster_avg_intra_dist, cluster_inter_dist, max_radius)
 
-
-

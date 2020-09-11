@@ -72,8 +72,8 @@ class DistanceMeasure(object):
                 if arr[k] < smallest:
                     smallest = arr[k]
                     smallest_index = k
-                if smallest_index >= j:
-                    smallest_index += 1
+            if smallest_index >= j:
+                smallest_index += 1
             cluster_nearest_result.append(smallest_index)
         distance_measure_result = dict()
         for n in range(0, len(dist_table)):

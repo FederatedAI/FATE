@@ -25,7 +25,7 @@ message KmeansModelParam {
   bool converged = 3;
   repeated Clusterdetail cluster_detail = 4;
   repeated Centroiddetail centroid_detail = 5;
-
+  repeated string header = 6;
 }
 
 message Clusterdetail{
