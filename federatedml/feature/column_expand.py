@@ -19,8 +19,7 @@ import copy
 from federatedml.model_base import ModelBase
 from federatedml.param.column_expand_param import ColumnExpandParam
 from federatedml.protobuf.generated import column_expand_meta_pb2, column_expand_param_pb2
-from federatedml.util import LOGGER
-from federatedml.util import consts
+from federatedml.util import consts, LOGGER
 
 DELIMITER = ","
 
