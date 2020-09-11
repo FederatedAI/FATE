@@ -110,7 +110,7 @@ def migration(config_data: dict):
                         os.path.join(migrate_model.model_path, "variables", "data", "pipeline", "pipeline", "Pipeline"))
 
         # modify proto
-        with open(os.path.join(migrate_model.model_path, 'define', 'define.yaml'), 'r') as fin:
+        with open(os.path.join(migrate_model.model_path, 'define', 'define-meta.yaml'), 'r') as fin:
             define_yaml = yaml.safe_load(fin)
 
         for key, value in define_yaml['model_proto'].items():
