@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='com.webank.ai.fate.core.mlmodel.buffer',
   syntax='proto3',
   serialized_options=_b('B\025KmeansModelParamProto'),
-  serialized_pb=_b('\n\x19hetero-kmeans-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\xf8\x01\n\x10KmeansModelParam\x12\x19\n\x11\x63ount_of_clusters\x18\x01 \x01(\x03\x12\x16\n\x0emax_interation\x18\x02 \x01(\x03\x12\x11\n\tconverged\x18\x03 \x01(\x08\x12M\n\x0e\x63luster_detail\x18\x04 \x03(\x0b\x32\x35.com.webank.ai.fate.core.mlmodel.buffer.Clusterdetail\x12O\n\x0f\x63\x65ntroid_detail\x18\x05 \x03(\x0b\x32\x36.com.webank.ai.fate.core.mlmodel.buffer.Centroiddetail\" \n\rClusterdetail\x12\x0f\n\x07\x63luster\x18\x01 \x03(\x01\"\"\n\x0e\x43\x65ntroiddetail\x12\x10\n\x08\x63\x65ntroid\x18\x01 \x03(\x01\x42\x17\x42\x15KmeansModelParamProtob\x06proto3')
+  serialized_pb=_b('\n\x19hetero-kmeans-param.proto\x12&com.webank.ai.fate.core.mlmodel.buffer\"\x88\x02\n\x10KmeansModelParam\x12\x19\n\x11\x63ount_of_clusters\x18\x01 \x01(\x03\x12\x16\n\x0emax_interation\x18\x02 \x01(\x03\x12\x11\n\tconverged\x18\x03 \x01(\x08\x12M\n\x0e\x63luster_detail\x18\x04 \x03(\x0b\x32\x35.com.webank.ai.fate.core.mlmodel.buffer.Clusterdetail\x12O\n\x0f\x63\x65ntroid_detail\x18\x05 \x03(\x0b\x32\x36.com.webank.ai.fate.core.mlmodel.buffer.Centroiddetail\x12\x0e\n\x06header\x18\x06 \x03(\t\" \n\rClusterdetail\x12\x0f\n\x07\x63luster\x18\x01 \x03(\x01\"\"\n\x0e\x43\x65ntroiddetail\x12\x10\n\x08\x63\x65ntroid\x18\x01 \x03(\x01\x42\x17\x42\x15KmeansModelParamProtob\x06proto3')
 )
 
 
@@ -68,6 +68,13 @@ _KMEANSMODELPARAM = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='header', full_name='com.webank.ai.fate.core.mlmodel.buffer.KmeansModelParam.header', index=5,
+      number=6, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -81,7 +88,7 @@ _KMEANSMODELPARAM = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=70,
-  serialized_end=318,
+  serialized_end=334,
 )
 
 
@@ -111,8 +118,8 @@ _CLUSTERDETAIL = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=320,
-  serialized_end=352,
+  serialized_start=336,
+  serialized_end=368,
 )
 
 
@@ -142,8 +149,8 @@ _CENTROIDDETAIL = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=354,
-  serialized_end=388,
+  serialized_start=370,
+  serialized_end=404,
 )
 
 _KMEANSMODELPARAM.fields_by_name['cluster_detail'].message_type = _CLUSTERDETAIL
