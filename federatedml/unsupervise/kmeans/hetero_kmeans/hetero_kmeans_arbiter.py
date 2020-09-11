@@ -80,8 +80,8 @@ class HeteroKmeansArbiter(BaseKmeansModel):
     @staticmethod
     def get_max_radius(v1, v2):
         rs = {}
-        for k1 in v1:
-            rs[k1] = max(v1[k1], v2[k1])
+        for k1 in v1.keys() | v2.keys():
+            rs[k1] = max(v1.get(k1, 0), v2.get(k1, 0))
         return rs
 
     def cal_dbi(self, dist_sum, cluster_result):
