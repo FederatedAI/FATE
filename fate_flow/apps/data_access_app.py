@@ -20,7 +20,7 @@ from flask import Flask, request
 
 from fate_flow.entity.types import StatusSet
 from fate_arch import storage
-from fate_flow.settings import stat_logger, USE_LOCAL_DATA
+from fate_flow.settings import stat_logger, UPLOAD_DATA_FROM_CLIENT
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils import detect_utils, job_utils
 from fate_flow.scheduler import DAGScheduler
@@ -38,7 +38,7 @@ def internal_server_error(e):
 @manager.route('/<access_module>', methods=['post'])
 def download_upload(access_module):
     job_id = job_utils.generate_job_id()
-    if access_module == "upload" and USE_LOCAL_DATA and not (request.json and request.json.get("use_local_data") == 0):
+    if access_module == "upload" and UPLOAD_DATA_FROM_CLIENT and not (request.json and request.json.get("use_local_data") == 0):
         file = request.files['file']
         filename = os.path.join(job_utils.get_job_directory(job_id), 'fate_upload_tmp', file.filename)
         os.makedirs(os.path.dirname(filename), exist_ok=True)

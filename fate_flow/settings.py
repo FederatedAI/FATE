@@ -16,7 +16,10 @@
 # -*- coding: utf-8 -*-
 import os
 
-from fate_arch.common import file_utils, log
+from fate_arch.computing import ComputingEngine
+from fate_arch.federation import FederationEngine
+from fate_arch.storage import StorageEngine
+from fate_arch.common import file_utils, log, EngineType
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_arch.common.conf_utils import get_base_config
 import __main__
@@ -26,8 +29,15 @@ WORK_MODE = get_base_config('work_mode', 0)
 DATABASE = get_base_config("database", {})
 MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
 
+# storage engine is used for component output data
+SUPPORT_ENGINES = {
+    EngineType.COMPUTING: [ComputingEngine.EGGROLL, ComputingEngine.SPARK],
+    EngineType.FEDERATION: [FederationEngine.EGGROLL, FederationEngine.RABBITMQ],
+    EngineType.STORAGE: [StorageEngine.EGGROLL, StorageEngine.HDFS]
+}
+
 # upload data
-USE_LOCAL_DATA = True
+UPLOAD_DATA_FROM_CLIENT = True
 
 # Local authentication switch
 USE_AUTHENTICATION = False

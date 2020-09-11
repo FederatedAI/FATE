@@ -27,8 +27,8 @@ from fate_arch.abc import FederationABC, GarbageCollectionABC
 from fate_arch.common import Party
 from fate_arch.common.log import getLogger
 from fate_arch.computing.spark import get_storage_level, Table
-from fate_arch.federation.spark._mq_channel import MQChannel
-from fate_arch.federation.spark._rabbit_manager import RabbitManager
+from fate_arch.federation.rabbitmq._mq_channel import MQChannel
+from fate_arch.federation.rabbitmq._rabbit_manager import RabbitManager
 
 LOGGER = getLogger()
 
