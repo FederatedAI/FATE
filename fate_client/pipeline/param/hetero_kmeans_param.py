@@ -53,7 +53,7 @@ class KmeansParam(BaseParam):
             raise ValueError(
                 descr + "max_iter not supported, should be larger than 0".format(self.max_iter))
 
-        if not isinstance(self.tol,float):
+        if not isinstance(self.tol, (float, int)):
             raise ValueError(
                 descr + "tol not supported, should be float type".format(self.tol))
         elif self.tol < 0:
