@@ -87,8 +87,8 @@
                 "model": ["model"]
             }
         },
-        "hetero_lr_0": {
-            "module": "HeteroLR",
+        "hetero_kmeans_0": {
+            "module": "HeteroKmeans",
             "input": {
                 "data": {
                     "train_data": ["one_hot_encoder_0.train"]
