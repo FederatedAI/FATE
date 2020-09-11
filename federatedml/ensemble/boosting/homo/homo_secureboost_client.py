@@ -111,9 +111,11 @@ class HomoSecureBoostClient(HomoBoostingClient):
 
         weights = np.array(weight_list)
 
-        if class_num > 1:
+        if class_num > 2:
             weights = weights.reshape((-1, class_num))
-        return float(np.sum(weights * learning_rate, axis=0) + init_score)
+            return np.sum(weights * learning_rate, axis=0) + init_score
+        else:
+            return float(np.sum(weights * learning_rate, axis=0) + init_score)
 
     def fast_homo_tree_predict(self, data_inst):
 
@@ -134,7 +136,8 @@ class HomoSecureBoostClient(HomoBoostingClient):
         predict_rs = to_predict_data.mapValues(func)
 
         return self.predict_score_to_output(data_instances=data_inst, predict_score=predict_rs,
-                                            classes=self.classes_, )
+                                            classes=None if len(self.classes_) == 0 else self.classes_,
+                                            threshold=self.predict_param.threshold)
 
     @assert_io_num_rows_equal
     def predict(self, data_inst):

@@ -77,9 +77,9 @@ class Boosting(ModelBase, ABC):
         # training
         self.feature_num = None  # feature number
         self.init_score = None  # init score
-        self.num_classes = 2  # number of classes
+        self.num_classes = None  # number of classes
         self.convergence = None  # function to check loss convergence
-        self.classes_ = []  # class indices
+        self.classes_ = []  # list of class indices
         self.y = None   # label
         self.y_hat = None  # accumulated predict value
         self.loss = None   # loss func
