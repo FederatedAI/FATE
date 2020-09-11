@@ -134,7 +134,7 @@ class HomoSecureBoostClient(HomoBoostingClient):
         predict_rs = to_predict_data.mapValues(func)
 
         return self.predict_score_to_output(data_instances=data_inst, predict_score=predict_rs,
-                                            classes=self.num_classes, )
+                                            classes=self.classes_, )
 
     @assert_io_num_rows_equal
     def predict(self, data_inst):
