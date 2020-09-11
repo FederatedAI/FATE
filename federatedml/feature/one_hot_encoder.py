@@ -15,20 +15,18 @@
 #  limitations under the License.
 
 import functools
-
-import numpy as np
 import math
 
-from arch.api.utils import log_utils
+import numpy as np
+
 from federatedml.model_base import ModelBase
 from federatedml.param.onehot_encoder_param import OneHotEncoderParam
 from federatedml.protobuf.generated import onehot_param_pb2, onehot_meta_pb2
 from federatedml.statistic.data_overview import get_header
+from federatedml.util import LOGGER
+from federatedml.util import abnormal_detection
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
-from federatedml.util import abnormal_detection
-
-LOGGER = log_utils.getLogger()
 
 MODEL_PARAM_NAME = 'OneHotParam'
 MODEL_META_NAME = 'OneHotMeta'
@@ -140,7 +138,7 @@ class OneHotEncoder(ModelBase):
         f1 = functools.partial(self.record_new_header,
                                inner_param=self.inner_param)
 
-        self.col_maps = data_instances.mapPartitions(f1).reduce(self.merge_col_maps)
+        self.col_maps = data_instances.applyPartitions(f1).reduce(self.merge_col_maps)
         LOGGER.debug("Before set_schema in fit, schema is : {}, header: {}".format(self.schema,
                                                                                    self.inner_param.header))
         self._transform_schema()

@@ -25,7 +25,6 @@ import functools
 
 import numpy as np
 
-from arch.api.utils import log_utils
 from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.model_base import ModelBase
@@ -38,9 +37,8 @@ from federatedml.protobuf.generated.data_io_param_pb2 import OutlierParam
 from federatedml.statistic import data_overview
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
+from federatedml.util import LOGGER
 from federatedml.util.io_check import assert_io_num_rows_equal
-
-LOGGER = log_utils.getLogger()
 
 
 # =============================================================================
@@ -674,7 +672,7 @@ class SparseTagReader(object):
                                            with_label=self.with_label,
                                            tag_with_value=self.tag_with_value,
                                            tag_value_delimitor=self.tag_value_delimitor)
-        tags_set_list = list(input_data.mapPartitions(tag_aggregator).collect())
+        tags_set_list = list(input_data.applyPartitions(tag_aggregator).collect())
         tags_set = set()
         for _, _tags_set in tags_set_list:
             tags_set |= _tags_set

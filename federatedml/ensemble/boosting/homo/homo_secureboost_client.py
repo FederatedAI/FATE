@@ -1,25 +1,20 @@
+import numpy as np
+import functools
+from typing import List
+from operator import itemgetter
 from federatedml.ensemble.boosting.boosting_core.homo_boosting import HomoBoostingClient
 from federatedml.param.boosting_param import HomoSecureBoostParam
 from federatedml.ensemble.basic_algorithms.decision_tree.homo.homo_decision_tree_client import HomoDecisionTreeClient
 from federatedml.util import consts
-from operator import itemgetter
-
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import BoostingTreeModelMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import ObjectiveMeta
 from federatedml.protobuf.generated.boosting_tree_model_meta_pb2 import QuantileMeta
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import BoostingTreeModelParam
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
 from federatedml.ensemble import HeteroSecureBoostGuest
-import numpy as np
-
 from federatedml.util.io_check import assert_io_num_rows_equal
+from federatedml.util import LOGGER
 
-import functools
-
-from typing import List
-
-from arch.api.utils import log_utils
-LOGGER = log_utils.getLogger()
 
 make_readable_feature_importance = HeteroSecureBoostGuest.make_readable_feature_importance
 
@@ -37,10 +32,15 @@ class HomoSecureBoostClient(HomoBoostingClient):
         self.model_param = HomoSecureBoostParam()
 
     def _init_model(self, boosting_param: HomoSecureBoostParam):
+
         super(HomoSecureBoostClient, self)._init_model(boosting_param)
         self.use_missing = boosting_param.use_missing
         self.zero_as_missing = boosting_param.zero_as_missing
         self.tree_param = boosting_param.tree_param
+
+        if self.use_missing:
+            self.tree_param.use_missing = self.use_missing
+            self.tree_param.zero_as_missing = self.zero_as_missing
 
     def get_valid_features(self, epoch_idx, b_idx):
         valid_feature = self.transfer_inst.valid_features.get(idx=0, suffix=('valid_features', epoch_idx, b_idx))
@@ -113,7 +113,7 @@ class HomoSecureBoostClient(HomoBoostingClient):
 
         if class_num > 1:
             weights = weights.reshape((-1, class_num))
-        return np.sum(weights * learning_rate, axis=0) + init_score
+        return float(np.sum(weights * learning_rate, axis=0) + init_score)
 
     def fast_homo_tree_predict(self, data_inst):
 
@@ -133,7 +133,8 @@ class HomoSecureBoostClient(HomoBoostingClient):
                                  learning_rate=self.learning_rate, class_num=self.booster_dim)
         predict_rs = to_predict_data.mapValues(func)
 
-        return self.score_to_predict_result(data_inst, predict_rs, )
+        return self.predict_score_to_output(data_instances=data_inst, predict_score=predict_rs,
+                                            classes=self.classes_, )
 
     @assert_io_num_rows_equal
     def predict(self, data_inst):

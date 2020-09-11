@@ -16,9 +16,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.utils import log_utils
+from fate_arch.computing import is_table
 
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class RunningFuncs(object):
@@ -99,6 +99,7 @@ class ComponentProperties(object):
         if "isometric_model" in args:
             self.has_isometric_model = True
         data_sets = args.get("data")
+        LOGGER.debug(f"parse_dsl_args data_sets: {data_sets}")
         if data_sets is None:
             return self
         for data_key, data_dicts in data_sets.items():
@@ -185,8 +186,10 @@ class ComponentProperties(object):
                     del data_dict[data_type]
 
             if len(data_dict) > 0:
+                LOGGER.debug(f'data_dict: {data_dict}')
                 for k, v in data_dict.items():
                     data_list = model.obtain_data(v)
+                    LOGGER.debug(f"data_list: {data_list}")
                     if isinstance(data_list, list):
                         for i, data_i in enumerate(data_list):
                             data[".".join([cpn_name, k, str(i)])] = data_i
@@ -214,14 +217,14 @@ class ComponentProperties(object):
         if validate_data or (self.has_train_data and self.has_eval_data):
             self.has_validate_data = True
 
-        if self.has_train_data and type(train_data) in ["DTable", "RDDTable"]:
+        if self.has_train_data and is_table(train_data):
             self.input_data_count = train_data.count()
         elif self.has_normal_input_data:
             for data_key, data_table in data.items():
-                if type(data_table) in ["DTable", "RDDTable"]:
+                if is_table(data_table):
                     self.input_data_count = data_table.count()
 
-        if self.has_validate_data and type(validate_data) in ["DTable", "RDDTable"]:
+        if self.has_validate_data and is_table(validate_data):
             self.input_eval_data_count = validate_data.count()
 
         self._abnormal_dsl_config_detect()
@@ -325,3 +328,8 @@ class ComponentProperties(object):
             # LOGGER.debug("before out loop, one data: {}".format(result_data.first()))
 
         return result_data
+
+    def set_union_func(self, func):
+        self.union_data = func
+
+

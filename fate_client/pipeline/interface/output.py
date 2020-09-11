@@ -19,64 +19,6 @@ from pipeline.backend.config import IODataType
 
 class Output(object):
     def __init__(self, name, data_type='single', has_data=True, has_model=True, output_unit=1):
-        class Model(object):
-            def __init__(self, prefix):
-                self.prefix = prefix
-
-            @property
-            def model(self):
-                return ".".join([self.prefix, "model"])
-
-            @staticmethod
-            def get_all_output():
-                return ["model"]
-
-        class SingleOutputData(object):
-            def __init__(self, prefix):
-                self.prefix = prefix
-
-            @property
-            def data(self):
-                return ".".join([self.prefix, IODataType.SINGLE])
-
-            @staticmethod
-            def get_all_output():
-                return ["data"]
-
-        class TraditionalMultiOutputData(object):
-            def __init__(self, prefix):
-                self.prefix = prefix
-
-            @property
-            def train_data(self):
-                return ".".join([self.prefix, IODataType.TRAIN])
-
-            @property
-            def test_data(self):
-                return ".".join([self.prefix, IODataType.TEST])
-
-            @property
-            def validate_data(self):
-                return ".".join([self.prefix, IODataType.VALIDATE])
-
-            @staticmethod
-            def get_all_output():
-                return [IODataType.TRAIN,
-                        IODataType.VALIDATE,
-                        IODataType.TEST]
-
-        class NoLimitOutputData(object):
-            def __init__(self, prefix, output_unit=1):
-                self.prefix = prefix
-                self.output_unit = output_unit
-
-            @property
-            def data(self):
-                return [self.prefix + "." + "data_" + str(i) for i in range(self.output_unit)]
-
-            def get_all_output(self):
-                return ["data_" + str(i) for i in range(self.output_unit)]
-
         if has_model:
             self.model = Model(name).model
             self.model_output = Model(name).get_all_output()
@@ -92,3 +34,64 @@ class Output(object):
                 self.data = NoLimitOutputData(name, output_unit)
                 self.data_output = NoLimitOutputData(name, output_unit).get_all_output()
 
+
+class Model(object):
+    def __init__(self, prefix):
+        self.prefix = prefix
+
+    @property
+    def model(self):
+        return ".".join([self.prefix, "model"])
+
+    @staticmethod
+    def get_all_output():
+        return ["model"]
+
+
+class SingleOutputData(object):
+    def __init__(self, prefix):
+        self.prefix = prefix
+
+    @property
+    def data(self):
+        return ".".join([self.prefix, IODataType.SINGLE])
+
+    @staticmethod
+    def get_all_output():
+        return ["data"]
+
+
+class TraditionalMultiOutputData(object):
+    def __init__(self, prefix):
+        self.prefix = prefix
+
+    @property
+    def train_data(self):
+        return ".".join([self.prefix, IODataType.TRAIN])
+
+    @property
+    def test_data(self):
+        return ".".join([self.prefix, IODataType.TEST])
+
+    @property
+    def validate_data(self):
+        return ".".join([self.prefix, IODataType.VALIDATE])
+
+    @staticmethod
+    def get_all_output():
+        return [IODataType.TRAIN,
+                IODataType.VALIDATE,
+                IODataType.TEST]
+
+
+class NoLimitOutputData(object):
+    def __init__(self, prefix, output_unit=1):
+        self.prefix = prefix
+        self.output_unit = output_unit
+
+    @property
+    def data(self):
+        return [self.prefix + "." + "data_" + str(i) for i in range(self.output_unit)]
+
+    def get_all_output(self):
+        return ["data_" + str(i) for i in range(self.output_unit)]

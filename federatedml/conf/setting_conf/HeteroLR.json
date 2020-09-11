@@ -1,6 +1,5 @@
 {
     "module_path":  "federatedml/linear_model/logistic_regression/hetero_logistic_regression",
-    "default_runtime_conf": "logistic_regression_param.json",
     "param_class" : "federatedml/param/logistic_regression_param.py/HeteroLogisticParam",
     "role":
     {

@@ -16,20 +16,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import bisect
 import functools
 import math
 import random
-import bisect
 
-from arch.api.utils import log_utils
 from federatedml.feature.binning.bin_inner_param import BinInnerParam
 from federatedml.feature.binning.bin_result import BinColResults, BinResults
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.statistic import data_overview
 
-# from federatedml.statistic import statics
 
-LOGGER = log_utils.getLogger()
+# from federatedml.statistic import statics
 
 
 class BaseBinning(object):
@@ -333,7 +331,7 @@ class BaseBinning(object):
                               split_points=split_points,
                               cols_dict=self.bin_inner_param.bin_cols_map)
 
-        result_sum = data_bin_with_label.mapPartitions(f)
+        result_sum = data_bin_with_label.applyPartitions(f)
         result_counts = result_sum.reduce(self.aggregate_partition_label)
         for col_name, bin_results in result_counts.items():
             for b in bin_results:

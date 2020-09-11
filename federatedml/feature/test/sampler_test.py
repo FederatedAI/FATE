@@ -17,7 +17,7 @@
 import numpy as np
 import unittest
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 from fate_flow.operation.job_tracker import Tracker
 from federatedml.feature.instance import Instance
 from federatedml.feature.sampler import RandomSampler

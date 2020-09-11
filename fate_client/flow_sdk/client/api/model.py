@@ -21,14 +21,30 @@ from flow_sdk.utils import preprocess, get_project_base_directory
 
 
 class Model(BaseFlowAPI):
-    def load(self, conf_path):
+    def load(self, conf_path=None, job_id=None):
+        kwargs = locals()
+        if not kwargs.get("conf_path") and not kwargs.get("job_id"):
+            response = {
+                "retcode": 100,
+                "retmsg": "Load model failed. No arguments received, "
+                          "please provide one of arguments from job id and conf path."
+            }
+        else:
+            if kwargs.get("conf_path") and kwargs.get("job_id"):
+                response = {
+                    "retcode": 100,
+                    "retmsg": "Load model failed. Please do not provide job id and "
+                              "conf path at the same time."
+                }
+            else:
+                config_data, dsl_data = preprocess(**kwargs)
+                self._post(url='model/load', json=config_data)
         if not os.path.exists(conf_path):
             raise FileNotFoundError('Invalid conf path, file not exists.')
-        kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
         return self._post(url='model/load', json=config_data)
 
-    def bind(self, conf_path):
+    def bind(self, conf_path, job_id=None):
         if not os.path.exists(conf_path):
             raise FileNotFoundError('Invalid conf path, file not exists.')
         kwargs = locals()

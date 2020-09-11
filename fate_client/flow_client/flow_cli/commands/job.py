@@ -18,6 +18,7 @@ import json
 from datetime import datetime
 
 import click
+import flask
 import requests
 from contextlib import closing
 
@@ -64,7 +65,7 @@ def submit(ctx, **kwargs):
 @job.command("list", short_help="List Job Command")
 @cli_args.LIMIT
 @click.pass_context
-def list(ctx, **kwargs):
+def list_job(ctx, **kwargs):
     """
     - DESCRIPTION:
 
@@ -83,7 +84,6 @@ def list(ctx, **kwargs):
 @cli_args.JOBID
 @cli_args.ROLE
 @cli_args.PARTYID
-@cli_args.COMPONENT_NAME
 @cli_args.STATUS
 @click.pass_context
 def query(ctx, **kwargs):
@@ -102,11 +102,13 @@ def query(ctx, **kwargs):
     response = access_server('post', ctx, "job/query", config_data, False)
     if isinstance(response, requests.models.Response):
         response = response.json()
+    if isinstance(response, flask.wrappers.Response):
+        response = response.json
     if response['retcode'] == 0:
         for i in range(len(response['data'])):
             del response['data'][i]['f_runtime_conf']
             del response['data'][i]['f_dsl']
-    prettify(response.json() if isinstance(response, requests.models.Response) else response)
+    prettify(response)
 
 
 @job.command("clean", short_help="Clean Job Command")
@@ -164,10 +166,14 @@ def config(ctx, **kwargs):
         flow job config -j $JOB_ID -r host -p 10000 --output-path ./examples/
     """
     config_data, dsl_data = preprocess(**kwargs)
-    response = access_server('post', ctx, 'job/config', config_data, False).json()
+    response = access_server('post', ctx, 'job/config', config_data, False)
+    if isinstance(response, requests.models.Response):
+        response = response.json()
+    if isinstance(response, flask.wrappers.Response):
+        response = response.json
     if response['retcode'] == 0:
         job_id = response['data']['job_id']
-        download_directory = os.path.join(config_data['output_path'], 'job_{}_config'.format(job_id))
+        download_directory = os.path.join(os.path.abspath(config_data['output_path']), 'job_{}_config'.format(job_id))
         os.makedirs(download_directory, exist_ok=True)
         for k, v in response['data'].items():
             if k == 'job_id':
@@ -178,7 +184,7 @@ def config(ctx, **kwargs):
         del response['data']['runtime_conf']
         response['directory'] = download_directory
         response['retmsg'] = 'download successfully, please check {} directory'.format(download_directory)
-    prettify(response.json() if isinstance(response, requests.models.Response) else response)
+    prettify(response)
 
 
 @job.command("log", short_help="Log Job Command")
@@ -202,19 +208,18 @@ def log(ctx, **kwargs):
     with closing(access_server('get', ctx, 'job/log', config_data, False, stream=True)) as response:
         if response.status_code == 200:
             download_from_request(http_response=response, tar_file_name=tar_file_name, extract_dir=extract_dir)
-            response_dict = {'retcode': 0,
-                             'directory': extract_dir,
-                             'retmsg': 'download successfully, please check {} directory'.format(extract_dir)}
+            res = {'retcode': 0,
+                   'directory': extract_dir,
+                   'retmsg': 'download successfully, please check {} directory'.format(extract_dir)}
         else:
-            response_dict = response.json() if isinstance(response, requests.models.Response) else response.json
-    prettify(response_dict)
+            res = response.json() if isinstance(response, requests.models.Response) else response
+    prettify(res)
 
 
 @job.command("view", short_help="Query Job Data View Command")
 @cli_args.JOBID
 @cli_args.ROLE
 @cli_args.PARTYID
-@cli_args.COMPONENT_NAME
 @cli_args.STATUS
 @click.pass_context
 def view(ctx, **kwargs):
@@ -292,11 +297,16 @@ def dsl_generator(ctx, **kwargs):
                     for chunk in response.iter_content(1024):
                         if chunk:
                             fw.write(chunk)
-                response_dict = {'retcode': 0,
-                                 'retmsg': "New predict dsl file has been generated successfully. "
-                                           "File path is: {}".format(output_path)}
+                res = {'retcode': 0,
+                       'retmsg': "New predict dsl file has been generated successfully. "
+                                 "File path is: {}".format(output_path)}
             else:
-                response_dict = response.json() if isinstance(response, requests.models.Response) else response.json
-        prettify(response_dict)
+                try:
+                    res = response.json() if isinstance(response, requests.models.Response) else response
+                except Exception:
+                    res = {'retcode': 100,
+                           'retmsg': "New predict dsl file generated failed."
+                                     "For more details, please check logs/fate_flow/fate_flow_stat.log"}
+        prettify(res)
     else:
         access_server('post', ctx, 'job/dsl/generate', config_data)

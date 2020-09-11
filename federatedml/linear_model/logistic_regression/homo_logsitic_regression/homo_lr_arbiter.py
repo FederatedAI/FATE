@@ -18,15 +18,13 @@
 
 import numpy as np
 
-from arch.api.utils import log_utils
 from federatedml.framework.homo.procedure import aggregator
 from federatedml.framework.homo.procedure import paillier_cipher
 from federatedml.linear_model.linear_model_weight import LinearModelWeights as LogisticRegressionWeights
 from federatedml.linear_model.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.optim import activation
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class HomoLRArbiter(HomoLRBase):
@@ -74,18 +72,20 @@ class HomoLRArbiter(HomoLRBase):
                 LOGGER.info("n_iters: {}, total_loss: {}, converge flag is :{}".format(self.n_iter_,
                                                                                        total_loss,
                                                                                        self.is_converged))
-                if self.is_converged or self.n_iter_ == max_iter:
-                    break
+
                 self.model_weights = LogisticRegressionWeights(merged_model.unboxed,
                                                                self.model_param.init_param.fit_intercept)
                 if self.header is None:
                     self.header = ['x' + str(i) for i in range(len(self.model_weights.coef_))]
 
+                if self.is_converged or self.n_iter_ == max_iter:
+                    break
+
             self.cipher.re_cipher(iter_num=self.n_iter_,
                                   re_encrypt_times=self.re_encrypt_times,
                                   host_ciphers_dict=host_ciphers,
                                   re_encrypt_batches=self.re_encrypt_batches)
-            
+
             # validation_strategy.validate(self, self.n_iter_)
             self.n_iter_ += 1
 
@@ -123,4 +123,3 @@ class HomoLRArbiter(HomoLRBase):
                                                          idx=idx,
                                                          suffix=current_suffix)
             self.host_predict_results.append((prob_table, predict_table))
-

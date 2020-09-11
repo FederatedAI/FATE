@@ -17,7 +17,7 @@
 import unittest
 import random
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 from federatedml.feature.instance import Instance
 from federatedml.util.classify_label_checker import ClassifyLabelChecker, RegressionLabelChecker
 

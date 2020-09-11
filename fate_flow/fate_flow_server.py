@@ -35,24 +35,22 @@ from fate_flow.apps.table_app import manager as table_app_manager
 from fate_flow.apps.tracking_app import manager as tracking_app_manager
 from fate_flow.apps.permission_app import manager as permission_app_manager
 from fate_flow.apps.version_app import manager as version_app_manager
-from fate_flow.scheduling_apps.controller_app import manager as controller_app_manager
 from fate_flow.scheduling_apps.initiator_app import manager as initiator_app_manager
+from fate_flow.scheduling_apps.party_app import manager as party_app_manager
 from fate_flow.scheduling_apps.tracker_app import manager as tracker_app_manager
 from fate_flow.db.db_models import init_database_tables as init_flow_db
 from fate_arch.storage.metastore.db_models import init_database_tables as init_arch_db
-from fate_flow.operation import job_trigger, job_detector
-from fate_flow.scheduler import schedule_trigger
+from fate_flow.scheduler import AnomalyDetector
+from fate_flow.scheduler import DAGScheduler
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.entity.constant import WorkMode, ProcessRole
-from fate_flow.manager import queue_manager
-from fate_flow.settings import IP, GRPC_PORT, CLUSTER_STANDALONE_JOB_SERVER_PORT, _ONE_DAY_IN_SECONDS, \
-    MAX_CONCURRENT_JOB_RUN, stat_logger, API_VERSION
+from fate_flow.entity.types import ProcessRole
+from fate_flow.manager import ResourceManager
+from fate_flow.settings import IP, HTTP_PORT, GRPC_PORT, _ONE_DAY_IN_SECONDS, stat_logger, API_VERSION
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import PrivilegeAuth
 from fate_flow.utils.grpc_utils import UnaryServicer
 from fate_flow.utils.service_utils import ServiceUtils
-from fate_arch.common import base_utils
 
 '''
 Initialize the manager
@@ -80,7 +78,7 @@ if __name__ == '__main__':
             '/{}/pipeline'.format(API_VERSION): pipeline_app_manager,
             '/{}/permission'.format(API_VERSION): permission_app_manager,
             '/{}/version'.format(API_VERSION): version_app_manager,
-            '/{}/controller'.format(API_VERSION): controller_app_manager,
+            '/{}/party'.format(API_VERSION): party_app_manager,
             '/{}/initiator'.format(API_VERSION): initiator_app_manager,
             '/{}/tracker'.format(API_VERSION): tracker_app_manager,
         }
@@ -97,19 +95,12 @@ if __name__ == '__main__':
     parser.add_argument('--standalone_node', default=False, help="if standalone node mode or not ", action='store_true')
     args = parser.parse_args()
     RuntimeConfig.init_env()
-    RuntimeConfig.set_process_role(ProcessRole.SERVER)
-    queue_manager.init_job_queue()
-    # history_job_clean = job_controller.JobClean()
-    # history_job_clean.start()
+    RuntimeConfig.set_process_role(ProcessRole.DRIVER)
     PrivilegeAuth.init()
     ServiceUtils.register()
-    # start job detector
-    job_detector.JobDetector(interval=5 * 1000).start()
-    # start trigger
-    trigger = job_trigger.JobTrigger(queue=RuntimeConfig.JOB_QUEUE, concurrent_num=MAX_CONCURRENT_JOB_RUN)
-    trigger.start()
-    schedule_trigger.ScheduleTrigger(interval=1000).start()
-    # start grpc server
+    ResourceManager.initialize()
+    AnomalyDetector(interval=5 * 1000).start()
+    DAGScheduler(interval=2 * 1000).start()
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),
                          options=[(cygrpc.ChannelArgKey.max_send_message_length, -1),
                                   (cygrpc.ChannelArgKey.max_receive_message_length, -1)])
@@ -119,7 +110,7 @@ if __name__ == '__main__':
     server.start()
     # start http server
     try:
-        run_simple(hostname=IP, port=RuntimeConfig.HTTP_PORT, application=app, threaded=True)
+        run_simple(hostname=IP, port=HTTP_PORT, application=app, threaded=True)
         stat_logger.info("FATE Flow server start Successfully")
     except OSError as e:
         traceback.print_exc()

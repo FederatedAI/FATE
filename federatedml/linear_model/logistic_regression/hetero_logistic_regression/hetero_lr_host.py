@@ -16,7 +16,6 @@
 
 import numpy as np
 
-from arch.api.utils import log_utils
 from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
@@ -24,9 +23,8 @@ from federatedml.linear_model.logistic_regression.hetero_logistic_regression.het
 from federatedml.optim.gradient import hetero_lr_gradient_and_loss
 from federatedml.secureprotol import EncryptModeCalculator
 from federatedml.statistic.data_overview import rubbish_clear
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class HeteroLRHost(HeteroLRBase):

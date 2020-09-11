@@ -17,19 +17,14 @@ import sys
 from collections import defaultdict
 import math
 import logging
-
-from arch.api.utils import log_utils
+from federatedml.util import LOGGER
 from fate_flow.entity.metric import Metric, MetricMeta
-
 from federatedml.param import EvaluateParam
 from federatedml.util import consts
 from federatedml.model_base import ModelBase
 from federatedml.evaluation.metric_interface import MetricInterface
 
 import numpy as np
-
-LOGGER = log_utils.getLogger()
-
 
 class Evaluation(ModelBase):
 
@@ -495,7 +490,7 @@ class Evaluation(ModelBase):
         train_pos_perc, validate_pos_perc, intervals = metric_res[1]
 
         extra_metas = {'psi_scores': list(np.round(psi_scores, self.round_num)), 'total_psi': round(total_psi, self.round_num),
-                        'expected_interval': list(expected_interval),
+                       'expected_interval': list(expected_interval),
                        'expected_percentage': list(expected_percentage), 'actual_interval': list(actual_interval),
                        'actual_percentage': list(actual_percentage), 'intervals': list(intervals),
                        'train_pos_perc': train_pos_perc, 'validate_pos_perc': validate_pos_perc

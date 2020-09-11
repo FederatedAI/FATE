@@ -70,7 +70,7 @@ class Session(object):
 
         if self._computing_type == ComputingEngine.EGGROLL:
             from fate_arch.computing.eggroll import CSession
-            work_mode = kwargs.get("work_mode", 1)
+            work_mode = kwargs.get("work_mode", WorkMode.CLUSTER)
             options = kwargs.get("options", {})
             self._computing_session = CSession(session_id=computing_session_id,
                                                work_mode=work_mode,
@@ -96,7 +96,7 @@ class Session(object):
                         *,
                         runtime_conf: typing.Optional[dict] = None,
                         parties_info: typing.Optional[PartiesInfo] = None,
-                        server_conf: typing.Optional[dict] = None):
+                        service_conf: typing.Optional[dict] = None):
 
         if parties_info is None:
             if runtime_conf is None:
@@ -104,25 +104,20 @@ class Session(object):
             parties_info = PartiesInfo.from_conf(runtime_conf)
         self._parties_info = parties_info
 
-        if server_conf is None:
-            server_conf = load_json_conf("conf/server_conf.json")
-
         if self.is_federation_valid:
             raise RuntimeError("federation session already valid")
 
         if self._federation_type == FederationEngine.EGGROLL:
             from fate_arch.computing.eggroll import CSession
             from fate_arch.federation.eggroll import Federation
-            from fate_arch.federation.eggroll import Proxy
 
             if not self.is_computing_valid or not isinstance(self._computing_session, CSession):
                 raise RuntimeError(f"require computing with type {ComputingEngine.EGGROLL} valid")
 
-            proxy = Proxy.from_conf(server_conf)
             self._federation_session = Federation(rp_ctx=self._computing_session.get_rpc(),
                                                   rs_session_id=federation_session_id,
                                                   party=parties_info.local_party,
-                                                  proxy=proxy)
+                                                  proxy_endpoint=f"{service_conf['host']}:{service_conf['port']}")
             return self
 
         if self._federation_type == FederationEngine.MQ:
@@ -135,7 +130,7 @@ class Session(object):
             self._federation_session = Federation.from_conf(federation_session_id=federation_session_id,
                                                             party=parties_info.local_party,
                                                             runtime_conf=runtime_conf,
-                                                            server_conf=server_conf)
+                                                            service_conf=service_conf)
             return self
 
         if self._federation_type == FederationEngine.STANDALONE:

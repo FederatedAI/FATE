@@ -16,21 +16,20 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.utils import log_utils
-from federatedml.feature.feature_selection.filter_base import BaseFilterMethod
-from federatedml.statistic.statics import MultivariateStatisticalSummary
-from federatedml.param.feature_selection_param import VarianceOfCoeSelectionParam
-from federatedml.protobuf.generated import feature_selection_meta_pb2
-from federatedml.util import consts
 import math
 
-LOGGER = log_utils.getLogger()
+from federatedml.feature.feature_selection.filter_base import BaseFilterMethod
+from federatedml.param.feature_selection_param import VarianceOfCoeSelectionParam
+from federatedml.protobuf.generated import feature_selection_meta_pb2
+from federatedml.statistic.statics import MultivariateStatisticalSummary
+from federatedml.util import consts
 
 
 class VarianceCoeFilter(BaseFilterMethod):
     """
     Filter the columns if coefficient of variance is less than a threshold.
     """
+
     def __init__(self, filter_param: VarianceOfCoeSelectionParam):
         super().__init__(filter_param)
         self.statics_obj = None

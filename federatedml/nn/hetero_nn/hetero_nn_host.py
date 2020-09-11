@@ -20,15 +20,13 @@
 
 import numpy as np
 
-from federatedml.util import consts
-from arch.api.utils import log_utils
+from federatedml.util import consts, LOGGER
 from federatedml.framework.hetero.procedure import batch_generator
 from federatedml.nn.hetero_nn.backend.model_builder import model_builder
 from federatedml.nn.hetero_nn.hetero_nn_base import HeteroNNBase
 from federatedml.protobuf.generated.hetero_nn_model_meta_pb2 import HeteroNNMeta
 from federatedml.protobuf.generated.hetero_nn_model_param_pb2 import HeteroNNParam
 
-LOGGER = log_utils.getLogger()
 MODELMETA = "HeteroNNHostMeta"
 MODELPARAM = "HeteroNNHostParam"
 

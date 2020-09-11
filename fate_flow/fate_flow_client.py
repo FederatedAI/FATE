@@ -26,18 +26,17 @@ import re
 import requests
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 
-from fate_arch.common import file_utils
-from fate_flow.settings import SERVERS, ROLE, API_VERSION
+from fate_arch.common import file_utils, conf_utils
+from fate_flow.settings import FATEFLOW_SERVICE_NAME, API_VERSION
 from fate_flow.utils import detect_utils
 
-server_conf = file_utils.load_json_conf("conf/server_conf.json")
 JOB_OPERATE_FUNC = ["submit_job", "stop_job", "query_job", "data_view_query", "clean_job", "clean_queue"]
 JOB_FUNC = ["job_config", "job_log"]
 TASK_OPERATE_FUNC = ["query_task"]
 TRACKING_FUNC = ["component_parameters", "component_metric_all", "component_metric_delete", "component_metrics",
                  "component_output_model", "component_output_data", "component_output_data_table"]
 DATA_FUNC = ["download", "upload", "upload_history"]
-TABLE_FUNC = ["table_info", "table_delete"]
+TABLE_FUNC = ["table_info", "table_delete", "table_add"]
 MODEL_FUNC = ["load", "bind", "store", "restore", "export", "import"]
 PERMISSION_FUNC = ["grant_privilege", "delete_privilege", "query_privilege"]
 
@@ -50,8 +49,8 @@ def prettify(response, verbose=True):
 
 
 def call_fun(func, config_data, dsl_path, config_path):
-    ip = server_conf.get(SERVERS).get(ROLE).get('host')
-    http_port = server_conf.get(SERVERS).get(ROLE).get('http.port')
+    ip = conf_utils.get_base_config(FATEFLOW_SERVICE_NAME).get("host")
+    http_port = conf_utils.get_base_config(FATEFLOW_SERVICE_NAME).get("http_port")
     server_url = "http://{}:{}/{}".format(ip, http_port, API_VERSION)
 
     if func in JOB_OPERATE_FUNC:
@@ -191,7 +190,7 @@ def call_fun(func, config_data, dsl_path, config_path):
             detect_utils.check_config(config=config_data, required_arguments=['namespace', 'table_name'])
             response = requests.post("/".join([server_url, "table", func]), json=config_data)
         else:
-            response = requests.post("/".join([server_url, "table", func.lstrip('table_')]), json=config_data)
+            response = requests.post("/".join([server_url, func.replace('_', '/')]), json=config_data)
     elif func in MODEL_FUNC:
         if func == "import":
             file_path = config_data["file"]

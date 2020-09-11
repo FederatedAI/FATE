@@ -27,22 +27,37 @@ def internal_server_error(e):
     return get_json_result(retcode=100, retmsg=str(e))
 
 
+@manager.route('/add', methods=['post'])
+def table_add():
+    request_data = request.json
+    address_dict = request_data.get('address')
+    engine = request_data.get('engine')
+    name = request_data.get('name')
+    namespace = request_data.get('namespace')
+    address = storage.StorageTableMeta.create_address(storage_engine=engine, address_dict=address_dict)
+    with storage.Session.build(storage_engine=engine, options=request_data.get("options")) as storage_session:
+        storage_session.create_table(address=address, name=name, namespace=namespace, partitions=request_data.get('partitions', None),
+                                     hava_head=request_data.get('head', 1), in_serialized=False)
+    return get_json_result(data={"table_name": name, "namespace": namespace})
+
+
 @manager.route('/delete', methods=['post'])
 def table_delete():
     request_data = request.json
     table_name = request_data.get('table_name')
     namespace = request_data.get('namespace')
-    table = get_table(name=table_name, namespace=namespace)
-    if table:
-        table.destroy()
-        data = {'table_name': table_name, 'namespace': namespace}
-        try:
-            table.close()
-        except Exception as e:
-            stat_logger.exception(e)
-    else:
-        return get_json_result(retcode=101, retmsg='no find table')
-    return get_json_result(data=data)
+    with storage.Session.build(name=table_name, namespace=namespace) as storage_session:
+        table = storage_session.get_table()
+        if table:
+            table.destroy()
+            data = {'table_name': table_name, 'namespace': namespace}
+            try:
+                table.close()
+            except Exception as e:
+                stat_logger.exception(e)
+            return get_json_result(data=data)
+        else:
+            return get_json_result(retcode=101, retmsg='no find table')
 
 
 @manager.route('/<table_func>', methods=['post'])
@@ -56,7 +71,7 @@ def dtable(table_func):
         if config.get('create', False):
             pass
         else:
-            table_meta = storage.StorageTableMeta.build(name=table_name, namespace=namespace)
+            table_meta = storage.StorageTableMeta(name=table_name, namespace=namespace)
             if table_meta:
                 table_key_count = table_meta.get_count()
                 table_partition = table_meta.get_partitions()

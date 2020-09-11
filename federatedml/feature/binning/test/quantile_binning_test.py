@@ -19,7 +19,7 @@ import uuid
 
 import numpy as np
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.feature.instance import Instance

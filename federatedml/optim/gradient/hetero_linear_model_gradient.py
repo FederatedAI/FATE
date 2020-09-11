@@ -21,13 +21,11 @@ import functools
 import numpy as np
 import scipy.sparse as sp
 
-from arch.api.utils import log_utils
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.statistic import data_overview
+from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util import fate_operator
-
-LOGGER = log_utils.getLogger()
 
 
 def __compute_partition_gradient(data, fit_intercept=True, is_sparse=False):
@@ -114,7 +112,7 @@ def compute_gradient(data_instances, fore_gradient, fit_intercept):
     f = functools.partial(__compute_partition_gradient,
                           fit_intercept=fit_intercept,
                           is_sparse=is_sparse)
-    gradient_partition = feat_join_grad.mapPartitions(f)
+    gradient_partition = feat_join_grad.applyPartitions(f)
     gradient_partition = gradient_partition.reduce(lambda x, y: x + y)
 
     gradient = gradient_partition / data_instances.count()

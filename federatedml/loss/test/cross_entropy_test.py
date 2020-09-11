@@ -20,7 +20,7 @@ import unittest
 import numpy as np
 from sklearn import metrics
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 from federatedml.loss import SigmoidBinaryCrossEntropyLoss
 from federatedml.loss import SoftmaxCrossEntropyLoss
 from federatedml.util import consts

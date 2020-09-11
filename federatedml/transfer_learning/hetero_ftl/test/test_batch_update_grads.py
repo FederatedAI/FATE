@@ -3,7 +3,7 @@ import json
 from federatedml.param.ftl_param import FTLParam
 import numpy as np
 from numpy import array
-from arch.api import session
+from fate_arch.session import computing_session as session
 import pandas as pd
 
 from federatedml.nn.hetero_nn.backend.tf_keras.data_generator import KerasSequenceDataConverter

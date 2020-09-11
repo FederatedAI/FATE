@@ -1,3 +1,6 @@
+import functools
+import copy
+import numpy as np
 from federatedml.feature.binning.quantile_binning import QuantileBinning
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.util import consts
@@ -6,18 +9,10 @@ from federatedml.feature.instance import Instance
 from federatedml.feature.sparse_vector import SparseVector
 from federatedml.model_base import ModelBase
 from federatedml.param.psi_param import PSIParam
-
-import functools
-import copy
-
-import numpy as np
-
-from arch.api.utils import log_utils
-
+from federatedml.util import LOGGER
 from federatedml.protobuf.generated.psi_model_param_pb2 import PsiSummary, FeaturePsi
 from federatedml.protobuf.generated.psi_model_meta_pb2 import PSIMeta
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import abnormal_detection
 
 ROUND_NUM = 6
 
@@ -120,6 +115,7 @@ class PSI(ModelBase):
         self.total_scores = None
         self.all_feature_list = None
         self.dense_missing_val = NoneType()
+        self.binning_error = consts.DEFAULT_RELATIVE_ERROR
 
         self.interval_perc1 = None
         self.interval_perc2 = None
@@ -131,6 +127,7 @@ class PSI(ModelBase):
         self.max_bin_num = model.max_bin_num
         self.need_run = model.need_run
         self.dense_missing_val = NoneType() if model.dense_missing_val is None else model.dense_missing_val
+        self.binning_error = model.binning_error
 
     @staticmethod
     def check_table_content(tb):
@@ -224,7 +221,11 @@ class PSI(ModelBase):
         header1 = expect_table.schema['header']
         header2 = actual_table.schema['header']
 
-        assert header1 == header2, 'table header must be the same while computing psi values'
+        if not set(header1) == set(header2):
+            raise ValueError('table header must be the same while computing psi values')
+
+        # baseline table should not contain empty columns
+        abnormal_detection.empty_column_detection(expect_table)
 
         self.all_feature_list = header1
 
@@ -244,7 +245,8 @@ class PSI(ModelBase):
         if not(self.check_table_content(expect_table) and self.check_table_content(actual_table)):
             raise ValueError('contents of input table must be instances of class "Instance"')
 
-        param = FeatureBinningParam(method=consts.QUANTILE, bin_num=self.max_bin_num, local_only=True)
+        param = FeatureBinningParam(method=consts.QUANTILE, bin_num=self.max_bin_num, local_only=True,
+                                    error=self.binning_error)
         binning_obj = QuantileBinning(params=param, abnormal_list=[NoneType()], allow_duplicate=False)
         binning_obj.fit_split_points(expect_table)
 
@@ -263,7 +265,7 @@ class PSI(ModelBase):
                                         missing_val=self.dense_missing_val,
                                         is_sparse=self.is_sparse(self.data_bin1))
 
-        map_rs1 = self.data_bin1.mapPartitions(count_func1)
+        map_rs1 = self.data_bin1.applyPartitions(count_func1)
         count1 = count_rs_to_dict(map_rs1.reduce(map_partition_reduce))
 
         data_bin2, bin_split_points2, bin_sparse_points2 = binning_obj.convert_feature_to_bin(actual_table)
@@ -276,7 +278,7 @@ class PSI(ModelBase):
                                         missing_val=self.dense_missing_val,
                                         is_sparse=self.is_sparse(self.data_bin2))
 
-        map_rs2 = self.data_bin2.mapPartitions(count_func2)
+        map_rs2 = self.data_bin2.applyPartitions(count_func2)
         count2 = count_rs_to_dict(map_rs2.reduce(map_partition_reduce))
 
         self.count1, self.count2 = count1, count2
@@ -308,6 +310,9 @@ class PSI(ModelBase):
         return {'psi_scores': self.total_scores}
 
     def export_model(self):
+
+        if not self.need_run:
+            return None
 
         psi_summary = PsiSummary()
         psi_summary.total_score.update(self.total_scores)

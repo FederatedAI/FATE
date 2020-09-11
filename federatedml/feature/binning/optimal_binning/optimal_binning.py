@@ -20,13 +20,12 @@ import copy
 import functools
 import math
 import operator
+import time
 import uuid
 
 import numpy as np
-import time
 
-from arch.api import session
-from arch.api.utils import log_utils
+from fate_arch.session import computing_session as session
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.bucket_binning import BucketBinning
 from federatedml.feature.binning.optimal_binning import bucket_info
@@ -35,9 +34,8 @@ from federatedml.feature.binning.quantile_binning import QuantileBinningTool
 from federatedml.param.feature_binning_param import FeatureBinningParam, OptimalBinningParam
 from federatedml.statistic import data_overview
 from federatedml.statistic import statics
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-LOGGER = log_utils.getLogger()
 
 
 class OptimalBinning(BaseBinning):
@@ -142,8 +140,12 @@ class OptimalBinning(BaseBinning):
                                          bucket_dict=copy.deepcopy(bucket_dict),
                                          is_sparse=is_sparse,
                                          get_bin_num_func=self.get_bin_num)
-        bucket_table = data_instances.mapPartitions2(convert_func)
-        bucket_table = bucket_table.reduce(self.merge_bucket_list, key_func=lambda key: key[1])
+        # bucket_table = data_instances.mapPartitions2(convert_func)
+        # bucket_table = bucket_table.reduce(self.merge_bucket_list, key_func=lambda key: key[1])
+
+        bucket_table = data_instances.mapReducePartitions(convert_func, self.merge_bucket_list)
+        bucket_table = dict(bucket_table.collect())
+
         for k, v in bucket_table.items():
             LOGGER.debug(f"[feature] {k}, length of list: {len(v)}")
 
@@ -208,7 +210,8 @@ class OptimalBinning(BaseBinning):
                 bucket.add(label, col_value)
         result = []
         for col_name, bucket_list in bucket_dict.items():
-            result.append(((data_key, col_name), bucket_list))
+            # result.append(((data_key, col_name), bucket_list))
+            result.append((col_name, bucket_list))
         return result
 
     @staticmethod

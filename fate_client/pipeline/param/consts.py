@@ -112,6 +112,7 @@ ALL_REGRESSION_METRICS = [
     R2_SCORE,
     ROOT_MEAN_SQUARED_ERROR
 ]
+
 ALL_MULTI_METRICS = [
     ACCURACY,
     PRECISION,
@@ -189,6 +190,7 @@ STATISTIC_FILTER = 'statistic_filter'
 PSI_FILTER = 'psi_filter'
 HETERO_SBT_FILTER = 'hetero_sbt_filter'
 HOMO_SBT_FILTER = 'homo_sbt_filter'
+HETERO_FAST_SBT_FILTER = 'hetero_fast_sbt_filter'
 IV = 'iv'
 
 # Selection Pre-model
@@ -241,3 +243,8 @@ KURTOSIS = 'kurtosis'
 # adapter model name
 HOMO_SBT = 'homo_sbt'
 HETERO_SBT = 'hetero_sbt'
+HETERO_FAST_SBT_MIX = 'hetero_fast_sbt_mix'
+HETERO_FAST_SBT_LAYERED = 'hetero_fast_sbt_layered'
+
+# column_expand
+MANUAL = 'manual'

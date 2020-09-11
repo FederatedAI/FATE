@@ -131,7 +131,7 @@ class FLOWClient(object):
         except json.decoder.JSONDecodeError:
             response = {'retcode': 100,
                         'retmsg': "Internal server error. Nothing in response. You may check out the configuration in "
-                                  "'FATE/arch/conf/server_conf.json' and restart fate flow server."}
+                                  "'FATE/conf/service_conf.yaml' and restart fate flow server."}
         return response
 
 
@@ -161,7 +161,7 @@ class QueryJobResponse(object):
         self.status = status
         self.progress = None
         try:
-            self.current_tasks = response.get('data')[0]["f_current_tasks"]
+            self.progress = response.get('data')[0]["f_progress"]
         except KeyError:
             pass
 
@@ -220,12 +220,10 @@ class JobProgress(object):
         self.job_id = job_id
         self.show_str = f"[{self.elapse()}]{self.job_id} submitted {self.name}"
 
-    def running(self, status, progress, current_tasks):
+    def running(self, status, progress):
         if progress is None:
             progress = 0
-        if current_tasks is None:
-            current_tasks = []
-        self.show_str = f"[{self.elapse()}]{self.job_id} {status} {progress:3}% {self.name}:{current_tasks}"
+        self.show_str = f"[{self.elapse()}]{self.job_id} {status} {progress:3}% {self.name}"
 
     def exception(self, exception_id):
         self.show_str = f"[{self.elapse()}]{self.name} exception({exception_id}): {self.job_id}"

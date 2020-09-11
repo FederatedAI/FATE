@@ -14,7 +14,6 @@
 #  limitations under the License.
 #
 import os
-import json
 import click
 from ruamel import yaml
 from flow_client.flow_cli.utils.cli_utils import prettify, get_lan_ip
@@ -41,11 +40,11 @@ def flow_cli(ctx):
     if is_server_conf_exist:
         try:
             with open(config.get("server_conf_path")) as server_conf_fp:
-                server_conf = json.load(server_conf_fp)
-            ip = server_conf.get(config.get("server")).get(config.get("role")).get("host")
+                server_conf = yaml.safe_load(server_conf_fp)
+            ip = server_conf.get("fateflow", {}).get("host")
             if ip in ["localhost", "127.0.0.1"]:
                 ip = get_lan_ip()
-            ctx.obj["http_port"] = server_conf.get(config.get("server", None)).get(config.get("role", None)).get("http.port", None)
+            ctx.obj["http_port"] = server_conf.get("fateflow", {}).get("http_port")
             ctx.obj["server_url"] = "http://{}:{}/{}".format(ip, ctx.obj["http_port"], config.get("api_version"))
         except Exception:
             return
@@ -65,6 +64,8 @@ def flow_cli(ctx):
               help="Server configuration file absolute path.")
 @click.option("--ip", type=click.STRING, help="Fate flow server ip address.")
 @click.option("--port", type=click.INT, help="Fate flow server port.")
+@click.option("--reset", is_flag=True, default=False,
+              help="If specified, initialization settings would be reset to none. Users should init flow again.")
 def initialization(**kwargs):
     """
     \b
@@ -76,35 +77,49 @@ def initialization(**kwargs):
 
     \b
     - USAGE:
-        flow init -c /data/projects/FATE/conf/server_conf.json
-        flow init --ip 10.1.2.3 --port 9380
+        flow init -c /data/projects/fate/python/conf/service_conf.yaml
+        flow init --ip 127.0.0.1 --port 9380
     """
     with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "r") as fin:
         config = yaml.safe_load(fin)
-    if kwargs.get("server_conf_path"):
-        config["server_conf_path"] = os.path.abspath(kwargs.get("server_conf_path"))
-    if kwargs.get("ip"):
-        config["ip"] = kwargs.get("ip")
-    if kwargs.get("port"):
-        config["port"] = kwargs.get("port")
-    if kwargs.get("server_conf_path") or (kwargs.get("ip") and kwargs.get("port")):
+
+    if kwargs.get('reset'):
+        config["server_conf_path"] = None
+        config["ip"] = None
+        config["port"] = None
         with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "w") as fout:
             yaml.dump(config, fout, Dumper=yaml.RoundTripDumper)
-
         prettify(
             {
                 "retcode": 0,
-                "retmsg": "Fate Flow CLI has been initialized successfully."
+                "retmsg": "Fate Flow CLI has been reset successfully. "
+                          "Please do initialization again before you using flow CLI v2."
             }
         )
     else:
-        prettify(
-            {
-                "retcode": 100,
-                "retmsg": "Fate Flow CLI initialization failed. Please provides server configuration file path "
-                          "or server http ip address and port information."
-            }
-        )
+        if kwargs.get("server_conf_path"):
+            config["server_conf_path"] = os.path.abspath(kwargs.get("server_conf_path"))
+        if kwargs.get("ip"):
+            config["ip"] = kwargs.get("ip")
+        if kwargs.get("port"):
+            config["port"] = kwargs.get("port")
+        if kwargs.get("server_conf_path") or (kwargs.get("ip") and kwargs.get("port")):
+            with open(os.path.join(os.path.dirname(__file__), "settings.yaml"), "w") as fout:
+                yaml.dump(config, fout, Dumper=yaml.RoundTripDumper)
+            prettify(
+                {
+                    "retcode": 0,
+                    "retmsg": "Fate Flow CLI has been initialized successfully."
+                }
+            )
+        else:
+            prettify(
+                {
+                    "retcode": 100,
+                    "retmsg": "Fate Flow CLI initialization failed. Please provides server configuration file path "
+                              "or server http ip address and port information."
+                }
+            )
 
 
 flow_cli.add_command(component.component)

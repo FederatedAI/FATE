@@ -53,7 +53,7 @@ class Component(BaseFlowAPI):
                      required_arguments=['job_id', 'component_name', 'role', 'party_id'])
         return self._post(url='tracking/component/parameters', json=config_data)
 
-    def output_data(self, job_id, role, party_id, component_name, output_path, limit=10):
+    def output_data(self, job_id, role, party_id, component_name, output_path, limit=-1):
         kwargs = locals()
         config_data, dsl_data = preprocess(**kwargs)
         check_config(config=config_data,

@@ -13,9 +13,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from arch.api.utils import log_utils
 
-LOGGER = log_utils.getLogger()
+from fate_arch.computing import is_table
+from federatedml.util import LOGGER
+
 
 def check_schema(input_schema, output_schema):
     LOGGER.debug(f"input schema: {input_schema} -> output schema: {output_schema}")
@@ -37,20 +38,20 @@ def assert_schema_consistent(func):
         all_args.extend(args)
         all_args.extend(kwargs.values())
         for arg in all_args:
-            if type(arg).__name__ in ["DTable", "RDDTable"]:
+            if is_table(arg):
                 input_schema = arg.schema
                 break
         result = func(*args, **kwargs)
         if input_schema is not None:
             # single data set
-            if type(result).__name__ in ["DTable", "RDDTable"] and result.count() > 0:
+            if is_table(result) and result.count() > 0:
                 output_schema = result.schema
                 check_schema(input_schema, output_schema)
 
             # multiple data sets
             elif type(result).__name__ in ["list", "tuple"]:
                 for output_data in result:
-                    if type(output_data).__name__ in ["DTable", "RDDTable"] and output_data.count() > 0:
+                    if is_table(output_data) and output_data.count() > 0:
                         output_schema = output_data.schema
                         check_schema(input_schema, output_schema)
         return result

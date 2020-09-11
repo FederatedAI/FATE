@@ -43,7 +43,7 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
      - DataIO
      - 该组件通常是建模任务的第一个组件。 它将用户上传的数据转换为Instance对象，该对象可用于以下组件。
      - DTable，值为原始数据
-     - 转换后的数据表，值为在 :download:`federatedml/feature/instance.py <feature/instance.py>` 中定义的Data Instance的实例
+     - 转换后的数据表，值为在 : `federatedml/feature/instance.py` 中定义的Data Instance的实例
      - 
      -
 
@@ -239,9 +239,30 @@ Federatedml模块包括许多常见机器学习算法联邦化实现。所有模
 ---------
 
 
-.. toctree::
-   :maxdepth: 2
+* `Encrypt`_
 
-   secureprotol/README
+   - `Paillier encryption`_
+   - `Affine Homomorphic Encryption`_
+   - `IterativeAffine Homomorphic Encryption`_
+   - `RSA encryption`_
+   - `Fake encryption`_
+
+* `Encode`_
+
+* `Diffne Hellman Key Exchange`_
+
+* `SecretShare MPC Protocol(SPDZ)`_
+
+
+.. _Encrypt: secureprotol/README.rst#encrypt
+.. _Paillier encryption: secureprotol/README.rst#paillier-encryption
+.. _Affine Homomorphic Encryption: secureprotol/README.rst#affine-homomorphic-encryption
+.. _IterativeAffine Homomorphic Encryption: secureprotol/README.rst#iterativeaffine-homomorphic-encryption
+.. _RSA encryption: secureprotol/README.rst#rst-encryption
+.. _Fake encryption: secureprotol/README.rst#fake-encryption
+.. _Encode: secureprotol/README.rst#encode
+.. _Diffne Hellman Key Exchange: secureprotol/README.rst#diffne-hellman-key-exchange
+.. _SecretShare MPC Protocol(SPDZ): secureprotol/README.rst#secretshare-mpc-protocol-spdz
+
 
 

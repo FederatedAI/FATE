@@ -79,19 +79,14 @@ def load_yaml_conf(conf_path):
         raise EnvironmentError("loading yaml file config from {} failed:".format(conf_path), e)
 
 
-def set_server_conf(config, SERVER_CONF_PATH, SERVERS):
-    # manager
-    federatedId = config.get('federatedId')
-    server_conf = load_json_conf_real_time(SERVER_CONF_PATH)
-    manager_conf = server_conf.get(SERVERS).get('fatemanager', {})
-    if manager_conf:
-        server_conf[SERVERS]['fatemanager']['federatedId'] = federatedId
-    else:
-        server_conf[SERVERS]['fatemanager'] = {}
-        server_conf[SERVERS]['fatemanager']['federatedId'] = federatedId
-    json_conf_path = os.path.join(get_project_base_directory(), SERVER_CONF_PATH)
-    rewrite_json_file(json_conf_path, server_conf)
-    return {'federatedId': federatedId}
+def rewrite_yaml_conf(conf_path, config):
+    if not os.path.isabs(conf_path):
+        conf_path = os.path.join(get_project_base_directory(), conf_path)
+    try:
+        with open(conf_path, "w") as f:
+            yaml.dump(config, f, Dumper=yaml.RoundTripDumper)
+    except Exception as e:
+        raise EnvironmentError("rewrite yaml file config {} failed:".format(conf_path), e)
 
 
 def rewrite_json_file(filepath, json_data):

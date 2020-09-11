@@ -20,9 +20,8 @@ import functools
 
 from google.protobuf import json_format
 
-from arch.api.utils import log_utils
 from federatedml.feature.feature_selection import filter_factory
-from federatedml.feature.feature_selection.model_adaptor.adapter_factory import adapter_factory
+from federatedml.feature.feature_selection.model_adapter.adapter_factory import adapter_factory
 from federatedml.feature.feature_selection.selection_properties import SelectionProperties, CompletedSelectionResults
 from federatedml.model_base import ModelBase
 from federatedml.param.feature_selection_param import FeatureSelectionParam
@@ -30,12 +29,11 @@ from federatedml.protobuf.generated import feature_selection_param_pb2, feature_
 from federatedml.statistic.data_overview import get_header
 from federatedml.transfer_variable.transfer_class.hetero_feature_selection_transfer_variable import \
     HeteroFeatureSelectionTransferVariable
+from federatedml.util import LOGGER
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.util.schema_check import assert_schema_consistent
-
-LOGGER = log_utils.getLogger()
 
 MODEL_PARAM_NAME = 'FeatureSelectionParam'
 MODEL_META_NAME = 'FeatureSelectionMeta'
@@ -304,14 +302,14 @@ class BaseHeteroFeatureSelection(ModelBase):
         else:
             for filter_idx, method in enumerate(self.filter_methods):
                 if method in [consts.STATISTIC_FILTER, consts.IV_FILTER, consts.PSI_FILTER,
-                              consts.HETERO_SBT_FILTER, consts.HOMO_SBT_FILTER]:
+                              consts.HETERO_SBT_FILTER, consts.HOMO_SBT_FILTER, consts.HETERO_FAST_SBT_FILTER]:
                     if method == consts.STATISTIC_FILTER:
                         metrics = self.model_param.statistic_param.metrics
                     elif method == consts.IV_FILTER:
                         metrics = self.model_param.iv_param.metrics
                     elif method == consts.PSI_FILTER:
                         metrics = self.model_param.psi_param.metrics
-                    elif method in [consts.HETERO_SBT_FILTER, consts.HOMO_SBT_FILTER]:
+                    elif method in [consts.HETERO_SBT_FILTER, consts.HOMO_SBT_FILTER, consts.HETERO_FAST_SBT_FILTER]:
                         metrics = self.model_param.sbt_param.metrics
                     else:
                         raise ValueError(f"method: {method} is not supported")

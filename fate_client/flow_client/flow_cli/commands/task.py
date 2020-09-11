@@ -14,9 +14,8 @@
 #  limitations under the License.
 #
 import click
-import requests
 from flow_client.flow_cli.utils import cli_args
-from flow_client.flow_cli.utils.cli_utils import preprocess, access_server, prettify
+from flow_client.flow_cli.utils.cli_utils import preprocess, access_server
 
 
 @click.group(short_help="Task Operations")
@@ -33,7 +32,7 @@ def task(ctx):
 @task.command("list", short_help="List Task Command")
 @cli_args.LIMIT
 @click.pass_context
-def list(ctx, **kwargs):
+def list_task(ctx, **kwargs):
     """
     \b
     - DESCRIPTION:
@@ -50,8 +49,8 @@ def list(ctx, **kwargs):
 
 @task.command("query", short_help="Query Task Command")
 @cli_args.JOBID
-@cli_args.PARTYID
 @cli_args.ROLE
+@cli_args.PARTYID
 @cli_args.COMPONENT_NAME
 @cli_args.STATUS
 @click.pass_context
@@ -67,4 +66,4 @@ def query(ctx, **kwargs):
         flow task query -cpn hetero_feature_binning_0 -s success
     """
     config_data, dsl_data = preprocess(**kwargs)
-    access_server('post', ctx, 'job/task/query', config_data, False)
+    access_server('post', ctx, 'job/task/query', config_data)

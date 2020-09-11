@@ -15,7 +15,6 @@
 #
 
 from typing import Iterable
-from fate_arch.common.profile import log_elapsed
 from fate_arch.storage import StorageTableBase, StorageEngine, EggRollStorageType
 
 
@@ -25,20 +24,21 @@ class StorageTable(StorageTableBase):
                  name,
                  namespace,
                  address,
-                 partitions: int = 1,
-                 storage_type: EggRollStorageType = EggRollStorageType.ROLLPAIR_LMDB,
+                 partitions: int = None,
+                 storage_type: EggRollStorageType = None,
                  options=None):
         super(StorageTable, self).__init__(name=name, namespace=namespace)
         self._context = context
         self._address = address
-        self._partitions = partitions
-        self._type = storage_type
+        self._partitions = partitions if partitions else 1
+        self._type = storage_type if storage_type else EggRollStorageType.ROLLPAIR_LMDB
         self._options = options if options else {}
         self._engine = StorageEngine.EGGROLL
 
         if self._type:
             self._options["store_type"] = self._type
         self._options["total_partitions"] = partitions
+        self._options["create_if_missing"] = True
         self._table = self._context.load(namespace=self._namespace, name=self._name, options=self._options)
 
     def get_name(self):
@@ -65,7 +65,6 @@ class StorageTable(StorageTableBase):
     def put_all(self, kv_list: Iterable, **kwargs):
         return self._table.put_all(kv_list)
 
-    @log_elapsed
     def collect(self, **kwargs) -> list:
         return self._table.get_all(**kwargs)
 
@@ -73,7 +72,6 @@ class StorageTable(StorageTableBase):
         super().destroy()
         return self._table.destroy()
 
-    @log_elapsed
     def count(self, **kwargs):
         count = self._table.count()
         self.get_meta().update_metas(count=count)

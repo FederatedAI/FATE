@@ -1,12 +1,9 @@
 from abc import ABC
 import abc
-
 from numpy import random
 import numpy as np
-
 from federatedml.param.boosting_param import BoostingParam
 from federatedml.param.feature_binning_param import FeatureBinningParam
-
 from federatedml.model_selection.k_fold import KFold
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
@@ -15,7 +12,6 @@ from federatedml.feature.sparse_vector import SparseVector
 from federatedml.model_base import ModelBase
 from federatedml.feature.fate_element_type import NoneType
 from federatedml.ensemble.basic_algorithms import BasicAlgorithms
-
 from federatedml.loss import FairLoss
 from federatedml.loss import HuberLoss
 from federatedml.loss import LeastAbsoluteErrorLoss
@@ -24,21 +20,14 @@ from federatedml.loss import LogCoshLoss
 from federatedml.loss import SigmoidBinaryCrossEntropyLoss
 from federatedml.loss import SoftmaxCrossEntropyLoss
 from federatedml.loss import TweedieLoss
-
 from federatedml.param.evaluation_param import EvaluateParam
-
 from federatedml.ensemble.boosting.boosting_core.predict_cache import PredictDataCache
-
 from federatedml.statistic import data_overview
-
 from federatedml.optim.convergence import converge_func_factory
-
-from arch.api.utils import log_utils
+from federatedml.util import LOGGER
 
 import functools
 import typing
-
-LOGGER = log_utils.getLogger()
 
 
 class Boosting(ModelBase, ABC):
@@ -51,7 +40,6 @@ class Boosting(ModelBase, ABC):
         self.objective_param = None
         self.learning_rate = None
         self.boosting_round = None
-        self.subsample_feature_rate = None
         self.n_iter_no_change = None
         self.tol = 0.0
         self.bin_num = None
@@ -62,14 +50,17 @@ class Boosting(ModelBase, ABC):
         self.feature_name_fid_mapping = {}
         self.mode = None
         self.model_param = BoostingParam()
-        self.subsample_feature_rate = 1.0
+        self.subsample_feature_rate = 0.8
+        self.subsample_random_seed = None
         self.model_name = 'default'  # model name
         self.early_stopping_rounds = None
         self.use_first_metric_only = False
+        self.binning_error = consts.DEFAULT_RELATIVE_ERROR
 
         # running variable
 
         # data
+        self._set_random_seed = False
         self.binning_class = None  # class used for data binning
         self.binning_obj = None  # instance of self.binning_class
         self.data_bin = None  # data with transformed features
@@ -106,6 +97,7 @@ class Boosting(ModelBase, ABC):
         self.transfer_variable = None
 
     def _init_model(self, boosting_param: BoostingParam):
+
         self.task_type = boosting_param.task_type
         self.objective_param = boosting_param.objective_param
         self.learning_rate = boosting_param.learning_rate
@@ -117,6 +109,9 @@ class Boosting(ModelBase, ABC):
         self.cv_param = boosting_param.cv_param
         self.validation_freqs = boosting_param.validation_freqs
         self.metrics = boosting_param.metrics
+        self.subsample_feature_rate = boosting_param.subsample_feature_rate
+        self.subsample_random_seed = boosting_param.subsample_random_seed
+        self.binning_error = boosting_param.binning_error
 
     @staticmethod
     def data_format_transform(row):
@@ -163,10 +158,10 @@ class Boosting(ModelBase, ABC):
 
     def convert_feature_to_bin(self, data_instance, handle_missing_value=False):
         LOGGER.info("convert feature to bins")
-        param_obj = FeatureBinningParam(bin_num=self.bin_num)
+        param_obj = FeatureBinningParam(bin_num=self.bin_num, error=self.binning_error)
 
         if handle_missing_value:
-            self.binning_obj = self.binning_class(param_obj, abnormal_list=[NoneType()])
+            self.binning_obj = self.binning_class(param_obj, abnormal_list=[NoneType()],)
         else:
             self.binning_obj = self.binning_class(param_obj)
 
@@ -175,7 +170,12 @@ class Boosting(ModelBase, ABC):
         return self.binning_obj.convert_feature_to_bin(data_instance)
 
     def sample_valid_features(self):
+
         LOGGER.info("sample valid features")
+
+        if not self._set_random_seed and self.subsample_random_seed is not None:
+            np.random.seed(self.subsample_random_seed)
+            self._set_random_seed = True
 
         self.feature_num = self.bin_split_points.shape[0]
         choose_feature = random.choice(range(0, self.feature_num), \

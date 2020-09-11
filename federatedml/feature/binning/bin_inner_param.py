@@ -16,11 +16,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.utils import log_utils
-from federatedml.util import fate_operator
+
 import copy
 
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
+from federatedml.util import anonymous_generator
 
 
 class BinInnerParam(object):
@@ -148,14 +148,14 @@ class BinInnerParam(object):
         result = {}
         for x, y in col_name_dict.items():
             col_index = self.col_name_maps.get(x)
-            result[fate_operator.generate_anonymous(col_index, model=model)] = y
+            result[anonymous_generator.generate_anonymous(col_index, model=model)] = y
         return result
 
     def encode_col_name_list(self, col_name_list: list, model):
         result = []
         for x in col_name_list:
             col_index = self.col_name_maps.get(x)
-            result.append(fate_operator.generate_anonymous(col_index, model=model))
+            result.append(anonymous_generator.generate_anonymous(col_index, model=model))
         return result
 
     # def __encode_col_name(self, col_name):
@@ -166,11 +166,10 @@ class BinInnerParam(object):
     #     return '.'.join(['host', str(col_index)])
 
     def decode_col_name(self, encoded_name: str):
-        col_index = fate_operator.reconstruct_fid(encoded_name)
+        col_index = anonymous_generator.reconstruct_fid(encoded_name)
 
         # try:
         #     col_index = int(encoded_name.split('.')[1])
         # except IndexError or ValueError:
         #     raise RuntimeError("Bin inner param is trying to decode an invalid col_name.")
         return self.header[col_index]
-

@@ -13,25 +13,19 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import io
-import os
-import tarfile
 
-from flask import Flask, request, send_file
+from flask import Flask, request
 
-from fate_arch.common.base_utils import json_loads, json_dumps
-from fate_flow.scheduler.task_scheduler import TaskScheduler
-from fate_flow.scheduler.dag_scheduler import DAGScheduler
-from fate_flow.scheduler.federated_scheduler import FederatedScheduler
-from fate_flow.controller.task_controller import TaskController
-from fate_flow.operation.job_saver import JobSaver
-from fate_flow.manager import data_manager
-from fate_flow.settings import stat_logger, CLUSTER_STANDALONE_JOB_SERVER_PORT
-from fate_flow.utils import job_utils, detect_utils
-from fate_flow.utils.api_utils import get_json_result, request_execute_server
-from fate_flow.entity.constant import WorkMode, JobStatus, RetCode, FederatedSchedulingStatusCode
-from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.controller.job_controller import JobController
+from fate_arch.common import log
+from fate_arch.common.base_utils import json_dumps
+from fate_flow.controller import JobController
+from fate_flow.db.db_models import Task
+from fate_flow.entity.types import JobStatus, RetCode, FederatedSchedulingStatusCode
+from fate_flow.operation import JobSaver
+from fate_flow.scheduler import DAGScheduler
+from fate_flow.scheduler import FederatedScheduler
+from fate_flow.settings import stat_logger
+from fate_flow.utils.api_utils import get_json_result
 
 manager = Flask(__name__)
 
@@ -39,19 +33,20 @@ manager = Flask(__name__)
 @manager.errorhandler(500)
 def internal_server_error(e):
     stat_logger.exception(e)
-    return get_json_result(retcode=100, retmsg=str(e))
+    return get_json_result(retcode=RetCode.EXCEPTION_ERROR, retmsg=log.exception_to_trace_string(e))
+
 
 # apply initiator for control operation
 
 
 @manager.route('/<job_id>/<role>/<party_id>/stop/<stop_status>', methods=['POST'])
 def stop_job(job_id, role, party_id, stop_status):
-    jobs = job_utils.query_job(job_id=job_id, role=role, party_id=party_id, is_initiator=1)
+    jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id, is_initiator=True)
     if len(jobs) > 0:
         if stop_status == JobStatus.CANCELED:
-            status_code, response = FederatedScheduler.request_cancel_job(job=jobs[0])
-            if status_code == FederatedSchedulingStatusCode.SUCCESS:
-                return get_json_result(retcode=RetCode.SUCCESS, retmsg="cancel job success")
+            JobController.cancel_job(job_id=job_id, role=role, party_id=party_id)
+        job = jobs[0]
+        job.f_status = stop_status
         status_code, response = FederatedScheduler.stop_job(job=jobs[0], stop_status=stop_status)
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
             return get_json_result(retcode=0, retmsg='success')
@@ -61,34 +56,15 @@ def stop_job(job_id, role, party_id, stop_status):
         return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="can not found job")
 
 
-@manager.route('/<job_id>/<role>/<party_id>/cancel', methods=['POST'])
-def cancel_job(job_id, role, party_id):
-    jobs = job_utils.query_job(job_id=job_id, role=role, party_id=party_id, is_initiator=1)
-    if len(jobs) > 0:
-        status = JobController.cancel_job(job_id=job_id, role=role, party_id=party_id)
-        if status:
-            return get_json_result(retcode=0, retmsg='success')
-        else:
-            return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg=f"cancel job {job_id} failed, job status is {jobs[0].f_status}")
-    else:
-        return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg="can not found job")
-
-
-@manager.route('/<job_id>/<role>/<party_id>/status', methods=['POST'])
-def job_status(job_id, role, party_id):
-    job_info = {}
-    job_info.update(request.json)
-    job_info.update({
-        "job_id": job_id,
-        "role": role,
-        "party_id": party_id
-    })
-    JobSaver.update_job(job_info=job_info)
+@manager.route('/<job_id>/<role>/<party_id>/rerun', methods=['POST'])
+def rerun_job(job_id, role, party_id):
+    DAGScheduler.rerun_job(job_id=job_id, initiator_role=role, initiator_party_id=party_id,
+                           component_name=request.json.get("component_name"))
     return get_json_result(retcode=0, retmsg='success')
 
 
-@manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/status', methods=['POST'])
-def task_status(job_id, component_name, task_id, task_version, role, party_id):
+@manager.route('/<job_id>/<component_name>/<task_id>/<task_version>/<role>/<party_id>/report', methods=['POST'])
+def report_task(job_id, component_name, task_id, task_version, role, party_id):
     task_info = {}
     task_info.update(request.json)
     task_info.update({
@@ -99,4 +75,6 @@ def task_status(job_id, component_name, task_id, task_version, role, party_id):
         "party_id": party_id,
     })
     JobSaver.update_task(task_info=task_info)
+    if task_info.get("party_status"):
+        JobSaver.update_status(Task, task_info)
     return get_json_result(retcode=0, retmsg='success')

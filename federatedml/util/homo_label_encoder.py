@@ -1,10 +1,7 @@
 from federatedml.transfer_variable.transfer_class.homo_label_encoder_transfer_variable \
     import HomoLabelEncoderTransferVariable
-
 from federatedml.util import consts
-from arch.api.utils import log_utils
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class HomoLabelEncoderClient(object):
@@ -17,8 +14,11 @@ class HomoLabelEncoderClient(object):
         LOGGER.info('start homo label alignments')
         self.transvar.local_labels.remote(class_set, role=consts.ARBITER, suffix=('label_align',))
         new_label_mapping = self.transvar.label_mapping.get(idx=0, suffix=('label_mapping',))
-        new_classes = [new_label_mapping[k] for k in new_label_mapping]
-        return new_classes, new_label_mapping
+        reverse_mapping = {v: k for k, v in new_label_mapping.items()}
+        new_classes_index = [new_label_mapping[k] for k in new_label_mapping]
+        new_classes_index = sorted(new_classes_index)
+        aligned_labels = [reverse_mapping[i] for i in new_classes_index]
+        return aligned_labels, new_label_mapping
 
 
 class HomoLabelEncoderArbiter(object):

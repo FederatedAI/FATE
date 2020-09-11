@@ -1,0 +1,22 @@
+{
+  "federatedml.framework.homo.procedure.table_aggregator.TableScatterTransVar": {
+    "client_table": {
+      "src": [
+        "guest",
+        "host"
+      ],
+      "dst": [
+        "arbiter"
+      ]
+    },
+    "server_table": {
+      "src": [
+        "arbiter"
+      ],
+      "dst": [
+        "guest",
+        "host"
+      ]
+    }
+  }
+}

@@ -16,16 +16,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import copy
 import functools
 import uuid
-from arch.api.utils import log_utils
+from federatedml.util import LOGGER
 
 from federatedml.feature.binning.base_binning import BaseBinning
 from federatedml.feature.binning.quantile_summaries import quantile_summary_factory
 from federatedml.param.feature_binning_param import FeatureBinningParam
 from federatedml.statistic import data_overview
 from federatedml.util import consts
-LOGGER = log_utils.getLogger()
 
 
 class QuantileBinning(BaseBinning):
@@ -97,7 +97,7 @@ class QuantileBinning(BaseBinning):
                                   cols_dict=self.bin_inner_param.bin_cols_map,
                                   header=self.header,
                                   is_sparse=is_sparse)
-            summary_dict = data_instances.mapPartitions(f)
+            summary_dict = data_instances.applyPartitions(f)
             summary_dict = summary_dict.reduce(self.merge_summary_dict)
             if is_sparse:
                 total_count = data_instances.count()
@@ -119,6 +119,11 @@ class QuantileBinning(BaseBinning):
                     split_point.append(s_p)
             self.bin_results.put_col_split_points(col_name, split_point)
 
+    @staticmethod
+    def copy_merge(s1, s2):
+        new_s1 = copy.deepcopy(s1)
+        return new_s1.merge(s2)
+
     def _fit_split_point(self, data_instances, is_sparse, percentile_rate):
         if self.summary_dict is None:
             f = functools.partial(self.feature_summary,
@@ -128,8 +133,13 @@ class QuantileBinning(BaseBinning):
                                   header=self.header,
                                   is_sparse=is_sparse)
             # LOGGER.debug("in _fit_split_point, cols_map: {}".format(self.bin_inner_param.bin_cols_map))
-            summary_dict = data_instances.mapPartitions2(f)
-            summary_dict = summary_dict.reduce(lambda s1, s2: s1.merge(s2), key_func=lambda key: key[1])
+            # summary_dict = data_instances.mapPartitions2(f)
+            #
+            # summary_dict = summary_dict.reduce(self.copy_merge, key_func=lambda key: key[1])
+
+            summary_dict = data_instances.mapReducePartitions(f, self.copy_merge)
+            summary_dict = dict(summary_dict.collect())
+            LOGGER.debug(f"new summary_dict: {summary_dict}")
             if is_sparse:
                 total_count = data_instances.count()
                 for _, summary_obj in summary_dict.items():
@@ -184,7 +194,9 @@ class QuantileBinning(BaseBinning):
         result = []
         for features_name, summary_obj in summary_dict.items():
             summary_obj.compress()
-            result.append(((_, features_name), summary_obj))
+            # result.append(((_, features_name), summary_obj))
+            result.append((features_name, summary_obj))
+
         return result
 
     @staticmethod
@@ -275,6 +287,9 @@ class QuantileBinning(BaseBinning):
         if s_dict2 is None:
             return s_dict1
 
+        s_dict1 = copy.deepcopy(s_dict1)
+        s_dict2 = copy.deepcopy(s_dict2)
+
         new_dict = {}
         for col_name, summary1 in s_dict1.items():
             summary2 = s_dict2.get(col_name)
@@ -285,7 +300,7 @@ class QuantileBinning(BaseBinning):
     def query_quantile_point(self, query_points, col_names=None):
         # self.cols = cols
         # self._init_cols(data_instances)
-        
+
         if self.summary_dict is None:
             raise RuntimeError("Bin object should be fit before query quantile points")
 

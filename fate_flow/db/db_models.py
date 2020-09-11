@@ -19,17 +19,18 @@ import os
 import sys
 
 import __main__
-from peewee import (Model, CharField, IntegerField, BigIntegerField,
-                    TextField, CompositeKey, BigAutoField)
+from peewee import (CharField, IntegerField, BigIntegerField,
+                    TextField, CompositeKey, BigAutoField, BooleanField)
 from playhouse.apsw_ext import APSWDatabase
 from playhouse.pool import PooledMySQLDatabase
 
 from fate_arch.common import log
 from fate_arch.common.base_utils import current_timestamp
-from fate_arch.storage.metastore.db_models import JSONField
-from fate_flow.entity.constant import WorkMode
-from fate_flow.settings import DATABASE, WORK_MODE, stat_logger, USE_LOCAL_DATABASE
+from fate_arch.storage.metastore.base_model import JSONField, BaseModel, LongTextField
+from fate_arch.common import WorkMode
+from fate_flow.settings import DATABASE, WORK_MODE, stat_logger
 from fate_flow.entity.runtime_config import RuntimeConfig
+
 
 LOGGER = log.getLogger()
 
@@ -46,21 +47,15 @@ def singleton(cls, *args, **kw):
     return _singleton
 
 
-
 @singleton
 class BaseDataBase(object):
     def __init__(self):
         database_config = DATABASE.copy()
         db_name = database_config.pop("name")
         if WORK_MODE == WorkMode.STANDALONE:
-            if USE_LOCAL_DATABASE:
-                self.database_connection = APSWDatabase('fate_flow_sqlite.db')
-                RuntimeConfig.init_config(USE_LOCAL_DATABASE=True)
-                stat_logger.info('init sqlite database on standalone mode successfully')
-            else:
-                self.database_connection = PooledMySQLDatabase(db_name, **database_config)
-                stat_logger.info('init mysql database on standalone mode successfully')
-                RuntimeConfig.init_config(USE_LOCAL_DATABASE=False)
+            self.database_connection = APSWDatabase('fate_flow_sqlite.db')
+            RuntimeConfig.init_config(USE_LOCAL_DATABASE=True)
+            stat_logger.info('init sqlite database on standalone mode successfully')
         elif WORK_MODE == WorkMode.CLUSTER:
             self.database_connection = PooledMySQLDatabase(db_name, **database_config)
             stat_logger.info('init mysql database on cluster mode successfully')
@@ -87,53 +82,27 @@ def close_connection():
         LOGGER.exception(e)
 
 
-class DataBaseModel(Model):
+class DataBaseModel(BaseModel):
     class Meta:
         database = DB
 
-    def to_json(self):
-        return self.__dict__['__data__']
 
-    def to_human_model_dict(self, only_primary_with: list = None):
-        model_dict = self.__dict__["__data__"]
-        human_model_dict = {}
-        if not only_primary_with:
-            for k, v in model_dict.items():
-                human_model_dict[k.lstrip("f_")] = v
-        else:
-            for k in self._meta.primary_key.field_names:
-                human_model_dict[k.lstrip("f_")] = model_dict[k]
-            for k in only_primary_with:
-                human_model_dict[k] = model_dict["f_%s" % k]
-        return human_model_dict
-
-    def save(self, *args, **kwargs):
-        if hasattr(self, "f_update_date"):
-            self.f_update_date = datetime.datetime.now()
-        if hasattr(self, "f_update_time"):
-            self.f_update_time = current_timestamp()
-        return super(DataBaseModel, self).save(*args, **kwargs)
-
-
+@DB.connection_context()
 def init_database_tables():
-    with DB.connection_context():
-        members = inspect.getmembers(sys.modules[__name__], inspect.isclass)
-        table_objs = []
-        for name, obj in members:
-            if obj != DataBaseModel and issubclass(obj, DataBaseModel):
-                table_objs.append(obj)
-        DB.create_tables(table_objs)
+    members = inspect.getmembers(sys.modules[__name__], inspect.isclass)
+    table_objs = []
+    for name, obj in members:
+        if obj != DataBaseModel and issubclass(obj, DataBaseModel):
+            table_objs.append(obj)
+    DB.create_tables(table_objs)
 
 
-class Queue(DataBaseModel):
-    f_job_id = CharField(max_length=100)
-    f_event = CharField(max_length=500)
-    f_is_waiting = IntegerField(default=1)
-    # 0: out; 1: in queue one; 2 :cancel; 3: in queue two; 4: out because of Over limit; 5: Intermediate queue
-    f_frequency = IntegerField(default=0)
-
-    class Meta:
-        db_table = "t_queue"
+def fill_db_model_object(model_object, human_model_dict):
+    for k, v in human_model_dict.items():
+        attr_name = 'f_%s' % k
+        if hasattr(model_object.__class__, attr_name):
+            setattr(model_object, attr_name, v)
+    return model_object
 
 
 class Job(DataBaseModel):
@@ -153,9 +122,12 @@ class Job(DataBaseModel):
     # this party configuration
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
-    f_is_initiator = IntegerField(null=True, index=True, default=-1)
-    f_resources = IntegerField(index=True, default=0)
-    f_remaining_resources = IntegerField(index=True, default=0)
+    f_is_initiator = BooleanField(null=True, index=True, default=False)
+    f_engine_name = CharField(max_length=150, null=True)
+    f_cores = IntegerField(index=True, default=0)
+    f_memory = IntegerField(index=True, default=0)  # MB
+    f_remaining_cores = IntegerField(index=True, default=0)
+    f_remaining_memory = IntegerField(index=True, default=0)  # MB
     f_progress = IntegerField(null=True, default=0)
     f_create_time = BigIntegerField()
     f_update_time = BigIntegerField(null=True)
@@ -176,10 +148,13 @@ class Task(DataBaseModel):
     f_task_version = BigIntegerField()
     f_initiator_role = CharField(max_length=50, index=True)
     f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
+    f_federated_mode = CharField(max_length=10, index=True)
+    f_federated_status_collect_type = CharField(max_length=10, index=True)
     f_status = CharField(max_length=50)
     # this party configuration
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
+    f_run_on = BooleanField(null=True, index=True, default=False)
     f_run_ip = CharField(max_length=100, null=True)
     f_run_pid = IntegerField(null=True)
     f_party_status = CharField(max_length=50)
@@ -271,23 +246,30 @@ class TrackingOutputDataInfo(DataBaseModel):
     f_description = TextField(null=True, default='')
 
 
-class MachineLearningModelMeta(DataBaseModel):
-    f_id = BigIntegerField(primary_key=True)
+class MachineLearningModelInfo(DataBaseModel):
+    f_id = BigAutoField(primary_key=True)
     f_role = CharField(max_length=50, index=True)
     f_party_id = CharField(max_length=10, index=True)
-    f_roles = TextField()
-    f_job_id = CharField(max_length=25)
+    f_roles = JSONField()
+    f_job_id = CharField(max_length=25, unique=True)
     f_model_id = CharField(max_length=100, index=True)
-    f_model_version = CharField(max_length=100, index=True)
+    f_model_version = CharField(max_length=100, index=True, unique=True)
     f_loaded_times = IntegerField(default=0)
     f_size = BigIntegerField(default=0)
     f_create_time = BigIntegerField(default=0)
     f_update_time = BigIntegerField(default=0)
     f_description = TextField(null=True, default='')
-    # f_tag = CharField(max_length=50, null=True, index=True, default='')
+    f_initiator_role = CharField(max_length=50, index=True)
+    f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
+    f_runtime_conf = JSONField()
+    f_work_mode = IntegerField()
+    f_dsl = JSONField()
+    f_train_runtime_conf = JSONField(default={})
+    f_imported = IntegerField(default=0)
+    f_job_status = CharField(max_length=50)
 
     class Meta:
-        db_table = "t_machine_learning_model_meta"
+        db_table = "t_machine_learning_model_info"
 
 
 class ModelTag(DataBaseModel):
@@ -311,17 +293,36 @@ class Tag(DataBaseModel):
 
 
 class ComponentSummary(DataBaseModel):
+    _mapper = {}
+
+    @classmethod
+    def model(cls, table_index=None, date=None):
+        if not table_index:
+            table_index = date.strftime(
+                '%Y%m%d') if date else datetime.datetime.now().strftime(
+                '%Y%m%d')
+        class_name = 'ComponentSummary_%s' % table_index
+
+        ModelClass = TrackingMetric._mapper.get(class_name, None)
+        if ModelClass is None:
+            class Meta:
+                db_table = '%s_%s' % ('t_component_summary', table_index)
+
+            attrs = {'__module__': cls.__module__, 'Meta': Meta}
+            ModelClass = type("%s_%s" % (cls.__name__, table_index), (cls,), attrs)
+            ComponentSummary._mapper[class_name] = ModelClass
+        return ModelClass()
+
     f_id = BigAutoField(primary_key=True)
     f_job_id = CharField(max_length=25)
-    f_role = CharField(max_length=50, index=True)
+    f_role = CharField(max_length=25, index=True)
     f_party_id = CharField(max_length=10, index=True)
     f_component_name = TextField()
-    f_summary = TextField()
+    f_task_id = CharField(max_length=50, null=True)
+    f_task_version = CharField(max_length=50, null=True)
+    f_summary = LongTextField()
     f_create_time = BigIntegerField(default=0)
     f_update_time = BigIntegerField(default=0)
-
-    class Meta:
-        db_table = "t_component_summary"
 
 
 class ModelOperationLog(DataBaseModel):
@@ -339,9 +340,31 @@ class ModelOperationLog(DataBaseModel):
         db_table = "t_model_operation_log"
 
 
-def fill_db_model_object(model_object, human_model_dict):
-    for k, v in human_model_dict.items():
-        attr_name = 'f_%s' % k
-        if hasattr(model_object.__class__, attr_name):
-            setattr(model_object, attr_name, v)
-    return model_object
+class BackendRegistry(DataBaseModel):
+    f_engine_name = CharField(max_length=50, index=True)
+    f_engine_type = CharField(max_length=10, index=True)
+    f_engine_address = JSONField()
+    f_cores = IntegerField(index=True)
+    f_memory = IntegerField(index=True)  # MB
+    f_remaining_cores = IntegerField(index=True)
+    f_remaining_memory = IntegerField(index=True) # MB
+    f_nodes = IntegerField(index=True)
+    f_create_time = BigIntegerField()
+    f_update_time = BigIntegerField(null=True)
+
+    class Meta:
+        db_table = "t_backend_registry"
+        primary_key = CompositeKey('f_engine_name', 'f_engine_type')
+
+
+class DBQueue(DataBaseModel):
+    f_job_id = CharField(max_length=25, primary_key=True)
+    f_job_status = CharField(max_length=50, index=True)
+    f_initiator_role = CharField(max_length=50, index=True)
+    f_initiator_party_id = CharField(max_length=50, index=True, default=-1)
+    f_create_time = BigIntegerField()
+    f_update_time = BigIntegerField(null=True)
+    f_tag = CharField(max_length=50, null=True, index=True, default='')
+
+    class Meta:
+        db_table = "t_queue"

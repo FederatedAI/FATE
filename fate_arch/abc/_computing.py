@@ -64,7 +64,14 @@ class CTableABC(metaclass=ABCMeta):
         ...
 
     @abc.abstractmethod
-    def mapPartitions(self, func):
+    def mapPartitions(self, func, use_previous_behavior=True, preserves_partitioning=False):
+        ...
+
+    @abc.abstractmethod
+    def mapReducePartitions(self, mapper, reducer, **kwargs):
+        ...
+
+    def applyPartitions(self, func):
         ...
 
     @abc.abstractmethod

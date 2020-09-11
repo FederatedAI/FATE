@@ -1,13 +1,11 @@
 import functools
 import numpy as np
 
-from arch.api.utils import log_utils
 from federatedml.statistic.data_overview import get_header
 from federatedml.statistic.statics import MultivariateStatisticalSummary
 from federatedml.util import consts
+from federatedml.util import LOGGER
 from federatedml.statistic import data_overview
-
-LOGGER = log_utils.getLogger()
 
 
 class Imputer(object):
@@ -202,7 +200,7 @@ class Imputer(object):
         return np.array(impute_num_list)
 
     def __get_impute_rate_from_replace_data(self, data):
-        impute_number_statics = data.mapPartitions(self.__get_impute_number).reduce(lambda x, y: x + y)
+        impute_number_statics = data.applyPartitions(self.__get_impute_number).reduce(lambda x, y: x + y)
         cols_impute_rate = impute_number_statics[:-1] / impute_number_statics[-1]
 
         return cols_impute_rate

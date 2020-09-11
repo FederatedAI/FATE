@@ -17,8 +17,21 @@
 import os
 from fate_arch.common import file_utils
 
+SERVICE_CONF_NAME = "service_conf"
+MULTI_BACKEND_CONF_NAME = "multi_backend"
 
-# TODO: add config cache
-def get_base_config(key, default=None):
-    base_config = file_utils.load_yaml_conf(os.path.join(file_utils.get_project_base_directory(), "conf/base_conf.yaml")) or dict()
+
+def conf_realpath(conf_name):
+    conf_path = f"conf/{conf_name}.yaml"
+    return os.path.join(file_utils.get_project_base_directory(), conf_path)
+
+
+def get_base_config(key, default=None, conf_name=SERVICE_CONF_NAME):
+    base_config = file_utils.load_yaml_conf(conf_path=conf_realpath(conf_name=conf_name)) or dict()
     return base_config.get(key, default)
+
+
+def update_config(key, value, conf_name=SERVICE_CONF_NAME):
+    config = file_utils.load_yaml_conf(conf_path=conf_realpath(conf_name=conf_name)) or dict()
+    config[key] = value
+    file_utils.rewrite_yaml_conf(conf_path=conf_realpath(conf_name=conf_name), config=config)

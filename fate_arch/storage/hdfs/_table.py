@@ -24,6 +24,7 @@ from fate_arch.storage import StorageEngine, HDFSStorageType
 from fate_arch.storage import StorageTableBase
 
 LOGGER = getLogger()
+_ID_DELIMITER = "\t"
 
 
 class StorageTable(StorageTableBase):
@@ -32,20 +33,18 @@ class StorageTable(StorageTableBase):
                  address=None,
                  name: str = None,
                  namespace: str = None,
-                 partitions: int = 1,
+                 partitions: int = None,
                  storage_type: HDFSStorageType = None,
                  options=None):
+        super(StorageTable, self).__init__(name=name, namespace=namespace)
         self._context = context
         self._address = address
         self._name = name
         self._namespace = namespace
-        self._partitions = partitions
-        self._storage_type = storage_type
+        self._partitions = partitions if partitions else 1
+        self._type = storage_type if storage_type else HDFSStorageType.DISK
         self._options = options if options else {}
-        self._storage_engine = StorageEngine.HDFS
-
-    def get_partitions(self):
-        return self._partitions
+        self._engine = StorageEngine.HDFS
 
     def get_name(self):
         return self._name
@@ -53,22 +52,31 @@ class StorageTable(StorageTableBase):
     def get_namespace(self):
         return self._namespace
 
-    def get_engine(self):
-        return self._storage_engine
-
     def get_address(self):
-        return self.address
+        return self._address
+
+    def get_engine(self):
+        return self._engine
+
+    def get_type(self):
+        return self._type
+
+    def get_partitions(self):
+        return self._partitions
+
+    def get_options(self):
+        return self._options
 
     def put_all(self, kv_list: Iterable, **kwargs):
-        path, fs = StorageTable.get_hadoop_fs(address=self.address)
+        path, fs = StorageTable.get_hadoop_fs(sc=self._context, address=self._address)
         if fs.exists(path):
             out = fs.append(path)
         else:
-            out = fs.create_table(path)
+            out = fs.create(path)
 
         counter = 0
         for k, v in kv_list:
-            content = u"{}{}{}\n".format(k, StorageTable.delimiter, pickle.dumps(v).hex())
+            content = u"{}{}{}\n".format(k, _ID_DELIMITER, pickle.dumps(v).hex())
             out.write(bytearray(content, "utf-8"))
             counter = counter + 1
         out.flush()
@@ -76,24 +84,37 @@ class StorageTable(StorageTableBase):
         self._meta.update_metas(count=counter)
 
     def collect(self, **kwargs) -> list:
-        sc = SparkContext.getOrCreate()
-        hdfs_path = StorageTable.generate_hdfs_path(self.address)
-        path = StorageTable.get_path(sc, hdfs_path)
-        fs = StorageTable.get_file_system(sc)
+        hdfs_path = StorageTable.generate_hdfs_path(self._address)
+        path = StorageTable.get_path(self._context, hdfs_path)
+        fs = StorageTable.get_file_system(self._context)
         istream = fs.open(path)
-        reader = sc._gateway.jvm.java.io.BufferedReader(sc._jvm.java.io.InputStreamReader(istream))
+        reader = self._context._gateway.jvm.java.io.BufferedReader(self._context._jvm.java.io.InputStreamReader(istream))
         while True:
             line = reader.readLine()
             if line is not None:
-                fields = line.strip().partition(StorageTable.delimiter)
+                fields = line.strip().partition(_ID_DELIMITER)
                 yield fields[0], pickle.loads(bytes.fromhex(fields[2]))
+            else:
+                break
+        istream.close()
+
+    def read(self) -> list:
+        hdfs_path = StorageTable.generate_hdfs_path(self._address)
+        path = StorageTable.get_path(self._context, hdfs_path)
+        fs = StorageTable.get_file_system(self._context)
+        istream = fs.open(path)
+        reader = self._context._gateway.jvm.java.io.BufferedReader(self._context._jvm.java.io.InputStreamReader(istream))
+        while True:
+            line = reader.readLine()
+            if line is not None:
+                yield line
             else:
                 break
         istream.close()
 
     def destroy(self):
         super().destroy()
-        path, fs = StorageTable.get_hadoop_fs(self.address)
+        path, fs = StorageTable.get_hadoop_fs(self._context, self._address)
         if fs.exists(path):
             fs.delete(path)
 
@@ -108,8 +129,6 @@ class StorageTable(StorageTableBase):
         fs = StorageTable.get_file_system(sc)
         fs.rename(src_path, dst_path)
         return StorageTable(address=address, partitions=partitions, name=name, namespace=namespace, **kwargs)
-
-    delimiter = '\t'
 
     @classmethod
     def generate_hdfs_path(cls, address):
@@ -127,8 +146,7 @@ class StorageTable(StorageTableBase):
         return filesystem_class.get(hadoop_configuration)
 
     @classmethod
-    def get_hadoop_fs(cls, address):
-        sc = SparkContext.getOrCreate()
+    def get_hadoop_fs(cls, sc, address):
         hdfs_path = StorageTable.generate_hdfs_path(address)
         path = StorageTable.get_path(sc, hdfs_path)
         fs = StorageTable.get_file_system(sc)

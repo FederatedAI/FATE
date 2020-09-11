@@ -18,10 +18,8 @@ from collections.abc import Iterable
 
 import numpy as np
 
-from arch.api.utils import log_utils
 from federatedml.statistic import statics
-
-LOGGER = log_utils.getLogger()
+from federatedml.util import LOGGER
 
 
 class Initializer(object):

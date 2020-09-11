@@ -1,37 +1,23 @@
 from abc import ABC
 import abc
-
 from federatedml.ensemble.boosting.boosting_core import Boosting
-
 from federatedml.feature.homo_feature_binning.homo_split_points import HomoFeatureBinningClient, \
-                                                                       HomoFeatureBinningServer
-
+                                                                      HomoFeatureBinningServer
 from federatedml.util.classify_label_checker import ClassifyLabelChecker, RegressionLabelChecker
 from federatedml.util import consts
-
 from federatedml.util.homo_label_encoder import HomoLabelEncoderClient, HomoLabelEncoderArbiter
-
 from federatedml.transfer_variable.transfer_class.homo_boosting_transfer_variable import HomoBoostingTransferVariable
-
-from typing import List, Tuple
-
+from typing import List
 from federatedml.feature.fate_element_type import NoneType
-from arch.api.utils import log_utils
-
+from federatedml.util import LOGGER
 from federatedml.ensemble.boosting.boosting_core.homo_boosting_aggregator import HomoBoostArbiterAggregator, \
     HomoBoostClientAggregator
-
 from federatedml.optim.convergence import converge_func_factory
-
 from federatedml.param.boosting_param import HomoSecureBoostParam
-
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
-
 from federatedml.util.io_check import assert_io_num_rows_equal
-
-
-LOGGER = log_utils.getLogger()
+from federatedml.param.feature_binning_param import FeatureBinningParam
 
 
 class HomoBoostingClient(Boosting, ABC):
@@ -46,12 +32,13 @@ class HomoBoostingClient(Boosting, ABC):
 
     def federated_binning(self,  data_instance):
 
+        binning_param = FeatureBinningParam(bin_num=self.bin_num, error=self.binning_error)
+        self.binning_obj.bin_param = binning_param
+
         if self.use_missing:
-            binning_result = self.binning_obj.average_run(data_instances=data_instance,
-                                                          bin_num=self.bin_num, abnormal_list=[NoneType()])
+            binning_result = self.binning_obj.average_run(data_instances=data_instance, abnormal_list=[NoneType()])
         else:
-            binning_result = self.binning_obj.average_run(data_instances=data_instance,
-                                                          bin_num=self.bin_num)
+            binning_result = self.binning_obj.average_run(data_instances=data_instance,)
 
         return self.binning_obj.convert_feature_to_bin(data_instance, binning_result)
 
@@ -66,6 +53,19 @@ class HomoBoostingClient(Boosting, ABC):
             RegressionLabelChecker.validate_label(data_inst)
 
         return classes_
+
+    @staticmethod
+    def check_label_starts_from_zero(aligned_labels):
+        """
+        in current version, labels should start from 0 and
+        are consecutive integers
+        """
+        if aligned_labels[0] != 0:
+            raise ValueError('label should starts from 0')
+        for prev, aft in zip(aligned_labels[:-1], aligned_labels[1:]):
+            if prev + 1 != aft:
+                raise ValueError('labels should be a sequence of consecutive integers, '
+                                 'but got {} and {}'.format(prev, aft))
 
     def sync_feature_num(self):
         self.transfer_inst.feature_number.remote(self.feature_num, role=consts.ARBITER, idx=-1, suffix=('feat_num', ))
@@ -94,11 +94,12 @@ class HomoBoostingClient(Boosting, ABC):
         # sync label class and set y
         if self.task_type == consts.CLASSIFICATION:
 
-            new_classes, new_label_mapping = HomoLabelEncoderClient().label_alignment(local_classes)
-            self.classes_ = new_classes
+            aligned_label, new_label_mapping = HomoLabelEncoderClient().label_alignment(local_classes)
+            self.classes_ = aligned_label
+            self.check_label_starts_from_zero(self.classes_)
             # set labels
             self.num_classes = len(new_label_mapping)
-            LOGGER.debug('num_classes is {}'.format(self.num_classes))
+            LOGGER.debug('aligned labels are {}, num_classes is {}'.format(aligned_label, self.num_classes))
             self.y = self.data_bin.mapValues(lambda instance: new_label_mapping[instance.label])
             # set tree dimension
             self.booster_dim = self.num_classes if self.num_classes > 2 else 1

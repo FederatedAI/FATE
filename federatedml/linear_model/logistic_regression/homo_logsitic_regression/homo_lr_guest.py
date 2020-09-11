@@ -16,22 +16,20 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import functools
 import copy
+import functools
 
-from arch.api.utils import log_utils
 from federatedml.framework.homo.procedure import aggregator
 from federatedml.linear_model.linear_model_weight import LinearModelWeights as LogisticRegressionWeights
 from federatedml.linear_model.logistic_regression.homo_logsitic_regression.homo_lr_base import HomoLRBase
 from federatedml.model_selection import MiniBatch
 from federatedml.optim import activation
 from federatedml.optim.gradient.homo_lr_gradient import LogisticGradient
+from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util import fate_operator
 from federatedml.util.fate_operator import vec_dot
 from federatedml.util.io_check import assert_io_num_rows_equal
-
-LOGGER = log_utils.getLogger()
 
 
 class HomoLRGuest(HomoLRBase):
@@ -97,19 +95,18 @@ class HomoLRGuest(HomoLRBase):
                                       coef=model_weights.coef_,
                                       intercept=model_weights.intercept_,
                                       fit_intercept=self.fit_intercept)
-                grad = batch_data.mapPartitions(f).reduce(fate_operator.reduce_add)
+                grad = batch_data.applyPartitions(f).reduce(fate_operator.reduce_add)
                 grad /= n
                 # LOGGER.debug('iter: {}, batch_index: {}, grad: {}, n: {}'.format(
                 #     self.n_iter_, batch_num, grad, n))
-                model_weights = self.optimizer.update_model(model_weights, grad, has_applied=False)
                 LOGGER.debug('iter: {}, batch_index: {}, grad: {}, n: {}'.format(
                     self.n_iter_, batch_num, grad, n))
-                if self.use_proximal: #use proximal term
-                    model_weights = self.optimizer.update_model(model_weights, grad = grad,
+                if self.use_proximal:  # use proximal term
+                    model_weights = self.optimizer.update_model(model_weights, grad=grad,
                                                                 has_applied=False,
-                                                                prev_round_weights = self.prev_round_weights)
+                                                                prev_round_weights=self.prev_round_weights)
                 else:
-                    model_weights = self.optimizer.update_model(model_weights, grad = grad,
+                    model_weights = self.optimizer.update_model(model_weights, grad=grad,
                                                                 has_applied=False)
 
                 batch_num += 1

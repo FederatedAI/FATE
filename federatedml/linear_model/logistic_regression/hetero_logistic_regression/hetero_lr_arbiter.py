@@ -14,15 +14,12 @@
 #  limitations under the License.
 #
 
-from arch.api.utils import log_utils
 from federatedml.linear_model.base_linear_model_arbiter import HeteroBaseArbiter
 from federatedml.linear_model.logistic_regression.hetero_logistic_regression.hetero_lr_base import HeteroLRBase
 from federatedml.optim.gradient import hetero_lr_gradient_and_loss
 from federatedml.param.logistic_regression_param import HeteroLogisticParam
+from federatedml.util import LOGGER
 from federatedml.util import consts
-
-
-LOGGER = log_utils.getLogger()
 
 
 class HeteroLRArbiter(HeteroBaseArbiter, HeteroLRBase):

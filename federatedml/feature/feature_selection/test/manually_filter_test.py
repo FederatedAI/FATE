@@ -21,7 +21,7 @@ import uuid
 
 import numpy as np
 
-from arch.api import session
+from fate_arch.session import computing_session as session
 from federatedml.feature.feature_selection.filter_factory import get_filter
 from federatedml.feature.feature_selection.selection_properties import SelectionProperties
 from federatedml.param.feature_selection_param import FeatureSelectionParam

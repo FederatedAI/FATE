@@ -13,22 +13,19 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import threading
-import time
-
 from fate_flow.utils.authentication_utils import authentication_check
 from federatedml.protobuf.generated import pipeline_pb2
 from fate_arch.common.log import schedule_logger
-from fate_flow.scheduler.task_scheduler import TaskScheduler
-from fate_flow.entity.constant import JobStatus, TaskStatus
+from fate_arch.common import EngineType
+from fate_flow.entity.types import JobStatus, EndStatus, RunParameters
 from fate_flow.entity.runtime_config import RuntimeConfig
-from fate_flow.operation.job_tracker import Tracker
-from fate_flow.settings import USE_AUTHENTICATION
-from fate_flow.utils import job_utils, job_controller_utils
-from fate_flow.utils.job_utils import save_job_conf, get_job_dsl_parser
-from fate_flow.operation.job_saver import JobSaver
+from fate_flow.operation import Tracker
+from fate_flow.settings import USE_AUTHENTICATION, ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH
+from fate_flow.utils import job_utils, schedule_utils, data_utils
+from fate_flow.operation import JobSaver, JobQueue
 from fate_arch.common.base_utils import json_dumps, current_timestamp
-from fate_flow.controller.task_controller import TaskController
+from fate_flow.controller import TaskController
+from fate_flow.manager import ResourceManager
 
 
 class JobController(object):
@@ -41,19 +38,18 @@ class JobController(object):
         if USE_AUTHENTICATION:
             authentication_check(src_role=job_info.get('src_role', None), src_party_id=job_info.get('src_party_id', None),
                                  dsl=dsl, runtime_conf=runtime_conf, role=role, party_id=party_id)
-        save_job_conf(job_id=job_id,
-                      job_dsl=dsl,
-                      job_runtime_conf=runtime_conf,
-                      train_runtime_conf=train_runtime_conf,
-                      pipeline_dsl=None)
-        job_parameters = runtime_conf['job_parameters']
+        job_parameters = RunParameters(**runtime_conf['job_parameters'])
         job_initiator = runtime_conf['initiator']
+
+        dsl_parser = schedule_utils.get_job_dsl_parser(dsl=dsl,
+                                                       runtime_conf=runtime_conf,
+                                                       train_runtime_conf=train_runtime_conf)
 
         # save new job into db
         if role == job_initiator['role'] and party_id == job_initiator['party_id']:
-            is_initiator = 1
+            is_initiator = True
         else:
-            is_initiator = 0
+            is_initiator = False
         job_info["status"] = JobStatus.WAITING
         roles = job_info['roles']
         # this party configuration
@@ -61,35 +57,52 @@ class JobController(object):
         job_info["party_id"] = party_id
         job_info["is_initiator"] = is_initiator
         job_info["progress"] = 0
+        cls.get_job_engines_address(job_parameters=job_parameters)
+        runtime_conf["job_parameters"] = job_parameters.to_dict()
+
         JobSaver.create_job(job_info=job_info)
+        job_utils.save_job_conf(job_id=job_id,
+                                job_dsl=dsl,
+                                job_runtime_conf=runtime_conf,
+                                train_runtime_conf=train_runtime_conf,
+                                pipeline_dsl=None)
 
-        dsl_parser = get_job_dsl_parser(dsl=dsl,
-                                        runtime_conf=runtime_conf,
-                                        train_runtime_conf=train_runtime_conf)
-
-        cls.initialize_tasks(job_id, role, party_id, job_initiator, dsl_parser)
+        cls.initialize_tasks(job_id, role, party_id, True, job_initiator, job_parameters, dsl_parser)
         cls.initialize_job_tracker(job_id=job_id, role=role, party_id=party_id, job_info=job_info, is_initiator=is_initiator, dsl_parser=dsl_parser)
 
     @classmethod
-    def initialize_tasks(cls, job_id, role, party_id, job_initiator, dsl_parser):
-        base_task_info = {}
-        base_task_info["job_id"] = job_id
-        base_task_info["initiator_role"] = job_initiator['role']
-        base_task_info["initiator_party_id"] = job_initiator['party_id']
-        base_task_info["status"] = TaskStatus.WAITING
-        base_task_info["role"] = role
-        base_task_info["party_id"] = party_id
-        base_task_info["party_status"] = TaskStatus.WAITING
-        for component in dsl_parser.get_topology_components():
+    def get_job_engines_address(cls, job_parameters: RunParameters):
+        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.COMPUTING, engine_name=job_parameters.computing_engine)
+        job_parameters.engines_address[EngineType.COMPUTING] = backend_info.f_engine_address
+        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.FEDERATION, engine_name=job_parameters.federation_engine)
+        job_parameters.engines_address[EngineType.FEDERATION] = backend_info.f_engine_address
+        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.STORAGE, engine_name=job_parameters.storage_engine)
+        job_parameters.engines_address[EngineType.STORAGE] = backend_info.f_engine_address
+
+    @classmethod
+    def initialize_tasks(cls, job_id, role, party_id, run_on, job_initiator, job_parameters: RunParameters, dsl_parser, component_name=None, task_version=None):
+        common_task_info = {}
+        common_task_info["job_id"] = job_id
+        common_task_info["initiator_role"] = job_initiator['role']
+        common_task_info["initiator_party_id"] = job_initiator['party_id']
+        common_task_info["role"] = role
+        common_task_info["party_id"] = party_id
+        common_task_info["federated_mode"] = job_parameters.federated_mode
+        common_task_info["federated_status_collect_type"] = job_parameters.federated_status_collect_type
+        if task_version:
+            common_task_info["task_version"] = task_version
+        if not component_name:
+            components = dsl_parser.get_topology_components()
+        else:
+            components = [dsl_parser.get_component_info(component_name=component_name)]
+        for component in components:
             component_parameters = component.get_role_parameters()
-            for parameters_on_party in component_parameters.get(base_task_info["role"], []):
-                if parameters_on_party.get('local', {}).get('party_id') == base_task_info["party_id"]:
+            for parameters_on_party in component_parameters.get(common_task_info["role"], []):
+                if parameters_on_party.get('local', {}).get('party_id') == common_task_info["party_id"]:
                     task_info = {}
-                    task_info.update(base_task_info)
+                    task_info.update(common_task_info)
                     task_info["component_name"] = component.get_name()
-                    task_info["task_id"] = job_utils.generate_task_id(job_id=base_task_info["job_id"], component_name=component.get_name())
-                    task_info["task_version"] = 0
-                    JobSaver.create_task(task_info=task_info)
+                    TaskController.create_task(role=role, party_id=party_id, run_on=run_on, task_info=task_info)
 
     @classmethod
     def initialize_job_tracker(cls, job_id, role, party_id, job_info, is_initiator, dsl_parser):
@@ -119,6 +132,11 @@ class JobController(object):
                         partner[_role].append(_party_id)
 
         job_args = dsl_parser.get_args_input()
+        dataset = cls.get_dataset(is_initiator, role, party_id, roles, job_args)
+        tracker.log_job_view({'partner': partner, 'dataset': dataset, 'roles': show_role})
+
+    @classmethod
+    def get_dataset(cls, is_initiator, role, party_id, roles, job_args):
         dataset = {}
         dsl_version = 1
         if job_args.get('dsl_version'):
@@ -141,19 +159,41 @@ class JobController(object):
                                 for _data_type, _data_location in _role_party_args[_party_index][key].items():
                                     dataset[_role][_party_id][key] = '{}.{}'.format(
                                         _data_location['namespace'], _data_location['name'])
-        tracker.log_job_view({'partner': partner, 'dataset': dataset, 'roles': show_role})
+        return dataset
 
     @classmethod
-    def start_job(cls, job_id, role, party_id):
+    def query_job_input_args(cls, input_data, role, party_id):
+        min_partition = data_utils.get_input_data_min_partitions(input_data, role, party_id)
+        return {'min_input_data_partition': min_partition}
+
+    @classmethod
+    def apply_resource(cls, job_id, role, party_id):
+        if role == "arbiter":
+            return True
+        return ResourceManager.apply_for_job_resource(job_id=job_id, role=role, party_id=party_id)
+
+    @classmethod
+    def return_resource(cls, job_id, role, party_id):
+        if role == "arbiter":
+            return True
+        return ResourceManager.return_job_resource(job_id=job_id, role=role, party_id=party_id)
+
+    @classmethod
+    def start_job(cls, job_id, role, party_id, extra_info=None):
+        schedule_logger(job_id=job_id).info(f"try to start job {job_id} on {role} {party_id}")
         job_info = {
             "job_id": job_id,
             "role": role,
             "party_id": party_id,
             "status": JobStatus.RUNNING,
-            "party_status": JobStatus.RUNNING,
             "start_time": current_timestamp()
         }
-        JobSaver.update_job(job_info=job_info)
+        if extra_info:
+            schedule_logger(job_id=job_id).info(f"extra info: {extra_info}")
+            job_info.update(extra_info)
+        cls.update_job_status(job_info=job_info)
+        cls.update_job(job_info=job_info)
+        schedule_logger(job_id=job_id).info(f"start job {job_id} on {role} {party_id} successfully")
 
     @classmethod
     def update_job(cls, job_info):
@@ -162,11 +202,18 @@ class JobController(object):
         :param job_info:
         :return:
         """
-        JobSaver.update_job(job_info=job_info)
+        return JobSaver.update_job(job_info=job_info)
+
+    @classmethod
+    def update_job_status(cls, job_info):
+        update_status = JobSaver.update_job_status(job_info=job_info)
+        if update_status and EndStatus.contains(job_info.get("status")):
+            ResourceManager.return_job_resource(job_id=job_info["job_id"], role=job_info["role"], party_id=job_info["party_id"])
+        return update_status
 
     @classmethod
     def stop_job(cls, job, stop_status):
-        tasks = job_utils.query_task(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
+        tasks = JobSaver.query_task(job_id=job.f_job_id, role=job.f_role, party_id=job.f_party_id)
         for task in tasks:
             TaskController.stop_task(task=task, stop_status=stop_status)
         # Job status depends on the final operation result and initiator calculate
@@ -182,7 +229,7 @@ class JobController(object):
         job_type = job_parameters.get('job_type', '')
         if job_type == 'predict':
             return
-        dag = job_utils.get_job_dsl_parser(dsl=job_dsl,
+        dag = schedule_utils.get_job_dsl_parser(dsl=job_dsl,
                                            runtime_conf=job_runtime_conf,
                                            train_runtime_conf=train_runtime_conf)
         predict_dsl = dag.get_predict_dsl(role=role)
@@ -195,12 +242,14 @@ class JobController(object):
         pipeline.model_version = model_version
         tracker = Tracker(job_id=job_id, role=role, party_id=party_id, model_id=model_id, model_version=model_version)
         tracker.save_pipelined_model(pipelined_buffer_object=pipeline)
+        if role != 'local':
+            tracker.save_machine_learning_model_info()
         schedule_logger(job_id).info('job {} on {} {} save pipeline successfully'.format(job_id, role, party_id))
 
     @classmethod
     def clean_job(cls, job_id, role, party_id, roles):
         schedule_logger(job_id).info('Job {} on {} {} start to clean'.format(job_id, role, party_id))
-        tasks = job_utils.query_task(job_id=job_id, role=role, party_id=party_id)
+        tasks = JobSaver.query_task(job_id=job_id, role=role, party_id=party_id, only_latest=False)
         for task in tasks:
             try:
                 Tracker(job_id=job_id, role=role, party_id=party_id, task_id=task.f_task_id, task_version=task.f_task_version).clean_task(roles)
@@ -213,21 +262,16 @@ class JobController(object):
         schedule_logger(job_id).info('job {} on {} {} clean done'.format(job_id, role, party_id))
 
     @classmethod
-    def check_job_run(cls, job_id, role, party_id):
-        return job_controller_utils.job_quantity_constraint(job_id, role, party_id)
-
-    @classmethod
     def cancel_job(cls, job_id, role, party_id):
         schedule_logger(job_id).info('{} {} get cancel waiting job {} command'.format(role, party_id, job_id))
-        jobs = job_utils.query_job(job_id=job_id)
+        jobs = JobSaver.query_job(job_id=job_id)
         if jobs:
             job = jobs[0]
-            job_runtime_conf = job.f_runtime_conf
-            event = job_utils.job_event(job.f_job_id,
-                                        job_runtime_conf['initiator']['role'],
-                                        job_runtime_conf['initiator']['party_id'])
             try:
-                RuntimeConfig.JOB_QUEUE.del_event(event)
+                # You cannot delete an event directly, otherwise the status might not be updated
+                status = JobQueue.update_event(job_id=job.f_job_id, initiator_role=job.f_initiator_role, initiator_party_id=job.f_initiator_party_id, job_status=JobStatus.CANCELED)
+                if not status:
+                    return False
             except:
                 return False
             schedule_logger(job_id).info('cancel waiting job successfully, job id is {}'.format(job.f_job_id))
@@ -235,18 +279,4 @@ class JobController(object):
         else:
             schedule_logger(job_id).warning('role {} party id {} cancel waiting job failed, no find jod {}'.format(role, party_id, job_id))
             raise Exception('role {} party id {} cancel waiting job failed, no find jod {}'.format(role, party_id, job_id))
-
-
-class JobClean(threading.Thread):
-    def run(self):
-        time.sleep(5)
-        jobs = job_utils.query_job(status=JobStatus.RUNNING, is_initiator=1)
-        job_ids = set([job.f_job_id for job in jobs])
-        for job_id in job_ids:
-            schedule_logger(job_id).info('fate flow server start clean job')
-            TaskScheduler.stop(job_id, JobStatus.FAILED)
-
-
-
-
 
