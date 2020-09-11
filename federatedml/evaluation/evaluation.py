@@ -135,11 +135,9 @@ class Evaluation(ModelBase):
         intra_cluster_data, inter_cluster_dist = {'avg_dist': [], 'max_radius': []}, []
         
         run_intra_metrics = False  # run intra metrics or outer metrics ?
-        LOGGER.debug('data is {}'.format(data))
         if len(data[0][1]) == 3:
             # [int int] -> [true_label, predicted label] -> outer metric
             # [int np.array] - > [predicted label, distance] -> need no metric computation
-            LOGGER.debug('type is {} {}'.format(type(data[0][1][0]), type(data[0][1][1])))
             if not (type(data[0][1][0]) == int and type(data[0][1][1]) == int):
                 return None, None, run_intra_metrics
 
@@ -250,12 +248,10 @@ class Evaluation(ModelBase):
         LOGGER.debug(f'running eval, data: {data}')
         self.eval_results.clear()
         for (key, eval_data) in data.items():
-            LOGGER.debug('key is {}, eval data is {}'.format(key, eval_data))
             eval_data_local = list(eval_data.collect())
             if len(eval_data_local) == 0:
                 continue
             split_data_with_label = self.split_data_with_type(eval_data_local)
-            LOGGER.debug('split data is {}'.format(split_data_with_label))
             for mode, data in split_data_with_label.items():
                 eval_result = self.evaluate_metrics(mode, data)
                 self.eval_results[key].append(eval_result)
@@ -265,9 +261,8 @@ class Evaluation(ModelBase):
     def __save_single_value(self, result, metric_name, metric_namespace, eval_name):
         
         metric_type = 'EVALUATION_SUMMARY'
-        LOGGER.debug('metric name is {} {}'.format(metric_name, eval_name))
         if eval_name in consts.ALL_CLUSTER_METRICS:
-            metric_type='CLUSTERING_EVALUATION_SUMMARY'
+            metric_type = 'CLUSTERING_EVALUATION_SUMMARY'
 
         self.tracker.log_metric_data(metric_namespace, metric_name,
                                      [Metric(eval_name, np.round(result, self.round_num))])
@@ -537,7 +532,6 @@ class Evaluation(ModelBase):
     def __save_distance_measure(self, metric, metric_res: dict, metric_name, metric_namespace):
 
         extra_metas = {}
-        LOGGER.debug('metric res is {}'.format(metric_res))
         cluster_index = [k for k in metric_res.keys()]
         radius, neareast_idx = [], []
         for k in metric_res:
@@ -617,11 +611,9 @@ class Evaluation(ModelBase):
                         self.__save_pr_table(metric, metric_res[1], metric_name, metric_namespace)
 
                     elif metric == consts.CONTINGENCY_MATRIX:
-                        LOGGER.debug('contingency mat quantile called')
                         self.__save_contingency_matrix(metric, metric_res[1], metric_name, metric_namespace)
 
                     elif metric == consts.DISTANCE_MEASURE:
-                        LOGGER.debug('distance measure called')
                         self.__save_distance_measure(metric, metric_res[1], metric_name, metric_namespace)
 
         if return_single_val_metrics:
