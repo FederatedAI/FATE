@@ -243,6 +243,11 @@ class Evaluation(ModelBase):
         LOGGER.debug(f'running eval, data: {data}')
         self.eval_results.clear()
         for (key, eval_data) in data.items():
+
+            if eval_data is None:
+                LOGGER.debug('data with {} is None, skip metric computation'.format(key))
+                continue
+
             eval_data_local = list(eval_data.collect())
             if len(eval_data_local) == 0:
                 continue
