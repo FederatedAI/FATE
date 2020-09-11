@@ -128,7 +128,8 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
                                  learning_rate=self.learning_rate, class_num=self.booster_dim)
         predict_rs = to_predict_data.mapValues(func)
 
-        return self.score_to_predict_result(data_inst, predict_rs, )
+        return self.predict_score_to_output(data_instances=data_inst, predict_score=predict_rs,
+                                            classes=self.num_classes, )
 
     @assert_io_num_rows_equal
     def predict(self, data_inst):

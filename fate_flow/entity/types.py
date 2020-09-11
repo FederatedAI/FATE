@@ -22,11 +22,8 @@ class RunParameters(object):
         self.job_type = "train"
         self.work_mode = WorkMode.STANDALONE
         self.backend = Backend.EGGROLL  # Pre-v1.5 configuration item
-        self.computing_backend = None
         self.computing_engine = None
-        self.federation_backend = None
         self.federation_engine = None
-        self.storage_backend = None
         self.storage_engine = None
         self.engines_address = {}
         self.federated_mode = None

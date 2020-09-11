@@ -19,7 +19,8 @@ from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.util.anonymous_generator import generate_anonymous
 
 
-class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
+class HeteroSecureBoostGuest(HeteroBoostingGuest):
+
 
     def __init__(self):
         super(HeteroSecureBoostingTreeGuest, self).__init__()
