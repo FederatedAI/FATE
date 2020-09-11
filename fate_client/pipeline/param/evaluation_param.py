@@ -125,7 +125,6 @@ class EvaluateParam(BaseParam):
 
         self.metrics = self._check_valid_metric(self.metrics)
 
-
         return True
 
     def check_single_value_default_metric(self):
@@ -140,5 +139,6 @@ class EvaluateParam(BaseParam):
             if metric in ban_metric:
                 self.metrics.remove(metric)
         self.check()
+
 
 
