@@ -80,7 +80,8 @@ class BaseKmeansModel(ModelBase):
                                                                       max_interation=self.n_iter_,
                                                                       converged=self.is_converged,
                                                                       cluster_detail=cluster_detail,
-                                                                      centroid_detail=centroid_detail)
+                                                                      centroid_detail=centroid_detail,
+                                                                      header=self.header)
         return param_protobuf_obj
 
     def export_model(self):
