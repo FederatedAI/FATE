@@ -57,20 +57,20 @@ class Table(CTableABC):
         return from_rdd(_map_value(self._rdd, func))
 
     @computing_profile
-    def mapPartitions(self, func, **kwargs):
-        return from_rdd(self._rdd.mapPartitions(func))
+    def mapPartitions(self, func, use_previous_behavior=True, preserves_partitioning=False, **kwargs):
+        if use_previous_behavior is True:
+            LOGGER.warning(f"please use `applyPartitions` instead of `mapPartitions` "
+                           f"if the previous behavior was expected. "
+                           f"The previous behavior will not work in future")
+            return self.applyPartitions(func)
+        return from_rdd(self._rdd.mapPartitions(func, preservesPartitioning=preserves_partitioning))
 
     @computing_profile
     def mapReducePartitions(self, mapper, reducer, **kwargs):
         return from_rdd(self._rdd.mapPartitions(mapper).reduceByKey(reducer))
 
     @computing_profile
-    def applyPartitions(self, func, use_previous_behavior=True, **kwargs):
-        if use_previous_behavior is True:
-            LOGGER.warning(f"please use `applyPartitions` instead of `mapPartitions` "
-                           f"if the previous behavior was expected. "
-                           f"The previous behavior will not work in future")
-            return self.applyPartitions(func)
+    def applyPartitions(self, func, **kwargs):
         return from_rdd(_map_partitions(self._rdd, func))
 
     @computing_profile

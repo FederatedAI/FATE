@@ -26,6 +26,7 @@ BINARY = 'binary'
 MULTY = 'multi'
 CLASSIFICATION = "classification"
 REGRESSION = 'regression'
+CLUSTERING = 'clustering'
 PAILLIER = 'Paillier'
 RANDOM_PADS = "RandomPads"
 NONE = "None"
@@ -69,24 +70,37 @@ CONFUSION_MAT = 'confusion_mat'
 PSI = 'psi'
 FEATURE_IMPORTANCE = 'feature_importance'
 QUANTILE_PR = 'quantile_pr'
+JACCARD_SIMILARITY_SCORE = 'jaccard_similarity_score'
+FOWLKES_MALLOWS_SCORE = 'fowlkes_mallows_score'
+ADJUSTED_RAND_SCORE = 'adjusted_rand_score'
+DAVIES_BOULDIN_INDEX = 'davies_bouldin_index'
+DISTANCE_MEASURE = 'distance_measure'
+CONTINGENCY_MATRIX = 'contingency_matrix'
 
 # evaluation alias metric
 ALL_METRIC_NAME = [AUC, KS, LIFT, GAIN, PRECISION, RECALL, ACCURACY, EXPLAINED_VARIANCE, MEAN_ABSOLUTE_ERROR,
                    MEAN_SQUARED_ERROR, MEAN_SQUARED_LOG_ERROR, MEDIAN_ABSOLUTE_ERROR, R2_SCORE, ROOT_MEAN_SQUARED_ERROR,
-                   ROC, F1_SCORE, CONFUSION_MAT, PSI, QUANTILE_PR]
+                   ROC, F1_SCORE, CONFUSION_MAT, PSI, QUANTILE_PR, JACCARD_SIMILARITY_SCORE, FOWLKES_MALLOWS_SCORE,
+                   ADJUSTED_RAND_SCORE, DAVIES_BOULDIN_INDEX, DISTANCE_MEASURE, CONTINGENCY_MATRIX]
+
 ALIAS = {
     ('l1', 'mae', 'regression_l1'): MEAN_ABSOLUTE_ERROR,
     ('l2', 'mse', 'regression_l2', 'regression'): MEAN_SQUARED_ERROR,
     ('l2_root', 'rmse'): ROOT_MEAN_SQUARED_ERROR,
     ('msle', ): MEAN_SQUARED_LOG_ERROR,
     ('r2', ): R2_SCORE,
-    ('acc', ): ACCURACY
+    ('acc', ): ACCURACY,
+    ('DBI', ): DAVIES_BOULDIN_INDEX,
+    ('FMI', ): FOWLKES_MALLOWS_SCORE,
+    ('RI', ): ADJUSTED_RAND_SCORE,
+    ('jaccard', ): JACCARD_SIMILARITY_SCORE
 }
 
 # default evaluation metrics
 DEFAULT_BINARY_METRIC = [AUC, KS]
 DEFAULT_REGRESSION_METRIC = [ROOT_MEAN_SQUARED_ERROR, MEAN_ABSOLUTE_ERROR]
 DEFAULT_MULTI_METRIC = [ACCURACY, PRECISION, RECALL]
+DEFAULT_CLUSTER_METRIC = [DAVIES_BOULDIN_INDEX]
 
 # allowed metrics for different tasks
 ALL_BINARY_METRICS = [
@@ -118,6 +132,14 @@ ALL_MULTI_METRICS = [
     PRECISION,
     RECALL
 ]
+ALL_CLUSTER_METRICS = [
+    JACCARD_SIMILARITY_SCORE,
+    FOWLKES_MALLOWS_SCORE,
+    ADJUSTED_RAND_SCORE,
+    DAVIES_BOULDIN_INDEX,
+    DISTANCE_MEASURE,
+    CONTINGENCY_MATRIX
+]
 
 # single value metrics
 REGRESSION_SINGLE_VALUE_METRICS = [
@@ -141,6 +163,12 @@ MULTI_SINGLE_VALUE_METRIC = [
     ACCURACY
 ]
 
+CLUSTER_SINGLE_VALUE_METRIC = [
+    JACCARD_SIMILARITY_SCORE,
+    FOWLKES_MALLOWS_SCORE,
+    ADJUSTED_RAND_SCORE,
+    DAVIES_BOULDIN_INDEX
+]
 # workflow
 TRAIN_DATA = "train_data"
 TEST_DATA = "test_data"
@@ -170,6 +198,7 @@ DEFAULT_HEAD_SIZE = 10000
 DEFAULT_RELATIVE_ERROR = 0.001
 ONE_HOT_LIMIT = 1024   # No more than 10 possible values
 PERCENTAGE_VALUE_LIMIT = 0.1
+SECURE_AGG_AMPLIFY_FACTOR = 1000
 
 QUANTILE = 'quantile'
 BUCKET = 'bucket'
@@ -236,11 +265,12 @@ CORRELATION = 'corr'
 VARIANCE = 'variance'
 COEFFICIENT_OF_VARIATION = 'coefficient_of_variance'
 MISSING_COUNT = "missing_count"
+MISSING_RATIO = "missing_ratio"
 SKEWNESS = 'skewness'
 KURTOSIS = 'kurtosis'
 
 
-# adapter model name
+# adapters model name
 HOMO_SBT = 'homo_sbt'
 HETERO_SBT = 'hetero_sbt'
 HETERO_FAST_SBT_MIX = 'hetero_fast_sbt_mix'
