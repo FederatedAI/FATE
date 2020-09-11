@@ -50,7 +50,7 @@ class HeteroKmeansClient(BaseKmeansModel):
         random_list = list()
         v_list = list()
         for r in range(0, self.k):
-            random_list.append(math.ceil(random.random() * data_instances.count()))
+            random_list.append(math.floor(random.random() * data_instances.count()))
         n = 0
         key = list(data_instances.mapValues(lambda data_instance: None).collect())
         for k in key:
