@@ -57,6 +57,8 @@ class HistogramBag(object):
         self.bag = tensor
 
     def binary_op(self, other, func, inplace=False):
+
+
         assert isinstance(other, HistogramBag)
         assert len(self.bag) == len(other)
 
