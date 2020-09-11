@@ -39,7 +39,7 @@ class Table(CTableABC):
         if isinstance(address, HDFSAddress):
             self._rdd.map(lambda x: hdfs_utils.serialize(x[0], x[1])) \
                 .repartition(partitions) \
-                .saveAsTextFile(address.path)
+                .saveAsTextFile(f"{address.name_node}/{address.path}")
             schema.update(self.schema)
             return
         raise NotImplementedError(f"address type {type(address)} not supported with spark backend")

@@ -109,7 +109,7 @@ class Federation(FederationABC):
 
         if isinstance(v, Table):
             total_size = v.count()
-            partitions = v.partitions()
+            partitions = v.partitions
             LOGGER.debug("start to remote RDD, total_size={}, partitions={}.".format(total_size, partitions))
             send_func = partial(_partition_send, name=name, tag=tag,
                                 total_size=total_size, partitions=partitions, mq_names=mq_names, mq=self._mq)
@@ -163,8 +163,8 @@ class Federation(FederationABC):
                 # initial receive queue, the name is receive-${vhost}
                 self._rabbit_manager.create_queue(names["vhost"], names["receive"])
 
-                host = self._mq.mq_conf.get(int(party_id)).get("host")
-                port = self._mq.mq_conf.get(int(party_id)).get("port")
+                host = self._mq.mq_conf.get(str(party_id)).get("host")
+                port = self._mq.mq_conf.get(str(party_id)).get("port")
 
                 upstream_uri = f"amqp://{self._mq.union_name}:{self._mq.policy_id}@{host}:{port}"
                 self._rabbit_manager.federate_queue(upstream_host=upstream_uri, vhost=names["vhost"],

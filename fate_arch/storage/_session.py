@@ -87,7 +87,7 @@ class StorageSessionBase(StorageSessionABC):
         table_meta.create()
         table.set_meta(table_meta)
         # update count on meta
-        table.count()
+        # table.count()
         return table
 
     def set_default(self, name, namespace):

@@ -22,7 +22,6 @@ from fate_arch.common import hdfs_utils
 from fate_arch.common.log import getLogger
 from fate_arch.storage import StorageEngine, HDFSStorageType
 from fate_arch.storage import StorageTableBase
-from fate_arch.common.address import HDFSAddress
 
 LOGGER = getLogger()
 
@@ -74,8 +73,9 @@ class StorageTable(StorageTableBase):
         return self._options
 
     def put_all(self, kv_list: Iterable, append=False, **kwargs):
+        LOGGER.info(f"put in hdfs file: {self._path}")
         stream = self._hdfs_client.open_append_stream(path=self._path, compression=None) \
-            if append else self._hdfs_client.open_output_stream(source=self._path, compression=None)
+            if append else self._hdfs_client.open_output_stream(path=self._path, compression=None)
 
         counter = 0
         with io.TextIOWrapper(stream) as writer:
@@ -117,4 +117,4 @@ class StorageTable(StorageTableBase):
 
     @property
     def _path(self) -> str:
-        return self._address.path
+        return f"{self._address.name_node}/{self._address.path}"
