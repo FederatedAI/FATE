@@ -21,7 +21,7 @@ from pipeline.interface import Output
 from pipeline.utils.logger import LOGGER
 
 
-class HeteroKmeasn(Component, KmeansParam):
+class HeteroKmeans(Component, KmeansParam):
     def __init__(self, **kwargs):
         Component.__init__(self, **kwargs)
 
@@ -32,7 +32,7 @@ class HeteroKmeasn(Component, KmeansParam):
 
         KmeansParam.__init__(self, **new_kwargs)
         self.input = Input(self.name, data_type="multi")
-        self.output = Output(self.name, data_type="multi")
+        self.output = Output(self.name, data_type="no_limit", output_unit=2)
         self._module_name = "HeteroKmeans"
 
 
