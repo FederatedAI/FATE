@@ -74,7 +74,8 @@ def main(config="../../config.yaml", namespace=""):
     dataio_0.get_party_instance(role="host", party_id=host).algorithm_param(with_label=False)
 
     # define Intersection components
-    intersection_0 = Intersection(name="intersection_0")
+    intersection_0 = Intersection(name="intersection_0", intersect_method="rsa",
+                                  sync_intersect_ids=True, only_output_key=False)
 
     param = {
         "penalty": "L2",
