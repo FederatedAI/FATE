@@ -152,13 +152,11 @@ class JobController(object):
                         dataset[_role][_party_id] = dataset[_role].get(_party_id, {})
                         if dsl_version == 1:
                             for _data_type, _data_location in _role_party_args[_party_index]['args']['data'].items():
-                                dataset[_role][_party_id][_data_type] = '{}.{}'.format(_data_location['namespace'],
-                                                                                       _data_location['name'])
+                                dataset[_role][_party_id][_data_type] = {"name": _data_location['name'], "namespace": _data_location['namespace']}
                         else:
                             for key in _role_party_args[_party_index].keys():
                                 for _data_type, _data_location in _role_party_args[_party_index][key].items():
-                                    dataset[_role][_party_id][key] = '{}.{}'.format(
-                                        _data_location['namespace'], _data_location['name'])
+                                    dataset[_role][_party_id][key] = {"name": _data_location['name'], "namespace": _data_location['namespace']}
         return dataset
 
     @classmethod
