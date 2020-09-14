@@ -1,6 +1,6 @@
 {
   "job_parameters": {
-    "federated_mode": 1
+    "federated_mode": "MULTIPLE"
   },
   "migrate_initiator": {
     "role": "guest",
@@ -18,6 +18,7 @@
   },
   "execute_party": {
     "guest": [9999],
+    "arbiter": [10000],
     "host": [10000]
   },
   "model_id": "arbiter-10000#guest-9999#host-10000#model",
