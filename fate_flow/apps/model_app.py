@@ -58,10 +58,13 @@ def load_model():
         if model:
             model_info = model.to_json()
             request_config['initiator'] = {}
-            request_config['initiator']['party_id'] = model_info.get('f_initiator_party_id')
+            request_config['initiator']['party_id'] = str(model_info.get('f_initiator_party_id'))
             request_config['initiator']['role'] = model_info.get('f_initiator_role')
             request_config['job_parameters'] = model_info.get('f_runtime_conf').get('job_parameters')
             request_config['role'] = model_info.get('f_runtime_conf').get('role')
+            for key, value in request_config['role'].items():
+                for i, v in enumerate(value):
+                    value[i] = str(v)
             request_config.pop('job_id')
         else:
             return get_json_result(retcode=101,
@@ -155,7 +158,9 @@ def migrate_model_process():
             local_res["party_id"] = request_config.get("role").get(role_name)[offset]
             local_res["migrate_party_id"] = party_id
             # res_dict[party_id] = local_res
-            res_dict[local_res["party_id"]] = local_res
+            if not res_dict.get(role_name):
+                res_dict[role_name] = {}
+            res_dict[role_name][local_res["party_id"]] = local_res
 
     # for role_name, role_partys in request_config.get("migrate_role").items():
     for role_name, role_partys in request_config.get("execute_party").items():
@@ -163,7 +168,7 @@ def migrate_model_process():
         #     continue
         migrate_status_info[role_name] = migrate_status_info.get(role_name, {})
         for party_id in role_partys:
-            request_config["local"] = res_dict.get(party_id)
+            request_config["local"] = res_dict.get(role_name).get(party_id)
             try:
                 response = federated_api(job_id=_job_id,
                                          method='POST',
@@ -243,10 +248,13 @@ def bind_model_service():
         if model:
             model_info = model.to_json()
             request_config['initiator'] = {}
-            request_config['initiator']['party_id'] = model_info.get('f_initiator_party_id')
+            request_config['initiator']['party_id'] = str(model_info.get('f_initiator_party_id'))
             request_config['initiator']['role'] = model_info.get('f_initiator_role')
             request_config['job_parameters'] = model_info.get('f_runtime_conf').get('job_parameters')
             request_config['role'] = model_info.get('f_runtime_conf').get('role')
+            for key, value in request_config['role'].items():
+                for i, v in enumerate(value):
+                    value[i] = str(v)
             request_config.pop('job_id')
         else:
             return get_json_result(retcode=101,
