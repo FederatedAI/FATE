@@ -54,8 +54,6 @@ class HomoDecisionTreeArbiter(DecisionTree):
 
     def federated_find_best_split(self, node_histograms, parallel_partitions=10) -> List[SplitInfo]:
 
-        # node histograms [[HistogramBag,HistogramBag,...],[HistogramBag,HistogramBag,....],..]
-        LOGGER.debug('federated finding best splits,histograms from {} client received'.format(len(node_histograms)))
         LOGGER.debug('aggregating histograms')
         acc_histogram = node_histograms
         best_splits = self.splitter.find_split(acc_histogram, self.valid_features, parallel_partitions,
@@ -67,7 +65,7 @@ class HomoDecisionTreeArbiter(DecisionTree):
         self.transfer_inst.best_split_points.remote(split_info, idx=-1, suffix=suffix)
 
     def sync_local_histogram(self, suffix) -> List[HistogramBag]:
-        LOGGER.debug('get local histograms')
+
         node_local_histogram = self.aggregator.aggregate_histogram(suffix=suffix)
         LOGGER.debug('num of histograms {}'.format(len(node_local_histogram)))
         return node_local_histogram

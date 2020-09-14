@@ -19,8 +19,7 @@ import copy
 from federatedml.model_base import ModelBase
 from federatedml.param.column_expand_param import ColumnExpandParam
 from federatedml.protobuf.generated import column_expand_meta_pb2, column_expand_param_pb2
-from federatedml.util import LOGGER
-from federatedml.util import consts
+from federatedml.util import consts, LOGGER
 
 DELIMITER = ","
 
@@ -80,11 +79,15 @@ class ColumnExpand(ModelBase):
 
     @staticmethod
     def _append_feature(entry, append_value):
-        new_entry = entry + DELIMITER + append_value
+        # empty content
+        if len(entry) == 0:
+            new_entry = append_value
+        else:
+            new_entry = entry + DELIMITER + append_value
         return new_entry
 
     def _append_column(self, data):
-        # uses for FATE v.1.5.x
+        # uses for FATE v1.5.x
         append_value = self.new_feature_generator.generate()
         new_data = data.mapValues(lambda v: ColumnExpand._append_feature(v, append_value))
 
@@ -92,6 +95,8 @@ class ColumnExpand(ModelBase):
         header = new_schema.get("header", "")
         if len(header) == 0:
             new_header = DELIMITER.join(self.append_header)
+            if new_schema.get("sid", None) is not None:
+                new_schema["sid"] = new_schema.get("sid").strip()
         else:
             new_header = DELIMITER.join(header.split(DELIMITER) + self.append_header)
         new_schema["header"] = new_header

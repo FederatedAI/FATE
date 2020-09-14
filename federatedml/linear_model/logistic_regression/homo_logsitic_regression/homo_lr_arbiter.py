@@ -72,12 +72,14 @@ class HomoLRArbiter(HomoLRBase):
                 LOGGER.info("n_iters: {}, total_loss: {}, converge flag is :{}".format(self.n_iter_,
                                                                                        total_loss,
                                                                                        self.is_converged))
-                if self.is_converged or self.n_iter_ == max_iter:
-                    break
+
                 self.model_weights = LogisticRegressionWeights(merged_model.unboxed,
                                                                self.model_param.init_param.fit_intercept)
                 if self.header is None:
                     self.header = ['x' + str(i) for i in range(len(self.model_weights.coef_))]
+
+                if self.is_converged or self.n_iter_ == max_iter:
+                    break
 
             self.cipher.re_cipher(iter_num=self.n_iter_,
                                   re_encrypt_times=self.re_encrypt_times,

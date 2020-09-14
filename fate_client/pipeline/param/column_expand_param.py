@@ -34,7 +34,7 @@ class ColumnExpandParam(BaseParam):
     method : str, default: 'manual'
         If method is 'manual', use user-specified `fill_value` to fill in new features.
 
-    fill_value : int, float, str, List[int], List[float], List[str] default: 1e-6
+    fill_value : int, float, str, List[int], List[float], List[str] default: 1e-8
         Used for filling expanded feature columns. If given a list, length of the list must match that of `append_header`
 
     need_run: bool, default: True
@@ -42,7 +42,7 @@ class ColumnExpandParam(BaseParam):
 
     """
 
-    def __init__(self,append_header=None, method="manual",
+    def __init__(self, append_header=None, method="manual",
                  fill_value=consts.FLOAT_ZERO, need_run=True):
         super(ColumnExpandParam, self).__init__()
         self.append_header = [] if append_header is None else append_header
@@ -64,7 +64,7 @@ class ColumnExpandParam(BaseParam):
         BaseParam.check_boolean(self.need_run, descr=descr)
 
         if not isinstance(self.append_header, list):
-            raise ValueError(f"{descr} append_header must be list of None. "
+            raise ValueError(f"{descr} append_header must be None or list of str. "
                              f"Received {type(self.append_header)} instead.")
         for feature_name in self.append_header:
             BaseParam.check_string(feature_name, descr+"append_header values")
@@ -73,7 +73,7 @@ class ColumnExpandParam(BaseParam):
             if len(self.append_header) != len(self.fill_value):
                 raise ValueError(
                     f"{descr} `fill value` is set to be list, "
-                    f"param `append header` must also be list of the same length.")
+                    f"and param `append_header` must also be list of the same length.")
         else:
             self.fill_value = [self.fill_value]
         for value in self.fill_value:

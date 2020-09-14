@@ -154,7 +154,7 @@ class JobSaver(object):
             update_info["end_time"] = current_timestamp()
             if obj.f_start_time:
                 update_info['elapsed'] = update_info['end_time'] - obj.f_start_time
-        if update_info.get("progress") and hasattr(entity_model, "f_progress"):
+        if update_info.get("progress") and hasattr(entity_model, "f_progress") and update_info["progress"] > 0:
             update_filters.append(operator.attrgetter("f_progress")(entity_model) <= update_info["progress"])
         return cls.execute_update(old_obj=obj, model=entity_model, update_info=update_info, update_filters=update_filters)
 

@@ -161,3 +161,15 @@ Param
 
 .. automodule:: federatedml.param.homo_onehot_encoder_param
    :members:
+
+
+Column Expand
+=============
+Column Expand is used for adding arbitrary number of columns with user-provided values.
+This module is run directly on table object, before data entering DataIO.
+
+Param
+------
+
+.. automodule:: federatedml.param.column_expand_param
+   :members:

@@ -62,7 +62,7 @@ class CSession(CSessionABC):
                 raise RuntimeError(f"no exists: {address.name}, {address.namespace}, {address.storage_type}")
 
             if address.storage_type != EggRollStorageType.ROLLPAIR_IN_MEMORY:
-                rp = rp.save_as(name=f"{address.name}_{fate_uuid()}", namespace=address.namespace, partition=partitions,
+                rp = rp.save_as(name=f"{address.name}_{fate_uuid()}", namespace=self.session_id, partition=partitions,
                                 options={'store_type': EggRollStorageType.ROLLPAIR_IN_MEMORY})
 
             table = Table(rp=rp)
