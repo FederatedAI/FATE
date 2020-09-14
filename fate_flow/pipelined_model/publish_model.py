@@ -37,9 +37,9 @@ def generate_publish_model_info(config_data):
 
 def load_model(config_data):
     stat_logger.info(config_data)
-    if not config_data.get('servings', {}).get('hosts'):
+    if not config_data.get('servings'):
         return 100, 'Please configure servings address'
-    for serving in config_data.get('servings').get('hosts'):
+    for serving in config_data.get('servings'):
         with grpc.insecure_channel(serving) as channel:
             stub = model_service_pb2_grpc.ModelServiceStub(channel)
             load_model_request = model_service_pb2.PublishRequest()

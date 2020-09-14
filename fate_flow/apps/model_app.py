@@ -199,7 +199,7 @@ def do_migrate_model():
 @manager.route('/load/do', methods=['POST'])
 def do_load_model():
     request_data = request.json
-    request_data["servings"] = ServiceUtils.get("servings", [])
+    request_data["servings"] = ServiceUtils.get("servings", {}).get('hosts', [])
     retcode, retmsg = publish_model.load_model(config_data=request_data)
     try:
         if not retcode:
@@ -254,7 +254,7 @@ def bind_model_service():
                                           "Please check if the model version is valid.".format(request_config.get('job_id')))
     if not request_config.get('servings'):
         # get my party all servings
-        request_config['servings'] = ServiceUtils.get("servings", [])
+        request_config['servings'] = ServiceUtils.get("servings", {}).get('hosts', [])
     service_id = request_config.get('service_id')
     if not service_id:
         return get_json_result(retcode=101, retmsg='no service id')
