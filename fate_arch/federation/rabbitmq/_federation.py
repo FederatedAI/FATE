@@ -49,9 +49,9 @@ class MQ(object):
 
 
 class _QueueNames(object):
-    def __init__(self, vhost, union, send, receive):
+    def __init__(self, vhost, send, receive):
         self.vhost = vhost
-        self.union = union
+        # self.union = union
         self.send = send
         self.receive = receive
 
@@ -131,7 +131,7 @@ class Federation(FederationABC):
         LOGGER.debug("federation start to cleanup...")
         for party_id, names in self._queue_map.items():
             LOGGER.debug(f"cleanup party_id={party_id}, names={names}.")
-            self._rabbit_manager.de_federate_queue(union_name=names.union, vhost=names.vhost)
+            self._rabbit_manager.de_federate_queue(vhost=names.vhost, receive_queue_name=names.receive)
             self._rabbit_manager.delete_queue(vhost=names.vhost, queue_name=names.send)
             self._rabbit_manager.delete_queue(vhost=names.vhost, queue_name=names.receive)
             self._rabbit_manager.delete_vhost(vhost=names.vhost)
@@ -149,9 +149,12 @@ class Federation(FederationABC):
         if party not in self._queue_map:
             # gen names
             low, high = (self._party, party) if self._party < party else (party, self._party)
-            union_name = f"{low.role}-{low.party_id}-{high.role}-{high.party_id}"
-            vhost_name = f"{self._session_id}-{union_name}"
-            names = _QueueNames(vhost_name, union_name, f"send-{vhost_name}", f"receive-{vhost_name}")
+            # union_name = f"{low.role}-{low.party_id}-{high.role}-{high.party_id}"
+            vhost_name = f"{self._session_id}-{low.role}-{low.party_id}-{high.role}-{high.party_id}"
+
+            send_queue_name = f"send-{self._party.role}-{self._party.party_id}-{party.role}-{party.party_id}"
+            receive_queue_name = f"receive-{party.role}-{party.party_id}-{self._party.role}-{self._party.party_id}"
+            names = _QueueNames(vhost_name, send_queue_name, receive_queue_name)
 
             # initial vhost
             self._rabbit_manager.create_vhost(names.vhost)
@@ -164,7 +167,7 @@ class Federation(FederationABC):
             self._rabbit_manager.create_queue(names.vhost, names.receive)
 
             upstream_uri = self._upstream_uri(party_id=party.party_id)
-            self._rabbit_manager.federate_queue(upstream_host=upstream_uri, vhost=names.vhost, union_name=names.union)
+            self._rabbit_manager.federate_queue(upstream_host=upstream_uri, vhost=names.vhost, send_queue_name=names.send, receive_queue_name=names.receive)
 
             self._queue_map[party] = names
 
@@ -184,16 +187,16 @@ class Federation(FederationABC):
         for party, names in mq_names.items():
             info = self._channels_map.get(party)
             if info is None:
-                info = _get_channel(self._mq, names)
+                info = _get_channel(self._mq, names, party_id=party.party_id)
                 self._channels_map[party] = info
             channel_infos.append(info)
         LOGGER.debug("got channel_infos.")
         return channel_infos
 
 
-def _get_channel(mq, names: _QueueNames):
+def _get_channel(mq, names: _QueueNames, party_id):
     return MQChannel(host=mq.host, port=mq.port, user=mq.union_name, password=mq.policy_id,
-                     vhost=names.vhost, send_queue_name=names.send, receive_queue_name=names.receive)
+                     vhost=names.vhost, send_queue_name=names.send, receive_queue_name=names.receive, party_id=party_id)
 
 
 def _send_kv(name, tag, data, channel_infos, total_size, partitions):
@@ -226,7 +229,7 @@ def _send_obj(name, tag, data, channel_infos):
 def _get_channels(mq_names, mq):
     channel_infos = []
     for party, names in mq_names.items():
-        info = _get_channel(mq, names)
+        info = _get_channel(mq, names, party_id=party.party_id)
         channel_infos.append(info)
     return channel_infos
 
