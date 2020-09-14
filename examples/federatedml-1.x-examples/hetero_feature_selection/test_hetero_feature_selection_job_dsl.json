@@ -54,7 +54,9 @@
             "output": {
                 "data": ["train_data"],
                 "model": ["model"]
-            }
+            },
+            "need_deploy": false
+
         },
         "hetero_feature_selection_0": {
             "module": "HeteroFeatureSelection",

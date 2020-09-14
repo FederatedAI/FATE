@@ -246,15 +246,16 @@ class KerasSequenceData(tf.keras.utils.Sequence):
     def get_shape(self):
         return self.x_shape, self.y_shape
 
-    def __init__(self, data_instances, batch_size, encode_label):
+    def __init__(self, data_instances, batch_size, encode_label, label_mapping):
         self.size = data_instances.count()
         if self.size <= 0:
             raise ValueError("empty data")
 
         _, one_data = data_instances.first()
         self.x_shape = one_data.features.shape
+        num_label = len(label_mapping)
+        print(label_mapping)
 
-        num_label = len(data_instances.map(lambda x, y: [x, {y.label}]).reduce(lambda x, y: x | y))
         if encode_label:
             if num_label > 2:
                 self.y_shape = (num_label,)
@@ -265,7 +266,7 @@ class KerasSequenceData(tf.keras.utils.Sequence):
                 for k, inst in data_instances.collect():
                     self._keys.append(k)
                     self.x[index] = inst.features
-                    self.y[index][inst.label] = 1
+                    self.y[index][label_mapping[inst.label]] = 1
                     index += 1
             else:
                 raise ValueError(f"num_label is {num_label}")
@@ -281,7 +282,7 @@ class KerasSequenceData(tf.keras.utils.Sequence):
             for k, inst in data_instances.collect():
                 self._keys.append(k)
                 self.x[index] = inst.features
-                self.y[index] = inst.label
+                self.y[index] = label_mapping[inst.label]
                 index += 1
 
         self.batch_size = batch_size if batch_size > 0 else self.size

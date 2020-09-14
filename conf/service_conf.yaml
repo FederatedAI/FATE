@@ -1,8 +1,5 @@
 work_mode: 1
-use_local_database: true
 use_registry: false
-federated_comm: PUSH
-multi_backend: false
 fateflow:
   host: 0.0.0.0
   http_port: 9380
@@ -29,6 +26,10 @@ SPARK:
     home:
   cores_per_node: 20
   nodes: 2
+HDFS:
+  address:
+    name_node:
+    path_prefix:
 MQ:
   address:
     self:

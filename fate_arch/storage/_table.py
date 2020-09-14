@@ -75,6 +75,9 @@ class StorageTableBase(StorageTableABC):
     def collect(self, **kwargs) -> list:
         pass
 
+    def read(self) -> list:
+        pass
+
     def count(self):
         pass
 
@@ -84,6 +87,7 @@ class StorageTableBase(StorageTableABC):
 
 
 class StorageTableMeta(StorageTableMetaABC):
+
     def __init__(self, name, namespace, new=False):
         self.name = name
         self.namespace = namespace
@@ -92,14 +96,15 @@ class StorageTableMeta(StorageTableMetaABC):
         self.type = None
         self.options = None
         self.partitions = None
+        self.in_serialized = None
+        self.have_head = None
+        self.id_delimiter = None
         self.schema = None
         self.count = None
         self.part_of_data = None
         self.description = None
         self.create_time = None
         self.update_time = None
-        self.is_kv_storage = None
-        self.is_serialize = None
         if self.options is None:
             self.options = {}
         if self.schema is None:
@@ -128,28 +133,28 @@ class StorageTableMeta(StorageTableMetaABC):
         else:
             return super().__new__(cls)
 
+    @DB.connection_context()
     def create(self):
-        with DB.connection_context():
-            table_meta = StorageTableMetaModel()
-            table_meta.f_create_time = current_timestamp()
-            table_meta.f_schema = {}
-            table_meta.f_part_of_data = []
-            for k, v in self.to_dict().items():
-                attr_name = 'f_%s' % k
-                if hasattr(StorageTableMetaModel, attr_name):
-                    setattr(table_meta, attr_name, v if not issubclass(type(v), AddressABC) else v.__dict__)
-            try:
-                rows = table_meta.save(force_insert=True)
-                if rows != 1:
-                    raise Exception("create table meta failed")
-            except peewee.IntegrityError as e:
-                if e.args[0] == 1062:
-                    # warning
-                    pass
-                else:
-                    raise e
-            except Exception as e:
+        table_meta = StorageTableMetaModel()
+        table_meta.f_create_time = current_timestamp()
+        table_meta.f_schema = {}
+        table_meta.f_part_of_data = []
+        for k, v in self.to_dict().items():
+            attr_name = 'f_%s' % k
+            if hasattr(StorageTableMetaModel, attr_name):
+                setattr(table_meta, attr_name, v if not issubclass(type(v), AddressABC) else v.__dict__)
+        try:
+            rows = table_meta.save(force_insert=True)
+            if rows != 1:
+                raise Exception("create table meta failed")
+        except peewee.IntegrityError as e:
+            if e.args[0] == 1062:
+                # warning
+                pass
+            else:
                 raise e
+        except Exception as e:
+            raise e
 
     def set_metas(self, **kwargs):
         for k, v in kwargs.items():
@@ -157,30 +162,31 @@ class StorageTableMeta(StorageTableMetaABC):
                 setattr(self, k, v)
 
     @classmethod
+    @DB.connection_context()
     def query_table_meta(cls, filter_fields, query_fields=None):
-        with DB.connection_context():
-            filters = []
-            querys = []
-            for f_n, f_v in filter_fields.items():
+        filters = []
+        querys = []
+        for f_n, f_v in filter_fields.items():
+            attr_name = 'f_%s' % f_n
+            if hasattr(StorageTableMetaModel, attr_name):
+                filters.append(operator.attrgetter('f_%s' % f_n)(StorageTableMetaModel) == f_v)
+        if query_fields:
+            for f_n in query_fields:
                 attr_name = 'f_%s' % f_n
                 if hasattr(StorageTableMetaModel, attr_name):
-                    filters.append(operator.attrgetter('f_%s' % f_n)(StorageTableMetaModel) == f_v)
-            if query_fields:
-                for f_n in query_fields:
-                    attr_name = 'f_%s' % f_n
-                    if hasattr(StorageTableMetaModel, attr_name):
-                        querys.append(operator.attrgetter('f_%s' % f_n)(StorageTableMetaModel))
-            if filters:
-                if querys:
-                    tables_meta = StorageTableMetaModel.select(querys).where(*filters)
-                else:
-                    tables_meta = StorageTableMetaModel.select().where(*filters)
-                return [table_meta for table_meta in tables_meta]
+                    querys.append(operator.attrgetter('f_%s' % f_n)(StorageTableMetaModel))
+        if filters:
+            if querys:
+                tables_meta = StorageTableMetaModel.select(querys).where(*filters)
             else:
-                # not allow query all table
-                return []
+                tables_meta = StorageTableMetaModel.select().where(*filters)
+            return [table_meta for table_meta in tables_meta]
+        else:
+            # not allow query all table
+            return []
 
-    def update_metas(self, schema=None, count=None, part_of_data=None, description=None, partitions=None, **kwargs):
+    @DB.connection_context()
+    def update_metas(self, schema=None, count=None, part_of_data=None, description=None, partitions=None, in_serialized=None, **kwargs):
         meta_info = {}
         for k, v in locals().items():
             if k not in ["self", "kwargs", "meta_info"] and v is not None:
@@ -188,37 +194,36 @@ class StorageTableMeta(StorageTableMetaABC):
         meta_info.update(kwargs)
         meta_info["name"] = meta_info.get("name", self.name)
         meta_info["namespace"] = meta_info.get("namespace", self.namespace)
-        with DB.connection_context():
-            update_filters = []
-            primary_keys = StorageTableMetaModel._meta.primary_key.field_names
-            for p_k in primary_keys:
-                update_filters.append(operator.attrgetter(p_k)(StorageTableMetaModel) == meta_info[p_k.lstrip("f_")])
-            table_meta = StorageTableMetaModel()
-            update_fields = {}
-            for k, v in meta_info.items():
-                attr_name = 'f_%s' % k
-                if hasattr(StorageTableMetaModel, attr_name) and attr_name not in primary_keys:
-                    if k == "part_of_data":
-                        if len(v) < 100:
-                            tmp = table_meta.f_part_of_data[- (100 - len(v)):] + v
-                        else:
-                            tmp = v[:100]
-                        update_fields[operator.attrgetter(attr_name)(StorageTableMetaModel)] = tmp
+        update_filters = []
+        primary_keys = StorageTableMetaModel._meta.primary_key.field_names
+        for p_k in primary_keys:
+            update_filters.append(operator.attrgetter(p_k)(StorageTableMetaModel) == meta_info[p_k.lstrip("f_")])
+        table_meta = StorageTableMetaModel()
+        update_fields = {}
+        for k, v in meta_info.items():
+            attr_name = 'f_%s' % k
+            if hasattr(StorageTableMetaModel, attr_name) and attr_name not in primary_keys:
+                if k == "part_of_data":
+                    if len(v) < 100:
+                        tmp = v
                     else:
-                        update_fields[operator.attrgetter(attr_name)(StorageTableMetaModel)] = v
-            if update_filters:
-                operate = table_meta.update(update_fields).where(*update_filters)
-            else:
-                operate = table_meta.update(update_fields)
-            return operate.execute() > 0
+                        tmp = v[:100]
+                    update_fields[operator.attrgetter(attr_name)(StorageTableMetaModel)] = tmp
+                else:
+                    update_fields[operator.attrgetter(attr_name)(StorageTableMetaModel)] = v
+        if update_filters:
+            operate = table_meta.update(update_fields).where(*update_filters)
+        else:
+            operate = table_meta.update(update_fields)
+        return operate.execute() > 0
 
+    @DB.connection_context()
     def destroy_metas(self):
-        with DB.connection_context():
-            StorageTableMetaModel \
-                .delete() \
-                .where(StorageTableMetaModel.f_name == self.name,
-                       StorageTableMetaModel.f_namespace == self.namespace) \
-                .execute()
+        StorageTableMetaModel \
+            .delete() \
+            .where(StorageTableMetaModel.f_name == self.name,
+                   StorageTableMetaModel.f_namespace == self.namespace) \
+            .execute()
 
     @classmethod
     def create_address(cls, storage_engine, address_dict):
@@ -244,6 +249,15 @@ class StorageTableMeta(StorageTableMetaABC):
 
     def get_partitions(self):
         return self.partitions
+
+    def get_in_serialized(self):
+        return self.in_serialized
+
+    def get_id_delimiter(self):
+        return self.id_delimiter
+
+    def get_have_head(self):
+        return self.have_head
 
     def get_schema(self):
         return self.schema

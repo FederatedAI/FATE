@@ -121,10 +121,6 @@ configuration files: ``$PYTHONPATH/arch/conf/server.conf``,
     |                       |                       | data, False means use |
     |                       |                       | server data           |
     +-----------------------+-----------------------+-----------------------+
-    | USE_LOCAL_DATABASE    | Whether to use a      | False for no, True    |
-    |                       | local                 | for yes               |
-    |                       | database(sqlite)      |                       |
-    +-----------------------+-----------------------+-----------------------+
     | USE_AUTHENTICATION    | Whether to enable     | False for no, True    |
     |                       | authentication        | for yes               |
     +-----------------------+-----------------------+-----------------------+
@@ -183,7 +179,6 @@ learning modeling experiment.
     Configuration item Configuration item value
     ================== ========================
     WORK_MODE          0
-    USE_LOCAL_DATABASE True
     ================== ========================
 
 :Features:
@@ -217,7 +212,6 @@ refer to docker version deploy guide at
     Configuration item Configuration item value
     ================== ================================
     WORK_MODE          0
-    USE_LOCAL_DATABASE False
     DATABASE           configuration for mysql database
     ================== ================================
 

@@ -20,6 +20,7 @@ import shutil
 import base64
 from ruamel import yaml
 
+from os.path import join, getsize
 from fate_arch.common import file_utils
 from fate_arch.protobuf.python import default_empty_fill_pb2
 from fate_flow.settings import stat_logger, TEMP_DIRECTORY
@@ -216,3 +217,9 @@ class PipelinedModel(object):
 
     def archive_model_file_path(self):
         return "{}.{}".format(self.archive_model_base_path(), self.default_archive_format)
+
+    def calculate_model_file_size(self):
+        size = 0
+        for root, dirs, files in os.walk(self.model_path):
+            size += sum([getsize(join(root, name)) for name in files])
+        return round(size/1024)

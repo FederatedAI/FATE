@@ -126,7 +126,7 @@ class StorageSessionBase(StorageSessionABC):
     def create(self):
         raise NotImplementedError()
 
-    def create_table(self, address, name, namespace, partitions=1, **kwargs):
+    def create_table(self, address, name, namespace, partitions=None, **kwargs):
         table = self.table(address=address, name=name, namespace=namespace, partitions=partitions, **kwargs)
         table_meta = StorageTableMeta(name=name, namespace=namespace, new=True)
         table_meta.set_metas(**kwargs)
@@ -166,19 +166,19 @@ class StorageSessionBase(StorageSessionABC):
         raise NotImplementedError()
 
     @classmethod
+    @DB.connection_context()
     def get_storage_info(cls, name, namespace):
-        with DB.connection_context():
-            metas = StorageTableMetaModel.select().where(StorageTableMetaModel.f_name == name,
-                                                         StorageTableMetaModel.f_namespace == namespace)
-            if metas:
-                meta = metas[0]
-                engine = meta.f_engine
-                address_dict = meta.f_address
-                address = StorageTableMeta.create_address(storage_engine=engine, address_dict=address_dict)
-                partitions = meta.f_partitions
-            else:
-                return None, None, None
-        return engine, address, partitions
+        metas = StorageTableMetaModel.select().where(StorageTableMetaModel.f_name == name,
+                                                     StorageTableMetaModel.f_namespace == namespace)
+        if metas:
+            meta = metas[0]
+            engine = meta.f_engine
+            address_dict = meta.f_address
+            address = StorageTableMeta.create_address(storage_engine=engine, address_dict=address_dict)
+            partitions = meta.f_partitions
+            return engine, address, partitions
+        else:
+            return None, None, None
 
     def __enter__(self):
         with DB.connection_context():

@@ -218,7 +218,7 @@ class BaseLinearModel(ModelBase):
                         return True
             return False
 
-        check_status = data_instances.mapPartitions(_check_overflow)
+        check_status = data_instances.applyPartitions(_check_overflow)
         is_overflow = check_status.reduce(lambda a, b: a or b)
         if is_overflow:
             raise OverflowError("The input data is too large for GLM, please have "

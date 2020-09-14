@@ -18,7 +18,7 @@ from collections import Iterable
 from fate_arch.abc import AddressABC, CSessionABC
 from fate_arch.common.base_utils import fate_uuid
 from fate_arch.common.log import getLogger
-from fate_arch.computing.standalone import Table
+from fate_arch.computing.standalone._table import Table
 from fate_arch.standalone import Session
 
 LOGGER = getLogger()
@@ -50,7 +50,7 @@ class CSession(CSessionABC):
             return address
         raise NotImplementedError(f"address type {type(address)} not supported with standalone backend")
 
-    def parallelize(self, data: Iterable, partition: int, include_key: bool = False, **kwargs):
+    def parallelize(self, data: Iterable, partition: int, include_key: bool, **kwargs):
         table = self._session.parallelize(data=data, partition=partition, include_key=include_key, **kwargs)
         return Table(table)
 

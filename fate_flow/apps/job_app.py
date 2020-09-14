@@ -27,7 +27,7 @@ from fate_flow.scheduler import FederatedScheduler
 from fate_flow.settings import stat_logger, TEMP_DIRECTORY
 from fate_flow.utils import job_utils, detect_utils, schedule_utils
 from fate_flow.utils.api_utils import get_json_result, error_response
-from fate_flow.entity.types import FederatedSchedulingStatusCode, RetCode
+from fate_flow.entity.types import FederatedSchedulingStatusCode, RetCode, JobStatus
 from fate_flow.operation import Tracker
 from fate_flow.operation import JobSaver
 from fate_flow.operation import JobClean
@@ -147,7 +147,7 @@ def job_log():
         memory_file.seek(0)
         return send_file(memory_file, attachment_filename='job_{}_log.tar.gz'.format(job_id), as_attachment=True)
     else:
-        return error_response(500, "Log file path: {} not found. Please check if the job id is valid.".format(job_log_dir))
+        return error_response(210, "Log file path: {} not found. Please check if the job id is valid.".format(job_log_dir))
 
 
 @manager.route('/task/query', methods=['POST'])
@@ -182,8 +182,12 @@ def clean_job():
 
 @manager.route('/clean/queue', methods=['POST'])
 def clean_queue():
-    job_utils.start_clean_queue()
-    return get_json_result(retcode=0, retmsg='success')
+    jobs = JobSaver.query_job(is_initiator=True, status=JobStatus.WAITING)
+    clean_status = {}
+    for job in jobs:
+        status_code, response = FederatedScheduler.request_stop_job(job=job, stop_status=JobStatus.CANCELED)
+        clean_status[job.f_job_id] = status_code
+    return get_json_result(retcode=0, retmsg='success', data=clean_status)
 
 
 @manager.route('/dsl/generate', methods=['POST'])
@@ -213,6 +217,7 @@ def dsl_generator():
         return get_json_result(data=predict_dsl)
     except Exception as e:
         stat_logger.exception(e)
-        return error_response(500, "DSL generating failed. For more details, please checkout fate_flow_stat.log.")
+        return error_response(210, "DSL generating failed. For more details, "
+                                   "please check logs/fate_flow/fate_flow_stat.log.")
 
 

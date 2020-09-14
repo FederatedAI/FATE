@@ -212,9 +212,13 @@ class PadsCipher(Encrypt):
         super().__init__()
         self._uuid = None
         self._rands = None
+        self._amplify_factor = 1
 
     def set_self_uuid(self, uuid):
         self._uuid = uuid
+
+    def set_amplify_factor(self, factor):
+        self._amplify_factor = factor
 
     def set_exchanged_keys(self, keys):
         self._seeds = {uid: v & 0xffffffff for uid, v in keys.items() if uid != self._uuid}
@@ -225,25 +229,25 @@ class PadsCipher(Encrypt):
             ret = value
             for uid, rand in self._rands.items():
                 if uid > self._uuid:
-                    ret = rand.add_rand_pads(ret, 1.0)
+                    ret = rand.add_rand_pads(ret, 1.0 * self._amplify_factor)
                 else:
-                    ret = rand.add_rand_pads(ret, -1.0)
+                    ret = rand.add_rand_pads(ret, -1.0 * self._amplify_factor)
             return ret
         elif isinstance(value, torch.Tensor):
             ret = value.numpy()
             for uid, rand in self._rands.items():
                 if uid > self._uuid:
-                    ret = rand.add_rand_pads(ret, 1.0)
+                    ret = rand.add_rand_pads(ret, 1.0 * self._amplify_factor)
                 else:
-                    ret = rand.add_rand_pads(ret, -1.0)
+                    ret = rand.add_rand_pads(ret, -1.0 * self._amplify_factor)
             return torch.Tensor(ret)
         else:
             ret = value
             for uid, rand in self._rands.items():
                 if uid > self._uuid:
-                    ret += rand.rand(1)[0]
+                    ret += rand.rand(1)[0] * self._amplify_factor
                 else:
-                    ret -= rand.rand(1)[0]
+                    ret -= rand.rand(1)[0] * self._amplify_factor
             return ret
 
     def decrypt(self, value):

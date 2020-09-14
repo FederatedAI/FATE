@@ -80,83 +80,83 @@ class JobSaver(object):
         return update_status
 
     @classmethod
+    @DB.connection_context()
     def create_job_family_entity(cls, entity_model, entity_info):
-        with DB.connection_context():
-            obj = entity_model()
-            obj.f_create_time = current_timestamp()
-            for k, v in entity_info.items():
-                attr_name = 'f_%s' % k
-                if hasattr(entity_model, attr_name):
-                    setattr(obj, attr_name, v)
-            try:
-                rows = obj.save(force_insert=True)
-                if rows != 1:
-                    raise Exception("Create {} failed".format(entity_model))
-            except peewee.IntegrityError as e:
-                if e.args[0] == 1062:
-                    sql_logger(job_id=entity_info.get("job_id", "fate_flow")).warning(e)
-                else:
-                    raise Exception("Create {} failed:\n{}".format(entity_model, e))
-            except Exception as e:
+        obj = entity_model()
+        obj.f_create_time = current_timestamp()
+        for k, v in entity_info.items():
+            attr_name = 'f_%s' % k
+            if hasattr(entity_model, attr_name):
+                setattr(obj, attr_name, v)
+        try:
+            rows = obj.save(force_insert=True)
+            if rows != 1:
+                raise Exception("Create {} failed".format(entity_model))
+        except peewee.IntegrityError as e:
+            if e.args[0] == 1062:
+                sql_logger(job_id=entity_info.get("job_id", "fate_flow")).warning(e)
+            else:
                 raise Exception("Create {} failed:\n{}".format(entity_model, e))
+        except Exception as e:
+            raise Exception("Create {} failed:\n{}".format(entity_model, e))
 
     @classmethod
+    @DB.connection_context()
     def update_status(cls, entity_model, entity_info):
-        with DB.connection_context():
-            query_filters = []
-            primary_keys = entity_model.get_primary_keys_name()
-            for p_k in primary_keys:
-                query_filters.append(operator.attrgetter(p_k)(entity_model) == entity_info[p_k.lstrip("f").lstrip("_")])
-            objs = entity_model.select().where(*query_filters)
-            if objs:
-                obj = objs[0]
-            else:
-                raise Exception("can not found the {}".format(entity_model.__class__.__name__))
-            update_filters = query_filters[:]
-            update_info = {}
-            for status_field in cls.STATUS_FIELDS:
-                if entity_info.get(status_field) and hasattr(entity_model, f"f_{status_field}"):
-                    if status_field in ["status", "party_status"]:
-                        update_info[status_field] = entity_info[status_field]
-                        if_pass = False
-                        if isinstance(obj, Task):
-                            if TaskStatus.StateTransitionRule.if_pass(src_status=getattr(obj, f"f_{status_field}"), dest_status=update_info[status_field]):
-                                if_pass = True
-                        elif isinstance(obj, Job):
-                            if JobStatus.StateTransitionRule.if_pass(src_status=getattr(obj, f"f_{status_field}"), dest_status=update_info[status_field]):
-                                if_pass = True
-                        if if_pass:
-                            update_filters.append(operator.attrgetter(f"f_{status_field}")(type(obj)) == getattr(obj, f"f_{status_field}"))
-                        else:
-                            # not allow update status
-                            update_info.pop(status_field)
-            return cls.execute_update(old_obj=obj, model=entity_model, update_info=update_info, update_filters=update_filters)
+        query_filters = []
+        primary_keys = entity_model.get_primary_keys_name()
+        for p_k in primary_keys:
+            query_filters.append(operator.attrgetter(p_k)(entity_model) == entity_info[p_k.lstrip("f").lstrip("_")])
+        objs = entity_model.select().where(*query_filters)
+        if objs:
+            obj = objs[0]
+        else:
+            raise Exception("can not found the {}".format(entity_model.__class__.__name__))
+        update_filters = query_filters[:]
+        update_info = {}
+        for status_field in cls.STATUS_FIELDS:
+            if entity_info.get(status_field) and hasattr(entity_model, f"f_{status_field}"):
+                if status_field in ["status", "party_status"]:
+                    update_info[status_field] = entity_info[status_field]
+                    if_pass = False
+                    if isinstance(obj, Task):
+                        if TaskStatus.StateTransitionRule.if_pass(src_status=getattr(obj, f"f_{status_field}"), dest_status=update_info[status_field]):
+                            if_pass = True
+                    elif isinstance(obj, Job):
+                        if JobStatus.StateTransitionRule.if_pass(src_status=getattr(obj, f"f_{status_field}"), dest_status=update_info[status_field]):
+                            if_pass = True
+                    if if_pass:
+                        update_filters.append(operator.attrgetter(f"f_{status_field}")(type(obj)) == getattr(obj, f"f_{status_field}"))
+                    else:
+                        # not allow update status
+                        update_info.pop(status_field)
+        return cls.execute_update(old_obj=obj, model=entity_model, update_info=update_info, update_filters=update_filters)
 
     @classmethod
+    @DB.connection_context()
     def update_job_family_entity(cls, entity_model, entity_info):
-        with DB.connection_context():
-            query_filters = []
-            primary_keys = entity_model.get_primary_keys_name()
-            for p_k in primary_keys:
-                query_filters.append(operator.attrgetter(p_k)(entity_model) == entity_info[p_k.lstrip("f").lstrip("_")])
-            objs = entity_model.select().where(*query_filters)
-            if objs:
-                obj = objs[0]
-            else:
-                raise Exception("can not found the {}".format(entity_model.__class__.__name__))
-            update_filters = query_filters[:]
-            update_info = {}
-            update_info.update(entity_info)
-            for _ in cls.STATUS_FIELDS:
-                # not allow update status fields by this function
-                update_info.pop(_, None)
-            if update_info.get("tag") == "job_end" and hasattr(entity_model, "f_tag"):
-                update_info["end_time"] = current_timestamp()
-                if obj.f_start_time:
-                    update_info['elapsed'] = update_info['end_time'] - obj.f_start_time
-            if update_info.get("progress") and hasattr(entity_model, "f_progress"):
-                update_filters.append(operator.attrgetter("f_progress")(entity_model) <= update_info["progress"])
-            return cls.execute_update(old_obj=obj, model=entity_model, update_info=update_info, update_filters=update_filters)
+        query_filters = []
+        primary_keys = entity_model.get_primary_keys_name()
+        for p_k in primary_keys:
+            query_filters.append(operator.attrgetter(p_k)(entity_model) == entity_info[p_k.lstrip("f").lstrip("_")])
+        objs = entity_model.select().where(*query_filters)
+        if objs:
+            obj = objs[0]
+        else:
+            raise Exception("can not found the {}".format(entity_model.__class__.__name__))
+        update_filters = query_filters[:]
+        update_info = {}
+        update_info.update(entity_info)
+        for _ in cls.STATUS_FIELDS:
+            # not allow update status fields by this function
+            update_info.pop(_, None)
+        if update_info.get("tag") == "job_end" and hasattr(entity_model, "f_tag"):
+            update_info["end_time"] = current_timestamp()
+            if obj.f_start_time:
+                update_info['elapsed'] = update_info['end_time'] - obj.f_start_time
+        if update_info.get("progress") and hasattr(entity_model, "f_progress") and update_info["progress"] > 0:
+            update_filters.append(operator.attrgetter("f_progress")(entity_model) <= update_info["progress"])
+        return cls.execute_update(old_obj=obj, model=entity_model, update_info=update_info, update_filters=update_filters)
 
     @classmethod
     def execute_update(cls, old_obj, model, update_info, update_filters):
@@ -176,44 +176,44 @@ class JobSaver(object):
             return False
 
     @classmethod
+    @DB.connection_context()
     def query_job(cls, **kwargs):
-        with DB.connection_context():
-            filters = []
-            for f_n, f_v in kwargs.items():
-                attr_name = 'f_%s' % f_n
-                if hasattr(Job, attr_name):
-                    filters.append(operator.attrgetter('f_%s' % f_n)(Job) == f_v)
-            if filters:
-                jobs = Job.select().where(*filters)
-                return [job for job in jobs]
-            else:
-                # not allow query all job
-                return []
+        filters = []
+        for f_n, f_v in kwargs.items():
+            attr_name = 'f_%s' % f_n
+            if hasattr(Job, attr_name):
+                filters.append(operator.attrgetter('f_%s' % f_n)(Job) == f_v)
+        if filters:
+            jobs = Job.select().where(*filters)
+            return [job for job in jobs]
+        else:
+            # not allow query all job
+            return []
 
     @classmethod
+    @DB.connection_context()
     def get_tasks_asc(cls, job_id, role, party_id):
-        with DB.connection_context():
-            tasks = Task.select().where(Task.f_job_id == job_id, Task.f_role == role, Task.f_party_id == party_id).order_by(Task.f_create_time.asc())
-            tasks_group = cls.get_latest_tasks(tasks=tasks)
-            return tasks_group
+        tasks = Task.select().where(Task.f_job_id == job_id, Task.f_role == role, Task.f_party_id == party_id).order_by(Task.f_create_time.asc())
+        tasks_group = cls.get_latest_tasks(tasks=tasks)
+        return tasks_group
 
     @classmethod
+    @DB.connection_context()
     def query_task(cls, only_latest=True, **kwargs):
-        with DB.connection_context():
-            filters = []
-            for f_n, f_v in kwargs.items():
-                attr_name = 'f_%s' % f_n
-                if hasattr(Task, attr_name):
-                    filters.append(operator.attrgetter('f_%s' % f_n)(Task) == f_v)
-            if filters:
-                tasks = Task.select().where(*filters)
-            else:
-                tasks = Task.select()
-            if only_latest:
-                tasks_group = cls.get_latest_tasks(tasks=tasks)
-                return list(tasks_group.values())
-            else:
-                return [task for task in tasks]
+        filters = []
+        for f_n, f_v in kwargs.items():
+            attr_name = 'f_%s' % f_n
+            if hasattr(Task, attr_name):
+                filters.append(operator.attrgetter('f_%s' % f_n)(Task) == f_v)
+        if filters:
+            tasks = Task.select().where(*filters)
+        else:
+            tasks = Task.select()
+        if only_latest:
+            tasks_group = cls.get_latest_tasks(tasks=tasks)
+            return list(tasks_group.values())
+        else:
+            return [task for task in tasks]
 
     @classmethod
     def get_latest_tasks(cls, tasks):

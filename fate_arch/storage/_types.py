@@ -72,3 +72,6 @@ class Relationship(object):
         StorageEngine.MYSQL: MysqlAddress,
         StorageEngine.FILE: FileAddress
     }
+
+
+DEFAULT_ID_DELIMITER = ","

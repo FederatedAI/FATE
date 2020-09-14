@@ -231,12 +231,16 @@ def component_output_data():
 @manager.route('/component/output/data/download', methods=['get'])
 def component_output_data_download():
     request_data = request.json
-    output_tables_meta = get_component_output_tables_meta(task_data=request_data)
+    try:
+        output_tables_meta = get_component_output_tables_meta(task_data=request_data)
+    except Exception as e:
+        stat_logger.exception(e)
+        return error_response(210, str(e))
     limit = request_data.get('limit', -1)
     if not output_tables_meta:
-        return error_response(response_code=500, retmsg='no data')
+        return error_response(response_code=210, retmsg='no data')
     if limit == 0:
-        return error_response(response_code=500, retmsg='limit is 0')
+        return error_response(response_code=210, retmsg='limit is 0')
     have_data_label = False
 
     output_data_file_list = []
@@ -306,22 +310,26 @@ def component_output_data_table():
 @manager.route('/component/summary/download', methods=['POST'])
 def get_component_summary():
     request_data = request.json
-    required_params = ["job_id", "component_name", "role", "party_id"]
-    detect_utils.check_config(request_data, required_params)
-    tracker = Tracker(job_id=request_data["job_id"], component_name=request_data["component_name"],
-                      role=request_data["role"], party_id=request_data["party_id"],
-                      task_id=request_data.get("task_id", None), task_version=request_data.get("task_version", None))
-    summary = tracker.read_summary_from_db()
-    if summary:
-        if request_data.get("filename"):
-            temp_filepath = os.path.join(TEMP_DIRECTORY, request_data.get("filename"))
-            with open(temp_filepath, "w") as fout:
-                fout.write(json.dumps(summary, indent=4))
-            return send_file(open(temp_filepath, "rb"), as_attachment=True,
-                             attachment_filename=request_data.get("filename"))
-        else:
-            return get_json_result(data=summary)
-    return error_response(500, "No component summary found, please check if arguments are specified correctly.")
+    try:
+        required_params = ["job_id", "component_name", "role", "party_id"]
+        detect_utils.check_config(request_data, required_params)
+        tracker = Tracker(job_id=request_data["job_id"], component_name=request_data["component_name"],
+                          role=request_data["role"], party_id=request_data["party_id"],
+                          task_id=request_data.get("task_id", None), task_version=request_data.get("task_version", None))
+        summary = tracker.read_summary_from_db()
+        if summary:
+            if request_data.get("filename"):
+                temp_filepath = os.path.join(TEMP_DIRECTORY, request_data.get("filename"))
+                with open(temp_filepath, "w") as fout:
+                    fout.write(json.dumps(summary, indent=4))
+                return send_file(open(temp_filepath, "rb"), as_attachment=True,
+                                 attachment_filename=request_data.get("filename"))
+            else:
+                return get_json_result(data=summary)
+        return error_response(210, "No component summary found, please check if arguments are specified correctly.")
+    except Exception as e:
+        stat_logger.exception(e)
+        return error_response(210, str(e))
 
 
 @manager.route('/component/list', methods=['POST'])
@@ -383,16 +391,16 @@ def get_component_output_data_schema(output_table_meta, have_data_label, is_str=
     return header
 
 
+@DB.connection_context()
 def check_request_parameters(request_data):
-    with DB.connection_context():
-        if 'role' not in request_data and 'party_id' not in request_data:
-            jobs = Job.select(Job.f_runtime_conf).where(Job.f_job_id == request_data.get('job_id', ''),
-                                                        Job.f_is_initiator == True)
-            if jobs:
-                job = jobs[0]
-                job_runtime_conf = job.f_runtime_conf
-                job_initiator = job_runtime_conf.get('initiator', {})
-                role = job_initiator.get('role', '')
-                party_id = job_initiator.get('party_id', 0)
-                request_data['role'] = role
-                request_data['party_id'] = party_id
+    if 'role' not in request_data and 'party_id' not in request_data:
+        jobs = Job.select(Job.f_runtime_conf).where(Job.f_job_id == request_data.get('job_id', ''),
+                                                    Job.f_is_initiator == True)
+        if jobs:
+            job = jobs[0]
+            job_runtime_conf = job.f_runtime_conf
+            job_initiator = job_runtime_conf.get('initiator', {})
+            role = job_initiator.get('role', '')
+            party_id = job_initiator.get('party_id', 0)
+            request_data['role'] = role
+            request_data['party_id'] = party_id

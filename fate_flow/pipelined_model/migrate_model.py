@@ -15,6 +15,7 @@
 #
 import os
 import shutil
+from ruamel import yaml
 from datetime import datetime
 
 from fate_flow.db.db_models import DB, MachineLearningModelInfo as MLModel
@@ -22,7 +23,7 @@ from fate_flow.pipelined_model import pipelined_model
 from fate_arch.common.base_utils import json_loads, json_dumps
 from fate_arch.common.file_utils import get_project_base_directory
 from fate_flow.utils import model_utils
-# from federatedml.protobuf.model_migrate.model_migrate import model_migration
+from federatedml.protobuf.model_migrate.model_migrate import model_migration
 
 
 def gen_model_file_path(model_id, model_version):
@@ -109,43 +110,54 @@ def migration(config_data: dict):
                         os.path.join(migrate_model.model_path, "variables", "data", "pipeline", "pipeline", "Pipeline"))
 
         # modify proto
-        secureboost_dict = migrate_model.read_component_model('secureboost_0', 'train')
+        with open(os.path.join(migrate_model.model_path, 'define', 'define_meta.yaml'), 'r') as fin:
+            define_yaml = yaml.safe_load(fin)
 
-        modified_buffer = model_migration(model_contents=secureboost_dict,
-                                          module_name='HeteroSecureBoost',
-                                          old_guest_list=config_data['role']['guest'],
-                                          new_guest_list=config_data['migrate_role']['guest'],
-                                          old_host_list=config_data['role']['host'],
-                                          new_host_list=config_data['migrate_role']['host'])
+        for key, value in define_yaml['model_proto'].items():
+            if key == 'pipeline':
+                continue
+            for v in value.keys():
+                buffer_obj = migrate_model.read_component_model(key, v)
+                module_name = define_yaml['component_define'].get(key, {}).get('module_name')
+                modified_buffer = model_migration(model_contents=buffer_obj,
+                                                  module_name=module_name,
+                                                  old_guest_list=config_data['role']['guest'],
+                                                  new_guest_list=config_data['migrate_role']['guest'],
+                                                  old_host_list=config_data['role']['host'],
+                                                  new_host_list=config_data['migrate_role']['host'],
+                                                  old_arbiter_list=config_data.get('role', {}).get('arbiter', None),
+                                                  new_arbiter_list=config_data.get('migrate_role', {}).get('arbiter', None))
+                migrate_model.save_component_model(component_name=key, component_module_name=module_name,
+                                                   model_alias=v, model_buffers=modified_buffer)
 
-        migrate_model.save_component_model('secureboost_0', 'HeteroSecureBoostingTreeGuestParam',
-                                           'train', modified_buffer)
+        archive_path = migrate_model.packaging_model()
 
-        with DB.connection_context():
-            MLModel.create(
-                f_role=config_data["local"]["role"],
-                f_party_id=config_data["local"]["migrate_party_id"],
-                f_roles=config_data["migrate_role"],
-                f_job_id=train_runtime_conf["job_parameters"]["model_version"],
-                f_model_id=train_runtime_conf["job_parameters"]["model_id"],
-                f_model_version=train_runtime_conf["job_parameters"]["model_version"],
-                f_initiator_role=config_data["migrate_initiator"]["role"],
-                f_initiator_party_id=config_data["migrate_initiator"]["party_id"],
-                f_runtime_conf=train_runtime_conf,
-                f_work_mode=train_runtime_conf["job_parameters"]["work_mode"],
-                f_dsl=json_loads(pipeline.train_dsl),
-                f_migrated=1
-            )
+        # with DB.connection_context():
+        #     MLModel.create(
+        #         f_role=config_data["local"]["role"],
+        #         f_party_id=config_data["local"]["migrate_party_id"],
+        #         f_roles=config_data["migrate_role"],
+        #         f_job_id=train_runtime_conf["job_parameters"]["model_version"],
+        #         f_model_id=train_runtime_conf["job_parameters"]["model_id"],
+        #         f_model_version=train_runtime_conf["job_parameters"]["model_version"],
+        #         f_initiator_role=config_data["migrate_initiator"]["role"],
+        #         f_initiator_party_id=config_data["migrate_initiator"]["party_id"],
+        #         f_runtime_conf=train_runtime_conf,
+        #         f_work_mode=train_runtime_conf["job_parameters"]["work_mode"],
+        #         f_dsl=json_loads(pipeline.train_dsl),
+        #         f_migrated=1,
+        #         f_job_status='complete'
+        #     )
 
-        return (0, "Migrating model successfully. " \
+        return (0, f"Migrating model successfully. " \
                   "The configuration of model has been modified automatically. " \
                   "New model id is: {}, model version is: {}. " \
                   "Model files can be found at '{}'.".format(train_runtime_conf["job_parameters"]["model_id"],
                                                              migrate_model.model_version,
-                                                             migrate_model.model_path),
+                                                             os.path.abspath(archive_path)),
                 {"model_id": migrate_model.model_id,
                  "model_version": migrate_model.model_version,
-                 "path": migrate_model.model_path})
+                 "path": os.path.abspath(archive_path)})
 
     except Exception as e:
         return 100, str(e), {}

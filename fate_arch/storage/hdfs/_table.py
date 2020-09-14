@@ -24,6 +24,7 @@ from fate_arch.storage import StorageEngine, HDFSStorageType
 from fate_arch.storage import StorageTableBase
 
 LOGGER = getLogger()
+_ID_DELIMITER = "\t"
 
 
 class StorageTable(StorageTableBase):
@@ -32,7 +33,7 @@ class StorageTable(StorageTableBase):
                  address=None,
                  name: str = None,
                  namespace: str = None,
-                 partitions: int = 1,
+                 partitions: int = None,
                  storage_type: HDFSStorageType = None,
                  options=None):
         super(StorageTable, self).__init__(name=name, namespace=namespace)
@@ -40,7 +41,7 @@ class StorageTable(StorageTableBase):
         self._address = address
         self._name = name
         self._namespace = namespace
-        self._partitions = partitions
+        self._partitions = partitions if partitions else 1
         self._type = storage_type if storage_type else HDFSStorageType.DISK
         self._options = options if options else {}
         self._engine = StorageEngine.HDFS
@@ -75,7 +76,7 @@ class StorageTable(StorageTableBase):
 
         counter = 0
         for k, v in kv_list:
-            content = u"{}{}{}\n".format(k, StorageTable.delimiter, pickle.dumps(v).hex())
+            content = u"{}{}{}\n".format(k, _ID_DELIMITER, pickle.dumps(v).hex())
             out.write(bytearray(content, "utf-8"))
             counter = counter + 1
         out.flush()
@@ -91,8 +92,22 @@ class StorageTable(StorageTableBase):
         while True:
             line = reader.readLine()
             if line is not None:
-                fields = line.strip().partition(StorageTable.delimiter)
+                fields = line.strip().partition(_ID_DELIMITER)
                 yield fields[0], pickle.loads(bytes.fromhex(fields[2]))
+            else:
+                break
+        istream.close()
+
+    def read(self) -> list:
+        hdfs_path = StorageTable.generate_hdfs_path(self._address)
+        path = StorageTable.get_path(self._context, hdfs_path)
+        fs = StorageTable.get_file_system(self._context)
+        istream = fs.open(path)
+        reader = self._context._gateway.jvm.java.io.BufferedReader(self._context._jvm.java.io.InputStreamReader(istream))
+        while True:
+            line = reader.readLine()
+            if line is not None:
+                yield line
             else:
                 break
         istream.close()
@@ -114,8 +129,6 @@ class StorageTable(StorageTableBase):
         fs = StorageTable.get_file_system(sc)
         fs.rename(src_path, dst_path)
         return StorageTable(address=address, partitions=partitions, name=name, namespace=namespace, **kwargs)
-
-    delimiter = '\t'
 
     @classmethod
     def generate_hdfs_path(cls, address):

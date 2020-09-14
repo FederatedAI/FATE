@@ -260,12 +260,20 @@ class FTLGuest(FTL):
 
         return summary
 
+    def check_host_number(self):
+        host_num = len(self.component_properties.host_party_idlist)
+        LOGGER.info('host number is {}'.format(host_num))
+        if host_num != 1:
+            raise ValueError('only 1 host party is allowed')
+
     def fit(self, data_inst, validate_data=None):
 
         LOGGER.debug('in training, partitions is {}'.format(data_inst.partitions))
         LOGGER.info('start to fit a ftl model, '
                     'run mode is {},'
                     'communication efficient mode is {}'.format(self.mode, self.comm_eff))
+
+        self.check_host_number()
 
         data_loader, self.x_shape, self.data_num, self.overlap_num = self.prepare_data(self.init_intersect_obj(),
                                                                                        data_inst, guest_side=True)
