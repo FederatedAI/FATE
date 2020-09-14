@@ -78,7 +78,6 @@ def header_alignment(data_instances, pre_header):
                 col_order[v] = k
             inst_new = copy.deepcopy(inst)
             inst_new.features = inst.features[col_order]
-            # inst.features = inst.features[col_order]
 
         return inst_new
 
