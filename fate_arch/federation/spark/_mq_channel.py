@@ -23,20 +23,15 @@ LOGGER = log.getLogger()
 
 class MQChannel(object):
 
-    def __init__(self, host, port, user, password, party_id, vhost, send_queue_name, receive_queue_name):
+    def __init__(self, host, port, user, password, vhost, send_queue_name, receive_queue_name):
         self._host = host
         self._port = port
         self._credentials = pika.PlainCredentials(user, password)
-        self._party_id = party_id
         self._vhost = vhost
         self._send_queue_name = send_queue_name
         self._receive_queue_name = receive_queue_name
         self._conn = None
         self._channel = None
-
-    @property
-    def party_id(self):
-        return self._party_id
 
     def basic_publish(self, body, properties):
         try:
