@@ -5,11 +5,11 @@
     {
         "guest":
         {
-            "program": "hetero_fast_secureboost_guest.py/HeteroFastSecureBoostGuest"
+            "program": "hetero_fast_secureboost_guest.py/HeteroFastSecureBoostingTreeGuest"
         },
         "host":
         {
-            "program": "hetero_fast_secureboost_host.py/HeteroFastSecureBoostHost"
+            "program": "hetero_fast_secureboost_host.py/HeteroFastSecureBoostingTreeHost"
         }
     }
 }

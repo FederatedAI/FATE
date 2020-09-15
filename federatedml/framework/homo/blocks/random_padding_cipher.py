@@ -31,7 +31,9 @@ class RandomPaddingCipherTransVar(HomoTransferBase):
 
 class Server(object):
 
-    def __init__(self, trans_var: RandomPaddingCipherTransVar = RandomPaddingCipherTransVar()):
+    def __init__(self, trans_var: RandomPaddingCipherTransVar = None):
+        if trans_var is None:
+            trans_var = RandomPaddingCipherTransVar()
         self._uuid = uuid_generator.Server(trans_var=trans_var.uuid_transfer_variable)
         self._dh = diffie_hellman.Server(trans_var=trans_var.dh_transfer_variable)
 
@@ -45,7 +47,9 @@ class Server(object):
 
 class Client(object):
 
-    def __init__(self, trans_var: RandomPaddingCipherTransVar = RandomPaddingCipherTransVar()):
+    def __init__(self, trans_var: RandomPaddingCipherTransVar = None):
+        if trans_var is None:
+            trans_var = RandomPaddingCipherTransVar()
         self._uuid = uuid_generator.Client(trans_var=trans_var.uuid_transfer_variable)
         self._dh = diffie_hellman.Client(trans_var=trans_var.dh_transfer_variable)
         self._cipher = None

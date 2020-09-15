@@ -1,7 +1,7 @@
 from typing import List
 import numpy as np
 import functools
-from federatedml.ensemble.boosting.hetero.hetero_secureboost_guest import HeteroSecureBoostGuest
+from federatedml.ensemble.boosting.hetero.hetero_secureboost_guest import HeteroSecureBoostingTreeGuest
 from federatedml.param.boosting_param import HeteroFastSecureBoostParam
 from federatedml.ensemble.basic_algorithms import HeteroFastDecisionTreeGuest
 from federatedml.ensemble.boosting.hetero import hetero_fast_secureboost_plan as plan
@@ -9,10 +9,10 @@ from federatedml.util import LOGGER
 from federatedml.util import consts
 
 
-class HeteroFastSecureBoostGuest(HeteroSecureBoostGuest):
+class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
 
     def __init__(self):
-        super(HeteroFastSecureBoostGuest, self).__init__()
+        super(HeteroFastSecureBoostingTreeGuest, self).__init__()
 
         self.tree_num_per_party = 1
         self.guest_depth = 0
@@ -23,7 +23,7 @@ class HeteroFastSecureBoostGuest(HeteroSecureBoostGuest):
         self.model_name = 'fast secureboost'
 
     def _init_model(self, param: HeteroFastSecureBoostParam):
-        super(HeteroFastSecureBoostGuest, self)._init_model(param)
+        super(HeteroFastSecureBoostingTreeGuest, self)._init_model(param)
         LOGGER.debug('loss func is {}'.format(param.objective_param.objective))
         self.tree_num_per_party = param.tree_num_per_party
         self.work_mode = param.work_mode
@@ -95,7 +95,7 @@ class HeteroFastSecureBoostGuest(HeteroSecureBoostGuest):
             if not tree.use_guest_feat_only_predict_mode:
                 continue
 
-            rs, reach_leaf = HeteroSecureBoostGuest.traverse_a_tree(tree, sample, cur_node_idx)
+            rs, reach_leaf = HeteroSecureBoostingTreeGuest.traverse_a_tree(tree, sample, cur_node_idx)
             node_pos[t_idx] = rs
 
         return node_pos
@@ -136,7 +136,7 @@ class HeteroFastSecureBoostGuest(HeteroSecureBoostGuest):
 
             LOGGER.debug('running layered mode predict')
 
-            return super(HeteroFastSecureBoostGuest, self).boosting_fast_predict(data_inst, trees, predict_cache)
+            return super(HeteroFastSecureBoostingTreeGuest, self).boosting_fast_predict(data_inst, trees, predict_cache)
 
     def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
 
@@ -158,7 +158,7 @@ class HeteroFastSecureBoostGuest(HeteroSecureBoostGuest):
 
     def get_model_meta(self):
 
-        _, model_meta = super(HeteroFastSecureBoostGuest, self).get_model_meta()
+        _, model_meta = super(HeteroFastSecureBoostingTreeGuest, self).get_model_meta()
         meta_name = "HeteroFastSecureBoostGuestMeta"
         model_meta.work_mode = self.work_mode
 
@@ -166,7 +166,7 @@ class HeteroFastSecureBoostGuest(HeteroSecureBoostGuest):
 
     def get_model_param(self):
 
-        _, model_param = super(HeteroFastSecureBoostGuest, self).get_model_param()
+        _, model_param = super(HeteroFastSecureBoostingTreeGuest, self).get_model_param()
         param_name = "HeteroFastSecureBoostGuestParam"
         model_param.tree_plan.extend(plan.encode_plan(self.tree_plan))
         model_param.model_name = consts.HETERO_FAST_SBT_MIX if self.work_mode == consts.MIX_TREE else \
@@ -175,9 +175,9 @@ class HeteroFastSecureBoostGuest(HeteroSecureBoostGuest):
         return param_name, model_param
 
     def set_model_meta(self, model_meta):
-        super(HeteroFastSecureBoostGuest, self).set_model_meta(model_meta)
+        super(HeteroFastSecureBoostingTreeGuest, self).set_model_meta(model_meta)
         self.work_mode = model_meta.work_mode
 
     def set_model_param(self, model_param):
-        super(HeteroFastSecureBoostGuest, self).set_model_param(model_param)
+        super(HeteroFastSecureBoostingTreeGuest, self).set_model_param(model_param)
         self.tree_plan = plan.decode_plan(model_param.tree_plan)

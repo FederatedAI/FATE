@@ -2,24 +2,24 @@ from typing import List
 import numpy as np
 import functools
 from operator import itemgetter
-from federatedml.ensemble.boosting.hetero.hetero_secureboost_host import HeteroSecureBoostHost
+from federatedml.ensemble.boosting.hetero.hetero_secureboost_host import HeteroSecureBoostingTreeHost
 from federatedml.param.boosting_param import HeteroFastSecureBoostParam
 from federatedml.ensemble.basic_algorithms import HeteroFastDecisionTreeHost
 from federatedml.ensemble.boosting.hetero import hetero_fast_secureboost_plan as plan
-from federatedml.ensemble import HeteroSecureBoostGuest
+from federatedml.ensemble import HeteroSecureBoostingTreeGuest
 from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import FeatureImportanceInfo
 from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
 
 
-make_readable_feature_importance = HeteroSecureBoostGuest.make_readable_feature_importance
+make_readable_feature_importance = HeteroSecureBoostingTreeGuest.make_readable_feature_importance
 
 
-class HeteroFastSecureBoostHost(HeteroSecureBoostHost):
+class HeteroFastSecureBoostingTreeHost(HeteroSecureBoostingTreeHost):
 
     def __init__(self):
-        super(HeteroFastSecureBoostHost, self).__init__()
+        super(HeteroFastSecureBoostingTreeHost, self).__init__()
 
         self.tree_num_per_party = 1
         self.guest_depth = 0
@@ -32,7 +32,7 @@ class HeteroFastSecureBoostHost(HeteroSecureBoostHost):
         self.feature_importances_ = {}
 
     def _init_model(self, param: HeteroFastSecureBoostParam):
-        super(HeteroFastSecureBoostHost, self)._init_model(param)
+        super(HeteroFastSecureBoostingTreeHost, self)._init_model(param)
         self.tree_num_per_party = param.tree_num_per_party
         self.work_mode = param.work_mode
         self.guest_depth = param.guest_depth
@@ -102,7 +102,7 @@ class HeteroFastSecureBoostHost(HeteroSecureBoostHost):
         return tree
 
     def generate_summary(self) -> dict:
-        summary = super(HeteroFastSecureBoostHost, self).generate_summary()
+        summary = super(HeteroFastSecureBoostingTreeHost, self).generate_summary()
         summary['feature_importance'] = make_readable_feature_importance(self.feature_name_fid_mapping,
                                                                          self.feature_importances_)
         return summary
@@ -144,11 +144,11 @@ class HeteroFastSecureBoostHost(HeteroSecureBoostHost):
 
             LOGGER.info('running layered mode predict')
 
-            super(HeteroFastSecureBoostHost, self).boosting_fast_predict(data_inst, trees)
+            super(HeteroFastSecureBoostingTreeHost, self).boosting_fast_predict(data_inst, trees)
 
     def get_model_meta(self):
 
-        _, model_meta = super(HeteroFastSecureBoostHost, self).get_model_meta()
+        _, model_meta = super(HeteroFastSecureBoostingTreeHost, self).get_model_meta()
         meta_name = "HeteroFastSecureBoostHostMeta"
         model_meta.work_mode = self.work_mode
 
@@ -156,7 +156,7 @@ class HeteroFastSecureBoostHost(HeteroSecureBoostHost):
 
     def get_model_param(self):
 
-        _, model_param = super(HeteroFastSecureBoostHost, self).get_model_param()
+        _, model_param = super(HeteroFastSecureBoostingTreeHost, self).get_model_param()
         param_name = "HeteroSecureBoostHostParam"
         model_param.tree_plan.extend(plan.encode_plan(self.tree_plan))
         model_param.model_name = consts.HETERO_FAST_SBT_MIX if self.work_mode == consts.MIX_TREE else \
@@ -175,9 +175,9 @@ class HeteroFastSecureBoostHost(HeteroSecureBoostHost):
         return param_name, model_param
 
     def set_model_meta(self, model_meta):
-        super(HeteroFastSecureBoostHost, self).set_model_meta(model_meta)
+        super(HeteroFastSecureBoostingTreeHost, self).set_model_meta(model_meta)
         self.work_mode = model_meta.work_mode
 
     def set_model_param(self, model_param):
-        super(HeteroFastSecureBoostHost, self).set_model_param(model_param)
+        super(HeteroFastSecureBoostingTreeHost, self).set_model_param(model_param)
         self.tree_plan = plan.decode_plan(model_param.tree_plan)
