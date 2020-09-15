@@ -23,6 +23,8 @@ from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
 from tensorflow.keras import optimizers
 from tensorflow.keras.layers import Dense
+from tensorflow.keras import initializers
+from pipeline.component.evaluation import Evaluation
 
 from examples.util.config import Config
 
@@ -49,13 +51,25 @@ def main(config="../../config.yaml", namespace=""):
     dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense")
     dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
 
-    hetero_ftl_0 = HeteroFTL(name='hetero_ftl_0', epochs=10, alpha=1, batch_size=-1)
-    hetero_ftl_0.add_nn_layer(Dense(units=32, activation='sigmoid'))
+    hetero_ftl_0 = HeteroFTL(name='hetero_ftl_0',
+                             epochs=10,
+                             alpha=1,
+                             batch_size=-1,
+                             mode='plain',
+                             communication_efficient=True,
+                             local_round=5)
+
+    hetero_ftl_0.add_nn_layer(Dense(units=32, activation='sigmoid',
+                                    kernel_initializer=initializers.RandomNormal(stddev=1.0,
+                                                                                 dtype="float32"),
+                                    bias_initializer=initializers.Zeros()))
     hetero_ftl_0.compile(optimizer=optimizers.Adam(lr=0.01))
+    evaluation_0 = Evaluation(name='evaluation_0', eval_type="binary")
 
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(hetero_ftl_0, data=Data(train_data=dataio_0.output.data))
+    pipeline.add_component(evaluation_0, data=Data(data=hetero_ftl_0.output.data))
 
     pipeline.compile()
 
