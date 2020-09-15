@@ -50,7 +50,8 @@ def main(config="../../config.yaml", namespace=""):
     host_validate_data_0 = {"name": "default_credit_test", "namespace": f"experiment{namespace}"}
     host_validate_data_1 = {"name": "default_credit_test", "namespace": f"experiment{namespace}"}
 
-    pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host_0, arbiter=arbiter)
+    pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=[host_0, host_1]
+                                                                                , arbiter=arbiter)
 
     dataio_0, dataio_1 = DataIO(name="dataio_0"), DataIO(name='dataio_1')
     reader_0, reader_1 = Reader(name="reader_0"), Reader(name='reader_1')
