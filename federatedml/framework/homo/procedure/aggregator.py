@@ -44,7 +44,9 @@ class LegacyAggregatorTransVar(HomoTransferBase):
 
 class Arbiter(object):
 
-    def __init__(self, trans_var=LegacyAggregatorTransVar()):
+    def __init__(self, trans_var=None):
+        if trans_var is None:
+            trans_var = LegacyAggregatorTransVar()
         self._guest_parties = trans_var.get_parties(roles=[consts.GUEST])
         self._host_parties = trans_var.get_parties(roles=[consts.HOST])
         self._client_parties = trans_var.client_parties
@@ -129,7 +131,9 @@ class Arbiter(object):
 
 
 class Client(object):
-    def __init__(self, trans_var=LegacyAggregatorTransVar()):
+    def __init__(self, trans_var=None):
+        if trans_var is None:
+            trans_var = LegacyAggregatorTransVar()
         self._enable_secure_aggregate = False
 
         self._loss_sync = loss_scatter.Client(trans_var.loss_scatter)

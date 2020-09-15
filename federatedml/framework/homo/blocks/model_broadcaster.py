@@ -24,7 +24,9 @@ class ModelBroadcasterTransVar(HomoTransferBase):
 
 
 class Server(object):
-    def __init__(self, trans_var: ModelBroadcasterTransVar = ModelBroadcasterTransVar()):
+    def __init__(self, trans_var: ModelBroadcasterTransVar = None):
+        if trans_var is None:
+            trans_var = ModelBroadcasterTransVar()
         self._broadcaster = trans_var.server_model
         self._client_parties = trans_var.client_parties
 
@@ -35,7 +37,9 @@ class Server(object):
 
 class Client(object):
 
-    def __init__(self, trans_var: ModelBroadcasterTransVar = ModelBroadcasterTransVar()):
+    def __init__(self, trans_var: ModelBroadcasterTransVar = None):
+        if trans_var is None:
+            trans_var = ModelBroadcasterTransVar()
         self._broadcaster = trans_var.server_model
         self._server_parties = trans_var.server_parties
 

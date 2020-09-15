@@ -31,7 +31,9 @@ class TableScatterTransVar(HomoTransferBase):
 
 class TableTransferServer(object):
 
-    def __init__(self, trans_var: TableScatterTransVar = TableScatterTransVar()):
+    def __init__(self, trans_var: TableScatterTransVar = None):
+        if trans_var is None:
+            trans_var = TableScatterTransVar()
         self._scatter = trans_var.client_table
         self._broadcaster = trans_var.server_table
         self._client_parties = trans_var.client_parties
@@ -48,7 +50,9 @@ class TableTransferServer(object):
 
 class TableTransferClient(object):
 
-    def __init__(self, trans_var: TableScatterTransVar = TableScatterTransVar()):
+    def __init__(self, trans_var: TableScatterTransVar = None):
+        if trans_var is None:
+            trans_var = TableScatterTransVar()
         self._scatter = trans_var.client_table
         self._broadcaster = trans_var.server_table
         self._server_parties = trans_var.server_parties

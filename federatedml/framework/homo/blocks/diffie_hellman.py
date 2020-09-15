@@ -28,7 +28,9 @@ class DHTransVar(HomoTransferBase):
 
 class Server(object):
 
-    def __init__(self, trans_var: DHTransVar = DHTransVar()):
+    def __init__(self, trans_var: DHTransVar = None):
+        if trans_var is None:
+            trans_var = DHTransVar()
         self._p_power_r = trans_var.p_power_r
         self._p_power_r_bc = trans_var.p_power_r_bc
         self._pubkey = trans_var.pubkey
@@ -43,7 +45,9 @@ class Server(object):
 
 class Client(object):
 
-    def __init__(self, trans_var: DHTransVar = DHTransVar()):
+    def __init__(self, trans_var: DHTransVar = None):
+        if trans_var is None:
+            trans_var = DHTransVar()
         self._p_power_r = trans_var.p_power_r
         self._p_power_r_bc = trans_var.p_power_r_bc
         self._pubkey = trans_var.pubkey
