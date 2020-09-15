@@ -25,7 +25,9 @@ class LossScatterTransVar(HomoTransferBase):
 
 class Server(object):
 
-    def __init__(self, trans_var: LossScatterTransVar = LossScatterTransVar()):
+    def __init__(self, trans_var: LossScatterTransVar = None):
+        if trans_var is None:
+            trans_var = LossScatterTransVar()
         self._scatter = trans_var.loss
         self._client_parties = trans_var.client_parties
 
@@ -44,7 +46,9 @@ class Server(object):
 
 
 class Client(object):
-    def __init__(self, trans_var: LossScatterTransVar = LossScatterTransVar()):
+    def __init__(self, trans_var: LossScatterTransVar = None):
+        if trans_var is None:
+            trans_var = LossScatterTransVar()
         self._scatter = trans_var.loss
         self._server_parties = trans_var.server_parties
 

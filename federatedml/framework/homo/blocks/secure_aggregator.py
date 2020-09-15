@@ -33,7 +33,9 @@ class SecureAggregatorTransVar(HomoTransferBase):
 
 
 class Server(object):
-    def __init__(self, trans_var: SecureAggregatorTransVar = SecureAggregatorTransVar(), enable_secure_aggregate=True):
+    def __init__(self, trans_var: SecureAggregatorTransVar = None, enable_secure_aggregate=True):
+        if trans_var is None:
+            trans_var = SecureAggregatorTransVar()
         self._aggregator = aggregator.Server(trans_var=trans_var.aggregator_trans_var)
         self.enable_secure_aggregate = enable_secure_aggregate
         if enable_secure_aggregate:
@@ -52,7 +54,9 @@ class Server(object):
 
 
 class Client(object):
-    def __init__(self, trans_var: SecureAggregatorTransVar = SecureAggregatorTransVar(), enable_secure_aggregate=True):
+    def __init__(self, trans_var: SecureAggregatorTransVar = None, enable_secure_aggregate=True):
+        if trans_var is None:
+            trans_var = SecureAggregatorTransVar()
         self.enable_secure_aggregate = enable_secure_aggregate
         self._aggregator = aggregator.Client(trans_var=trans_var.aggregator_trans_var)
         if enable_secure_aggregate:
