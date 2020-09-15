@@ -1,0 +1,97 @@
+{
+  "initiator": {
+    "role": "guest",
+    "party_id": 10001
+  },
+  "role": {
+    "arbiter": [
+      10001
+    ],
+    "host": [
+      10002
+    ],
+    "guest": [
+      10001
+    ]
+  },
+  "job_parameters": {
+    "job_type": "train",
+    "backend": 0,
+    "work_mode": 0,
+    "dsl_version": 2
+  },
+  "role_parameters": {
+    "guest": {
+      "0": {
+        "column_expand_0": {
+          "append_header": [
+            "x_0",
+            "x_1",
+            "x_2",
+            "x_3"
+          ],
+          "method": "manual",
+          "fill_value": [
+            0,
+            0.2,
+            0.5,
+            1
+          ],
+          "need_run": true
+        },
+        "dataio_0": {
+          "with_label": true,
+          "output_format": "dense"
+        },
+        "reader_0": {
+          "table": {
+            "name": "breast_hetero_guest",
+            "namespace": "experiment"
+          }
+        }
+      }
+    },
+    "host": {
+      "0": {
+        "column_expand_0": {
+          "need_run": false
+        },
+        "dataio_0": {
+          "with_label": false
+        },
+        "reader_0": {
+          "table": {
+            "name": "breast_hetero_host",
+            "namespace": "experiment"
+          }
+        }
+      }
+    }
+  },
+  "algorithm_parameters": {
+    "intersection_0": {
+      "intersect_method": "rsa",
+      "sync_intersect_ids": true,
+      "only_output_key": false
+    },
+    "hetero_lr_0": {
+      "penalty": "L2",
+      "tol": 0.0001,
+      "alpha": 0.01,
+      "optimizer": "nesterov_momentum_sgd",
+      "batch_size": -1,
+      "learning_rate": 0.15,
+      "init_param": {
+        "init_method": "random_uniform"
+      },
+      "max_iter": 20,
+      "early_stop": "weight_diff",
+      "sqn_param": {
+        "update_interval_L": 3,
+        "memory_M": 5,
+        "sample_size": 5000,
+        "random_seed": null
+      }
+    }
+  }
+}

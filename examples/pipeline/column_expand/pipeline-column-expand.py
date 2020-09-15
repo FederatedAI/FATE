@@ -117,6 +117,10 @@ def main(config="../../config.yaml", namespace=""):
     # query component summary
     print(pipeline.get_component("hetero_lr_0").get_summary())
 
+    print(f"\n {pipeline.get_train_conf()}")
+    print(f"\n {pipeline.get_train_dsl()}")
+
+
     # predict
     # deploy required components
     pipeline.deploy_component([column_expand_0, dataio_0, intersection_0, hetero_lr_0])
@@ -130,6 +134,9 @@ def main(config="../../config.yaml", namespace=""):
                                    data=Data(predict_input={pipeline.column_expand_0.input.data: reader_0.output.data}))
     # run predict model
     predict_pipeline.predict(backend=backend, work_mode=work_mode)
+
+    print(f"\n {pipeline.get_predict_conf()}")
+    print(f"\n {pipeline.get_predict_dsl()}")
 
 
 if __name__ == "__main__":

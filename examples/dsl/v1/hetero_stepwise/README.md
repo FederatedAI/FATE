@@ -28,4 +28,4 @@ then use following commands to running the task.
     
     python {fate_install_path}/fate_flow/fate_flow_client.py -f submit_job -c ${runtime_config{ -d ${dsl}
 
-Alternatively, use [run_test](../../test) to run the whole testsuite, by which all required data will be automatically uploaded. 
+Alternatively, use [run_test](../../../test) to run the whole testsuite, by which all required data will be automatically uploaded. 

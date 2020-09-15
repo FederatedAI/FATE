@@ -54,8 +54,8 @@ def main(config="../../config.yaml", namespace=""):
     dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
-    hetero_poisson_0 = HeteroPoisson(name="hetero_poisson_0", early_stop="weight_diff", max_iter=20,
-                                     alpha=100, batch_size=-1, learning_rate=0.01,
+    hetero_poisson_0 = HeteroPoisson(name="hetero_poisson_0", early_stop="weight_diff", max_iter=10,
+                                     alpha=100, batch_size=-1, learning_rate=0.01, optimizer="rmsprop",
                                      init_param={"init_method": "zeros"},
                                      encrypted_mode_calculator_param={"mode": "fast"})
 
