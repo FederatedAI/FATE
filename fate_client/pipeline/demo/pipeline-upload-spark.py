@@ -23,8 +23,12 @@ from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
 
 # find python path
-import site
-SITE_PATH = site.getsitepackages()[0]
+# default fate installation path
+SITE_PATH = "/data/projects/fate/python"
+
+# site-package ver
+# import site
+# SITE_PATH = site.getsitepackages()[0]
 
 
 def main():
@@ -35,13 +39,10 @@ def main():
     backend = Backend.SPARK
     # 0 for standalone, 1 for cluster
     # work_mode = WorkMode.STANDALONE
-    # use the work mode below for cluster deployment
     work_mode = WorkMode.CLUSTER
-    # storage engine for uploaded data
-    storage_engine = "HDFS"
 
     # partition for data storage
-    partition = 8
+    partition = 4
 
     dense_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
 
@@ -54,15 +55,15 @@ def main():
                                     table_name=dense_data["name"],             # table name
                                     namespace=dense_data["namespace"],         # namespace
                                     head=1, partition=partition,               # data info
-                                    storage_path="hdfs://mfate-cluster/data")  # storage path
+                                    id_delimiter=",")                          # id delimiter
 
     pipeline_upload.add_upload_data(file=os.path.join(SITE_PATH, "examples/data/tag_value_1000_140.csv"),
                                     table_name=tag_data["name"],
                                     namespace=tag_data["namespace"],
                                     head=0, partition=partition,
-                                    storage_path="hdfs://mfate-cluster/data")
+                                    id_delimiter=",")
     # upload all data
-    pipeline_upload.upload(work_mode=work_mode, backend=backend, drop=1, storage_engine=storage_engine)
+    pipeline_upload.upload(work_mode=work_mode, backend=backend, drop=1)
 
     pipeline = PipeLine().set_initiator(role="guest", party_id=guest).set_roles(guest=guest)
 

@@ -18,7 +18,6 @@ import json
 import pickle
 import sys
 import time
-from pathlib import Path
 from types import SimpleNamespace
 
 from pipeline.backend.config import Backend, WorkMode
@@ -34,6 +33,7 @@ from pipeline.utils import tools
 from pipeline.utils.invoker.job_submitter import JobInvoker
 from pipeline.utils.logger import LOGGER
 
+DELIMITER = ","
 
 class PipeLine(object):
     def __init__(self):
@@ -209,15 +209,13 @@ class PipeLine(object):
                     self._components_input[component.name][attr.strip("_")] = [val]
 
     @LOGGER.catch(onerror=lambda _: sys.exit(1))
-    def add_upload_data(self, file, table_name, namespace, head=1, partition=16, storage_path=None):
+    def add_upload_data(self, file, table_name, namespace, head=1, partition=16, id_delimiter=DELIMITER):
         data_conf = {"file": file,
                      "table_name": table_name,
                      "namespace": namespace,
                      "head": head,
-                     "partition": partition}
-        if storage_path is not None:
-            file_name = Path(file).name
-            data_conf["storage_address"] = {"path": f"{Path(storage_path).joinpath(file_name)}"}
+                     "partition": partition,
+                     "id_delimiter": id_delimiter}
         self._upload_conf.append(data_conf)
 
     def _get_task_inst(self, job_id, name, init_role, party_id):
@@ -305,13 +303,10 @@ class PipeLine(object):
 
         return job_parameters
 
-    def _construct_upload_conf(self, data_conf, backend, work_mode, storage_engine):
+    def _construct_upload_conf(self, data_conf, backend, work_mode):
         upload_conf = copy.deepcopy(data_conf)
         upload_conf["backend"] = backend
         upload_conf["work_mode"] = work_mode
-        if storage_engine is not None:
-            upload_conf["storage_engine"] = storage_engine
-            upload_conf["use_local_data"] = 0
         return upload_conf
 
     def describe(self):
@@ -461,14 +456,10 @@ class PipeLine(object):
                                              self._initiator.party_id)
 
     @LOGGER.catch(onerror=lambda _: sys.exit(1))
-    def upload(self, backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, drop=0, storage_engine=None):
+    def upload(self, backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE, drop=0):
         for data_conf in self._upload_conf:
-            #if not isinstance(work_mode, int):
-            #    work_mode = work_mode.value
-            #if not isinstance(backend, int):
-            #    backend = backend.value
-            upload_conf = self._construct_upload_conf(data_conf, backend, work_mode, storage_engine)
-            LOGGER.debug(f"upload_conf is {upload_conf}")
+            upload_conf = self._construct_upload_conf(data_conf, backend, work_mode)
+            LOGGER.debug(f"upload_conf is {json.dumps(upload_conf)}")
             self._train_job_id, detail_info = self._job_invoker.upload_data(upload_conf, int(drop))
             self._train_board_url = detail_info["board_url"]
             self._job_invoker.monitor_job_status(self._train_job_id,
