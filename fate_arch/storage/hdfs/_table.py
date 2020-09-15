@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 import io
+import os
 from typing import Iterable
 
 from pyarrow import fs
@@ -128,7 +129,7 @@ class StorageTable(StorageTableBase):
                     yield line
 
         else:
-            selector = fs.FileSelector(f"/{self._address.path}")
+            selector = fs.FileSelector(os.path.join("/", self._address.path))
             file_infos = self._hdfs_client.get_file_info(selector)
             for file_info in file_infos:
                 if file_info.base_name == "_SUCCESS":
