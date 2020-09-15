@@ -45,6 +45,7 @@ class PipeLine(object):
         self._train_dsl = {}
         self._predict_dsl = {}
         self._train_conf = {}
+        self._predict_conf = {}
         self._upload_conf = []
         self._cur_state = None
         self._job_invoker = JobInvoker()
@@ -82,6 +83,18 @@ class PipeLine(object):
                 "components": self._components,
                 "stage": self._stage
                 }
+
+    def get_train_dsl(self):
+        return copy.deepcopy(self._train_dsl)
+
+    def get_train_conf(self):
+        return copy.deepcopy(self._train_conf)
+
+    def get_predict_dsl(self):
+        return copy.deepcopy(self._predict_dsl)
+
+    def get_predict_conf(self):
+        return copy.deepcopy(self._predict_conf)
 
     def _get_initiator_conf(self):
         if self._initiator is None:
@@ -439,6 +452,7 @@ class PipeLine(object):
                                                  work_mode,
                                                  job_type="predict",
                                                  model_info=self._model_info)
+        self._predict_conf = copy.deepcopy(predict_conf)
         predict_dsl = copy.deepcopy(self._predict_dsl)
 
         self._predict_job_id, _ = self._job_invoker.submit_job(dsl=predict_dsl, submit_conf=predict_conf)
