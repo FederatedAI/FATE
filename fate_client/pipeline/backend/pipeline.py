@@ -384,11 +384,6 @@ class PipeLine(object):
         # print("submit conf' type {}".format(type(submit_conf)))
         LOGGER.debug(f"submit conf type is {type(submit_conf)}")
 
-        if not isinstance(work_mode, int):
-            work_mode = work_mode.value
-        if not isinstance(backend, int):
-            backend = backend.value
-
         submit_conf["job_parameters"] = {
             "work_mode": work_mode,
             "backend": backend,
@@ -409,11 +404,10 @@ class PipeLine(object):
         if self._stage == "predict":
             raise ValueError("This pipeline is constructed for predicting, cannot use fit interface")
 
-        # print("_train_conf {}".format(self._train_conf))
         LOGGER.debug(f"in fit, _train_conf is: \n {json.dumps(self._train_conf)}")
         self._set_state("fit")
         training_conf = self._feed_job_parameters(self._train_conf, backend, work_mode)
-        # pprint.pprint(training_conf)
+        self._train_conf = copy.deepcopy(training_conf)
         LOGGER.debug(f"train_conf is: \n {json.dumps(training_conf, indent=4, ensure_ascii=False)}")
         self._train_job_id, detail_info = self._job_invoker.submit_job(self._train_dsl, training_conf)
         self._train_board_url = detail_info["board_url"]

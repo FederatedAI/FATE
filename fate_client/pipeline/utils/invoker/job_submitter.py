@@ -71,10 +71,10 @@ class JobInvoker(object):
             if dsl:
                 dsl_path = os.path.join(job_dir, "job_dsl.json")
                 # pprint.pprint(dsl)
-                LOGGER.info(f"submit dsl is: \n {json.dumps(dsl, indent=4, ensure_ascii=False)}")
+                LOGGER.debug(f"submit dsl is: \n {json.dumps(dsl, indent=4, ensure_ascii=False)}")
                 with open(dsl_path, "w") as fout:
                     fout.write(json.dumps(dsl))
-
+            LOGGER.debug(f"submit conf is: \n {json.dumps(submit_conf, indent=4, ensure_ascii=False)}")
             submit_path = os.path.join(job_dir, "job_runtime_conf.json")
             with open(submit_path, "w") as fout:
                 fout.write(json.dumps(submit_conf))

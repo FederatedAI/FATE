@@ -15,37 +15,25 @@
     ]
   },
   "job_parameters": {
-    "job_type": "train",
+    "work_mode": 1,
     "backend": 0,
-    "work_mode": 0,
-    "dsl_version": 2
+    "dsl_version": 2,
+    "job_type": "predict",
+    "model_id": "arbiter-10000#guest-9999#host-10000#model",
+    "model_version": "20200915192231402051123"
   },
   "role_parameters": {
     "guest": {
       "0": {
-        "column_expand_0": {
-          "append_header": [
-            "x_0",
-            "x_1",
-            "x_2",
-            "x_3"
-          ],
-          "method": "manual",
-          "fill_value": [
-            0,
-            0.2,
-            0.5,
-            1
-          ],
-          "need_run": true
-        },
         "dataio_0": {
           "with_label": true,
+          "label_name": "motor_speed",
+          "label_type": "float",
           "output_format": "dense"
         },
         "reader_0": {
           "table": {
-            "name": "breast_hetero_guest",
+            "name": "motor_hetero_guest",
             "namespace": "experiment"
           }
         }
@@ -53,15 +41,12 @@
     },
     "host": {
       "0": {
-        "column_expand_0": {
-          "need_run": false
-        },
         "dataio_0": {
           "with_label": false
         },
         "reader_0": {
           "table": {
-            "name": "breast_hetero_host",
+            "name": "motor_hetero_host",
             "namespace": "experiment"
           }
         }
@@ -69,29 +54,27 @@
     }
   },
   "algorithm_parameters": {
-    "intersection_0": {
-      "intersect_method": "rsa",
-      "sync_intersect_ids": true,
-      "only_output_key": false
-    },
-    "hetero_lr_0": {
+    "hetero_linr_0": {
       "penalty": "L2",
-      "tol": 0.0001,
+      "tol": 0.001,
       "alpha": 0.01,
-      "optimizer": "nesterov_momentum_sgd",
+      "optimizer": "sgd",
       "batch_size": -1,
       "learning_rate": 0.15,
       "init_param": {
-        "init_method": "random_uniform"
+        "init_method": "zeros"
       },
       "max_iter": 20,
       "early_stop": "weight_diff",
-      "sqn_param": {
-        "update_interval_L": 3,
-        "memory_M": 5,
-        "sample_size": 5000,
-        "random_seed": null
-      }
+      "encrypted_mode_calculator_param": {
+        "mode": "fast"
+      },
+      "decay": 0.0,
+      "decay_sqrt": false
+    },
+    "evaluation_0": {
+      "eval_type": "regression",
+      "pos_label": 1
     }
   }
 }

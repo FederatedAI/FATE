@@ -15,14 +15,20 @@
     ]
   },
   "job_parameters": {
-    "job_type": "train",
-    "backend": 0,
     "work_mode": 0,
-    "dsl_version": 2
+    "backend": 0,
+    "dsl_version": 2,
+    "job_type": "predict",
+    "model_id": "arbiter-10000#guest-9999#host-10000#model",
+    "model_version": "2020091517445076770481"
   },
   "role_parameters": {
     "guest": {
       "0": {
+        "dataio_0": {
+          "with_label": true,
+          "output_format": "dense"
+        },
         "column_expand_0": {
           "append_header": [
             "x_0",
@@ -39,10 +45,6 @@
           ],
           "need_run": true
         },
-        "dataio_0": {
-          "with_label": true,
-          "output_format": "dense"
-        },
         "reader_0": {
           "table": {
             "name": "breast_hetero_guest",
@@ -53,11 +55,11 @@
     },
     "host": {
       "0": {
-        "column_expand_0": {
-          "need_run": false
-        },
         "dataio_0": {
           "with_label": false
+        },
+        "column_expand_0": {
+          "need_run": false
         },
         "reader_0": {
           "table": {
