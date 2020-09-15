@@ -26,6 +26,7 @@ from federatedml.evaluation.metric_interface import MetricInterface
 
 import numpy as np
 
+
 class Evaluation(ModelBase):
 
     def __init__(self):
@@ -615,6 +616,11 @@ class Evaluation(ModelBase):
 
                     elif metric == consts.DISTANCE_MEASURE:
                         self.__save_distance_measure(metric, metric_res[1], metric_name, metric_namespace)
+
+        if len(self.validate_metric) != 0:
+            self.set_summary(self.validate_metric)
+        else:
+            self.set_summary(self.train_metric)
 
         if return_single_val_metrics:
             if len(self.validate_metric) != 0:
