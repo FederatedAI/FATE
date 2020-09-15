@@ -33,7 +33,6 @@ from pipeline.utils import tools
 from pipeline.utils.invoker.job_submitter import JobInvoker
 from pipeline.utils.logger import LOGGER
 
-DELIMITER = ","
 
 class PipeLine(object):
     def __init__(self):
@@ -209,7 +208,7 @@ class PipeLine(object):
                     self._components_input[component.name][attr.strip("_")] = [val]
 
     @LOGGER.catch(onerror=lambda _: sys.exit(1))
-    def add_upload_data(self, file, table_name, namespace, head=1, partition=16, id_delimiter=DELIMITER):
+    def add_upload_data(self, file, table_name, namespace, head=1, partition=16, id_delimiter=","):
         data_conf = {"file": file,
                      "table_name": table_name,
                      "namespace": namespace,
