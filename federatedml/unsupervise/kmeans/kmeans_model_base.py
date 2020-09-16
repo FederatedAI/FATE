@@ -175,7 +175,6 @@ class BaseKmeansModel(ModelBase):
     def set_predict_data_schema(self, predict_datas, schemas):
         if predict_datas is None:
             return None, None
-            return predict_datas
 
         predict_data = predict_datas[0][0]
         schema = schemas[0]
@@ -193,6 +192,6 @@ class BaseKmeansModel(ModelBase):
         else:
             data_output = predict_data
             if data_output is not None:
-                data_output.schema = {"header": ["label", "predict_result"], "sid_name": schema.get('sid_name')}
+                data_output.schema = {"header": ["label", "predicted label"], "sid_name": schema.get('sid_name')}
             predict_datas = [data_output, None]
         return predict_datas
