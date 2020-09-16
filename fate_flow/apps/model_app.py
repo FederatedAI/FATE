@@ -209,8 +209,8 @@ def do_load_model():
     try:
         if not retcode:
             with DB.connection_context():
-                model = MLModel.get_or_none(MLModel.f_role == request_data.get("initiator").get("role"),
-                                            MLModel.f_party_id == request_data.get("initiator").get("party_id"),
+                model = MLModel.get_or_none(MLModel.f_role == request_data.get("local").get("role"),
+                                            MLModel.f_party_id == request_data.get("local").get("party_id"),
                                             MLModel.f_model_id == request_data.get("job_parameters").get("model_id"),
                                             MLModel.f_model_version == request_data.get("job_parameters").get("model_version"))
                 if model:
@@ -221,8 +221,8 @@ def do_load_model():
         stat_logger.exception(modify_err)
 
     try:
-        party_model_id = gen_party_model_id(role=request_data.get("initiator").get("role"),
-                                            party_id=request_data.get("initiator").get("party_id"),
+        party_model_id = gen_party_model_id(role=request_data.get("local").get("role"),
+                                            party_id=request_data.get("local").get("party_id"),
                                             model_id=request_data.get("job_parameters").get("model_id"))
         src_model_path = os.path.join(file_utils.get_project_base_directory(), 'model_local_cache', party_model_id,
                                       request_data.get("job_parameters").get("model_version"))
@@ -266,6 +266,7 @@ def bind_model_service():
     service_id = request_config.get('service_id')
     if not service_id:
         return get_json_result(retcode=101, retmsg='no service id')
+    check_config(request_config, ['initiator', 'role', 'job_parameters'])
     bind_status, retmsg = publish_model.bind_model_service(config_data=request_config)
     operation_record(request_config, "bind", "success" if not bind_status else "failed")
     return get_json_result(retcode=bind_status, retmsg='service id is {}'.format(service_id) if not retmsg else retmsg)
@@ -540,6 +541,14 @@ def operation_record(data: dict, oper_type, oper_status):
                            f_request_ip=request.remote_addr,
                            f_model_id=data.get("model_id"),
                            f_model_version=data.get("model_version"))
+        elif oper_type == 'load':
+            OperLog.create(f_operation_type=oper_type,
+                           f_operation_status=oper_status,
+                           f_initiator_role=data.get("initiator").get("role"),
+                           f_initiator_party_id=data.get("initiator").get("party_id"),
+                           f_request_ip=request.remote_addr,
+                           f_model_id=data.get("job_parameters").get("model_id"),
+                           f_model_version=data.get("job_parameters").get("model_version"))
         else:
             OperLog.create(f_operation_type=oper_type,
                            f_operation_status=oper_status,
