@@ -66,10 +66,12 @@ def main(config="../../config.yaml", namespace=""):
     intersect_1 = Intersection(name="intersection_1")
 
     union_0 = Union(name="union_0")
-    hetero_lr_0 = HeteroLR(name="hetero_lr_0", max_iter=20, early_stop="weight_diff")
+    hetero_lr_0 = HeteroLR(name="hetero_lr_0", max_iter=3, early_stop="weight_diff",
+                           optimizer="nesterov_momentum_sgd", tol=1E-4, alpha=0.01,
+                           learning_rate=0.15, init_param={"init_method": "random_uniform"})
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary", pos_label=1)
-    evaluation_0.get_party_instance(role='host', party_id=host).alogrithm_param(need_run=False)
+    evaluation_0.get_party_instance(role='host', party_id=host).algorithm_param(need_run=False)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)

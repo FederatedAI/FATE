@@ -50,7 +50,7 @@ def main(config="../../config.yaml", namespace=""):
     dataio_1 = DataIO(name="dataio_1", with_label=True, output_format="dense", label_name="y",
                       missing_fill=False, outlier_replace=False)
 
-    union_0 = Union(name="union_0", allow_missing=False)
+    union_0 = Union(name="union_0", allow_missing=False, need_run=True)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)

@@ -129,28 +129,32 @@ class JobInvoker(object):
             if status == JobStatus.COMPLETE:
                 # print("job is success!!!")
                 elapse_seconds = timedelta(seconds=int(time.time() - start_time))
-                LOGGER.info(f"Job is success!!! Job id is {job_id}")
+                sys.stdout.write(f"\n\r")
+                LOGGER.info(f"Job is complete!!! Job id is {job_id}")
                 LOGGER.info(f"Total time: {elapse_seconds}")
                 return StatusCode.SUCCESS
 
-            if status == JobStatus.FAILED:
+            elif status == JobStatus.FAILED:
+                sys.stdout.write(f"\n\r")
                 raise ValueError(f"Job is failed, please check out job {job_id} by fate board or fate_flow cli")
 
-            if status == JobStatus.WAITING:
+            elif status == JobStatus.WAITING:
                 elapse_seconds = timedelta(seconds=int(time.time() - start_time))
                 sys.stdout.write(f"Job is still waiting, time elapse: {elapse_seconds}\r")
                 sys.stdout.flush()
 
-            if status == JobStatus.CANCELED:
+            elif status == JobStatus.CANCELED:
                 elapse_seconds = timedelta(seconds=int(time.time() - start_time))
-                sys.stdout.write(f"Job is canceled, time elapse: {elapse_seconds}\r")
+                sys.stdout.write(f"\n\r")
+                LOGGER.info(f"Job is canceled, time elapse: {elapse_seconds}\r")
                 return StatusCode.CANCELED
 
-            if status == JobStatus.TIMEOUT:
+            elif status == JobStatus.TIMEOUT:
                 elapse_seconds = timedelta(seconds=int(time.time() - start_time))
+                sys.stdout.write(f"\n\r")
                 raise ValueError(f"Job is timeout, time elapse: {elapse_seconds}\r")
 
-            if status == JobStatus.RUNNING:
+            elif status == JobStatus.RUNNING:
                 ret_code, _, data = self.query_task(job_id=job_id, role=role, party_id=party_id,
                                                     status=JobStatus.RUNNING)
                 if ret_code != 0 or len(data) == 0:
@@ -170,9 +174,8 @@ class JobInvoker(object):
                     pre_cpn = cpn
                 sys.stdout.write(f"Running component {cpn}, time elapse: {elapse_seconds}\r")
                 sys.stdout.flush()
-
             else:
-                raise ValueError(f"Unknown status: {status}.\r")
+                raise ValueError(f"Unknown status: {status}")
 
             time.sleep(conf.TIME_QUERY_FREQS)
 
