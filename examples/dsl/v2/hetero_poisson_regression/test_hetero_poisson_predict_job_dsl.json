@@ -8,26 +8,7 @@
                 ]
             }
         },
-        "dataio_0": {
-            "module": "DataIO",
-            "input": {
-                "data": {
-                    "data": [
-                        "reader_0.data"
-                    ]
-                }
-            },
-            "output": {
-                "data": [
-                    "data"
-                ],
-                "model": [
-                    "model"
-                ]
-            }
-        },
         "intersection_0": {
-            "module": "Intersection",
             "input": {
                 "data": {
                     "data": [
@@ -35,27 +16,46 @@
                     ]
                 }
             },
+            "module": "Intersection",
             "output": {
                 "data": [
                     "data"
                 ]
             }
         },
-        "hetero_linr_0": {
-            "module": "HeteroLinR",
+        "dataio_0": {
             "input": {
                 "data": {
-                    "train_data": [
-                        "intersection_0.data"
+                    "data": [
+                        "reader_0.data"
                     ]
-                }
+                },
+                "model": [
+                    "pipeline.dataio_0.model"
+                ]
             },
+            "module": "DataIO",
             "output": {
                 "data": [
                     "data"
-                ],
+                ]
+            }
+        },
+        "hetero_poisson_0": {
+            "input": {
+                "data": {
+                    "test_data": [
+                        "intersection_0.data"
+                    ]
+                },
                 "model": [
-                    "model"
+                    "pipeline.hetero_poisson_0.model"
+                ]
+            },
+            "module": "HeteroPoisson",
+            "output": {
+                "data": [
+                    "data"
                 ]
             }
         }

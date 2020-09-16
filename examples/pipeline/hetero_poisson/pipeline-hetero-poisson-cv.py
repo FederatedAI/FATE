@@ -18,7 +18,6 @@ import argparse
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
-from pipeline.component.evaluation import Evaluation
 from pipeline.component.hetero_poisson import HeteroPoisson
 from pipeline.component.intersection import Intersection
 from pipeline.component.reader import Reader
@@ -49,12 +48,16 @@ def main(config="../../config.yaml", namespace=""):
 
     dataio_0 = DataIO(name="dataio_0")
     dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, label_name="doctorco",
-                                                                             label_type="float", output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
+                                                                             label_type="float", output_format="dense",
+                                                                              missing_fill=True, outlier_replace=False)
+    dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False, output_format="dense",
+                                                                            outlier_replace=False)
 
     intersection_0 = Intersection(name="intersection_0")
     hetero_poisson_0 = HeteroPoisson(name="hetero_poisson_0", early_stop="weight_diff", max_iter=10,
-                                     alpha=100, batch_size=-1, learning_rate=0.01,
+                                     optimizer="rmsprop", tol=0.001, penalty="L2",
+                                     alpha=100.0, batch_size=-1, learning_rate=0.01,
+                                     exposure_colname="exposure", decay_sqrt=False,
                                      init_param={"init_method": "zeros"},
                                      encrypted_mode_calculator_param={"mode": "fast"},
                                      cv_param={
@@ -64,12 +67,10 @@ def main(config="../../config.yaml", namespace=""):
                                          "need_cv": True
                                      })
 
-    evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)
-
+    pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
     pipeline.add_component(hetero_poisson_0, data=Data(train_data=intersection_0.output.data))
-    pipeline.add_component(evaluation_0, data=Data(data=hetero_poisson_0.output.data))
 
     pipeline.compile()
 

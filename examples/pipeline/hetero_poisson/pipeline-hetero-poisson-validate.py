@@ -50,7 +50,7 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data[0])
     reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data[0])
 
-    reader_1 = Reader(name="reader_0")
+    reader_1 = Reader(name="reader_1")
     reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data[1])
     reader_1.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data[1])
 
@@ -66,11 +66,11 @@ def main(config="../../config.yaml", namespace=""):
     intersect_1 = Intersection(name="intersection_1")
 
     hetero_poisson_0 = HeteroPoisson(name="hetero_poisson_0", early_stop="weight_diff", max_iter=20,
-                                     exposure_colname="exposure",
-                                     alpha=100, batch_size=-1, learning_rate=0.01,
+                                     exposure_colname="exposure", optimizer="rmsprop", tol=0.001,
+                                     alpha=100.0, batch_size=-1, learning_rate=0.01, penalty="L2",
                                      validation_freqs=5, early_stopping_rounds=5,
                                      metrics= ["mean_absolute_error", "root_mean_squared_error"],
-                                     use_first_metric_only=False,
+                                     use_first_metric_only=False, decay_sqrt=False,
                                      init_param={"init_method": "zeros"},
                                      encrypted_mode_calculator_param={"mode": "fast"})
 

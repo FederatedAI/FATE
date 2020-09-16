@@ -1,6 +1,14 @@
-{
+ {
     "components": {
         "reader_0": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "reader_1": {
             "module": "Reader",
             "output": {
                 "data": [
@@ -26,6 +34,27 @@
                 ]
             }
         },
+        "dataio_1": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "reader_1.data"
+                    ]
+                },
+                "model": [
+                    "dataio_0.model"
+                ]
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        },
         "intersection_0": {
             "module": "Intersection",
             "input": {
@@ -41,12 +70,30 @@
                 ]
             }
         },
-        "hetero_linr_0": {
-            "module": "HeteroLinR",
+        "intersection_1": {
+            "module": "Intersection",
+            "input": {
+                "data": {
+                    "data": [
+                        "dataio_1.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
+        "hetero_poisson_0": {
+            "module": "HeteroPoisson",
             "input": {
                 "data": {
                     "train_data": [
                         "intersection_0.data"
+                    ],
+                    "validate_data": [
+                        "intersection_1.data"
                     ]
                 }
             },

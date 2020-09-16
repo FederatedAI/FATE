@@ -1,81 +1,81 @@
 {
-  "initiator": {
-    "role": "guest",
-    "party_id": 9999
-  },
-  "role": {
-    "arbiter": [
-      10000
-    ],
-    "host": [
-      10000
-    ],
-    "guest": [
-      9999
-    ]
-  },
-  "job_parameters": {
-    "work_mode": 0,
-    "backend": 0,
-    "dsl_version": 2
-  },
-  "role_parameters": {
-    "guest": {
-      "0": {
-        "dataio_0": {
-          "with_label": true,
-          "label_name": "motor_speed",
-          "label_type": "float"
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "arbiter": [
+            10000
+        ],
+        "host": [
+            10000
+        ],
+        "guest": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "work_mode": 0,
+        "backend": 0,
+        "dsl_version": 2
+    },
+    "role_parameters": {
+        "guest": {
+            "0": {
+                "dataio_0": {
+                    "with_label": true,
+                    "label_name": "motor_speed",
+                    "label_type": "float"
+                },
+                "reader_0": {
+                    "table": {
+                        "name": "motor_hetero_guest",
+                        "namespace": "experiment"
+                    }
+                }
+            }
         },
-        "reader_0": {
-          "table": {
-            "name": "motor_hetero_guest",
-            "namespace": "experiment"
-          }
+        "host": {
+            "0": {
+                "dataio_0": {
+                    "with_label": false
+                },
+                "reader_0": {
+                    "table": {
+                        "name": "motor_hetero_host",
+                        "namespace": "experiment"
+                    }
+                }
+            }
         }
-      }
     },
-    "host": {
-      "0": {
+    "algorithm_parameters": {
         "dataio_0": {
-          "with_label": false
+            "missing_fill": true,
+            "outlier_replace": false,
+            "output_format": "sparse"
         },
-        "reader_0": {
-          "table": {
-            "name": "motor_hetero_host",
-            "namespace": "experiment"
-          }
+        "hetero_linr_0": {
+            "penalty": "L2",
+            "tol": 0.001,
+            "alpha": 0.01,
+            "optimizer": "sgd",
+            "batch_size": 100,
+            "learning_rate": 0.15,
+            "init_param": {
+                "init_method": "zeros"
+            },
+            "max_iter": 2,
+            "early_stop": "weight_diff",
+            "encrypted_mode_calculator_param": {
+                "mode": "fast"
+            },
+            "decay": 0.0,
+            "decay_sqrt": false
+        },
+        "evaluation_0": {
+            "eval_type": "regression",
+            "pos_label": 1
         }
-      }
     }
-  },
-  "algorithm_parameters": {
-    "dataio_0": {
-      "missing_fill": true,
-      "outlier_replace": false,
-      "output_format": "sparse"
-    },
-    "hetero_linr_0": {
-      "penalty": "L2",
-      "tol": 0.001,
-      "alpha": 0.01,
-      "optimizer": "sgd",
-      "batch_size": 100,
-      "learning_rate": 0.15,
-      "init_param": {
-        "init_method": "zeros"
-      },
-      "max_iter": 2,
-      "early_stop": "weight_diff",
-      "encrypted_mode_calculator_param": {
-        "mode": "fast"
-      },
-      "decay": 0.0,
-      "decay_sqrt": false
-    },
-    "evaluation_0": {
-      "eval_type": "regression",
-      "pos_label": 1
-    }
-  }
 }

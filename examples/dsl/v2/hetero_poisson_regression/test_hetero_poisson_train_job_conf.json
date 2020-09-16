@@ -21,54 +21,57 @@
         "dsl_version": 2
     },
     "role_parameters": {
-        "host": {
+        "guest": {
             "0": {
+                "dataio_0": {
+                    "with_label": true,
+                    "label_name": "doctorco",
+                    "label_type": "float",
+                    "output_format": "dense"
+                },
                 "reader_0": {
                     "table": {
-                        "name": "motor_hetero_host",
+                        "name": "dvisits_hetero_guest",
                         "namespace": "experiment"
                     }
-                },
-                "dataio_0": {
-                    "with_label": false
                 }
             }
         },
-        "guest": {
+        "host": {
             "0": {
-                "reader_0": {
-                    "table": {
-                        "name": "motor_hetero_guest",
-                        "namespace": "experiment"
-                    }
+                "evaluation_0": {
+                    "need_run": false
                 },
                 "dataio_0": {
-                    "with_label": true,
-                    "label_name": "motor_speed",
-                    "label_type": "float",
-                    "output_format": "dense"
+                    "with_label": false
+                },
+                "reader_0": {
+                    "table": {
+                        "name": "dvisits_hetero_host",
+                        "namespace": "experiment"
+                    }
                 }
             }
         }
     },
     "algorithm_parameters": {
-        "hetero_linr_0": {
+        "hetero_poisson_0": {
             "penalty": "L2",
             "tol": 0.001,
-            "alpha": 0.01,
-            "optimizer": "sgd",
+            "alpha": 100.0,
+            "optimizer": "rmsprop",
             "batch_size": -1,
-            "learning_rate": 0.15,
+            "learning_rate": 0.01,
             "init_param": {
                 "init_method": "zeros"
             },
-            "max_iter": 20,
+            "max_iter": 10,
             "early_stop": "weight_diff",
             "encrypted_mode_calculator_param": {
                 "mode": "fast"
             },
-            "decay": 0.0,
-            "decay_sqrt": false
+            "decay_sqrt": false,
+            "exposure_colname": "exposure"
         },
         "evaluation_0": {
             "eval_type": "regression",

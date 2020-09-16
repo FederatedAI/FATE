@@ -1,4 +1,4 @@
-{
+ {
     "components": {
         "reader_0": {
             "module": "Reader",
@@ -41,8 +41,8 @@
                 ]
             }
         },
-        "hetero_linr_0": {
-            "module": "HeteroLinR",
+        "hetero_poisson_0": {
+            "module": "HeteroPoisson",
             "input": {
                 "data": {
                     "train_data": [
@@ -56,6 +56,21 @@
                 ],
                 "model": [
                     "model"
+                ]
+            }
+        },
+        "evaluation_0": {
+            "module": "Evaluation",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_poisson_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
                 ]
             }
         }

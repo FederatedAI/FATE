@@ -59,6 +59,8 @@ def main(config="../../config.yaml", namespace=""):
                                encrypted_mode_calculator_param={"mode": "fast"})
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)
+    # evaluation_0.get_party_instance(role='host', party_id=hosts[0]).algorithm_param(need_run=False)
+    # evaluation_0.get_party_instance(role='host', party_id=hosts[1]).algorithm_param(need_run=False)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
