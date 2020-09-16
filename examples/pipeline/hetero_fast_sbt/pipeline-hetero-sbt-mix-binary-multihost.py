@@ -42,13 +42,14 @@ def main(config="../../config.yaml", namespace=""):
     work_mode = config.work_mode
 
     # data sets
-    guest_train_data = {"name": "vehicle_scale_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data_0 = {"name": "vehicle_scale_hetero_host", "namespace": f"experiment{namespace}"}
-    host_train_data_1 = {"name": "vehicle_scale_hetero_host", "namespace": f"experiment{namespace}"}
+    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data_0 = {"name": "breast_hetero_host", "namespac "
+                                                       "e": f"experiment{namespace}"}
+    host_train_data_1 = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
 
-    guest_validate_data = {"name": "vehicle_scale_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_validate_data_0 = {"name": "vehicle_scale_hetero_host", "namespace": f"experiment{namespace}"}
-    host_validate_data_1 = {"name": "vehicle_scale_hetero_host", "namespace": f"experiment{namespace}"}
+    guest_validate_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_validate_data_0 = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
+    host_validate_data_1 = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
 
     # init pipeline
     pipeline = PipeLine().set_initiator(role="guest", party_id=guest).set_roles(guest=guest, host=[host_0, host_1])

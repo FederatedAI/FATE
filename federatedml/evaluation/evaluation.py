@@ -140,8 +140,10 @@ class Evaluation(ModelBase):
         if len(data[0][1]) == 5:  # the input format is for intra metrics
             run_intra_metrics = True
 
+        cluster_index_list = []
         for d in data:
             if run_intra_metrics:
+                cluster_index_list.append(d[0])
                 intra_cluster_data['avg_dist'].append(d[1][1])
                 intra_cluster_data['max_radius'].append(d[1][2])
                 if len(inter_cluster_dist) == 0:
@@ -149,6 +151,13 @@ class Evaluation(ModelBase):
             else:
                 true_cluster_index.append(d[1][0])
                 predicted_cluster_index.append(d[1][1])
+
+        # if cluster related data exists, sort by cluster index
+        if len(cluster_index_list) != 0:
+            to_sort = list(zip(cluster_index_list, intra_cluster_data['avg_dist'], intra_cluster_data['max_radius']))
+            sort_rs = sorted(to_sort, key=lambda x: x[0])  # cluster index
+            intra_cluster_data['avg_dist'] = [i[1] for i in sort_rs]
+            intra_cluster_data['max_radius'] = [i[2] for i in sort_rs]
 
         return (true_cluster_index, predicted_cluster_index, run_intra_metrics) if not run_intra_metrics else \
                (intra_cluster_data, inter_cluster_dist, run_intra_metrics)

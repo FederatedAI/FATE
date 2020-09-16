@@ -166,6 +166,9 @@ class FeatureHistogram(object):
     @staticmethod
     def dtable_histogram_cumsum(histograms):
 
+        if len(histograms) == 0:
+            return histograms
+
         new_hist = [[0, 0, 0] for i in range(len(histograms))]
         new_hist[0][0] = copy.deepcopy(histograms[0][0])
         new_hist[0][1] = copy.deepcopy(histograms[0][1])
