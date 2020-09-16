@@ -10,8 +10,7 @@
         "task_cores_per_node": 5,
         "task_memory_per_node": 1024,
         "align_task_input_data_partition": true,
-        "federated_comm": "PUSH",
-        "dsl_version": "2"
+        "federated_comm": "PUSH"
     },
     "role": {
         "guest": [10000],
@@ -20,36 +19,81 @@
     },
     "role_parameters": {
         "guest": {
-            "0": {
-                "reader_0": {
-                    "table": {"name": "breast_hetero_guest", "namespace": "experiment"}
-                },
-                "dataio_0":{
-                    "with_label": true,
-                    "label_name": "y",
-                    "label_type": "int",
-                    "output_format": "dense"
+            "args": {
+                "data": {
+                    "train_data": [
+                        {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    ],
+                    "eval_data": [
+                        {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    ]
                 }
+            },
+            "dataio_0": {
+                "with_label": [
+                    true
+                ],
+                "label_name": [
+                    "y"
+                ],
+                "label_type": [
+                    "int"
+                ],
+                "output_format": [
+                    "dense"
+                ],
+                "missing_fill": [
+                    true
+                ],
+                "outlier_replace": [
+                    true
+                ]
             }
         },
         "host": {
-            "0": {
-                "reader_0": {
-                    "table": {"name": "breast_hetero_host", "namespace": "experiment"}
-                },
-                "dataio_0":{
-                    "with_label": false,
-                    "output_format": "dense"
+            "args": {
+                "data": {
+                    "train_data": [
+                        {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        },
+                        {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    ],
+                    "eval_data": [
+                        {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        },
+                        {
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        }
+                    ]
                 }
             },
-            "1": {
-                "reader_0": {
-                    "table": {"name": "breast_hetero_host", "namespace": "experiment"}
-                },
-                "dataio_0":{
-                    "with_label": false,
-                    "output_format": "dense"
-                }
+            "dataio_0": {
+                "with_label": [
+                    false,
+                    false
+                ],
+                "output_format": [
+                    "dense",
+                    "dense"
+                ],
+                "outlier_replace": [
+                    true,
+                    true
+                ]
             }
         }
     },

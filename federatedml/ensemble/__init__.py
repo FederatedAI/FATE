@@ -25,15 +25,15 @@ from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.feature_histo
 from federatedml.ensemble.basic_algorithms.decision_tree.hetero.hetero_decision_tree_host import HeteroDecisionTreeHost
 from federatedml.ensemble.basic_algorithms.decision_tree.hetero.hetero_decision_tree_guest import HeteroDecisionTreeGuest
 
-from federatedml.ensemble.boosting.hetero.hetero_secureboost_guest import HeteroSecureBoostGuest
-from federatedml.ensemble.boosting.hetero.hetero_secureboost_host import HeteroSecureBoostHost
+from federatedml.ensemble.boosting.hetero.hetero_secureboost_guest import HeteroSecureBoostingTreeGuest
+from federatedml.ensemble.boosting.hetero.hetero_secureboost_host import HeteroSecureBoostingTreeHost
 
 from federatedml.ensemble.boosting.homo.homo_secureboosting_aggregator import SecureBoostClientAggregator, SecureBoostArbiterAggregator,\
     DecisionTreeClientAggregator, DecisionTreeArbiterAggregator
 from federatedml.ensemble.basic_algorithms.decision_tree.homo.homo_decision_tree_client import HomoDecisionTreeClient
 from federatedml.ensemble.basic_algorithms.decision_tree.homo.homo_decision_tree_arbiter import HomoDecisionTreeArbiter
-from federatedml.ensemble.boosting.homo.homo_secureboost_client import HomoSecureBoostClient
-from federatedml.ensemble.boosting.homo.homo_secureboost_arbiter import HomoSecureBoostArbiter
+from federatedml.ensemble.boosting.homo.homo_secureboost_client import HomoSecureBoostingTreeClient
+from federatedml.ensemble.boosting.homo.homo_secureboost_arbiter import HomoSecureBoostingTreerbiter
 
 
 __all__ = ["Node",
@@ -41,5 +41,5 @@ __all__ = ["Node",
            "FeatureHistogram", "XgboostCriterion", "DecisionTree", 'SplitInfo',
            "HomoDecisionTreeClient", "HomoDecisionTreeArbiter", "SecureBoostArbiterAggregator", "SecureBoostClientAggregator"
            , "DecisionTreeArbiterAggregator", 'DecisionTreeClientAggregator',
-            "HeteroSecureBoostGuest", "HeteroSecureBoostHost", "HomoSecureBoostArbiter",
-           "HomoSecureBoostClient", "HistogramBag", "FeatureHistogramWeights",]
+           "HeteroSecureBoostingTreeGuest", "HeteroSecureBoostingTreeHost", "HomoSecureBoostingTreerbiter",
+           "HomoSecureBoostingTreeClient", "HistogramBag", "FeatureHistogramWeights", ]

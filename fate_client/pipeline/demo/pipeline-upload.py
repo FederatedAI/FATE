@@ -51,14 +51,14 @@ def main():
     pipeline_upload.add_upload_data(file=os.path.join(SITE_PATH, "examples/data/breast_hetero_guest.csv"),
                                     table_name=dense_data["name"],             # table name
                                     namespace=dense_data["namespace"],         # namespace
-                                    head=1, partition=partition)
+                                    head=1, partition=partition)               # data info
 
     pipeline_upload.add_upload_data(file=os.path.join(SITE_PATH, "examples/data/tag_value_1000_140.csv"),
                                     table_name=tag_data["name"],
                                     namespace=tag_data["namespace"],
                                     head=0, partition=partition)
     # upload all data
-    pipeline_upload.upload(work_mode=work_mode, drop=1)
+    pipeline_upload.upload(work_mode=work_mode, backend=backend, drop=1)
 
     pipeline = PipeLine().set_initiator(role="guest", party_id=guest).set_roles(guest=guest)
 

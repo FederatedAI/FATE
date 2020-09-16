@@ -5,15 +5,15 @@
     {
         "guest":
         {
-            "program": "homo_secureboost_client.py/HomoSecureBoostClient"
+            "program": "homo_secureboost_client.py/HomoSecureBoostingTreeClient"
         },
         "host":
         {
-            "program": "homo_secureboost_client.py/HomoSecureBoostClient"
+            "program": "homo_secureboost_client.py/HomoSecureBoostingTreeClient"
         },
         "arbiter":
         {
-            "program": "homo_secureboost_arbiter.py/HomoSecureBoostArbiter"
+            "program": "homo_secureboost_arbiter.py/HomoSecureBoostingTreeArbiter"
         }
     }
 }
