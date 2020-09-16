@@ -232,6 +232,15 @@ class Evaluation(ModelBase):
 
         return eval_result
 
+    @staticmethod
+    def _check_clustering_input(data):
+        # one evaluation component is only available for one kmeans component in current version
+        input_num = len(data.items())
+        if input_num > 1:
+            raise ValueError('multiple input detected, '
+                             'one evaluation component is only available '
+                             'for one clustering(kmean) component in current version')
+
     def evaluate_metrics(self, mode: str, data: list) -> dict:
 
         eval_result = None
@@ -250,6 +259,10 @@ class Evaluation(ModelBase):
 
         if len(data) <= 0:
             return
+
+        if self.eval_type == consts.CLUSTERING:
+            self._clustering_extract(data)
+
         LOGGER.debug(f'running eval, data: {data}')
         self.eval_results.clear()
         for (key, eval_data) in data.items():
