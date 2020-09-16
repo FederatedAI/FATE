@@ -59,7 +59,7 @@ class HeteroKmeansClient(BaseKmeansModel):
             n += 1
         return v_list
 
-    def f(self, iterator):
+    def cluster_sum(self, iterator):
         cluster_result = dict()
         for k, v in iterator:
             if v[1] not in cluster_result:
@@ -70,7 +70,7 @@ class HeteroKmeansClient(BaseKmeansModel):
 
     def centroid_cal(self, cluster_result, data_instances):
         cluster_result_dtable = data_instances.join(cluster_result, lambda v1, v2: [v1.features, v2])
-        centroid_feature_sum = cluster_result_dtable.mapPartitions(self.f).reduce(self.sum_dict)
+        centroid_feature_sum = cluster_result_dtable.mapPartitions(self.cluster_sum).reduce(self.sum_dict)
         cluster_count = cluster_result.mapPartitions(self.count).reduce(self.sum_dict)
         centroid_list = []
         cluster_count_list = []
