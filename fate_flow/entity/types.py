@@ -22,11 +22,8 @@ class RunParameters(object):
         self.job_type = "train"
         self.work_mode = WorkMode.STANDALONE
         self.backend = Backend.EGGROLL  # Pre-v1.5 configuration item
-        self.computing_backend = None
         self.computing_engine = None
-        self.federation_backend = None
         self.federation_engine = None
-        self.storage_backend = None
         self.storage_engine = None
         self.engines_address = {}
         self.federated_mode = None
@@ -41,7 +38,7 @@ class RunParameters(object):
         self.model_id = None
         self.model_version = None
         self.dsl_version = None
-        self.input_data_partition = None
+        self.input_data_aligned_partitions = None
 
         for k, v in kwargs.items():
             if hasattr(self, k):
@@ -150,7 +147,7 @@ class TaskStatus(BaseStatus):
 
     class StateTransitionRule(BaseStateTransitionRule):
         RULES = {
-            StatusSet.WAITING: [StatusSet.RUNNING, StatusSet.CANCELED],
+            StatusSet.WAITING: [StatusSet.RUNNING, StatusSet.CANCELED, StatusSet.TIMEOUT],
             StatusSet.RUNNING: [StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.COMPLETE],
             StatusSet.CANCELED: [],
             StatusSet.TIMEOUT: [StatusSet.FAILED, StatusSet.COMPLETE],

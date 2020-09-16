@@ -75,14 +75,14 @@ class Table(CTableABC):
         return Table(self._rp.collapse_partitions(func))
 
     @computing_profile
-    def mapPartitions(self, func, use_previous_behavior=True, **kwargs):
+    def mapPartitions(self, func, use_previous_behavior=True, preserves_partitioning=False, **kwargs):
         if use_previous_behavior is True:
             LOGGER.warning(f"please use `applyPartitions` instead of `mapPartitions` "
                            f"if the previous behavior was expected. "
                            f"The previous behavior will not work in future")
             return self.applyPartitions(func)
 
-        return Table(self._rp.map_partitions(func))
+        return Table(self._rp.map_partitions(func, options={"shuffle": not preserves_partitioning}))
 
     @computing_profile
     def mapReducePartitions(self, mapper, reducer, **kwargs):

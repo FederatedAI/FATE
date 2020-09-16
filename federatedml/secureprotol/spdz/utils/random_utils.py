@@ -65,13 +65,18 @@ class _MixRand(object):
 
 def _mix_rand_func(it, q_field):
     _mix = _MixRand(1, q_field)
-    return [(k, np.array([next(_mix) for _ in v], dtype=object)) for k, v in it]
+    result = []
+    for k, v in it:
+        result.append((k, np.array([next(_mix) for _ in v], dtype=object)))
+    return result
 
 
 def urand_tensor(q_field, tensor, use_mix=False):
     if is_table(tensor):
         if use_mix:
-            return tensor.mapPartitions2(functools.partial(_mix_rand_func, q_field=q_field))
+            return tensor.mapPartitions(functools.partial(_mix_rand_func, q_field=q_field),
+                                        use_previous_behavior=False,
+                                        preserves_partitioning=True)
         return tensor.mapValues(
             lambda x: np.array([random.SystemRandom().randint(1, q_field) for _ in x], dtype=object))
     if isinstance(tensor, np.ndarray):

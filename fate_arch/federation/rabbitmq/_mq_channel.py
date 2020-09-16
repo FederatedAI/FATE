@@ -23,16 +23,16 @@ LOGGER = log.getLogger()
 
 class MQChannel(object):
 
-    def __init__(self, host, port, user, password, party_id, vhost, send_queue_name, receive_queue_name):
+    def __init__(self, host, port, user, password, vhost, send_queue_name, receive_queue_name, party_id):
         self._host = host
         self._port = port
         self._credentials = pika.PlainCredentials(user, password)
-        self._party_id = party_id
         self._vhost = vhost
         self._send_queue_name = send_queue_name
         self._receive_queue_name = receive_queue_name
         self._conn = None
         self._channel = None
+        self._party_id = party_id
 
     @property
     def party_id(self):
@@ -41,6 +41,7 @@ class MQChannel(object):
     def basic_publish(self, body, properties):
         try:
             self._get_channel()
+            LOGGER.info(f"send queue: {self._send_queue_name}")
             return self._channel.basic_publish(exchange='', routing_key=self._send_queue_name, body=body,
                                                properties=properties)
         except Exception as e:
@@ -54,6 +55,7 @@ class MQChannel(object):
     def consume(self):
         try:
             self._get_channel()
+            LOGGER.info(f"receive queue: {self._receive_queue_name}")
             return self._channel.consume(queue=self._receive_queue_name)
         except Exception as e:
             LOGGER.error("Lost connection to rabbitmq service on manager, exception:{}.".format(e))

@@ -99,6 +99,7 @@ class ComponentProperties(object):
         if "isometric_model" in args:
             self.has_isometric_model = True
         data_sets = args.get("data")
+        LOGGER.debug(f"parse_dsl_args data_sets: {data_sets}")
         if data_sets is None:
             return self
         for data_key, data_dicts in data_sets.items():
@@ -185,8 +186,10 @@ class ComponentProperties(object):
                     del data_dict[data_type]
 
             if len(data_dict) > 0:
+                LOGGER.debug(f'data_dict: {data_dict}')
                 for k, v in data_dict.items():
                     data_list = model.obtain_data(v)
+                    LOGGER.debug(f"data_list: {data_list}")
                     if isinstance(data_list, list):
                         for i, data_i in enumerate(data_list):
                             data[".".join([cpn_name, k, str(i)])] = data_i
@@ -325,3 +328,8 @@ class ComponentProperties(object):
             # LOGGER.debug("before out loop, one data: {}".format(result_data.first()))
 
         return result_data
+
+    def set_union_func(self, func):
+        self.union_data = func
+
+

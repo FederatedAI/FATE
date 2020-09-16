@@ -25,7 +25,7 @@ from federatedml.util import LOGGER
 from federatedml.util import consts
 from federatedml.evaluation.evaluation import Evaluation
 from federatedml.param.evaluation_param import EvaluateParam
-from federatedml.evaluation.evaluation import PerformanceRecorder
+from federatedml.evaluation.performance_recorder import PerformanceRecorder
 from federatedml.transfer_variable.transfer_class.validation_strategy_transfer_variable import  \
     ValidationStrategyVariable
 

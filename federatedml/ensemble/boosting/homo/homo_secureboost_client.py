@@ -32,10 +32,15 @@ class HomoSecureBoostClient(HomoBoostingClient):
         self.model_param = HomoSecureBoostParam()
 
     def _init_model(self, boosting_param: HomoSecureBoostParam):
+
         super(HomoSecureBoostClient, self)._init_model(boosting_param)
         self.use_missing = boosting_param.use_missing
         self.zero_as_missing = boosting_param.zero_as_missing
         self.tree_param = boosting_param.tree_param
+
+        if self.use_missing:
+            self.tree_param.use_missing = self.use_missing
+            self.tree_param.zero_as_missing = self.zero_as_missing
 
     def get_valid_features(self, epoch_idx, b_idx):
         valid_feature = self.transfer_inst.valid_features.get(idx=0, suffix=('valid_features', epoch_idx, b_idx))
@@ -106,9 +111,11 @@ class HomoSecureBoostClient(HomoBoostingClient):
 
         weights = np.array(weight_list)
 
-        if class_num > 1:
+        if class_num > 2:
             weights = weights.reshape((-1, class_num))
-        return np.sum(weights * learning_rate, axis=0) + init_score
+            return np.sum(weights * learning_rate, axis=0) + init_score
+        else:
+            return float(np.sum(weights * learning_rate, axis=0) + init_score)
 
     def fast_homo_tree_predict(self, data_inst):
 
@@ -128,7 +135,9 @@ class HomoSecureBoostClient(HomoBoostingClient):
                                  learning_rate=self.learning_rate, class_num=self.booster_dim)
         predict_rs = to_predict_data.mapValues(func)
 
-        return self.score_to_predict_result(data_inst, predict_rs, )
+        return self.predict_score_to_output(data_instances=data_inst, predict_score=predict_rs,
+                                            classes=None if len(self.classes_) == 0 else self.classes_,
+                                            threshold=self.predict_param.threshold)
 
     @assert_io_num_rows_equal
     def predict(self, data_inst):

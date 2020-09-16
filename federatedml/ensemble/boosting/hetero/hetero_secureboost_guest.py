@@ -19,7 +19,6 @@ from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.util.anonymous_generator import generate_anonymous
 
 
-
 class HeteroSecureBoostGuest(HeteroBoostingGuest):
 
     def __init__(self):
@@ -209,9 +208,11 @@ class HeteroSecureBoostGuest(HeteroBoostingGuest):
         for leaf_idx, tree in zip(leaf_pos, trees):
             weights.append(tree.tree_node[leaf_idx].weight)
         weights = np.array(weights)
-        if multi_class_num is not None:
+        if multi_class_num > 2:
             weights = weights.reshape((-1, multi_class_num))
-        return np.sum(weights * learning_rate, axis=0) + init_score
+            return np.sum(weights * learning_rate, axis=0) + init_score
+        else:
+            return float(np.sum(weights * learning_rate, axis=0) + init_score)
 
     @staticmethod
     def get_predict_scores(leaf_pos, learning_rate, init_score, trees: List[HeteroDecisionTreeGuest]
@@ -327,7 +328,8 @@ class HeteroSecureBoostGuest(HeteroBoostingGuest):
         predict_rs = self.boosting_fast_predict(processed_data, trees=trees, predict_cache=predict_cache)
         self.predict_data_cache.add_data(cache_dataset_key, predict_rs)
 
-        return self.score_to_predict_result(data_inst, predict_rs)
+        return self.predict_score_to_output(data_inst, predict_rs, classes=None if len(self.classes_) == 0 else
+                                            self.classes_, threshold=self.predict_param.threshold)
 
     def get_model_meta(self):
         model_meta = BoostingTreeModelMeta()

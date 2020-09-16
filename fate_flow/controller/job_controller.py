@@ -72,11 +72,11 @@ class JobController(object):
 
     @classmethod
     def get_job_engines_address(cls, job_parameters: RunParameters):
-        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.COMPUTING, engine_id=job_parameters.computing_backend)
+        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.COMPUTING, engine_name=job_parameters.computing_engine)
         job_parameters.engines_address[EngineType.COMPUTING] = backend_info.f_engine_address
-        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.FEDERATION, engine_id=job_parameters.federation_backend)
+        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.FEDERATION, engine_name=job_parameters.federation_engine)
         job_parameters.engines_address[EngineType.FEDERATION] = backend_info.f_engine_address
-        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.STORAGE, engine_id=job_parameters.storage_backend)
+        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.STORAGE, engine_name=job_parameters.storage_engine)
         job_parameters.engines_address[EngineType.STORAGE] = backend_info.f_engine_address
 
     @classmethod
@@ -152,13 +152,11 @@ class JobController(object):
                         dataset[_role][_party_id] = dataset[_role].get(_party_id, {})
                         if dsl_version == 1:
                             for _data_type, _data_location in _role_party_args[_party_index]['args']['data'].items():
-                                dataset[_role][_party_id][_data_type] = '{}.{}'.format(_data_location['namespace'],
-                                                                                       _data_location['name'])
+                                dataset[_role][_party_id][_data_type] = '{}.{}'.format(_data_location['namespace'], _data_location['name'])
                         else:
                             for key in _role_party_args[_party_index].keys():
                                 for _data_type, _data_location in _role_party_args[_party_index][key].items():
-                                    dataset[_role][_party_id][key] = '{}.{}'.format(
-                                        _data_location['namespace'], _data_location['name'])
+                                    dataset[_role][_party_id][key] = '{}.{}'.format(_data_location['namespace'], _data_location['name'])
         return dataset
 
     @classmethod
@@ -274,9 +272,9 @@ class JobController(object):
                     return False
             except:
                 return False
-            schedule_logger(job_id).info('cancel waiting job successfully, job id is {}'.format(job.f_job_id))
+            schedule_logger(job_id).info('cancel {} job successfully, job id is {}'.format(job.f_status, job.f_job_id))
             return True
         else:
-            schedule_logger(job_id).warning('role {} party id {} cancel waiting job failed, no find jod {}'.format(role, party_id, job_id))
-            raise Exception('role {} party id {} cancel waiting job failed, no find jod {}'.format(role, party_id, job_id))
+            schedule_logger(job_id).warning('role {} party id {} cancel job failed, no find jod {}'.format(role, party_id, job_id))
+            raise Exception('role {} party id {} cancel job failed, no find jod {}'.format(role, party_id, job_id))
 

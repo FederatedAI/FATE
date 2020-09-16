@@ -50,13 +50,9 @@ class Component(object):
     def reset_name(self, name):
         self._component_name = name
 
-    def get_party_instance(self, role="all", party_id=None) -> 'Component':
-        if role not in ["all", "guest", "host", "arbiter"]:
-            raise ValueError("Role should be one of guest/host/arbiter, if not set, default is all")
-
-        if role == "all":
-            if party_id is not None:
-                raise ValueError("when role is all, party_id should not be set")
+    def get_party_instance(self, role="guest", party_id=None) -> 'Component':
+        if role not in ["guest", "host", "arbiter"]:
+            raise ValueError("Role should be one of guest/host/arbiter")
 
         if party_id is not None:
             if isinstance(party_id, list):
@@ -147,9 +143,6 @@ class Component(object):
             return role_param_conf
 
         for role in self.__party_instance:
-            if role == "all":
-                pass
-
             role_param_conf[role] = {}
             if None in self.__party_instance[role]["party"]:
                 role_all_party_conf = self.__party_instance[role]["party"][None].get_algorithm_param()
