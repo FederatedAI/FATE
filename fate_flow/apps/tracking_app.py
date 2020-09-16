@@ -384,7 +384,10 @@ def get_component_output_data_schema(output_table_meta, have_data_label, is_str=
         header.append(schema.get('label_name'))
     if is_str:
         if not schema.get('header'):
-            return None
+            if schema.get('sid'):
+                return [schema.get('sid')]
+            else:
+                return None
         header.extend([feature for feature in schema.get('header').split(',')])
     else:
         header.extend(schema.get('header', []))

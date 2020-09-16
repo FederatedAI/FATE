@@ -36,7 +36,7 @@ def dataset_to_list(src):
 
 def get_header_schema(header_line, id_delimiter):
     header_source_item = header_line.split(id_delimiter)
-    return {'header': id_delimiter.join(header_source_item[1:]).strip(), 'sid': header_source_item[0]}
+    return {'header': id_delimiter.join(header_source_item[1:]).strip(), 'sid': header_source_item[0].strip()}
 
 
 def list_to_str(input_list, id_delimiter):
