@@ -37,8 +37,8 @@ def main(config="../../config.yaml", namespace=""):
     backend = config.backend
     work_mode = config.work_mode
 
-    guest_train_data = {"name": "dvisits_hetero_mini_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "dvisits_hetero_mini_host", "namespace": f"experiment{namespace}"}
+    guest_train_data = {"name": "dvisits_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "dvisits_hetero_host", "namespace": f"experiment{namespace}"}
 
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host, arbiter=arbiter)
 
@@ -52,11 +52,14 @@ def main(config="../../config.yaml", namespace=""):
     dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
-    hetero_poisson_0 = HeteroPoisson(name="hetero_poisson_0", early_stop="diff", max_iter=3,
+    hetero_poisson_0 = HeteroPoisson(name="hetero_poisson_0", early_stop="diff", max_iter=5,
+                                     penalty="None", optimizer="sgd", tol=0.001,
+                                     batch_size=-1, learning_rate=0.15, decay=0.0,
+                                     decay_sqrt=False, alpha=0.01,
                                      init_param={"init_method": "zeros"},
                                      encrypted_mode_calculator_param={"mode": "fast"},
-                                     stepwise_param={"score_name": "AIC", "direction": "backward",
-                                                     "need_stepwise": True, "max_step": 2, "nvmin": 2
+                                     stepwise_param={"score_name": "AIC", "direction": "both",
+                                                     "need_stepwise": True, "max_step": 1, "nvmin": 2
                                                      })
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
@@ -67,7 +70,7 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.fit(backend=backend, work_mode=work_mode)
 
-    print (pipeline.get_component("hetero_poisson_0").get_summary())
+    print(pipeline.get_component("hetero_poisson_0").get_summary())
 
 
 if __name__ == "__main__":
