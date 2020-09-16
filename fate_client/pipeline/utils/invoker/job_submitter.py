@@ -106,18 +106,14 @@ class JobInvoker(object):
             result = self.client.data.upload(conf_path=submit_path, verbose=1, drop=drop)
             try:
                 if 'retcode' not in result or result["retcode"] != 0 or result["retcode"] != 0:
-                    # LOGGER.opt(exception=True).error(f"retcode err")
                     raise ValueError
 
                 if "jobId" not in result:
-                    # LOGGER.opt(exception=True).error(f"jobID not in result: {result}")
                     raise ValueError
 
                 job_id = result["jobId"]
                 data = result["data"]
-            except ValueError:
-                # LOGGER.opt(exception=True).error(f"job submit failed, err msg: {result}")
-                # raise
+            except:
                 raise ValueError("job submit failed, err msg: {}".format(result))
 
         return job_id, data
@@ -126,7 +122,6 @@ class JobInvoker(object):
         party_id = str(party_id)
         start_time = time.time()
         pre_cpn = None
-        # print ("Job id is {}".format(job_id))
         LOGGER.info(f"Job id is {job_id}")
         while True:
             ret_code, ret_msg, data = self.query_job(job_id, role, party_id)
@@ -139,17 +134,21 @@ class JobInvoker(object):
                 return StatusCode.SUCCESS
 
             if status == JobStatus.FAILED:
-                # print("job is failed, please check out job {} by fate board or fate_flow cli".format(job_id))
-                # LOGGER.error(f"Job is failed, please check out job {job_id} by fate board or fate_flow cli")
-                # return StatusCode.FAIL
                 raise ValueError(f"Job is failed, please check out job {job_id} by fate board or fate_flow cli")
 
             if status == JobStatus.WAITING:
                 elapse_seconds = timedelta(seconds=int(time.time() - start_time))
-                # print("job is still waiting, time elapse: {}".format(elapse_seconds), end="\r", flush=True)
                 sys.stdout.write(f"Job is still waiting, time elapse: {elapse_seconds}\r")
                 sys.stdout.flush()
-                # LOGGER.trace(f"Job is still waiting, time elapse: {elapse_seconds}")
+
+            if status == JobStatus.CANCELED:
+                elapse_seconds = timedelta(seconds=int(time.time() - start_time))
+                sys.stdout.write(f"Job is canceled, time elapse: {elapse_seconds}\r")
+                return StatusCode.CANCELED
+
+            if status == JobStatus.TIMEOUT:
+                elapse_seconds = timedelta(seconds=int(time.time() - start_time))
+                raise ValueError(f"Job is timeout, time elapse: {elapse_seconds}\r")
 
             if status == JobStatus.RUNNING:
                 ret_code, _, data = self.query_task(job_id=job_id, role=role, party_id=party_id,
@@ -167,17 +166,13 @@ class JobInvoker(object):
                         cpn.append(cpn_data["f_component_name"])
 
                 if cpn != pre_cpn:
-                    # print("\n", end="\r")
                     sys.stdout.write(f"\n \r")
                     pre_cpn = cpn
-                """
-                print("Running component {}, time elpase: {}".format(cpn,
-                                                                     elapse_seconds), end="\r",
-                      flush=True)
-                """
                 sys.stdout.write(f"Running component {cpn}, time elapse: {elapse_seconds}\r")
                 sys.stdout.flush()
-                # LOGGER.trace(f"Running component {cpn}, time elapse: {elapse_seconds}")
+
+            else:
+                raise ValueError(f"Unknown status: {status}.\r")
 
             time.sleep(conf.TIME_QUERY_FREQS)
 
@@ -281,8 +276,6 @@ class JobInvoker(object):
                 data = result["data"]
             return ret_code, ret_msg, data
         except ValueError:
-            # LOGGER.opt(exception=True).error(f"query task result is {result}, can not parse useful info. err msg: ")
-            # raise
             raise ValueError("Query task result is {}, cannot parse useful info".format(result))
 
     def get_output_data(self, job_id, cpn_name, role, party_id, limits=None):
@@ -339,7 +332,7 @@ class JobInvoker(object):
                         data_dict[data_name] = curr_data_dict
             # no output data obtained
             else:
-                LOGGER.error(f"No output data found in directory{output_dir}")
+                raise ValueError(f"No output data found in directory{output_dir}")
             if len(data_dict) == 1:
                 return list(data_dict.values())[0]
             return data_dict
@@ -376,8 +369,7 @@ class JobInvoker(object):
                 meta_dict = json.load(fin)
                 meta = meta_dict["header"]
             except ValueError:
-                LOGGER.error(f"Cannot get output data meta. err msg: ")
-                # raise
+                raise ValueError(f"Cannot get output data meta. err msg: ")
 
         return meta
 
@@ -388,11 +380,10 @@ class JobInvoker(object):
             result = self.client.component.output_model(job_id=job_id, role=role,
                                                         party_id=party_id, component_name=cpn_name)
             if "data" not in result:
-                LOGGER.error(f"job {job_id}, component {cpn_name} has no output model param")
-                return
+                raise ValueError(f"job {job_id}, component {cpn_name} has no output model param")
             return result["data"]
         except:
-            LOGGER.error("Cannot get output model, err msg: ")
+            raise ValueError("Cannot get output model, err msg: ")
             # raise
 
     def get_metric(self, job_id, cpn_name, role, party_id):
@@ -402,11 +393,10 @@ class JobInvoker(object):
             result = self.client.component.metric_all(job_id=job_id, role=role,
                                                       party_id=party_id, component_name=cpn_name)
             if "data" not in result:
-                LOGGER.error(f"job {job_id}, component {cpn_name} has no output metric")
-                return
+                raise ValueError(f"job {job_id}, component {cpn_name} has no output metric")
             return result["data"]
         except:
-            LOGGER.error("Cannot get ouput model, err msg: ")
+            raise ValueError("Cannot get ouput model, err msg: ")
             # raise
 
     def get_summary(self, job_id, cpn_name, role, party_id):
@@ -417,12 +407,10 @@ class JobInvoker(object):
                                                        party_id=party_id, component_name=cpn_name)
             if "data" not in result:
                 # print("job {}, component {} has no output metric".format(job_id, cpn_name))
-                LOGGER.error(f"Job {job_id}, component {cpn_name} has no output metric")
-                return
+                raise ValueError(f"Job {job_id}, component {cpn_name} has no output metric")
             return result["data"]
         except:
-            LOGGER.error("Cannot get output model, err msg: ")
-            # raise
+            raise ValueError("Cannot get output model, err msg: ")
 
     def get_predict_dsl(self, train_dsl, cpn_list, version):
         result = None
