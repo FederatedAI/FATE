@@ -42,22 +42,16 @@ class HeteroKmeansClient(BaseKmeansModel):
     def educl_dist(u, centroid_list):
         result = []
         for c in centroid_list:
-            result.append(np.sum(np.power(np.array(c) - u.features, 2)))
+            result.append(np.sum(np.square(np.array(c) - u.features)))
         return result
 
     def get_centroid(self, data_instances):
-        random.seed(self.k)
-        random_list = list()
-        v_list = list()
-        for r in range(0, self.k):
-            random_list.append(math.floor(random.random() * data_instances.count()))
-        n = 0
+        random_key = []
         key = list(data_instances.mapValues(lambda data_instance: None).collect())
-        for k in key:
-            if n in random_list:
-                v_list.append(k[0])
-            n += 1
-        return v_list
+        random_list = list(np.random.choice(data_instances.count(), self.k, replace=False))
+        for k in random_list:
+            random_key.append(key[k][0])
+        return random_key
 
     def cluster_sum(self, iterator):
         cluster_result = dict()
