@@ -14,41 +14,76 @@
 #  limitations under the License.
 #
 import argparse
-from pathlib import Path
 
+from examples.util.config import Config
 from pipeline.backend.pipeline import PipeLine
+from pipeline.component import HeteroPearson
 from pipeline.component.dataio import DataIO
 from pipeline.component.intersection import Intersection
 from pipeline.component.reader import Reader
-from pipeline.demo.util.demo_util import Config
 from pipeline.interface.data import Data
 
 
-def run_pipeline(config, guest_data, host_data, hetero_pearson, namespace):
-    arbiter = config.arbiter
+# noinspection PyPep8Naming
+class dataset(object):
+    breast = {
+        "guest": {"name": "breast_hetero_guest", "namespace": "experiment"},
+        "host": [
+            {"name": "breast_hetero_host", "namespace": "experiment"}
+        ]
+    }
+
+
+def run_pearson_pipeline(config, namespace, data, common_param=None, guest_only_param=None, host_only_param=None):
+    if isinstance(config, str):
+        config = Config.load(config)
+    guest_data = data["guest"]
+    host_data = data["host"][0]
+
     guest_data["namespace"] = f"{guest_data['namespace']}{namespace}"
     host_data["namespace"] = f"{host_data['namespace']}{namespace}"
 
     pipeline = PipeLine() \
-        .set_initiator(role='guest', party_id=config.guest) \
-        .set_roles(guest=config.guest, host=config.host[0], arbiter=arbiter)
+        .set_initiator(role='guest', party_id=config.parties.guest) \
+        .set_roles(guest=config.parties.guest, host=config.parties.host[0])
 
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=config.guest).algorithm_param(table=guest_data)
-    reader_0.get_party_instance(role='host', party_id=config.host[0]).algorithm_param(table=host_data)
+    reader_0.get_party_instance(role='guest', party_id=config.parties.guest).algorithm_param(table=guest_data)
+    reader_0.get_party_instance(role='host', party_id=config.parties.host[0]).algorithm_param(table=host_data)
 
     dataio_0 = DataIO(name="dataio_0")
-    dataio_0.get_party_instance(role='guest', party_id=config.guest).algorithm_param(with_label=True,
-                                                                                     output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=config.host[0]).algorithm_param(with_label=False)
+    dataio_0.get_party_instance(role='guest', party_id=config.parties.guest) \
+        .algorithm_param(with_label=True, output_format="dense")
+    dataio_0.get_party_instance(role='host', party_id=config.parties.host[0]).algorithm_param(with_label=False)
 
     intersect_0 = Intersection(name="intersection_0")
+
+    if common_param is None:
+        common_param = {}
+    hetero_pearson_component = HeteroPearson(name="hetero_pearson_0", **common_param)
+
+    if guest_only_param:
+        hetero_pearson_component.get_party_instance("guest", config.parties.guest).algorithm_param(**guest_only_param)
+
+    if host_only_param:
+        hetero_pearson_component.get_party_instance("host", config.parties.host[0]).algorithm_param(**host_only_param)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersect_0, data=Data(data=dataio_0.output.data))
-    pipeline.add_component(hetero_pearson, data=Data(train_data=intersect_0.output.data))
+    pipeline.add_component(hetero_pearson_component, data=Data(train_data=intersect_0.output.data))
 
     pipeline.compile()
     pipeline.fit(backend=config.backend, work_mode=config.work_mode)
     return pipeline
+
+
+def runner(main_func):
+    parser = argparse.ArgumentParser("PIPELINE DEMO")
+    parser.add_argument("-config", type=str,
+                        help="config file")
+    args = parser.parse_args()
+    if args.config is not None:
+        main_func(args.config)
+    else:
+        main_func()
