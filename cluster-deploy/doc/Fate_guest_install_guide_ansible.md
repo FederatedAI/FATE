@@ -385,8 +385,8 @@ guest:
       default_rules:  ---默认路由，本party指向exchange或者其他party的IP，端口
       - name: default ---名称，默认即可
         ip: 192.168.0.3 ---exchange或者对端party rollsite IP，和webank确认后修改。
-        port: 9370 ---exchange或者对端party rollsite 端口，一般默认9370，和webank确认后修改。
-        is_secure: False ---server_secure或者client_secure为true，指向的下一跳rollsite也开启了安全认证，此参数需要设置为true，上一个参数port需设置为9371，不使用安全证书默认即可。
+        port: 9370 ---exchange或者对端party rollsite 端口，一般默认9370，即无安全证书部署；如需开启安全证书通信，应设置为9371；和webank确认后修改。
+        is_secure: False ---是否使用安全认证通讯；需要结合server_secure或者client_secure使用，当三者都为true时，表示和下一跳rollsite使用安全认证通讯，同时上一个参数port需设置为9371；不使用安全证书默认即可。
       rules:  ---本party自身路由配置
       - name: default ---本party rollsite所在主机IP和端口
         ip: 192.168.0.1
