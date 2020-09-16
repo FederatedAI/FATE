@@ -388,6 +388,19 @@ class Boosting(ModelBase, ABC):
     def load_booster(self, *args):
         raise NotImplementedError()
 
+    def score_to_prob(self, predict_rs):
+
+        # if is classification task, apply sigmoid/sofmax on result
+        loss_method = self.loss
+        if self.task_type == consts.CLASSIFICATION and self.num_classes == 2:
+            # binary
+            predict_rs = predict_rs.mapValues(lambda y_hat: float(loss_method.predict(y_hat)))
+        else:
+            # multi
+            predict_rs = predict_rs.mapValues(lambda y_hat: loss_method.predict(y_hat).tolist())
+
+        return predict_rs
+
     def score_to_predict_result(self, data_inst, y_hat):
 
         predicts = None
