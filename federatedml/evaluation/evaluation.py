@@ -261,7 +261,7 @@ class Evaluation(ModelBase):
             return
 
         if self.eval_type == consts.CLUSTERING:
-            self._clustering_extract(data)
+            self._check_clustering_input(data)
 
         LOGGER.debug(f'running eval, data: {data}')
         self.eval_results.clear()
