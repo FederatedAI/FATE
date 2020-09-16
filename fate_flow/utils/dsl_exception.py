@@ -47,7 +47,7 @@ class ModuleException(Exception):
         self.other_info = other_info
 
 
-class ComponentNotExistError(Exception):
+class ComponentNotExistError(ModuleException):
     def __str__(self):
         return "Component {} does not exist, please have a check".format(self.component)
 
