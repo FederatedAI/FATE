@@ -64,11 +64,11 @@ class Reader(object):
         self.tracker.log_output_data_info(data_name=component_parameters.get('output_data_name')[0] if component_parameters.get('output_data_name') else table_key,
                                           table_namespace=dest_table_meta.get_namespace(),
                                           table_name=dest_table_meta.get_name())
-        headers_str = dest_table_meta.get_schema().get('header')
+        headers_str = src_table_meta.get_schema().get('header')
         table_info = {}
-        if dest_table_meta.get_schema() and headers_str:
+        if src_table_meta.get_schema() and headers_str:
             data_list = [headers_str.split(',')]
-            for data in dest_table_meta.get_part_of_data():
+            for data in src_table_meta.get_part_of_data():
                 data_list.append(data[1].split(','))
             data = np.array(data_list)
             Tdata = data.transpose()
@@ -80,7 +80,7 @@ class Reader(object):
             "table_info": table_info,
             "partitions": dest_table_meta.get_partitions(),
             "storage_engine": dest_table_meta.get_engine(),
-            "count": dest_table_meta.get_count()
+            "count": src_table_meta.get_count()
         }
 
         self.tracker.set_metric_meta(metric_namespace="reader_namespace",

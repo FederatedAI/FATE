@@ -13,15 +13,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-from eggroll.roll_pair.roll_pair import RollPair
-from fate_arch.abc import AddressABC, CTableABC
+
+import pickle
+
+_DELIMITER = '\t'
+NEWLINE = '\n'
 
 
-# noinspection PyAbstractClass
-class Table(CTableABC):
+def deserialize(m):
+    fields = m.partition(_DELIMITER)
+    return fields[0], pickle.loads(bytes.fromhex(fields[2]))
 
-    def __init__(self, rp: RollPair):
-        self._rp: RollPair = ...
-        ...
 
-    def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs): ...
+def serialize(k, v):
+    return f"{k}{_DELIMITER}{pickle.dumps(v).hex()}"

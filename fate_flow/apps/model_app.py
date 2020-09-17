@@ -58,10 +58,13 @@ def load_model():
         if model:
             model_info = model.to_json()
             request_config['initiator'] = {}
-            request_config['initiator']['party_id'] = model_info.get('f_initiator_party_id')
+            request_config['initiator']['party_id'] = str(model_info.get('f_initiator_party_id'))
             request_config['initiator']['role'] = model_info.get('f_initiator_role')
             request_config['job_parameters'] = model_info.get('f_runtime_conf').get('job_parameters')
             request_config['role'] = model_info.get('f_runtime_conf').get('role')
+            for key, value in request_config['role'].items():
+                for i, v in enumerate(value):
+                    value[i] = str(v)
             request_config.pop('job_id')
         else:
             return get_json_result(retcode=101,
@@ -155,7 +158,9 @@ def migrate_model_process():
             local_res["party_id"] = request_config.get("role").get(role_name)[offset]
             local_res["migrate_party_id"] = party_id
             # res_dict[party_id] = local_res
-            res_dict[local_res["party_id"]] = local_res
+            if not res_dict.get(role_name):
+                res_dict[role_name] = {}
+            res_dict[role_name][local_res["party_id"]] = local_res
 
     # for role_name, role_partys in request_config.get("migrate_role").items():
     for role_name, role_partys in request_config.get("execute_party").items():
@@ -163,7 +168,7 @@ def migrate_model_process():
         #     continue
         migrate_status_info[role_name] = migrate_status_info.get(role_name, {})
         for party_id in role_partys:
-            request_config["local"] = res_dict.get(party_id)
+            request_config["local"] = res_dict.get(role_name).get(party_id)
             try:
                 response = federated_api(job_id=_job_id,
                                          method='POST',
@@ -199,13 +204,13 @@ def do_migrate_model():
 @manager.route('/load/do', methods=['POST'])
 def do_load_model():
     request_data = request.json
-    request_data["servings"] = ServiceUtils.get("servings", [])
+    request_data["servings"] = ServiceUtils.get("servings", {}).get('hosts', [])
     retcode, retmsg = publish_model.load_model(config_data=request_data)
     try:
         if not retcode:
             with DB.connection_context():
-                model = MLModel.get_or_none(MLModel.f_role == request_data.get("initiator").get("role"),
-                                            MLModel.f_party_id == request_data.get("initiator").get("party_id"),
+                model = MLModel.get_or_none(MLModel.f_role == request_data.get("local").get("role"),
+                                            MLModel.f_party_id == request_data.get("local").get("party_id"),
                                             MLModel.f_model_id == request_data.get("job_parameters").get("model_id"),
                                             MLModel.f_model_version == request_data.get("job_parameters").get("model_version"))
                 if model:
@@ -216,8 +221,8 @@ def do_load_model():
         stat_logger.exception(modify_err)
 
     try:
-        party_model_id = gen_party_model_id(role=request_data.get("initiator").get("role"),
-                                            party_id=request_data.get("initiator").get("party_id"),
+        party_model_id = gen_party_model_id(role=request_data.get("local").get("role"),
+                                            party_id=request_data.get("local").get("party_id"),
                                             model_id=request_data.get("job_parameters").get("model_id"))
         src_model_path = os.path.join(file_utils.get_project_base_directory(), 'model_local_cache', party_model_id,
                                       request_data.get("job_parameters").get("model_version"))
@@ -243,10 +248,13 @@ def bind_model_service():
         if model:
             model_info = model.to_json()
             request_config['initiator'] = {}
-            request_config['initiator']['party_id'] = model_info.get('f_initiator_party_id')
+            request_config['initiator']['party_id'] = str(model_info.get('f_initiator_party_id'))
             request_config['initiator']['role'] = model_info.get('f_initiator_role')
             request_config['job_parameters'] = model_info.get('f_runtime_conf').get('job_parameters')
             request_config['role'] = model_info.get('f_runtime_conf').get('role')
+            for key, value in request_config['role'].items():
+                for i, v in enumerate(value):
+                    value[i] = str(v)
             request_config.pop('job_id')
         else:
             return get_json_result(retcode=101,
@@ -254,10 +262,11 @@ def bind_model_service():
                                           "Please check if the model version is valid.".format(request_config.get('job_id')))
     if not request_config.get('servings'):
         # get my party all servings
-        request_config['servings'] = ServiceUtils.get("servings", [])
+        request_config['servings'] = ServiceUtils.get("servings", {}).get('hosts', [])
     service_id = request_config.get('service_id')
     if not service_id:
         return get_json_result(retcode=101, retmsg='no service id')
+    check_config(request_config, ['initiator', 'role', 'job_parameters'])
     bind_status, retmsg = publish_model.bind_model_service(config_data=request_config)
     operation_record(request_config, "bind", "success" if not bind_status else "failed")
     return get_json_result(retcode=bind_status, retmsg='service id is {}'.format(service_id) if not retmsg else retmsg)
@@ -532,6 +541,14 @@ def operation_record(data: dict, oper_type, oper_status):
                            f_request_ip=request.remote_addr,
                            f_model_id=data.get("model_id"),
                            f_model_version=data.get("model_version"))
+        elif oper_type == 'load':
+            OperLog.create(f_operation_type=oper_type,
+                           f_operation_status=oper_status,
+                           f_initiator_role=data.get("initiator").get("role"),
+                           f_initiator_party_id=data.get("initiator").get("party_id"),
+                           f_request_ip=request.remote_addr,
+                           f_model_id=data.get("job_parameters").get("model_id"),
+                           f_model_version=data.get("job_parameters").get("model_version"))
         else:
             OperLog.create(f_operation_type=oper_type,
                            f_operation_status=oper_status,
