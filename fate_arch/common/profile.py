@@ -64,7 +64,7 @@ class _ComputingTimer(object):
         if name not in self._STATS:
             self._STATS[name] = _ComputingTimerItem()
 
-        profile_logger.debug(f"[computing]uuid={self.uuid}, call_stack={call_stack}")
+        profile_logger.debug(f"[computing.{self._name}]uuid={self.uuid}, call_stack={call_stack}")
 
     def done(self):
         self._elapse = time.time() - self._start
