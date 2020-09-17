@@ -29,7 +29,7 @@
                     ],
                     "eval_data": [
                         {
-                            "name": "homo_breast_test",
+                            "name": "breast_homo_test",
                             "namespace": "experiment"
                         }
                     ]
@@ -61,7 +61,7 @@
                     ],
                     "eval_data": [
                         {
-                            "name": "homo_breast_test",
+                            "name": "breast_homo_test",
                             "namespace": "experiment"
                         }
                     ]

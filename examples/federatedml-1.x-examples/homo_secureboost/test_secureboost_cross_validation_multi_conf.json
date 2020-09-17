@@ -24,7 +24,7 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "homo_vehicle_scale_guest",
+                            "name": "vehicle_scale_homo_guest",
                             "namespace": "experiment"
                         }
                     ]
@@ -50,7 +50,7 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "homo_vehicle_scale_host",
+                            "name": "vehicle_scale_homo_host",
                             "namespace": "experiment"
                         }
                     ]

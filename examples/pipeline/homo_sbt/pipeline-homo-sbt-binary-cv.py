@@ -18,66 +18,62 @@ import argparse
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
-from pipeline.component.hetero_ftl import HeteroFTL
+from pipeline.component.homo_secureboost import HomoSecureBoost
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
-from tensorflow.keras import optimizers
-from tensorflow.keras.layers import Dense
+from pipeline.component.evaluation import Evaluation
+from pipeline.interface.model import Model
 
 from examples.util.config import Config
 
 
 def main(config="../../config.yaml", namespace=""):
+
     # obtain config
     if isinstance(config, str):
         config = Config.load(config)
+
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
+    arbiter = parties.arbiter[0]
+
     backend = config.backend
     work_mode = config.work_mode
 
-    guest_train_data = {"name": "nus_wide_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "nus_wide_host", "namespace": f"experiment{namespace}"}
-    pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
+    guest_train_data = {"name": "breast_homo_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "breast_homo_host", "namespace": f"experiment{namespace}"}
 
-    reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
-    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
+    pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host, arbiter=arbiter)
 
     dataio_0 = DataIO(name="dataio_0")
-    dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
+    reader_0 = Reader(name="reader_0")
 
-    hetero_ftl_0 = HeteroFTL(name='hetero_ftl_0', epochs=10, alpha=1, batch_size=-1)
-    hetero_ftl_0.add_nn_layer(Dense(units=32, activation='sigmoid'))
-    hetero_ftl_0.compile(optimizer=optimizers.Adam(lr=0.01))
+    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
+    reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
+    dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense")
+    dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=True, output_format="dense")
+
+    homo_secureboost_0 = HomoSecureBoost(name="homo_secureboost_0",
+                                         num_trees=5,
+                                         task_type='classification',
+                                         objective_param={"objective": "cross_entropy"},
+                                         tree_param={
+                                             "max_depth": 5
+                                         },
+                                         cv_param={
+                                             "need_cv": True,
+                                             "shuffle": False,
+                                             "n_splits": 5
+                                         }
+                                         )
 
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(hetero_ftl_0, data=Data(train_data=dataio_0.output.data))
+    pipeline.add_component(homo_secureboost_0, data=Data(train_data=dataio_0.output.data))
 
     pipeline.compile()
-
     pipeline.fit(backend=backend, work_mode=work_mode)
-
-    """
-    # predict
-
-    pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
-                     feed_dict={input_0:
-                                    {"guest":
-                                         {9999: guest_train_data},
-                                     "host": {
-                                         10000: host_train_data[0]
-                                     }
-                                     }
-                                })
-            
-
-    with open("output.pkl", "wb") as fout:
-        fout.write(pipeline.dump())
-    """
 
 
 if __name__ == "__main__":
