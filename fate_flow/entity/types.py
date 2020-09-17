@@ -38,7 +38,7 @@ class RunParameters(object):
         self.model_id = None
         self.model_version = None
         self.dsl_version = None
-        self.input_data_partition = None
+        self.input_data_aligned_partitions = None
 
         for k, v in kwargs.items():
             if hasattr(self, k):
@@ -147,7 +147,7 @@ class TaskStatus(BaseStatus):
 
     class StateTransitionRule(BaseStateTransitionRule):
         RULES = {
-            StatusSet.WAITING: [StatusSet.RUNNING, StatusSet.CANCELED],
+            StatusSet.WAITING: [StatusSet.RUNNING, StatusSet.CANCELED, StatusSet.TIMEOUT],
             StatusSet.RUNNING: [StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.COMPLETE],
             StatusSet.CANCELED: [],
             StatusSet.TIMEOUT: [StatusSet.FAILED, StatusSet.COMPLETE],

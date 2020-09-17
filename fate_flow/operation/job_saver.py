@@ -44,15 +44,15 @@ class JobSaver(object):
                 for k in ["job_id", "role", "party_id"]:
                     new_job_info[k] = job_info[k]
                 new_job_info["tag"] = "job_end"
-                cls.update_job_family_entity(Job, new_job_info)
+                cls.update_entity_table(Job, new_job_info)
         else:
-            schedule_logger(job_id=job_info["job_id"]).info("update job {} status failed".format(job_info["job_id"]))
+            schedule_logger(job_id=job_info["job_id"]).info("update job {} status does not take effect".format(job_info["job_id"]))
         return update_status
 
     @classmethod
     def update_job(cls, job_info):
         schedule_logger(job_id=job_info["job_id"]).info("try to update job {}".format(job_info["job_id"]))
-        update_status = cls.update_job_family_entity(Job, job_info)
+        update_status = cls.update_entity_table(Job, job_info)
         if update_status:
             schedule_logger(job_id=job_info.get("job_id")).info(f"job {job_info['job_id']} update successfully: {job_info}")
         else:
@@ -72,7 +72,7 @@ class JobSaver(object):
     @classmethod
     def update_task(cls, task_info):
         schedule_logger(job_id=task_info["job_id"]).info("try to update job {} task {} {}".format(task_info["job_id"], task_info["task_id"], task_info["task_version"]))
-        update_status = cls.update_job_family_entity(Task, task_info)
+        update_status = cls.update_entity_table(Task, task_info)
         if update_status:
             schedule_logger(job_id=task_info["job_id"]).info("job {} task {} {} update successfully".format(task_info["job_id"], task_info["task_id"], task_info["task_version"]))
         else:
@@ -134,7 +134,7 @@ class JobSaver(object):
 
     @classmethod
     @DB.connection_context()
-    def update_job_family_entity(cls, entity_model, entity_info):
+    def update_entity_table(cls, entity_model, entity_info):
         query_filters = []
         primary_keys = entity_model.get_primary_keys_name()
         for p_k in primary_keys:
@@ -189,6 +189,12 @@ class JobSaver(object):
         else:
             # not allow query all job
             return []
+
+    @classmethod
+    @DB.connection_context()
+    def query_start_timeout_job(cls, timeout):
+        jobs = Job.select().where(Job.f_status == JobStatus.WAITING, Job.f_cores > 0, Job.f_update_time < current_timestamp() - timeout)
+        return [job for job in jobs]
 
     @classmethod
     @DB.connection_context()

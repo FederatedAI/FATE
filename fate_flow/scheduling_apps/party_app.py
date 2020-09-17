@@ -67,7 +67,7 @@ def start_job(job_id, role, party_id):
 
 
 @manager.route('/<job_id>/<role>/<party_id>/align', methods=['POST'])
-def query_task_input_args(job_id, role, party_id):
+def query_job_input_args(job_id, role, party_id):
     job_input_args = JobController.query_job_input_args(input_data=request.json, role=role, party_id=party_id)
     return get_json_result(retcode=0, retmsg='success', data=job_input_args)
 
