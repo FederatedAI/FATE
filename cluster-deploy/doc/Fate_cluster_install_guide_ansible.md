@@ -40,10 +40,12 @@ Eggroll 是一个适用于机器学习和深度学习的大规模分布式架构
 
  本示例是每端只有一台主机，每端可以多台主机，目前只支持nodemanager多节点部署，其他组件都是单节点。
 
-| role  | partyid | IP地址                | 操作系统                | 主机配置 | 存储 | 部署模块                                                     |
-| ----- | ------- | --------------------- | ----------------------- | -------- | ---- | ------------------------------------------------------------ |
-| host  | 10000   | 192.168.0.1 （有外网) | CentOS 7.2/Ubuntu 16.04 | 8C16G    | 500G | fate_flow，fateboard，clustermanager，nodemanger，rollsite，mysql |
-| guest | 9999    | 192.168.0.2           | CentOS 7.2/Ubuntu 16.04 | 8C16G    | 500G | fate_flow，fateboard，clustermanager，nodemanger，rollsite，mysql |
+| role  | partyid | IP地址                | 操作系统   | 主机配置 | 存储 | 部署模块                                                     |
+| ----- | ------- | --------------------- | ---------- | -------- | ---- | ------------------------------------------------------------ |
+| host  | 10000   | 192.168.0.1 （有外网) | CentOS 7.2 | 8C16G    | 500G | fate_flow，fateboard，clustermanager，nodemanger，rollsite，mysql |
+| guest | 9999    | 192.168.0.2           | CentOS 7.2 | 8C16G    | 500G | fate_flow，fateboard，clustermanager，nodemanger，rollsite，mysql |
+
+备注：涉及exchange说明会用192.168.0.3表示其IP，但本次示例不涉及exchange的部署。
 
 ## 2.2.主机资源和操作系统要求
 
@@ -51,7 +53,7 @@ Eggroll 是一个适用于机器学习和深度学习的大规模分布式架构
 | -------- | ------------------------------------------------------------ |
 | 主机配置 | 不低于8C16G500G，千兆网卡                                    |
 | 操作系统 | CentOS linux 7.2及以上同时低于8/Ubuntu 16.04 或 Ubuntu 18.04 |
-| 依赖包   | 需要安装如下依赖包：<br/>#centos<br/>gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio <br/>numactl autoconf automake libtool libffi-devel ansible jq supervisor<br/>#ubuntu<br/>gcc g++ make openssl supervisor ansible jq libgmp-dev libmpfr-dev libmpc-dev <br/>libaio libaio-dev numactl autoconf automake libtool libffi-dev ansible jq supervisor <br/>cd /usr/lib/x86_64-linux-gnu<br/>if [ ! -f "libssl.so.10" ];then<br/>   ln -s libssl.so.1.0.0 libssl.so.10<br/>   ln -s libcrypto.so.1.0.0 libcrypto.so.10<br/>fi |
+| 依赖包   | 需要安装如下依赖包：<br/>#centos<br/>gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio <br/>numactl autoconf automake libtool libffi-devel ansible jq supervisor |
 | 用户     | 用户：app，属主：apps（app用户需可以sudo su root而无需密码） |
 | 文件系统 | 1、数据盘挂载在/data目录下。<br>2、创建/data/projects目录，目录属主为：app:apps。<br/>3、根目录空闲空间不低于20G。 |
 | 虚拟内存 | 不低于128G                                                   |
@@ -100,8 +102,6 @@ vim /etc/hosts
 
 centos系统执行：rpm -qa | grep selinux
 
-ubuntu系统执行：apt list --installed | grep selinux
-
 如果已安装了selinux就执行：setenforce 0
 
 3.3 修改Linux系统参数
@@ -109,34 +109,38 @@ ubuntu系统执行：apt list --installed | grep selinux
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
 
-1）vim /etc/security/limits.conf
+1）清理20-nproc.conf文件
+
+cd /etc/security/limits.d
+
+ls -lrt 20-nproc.conf
+
+存在则：mv 20-nproc.conf 20-nproc.conf_bak
+
+2）vim /etc/security/limits.conf
 
 \* soft nofile 65535
 
 \* hard nofile 65535
 
-2）vim /etc/security/limits.d/20-nproc.conf
+\* soft nproc 65535
 
-\* soft nproc unlimited
+\* hard nproc 65535
+
+重新登陆，ulimit -a查看是否生效
 
 3.4 关闭防火墙
 --------------
 
 **在目标服务器（192.168.0.1 192.168.0.2 ）root用户下执行**
 
-如果是Centos系统：
+Centos系统：
 
 systemctl disable firewalld.service
 
 systemctl stop firewalld.service
 
 systemctl status firewalld.service
-
-如果是Ubuntu系统：
-
-ufw disable
-
-ufw status
 
 3.5 软件环境初始化
 ------------------
@@ -164,6 +168,8 @@ app ALL=(ALL) NOPASSWD: ALL
 Defaults !env_reset
 
 **3）配置ssh无密登录**
+
+**注意：192.168.0.1不但需要可以免密登陆192.168.0.2，也需要可以免密登陆自身，配置完后务必手工ssh连接下自身和192.168.0.2，确认下认证信息。**
 
 **a. 在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
@@ -297,9 +303,6 @@ tar xzf ansible_nfate_1.4.5_release-1.0.0.tar.gz
 ```
 cd ansible-nfate-*
 #init.sh文件不需要修改，主要是辅助生成一些配置文件
-
-#测试环境加test参数执行
- sh ./tools/init.sh test
  
 #生产环境加prod参数执行
  sh ./tools/init.sh prod
@@ -313,31 +316,40 @@ init project_prod.yml
 
 ### 4.4.2 证书制作配置(可选)
 
+1）证书制作
+
 ```
-#证书制作
 vi /data/projects/ansible-nfate-1.*/tools/make.sh
-#1、自定义证书需同时部署两端，只部署一端需要手工处理证书，手工处理部分暂不介绍。
-#2、如果同时部署host和guest，则修改guest_host和host_host对应IP，exchange_host不需修改。同时部署host和exchange或者同时部署guest和exchange也是同理。
-#3、如果都需要部署，则都需要修改。
+
+#1、自定义安全证书需同时部署两端，只部署一端需要手工处理证书，手工处理部分暂不介绍。
+#2、安全证书支持如下部署方式：
+    1）host和guest同时部署。
+    2）host和exchange同时部署。
+    3）guest和exchange同时部署。
 
 guest_host="192.168.0.1" ---根据实际IP修改
 host_host="192.168.0.2" ---根据实际IP修改
-exchange_host="192.168.0.3" ---根据实际IP修改
+exchange_host="192.168.0.3" ---根据实际IP修改，本示例不部署无需修改
+```
 
-#执行脚本制作证书
+2）执行脚本制作证书
+
+```
 cd tools
 sh ./make.sh
 
-在keys/host，guest，exchange下会产生证书文件。
+在keys/host，guest目录下会产生证书文件。
+```
 
-#拷贝证书到部署目录
+3）拷贝证书到部署目录
+
+```
 sh cp-keys.sh host guest
 
 证书文件会拷贝到roles/eggroll/files/keys目录
 
 特别说明：
-1、cp-keys.sh的两个参数可以取值为host、guest和exchange。
-2、目前脚本部署只支持2方设置证书认证。（host&guest、host&exchange、guest&exchange)
+1、目前脚本部署只支持2方设置证书认证。（host&guest、host&exchange、guest&exchange)
 ```
 
 #### 4.4.2 修改配置文件
@@ -378,6 +390,8 @@ deploy_mode: "install" ---默认为空，修改为install，表示新部署
 
 **3）修改host方参数**
 
+**注意：启用安全证书通讯需把server_secure，client_secure，is_secure设置为true，以及is_secure对应的port设置为9371**。
+
 ```
 #不部署host方则不用修改
 #除了nodemanger可以设置多个IP外，其他都是单个IP
@@ -395,10 +409,10 @@ host:
       max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如12G，如果是rollsite专用的机器，配置成物理内存的75%。
       server_secure: False ---作为服务端，开启安全证书验证，不使用安全证书默认即可
       client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
-      default_rules: ---本party指向exchange或者其他party的IP，端口路由配置
+      default_rules: ---本party指向exchange或者其他party的IP、端口路由配置
       - name: default
-        ip: 192.168.0.3 ---exchange或者对端party rollsite IP
-        port: 9370 ---exchange或者对端party rollsite 端口，一般默认9370，即无安全证书部署；如需开启安全证书通信，应设置为9371；
+        ip: 192.168.0.2 ---对端party rollsite IP
+        port: 9370 ---对端party rollsite 端口，一般默认9370，即无安全证书部署；如需开启安全证书通信，应设置为9371；
         is_secure: False ---是否使用安全认证通讯；需要结合server_secure或者client_secure使用，当三者都为true时，表示和下一跳rollsite使用安全认证通讯，同时上一个参数port需设置为9371；不使用安全证书默认即可。
       rules: ---本party自身路由配置
       - name: default
@@ -453,6 +467,8 @@ host:
 
 **4）修改guest参数**
 
+**注意：启用安全证书通讯需把server_secure，client_secure，is_secure设置为true，以及is_secure对应的port设置为9371**。
+
 ```
 #不部署guest方则不用修改
 #除了nodemanger可以设置多个IP外，其他都是单个IP
@@ -470,10 +486,10 @@ guest:
       max_memory:    ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如12G，如果是rollsite专用的机器，配置成物理内存的75%。
       server_secure: False ---作为服务端，开启安全证书验证，不使用安全证书默认即可
       client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
-      default_rules:  ---本party指向exchange或者其他party的IP，端口路由配置
+      default_rules:  ---本party指向exchange或者其他party的IP、端口路由配置
       - name: default
-        ip: 192.168.0.3 ---exchange或者对端party rollsite IP
-        port: 9370 ---exchange或者对端party rollsite 端口，一般默认9370
+        ip: 192.168.0.1 ---对端party rollsite IP
+        port: 9370 ---对端party rollsite 端口，一般默认9370，即无安全证书部署；如需开启安全证书通信，应设置为9371；
         is_secure: False ---server_secure或者client_secure为true，指向的下一跳rollsite也开启了安全认证，此参数需要设置为true，上一个参数port需设置为9371，不使用安全证书默认即可
       rules:  ---本party自身路由配置
       - name: default
@@ -528,12 +544,14 @@ guest:
 
 **5）修改exchange参数**
 
+**注意：启用安全证书通讯需把server_secure，client_secure，is_secure设置为true，以及is_secure对应的port设置为9371**。
+
 ```
 #不部署exchange则不需要修改
 vi /data/projects/ansible-nfate-1.*/var_files/prod/fate_exchange
 
 exchange:
-  enable: False
+  enable: False --部署exchange需修改为True
   rollsite: 
     ips:
     - 192.168.0.3
@@ -548,17 +566,15 @@ exchange:
     rules:
     - name: default
       ip: 192.168.0.1
-      port: 9367
+      port: 9370  ---对应party rollsite 端口，一般默认9370，即无安全证书通讯；如需开启安全证书通信，应设置为9371；
       is_secure: False ---server_secure或者client_secure为true，指向的下一跳rollsite也开启了安全认证，此参数需要设置为true，上一个参数port需设置为9371，不使用安全证书默认即可
   - id: 9999
     rules:
     - name: default
       ip: 192.168.0.2
-      port: 9370
+      port: 9370 ---对应party rollsite 端口，一般默认9370，即无安全证书通讯；如需开启安全证书通信，应设置为9371；
       is_secure: False ---server_secure或者client_secure为true，指向的下一跳rollsite也开启了安全认证，此参数需要设置为true，上一个参数port需设置为9371，不使用安全证书默认即可
 ```
-
-
 
 ### 4.5 部署
 
@@ -567,11 +583,10 @@ exchange:
 ```
 #相对ansible-nfate-*目录
 cd /data/projects/ansible-nfate-1.*
-#测试环境加test参数执行
- nohup  sh ./boot.sh test -D > logs/boot.log 2>&1 &
  
 #生产环境加prod参数执行
 nohup  sh ./boot.sh prod -D > logs/boot.log 2>&1 &
+
 ```
 
 部署日志输出在logs目录下,实时查看是否有报错：
@@ -596,6 +611,16 @@ tail -f ansible.log （实时查看部署情况，如果没有这个日志文件
     ---/data/projects/data存在，需要mv。
 7、"Warning: supervisor_fate_conf exists, please remove ls /data/projects/common/supervisord/supervisord.d/fate-*.conf"
   ---/data/projects/common目录存在，需要mv。
+```
+
+fateflow部署完重启：
+
+```
+#因为fate_flow依赖的组件比较多，可能启动会有异常，处理如下：
+netstat -tlnp | grep 9360
+如果没有端口则重起fateflow：
+sh service.sh stop fate-fateflow
+sh service.sh start fate-fateflow
 ```
 
 ### 4.6 问题定位

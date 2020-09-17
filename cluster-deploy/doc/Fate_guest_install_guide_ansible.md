@@ -37,18 +37,20 @@ Eggroll 是一个适用于机器学习和深度学习的大规模分布式架构
 
 ## 2.1.部署规划
 
-| role  | partyid                | IP地址                | 操作系统                | 主机配置 | 存储 | 外网IP      | 外网带宽 | 部署模块                                              |
-| ----- | ---------------------- | --------------------- | ----------------------- | -------- | ---- | ----------- | -------- | ----------------------------------------------------- |
-| guest | 9999(根据实际规划修改) | 192.168.0.1 （有外网) | CentOS 7.2/Ubuntu 16.04 | 8C16G    | 500G | xx.xx.xx.xx | >=20Mb   | fate_flow，fateboard，clustermanager，rollsite，mysql |
-| guest | 9999(根据实际规划修改) | 192.168.0.2           | CentOS 7.2/Ubuntu 16.04 | 16C32G   | 2T   |             |          | nodemanger                                            |
+| role  | partyid                | IP地址                | 操作系统   | 主机配置 | 存储 | 外网IP      | 外网带宽 | 部署模块                                              |
+| ----- | ---------------------- | --------------------- | ---------- | -------- | ---- | ----------- | -------- | ----------------------------------------------------- |
+| guest | 9999(根据实际规划修改) | 192.168.0.1 （有外网) | CentOS 7.2 | 8C16G    | 500G | xx.xx.xx.xx | >=20Mb   | fate_flow，fateboard，clustermanager，rollsite，mysql |
+| guest | 9999(根据实际规划修改) | 192.168.0.2           | CentOS 7.2 | 16C32G   | 2T   |             |          | nodemanger                                            |
+
+备注：涉及exchange说明会用192.168.0.3表示其IP，但本次示例不涉及exchange的部署。
 
 ## 2.2.主机资源和操作系统要求
 
 | **类别** | **说明**                                                     |
 | -------- | ------------------------------------------------------------ |
 | 主机配置 | 不低于8C16G500G，千兆网卡                                    |
-| 操作系统 | CentOS linux 7.2及以上同时低于8/Ubuntu 16.04 或 Ubuntu 18.04 |
-| 依赖包   | 需要安装如下依赖包：<br/>#centos<br/>gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio <br/>numactl autoconf automake libtool libffi-devel ansible jq supervisor<br/>#ubuntu<br/>gcc g++ make openssl supervisor ansible jq libgmp-dev libmpfr-dev libmpc-dev <br/>libaio libaio-dev numactl autoconf automake libtool libffi-dev ansible jq supervisor <br/>cd /usr/lib/x86_64-linux-gnu<br/>if [ ! -f "libssl.so.10" ];then<br/>   ln -s libssl.so.1.0.0 libssl.so.10<br/>   ln -s libcrypto.so.1.0.0 libcrypto.so.10<br/>fi |
+| 操作系统 | CentOS linux 7.2及以上同时低于8                              |
+| 依赖包   | 需要安装如下依赖包：<br/>#centos<br/>gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio <br/>numactl autoconf automake libtool libffi-devel ansible jq supervisor |
 | 用户     | 用户：app，属主：apps（app用户需可以sudo su root而无需密码） |
 | 文件系统 | 1、数据盘挂载在/data目录下。<br/>2、创建/data/projects目录，目录属主为：app:apps。<br/>3、根目录空闲空间不低于20G。 |
 | 虚拟内存 | 不低于128G                                                   |
@@ -97,8 +99,6 @@ vim /etc/hosts
 
 centos系统执行：rpm -qa | grep selinux
 
-ubuntu系统执行：apt list --installed | grep selinux
-
 如果已安装了selinux就执行：setenforce 0
 
 3.3 修改Linux系统参数
@@ -106,34 +106,36 @@ ubuntu系统执行：apt list --installed | grep selinux
 
 **在目标服务器（192.168.0.1 192.168.0.2）root用户下执行：**
 
-1）vim /etc/security/limits.conf
+1）清理20-nproc.conf文件
+
+cd /etc/security/limits.d
+
+ls -lrt 20-nproc.conf
+
+存在则：mv 20-nproc.conf 20-nproc.conf_bak
+
+2）vim /etc/security/limits.conf
 
 \* soft nofile 65535
 
 \* hard nofile 65535
 
-2）vim /etc/security/limits.d/20-nproc.conf
+\* soft nproc 65535
 
-\* soft nproc unlimited
+\* hard nproc 65535
+
+重新登陆，ulimit -a查看是否生效
 
 3.4 关闭防火墙
 --------------
 
 **在目标服务器（192.168.0.1 192.168.0.2 ）root用户下执行**
 
-如果是Centos系统：
-
 systemctl disable firewalld.service
 
 systemctl stop firewalld.service
 
 systemctl status firewalld.service
-
-如果是Ubuntu系统：
-
-ufw disable
-
-ufw status
 
 3.5 软件环境初始化
 ------------------
@@ -161,6 +163,8 @@ app ALL=(ALL) NOPASSWD: ALL
 Defaults !env_reset
 
 **3）配置ssh无密登录**
+
+**注意：192.168.0.1不但需要可以免密登陆192.168.0.2，也需要可以免密登陆自身，配置完后务必手工ssh连接下自身和192.168.0.2，确认下认证信息。**
 
 **a. 在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
@@ -295,9 +299,6 @@ tar xzf ansible_nfate_1.4.5_release-1.0.0.tar.gz
 ```
 cd ansible-nfate-*
 #init.sh文件不需要修改，主要是辅助生成一些配置文件
-
-#测试环境加test参数执行
- sh ./tools/init.sh test
  
 #生产环境加prod参数执行
  sh ./tools/init.sh prod
@@ -366,6 +367,8 @@ deploy_mode: "install" ---默认为空，修改为install，表示新部署
 
 **3）修改guest参数**
 
+**注意：启用安全证书通讯需把server_secure，client_secure，is_secure设置为true，以及is_secure对应的port设置为9371**。
+
 ```
 #除了nodemanger可以设置多个IP外，其他都是单个IP
 vi /data/projects/ansible-nfate-1.*/var_files/prod/fate_guest
@@ -379,7 +382,7 @@ guest:
       port: 9370 ---rollsite grpc端口
       secure_port: 9371 ---rollsite grpcs端口
       pool_size: 600 ---线程池大小
-      max_memory: 8G   ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如12G，如果是rollsite专用的机器，配置成物理内存的75%。
+      max_memory: 12G   ---rollsite进程JVM内存参数，默认是物理内存的1/4，可根据实际情况设置,如12G，如果是rollsite专用的机器，配置成物理内存的75%。
       server_secure: False ---作为服务端，开启安全证书验证，不使用安全证书默认即可
       client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
       default_rules:  ---默认路由，本party指向exchange或者其他party的IP，端口
@@ -447,8 +450,6 @@ guest:
 ```
 #相对ansible-nfate-*目录
 cd /data/projects/ansible-nfate-1.*
-#测试环境加test参数执行
- nohup  sh ./boot.sh test -D > logs/boot.log 2>&1 &
  
 #生产环境加prod参数执行
 nohup  sh ./boot.sh prod -D > logs/boot.log 2>&1 &
@@ -476,6 +477,16 @@ tail -f ansible.log （实时查看部署情况，如果没有这个日志文件
     ---/data/projects/data存在，需要mv。
 7、"Warning: supervisor_fate_conf exists, please remove ls /data/projects/common/supervisord/supervisord.d/fate-*.conf"
   ---/data/projects/common目录存在，需要mv。
+```
+
+fateflow部署完重启：
+
+```
+#因为fate_flow依赖的组件比较多，可能启动会有异常，处理如下：
+netstat -tlnp | grep 9360
+如果没有端口则重起fateflow：
+sh service.sh stop fate-fateflow
+sh service.sh start fate-fateflow
 ```
 
 ## 4.6 问题定位
