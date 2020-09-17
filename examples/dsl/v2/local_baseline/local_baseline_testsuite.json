@@ -1,0 +1,46 @@
+{
+    "data": [
+        {
+            "file": "../../data/vehicle_scale_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "../../data/vehicle_scale_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "vehicle_scale_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "../../data/breast_homo_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "../../data/breast_homo_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "tasks": {
+        "local_baseline": {
+            "conf": "./test_local_baseline_job_conf.json",
+            "dsl": "./test_local_baseline_job_dsl.json"
+        },
+        "local_baseline-homo": {
+            "conf": "./test_local_baseline_homo_job_conf.json",
+            "dsl": "./test_local_baseline_homo_job_dsl.json"
+        }
+    }
+}
