@@ -60,7 +60,7 @@
             "file": "examples/data/vehicle_scale_homo_test.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "homo_vehicle_scale_test",
+            "table_name": "vehicle_scale_homo_test",
             "namespace": "experiment",
             "role": "host_0"
         },
@@ -68,7 +68,7 @@
             "file": "examples/data/student_homo_guest.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "homo_student_guest",
+            "table_name": "student_homo_guest",
             "namespace": "experiment",
             "role": "guest_0"
         },
@@ -76,7 +76,7 @@
             "file": "examples/data/student_homo_host.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "homo_student_host",
+            "table_name": "student_homo_host",
             "namespace": "experiment",
             "role": "host_0"
         },
@@ -84,7 +84,7 @@
             "file": "examples/data/student_homo_test.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "homo_student_test",
+            "table_name": "student_homo_test",
             "namespace": "experiment",
             "role": "guest_0"
         },
@@ -92,7 +92,7 @@
             "file": "examples/data/student_homo_test.csv",
             "head": 1,
             "partition": 16,
-            "table_name": "homo_student_test",
+            "table_name": "student_homo_test",
             "namespace": "experiment",
             "role": "host_0"
         },
