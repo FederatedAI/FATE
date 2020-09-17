@@ -136,7 +136,7 @@ class _FederationTimer(object):
         except ImportError:
             return pprint.pformat(cls._STATS)
         else:
-            head = ["name", "get_count", "remote_count", "remote_time", "get_time", "mean_get_time", "mean_remote_time"]
+            head = ["name", "get_count", "remote_count", "get_time", "remote_time", "mean_get_time", "mean_remote_time"]
             pretty_table = prettytable.PrettyTable(head)
             pretty_table.hrules = prettytable.ALL
             pretty_table.max_width["name"] = 25
@@ -156,7 +156,7 @@ class _FederationRemoteTimer(_FederationTimer):
 
         if name not in self._STATS:
             self._STATS[name] = _FederationTimerItem()
-        self._STATS[name].remote_time += 1
+        self._STATS[name].remote_count += 1
 
     def done(self, federation):
         self._end_time = time.time()
