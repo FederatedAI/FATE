@@ -662,5 +662,5 @@ class Evaluation(ModelBase):
     def extract_data(data: dict):
         result = {}
         for k, v in data.items():
-            result[".".join(k.split(".")[:-1])] = v
+            result[".".join(k.split(".")[:1])] = v
         return result
