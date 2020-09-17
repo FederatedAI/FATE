@@ -70,7 +70,7 @@
             "penalty": "L2",
             "optimizer": "rmsprop",
             "alpha": 0.01,
-            "max_iter": 10,
+            "max_iter": 3,
             "batch_size": 320,
             "learning_rate": 0.15,
             "init_param": {
@@ -81,14 +81,14 @@
             "penalty": "L2",
             "optimizer": "rmsprop",
             "alpha": 0.01,
-            "max_iter": 10,
+            "max_iter": 3,
             "batch_size": 320,
             "learning_rate": 0.15,
             "init_param": {
                 "init_method": "random_uniform"
             },
             "cv_param": {
-                "n_splits": 5,
+                "n_splits": 2,
                 "shuffle": true,
                 "random_seed": 103,
                 "need_cv": true
@@ -96,13 +96,14 @@
         },
         "hetero_secureboost_0": {
             "cv_param": {
+                "n_splits": 2,
                 "need_cv": true,
                 "shuffle": false
             },
-            "num_trees": 5
+            "num_trees": 3
         },
         "hetero_secureboost_1": {
-            "num_trees": 5
+            "num_trees": 2
         }
     }
 }
