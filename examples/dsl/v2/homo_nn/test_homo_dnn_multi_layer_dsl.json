@@ -1,0 +1,48 @@
+{
+  "components": {
+    "reader_0": {
+      "module": "Reader",
+      "output": {
+        "data": [
+          "data"
+        ]
+      }
+    },
+    "dataio_0": {
+      "module": "DataIO",
+      "input": {
+        "data": {
+          "data": [
+            "reader_0.data"
+          ]
+        }
+      },
+      "output": {
+        "data": [
+          "data"
+        ],
+        "model": [
+          "model"
+        ]
+      }
+    },
+    "homo_nn_0": {
+      "module": "HomoNN",
+      "input": {
+        "data": {
+          "train_data": [
+            "dataio_0.data"
+          ]
+        }
+      },
+      "output": {
+        "data": [
+          "data"
+        ],
+        "model": [
+          "model"
+        ]
+      }
+    }
+  }
+}

@@ -45,23 +45,23 @@ def run_homo_nn_pipeline(config, namespace, data: dict, nn_component, num_host):
         config = Config.load(config)
 
     guest_train_data = data["guest"]
-    host_train_data = data["host"][num_host]
+    host_train_data = data["host"][:num_host]
     for d in [guest_train_data, *host_train_data]:
         d["namespace"] = f"{d['namespace']}{namespace}"
 
     hosts = config.parties.host[:num_host]
     pipeline = PipeLine() \
-        .set_initiator(role='guest', party_id=config.parties.guest) \
-        .set_roles(guest=config.parties.guest, host=hosts, arbiter=config.parties.arbiter)
+        .set_initiator(role='guest', party_id=config.parties.guest[0]) \
+        .set_roles(guest=config.parties.guest[0], host=hosts, arbiter=config.parties.arbiter)
 
-    reader_0 = Reader(name="reader_1")
-    reader_0.get_party_instance(role='guest', party_id=config.parties.guest).algorithm_param(table=guest_train_data)
+    reader_0 = Reader(name="reader_0")
+    reader_0.get_party_instance(role='guest', party_id=config.parties.guest[0]).algorithm_param(table=guest_train_data)
     for i in range(num_host):
         reader_0.get_party_instance(role='host', party_id=hosts[i]) \
             .algorithm_param(table=host_train_data[i])
 
     dataio_0 = DataIO(name="dataio_0", with_label=True)
-    dataio_0.get_party_instance(role='guest', party_id=config.parties.guest) \
+    dataio_0.get_party_instance(role='guest', party_id=config.parties.guest[0]) \
         .algorithm_param(with_label=True, output_format="dense")
     dataio_0.get_party_instance(role='host', party_id=hosts).algorithm_param(with_label=True)
 
@@ -80,6 +80,8 @@ def run_homo_nn_pipeline(config, namespace, data: dict, nn_component, num_host):
                                    data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
     # run predict model
     predict_pipeline.predict(backend=config.backend, work_mode=config.work_mode)
+    pipeline.get_train_conf()
+    pipeline.get_train_dsl()
 
 
 def runner(main_func):

@@ -44,15 +44,15 @@ def run_pearson_pipeline(config, namespace, data, common_param=None, guest_only_
     host_data["namespace"] = f"{host_data['namespace']}{namespace}"
 
     pipeline = PipeLine() \
-        .set_initiator(role='guest', party_id=config.parties.guest) \
-        .set_roles(guest=config.parties.guest, host=config.parties.host[0])
+        .set_initiator(role='guest', party_id=config.parties.guest[0]) \
+        .set_roles(guest=config.parties.guest[0], host=config.parties.host[0])
 
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=config.parties.guest).algorithm_param(table=guest_data)
+    reader_0.get_party_instance(role='guest', party_id=config.parties.guest[0]).algorithm_param(table=guest_data)
     reader_0.get_party_instance(role='host', party_id=config.parties.host[0]).algorithm_param(table=host_data)
 
     dataio_0 = DataIO(name="dataio_0")
-    dataio_0.get_party_instance(role='guest', party_id=config.parties.guest) \
+    dataio_0.get_party_instance(role='guest', party_id=config.parties.guest[0]) \
         .algorithm_param(with_label=True, output_format="dense")
     dataio_0.get_party_instance(role='host', party_id=config.parties.host[0]).algorithm_param(with_label=False)
 
@@ -63,7 +63,7 @@ def run_pearson_pipeline(config, namespace, data, common_param=None, guest_only_
     hetero_pearson_component = HeteroPearson(name="hetero_pearson_0", **common_param)
 
     if guest_only_param:
-        hetero_pearson_component.get_party_instance("guest", config.parties.guest).algorithm_param(**guest_only_param)
+        hetero_pearson_component.get_party_instance("guest", config.parties.guest[0]).algorithm_param(**guest_only_param)
 
     if host_only_param:
         hetero_pearson_component.get_party_instance("host", config.parties.host[0]).algorithm_param(**host_only_param)
