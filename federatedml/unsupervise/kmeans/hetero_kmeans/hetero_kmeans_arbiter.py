@@ -134,7 +134,7 @@ class HeteroKmeansArbiter(BaseKmeansModel):
         self.aggregator.send_aggregated_tables(cluster_result, suffix='predict')
 
         dist_cluster_dtable = res_dict.join(cluster_result, lambda v1, v2: [v1, v2])
-        dist_table = self.cal_ave_dist(dist_cluster_dtable, cluster_result, self.k)  # ave dist in each cluster
+        dist_table = self.cal_ave_dist(dist_cluster_dtable, cluster_result)  # ave dist in each cluster
         cluster_dist = self.cluster_dist_aggregator.sum_model(suffix='predict')
 
         dist_cluster_dtable_out = cluster_result.join(cluster_dist_result, lambda v1, v2: [int(v1), float(v2)])
