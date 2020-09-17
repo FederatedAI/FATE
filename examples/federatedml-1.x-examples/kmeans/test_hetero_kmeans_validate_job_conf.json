@@ -94,6 +94,9 @@
         },
         "evaluation_0":{
             "eval_type":"clustering"
+        },
+        "evaluation_1":{
+            "eval_type":"clustering"
         }
     }
 }

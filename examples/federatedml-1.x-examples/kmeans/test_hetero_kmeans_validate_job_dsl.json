@@ -68,8 +68,7 @@
         "data": {
           "train_data": [
             "intersection_0.train"
-          ],
-          "validate_data": ["intersection_1.eval_data"]
+          ]
         }
       },
       "output": {
