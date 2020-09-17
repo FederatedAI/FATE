@@ -19,11 +19,13 @@ import json
 import typing
 from pathlib import Path
 
+from fate_arch.common import conf_utils
+
 import yaml
 
 _transfer_auth: typing.Optional[typing.MutableMapping] = None
 
-_TRANSFER_CONF_PATH = "../../../conf/transfer_conf.yaml"
+_TRANSFER_CONF_PATH = conf_utils.conf_realpath(conf_name=conf_utils.TRANSFER_CONF)
 
 
 def _get_transfer_conf():
@@ -41,7 +43,7 @@ def _get_transfer_conf():
 
     transfer_conf_files = []
     for base_dir in conf.get('paths', []):
-        full_path = path.parent.joinpath(base_dir)
+        full_path = path.parent.parent.joinpath(base_dir)
         if full_path.is_file():
             if full_path.suffix == ".json":
                 transfer_conf_files.append([full_path])

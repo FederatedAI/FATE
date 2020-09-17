@@ -18,9 +18,9 @@ class TestJobOperation(unittest.TestCase):
 
     def test_job_operation(self):
         # submit
-        with open(os.path.join(file_utils.get_project_base_directory(), self.dsl_path), 'r') as f:
+        with open(os.path.join(file_utils.get_python_base_directory(), self.dsl_path), 'r') as f:
             dsl_data = json.load(f)
-        with open(os.path.join(file_utils.get_project_base_directory(), self.config_path), 'r') as f:
+        with open(os.path.join(file_utils.get_python_base_directory(), self.config_path), 'r') as f:
             config_data = json.load(f)
             config_data['job_parameters']['work_mode'] = WORK_MODE
         response = requests.post("/".join([self.server_url, 'job', 'submit']),

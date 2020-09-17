@@ -28,8 +28,12 @@ def get_project_base_directory():
     global PROJECT_BASE
     if PROJECT_BASE is None:
         PROJECT_BASE = os.path.abspath(
-            os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir))
+            os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir, os.pardir))
     return PROJECT_BASE
+
+
+def get_python_base_directory():
+    return os.path.join(get_project_base_directory(), "python")
 
 
 @cached(cache=LRUCache(maxsize=10))
@@ -93,8 +97,3 @@ def rewrite_json_file(filepath, json_data):
     with open(filepath, 'w') as f:
         json.dump(json_data, f, indent=4, separators=(',', ': '))
     f.close()
-
-
-if __name__ == "__main__":
-    print(get_project_base_directory())
-    print(load_json_conf('federatedml/transfer_variable/definition/transfer_conf.json'))

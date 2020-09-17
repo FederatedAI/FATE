@@ -309,7 +309,7 @@ class TaskExecutor(object):
     @classmethod
     def monkey_patch(cls):
         package_name = "monkey_patch"
-        package_path = os.path.join(file_utils.get_project_base_directory(), "fate_flow", package_name)
+        package_path = os.path.join(file_utils.get_python_base_directory(), "fate_flow", package_name)
         if not os.path.exists(package_path):
             return
         for f in os.listdir(package_path):

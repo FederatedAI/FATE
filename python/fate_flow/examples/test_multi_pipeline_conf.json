@@ -7,7 +7,7 @@
         "work_mode": 1,
         "task_parallelism": 2,
         "task_nodes": 1,
-        "task_cores_per_node": 2,
+        "task_cores_per_node": 1,
         "align_task_input_data_partition": true,
         "dsl_version": "2"
     },

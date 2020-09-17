@@ -74,7 +74,7 @@ API_VERSION = "v1"
 FATEFLOW_SERVICE_NAME = 'fateflow'
 MAIN_MODULE = os.path.relpath(__main__.__file__)
 SERVER_MODULE = 'fate_flow_server.py'
-TEMP_DIRECTORY = os.path.join(file_utils.get_project_base_directory(), "fate_flow", "temp")
+TEMP_DIRECTORY = os.path.join(file_utils.get_project_base_directory(), "temp", "fate_flow")
 HEADERS = {
     'Content-Type': 'application/json',
     'Connection': 'close'
