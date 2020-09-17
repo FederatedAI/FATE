@@ -4,7 +4,8 @@
         "party_id": 9999
     },
     "job_parameters": {
-        "work_mode": 0,
+        "work_mode": 1,
+        "backend": 0,
         "task_parallelism": 2,
         "task_nodes": 1,
         "task_cores_per_node": 2,

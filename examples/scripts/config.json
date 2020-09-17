@@ -180,7 +180,7 @@
       "file": "examples/data/breast_homo_test.csv",
       "head": 1,
       "partition": 16,
-      "table_name": "homo_breast_test",
+      "table_name": "breast_homo_test",
       "namespace": "experiment",
       "count": 114
     },

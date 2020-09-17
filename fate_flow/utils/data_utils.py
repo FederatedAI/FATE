@@ -47,19 +47,25 @@ def default_output_table_info(task_id, task_version):
     return f"output_data_{task_id}_{task_version}", base_utils.fate_uuid()
 
 
-def default_output_path(name, namespace):
-    return f"/fate/output_data/{namespace}/{name}"
+def default_output_fs_path(name, namespace, prefix=None):
+    return default_filesystem_path(data_type="output", name=name, namespace=namespace, prefix=prefix)
 
 
-def default_input_path(name, namespace):
-    return f"/fate/input_data/{namespace}/{name}"
+def default_input_fs_path(name, namespace, prefix=None):
+    return default_filesystem_path(data_type="input", name=name, namespace=namespace, prefix=prefix)
+
+
+def default_filesystem_path(data_type, name, namespace, prefix=None):
+    p = f"/fate/{data_type}_data/{namespace}/{name}"
+    if prefix:
+        p = f"{prefix}/{p}"
+    return p
 
 
 def get_input_data_min_partitions(input_data, role, party_id):
     min_partition = None
     if role != 'arbiter':
         for data_type, data_location in input_data[role][party_id].items():
-
             table_info = {'name': data_location.split('.')[1], 'namespace': data_location.split('.')[0]}
             table_meta = storage.StorageTableMeta(name=table_info['name'], namespace=table_info['namespace'])
             if table_meta:

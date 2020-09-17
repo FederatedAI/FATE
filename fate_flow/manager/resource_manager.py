@@ -24,28 +24,21 @@ from fate_arch.common.log import schedule_logger
 from fate_arch.common import EngineType
 from fate_flow.db.db_models import DB, BackendRegistry, Job
 from fate_flow.entity.types import ResourceOperation, RunParameters
-from fate_flow.settings import stat_logger, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE
+from fate_flow.settings import stat_logger, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE, SUPPORT_ENGINES
 from fate_flow.utils import job_utils
 
 
 class ResourceManager(object):
     @classmethod
     def initialize(cls):
-        # initialize default backend
-        # storage backend is for component output data
-        default_backends = {
-            EngineType.COMPUTING: [ComputingEngine.EGGROLL, ComputingEngine.SPARK],
-            EngineType.FEDERATION: [FederationEngine.EGGROLL, FederationEngine.MQ],
-            EngineType.STORAGE: [StorageEngine.EGGROLL, StorageEngine.HDFS]
-        }
-        for engine_type, engines_name in default_backends.items():
+        for engine_type, engines_name in SUPPORT_ENGINES.items():
             for engine_name in engines_name:
                 engine_info = get_base_config(engine_name, {})
                 if engine_info:
                     engine_info["engine"] = engine_name
                     cls._initialize_backend(engine_type=engine_type, engine_info=engine_info)
-        # initialize standalone backend
-        for engine_type in default_backends.keys():
+        # initialize standalone engine
+        for engine_type in SUPPORT_ENGINES.keys():
             engine_name = "STANDALONE"
             engine_info = {
                 "engine": engine_name,
@@ -130,7 +123,17 @@ class ResourceManager(object):
             else:
                 schedule_logger(job_id=job_id).info(
                     f"save apply job {job_id} resource on {role} {party_id} record failed, rollback...")
-                cls.return_job_resource(job_id=job_id, role=role, party_id=party_id)
+                return_status, remaining_cores, remaining_memory = cls.update_resource(model=BackendRegistry,
+                                                                                       cores=cores,
+                                                                                       memory=memory,
+                                                                                       operation_type=ResourceOperation.RETURN,
+                                                                                       engine_type=EngineType.COMPUTING,
+                                                                                       engine_name=engine_name,
+                                                                                       )
+                if return_status:
+                    schedule_logger(job_id=job_id).info(f"return job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} successfully")
+                else:
+                    schedule_logger(job_id=job_id).info(f"return job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} failed, remaining_cores: {remaining_cores}, remaining_memory: {remaining_memory}")
                 return False
         else:
             schedule_logger(job_id=job_id).info(f"apply job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} failed, remaining_cores: {remaining_cores}, remaining_memory: {remaining_memory}")

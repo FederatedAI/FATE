@@ -72,8 +72,8 @@ class _FederationRemoteTimer(_FederationTimer):
 
     def done(self, federation):
         self._end_time = time.time()
-        profile_logger.info(f"[federation.remote@{self._local_party}->{self._parties}]"
-                            f"done: name={self._name}, tag={self._tag}")
+        profile_logger.debug(f"[federation.remote@{self._local_party}->{self._parties}]"
+                             f"done: name={self._name}, tag={self._tag}")
 
         if is_profile_remote_enable():
             federation.remote(v={"start_time": self._start_time, "end_time": self._end_time},
@@ -102,15 +102,15 @@ class _FederationGetTimer(_FederationTimer):
 
     def done(self, federation):
         self._end_time = time.time()
-        profile_logger.info(f"[federation.get@{self._local_party}<-{self._parties}]"
-                            f"done: name={self._name}, tag={self._tag}")
+        profile_logger.debug(f"[federation.get@{self._local_party}<-{self._parties}]"
+                             f"done: name={self._name}, tag={self._tag}")
 
         if is_profile_remote_enable():
             remote_meta = federation.get(name=self._name, tag=profile_remote_tag(self._tag), parties=self._parties,
                                          gc=None)
             for party, meta in zip(self._parties, remote_meta):
-                profile_logger.info(f"[federation.meta{self._local_party}<-{party}]"
-                                    f"name={self._name}, tag = {self._tag}, meta={meta}")
+                profile_logger.debug(f"[federation.meta{self._local_party}<-{party}]"
+                                     f"name={self._name}, tag = {self._tag}, meta={meta}")
 
     @property
     def elapse(self):
@@ -118,12 +118,12 @@ class _FederationGetTimer(_FederationTimer):
 
 
 def federation_remote_timer(name, tag, local, parties):
-    profile_logger.info(f"[federation.remote@{local}->{parties}]start: name={name}, tag={tag}")
+    profile_logger.debug(f"[federation.remote@{local}->{parties}]start: name={name}, tag={tag}")
     return _FederationRemoteTimer(name, tag, local, parties)
 
 
 def federation_get_timer(name, tag, local, parties):
-    profile_logger.info(f"[federation.get@{local}<-{parties}]start: name={name}, tag={tag}")
+    profile_logger.debug(f"[federation.get@{local}<-{parties}]start: name={name}, tag={tag}")
     return _FederationGetTimer(name, tag, local, parties)
 
 
@@ -162,16 +162,16 @@ def computing_profile(func):
         func_string = _func_annotated_string(func, *args, **kwargs)
         call_stack_strings = _call_stack_strings()
         if _PROFILE_LOG_ENABLED:
-            profile_logger.info(f"[computing.{func.__name__}]start, "
-                                f"func: {func_string}, "
-                                f"call_stack: {call_stack_strings}")
+            profile_logger.debug(f"[computing.{func.__name__}]start, "
+                                 f"func: {func_string}, "
+                                 f"call_stack: {call_stack_strings}")
         timer = _ComputingTimer(func.__name__)
         rtn = func(*args, **kwargs)
         timer.done()
         if _PROFILE_LOG_ENABLED:
-            profile_logger.info(f"[computing.{func.__name__}]done, func: {func_string}->{_pretty_table_str(rtn)}, "
-                                f"elapse={timer.elapse()}, "
-                                f"call_stack: {call_stack_strings}")
+            profile_logger.debug(f"[computing.{func.__name__}]done, func: {func_string}->{_pretty_table_str(rtn)}, "
+                                 f"elapse={timer.elapse()}, "
+                                 f"call_stack: {call_stack_strings}")
         return rtn
 
     return _fn

@@ -64,57 +64,6 @@ class Session(object):
             storage_session.set_default(name=kwargs["name"], namespace=kwargs["namespace"])
         return storage_session
 
-    @classmethod
-    def convert(cls, src_name, src_namespace, dest_name, dest_namespace,
-                computing_engine: ComputingEngine = ComputingEngine.EGGROLL, force=False):
-        # The source and target may be different session types
-        src_table_meta = StorageTableMeta(name=src_name, namespace=src_namespace)
-        if not src_table_meta:
-            raise RuntimeError(f"can not found table name: {src_name} namespace: {src_namespace}")
-        dest_table_address = None
-        dest_table_engine = None
-        if src_table_meta.get_engine() not in Relationship.CompToStore.get(computing_engine, []):
-            if computing_engine == ComputingEngine.STANDALONE:
-                from fate_arch.storage import EggRollStorageType
-                dest_table_address = StorageTableMeta.create_address(storage_engine=StorageEngine.STANDALONE,
-                                                                     address_dict=dict(name=dest_name,
-                                                                                       namespace=dest_namespace,
-                                                                                       storage_type=EggRollStorageType.ROLLPAIR_LMDB))
-                dest_table_engine = StorageEngine.STANDALONE
-            elif computing_engine == ComputingEngine.EGGROLL:
-                from fate_arch.storage.eggroll import StorageSession
-                from fate_arch.storage import EggRollStorageType
-                dest_table_address = StorageTableMeta.create_address(storage_engine=StorageEngine.EGGROLL,
-                                                                     address_dict=dict(name=dest_name,
-                                                                                       namespace=dest_namespace,
-                                                                                       storage_type=EggRollStorageType.ROLLPAIR_LMDB))
-                dest_table_engine = StorageEngine.EGGROLL
-            elif computing_engine == ComputingEngine.SPARK:
-                pass
-            else:
-                raise RuntimeError(f"can not support computing engine {computing_engine}")
-            return src_table_meta, dest_table_address, dest_table_engine
-        else:
-            return src_table_meta, dest_table_address, dest_table_engine
-
-    @classmethod
-    def copy_table(cls, src_table, dest_table):
-        count = 0
-        data = []
-        part_of_data = []
-        for k, v in src_table.collect():
-            data.append((k, v))
-            count += 1
-            if count < 100:
-                part_of_data.append((k, v))
-            if len(data) == MAX_NUM:
-                dest_table.put_all(data)
-                data = []
-        if data:
-            dest_table.put_all(data)
-        dest_table.get_meta().update_metas(schema=src_table.get_meta(meta_type="schema"), count=src_table.count(),
-                                           part_of_data=part_of_data)
-
 
 class StorageSessionBase(StorageSessionABC):
     def __init__(self, session_id, engine_name):
@@ -138,7 +87,7 @@ class StorageSessionBase(StorageSessionABC):
         table_meta.create()
         table.set_meta(table_meta)
         # update count on meta
-        table.count()
+        # table.count()
         return table
 
     def set_default(self, name, namespace):
