@@ -1,25 +1,18 @@
 {
     "components" : {
-        "reader_0": {
-            "module": "Reader",
-            "output": {
-                "data": ["table"]
-            }
-         },
         "dataio_0": {
             "module": "DataIO",
             "input": {
                 "data": {
                     "data": [
-                         "reader_0.table"
+                        "args.train_data"
                     ]
                 }
             },
             "output": {
                 "data": ["train"],
                 "model": ["dataio"]
-            },
-			"need_deploy": true
+            }
          },
         "hetero_kmeans_0": {
             "module": "HeteroKmeans",

@@ -30,7 +30,7 @@ from federatedml.statistic.data_overview import get_header
 from federatedml.transfer_variable.transfer_class.hetero_feature_selection_transfer_variable import \
     HeteroFeatureSelectionTransferVariable
 from federatedml.util import LOGGER
-from federatedml.util import abnormal_detection
+from federatedml.util import abnormal_detection, anonymous_generator
 from federatedml.util import consts
 from federatedml.util.io_check import assert_io_num_rows_equal
 from federatedml.util.schema_check import assert_schema_consistent
@@ -106,11 +106,18 @@ class BaseHeteroFeatureSelection(ModelBase):
         )
 
         host_col_names = []
-        for host_id, this_host_name in enumerate(self.completed_selection_result.get_host_sorted_col_names()):
-            party_id = self.component_properties.host_party_idlist[host_id]
-            LOGGER.debug("In _get_param, this_host_name: {}, party_id: {}".format(this_host_name, party_id))
+        if self.role == consts.GUEST:
+            for host_id, this_host_name in enumerate(self.completed_selection_result.get_host_sorted_col_names()):
+                party_id = self.component_properties.host_party_idlist[host_id]
+                LOGGER.debug("In _get_param, this_host_name: {}, party_id: {}".format(this_host_name, party_id))
 
-            host_col_names.append(feature_selection_param_pb2.HostColNames(col_names=this_host_name,
+                host_col_names.append(feature_selection_param_pb2.HostColNames(col_names=this_host_name,
+                                                                               party_id=str(party_id)))
+        else:
+            party_id = self.component_properties.local_partyid
+            anonymous_names = [anonymous_generator.generate_anonymous(fid, model=self)
+                               for fid in range(len(self.header))]
+            host_col_names.append(feature_selection_param_pb2.HostColNames(col_names=anonymous_names,
                                                                            party_id=str(party_id)))
 
         result_obj = feature_selection_param_pb2.FeatureSelectionParam(
@@ -121,8 +128,8 @@ class BaseHeteroFeatureSelection(ModelBase):
             header=self.curt_select_properties.header
         )
 
-        json_result = json_format.MessageToJson(result_obj)
-        LOGGER.debug("json_result: {}".format(json_result))
+        # json_result = json_format.MessageToJson(result_obj)
+        # LOGGER.debug("json_result: {}".format(json_result))
         return result_obj
 
     def save_data(self):

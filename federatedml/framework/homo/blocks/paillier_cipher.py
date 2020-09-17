@@ -34,7 +34,9 @@ class PaillierCipherTransVar(HomoTransferBase):
 
 class Server(object):
 
-    def __init__(self, trans_var: PaillierCipherTransVar = PaillierCipherTransVar()):
+    def __init__(self, trans_var: PaillierCipherTransVar = None):
+        if trans_var is None:
+            trans_var = PaillierCipherTransVar()
         self._use_encrypt = trans_var.use_encrypt
         self._pailler_pubkey = trans_var.pailler_pubkey
         self._re_encrypt_times = trans_var.re_encrypt_times
@@ -96,7 +98,9 @@ class Server(object):
 
 class Client(object):
 
-    def __init__(self, trans_var: PaillierCipherTransVar = PaillierCipherTransVar()):
+    def __init__(self, trans_var: PaillierCipherTransVar = None):
+        if trans_var is None:
+            trans_var = PaillierCipherTransVar()
         self._use_encrypt = trans_var.use_encrypt
         self._pailler_pubkey = trans_var.pailler_pubkey
         self._re_encrypt_times = trans_var.re_encrypt_times

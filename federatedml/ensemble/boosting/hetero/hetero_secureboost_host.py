@@ -14,10 +14,10 @@ from federatedml.util.io_check import assert_io_num_rows_equal
 # from federatedml.util.fate_operator import generate_anonymous
 from federatedml.util.anonymous_generator import generate_anonymous
 
-class HeteroSecureBoostHost(HeteroBoostingHost):
+class HeteroSecureBoostingTreeHost(HeteroBoostingHost):
 
     def __init__(self):
-        super(HeteroSecureBoostHost, self).__init__()
+        super(HeteroSecureBoostingTreeHost, self).__init__()
         self.tree_param = None  # decision tree param
         self.use_missing = False
         self.zero_as_missing = False
@@ -29,7 +29,7 @@ class HeteroSecureBoostHost(HeteroBoostingHost):
         self.predict_transfer_inst = HeteroSecureBoostTransferVariable()
 
     def _init_model(self, param: HeteroSecureBoostParam):
-        super(HeteroSecureBoostHost, self)._init_model(param)
+        super(HeteroSecureBoostingTreeHost, self)._init_model(param)
         self.tree_param = param.tree_param
         self.use_missing = param.use_missing
         self.zero_as_missing = param.zero_as_missing
@@ -90,7 +90,7 @@ class HeteroSecureBoostHost(HeteroBoostingHost):
             # idx is set as -1 when a sample reaches leaf
             if cur_node_idx == -1:
                 continue
-            nid, _ = HeteroSecureBoostHost.traverse_a_tree(tree, sample, cur_node_idx)
+            nid, _ = HeteroSecureBoostingTreeHost.traverse_a_tree(tree, sample, cur_node_idx)
             leaf_pos['node_pos'][t_idx] = nid
 
         return leaf_pos

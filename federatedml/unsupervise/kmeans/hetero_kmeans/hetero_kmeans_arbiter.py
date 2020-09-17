@@ -58,7 +58,7 @@ class HeteroKmeansArbiter(BaseKmeansModel):
                 sum_result[v[1]] += np.sqrt(v[0][v[1]])
         return sum_result
 
-    def cal_ave_dist(self, dist_cluster_dtable, cluster_result, k):
+    def cal_ave_dist(self, dist_cluster_dtable, cluster_result):
         dist_centroid_dist_dtable = dist_cluster_dtable.applyPartitions(self.sum_in_cluster).reduce(self.sum_dict)
         cluster_count = cluster_result.applyPartitions(self.count).reduce(self.sum_dict)
         cal_ave_dist_list = []
@@ -80,13 +80,13 @@ class HeteroKmeansArbiter(BaseKmeansModel):
     @staticmethod
     def get_max_radius(v1, v2):
         rs = {}
-        for k1 in v1:
-            rs[k1] = max(v1[k1], v2[k1])
+        for k1 in v1.keys() | v2.keys():
+            rs[k1] = max(v1.get(k1, 0), v2.get(k1, 0))
         return rs
 
     def cal_dbi(self, dist_sum, cluster_result):
         dist_cluster_dtable = dist_sum.join(cluster_result, lambda v1, v2: [v1, v2])
-        dist_table = self.cal_ave_dist(dist_cluster_dtable, cluster_result, self.k)  # ave dist in each cluster
+        dist_table = self.cal_ave_dist(dist_cluster_dtable, cluster_result)  # ave dist in each cluster
         cluster_dist = self.cluster_dist_aggregator.sum_model(suffix=(self.n_iter_,))
         cluster_avg_intra_dist = []
         for i in range(len(dist_table)):

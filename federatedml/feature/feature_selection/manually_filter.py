@@ -39,7 +39,7 @@ class ManuallyFilter(BaseFilterMethod):
         if (self.filter_param.filter_out_indexes or self.filter_param.filter_out_names) is not None:
             self.filter_out_indexes = self.filter_param.filter_out_indexes
             self.filter_out_names = self.filter_param.filter_out_names
-        else:
+        elif (self.filter_param.left_col_indexes or self.filter_param.left_col_names) is not None:
             filter_out_set = set([i for i in range(len(header))])
             if self.filter_param.left_col_indexes is not None:
                 filter_out_set = filter_out_set.difference(self.filter_param.left_col_indexes)

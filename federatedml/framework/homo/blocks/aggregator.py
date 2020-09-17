@@ -28,7 +28,9 @@ class AggregatorTransVar(HomoTransferBase):
 
 
 class Server(object):
-    def __init__(self, trans_var: AggregatorTransVar = AggregatorTransVar()):
+    def __init__(self, trans_var: AggregatorTransVar = None):
+        if trans_var is None:
+            trans_var = AggregatorTransVar()
         self._model_broadcaster = model_broadcaster.Server(trans_var=trans_var.model_broadcaster)
         self._model_scatter = model_scatter.Server(trans_var=trans_var.model_scatter)
 
@@ -40,7 +42,9 @@ class Server(object):
 
 
 class Client(object):
-    def __init__(self, trans_var: AggregatorTransVar = AggregatorTransVar()):
+    def __init__(self, trans_var: AggregatorTransVar = None):
+        if trans_var is None:
+            trans_var = AggregatorTransVar()
         self._model_broadcaster = model_broadcaster.Client(trans_var=trans_var.model_broadcaster)
         self._model_scatter = model_scatter.Client(trans_var=trans_var.model_scatter)
 

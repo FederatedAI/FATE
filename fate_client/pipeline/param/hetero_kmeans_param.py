@@ -17,7 +17,7 @@
 #  limitations under the License.
 #
 
-from federatedml.param.base_param import BaseParam
+from pipeline.param.base_param import BaseParam
 
 class KmeansParam(BaseParam):
     """
