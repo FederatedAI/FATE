@@ -42,7 +42,7 @@ Eggroll 是一个适用于机器学习和深度学习的大规模分布式架构
 | guest | 9999(根据实际规划修改) | 192.168.0.1 （有外网) | CentOS 7.2 | 8C16G    | 500G | xx.xx.xx.xx | >=20Mb   | fate_flow，fateboard，clustermanager，rollsite，mysql |
 | guest | 9999(根据实际规划修改) | 192.168.0.2           | CentOS 7.2 | 16C32G   | 2T   |             |          | nodemanger                                            |
 
-备注：涉及exchange说明会用192.168.0.3表示其IP，但本次示例不涉及exchange的部署。
+备注：涉及exchange说明会用192.168.0.88表示其IP，但本次示例不涉及exchange的部署。
 
 ## 2.2.主机资源和操作系统要求
 
@@ -218,15 +218,20 @@ cat /proc/swaps
 echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 ```
 
-## 3.7 安装ansible
+## 3.7 安装依赖包
 
-**目标服务器（192.168.0.1) root用户执行**
+**目标服务器（192.168.0.1 192.168.0.2) root用户执行**
 
 ```
-#判断是否已安装ansible
-ansible --version
-#没有则执行
-yum install -y ansible
+#安装基础依赖包
+yum install -y gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-devel 
+#如果有报错，需要解决yum源问题。
+
+#安装ansible和进程管理依赖包
+yum install -y ansible jq supervisor
+#如果有报错同时服务器有外网，没有外网的需要解决yum源不全的问题，执行：
+yum install -y epel-release
+#增加一个更全面的第三方的源，然后再重新安装ansible jq supervisor
 ```
 
 4 项目部署
@@ -387,7 +392,7 @@ guest:
       client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
       default_rules:  ---默认路由，本party指向exchange或者其他party的IP，端口
       - name: default ---名称，默认即可
-        ip: 192.168.0.3 ---exchange或者对端party rollsite IP，和webank确认后修改。
+        ip: 192.168.0.88 ---exchange或者对端party rollsite IP，和webank确认后修改。
         port: 9370 ---exchange或者对端party rollsite 端口，一般默认9370，即无安全证书部署；如需开启安全证书通信，应设置为9371；和webank确认后修改。
         is_secure: False ---是否使用安全认证通讯；需要结合server_secure或者client_secure使用，当三者都为true时，表示和下一跳rollsite使用安全认证通讯，同时上一个参数port需设置为9371；不使用安全证书默认即可。
       rules:  ---本party自身路由配置

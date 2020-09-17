@@ -45,7 +45,7 @@ Eggroll 是一个适用于机器学习和深度学习的大规模分布式架构
 | host  | 10000   | 192.168.0.1 （有外网) | CentOS 7.2 | 8C16G    | 500G | fate_flow，fateboard，clustermanager，nodemanger，rollsite，mysql |
 | guest | 9999    | 192.168.0.2           | CentOS 7.2 | 8C16G    | 500G | fate_flow，fateboard，clustermanager，nodemanger，rollsite，mysql |
 
-备注：涉及exchange说明会用192.168.0.3表示其IP，但本次示例不涉及exchange的部署。
+备注：涉及exchange说明会用192.168.0.88表示其IP，但本次示例不涉及exchange的部署。
 
 ## 2.2.主机资源和操作系统要求
 
@@ -223,18 +223,21 @@ cat /proc/swaps
 echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 ```
 
-## 3.7 安装ansible
+## 3.7 安装依赖包
 
-**目标服务器（192.168.0.1) root用户执行**
+**目标服务器（192.168.0.1 192.168.0.2）root用户执行**
 
 ```
-#判断是否已安装ansible
-ansible --version
-#没有则执行
-yum install -y ansible
+#安装基础依赖包
+yum install -y gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-devel 
+#如果有报错，需要解决yum源问题。
+
+#安装ansible和进程管理依赖包
+yum install -y ansible jq supervisor
+#如果有报错同时服务器有外网，没有外网的需要解决yum源不全的问题，执行：
+yum install -y epel-release
+#增加一个更全面的第三方的源，然后再重新安装ansible jq supervisor
 ```
-
-
 
 4.项目部署
 ==========
@@ -329,7 +332,7 @@ vi /data/projects/ansible-nfate-1.*/tools/make.sh
 
 guest_host="192.168.0.1" ---根据实际IP修改
 host_host="192.168.0.2" ---根据实际IP修改
-exchange_host="192.168.0.3" ---根据实际IP修改，本示例不部署无需修改
+exchange_host="192.168.0.88" ---根据实际IP修改，本示例不部署无需修改
 ```
 
 2）执行脚本制作证书
@@ -554,7 +557,7 @@ exchange:
   enable: False --部署exchange需修改为True
   rollsite: 
     ips:
-    - 192.168.0.3
+    - 192.168.0.88
     port: 9370
     secure_port: 9371 ---grpcs端口
     pool_size: 600
