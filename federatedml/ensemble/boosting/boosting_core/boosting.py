@@ -388,18 +388,35 @@ class Boosting(ModelBase, ABC):
     def load_booster(self, *args):
         raise NotImplementedError()
 
-    def score_to_prob(self, predict_rs):
+    def score_to_predict_result(self, data_inst, y_hat):
 
-        # if is classification task, apply sigmoid/sofmax on result
-        loss_method = self.loss
-        if self.task_type == consts.CLASSIFICATION and self.num_classes == 2:
-            # binary
-            predict_rs = predict_rs.mapValues(lambda y_hat: float(loss_method.predict(y_hat)))
+        predicts = None
+        if self.task_type == consts.CLASSIFICATION:
+            loss_method = self.loss
+            if self.num_classes == 2:
+                predicts = y_hat.mapValues(lambda f: float(loss_method.predict(f)))
+            else:
+                predicts = y_hat.mapValues(lambda f: loss_method.predict(f).tolist())
+
+        elif self.task_type == consts.REGRESSION:
+            if self.objective_param.objective in ["lse", "lae", "huber", "log_cosh", "fair", "tweedie"]:
+                predicts = y_hat
+            else:
+                raise NotImplementedError("objective {} not supprted yet".format(self.objective_param.objective))
+
+        if self.task_type == consts.CLASSIFICATION:
+
+            predict_result = self.predict_score_to_output(data_inst, predict_score=predicts, classes=self.classes_,
+                                                          threshold=self.predict_param.threshold)
+
+        elif self.task_type == consts.REGRESSION:
+            predict_result = data_inst.join(predicts, lambda inst, pred: [inst.label, float(pred), float(pred),
+                                                                          {"label": float(pred)}])
+
         else:
-            # multi
-            predict_rs = predict_rs.mapValues(lambda y_hat: loss_method.predict(y_hat).tolist())
+            raise NotImplementedError("task type {} not supported yet".format(self.task_type))
+        return predict_result
 
-        return predict_rs
 
     def data_and_header_alignment(self, data_inst):
 

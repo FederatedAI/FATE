@@ -33,7 +33,7 @@ from federatedml.ensemble.boosting.homo.homo_secureboosting_aggregator import Se
 from federatedml.ensemble.basic_algorithms.decision_tree.homo.homo_decision_tree_client import HomoDecisionTreeClient
 from federatedml.ensemble.basic_algorithms.decision_tree.homo.homo_decision_tree_arbiter import HomoDecisionTreeArbiter
 from federatedml.ensemble.boosting.homo.homo_secureboost_client import HomoSecureBoostingTreeClient
-from federatedml.ensemble.boosting.homo.homo_secureboost_arbiter import HomoSecureBoostingTreerbiter
+from federatedml.ensemble.boosting.homo.homo_secureboost_arbiter import HomoSecureBoostingTreeArbiter
 
 
 __all__ = ["Node",
@@ -41,5 +41,5 @@ __all__ = ["Node",
            "FeatureHistogram", "XgboostCriterion", "DecisionTree", 'SplitInfo',
            "HomoDecisionTreeClient", "HomoDecisionTreeArbiter", "SecureBoostArbiterAggregator", "SecureBoostClientAggregator"
            , "DecisionTreeArbiterAggregator", 'DecisionTreeClientAggregator',
-           "HeteroSecureBoostingTreeGuest", "HeteroSecureBoostingTreeHost", "HomoSecureBoostingTreerbiter",
+           "HeteroSecureBoostingTreeGuest", "HeteroSecureBoostingTreeHost", "HomoSecureBoostingTreeArbiter",
            "HomoSecureBoostingTreeClient", "HistogramBag", "FeatureHistogramWeights", ]
