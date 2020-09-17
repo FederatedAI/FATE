@@ -326,9 +326,9 @@ vi /data/projects/ansible-nfate-1.*/tools/make.sh
 
 #1、自定义安全证书需同时部署两端，只部署一端需要手工处理证书，手工处理部分暂不介绍。
 #2、安全证书支持如下部署方式：
-    1）host和guest同时部署。
-    2）host和exchange同时部署。
-    3）guest和exchange同时部署。
+    1）部署host+guest，host和guest使用安全证书通讯。
+    2）部署host+exchange+guest，其中host和exchange使用安全证书通讯，guest和exchange普通通讯。
+    3）部署host+exchange+guest，其中guest和exchange使用安全证书通讯，host和exchange普通通讯。
 
 guest_host="192.168.0.1" ---根据实际IP修改
 host_host="192.168.0.2" ---根据实际IP修改
@@ -393,7 +393,7 @@ deploy_mode: "install" ---默认为空，修改为install，表示新部署
 
 **3）修改host方参数**
 
-**注意：启用安全证书通讯需把server_secure，client_secure，is_secure设置为true，以及is_secure对应的port设置为9371**。
+**注意：默认是不启用安全证书的配置，如果启用安全证书通讯需把server_secure，client_secure，is_secure设置为true，以及is_secure对应的port设置为9371**。
 
 ```
 #不部署host方则不用修改
@@ -470,7 +470,7 @@ host:
 
 **4）修改guest参数**
 
-**注意：启用安全证书通讯需把server_secure，client_secure，is_secure设置为true，以及is_secure对应的port设置为9371**。
+**注意：默认是不启用安全证书的配置，如果启用安全证书通讯需把server_secure，client_secure，is_secure设置为true，以及is_secure对应的port设置为9371**。
 
 ```
 #不部署guest方则不用修改
@@ -547,7 +547,7 @@ guest:
 
 **5）修改exchange参数**
 
-**注意：启用安全证书通讯需把server_secure，client_secure，is_secure设置为true，以及is_secure对应的port设置为9371**。
+**注意：默认是不启用安全证书的配置，如果启用安全证书通讯需把server_secure，client_secure，is_secure设置为true，以及is_secure对应的port设置为9371**。
 
 ```
 #不部署exchange则不需要修改
@@ -765,6 +765,12 @@ cd /data/projects/common/supervisord
 
 ```
 sh service.sh start/stop/status all 
+
+#说明：因为fateflow依赖的组件比较多，重启所有的操作可能会导致fateflow启动异常，处理如下：
+netstat -tlnp | grep 9360
+如果没有端口则重起fateflow：
+sh service.sh stop fate-fateflow
+sh service.sh start fate-fateflow
 ```
 
 启动/关闭/查看单个模块(可选：clustermanager，nodemanager，rollsite，fateflow，fateboard，mysql)：
@@ -772,6 +778,8 @@ sh service.sh start/stop/status all
 ```
 sh service.sh start/stop/status fate-clustermanager
 ```
+
+
 
 ## 6.2 查看进程和端口
 

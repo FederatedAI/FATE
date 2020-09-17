@@ -372,7 +372,7 @@ deploy_mode: "install" ---默认为空，修改为install，表示新部署
 
 **3）修改guest参数**
 
-**注意：启用安全证书通讯需把server_secure，client_secure，is_secure设置为true，以及is_secure对应的port设置为9371**。
+**注意：默认是不启用安全证书的配置，如果启用安全证书通讯需把server_secure，client_secure，is_secure设置为true，以及is_secure对应的port设置为9371**。
 
 ```
 #除了nodemanger可以设置多个IP外，其他都是单个IP
@@ -619,6 +619,12 @@ cd /data/projects/common/supervisord
 
 ```
 sh service.sh start/stop/status all 
+
+#说明：因为fateflow依赖的组件比较多，重启所有的操作可能会导致fateflow启动异常，处理如下：
+netstat -tlnp | grep 9360
+如果没有端口则重起fateflow：
+sh service.sh stop fate-fateflow
+sh service.sh start fate-fateflow
 ```
 
 启动/关闭/查看单个模块(可选：clustermanager，nodemanager，rollsite，fateflow，fateboard，mysql)：
