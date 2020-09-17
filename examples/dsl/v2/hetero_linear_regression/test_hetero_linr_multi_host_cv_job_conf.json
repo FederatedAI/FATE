@@ -72,7 +72,7 @@
             "init_param": {
                 "init_method": "zeros"
             },
-            "max_iter": 2,
+            "max_iter": 20,
             "early_stop": "weight_diff",
             "encrypted_mode_calculator_param": {
                 "mode": "fast"
