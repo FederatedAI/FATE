@@ -417,6 +417,7 @@ class Boosting(ModelBase, ABC):
             raise NotImplementedError("task type {} not supported yet".format(self.task_type))
         return predict_result
 
+
     def data_and_header_alignment(self, data_inst):
 
         """
