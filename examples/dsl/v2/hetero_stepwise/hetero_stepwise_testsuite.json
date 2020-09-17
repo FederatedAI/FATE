@@ -1,7 +1,7 @@
 {
     "data": [
         {
-            "file": "../../data/breast_hetero_mini_guest.csv",
+            "file": "../../../data/breast_hetero_mini_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "breast_hetero_mini_guest",
@@ -9,7 +9,7 @@
             "role": "guest_0"
         },
         {
-            "file": "../../data/breast_hetero_mini_host.csv",
+            "file": "../../../data/breast_hetero_mini_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "breast_hetero_mini_host",
@@ -17,7 +17,7 @@
             "role": "host_0"
         },
         {
-            "file": "../../data/motor_hetero_mini_guest.csv",
+            "file": "../../../data/motor_hetero_mini_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "motor_hetero_mini_guest",
@@ -25,7 +25,7 @@
             "role": "guest_0"
         },
         {
-            "file": "../../data/motor_hetero_mini_host.csv",
+            "file": "../../../data/motor_hetero_mini_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "motor_hetero_mini_host",
@@ -33,7 +33,7 @@
             "role": "host_0"
         },
         {
-            "file": "../../data/dvisits_hetero_guest.csv",
+            "file": "../../../data/dvisits_hetero_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "dvisits_hetero_guest",
@@ -41,7 +41,7 @@
             "role": "guest_0"
         },
         {
-            "file": "../../data/dvisits_hetero_host.csv",
+            "file": "../../../data/dvisits_hetero_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "dvisits_hetero_host",
