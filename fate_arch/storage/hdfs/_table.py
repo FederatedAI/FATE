@@ -13,23 +13,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-import pickle
+import io
 from typing import Iterable
 
-from pyspark import SparkContext
+from pyarrow import fs
 
+from fate_arch.common import hdfs_utils
 from fate_arch.common.log import getLogger
 from fate_arch.storage import StorageEngine, HDFSStorageType
 from fate_arch.storage import StorageTableBase
 
 LOGGER = getLogger()
-_ID_DELIMITER = "\t"
 
 
 class StorageTable(StorageTableBase):
     def __init__(self,
-                 context,
                  address=None,
                  name: str = None,
                  namespace: str = None,
@@ -37,7 +35,6 @@ class StorageTable(StorageTableBase):
                  storage_type: HDFSStorageType = None,
                  options=None):
         super(StorageTable, self).__init__(name=name, namespace=namespace)
-        self._context = context
         self._address = address
         self._name = name
         self._namespace = namespace
@@ -45,6 +42,14 @@ class StorageTable(StorageTableBase):
         self._type = storage_type if storage_type else HDFSStorageType.DISK
         self._options = options if options else {}
         self._engine = StorageEngine.HDFS
+
+        # tricky way to load libhdfs
+        try:
+            from pyarrow import HadoopFileSystem
+            HadoopFileSystem(self._path)
+        except:
+            pass
+        self._hdfs_client = fs.HadoopFileSystem.from_uri(uri=self._path)
 
     def get_name(self):
         return self._name
@@ -67,90 +72,46 @@ class StorageTable(StorageTableBase):
     def get_options(self):
         return self._options
 
-    def put_all(self, kv_list: Iterable, **kwargs):
-        path, fs = StorageTable.get_hadoop_fs(sc=self._context, address=self._address)
-        if fs.exists(path):
-            out = fs.append(path)
-        else:
-            out = fs.create(path)
+    def put_all(self, kv_list: Iterable, append=False, **kwargs):
+        stream = self._hdfs_client.open_append_stream(path=self._path, compression=None) \
+            if append else self._hdfs_client.open_output_stream(source=self._path, compression=None)
 
         counter = 0
-        for k, v in kv_list:
-            content = u"{}{}{}\n".format(k, _ID_DELIMITER, pickle.dumps(v).hex())
-            out.write(bytearray(content, "utf-8"))
-            counter = counter + 1
-        out.flush()
-        out.close()
+        with io.TextIOWrapper(stream) as writer:
+            for k, v in kv_list:
+                writer.write(hdfs_utils.serialize(k, v))
+                writer.write(hdfs_utils.NEWLINE)
+                counter = counter + 1
         self._meta.update_metas(count=counter)
 
     def collect(self, **kwargs) -> list:
-        hdfs_path = StorageTable.generate_hdfs_path(self._address)
-        path = StorageTable.get_path(self._context, hdfs_path)
-        fs = StorageTable.get_file_system(self._context)
-        istream = fs.open(path)
-        reader = self._context._gateway.jvm.java.io.BufferedReader(self._context._jvm.java.io.InputStreamReader(istream))
-        while True:
-            line = reader.readLine()
-            if line is not None:
-                fields = line.strip().partition(_ID_DELIMITER)
-                yield fields[0], pickle.loads(bytes.fromhex(fields[2]))
-            else:
-                break
-        istream.close()
+        with io.TextIOWrapper(self._hdfs_client.open_input_stream(self._path)) as reader:
+            for line in reader:
+                yield hdfs_utils.deserialize(line.rstrip())
 
     def read(self) -> list:
-        hdfs_path = StorageTable.generate_hdfs_path(self._address)
-        path = StorageTable.get_path(self._context, hdfs_path)
-        fs = StorageTable.get_file_system(self._context)
-        istream = fs.open(path)
-        reader = self._context._gateway.jvm.java.io.BufferedReader(self._context._jvm.java.io.InputStreamReader(istream))
-        while True:
-            line = reader.readLine()
-            if line is not None:
+        with io.TextIOWrapper(self._hdfs_client.open_input_stream(self._path), encoding="utf-8") as reader:
+            for line in reader:
                 yield line
-            else:
-                break
-        istream.close()
 
     def destroy(self):
         super().destroy()
-        path, fs = StorageTable.get_hadoop_fs(self._context, self._address)
-        if fs.exists(path):
-            fs.delete(path)
+        self._hdfs_client.delete_file(self._path)
 
     def count(self):
-        pass
+        count = 0
+        with io.TextIOWrapper(self._hdfs_client.open_input_stream(self._path), encoding="utf-8") as reader:
+            for _ in reader:
+                count += 1
 
     def save_as(self, address, partitions=None, name=None, namespace=None, schema=None, **kwargs):
         super().save_as(name, namespace, partitions=partitions, schema=schema)
-        sc = SparkContext.getOrCreate()
-        src_path = StorageTable.get_path(sc, address.path)
-        dst_path = StorageTable.get_path(sc, address.path)
-        fs = StorageTable.get_file_system(sc)
-        fs.rename(src_path, dst_path)
+        self._hdfs_client.copy_file(src=self._path, dst=address.path)
         return StorageTable(address=address, partitions=partitions, name=name, namespace=namespace, **kwargs)
-
-    @classmethod
-    def generate_hdfs_path(cls, address):
-        return address.path
-    
-    @classmethod
-    def get_path(cls, sc, hdfs_path):
-        path_class = sc._gateway.jvm.org.apache.hadoop.fs.Path
-        return path_class(hdfs_path)
-
-    @classmethod
-    def get_file_system(cls, sc):
-        filesystem_class = sc._gateway.jvm.org.apache.hadoop.fs.FileSystem
-        hadoop_configuration = sc._jsc.hadoopConfiguration()
-        return filesystem_class.get(hadoop_configuration)
-
-    @classmethod
-    def get_hadoop_fs(cls, sc, address):
-        hdfs_path = StorageTable.generate_hdfs_path(address)
-        path = StorageTable.get_path(sc, hdfs_path)
-        fs = StorageTable.get_file_system(sc)
-        return path, fs
 
     def close(self):
         pass
+
+    @property
+    def _path(self) -> str:
+        return self._address.path

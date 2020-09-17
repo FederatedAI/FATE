@@ -16,9 +16,6 @@
 
 from typing import Iterable
 
-# noinspection PyPackageRequirements
-from pyspark import SparkContext
-
 from fate_arch.abc import AddressABC
 from fate_arch.abc import CSessionABC
 from fate_arch.computing.spark._table import from_hdfs, from_rdd
@@ -44,6 +41,8 @@ class CSession(CSessionABC):
         raise NotImplementedError(f"address type {type(address)} not supported with spark backend")
 
     def parallelize(self, data: Iterable, partition: int, include_key: bool, **kwargs):
+        # noinspection PyPackageRequirements
+        from pyspark import SparkContext
         _iter = data if include_key else enumerate(data)
         rdd = SparkContext.getOrCreate().parallelize(_iter, partition)
         return from_rdd(rdd)

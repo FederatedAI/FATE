@@ -28,14 +28,3 @@ def materialize(rdd):
 # noinspection PyUnresolvedReferences
 def get_storage_level():
     return StorageLevel.MEMORY_AND_DISK
-
-
-def _get_file_system(sc):
-    filesystem_class = sc._gateway.jvm.org.apache.hadoop.fs.FileSystem
-    hadoop_configuration = sc._jsc.hadoopConfiguration()
-    return filesystem_class.get(hadoop_configuration)
-
-
-def _get_path(sc, hdfs_path):
-    path_class = sc._gateway.jvm.org.apache.hadoop.fs.Path
-    return path_class(hdfs_path)
