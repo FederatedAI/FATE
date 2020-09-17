@@ -6,10 +6,10 @@ from numpy import random
 from federatedml.util import LOGGER
 
 
-class HomoSecureBoostArbiter(HomoBoostingArbiter):
+class HomoSecureBoostingTreerbiter(HomoBoostingArbiter):
 
     def __init__(self):
-        super(HomoSecureBoostArbiter, self).__init__()
+        super(HomoSecureBoostingTreerbiter, self).__init__()
         self.tree_param = None  # decision tree param
         self.use_missing = False
         self.zero_as_missing = False
@@ -19,7 +19,7 @@ class HomoSecureBoostArbiter(HomoBoostingArbiter):
         self.model_param = HomoSecureBoostParam()
 
     def _init_model(self, boosting_param: HomoSecureBoostParam):
-        super(HomoSecureBoostArbiter, self)._init_model(boosting_param)
+        super(HomoSecureBoostingTreerbiter, self)._init_model(boosting_param)
         self.use_missing = boosting_param.use_missing
         self.zero_as_missing = boosting_param.zero_as_missing
         self.tree_param = boosting_param.tree_param

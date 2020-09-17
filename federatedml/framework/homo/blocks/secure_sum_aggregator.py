@@ -31,8 +31,9 @@ class SecureSumAggregatorTransVar(SecureAggregatorTransVar):
 
 
 class Server(secure_aggregator.Server):
-    def __init__(self, trans_var: SecureSumAggregatorTransVar = SecureSumAggregatorTransVar(),
-                 enable_secure_aggregate=True):
+    def __init__(self, trans_var: SecureSumAggregatorTransVar = None, enable_secure_aggregate=True):
+        if trans_var is None:
+            trans_var = SecureSumAggregatorTransVar()
         super().__init__(trans_var=trans_var, enable_secure_aggregate=enable_secure_aggregate)
 
     def sum_model(self, suffix=tuple()):
@@ -43,8 +44,9 @@ class Server(secure_aggregator.Server):
 
 
 class Client(secure_aggregator.Client):
-    def __init__(self, trans_var: SecureSumAggregatorTransVar = SecureSumAggregatorTransVar(),
-                 enable_secure_aggregate=True):
+    def __init__(self, trans_var: SecureSumAggregatorTransVar = None, enable_secure_aggregate=True):
+        if trans_var is None:
+            trans_var = SecureSumAggregatorTransVar()
         super().__init__(trans_var=trans_var, enable_secure_aggregate=enable_secure_aggregate)
 
 

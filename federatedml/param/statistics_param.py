@@ -22,6 +22,7 @@ import re
 
 from federatedml.param.base_param import BaseParam
 from federatedml.util import consts
+import copy
 
 
 class StatisticsParam(BaseParam):
@@ -35,8 +36,6 @@ class StatisticsParam(BaseParam):
         "summary" represents list: [consts.SUM, consts.MEAN, consts.STANDARD_DEVIATION,
                     consts.MEDIAN, consts.MIN, consts.MAX,
                     consts.MISSING_COUNT, consts.SKEWNESS, consts.KURTOSIS]
-        "describe" represents list: [consts.COUNT, consts.MEAN,
-                    consts.STANDARD_DEVIATION, consts.MIN, consts.MAX]
 
     column_names: list of string, default []
         Specify columns to be used for statistic computation by column names in header
@@ -57,6 +56,10 @@ class StatisticsParam(BaseParam):
                   consts.COEFFICIENT_OF_VARIATION, consts.MISSING_COUNT,
                   consts.MISSING_RATIO,
                   consts.SKEWNESS, consts.KURTOSIS]
+    BASIC_STAT = [consts.SUM, consts.MEAN, consts.STANDARD_DEVIATION,
+                  consts.MEDIAN, consts.MIN, consts.MAX, consts.MISSING_RATIO,
+                  consts.MISSING_COUNT, consts.SKEWNESS, consts.KURTOSIS,
+                  consts.COEFFICIENT_OF_VARIATION]
     LEGAL_QUANTILE = re.compile("^(100)|([1-9]?[0-9])%$")
 
     def __init__(self, statistics="summary", column_names=None,
@@ -77,16 +80,18 @@ class StatisticsParam(BaseParam):
         if abnormal_list is None:
             self.abnormal_list = []
 
-    @staticmethod
-    def extend_statistics(statistic_name):
-        if statistic_name == "summary":
-            return [consts.SUM, consts.MEAN, consts.STANDARD_DEVIATION,
-                    consts.MEDIAN, consts.MIN, consts.MAX, consts.MISSING_RATIO,
-                    consts.MISSING_COUNT, consts.SKEWNESS, consts.KURTOSIS,
-                    consts.COEFFICIENT_OF_VARIATION]
-        if statistic_name == "describe":
-            return [consts.COUNT, consts.MEAN, consts.STANDARD_DEVIATION,
-                    consts.MIN, consts.MAX]
+    # @staticmethod
+    # def extend_statistics(statistic_name):
+    #     basic_metrics = [consts.SUM, consts.MEAN, consts.STANDARD_DEVIATION,
+    #                 consts.MEDIAN, consts.MIN, consts.MAX, consts.MISSING_RATIO,
+    #                 consts.MISSING_COUNT, consts.SKEWNESS, consts.KURTOSIS,
+    #                 consts.COEFFICIENT_OF_VARIATION]
+    #     if statistic_name == "summary":
+    #         return basic_metrics
+    #
+    # if statistic_name == "describe":
+    #     return [consts.COUNT, consts.MEAN, consts.STANDARD_DEVIATION,
+    #             consts.MIN, consts.MAX]
 
     @staticmethod
     def find_stat_name_match(stat_name):
@@ -102,11 +107,19 @@ class StatisticsParam(BaseParam):
     def check(self):
         model_param_descr = "Statistics's param statistics"
         BaseParam.check_boolean(self.need_run, model_param_descr)
+        statistics = copy.copy(self.BASIC_STAT)
         if not isinstance(self.statistics, list):
-            if self.statistics in [consts.DESCRIBE, consts.SUMMARY]:
-                self.statistics = StatisticsParam.extend_statistics(self.statistics)
+            if self.statistics in [consts.SUMMARY]:
+                self.statistics = statistics
             else:
-                self.statistics = [self.statistics]
+                if self.statistics not in statistics:
+                    statistics.append(self.statistics)
+                self.statistics = statistics
+        else:
+            for s in self.statistics:
+                if s not in statistics:
+                    statistics.append(s)
+            self.statistics = statistics
 
         for stat_name in self.statistics:
             match_found = StatisticsParam.find_stat_name_match(stat_name)

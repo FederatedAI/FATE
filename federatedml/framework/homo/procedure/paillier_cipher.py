@@ -23,7 +23,9 @@ from federatedml.secureprotol.fate_paillier import PaillierPublicKey
 
 class Host(object):
 
-    def __init__(self, trans_var=PaillierCipherTransVar()):
+    def __init__(self, trans_var=None):
+        if trans_var is None:
+            trans_var = PaillierCipherTransVar()
         self._paillier = paillier_cipher.Client(trans_var=trans_var)
 
     def register_paillier_cipher(self, transfer_variables):
@@ -44,7 +46,9 @@ class Arbiter(object):
     def register_paillier_cipher(self, transfer_variables):
         pass
 
-    def __init__(self, trans_var=PaillierCipherTransVar()):
+    def __init__(self, trans_var=None):
+        if trans_var is None:
+            trans_var = PaillierCipherTransVar()
         self._paillier = paillier_cipher.Server(trans_var=trans_var)
         self._client_parties = trans_var.client_parties
         self._party_idx_map = {party: idx for idx, party in enumerate(self._client_parties)}

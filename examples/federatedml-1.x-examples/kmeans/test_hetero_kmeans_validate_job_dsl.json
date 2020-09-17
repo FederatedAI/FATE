@@ -1,60 +1,36 @@
 {
   "components": {
-    "reader_0": {
-      "module": "Reader",
-      "output": {
-        "data": [
-          "table"
-        ]
-      }
-    },
     "dataio_0": {
-      "module": "DataIO",
-      "input": {
-        "data": {
-          "data": [
-            "reader_0.table"
-          ]
-        }
-      },
-      "output": {
-        "data": [
-          "train"
-        ],
-        "model": [
-          "dataio"
-        ]
-      },
-      "need_deploy": true
-    },
-    "reader_1": {
-      "module": "Reader",
-      "output": {
-        "data": [
-          "table"
-        ]
-      },
-      "need_deploy": true
-    },
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.train_data"
+                    ]
+                }
+            },
+            "output": {
+                "data": ["train"],
+                "model": ["dataio"]
+            }
+         },
     "dataio_1": {
-      "module": "DataIO",
-      "input": {
-        "data": {
-          "data": [
-            "reader_1.table"
-          ]
-        },
-        "model": [
-          "dataio_0.dataio"
-        ]
-      },
-      "output": {
-        "data": [
-          "eval_data"
-        ]
-      },
-      "need_deploy": false
-    },
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.eval_data"
+                    ]
+                },
+                "model": [
+                    "dataio_0.dataio"
+                ]
+            },
+            "output": {
+                "data": ["eval"],
+                "model": ["dataio"]
+            }
+         },
     "intersection_0": {
       "module": "Intersection",
       "input": {
@@ -75,7 +51,7 @@
       "input": {
         "data": {
           "data": [
-            "dataio_1.eval_data"
+            "dataio_1.eval"
           ]
         }
       },

@@ -25,7 +25,9 @@ class HasConvergedTransVar(HomoTransferBase):
 
 class Server(object):
 
-    def __init__(self, trans_var: HasConvergedTransVar = HasConvergedTransVar()):
+    def __init__(self, trans_var: HasConvergedTransVar = None):
+        if trans_var is None:
+            trans_var = HasConvergedTransVar()
         self._broadcaster = trans_var.has_converged
         self._client_parties = trans_var.client_parties
 
@@ -35,7 +37,9 @@ class Server(object):
 
 
 class Client(object):
-    def __init__(self, trans_var: HasConvergedTransVar = HasConvergedTransVar()):
+    def __init__(self, trans_var: HasConvergedTransVar = None):
+        if trans_var is None:
+            trans_var = HasConvergedTransVar()
         self._broadcaster = trans_var.has_converged
         self._server_parties = trans_var.server_parties
 

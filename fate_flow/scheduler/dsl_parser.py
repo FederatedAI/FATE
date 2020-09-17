@@ -292,6 +292,9 @@ class BaseDSLParser(object):
         return next_components
 
     def get_component_info(self, component_name):
+        if component_name not in self.component_name_index:
+            raise ComponentNotExistError(component=component_name)
+
         idx = self.component_name_index.get(component_name)
         return self.components[idx]
 

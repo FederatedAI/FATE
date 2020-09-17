@@ -26,6 +26,7 @@ from federatedml.evaluation.metric_interface import MetricInterface
 
 import numpy as np
 
+
 class Evaluation(ModelBase):
 
     def __init__(self):
@@ -70,7 +71,7 @@ class Evaluation(ModelBase):
         self.eval_type = self.model_param.eval_type
         self.pos_label = self.model_param.pos_label
         self.metrics = model.metrics
-        self.metric_interface = MetricInterface(pos_label=self.pos_label, eval_type=self.eval_type,)
+        self.metric_interface = MetricInterface(pos_label=self.pos_label, eval_type=self.eval_type, )
 
     def _run_data(self, data_sets=None, stage=None):
         if not self.need_run:
@@ -128,7 +129,7 @@ class Evaluation(ModelBase):
 
         true_cluster_index, predicted_cluster_index = [], []
         intra_cluster_data, inter_cluster_dist = {'avg_dist': [], 'max_radius': []}, []
-        
+
         run_intra_metrics = False  # run intra metrics or outer metrics ?
         if len(data[0][1]) == 3:
             # [int int] -> [true_label, predicted label] -> outer metric
@@ -139,8 +140,10 @@ class Evaluation(ModelBase):
         if len(data[0][1]) == 5:  # the input format is for intra metrics
             run_intra_metrics = True
 
+        cluster_index_list = []
         for d in data:
             if run_intra_metrics:
+                cluster_index_list.append(d[0])
                 intra_cluster_data['avg_dist'].append(d[1][1])
                 intra_cluster_data['max_radius'].append(d[1][2])
                 if len(inter_cluster_dist) == 0:
@@ -149,8 +152,15 @@ class Evaluation(ModelBase):
                 true_cluster_index.append(d[1][0])
                 predicted_cluster_index.append(d[1][1])
 
+        # if cluster related data exists, sort by cluster index
+        if len(cluster_index_list) != 0:
+            to_sort = list(zip(cluster_index_list, intra_cluster_data['avg_dist'], intra_cluster_data['max_radius']))
+            sort_rs = sorted(to_sort, key=lambda x: x[0])  # cluster index
+            intra_cluster_data['avg_dist'] = [i[1] for i in sort_rs]
+            intra_cluster_data['max_radius'] = [i[2] for i in sort_rs]
+
         return (true_cluster_index, predicted_cluster_index, run_intra_metrics) if not run_intra_metrics else \
-               (intra_cluster_data, inter_cluster_dist, run_intra_metrics)
+            (intra_cluster_data, inter_cluster_dist, run_intra_metrics)
 
     def _evaluate_classification_and_regression_metrics(self, mode, data):
 
@@ -202,15 +212,15 @@ class Evaluation(ModelBase):
         for eval_metric in self.metrics:
 
             # if input format and required metrics matches ? XNOR
-            if not((not (eval_metric in self.clustering_intra_metric_list) and not run_outer_metric) + \
-               ((eval_metric in self.clustering_intra_metric_list) and run_outer_metric)):
+            if not ((not (eval_metric in self.clustering_intra_metric_list) and not run_outer_metric) + \
+                    ((eval_metric in self.clustering_intra_metric_list) and run_outer_metric)):
                 LOGGER.warning('input data format does not match current clustering metric: {}'.format(eval_metric))
                 continue
 
             LOGGER.debug('clustering_metrics is {}'.format(eval_metric))
-            
+
             if run_outer_metric:
-     
+
                 if eval_metric == consts.DISTANCE_MEASURE:
                     res = getattr(self.metric_interface, eval_metric)(rs0['avg_dist'], rs1, rs0['max_radius'])
                 else:
@@ -221,6 +231,15 @@ class Evaluation(ModelBase):
             eval_result[eval_metric].append(res)
 
         return eval_result
+
+    @staticmethod
+    def _check_clustering_input(data):
+        # one evaluation component is only available for one kmeans component in current version
+        input_num = len(data.items())
+        if input_num > 1:
+            raise ValueError('multiple input detected, '
+                             'one evaluation component is only available '
+                             'for one clustering(kmean) component in current version')
 
     def evaluate_metrics(self, mode: str, data: list) -> dict:
 
@@ -240,6 +259,10 @@ class Evaluation(ModelBase):
 
         if len(data) <= 0:
             return
+
+        if self.eval_type == consts.CLUSTERING:
+            self._check_clustering_input(data)
+
         LOGGER.debug(f'running eval, data: {data}')
         self.eval_results.clear()
         for (key, eval_data) in data.items():
@@ -259,7 +282,7 @@ class Evaluation(ModelBase):
         return self.callback_metric_data(return_single_val_metrics=return_result)
 
     def __save_single_value(self, result, metric_name, metric_namespace, eval_name):
-        
+
         metric_type = 'EVALUATION_SUMMARY'
         if eval_name in consts.ALL_CLUSTER_METRICS:
             metric_type = 'CLUSTERING_EVALUATION_SUMMARY'
@@ -323,7 +346,7 @@ class Evaluation(ModelBase):
         single_val_metric = None
 
         if metric in self.save_single_value_metric_list or \
-           (metric == consts.ACCURACY and self.eval_type == consts.MULTY):
+                (metric == consts.ACCURACY and self.eval_type == consts.MULTY):
 
             single_val_metric = metric_res[1]
 
@@ -370,7 +393,6 @@ class Evaluation(ModelBase):
         best_ks, fpr, tpr, thresholds, cuts = metric_res[1]
 
         for curve_name, curve_data in zip(["fpr", "tpr"], [fpr, tpr]):
-
             metric_name_fpr = '_'.join([metric_name, curve_name])
             curve_name_fpr = "_".join([data_name, curve_name])
             self.__save_curve_data(cuts, curve_data, metric_name_fpr, metric_namespace)
@@ -475,7 +497,8 @@ class Evaluation(ModelBase):
 
     def __save_confusion_mat_table(self, metric, confusion_mat, thresholds, metric_name, metric_namespace):
 
-        extra_metas = {'tp': list(confusion_mat['tp']), 'tn': list(confusion_mat['tn']), 'fp': list(confusion_mat['fp']),
+        extra_metas = {'tp': list(confusion_mat['tp']), 'tn': list(confusion_mat['tn']),
+                       'fp': list(confusion_mat['fp']),
                        'fn': list(confusion_mat['fn']), 'thresholds': list(np.round(thresholds, self.round_num))}
 
         self.tracker.set_metric_meta(metric_namespace, metric_name,
@@ -494,7 +517,8 @@ class Evaluation(ModelBase):
         psi_scores, total_psi, expected_interval, expected_percentage, actual_interval, actual_percentage, \
         train_pos_perc, validate_pos_perc, intervals = metric_res[1]
 
-        extra_metas = {'psi_scores': list(np.round(psi_scores, self.round_num)), 'total_psi': round(total_psi, self.round_num),
+        extra_metas = {'psi_scores': list(np.round(psi_scores, self.round_num)),
+                       'total_psi': round(total_psi, self.round_num),
                        'expected_interval': list(expected_interval),
                        'expected_percentage': list(expected_percentage), 'actual_interval': list(actual_interval),
                        'actual_percentage': list(actual_percentage), 'intervals': list(intervals),
@@ -599,7 +623,7 @@ class Evaluation(ModelBase):
                         self.__save_psi_table(metric, metric_res, metric_name, metric_namespace)
 
                     elif metric == consts.CONFUSION_MAT:
-                        confusion_mat, cuts, score_threshold= metric_res[1]
+                        confusion_mat, cuts, score_threshold = metric_res[1]
                         self.__save_confusion_mat_table(metric, confusion_mat, score_threshold, metric_name,
                                                         metric_namespace)
 
@@ -615,6 +639,11 @@ class Evaluation(ModelBase):
 
                     elif metric == consts.DISTANCE_MEASURE:
                         self.__save_distance_measure(metric, metric_res[1], metric_name, metric_namespace)
+
+        if len(self.validate_metric) != 0:
+            self.set_summary(self.validate_metric)
+        else:
+            self.set_summary(self.train_metric)
 
         if return_single_val_metrics:
             if len(self.validate_metric) != 0:
