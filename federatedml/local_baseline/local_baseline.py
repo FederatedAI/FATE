@@ -17,7 +17,6 @@
 #  limitations under the License.
 
 from arch.api.utils import log_utils
-from arch.api import session
 
 import copy
 
@@ -34,7 +33,6 @@ from sklearn.linear_model import LogisticRegression
 import numpy as np
 
 LOGGER = log_utils.getLogger()
-session.init("baseline")
 
 
 class LocalBaseline(ModelBase):
