@@ -134,7 +134,7 @@ class HomoSecureBoostClient(HomoBoostingClient):
                                  zero_as_missing=self.zero_as_missing, use_missing=self.use_missing,
                                  learning_rate=self.learning_rate, class_num=self.booster_dim)
         predict_rs = to_predict_data.mapValues(func)
-
+        predict_rs = self.score_to_prob(predict_rs)
         return self.predict_score_to_output(data_instances=data_inst, predict_score=predict_rs,
                                             classes=None if len(self.classes_) == 0 else self.classes_,
                                             threshold=self.predict_param.threshold)

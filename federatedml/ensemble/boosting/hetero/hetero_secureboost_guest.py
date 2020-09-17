@@ -327,6 +327,7 @@ class HeteroSecureBoostGuest(HeteroBoostingGuest):
 
         predict_rs = self.boosting_fast_predict(processed_data, trees=trees, predict_cache=predict_cache)
         self.predict_data_cache.add_data(cache_dataset_key, predict_rs)
+        predict_rs = self.score_to_prob(predict_rs)
 
         return self.predict_score_to_output(data_inst, predict_rs, classes=None if len(self.classes_) == 0 else
                                             self.classes_, threshold=self.predict_param.threshold)
