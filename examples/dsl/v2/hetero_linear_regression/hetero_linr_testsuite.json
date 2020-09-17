@@ -44,11 +44,11 @@
         },
         "linr-multi-host-train": {
             "conf": "./test_hetero_linr_multi_host_train_job_conf.json",
-            "dsl": "./test_hetero_linr_multi-host_train_job_dsl.json"
+            "dsl": "./test_hetero_linr_multi_host_train_job_dsl.json"
         },
         "linr-multi-host-predict": {
             "conf": "./test_hetero_linr_multi_host_predict_job_conf.json",
-            "dsl": "./test_hetero_linr_multi-host_predict_job_dsl.json"
+            "dsl": "./test_hetero_linr_multi_host_predict_job_dsl.json"
         },
         "linr-multi-host-cv": {
             "conf": "./test_hetero_linr_multi_host_cv_job_conf.json",
