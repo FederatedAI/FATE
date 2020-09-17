@@ -28,7 +28,8 @@ from federatedml.ensemble.basic_algorithms.decision_tree.hetero.hetero_decision_
 from federatedml.ensemble.boosting.hetero.hetero_secureboost_guest import HeteroSecureBoostingTreeGuest
 from federatedml.ensemble.boosting.hetero.hetero_secureboost_host import HeteroSecureBoostingTreeHost
 
-from federatedml.ensemble.boosting.homo.homo_secureboosting_aggregator import SecureBoostClientAggregator, SecureBoostArbiterAggregator,\
+from federatedml.ensemble.boosting.homo.homo_secureboosting_aggregator import SecureBoostClientAggregator, \
+    SecureBoostArbiterAggregator,\
     DecisionTreeClientAggregator, DecisionTreeArbiterAggregator
 from federatedml.ensemble.basic_algorithms.decision_tree.homo.homo_decision_tree_client import HomoDecisionTreeClient
 from federatedml.ensemble.basic_algorithms.decision_tree.homo.homo_decision_tree_arbiter import HomoDecisionTreeArbiter
