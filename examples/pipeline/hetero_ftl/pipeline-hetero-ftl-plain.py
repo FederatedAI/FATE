@@ -18,10 +18,13 @@ import argparse
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
-from pipeline.component.hetero_fast_secureboost import HeteroFastSecureBoost
-from pipeline.component.intersection import Intersection
+from pipeline.component.hetero_ftl import HeteroFTL
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
+from tensorflow.keras import optimizers
+from tensorflow.keras.layers import Dense
+from tensorflow.keras import initializers
+from pipeline.component.evaluation import Evaluation
 
 from examples.util.config import Config
 
@@ -36,11 +39,8 @@ def main(config="../../config.yaml", namespace=""):
     backend = config.backend
     work_mode = config.work_mode
 
-    # prepare
-
-    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
-
+    guest_train_data = {"name": "nus_wide_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "nus_wide_host", "namespace": f"experiment{namespace}"}
     pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
 
     reader_0 = Reader(name="reader_0")
@@ -51,36 +51,39 @@ def main(config="../../config.yaml", namespace=""):
     dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense")
     dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
 
-    intersect_0 = Intersection(name="intersection_0")
-    hetero_fast_secure_boost_0 = HeteroFastSecureBoost(name="hetero_fast_secure_boost_0",
-                                                       num_trees=4,
-                                                       task_type='classification',
-                                                       objective_param={"objective": "cross_entropy"},
-                                                       encrypt_param={"method": "iterativeAffine"},
-                                                       validation_freqs=1,
-                                                       work_mode='layered',
-                                                       guest_depth=2,
-                                                       host_depth=3
-                                                       )
+    hetero_ftl_0 = HeteroFTL(name='hetero_ftl_0',
+                             epochs=10, alpha=1, batch_size=-1, mode='plain')
+
+    hetero_ftl_0.add_nn_layer(Dense(units=32, activation='sigmoid',
+                                    kernel_initializer=initializers.RandomNormal(stddev=1.0,
+                                                                                 dtype="float32"),
+                                    bias_initializer=initializers.Zeros()))
+
+    hetero_ftl_0.compile(optimizer=optimizers.Adam(lr=0.01))
+    evaluation_0 = Evaluation(name='evaluation_0', eval_type="binary")
 
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(intersect_0, data=Data(data=dataio_0.output.data))
-    pipeline.add_component(hetero_fast_secure_boost_0, data=Data(train_data=intersect_0.output.data))
-
-    # fitting
+    pipeline.add_component(hetero_ftl_0, data=Data(train_data=dataio_0.output.data))
+    pipeline.add_component(evaluation_0, data=Data(data=hetero_ftl_0.output.data))
 
     pipeline.compile()
 
     pipeline.fit(backend=backend, work_mode=work_mode)
 
-    print(pipeline.get_component("intersection_0").get_output_data())
-    print(pipeline.get_component("dataio_0").get_model_param())
-    print(pipeline.get_component("hetero_fast_secure_boost_0").get_summary())
-
     """
     # predict
-    pipeline.predict(backend=backend, work_mode=work_mode)
+
+    pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE,
+                     feed_dict={input_0:
+                                    {"guest":
+                                         {9999: guest_train_data},
+                                     "host": {
+                                         10000: host_train_data[0]
+                                     }
+                                     }
+                                })
+            
 
     with open("output.pkl", "wb") as fout:
         fout.write(pipeline.dump())

@@ -22,6 +22,8 @@ from pipeline.component.hetero_secureboost import HeteroSecureBoost
 from pipeline.component.intersection import Intersection
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
+from pipeline.component.evaluation import Evaluation
+from pipeline.interface.model import Model
 
 from examples.util.config import Config
 
@@ -32,58 +34,57 @@ def main(config="../../config.yaml", namespace=""):
         config = Config.load(config)
     parties = config.parties
     guest = parties.guest[0]
-    hosts = parties.host
-    arbiter = parties.arbiter[0]
+    host = parties.host[0]
+
     backend = config.backend
     work_mode = config.work_mode
 
-    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = [{"name": "breast_hetero_host", "namespace": f"experiment{namespace}"},
-                       {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}]
+    # data sets
+    guest_train_data = {"name": "vehicle_scale_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "vehicle_scale_hetero_host", "namespace": f"experiment{namespace}"}
 
-    pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=hosts, arbiter=arbiter)
+    # init pipeline
+    pipeline = PipeLine().set_initiator(role="guest", party_id=guest).set_roles(guest=guest, host=host,)
+
+    # set data reader and data-io
 
     reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
-    reader_0.get_party_instance(role='host', party_id=hosts[0]).algorithm_param(table=host_train_data[0])
-    reader_0.get_party_instance(role='host', party_id=hosts[1]).algorithm_param(table=host_train_data[1])
+    reader_0.get_party_instance(role="guest", party_id=guest).algorithm_param(table=guest_train_data)
+    reader_0.get_party_instance(role="host", party_id=host).algorithm_param(table=host_train_data)
     dataio_0 = DataIO(name="dataio_0")
+    dataio_0.get_party_instance(role="guest", party_id=guest).algorithm_param(with_label=True, output_format="dense")
+    dataio_0.get_party_instance(role="host", party_id=host).algorithm_param(with_label=False)
 
-    dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True, output_format="dense")
-    dataio_0.get_party_instance(role='host', party_id=hosts).algorithm_param(with_label=False)
-
+    # data intersect component
     intersect_0 = Intersection(name="intersection_0")
+
+    # secure boost component
     hetero_secure_boost_0 = HeteroSecureBoost(name="hetero_secure_boost_0",
-                                              num_trees=5, task_type='classification',
+                                              num_trees=5,
+                                              task_type="classification",
                                               objective_param={"objective": "cross_entropy"},
-                                              encrypt_param={"method": "iterativeAffine"},
-                                              validation_freqs=1)
+                                              encrypt_param={"method": "paillier"},
+                                              tree_param={"max_depth": 5},
+                                              validation_freqs=1,
+                                              cv_param={
+                                                  "need_cv": True,
+                                                  "n_splits": 5,
+                                                  "shuffle": False,
+                                                  "random_seed": 103
+                                              }
+                                              )
 
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersect_0, data=Data(data=dataio_0.output.data))
     pipeline.add_component(hetero_secure_boost_0, data=Data(train_data=intersect_0.output.data))
 
-    # pipeline.set_deploy_end_component([dataio_0])
-    # pipeline.deploy_component([dataio_0])
-
     pipeline.compile()
-
     pipeline.fit(backend=backend, work_mode=work_mode)
 
-    print(pipeline.get_component("intersection_0").get_output_data())
-    print(pipeline.get_component("dataio_0").get_model_param())
-    print(pipeline.get_component("hetero_secure_boost_0").get_model_param())
-    # pipeline.get_component("intersection_0").summary("intersect_count", "intersect_rate")
+    print("fitting hetero secureboost done, result:")
+    print(pipeline.get_component("hetero_secure_boost_0").get_summary())
 
-    """
-    # predict
-    
-    pipeline.predict(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE)
-    
-    with open("output.pkl", "wb") as fout:
-        fout.write(pipeline.dump())``
-    """
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("PIPELINE DEMO")

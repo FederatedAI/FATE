@@ -227,7 +227,14 @@ class StorageTableMeta(StorageTableMetaABC):
 
     @classmethod
     def create_address(cls, storage_engine, address_dict):
-        return Relationship.EngineToAddress.get(storage_engine)(**address_dict)
+        address_class = Relationship.EngineToAddress.get(storage_engine)
+        kwargs = {}
+        for k in address_class.__init__.__code__.co_varnames:
+            if k == "self":
+                continue
+            if address_dict.get(k, None):
+                kwargs[k] = address_dict[k]
+        return address_class(**kwargs)
 
     def get_name(self):
         return self.name

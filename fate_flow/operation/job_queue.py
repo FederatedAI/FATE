@@ -22,7 +22,7 @@ from fate_flow.entity.types import JobStatus
 class JobQueue(object):
     @classmethod
     @DB.connection_context()
-    def set_event(cls, job_id, initiator_role, initiator_party_id):
+    def create_event(cls, job_id, initiator_role, initiator_party_id):
         events = cls.query_event(job_id=job_id, initiator_role=initiator_role,
                                  initiator_party_id=initiator_party_id)
         if events:

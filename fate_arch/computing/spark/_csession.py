@@ -19,6 +19,9 @@ from typing import Iterable
 from fate_arch.abc import AddressABC
 from fate_arch.abc import CSessionABC
 from fate_arch.computing.spark._table import from_hdfs, from_rdd
+from fate_arch.common import log
+
+LOGGER = log.getLogger()
 
 
 class CSession(CSessionABC):
@@ -32,7 +35,7 @@ class CSession(CSessionABC):
     def load(self, address: AddressABC, partitions, schema, **kwargs):
         from fate_arch.common.address import HDFSAddress
         if isinstance(address, HDFSAddress):
-            table = from_hdfs(paths=address.path, partitions=partitions)
+            table = from_hdfs(paths=f"{address.name_node}/{address.path}", partitions=partitions)
             table.schema = schema
             return table
         from fate_arch.common.address import FileAddress

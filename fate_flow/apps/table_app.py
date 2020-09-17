@@ -35,9 +35,21 @@ def table_add():
     name = request_data.get('name')
     namespace = request_data.get('namespace')
     address = storage.StorageTableMeta.create_address(storage_engine=engine, address_dict=address_dict)
+    in_serialized = request_data.get("in_serialized", 1 if engine in {storage.StorageEngine.STANDALONE, storage.StorageEngine.EGGROLL} else 0)
+    destroy = (request_data.get("drop", 0) == 1)
+    data_table_meta = storage.StorageTableMeta(name=name, namespace=namespace)
+    if data_table_meta:
+        if destroy:
+            data_table_meta.destroy_metas()
+        else:
+            return get_json_result(retcode=100,
+                                   retmsg='The data table already exists.'
+                                          'If you still want to continue uploading, please add the parameter -drop.'
+                                          '0 means not to delete and continue adding'
+                                          '1 means to add again after deleting the table')
     with storage.Session.build(storage_engine=engine, options=request_data.get("options")) as storage_session:
         storage_session.create_table(address=address, name=name, namespace=namespace, partitions=request_data.get('partitions', None),
-                                     hava_head=request_data.get('head', 1), in_serialized=False)
+                                     hava_head=request_data.get("head", 1), id_delimiter=request_data.get("id_delimiter", None), in_serialized=in_serialized)
     return get_json_result(data={"table_name": name, "namespace": namespace})
 
 

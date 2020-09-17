@@ -26,8 +26,7 @@ class SecureMeanAggregatorTransVar(SecureAggregatorTransVar):
 
 
 class Server(secure_aggregator.Server):
-    def __init__(self, trans_var: SecureMeanAggregatorTransVar,
-                 enable_secure_aggregate=True):
+    def __init__(self, trans_var: SecureMeanAggregatorTransVar = None, enable_secure_aggregate=True):
         if trans_var is None:
             trans_var = SecureMeanAggregatorTransVar()
         super().__init__(trans_var=trans_var, enable_secure_aggregate=enable_secure_aggregate)
@@ -52,8 +51,7 @@ class Server(secure_aggregator.Server):
 
 
 class Client(secure_aggregator.Client):
-    def __init__(self, trans_var: SecureMeanAggregatorTransVar = None,
-                 enable_secure_aggregate=True):
+    def __init__(self, trans_var: SecureMeanAggregatorTransVar = None, enable_secure_aggregate=True):
         if trans_var is None:
             trans_var = SecureMeanAggregatorTransVar()
         super().__init__(trans_var=trans_var, enable_secure_aggregate=enable_secure_aggregate)
