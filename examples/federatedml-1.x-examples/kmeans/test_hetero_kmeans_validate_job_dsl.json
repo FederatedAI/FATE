@@ -107,7 +107,16 @@
       "input": {
         "data": {
           "data": [
-            "hetero_kmeans_0.train_1",
+            "hetero_kmeans_0.train_1"
+          ]
+        }
+      }
+    },
+    "evaluation_1": {
+      "module": "Evaluation",
+      "input": {
+        "data": {
+          "data": [
             "hetero_kmeans_1.train_1"
           ]
         }
