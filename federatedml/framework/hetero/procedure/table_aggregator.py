@@ -110,7 +110,8 @@ class Client(secure_sum_aggregator.Client, secure_mean_aggregator.Client):
             trans_var = TableScatterTransVar()
         super().__init__(trans_var, enable_secure_aggregate)
         self._table_sync = TableTransferClient()
-        self._random_padding_cipher.set_amplify_factor(consts.SECURE_AGG_AMPLIFY_FACTOR)
+        if enable_secure_aggregate:
+            self._random_padding_cipher.set_amplify_factor(consts.SECURE_AGG_AMPLIFY_FACTOR)
 
     def secure_aggregate_table(self, send_func, table, enable_secure_aggregate=True):
         """

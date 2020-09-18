@@ -34,7 +34,7 @@ class HeteroKmeansArbiter(BaseKmeansModel):
         # self.dist_aggregator = secure_sum_aggregator.Server(enable_secure_aggregate=False)
         # self.cluster_dist_aggregator = secure_sum_aggregator.Server(enable_secure_aggregate=False)
         self.DBI = 0
-        self.aggregator = table_aggregator.Server()
+        self.aggregator = table_aggregator.Server(enable_secure_aggregate=True)
 
     def callback_dbi(self, iter_num, dbi):
         metric_meta = MetricMeta(name='train',

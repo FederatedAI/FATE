@@ -33,14 +33,14 @@ class HeteroKmeansClient(BaseKmeansModel):
         # self.cluster_dist_aggregator = secure_sum_aggregator.Client(enable_secure_aggregate=False)
         self.client_dist = None
         self.client_tol = None
-        self.aggregator = table_aggregator.Client()
+        self.aggregator = table_aggregator.Client(enable_secure_aggregate=True)
 
     @staticmethod
     def educl_dist(u, centroid_list):
         result = []
         for c in centroid_list:
             result.append(np.sum(np.square(np.array(c) - u.features)))
-        return result
+        return np.array(result)
 
     def get_centroid(self, data_instances):
         random_key = []
@@ -67,7 +67,7 @@ class HeteroKmeansClient(BaseKmeansModel):
         cluster_count_list = []
         count_all = data_instances.count()
         # for k in centroid_feature_sum:
-        for k in self.k:
+        for k in range(self.k):
             if k not in centroid_feature_sum:
                 centroid_list.append(self.centroid_list[int(k)])
                 cluster_count_list.append([k, 0, 0])
@@ -75,7 +75,7 @@ class HeteroKmeansClient(BaseKmeansModel):
                 count = cluster_count[k]
                 centroid_list.append(centroid_feature_sum[k] / count)
                 cluster_count_list.append([k, count, count / count_all])
-
+        LOGGER.debug(f"centroid_list: {centroid_list}, cluster_count_list: {cluster_count_list}")
         return centroid_list, cluster_count_list
 
     def centroid_dist(self, centroid_list):
