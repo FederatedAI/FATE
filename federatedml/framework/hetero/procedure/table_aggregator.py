@@ -16,13 +16,15 @@
 import numpy as np
 
 from fate_arch.session import computing_session
-from federatedml.framework.homo.blocks.base import HomoTransferBase
-from federatedml.framework.homo.procedure import aggregator
+from federatedml.framework.homo.blocks import secure_mean_aggregator
+# from federatedml.framework.homo.procedure import aggregator
+from federatedml.framework.homo.blocks import secure_sum_aggregator
 from federatedml.util import LOGGER
 from federatedml.util import consts
 
 
-class TableScatterTransVar(HomoTransferBase):
+class TableScatterTransVar(secure_sum_aggregator.AggregatorTransVar,
+                           secure_mean_aggregator.SecureMeanAggregatorTransVar):
     def __init__(self, server=(consts.ARBITER,), clients=(consts.GUEST, consts.HOST), prefix=None):
         super().__init__(server=server, clients=clients, prefix=prefix)
         self.client_table = self.create_client_to_server_variable(name="client_table")
@@ -47,6 +49,10 @@ class TableTransferServer(object):
         LOGGER.debug("In TableTransferServer, send_tables")
         return self._broadcaster.remote_parties(obj=tables, parties=parties, suffix=suffix)
 
+    @property
+    def client_parties(self):
+        return self._client_parties
+
 
 class TableTransferClient(object):
 
@@ -64,10 +70,12 @@ class TableTransferClient(object):
         return self._scatter.remote_parties(obj=tables, parties=self._server_parties, suffix=suffix)
 
 
-class Arbiter(aggregator.Arbiter):
+class Server(secure_sum_aggregator.Server, secure_mean_aggregator.Server):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, trans_var: TableScatterTransVar = None, enable_secure_aggregate=True):
+        if trans_var is None:
+            trans_var = TableScatterTransVar()
+        super().__init__(trans_var=trans_var, enable_secure_aggregate=enable_secure_aggregate)
         self._table_sync = TableTransferServer()
 
     def aggregate_tables(self, suffix=tuple()):
@@ -79,15 +87,14 @@ class Arbiter(aggregator.Arbiter):
         return result
 
     def send_aggregated_tables(self, table, suffix=tuple()):
-        for party in self._client_parties:
+        for party in self._table_sync.client_parties:
             self._table_sync.send_tables(tables=table, parties=party, suffix=suffix)
 
-    def aggregate_and_broadcast(self, ciphers_dict=None, suffix=tuple()):
+    def aggregate_and_broadcast_table(self, suffix=tuple()):
         """
         aggregate tables from guest and hosts, then broadcast the aggregated table.
 
         Args:
-            ciphers_dict: Useless, set for extension
             suffix: tag suffix
         """
         LOGGER.debug(f"Start aggregate_and_broadcast")
@@ -96,19 +103,17 @@ class Arbiter(aggregator.Arbiter):
         return table
 
 
-class Client(aggregator.Client):
+class Client(secure_sum_aggregator.Client, secure_mean_aggregator.Client):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, trans_var: TableScatterTransVar = None, enable_secure_aggregate=True):
+        if trans_var is None:
+            trans_var = TableScatterTransVar()
+        super().__init__(trans_var, enable_secure_aggregate)
         self._table_sync = TableTransferClient()
+        if enable_secure_aggregate:
+            self._random_padding_cipher.set_amplify_factor(consts.SECURE_AGG_AMPLIFY_FACTOR)
 
-    def register_aggregator(self, transfer_variables, enable_secure_aggregate=True):
-        super(Client, self).register_aggregator(transfer_variables, enable_secure_aggregate)
-        if self._enable_secure_aggregate:
-            self._cipher.set_amplify_factor(consts.SECURE_AGG_AMPLIFY_FACTOR)
-        return self
-
-    def secure_aggregate(self, send_func, table, degree: float = None, enable_secure_aggregate=True):
+    def secure_aggregate_table(self, send_func, table, enable_secure_aggregate=True):
         """
         Secure aggregate tables.
 
@@ -126,7 +131,7 @@ class Client(aggregator.Client):
             zeros_table = np.zeros(len(list_key))
             LOGGER.debug("Before cipher encrypted")
 
-            rand_table = self._cipher.encrypt(zeros_table)
+            rand_table = self._random_padding_cipher.encrypt(zeros_table)
             LOGGER.debug(f"rand_table: {rand_table}")
             rand_table = computing_session.parallelize(tuple(zip(list_key, rand_table)),
                                                        include_key=True,
@@ -141,30 +146,17 @@ class Client(aggregator.Client):
         def _func(_table):
             LOGGER.debug(f"cipher table content: {list(_table.collect())[0]}")
             self._table_sync.send_tables(_table, suffix=suffix)
+
         LOGGER.debug(f"plantext table content: {list(table.collect())[0]}")
 
-        return self.secure_aggregate(send_func=_func,
-                                     table=table,
-                                     enable_secure_aggregate=self._enable_secure_aggregate)
+        return self.secure_aggregate_table(send_func=_func,
+                                           table=table,
+                                           enable_secure_aggregate=self.enable_secure_aggregate)
 
     def get_aggregated_table(self, suffix=tuple()):
         return self._table_sync.get_tables(suffix=suffix)
 
-    def aggregate_then_get(self, table, degree: float = None, suffix=tuple()):
+    def aggregate_then_get_table(self, table, suffix=tuple()):
         self.send_table(table=table, suffix=suffix)
         return self.get_aggregated_table(suffix=suffix)
 
-
-Guest = Client
-Host = Client
-
-
-def with_role(role, transfer_variable, enable_secure_aggregate=True):
-    if role == consts.GUEST:
-        return Client().register_aggregator(transfer_variable, enable_secure_aggregate)
-    elif role == consts.HOST:
-        return Client().register_aggregator(transfer_variable, enable_secure_aggregate)
-    elif role == consts.ARBITER:
-        return Arbiter().register_aggregator(transfer_variable, enable_secure_aggregate)
-    else:
-        raise ValueError(f"role {role} not found")

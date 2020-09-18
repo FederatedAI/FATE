@@ -20,8 +20,7 @@ from fate_arch.session import computing_session as session
 from fate_flow.entity.metric import Metric
 from fate_flow.entity.metric import MetricMeta
 from federatedml.evaluation.metrics import clustering_metric
-from federatedml.framework.homo.blocks import secure_sum_aggregator
-from federatedml.framework.homo.procedure import table_aggregator
+from federatedml.framework.hetero.procedure import table_aggregator
 from federatedml.param.hetero_kmeans_param import KmeansParam
 from federatedml.unsupervise.kmeans.kmeans_model_base import BaseKmeansModel
 from federatedml.util import LOGGER
@@ -32,10 +31,10 @@ class HeteroKmeansArbiter(BaseKmeansModel):
     def __init__(self):
         super(HeteroKmeansArbiter, self).__init__()
         self.model_param = KmeansParam()
-        self.dist_aggregator = secure_sum_aggregator.Server(enable_secure_aggregate=False)
-        self.cluster_dist_aggregator = secure_sum_aggregator.Server(enable_secure_aggregate=False)
+        # self.dist_aggregator = secure_sum_aggregator.Server(enable_secure_aggregate=False)
+        # self.cluster_dist_aggregator = secure_sum_aggregator.Server(enable_secure_aggregate=False)
         self.DBI = 0
-        self.aggregator = table_aggregator.Arbiter()
+        self.aggregator = table_aggregator.Server(enable_secure_aggregate=True)
 
     def callback_dbi(self, iter_num, dbi):
         metric_meta = MetricMeta(name='train',
@@ -63,6 +62,8 @@ class HeteroKmeansArbiter(BaseKmeansModel):
         cluster_count = cluster_result.applyPartitions(self.count).reduce(self.sum_dict)
         cal_ave_dist_list = []
         for i in range(self.k):
+            if i not in cluster_count:
+                cal_ave_dist_list.append([i, 0, 0])
             count = cluster_count[i]
             cal_ave_dist_list.append([i, count, dist_centroid_dist_dtable[i] / count])
         return cal_ave_dist_list
@@ -87,7 +88,7 @@ class HeteroKmeansArbiter(BaseKmeansModel):
     def cal_dbi(self, dist_sum, cluster_result):
         dist_cluster_dtable = dist_sum.join(cluster_result, lambda v1, v2: [v1, v2])
         dist_table = self.cal_ave_dist(dist_cluster_dtable, cluster_result)  # ave dist in each cluster
-        cluster_dist = self.cluster_dist_aggregator.sum_model(suffix=(self.n_iter_,))
+        cluster_dist = self.aggregator.sum_model(suffix=(self.n_iter_,))
         cluster_avg_intra_dist = []
         for i in range(len(dist_table)):
             cluster_avg_intra_dist.append(dist_table[i][2])
@@ -135,7 +136,7 @@ class HeteroKmeansArbiter(BaseKmeansModel):
 
         dist_cluster_dtable = res_dict.join(cluster_result, lambda v1, v2: [v1, v2])
         dist_table = self.cal_ave_dist(dist_cluster_dtable, cluster_result)  # ave dist in each cluster
-        cluster_dist = self.cluster_dist_aggregator.sum_model(suffix='predict')
+        cluster_dist = self.aggregator.sum_model(suffix='predict')
 
         dist_cluster_dtable_out = cluster_result.join(cluster_dist_result, lambda v1, v2: [int(v1), float(v2)])
         cluster_max_radius = dist_cluster_dtable_out.applyPartitions(self.max_radius).reduce(self.get_max_radius)
