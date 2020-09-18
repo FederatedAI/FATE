@@ -49,7 +49,13 @@ class _ComputingTimerItem(object):
             self.max_time_uuid = other.max_time_uuid
 
     def get_statistic(self):
-        return [self.count, self.total_time, self.total_time / self.count, self.max_time, self.max_time_uuid]
+        return [self.count, self.total_time, self.mean, self.max_time, self.max_time_uuid]
+
+    @property
+    def mean(self):
+        if self.count == 0:
+            return 0.0
+        return self.total_time / self.count
 
     def __str__(self):
         return f"count={self.count}, total_time={self.total_time}, mean_time={self.total_time / self.count}," \
