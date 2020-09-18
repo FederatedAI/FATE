@@ -398,10 +398,15 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
             if sample_inst.count() >= exact_num:
                 break
         if sample_inst.count() != exact_num:
-            diff = sample_inst.count() - exact_num
-            diff_list = sample_inst.take(diff)
-            for k, _ in diff_list:
-                sample_inst.delete(k=k)
+            # diff = sample_inst.count() - exact_num
+            # diff_list = sample_inst.take(diff)
+            # for k, _ in diff_list:
+                #sample_inst.delete(k=k)
+            sample_inst_list = sample_inst.take(exact_num)
+            from fate_arch.session import computing_session as session
+            sample_inst = session.parallelize(sample_inst_list,
+                                              partition=sample_inst.partitions,
+                                              include_key=True)
         return sample_inst
 
     def _sync_block_num(self):

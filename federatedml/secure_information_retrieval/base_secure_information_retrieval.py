@@ -51,14 +51,9 @@ class BaseSecureInformationRetrieval(ModelBase):
 
     def _init_base_model(self, param: SecureInformationRetrievalParam):
         self.transfer_variable = SecureInformationRetrievalTransferVariable()
-        self._init_transfer_variable()
 
         self.model_param = param
         self.security_level = self.model_param.security_level
-
-    def _init_transfer_variable(self):
-        self.transfer_variable.natural_indexation.disable_auto_clean()
-        self.transfer_variable.id_blocks_ciphertext.disable_auto_clean()
 
     @staticmethod
     def _abnormal_detection(data_instances):
