@@ -41,6 +41,13 @@ class _ComputingTimerItem(object):
             self.max_time = elapse_time
             self.max_time_uuid = computing_uuid
 
+    def union(self, other: '_ComputingTimerItem'):
+        self.count += other.count
+        self.total_time += other.total_time
+        if other.max_time > self.max_time:
+            self.max_time = other.max_time
+            self.max_time_uuid = other.max_time_uuid
+
     def get_statistic(self):
         return [self.count, self.total_time, self.total_time / self.count, self.max_time, self.max_time_uuid]
 
@@ -85,8 +92,11 @@ class _ComputingTimer(object):
             pretty_table = prettytable.PrettyTable(head)
             pretty_table.hrules = prettytable.ALL
             pretty_table.max_width["name"] = 25
+            total = _ComputingTimerItem()
             for name, timer in cls._STATS.items():
                 pretty_table.add_row([name, *timer.get_statistic()])
+                total.union(timer)
+            pretty_table.add_row(["TOTAL", *total.get_statistic()])
             return pretty_table.get_string()
 
 
@@ -110,6 +120,12 @@ class _FederationTimerItem(object):
             return self.remote_time / self.remote_count
         else:
             return 0.0
+
+    def union(self, other: '_FederationTimerItem'):
+        self.get_count += other.get_count
+        self.remote_count += other.remote_count
+        self.get_time += other.get_time
+        self.remote_time += other.remote_time
 
     def get_statistic(self):
         return [self.get_count, self.remote_count, self.get_time, self.remote_time, self.get_mean_time,
@@ -140,8 +156,11 @@ class _FederationTimer(object):
             pretty_table = prettytable.PrettyTable(head)
             pretty_table.hrules = prettytable.ALL
             pretty_table.max_width["name"] = 25
+            total = _FederationTimerItem()
             for name, timer in cls._STATS.items():
                 pretty_table.add_row([name, *timer.get_statistic()])
+                total.union(timer)
+            pretty_table.add_row(["TOTAL", *total.get_statistic()])
             return pretty_table.get_string()
 
 
