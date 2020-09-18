@@ -103,7 +103,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
             perform_recorder[i] = gain
             gains.append(gain)
 
-            if gain > self.min_impurity_split and gain > best_gain:
+            if gain > self.min_impurity_split and gain > best_gain + consts.FLOAT_ZERO:
                 best_gain = gain
                 best_idx = i
 
@@ -116,7 +116,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
         best_gain_host_idx = 1
         for i in range(1, len(splitinfo_guest_host)):
             gain_host_i = self.decrypt(splitinfo_guest_host[i].gain)
-            if best_gain_host < gain_host_i:
+            if best_gain_host < gain_host_i - consts.FLOAT_ZERO:
                 best_gain_host = gain_host_i
                 best_gain_host_idx = i
 
@@ -274,7 +274,7 @@ class HeteroDecisionTreeGuest(DecisionTree):
                     if best_splitinfo_host[_][0] == -1:
                         best_splitinfo_host[_] = list(splitinfo[:2])
                         best_gains[_] = splitinfo[2]
-                    elif splitinfo[0] != -1 and splitinfo[2] > best_gains[_]:
+                    elif splitinfo[0] != -1 and splitinfo[2] > best_gains[_] + consts.FLOAT_ZERO:
                         best_splitinfo_host[_][0] = k + splitinfo[0]
                         best_splitinfo_host[_][1] = splitinfo[1]
                         best_gains[_] = splitinfo[2]
