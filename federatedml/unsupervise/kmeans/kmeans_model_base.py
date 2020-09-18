@@ -54,7 +54,7 @@ class BaseKmeansModel(ModelBase):
         self.k = params.k
         self.max_iter = params.max_iter
         self.tol = params.tol
-        self.aggregator.register_aggregator(self.transfer_variable)
+        # self.aggregator.register_aggregator(self.transfer_variable)
 
     def get_header(self, data_instances):
         if self.header is not None:
