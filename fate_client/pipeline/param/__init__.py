@@ -16,7 +16,7 @@
 
 from pipeline.param.dataio_param import DataIOParam
 from pipeline.param.encrypt_param import EncryptParam
-from pipeline.param.logistic_regression_param import InitParam
+from pipeline.param.init_model_param import InitParam
 from pipeline.param.logistic_regression_param import LogisticParam
 from pipeline.param.linear_regression_param import LinearParam
 from pipeline.param.encrypted_mode_calculation_param import EncryptedModeCalculatorParam
