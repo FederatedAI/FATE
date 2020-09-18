@@ -42,7 +42,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
 
         Define exp(wx) as mu, named it as guest_forward or host_forward
         Define (mu-y) as fore_gradient
-        Then, gradient = fore_gradeint * x
+        Then, gradient = fore_gradient * x
 
         '''
         if offset is None:
