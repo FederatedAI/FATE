@@ -61,11 +61,9 @@ class HeteroKmeansArbiter(BaseKmeansModel):
         dist_centroid_dist_dtable = dist_cluster_dtable.applyPartitions(self.sum_in_cluster).reduce(self.sum_dict)
         cluster_count = cluster_result.applyPartitions(self.count).reduce(self.sum_dict)
         cal_ave_dist_list = []
-        for i in range(self.k):
-            if i not in cluster_count:
-                cal_ave_dist_list.append([i, 0, 0])
-            count = cluster_count[i]
-            cal_ave_dist_list.append([i, count, dist_centroid_dist_dtable[i] / count])
+        for key in cluster_count.keys():
+            count = cluster_count[key]
+            cal_ave_dist_list.append([key, count, dist_centroid_dist_dtable[key] / count])
         return cal_ave_dist_list
 
     @staticmethod
@@ -88,6 +86,9 @@ class HeteroKmeansArbiter(BaseKmeansModel):
     def cal_dbi(self, dist_sum, cluster_result):
         dist_cluster_dtable = dist_sum.join(cluster_result, lambda v1, v2: [v1, v2])
         dist_table = self.cal_ave_dist(dist_cluster_dtable, cluster_result)  # ave dist in each cluster
+        if len(dist_table) == 1:
+            raise ValueError('Only one class detected. DBI calculation error')
+        cluster_dist = self.cluster_dist_aggregator.sum_model(suffix=(self.n_iter_,))
         cluster_dist = self.aggregator.sum_model(suffix=(self.n_iter_,))
         cluster_avg_intra_dist = []
         for i in range(len(dist_table)):
@@ -136,12 +137,15 @@ class HeteroKmeansArbiter(BaseKmeansModel):
 
         dist_cluster_dtable = res_dict.join(cluster_result, lambda v1, v2: [v1, v2])
         dist_table = self.cal_ave_dist(dist_cluster_dtable, cluster_result)  # ave dist in each cluster
+        if len(dist_table) == 1:
+            raise ValueError('Only one class detected. DBI calculation error')
+        cluster_dist = self.cluster_dist_aggregator.sum_model(suffix='predict')
         cluster_dist = self.aggregator.sum_model(suffix='predict')
 
         dist_cluster_dtable_out = cluster_result.join(cluster_dist_result, lambda v1, v2: [int(v1), float(v2)])
         cluster_max_radius = dist_cluster_dtable_out.applyPartitions(self.max_radius).reduce(self.get_max_radius)
         result = []
-        for i in range(self.k):
+        for i in range(len(dist_table)):
             result.append(
                 tuple([i, [dist_table[i][1], dist_table[i][2], cluster_max_radius[i], list(cluster_dist._weights)]]))
         predict_result1 = session.parallelize(result, partition=res_dict.partitions, include_key=True)
