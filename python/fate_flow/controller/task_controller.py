@@ -20,7 +20,7 @@ from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import Task
 from fate_flow.operation.task_executor import TaskExecutor
 from fate_flow.scheduler import FederatedScheduler
-from fate_flow.entity.types import TaskStatus, EndStatus
+from fate_flow.entity.types import TaskStatus, EndStatus, KillProcessStatusCode
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.utils import job_utils
 import os
@@ -224,9 +224,10 @@ class TaskController(object):
         kill_status = False
         try:
             # kill task executor
-            kill_status = job_utils.kill_task_executor_process(task)
+            kill_status_code = job_utils.kill_task_executor_process(task)
             # session stop
-            job_utils.start_session_stop(task)
+            if kill_status_code == KillProcessStatusCode.KILLED or task.f_status not in {TaskStatus.WAITING}:
+                job_utils.start_session_stop(task)
         except Exception as e:
             schedule_logger(task.f_job_id).exception(e)
         finally:

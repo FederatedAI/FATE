@@ -204,3 +204,9 @@ class TagOperation(object):
 class ResourceOperation(object):
     APPLY = "apply"
     RETURN = "return"
+
+
+class KillProcessStatusCode(object):
+    KILLED = 0
+    NOT_FOUND = 1
+    ERROR_PID = 2

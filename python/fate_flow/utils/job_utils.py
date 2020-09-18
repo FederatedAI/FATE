@@ -28,7 +28,7 @@ from fate_arch.common.base_utils import json_loads, json_dumps, fate_uuid, curre
 from fate_arch.common.log import schedule_logger
 from fate_flow.db.db_models import DB, Job, Task
 from fate_flow.entity.types import JobStatus
-from fate_flow.entity.types import TaskStatus, RunParameters
+from fate_flow.entity.types import TaskStatus, RunParameters, KillProcessStatusCode
 from fate_flow.settings import stat_logger, JOB_DEFAULT_TIMEOUT, WORK_MODE
 from fate_flow.utils import detect_utils
 from fate_flow.utils import session_utils
@@ -339,19 +339,19 @@ def kill_task_executor_process(task: Task, only_child=False):
         if not task.f_run_pid:
             schedule_logger(task.f_job_id).info("job {} task {} {} {} no process pid".format(
                 task.f_job_id, task.f_task_id, task.f_role, task.f_party_id))
-            return True
+            return KillProcessStatusCode.NOT_FOUND
         pid = int(task.f_run_pid)
         schedule_logger(task.f_job_id).info("try to stop job {} task {} {} {} process pid:{}".format(
             task.f_job_id, task.f_task_id, task.f_role, task.f_party_id, pid))
         if not check_job_process(pid):
             schedule_logger(task.f_job_id).info("can not found job {} task {} {} {} process pid:{}".format(
                 task.f_job_id, task.f_task_id, task.f_role, task.f_party_id, pid))
-            return True
+            return KillProcessStatusCode.NOT_FOUND
         p = psutil.Process(int(pid))
         if not is_task_executor_process(task=task, process=p):
             schedule_logger(task.f_job_id).warning("this pid {} is not job {} task {} {} {} executor".format(
                 pid, task.f_job_id, task.f_task_id, task.f_role, task.f_party_id))
-            return False
+            return KillProcessStatusCode.ERROR_PID
         for child in p.children(recursive=True):
             if check_job_process(child.pid) and is_task_executor_process(task=task, process=child):
                 child.stop_job()
@@ -360,7 +360,7 @@ def kill_task_executor_process(task: Task, only_child=False):
                 p.kill()
         schedule_logger(task.f_job_id).info("successfully stop job {} task {} {} {} process pid:{}".format(
             task.f_job_id, task.f_task_id, task.f_role, task.f_party_id, pid))
-        return True
+        return KillProcessStatusCode.KILLED
     except Exception as e:
         raise e
 
@@ -368,7 +368,7 @@ def kill_task_executor_process(task: Task, only_child=False):
 def start_session_stop(task):
     job_conf_dict = get_job_conf(task.f_job_id)
     job_parameters = RunParameters(**job_conf_dict['job_runtime_conf_path']["job_parameters"])
-    computing_session_id = generate_session_id(task.f_task_id, task.f_task_version, task.f_role, task.f_party_id, suffix="computing")
+    computing_session_id = generate_session_id(task.f_task_id, task.f_task_version, task.f_role, task.f_party_id)
     if task.f_status != TaskStatus.WAITING:
         schedule_logger(task.f_job_id).info(f'start run subprocess to stop task session {computing_session_id}')
     else:
