@@ -414,8 +414,8 @@ host:
       client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
       default_rules: ---本party指向exchange或者其他party的IP、端口路由配置
       - name: default
-        ip: 192.168.0.2 ---对端party rollsite IP
-        port: 9370 ---对端party rollsite 端口，一般默认9370，即无安全证书部署；如需开启安全证书通信，应设置为9371；
+        ip: 192.168.0.2 ---exchange或者对端party rollsite IP
+        port: 9370 ---exchange或者对端party rollsite 端口，一般默认9370，即无安全证书部署；如需开启安全证书通信，应设置为9371；
         is_secure: False ---是否使用安全认证通讯；需要结合server_secure或者client_secure使用，当三者都为true时，表示和下一跳rollsite使用安全认证通讯，同时上一个参数port需设置为9371；不使用安全证书默认即可。
       rules: ---本party自身路由配置
       - name: default
@@ -491,8 +491,8 @@ guest:
       client_secure: False ---作为客户端，使用证书发起安全请求，不使用安全证书默认即可
       default_rules:  ---本party指向exchange或者其他party的IP、端口路由配置
       - name: default
-        ip: 192.168.0.1 ---对端party rollsite IP
-        port: 9370 ---对端party rollsite 端口，一般默认9370，即无安全证书部署；如需开启安全证书通信，应设置为9371；
+        ip: 192.168.0.1 ---exchange或者对端party rollsite IP
+        port: 9370 ---exchange或者对端party rollsite 端口，一般默认9370，即无安全证书部署；如需开启安全证书通信，应设置为9371；
         is_secure: False ---server_secure或者client_secure为true，指向的下一跳rollsite也开启了安全认证，此参数需要设置为true，上一个参数port需设置为9371，不使用安全证书默认即可
       rules:  ---本party自身路由配置
       - name: default
