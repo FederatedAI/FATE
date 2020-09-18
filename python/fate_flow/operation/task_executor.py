@@ -148,7 +148,7 @@ class TaskExecutor(object):
                 session_options = {}
 
             sess = session.Session(computing_type=job_parameters.computing_engine, federation_type=job_parameters.federation_engine)
-            computing_session_id = job_utils.generate_session_id(task_id, task_version, role, party_id, EngineType.COMPUTING)
+            computing_session_id = job_utils.generate_session_id(task_id, task_version, role, party_id)
             sess.init_computing(computing_session_id=computing_session_id, options=session_options)
             federation_session_id = job_utils.generate_federated_id(task_id, task_version)
             sess.init_federation(federation_session_id=federation_session_id,
