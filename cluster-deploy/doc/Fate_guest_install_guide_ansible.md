@@ -249,16 +249,16 @@ yum install -y epel-release
 **在目标服务器（192.168.0.1 192.168.0.2）app用户下执行**
 
 ```
-#虚拟内存，size不低于128G，如不满足需参考4.6章节重新设置
+#虚拟内存，size不低于128G，如不满足需参考3.6章节重新设置
 cat /proc/swaps
 Filename                                Type            Size    Used    Priority
 /data/swapfile128G                      file            134217724       384     -1
 
-#文件句柄数，不低于65535，如不满足需参考4.3章节重新设置
+#文件句柄数，不低于65535，如不满足需参考3.3章节重新设置
 ulimit -n
 65535
 
-#用户进程数，不低于64000，如不满足需参考4.3章节重新设置
+#用户进程数，不低于64000，如不满足需参考3.3章节重新设置
 ulimit -u
 65535
 
@@ -268,6 +268,7 @@ ps -ef| grep -i fate
 netstat -tlnp | grep 4670
 netstat -tlnp | grep 4671
 netstat -tlnp | grep 9370
+netstat -tlnp | grep 9371
 netstat -tlnp | grep 9360
 netstat -tlnp | grep 8080
 netstat -tlnp | grep 3306
