@@ -54,6 +54,9 @@ def data_upload(submitter, upload_config, check_interval, fate_home):
                                   partition=data["partition"],
                                   head=data["head"])
         print(f"[{time.strftime('%Y-%m-%d %X')}]upload done {format_msg}, job_id={job_id}\n")
+        if job_id is None:
+            print("table already exist. To upload again, Please add '-f 1' in start cmd")
+            continue
 
         submitter.await_finish(job_id, check_interval=check_interval)
         check_data_count(submitter, fate_home, data["table_name"], data["namespace"], data["count"])
