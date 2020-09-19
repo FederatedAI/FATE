@@ -93,7 +93,7 @@ class _ComputingTimer(object):
 
     @classmethod
     def computing_statistics_table(cls):
-        stack_table = beautifultable.BeautifulTable(120, precision=4)
+        stack_table = beautifultable.BeautifulTable(110, precision=4)
         stack_table.set_style(beautifultable.STYLE_BOX_ROUNDED)
         stack_table.columns.header = ["function", "n", "sum(s)", "mean(s)", "max(s)", "stack_hash", "stack"]
         stack_table.columns.alignment["stack"] = beautifultable.ALIGN_LEFT
@@ -103,7 +103,7 @@ class _ComputingTimer(object):
         stack_table.border.bottom = ''
         stack_table.border.top = ''
 
-        function_table = beautifultable.BeautifulTable(120)
+        function_table = beautifultable.BeautifulTable(110)
         function_table.set_style(beautifultable.STYLE_COMPACT)
         function_table.columns.header = ["function", "n", "sum(s)", "mean(s)", "max(s)"]
 
@@ -117,7 +117,7 @@ class _ComputingTimer(object):
         for function_name, item in aggregate.items():
             function_table.rows.append([function_name, *item.as_list()])
 
-        base_table = beautifultable.BeautifulTable(140)
+        base_table = beautifultable.BeautifulTable(120)
         stack_table.rows.sort("sum(s)", reverse=True)
         base_table.rows.append(["stack", stack_table])
         function_table.rows.sort("sum(s)", reverse=True)
@@ -134,7 +134,7 @@ class _FederationTimer(object):
     @classmethod
     def federation_statistics_table(cls):
         total = _TimerItem()
-        get_table = beautifultable.BeautifulTable(120)
+        get_table = beautifultable.BeautifulTable(110)
         get_table.columns.header = ["name", "n", "sum(s)", "mean(s)", "max(s)"]
         for name, item in cls._GET_STATS.items():
             get_table.rows.append([name, *item.as_list()])
@@ -144,7 +144,7 @@ class _FederationTimer(object):
         get_table.border.right = ''
         get_table.border.bottom = ''
         get_table.border.top = ''
-        remote_table = beautifultable.BeautifulTable(120)
+        remote_table = beautifultable.BeautifulTable(110)
         remote_table.columns.header = ["name", "n", "sum(s)", "mean(s)", "max(s)"]
         for name, item in cls._REMOTE_STATS.items():
             remote_table.rows.append([name, *item.as_list()])
@@ -155,7 +155,7 @@ class _FederationTimer(object):
         remote_table.border.bottom = ''
         remote_table.border.top = ''
 
-        base_table = beautifultable.BeautifulTable(140)
+        base_table = beautifultable.BeautifulTable(120)
         base_table.rows.append(["get", get_table])
         base_table.rows.append(["remote", remote_table])
         base_table.rows.append(["total", total])
