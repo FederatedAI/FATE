@@ -1,3 +1,4 @@
+import copy
 import functools
 import numpy as np
 
@@ -63,10 +64,10 @@ class Imputer(object):
         replace_cols_index_list = []
         for i, v in enumerate(data):
             if str(v) in missing_value_list:
-                data[i] = output_format(transform_list[i])
+                data[i] = copy.deepcopy(output_format(transform_list[i]))
                 replace_cols_index_list.append(i)
             else:
-                data[i] = output_format(v)
+                data[i] = copy.deepcopy(output_format(v))
 
         return data, replace_cols_index_list
 
@@ -75,7 +76,7 @@ class Imputer(object):
         replace_cols_index_list = []
         for i, v in enumerate(data):
             if str(v) in missing_value_list:
-                data[i] = str(transform_list[i])
+                data[i] = copy.deepcopy(str(transform_list[i]))
                 replace_cols_index_list.append(i)
 
         return data, replace_cols_index_list
@@ -85,10 +86,10 @@ class Imputer(object):
         replace_cols_index_list = []
         for i, v in enumerate(data):
             if str(v) in missing_value_list:
-                data[i] = output_format(replace_value)
+                data[i] = copy.deepcopy(output_format(replace_value))
                 replace_cols_index_list.append(i)
             else:
-                data[i] = output_format(data[i])
+                data[i] = copy.deepcopy(output_format(data[i]))
 
         return data, replace_cols_index_list
 
@@ -97,7 +98,7 @@ class Imputer(object):
         replace_cols_index_list = []
         for i, v in enumerate(data):
             if str(v) in missing_value_list:
-                data[i] = str(replace_value)
+                data[i] = copy.deepcopy(str(replace_value))
                 replace_cols_index_list.append(i)
 
         return data, replace_cols_index_list
@@ -177,8 +178,7 @@ class Imputer(object):
         else:
             raise ValueError("Unknown replace area {} in Imputer".format(replace_area))
 
-        transform_data = data.mapValues(f)
-        return transform_data
+        return data.mapValues(f)
 
     @staticmethod
     def __get_impute_number(some_data):

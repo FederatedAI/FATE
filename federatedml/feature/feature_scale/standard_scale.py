@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
+import copy
 import functools
 
 import numpy as np
@@ -65,7 +66,7 @@ class StandardScale(BaseScale):
         for i in process_cols_list:
             features[i] = (data.features[i] - mean[i]) / std[i]
 
-        data.features = features
+        data.features = copy.deepcopy(features)
         return data
 
     def fit(self, data):

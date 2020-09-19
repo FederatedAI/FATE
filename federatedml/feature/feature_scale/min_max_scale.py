@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
+import copy
 import functools
 import numpy as np
 
@@ -33,7 +34,6 @@ class MinMaxScale(BaseScale):
     def __init__(self, params):
         super().__init__(params)
         self.mode = params.mode
-
         self.column_range = None
 
     @staticmethod
@@ -51,7 +51,7 @@ class MinMaxScale(BaseScale):
 
             features[i] = (value - min_value_list[i]) / scale_value_list[i]
 
-        data.features = features
+        data.features = copy.deepcopy(features)
         return data
 
     def fit(self, data):
