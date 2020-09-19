@@ -1,0 +1,72 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "host": [
+            9998
+        ],
+        "guest": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "job_type": "train",
+        "backend": 0,
+        "work_mode": 0,
+        "dsl_version": 2
+    },
+    "role_parameters": {
+        "host": {
+            "0": {
+                "reader_0": {
+                    "table": {
+                        "name": "student_hetero_host",
+                        "namespace": "experiment"
+                    }
+                },
+                "dataio_0": {
+                    "with_label": false
+                }
+            }
+        },
+        "guest": {
+            "0": {
+                "reader_0": {
+                    "table": {
+                        "name": "student_hetero_guest",
+                        "namespace": "experiment"
+                    }
+                },
+                "dataio_0": {
+                    "with_label": true,
+                    "label_type": "float",
+                    "output_format": "dense"
+                }
+            }
+        }
+    },
+    "algorithm_parameters": {
+        "hetero_secure_boost_0": {
+            "task_type": "regression",
+            "objective_param": {
+                "objective": "lse"
+            },
+            "num_trees": 1,
+            "cv_param": {
+                "need_cv": true,
+                "n_splits": 5,
+                "shuffle": false,
+                "random_seed": 103
+            },
+            "validation_freqs": 1,
+            "encrypt_param": {
+                "method": "iterativeAffine"
+            },
+            "tree_param": {
+                "max_depth": 5
+            }
+        }
+    }
+}
