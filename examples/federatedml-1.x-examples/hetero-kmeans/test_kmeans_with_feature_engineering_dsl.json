@@ -73,25 +73,11 @@
                 "model": ["selected"]
             }
         },
-        "one_hot_encoder_0": {
-            "module": "OneHotEncoder",
-            "input": {
-                "data": {
-                    "data": [
-                        "hetero_feature_selection_0.train"
-                    ]
-                }
-            },
-            "output": {
-                "data": ["train"],
-                "model": ["model"]
-            }
-        },
         "hetero_kmeans_0": {
             "module": "HeteroKmeans",
             "input": {
                 "data": {
-                    "train_data": ["one_hot_encoder_0.train"]
+                    "train_data": ["hetero_feature_selection_0.train"]
                 }
             },
             "output": {

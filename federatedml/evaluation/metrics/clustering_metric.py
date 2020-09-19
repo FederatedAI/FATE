@@ -5,6 +5,7 @@ import sys
 from sklearn.metrics import jaccard_similarity_score
 from sklearn.metrics import fowlkes_mallows_score
 from sklearn.metrics import adjusted_rand_score
+from sklearn.metrics.cluster import contingency_matrix
 
 from arch.api import session
 from federatedml.feature.instance import Instance
@@ -28,7 +29,13 @@ class FowlkesMallowsScore(object):
     """
 
     def compute(self, labels, pred_scores):
-        return fowlkes_mallows_score(labels, pred_scores)
+        n_samples, = np.array(labels).shape
+
+        CMatrix = contingency_matrix(labels, pred_scores, sparse=True)
+        tp_count = np.dot(CMatrix.data, CMatrix.data) - n_samples
+        tp_fp_count = np.sum(np.asarray(CMatrix.sum(axis=0)).ravel() ** 2) - n_samples
+        tp_fn_count = np.sum(np.asarray(CMatrix.sum(axis=1)).ravel() ** 2) - n_samples
+        return np.sqrt(tp_count / tp_fp_count) * np.sqrt(tp_count / tp_fn_count) if tp_count != 0. else 0.
 
 
 class AdjustedRandScore(object):
@@ -52,7 +59,7 @@ class ContengincyMatrix(object):
         unique_true_label = np.unique(labels)
         result_array = np.zeros([len(unique_true_label), len(unique_predicted_label)])
         for v1, v2 in label_predict:
-            result_array[v1][v2] += 1
+            result_array[v1][list(unique_predicted_label).index(v2)] += 1
         return result_array, unique_predicted_label, unique_true_label
 
 
@@ -65,7 +72,7 @@ class DistanceMeasure(object):
         max_radius_result = max_radius
         cluster_nearest_result = []
         for j in range(0, len(dist_table)):
-            arr = inter_cluster_dist[j * len(dist_table): (j+1) * len(dist_table)]
+            arr = inter_cluster_dist[j * len(dist_table): (j + 1) * len(dist_table)]
             smallest = np.inf
             smallest_index = 0
             for k in range(0, len(arr)):

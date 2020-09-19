@@ -103,8 +103,7 @@
             "select_col_indexes": -1,
             "filter_methods": [
                 "manually",
-                "iv_value_thres",
-                "iv_percentile"
+                "iv_value_thres"
             ],
             "manually_param": {
                 "filter_out_indexes": null
@@ -112,14 +111,6 @@
             "iv_value_param": {
                 "value_threshold": 1.0
             },
-            "iv_percentile_param": {
-                "percentile_threshold": 0.9
-            },
-            "need_run": true
-        },
-        "one_hot_encoder_0": {
-            "transform_col_indexes": -1,
-            "transform_col_names": null,
             "need_run": true
         },
         "hetero_kmeans_0": {

@@ -74,6 +74,7 @@
             "module": "Evaluation",
             "input": {
                 "data": {
+
                     "data": ["hetero_linr_0.train"]
                 }
             }

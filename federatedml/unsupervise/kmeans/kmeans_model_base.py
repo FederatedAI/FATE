@@ -35,6 +35,7 @@ class BaseKmeansModel(ModelBase):
         self.k = 0
         self.max_iter = 0
         self.tol = 0
+        self.random_stat = None
         self.iter = iter
         self.centroid_list = None
         self.cluster_result = None
@@ -54,6 +55,7 @@ class BaseKmeansModel(ModelBase):
         self.k = params.k
         self.max_iter = params.max_iter
         self.tol = params.tol
+        self.random_stat = params.random_stat
         # self.aggregator.register_aggregator(self.transfer_variable)
 
     def get_header(self, data_instances):
