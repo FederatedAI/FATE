@@ -30,7 +30,7 @@ HDFS:
   address:
     name_node:
     path_prefix:
-MQ:
+RABBITMQ:
   address:
     self:
       9999: 192.168.1.3
