@@ -18,17 +18,11 @@
 
 PROJECT_BASE=$(cd "$(dirname "$0")";cd ../;cd ../;pwd)
 echo "PROJECT_BASE: "${PROJECT_BASE}
-EGGROLL_HOME=${PROJECT_BASE}/eggroll
-PYTHON_PATH=${PROJECT_BASE}/python:${EGGROLL_HOME}/python
-export PYTHONPATH=${PYTHON_PATH}
-export EGGROLL_HOME=${EGGROLL_HOME}
-export SPARK_HOME=/data/projects/common/spark/spark-2.4.1-bin-hadoop2.7
+source ${PROJECT_BASE}/bin/init_env.sh
 echo "PYTHONPATH: "${PYTHONPATH}
 echo "EGGROLL_HOME: "${EGGROLL_HOME}
+echo "SPARK_HOME: "${SPARK_HOME}
 log_dir=${PROJECT_BASE}/logs
-venv=/data/projects/fate/common/python/venv
-venv=/Users/jarviszeng/Work/common/venv/fate
-echo "venv: "${venv}
 
 module=fate_flow_server.py
 
@@ -89,7 +83,6 @@ start() {
     getpid
     if [[ ${pid} == "" ]]; then
         mklogsdir
-        source ${venv}/bin/activate
         nohup python ${PROJECT_BASE}/python/fate_flow/fate_flow_server.py >> "${log_dir}/console.log" 2>>"${log_dir}/error.log" &
         for((i=1;i<=100;i++));
         do
