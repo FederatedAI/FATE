@@ -17,12 +17,12 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.hetero_data_split import HeteroDataSplit
-from pipeline.component.hetero_linr import HeteroLinR
-from pipeline.component.intersection import Intersection
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
+from pipeline.component import DataIO
+from pipeline.component import HeteroDataSplit
+from pipeline.component import HeteroLinR
+from pipeline.component import Intersection
+from pipeline.component import Reader
+from pipeline.interface import Data
 
 from examples.util.config import Config
 
@@ -80,7 +80,7 @@ def main(config="../../config.yaml", namespace=""):
     print(pipeline.get_component("hetero_data_split_0").get_output_data(limits=10))
     print("\nlinr output data is: ")
     print(pipeline.get_component("hetero_linr_0").get_output_data(limits=10))
-    print("\n summary content is: ")
+    print("\nsummary content is: ")
     print(pipeline.get_component("hetero_data_split_0").get_summary())
 
 
