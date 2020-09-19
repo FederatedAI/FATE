@@ -53,12 +53,12 @@ FATE_SERVICES_REGISTERED_PATH = {
     "servings": "/FATE-SERVICES/serving/online/publishLoad/providers",
 }
 
-# job maximum number  of the initiator
+# default parameters
 DEFAULT_TASK_PARALLELISM = 1
 DEFAULT_TASK_CORES_PER_NODE = 5
 DEFAULT_TASK_MEMORY_PER_NODE = 0  # mb
+MAX_CORES_PERCENT_PER_JOB = 20  # 0 means not limited
 STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE = 20
-
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
 # abnormal condition parameter

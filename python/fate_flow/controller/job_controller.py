@@ -20,7 +20,7 @@ from fate_arch.common import EngineType
 from fate_flow.entity.types import JobStatus, EndStatus, RunParameters
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation import Tracker
-from fate_flow.settings import USE_AUTHENTICATION, ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH
+from fate_flow.settings import USE_AUTHENTICATION, MAX_CORES_PERCENT_PER_JOB
 from fate_flow.utils import job_utils, schedule_utils, data_utils
 from fate_flow.operation import JobSaver, JobQueue
 from fate_arch.common.base_utils import json_dumps, current_timestamp

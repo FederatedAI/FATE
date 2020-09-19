@@ -31,9 +31,7 @@ class FederatedScheduler(object):
     # Job
     @classmethod
     def create_job(cls, job: Job):
-        status_code, response = cls.job_command(job=job, command="create", command_body=job.to_human_model_dict())
-        if status_code != FederatedSchedulingStatusCode.SUCCESS:
-            raise Exception("create job failed: {}".format(response))
+        return cls.job_command(job=job, command="create", command_body=job.to_human_model_dict())
 
     @classmethod
     def resource_for_job(cls, job, operation_type, specific_dest=None):

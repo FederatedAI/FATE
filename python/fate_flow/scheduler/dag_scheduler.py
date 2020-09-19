@@ -105,7 +105,9 @@ class DAGScheduler(Cron):
         job_runtime_conf["job_parameters"] = job_parameters.to_dict()
         job.f_runtime_conf = job_runtime_conf
 
-        FederatedScheduler.create_job(job=job)
+        status_code, response = FederatedScheduler.create_job(job=job)
+        if status_code != FederatedSchedulingStatusCode.SUCCESS:
+            raise Exception("create job failed: {}".format(response))
 
         if job_parameters.work_mode == WorkMode.CLUSTER:
             # Save the status information of all participants in the initiator for scheduling
