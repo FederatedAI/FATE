@@ -56,11 +56,11 @@ class Table(CTableABC):
     def take(self, n=1, **kwargs):
         if n <= 0:
             raise ValueError(f"{n} <= 0")
-        return list(itertools.islice(self.collect(), n))
+        return list(itertools.islice(self._table.collect(**kwargs), n))
 
     @computing_profile
     def first(self, **kwargs):
-        resp = self.take(1, **kwargs)
+        resp = list(itertools.islice(self._table.collect(**kwargs), 1))
         if len(resp) < 1:
             raise RuntimeError(f"table is empty")
         return resp[0]
@@ -91,7 +91,7 @@ class Table(CTableABC):
             LOGGER.warning(f"please use `applyPartitions` instead of `mapPartitions` "
                            f"if the previous behavior was expected. "
                            f"The previous behavior will not work in future")
-            return self.applyPartitions(func)
+            return Table(self._table.applyPartitions(func))
         return Table(self._table.mapPartitions(func, preserves_partitioning=preserves_partitioning))
 
     @computing_profile
