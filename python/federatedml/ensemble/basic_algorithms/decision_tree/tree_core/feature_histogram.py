@@ -213,6 +213,7 @@ class FeatureHistogram(object):
                 feature_num = bin_split_points.shape[0]
                 return FeatureHistogram.recombine_histograms(hist_list, node_map, feature_num)
             else:
+
                 histograms_table = session.parallelize(hist_list, partition=data_bin.partitions, include_key=True)
                 return FeatureHistogram.construct_table(histograms_table)
 

@@ -409,7 +409,11 @@ class MultivariateStatisticalSummary(object):
                 if isinstance(instances, Instance):
                     features = instances.features
                 else:
-                    features = instances
+                    try:
+                        features = np.array(instances, dtype=float)
+                    except ValueError as e:
+                        raise ValueError(f"Static Module accept numeric input only. Error info: {e}")
+                LOGGER.debug(f"In statics, features: {features}")
                 row_values = features[cols_index]
             else:
                 sparse_data = instances.features.get_sparse_vector()
