@@ -56,7 +56,7 @@ class EncryptParam(BaseParam):
                 self.method = consts.PAILLIER
             elif user_input == "iterativeaffine":
                 self.method = consts.ITERATIVEAFFINE
-            elif user_input == "random_iterativeaffine":
+            elif user_input == "randomiterativeaffine":
                 self.method = consts.RANDOM_ITERATIVEAFFINE
             else:
                 raise ValueError(
