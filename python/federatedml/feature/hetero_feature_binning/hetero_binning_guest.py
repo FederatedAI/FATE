@@ -58,6 +58,7 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
             self.binning_obj.cal_local_iv(data_instances, label_table=label_table)
             self.transform(data_instances)
             self.set_summary(self.binning_obj.bin_results.summary())
+            LOGGER.debug(f"Summary is: {self.summary()}")
             return self.data_output
 
         cipher = PaillierEncrypt()
