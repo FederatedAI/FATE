@@ -456,11 +456,11 @@ class SecureInformationRetrievalGuest(BaseSecureInformationRetrieval):
             id_block = self._transmit_value_ciphertext(time=i)     # List[(Ei, Eval)]
             nonce_inst = self._sync_nonce_list(time=i)
 
-            #if i != self.target_block_index:
-            #    id_block.destroy()
-            #else:
-            id_block_ciphertext = id_block
-            nonce = nonce_inst
+            if i != self.target_block_index:
+                pass
+            else:
+                id_block_ciphertext = id_block
+                nonce = nonce_inst
 
             self.transfer_variable.block_confirm.remote(True,
                                                         suffix=(i,),
