@@ -50,14 +50,25 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
     reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
 
+    reader_1 = Reader(name="reader_1")
+    reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
+    reader_1.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
+
     dataio_0 = DataIO(name="dataio_0")
     dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True)
     dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
 
-    intersection_0 = Intersection(name="intersection_0")
+    dataio_1 = DataIO(name="dataio_1")
+    dataio_1.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True)
+    dataio_1.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
 
-    hetero_nn_0 = HeteroNN(name="hetero_nn_0", epochs=100,
-                           interactive_layer_lr=0.15, batch_size=-1, early_stop="diff")
+    intersection_0 = Intersection(name="intersection_0")
+    intersection_1 = Intersection(name="intersection_1")
+
+    hetero_nn_0 = HeteroNN(name="hetero_nn_0", epochs=100, validation_freqs=1,
+                           interactive_layer_lr=0.15, batch_size=-1, early_stop="diff",
+                           early_stopping_rounds=15, use_first_metric_only=True)
+
     hetero_nn_0.add_bottom_model(Dense(units=3, input_shape=(10,), activation="relu",
                                        kernel_initializer=initializers.Constant(value=1)))
     hetero_nn_0.set_interactve_layer(Dense(units=2, input_shape=(2,),
@@ -70,12 +81,16 @@ def main(config="../../config.yaml", namespace=""):
     evaluation_0 = Evaluation(name="evaluation_0")
 
     pipeline.add_component(reader_0)
+    pipeline.add_component(reader_1)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data))
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
-    pipeline.add_component(hetero_nn_0, data=Data(train_data=intersection_0.output.data))
-    pipeline.add_component(hetero_nn_1, data=Data(test_data=intersection_0.output.data),
+    pipeline.add_component(intersection_1, data=Data(data=dataio_1.output.data))
+    pipeline.add_component(hetero_nn_0, data=Data(train_data=intersection_0.output.data,
+                                                  validate_data=intersection_1.output.data))
+    pipeline.add_component(hetero_nn_1, data=Data(test_data=intersection_1.output.data),
                            model=Model(model=hetero_nn_0.output.model))
-    pipeline.add_component(evaluation_0, data=Data(data=hetero_nn_0.output.data))
+    pipeline.add_component(evaluation_0, data=Data(data=[hetero_nn_0.output.data, hetero_nn_1.output.data]))
 
     pipeline.compile()
 
