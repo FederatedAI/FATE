@@ -79,7 +79,9 @@ def make_add_one_hot_dsl(config, namespace, bin_param, is_multi_host=False):
     # configure DataIO for guest
     dataio_0_guest_party_instance.algorithm_param(with_label=True, output_format="dense")
     # get and configure DataIO party instance of host
-    dataio_0.get_party_instance(role='host', party_id=hosts).algorithm_param(with_label=False)
+    dataio_0.get_party_instance(role='host', party_id=hosts[0]).algorithm_param(with_label=False)
+    if is_multi_host:
+        dataio_0.get_party_instance(role='host', party_id=hosts[1]).algorithm_param(with_label=False)
 
     # define Intersection components
     intersection_0 = Intersection(name="intersection_0")
