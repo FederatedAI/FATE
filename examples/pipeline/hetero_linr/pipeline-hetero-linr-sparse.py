@@ -50,7 +50,7 @@ def main(config="../../config.yaml", namespace=""):
     reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
     reader_0.get_party_instance(role='host', party_id=host).algorithm_param(table=host_train_data)
 
-    dataio_0 = DataIO(name="dataio_0", output_format="sparse", missing_fille=True, outlier_replace=False)
+    dataio_0 = DataIO(name="dataio_0", output_format="sparse", missing_fill=True, outlier_replace=False)
     dataio_0.get_party_instance(role='guest', party_id=guest).algorithm_param(with_label=True,
                                                                               label_name="motor_speed",
                                                                               label_type="float")
@@ -64,6 +64,7 @@ def main(config="../../config.yaml", namespace=""):
                                encrypted_mode_calculator_param={"mode": "fast"})
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)
+    # evaluation_0.get_party_instance(role='host', party_id=host).algorithm_param(need_run=False)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
@@ -73,26 +74,11 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.compile()
 
-    pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE)
+    pipeline.fit(backend=backend, work_mode=work_mode)
 
     print (pipeline.get_component("hetero_linr_0").get_model_param())
     print (pipeline.get_component("hetero_linr_0").get_summary())
     print (pipeline.get_component("evaluation_0").get_summary())
-
-
-    # predict
-    # deploy required components
-    pipeline.deploy_component([dataio_0, intersection_0, hetero_linr_0])
-
-    predict_pipeline = PipeLine()
-    # add data reader onto predict pipeline
-    predict_pipeline.add_component(reader_0)
-    # add selected components from train pipeline onto predict pipeline
-    # specify data source
-    predict_pipeline.add_component(pipeline,
-                                   data=Data(predict_input={pipeline.dataio_0.input.data: reader_0.output.data}))
-    # run predict model
-    predict_pipeline.predict(backend=backend, work_mode=work_mode)
 
 
 if __name__ == "__main__":

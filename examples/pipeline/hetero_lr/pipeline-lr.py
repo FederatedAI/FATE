@@ -20,8 +20,12 @@ from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
 from pipeline.component.hetero_lr import HeteroLR
 from pipeline.component.intersection import Intersection
+from pipeline.component.evaluation import Evaluation
+
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
+from pipeline.interface.model import Model
+
 
 from examples.util.config import Config
 
@@ -37,8 +41,11 @@ def main(config="../../config.yaml", namespace=""):
     backend = config.backend
     work_mode = config.work_mode
 
-    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
-    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
+    guest_train_data = {"name": "breast_hetero_mini_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "breast_hetero_mini_host", "namespace": f"experiment{namespace}"}
+
+    guest_eval_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_eval_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
 
     # initialize pipeline
     pipeline = PipeLine()
@@ -64,26 +71,53 @@ def main(config="../../config.yaml", namespace=""):
     # get and configure DataIO party instance of host
     dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
 
+    dataio_1 = DataIO(name="dataio_1")  # start component numbering at 0
+
+    # get DataIO party instance of guest
+    dataio_1_guest_party_instance = dataio_1.get_party_instance(role='guest', party_id=guest)
+    # configure DataIO for guest
+    dataio_1_guest_party_instance.algorithm_param(with_label=True, output_format="dense")
+    # get and configure DataIO party instance of host
+    dataio_1.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
+
     # define Intersection components
     intersection_0 = Intersection(name="intersection_0")
+    evaluation_0 = Evaluation(name="evaluation_0", eval_type="binary")
 
     param = {
         "penalty": "L2",
         "validation_freqs": None,
         "early_stopping_rounds": None,
-        "max_iter": 5
+        "max_iter": 2,
+        "init_param": {
+            "init_method": "zeros"
+        }
     }
 
     hetero_lr_0 = HeteroLR(name='hetero_lr_0', **param)
+    hetero_lr_1 = HeteroLR(name='hetero_lr_1')
+
+    # add data reader onto predict pipeline
+    reader_2 = Reader(name="reader_2")
+    # configure Reader for guest
+    reader_2.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_eval_data)
+    # configure Reader for host
+    reader_2.get_party_instance(role='host', party_id=host).algorithm_param(table=host_eval_data)
 
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
+    pipeline.add_component(reader_2)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(dataio_1, data=Data(data=reader_2.output.data))
+
     # set data input sources of intersection components
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
     # set train & validate data of hetero_lr_0 component
 
     pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data))
+    pipeline.add_component(hetero_lr_1, data=Data(test_data=dataio_1.output.data),
+                           model=Model(hetero_lr_0.output.model))
+    pipeline.add_component(evaluation_0, data=Data(data=[hetero_lr_0.output.data, hetero_lr_1.output.data]))
 
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
     pipeline.compile()

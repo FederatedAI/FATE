@@ -1,0 +1,62 @@
+{
+    "data": [
+        {
+            "file": "../../../data/motor_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "motor_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "../../../data/motor_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "motor_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "../../../data/motor_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "motor_hetero_host",
+            "namespace": "experiment",
+            "role": "host_1"
+        }
+    ],
+    "tasks": {
+        "linr": {
+            "conf": "./test_hetero_linr_train_job_conf.json",
+            "dsl": "./test_hetero_linr_train_job_dsl.json"
+        },
+        "linr-predict": {
+            "conf": "./test_hetero_linr_predict_job_conf.json",
+            "dsl": "./test_hetero_linr_predict_job_dsl.json"
+        },
+        "linr-validate": {
+            "conf": "./test_hetero_linr_validate_job_conf.json",
+            "dsl": "./test_hetero_linr_validate_job_dsl.json"
+        },
+        "linr-cv": {
+            "conf": "./test_hetero_linr_cv_job_conf.json",
+            "dsl": "./test_hetero_linr_cv_job_dsl.json"
+        },
+        "linr-multi-host-train": {
+            "conf": "./test_hetero_linr_multi_host_train_job_conf.json",
+            "dsl": "./test_hetero_linr_multi_host_train_job_dsl.json"
+        },
+        "linr-multi-host-predict": {
+            "conf": "./test_hetero_linr_multi_host_predict_job_conf.json",
+            "dsl": "./test_hetero_linr_multi_host_predict_job_dsl.json"
+        },
+        "linr-multi-host-cv": {
+            "conf": "./test_hetero_linr_multi_host_cv_job_conf.json",
+            "dsl": "./test_hetero_linr_multi_host_cv_job_dsl.json"
+        },
+        "linr_sparse": {
+            "conf": "./test_hetero_linr_train_sparse_job_conf.json",
+            "dsl": "./test_hetero_linr_train_sparse_job_dsl.json"
+        }
+    }
+}
