@@ -141,7 +141,7 @@ class StorageSessionBase(StorageSessionABC):
             rows = session_record.save(force_insert=True)
             if rows != 1:
                 raise Exception(f"create session record {self._session_id} failed")
-            LOGGER.info(f"save session {self._session_id} record")
+            LOGGER.debug(f"save session {self._session_id} record")
         self.create()
         return self
 
@@ -150,7 +150,7 @@ class StorageSessionBase(StorageSessionABC):
         with DB.connection_context():
             rows = SessionRecord.delete().where(SessionRecord.f_session_id == self._session_id).execute()
             if rows > 0:
-                LOGGER.info(f"delete session {self._session_id} record")
+                LOGGER.debug(f"delete session {self._session_id} record")
             else:
                 LOGGER.warning(f"failed delete session {self._session_id} record")
 

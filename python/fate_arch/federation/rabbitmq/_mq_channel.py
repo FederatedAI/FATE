@@ -41,13 +41,13 @@ class MQChannel(object):
     def basic_publish(self, body, properties):
         try:
             self._get_channel()
-            LOGGER.info(f"send queue: {self._send_queue_name}")
+            LOGGER.debug(f"send queue: {self._send_queue_name}")
             return self._channel.basic_publish(exchange='', routing_key=self._send_queue_name, body=body,
                                                properties=properties)
         except Exception as e:
             LOGGER.error("Lost connection to rabbitmq service on manager, exception:{}.".format(e))
             self._clear()
-            LOGGER.info("Trying to reconnect...")
+            LOGGER.debug("Trying to reconnect...")
             self._get_channel()
             return self._channel.basic_publish(exchange='', routing_key=self._send_queue_name, body=body,
                                                properties=properties)
@@ -55,12 +55,12 @@ class MQChannel(object):
     def consume(self):
         try:
             self._get_channel()
-            LOGGER.info(f"receive queue: {self._receive_queue_name}")
+            LOGGER.debug(f"receive queue: {self._receive_queue_name}")
             return self._channel.consume(queue=self._receive_queue_name)
         except Exception as e:
             LOGGER.error("Lost connection to rabbitmq service on manager, exception:{}.".format(e))
             self._clear()
-            LOGGER.info("Trying to reconnect...")
+            LOGGER.debug("Trying to reconnect...")
             self._get_channel()
             return self._channel.consume(queue=self._receive_queue_name)
 
@@ -71,7 +71,7 @@ class MQChannel(object):
         except Exception as e:
             LOGGER.error("Lost connection to rabbitmq service on manager, exception:{}.".format(e))
             self._clear()
-            LOGGER.info("Trying to reconnect...")
+            LOGGER.debug("Trying to reconnect...")
             self._get_channel()
             return self._channel.basic_ack(delivery_tag=delivery_tag)
 
@@ -82,7 +82,7 @@ class MQChannel(object):
         except Exception as e:
             LOGGER.error("Lost connection to rabbitmq service on manager, exception:{}.".format(e))
             self._clear()
-            LOGGER.info("Trying to reconnect...")
+            LOGGER.debug("Trying to reconnect...")
             self._get_channel()
             return self._channel.cancel()
 

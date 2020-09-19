@@ -93,60 +93,67 @@ class Federation(FederationABC):
         self._channels_map = {}
 
     def get(self, name, tag, parties: typing.List[Party], gc: GarbageCollectionABC) -> typing.List:
-        log_str = f"federation.get(name={name}, tag={tag}, parties={parties})"
-        LOGGER.debug(f"[{log_str}]start to get obj")
+        log_str = f"rabbitmq.get(name={name}, tag={tag}, parties={parties})"
+        LOGGER.debug(f"[{log_str}]start to get")
 
         mq_names = self._get_mq_names(parties)
+        LOGGER.debug(f"[rabbitmq.get]mq_names: {mq_names}")
         channel_infos = self._get_channels(mq_names=mq_names)
+        LOGGER.debug(f"[rabbitmq.get]got channel infos: {channel_infos}")
 
         rtn = []
-        for info in channel_infos:
+        for i, info in enumerate(channel_infos):
             obj = _receive(info, name, tag)
-            LOGGER.info(f'federation got data. name: {name}, tag: {tag}')
+
             if isinstance(obj, RDD):
                 rtn.append(Table(obj))
+                LOGGER.debug(f"[{log_str}]received rdd({i + 1}/{len(parties)}), party: {parties[i]} ")
             else:
                 rtn.append(obj)
-        LOGGER.debug("finish get obj, name={}, tag={}, parties={}.".format(name, tag, parties))
+                LOGGER.debug(f"[{log_str}]received obj({i + 1}/{len(parties)}), party: {parties[i]} ")
+        LOGGER.debug(f"[{log_str}]finish to get")
         return rtn
 
     def remote(self, v, name: str, tag: str, parties: typing.List[Party],
                gc: GarbageCollectionABC) -> typing.NoReturn:
-        LOGGER.debug("start to remote obj, name={}, tag={}, parties={}.".format(name, tag, parties))
+        log_str = f"rabbitmq.remote(name={name}, tag={tag}, parties={parties})"
         mq_names = self._get_mq_names(parties)
+        LOGGER.debug(f"[rabbitmq.remote]mq_names: {mq_names}")
 
         if isinstance(v, Table):
             total_size = v.count()
             partitions = v.partitions
-            LOGGER.debug("start to remote RDD, total_size={}, partitions={}.".format(total_size, partitions))
+            LOGGER.debug(f"[{log_str}]start to remote RDD, total_size={total_size}, partitions={partitions}")
             send_func = _get_partition_send_func(name, tag, total_size, partitions, mq_names, mq=self._mq)
             # noinspection PyProtectedMember
             v._rdd.mapPartitions(send_func).collect()
         else:
+            LOGGER.debug(f"[{log_str}]start to remote obj")
             channel_infos = self._get_channels(mq_names=mq_names)
+            LOGGER.debug(f"[rabbitmq.remote]got channel_infos: {channel_infos}")
             _send_obj(name=name, tag=tag, data=p_dumps(v), channel_infos=channel_infos)
-        LOGGER.debug("finish remote obj, name={}, tag={}, parties={}.".format(name, tag, parties))
+        LOGGER.debug(f"[{log_str}]finish to remote")
 
     def cleanup(self):
-        LOGGER.debug("federation start to cleanup...")
+        LOGGER.debug("[rabbitmq.cleanup]start to cleanup...")
         for party_id, names in self._queue_map.items():
-            LOGGER.debug(f"cleanup party_id={party_id}, names={names}.")
+            LOGGER.debug(f"[rabbitmq.cleanup]cleanup party_id={party_id}, names={names}.")
             self._rabbit_manager.de_federate_queue(vhost=names.vhost, receive_queue_name=names.receive)
             self._rabbit_manager.delete_queue(vhost=names.vhost, queue_name=names.send)
             self._rabbit_manager.delete_queue(vhost=names.vhost, queue_name=names.receive)
             self._rabbit_manager.delete_vhost(vhost=names.vhost)
         self._queue_map.clear()
         if self._mq.union_name:
-            LOGGER.debug(f"clean user {self._mq.union_name}.")
+            LOGGER.debug(f"[rabbitmq.cleanup]clean user {self._mq.union_name}.")
             self._rabbit_manager.delete_user(user=self._mq.union_name)
 
     def _get_mq_names(self, parties: typing.List[Party]):
         mq_names = {party: self._get_or_create_queue(party) for party in parties}
-        LOGGER.debug("get_mq_names:{}".format(mq_names))
         return mq_names
 
     def _get_or_create_queue(self, party: Party) -> _QueueNames:
         if party not in self._queue_map:
+            LOGGER.debug(f"[rabbitmq.get_or_create_queue]queue for party:{party} not found, start to create")
             # gen names
             low, high = (self._party, party) if self._party < party else (party, self._party)
             # union_name = f"{low.role}-{low.party_id}-{high.role}-{high.party_id}"
@@ -167,12 +174,14 @@ class Federation(FederationABC):
             self._rabbit_manager.create_queue(names.vhost, names.receive)
 
             upstream_uri = self._upstream_uri(party_id=party.party_id)
-            self._rabbit_manager.federate_queue(upstream_host=upstream_uri, vhost=names.vhost, send_queue_name=names.send, receive_queue_name=names.receive)
+            self._rabbit_manager.federate_queue(upstream_host=upstream_uri, vhost=names.vhost,
+                                                send_queue_name=names.send, receive_queue_name=names.receive)
 
             self._queue_map[party] = names
+            LOGGER.debug(f"[rabbitmq.get_or_create_queue]queue for party:{party} created, names: {names}")
 
         names = self._queue_map[party]
-        LOGGER.debug(f"get_mq_names, party={party}, self._mq={self._mq}, names={names}")
+        LOGGER.debug(f"[rabbitmq.get_or_create_queue]get queue: names: {names}")
         return names
 
     def _upstream_uri(self, party_id):
@@ -182,7 +191,6 @@ class Federation(FederationABC):
         return upstream_uri
 
     def _get_channels(self, mq_names: typing.MutableMapping[Party, _QueueNames]):
-        LOGGER.debug("mq_names:{}.".format(mq_names))
         channel_infos = []
         for party, names in mq_names.items():
             info = self._channels_map.get(party)
@@ -190,7 +198,6 @@ class Federation(FederationABC):
                 info = _get_channel(self._mq, names, party_id=party.party_id)
                 self._channels_map[party] = info
             channel_infos.append(info)
-        LOGGER.debug("got channel_infos.")
         return channel_infos
 
 
@@ -209,7 +216,7 @@ def _send_kv(name, tag, data, channel_infos, total_size, partitions):
             correlation_id=tag,
             headers=headers
         )
-        LOGGER.debug("_send_kv, info:{}, properties:{}.".format(info, properties))
+        LOGGER.debug(f"[rabbitmq._send_kv]info: {info}, properties: {properties}.")
         info.basic_publish(body=json.dumps(data), properties=properties)
 
 
@@ -221,7 +228,7 @@ def _send_obj(name, tag, data, channel_infos):
             message_id=name,
             correlation_id=tag
         )
-        LOGGER.debug("_send_obj, properties:{}.".format(properties))
+        LOGGER.debug(f"[rabbitmq._send_obj]properties:{properties}.")
         info.basic_publish(body=data, properties=properties)
 
 
@@ -239,7 +246,7 @@ MESSAGE_MAX_SIZE = 200000
 
 def _partition_snd(kvs, name, tag, total_size, partitions, mq_names, mq):
     LOGGER.debug(
-        f"_partition_send, total_size:{total_size}, partitions:{partitions}, mq_names:{mq_names}, mq:{mq}.")
+        f"[rabbitmq._partition_send]total_size:{total_size}, partitions:{partitions}, mq_names:{mq_names}, mq:{mq}.")
     channel_infos = _get_channels(mq_names=mq_names, mq=mq)
     data = []
     lines = 0
@@ -266,35 +273,40 @@ def _get_partition_send_func(name, tag, total_size, partitions, mq_names, mq):
 
 def _receive(channel_info, name, tag):
     count = 0
-    obj = None
+    obj: typing.Optional[RDD] = None
+    partitions = -1
     for method, properties, body in channel_info.consume():
-        LOGGER.debug("_receive, count:{}, method:{}, properties:{}.".format(count, method, properties))
-        if properties.message_id == name and properties.correlation_id == tag:
-            if properties.content_type == 'text/plain':
-                obj = p_loads(body)
-                channel_info.basic_ack(delivery_tag=method.delivery_tag)
-                break
-            elif properties.content_type == 'application/json':
-                data = json.loads(body)
-                count += len(data)
-                data_iter = ((p_loads(bytes.fromhex(el['k'])), p_loads(bytes.fromhex(el['v']))) for el in data)
-                sc = SparkContext.getOrCreate()
-                if obj:
-                    rdd = sc.parallelize(data_iter, properties.headers["partitions"])
-                    obj = obj.union(rdd)
-                    LOGGER.debug("before coalesce: federation get union partition %d, count: %d" % (
-                        obj.getNumPartitions(), obj.count()))
-                    obj = obj.coalesce(properties.headers["partitions"])
-                    LOGGER.debug("end coalesce: federation get union partition %d, count: %d" % (
-                        obj.getNumPartitions(), obj.count()))
-                else:
-                    obj = sc.parallelize(data_iter, properties.headers["partitions"]) \
-                        .persist(get_storage_level())
-                if count == properties.headers["total_size"]:
-                    channel_info.basic_ack(delivery_tag=method.delivery_tag)
-                    break
+        LOGGER.debug(f"[rabbitmq._receive]count: {count}, method: {method}, properties: {properties}.")
+        if properties.message_id != name or properties.correlation_id != tag:
+            raise RuntimeError(f"rabbitmq got unexpected message, "
+                               f"require {name}.{tag}, got {properties.message_id}.{properties.correlation_id}")
 
+        # object
+        if properties.content_type == 'text/plain':
+            obj = p_loads(body)
             channel_info.basic_ack(delivery_tag=method.delivery_tag)
-    # return any pending messages
+            channel_info.cancel()
+            return obj
+
+        # rdd
+        if properties.content_type == 'application/json':
+            data = json.loads(body)
+            count += len(data)
+            data_iter = ((p_loads(bytes.fromhex(el['k'])), p_loads(bytes.fromhex(el['v']))) for el in data)
+            sc = SparkContext.getOrCreate()
+            partitions = properties.headers["partitions"]
+            rdd = sc.parallelize(data_iter, partitions)
+            obj = rdd if obj is None else obj.union(rdd)
+
+            # trigger action
+            obj.persist(get_storage_level())
+            LOGGER.debug(f"count: {obj.count()}")
+            channel_info.basic_ack(delivery_tag=method.delivery_tag)
+
+            if count == properties.headers["total_size"]:
+                break
+
     channel_info.cancel()
+    obj = obj.coalesce(partitions)
+
     return obj

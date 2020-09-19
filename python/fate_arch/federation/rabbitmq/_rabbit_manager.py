@@ -6,7 +6,6 @@
 import requests
 
 from fate_arch.common import log
-from fate_arch.common import string_utils
 
 LOGGER = log.getLogger()
 
@@ -162,7 +161,7 @@ class RabbitManager:
                     "queue": receive_queue_name.replace("receive", "send")
                 }
         }
-        LOGGER.info(f"set_federated_upstream, url: {url} body: {body}")
+        LOGGER.debug(f"set_federated_upstream, url: {url} body: {body}")
 
         result = requests.put(url, headers=C_COMMON_HTTP_HEADER, json=body, auth=(self.user, self.password))
         LOGGER.debug(result)
@@ -190,7 +189,7 @@ class RabbitManager:
                     "federation-upstream": receive_queue_name
                 }
         }
-        LOGGER.info(f"set_federated_queue_policy, url: {url} body: {body}")
+        LOGGER.debug(f"set_federated_queue_policy, url: {url} body: {body}")
 
         result = requests.put(url, headers=C_COMMON_HTTP_HEADER, json=body, auth=(self.user, self.password))
         LOGGER.debug(result)
@@ -206,10 +205,10 @@ class RabbitManager:
         return result
 
     # Create federate queue with upstream
-    def federate_queue(self, upstream_host, vhost,  send_queue_name, receive_queue_name):
+    def federate_queue(self, upstream_host, vhost, send_queue_name, receive_queue_name):
         import time
         time.sleep(5)
-        LOGGER.info(f"create federate_queue {send_queue_name} {receive_queue_name}")
+        LOGGER.debug(f"create federate_queue {send_queue_name} {receive_queue_name}")
 
         result_set_upstream = self._set_federated_upstream(upstream_host, vhost, receive_queue_name)
 
@@ -228,9 +227,9 @@ class RabbitManager:
 
     def de_federate_queue(self, vhost, receive_queue_name):
         result = self._unset_federated_queue_policy(receive_queue_name, vhost)
-        LOGGER.info(f"delete federate queue policy status code: {result.status_code}")
+        LOGGER.debug(f"delete federate queue policy status code: {result.status_code}")
 
         result = self._unset_federated_upstream(receive_queue_name, vhost)
-        LOGGER.info(f"delete federate queue upstream status code: {result.status_code}")
+        LOGGER.debug(f"delete federate queue upstream status code: {result.status_code}")
 
         return True
