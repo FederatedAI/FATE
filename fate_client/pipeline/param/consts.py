@@ -32,7 +32,7 @@ RANDOM_PADS = "RandomPads"
 NONE = "None"
 AFFINE = 'Affine'
 ITERATIVEAFFINE = 'IterativeAffine'
-RANDOM_ITERATIVEAFFINE = 'Random_IterativeAffine'
+RANDOM_ITERATIVEAFFINE = 'RandomIterativeAffine'
 L1_PENALTY = 'L1'
 L2_PENALTY = 'L2'
 
