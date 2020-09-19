@@ -1,8 +1,0 @@
-{
-    "security_level": 0.5,
-    "oblivious_transfer_protocol": "OT_Hauck",
-    "commutative_encryption": "CommutativeEncryptionPohligHellman",
-    "non_committing_encryption": "aes",
-    "key_size": 1024,
-    "raw_retrieval": false
-}

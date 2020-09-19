@@ -1,6 +1,5 @@
 {
     "module_path": "federatedml/secure_information_retrieval",
-    "default_runtime_conf": "sir_param.json",
     "param_class": "federatedml/param/sir_param.py/SecureInformationRetrievalParam",
     "role":
     {
