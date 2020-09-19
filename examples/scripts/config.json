@@ -204,7 +204,7 @@
       "file": "examples/data/vehicle_scale_homo_test.csv",
       "head": 1,
       "partition": 16,
-      "table_name": "vehicle_homo_scale_test",
+      "table_name": "vehicle_scale_homo_test",
       "namespace": "experiment",
       "count": 169
     },
