@@ -17,32 +17,29 @@
 import uuid
 from itertools import chain
 
-# noinspection PyPackageRequirements
-from pyspark import rddsampler, RDD, SparkContext, util
-
-from fate_arch.abc import AddressABC
 from fate_arch.abc import CTableABC
-from fate_arch.common import log
+from fate_arch.common import log, hdfs_utils
 from fate_arch.common.profile import computing_profile
-from fate_arch.computing.spark._kv_serdes import save_as_hdfs, load_from_hdfs
-from fate_arch.computing.spark._util import materialize
+from fate_arch.computing.spark._materialize import materialize
 
 LOGGER = log.getLogger()
 
 
 class Table(CTableABC):
 
-    def __init__(self, rdd: RDD):
+    def __init__(self, rdd):
         self._rdd = rdd
 
     def __getstate__(self):
         pass
 
     @computing_profile
-    def save(self, address: AddressABC, partitions: int, schema: dict, **kwargs):
+    def save(self, address, partitions, schema, **kwargs):
         from fate_arch.common.address import HDFSAddress
         if isinstance(address, HDFSAddress):
-            save_as_hdfs(rdd=self._rdd, paths=address.path, partitions=partitions)
+            self._rdd.map(lambda x: hdfs_utils.serialize(x[0], x[1])) \
+                .repartition(partitions) \
+                .saveAsTextFile(f"{address.name_node}/{address.path}")
             schema.update(self.schema)
             return
         raise NotImplementedError(f"address type {type(address)} not supported with spark backend")
@@ -126,8 +123,10 @@ class Table(CTableABC):
 
 
 def from_hdfs(paths: str, partitions):
+    # noinspection PyPackageRequirements
+    from pyspark import SparkContext
     sc = SparkContext.getOrCreate()
-    rdd = materialize(load_from_hdfs(sc, paths, partitions))
+    rdd = materialize(sc.textFile(paths, partitions).map(hdfs_utils.deserialize).repartition(partitions))
     return Table(rdd=rdd)
 
 
@@ -136,12 +135,18 @@ def from_rdd(rdd):
     return Table(rdd=rdd)
 
 
+def _fail_on_stopiteration(fn):
+    # noinspection PyPackageRequirements
+    from pyspark import util
+    return util.fail_on_stopiteration(fn)
+
+
 def _map(rdd, func):
     def _fn(x):
         return func(x[0], x[1])
 
     def _func(_, iterator):
-        return map(util.fail_on_stopiteration(_fn), iterator)
+        return map(_fail_on_stopiteration(_fn), iterator)
 
     return rdd.mapPartitionsWithIndex(_func, preservesPartitioning=False)
 
@@ -151,7 +156,7 @@ def _map_value(rdd, func):
         return x[0], func(x[1])
 
     def _func(_, iterator):
-        return map(util.fail_on_stopiteration(_fn), iterator)
+        return map(_fail_on_stopiteration(_fn), iterator)
 
     return rdd.mapPartitionsWithIndex(_func, preservesPartitioning=True)
 
@@ -180,6 +185,8 @@ def _glom(rdd):
 
 def _sample(rdd, fraction: float, seed: int):
     assert fraction >= 0.0, "Negative fraction value: %s" % fraction
+    # noinspection PyPackageRequirements
+    from pyspark import rddsampler
     _sample_func = rddsampler.RDDSampler(False, fraction, seed).func
 
     def _func(split, iterator):
@@ -193,7 +200,7 @@ def _filter(rdd, func):
         return func(x[0], x[1])
 
     def _func(_, iterator):
-        return filter(util.fail_on_stopiteration(_fn), iterator)
+        return filter(_fail_on_stopiteration(_fn), iterator)
 
     return rdd.mapPartitionsWithIndex(_func, preservesPartitioning=True)
 
@@ -223,6 +230,6 @@ def _flat_map(rdd, func):
         return func(x[0], x[1])
 
     def _func(_, iterator):
-        return chain.from_iterable(map(util.fail_on_stopiteration(_fn), iterator))
+        return chain.from_iterable(map(_fail_on_stopiteration(_fn), iterator))
 
     rdd.mapPartitionsWithIndex(_func, preservesPartitioning=False)

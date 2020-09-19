@@ -27,7 +27,9 @@ class UUIDTransVar(HomoTransferBase):
 
 class Server(object):
 
-    def __init__(self, trans_var: UUIDTransVar = UUIDTransVar()):
+    def __init__(self, trans_var: UUIDTransVar = None):
+        if trans_var is None:
+            trans_var = UUIDTransVar()
         self._uuid_transfer = trans_var.uuid
         self._uuid_set = set()
         self._ind = -1
@@ -55,7 +57,9 @@ class Server(object):
 
 class Client(object):
 
-    def __init__(self, trans_var: UUIDTransVar = UUIDTransVar()):
+    def __init__(self, trans_var: UUIDTransVar = None):
+        if trans_var is None:
+            trans_var = UUIDTransVar()
         self._uuid_variable = trans_var.uuid
         self._server_parties = trans_var.server_parties
 

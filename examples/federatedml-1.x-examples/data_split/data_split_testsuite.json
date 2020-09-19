@@ -1,22 +1,6 @@
 {
   "data": [
       {
-          "file": "examples/data/breast_homo_guest.csv",
-          "head": 1,
-          "partition": 16,
-          "table_name": "breast_homo_guest",
-          "namespace": "experiment",
-          "role": "guest_0"
-      },
-      {
-          "file": "examples/data/breast_homo_host.csv",
-          "head": 1,
-          "partition": 16,
-          "table_name": "breast_homo_host",
-          "namespace": "experiment",
-          "role": "host_0"
-      },
-      {
           "file": "examples/data/motor_hetero_guest.csv",
           "head": 1,
           "partition": 16,
@@ -31,8 +15,23 @@
           "table_name": "motor_hetero_host",
           "namespace": "experiment",
           "role": "host_0"
+      },
+      {
+          "file": "examples/data/breast_homo_guest.csv",
+          "head": 1,
+          "partition": 16,
+          "table_name": "breast_homo_guest",
+          "namespace": "experiment",
+          "role": "guest_0"
+      },
+      {
+          "file": "examples/data/breast_homo_host.csv",
+          "head": 1,
+          "partition": 16,
+          "table_name": "breast_homo_host",
+          "namespace": "experiment",
+          "role": "host_0"
       }
-
   ],
   "tasks": {
     "hetero_data_split": {

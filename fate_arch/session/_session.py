@@ -26,7 +26,7 @@ class Session(object):
             else:
                 return Session(ComputingEngine.STANDALONE, FederationEngine.STANDALONE)
         if backend == Backend.SPARK:
-            return Session(ComputingEngine.SPARK, FederationEngine.MQ)
+            return Session(ComputingEngine.SPARK, FederationEngine.RABBITMQ)
 
     def __init__(self, computing_type: ComputingEngine,
                  federation_type: FederationEngine):
@@ -120,9 +120,9 @@ class Session(object):
                                                   proxy_endpoint=f"{service_conf['host']}:{service_conf['port']}")
             return self
 
-        if self._federation_type == FederationEngine.MQ:
+        if self._federation_type == FederationEngine.RABBITMQ:
             from fate_arch.computing.spark import CSession
-            from fate_arch.federation.spark import Federation
+            from fate_arch.federation.rabbitmq import Federation
 
             if not self.is_computing_valid or not isinstance(self._computing_session, CSession):
                 raise RuntimeError(f"require computing with type {ComputingEngine.SPARK} valid")

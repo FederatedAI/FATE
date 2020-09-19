@@ -361,7 +361,7 @@ class MultivariateStatisticalSummary(object):
                                           summary_statistics=copy.deepcopy(self.summary_statistics),
                                           is_sparse=is_sparse)
         self.summary_statistics = self.data_instances.applyPartitions(partition_cal). \
-            reduce(lambda x, y: x.merge(y))
+            reduce(lambda x, y: self.copy_merge(x, y))
         # self.summary_statistics = summary_statistic_dict.reduce(self.aggregate_statics)
         self.finish_fit_statics = True
 
@@ -377,6 +377,11 @@ class MultivariateStatisticalSummary(object):
         self.binning_obj.fit_split_points(self.data_instances)
 
         return self.binning_obj
+
+    @staticmethod
+    def copy_merge(s1, s2):
+        new_s1 = copy.deepcopy(s1)
+        return new_s1.merge(s2)
 
     @staticmethod
     def static_in_partition(data_instances, cols_index, summary_statistics, is_sparse):
@@ -404,7 +409,11 @@ class MultivariateStatisticalSummary(object):
                 if isinstance(instances, Instance):
                     features = instances.features
                 else:
-                    features = instances
+                    try:
+                        features = np.array(instances, dtype=float)
+                    except ValueError as e:
+                        raise ValueError(f"Static Module accept numeric input only. Error info: {e}")
+                LOGGER.debug(f"In statics, features: {features}")
                 row_values = features[cols_index]
             else:
                 sparse_data = instances.features.get_sparse_vector()

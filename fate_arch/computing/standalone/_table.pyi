@@ -19,6 +19,7 @@ from fate_arch.abc import AddressABC, CTableABC
 from fate_arch.standalone import Table as StandaloneTable
 
 
+# noinspection PyAbstractClass
 class Table(CTableABC):
     def __init__(self, table: StandaloneTable):
         self._table = table

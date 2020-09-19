@@ -170,20 +170,32 @@ class HomoNNClient(HomoNNBase):
         _, self._label_align_mapping = HomoLabelEncoderClient().label_alignment(local_labels)
         num_classes = len(self._label_align_mapping)
 
-        for layer in reversed(self.nn_define):
-            if self.config_type == "pytorch":
+        if self.config_type == "pytorch":
+            for layer in reversed(self.nn_define):
                 if layer['layer'] == "Linear":
                     output_dim = layer['config'][1]
                     if output_dim == 1 and num_classes == 2:
                         return
                     layer['config'][1] = num_classes
                     return
-            else:
+
+        if self.config_type == "nn":
+            for layer in reversed(self.nn_define):
                 if layer['layer'] == "Dense":
                     output_dim = layer.get('units', None)
                     if output_dim == 1 and num_classes == 2:
                         return
                     layer['units'] = num_classes
+                    return
+
+        if self.config_type == "keras":
+            layers = self.nn_define['config']['layers']
+            for layer in reversed(layers):
+                if layer['class_name'] == 'Dense':
+                    output_dim = layer['config'].get('units', None)
+                    if output_dim == 1 and num_classes == 2:
+                        return
+                    layer['config']['units'] = num_classes
                     return
 
     def fit(self, data_inst: CTableABC, *args):

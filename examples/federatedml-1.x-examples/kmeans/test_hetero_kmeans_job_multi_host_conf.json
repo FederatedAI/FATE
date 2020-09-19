@@ -4,15 +4,18 @@
         "party_id": 10000
     },
     "job_parameters": {
-        "work_mode": 0
+        "work_mode": 0,
+        "task_parallelism": 1,
+        "task_nodes": 1,
+        "task_cores_per_node": 5,
+        "task_memory_per_node": 1024,
+        "align_task_input_data_partition": true,
+        "federated_comm": "PUSH"
     },
     "role": {
-        "guest": [
-            10000
-        ],
-        "host": [
-            10000
-        ]
+        "guest": [10000],
+        "host": [10000, 10001],
+        "arbiter": [10000]
     },
     "role_parameters": {
         "guest": {
@@ -20,13 +23,13 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "stu_b_train",
+                            "name": "breast_hetero_guest",
                             "namespace": "experiment"
                         }
                     ],
                     "eval_data": [
                         {
-                            "name": "stu_b_test",
+                            "name": "breast_hetero_guest",
                             "namespace": "experiment"
                         }
                     ]
@@ -44,6 +47,12 @@
                 ],
                 "output_format": [
                     "dense"
+                ],
+                "missing_fill": [
+                    true
+                ],
+                "outlier_replace": [
+                    true
                 ]
             }
         },
@@ -52,13 +61,21 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "stu_a_train",
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        },
+                        {
+                            "name": "breast_hetero_host",
                             "namespace": "experiment"
                         }
                     ],
                     "eval_data": [
                         {
-                            "name": "stu_a_test",
+                            "name": "breast_hetero_host",
+                            "namespace": "experiment"
+                        },
+                        {
+                            "name": "breast_hetero_host",
                             "namespace": "experiment"
                         }
                     ]
@@ -66,43 +83,28 @@
             },
             "dataio_0": {
                 "with_label": [
+                    false,
                     false
                 ],
                 "output_format": [
+                    "dense",
                     "dense"
+                ],
+                "outlier_replace": [
+                    true,
+                    true
                 ]
             }
         }
     },
     "algorithm_parameters": {
-        "secureboost_0": {
-            "task_type": "classification",
-            "learning_rate": 0.1,
-            "num_trees": 3,
-            "subsample_feature_rate": 1,
-            "n_iter_no_change": false,
-            "tol": 0.0001,
-            "bin_num": 50,
-            "validation_freqs": 1,
-            "early_stopping_rounds": 5,
-            "objective_param": {
-                "objective": "cross_entropy"
-            },
-            "encrypt_param": {
-                "method": "paillier"
-            },
-            "predict_param": {
-                "threshold": 0.5
-            },
-            "cv_param": {
-                "n_splits": 5,
-                "shuffle": false,
-                "random_seed": 103,
-                "need_cv": false
-            }
+        "hetero_kmeans_0": {
+            "k":4,
+            "tol": 0.01,
+            "max_iter": 4
         },
-        "evaluation_0": {
-            "eval_type": "binary"
+        "evaluation_0":{
+            "eval_type":"clustering"
         }
     }
 }

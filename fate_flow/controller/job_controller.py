@@ -152,13 +152,11 @@ class JobController(object):
                         dataset[_role][_party_id] = dataset[_role].get(_party_id, {})
                         if dsl_version == 1:
                             for _data_type, _data_location in _role_party_args[_party_index]['args']['data'].items():
-                                dataset[_role][_party_id][_data_type] = '{}.{}'.format(_data_location['namespace'],
-                                                                                       _data_location['name'])
+                                dataset[_role][_party_id][_data_type] = '{}.{}'.format(_data_location['namespace'], _data_location['name'])
                         else:
                             for key in _role_party_args[_party_index].keys():
                                 for _data_type, _data_location in _role_party_args[_party_index][key].items():
-                                    dataset[_role][_party_id][key] = '{}.{}'.format(
-                                        _data_location['namespace'], _data_location['name'])
+                                    dataset[_role][_party_id][key] = '{}.{}'.format(_data_location['namespace'], _data_location['name'])
         return dataset
 
     @classmethod
@@ -274,9 +272,9 @@ class JobController(object):
                     return False
             except:
                 return False
-            schedule_logger(job_id).info('cancel waiting job successfully, job id is {}'.format(job.f_job_id))
+            schedule_logger(job_id).info('cancel {} job successfully, job id is {}'.format(job.f_status, job.f_job_id))
             return True
         else:
-            schedule_logger(job_id).warning('role {} party id {} cancel waiting job failed, no find jod {}'.format(role, party_id, job_id))
-            raise Exception('role {} party id {} cancel waiting job failed, no find jod {}'.format(role, party_id, job_id))
+            schedule_logger(job_id).warning('role {} party id {} cancel job failed, no find jod {}'.format(role, party_id, job_id))
+            raise Exception('role {} party id {} cancel job failed, no find jod {}'.format(role, party_id, job_id))
 

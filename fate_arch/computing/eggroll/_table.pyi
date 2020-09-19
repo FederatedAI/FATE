@@ -17,6 +17,7 @@ from eggroll.roll_pair.roll_pair import RollPair
 from fate_arch.abc import AddressABC, CTableABC
 
 
+# noinspection PyAbstractClass
 class Table(CTableABC):
 
     def __init__(self, rp: RollPair):

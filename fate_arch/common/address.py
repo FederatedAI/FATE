@@ -20,9 +20,8 @@ class EggRollAddress(AddressABC):
 
 
 class HDFSAddress(AddressABC):
-    def __init__(self, name_node, path_prefix=None, path=None):
+    def __init__(self, name_node, path=None):
         self.name_node = name_node
-        self.path_prefix = path_prefix
         self.path = path
 
 

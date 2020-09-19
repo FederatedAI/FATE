@@ -260,7 +260,7 @@ class TaskExecutor(object):
                             with storage.Session.build(session_id=job_utils.generate_session_id(task_id, task_version, role, party_id, suffix="storage", random_end=True),
                                                        name=storage_table_meta.get_name(), namespace=storage_table_meta.get_namespace()) as storage_session:
                                 storage_table = storage_session.get_table()
-                                partitions = task_parameters.input_data_partition if task_parameters.input_data_partition else storage_table.get_partitions()
+                                partitions = task_parameters.input_data_aligned_partitions if task_parameters.input_data_aligned_partitions else storage_table.get_partitions()
                             computing_table = session.get_latest_opened().computing.load(
                                 storage_table_meta.get_address(),
                                 schema=storage_table_meta.get_schema(),

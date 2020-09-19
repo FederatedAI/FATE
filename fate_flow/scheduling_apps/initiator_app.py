@@ -43,8 +43,7 @@ def internal_server_error(e):
 def stop_job(job_id, role, party_id, stop_status):
     jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id, is_initiator=True)
     if len(jobs) > 0:
-        if stop_status == JobStatus.CANCELED:
-            JobController.cancel_job(job_id=job_id, role=role, party_id=party_id)
+        JobController.cancel_job(job_id=job_id, role=role, party_id=party_id)
         job = jobs[0]
         job.f_status = stop_status
         status_code, response = FederatedScheduler.stop_job(job=jobs[0], stop_status=stop_status)

@@ -16,16 +16,28 @@
 # -*- coding: utf-8 -*-
 import os
 
-from fate_arch.common import file_utils, log
+from fate_arch.computing import ComputingEngine
+from fate_arch.federation import FederationEngine
+from fate_arch.storage import StorageEngine
+from fate_arch.common import file_utils, log, EngineType
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_arch.common.conf_utils import get_base_config
 import __main__
 
 
 WORK_MODE = get_base_config('work_mode', 0)
+DATABASE = get_base_config("database", {})
+MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
+
+# storage engine is used for component output data
+SUPPORT_ENGINES = {
+    EngineType.COMPUTING: [ComputingEngine.EGGROLL, ComputingEngine.SPARK],
+    EngineType.FEDERATION: [FederationEngine.EGGROLL, FederationEngine.RABBITMQ],
+    EngineType.STORAGE: [StorageEngine.EGGROLL, StorageEngine.HDFS]
+}
 
 # upload data
-USE_LOCAL_DATA = True
+UPLOAD_DATA_FROM_CLIENT = True
 
 # Local authentication switch
 USE_AUTHENTICATION = False
@@ -48,11 +60,12 @@ DEFAULT_TASK_MEMORY_PER_NODE = 0  # mb
 STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE = 20
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
-DEFAULT_GRPC_OVERALL_TIMEOUT = 60 * 1000 * 60  # ms
+
+# abnormal condition parameter
+DEFAULT_GRPC_OVERALL_TIMEOUT = 2 * 60 * 1000  # ms
 DEFAULT_FEDERATED_COMMAND_TRYS = 3
 JOB_DEFAULT_TIMEOUT = 7 * 24 * 60 * 60
-DATABASE = get_base_config("database", {})
-MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
+JOB_START_TIMEOUT = 60 * 1000  # ms
 
 '''
 Constants
@@ -90,7 +103,7 @@ GRPC_PORT = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("grpc_port")
 
 # switch
 ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH = True
-FEDERATED_STATUS_COLLECT_TYPE = "PUSH"
+DEFAULT_FEDERATED_STATUS_COLLECT_TYPE = "PUSH"
 
 # init
 RuntimeConfig.init_config(WORK_MODE=WORK_MODE)

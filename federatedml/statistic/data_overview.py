@@ -16,6 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import copy
 import functools
 
 from federatedml.util import LOGGER
@@ -68,16 +69,17 @@ def header_alignment(data_instances, pre_header):
                 if k not in header_pos:
                     continue
                 new_data[header_pos.get(k)] = v
-
-            inst.features.set_shape(shape)
-            inst.features.set_sparse_vector(new_data)
+            inst_new = copy.deepcopy(inst)
+            inst_new.features.set_shape(shape)
+            inst_new.features.set_sparse_vector(new_data)
         else:
             col_order = [None] * len(header_pos)
             for k, v in header_pos.items():
                 col_order[v] = k
-            inst.features = inst.features[col_order]
+            inst_new = copy.deepcopy(inst)
+            inst_new.features = inst.features[col_order]
 
-        return inst
+        return inst_new
 
     correct_schema = data_instances.schema
     correct_schema["header"] = pre_header
