@@ -17,11 +17,11 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.reader import Reader
-from pipeline.component.union import Union
-from pipeline.interface.data import Data
-from pipeline.interface.model import Model
+from pipeline.component import DataIO
+from pipeline.component import Reader
+from pipeline.component import Union
+from pipeline.interface import Data
+from pipeline.interface import Model
 
 from examples.util.config import Config
 

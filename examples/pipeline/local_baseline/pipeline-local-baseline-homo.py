@@ -17,12 +17,12 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.evaluation import Evaluation
-from pipeline.component.homo_lr import HomoLR
-from pipeline.component.local_baseline import LocalBaseline
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
+from pipeline.component import DataIO
+from pipeline.component import Evaluation
+from pipeline.component import HomoLR
+from pipeline.component import LocalBaseline
+from pipeline.component import Reader
+from pipeline.interface import Data
 
 from examples.util.config import Config
 
