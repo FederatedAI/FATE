@@ -89,7 +89,7 @@ def make_normal_dsl(config, namespace, selection_param, is_multi_host=False,
         # last_cpn = hetero_feature_binning_0
 
     if 'statistic_param' in kwargs:
-        print(f"param: {kwargs['statistic_param']}, kwargs: {kwargs}")
+        # print(f"param: {kwargs['statistic_param']}, kwargs: {kwargs}")
         statistic_0 = DataStatistics(**kwargs['statistic_param'])
         pipeline.add_component(statistic_0, data=Data(data=last_cpn.output.data))
         # last_cpn = statistic_0
