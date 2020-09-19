@@ -161,6 +161,7 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
 
     @staticmethod
     def load_data(data_instance):
+        data_instance = copy.deepcopy(data_instance)
         # Here suppose this is a binary question and the event label is 1
         if data_instance.label != 1:
             data_instance.label = 0
