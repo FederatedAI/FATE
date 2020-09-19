@@ -1,7 +1,7 @@
 {
     "data": [
         {
-            "file": "../../../data/breast_hetero_guest.csv",
+            "file": "examples/data/breast_hetero_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "breast_hetero_guest",
@@ -9,7 +9,7 @@
             "role": "guest_0"
         },
         {
-            "file": "../../../data/breast_hetero_host.csv",
+            "file": "examples/data/breast_hetero_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "breast_hetero_host",
@@ -17,7 +17,7 @@
             "role": "host_0"
         },
         {
-            "file": "../../../data/tag_value_1000_140.csv",
+            "file": "examples/data/tag_value_1000_140.csv",
             "head": 0,
             "partition": 16,
             "table_name": "tag_value_1",
@@ -25,7 +25,7 @@
             "role": "guest_0"
         },
         {
-            "file": "../../../data/tag_value_1000_140.csv",
+            "file": "examples/data/tag_value_1000_140.csv",
             "head": 0,
             "partition": 16,
             "table_name": "tag_value_2",
@@ -33,7 +33,7 @@
             "role": "guest_0"
         },
         {
-            "file": "../../../data/tag_value_1000_140.csv",
+            "file": "examples/data/tag_value_1000_140.csv",
             "head": 0,
             "partition": 16,
             "table_name": "tag_value_3",
