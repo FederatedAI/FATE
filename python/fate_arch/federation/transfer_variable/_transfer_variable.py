@@ -118,7 +118,7 @@ class Variable(object):
 
         name = self._short_name if self._use_short_name else self._name
 
-        timer = profile.federation_remote_timer(name, tag, local, parties)
+        timer = profile.federation_remote_timer(self._name, tag, local, parties)
         session.federation.remote(v=obj, name=name, tag=tag, parties=parties, gc=self._remote_gc)
         timer.done(session.federation)
 
@@ -142,7 +142,7 @@ class Variable(object):
             raise RuntimeError(f"not allowed to get object to {local} using {self._name}")
 
         name = self._short_name if self._use_short_name else self._name
-        timer = profile.federation_get_timer(name, tag, local, parties)
+        timer = profile.federation_get_timer(self._name, tag, local, parties)
         rtn = session.federation.get(name=name, tag=tag, parties=parties, gc=self._get_gc)
         timer.done(session.federation)
 
