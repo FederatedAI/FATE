@@ -1,0 +1,112 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "host": [
+            9998,
+            10000
+        ],
+        "guest": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "job_type": "train",
+        "backend": 0,
+        "work_mode": 0,
+        "dsl_version": 2
+    },
+    "role_parameters": {
+        "guest": {
+            "0": {
+                "dataio_0": {
+                    "with_label": true,
+                    "label_name": "motor_speed",
+                    "label_type": "float",
+                    "output_format": "dense"
+                },
+                "dataio_1": {
+                    "with_label": true,
+                    "label_name": "motor_speed",
+                    "label_type": "float",
+                    "output_format": "dense"
+                },
+                "reader_1": {
+                    "table": {
+                        "name": "motor_hetero_guest",
+                        "namespace": "experiment"
+                    }
+                },
+                "reader_0": {
+                    "table": {
+                        "name": "motor_hetero_guest",
+                        "namespace": "experiment"
+                    }
+                }
+            }
+        },
+        "host": {
+            "1": {
+                "dataio_0": {
+                    "with_label": false
+                },
+                "dataio_1": {
+                    "with_label": false
+                },
+                "reader_1": {
+                    "table": {
+                        "name": "motor_hetero_host_2",
+                        "namespace": "experiment"
+                    }
+                },
+                "reader_0": {
+                    "table": {
+                        "name": "motor_hetero_host_2",
+                        "namespace": "experiment"
+                    }
+                }
+            },
+            "0": {
+                "dataio_0": {
+                    "with_label": false
+                },
+                "dataio_1": {
+                    "with_label": false
+                },
+                "reader_1": {
+                    "table": {
+                        "name": "motor_hetero_host_1",
+                        "namespace": "experiment"
+                    }
+                },
+                "reader_0": {
+                    "table": {
+                        "name": "motor_hetero_host_1",
+                        "namespace": "experiment"
+                    }
+                }
+            }
+        }
+    },
+    "algorithm_parameters": {
+        "hetero_secure_boost_0": {
+            "task_type": "regression",
+            "objective_param": {
+                "objective": "lse"
+            },
+            "num_trees": 1,
+            "validation_freqs": 1,
+            "encrypt_param": {
+                "method": "iterativeAffine"
+            },
+            "tree_param": {
+                "max_depth": 5
+            }
+        },
+        "evaluation_0": {
+            "eval_type": "binary"
+        }
+    }
+}

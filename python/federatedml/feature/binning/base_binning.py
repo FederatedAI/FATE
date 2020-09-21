@@ -20,6 +20,7 @@ import bisect
 import functools
 import math
 import random
+import copy
 
 from federatedml.feature.binning.bin_inner_param import BinInnerParam
 from federatedml.feature.binning.bin_result import BinColResults, BinResults
@@ -217,6 +218,7 @@ class BaseBinning(object):
     @staticmethod
     def _convert_sparse_data(instances, bin_inner_param: BinInnerParam, bin_results: BinResults,
                              abnormal_list: list, convert_type: str = 'bin_num'):
+        instances = copy.deepcopy(instances)
         all_data = instances.features.get_all_data()
         data_shape = instances.features.get_shape()
         indice = []
@@ -266,6 +268,7 @@ class BaseBinning(object):
     @staticmethod
     def _convert_dense_data(instances, bin_inner_param: BinInnerParam, bin_results: BinResults,
                             abnormal_list: list, convert_type: str = 'bin_num'):
+        instances = copy.deepcopy(instances)
         features = instances.features
         transform_cols_idx = bin_inner_param.transform_bin_indexes
         split_points_dict = bin_results.all_split_points

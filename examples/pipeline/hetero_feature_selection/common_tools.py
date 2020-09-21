@@ -1,0 +1,127 @@
+#
+#  Copyright 2019 The FATE Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
+import json
+
+from pipeline.backend.pipeline import PipeLine
+from pipeline.component.data_statistics import DataStatistics
+from pipeline.component.dataio import DataIO
+from pipeline.component.hetero_feature_binning import HeteroFeatureBinning
+from pipeline.component.hetero_feature_selection import HeteroFeatureSelection
+from pipeline.component.hetero_secureboost import HeteroSecureBoost
+from pipeline.component.intersection import Intersection
+from pipeline.component.psi import PSI
+from pipeline.component.reader import Reader
+from pipeline.interface.data import Data
+from pipeline.interface.model import Model
+
+
+def prettify(response, verbose=True):
+    if verbose:
+        print(json.dumps(response, indent=4, ensure_ascii=False))
+        print()
+    return response
+
+
+def make_normal_dsl(config, namespace, selection_param, is_multi_host=False,
+                    host_dense_output=True, **kwargs):
+    parties = config.parties
+    guest = parties.guest[0]
+    if is_multi_host:
+        hosts = parties.host
+    else:
+        hosts = parties.host[0]
+
+    guest_train_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_train_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
+
+    guest_eval_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
+    host_eval_data = {"name": "breast_hetero_host", "namespace": f"experiment{namespace}"}
+
+    # initialize pipeline
+    pipeline = PipeLine()
+    # set job initiator
+    pipeline.set_initiator(role='guest', party_id=guest)
+    # set participants information
+    pipeline.set_roles(guest=guest, host=hosts)
+
+    # define Reader components to read in data
+    reader_0 = Reader(name="reader_0")
+    # configure Reader for guest
+    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_train_data)
+    # configure Reader for host
+    reader_0.get_party_instance(role='host', party_id=hosts).algorithm_param(table=host_train_data)
+
+    # define DataIO components
+    dataio_0 = DataIO(name="dataio_0")  # start component numbering at 0
+
+    # get DataIO party instance of guest
+    dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
+    # configure DataIO for guest
+    dataio_0_guest_party_instance.algorithm_param(with_label=True, output_format="dense")
+    # get and configure DataIO party instance of host
+    dataio_0.get_party_instance(role='host', party_id=hosts).algorithm_param(with_label=False)
+
+    # define Intersection components
+    intersection_0 = Intersection(name="intersection_0")
+    pipeline.add_component(reader_0)
+    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
+    pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
+
+    last_cpn = intersection_0
+    selection_include_model = []
+    if 'binning_param' in kwargs:
+        hetero_feature_binning_0 = HeteroFeatureBinning(**kwargs['binning_param'])
+        pipeline.add_component(hetero_feature_binning_0, data=Data(data=last_cpn.output.data))
+        selection_include_model.append(hetero_feature_binning_0)
+        # last_cpn = hetero_feature_binning_0
+
+    if 'statistic_param' in kwargs:
+        # print(f"param: {kwargs['statistic_param']}, kwargs: {kwargs}")
+        statistic_0 = DataStatistics(**kwargs['statistic_param'])
+        pipeline.add_component(statistic_0, data=Data(data=last_cpn.output.data))
+        # last_cpn = statistic_0
+        selection_include_model.append(statistic_0)
+
+    if 'psi_param' in kwargs:
+        reader_1 = Reader(name="reader_1")
+        reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=guest_eval_data)
+        reader_1.get_party_instance(role='host', party_id=hosts).algorithm_param(table=host_eval_data)
+        dataio_1 = DataIO(name="dataio_1")
+        intersection_1 = Intersection(name="intersection_1")
+        pipeline.add_component(reader_1)
+        pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data), model=Model(dataio_0.output.model))
+        pipeline.add_component(intersection_1, data=Data(data=dataio_1.output.data))
+
+        psi_0 = PSI(**kwargs['psi_param'])
+        pipeline.add_component(psi_0, data=Data(train_data=intersection_0.output.data,
+                                                validate_data=intersection_1.output.data))
+        # last_cpn = statistic_0
+        selection_include_model.append(psi_0)
+
+    if 'sbt_param' in kwargs:
+        secureboost_0 = HeteroSecureBoost(**kwargs['sbt_param'])
+
+        pipeline.add_component(secureboost_0, data=Data(train_data=intersection_0.output.data))
+        selection_include_model.append(secureboost_0)
+
+
+    hetero_feature_selection_0 = HeteroFeatureSelection(**selection_param)
+
+    pipeline.add_component(hetero_feature_selection_0, data=Data(data=intersection_0.output.data),
+                           model=Model(isometric_model=[x.output.model for x in selection_include_model]))
+    # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
+    pipeline.compile()
+    return pipeline
