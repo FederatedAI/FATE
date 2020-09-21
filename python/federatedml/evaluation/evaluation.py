@@ -377,11 +377,12 @@ class Evaluation(ModelBase):
     def __save_roc_curve(self, data_name, metric_name, metric_namespace, metric_res):
         fpr, tpr, thresholds, _ = metric_res
 
+        fpr, tpr, thresholds = self.__filter_duplicate_roc_data_point(fpr, tpr, thresholds)
+
         # set roc edge value
         fpr.append(1.0)
         tpr.append(1.0)
-
-        fpr, tpr, thresholds = self.__filter_duplicate_roc_data_point(fpr, tpr, thresholds)
+        thresholds.append(1.0)
 
         self.__save_curve_data(fpr, tpr, metric_name, metric_namespace)
         self.__save_curve_meta(metric_name=metric_name, metric_namespace=metric_namespace,
