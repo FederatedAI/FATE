@@ -112,7 +112,7 @@
             "validation_freqs": 3,
             "early_stopping_rounds": 3,
             "init_param": {
-                "init_method": "random_uniform"
+                "init_method": "zeros"
             },
             "cv_param": {
                 "n_splits": 5,
