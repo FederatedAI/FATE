@@ -49,7 +49,7 @@ from fate_flow.settings import IP, HTTP_PORT, GRPC_PORT, _ONE_DAY_IN_SECONDS, st
 from fate_flow.utils import job_utils
 from fate_flow.utils.api_utils import get_json_result
 from fate_flow.utils.authentication_utils import PrivilegeAuth
-from fate_flow.utils.grpc_utils import UnaryServicer
+from fate_flow.utils.grpc_utils import UnaryService
 from fate_flow.utils.service_utils import ServiceUtils
 
 '''
@@ -105,7 +105,7 @@ if __name__ == '__main__':
                          options=[(cygrpc.ChannelArgKey.max_send_message_length, -1),
                                   (cygrpc.ChannelArgKey.max_receive_message_length, -1)])
 
-    proxy_pb2_grpc.add_DataTransferServiceServicer_to_server(UnaryServicer(), server)
+    proxy_pb2_grpc.add_DataTransferServiceServicer_to_server(UnaryService(), server)
     server.add_insecure_port("{}:{}".format(IP, GRPC_PORT))
     server.start()
     # start http server
