@@ -283,7 +283,7 @@ API <./doc/fate_flow_rest_api.rst>`__\ 和\ `命令行界面 <./doc/fate_flow_cl
 
     您可以在\ `CLI <./doc/fate_flow_cli.rst>`__ 中找到更多有用的命令。
 
-有关更多联邦学习Pipeline作业(job) 示例, 请参考\ `federatedml-1.x-examples <./../examples/federatedml-1.x-examples>`__ 和 `README <./../examples/federatedml-1.x-examples/README.rst>`__
+有关更多联邦学习Pipeline作业(job) 示例, 请参考\ `examples <./../../examples/dsl/v2>`__ 和 `README <./../../examples/dsl/v2/README.rst>`__
 
 在线推理
 ~~~~~~~~

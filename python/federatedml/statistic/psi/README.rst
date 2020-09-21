@@ -32,4 +32,4 @@ Param
 How to use
 ^^^^^^^^^^
 
-An example is offered in examples/federatedml-1.x-examples/psi folder.
+An example is offered in examples/dsl/v2/psi folder.
