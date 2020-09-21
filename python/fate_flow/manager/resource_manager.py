@@ -101,6 +101,7 @@ class ResourceManager(object):
         record.f_memory = memory
         record.f_remaining_cores = cores
         record.f_remaining_memory = memory
+        record.f_in_use = True
         record.f_create_time = base_utils.current_timestamp()
         try:
             rows = record.save(force_insert=True)
@@ -120,7 +121,10 @@ class ResourceManager(object):
     @DB.connection_context()
     def get_resource_record(cls, job_id, role, party_id):
         try:
-            return ResourceRecord.get(ResourceRecord.f_job_id == job_id, ResourceRecord.f_role == role, ResourceRecord.f_party_id == party_id)
+            return ResourceRecord.get(ResourceRecord.f_job_id == job_id,
+                                      ResourceRecord.f_role == role,
+                                      ResourceRecord.f_party_id == party_id,
+                                      ResourceRecord.f_in_use == True)
         except Exception as e:
             schedule_logger(job_id=job_id).exception(e)
             return None
@@ -129,9 +133,9 @@ class ResourceManager(object):
     @DB.connection_context()
     def delete_resource_record(cls, job_id, role, party_id):
         try:
-            rows = ResourceRecord.delete().where(ResourceRecord.f_job_id == job_id,
-                                                 ResourceRecord.f_role == role,
-                                                 ResourceRecord.f_party_id == party_id).execute()
+            rows = ResourceRecord.update({ResourceRecord.f_in_use: False}).where(ResourceRecord.f_job_id == job_id,
+                                                                                 ResourceRecord.f_role == role,
+                                                                                 ResourceRecord.f_party_id == party_id).execute()
             if rows > 1:
                 schedule_logger(job_id=job_id).info(f"delete job {job_id} on {role} {party_id} resource record successfully")
                 return True
@@ -177,7 +181,7 @@ class ResourceManager(object):
         engine_name, cores, memory = cls.calculate_job_resource(job_id=job_id, role=role, party_id=party_id)
         record = cls.get_resource_record(job_id=job_id, role=role, party_id=party_id)
         if not record:
-            schedule_logger(job_id=job_id).info(f"can not found job {job_id} on {role} {party_id} resource record, pass return resource")
+            schedule_logger(job_id=job_id).info(f"can not found job {job_id} on {role} {party_id} in use resource record, pass return resource")
             return False
         return_status, remaining_cores, remaining_memory = cls.update_resource(model=BackendRegistry,
                                                                                cores=cores,

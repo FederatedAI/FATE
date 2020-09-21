@@ -362,6 +362,7 @@ class ResourceRecord(DataBaseModel):
     f_memory = IntegerField(index=True)  # MB
     f_remaining_cores = IntegerField(index=True, default=0)
     f_remaining_memory = IntegerField(index=True, default=0)  # MB
+    f_in_use = BooleanField(index=True, default=True)
     f_create_time = BigIntegerField()
     f_update_time = BigIntegerField(null=True)
 

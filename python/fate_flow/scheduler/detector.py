@@ -97,7 +97,7 @@ class Detector(cron.Cron):
     @classmethod
     @DB.connection_context()
     def detect_resource_record(cls):
-        records = ResourceRecord.select()
+        records = ResourceRecord.select().where(ResourceRecord.f_in_use == True)
         job_ids = set([record.f_job_id for record in records])
         if job_ids:
             jobs = Job.select().where(Job.f_job_id << job_ids, Job.f_status << EndStatus.status_list(), base_utils.current_timestamp() - Job.f_update_time > 10 * 60 * 1000)
