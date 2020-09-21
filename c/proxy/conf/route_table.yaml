@@ -1,0 +1,11 @@
+default:
+  proxy:
+    - host: 0.0.0.0
+      grpc_port: 9380
+9999:
+  proxy:
+    - host: 0.0.0.0
+      grpc_port: 9380
+  fateflow:
+    - host: 0.0.0.0
+      grpc_port: 9380
