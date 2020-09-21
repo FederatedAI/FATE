@@ -86,7 +86,17 @@ class Table(CTableABC):
 
     @computing_profile
     def mapReducePartitions(self, mapper, reducer, **kwargs):
-        return Table(self._rp.map_partitions(func=mapper, reduce_op=reducer))
+        partitions = self._rp.get_partitions()
+        mapped = self._rp.map_partitions(mapper)
+        reduced = {}
+        for k, v in mapped.collect():
+            if k not in reduced:
+                reduced[k] = v
+            else:
+                reduced[k] = reducer(reduced[k], v)
+
+        from fate_arch.session import computing_session
+        return computing_session.parallelize(reduced.items(), partition=partitions, include_key=True)
 
     @computing_profile
     def reduce(self, func, **kwargs):
