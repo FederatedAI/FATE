@@ -8,8 +8,7 @@
             10000
         ],
         "host": [
-            9999,
-            10000
+            9999
         ]
     },
     "job_parameters": {
@@ -19,21 +18,14 @@
         "dsl_version": 2
     },
     "role_parameters": {
-        "host": {
-            "0|1": {
-                "reader_0": {
+        "guest": {
+            "0": {
+                "reader_1": {
                     "table": {
-                        "name": "breast_hetero_host",
+                        "name": "breast_hetero_guest",
                         "namespace": "experiment"
                     }
                 },
-                "dataio_0": {
-                    "with_label": false
-                }
-            }
-        },
-        "guest": {
-            "0": {
                 "reader_0": {
                     "table": {
                         "name": "breast_hetero_guest",
@@ -45,9 +37,31 @@
                     "output_format": "dense"
                 }
             }
+        },
+        "host": {
+            "0": {
+                "reader_1": {
+                    "table": {
+                        "name": "breast_hetero_host",
+                        "namespace": "experiment"
+                    }
+                },
+                "reader_0": {
+                    "table": {
+                        "name": "breast_hetero_host",
+                        "namespace": "experiment"
+                    }
+                },
+                "dataio_0": {
+                    "with_label": false
+                }
+            }
         }
     },
     "algorithm_parameters": {
+        "sample_0": {
+            "fractions": 0.9
+        },
         "hetero_feature_binning_0": {
             "method": "quantile",
             "compress_thres": 10000,
@@ -66,24 +80,13 @@
                 "transform_type": "bin_num"
             }
         },
-        "statistic_0": {
-            "statistics": [
-                "95%",
-                "coefficient_of_variance",
-                "stddev"
-            ],
-            "column_names": [],
-            "column_indexes": -1
-        },
         "hetero_feature_selection_0": {
             "select_col_indexes": -1,
             "select_names": [],
             "filter_methods": [
-                "unique_value",
+                "manually",
                 "iv_value_thres",
-                "coefficient_of_variation_value_thres",
-                "iv_percentile",
-                "outlier_cols"
+                "iv_percentile"
             ],
             "unique_param": {
                 "eps": 1e-06
@@ -100,6 +103,10 @@
             "outlier_param": {
                 "percentile": 0.95,
                 "upper_threshold": 2.0
+            },
+            "manually_param": {
+                "filter_out_indexes": [],
+                "filter_out_names": []
             }
         }
     }

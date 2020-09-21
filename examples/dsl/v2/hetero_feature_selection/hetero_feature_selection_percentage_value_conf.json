@@ -18,6 +18,19 @@
         "dsl_version": 2
     },
     "role_parameters": {
+        "host": {
+            "0": {
+                "dataio_0": {
+                    "with_label": false
+                },
+                "reader_0": {
+                    "table": {
+                        "name": "breast_hetero_host",
+                        "namespace": "experiment"
+                    }
+                }
+            }
+        },
         "guest": {
             "0": {
                 "dataio_0": {
@@ -27,19 +40,6 @@
                 "reader_0": {
                     "table": {
                         "name": "breast_hetero_guest",
-                        "namespace": "experiment"
-                    }
-                }
-            }
-        },
-        "host": {
-            "0": {
-                "dataio_0": {
-                    "with_label": false
-                },
-                "reader_0": {
-                    "table": {
-                        "name": "breast_hetero_host",
                         "namespace": "experiment"
                     }
                 }
