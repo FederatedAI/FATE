@@ -36,11 +36,6 @@ class Federation(FederationABC):
         LOGGER.debug(f"init eggroll federation: rp_session_id={rp_ctx.session_id}, rs_session_id={rs_session_id},"
                      f"party={party}, proxy_endpoint={proxy_endpoint}")
 
-        from eggroll.core.meta_model import ErEndpoint
-        if isinstance(proxy_endpoint, str):
-            splited = proxy_endpoint.split(':')
-            proxy_endpoint = ErEndpoint(host=splited[0].strip(), port=int(splited[1].strip()))
-
         options = {
             'self_role': party.role,
             'self_party_id': party.party_id,
