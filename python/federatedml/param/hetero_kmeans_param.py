@@ -65,7 +65,7 @@ class KmeansParam(BaseParam):
                 descr + "tol not supported, should be larger than or equal to 0".format(self.tol))
 
         if self.random_stat is not None:
-            if isinstance(self.random_stat, int):
+            if not isinstance(self.random_stat, int):
                 raise ValueError(descr + "random_stat not supported, should be int type".format(self.random_stat))
             elif self.random_stat < 0:
                 raise ValueError(
