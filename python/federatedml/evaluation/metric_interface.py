@@ -4,15 +4,12 @@ from sklearn.metrics import roc_curve
 import numpy as np
 from federatedml.util import consts
 import logging
-from arch.api.utils import log_utils
-
+from federatedml.util import LOGGER
 from federatedml.evaluation.metrics import classification_metric
 from federatedml.evaluation.metrics import regression_metric
 from federatedml.evaluation.metrics import clustering_metric
 
 from functools import wraps
-
-LOGGER = log_utils.getLogger()
 
 
 class MetricInterface(object):

@@ -322,7 +322,7 @@ class Evaluation(ModelBase):
     @staticmethod
     def __multi_class_label_padding(metrics, label_indices):
 
-        # in case some labels don't appear when running homo-multiclass algo
+        # in case some labels don't appear when running homo-multi-class algo
         label_num = np.max(label_indices) + 1
         index_result_mapping = dict(zip(label_indices, metrics))
         new_metrics, new_label_indices = [], []
@@ -330,7 +330,7 @@ class Evaluation(ModelBase):
             if i in index_result_mapping:
                 new_metrics.append(index_result_mapping[i])
             else:
-                new_label_indices.append(0)
+                new_metrics.append(0.0)
             new_label_indices.append(i)
 
         return new_metrics, new_label_indices
