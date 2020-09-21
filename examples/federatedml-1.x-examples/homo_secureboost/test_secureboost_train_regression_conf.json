@@ -23,13 +23,13 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "homo_student_guest",
+                            "name": "student_homo_guest",
                             "namespace": "experiment"
                         }
                     ],
                     "eval_data": [
                         {
-                            "name": "homo_student_test",
+                            "name": "student_homo_test",
                             "namespace": "experiment"
                         }
                     ]
@@ -55,13 +55,13 @@
                 "data": {
                     "train_data": [
                         {
-                            "name": "homo_student_host",
+                            "name": "student_homo_host",
                             "namespace": "experiment"
                         }
                     ],
                     "eval_data": [
                         {
-                            "name": "homo_student_test",
+                            "name": "student_homo_test",
                             "namespace": "experiment"
                         }
                     ]
