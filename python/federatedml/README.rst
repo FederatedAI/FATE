@@ -22,7 +22,7 @@ FederatedML includes implementation of many common machine learning algorithms o
    :alt: federatedml structure
 
 
-Alogorithm List
+Algorithm List
 ---------------
 
 .. list-table:: Algorithm
@@ -39,11 +39,11 @@ Alogorithm List
 
    * - `DataIO`_
      - DataIO
-     - This component is  typically the first component of a modeling task. It will transform user-uploaded date into Instance object which can be used for the following components.
+     - This component is  typically the first component of a modeling task. It will transform user-uploaded date into Instance object.
      - Table, values are raw data.
      - Transformed Table, values are data instance define in `federatedml/feature/instance.py`
      -
-     - DataIO Model, consists of model-meta and model-param.
+     - DataIO Model
 
    * - `Intersect`_
      - Intersection
@@ -51,15 +51,15 @@ Alogorithm List
      - Table.
      - Table with only common instance keys.
      -
-     - Intersect Model, consists of model-meta and model-param.
+     - Intersect Model
 
    * - `Federated Sampling`_
      - FederatedSample
-     - Federated Sampling data so that its distribution become balance in each party.This module supports both random and stratified sampling for hetero and homogeneous scenario.
+     - Federated Sampling data so that its distribution become balance in each party.This module supports standalone and federated versions.
      - Table
-     - Table of sampled data.
+     - Table of sampled data; both random and stratified sampling methods are supported.
      -
-     - Federated Sampling Model, consists of model-meta and model-param.
+     -
 
    * - `Feature Scale`_
      - FeatureScale
@@ -72,10 +72,10 @@ Alogorithm List
    * - `Hetero Feature Binning`_
      - Hetero Feature Binning
      - With binning input data, calculates each column's iv and woe and transform data according to the binned information.
-     - Table with y in guest and without y in host.
+     - Table, values are instances.
      - Transformed Table.
      -
-     - Hetero Feature Binning Model, including iv/woe, split points, event counts, non-event counts etc. of each column.
+     - iv/woe, split points, event counts, non-event counts etc. of each column.
 
    * - `OneHot Encoder`_
      - OneHotEncoder
@@ -83,7 +83,7 @@ Alogorithm List
      - Table, values are instances.
      - Transformed Table with new header.
      -
-     - OneHost Encoder Model, including feature-name mapping between original header and new header.
+     - Feature-name mapping between original header and new header.
 
    * - `Hetero Feature Selection`_
      - HeteroFeatureSelection
@@ -91,7 +91,7 @@ Alogorithm List
      - Table
      - Transformed Table with new header and filtered data instance.
      - If iv filters used, hetero_binning model is needed.
-     - Hetero Feature Selection Model, which includes information on whether each column is filtered.
+     - Whether each column is filtered.
 
    * - `Union`_
      - Union
@@ -107,7 +107,7 @@ Alogorithm List
      - Table, values are instances
      - Table, values are instances.
      -
-     - Logistic Regression Model.
+     - Logistic Regression Model, consists of model-meta and model-param.
 
    * - `Local Baseline`_
      - LocalBaseline
@@ -123,7 +123,7 @@ Alogorithm List
      - Table, values are instances.
      - Table, values are instances.
      -
-     - Linear Regression Model.
+     - Linear Regression Model, consists of model-meta and model-param.
 
    * - `Hetero-Poisson`_
      - HeteroPoisson
@@ -131,7 +131,7 @@ Alogorithm List
      - Table, values are instances.
      - Table, values are instances.
      -
-     - Poisson Regression Model.
+     - Poisson Regression Model, consists of model-meta and model-param.
 
    * - `Homo-LR`_
      - HomoLR
@@ -139,7 +139,7 @@ Alogorithm List
      - Table, values are instances.
      - Table, values are instances.
      -
-     - Logistic Regression Model
+     - Logistic Regression Model, consists of model-meta and model-param.
 
    * - `Homo-NN`_
      - HomoNN
@@ -147,7 +147,7 @@ Alogorithm List
      - Table, values are instances.
      - Table, values are instances.
      -
-     - Neural Network Model, .
+     - Neural Network Model, consists of model-meta and model-param.
 
    * - `Hetero Secure Boosting`_
      - HeteroSecureBoost
@@ -160,7 +160,7 @@ Alogorithm List
    * - `Evaluation`_
      - Evaluation
      - Output the model evaluation metrics for user.
-     - Table, values are instances.
+     - Table(s), values are instances.
      -
      -
      -
@@ -179,7 +179,7 @@ Alogorithm List
      - Table, values are instances.
      - Table, values are instances.
      -
-     - Hetero Neural Network Model.
+     - Hetero Neural Network Model, consists of model-meta and model-param.
 
    * - `Homo Secure Boosting`_
      - HomoSecureBoost
@@ -187,7 +187,7 @@ Alogorithm List
      - Table, values are instances.
      - Table, values are instances.
      -
-     - SecureBoost Model, consists of model-meta and model-param
+     - SecureBoost Model, consists of model-meta and model-param.
 
    * - `Homo OneHot Encoder`_
      - HomoOneHotEncoder
@@ -195,7 +195,7 @@ Alogorithm List
      - Table, values are instances.
      - Transformed Table with new header.
      -
-     - Homo OneHot Model, consists of model-meta and model-param
+     - Feature-name mapping between original header and new header.
 
    * - `Data Split`_
      - Data Split
@@ -211,7 +211,7 @@ Alogorithm List
      - Table, values are raw data.
      - Transformed Table with added column(s) and new header.
      -
-     - Column Expand Model, consists of model-meta and model-param
+     - Column Expand Model
 
 .. _DataIO: util/README.rst
 .. _Intersect: statistic/intersect/README.rst

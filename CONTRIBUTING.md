@@ -44,7 +44,7 @@ Before sending your pull request, here are some principle and standards to follo
 
 * Include unit tests when you contribute new features. You may created a test folder in your module and put your test files in it. Here is [an example](./federatedml/model_selection/test/).  FATE provides a [test script](./federatedml/test/run_test.sh) for you to check all unit test. Make sure your code work correctly.
 
-* Provide examples in [example folder](./examples). If specific format data is needed, please also provided example data in [data folder](./example/data). In your algorithm examples, some dsl and conf files should be provided and provide a testsuite file with which user can test your example easily. Here is [an example of testsuite file](./examples/federatedml-1.x-examples/hetero_logistic_regression/hetero_lr_testsuite.json)
+* Provide examples in [example folder](./examples). If specific format data is needed, please also provided example data in [data folder](./example/data). In your algorithm examples, some dsl and conf files should be provided and provide a testsuite file with which user can test your example easily. Here is [an example of testsuite file](./examples/dsl/v2/hetero_logistic_regression/hetero_lr_testsuite.json)
 
 * After you contribute a new feature to FATE, FATE team members are (by default) responsible for the maintenance of this feature. This means we must make comparison between the benefit of contribution and the cost of maintaining the feature and accept those features with greater benefits.
 

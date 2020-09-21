@@ -1,7 +1,7 @@
 Federated Linear Regression
 ===========================
 
-Linear Regression(LinR) is a simple statistic model widely used for predicting continuous numbers. FATE provides Heterogeneous Linear Regression(HeteroLinR). HeteroLinR also supports multi-Host training. You can specify multiple hosts in the job configuration file like the provided `examples/federatedml-1.x-examples/hetero_linear_regression`.
+Linear Regression(LinR) is a simple statistic model widely used for predicting continuous numbers. FATE provides Heterogeneous Linear Regression(HeteroLinR). HeteroLinR also supports multi-Host training. You can specify multiple hosts in the job configuration file like the provided `examples/dsl/v2/hetero_linear_regression`.
 
 Here we simplify participants of the federation process into three parties. Party A represents Guest, party B represents Host. Party C, which is also known as “Arbiter,” is a third party that works as coordinator. Party C is responsible for generating private and public keys.
 
