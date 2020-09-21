@@ -145,7 +145,7 @@ class Guest(HeteroGradientBase):
         self.unilateral_optim_gradient_transfer = guest_optim_gradient_transfer
 
     def compute_and_aggregate_forwards(self, data_instances, model_weights,
-                                       encrypted_calculator, batch_index, offset=None):
+                                       encrypted_calculator, batch_index, current_suffix, offset=None):
         raise NotImplementedError("Function should not be called here")
 
     def compute_gradient_procedure(self, data_instances, encrypted_calculator, model_weights, optimizer,
@@ -163,10 +163,10 @@ class Guest(HeteroGradientBase):
           Step 4: Send unilateral gradients to arbiter and received the optimized and decrypted gradient.
           """
         current_suffix = (n_iter_, batch_index)
-        self.host_forwards = self.get_host_forward(suffix=current_suffix)
+        # self.host_forwards = self.get_host_forward(suffix=current_suffix)
 
-        fore_gradient = self.compute_and_aggregate_forwards(data_instances, model_weights,
-                                                            encrypted_calculator, batch_index, offset)
+        fore_gradient = self.compute_and_aggregate_forwards(data_instances, model_weights, encrypted_calculator,
+                                                            batch_index, current_suffix, offset)
 
         self.remote_fore_gradient(fore_gradient, suffix=current_suffix)
 

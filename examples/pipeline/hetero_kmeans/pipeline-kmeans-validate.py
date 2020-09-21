@@ -18,8 +18,9 @@ import argparse
 
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
-from pipeline.component.hetero_feature_binning import HeteroFeatureBinning
+from pipeline.component.hetero_kmeans import HeteroKmeans
 from pipeline.component.intersection import Intersection
+from pipeline.component.evaluation import Evaluation
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
 from pipeline.interface.model import Model
@@ -34,6 +35,7 @@ def main(config="../../config.yaml", namespace=""):
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
+    arbiter = parties.arbiter[0]
     backend = config.backend
     work_mode = config.work_mode
 
@@ -48,7 +50,7 @@ def main(config="../../config.yaml", namespace=""):
     # set job initiator
     pipeline.set_initiator(role='guest', party_id=guest)
     # set participants information
-    pipeline.set_roles(guest=guest, host=host)
+    pipeline.set_roles(guest=guest, host=host, arbiter=arbiter)
 
     # define Reader components to read in data
     reader_0 = Reader(name="reader_0")
@@ -77,37 +79,37 @@ def main(config="../../config.yaml", namespace=""):
     intersection_1 = Intersection(name="intersection_1")
 
     param = {
-        "name": 'hetero_feature_binning_0',
-        "method": 'optimal',
-        "optimal_binning_param": {
-            "metric_method": "iv"
-        },
-        "bin_indexes": -1
+        "k": 3,
+        "max_iter": 10
     }
-    hetero_feature_binning_0 = HeteroFeatureBinning(**param)
-    hetero_feature_binning_1 = HeteroFeatureBinning(name='hetero_feature_binning_1')
+
+    hetero_kmeans_0 = HeteroKmeans(name='hetero_kmeans_0', **param)
+    hetero_kmeans_1 = HeteroKmeans(name='hetero_kmeans_1')
+    evaluation_0 = Evaluation(name='evaluation_0', eval_type='clustering')
+    evaluation_1 = Evaluation(name='evaluation_1', eval_type='clustering')
 
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    # set dataio_1 to replicate model from dataio_0
     pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data), model=Model(dataio_0.output.model))
     # set data input sources of intersection components
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
     pipeline.add_component(intersection_1, data=Data(data=dataio_1.output.data))
     # set train & validate data of hetero_lr_0 component
-    pipeline.add_component(hetero_feature_binning_0, data=Data(data=intersection_0.output.data))
-    pipeline.add_component(hetero_feature_binning_1, data=Data(data=intersection_1.output.data),
-                           model=Model(hetero_feature_binning_0.output.model))
 
+    pipeline.add_component(hetero_kmeans_0, data=Data(train_data=intersection_0.output.data))
+    pipeline.add_component(hetero_kmeans_1, data=Data(train_data=intersection_1.output.data))
+    # print(f"data: {hetero_kmeans_0.output.data.data[0]}")
+    pipeline.add_component(evaluation_0, data=Data(data=hetero_kmeans_0.output.data.data[0]))
+    pipeline.add_component(evaluation_1, data=Data(data=hetero_kmeans_1.output.data.data[0]))
     # compile pipeline once finished adding modules, this step will form conf and dsl files for running job
     pipeline.compile()
 
     # fit model
     pipeline.fit(backend=backend, work_mode=work_mode)
     # query component summary
-    print(pipeline.get_component("hetero_feature_binning_0").get_summary())
+    print(pipeline.get_component("hetero_kmeans_0").get_summary())
 
 
 if __name__ == "__main__":
