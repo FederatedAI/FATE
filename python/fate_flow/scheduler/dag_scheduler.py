@@ -97,10 +97,6 @@ class DAGScheduler(Cron):
                                                        runtime_conf=job_runtime_conf,
                                                        train_runtime_conf=train_runtime_conf)
 
-        """
-        if job_parameters.align_task_input_data_partition and int(initiator_party_id) != 0:
-            job_parameters.input_data_aligned_partitions = cls.align_input_data_partitions(job=job, dsl_parser=dsl_parser)
-        """
         cls.set_default_job_parameters(job_parameters=job_parameters)
 
         # update runtime conf
@@ -180,12 +176,6 @@ class DAGScheduler(Cron):
             job_parameters.task_memory_per_node = DEFAULT_TASK_MEMORY_PER_NODE
         if job_parameters.federated_status_collect_type is None:
             job_parameters.federated_status_collect_type = DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
-
-        """
-        if job_parameters.input_data_aligned_partitions:
-            if job_parameters.task_nodes * job_parameters.task_cores_per_node > job_parameters.input_data_aligned_partitions:
-                job_parameters.task_cores_per_node = int(max(job_parameters.input_data_aligned_partitions / job_parameters.task_nodes, 1))
-        """
 
     def run_do(self):
         schedule_logger().info("start schedule waiting jobs")

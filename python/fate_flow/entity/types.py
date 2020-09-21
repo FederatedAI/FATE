@@ -147,7 +147,7 @@ class TaskStatus(BaseStatus):
 
     class StateTransitionRule(BaseStateTransitionRule):
         RULES = {
-            StatusSet.WAITING: [StatusSet.RUNNING, StatusSet.CANCELED, StatusSet.TIMEOUT],
+            StatusSet.WAITING: [StatusSet.RUNNING, StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED],
             StatusSet.RUNNING: [StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.COMPLETE],
             StatusSet.CANCELED: [],
             StatusSet.TIMEOUT: [StatusSet.FAILED, StatusSet.COMPLETE],
