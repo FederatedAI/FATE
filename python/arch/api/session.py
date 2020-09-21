@@ -52,7 +52,8 @@ def table(name, namespace, **kwargs) -> CTableABC:
 
 
 def parallelize(data: Iterable, partition, include_key=False, **kwargs) -> CTableABC:
-    return session.get_latest_opened().computing.parallelize(data=data, partition=partition, include_key=include_key, **kwargs)
+    return session.get_latest_opened().computing.parallelize(data=data, partition=partition, include_key=include_key,
+                                                             **kwargs)
 
 
 def cleanup(name, namespace, *args, **kwargs):
@@ -63,11 +64,6 @@ def cleanup(name, namespace, *args, **kwargs):
 
 def get_session_id():
     return session.get_latest_opened().computing.session_id
-
-
-def get_data_table(name, namespace):
-    LOGGER.warning(f"don't use this, use table directly")
-    return session.get_latest_opened().computing.load(name=name, namespace=namespace)
 
 
 def clean_tables(namespace, regex_string='*'):

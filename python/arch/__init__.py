@@ -14,4 +14,6 @@
 #  limitations under the License.
 #
 
+import warnings
 
+warnings.warn('arch directory is deprecated, use fate_arch instead', DeprecationWarning)
