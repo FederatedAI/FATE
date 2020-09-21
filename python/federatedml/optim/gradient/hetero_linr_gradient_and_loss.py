@@ -37,7 +37,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
                                  transfer_variables.loss_intermediate)
 
     def compute_and_aggregate_forwards(self, data_instances, model_weights,
-                                       encrypted_calculator, batch_index, offset=None):
+                                       encrypted_calculator, batch_index, current_suffix, offset=None):
         """
         Compute gradients:
         gradient = (1/N)*\sum(wx -y)*x
@@ -56,11 +56,15 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         offset: Used in Poisson only.
 
         batch_index: int, use to obtain current encrypted_calculator index:
+
+        current_suffix: tuple or string. Used in transfer_variable
         """
         wx = data_instances.mapValues(
             lambda v: vec_dot(v.features, model_weights.coef_) + model_weights.intercept_)
         self.forwards = wx
         self.aggregated_forwards = encrypted_calculator[batch_index].encrypt(wx)
+
+        self.host_forwards = self.get_host_forward(suffix=current_suffix)
 
         for host_forward in self.host_forwards:
             self.aggregated_forwards = self.aggregated_forwards.join(host_forward, lambda g, h: g + h)

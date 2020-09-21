@@ -37,7 +37,7 @@ If an id `42` exists in both `dataio_0.data` and `dataio_1.data`, and:
 2.) 'keep_duplicate` set to true: the value from `dataio_0.data` and the one from `dataio_1.data` are both kept; the value from `dataio_1.data` will have a new id `42_dataio_1` in the result table.
 
 
-For more example job configuration and dsl setting files, please refer `examples/federatedml-1.x-examples/union`.
+For more example job configuration and dsl setting files, please refer `examples/dsl/v2/union`.
 
 Param
 ------

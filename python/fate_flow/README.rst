@@ -325,7 +325,7 @@ Offline Modeling
 
    And then, you can found so many useful command from `CLI <./doc/fate_flow_cli.rst>`__.
 
-   For more Federated Learning pipeline Job example, please refer at `federatedml-1.x-examples <./../examples/federatedml-1.x-examples>`__ and it’s `README <./../examples/federatedml-1.x-examples/README.rst>`__
+   For more Federated Learning pipeline Job example, please refer at `examples <./../../examples/dsl/v2>`__ and it’s `README <./../../examples/dsl/v2/README.rst>`__
 
 Online Inference
 ^^^^^^^^^^^^^^^^

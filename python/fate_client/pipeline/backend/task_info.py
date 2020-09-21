@@ -14,6 +14,10 @@
 #  limitations under the License.
 #
 
+import sys
+
+from pipeline.utils.logger import LOGGER
+
 
 class TaskInfo(object):
     def __init__(self, jobid, component, job_client, role='guest', party_id=9999):
@@ -23,15 +27,19 @@ class TaskInfo(object):
         self._party_id = party_id
         self._role = role
 
+    @LOGGER.catch(onerror=lambda _: sys.exit(1))
     def get_output_data(self, limits=None):
         return self._job_client.get_output_data(self._jobid, self._component.name, self._role, self._party_id, limits)
 
+    @LOGGER.catch(onerror=lambda _: sys.exit(1))
     def get_model_param(self):
         return self._job_client.get_model_param(self._jobid, self._component.name, self._role, self._party_id)
 
+    @LOGGER.catch(onerror=lambda _: sys.exit(1))
     def get_output_data_table(self):
         return self._job_client.get_output_data_table(self._jobid, self._component.name, self._role, self._party_id)
 
+    @LOGGER.catch(onerror=lambda _: sys.exit(1))
     def get_summary(self):
         return self._job_client.get_summary(self._jobid, self._component.name, self._role, self._party_id)
 

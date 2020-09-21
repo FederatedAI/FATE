@@ -19,7 +19,7 @@ In addition, note that loss history is not available for Guest when running homo
 
 Currently local baseline does not support predict task from history job. This feature will be added in future updates.
 
-For examples of using Local Baseline module, please refer `examples/federatedml-1.x-examples/local_baseline`.
+For examples of using Local Baseline module, please refer `examples/dsl/v2/local_baseline`.
 
 Param
 ------

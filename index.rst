@@ -17,7 +17,7 @@ https://fate.fedai.org
    :caption: Quick Start
    :maxdepth: 3
 
-   Quick Start <examples/federatedml-1.x-examples/README>
+   Quick Start <examples/dsl/v2/README>
    Data Upload <doc/upload_data_guide>
    Configuration <doc/dsl_conf_setting_guide>
 

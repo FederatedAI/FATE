@@ -20,9 +20,9 @@ import os
 import site
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
+from pipeline.component import DataIO
+from pipeline.component import Reader
+from pipeline.interface import Data
 
 from examples.util.config import Config
 

@@ -1,3 +1,4 @@
+from pipeline.component.column_expand import ColumnExpand
 from pipeline.component.data_statistics import DataStatistics
 from pipeline.component.dataio import DataIO
 from pipeline.component.evaluation import Evaluation
@@ -32,5 +33,5 @@ __all__ = ["DataStatistics", "DataIO", "Evaluation", "HeteroDataSplit",
            "HeteroPearson", "HeteroPoisson", "HeteroSecureBoost", "HomoDataSplit",
            "HomoLR", "HomoNN", "HomoSecureBoost", "Intersection",
            "LocalBaseline", "OneHotEncoder", "PSI", "Reader",
-           "FederatedSample", "FeatureScale", "Union"]
+           "FederatedSample", "FeatureScale", "Union", "ColumnExpand"]
 

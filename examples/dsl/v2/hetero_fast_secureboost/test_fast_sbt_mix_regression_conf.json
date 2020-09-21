@@ -1,0 +1,86 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "host": [
+            9998
+        ],
+        "guest": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "job_type": "train",
+        "backend": 0,
+        "work_mode": 0,
+        "dsl_version": 2
+    },
+    "role_parameters": {
+        "host": {
+            "0": {
+                "dataio_1": {
+                    "with_label": false
+                },
+                "reader_1": {
+                    "table": {
+                        "name": "student_hetero_host",
+                        "namespace": "experiment"
+                    }
+                },
+                "dataio_0": {
+                    "with_label": false
+                },
+                "reader_0": {
+                    "table": {
+                        "name": "student_hetero_host",
+                        "namespace": "experiment"
+                    }
+                }
+            }
+        },
+        "guest": {
+            "0": {
+                "dataio_1": {
+                    "with_label": true,
+                    "output_format": "dense"
+                },
+                "reader_1": {
+                    "table": {
+                        "name": "student_hetero_guest",
+                        "namespace": "experiment"
+                    }
+                },
+                "dataio_0": {
+                    "with_label": true,
+                    "output_format": "dense"
+                },
+                "reader_0": {
+                    "table": {
+                        "name": "student_hetero_guest",
+                        "namespace": "experiment"
+                    }
+                }
+            }
+        }
+    },
+    "algorithm_parameters": {
+        "hetero_fast_secure_boost_0": {
+            "task_type": "regression",
+            "objective_param": {
+                "objective": "lse"
+            },
+            "num_trees": 4,
+            "validation_freqs": 1,
+            "encrypt_param": {
+                "method": "iterativeAffine"
+            },
+            "tree_num_per_party": 1,
+            "work_mode": "mix"
+        },
+        "evaluation_0": {
+            "eval_type": "regression"
+        }
+    }
+}

@@ -14,6 +14,8 @@
 #  limitations under the License.
 #
 
+import copy
+
 from federatedml.framework.hetero.procedure import convergence
 from federatedml.framework.hetero.procedure import paillier_cipher, batch_generator
 from federatedml.linear_model.linear_model_weight import LinearModelWeights
@@ -47,6 +49,7 @@ class HeteroLRGuest(HeteroLRBase):
         ----------
         data_instance: DTable of Instance, input data
         """
+        data_instance = copy.deepcopy(data_instance)
         if data_instance.label != 1:
             data_instance.label = -1
         return data_instance
