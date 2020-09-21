@@ -40,127 +40,127 @@ Alogorithm List
    * - `DataIO`_
      - DataIO
      - This component is  typically the first component of a modeling task. It will transform user-uploaded date into Instance object which can be used for the following components.
-     - DTable，values are raw data
-     - Transformed DTable, values are data instance define in `federatedml/feature/instance.py`
+     - Table, values are raw data.
+     - Transformed Table, values are data instance define in `federatedml/feature/instance.py`
      -
-     -
+     - DataIO Model, consists of model-meta and model-param.
 
    * - `Intersect`_
      - Intersection
-     - Compute intersect data set of two parties without leakage of difference set information. Mainly used in hetero scenario task.
-     - DTable
-     - DTable which keys are occurred in both parties
+     - Compute intersect data set of multiple parties without leakage of difference set information. Mainly used in hetero scenario task.
+     - Table.
+     - Table with only common instance keys.
      -
-     -
+     - Intersect Model, consists of model-meta and model-param.
 
    * - `Federated Sampling`_
      - FederatedSample
-     - Federated Sampling data so that its distribution become balance in each party.This module support both federated and standalone version
-     - DTable
-     - the sampled data, supports both random and stratified sampling.
+     - Federated Sampling data so that its distribution become balance in each party.This module supports both random and stratified sampling for hetero and homogeneous scenario.
+     - Table
+     - Table of sampled data.
      -
-     -
+     - Federated Sampling Model, consists of model-meta and model-param.
 
    * - `Feature Scale`_
      - FeatureScale
      - Module for feature scaling and standardization.
-     - DTable，DTable, whose values are instances.
-     - Transformed DTable.
+     - Table，values are instances.
+     - Transformed Table.
      - Transform factors like min/max, mean/std.
      -
 
    * - `Hetero Feature Binning`_
      - Hetero Feature Binning
      - With binning input data, calculates each column's iv and woe and transform data according to the binned information.
-     - DTable with y in guest and without y in host.
-     - Transformed DTable.
+     - Table with y in guest and without y in host.
+     - Transformed Table.
      -
-     - iv/woe, split points, event counts, non-event counts etc. of each column.
+     - Hetero Feature Binning Model, including iv/woe, split points, event counts, non-event counts etc. of each column.
 
    * - `OneHot Encoder`_
      - OneHotEncoder
      - Transfer a column into one-hot format.
-     - Input DTable.
-     - Transformed DTable with new headers.
+     - Table, values are instances.
+     - Transformed Table with new header.
      -
-     - Original header and feature values to new header map.
+     - OneHost Encoder Model, including feature-name mapping between original header and new header.
 
    * - `Hetero Feature Selection`_
      - HeteroFeatureSelection
      - Provide 5 types of filters. Each filters can select columns according to user config
-     - DTable
-     - Transformed DTable with new headers and filtered data instance.
+     - Table
+     - Transformed Table with new header and filtered data instance.
      - If iv filters used, hetero_binning model is needed.
-     - Whether left or not for each column.
+     - Hetero Feature Selection Model, which includes information on whether each column is filtered.
 
    * - `Union`_
      - Union
      - Combine multiple data tables into one.
-     - Input DTable(s).
-     - one DTable with combined values from input DTables.
+     - Tables.
+     - Table with combined values from input Tables.
      -
      -
 
    * - `Hetero-LR`_
      - HeteroLR
      - Build hetero logistic regression module through multiple parties.
-     - DTable
+     - Table, values are instances
+     - Table, values are instances.
      -
-     -
-     - Logistic Regression model.
+     - Logistic Regression Model.
 
    * - `Local Baseline`_
      - LocalBaseline
      - Wrapper that runs sklearn Logistic Regression model with local data.
-     - DTable
+     - Table, values are instances.
+     - Table, values are instances.
      -
      -
-     -  Logistic Regression.
 
    * - `Hetero-LinR`_
      - HeteroLinR
      - Build hetero linear regression module through multiple parties.
-     - DTable
+     - Table, values are instances.
+     - Table, values are instances.
      -
-     -
-     - Linear Regression model.
+     - Linear Regression Model.
 
    * - `Hetero-Poisson`_
      - HeteroPoisson
      - Build hetero poisson regression module through multiple parties.
-     - Input DTable.
+     - Table, values are instances.
+     - Table, values are instances.
      -
-     -
-     - Poisson Regression model.
+     - Poisson Regression Model.
 
    * - `Homo-LR`_
      - HomoLR
      - Build homo logistic regression module through multiple parties.
-     - Input DTable.
-     -
+     - Table, values are instances.
+     - Table, values are instances.
      -
      - Logistic Regression Model
 
    * - `Homo-NN`_
      - HomoNN
      - Build homo neural network module through multiple parties.
-     - Input DTable
+     - Table, values are instances.
+     - Table, values are instances.
      -
-     -
-     - Neural Network model.
+     - Neural Network Model, .
 
    * - `Hetero Secure Boosting`_
      - HeteroSecureBoost
      - Build hetero secure boosting module through multiple parties
-     - DTable, values are instances.
+     - Table, values are instances.
+     - Table, values are instances.
      -
-     -
-     - SecureBoost Model, consists of model-meta and model-param
+     - SecureBoost Model, consists of model-meta and model-param.
 
    * - `Evaluation`_
      - Evaluation
      - Output the model evaluation metrics for user.
-     -
+     - Table, values are instances.
      -
      -
      -
@@ -168,7 +168,7 @@ Alogorithm List
    * - `Hetero Pearson`_
      - HeteroPearson
      - Calculate hetero correlation of features from different parties.
-     - DTable
+     - Table, values are instances.
      -
      -
      -
@@ -176,36 +176,42 @@ Alogorithm List
    * - `Hetero-NN`_
      - HeteroNN
      - Build hetero neural network module.
-     - DTable
+     - Table, values are instances.
+     - Table, values are instances.
      -
-     -
-     - hetero neural network model.
+     - Hetero Neural Network Model.
 
    * - `Homo Secure Boosting`_
      - HomoSecureBoost
      - Build homo secure boosting module through multiple parties
-     - DTable, values are instance.
-     -
+     - Table, values are instances.
+     - Table, values are instances.
      -
      - SecureBoost Model, consists of model-meta and model-param
 
    * - `Homo OneHot Encoder`_
      - HomoOneHotEncoder
      - Build homo onehot encoder module through multiple parties.
-     - DTable, values are instance.
-     -
+     - Table, values are instances.
+     - Transformed Table with new header.
      -
      - Homo OneHot Model, consists of model-meta and model-param
 
    * - `Data Split`_
      - Data Split
      - Split one data table into 3 tables by given ratio or count
+     - Table, values are instances.
      - 3 Tables, values are instance.
      -
      -
+
+   * - `Column Expand`_
+     - Column Expand
+     - Add arbitrary number of columns with user-provided values.
+     - Table, values are raw data.
+     - Transformed Table with added column(s) and new header.
      -
-
-
+     - Column Expand Model, consists of model-meta and model-param
 
 .. _DataIO: util/README.rst
 .. _Intersect: statistic/intersect/README.rst
@@ -228,6 +234,7 @@ Alogorithm List
 .. _Homo Secure Boosting: tree/README.rst
 .. _Data Split: model_selection/data_split/README.rst
 .. _Homo OneHot Encoder: feature/README.rst
+.. _Column Expand: feature/README.rst
 
 
 Secure Protocol
