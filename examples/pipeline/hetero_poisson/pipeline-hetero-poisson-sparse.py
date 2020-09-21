@@ -17,12 +17,12 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.evaluation import Evaluation
-from pipeline.component.hetero_poisson import HeteroPoisson
-from pipeline.component.intersection import Intersection
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
+from pipeline.component import DataIO
+from pipeline.component import Evaluation
+from pipeline.component import HeteroPoisson
+from pipeline.component import Intersection
+from pipeline.component import Reader
+from pipeline.interface import Data
 
 from examples.util.config import Config
 
@@ -55,14 +55,18 @@ def main(config="../../config.yaml", namespace=""):
     dataio_0.get_party_instance(role='host', party_id=host).algorithm_param(with_label=False)
 
     intersection_0 = Intersection(name="intersection_0")
-    hetero_poisson_0 = HeteroPoisson(name="hetero_poisson_0", early_stop="weight_diff", max_iter=20,
-                                     alpha=100, batch_size=-1, learning_rate=0.01,
+    hetero_poisson_0 = HeteroPoisson(name="hetero_poisson_0", early_stop="weight_diff", max_iter=2,
+                                     alpha=100.0, batch_size=-1, learning_rate=0.01,
+                                     exposure_colname="exposure", optimizer="rmsprop",
+                                     penalty="L2", decay_sqrt=False, tol=0.001,
                                      init_param={"init_method": "zeros"},
                                      encrypted_mode_calculator_param={"mode": "fast"}
                                      )
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)
+    evaluation_0.get_party_instance(role='host', party_id=host).algorithm_param(need_run=False)
 
+    pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
     pipeline.add_component(hetero_poisson_0, data=Data(train_data=intersection_0.output.data))
@@ -74,7 +78,6 @@ def main(config="../../config.yaml", namespace=""):
 
     print (pipeline.get_component("hetero_poisson_0").get_model_param())
     print (pipeline.get_component("hetero_poisson_0").get_summary())
-    print (pipeline.get_component("evaluation_0").get_summary())
 
 
 if __name__ == "__main__":

@@ -17,11 +17,11 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.hetero_lr import HeteroLR
-from pipeline.component.intersection import Intersection
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
+from pipeline.component import DataIO
+from pipeline.component import HeteroLR
+from pipeline.component import Intersection
+from pipeline.component import Reader
+from pipeline.interface import Data
 
 from examples.util.config import Config
 
@@ -52,6 +52,9 @@ def main(config="../../config.yaml", namespace=""):
 
     intersection_0 = Intersection(name="intersection_0")
     hetero_lr_0 = HeteroLR(name="hetero_lr_0", early_stop="diff", max_iter=5,
+                           penalty="None", optimizer="sgd", tol=0.001,
+                           batch_size=-1, learning_rate=0.15, decay=0.0,
+                           decay_sqrt=False,
                            init_param={"init_method": "zeros"},
                            encrypted_mode_calculator_param={"mode": "fast"},
                            stepwise_param={"score_name": "AIC", "direction": "backward",

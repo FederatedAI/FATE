@@ -17,11 +17,11 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.reader import Reader
-from pipeline.component.union import Union
-from pipeline.interface.data import Data
-from pipeline.interface.model import Model
+from pipeline.component import DataIO
+from pipeline.component import Reader
+from pipeline.component import Union
+from pipeline.interface import Data
+from pipeline.interface import Model
 
 from examples.util.config import Config
 
@@ -50,7 +50,7 @@ def main(config="../../config.yaml", namespace=""):
     dataio_1 = DataIO(name="dataio_1", with_label=True, output_format="dense", label_name="y",
                       missing_fill=False, outlier_replace=False)
 
-    union_0 = Union(name="union_0", allow_missing=False)
+    union_0 = Union(name="union_0", allow_missing=False, need_run=True)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(reader_1)

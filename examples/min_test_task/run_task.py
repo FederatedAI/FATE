@@ -18,7 +18,7 @@ hetero_sbt_dsl_file = home_dir + "/config/test_secureboost_train_dsl.json"
 predict_task_file = home_dir + "/config/test_predict_conf.json"
 
 guest_import_data_file = home_dir + "/config/data/breast_b.csv"
-fate_flow_path = home_dir + "/../../fate_flow/fate_flow_client.py"
+fate_flow_path = home_dir + "/../../python/fate_flow/fate_flow_client.py"
 
 evaluation_component_name = 'evaluation_0'
 

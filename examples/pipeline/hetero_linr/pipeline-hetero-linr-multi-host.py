@@ -12,14 +12,13 @@
 
 import argparse
 
-from pipeline.backend.config import Backend
-from pipeline.backend.config import WorkMode
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.hetero_linr import HeteroLinR
-from pipeline.component.intersection import Intersection
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
+from pipeline.component import DataIO
+from pipeline.component import Evaluation
+from pipeline.component import HeteroLinR
+from pipeline.component import Intersection
+from pipeline.component import Reader
+from pipeline.interface import Data
 
 from examples.util.config import Config
 
@@ -54,21 +53,28 @@ def main(config="../../config.yaml", namespace=""):
 
     intersection_0 = Intersection(name="intersection_0")
     hetero_linr_0 = HeteroLinR(name="hetero_linr_0", penalty="L2", optimizer="sgd", tol=0.001,
-                               alpha=0.01, max_iter=10, early_stop="weight_diff", batch_size=-1,
+                               alpha=0.01, max_iter=20, early_stop="weight_diff", batch_size=-1,
                                learning_rate=0.15, decay=0.0, decay_sqrt=False,
                                init_param={"init_method": "zeros"},
                                encrypted_mode_calculator_param={"mode": "fast"})
+
+    evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)
+    # evaluation_0.get_party_instance(role='host', party_id=hosts[0]).algorithm_param(need_run=False)
+    # evaluation_0.get_party_instance(role='host', party_id=hosts[1]).algorithm_param(need_run=False)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
     pipeline.add_component(hetero_linr_0, data=Data(train_data=intersection_0.output.data))
+    pipeline.add_component(evaluation_0, data=Data(data=hetero_linr_0.output.data))
+
 
     pipeline.compile()
 
-    pipeline.fit(backend=Backend.EGGROLL, work_mode=WorkMode.STANDALONE)
+    pipeline.fit(backend=backend, work_mode=work_mode)
 
     print (pipeline.get_component("hetero_linr_0").get_summary())
+    print (pipeline.get_component("evaluation_0").get_summary())
 
 
     # predict
