@@ -15,5 +15,8 @@
 #
 
 import warnings
+from fate_arch.common import log
 
+LOGGER = log.getLogger()
 warnings.warn('arch directory is deprecated, use fate_arch instead', DeprecationWarning)
+LOGGER.warn('arch directory is deprecated, and will be removed in 1.6, use fate_arch instead', DeprecationWarning)
