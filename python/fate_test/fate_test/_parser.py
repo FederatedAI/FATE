@@ -23,7 +23,8 @@ from pathlib import Path
 
 import click
 import prettytable
-from ruamel import yaml
+
+from fate_test._config import Parties, Config
 
 
 # noinspection PyPep8Naming
@@ -60,146 +61,16 @@ DSL_JSON_HOOK = chain_hook()
 
 
 @dataclass
-class Address(object):
-    host: str
-    port: int
-
-    @staticmethod
-    def from_string(address: str):
-        host, port = address.split(":")
-        return Address(host, int(port))
-
-    @property
-    def tuple_format(self):
-        return self.host, self.port
-
-    @property
-    def string_format(self):
-        return f"{self.host}:{self.port}"
-
-
-@dataclass
-class Service(object):
-    address: Address
-    parties: typing.List
-
-    @staticmethod
-    def from_dict(d: dict):
-        address = d["address"]
-        parties = d["parties"]
-        return Service(Address.from_string(address), parties)
-
-
-@dataclass
-class SSHTunnel(object):
-    ssh_address: Address
-    ssh_username: str
-    ssh_password: str
-    ssh_priv_key: str
-    services: typing.List[Service]
-
-    @staticmethod
-    def from_dict(d: dict):
-        ssh_address = Address.from_string(d["ssh_address"])
-        ssh_username = d["ssh_username"]
-        ssh_password = d.get("ssh_password", None)
-        ssh_priv_key = d.get("ssh_priv_key", None)
-        services = [Service.from_dict(service) for service in d["services"]]
-        return SSHTunnel(ssh_address, ssh_username, ssh_password, ssh_priv_key, services)
-
-
-@dataclass
-class Parties(object):
-    guest: typing.List[int]
-    host: typing.List[int]
-    arbiter: typing.List[int] = field(default_factory=list)
-
-    @staticmethod
-    def from_dict(d: dict):
-        return Parties(**d)
-
-    def __post_init__(self):
-        self._party_to_role_string = {}
-        for role in self.__class__.__annotations__:
-            parties = getattr(self, role)
-            for i, party in enumerate(parties):
-                if party not in self._party_to_role_string:
-                    self._party_to_role_string[party] = set()
-                self._party_to_role_string[party].add(f"{role.lower()}_{i}")
-
-    def parties_to_role_string(self, parties):
-        role_strings = set()
-        for party in parties:
-            if party not in self._party_to_role_string:
-                raise ValueError(f"{party} not in parties")
-            role_strings.update(self._party_to_role_string[party])
-        return role_strings
-
-    def extract_role(self, counts: typing.MutableMapping[str, int]):
-        roles = {}
-        for role, num in counts.items():
-            if not hasattr(self, role):
-                raise ValueError(f"{role} should be one of [guest, host, arbiter]")
-            else:
-                if len(getattr(self, role)) < num:
-                    raise ValueError(f"require {num} {role} parties, only {len(getattr(self, role))} in config")
-            roles[role] = getattr(self, role)[:num]
-        return roles
-
-    def extract_initiator_role(self, role):
-        initiator_role = role.strip()
-        if len(getattr(self, initiator_role)) < 1:
-            raise ValueError(f"role {initiator_role} has empty party list")
-        party_id = getattr(self, initiator_role)[0]
-        return dict(role=initiator_role, party_id=party_id)
-
-
-@dataclass
-class Config(object):
-    parties: Parties
-    local_services: typing.List[Service] = field(default_factory=list)
-    ssh_tunnel: typing.List[SSHTunnel] = field(default_factory=list)
-    work_mode: int = 0
-    data_base_dir: Path = None
-
-    @staticmethod
-    def from_yaml(path: typing.Union[str, Path], **kwargs):
-        if isinstance(path, str):
-            path = Path(path)
-        config = {}
-        if path is not None:
-            with path.open("r") as f:
-                config.update(yaml.safe_load(f))
-        config.update(kwargs)
-
-        if "parties" not in config:
-            raise NameError(f"`parties` not found")
-        parties = Parties.from_dict(config["parties"])
-
-        local_services = [Service.from_dict(d) for d in config.get("local_services", [])]
-        ssh_tunnel = [SSHTunnel.from_dict(d) for d in config.get("ssh_tunnel", [])]
-        work_mode = int(config.get("work_mode", 0))
-        if config.get("data_base_dir") is not None:
-            data_base_dir = Path(config["data_base_dir"])
-            if not data_base_dir.is_absolute():
-                data_base_dir = path.parent.joinpath(data_base_dir)
-            data_base_dir = data_base_dir.resolve()
-        else:
-            data_base_dir = None
-
-        return Config(parties, local_services, ssh_tunnel, work_mode, data_base_dir)
-
-
-@dataclass
 class Data(object):
     config: dict
     role_str: str
 
     @staticmethod
-    def load(config):
+    def load(config, path: Path):
         kwargs = {}
-        for field_name in ['file', 'head', 'partition', 'table_name', 'namespace']:
+        for field_name in ['head', 'partition', 'table_name', 'namespace']:
             kwargs[field_name] = config[field_name]
+        kwargs['file'] = path.parent.joinpath(config['file']).resolve()
         role_str = config.get("role") if config.get("role") != "guest" else "guest_0"
         return Data(config=kwargs, role_str=role_str)
 
@@ -270,9 +141,16 @@ class Job(object):
 
 
 @dataclass
+class PipelineJob(object):
+    job_name: str
+    script_path: Path
+
+
+@dataclass
 class Testsuite(object):
     dataset: typing.List[Data]
     jobs: typing.List[Job]
+    pipeline_jobs: typing.List[PipelineJob]
     path: Path
 
     @staticmethod
@@ -282,13 +160,18 @@ class Testsuite(object):
 
         dataset = []
         for d in testsuite_config.get("data"):
-            dataset.append(Data.load(d))
+            dataset.append(Data.load(d, path))
 
         jobs = []
         for job_name, job_configs in testsuite_config.get("tasks", {}).items():
             jobs.append(Job.load(job_name=job_name, job_configs=job_configs, base=path.parent))
 
-        testsuite = Testsuite(dataset, jobs, path)
+        pipeline_jobs = []
+        for job_name, job_configs in testsuite_config.get("pipeline_tasks", {}).items():
+            script_path = path.parent.joinpath(job_configs["script"]).resolve()
+            pipeline_jobs.append(PipelineJob(job_name, script_path))
+
+        testsuite = Testsuite(dataset, jobs, pipeline_jobs, path)
         return testsuite
 
     def jobs_iter(self):
@@ -325,7 +208,7 @@ class Testsuite(object):
     def reflash_configs(self, config: Config):
 
         for data in self.dataset:
-            data.config.update(dict(work_mode=config.work_mode))
+            data.config.update(dict(work_mode=config.work_mode, backend=config.backend))
 
         for job in self.jobs:
             job.job_conf.update(config.parties, config.work_mode)
@@ -352,11 +235,61 @@ class FinalStatus(object):
     rest_dependency: typing.List[str] = field(default_factory=list)
 
 
+@dataclass
+class BenchmarkJob(object):
+    job_name: str
+    script_path: Path
+    conf_path: Path
+
+
+@dataclass
+class BenchmarkPair(object):
+    pair_name: str
+    jobs: typing.List[BenchmarkJob]
+
+
+@dataclass
+class BenchmarkSuite(object):
+    dataset: typing.List[Data]
+    pairs: typing.List[BenchmarkPair]
+    path: Path
+
+    @staticmethod
+    def load(path: Path):
+        with path.open("r") as f:
+            testsuite_config = json.load(f, object_hook=DATA_JSON_HOOK.hook)
+
+        dataset = []
+        for d in testsuite_config.get("data"):
+            dataset.append(Data.load(d, path))
+
+        pairs = []
+        for pair_name, pair_configs in testsuite_config.items():
+            if pair_name == "data":
+                continue
+            jobs = []
+            for job_name, job_configs in pair_configs.items():
+                script_path = path.parent.joinpath(job_configs["script"]).resolve()
+                if job_configs.get("conf"):
+                    conf_path = path.parent.joinpath(job_configs["conf"]).resolve()
+                else:
+                    conf_path = ""
+                jobs.append(BenchmarkJob(job_name=job_name, script_path=script_path, conf_path=conf_path))
+            pairs.append(BenchmarkPair(pair_name=pair_name, jobs=jobs))
+        suite = BenchmarkSuite(dataset=dataset, pairs=pairs, path=path)
+        return suite
+
+    def reflash_configs(self, config: Config):
+        for data in self.dataset:
+            data.config.update(dict(work_mode=config.work_mode, backend=config.backend))
+        return self
+
+
 def _namespace_hook(namespace):
     def _hook(d):
         if d is None:
             return d
-        if 'namespace' in d:
+        if 'namespace' in d and namespace:
             d['namespace'] = f"{d['namespace']}_{namespace}"
         return d
 
