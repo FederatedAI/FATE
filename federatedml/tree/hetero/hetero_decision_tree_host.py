@@ -31,7 +31,7 @@ from federatedml.protobuf.generated.boosting_tree_model_param_pb2 import Decisio
 from federatedml.tree import DecisionTree
 from federatedml.tree import Splitter
 from federatedml.tree import SplitInfo
-from federatedml.tree import FeatureHistogram
+from federatedml.tree import FeatureHistogram, FastFeatureHistogram
 from federatedml.transfer_variable.transfer_class.hetero_decision_tree_transfer_variable import \
     HeteroDecisionTreeTransferVariable
 from federatedml.util import consts
@@ -71,6 +71,12 @@ class HeteroDecisionTreeHost(DecisionTree):
         self.runtime_idx = 0
         self.sitename = consts.HOST
 
+        # For fast histogram
+        self.encrypter_type = None
+        self.bin_num = None
+        self.data_bin_dense = None
+        self.data_bin_dense_with_position = None
+
     def set_flowid(self, flowid=0):
         LOGGER.info("set flowid, flowid is {}".format(flowid))
         self.transfer_inst.set_flowid(flowid)
@@ -79,12 +85,22 @@ class HeteroDecisionTreeHost(DecisionTree):
     #     self.runtime_idx = runtime_idx
     #     self.sitename = ":".join([consts.HOST, str(self.runtime_idx)])
 
-    def set_inputinfo(self, data_bin=None, grad_and_hess=None, bin_split_points=None, bin_sparse_points=None):
+    def set_inputinfo(self, data_bin=None, grad_and_hess=None, bin_split_points=None,
+                      bin_sparse_points=None, data_bin_dense=None):
         LOGGER.info("set input info")
         self.data_bin = data_bin
         self.grad_and_hess = grad_and_hess
         self.bin_split_points = bin_split_points
         self.bin_sparse_points = bin_sparse_points
+        self.data_bin_dense = data_bin_dense  # For fast histogram
+
+    def set_encrypter_type(self, encrypter_type):
+        # For fast histogram
+        self.encrypter_type = encrypter_type
+
+    def set_bin_num(self, bin_num):
+        # For fast histogram
+        self.bin_num = bin_num
 
     def set_valid_features(self, valid_features=None):
         LOGGER.info("set valid features")
@@ -155,6 +171,22 @@ class HeteroDecisionTreeHost(DecisionTree):
                                                   self.transfer_inst.tree_node_queue, dep),
                                               idx=0)
         """
+
+    def fast_get_histograms(self, node_map):
+        LOGGER.info("start to get node histograms")
+        acc_histograms = FastFeatureHistogram.calculate_histogram(
+            data_bin=self.data_bin_dense_with_position,
+            grad_and_hess=self.grad_and_hess,
+            bin_split_points=self.bin_split_points,
+            cipher_split_num=14,
+            node_map=node_map,
+            bin_num=self.bin_num,
+            valid_features=self.valid_features,
+            use_missing=self.use_missing,
+            zero_as_missing=self.zero_as_missing
+        )
+
+        return acc_histograms
 
     def get_histograms(self, node_map={}):
         LOGGER.info("start to get node histograms")
@@ -433,7 +465,10 @@ class HeteroDecisionTreeHost(DecisionTree):
                 break
 
             node_positions = self.sync_node_positions(dep)
-            self.data_bin_with_position = self.data_bin.join(node_positions, lambda v1, v2: (v1, v2))
+            if self.encrypter_type.lower() == consts.ITERATIVEAFFINE.lower():
+                self.data_bin_dense_with_position = self.data_bin_dense.join(node_positions, lambda v1, v2: (v1, v2))
+            else:
+                self.data_bin_with_position = self.data_bin.join(node_positions, lambda v1, v2: (v1, v2))
 
             batch = 0
             for i in range(0, len(self.tree_node_queue), self.max_split_nodes):
@@ -444,7 +479,10 @@ class HeteroDecisionTreeHost(DecisionTree):
                     node_map[tree_node.id] = node_num
                     node_num += 1
 
-                acc_histograms = self.get_histograms(node_map=node_map)
+                if self.encrypter_type.lower() == consts.ITERATIVEAFFINE.lower():
+                    acc_histograms = self.fast_get_histograms(node_map=node_map)
+                else:
+                    acc_histograms = self.get_histograms(node_map=node_map)
 
                 splitinfo_host, encrypted_splitinfo_host = self.splitter.find_split_host(acc_histograms,
                                                                                          self.valid_features,

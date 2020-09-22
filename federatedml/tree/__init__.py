@@ -22,6 +22,7 @@ from federatedml.tree.tree_core.splitter import Splitter
 from federatedml.tree.tree_core.boosting_tree import BoostingTree
 from federatedml.tree.tree_core.feature_histogram import FeatureHistogram
 from federatedml.tree.tree_core.feature_histogram import HistogramBag, FeatureHistogramWeights
+from federatedml.tree.tree_core.fast_feature_histogram import FastFeatureHistogram
 
 
 from federatedml.tree.hetero.hetero_decision_tree_host import HeteroDecisionTreeHost
@@ -38,7 +39,7 @@ from federatedml.tree.homo.homo_secureboosting_arbiter import HomoSecureBoosting
 
 __all__ = ["Node", "HeteroSecureBoostingTreeGuest", "HeteroSecureBoostingTreeHost",
            "HeteroDecisionTreeHost", "HeteroDecisionTreeGuest", "Splitter",
-           "FeatureHistogram", "XgboostCriterion", "DecisionTree", 'SplitInfo', "BoostingTree",
+           "FeatureHistogram", "FastFeatureHistogram", "XgboostCriterion", "DecisionTree", 'SplitInfo', "BoostingTree",
            "HistogramBag", "FeatureHistogramWeights","HomoDecisionTreeClient", "HomoDecisionTreeArbiter",
            "SecureBoostArbiterAggregator", "SecureBoostClientAggregator"
            , "DecisionTreeArbiterAggregator", 'DecisionTreeClientAggregator', "HomoSecureBoostingTreeArbiter",
