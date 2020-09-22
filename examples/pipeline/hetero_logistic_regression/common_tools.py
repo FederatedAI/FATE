@@ -37,7 +37,7 @@ def prettify(response, verbose=True):
 
 
 def make_normal_dsl(config, namespace, lr_param, is_multi_host=False, has_validate=False,
-                    is_cv=False, is_ovr=False):
+                    is_cv=False, is_ovr=False, is_dense=True):
     parties = config.parties
     guest = parties.guest[0]
     if is_multi_host:
@@ -75,7 +75,10 @@ def make_normal_dsl(config, namespace, lr_param, is_multi_host=False, has_valida
     reader_0.get_party_instance(role='host', party_id=hosts).algorithm_param(table=host_train_data)
 
     # define DataIO components
-    dataio_0 = DataIO(name="dataio_0")  # start component numbering at 0
+    if is_dense:
+        dataio_0 = DataIO(name="dataio_0", output_format='dense')
+    else:
+        dataio_0 = DataIO(name="dataio_0", output_format='sparse')
 
     # get DataIO party instance of guest
     dataio_0_guest_party_instance = dataio_0.get_party_instance(role='guest', party_id=guest)
@@ -228,7 +231,7 @@ def make_feature_engineering_dsl(config, namespace, lr_param, is_multi_host=Fals
             "iv_percentile"
         ],
         "manually_param": {
-            "filter_out_indexes": False
+            "filter_out_indexes": None
         },
         "iv_value_param": {
             "value_threshold": 1.0
@@ -240,7 +243,8 @@ def make_feature_engineering_dsl(config, namespace, lr_param, is_multi_host=Fals
     }
     hetero_feature_selection_0 = HeteroFeatureSelection(name='hetero_feature_selection_0',
                                                         **selection_param)
-    pipeline.add_component(hetero_feature_selection_0, data=Data(data=hetero_feature_binning_0.output.data))
+    pipeline.add_component(hetero_feature_selection_0, data=Data(data=hetero_feature_binning_0.output.data),
+                           model=Model(isometric_model=[hetero_feature_binning_0.output.model]))
     train_line.append(hetero_feature_selection_0)
 
     onehot_param = {

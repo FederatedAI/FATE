@@ -24,7 +24,8 @@ for i in range(4):
 print(f'fate_path: {cur_path}')
 sys.path.append(cur_path)
 
-from examples.pipeline.hetero_feature_binning import common_tools
+from examples.pipeline.hetero_logistic_regression import common_tools
+
 from examples.util.config import Config
 
 
@@ -34,36 +35,34 @@ def main(config="../../config.yaml", namespace=""):
         config = Config.load(config)
     backend = config.backend
     work_mode = config.work_mode
-    param = {
-        "name": "hetero_feature_binning_0",
-        "method": "optimal",
-        "optimal_binning_param": {
-            "metric_method": "gini",
-            "min_bin_pct": 0.05,
-            "max_bin_pct": 0.8,
-            "init_bucket_method": "bucket",
-            "init_bin_nums": 100,
-            "mixture": True
+
+    lr_param = {
+        "name": "hetero_lr_0",
+        "penalty": "L2",
+        "optimizer": "rmsprop",
+        "tol": 1e-05,
+        "alpha": 0.01,
+        "max_iter": 10,
+        "early_stop": "diff",
+        "batch_size": -1,
+        "learning_rate": 0.15,
+        "init_param": {
+            "init_method": "random_uniform"
         },
-        "compress_thres": 10000,
-        "head_size": 10000,
-        "error": 0.001,
-        "bin_num": 10,
-        "bin_indexes": -1,
-        "bin_names": None,
-        "category_indexes": None,
-        "category_names": None,
-        "adjustment_factor": 0.5,
-        "local_only": False,
-        "transform_param": {
-            "transform_cols": -1,
-            "transform_names": None,
-            "transform_type": "bin_num"
+        "cv_param": {
+            "n_splits": 5,
+            "shuffle": False,
+            "random_seed": 103,
+            "need_cv": False
         }
     }
-    pipeline = common_tools.make_normal_dsl(config, namespace, param, host_dense_output=False)
+
+    pipeline = common_tools.make_feature_engineering_dsl(config, namespace, lr_param)
+    # fit model
     pipeline.fit(backend=backend, work_mode=work_mode)
-    common_tools.prettify(pipeline.get_component("hetero_feature_binning_0").get_summary())
+    # query component summary
+    common_tools.prettify(pipeline.get_component("hetero_lr_0").get_summary())
+    common_tools.prettify(pipeline.get_component("evaluation_0").get_summary())
 
 
 if __name__ == "__main__":
