@@ -11,8 +11,6 @@ from federatedml.feature.fate_element_type import NoneType
 from federatedml.ensemble.basic_algorithms.decision_tree.tree_core.fast_feature_histogram import FastFeatureHistogram
 import functools
 
-LOGGER = log_utils.getLogger()
-
 
 class HeteroDecisionTreeHost(DecisionTree):
 
