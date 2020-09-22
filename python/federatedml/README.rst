@@ -39,7 +39,7 @@ Algorithm List
 
    * - `DataIO`_
      - DataIO
-     - This component is  typically the first component of a modeling task. It will transform user-uploaded date into Instance object.
+     - This component transforms user-uploaded date into Instance object.
      - Table, values are raw data.
      - Transformed Table, values are data instance define in `federatedml/feature/instance.py`
      -

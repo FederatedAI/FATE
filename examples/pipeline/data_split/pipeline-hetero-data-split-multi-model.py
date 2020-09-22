@@ -25,13 +25,12 @@ from pipeline.component import Reader
 from pipeline.interface import Data
 from pipeline.interface import Model
 
-from examples.util.config import Config
+from pipeline.utils.tools import load_job_config
 
 
 def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
-        config = Config.load(config)
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]

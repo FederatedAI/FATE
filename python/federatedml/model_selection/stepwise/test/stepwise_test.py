@@ -18,17 +18,20 @@ import numpy as np
 import unittest
 import uuid
 
-from fate_arch.session import computing_session as session
+from fate_arch.common import profile
+from fate_arch.session import Session
 from federatedml.feature.instance import Instance
 from federatedml.model_selection.stepwise.hetero_stepwise import HeteroStepwise
 from federatedml.util import consts
 from federatedml.util import data_io
 
+profile._PROFILE_LOG_ENABLED = False
+
 
 class TestStepwise(unittest.TestCase):
     def setUp(self):
         self.job_id = str(uuid.uuid1())
-        session.init(self.job_id)
+        self.session = Session.create(0, 0).init_computing(self.job_id).computing
         model = HeteroStepwise()
         model.__setattr__('role', consts.GUEST)
         model.__setattr__('fit_intercept', True)
@@ -49,7 +52,7 @@ class TestStepwise(unittest.TestCase):
             inst = Instance(inst_id=i, features=tmp, label=0)
             tmp = (i, inst)
             final_result.append(tmp)
-        table = session.parallelize(final_result,
+        table = self.session.parallelize(final_result,
                                     include_key=True,
                                     partition=3)
         schema = data_io.make_schema(header, sid_name, label_name)
@@ -100,13 +103,9 @@ class TestStepwise(unittest.TestCase):
         self.assertListEqual(to_enter, real_to_enter)
 
     def tearDown(self):
-        session.stop()
+        self.session.stop()
         try:
-            session.cleanup("*", self.job_id, True)
-        except EnvironmentError:
-            pass
-        try:
-            session.cleanup("*", self.job_id, False)
+            self.session.cleanup("*", self.job_id)
         except EnvironmentError:
             pass
 

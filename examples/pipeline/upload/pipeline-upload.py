@@ -14,79 +14,45 @@
 #  limitations under the License.
 #
 
-import argparse
 import os
-# find python path
-import site
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component import DataIO
-from pipeline.component import Reader
-from pipeline.interface import Data
+from pipeline.utils.tools import load_job_config
 
-from examples.util.config import Config
-
-SITE_PATH = site.getsitepackages()[0]
-
-
-def main(config="../../config.yaml"):
+def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
-        config = Config(config)
+        config = load_job_config(config)
     parties = config.parties
     guest = parties.guest[0]
-    host = parties.host[0]
     backend = config.backend
     work_mode = config.work_mode
+    data_base = config.data_base
 
-    dense_data = {"name": "breast_hetero_guest", "namespace": "experiment"}
-    tag_data = {"name": "tag_value_1", "namespace": "experiment"}
+    # partition for data storage
+    partition = 4
 
-    pipeline_upload = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest, host=host)
+    dense_data = {"name": "breast_hetero_guest", "namespace": f"experiment{namespace}"}
+
+    tag_data = {"name": "tag_value_1", "namespace": f"experiment{namespace}"}
+
+    pipeline_upload = PipeLine().set_initiator(role="guest", party_id=guest).set_roles(guest=guest)
     # add upload data info
     # csv file name from python path & file name
-    pipeline_upload.add_upload_data(file=os.path.join(SITE_PATH, "examples/data/breast_hetero_guest.csv"),
+    pipeline_upload.add_upload_data(file=os.path.join(data_base, "examples/data/breast_hetero_guest.csv"),
                                     table_name=dense_data["name"],             # table name
                                     namespace=dense_data["namespace"],         # namespace
-                                    head=1, partition=8)
-    pipeline_upload.add_upload_data(file=os.path.join(SITE_PATH, "examples/data/tag_value_1000_140.csv"),
+                                    head=1, partition=partition,               # data info
+                                    id_delimiter=",")                          # needed for spark backend
+
+    pipeline_upload.add_upload_data(file=os.path.join(data_base, "examples/data/tag_value_1000_140.csv"),
                                     table_name=tag_data["name"],
                                     namespace=tag_data["namespace"],
-                                    head=0, partition=8)
+                                    head=0, partition=partition,
+                                    id_delimiter=",")
     # upload all data
-    pipeline_upload.upload(work_mode=work_mode, drop=1)
-
-    pipeline = PipeLine().set_initiator(role='guest', party_id=guest).set_roles(guest=guest)
-
-    reader_0 = Reader(name="reader_0")
-    reader_0.get_party_instance(role='guest', party_id=guest).algorithm_param(table=dense_data)
-
-    reader_1 = Reader(name="reader_1")
-    reader_1.get_party_instance(role='guest', party_id=guest).algorithm_param(table=tag_data)
-
-    dataio_0 = DataIO(name="dataio_0", with_label=True, label_name="y", output_format="dense",
-                      missing_fill=False, outlier_replace=False)
-
-    dataio_1 = DataIO(name="dataio_1", with_label=False, input_format="tag", output_format="dense",
-                      tag_with_value=True, delimitor=",")
-
-
-    pipeline.add_component(reader_0)
-    pipeline.add_component(reader_1)
-    pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
-    pipeline.add_component(dataio_1, data=Data(data=reader_1.output.data))
-
-    pipeline.compile()
-
-    pipeline.fit(backend=backend, work_mode=work_mode)
+    pipeline_upload.upload(work_mode=work_mode, backend=backend, drop=1)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser("PIPELINE DEMO")
-    parser.add_argument("-config", type=str,
-                        help="config file")
-    args = parser.parse_args()
-    if args.config is not None:
-        main(args.config)
-    else:
-        main()
+    main()

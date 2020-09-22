@@ -16,7 +16,7 @@ mode may need to be modified depending on the deployment setting.
    python pipeline-mini-demo.py config.yaml
 
 For more pipeline demo, please refer to
-`examples <../../examples/pipeline>`__.
+`examples <../../../examples/pipeline>`__.
 
 A FATE Job is A Sequence
 ------------------------
@@ -37,7 +37,7 @@ of the listed modules run a small task with the data, and together they
 constitute a model training job.
 
 Beyond the given mini demo, a job may include multiple data sets and
-models. For more pipeline examples, please refer to `examples <../../examples/pipeline>`__.
+models. For more pipeline examples, please refer to `examples <../../../examples/pipeline>`__.
 
 Install Pipeline
 ----------------
@@ -45,7 +45,7 @@ Install Pipeline
 Pipeline CLI
 ~~~~~~~~~~~~
 
-After successfully installed FATE Pipeline, user needs configure Pipeline.
+After successfully installed FATE Client, user needs to configure server information and log directory for Pipeline.
 Pipeline provides a command line tool for quick setup. Run the following
 command for more information.
 
@@ -59,7 +59,7 @@ Interface of Pipeline
 Component
 ~~~~~~~~~
 
-FATE modules are each wrapped into ``component`` in Pipeline API. Each
+FATE modules are wrapped into ``component``s in Pipeline API. Each
 component can take in and output ``Data`` and ``Model``. Parameters of
 components can be set conveniently at the time of initialization.
 Unspecified parameters will take default values. All components have a
@@ -67,12 +67,43 @@ Unspecified parameters will take default values. All components have a
 identifier, and so it must be unique within a pipeline. We suggest that
 each component name includes a numbering as suffix for easy tracking.
 
+Components each may have input and/or output `Data` and/or `Model`.
+For details on inputs and outputs of each component, please refer to
+`guide <./component/README.rst>`__.
+
 An example of initializing a component with specified parameter values:
 
 .. code:: python
+   from pipeline.component import HeteroLR
 
    hetero_lr_0 = HeteroLR(name="hetero_lr_0", early_stop="weight_diff", max_iter=10,
                           early_stopping_rounds=2, validation_freqs=2)
+
+Input
+~~~~~~
+
+`Input <./component/README.rst>`__ encapsulates all input of a component, including
+``Data`` and ``Model`` input. To access ``input`` from a component,
+reference its ``input`` attribute:
+
+.. code:: python
+
+   input_all = dataio_0.input
+   input_data = dataio_0.input.data
+   input_model = dataio_0.input.model
+
+Output
+~~~~~~
+
+`Output <./component/README.rst>`__ encapsulates all output result of a component, including
+``Data`` and ``Model`` output. To access ``Output`` from a component,
+reference its ``output`` attribute:
+
+.. code:: python
+
+   output_all = dataio_0.output
+   output_data = dataio_0.output.data
+   output_model = dataio_0.output.model
 
 Data
 ~~~~
@@ -80,8 +111,10 @@ Data
 In most cases, data sets are wrapped into ``data`` when being passed
 between modules. For instance, in the mini demo, data output of
 ``dataio_0`` is set as data input to ``intersection_0``.
+For more information, please refer `here <./component/README.rst>`__.
 
 .. code:: python
+   from pipeline.interface import Data
 
    pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
 
@@ -93,6 +126,7 @@ Also from mini demo, result from ``intersection_0`` and
 component, respectively.
 
 .. code:: python
+   from pipeline.interface import Data
 
    pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data,
                                                  validate_data=intersection_1.output.data))
@@ -101,6 +135,7 @@ Another case of using keywords ``train_data``, ``validate_data``, and
 ``test_data`` is to select from ``DataSplit`` module’s multiple outputs:
 
 .. code:: python
+   from pipeline.interface import Data
 
    pipeline.add_component(hetero_linr_1, 
                           data=Data(test_data=hetero_data_split_0.output.data.test_data),
@@ -114,11 +149,14 @@ types of ``Model``: ``model`` and\ ``isometric_model``. When the current
 component is of the same class as the previous component, if receiving
 ``model``, the current component will replicate all model parameters from
 the previous component.
+For more information, please refer `here <./component/README.rst>`__.
 
 Check below for a case from mini demo, where ``model`` from ``dataio_0``
 is passed to ``dataio_1``.
 
 .. code:: python
+   from pipeline.interface import Data
+   from pipeline.interface import Model
 
    pipeline.add_component(dataio_1,
                           data=Data(data=reader_1.output.data),
@@ -131,23 +169,12 @@ is used. For instance, ``HeteroFeatureSelection`` can use
 important features.
 
 .. code:: python
+   from pipeline.interface import Data
+   from pipeline.interface import Model
 
    pipeline.add_component(hetero_feature_selection_0,
                           data=Data(data=intersection_0.output.data),
                           isometric_model=Model(hetero_feature_binning_0.output.model))
-
-Output
-~~~~~~
-
-``Output`` encapsulates all output result of a component, including
-``Data`` and ``Model`` output. To access ``Output`` from a component,
-reference its ``output`` attribute:
-
-.. code:: python
-
-   output_all = dataio_0.output
-   output_data = dataio_0.output.data
-   output_model = dataio_0.output.model
 
 Build A Pipeline
 ----------------

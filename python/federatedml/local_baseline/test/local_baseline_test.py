@@ -18,19 +18,26 @@ import numpy as np
 import unittest
 import uuid
 
-from fate_arch.session import computing_session as session
-from federatedml.feature.instance import Instance
+from fate_arch.common import profile
+from fate_arch.session import Session
 from federatedml.local_baseline.local_baseline import LocalBaseline
+from federatedml.param.local_baseline_param import LocalBaselineParam
+from federatedml.feature.instance import Instance
 from sklearn.linear_model import LogisticRegression
 
-class TestLocalBaselin(unittest.TestCase):
+profile._PROFILE_LOG_ENABLED = False
+
+
+class TestLocalBaseline(unittest.TestCase):
     def setUp(self):
         self.job_id = str(uuid.uuid1())
-        session.init(self.job_id)
+        self.session = Session.create(0, 0).init_computing(self.job_id).computing
         data_num = 100
         feature_num = 8
         self.prepare_data(data_num, feature_num)
+        params = LocalBaselineParam()
         local_baseline_obj = LocalBaseline()
+        local_baseline_obj._init_model(params)
         local_baseline_obj.need_run = True
         local_baseline_obj.header = ["x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8"]
         local_baseline_obj.model_name = "LogisticRegression"
@@ -46,7 +53,7 @@ class TestLocalBaselin(unittest.TestCase):
             inst = Instance(inst_id=i, features=tmp, label=self.y[i])
             tmp = (str(i), inst)
             final_result.append(tmp)
-        table = session.parallelize(final_result,
+        table = self.session.parallelize(final_result,
                                     include_key=True,
                                     partition=3)
         self.table = table
@@ -61,15 +68,11 @@ class TestLocalBaselin(unittest.TestCase):
         np.testing.assert_array_equal(model_predict_result, real_predict_result)
 
     def tearDown(self):
-         session.stop()
-         try:
-             session.cleanup("*", self.job_id, True)
-         except EnvironmentError:
-             pass
-         try:
-             session.cleanup("*", self.job_id, False)
-         except EnvironmentError:
-             pass
+        self.session.stop()
+        try:
+            self.session.cleanup("*", self.job_id)
+        except EnvironmentError:
+            pass
 
 
 if __name__ == '__main__':

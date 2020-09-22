@@ -17,13 +17,13 @@
 import argparse
 
 from examples.pipeline.hetero_feature_binning import common_tools
-from examples.util.config import Config
+from pipeline.utils.tools import load_job_config
 import copy
 
 def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
-        config = Config.load(config)
+        config = load_job_config(config)
     backend = config.backend
     work_mode = config.work_mode
 
