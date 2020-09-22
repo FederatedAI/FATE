@@ -170,7 +170,7 @@ def get_job_configuration(job_id, role, party_id, tasks=None):
         for task in tasks:
             jobs = Job.select(Job.f_job_id, Job.f_runtime_conf, Job.f_description).where(Job.f_job_id == task.f_job_id)
             job = jobs[0]
-            jobs_run_conf[job.f_job_id] = job.f_runtime_conf["role_parameters"]["local"]["upload_0"]
+            jobs_run_conf[job.f_job_id] = job.f_runtime_conf["role_parameters"]["local"]["0"]["upload_0"]
             jobs_run_conf[job.f_job_id]["notes"] = job.f_description
         return jobs_run_conf
     else:
