@@ -10,6 +10,6 @@ This section introduces the dsl and conf for usage of different types of tasks.
     runtime_config : test_column_expand_job_conf.json
     data type: categorical(binary)
 
-Users can use following commands to running the task.
+Users can use following commands to run a task.
 
     python {fate_install_path}/fate_flow/fate_flow_client.py -f submit_job -c ${runtime_config} -d ${dsl}
