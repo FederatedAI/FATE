@@ -89,7 +89,7 @@ def rerun_job():
 def query_job():
     jobs = JobSaver.query_job(**request.json)
     if not jobs:
-        return get_json_result(retcode=101, retmsg='find job failed')
+        return get_json_result(retcode=0, retmsg='no job could be found', data=[])
     return get_json_result(retcode=0, retmsg='success', data=[job.to_json() for job in jobs])
 
 

@@ -161,6 +161,7 @@ class Reader(object):
             f"source table name: {src_table.get_name()} namespace: {src_table.get_namespace()} engine: {src_table.get_engine()}")
         LOGGER.info(
             f"destination table name: {dest_table.get_name()} namespace: {dest_table.get_namespace()} engine: {dest_table.get_engine()}")
+        schema = {}
         if not src_table_meta.get_in_serialized():
             if src_table_meta.get_have_head():
                 get_head = False
@@ -168,8 +169,7 @@ class Reader(object):
                 get_head = True
             for line in src_table.read():
                 if not get_head:
-                    dest_table.get_meta().update_metas(schema=data_utils.get_header_schema(header_line=line,
-                                                                                           id_delimiter=src_table_meta.get_id_delimiter()))
+                    schema = data_utils.get_header_schema(header_line=line, id_delimiter=src_table_meta.get_id_delimiter())
                     get_head = True
                     continue
                 values = line.rstrip().split(src_table.get_meta().get_id_delimiter())
@@ -181,10 +181,11 @@ class Reader(object):
             for k, v in src_table.collect():
                 count = self.put_in_table(table=dest_table, k=k, v=v, temp=data_temp, count=count,
                                           part_of_data=part_of_data)
+            schema = src_table.get_meta().get_schema()
         if data_temp:
             dest_table.put_all(data_temp)
         LOGGER.info("copy successfully")
-        dest_table.get_meta().update_metas(schema=src_table.get_meta().get_schema(), part_of_data=part_of_data)
+        dest_table.get_meta().update_metas(schema=schema, part_of_data=part_of_data)
 
     def put_in_table(self, table: StorageTableABC, k, v, temp, count, part_of_data):
         temp.append((k, v))

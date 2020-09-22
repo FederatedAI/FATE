@@ -16,17 +16,5 @@
 local _M = {
     _VERSION = '0.1'
 }
-
-local ngx = ngx
-local ngx_balancer = require "ngx.balancer"
-
-local function balance()
-    local fate_cluster_server = ngx.ctx.fate_cluster_server
-    local ok, err = ngx_balancer.set_current_peer(fate_cluster_server)
-    if not ok then
-        utils.exit_abnormally('failed to set current peer: ' .. err, ngx.HTTP_SERVICE_UNAVAILABLE)
-    end
-end
-
-balance()
-
+local route_table = require "route_table"
+route_table.start()
