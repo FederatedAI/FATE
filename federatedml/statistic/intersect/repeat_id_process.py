@@ -100,7 +100,7 @@ class RepeatedIDIntersect(object):
                 data = data.mapValues(lambda v: v[1:])
             data.schema = original_schema
             if data.schema.get('header') is not None:
-                data.schema['header'] = copy.deepcopy(data.schema['header'][1:])
+                data.schema['header'] = data.schema['header'][1:]
         else:
             id_map = id_map_federation.get(idx=0)
             LOGGER.info("Get id_map from owner.")
