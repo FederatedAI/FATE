@@ -331,6 +331,9 @@ class MultivariateStatisticalSummary(object):
         # self.medians = None
         self.data_instances = data_instances
         self.cols_index = None
+        if not isinstance(abnormal_list, list):
+            abnormal_list = [abnormal_list]
+
         self.abnormal_list = abnormal_list
         self.__init_cols(data_instances, cols_index, stat_order, bias)
         self.label_summary = None

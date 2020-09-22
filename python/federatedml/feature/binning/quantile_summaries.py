@@ -268,7 +268,7 @@ class SparseQuantileSummaries(QuantileSummaries):
         if zeros_count == 0:
             return quantile
 
-        if quantile < self.zero_lower_bound:
+        if quantile <= self.zero_lower_bound:
             return (self._total_count / self.count) * quantile
 
         return (quantile - self.zero_upper_bound + self.zero_lower_bound) / (
