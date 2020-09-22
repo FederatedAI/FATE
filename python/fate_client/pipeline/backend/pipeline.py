@@ -95,6 +95,9 @@ class PipeLine(object):
     def get_predict_conf(self):
         return copy.deepcopy(self._predict_conf)
 
+    def get_upload_conf(self):
+        return copy.deepcopy(self._upload_conf)
+
     def _get_initiator_conf(self):
         if self._initiator is None:
             raise ValueError("Please set initiator of PipeLine")

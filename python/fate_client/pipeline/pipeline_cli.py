@@ -45,8 +45,8 @@ def _config(**kwargs):
 
         \b
         - USAGE:
-            pipeline config -c /data/projects/FATE/fate_client/pipeline/config.yaml
-            pipeline config --ip 10.1.2.3 --port 9380 --log-directory /data/projects/FATE/fate_client/pipeline/logs
+            pipeline config -c config.yaml
+            pipeline config --ip 10.1.2.3 --port 9380 --log-directory ./logs
     """
     config_path = kwargs.get("config_path")
     ip = kwargs.get("ip")
