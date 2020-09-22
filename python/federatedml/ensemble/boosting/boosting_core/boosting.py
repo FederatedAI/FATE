@@ -25,6 +25,7 @@ from federatedml.ensemble.boosting.boosting_core.predict_cache import PredictDat
 from federatedml.statistic import data_overview
 from federatedml.optim.convergence import converge_func_factory
 from federatedml.util import LOGGER
+import copy
 
 import functools
 import typing
@@ -115,6 +116,7 @@ class Boosting(ModelBase, ABC):
 
     @staticmethod
     def data_format_transform(row):
+
         if type(row.features).__name__ != consts.SPARSE_VECTOR:
             feature_shape = row.features.shape[0]
             indices = []
@@ -130,16 +132,23 @@ class Boosting(ModelBase, ABC):
                     indices.append(i)
                     data.append(row.features[i])
 
-            row.features = SparseVector(indices, data, feature_shape)
+            new_row = copy.deepcopy(row)
+            new_row.features = SparseVector(indices, data, feature_shape)
+            return new_row
         else:
             sparse_vec = row.features.get_sparse_vector()
+            replace_key = []
             for key in sparse_vec:
                 if sparse_vec.get(key) == NoneType() or np.isnan(sparse_vec.get(key)):
-                    sparse_vec[key] = NoneType()
+                    replace_key.append(key)
 
-            row.features.set_sparse_vector(sparse_vec)
-
-        return row
+            if len(replace_key) == 0:
+                return row
+            else:
+                new_row = copy.deepcopy(row)
+                new_sparse_vec = new_row.features.get_sparse_vector()
+                for key in replace_key:
+                    new_sparse_vec[key] = NoneType()
 
     def init_validation_strategy(self, train_data=None, validate_data=None):
         validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs,

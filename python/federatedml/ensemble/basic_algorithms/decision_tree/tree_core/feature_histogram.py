@@ -232,11 +232,12 @@ class FeatureHistogram(object):
 
         fid_1, histogram1 = fid_histogram1
         fid_2, histogram2 = fid_histogram2
+        aggregated_res = [[] for i in range(len(histogram1))]
         for i in range(len(histogram1)):
             for j in range(len(histogram1[i])):
-                histogram1[i][j] += histogram2[i][j]
+                aggregated_res[i].append(histogram1[i][j] + histogram2[i][j])
 
-        return fid_1, histogram1
+        return fid_1, aggregated_res
 
     @staticmethod
     def generate_histogram_template(node_map: dict, bin_split_points: np.ndarray, valid_features: dict,

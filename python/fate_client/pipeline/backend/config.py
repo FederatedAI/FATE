@@ -60,8 +60,12 @@ class IODataType:
 
 class FlowConfig(object):
     conf = get_default_config()
-    IP = conf.get("ip", "")
-    PORT = conf.get("port", "")
+    IP = conf.get("ip", None)
+    if IP is None:
+        raise ValueError(f"IP not configured. Please use command line tool pipeline config or modify config.yaml")
+    PORT = conf.get("port", None)
+    if PORT is None:
+        raise ValueError(f"PORT not configured. Please use command line tool pipeline config or modify config.yaml")
 
 
 class LogPath(object):

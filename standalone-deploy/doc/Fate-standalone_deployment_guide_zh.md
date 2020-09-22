@@ -61,7 +61,7 @@
 
 
 
-有些用例算法在 [examples](../../examples/federatedml-1.x-examples) 文件夹下, 请尝试使用。
+有些用例算法在 [examples](../../examples/dsl/v2) 文件夹下, 请尝试使用。
 
 您还可以通过浏览器体验算法过程看板，访问：Http://hostip:8080。
 
@@ -121,6 +121,6 @@
 
    
 
-有些用例算法在 [examples](../../examples/federatedml-1.x-examples) 文件夹下, 请尝试使用。
+有些用例算法在 [examples](../../examples/dsl/v2) 文件夹下, 请尝试使用。
 
 您还可以通过浏览器体验算法过程看板，访问：Http://hostip:8080。

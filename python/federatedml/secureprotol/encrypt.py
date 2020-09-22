@@ -258,8 +258,10 @@ class IterativeAffineEncrypt(SymmetricEncrypt):
     def __init__(self):
         super(IterativeAffineEncrypt, self).__init__()
 
-    def generate_key(self, key_size=1024, key_round=5):
-        self.key = IterativeAffineCipher.generate_keypair(key_size=key_size, key_round=key_round)
+    def generate_key(self, key_size=1024, key_round=5, randomized=False):
+        self.key = IterativeAffineCipher.generate_keypair(key_size=key_size,
+                                                          key_round=key_round,
+                                                          randomized=randomized)
 
     def encrypt(self, plaintext):
         if self.key is not None:

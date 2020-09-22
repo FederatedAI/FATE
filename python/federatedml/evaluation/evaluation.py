@@ -320,6 +320,22 @@ class Evaluation(ModelBase):
                                      MetricMeta(name=metric_name, metric_type=metric_type, extra_metas=extra_metas))
 
     @staticmethod
+    def __multi_class_label_padding(metrics, label_indices):
+
+        # in case some labels don't appear when running homo-multi-class algo
+        label_num = np.max(label_indices) + 1
+        index_result_mapping = dict(zip(label_indices, metrics))
+        new_metrics, new_label_indices = [], []
+        for i in range(label_num):
+            if i in index_result_mapping:
+                new_metrics.append(index_result_mapping[i])
+            else:
+                new_metrics.append(0.0)
+            new_label_indices.append(i)
+
+        return new_metrics, new_label_indices
+
+    @staticmethod
     def __filt_override_unit_ordinate_coordinate(x_sets, y_sets):
 
         max_y_dict = {}
@@ -377,11 +393,12 @@ class Evaluation(ModelBase):
     def __save_roc_curve(self, data_name, metric_name, metric_namespace, metric_res):
         fpr, tpr, thresholds, _ = metric_res
 
+        fpr, tpr, thresholds = self.__filter_duplicate_roc_data_point(fpr, tpr, thresholds)
+
         # set roc edge value
         fpr.append(1.0)
         tpr.append(1.0)
-
-        fpr, tpr, thresholds = self.__filter_duplicate_roc_data_point(fpr, tpr, thresholds)
+        thresholds.append(1.0)
 
         self.__save_curve_data(fpr, tpr, metric_name, metric_namespace)
         self.__save_curve_meta(metric_name=metric_name, metric_namespace=metric_namespace,
@@ -455,7 +472,6 @@ class Evaluation(ModelBase):
 
         pos_recall_score = recall_res[1][0]
         recall_cuts = recall_res[1][1]
-
         if len(recall_res[1]) >= 3:
             recall_thresholds = recall_res[1][2]
         else:
@@ -479,6 +495,11 @@ class Evaluation(ModelBase):
                 idx_list = idx_list[:-1]
             precision_thresholds = [precision_thresholds[idx] for idx in idx_list]
             recall_thresholds = [recall_thresholds[idx] for idx in idx_list]
+
+        elif self.eval_type == consts.MULTY:
+
+            pos_recall_score, recall_cuts = self.__multi_class_label_padding(pos_recall_score, recall_cuts)
+            pos_precision_score, precision_cuts = self.__multi_class_label_padding(pos_precision_score, precision_cuts)
 
         self.__save_curve_data(precision_cuts, pos_precision_score, metric_name_precision,
                                metric_namespace)

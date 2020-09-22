@@ -299,4 +299,4 @@ fate_flow_client 模块的运行规则是：
 :3.检查日志文件:
    现在，您可以在以下路径中检查日志：`${your_install_path}/logs/{your jobid}`.
 
-有关 dsl 配置文件和参数配置文件的更多详细信息，请参考此处的`examples/federatedml-1.x-examples`中查看。
+有关 dsl 配置文件和参数配置文件的更多详细信息，请参考此处的`examples/dsl/v2`中查看。

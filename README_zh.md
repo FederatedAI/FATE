@@ -4,7 +4,7 @@
   <img src="./doc/images/FATE_logo.png">
 </div>
 
-[DOC](./doc) | [Quick Start](./examples/federatedml-1.x-examples) | [English](./README.md)
+[DOC](./doc) | [Quick Start](./examples/dsl/v2) | [English](./README.md)
 
 FATE (Federated AI Technology Enabler) 是微众银行AI部门发起的开源项目，为联邦学习生态系统提供了可靠的安全计算框架。FATE项目使用多方安全计算 (MPC) 以及同态加密 (HE) 技术构建底层安全计算协议，以此支持不同种类的机器学习的安全计算，包括逻辑回归、基于树的算法、深度学习和迁移学习等。
 
@@ -60,7 +60,7 @@ FATE同样为大数据场景提供了分布式运行部署架构版本。从单�
 
 ### 快速开始
 
-我们提供了一个用于快速搭建训练任务的python脚本作为示例。该脚本位于：["./examples/federatedml-1.x-examples"](./examples/federatedml-1.x-examples)
+我们提供了一个用于快速搭建训练任务的python脚本作为示例。该脚本位于：["./examples"](./examples/dsl/v2)
 
 ###  获取模型并检查结果
 FATE提供了名为 fate-flow 的工具用来跟踪组件输出模型或日志。fate-flow的部署和使用可以在 [这里](./fate_flow/README.rst) 找到。

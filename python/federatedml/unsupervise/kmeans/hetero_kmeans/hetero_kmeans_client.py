@@ -94,7 +94,7 @@ class HeteroKmeansClient(BaseKmeansModel):
             raise ValueError('K is too larger or too samll for current data')
 
         # Get initialized centroid
-        np.random.seed(data_instances.count())
+        np.random.seed(self.random_stat)
         if self.role == consts.GUEST:
             first_centroid_key = self.get_centroid(data_instances)
             self.transfer_variable.centroid_list.remote(first_centroid_key, role=consts.HOST, idx=-1)
