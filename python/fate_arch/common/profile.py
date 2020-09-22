@@ -72,16 +72,16 @@ class _ComputingTimerItem(object):
 class _ComputingTimer(object):
     _STATS: typing.MutableMapping[str, _ComputingTimerItem] = {}
 
-    def __init__(self, function_name: str, function_stack):
+    def __init__(self, function_name: str, function_stack_list):
         self._start = time.time()
 
-        function_stack = "\n".join(function_stack)
+        function_stack = "\n".join(function_stack_list)
         self._hash = hashlib.blake2b(function_stack.encode('utf-8'), digest_size=5).hexdigest()
 
         if self._hash not in self._STATS:
             self._STATS[self._hash] = _ComputingTimerItem(function_name, function_stack)
             if _PROFILE_LOG_ENABLED:
-                profile_logger.debug(f"[computing#{self._hash}]function_stack: {function_stack}")
+                profile_logger.debug(f"[computing#{self._hash}]function_stack: {' <-'.join(function_stack_list)}")
 
         if _PROFILE_LOG_ENABLED:
             profile_logger.debug(f"[computing#{self._hash}]start")
