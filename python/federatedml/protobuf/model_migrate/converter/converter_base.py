@@ -18,7 +18,7 @@
 
 from abc import ABC, abstractmethod
 from typing import Dict, Tuple
-
+from federatedml.util.anonymous_generator import generate_anonymous
 from federatedml.util import consts
 
 
@@ -29,28 +29,29 @@ class AutoReplace(object):
         self.h_map = host_mapping
         self.a_map = arbiter_mapping
 
-    def map_finder(self, sitename):
-        if consts.GUEST == sitename:
+    def map_finder(self, role):
+        if consts.GUEST == role:
             return self.g_map
-        elif consts.HOST == sitename:
+        elif consts.HOST == role:
             return self.h_map
-        elif consts.ARBITER in sitename:
+        elif consts.ARBITER in role:
             return self.a_map
         else:
-            raise ValueError('this sitename contains no site name {}'.format(sitename))
+            raise ValueError('this role contains no site name {}'.format(role))
 
     def anonymous_format(self, string):
 
-        sitename, party_id, idx = string.split('_')
-        mapping = self.map_finder(sitename)
+        role, party_id, idx = string.split('_')
+        mapping = self.map_finder(role)
         new_party_id = mapping[int(party_id)]
-        return sitename + '_' + str(new_party_id) + '_' + idx
+        return generate_anonymous(idx, new_party_id, role)
 
     def colon_format(self, string: str):
-        sitename, party_id = string.split(':')
-        mapping = self.map_finder(sitename)
+
+        role, party_id = string.split(':')
+        mapping = self.map_finder(role)
         new_party_id = mapping[int(party_id)]
-        return sitename + ':' + str(new_party_id)
+        return role + ':' + str(new_party_id)
 
     def replace(self, string):
 

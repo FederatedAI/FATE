@@ -12,6 +12,7 @@ pandas==0.23.4
 peewee==3.9.3
 psutil==5.6.6
 pycryptodomex==3.6.6
+PyMySQL==0.9.3
 python-dotenv==0.13.0
 redis==3.0.1
 requests==2.23.0
