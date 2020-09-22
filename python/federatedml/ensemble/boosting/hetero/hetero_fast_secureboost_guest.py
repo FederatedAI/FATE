@@ -1,0 +1,183 @@
+from typing import List
+import numpy as np
+import functools
+from federatedml.ensemble.boosting.hetero.hetero_secureboost_guest import HeteroSecureBoostingTreeGuest
+from federatedml.param.boosting_param import HeteroFastSecureBoostParam
+from federatedml.ensemble.basic_algorithms import HeteroFastDecisionTreeGuest
+from federatedml.ensemble.boosting.hetero import hetero_fast_secureboost_plan as plan
+from federatedml.util import LOGGER
+from federatedml.util import consts
+
+
+class HeteroFastSecureBoostingTreeGuest(HeteroSecureBoostingTreeGuest):
+
+    def __init__(self):
+        super(HeteroFastSecureBoostingTreeGuest, self).__init__()
+
+        self.tree_num_per_party = 1
+        self.guest_depth = 0
+        self.host_depth = 0
+        self.work_mode = consts.MIX_TREE
+        self.tree_plan = []
+        self.model_param = HeteroFastSecureBoostParam()
+        self.model_name = 'fast secureboost'
+
+    def _init_model(self, param: HeteroFastSecureBoostParam):
+        super(HeteroFastSecureBoostingTreeGuest, self)._init_model(param)
+        LOGGER.debug('loss func is {}'.format(param.objective_param.objective))
+        self.tree_num_per_party = param.tree_num_per_party
+        self.work_mode = param.work_mode
+        self.guest_depth = param.guest_depth
+        self.host_depth = param.host_depth
+
+    def get_tree_plan(self, idx):
+
+        if len(self.tree_plan) == 0:
+            self.tree_plan = plan.create_tree_plan(self.work_mode, k=self.tree_num_per_party, tree_num=self.boosting_round,
+                                                   host_list=self.component_properties.host_party_idlist,
+                                                   complete_secure=self.complete_secure)
+            LOGGER.info('tree plan is {}'.format(self.tree_plan))
+
+        return self.tree_plan[idx]
+
+    def check_host_number(self, tree_type):
+        host_num = len(self.component_properties.host_party_idlist)
+        LOGGER.info('host number is {}'.format(host_num))
+        if tree_type == plan.tree_type_dict['layered_tree']:
+            assert host_num == 1, 'only 1 host party is allowed in layered mode'
+
+    def fit_a_booster(self, epoch_idx: int, booster_dim: int):
+
+        # prepare
+        tree_type, target_host_id = self.get_tree_plan(epoch_idx)
+        LOGGER.info('tree work mode is {}'.format(tree_type))
+        self.check_host_number(tree_type)
+
+        if self.cur_epoch_idx != epoch_idx:
+            self.grad_and_hess = self.compute_grad_and_hess(self.y_hat, self.y)
+            self.cur_epoch_idx = epoch_idx
+
+        g_h = self.get_grad_and_hess(self.grad_and_hess, booster_dim)
+
+        tree = HeteroFastDecisionTreeGuest(tree_param=self.tree_param)
+        tree.set_input_data(self.data_bin, self.bin_split_points, self.bin_sparse_points)
+        tree.set_grad_and_hess(g_h)
+        tree.set_encrypter(self.encrypter)
+        tree.set_encrypted_mode_calculator(self.encrypted_calculator)
+        tree.set_valid_features(self.sample_valid_features())
+        tree.set_flowid(self.generate_flowid(epoch_idx, booster_dim))
+        tree.set_host_party_idlist(self.component_properties.host_party_idlist)
+        tree.set_runtime_idx(self.component_properties.local_partyid)
+
+        tree.set_tree_work_mode(tree_type, target_host_id)
+        tree.set_layered_depth(self.guest_depth, self.host_depth)
+
+        LOGGER.debug('tree work mode is {}'.format(tree_type))
+        tree.fit()
+
+        self.update_feature_importance(tree.get_feature_importance())
+
+        tree.print_leafs()
+
+        return tree
+
+    @staticmethod
+    def traverse_guest_local_trees(node_pos, sample, trees: List[HeteroFastDecisionTreeGuest]):
+
+        """
+        in mix mode, a sample can reach leaf directly
+        """
+
+        for t_idx, tree in enumerate(trees):
+
+            cur_node_idx = node_pos[t_idx]
+
+            if not tree.use_guest_feat_only_predict_mode:
+                continue
+
+            rs, reach_leaf = HeteroSecureBoostingTreeGuest.traverse_a_tree(tree, sample, cur_node_idx)
+            node_pos[t_idx] = rs
+
+        return node_pos
+
+    @staticmethod
+    def merge_leaf_pos(pos1, pos2):
+        return pos1 + pos2
+
+    # this func will be called by super class's predict()
+    def boosting_fast_predict(self, data_inst, trees: List[HeteroFastDecisionTreeGuest], predict_cache=None):
+
+        LOGGER.info('fast sbt running predict')
+
+        if self.work_mode == consts.MIX_TREE:
+
+            LOGGER.info('running mix mode predict')
+
+            tree_num = len(trees)
+            node_pos = data_inst.mapValues(lambda x: np.zeros(tree_num, dtype=np.int64))
+
+            # traverse local trees
+            traverse_func = functools.partial(self.traverse_guest_local_trees, trees=trees)
+            guest_leaf_pos = node_pos.join(data_inst, traverse_func)
+
+            # get leaf node from other host parties
+            host_leaf_pos_list = self.predict_transfer_inst.host_predict_data.get(idx=-1)
+
+            for host_leaf_pos in host_leaf_pos_list:
+                guest_leaf_pos = guest_leaf_pos.join(host_leaf_pos, self.merge_leaf_pos)
+
+            predict_result = self.get_predict_scores(leaf_pos=guest_leaf_pos, learning_rate=self.learning_rate,
+                                                     init_score=self.init_score, trees=trees,
+                                                     multi_class_num=self.booster_dim, predict_cache=predict_cache)
+
+            return predict_result
+
+        else:
+
+            LOGGER.debug('running layered mode predict')
+
+            return super(HeteroFastSecureBoostingTreeGuest, self).boosting_fast_predict(data_inst, trees, predict_cache)
+
+    def load_booster(self, model_meta, model_param, epoch_idx, booster_idx):
+
+        tree = HeteroFastDecisionTreeGuest(self.tree_param)
+        tree.load_model(model_meta, model_param)
+        tree.set_flowid(self.generate_flowid(epoch_idx, booster_idx))
+        tree.set_runtime_idx(self.component_properties.local_partyid)
+        tree.set_host_party_idlist(self.component_properties.host_party_idlist)
+
+        tree_type, target_host_id = self.get_tree_plan(epoch_idx)
+        tree.set_tree_work_mode(tree_type, target_host_id)
+
+        if self.tree_plan[epoch_idx][0] == plan.tree_type_dict['guest_feat_only']:
+            LOGGER.debug('tree of epoch {} is guest only'.format(epoch_idx))
+            tree.use_guest_feat_only_predict_mode()
+
+        return tree
+
+
+    def get_model_meta(self):
+
+        _, model_meta = super(HeteroFastSecureBoostingTreeGuest, self).get_model_meta()
+        meta_name = "HeteroFastSecureBoostGuestMeta"
+        model_meta.work_mode = self.work_mode
+
+        return meta_name, model_meta
+
+    def get_model_param(self):
+
+        _, model_param = super(HeteroFastSecureBoostingTreeGuest, self).get_model_param()
+        param_name = "HeteroFastSecureBoostGuestParam"
+        model_param.tree_plan.extend(plan.encode_plan(self.tree_plan))
+        model_param.model_name = consts.HETERO_FAST_SBT_MIX if self.work_mode == consts.MIX_TREE else \
+                                 consts.HETERO_FAST_SBT_LAYERED
+
+        return param_name, model_param
+
+    def set_model_meta(self, model_meta):
+        super(HeteroFastSecureBoostingTreeGuest, self).set_model_meta(model_meta)
+        self.work_mode = model_meta.work_mode
+
+    def set_model_param(self, model_param):
+        super(HeteroFastSecureBoostingTreeGuest, self).set_model_param(model_param)
+        self.tree_plan = plan.decode_plan(model_param.tree_plan)

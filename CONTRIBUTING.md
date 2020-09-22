@@ -11,7 +11,7 @@ Before sending your pull requests, make sure you followed this list.
 
 - Read [contributing guidelines](CONTRIBUTING.md).
 - Read [Code of Conduct](CODE_OF_CONDUCT.md).
-- Follow the instruction of [develop guide](./doc/develop_guide.md)
+- Follow the instruction of [develop guide](./doc/develop_guide.rst)
 - Ensure you have signed the [Developer Certificate of Origin (DCO)](https://developercertificate.org/).
 - Check if my changes are consistent with the [guidelines](https://github.com/FederatedAI/FATE/blob/master/CONTRIBUTING.md#contributing-to-fate).
 - Changes are consistent with the [PEP.8 Python Coding Style](https://www.python.org/dev/peps/pep-0008/).
@@ -34,7 +34,7 @@ We are more than glad to accept your patches. To start with, please make sure yo
 
 Once you are ready to send your pull request, we will create a contributor branch to which you can send pull request. Then, FATE team members will be assigned to review and test your pull request. Once the review is pass, your contribution is accepted and will be released in a future version.
 
-If you have ideas of new features but don't know how to start with, a [develop guide](./doc/develop_guide.md)  has been provided
+If you have ideas of new features but don't know how to start with, a [develop guide](./doc/develop_guide.rst)  has been provided
 
 ## Contributing
 
@@ -44,7 +44,7 @@ Before sending your pull request, here are some principle and standards to follo
 
 * Include unit tests when you contribute new features. You may created a test folder in your module and put your test files in it. Here is [an example](./federatedml/model_selection/test/).  FATE provides a [test script](./federatedml/test/run_test.sh) for you to check all unit test. Make sure your code work correctly.
 
-* Provide examples in [example folder](./examples). If specific format data is needed, please also provided example data in [data folder](./example/data). In your algorithm examples, some dsl and conf files should be provided and provide a testsuite file with which user can test your example easily. Here is [an example of testsuite file](./examples/federatedml-1.x-examples/hetero_logistic_regression/hetero_lr_testsuite.json)
+* Provide examples in [example folder](./examples). If specific format data is needed, please also provided example data in [data folder](./example/data). In your algorithm examples, some dsl and conf files should be provided and provide a testsuite file with which user can test your example easily. Here is [an example of testsuite file](./examples/dsl/v2/hetero_logistic_regression/hetero_lr_testsuite.json)
 
 * After you contribute a new feature to FATE, FATE team members are (by default) responsible for the maintenance of this feature. This means we must make comparison between the benefit of contribution and the cost of maintaining the feature and accept those features with greater benefits.
 

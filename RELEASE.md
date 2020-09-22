@@ -1,3 +1,40 @@
+# Release 1.4.2
+## Major Features and Improvements
+> FederatedML
+* Optimize performance of Pearson which increases efficiency by more than twice.
+* Optimize Min-test module: Add secure-boost as optional test task. Set partyid and work_mode as input parameters. Use pre-import data set as input so that improved test process.
+* Support tok_k iv filter in feature selection module.
+* Support filling missing value for tag:value format data in DataIO.
+* Fix bug of lacking one layer of depth of tree in HeteroSecureBoost and support automatically alignment header of input data in predict process
+* Standardize the naming of example data set and add a data pre-import script. 
+
+> FATE-Flow
+* Distinguish between user stop job and system stop job;
+* Optimized some logs;
+* Optimize zookeeper configuration
+* The model supports persistent storage to mysql
+* Push the model to the online service to support the specified storage address (local file and FATEFlowServer interface)
+
+
+# Release 1.4.1
+## Major Features and Improvements
+> FederatedML
+* Reconstructed Evaluation Module improves efficiency by 60 times
+* Add PSI, confusion matrix, f1-score  and quantile threshold support for Precision/Recall in Evaluation.
+* Add option to retain duplicated keys in Union.
+* Support filter feature based on mode
+* Manual filter allows manually set columns to retain
+* Auto recoginize whether a data set includes a label column in predict process
+* Bug-fix: Missing schema after merge in Union; Fail to align label of multi-class in homo_nn with PyTorch backend; Floating-point precision error and value error due to int-type input in Feature Scale
+
+> FATE-Flow
+* Allow the host to stop the job
+* Optimize the task queue
+* Automatically align the input table partitions of all participants when the job is running
+* Fate flow client large file upload optimization
+* Fixed some bugs with abnormal status
+
+
 # Release 1.4.0
 ## Major Features and Improvements
 > FederatedML

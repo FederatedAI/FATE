@@ -1,0 +1,12 @@
+{
+    "module_path":  "federatedml/statistic/psi/",
+    "param_class" : "federatedml/param/psi_param.py/PSIParam",
+    "need_deploy": false,
+    "role":
+    {
+        "guest|host":
+        {
+            "program": "psi.py/PSI"
+        }
+    }
+}

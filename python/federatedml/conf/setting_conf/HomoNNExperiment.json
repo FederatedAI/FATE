@@ -1,0 +1,12 @@
+{
+  "module_path": "federatedml/nn/homo_nn",
+  "param_class": "federatedml/param/homo_nn_param.py/HomoNNParam",
+  "role": {
+    "arbiter": {
+      "program": "enter_point.py/HomoNNArbiterSubmitServer"
+    },
+    "host": {
+      "program": "enter_point.py/HomoNNArbiterSubmitClient"
+    }
+  }
+}

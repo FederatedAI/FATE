@@ -1,0 +1,57 @@
+[tool.poetry]
+name = "fate_client"
+version = "0.1.0"
+description = "Clients for FATE, including flow_client and pipeline"
+authors = ["FederatedAI <contact@FedAI.org>"]
+license = "Apache-2.0"
+readme = "README.rst"
+
+homepage = "https://fate.fedai.org/"
+repository = "https://github.com/FederatedAI/FATE"
+documentation = "https://fate.readthedocs.io/en/latest/?badge=latest"
+keywords = ["FATE", "clients", "Federated Learning"]
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Topic :: Software Development :: Testing",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: End Users/Desktop",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+
+packages = [
+    { include = "flow_client" },
+    { include = "flow_sdk" },
+    { include = "pipeline" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+requests_toolbelt = "^0.9.1"
+requests = "^2.24.0"
+click = "^7.1.2"
+six = "^1.15.0"
+"ruamel.yaml" = "^0.16.10"
+cachetools = "^4.1.1"
+python-dotenv = "^0.14.0"
+kazoo = "^2.8.0"
+loguru = "^0.5.1"
+prettytable = "^0.7.2"
+tensorflow = "1.15.2"
+torch = "1.4.0"
+flask = "^1.0.2"
+pyyaml = "^5.3.1"
+dataclasses = { version = "^0.7", python = "3.6", optional = true }
+
+[tool.poetry.dev-dependencies]
+
+[tool.poetry.scripts]
+flow = "flow_client.flow:flow_cli"
+testsuite = "testsuite.cli:cli"
+pipeline = "pipeline.pipeline_cli:cli"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

@@ -1,0 +1,15 @@
+{
+    "module_path":  "federatedml/toy_example",
+    "param_class" : "federatedml/param/secure_add_example_param/SecureAddExampleParam",
+    "role":
+    {
+        "guest":
+        {
+            "program": "secure_add_guest.py/SecureAddGuest"
+        },
+        "host":
+        {
+            "program": "secure_add_host.py/SecureAddHost"
+        }
+    }
+}

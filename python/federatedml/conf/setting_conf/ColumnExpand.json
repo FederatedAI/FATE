@@ -1,0 +1,11 @@
+{
+    "module_path":  "federatedml/feature",
+    "param_class" : "federatedml/param/column_expand_param.py/ColumnExpandParam",
+    "role":
+    {
+        "guest|host":
+        {
+            "program": "column_expand.py/ColumnExpand"
+        }
+    }
+}

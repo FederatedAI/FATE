@@ -1,0 +1,99 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 10000
+    },
+    "job_parameters": {
+        "work_mode": 0
+    },
+    "role": {
+        "guest": [
+            10000
+        ]
+    },
+    "role_parameters": {
+        "guest": {
+            "args": {
+                "data": {
+                    "data0": [
+                        {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    ],
+                    "data1": [
+                        {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    ],
+                    "data2": [
+                        {
+                            "name": "breast_hetero_guest",
+                            "namespace": "experiment"
+                        }
+                    ]
+                }
+            },
+            "dataio_0": {
+                "with_label": [
+                    true
+                ],
+                "label_name": [
+                    "y"
+                ],
+                "output_format": [
+                    "dense"
+                ],
+                "missing_fill": [
+                    false
+                ],
+                "outlier_replace": [
+                    false
+                ]
+            },
+            "dataio_1": {
+                "with_label": [
+                    true
+                ],
+                "label_name": [
+                    "y"
+                ],
+                "output_format": [
+                    "dense"
+                ],
+                "missing_fill": [
+                    false
+                ],
+                "outlier_replace": [
+                    false
+                ]
+            },
+            "dataio_2": {
+                "with_label": [
+                    true
+                ],
+                "label_name": [
+                    "y"
+                ],
+                "output_format": [
+                    "dense"
+                ],
+                "missing_fill": [
+                    false
+                ],
+                "outlier_replace": [
+                    false
+                ]
+            },
+            "union_0": {
+                "need_run": [
+                    true
+                ],
+                "allow_missing": [
+                    false
+                ]
+            }
+        }
+    }
+}

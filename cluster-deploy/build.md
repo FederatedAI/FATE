@@ -13,22 +13,23 @@
 
 ## 3. Build
 ```bash
-git clone https://github.com/FederatedAI/FATE.git -b v1.4.0 --depth=1
+git clone https://github.com/FederatedAI/FATE.git -b v1.4.2 --depth=1
 cd FATE/cluster-deploy
-bash build.sh release 
+bash build.sh release all
 ```
 The **depth** parameter represents the code that only gets the latest commit, which can speed up the clone.
 The **release** is the version tag, which you can modify.
+The **all** means that modules needs to be deployed, all means all, supports all, python, fateboard, eggroll
 
 ## 4. Output
 ```bash
-ls -l FATE_install_1.4.0-release.tar.gz
+ls -l FATE_install_1.4.2-release.tar.gz
 ```
 
 ## 5. Check packages
 ```bash
-tar xzf FATE_install_1.4.0-release.tar.gz
-ls -lrt FATE_install_1.4.0
+tar xzf FATE_install_1.4.2-release.tar.gz
+ls -lrt FATE_install_1.4.2
 ```
 You can see the following package:
 - bin

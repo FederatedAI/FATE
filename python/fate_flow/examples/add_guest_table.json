@@ -1,0 +1,12 @@
+{
+    "namespace": "experiment",
+    "name": "breast_hetero_guest",
+    "engine": "HDFS",
+    "address": {
+        "name_node": "hdfs://fate-cluster",
+        "path": "/data/breast_hetero_guest.csv"
+    },
+    "id_delimiter": ",",
+    "head": 1,
+    "partition": 4
+}
