@@ -98,7 +98,7 @@ class Submitter(object):
             f.flush()
             if remote_host:
                 self.run_cmd(["scp", f.name, f"{remote_host}:{f.name}"])
-                env_path = os.path.join(self._fate_home, "../../init_env.sh")
+                env_path = os.path.join(self._fate_home, "../bin/init_env.sh")
                 upload_cmd = f"source {env_path}"
                 upload_cmd = f"{upload_cmd} && python {self._flow_client_path} -f upload -c {f.name}"
                 if self._existing_strategy == 0 or self._existing_strategy == 1:
