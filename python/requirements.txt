@@ -149,3 +149,4 @@ cos-python-sdk-v5==1.8.0
 pika
 typing_extensions==3.7.4.2
 beautifultable==1.0.0
+cloudpickle==1.6.0

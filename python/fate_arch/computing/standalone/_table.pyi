@@ -15,8 +15,8 @@
 #
 
 
+from fate_arch._standalone import Table as StandaloneTable
 from fate_arch.abc import AddressABC, CTableABC
-from fate_arch.standalone import Table as StandaloneTable
 
 
 # noinspection PyAbstractClass

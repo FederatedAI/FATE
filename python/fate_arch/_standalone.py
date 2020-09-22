@@ -33,7 +33,7 @@ import numpy as np
 
 from fate_arch.common import file_utils, Party
 from fate_arch.common.log import getLogger
-from fate_arch.standalone import _cloudpickle as f_pickle
+import cloudpickle as f_pickle
 
 LOGGER = getLogger()
 
