@@ -87,12 +87,15 @@
             "metrics": [
                 "rmse"
             ],
+            "tree_param": {
+                "max_depth": 3
+            },
             "validation_freqs": 1,
             "objective_param": {
                 "objective": "lse"
             },
             "encrypt_param": {
-                "method": "paillier"
+                "method": "iterativeAffine"
             },
             "predict_param": {
                 "threshold": 0.5
