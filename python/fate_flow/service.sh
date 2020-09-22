@@ -22,7 +22,7 @@ echo "PROJECT_BASE: "${PROJECT_BASE}
 # source init_env.sh
 INI_ENV_SCRIPT=${PROJECT_BASE}/bin/init_env.sh
 if test -f "${INI_ENV_SCRIPT}"; then
-  source ${PROJECT_BASE}/bin/init_env.sh
+  # source ${PROJECT_BASE}/bin/init_env.sh
   echo "PYTHONPATH: "${PYTHONPATH}
   echo "EGGROLL_HOME: "${EGGROLL_HOME}
   echo "SPARK_HOME: "${SPARK_HOME}
@@ -35,6 +35,11 @@ log_dir=${PROJECT_BASE}/logs
 
 module=fate_flow_server.py
 
+
+parse_yaml_python() {
+  python -c "from ruamel import yaml; yaml.load()"h
+}
+
 parse_yaml() {
    local prefix=$2
    local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
@@ -44,7 +49,7 @@ parse_yaml() {
       indent = length($1)/2;
       vname[indent] = $2;
       for (i in vname) {if (i > indent) {delete vname[i]}}
-      if (length($3) > 0) "{
+      if (length($3) > 0) {
          vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
          printf("%s%s%s=\"%s\"\n", "'$prefix'",vn, $2, $3);
       }
