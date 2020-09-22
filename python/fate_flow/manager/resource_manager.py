@@ -91,26 +91,21 @@ class ResourceManager(object):
     @classmethod
     @DB.connection_context()
     def create_resource_record(cls, job_id, role, party_id, engine_type, engine_name, cores, memory):
-        record = ResourceRecord()
-        record.f_job_id = job_id
-        record.f_role = role
-        record.f_party_id = party_id
-        record.f_engine_type = engine_type
-        record.f_engine_name = engine_name
-        record.f_cores = cores
-        record.f_memory = memory
-        record.f_remaining_cores = cores
-        record.f_remaining_memory = memory
-        record.f_in_use = True
-        record.f_create_time = base_utils.current_timestamp()
         try:
-            rows = record.save(force_insert=True)
-            if rows == 1:
-                schedule_logger(job_id=job_id).info(f"create resource record for job {job_id} on {role} {party_id} successfully")
-                return True
-            else:
-                schedule_logger(job_id=job_id).warning(f"create resource record for job {job_id} on {role} {party_id} failed")
-                return False
+            ResourceRecord.replace(f_job_id=job_id,
+                                   f_role=role,
+                                   f_party_id=party_id,
+                                   f_engine_type=engine_type,
+                                   f_engine_name=engine_name,
+                                   f_cores=cores,
+                                   f_memory=memory,
+                                   f_remaining_cores=cores,
+                                   f_remaining_memory=memory,
+                                   f_in_use=True,
+                                   f_create_time=base_utils.current_timestamp()
+                                   ).execute()
+            schedule_logger(job_id=job_id).info(f"create resource record for job {job_id} on {role} {party_id} successfully")
+            return True
         except peewee.IntegrityError as e:
             if e.args[0] == 1062:
                 schedule_logger(job_id=job_id).warning(f"job {job_id} on {role} {party_id} resource record already exists")
@@ -131,11 +126,12 @@ class ResourceManager(object):
 
     @classmethod
     @DB.connection_context()
-    def delete_resource_record(cls, job_id, role, party_id):
+    def disable_resource_record(cls, job_id, role, party_id):
         try:
-            rows = ResourceRecord.update({ResourceRecord.f_in_use: False}).where(ResourceRecord.f_job_id == job_id,
-                                                                                 ResourceRecord.f_role == role,
-                                                                                 ResourceRecord.f_party_id == party_id).execute()
+            rows = ResourceRecord.update({ResourceRecord.f_in_use: False,
+                                          ResourceRecord.f_update_time: base_utils.current_timestamp()}).where(ResourceRecord.f_job_id == job_id,
+                                                                                                               ResourceRecord.f_role == role,
+                                                                                                               ResourceRecord.f_party_id == party_id).execute()
             if rows > 1:
                 schedule_logger(job_id=job_id).info(f"delete job {job_id} on {role} {party_id} resource record successfully")
                 return True
@@ -192,7 +188,7 @@ class ResourceManager(object):
                                                                                )
         if return_status:
             schedule_logger(job_id=job_id).info(f"return job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} successfully")
-            cls.delete_resource_record(job_id=job_id, role=role, party_id=party_id)
+            cls.disable_resource_record(job_id=job_id, role=role, party_id=party_id)
             return True
         else:
             schedule_logger(job_id=job_id).info(f"return job {job_id} resource(cores {cores} memory {memory}) on {role} {party_id} failed, remaining_cores: {remaining_cores}, remaining_memory: {remaining_memory}")

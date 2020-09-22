@@ -181,7 +181,10 @@ class DAGScheduler(Cron):
         schedule_logger().info("start schedule waiting jobs")
         events = JobQueue.get_event(job_status=JobStatus.WAITING)
         schedule_logger().info(f"have {len(events)} waiting jobs")
-        for event in events:
+        if len(events):
+            # FIFO
+            event = events[0]
+            schedule_logger().info(f"schedule waiting job {event.f_job_id}")
             try:
                 self.schedule_waiting_jobs(event=event)
             except Exception as e:
