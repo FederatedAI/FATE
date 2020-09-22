@@ -61,6 +61,18 @@
         "manually-left": {
             "conf": "hetero_feature_selection_manually_left_conf.json",
             "dsl": "hetero_feature_selection_manually_left_dsl.json"
+        },
+        "multi-iso": {
+            "conf": "hetero_feature_selection_multi_iso_conf.json",
+            "dsl": "hetero_feature_selection_multi_iso_dsl.json"
+        },
+        "fast-sbt": {
+            "conf": "hetero_feature_selection_fast_sbt_conf.json",
+            "dsl": "hetero_feature_selection_fast_sbt_dsl.json"
+        },
+        "single-predict": {
+            "conf": "hetero_feature_selection_single_predict_conf.json",
+            "dsl": "hetero_feature_selection_single_predict_dsl.json"
         }
     }
 }

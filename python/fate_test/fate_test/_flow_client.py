@@ -24,7 +24,7 @@ from pathlib import Path
 import requests
 from requests_toolbelt import MultipartEncoderMonitor, MultipartEncoder
 
-from testsuite._parser import Data, Job
+from fate_test._parser import Data, Job
 
 
 class FLOWClient(object):
@@ -34,9 +34,15 @@ class FLOWClient(object):
                  data_base_dir: typing.Optional[Path]):
         self.address = address
         self.version = "v1"
-        self._base = f"http://{self.address}/{self.version}/"
         self._http = requests.Session()
         self._data_base_dir = data_base_dir
+
+    def set_address(self, address):
+        self.address = address
+
+    @property
+    def _base(self):
+        return f"http://{self.address}/{self.version}/"
 
     def upload_data(self, data: Data, callback=None) -> 'UploadDataResponse':
         try:
@@ -131,7 +137,7 @@ class FLOWClient(object):
         except json.decoder.JSONDecodeError:
             response = {'retcode': 100,
                         'retmsg': "Internal server error. Nothing in response. You may check out the configuration in "
-                                  "'FATE/conf/service_conf.yaml' and restart fate flow server."}
+                                  "'FATE/arch/conf/server_conf.json' and restart fate flow server."}
         return response
 
 
@@ -160,10 +166,6 @@ class QueryJobResponse(object):
             raise RuntimeError(f"query job error, response: {response}") from e
         self.status = status
         self.progress = None
-        try:
-            self.progress = response.get('data')[0]["f_progress"]
-        except KeyError:
-            pass
 
 
 class UploadDataResponse(object):

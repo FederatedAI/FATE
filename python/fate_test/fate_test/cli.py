@@ -15,18 +15,20 @@
 #
 import time
 import uuid
+import importlib
 from datetime import timedelta
+from inspect import signature
 from pathlib import Path
 
 import click
 
-from testsuite._client import Clients
-from testsuite._config import create_config, priority_config
-from testsuite._flow_client import SubmitJobResponse, QueryJobResponse, JobProgress, DataProgress, \
+from fate_test._client import Clients
+from fate_test._config import create_config, priority_config
+from fate_test._flow_client import SubmitJobResponse, QueryJobResponse, JobProgress, DataProgress, \
     UploadDataResponse
-from testsuite._io import set_logger, LOGGER, echo
-from testsuite._parser import Testsuite, Config, DATA_JSON_HOOK, CONF_JSON_HOOK, DSL_JSON_HOOK, JSON_STRING
-
+from fate_test._io import set_logger, LOGGER, echo
+from fate_test._parser import Testsuite, BenchmarkSuite, Config, DATA_JSON_HOOK, CONF_JSON_HOOK, DSL_JSON_HOOK, JSON_STRING
+from fate_test.utils import match_metrics
 
 @click.group(name="cli")
 def cli():
@@ -50,8 +52,8 @@ def _config(cmd):
 
 @LOGGER.catch
 @cli.command(name="suite")
-@click.option('--namespace', default=time.strftime('%Y%m%d%H%M%S'), type=str,
-              help="namespace to distinguish each run")
+@click.option('--data-namespace-mangling', type=bool, is_flag=True, default=False,
+              help="mangling data namespace")
 @click.option('-i', '--include', required=True, type=click.Path(exists=True), multiple=True, metavar="<include>",
               help="include *testsuite.json under these paths")
 @click.option('-e', '--exclude', type=click.Path(exists=True), multiple=True,
@@ -64,13 +66,20 @@ def _config(cmd):
               help="glob string to filter sub-directory of path specified by <include>")
 @click.option("--yes", is_flag=True,
               help="skip double check")
-def run_suite(replace, namespace, config, include, exclude, glob, yes):
+@click.option("--skip-dsl-jobs", is_flag=True, default=False,
+              help="skip dsl jobs defined in testsuite")
+@click.option("--skip-pipeline-jobs", is_flag=True, default=False,
+              help="skip pipeline jobs defined in testsuite")
+@click.option("--skip-data", is_flag=True, default=False,
+              help="skip uploading data specified in testsuite")
+def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
+              skip_dsl_jobs, skip_pipeline_jobs, skip_data, yes):
     """
     process testsuite
     """
-
+    namespace = time.strftime('%Y%m%d%H%M%S')
     # prepare output dir and json hooks
-    _prepare(namespace, replace)
+    _prepare(data_namespace_mangling, namespace, replace)
 
     echo.welcome()
     config_inst = _parse_config(config)
@@ -90,20 +99,29 @@ def run_suite(replace, namespace, config, include, exclude, glob, yes):
             try:
                 start = time.time()
                 echo.echo(f"[{i + 1}/{len(suites)}]start at {time.strftime('%Y-%m-%d %X')} {suite.path}", fg='red')
-                suite.reflash_configs(client.config)
+                suite.reflash_configs(config_inst)
 
-                try:
-                    _upload_data(client, suite)
-                except Exception as e:
-                    raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
+                if not skip_data:
+                    try:
+                        _upload_data(client, suite)
+                    except Exception as e:
+                        raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
 
-                echo.stdout_newline()
-                try:
-                    _submit_job(client, suite)
-                except Exception as e:
-                    raise RuntimeError(f"exception occur while submit job for {suite.path}") from e
+                if not skip_dsl_jobs:
+                    echo.stdout_newline()
+                    try:
+                        _submit_job(client, suite)
+                    except Exception as e:
+                        raise RuntimeError(f"exception occur while submit job for {suite.path}") from e
 
-                _delete_data(client, suite)
+                if not skip_pipeline_jobs:
+                    try:
+                        _run_pipeline_jobs(config_inst, suite, namespace, data_namespace_mangling)
+                    except Exception as e:
+                        raise RuntimeError(f"exception occur while running pipeline jobs for {suite.path}") from e
+
+                if not skip_data:
+                    _delete_data(client, suite)
                 echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
                 echo.echo(suite.pretty_final_summary(), fg='red')
 
@@ -117,38 +135,111 @@ def run_suite(replace, namespace, config, include, exclude, glob, yes):
     echo.farewell()
 
 
+@LOGGER.catch
+@cli.command(name="benchmark-metrics")
+@click.option('--data-namespace-mangling', type=bool, is_flag=True, default=False,
+              help="mangling data namespace")
+@click.option('-i', '--include', required=True, type=click.Path(exists=True), multiple=True, metavar="<include>",
+              help="include *match.json under these paths")
+@click.option('-e', '--exclude', type=click.Path(exists=True), multiple=True,
+              help="exclude *match.json under these paths")
+@click.option('-c', '--config', default=priority_config().__str__(), type=click.Path(exists=True),
+              help=f"config path, defaults to {priority_config()}")
+@click.option("-g", '--glob', type=str,
+              help="glob string to filter sub-directory of path specified by <include>")
+@click.option('--absolute-tol', type=float,
+              help="tolerance (absolute error) for metrics to be considered almost equal. "
+                   "Comparison is done by evaluating abs(a-b) <= max(relative_tol * max(abs(a), abs(b)), absolute_tol)")
+@click.option('--relative-tol', type=float,
+              help="tolerance (relative difference) for metrics to be considered almost equal."
+                   "Comparison is done by evaluating abs(a-b) <= max(relative_tol * max(abs(a), abs(b)), absolute_tol)")
+@click.option("--yes", is_flag=True,
+              help="skip double check")
+@click.option("--skip-data", is_flag=True, default=False,
+              help="skip uploading data specified in match")
+def run_benchmark(data_namespace_mangling, config, include, exclude, glob, skip_data, absolute_tol, relative_tol, yes):
+    """
+    process benchmark suite
+    """
+    namespace = time.strftime('%Y%m%d%H%M%S')
+    # prepare output dir and json hooks
+    _prepare(data_namespace_mangling, namespace, replace={})
+
+    echo.welcome()
+    config_inst = _parse_config(config)
+    echo.echo(f"testsuite namespace: {namespace}", fg='red')
+    echo.echo("loading testsuites:")
+    suites = _load_testsuites(includes=include, excludes=exclude, glob=glob,
+                              suffix="match.json", suite_type="benchmark")
+    for suite in suites:
+        echo.echo(f"\tdataset({len(suite.dataset)}) benchmark pairs({len(suite.pairs)}) {suite.path}")
+    if not yes and not click.confirm("running?"):
+        return
+    with Clients(config_inst) as client:
+        for i, suite in enumerate(suites):
+            # noinspection PyBroadException
+            try:
+                start = time.time()
+                echo.echo(f"[{i + 1}/{len(suites)}]start at {time.strftime('%Y-%m-%d %X')} {suite.path}", fg='red')
+                suite.reflash_configs(config_inst)
+
+                if not skip_data:
+                    try:
+                        _upload_data(client, suite)
+                    except Exception as e:
+                        raise RuntimeError(f"exception occur while uploading data for {suite.path}") from e
+                try:
+                    _run_benchmark_pairs(config_inst, suite, absolute_tol, relative_tol, namespace, data_namespace_mangling)
+                except Exception as e:
+                    raise RuntimeError(f"exception occur while running benchmark jobs for {suite.path}") from e
+
+                if not skip_data:
+                    _delete_data(client, suite)
+                echo.echo(f"[{i + 1}/{len(suites)}]elapse {timedelta(seconds=int(time.time() - start))}", fg='red')
+
+            except Exception:
+                exception_id = uuid.uuid1()
+                echo.echo(f"exception in {suite.path}, exception_id={exception_id}")
+                LOGGER.exception(f"exception id: {exception_id}")
+            finally:
+                echo.stdout_newline()
+    echo.farewell()
+
+
 def _parse_config(config):
     try:
-        config_inst = Config.from_yaml(config)
+        config_inst = Config.load(config)
     except Exception as e:
         raise RuntimeError(f"error parse config from {config}") from e
     return config_inst
 
 
-def _prepare(namespace, replace):
+def _prepare(data_namespace_mangling, namespace, replace):
     Path(f"logs/{namespace}").mkdir(exist_ok=True, parents=True)
     set_logger(f"logs/{namespace}/exception.log")
     echo.set_file(click.open_file(f'logs/{namespace}/stdout', "a"))
 
-    DATA_JSON_HOOK.add_extend_namespace_hook(namespace)
-    CONF_JSON_HOOK.add_extend_namespace_hook(namespace)
+    if data_namespace_mangling:
+        echo.echo(f"add data_namespace_mangling: _{namespace}")
+        DATA_JSON_HOOK.add_extend_namespace_hook(namespace)
+        CONF_JSON_HOOK.add_extend_namespace_hook(namespace)
     DATA_JSON_HOOK.add_replace_hook(replace)
     CONF_JSON_HOOK.add_replace_hook(replace)
     DSL_JSON_HOOK.add_replace_hook(replace)
 
 
-def _load_testsuites(includes, excludes, glob):
+def _load_testsuites(includes, excludes, glob, suffix="testsuite.json", suite_type="testsuite"):
     def _find_testsuite_files(path):
         if isinstance(path, str):
             path = Path(path)
         if path.is_file():
-            if path.name.endswith("testsuite.json"):
+            if path.name.endswith(suffix):
                 paths = [path]
             else:
-                LOGGER.warning(f"{path} is file, but not end with `testsuite.json`, skip")
+                LOGGER.warning(f"{path} is file, but not end with `{suffix}`, skip")
                 paths = []
         else:
-            paths = path.glob(f"**/*testsuite.json")
+            paths = path.glob(f"**/*{suffix}")
         return [p.resolve() for p in paths]
 
     excludes_set = set()
@@ -171,7 +262,12 @@ def _load_testsuites(includes, excludes, glob):
                     suite_paths.add(suite_path)
     suites = []
     for suite_path in suite_paths:
-        suites.append(Testsuite.load(suite_path.resolve()))
+        if suite_type == "testsuite":
+            suites.append(Testsuite.load(suite_path.resolve()))
+        elif suite_type == "benchmark":
+            suites.append(BenchmarkSuite.load(suite_path.resolve()))
+        else:
+            raise ValueError(f"Unsupported suite type: {suite_type}. Only accept type 'testsuite' or 'benchmark'.")
     return suites
 
 
@@ -251,7 +347,7 @@ def _submit_job(clients: Clients, suite: Testsuite):
                 if isinstance(resp, SubmitJobResponse):
                     job_progress.submitted(resp.job_id)
                     echo.file(f"[jobs] {resp.job_id} ", nl=False)
-                    suite.update_status(job_name=job.job_name, job_id=resp.job_id, status="submitted")
+                    suite.update_status(job_name=job.job_name, job_id=resp.job_id)
 
                 if isinstance(resp, QueryJobResponse):
                     job_progress.running(resp.status, resp.progress)
@@ -274,6 +370,50 @@ def _submit_job(clients: Clients, suite: Testsuite):
                     suite.feed_success_model_info(job.job_name, response.model_info)
             update_bar(0)
             echo.stdout_newline()
+
+
+def _load_module_from_script(script_path):
+    module_name = str(script_path).split("/", -1)[-1].split(".")[0]
+    loader = importlib.machinery.SourceFileLoader(module_name, str(script_path))
+    spec = importlib.util.spec_from_loader(loader.name, loader)
+    mod = importlib.util.module_from_spec(spec)
+    loader.exec_module(mod)
+    return mod
+
+
+def _run_pipeline_jobs(config: Config, suite: Testsuite, namespace: str, data_namespace_mangling: bool):
+    # pipeline demo goes here
+    for pipeline_job in suite.pipeline_jobs:
+        job_name, script_path = pipeline_job.job_name, pipeline_job.script_path
+        mod = _load_module_from_script(script_path)
+        if data_namespace_mangling:
+            mod.main(config, f"_{namespace}")
+        else:
+            mod.main(config)
+
+
+def _run_benchmark_pairs(config: Config, suite: BenchmarkSuite, absolute_tol: float, relative_tol: float, namespace: str, data_namespace_mangling: bool):
+    # pipeline demo goes here
+    for pair in suite.pairs:
+        results = {}
+        for job in pair.jobs:
+            job_name, script_path, conf_path = job.job_name, job.script_path, job.conf_path
+            param = Config.load_from_file(conf_path)
+            mod = _load_module_from_script(script_path)
+            input_params = signature(mod.main).parameters
+            # local script
+            if len(input_params) == 1:
+                metric = mod.main(param=param)
+            # pipeline script
+            elif len(input_params) == 3:
+                if data_namespace_mangling:
+                    metric = mod.main(config=config, param=param, namespace=f"_{namespace}")
+                else:
+                    metric = mod.main(config=config, param=param)
+            else:
+                metric = mod.main()
+            results[job_name] = metric
+        match_metrics(evaluate=True, abs_tol=absolute_tol, rel_tol=relative_tol, **results)
 
 
 def main():

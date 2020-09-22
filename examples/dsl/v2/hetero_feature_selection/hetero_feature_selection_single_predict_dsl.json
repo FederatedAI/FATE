@@ -1,20 +1,28 @@
 {
     "components": {
+        "reader_0": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
+        },
         "dataio_0": {
             "module": "DataIO",
             "input": {
                 "data": {
                     "data": [
-                        "args.train_data"
+                        "reader_0.data"
                     ]
                 }
             },
             "output": {
                 "data": [
-                    "train"
+                    "data"
                 ],
                 "model": [
-                    "dataio"
+                    "model"
                 ]
             }
         },
@@ -23,32 +31,42 @@
             "input": {
                 "data": {
                     "data": [
-                        "dataio_0.train"
+                        "dataio_0.data"
                     ]
                 }
             },
             "output": {
                 "data": [
-                    "train"
+                    "data"
                 ]
-            },
-            "need_run": false
+            }
+        },
+        "reader_1": {
+            "module": "Reader",
+            "output": {
+                "data": [
+                    "data"
+                ]
+            }
         },
         "dataio_1": {
             "module": "DataIO",
             "input": {
                 "data": {
                     "data": [
-                        "args.eval_data"
+                        "reader_1.data"
                     ]
                 },
                 "model": [
-                    "dataio_0.dataio"
+                    "dataio_0.model"
                 ]
             },
             "output": {
                 "data": [
-                    "train"
+                    "data"
+                ],
+                "model": [
+                    "model"
                 ]
             }
         },
@@ -57,29 +75,28 @@
             "input": {
                 "data": {
                     "data": [
-                        "dataio_1.train"
+                        "dataio_1.data"
                     ]
                 }
             },
             "output": {
                 "data": [
-                    "train"
+                    "data"
                 ]
-            },
-            "need_run": false
+            }
         },
         "sample_0": {
             "module": "FederatedSample",
             "input": {
                 "data": {
                     "data": [
-                        "intersection_0.train"
+                        "intersection_0.data"
                     ]
                 }
             },
             "output": {
                 "data": [
-                    "train"
+                    "data"
                 ]
             }
         },
@@ -88,47 +105,7 @@
             "input": {
                 "data": {
                     "data": [
-                        "sample_0.train"
-                    ]
-                }
-            },
-            "output": {
-                "data": [
-                    "transform_data"
-                ],
-                "model": [
-                    "binning_model"
-                ]
-            },
-            "need_run": false
-        },
-        "hetero_feature_selection_0": {
-            "module": "HeteroFeatureSelection",
-            "input": {
-                "data": {
-                    "data": [
-                        "sample_0.train"
-                    ]
-                },
-                "isometric_model": [
-                    "hetero_feature_binning_0.binning_model"
-                ]
-            },
-            "output": {
-                "data": [
-                    "train"
-                ],
-                "model": [
-                    "selected"
-                ]
-            }
-        },
-        "feature_scale_0": {
-            "module": "FeatureScale",
-            "input": {
-                "data": {
-                    "data": [
-                        "hetero_feature_selection_0.train"
+                        "sample_0.data"
                     ]
                 }
             },
@@ -146,53 +123,92 @@
             "input": {
                 "data": {
                     "data": [
-                        "intersection_1.train"
+                        "intersection_1.data"
                     ]
                 },
-                "model": ["hetero_feature_binning_0.binning_model"]
+                "model": [
+                    "hetero_feature_binning_0.model"
+                ]
             },
             "output": {
                 "data": [
-                    "transform_data"
+                    "data"
                 ],
                 "model": [
-                    "binning_model"
+                    "model"
+                ]
+            }
+        },
+        "hetero_feature_selection_0": {
+            "module": "HeteroFeatureSelection",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_feature_binning_0.data"
+                    ]
+                },
+                "isometric_model": [
+                    "hetero_feature_binning_0.model"
                 ]
             },
-            "need_run": false
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
         },
-
         "hetero_feature_selection_1": {
             "module": "HeteroFeatureSelection",
             "input": {
                 "data": {
                     "data": [
-                        "intersection_1.train"
+                        "hetero_feature_binning_1.data"
                     ]
                 },
                 "model": [
-                    "hetero_feature_selection_0.selected"
+                    "hetero_feature_selection_0.model"
                 ]
             },
             "output": {
                 "data": [
-                    "train"
+                    "data"
                 ],
                 "model": [
-                    "selected"
+                    "model"
                 ]
             }
         },
-        "feature_scale_1": {
+        "scale_0": {
             "module": "FeatureScale",
             "input": {
                 "data": {
                     "data": [
-                        "hetero_feature_selection_1.train"
+                        "hetero_feature_selection_0.data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        },
+        "scale_1": {
+            "module": "FeatureScale",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_feature_selection_1.data"
                     ]
                 },
                 "model": [
-                    "feature_scale_0.model"
+                    "scale_0.model"
                 ]
             },
             "output": {

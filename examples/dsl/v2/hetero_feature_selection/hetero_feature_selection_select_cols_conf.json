@@ -20,28 +20,28 @@
     "role_parameters": {
         "host": {
             "0": {
+                "dataio_0": {
+                    "with_label": false
+                },
                 "reader_0": {
                     "table": {
                         "name": "breast_hetero_host",
                         "namespace": "experiment"
                     }
-                },
-                "dataio_0": {
-                    "with_label": false
                 }
             }
         },
         "guest": {
             "0": {
+                "dataio_0": {
+                    "with_label": true,
+                    "output_format": "dense"
+                },
                 "reader_0": {
                     "table": {
                         "name": "breast_hetero_guest",
                         "namespace": "experiment"
                     }
-                },
-                "dataio_0": {
-                    "with_label": true,
-                    "output_format": "dense"
                 }
             }
         }
