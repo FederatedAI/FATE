@@ -16,7 +16,7 @@
 
 import argparse
 
-from examples.pipeline.hetero_lr import common_tools
+from examples.pipeline.hetero_logistic_regression import common_tools
 
 from examples.util.config import Config
 
@@ -38,10 +38,14 @@ def main(config="../../config.yaml", namespace=""):
         "early_stop": "weight_diff",
         "batch_size": -1,
         "learning_rate": 0.15,
-        "validation_freqs": 3,
-        "early_stopping_rounds": 3,
         "init_param": {
             "init_method": "zeros"
+        },
+        "sqn_param": {
+            "update_interval_L": 3,
+            "memory_M": 5,
+            "sample_size": 5000,
+            "random_seed": None
         },
         "cv_param": {
             "n_splits": 5,
@@ -51,7 +55,7 @@ def main(config="../../config.yaml", namespace=""):
         }
     }
 
-    pipeline = common_tools.make_normal_dsl(config, namespace, lr_param, has_validate=True)
+    pipeline = common_tools.make_normal_dsl(config, namespace, lr_param)
     # fit model
     pipeline.fit(backend=backend, work_mode=work_mode)
     # query component summary
