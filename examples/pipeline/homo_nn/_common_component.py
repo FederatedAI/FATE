@@ -15,11 +15,11 @@
 #
 import argparse
 
-from examples.util.config import Config
 from pipeline.backend.pipeline import PipeLine
 from pipeline.component.dataio import DataIO
 from pipeline.component.reader import Reader
 from pipeline.interface.data import Data
+from pipeline.utils.tools import load_job_config
 
 
 # noinspection PyPep8Naming
@@ -42,7 +42,7 @@ class dataset(object):
 
 def run_homo_nn_pipeline(config, namespace, data: dict, nn_component, num_host):
     if isinstance(config, str):
-        config = Config.load(config)
+        config = load_job_config(config)
 
     guest_train_data = data["guest"]
     host_train_data = data["host"][:num_host]
