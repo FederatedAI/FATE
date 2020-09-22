@@ -27,9 +27,8 @@ from fate_flow.operation import JobSaver
 from fate_flow.entity.types import JobStatus, TaskStatus, EndStatus, StatusSet, SchedulingStatusCode, ResourceOperation, FederatedSchedulingStatusCode, RunParameters
 from fate_flow.operation import Tracker
 from fate_flow.controller import JobController
-from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT, DEFAULT_TASK_PARALLELISM, DEFAULT_TASK_CORES_PER_NODE, DEFAULT_TASK_MEMORY_PER_NODE, DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
 from fate_flow.settings import FATE_BOARD_DASHBOARD_ENDPOINT, DEFAULT_TASK_PARALLELISM, DEFAULT_TASK_CORES_PER_NODE, \
-    DEFAULT_TASK_MEMORY_PER_NODE, ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH
+    DEFAULT_TASK_MEMORY_PER_NODE, DEFAULT_FEDERATED_STATUS_COLLECT_TYPE
 from fate_flow.utils import detect_utils, job_utils, schedule_utils
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.utils import model_utils
@@ -50,7 +49,6 @@ class DAGScheduler(Cron):
         job_dsl = job_data.get('job_dsl', {})
         job_runtime_conf = job_data.get('job_runtime_conf', {})
         job_initiator = job_runtime_conf['initiator']
-        job_runtime_conf["job_parameters"]["align_task_input_data_partition"] = job_runtime_conf["job_parameters"].get("align_task_input_data_partition", ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH)
         job_parameters = RunParameters(**job_runtime_conf['job_parameters'])
         cls.backend_compatibility(job_parameters=job_parameters)
 

@@ -102,7 +102,6 @@ HTTP_PORT = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("http_port")
 GRPC_PORT = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("grpc_port")
 
 # switch
-ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH = True
 DEFAULT_FEDERATED_STATUS_COLLECT_TYPE = "PUSH"
 
 # init
