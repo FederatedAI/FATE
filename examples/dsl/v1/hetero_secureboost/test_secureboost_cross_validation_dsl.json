@@ -10,10 +10,14 @@
                 }
             },
             "output": {
-                "data": ["train"],
-                "model": ["dataio"]
+                "data": [
+                    "train"
+                ],
+                "model": [
+                    "dataio"
+                ]
             }
-         },
+        },
         "intersection_0": {
             "module": "Intersection",
             "input": {
@@ -24,7 +28,9 @@
                 }
             },
             "output": {
-                "data": ["train"]
+                "data": [
+                    "train"
+                ]
             }
         },
         "secureboost_0": {
@@ -37,7 +43,9 @@
                 }
             },
             "output": {
-                "data": ["train"]
+                "data": [
+                    "train"
+                ]
             }
         }
     }
