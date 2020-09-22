@@ -163,22 +163,23 @@ class _FederationTimer(object):
 
 
 class _FederationRemoteTimer(_FederationTimer):
-    def __init__(self, name, tag, local, parties):
+    def __init__(self, name, full_name, tag, local, parties):
         self._name = name
+        self._full_name = full_name
         self._tag = tag
         self._local_party = local
         self._parties = parties
         self._start_time = time.time()
         self._end_time = None
 
-        if name not in self._REMOTE_STATS:
-            self._REMOTE_STATS[name] = _TimerItem()
+        if self._full_name not in self._REMOTE_STATS:
+            self._REMOTE_STATS[self._full_name] = _TimerItem()
 
     def done(self, federation):
         self._end_time = time.time()
-        self._REMOTE_STATS[self._name].add(self.elapse)
+        self._REMOTE_STATS[self._full_name].add(self.elapse)
         profile_logger.debug(f"[federation.remote@{self._local_party}->{self._parties}]"
-                             f"done: name={self._name}, tag={self._tag}")
+                             f"done: name={self._full_name}, tag={self._tag}")
 
         if is_profile_remote_enable():
             federation.remote(v={"start_time": self._start_time, "end_time": self._end_time},
@@ -193,43 +194,44 @@ class _FederationRemoteTimer(_FederationTimer):
 
 
 class _FederationGetTimer(_FederationTimer):
-    def __init__(self, name, tag, local, parties):
+    def __init__(self, name, full_name, tag, local, parties):
         self._name = name
+        self._full_name = full_name
         self._tag = tag
         self._local_party = local
         self._parties = parties
         self._start_time = time.time()
         self._end_time = None
 
-        if name not in self._GET_STATS:
-            self._GET_STATS[name] = _TimerItem()
+        if self._full_name not in self._GET_STATS:
+            self._GET_STATS[self._full_name] = _TimerItem()
 
     def done(self, federation):
         self._end_time = time.time()
-        self._GET_STATS[self._name].add(self.elapse)
+        self._GET_STATS[self._full_name].add(self.elapse)
         profile_logger.debug(f"[federation.get@{self._local_party}<-{self._parties}]"
-                             f"done: name={self._name}, tag={self._tag}")
+                             f"done: name={self._full_name}, tag={self._tag}")
 
         if is_profile_remote_enable():
             remote_meta = federation.get(name=self._name, tag=profile_remote_tag(self._tag), parties=self._parties,
                                          gc=None)
             for party, meta in zip(self._parties, remote_meta):
                 profile_logger.debug(f"[federation.meta{self._local_party}<-{party}]"
-                                     f"name={self._name}, tag = {self._tag}, meta={meta}")
+                                     f"name={self._full_name}, tag = {self._tag}, meta={meta}")
 
     @property
     def elapse(self):
         return self._end_time - self._start_time
 
 
-def federation_remote_timer(name, tag, local, parties):
+def federation_remote_timer(name, full_name, tag, local, parties):
     profile_logger.debug(f"[federation.remote@{local}->{parties}]start: name={name}, tag={tag}")
-    return _FederationRemoteTimer(name, tag, local, parties)
+    return _FederationRemoteTimer(name, full_name, tag, local, parties)
 
 
-def federation_get_timer(name, tag, local, parties):
+def federation_get_timer(name, full_name, tag, local, parties):
     profile_logger.debug(f"[federation.get@{local}<-{parties}]start: name={name}, tag={tag}")
-    return _FederationGetTimer(name, tag, local, parties)
+    return _FederationGetTimer(name, full_name, tag, local, parties)
 
 
 def profile_ends():

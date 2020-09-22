@@ -166,7 +166,7 @@ Param
 Column Expand
 =============
 Column Expand is used for adding arbitrary number of columns with user-provided values.
-This module is run directly on table object, before data entering DataIO.
+This module is run directly on table object(raw data), before data entering DataIO.
 
 Param
 ------

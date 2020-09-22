@@ -1,0 +1,40 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "work_mode": 0,
+            "table_name": "breast_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "work_mode": 0,
+            "table_name": "breast_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        }
+    ],
+    "tasks": {
+        "default": {
+            "conf": "./test_homo_nn_default_conf.json",
+            "dsl": "./test_homo_nn_default_dsl.json"
+        },
+        "host_only": {
+            "conf": "./test_homo_nn_host_only_conf.json",
+            "dsl": "./test_homo_nn_host_only_dsl.json"
+        },
+        "sole": {
+            "conf": "./test_homo_nn_sole_conf.json",
+            "dsl": "./test_homo_nn_sole_dsl.json"
+        },
+        "mix_rand": {
+            "conf": "./test_homo_nn_mix_rand_conf.json",
+            "dsl": "./test_homo_nn_mix_rand_dsl.json"
+        }
+    }
+}

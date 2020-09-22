@@ -24,7 +24,6 @@ classifiers = [
 packages = [
     { include = "flow_client" },
     { include = "flow_sdk" },
-    { include = "testsuite" },
     { include = "pipeline" }
 ]
 
@@ -40,7 +39,6 @@ python-dotenv = "^0.14.0"
 kazoo = "^2.8.0"
 loguru = "^0.5.1"
 prettytable = "^0.7.2"
-sshtunnel = "^0.1.5"
 tensorflow = "1.15.2"
 torch = "1.4.0"
 flask = "^1.0.2"

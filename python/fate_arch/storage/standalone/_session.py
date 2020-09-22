@@ -13,9 +13,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+from fate_arch.abc import AddressABC
 from fate_arch.common.address import StandaloneAddress
 from fate_arch.storage import StorageSessionBase, StorageEngine
-from fate_arch.abc import AddressABC
 
 
 class StorageSession(StorageSessionBase):
@@ -25,7 +25,7 @@ class StorageSession(StorageSessionBase):
         self._session = None
 
     def create(self):
-        from fate_arch.standalone import Session
+        from fate_arch._standalone import Session
         self._session = Session(session_id=self._session_id)
 
     def table(self, address: AddressABC, name, namespace, partitions, storage_type=None, options=None, **kwargs):
