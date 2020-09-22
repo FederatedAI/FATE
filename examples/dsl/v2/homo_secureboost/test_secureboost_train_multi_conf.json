@@ -29,13 +29,13 @@
                 },
                 "reader_0": {
                     "table": {
-                        "name": "vehicle_homo_host",
+                        "name": "vehicle_scale_homo_host",
                         "namespace": "experiment"
                     }
                 },
                 "reader_1": {
                     "table": {
-                        "name": "vehicle_homo_test",
+                        "name": "vehicle_scale_homo_test",
                         "namespace": "experiment"
                     }
                 },
@@ -76,10 +76,10 @@
             "objective_param": {
                 "objective": "cross_entropy"
             },
-            "num_trees": 1,
+            "num_trees": 3,
             "validation_freqs": 1,
             "tree_param": {
-                "max_depth": 5
+                "max_depth": 3
             }
         },
         "evaluation_0": {

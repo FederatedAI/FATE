@@ -71,14 +71,14 @@
             "objective_param": {
                 "objective": "lse"
             },
-            "num_trees": 1,
+            "num_trees": 3,
             "validation_freqs": 1,
             "encrypt_param": {
                 "method": "iterativeAffine"
             },
             "early_stopping_rounds": 1,
             "tree_param": {
-                "max_depth": 5
+                "max_depth": 3
             }
         },
         "evaluation_0": {
