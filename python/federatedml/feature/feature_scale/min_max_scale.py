@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
+import copy
 import functools
 import numpy as np
 
@@ -21,7 +22,6 @@ from federatedml.protobuf.generated.feature_scale_meta_pb2 import ScaleMeta
 from federatedml.protobuf.generated.feature_scale_param_pb2 import ScaleParam
 from federatedml.protobuf.generated.feature_scale_param_pb2 import ColumnScaleParam
 from federatedml.feature.feature_scale.base_scale import BaseScale
-from federatedml.util import LOGGER
 
 
 class MinMaxScale(BaseScale):
@@ -33,7 +33,6 @@ class MinMaxScale(BaseScale):
     def __init__(self, params):
         super().__init__(params)
         self.mode = params.mode
-
         self.column_range = None
 
     @staticmethod
@@ -50,9 +49,9 @@ class MinMaxScale(BaseScale):
                 value = min_value_list[i]
 
             features[i] = (value - min_value_list[i]) / scale_value_list[i]
-
-        data.features = features
-        return data
+        _data = copy.deepcopy(data)
+        _data.features = copy.deepcopy(features)
+        return _data
 
     def fit(self, data):
         """

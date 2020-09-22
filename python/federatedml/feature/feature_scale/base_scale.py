@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
+import copy
 import functools
 from collections import Iterable
 
@@ -199,14 +200,15 @@ class BaseScale(object):
 
     @staticmethod
     def reset_feature_range(data, column_max_value, column_min_value, scale_column_idx):
+        _data = copy.deepcopy(data)
         for i in scale_column_idx:
-            value = data.features[i]
+            value = _data.features[i]
             if value > column_max_value[i]:
-                data.features[i] = column_max_value[i]
+                _data.features[i] = column_max_value[i]
             elif value < column_min_value[i]:
-                data.features[i] = column_min_value[i]
+                _data.features[i] = column_min_value[i]
 
-        return data
+        return _data
 
     def fit_feature_range(self, data):
         if self.feat_lower is not None or self.feat_upper is not None:
