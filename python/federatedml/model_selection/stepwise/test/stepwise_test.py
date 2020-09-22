@@ -18,11 +18,14 @@ import numpy as np
 import unittest
 import uuid
 
+from fate_arch.common import profile
 from fate_arch.session import Session
 from federatedml.feature.instance import Instance
 from federatedml.model_selection.stepwise.hetero_stepwise import HeteroStepwise
 from federatedml.util import consts
 from federatedml.util import data_io
+
+profile._PROFILE_LOG_ENABLED = False
 
 
 class TestStepwise(unittest.TestCase):

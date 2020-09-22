@@ -18,13 +18,17 @@ import numpy as np
 import unittest
 import uuid
 
+from fate_arch.common import profile
 from fate_arch.session import Session
 from federatedml.local_baseline.local_baseline import LocalBaseline
 from federatedml.param.local_baseline_param import LocalBaselineParam
 from federatedml.feature.instance import Instance
 from sklearn.linear_model import LogisticRegression
 
-class TestLocalBaselin(unittest.TestCase):
+profile._PROFILE_LOG_ENABLED = False
+
+
+class TestLocalBaseline(unittest.TestCase):
     def setUp(self):
         self.job_id = str(uuid.uuid1())
         self.session = Session.create(0, 0).init_computing(self.job_id).computing

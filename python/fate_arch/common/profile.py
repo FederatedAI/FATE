@@ -80,7 +80,8 @@ class _ComputingTimer(object):
 
         if self._hash not in self._STATS:
             self._STATS[self._hash] = _ComputingTimerItem(function_name, function_stack)
-            profile_logger.debug(f"[computing#{self._hash}]function_stack: {function_stack}")
+            if _PROFILE_LOG_ENABLED:
+                profile_logger.debug(f"[computing#{self._hash}]function_stack: {function_stack}")
 
         if _PROFILE_LOG_ENABLED:
             profile_logger.debug(f"[computing#{self._hash}]start")

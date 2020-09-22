@@ -19,10 +19,13 @@ import uuid
 
 import numpy as np
 
+from fate_arch.common import profile
 from fate_arch.session import Session
 from federatedml.feature.instance import Instance
 from federatedml.model_selection.data_split import data_split
 from federatedml.param.data_split_param import DataSplitParam
+
+profile._PROFILE_LOG_ENABLED = False
 
 
 class TestDataSplit(unittest.TestCase):
