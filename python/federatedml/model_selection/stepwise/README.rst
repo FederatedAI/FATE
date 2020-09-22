@@ -30,7 +30,7 @@ To use stepwise, set 'need_stepwise' to `True` and specify stepwise parameters a
 
  
 
-For examples of using stepwise with linear models, please refer to `examples/dsl/v1/hetero_stepwise`. For explanation on each stepwise module parameter, please refer to the comments in stepwise param :download:`stepwise_param.py <../../param/stepwise_param.py>`.
+For examples of using stepwise with linear models, please refer to `examples/dsl/v2/hetero_stepwise`. For explanation on each stepwise module parameter, please refer to the comments in stepwise param :download:`stepwise_param.py <../../param/stepwise_param.py>`.
 
 Please note that on FATE Board, the model information (max iters & coefficient/intercept values) represents the final result model. 
 
