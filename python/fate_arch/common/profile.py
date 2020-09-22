@@ -173,8 +173,8 @@ class _FederationRemoteTimer(_FederationTimer):
         self._start_time = time.time()
         self._end_time = None
 
-        if name not in self._REMOTE_STATS:
-            self._REMOTE_STATS[name] = _TimerItem()
+        if self._full_name not in self._REMOTE_STATS:
+            self._REMOTE_STATS[self._full_name] = _TimerItem()
 
     def done(self, federation):
         self._end_time = time.time()
@@ -204,8 +204,8 @@ class _FederationGetTimer(_FederationTimer):
         self._start_time = time.time()
         self._end_time = None
 
-        if name not in self._GET_STATS:
-            self._GET_STATS[name] = _TimerItem()
+        if self._full_name not in self._GET_STATS:
+            self._GET_STATS[self._full_name] = _TimerItem()
 
     def done(self, federation):
         self._end_time = time.time()

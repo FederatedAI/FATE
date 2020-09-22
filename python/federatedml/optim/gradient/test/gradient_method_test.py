@@ -36,14 +36,12 @@ import os
 import time
 import unittest
 
-# import numba
 import numpy as np
 import pandas as pd
 
 from federatedml.util import fate_operator
 
 
-# @numba.jit(nopython=True)
 def go_fast(a):  # Function is compiled and runs in machine code
     sum = 0
     for j in range(100000):
@@ -80,7 +78,6 @@ class TestHomoLRGradient(unittest.TestCase):
         # add jit in dot only: 7.616
         pass
 
-    # @numba.jit
     def _test_compute(self, X, Y, coef, intercept, fit_intercept):
         batch_size = len(X)
         if batch_size == 0:

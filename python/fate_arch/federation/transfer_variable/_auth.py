@@ -21,7 +21,7 @@ from pathlib import Path
 
 from fate_arch.common import conf_utils
 
-import yaml
+from ruamel import yaml
 
 _transfer_auth: typing.Optional[typing.MutableMapping] = None
 
@@ -39,7 +39,7 @@ def _get_transfer_conf():
         raise NameError(f"transfer variable path conf: {path} not found")
 
     with open(path) as f:
-        conf = yaml.load(f)
+        conf = yaml.safe_load(f)
 
     transfer_conf_files = []
     for base_dir in conf.get('paths', []):
