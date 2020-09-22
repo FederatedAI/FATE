@@ -762,10 +762,11 @@ Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以�
 cd /data/projects/common/supervisord
 ```
 
-启动/关闭/查看所有：
+启动/关闭/重启/查看所有：
 
 ```
-sh service.sh start/stop/status all 
+#注意：因mysql是基础组件，启动较慢，建议重启操作是先停止所有组件，然后先启动mysql，再启动其他组件
+sh service.sh start/stop/restart/status all 
 
 #说明：因为fateflow依赖的组件比较多，重启所有的操作可能会导致fateflow启动异常，处理如下：
 netstat -tlnp | grep 9360
@@ -774,10 +775,10 @@ sh service.sh stop fate-fateflow
 sh service.sh start fate-fateflow
 ```
 
-启动/关闭/查看单个模块(可选：clustermanager，nodemanager，rollsite，fateflow，fateboard，mysql)：
+启动/关闭/重启/查看单个模块(可选：clustermanager，nodemanager，rollsite，fateflow，fateboard，mysql)：
 
 ```
-sh service.sh start/stop/status fate-clustermanager
+sh service.sh start/stop/rsstart/status fate-clustermanager
 ```
 
 
