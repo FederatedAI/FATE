@@ -10,10 +10,14 @@
                 }
             },
             "output": {
-                "data": ["train"],
-                "model": ["dataio"]
+                "data": [
+                    "train"
+                ],
+                "model": [
+                    "dataio"
+                ]
             }
-         },
+        },
         "dataio_1": {
             "module": "DataIO",
             "input": {
@@ -24,14 +28,18 @@
                 },
                 "model": [
                     "dataio_0.dataio"
-                ] 
+                ]
             },
             "output": {
-                "data": ["eval"],
-                "model": ["dataio"]
+                "data": [
+                    "eval"
+                ],
+                "model": [
+                    "dataio"
+                ]
             },
             "need_deploy": false
-         },
+        },
         "intersection_0": {
             "module": "Intersection",
             "input": {
@@ -42,7 +50,9 @@
                 }
             },
             "output": {
-                "data": ["train"]
+                "data": [
+                    "train"
+                ]
             }
         },
         "intersection_1": {
@@ -55,7 +65,9 @@
                 }
             },
             "output": {
-                "data": ["eval"]
+                "data": [
+                    "eval"
+                ]
             },
             "need_deploy": false
         },
@@ -72,8 +84,12 @@
                 }
             },
             "output": {
-                "data": ["train"],
-                "model": ["train"]
+                "data": [
+                    "train"
+                ],
+                "model": [
+                    "train"
+                ]
             }
         },
         "evaluation_0": {

@@ -49,6 +49,9 @@
             "tree_num_per_party": 1,
             "tol": 0.0001,
             "bin_num": 50,
+            "tree_param": {
+                "max_depth": 3
+            },
             "objective_param": {
                 "objective": "lse"
             },

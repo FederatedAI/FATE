@@ -50,6 +50,9 @@
             "tol": 0.0001,
             "bin_num": 50,
             "metrics": ["Recall", "ks", "auc", "roc"],
+            "tree_param": {
+                "max_depth": 3
+            },
             "objective_param": { 
                 "objective": "cross_entropy"
             },
