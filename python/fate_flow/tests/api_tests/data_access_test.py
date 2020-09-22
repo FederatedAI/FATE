@@ -3,9 +3,9 @@ import time
 import unittest
 
 import requests
-from fate_arch.common import file_utils
+from fate_arch.common import file_utils, conf_utils
 
-from fate_flow.settings import HTTP_PORT, API_VERSION, WORK_MODE
+from fate_flow.settings import HTTP_PORT, API_VERSION, WORK_MODE, FATEFLOW_SERVICE_NAME
 
 
 class TestDataAccess(unittest.TestCase):
@@ -13,15 +13,16 @@ class TestDataAccess(unittest.TestCase):
         self.data_dir = os.path.join(file_utils.get_project_base_directory(), "examples", "data")
         self.upload_guest_config = {"file": os.path.join(self.data_dir, "breast_hetero_guest.csv"), "head": 1,
                                     "partition": 10, "work_mode": WORK_MODE, "namespace": "fate_flow_test_breast_hetero",
-                                    "table_name": "breast_hetero_guest", "use_local_data": 0, 'drop': 0}
+                                    "table_name": "breast_hetero_guest", "use_local_data": 0, 'drop': 0, 'backend': 0, "id_delimiter": ',',}
         self.upload_host_config = {"file": os.path.join(self.data_dir, "breast_hetero_host.csv"), "head": 1,
                                    "partition": 10, "work_mode": WORK_MODE, "namespace": "fate_flow_test_breast_hetero",
-                                   "table_name": "breast_hetero_host", "use_local_data": 0, 'drop': 0}
+                                   "table_name": "breast_hetero_host", "use_local_data": 0, 'drop': 0, 'backend': 0, "id_delimiter": ',',}
         self.download_config = {"output_path": os.path.join(file_utils.get_project_base_directory(),
                                                             "fate_flow/fate_flow_unittest_breast_b.csv"),
                                 "work_mode": WORK_MODE, "namespace": "fate_flow_test_breast_hetero",
                                 "table_name": "breast_hetero_guest"}
-        self.server_url = "http://{}:{}/{}".format('127.0.0.1', HTTP_PORT, API_VERSION)
+        ip = conf_utils.get_base_config(FATEFLOW_SERVICE_NAME).get("host")
+        self.server_url = "http://{}:{}/{}".format(ip, HTTP_PORT, API_VERSION)
 
     def test_upload_guest(self):
         response = requests.post("/".join([self.server_url, 'data', 'upload']), json=self.upload_guest_config)
