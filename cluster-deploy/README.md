@@ -21,7 +21,7 @@ In a party, FATE (Federated AI Technology Enabler) has the following modules. Sp
 | fate_flow      | 9360;9380      | Federated learning pipeline management module, there is only one service for each party |
 | fateboard      | 8080           | Federated learning process visualization module, only one service needs to be deployed per party |
 | clustermanager | 4670           | The cluster manager manages the cluster, only one instance needs to be deployed per party |
-| nodemanger     | 4671           | Node manager manages the resources of each machine, each party can have multiple of this service, but a server can only have one |
+| nodemanager    | 4671           | Node manager manages the resources of each machine, each party can have multiple of this service, but a server can only have one |
 | rollsite       | 9370           | Cross-site or cross-party communication components, equivalent to proxy + federation, each party has only one service |
 | mysql          | 3306           | Data storage, clustermanager and fateflow dependency, each party only needs one service |
 
@@ -56,11 +56,11 @@ The following configuration information is for one-sided server configuration. I
 
 ### 3.2 Cluster planning
 
-| party  | partyid | hostname      | IP          | os                      | software             | services                                                |
-| ------ | ------- | ------------- | ----------- | ----------------------- | -------------------- | ------------------------------------------------------- |
-| PartyA | 10000   | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate, eggroll, mysql | fate_flow, fateboard, clustermanager, nodemanger, mysql |
-| PartyA | 10000   | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate, eggroll        | nodemanger, rollsite                                    |
-| PartyB | 9999    | VM_0_3_centos | 192.168.0.3 | CentOS 7.2/Ubuntu 16.04 | fate, eggroll, mysql | all                                                     |
+| party  | partyid | hostname      | IP          | os                      | software             | services                                                 |
+| ------ | ------- | ------------- | ----------- | ----------------------- | -------------------- | -------------------------------------------------------- |
+| PartyA | 10000   | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate, eggroll, mysql | fate_flow, fateboard, clustermanager, nodemanager, mysql |
+| PartyA | 10000   | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate, eggroll        | nodemanager, rollsite                                    |
+| PartyB | 9999    | VM_0_3_centos | 192.168.0.3 | CentOS 7.2/Ubuntu 16.04 | fate, eggroll, mysql | all                                                      |
 
 ### 3.3 Basic environment configuration
 
@@ -104,15 +104,19 @@ Ubuntu system executes:  apt list --installed | grep selinux
 
 If selinux is already installed, execute: setenforce 0
 
-#### 3.3.3 Modify the maximum number of open files in Linux
+#### 3.3.3 Modify linux system parameters
 
 **Execute under the root user of the target server (192.168.0.1 192.168.0.2 192.168.0.3):**
 
-vim /etc/security/limits.conf
+1) vim /etc/security/limits.conf
 
-\* soft nofile 65536
+\* soft nofile 65535
 
-\* hard nofile 65536
+\* hard nofile 65535
+
+2) vim /etc/security/limits.d/20-nproc.conf
+
+\* soft nproc unlimited
 
 #### 3.3.4 Turn off the firewall (optional)
 
@@ -156,7 +160,7 @@ chown -R app:apps /data/projects
 
 ```
 #centos
-yum -y install gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpcdevel libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan lsof sysstat telnet psmisc
+yum -y install gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan lsof sysstat telnet psmisc
 #ubuntu
 apt-get install -y gcc g++ make openssl supervisor libgmp-dev  libmpfr-dev libmpc-dev libaio1 libaio-dev numactl autoconf automake libtool libffi-dev libssl1.0.0 libssl-dev liblz4-1 liblz4-dev liblz4-1-dbg liblz4-tool  zlib1g zlib1g-dbg zlib1g-dev
 cd /usr/lib/x86_64-linux-gnu
@@ -195,17 +199,36 @@ Execute under the app user of the target server (192.168.0.1 has an external net
 ```
 mkdir -p /data/projects/install
 cd /data/projects/install
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.0-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.2-release.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.0-release.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.0-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.2-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.2-release.tar.gz
 
 #Send to 192.168.0.2和192.168.0.3
 scp *.tar.gz app@192.168.0.2:/data/projects/install
 scp *.tar.gz app@192.168.0.3:/data/projects/install
 ```
 
-### 4.2 Deploy mysql
+### 4.2 Operating system parameter check
+
+**Execute under the app user of the target server (192.168.0.1 192.168.0.2 192.168.0.3)**
+
+```
+#Virtual memory, the size is not less than 128G, if it is not satisfied, please refer to #Chapter 3.4 to reset
+cat /proc/swaps
+Filename                                Type            Size    Used    Priority
+/data/swapfile128G                      file            134217724       384     -1
+
+#The number of file handles is not less than 65535. If it is not satisfied, please refer #to Chapter 3.3.3 to reset
+ulimit -n
+65535
+
+#The number of user processes is not less than 64000, if it is not satisfied, please #refer to Chapter 3.3.3 to reset
+ulimit -u
+65535
+```
+
+### 4.3 Deploy mysql
 
 **Execute under the app user of the target server (192.168.0.1 192.168.0.3)**
 
@@ -218,7 +241,7 @@ mkdir -p /data/projects/fate/data/mysql
 
 #Unzip the package
 cd /data/projects/install
-tar xzvf mysql-1.4.0-release.tar.gz
+tar xzvf mysql-*.tar.gz
 cd mysql
 tar xf mysql-8.0.13.tar.gz -C /data/projects/fate/common/mysql
 
@@ -276,13 +299,13 @@ mysql>flush privileges;
 
 #insert configuration data
 1) 192.168.0.1 execute
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.1', '9460', 'CLUSTER_MANAGER', 'HEALTHY');
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.1', '9461', 'NODE_MANAGER', 'HEALTHY');
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.2', '9461', 'NODE_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.1', '4670', 'CLUSTER_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.1', '4671', 'NODE_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.2', '4671', 'NODE_MANAGER', 'HEALTHY');
 
 2) 192.168.0.3 execute
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.3', '9460', 'CLUSTER_MANAGER', 'HEALTHY');
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.3', '9461', 'NODE_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.3', '4670', 'CLUSTER_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.3', '4671', 'NODE_MANAGER', 'HEALTHY');
 
 #check
 mysql>select User,Host from mysql.user;
@@ -295,7 +318,7 @@ mysql>select * from server_node;
 
 
 
-### 4.3 Deploy jdk
+### 4.4 Deploy jdk
 
 **Execute under the app user of the target server (192.168.0.1 192.168.0.2 192.168.0.3)**
 
@@ -309,7 +332,7 @@ cd /data/projects/fate/common/jdk
 mv jdk1.8.0_192 jdk-8u192
 ```
 
-### 4.4 Deploy python
+### 4.5 Deploy python
 
 **Execute under the app user of the target server (192.168.0.1 192.168.0.2 192.168.0.3)**
 
@@ -319,7 +342,7 @@ mkdir -p /data/projects/fate/common/python
 
 #Install miniconda3
 cd /data/projects/install
-tar xvf python-env-1.4.0-release.tar.gz
+tar xvf python-env-*.tar.gz
 cd python-env
 sh Miniconda3-4.5.4-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
 
@@ -332,24 +355,24 @@ sh Miniconda3-4.5.4-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
 tar xvf pip-packages-fate-*.tar.gz
 source /data/projects/fate/common/python/venv/bin/activate
 pip install setuptools-42.0.2-py2.py3-none-any.whl
-pip install -r pip-packages-fate-1.4.0/requirements.txt -f ./pip-packages-fate-1.4.0 --no-index
+pip install -r pip-packages-fate-1.4.2/requirements.txt -f ./pip-packages-fate-1.4.2 --no-index
 pip list | wc -l
-#The result should be 158
+#The result should be 161
 ```
 
 
 
 
-### 4.5 Deploy eggroll&fate
+### 4.6 Deploy eggroll&fate
 
-#### 4.5.1 Software deployment
+#### 4.6.1 Software deployment
 
 ```
 #Software deployment
 #Execute under the app user of the target server (192.168.0.1 192.168.0.2 192.168.0.3)
 cd /data/projects/install
-tar xf FATE_install_1.4.0-release.tar.gz
-cd FATE_install_1.4*
+tar xf FATE_install_*.tar.gz
+cd FATE_install_*
 tar xvf python.tar.gz -C /data/projects/fate/
 tar xvf eggroll.tar.gz -C /data/projects/fate
 
@@ -368,7 +391,7 @@ export PATH=\$PATH:\$JAVA_HOME/bin
 EOF
 ```
 
-#### 4.5.2 eggroll system configuration file modification
+#### 4.6.2 eggroll system configuration file modification
 
 This configuration file are shared among rollsite, clustermanager, and nodemanager, and configuration across multiple hosts on each party should be consistent. Content needs to be modified:
 
@@ -439,7 +462,7 @@ eggroll.resourcemanager.bootstrap.roll_pair_master.mainclass=com.webank.eggroll.
 eggroll.resourcemanager.bootstrap.roll_pair_master.jvm.options=
 # for roll site. rename in the next round
 eggroll.rollsite.coordinator=webank
-eggroll.rollsite.host=192.168.0.1
+eggroll.rollsite.host=192.168.0.2
 eggroll.rollsite.port=9370
 eggroll.rollsite.party.id=10000
 eggroll.rollsite.route.table.path=conf/route_table.json
@@ -492,7 +515,7 @@ eggroll.rollpair.transferpair.sendbuf.size=4150000
 EOF
 ```
 
-#### 4.5.3 eggroll routing configuration file modification
+#### 4.6.3 eggroll routing configuration file modification
 
 This configuration file rollsite is used to configure routing information. You can manually configure it by referring to the following example, or you can use the following command:
 
@@ -504,7 +527,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
 {
   "route_table":
   {
-    "9999":
+    "10000":
     {
       "default":[
         {
@@ -519,7 +542,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
         }
       ]      
     },
-    "10000":
+    "9999":
     {
       "default":[
         {
@@ -541,7 +564,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
 {
   "route_table":
   {
-    "10000":
+    "9999":
     {
       "default":[
         {
@@ -556,7 +579,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
         }
       ]      
     },
-    "9999":
+    "10000":
     {
       "default":[
         {
@@ -574,7 +597,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
 EOF
 ```
 
-#### 4.5.4 fate dependent service configuration file modification
+#### 4.6.4 fate dependent service configuration file modification
 
 - fateflow
 
@@ -650,7 +673,7 @@ cat > /data/projects/fate/python/arch/conf/server_conf.json << EOF
 EOF
 ```
 
-#### 4.5.5 Fate database information configuration file modification
+#### 4.6.5 Fate database information configuration file modification
 
 - work_mode(1 means cluster mode, default)
 
@@ -722,7 +745,7 @@ default_model_store_address:
 EOF
 ```
 
-#### 4.5.6 fateboard configuration file modification
+#### 4.6.6 fateboard configuration file modification
 
 1）application.properties
 
@@ -787,7 +810,7 @@ vi service.sh
 export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 ```
 
-### 4.6 Start service
+### 4.7 Start service
 
 **Execute under the app user of the target server (192.168.0.2)**
 
@@ -833,7 +856,7 @@ cd /data/projects/fate/fateboard
 sh service.sh start
 ```
 
-### 4.7 identify the problem
+### 4.8 identify the problem
 
 1) eggroll log
 
@@ -907,34 +930,42 @@ A result similar to the following indicates success:：
 
 ### 5.2 Minimization testing
 
-Start the virtual environment in host and guest respectively.
+Start the virtual environment in host and guest respectively. Please make sure you have already uploaded the preset dataset through the provided script. 
 
-#### 5.2.1 Fast mode
+#### 5.2.1 Upload preset Data
 
-In the node of guest and host parties, set the fields: guest_id, host_id, arbiter_id in run_task.py according to your actual setting. This file is located in / data / projects / fate / python / examples / min_test_task/.
+Execute on 192.168.0.1 and 192.168.0.3 respectively::
+```
+source /data/projects/fate/init_env.sh
+cd /data/projects/fate/python/examples/scripts/
+python upload_default_data.py -m 1
+```
 
-In the node of host party, run:
+For more details, please refer to [scripts' README](../examples/scripts/README.rst)
+
+#### 5.2.2 Fast mode
+
+Please make sure that both guest and host have uploaded the preset data through the given script respectively.In the fast mode, the minimization test script will use a relatively small data set, namely the breast data set containing 569 data.
+
+Select 9999 as the guest and execute on 192.168.0.3:
 
 ```
 source /data/projects/fate/init_env.sh
 cd /data/projects/fate/python/examples/min_test_task/
-sh run.sh host fast 		
+python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
 ```
 
-Get the values of "host_table" and "host_namespace" from test results, and pass them to following command.
+This test will automatically take breast as test data set.
 
-In the node of guest party, run: 
+There are some more parameters that you may need:
 
-```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/min_test_task/
-sh run.sh guest fast ${host_table} ${host_namespace}
-```
+1. -f: file type. "fast" means breast data set, "normal" means default credit data set.
+2. --add_sbt: If it is set to 1, the secureboost task will be started after running lr. If it is set to 0, the secureboost task will not be started. If this parameter is not set, the system default is 1.
 
 Wait a few minutes, a result showing "success" indicates that the operation is successful.
 In other cases, if FAILED or stuck, it means failure.
 
-#### 5.2.2 Normal mode
+#### 5.2.3 Normal mode
 
 Just replace the word "fast" with "normal" in all the commands, the rest is the same with fast mode.
 

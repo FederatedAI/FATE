@@ -1,0 +1,11 @@
+{
+    "module_path":  "federatedml/feature",
+    "param_class" : "federatedml/param/onehot_encoder_param.py/OneHotEncoderParam",
+    "role":
+    {
+        "guest|host":
+        {
+            "program": "one_hot_encoder.py/OneHotEncoder"
+        }
+    }
+}

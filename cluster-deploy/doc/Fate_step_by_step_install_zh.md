@@ -15,11 +15,11 @@
 2.集群规划
 ==========
 
-| party  | partyid | 主机名        | IP地址      | 操作系统                | 安装软件             | 服务                                                    |
-| ------ | ------- | ------------- | ----------- | ----------------------- | -------------------- | ------------------------------------------------------- |
-| PartyA | 10000   | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate，eggroll，mysql | fate_flow，fateboard，clustermanager，nodemanger，mysql |
-| PartyA | 10000   | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate,eggroll         | nodemanger，rollsite                                    |
-| PartyB | 9999    | VM_0_3_centos | 192.168.0.3 | CentOS 7.2/Ubuntu 16.04 | fate，eggroll，mysql | all                                                     |
+| party  | partyid | 主机名        | IP地址      | 操作系统                | 安装软件             | 服务                                                     |
+| ------ | ------- | ------------- | ----------- | ----------------------- | -------------------- | -------------------------------------------------------- |
+| PartyA | 10000   | VM_0_1_centos | 192.168.0.1 | CentOS 7.2/Ubuntu 16.04 | fate，eggroll，mysql | fate_flow，fateboard，clustermanager，nodemanager，mysql |
+| PartyA | 10000   | VM_0_2_centos | 192.168.0.2 | CentOS 7.2/Ubuntu 16.04 | fate,eggroll         | nodemanager，rollsite                                    |
+| PartyB | 9999    | VM_0_3_centos | 192.168.0.3 | CentOS 7.2/Ubuntu 16.04 | fate，eggroll，mysql | all                                                      |
 
 架构图：
 
@@ -34,7 +34,7 @@
 | fate     | fate_flow      | 9360;9380 | 联合学习任务流水线管理模块，每个party只能有一个此服务        |
 | fate     | fateboard      | 8080      | 联合学习过程可视化模块，每个party只能有一个此服务            |
 | eggroll  | clustermanager | 4670      | cluster manager管理集群，每个party只能有一个此服务           |
-| eggroll  | nodemanger     | 4671      | node manager管理每台机器资源，每个party可有多个此服务，但一台服务器置只能有一个 |
+| eggroll  | nodemanager    | 4671      | node manager管理每台机器资源，每个party可有多个此服务，但一台服务器置只能有一个 |
 | eggroll  | rollsite       | 9370      | 跨站点或者说跨party通讯组件，相当于proxy+federation，每个party只能有一个此服务 |
 | mysql    | mysql          | 3306      | 数据存储，clustermanager和fateflow依赖，每个party只需要一个此服务 |
 
@@ -83,16 +83,20 @@ ubuntu系统执行：apt list --installed | grep selinux
 
 如果已安装了selinux就执行：setenforce 0
 
-4.3 修改Linux最大打开文件数
+4.3 修改Linux系统参数
 ---------------------------
 
 **在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）root用户下执行：**
 
-vim /etc/security/limits.conf
+1）vim /etc/security/limits.conf
 
-\* soft nofile 65536
+\* soft nofile 65535
 
-\* hard nofile 65536
+\* hard nofile 65535
+
+2）vim /etc/security/limits.d/20-nproc.conf
+
+\* soft nproc unlimited
 
 4.4 关闭防火墙(可选)
 --------------
@@ -138,7 +142,7 @@ chown -R app:apps /data/projects
 
 ```
 #centos
-yum -y install gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpcdevel libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan lsof sysstat telnet psmisc
+yum -y install gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-devel snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4-devel libasan lsof sysstat telnet psmisc
 #ubuntu
 apt-get install -y gcc g++ make openssl supervisor libgmp-dev  libmpfr-dev libmpc-dev libaio1 libaio-dev numactl autoconf automake libtool libffi-dev libssl1.0.0 libssl-dev liblz4-1 liblz4-dev liblz4-1-dbg liblz4-tool  zlib1g zlib1g-dbg zlib1g-dev
 cd /usr/lib/x86_64-linux-gnu
@@ -176,17 +180,36 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 ```
 mkdir -p /data/projects/install
 cd /data/projects/install
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.0-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/python-env-1.4.2-release.tar.gz
 wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/jdk-8u192-linux-x64.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.0-release.tar.gz
-wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.0-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/mysql-1.4.2-release.tar.gz
+wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/FATE_install_1.4.2-release.tar.gz
 
 #传输到192.168.0.2和192.168.0.3
 scp *.tar.gz app@192.168.0.2:/data/projects/install
 scp *.tar.gz app@192.168.0.3:/data/projects/install
 ```
 
-## 5.2 部署mysql
+## 5.2 操作系统参数检查
+
+**在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）app用户下执行**
+
+```
+#虚拟内存，size不低于128G，如不满足需参考4.6章节重新设置
+cat /proc/swaps
+Filename                                Type            Size    Used    Priority
+/data/swapfile128G                      file            134217724       384     -1
+
+#文件句柄数，不低于65535，如不满足需参考4.3章节重新设置
+ulimit -n
+65535
+
+#用户进程数，不低于64000，如不满足需参考4.3章节重新设置
+ulimit -u
+65535
+```
+
+## 5.3 部署mysql
 
 **在目标服务器（192.168.0.1 192.168.0.3）app用户下执行**
 
@@ -199,7 +222,7 @@ mkdir -p /data/projects/fate/data/mysql
 
 #解压缩软件包
 cd /data/projects/install
-tar xzvf mysql-1.4.0-release.tar.gz
+tar xzvf mysql-*.tar.gz
 cd mysql
 tar xf mysql-8.0.13.tar.gz -C /data/projects/fate/common/mysql
 
@@ -257,13 +280,13 @@ mysql>flush privileges;
 
 #insert配置数据
 1) 192.168.0.1执行
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.1', '9460', 'CLUSTER_MANAGER', 'HEALTHY');
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.1', '9461', 'NODE_MANAGER', 'HEALTHY');
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.2', '9461', 'NODE_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.1', '4670', 'CLUSTER_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.1', '4671', 'NODE_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.2', '4671', 'NODE_MANAGER', 'HEALTHY');
 
 2) 192.168.0.3执行
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.3', '9460', 'CLUSTER_MANAGER', 'HEALTHY');
-mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.3', '9461', 'NODE_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.3', '4670', 'CLUSTER_MANAGER', 'HEALTHY');
+mysql>INSERT INTO server_node (host, port, node_type, status) values ('192.168.0.3', '4671', 'NODE_MANAGER', 'HEALTHY');
 
 #校验
 mysql>select User,Host from mysql.user;
@@ -276,9 +299,9 @@ mysql>select * from server_node;
 
 
 
-## 5.3 部署jdk
+## 5.4 部署jdk
 
-**在目标服务器（192.168.0.1 192.168.0.1 192.168.0.3）app用户下执行**:
+**在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）app用户下执行**:
 
 ```
 #创建jdk安装目录
@@ -290,7 +313,7 @@ cd /data/projects/fate/common/jdk
 mv jdk1.8.0_192 jdk-8u192
 ```
 
-## 5.4 部署python
+## 5.5 部署python
 
 **在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）app用户下执行**:
 
@@ -300,7 +323,7 @@ mkdir -p /data/projects/fate/common/python
 
 #安装miniconda3
 cd /data/projects/install
-tar xvf python-env-1.4.0-release.tar.gz
+tar xvf python-env-*.tar.gz
 cd python-env
 sh Miniconda3-4.5.4-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
 
@@ -313,25 +336,25 @@ sh Miniconda3-4.5.4-Linux-x86_64.sh -b -p /data/projects/fate/common/miniconda3
 tar xvf pip-packages-fate-*.tar.gz
 source /data/projects/fate/common/python/venv/bin/activate
 pip install setuptools-42.0.2-py2.py3-none-any.whl
-pip install -r pip-packages-fate-1.4.0/requirements.txt -f ./pip-packages-fate-1.4.0 --no-index
+pip install -r pip-packages-fate-1.4.2/requirements.txt -f ./pip-packages-fate-1.4.2 --no-index
 pip list | wc -l
-#结果应为158
+#结果应为161
 ```
 
 
 
 
-5.5 部署eggroll&fate
+5.6 部署eggroll&fate
 --------
 
-### **5.5.1软件部署**
+### **5.6.1软件部署**
 
 ```
 #部署软件
 #在目标服务器（192.168.0.1 192.168.0.2 192.168.0.3）app用户下执行:
 cd /data/projects/install
-tar xf FATE_install_1.4.0-release.tar.gz
-cd FATE_install_1.4*
+tar xf FATE_install_*.tar.gz
+cd FATE_install_*
 tar xvf python.tar.gz -C /data/projects/fate/
 tar xvf eggroll.tar.gz -C /data/projects/fate
 
@@ -350,7 +373,7 @@ export PATH=\$PATH:\$JAVA_HOME/bin
 EOF
 ```
 
-### 5.5.2 eggroll系统配置文件修改
+### 5.6.2 eggroll系统配置文件修改
 
 此配置文件rollsite，clustermanager，nodemanager共用，每端party多台主机保持一致，需修改内容：
 
@@ -421,7 +444,7 @@ eggroll.resourcemanager.bootstrap.roll_pair_master.mainclass=com.webank.eggroll.
 eggroll.resourcemanager.bootstrap.roll_pair_master.jvm.options=
 # for roll site. rename in the next round
 eggroll.rollsite.coordinator=webank
-eggroll.rollsite.host=192.168.0.1
+eggroll.rollsite.host=192.168.0.2
 eggroll.rollsite.port=9370
 eggroll.rollsite.party.id=10000
 eggroll.rollsite.route.table.path=conf/route_table.json
@@ -474,7 +497,7 @@ eggroll.rollpair.transferpair.sendbuf.size=4150000
 EOF
 ```
 
-### 5.5.3 eggroll路由配置文件修改
+### 5.6.3 eggroll路由配置文件修改
 
 此配置文件rollsite使用，配置路由信息，可以参考如下例子手工配置，也可以使用以下指令完成：
 
@@ -501,7 +524,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
         }
       ]      
     },
-    "9999":
+    "default":
     {
       "default":[
         {
@@ -538,7 +561,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
         }
       ]      
     },
-    "10000":
+    "default":
     {
       "default":[
         {
@@ -556,7 +579,7 @@ cat > /data/projects/fate/eggroll/conf/route_table.json << EOF
 EOF
 ```
 
-### 5.5.4 fate依赖服务配置文件修改
+### 5.6.4 fate依赖服务配置文件修改
 
 - fateflow
 
@@ -632,7 +655,7 @@ cat > /data/projects/fate/python/arch/conf/server_conf.json << EOF
 EOF
 ```
 
-### 5.5.5 fate数据库信息配置文件修改
+### 5.6.5 fate数据库信息配置文件修改
 
 - work_mode(为1表示集群模式，默认)
 
@@ -704,7 +727,7 @@ default_model_store_address:
 EOF
 ```
 
-### 5.5.6 fateboard配置文件修改
+### 5.6.6 fateboard配置文件修改
 
 1）application.properties
 
@@ -771,7 +794,7 @@ export JAVA_HOME=/data/projects/fate/common/jdk/jdk-8u192
 
 
 
-## 5.6 启动服务
+## 5.7 启动服务
 
 **在目标服务器（192.168.0.2）app用户下执行**
 
@@ -817,7 +840,7 @@ cd /data/projects/fate/fateboard
 sh service.sh start
 ```
 
-## 5.7 问题定位
+## 5.8 问题定位
 
 1）eggroll日志
 
@@ -892,40 +915,47 @@ python run_toy_example.py 9999 10000 1
 6.2 最小化测试
 --------------
 
-### **6.2.1 快速模式：**
+### **6.2.1 上传预设数据：**
 
-在guest和host两方各任一egg节点中，根据需要在run_task.py中设置字段：guest_id，host_id，arbiter_id。
+分别在192.168.0.1和192.168.0.3上执行：
 
-该文件在/data/projects/fate/python/examples/min_test_task/目录下。
+```
+source /data/projects/fate/init_env.sh
+cd /data/projects/fate/python/examples/scripts/
+python upload_default_data.py -m 1
+```
 
-**在Host节点上运行：**
+更多细节信息，敬请参考[脚本README](../../examples/scripts/README.rst)
+
+### **6.2.2 快速模式：**
+
+请确保guest和host两方均已分别通过给定脚本上传了预设数据。
+
+快速模式下，最小化测试脚本将使用一个相对较小的数据集，即包含了569条数据的breast数据集。
+
+选定9999为guest方，在192.168.0.3上执行：
 
 ```
 source /data/projects/fate/init_env.sh
 cd /data/projects/fate/python/examples/min_test_task/
-sh run.sh host fast
+python run_task.py -m 1 -gid 9999 -hid 10000 -aid 10000 -f fast
 ```
 
-从测试结果中获取“host_table”和“host_namespace”的值，并将它们作为参数传递给下述guest方命令。
+其他一些可能有用的参数包括：
 
-**在Guest节点上运行：**
+1. -f: 使用的文件类型. "fast" 代表 breast数据集, "normal" 代表 default credit 数据集.
+2. --add_sbt: 如果被设置为1, 将在运行完lr以后，启动secureboost任务，设置为0则不启动secureboost任务，不设置此参数系统默认为1。
 
-```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/min_test_task/
-sh run.sh guest fast ${host_table} ${host_namespace} 
-```
+若数分钟后在结果中显示了“success”字样则表明该操作已经运行成功了。若出现“FAILED”或者程序卡住，则意味着测试失败。
 
-等待几分钟，看到结果显示“成功”字段，表明操作成功。在其他情况下，如果失败或卡住，则表示失败。
-
-### **6.2.2 正常模式**：
+### **6.2.3 正常模式**：
 
 只需在命令中将“fast”替换为“normal”，其余部分与快速模式相同。
 
 6.3. Fateboard testing
 ----------------------
 
-Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以通过访问 http://192.168.0.1:8080 和 http://192.168.0.2:8080 来查看任务信息，如果有防火墙需开通。如果fateboard和fateflow没有部署再同一台服务器，需在fateboard页面设置fateflow所部署主机的登陆信息：页面右上侧齿轮按钮--》add--》填写fateflow主机ip，os用户，ssh端口，密码。
+Fateboard是一项Web服务。如果成功启动了fateboard服务，则可以通过访问 http://192.168.0.1:8080 和 http://192.168.0.3:8080 来查看任务信息，如果有防火墙需开通。如果fateboard和fateflow没有部署再同一台服务器，需在fateboard页面设置fateflow所部署主机的登陆信息：页面右上侧齿轮按钮--》add--》填写fateflow主机ip，os用户，ssh端口，密码。
 
 7.系统运维
 ================

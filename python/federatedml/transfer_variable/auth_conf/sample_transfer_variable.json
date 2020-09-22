@@ -1,0 +1,12 @@
+{
+  "federatedml.transfer_variable.transfer_class.sample_transfer_variable.SampleTransferVariable": {
+    "sample_ids": {
+      "src": [
+        "guest"
+      ],
+      "dst": [
+        "host"
+      ]
+    }
+  }
+}
