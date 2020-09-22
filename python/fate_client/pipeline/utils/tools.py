@@ -14,6 +14,11 @@
 #  limitations under the License.
 #
 
+import json
+import typing
+from pathlib import Path
+from ruamel import yaml
+
 
 def merge_dict(dict1, dict2):
     merge_ret = {}
@@ -42,3 +47,55 @@ def extract_explicit_parameter(func):
         return func(*args, **explict_kwargs)
 
     return wrapper
+
+
+def load_job_config(path):
+    config = JobConfig.load(path)
+    return config
+
+
+class Parties(object):
+    def __init__(self, parties):
+        self.host = parties.get("host", None)
+        self.guest = parties.get("guest", None)
+        self.arbiter = parties.get("arbiter", None)
+
+
+class JobConfig(object):
+    def __init__(self, config):
+        self.parties = Parties(config.get("parties", {}))
+        self.backend = config.get("backend", 0)
+        self.work_mode = config.get("work_mode", 0)
+        self.data_base = config.get("data_base", 0)
+
+    @staticmethod
+    def load(path: typing.Union[str, Path]):
+        conf = JobConfig.load_from_file(path)
+        return JobConfig(conf)
+
+    @staticmethod
+    def load_from_file(path: typing.Union[str, Path]):
+        """
+        Loads conf content from json or yaml file. Used to read in parameter configuration
+        Parameters
+        ----------
+        path: str, path to conf file, should be absolute path
+
+        Returns
+        -------
+        dict, parameter configuration in dictionary format
+
+        """
+        if isinstance(path, str):
+            path = Path(path)
+        config = {}
+        if path is not None:
+            file_type = path.suffix
+            with path.open("r") as f:
+                if file_type == ".yaml":
+                    config.update(yaml.safe_load(f))
+                elif file_type == ".json":
+                    config.update(json.load(f))
+                else:
+                    raise ValueError(f"Cannot load conf from file type {file_type}")
+        return config

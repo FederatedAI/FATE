@@ -15,6 +15,14 @@
 #
 
 import argparse
+import os
+import sys
+
+cur_path = os.path.realpath(__file__)
+for i in range(4):
+    cur_path = os.path.dirname(cur_path)
+print(f'fate_path: {cur_path}')
+sys.path.append(cur_path)
 
 from examples.pipeline.hetero_logistic_regression import common_tools
 
@@ -44,7 +52,7 @@ def main(config="../../config.yaml", namespace=""):
         }
     }
 
-    pipeline = common_tools.make_normal_dsl(config, namespace, lr_param, is_cv=True)
+    pipeline = common_tools.make_normal_dsl(config, namespace, lr_param, is_ovr=True)
     # fit model
     pipeline.fit(backend=backend, work_mode=work_mode)
     # query component summary

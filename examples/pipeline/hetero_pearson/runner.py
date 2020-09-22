@@ -15,7 +15,13 @@
 #
 
 import argparse
+import os
+import sys
 from enum import Enum
+
+additional_path = os.path.realpath('../')
+if additional_path not in sys.path:
+    sys.path.append(additional_path)
 
 
 class PearsonExample(Enum):
@@ -48,22 +54,22 @@ if __name__ == '__main__':
     example: PearsonExample = args.example
 
     if example == PearsonExample.DEFAULT:
-        from examples.pipeline.hetero_pearson.pipeline_hetero_pearson import main
+        from hetero_pearson.pipeline_hetero_pearson import main
 
         main(**kwargs)
 
     elif example == PearsonExample.SOLE:
-        from examples.pipeline.hetero_pearson.pipeline_hetero_pearson_sole import main
+        from hetero_pearson.pipeline_hetero_pearson_sole import main
 
         main(**kwargs)
 
     elif example == PearsonExample.HOST_ONLY:
-        from examples.pipeline.hetero_pearson.pipeline_hetero_pearson_host_only import main
+        from hetero_pearson.pipeline_hetero_pearson_host_only import main
 
         main(**kwargs)
 
     elif example == PearsonExample.MIX_RAND:
-        from examples.pipeline.hetero_pearson.pipeline_hetero_pearson_mix_rand import main
+        from hetero_pearson.pipeline_hetero_pearson_mix_rand import main
 
         main(**kwargs)
 

@@ -11,4 +11,4 @@ backend: 0 # 0 for eggroll, or 1 for spark
 
 work_mode: 0 # 0 for standalone, or 1 for cluster
 
-data_base: "/data/projects/fate/python" # path to project base where data is located
+data_base: "/data/projects/fate" # path to project base where data is located

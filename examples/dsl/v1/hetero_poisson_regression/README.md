@@ -43,13 +43,6 @@ This section introduces the dsl and conf for usage of different tasks.
     dsl: test_hetero_poisson_cv_job_dsl.json
 
     runtime_config: test_hetero_poisson_cv_job_conf.json
-    
-6. Train Task with Sparse Data:
-    
-    dsl: test_hetero_poisson_train_job_dsl.json
-
-    runtime_config : test_hetero_poisson_train_sparse_job_conf.json
-
 
 Users can use following commands to run the task.
 
