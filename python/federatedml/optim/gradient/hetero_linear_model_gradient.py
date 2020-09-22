@@ -245,7 +245,7 @@ class Host(HeteroGradientBase):
         define forward_hess = ∑(0.25 * x * s)
         """
         sqn_forwards = data_instances.mapValues(
-            lambda v: cipher_operator.encrypt(np.dot(v.features, delta_s.coef_) + delta_s.intercept_))
+            lambda v: cipher_operator.encrypt(fate_operator.vec_dot(v.features, delta_s.coef_) + delta_s.intercept_))
         # forward_sum = sqn_forwards.reduce(reduce_add)
         return sqn_forwards
 
