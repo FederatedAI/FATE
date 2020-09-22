@@ -17,7 +17,7 @@
 import argparse
 
 from examples.pipeline.hetero_feature_selection import common_tools
-from examples.util.config import Config
+from pipeline.utils.tools import load_job_config
 
 
 def main(config="../../config.yaml", namespace=""):

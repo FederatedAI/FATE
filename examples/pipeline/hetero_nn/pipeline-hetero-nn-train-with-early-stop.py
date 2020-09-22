@@ -16,7 +16,7 @@
 
 import argparse
 
-from examples.util.config import Config
+from pipeline.utils.tools import load_job_config
 from tensorflow.keras import initializers
 from tensorflow.keras import optimizers
 from tensorflow.keras.layers import Dense
@@ -34,7 +34,7 @@ from pipeline.interface import Model
 def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
-        config = Config.load(config)
+        config = load_job_config(config)
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
