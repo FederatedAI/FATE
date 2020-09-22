@@ -45,7 +45,7 @@ Install Pipeline
 Pipeline CLI
 ~~~~~~~~~~~~
 
-After successfully installed FATE Client, user needs configure Pipeline.
+After successfully installed FATE Client, user needs to configure server information and log directory for Pipeline.
 Pipeline provides a command line tool for quick setup. Run the following
 command for more information.
 
