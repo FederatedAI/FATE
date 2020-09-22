@@ -29,13 +29,13 @@
                 },
                 "reader_0": {
                     "table": {
-                        "name": "vehicle_homo_host",
+                        "name": "vehicle_scale_homo_host",
                         "namespace": "experiment"
                     }
                 },
                 "reader_1": {
                     "table": {
-                        "name": "vehicle_homo_test",
+                        "name": "vehicle_scale_homo_test",
                         "namespace": "experiment"
                     }
                 },
