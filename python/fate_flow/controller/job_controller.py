@@ -20,7 +20,7 @@ from fate_arch.common import EngineType
 from fate_flow.entity.types import JobStatus, EndStatus, RunParameters
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.operation import Tracker
-from fate_flow.settings import USE_AUTHENTICATION, MAX_CORES_PERCENT_PER_JOB
+from fate_flow.settings import USE_AUTHENTICATION
 from fate_flow.utils import job_utils, schedule_utils, data_utils
 from fate_flow.operation import JobSaver, JobQueue
 from fate_arch.common.base_utils import json_dumps, current_timestamp
@@ -57,8 +57,9 @@ class JobController(object):
         job_info["party_id"] = party_id
         job_info["is_initiator"] = is_initiator
         job_info["progress"] = 0
-        cls.get_job_engines_address(job_parameters=job_parameters)
+        engines_info = cls.get_job_engines_address(job_parameters=job_parameters)
         cls.special_role_parameters(role=role, job_parameters=job_parameters)
+        cls.check_parameters(job_parameters=job_parameters, engines_info=engines_info)
         runtime_conf["job_parameters"] = job_parameters.to_dict()
 
         JobSaver.create_job(job_info=job_info)
@@ -73,12 +74,17 @@ class JobController(object):
 
     @classmethod
     def get_job_engines_address(cls, job_parameters: RunParameters):
-        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.COMPUTING, engine_name=job_parameters.computing_engine)
-        job_parameters.engines_address[EngineType.COMPUTING] = backend_info.f_engine_address
-        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.FEDERATION, engine_name=job_parameters.federation_engine)
-        job_parameters.engines_address[EngineType.FEDERATION] = backend_info.f_engine_address
-        backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.STORAGE, engine_name=job_parameters.storage_engine)
-        job_parameters.engines_address[EngineType.STORAGE] = backend_info.f_engine_address
+        engines_info = {}
+        engine_list = [
+            (EngineType.COMPUTING, job_parameters.computing_engine),
+            (EngineType.FEDERATION, job_parameters.federation_engine),
+            (EngineType.STORAGE, job_parameters.storage_engine)
+        ]
+        for engine_type, engine_name in engine_list:
+            engine_info = ResourceManager.get_backend_registration_info(engine_type=engine_type, engine_name=engine_name)
+            job_parameters.engines_address[engine_type] = engine_info.f_engine_address
+            engines_info[engine_type] = engine_info
+        return engines_info
 
     @classmethod
     def special_role_parameters(cls, role, job_parameters: RunParameters):
@@ -86,6 +92,12 @@ class JobController(object):
             job_parameters.task_nodes = 1
             job_parameters.task_parallelism = 1
             job_parameters.task_cores_per_node = 1
+
+    @classmethod
+    def check_parameters(cls, job_parameters: RunParameters, engines_info):
+        status, max_cores_per_job = ResourceManager.check_resource_apply(job_parameters=job_parameters, engines_info=engines_info)
+        if not status:
+            raise RuntimeError(f"max cores per job is {max_cores_per_job}, please modify job parameters")
 
     @classmethod
     def initialize_tasks(cls, job_id, role, party_id, run_on, job_initiator, job_parameters: RunParameters, dsl_parser, component_name=None, task_version=None):

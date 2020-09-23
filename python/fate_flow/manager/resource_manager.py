@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
+import math
 import operator
 import peewee
 from fate_arch.computing import ComputingEngine
@@ -23,7 +24,7 @@ from fate_arch.common.log import schedule_logger
 from fate_arch.common import EngineType
 from fate_flow.db.db_models import DB, BackendRegistry, ResourceRecord
 from fate_flow.entity.types import ResourceOperation, RunParameters
-from fate_flow.settings import stat_logger, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE, SUPPORT_ENGINES
+from fate_flow.settings import stat_logger, STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE, SUPPORT_ENGINES, MAX_CORES_PERCENT_PER_JOB
 from fate_flow.utils import job_utils
 
 
@@ -87,6 +88,15 @@ class ResourceManager(object):
             except Exception as e:
                 stat_logger.warning(e)
             stat_logger.info(f"create {engine_type} engine {engine_name} registration information")
+
+    @classmethod
+    def check_resource_apply(cls, job_parameters: RunParameters, engines_info):
+        computing_engine, cores, memory = cls.calculate_job_resource(run_parameters=job_parameters)
+        max_cores_per_job = math.floor(engines_info[EngineType.COMPUTING].f_cores * MAX_CORES_PERCENT_PER_JOB)
+        if cores > max_cores_per_job:
+            return False, max_cores_per_job
+        else:
+            return True, max_cores_per_job
 
     @classmethod
     @DB.connection_context()
@@ -195,11 +205,12 @@ class ResourceManager(object):
             return False
 
     @classmethod
-    def calculate_job_resource(cls, job_id, role, party_id):
-        dsl, runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id,
-                                                                                role=role,
-                                                                                party_id=party_id)
-        run_parameters = RunParameters(**runtime_conf["job_parameters"])
+    def calculate_job_resource(cls, run_parameters: RunParameters = None, job_id=None, role=None, party_id=None):
+        if not run_parameters:
+            dsl, runtime_conf, train_runtime_conf = job_utils.get_job_configuration(job_id=job_id,
+                                                                                    role=role,
+                                                                                    party_id=party_id)
+            run_parameters = RunParameters(**runtime_conf["job_parameters"])
         cores = run_parameters.task_cores_per_node * run_parameters.task_nodes * run_parameters.task_parallelism
         memory = run_parameters.task_memory_per_node * run_parameters.task_nodes * run_parameters.task_parallelism
         computing_engine_info = cls.get_backend_registration_info(engine_type=EngineType.COMPUTING, engine_name=run_parameters.computing_engine)
@@ -284,7 +295,7 @@ class ResourceManager(object):
 
     @classmethod
     @DB.connection_context()
-    def get_backend_registration_info(cls, engine_type, engine_name):
+    def get_backend_registration_info(cls, engine_type, engine_name) -> BackendRegistry:
         engines = BackendRegistry.select().where(BackendRegistry.f_engine_type == engine_type, BackendRegistry.f_engine_name == engine_name)
         if engines:
             return engines[0]
