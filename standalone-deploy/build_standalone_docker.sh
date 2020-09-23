@@ -20,34 +20,6 @@ set -x
 
 basepath=$(cd `dirname $0`;pwd)
 fatepath=$(cd $basepath/..;pwd)
-cd ${fatepath}
-
-
-#eggroll_git_url=`grep -A 3 '"eggroll"' .gitmodules | grep 'url' | awk -F '= ' '{print $2}'`
-#eggroll_git_branch=`grep -A 3 '"eggroll"' .gitmodules | grep 'branch' | awk -F '= ' '{print $2}'`
-#echo "[INFO] Git clone eggroll submodule source code from ${eggroll_git_url} branch ${eggroll_git_branch}"
-#if [[ -e "eggroll" ]];then
-#    while [[ true ]];do
-#        read -p "The eggroll directory already exists, delete and re-download? [y/n] " input
-#        case ${input} in
-#        [yY]*)
-#                echo "[INFO] Delete the original eggroll"
-#                rm -rf eggroll
-#                git clone ${eggroll_git_url} -b ${eggroll_git_branch} eggroll
-#                break
-#                ;;
-#        [nN]*)
-#                echo "[INFO] Use the original eggroll"
-#                break
-#                ;;
-#        *)
-#                echo "Just enter y or n, please."
-#                ;;
-#        esac
-#    done
-#else
-#    git clone ${eggroll_git_url} -b ${eggroll_git_branch} eggroll
-#fi
 
 cd ${fatepath}
 fateboard_git_url=`grep -A 3 '"fateboard"' .gitmodules | grep 'url' | awk -F '= ' '{print $2}'`
@@ -76,21 +48,19 @@ else
     git clone ${fateboard_git_url} -b ${fateboard_git_branch} fateboard
 fi
 
-cd ${fatepath}
 
 init() {
     cd ${fatepath}
-    mkdir -p ${basepath}/arch
-    cp -r arch/conf ${basepath}/arch
-    cp -r arch/api ${basepath}/arch
-    cp -r arch/transfer_variables ${basepath}/arch
-    cp -r arch/standalone ${basepath}/arch
-    cp fate.env requirements.txt RELEASE.md ${basepath}
-    cp -r  federatedml examples fate_flow  ${basepath}
-    #docker run -v ${fatepath}/fateboard:/data/projects/fate/fateboard  --entrypoint="" maven:3.6-jdk-8 /bin/bash -c "cd /data/projects/fate/fateboard && mvn clean package -DskipTests"
+    cp -r  bin conf example fate.env python RELEASE.md   ${basepath}
+    cd ${basepath}
+    sed -i "s#work_mode: 1#work_mode: 0#g" ${basepath}/conf/service_conf.yaml
+    #sed -i.bak "s#^MarkupSafe==.*#MarkupSafe==1.1.1#g" ${basepath}/python/requirements.txt
+    tar -cf ./docker/python/fate.tar bin conf example fate.env python RELEASE.md
+    rm -rf bin conf example fate.env python RELEASE.md
+
     cd ${fatepath}/fateboard
     mvn clean package
-    cd -
+    cd ${basepath}
     if [ ! -d "${basepath}/fateboard" ];then
        mkdir -p ${basepath}/fateboard
     fi
@@ -106,13 +76,15 @@ init() {
     if [ ! -d "ssh" ];then
        mkdir ssh
     fi
-    cp ${fatepath}/fateboard/src/main/resources/application.properties ./conf
-    touch ./ssh/ssh.properties
+    cp ${fatepath}/fateboard/src/main/resources/application.properties ${basepath}/fateboard/conf
+    touch ${basepath}/fateboard/ssh/ssh.properties
 
+    sed -i "s#^fateflow.url=.*#fateflow.url=http://python:9380#g" ${basepath}/fateboard/conf/application.properties
+    sed -i "s#^fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:/fate/python/fate_flow/fate_flow_sqlite.db#g" ${basepath}/fateboard/conf/application.properties
+    sed -i "s#^spring.datasource.driver-Class-Name=.*#spring.datasource.driver-Class-Name=org.sqlite.JDBC#g" ${basepath}/fateboard/conf/application.properties
     cd ${basepath}
-    sed -i.bak "s#^MarkupSafe==.*#MarkupSafe==1.1.1#g" ./requirements.txt
-    rm  ./requirements.txt.bak
-    tar -cf ./docker/python/fate.tar arch federatedml  examples fate_flow fate.env requirements.txt RELEASE.md
+    tar -cf ./docker/fateboard/fateboard.tar fateboard
+    rm -rf ${basepath}/fateboard
 
     logPath="./fate/log"
     if [ ! -d "$logPath" ]; then
@@ -123,24 +95,16 @@ init() {
     if [ ! -d "$dataPath" ]; then
      mkdir -p "$dataPath"
     fi
-    cp -r ./fate_flow/* ./fate/data
-
-    sed -i.bak "s#^fateflow.url=.*#fateflow.url=http://python:9380#g" ./fateboard/conf/application.properties
-    sed -i.bak "s#^fateboard.datasource.jdbc-url=.*#fateboard.datasource.jdbc-url=jdbc:sqlite:/fate/fate_flow/fate_flow_sqlite.db#g" ./fateboard/conf/application.properties
-    sed -i.bak "s#^spring.datasource.driver-Class-Name=.*#spring.datasource.driver-Class-Name=org.sqlite.JDBC#g" ./fateboard/conf/application.properties
-    tar -cf ./docker/fateboard/fateboard.tar fateboard
+    cp -r ${fatepath}/python/fate_flow/* ./fate/data
 
     docker-compose -f ./docker/docker-compose-build.yml up -d
+
     docker restart fate_python
     sleep 5
     docker restart fate_fateboard
-    rm -rf arch federatedml  examples fate_flow fate.env requirements.txt RELEASE.md
     rm docker/python/fate.tar
-#    rm docker/python/requirements.txt
     rm docker/fateboard/fateboard.tar
 
-    cd ${basepath}
-    rm -rf ./fateboard
 
 }
 start() {

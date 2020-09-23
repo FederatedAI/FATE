@@ -1,15 +1,28 @@
 FATE Stand-alone Deployment Guide
 =================================
 
+Server Configuration:
+
++------------------------+-------------------------------------+
+| Quantity               | 1                                   |
++------------------------+-------------------------------------+
+| Configuration          | 8 core,16G memory, 500G hard disk   |
++------------------------+-------------------------------------+
+| Operating System       | CentOS Linux release 7.2            |
++------------------------+-------------------------------------+
+| Users                  | User: app owner:apps                |
++------------------------+-------------------------------------+
+
+
+
 The stand-alone version provides 2 deployment methods, which can be
 selected according to your actual situation:
 
--  Install FATE using Docker `Chinese
-   guide <./doc/Fate-standalone_deployment_guide_zh.md>`__
-   *(Recommended)*
+-  Install FATE using Docker  *(Recommended)*
 
--  Install FATE in Host `Chinese
-   guide <./doc/Fate-standalone_deployment_guide_zh.md>`__
+-  Install FATE in Host
+
+You can also refer to `Chinese  guide <./doc/Fate-standalone_deployment_guide_zh.md>`__
 
 1) Install FATE using Docker\ *(Recommended)*
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -36,11 +49,11 @@ possibility of encountering problems.
    ::
 
       #Get code
-      wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.4.2.tar.gz
-      tar -xzvf docker_standalone-fate-1.4.2.tar.gz
+      wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.5.0.tar.gz
+      tar -xzvf docker_standalone-fate-1.5.0.tar.gz
 
       #Execute the command
-      cd docker_standalone-fate-1.4.2
+      cd docker_standalone-fate-1.5.0
       bash install_standalone_docker.sh
 
 
@@ -52,7 +65,7 @@ possibility of encountering problems.
 
       CONTAINER_ID=`docker ps -aqf "name=fate_python"`
       docker exec -t -i ${CONTAINER_ID} bash
-      bash ./federatedml/test/run_test.sh
+      bash ./python/federatedml/test/run_test.sh
 
    If success,  the screen shows like blow:
 
@@ -98,15 +111,15 @@ Http://hostip:8080.
 
    ::
 
-      wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.4.2.tar.gz
-      tar -xzvf  standalone-fate-master-1.4.2.tar.gz
+      wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.5.0.tar.gz
+      tar -xzvf  standalone-fate-master-1.5.0.tar.gz
 
 3. Enter FATE directory and execute the init.sh.
 
    ::
 
-      cd standalone-fate-master-1.4.2
-      source init.sh init
+      cd standalone-fate-master-1.5.0
+      sh init.sh init
 
 4. Test
 
@@ -114,8 +127,9 @@ Http://hostip:8080.
 
    ::
 
-      cd standalone-fate-master-1.4.2
-      bash ./federatedml/test/run_test.sh
+      cd standalone-fate-master-1.5.0
+      source bin/init_env.sh
+      bash ./python/federatedml/test/run_test.sh
 
    If success,  the screen shows like blow:
 
@@ -127,7 +141,8 @@ Http://hostip:8080.
 
    ::
 
-        cd standalone-fate-master-1.4.2
+        cd standalone-fate-master-1.5.0
+        source bin/init_env.sh
         python ./examples/toy_example/run_toy_example.py 10000 10000 0
 
    If success,  the screen shows like blow:
