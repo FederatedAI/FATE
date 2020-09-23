@@ -14,6 +14,7 @@ Input
 ``Input`` encapsulates all upper stream input into a component in a FATE job.
 There are two classes of ``input``: ``data`` and ``model``. Not all components have
 both classes of input, and a component may accept only some types of a input class.
+For information on each components' input, check the `list <#component-list>`_ below.
 
 Here is an example to access a component's input:
 
@@ -30,6 +31,7 @@ Output
 
 Similar to ``Input``, ``Output`` encapsulates output ``data`` and ``model`` of component
 in a FATE job. Not all components have both classes of outputs.
+For information on each components' output, check the `list <#component-list>`_ below.
 
 Here is an example to access a component's output:
 
@@ -111,8 +113,9 @@ Below lists all five types of ``data`` and whether ``Input`` and ``Output`` incl
      - No
      - model prediction
 
-All input and output data of components need to be wrapepd into ``Data``
-objects when being passed between components.
+All input and output data of components need to be wrapped into ``Data``
+objects when being passed between components. For information on valid data
+types of each components, check the `list <#component-list>`_ below.
 Here is a an example of chaining components with different types of data input and output:
 
 .. code:: python
@@ -163,7 +166,8 @@ important features.
                           isometric_model=Model(hetero_feature_binning_0.output.model))
 
 Please note that when using `stepwise` or `cross validation` method, components do
-not have ``model`` output.
+not have ``model`` output. For information on valid data
+types of each components, check the `list <#component-list>`_ below.
 
 Parameter
 ~~~~~~~~~
