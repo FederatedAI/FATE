@@ -71,7 +71,7 @@ class Variable(object):
     @staticmethod
     def _get_short_name(name):
         fix_sized = hashlib.blake2b(name.encode('utf-8'), digest_size=10).hexdigest()
-        _, right = name.split('.', 1)
+        _, right = name.rsplit('.', 1)
         return f"hash.{fix_sized}.{right}"
 
     # copy never create a new instance
