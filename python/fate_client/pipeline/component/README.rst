@@ -1,9 +1,9 @@
 Components
 ==========
 
-Each ``Component`` wraps a `FederatedML <../../federatedml/README.rst>`__ ``Module``.
-``Module``s implement machine learning algorithms on federated learning,
-while ``Component``s provide convenient interface for easy model building.
+Each ``Component`` wraps a `FederatedML <../../python/federatedml/README.rst>`__ ``Module``.
+``Module`` implement machine learning algorithms on federated learning,
+while ``Component`` provide convenient interface for easy model building.
 
 Input & Output
 --------------
@@ -75,7 +75,7 @@ Another case of using keywords ``train_data``, ``validate_data``, and
                           model=Model(model=hetero_linr_0))
 
 
-Below lists all five types of ``data`` and whether they can be accessed in ``Input`` and ``Output``.
+Below lists all five types of ``data`` and whether ``Input`` and ``Output`` include them.
 
 .. list-table:: Data
    :widths: 30 20 20 30
@@ -168,9 +168,9 @@ not have ``model`` output.
 Parameter
 ~~~~~~~~~
 
-Parameters of underlying module can be set for all job participants or individually.
+Parameters of underlying module can be set for all job participants or per individual participant.
 
-1. Parameters may be specified when defining a component:
+1. Parameters for all participants may be specified when defining a component:
 
 .. code:: python
 
