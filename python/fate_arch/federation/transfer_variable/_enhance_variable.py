@@ -24,13 +24,13 @@ from fate_arch.federation.transfer_variable._generated_enhance_variable import *
 class EnhanceTransferVariables(BaseTransferVariables):
     def __init__(self, flow_id=0):
         super().__init__(flow_id)
-        base_cls = f"{self.__class__.__module__}${self.__class__.__name__}"
+        base_cls = f"{self.__class__.__module__}.{self.__class__.__name__}"
         for k, cls in getattr(self, "__annotations__", {}).items():
             if not issubclass(cls, (
                     A2GVariable, A2HVariable, G2AVariable, G2HVariable, H2AVariable, H2GVariable,
                     A2GHVariable, G2AHVariable, H2AGVariable, AG2HVariable, AH2GVariable, GH2AVariable)):
                 continue
-            name = f"{base_cls}${k}"
+            name = f"{base_cls}.{k}"
             obj = cls.get_or_create(name, lambda: cls(name))
             setattr(self, k, obj)
 
