@@ -13,13 +13,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-import traceback
 
-from fate_arch.common import FederatedCommunicationType, FederatedMode
+from fate_arch.common import FederatedMode
 from fate_arch.common.base_utils import json_loads, current_timestamp
 from fate_arch.common.log import schedule_logger
 from fate_arch.common import WorkMode, Backend, EngineType
-from fate_arch.common import conf_utils, string_utils
+from fate_arch.common import string_utils
 from fate_flow.db.db_models import Job
 from fate_flow.scheduler import FederatedScheduler
 from fate_flow.scheduler import TaskScheduler
@@ -165,7 +164,7 @@ class DAGScheduler(Cron):
     def set_default_job_parameters(cls, job_parameters: RunParameters):
         if job_parameters.task_parallelism is None:
             job_parameters.task_parallelism = DEFAULT_TASK_PARALLELISM
-        computing_engine_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.COMPUTING, engine_name=job_parameters.computing_engine)
+        computing_engine_info = ResourceManager.get_engine_registration_info(engine_type=EngineType.COMPUTING, engine_name=job_parameters.computing_engine)
         if job_parameters.task_nodes is None:
             job_parameters.task_nodes = computing_engine_info.f_nodes
         if job_parameters.task_cores_per_node is None:
