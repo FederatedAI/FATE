@@ -1,3 +1,4 @@
+import copy
 import functools
 import numpy as np
 
@@ -60,47 +61,51 @@ class Imputer(object):
     @staticmethod
     def __replace_missing_value_with_cols_transform_value_format(data, transform_list, missing_value_list,
                                                                  output_format):
+        _data = copy.deepcopy(data)
         replace_cols_index_list = []
-        for i, v in enumerate(data):
+        for i, v in enumerate(_data):
             if str(v) in missing_value_list:
-                data[i] = output_format(transform_list[i])
+                _data[i] = output_format(transform_list[i])
                 replace_cols_index_list.append(i)
             else:
-                data[i] = output_format(v)
+                _data[i] = output_format(v)
 
-        return data, replace_cols_index_list
+        return _data, replace_cols_index_list
 
     @staticmethod
     def __replace_missing_value_with_cols_transform_value(data, transform_list, missing_value_list):
+        _data = copy.deepcopy(data)
         replace_cols_index_list = []
-        for i, v in enumerate(data):
+        for i, v in enumerate(_data):
             if str(v) in missing_value_list:
-                data[i] = str(transform_list[i])
+                _data[i] = str(transform_list[i])
                 replace_cols_index_list.append(i)
 
-        return data, replace_cols_index_list
+        return _data, replace_cols_index_list
 
     @staticmethod
     def __replace_missing_value_with_replace_value_format(data, replace_value, missing_value_list, output_format):
+        _data = copy.deepcopy(data)
         replace_cols_index_list = []
-        for i, v in enumerate(data):
+        for i, v in enumerate(_data):
             if str(v) in missing_value_list:
-                data[i] = output_format(replace_value)
+                _data[i] = output_format(replace_value)
                 replace_cols_index_list.append(i)
             else:
-                data[i] = output_format(data[i])
+                _data[i] = output_format(_data[i])
 
-        return data, replace_cols_index_list
+        return _data, replace_cols_index_list
 
     @staticmethod
     def __replace_missing_value_with_replace_value(data, replace_value, missing_value_list):
+        _data = copy.deepcopy(data)
         replace_cols_index_list = []
-        for i, v in enumerate(data):
+        for i, v in enumerate(_data):
             if str(v) in missing_value_list:
-                data[i] = str(replace_value)
+                _data[i] = str(replace_value)
                 replace_cols_index_list.append(i)
 
-        return data, replace_cols_index_list
+        return _data, replace_cols_index_list
 
     def __get_cols_transform_value(self, data, replace_method, quantile=None):
         summary_obj = MultivariateStatisticalSummary(data, -1, abnormal_list=self.missing_value_list)
@@ -177,8 +182,7 @@ class Imputer(object):
         else:
             raise ValueError("Unknown replace area {} in Imputer".format(replace_area))
 
-        transform_data = data.mapValues(f)
-        return transform_data
+        return data.mapValues(f)
 
     @staticmethod
     def __get_impute_number(some_data):

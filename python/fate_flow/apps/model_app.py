@@ -87,6 +87,7 @@ def load_model():
         if role_name == 'arbiter':
             continue
         load_status_info[role_name] = load_status_info.get(role_name, {})
+        load_status_info['detail'][role_name] = {}
         for _party_id in role_partys:
             request_config['local'] = {'role': role_name, 'party_id': _party_id}
             try:
@@ -99,7 +100,6 @@ def load_model():
                                          json_body=request_config,
                                          federated_mode=request_config['job_parameters']['federated_mode'])
                 load_status_info[role_name][_party_id] = response['retcode']
-                load_status_info['detail'][role_name] = {}
                 detail = {_party_id: {}}
                 detail[_party_id]['retcode'] = response['retcode']
                 detail[_party_id]['retmsg'] = response['retmsg']
@@ -150,23 +150,18 @@ def migrate_model_process():
     res_dict = {}
 
     for role_name, role_partys in request_config.get("migrate_role").items():
-        # if role_name == 'arbiter':
-        #     continue
         for offset, party_id in enumerate(role_partys):
             local_res = deepcopy(local_template)
             local_res["role"] = role_name
             local_res["party_id"] = request_config.get("role").get(role_name)[offset]
             local_res["migrate_party_id"] = party_id
-            # res_dict[party_id] = local_res
             if not res_dict.get(role_name):
                 res_dict[role_name] = {}
             res_dict[role_name][local_res["party_id"]] = local_res
 
-    # for role_name, role_partys in request_config.get("migrate_role").items():
     for role_name, role_partys in request_config.get("execute_party").items():
-        # if role_name == 'arbiter':
-        #     continue
         migrate_status_info[role_name] = migrate_status_info.get(role_name, {})
+        migrate_status_info['detail'][role_name] = {}
         for party_id in role_partys:
             request_config["local"] = res_dict.get(role_name).get(party_id)
             try:
@@ -179,7 +174,6 @@ def migrate_model_process():
                                          json_body=request_config,
                                          federated_mode=request_config['job_parameters']['federated_mode'])
                 migrate_status_info[role_name][party_id] = response['retcode']
-                migrate_status_info['detail'][role_name] = {}
                 detail = {party_id: {}}
                 detail[party_id]['retcode'] = response['retcode']
                 detail[party_id]['retmsg'] = response['retmsg']
@@ -316,26 +310,31 @@ def operate_model(model_operation):
                     raise Exception("party id {} is not in model roles, please check if the party id is valid.")
                 try:
                     with DB.connection_context():
-                        MLModel.create(
-                            f_role=request_config["role"],
-                            f_party_id=request_config["party_id"],
-                            f_roles=train_runtime_conf["role"],
-                            f_job_id=train_runtime_conf["job_parameters"]["model_version"],
-                            f_model_id=train_runtime_conf["job_parameters"]["model_id"],
-                            f_model_version=train_runtime_conf["job_parameters"]["model_version"],
-                            f_initiator_role=train_runtime_conf["initiator"]["role"],
-                            f_initiator_party_id=train_runtime_conf["initiator"]["party_id"],
-                            f_runtime_conf=train_runtime_conf,
-                            f_work_mode=train_runtime_conf["job_parameters"]["work_mode"],
-                            f_dsl=json_loads(pipeline.train_dsl),
-                            f_imported=1,
-                            f_job_status='complete'
+                        model = MLModel.get_or_none(
+                            MLModel.f_job_id == train_runtime_conf["job_parameters"]["model_version"],
+                            MLModel.f_role == request_config["role"]
                         )
+                        if not model:
+                            MLModel.create(
+                                f_role=request_config["role"],
+                                f_party_id=request_config["party_id"],
+                                f_roles=train_runtime_conf["role"],
+                                f_job_id=train_runtime_conf["job_parameters"]["model_version"],
+                                f_model_id=train_runtime_conf["job_parameters"]["model_id"],
+                                f_model_version=train_runtime_conf["job_parameters"]["model_version"],
+                                f_initiator_role=train_runtime_conf["initiator"]["role"],
+                                f_initiator_party_id=train_runtime_conf["initiator"]["party_id"],
+                                f_runtime_conf=train_runtime_conf,
+                                f_work_mode=train_runtime_conf["job_parameters"]["work_mode"],
+                                f_dsl=json_loads(pipeline.train_dsl),
+                                f_imported=1,
+                                f_job_status='complete'
+                            )
+                        else:
+                            stat_logger.info(f'job id: {train_runtime_conf["job_parameters"]["model_version"]}, '
+                                             f'role: {request_config["role"]} model info already existed in database.')
                 except peewee.IntegrityError as e:
-                    if "1062" in str(e):
-                        pass
-                    else:
-                        stat_logger.exception(e)
+                    stat_logger.exception(e)
                 operation_record(request_config, "import", "success")
                 return get_json_result()
             except Exception:

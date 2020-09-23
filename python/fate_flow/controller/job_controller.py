@@ -58,6 +58,7 @@ class JobController(object):
         job_info["is_initiator"] = is_initiator
         job_info["progress"] = 0
         cls.get_job_engines_address(job_parameters=job_parameters)
+        cls.special_role_parameters(role=role, job_parameters=job_parameters)
         runtime_conf["job_parameters"] = job_parameters.to_dict()
 
         JobSaver.create_job(job_info=job_info)
@@ -78,6 +79,13 @@ class JobController(object):
         job_parameters.engines_address[EngineType.FEDERATION] = backend_info.f_engine_address
         backend_info = ResourceManager.get_backend_registration_info(engine_type=EngineType.STORAGE, engine_name=job_parameters.storage_engine)
         job_parameters.engines_address[EngineType.STORAGE] = backend_info.f_engine_address
+
+    @classmethod
+    def special_role_parameters(cls, role, job_parameters: RunParameters):
+        if role == "arbiter":
+            job_parameters.task_nodes = 1
+            job_parameters.task_parallelism = 1
+            job_parameters.task_cores_per_node = 1
 
     @classmethod
     def initialize_tasks(cls, job_id, role, party_id, run_on, job_initiator, job_parameters: RunParameters, dsl_parser, component_name=None, task_version=None):
@@ -166,14 +174,10 @@ class JobController(object):
 
     @classmethod
     def apply_resource(cls, job_id, role, party_id):
-        if role == "arbiter":
-            return True
         return ResourceManager.apply_for_job_resource(job_id=job_id, role=role, party_id=party_id)
 
     @classmethod
     def return_resource(cls, job_id, role, party_id):
-        if role == "arbiter":
-            return True
         return ResourceManager.return_job_resource(job_id=job_id, role=role, party_id=party_id)
 
     @classmethod

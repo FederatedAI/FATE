@@ -66,13 +66,15 @@ class TaskScheduler(object):
                 if status_code == SchedulingStatusCode.NO_RESOURCE:
                     # Wait for the next round of scheduling
                     break
+                elif status_code == SchedulingStatusCode.FAILED:
+                    scheduling_status_code = SchedulingStatusCode.FAILED
+                    break
         schedule_logger(job_id=job.f_job_id).info("finish scheduling job {} tasks".format(job.f_job_id))
         return scheduling_status_code, initiator_tasks_group.values()
 
     @classmethod
     def start_task(cls, job, task):
         schedule_logger(job_id=task.f_job_id).info("try to start job {} task {} {} on {} {}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_role, task.f_party_id))
-        # TODO: apply for job resource
         apply_status = ResourceManager.apply_for_task_resource(task_info=task.to_human_model_dict(only_primary_with=["status"]))
         if not apply_status:
             return SchedulingStatusCode.NO_RESOURCE
@@ -87,11 +89,12 @@ class TaskScheduler(object):
             return SchedulingStatusCode.PASS
         schedule_logger(job_id=task.f_job_id).info("start job {} task {} {} on {} {}".format(task.f_job_id, task.f_task_id, task.f_task_version, task.f_role, task.f_party_id))
         task_parameters = {}
-        #extra_task_parameters = TaskScheduler.align_task_parameters(job_id, job_parameters, job_initiator, job_args, component, task_id)
-        #task_parameters.update(extra_task_parameters)
         task_parameters.update(job.f_runtime_conf["job_parameters"])
-        FederatedScheduler.start_task(job=job, task=task, task_parameters=task_parameters)
-        return SchedulingStatusCode.SUCCESS
+        status_code, response = FederatedScheduler.start_task(job=job, task=task, task_parameters=task_parameters)
+        if status_code == FederatedSchedulingStatusCode.SUCCESS:
+            return SchedulingStatusCode.SUCCESS
+        else:
+            return SchedulingStatusCode.FAILED
 
     @classmethod
     def collect_task_of_all_party(cls, job, task):

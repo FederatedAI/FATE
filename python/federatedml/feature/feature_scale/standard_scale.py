@@ -14,6 +14,7 @@
 #  limitations under the License.
 #
 
+import copy
 import functools
 
 import numpy as np
@@ -55,9 +56,11 @@ class StandardScale(BaseScale):
                 value = column_lower[i]
 
             features[i] = (value - mean[i]) / std[i]
-        data.features = features
 
-        return data
+        _data = copy.deepcopy(data)
+        _data.features = features
+
+        return _data
 
     @staticmethod
     def __scale(data, mean, std, process_cols_list):
@@ -65,8 +68,9 @@ class StandardScale(BaseScale):
         for i in process_cols_list:
             features[i] = (data.features[i] - mean[i]) / std[i]
 
-        data.features = features
-        return data
+        _data = copy.deepcopy(data)
+        _data.features = features
+        return _data
 
     def fit(self, data):
         """
