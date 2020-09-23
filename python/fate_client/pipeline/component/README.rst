@@ -1,7 +1,7 @@
 Components
 ==========
 
-Each ``Component`` wraps a `FederatedML <../../python/federatedml/README.rst>`__ ``Module``.
+Each ``Component`` wraps a `FederatedML <../../../federatedml>`__ ``Module``.
 ``Module`` implement machine learning algorithms on federated learning,
 while ``Component`` provide convenient interface for easy model building.
 
@@ -29,7 +29,7 @@ Here is an example to access a component's input:
 Output
 ~~~~~~
 
-Similar to ``Input``, ``Output`` encapsulates output ``data`` and ``model`` of component
+Same as ``Input``, ``Output`` encapsulates output ``data`` and ``model`` of component
 in a FATE job. Not all components have both classes of outputs.
 For information on each components' output, check the `list <#component-list>`_ below.
 
@@ -47,7 +47,7 @@ Data
 ~~~~
 
 In most cases, data sets are wrapped into ``data`` when being passed
-between modules. For instance, in the `mini demo <../demo/pipeline-mini-demo.py>`_, data output of
+between modules. For instance, in the `mini demo <../demo/pipeline-mini-demo.py>`__, data output of
 ``dataio_0`` is set as data input to ``intersection_0``.
 
 .. code:: python
@@ -55,26 +55,51 @@ between modules. For instance, in the `mini demo <../demo/pipeline-mini-demo.py>
    pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
 
 For data sets used in different modeling stages (e.g., train & validate)
-of the same component, additional keywords ``train_data``,
-``validate_data`` and ``test_data`` are used to distinguish data sets.
-Also from mini `mini demo <../demo/pipeline-mini-demo.py>`_, result from
+of the same component, additional keywords ``train_data`` and
+``validate_data`` are used to distinguish data sets.
+Also from `mini demo <../demo/pipeline-mini-demo.py>`__, result from
 ``intersection_0`` and ``intersection_1`` are set as train and validate data
-input to hetero logistic regression component, respectively.
+of hetero logistic regression, respectively.
 
 .. code:: python
 
    pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data,
                                                  validate_data=intersection_1.output.data))
 
-Another case of using keywords ``train_data``, ``validate_data``, and
-``test_data`` is to use data output from ``DataSplit`` module, which always has three data outputs:
+Another case of using keywords ``train_data`` and ``validate_data`` is to use
+data output from ``DataSplit`` module, which always has three data outputs:
 ``train_data``, ``validate_data``, and ``test_data``.
 
 .. code:: python
 
-   pipeline.add_component(hetero_linr_1,
-                          data=Data(test_data=hetero_data_split_0.output.data.test_data),
-                          model=Model(model=hetero_linr_0))
+   pipeline.add_component(hetero_lr_0,
+                          data=Data(train_data=hetero_data_split_0.output.data.train_data))
+
+A special data type is ``predict_input``. ``predict_input`` is only used for specifying
+data input when running prediction task.
+
+Here is an example of running prediction by loading a model from the same job:
+
+.. code:: python
+
+   pipeline.add_component(hetero_lr_1,
+                          data=Data(predict_input=hetero_data_split_0.output.data.test_data),
+                          model=Model(model=hetero_lr_0))
+
+To use new data for prediction task with pre-trained model from a fitted job,
+data source needs to be updated in prediction job. Below is an example from
+`mini demo <../demo/pipeline-mini-demo.py>`__, where data input of original
+`dataio_0` component is set to be the new data from `reader_2`.
+
+.. code:: python
+
+    reader_2 = Reader(name="reader_2")
+    reader_2.get_party_instance(role="guest", party_id=guest).algorithm_param(table=guest_eval_data)
+    reader_2.get_party_instance(role="host", party_id=host).algorithm_param(table=host_eval_data)
+    # add data reader onto predict pipeline
+    predict_pipeline.add_component(reader_2)
+    predict_pipeline.add_component(pipeline,
+                                   data=Data(predict_input={pipeline.dataio_0.input.data: reader_2.output.data}))
 
 
 Below lists all five types of ``data`` and whether ``Input`` and ``Output`` include them.
@@ -108,7 +133,7 @@ Below lists all five types of ``data`` and whether ``Input`` and ``Output`` incl
      - Yes
      - output of ``DataSplit`` component
 
-   * - predict_data
+   * - predict_input
      - Yes
      - No
      - model prediction
@@ -284,7 +309,7 @@ Below lists input and output elements of each component.
    * - `Hetero-LR`_
      - HeteroLR
      - Build hetero logistic regression module through multiple parties.
-     - train_data; validate_data; predict_data
+     - train_data; validate_data; predict_input
      - data
      - model
      - model
@@ -292,7 +317,7 @@ Below lists input and output elements of each component.
    * - `Local Baseline`_
      - LocalBaseline
      - Wrapper that runs sklearn Logistic Regression model with local data.
-     - train_data; validate_data; predict_data
+     - train_data; validate_data; predict_input
      - data
      - None
      - None
@@ -300,7 +325,7 @@ Below lists input and output elements of each component.
    * - `Hetero-LinR`_
      - HeteroLinR
      - Build hetero linear regression module through multiple parties.
-     - train_data; validate_data; predict_data
+     - train_data; validate_data; predict_input
      - data
      - model
      - model
@@ -308,7 +333,7 @@ Below lists input and output elements of each component.
    * - `Hetero-Poisson`_
      - HeteroPoisson
      - Build hetero poisson regression module through multiple parties.
-     - train_data; validate_data; predict_data
+     - train_data; validate_data; predict_input
      - data
      - model
      - model
@@ -316,7 +341,7 @@ Below lists input and output elements of each component.
    * - `Homo-LR`_
      - HomoLR
      - Build homo logistic regression module through multiple parties.
-     - train_data; validate_data; predict_data
+     - train_data; validate_data; predict_input
      - data
      - model
      - model
@@ -324,7 +349,7 @@ Below lists input and output elements of each component.
    * - `Homo-NN`_
      - HomoNN
      - Build homo neural network module through multiple parties.
-     - train_data; validate_data; predict_data
+     - train_data; validate_data; predict_input
      - data
      - model
      - model
@@ -332,7 +357,7 @@ Below lists input and output elements of each component.
    * - `Hetero Secure Boosting`_
      - HeteroSecureBoost
      - Build hetero secure boosting module through multiple parties
-     - train_data; validate_data; predict_data
+     - train_data; validate_data; predict_input
      - data
      - model
      - model
@@ -356,7 +381,7 @@ Below lists input and output elements of each component.
    * - `Hetero-NN`_
      - HeteroNN
      - Build hetero neural network module.
-     - train_data; validate_data; predict_data
+     - train_data; validate_data; predict_input
      - data
      - model
      - model
@@ -364,7 +389,7 @@ Below lists input and output elements of each component.
    * - `Homo Secure Boosting`_
      - HomoSecureBoost
      - Build homo secure boosting module through multiple parties
-     - train_data; validate_data; predict_data
+     - train_data; validate_data; predict_input
      - data
      - model
      - model

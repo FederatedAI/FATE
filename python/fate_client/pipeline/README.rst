@@ -179,7 +179,7 @@ Query on Tasks
 
 FATE Pipeline provides API to query component information,
 including data, model, and metrics. All query API have matching name to
-`FlowPy <../fate_sdk>`__, while Pipeline retrieves and returns
+`FlowPy <../flow_sdk>`__, while Pipeline retrieves and returns
 query result directly to user.
 
 .. code:: python
