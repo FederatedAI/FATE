@@ -59,7 +59,7 @@ class Variable(object):
                 raise RuntimeError(f"Variable {name} auth error, "
                                    f"acquired: src={src}, dst={dst}, allowed: src={auth_src}, dst={auth_dst}")
 
-        assert len(name.split("$")) == 3, "incorrect name format, should be `module_name$class_name$variable_name`"
+        assert len(name.split(".")) >= 3, "incorrect name format, should be `module_name.class_name.variable_name`"
         self._name = name
         self._src = src
         self._dst = dst
@@ -70,9 +70,9 @@ class Variable(object):
 
     @staticmethod
     def _get_short_name(name):
-        fix_size = hashlib.blake2b(name.encode('utf-8'), digest_size=10).hexdigest()
-        _, right = name.split('$', 1)
-        return f"hash_${fix_size}_${right}"
+        fix_sized = hashlib.blake2b(name.encode('utf-8'), digest_size=10).hexdigest()
+        _, right = name.rsplit('.', 1)
+        return f"hash.{fix_sized}.{right}"
 
     # copy never create a new instance
     def __copy__(self):
@@ -214,7 +214,7 @@ class BaseTransferVariables(object):
         FederationTagNamespace.set_namespace(str(flowid))
 
     def _create_variable(self, name: str, src: typing.Iterable[str], dst: typing.Iterable[str]) -> Variable:
-        full_name = f"{self.__module__}${self.__class__.__name__}${name}"
+        full_name = f"{self.__module__}.{self.__class__.__name__}.{name}"
         return Variable.get_or_create(full_name, lambda: Variable(name=full_name, src=tuple(src), dst=tuple(dst)))
 
     @staticmethod

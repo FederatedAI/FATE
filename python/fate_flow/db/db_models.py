@@ -335,7 +335,7 @@ class ModelOperationLog(DataBaseModel):
         db_table = "t_model_operation_log"
 
 
-class BackendRegistry(DataBaseModel):
+class EngineRegistry(DataBaseModel):
     f_engine_name = CharField(max_length=50, index=True)
     f_engine_type = CharField(max_length=10, index=True)
     f_engine_address = JSONField()
@@ -348,7 +348,7 @@ class BackendRegistry(DataBaseModel):
     f_update_time = BigIntegerField(null=True)
 
     class Meta:
-        db_table = "t_backend_registry"
+        db_table = "t_engine_registry"
         primary_key = CompositeKey('f_engine_name', 'f_engine_type')
 
 
