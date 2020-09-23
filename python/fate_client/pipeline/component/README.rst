@@ -5,8 +5,8 @@ Each ``Component`` wraps a `FederatedML <../../../federatedml>`__ ``Module``.
 ``Module`` implement machine learning algorithms on federated learning,
 while ``Component`` provide convenient interface for easy model building.
 
-Input & Output
---------------
+Interface
+---------
 
 Input
 ~~~~~
@@ -40,8 +40,10 @@ Here is an example to access a component's output:
    from pipeline.component import DataIO
    dataio_0 = DataIO(name="dataio_0")
    output_all = dataio_0.output
-   input_data = dataio_0.output.data
-   input_model = dataio_0.output.model
+   output_data = dataio_0.output.data
+   output_model = dataio_0.output.model
+
+Meanwhile, to download components' output table or model, please use `task info <task-info>`_ interface.
 
 Data
 ~~~~
@@ -216,6 +218,23 @@ Parameters of underlying module can be set for all job participants or per indiv
    guest_dataio_0.algorithm_param(with_label=True)
    # directly set host dataio_0 component parameters
    dataio_0.get_party_instance(role='host', party_id=10000).algorithm_param(with_label=False)
+
+Task Info
+~~~~~~~~~
+
+Output data and model information of ``Components`` can be retrieved with
+Pipeline task info API. Currently Pipeline support these four inquiries on components:
+
+1. get_output_data: returns downloaded output data; use parameter `limits` to limit output lines
+2. get_output_data_table: returns output data table information(including table name and namespace)
+3. get_model_param: returns fitted model parameters
+4. get_summary: returns model summary
+
+To extract output of a component, the component needs to be first obtained from pipeline:
+
+.. code:: python
+
+   print (pipeline.get_component("dataio_0").get_output_data(limits=10))
 
 Component List
 --------------

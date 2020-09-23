@@ -88,8 +88,6 @@ reference its ``input`` attribute:
 .. code:: python
 
    input_all = dataio_0.input
-   input_data = dataio_0.input.data
-   input_model = dataio_0.input.model
 
 Output
 ~~~~~~
@@ -101,8 +99,6 @@ reference its ``output`` attribute:
 .. code:: python
 
    output_all = dataio_0.output
-   output_data = dataio_0.output.data
-   output_model = dataio_0.output.model
 
 Data
 ~~~~
