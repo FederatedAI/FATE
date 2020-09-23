@@ -223,7 +223,7 @@ Task Info
 ~~~~~~~~~
 
 Output data and model information of ``Components`` can be retrieved with
-Pipeline task info API. Currently Pipeline support these four inquiries on components:
+Pipeline task info API. Currently Pipeline support these four requests on components:
 
 1. get_output_data: returns downloaded output data; use parameter `limits` to limit output lines
 2. get_output_data_table: returns output data table information(including table name and namespace)
