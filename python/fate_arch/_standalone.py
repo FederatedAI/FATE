@@ -410,29 +410,34 @@ class Federation(object):
 
     # noinspection PyUnusedLocal
     def remote(self, v, name: str, tag: str, parties: typing.List[Party]):
-        log_str = f"federation.remote(name={name}, tag={tag}, parties={parties})"
+        log_str = f"federation.standalone.remote.{name}.{tag}"
 
-        assert v is not None, \
-            f"[{log_str}]remote `None`"
+        if v is None:
+            raise ValueError(f"[{log_str}]remote `None` to {parties}")
         LOGGER.debug(f"[{log_str}]remote data, type={type(v)}")
 
         if isinstance(v, Table):
+            LOGGER.debug(f"[{log_str}]remote "
+                         f"Table(namespace={v.namespace}, name={v.name}, partitions={v.partitions})")
             # noinspection PyProtectedMember
-            v = v.save_as(name=str(uuid.uuid1()), namespace=v._namespace, need_cleanup=False)
+            saved_name = str(uuid.uuid1())
+            LOGGER.debug(f"[{log_str}]save Table(namespace={v.namespace}, name={v.name}, partitions={v.partitions}) as "
+                         f"Table(namespace={v.namespace}, name={saved_name}, partitions={v.partitions})")
+            v = v.save_as(name=saved_name, namespace=v.namespace, need_cleanup=False)
+        else:
+            LOGGER.debug(f"[{log_str}]remote object with type: {type(v)}")
 
         for party in parties:
             _tagged_key = self._federation_object_key(name, tag, self._party, party)
             if isinstance(v, Table):
-                # noinspection PyProtectedMember
-                self._put_status(party, _tagged_key, (v._name, v._namespace))
+                self._put_status(party, _tagged_key, (v.name, v.namespace))
             else:
                 self._put_object(party, _tagged_key, v)
                 self._put_status(party, _tagged_key, _tagged_key)
-            LOGGER.debug("[REMOTE] Sent {}".format(_tagged_key))
 
     # noinspection PyProtectedMember
     def get(self, name: str, tag: str, parties: typing.List[Party]) -> typing.List:
-        log_str = f"federation.get(name={name}, tag={tag}, party={parties})"
+        log_str = f"federation.standalone.get.{name}.{tag}"
         LOGGER.debug(f"[{log_str}]")
         tasks = []
 
@@ -443,18 +448,19 @@ class Federation(object):
 
         rtn = []
         for r in results:
-            LOGGER.debug(f"[GET] {self._party} getting {r} from {parties}")
-
             if isinstance(r, tuple):
                 # noinspection PyTypeChecker
                 table: Table = _load_table(session=self._session, name=r[0], namespace=r[1], need_cleanup=True)
                 rtn.append(table)
+                LOGGER.debug(f"[{log_str}] got "
+                             f"Table(namespace={table.namespace}, name={table.name}, partitions={table.partitions})")
             else:
                 obj = self._get_object(r)
                 if obj is None:
                     raise EnvironmentError(f"federation get None from {parties} with name {name}, tag {tag}")
                 rtn.append(obj)
                 self._federation_object_table.delete(k=r)
+                LOGGER.debug(f"[{log_str}] got object with type: {type(obj)}")
             self._federation_status_table.delete(r)
         return rtn
 
