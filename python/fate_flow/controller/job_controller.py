@@ -81,7 +81,7 @@ class JobController(object):
             (EngineType.STORAGE, job_parameters.storage_engine)
         ]
         for engine_type, engine_name in engine_list:
-            engine_info = ResourceManager.get_backend_registration_info(engine_type=engine_type, engine_name=engine_name)
+            engine_info = ResourceManager.get_engine_registration_info(engine_type=engine_type, engine_name=engine_name)
             job_parameters.engines_address[engine_type] = engine_info.f_engine_address
             engines_info[engine_type] = engine_info
         return engines_info
