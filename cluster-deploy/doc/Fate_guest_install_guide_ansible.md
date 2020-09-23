@@ -224,7 +224,7 @@ echo '/data/swapfile128G swap swap defaults 0 0' >> /etc/fstab
 
 ```
 #安装基础依赖包
-yum install -y gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake libtool libffi-devel 
+yum install -y gcc gcc-c++ make openssl-devel gmp-devel mpfr-devel libmpc-devel libaio numactl autoconf automake
 #如果有报错，需要解决yum源问题。
 
 #安装ansible和进程管理依赖包
@@ -418,15 +418,14 @@ guest:
       egg: 2 ---任务运行时默认每个nodemanager节点启动的并发计算进程数，默认即可。
     fate_flow:
       enable: True ---是否部署fate_flow模块，True为部署，False为否
-      type: install ---install是新安装；update则是升级，从低版本升级到当前版本；
       ips:  ---只支持部署一台主机
       - 192.168.0.1
       grpcPort: 9360  ---服务grpc端口
       httpPort: 9380  ---服务http端口
       dbname: "fate_flow"  ---fate_flow服务使用的数据库名称，默认即可
+      core_per_node: 20
     fateboard:
       enable: True ---是否部署fateboard模块，True为部署，False为否
-      type: install ---install是新安装；update则是升级，从低版本升级到当前版本；
       ips:  ---只支持部署一台主机
       - 192.168.0.1
       port: 8080 ---服务端口
@@ -532,8 +531,8 @@ sh service.sh start fate-fateflow
 1）192.168.0.1上执行，guest_partyid和host_partyid都设为9999：
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/toy_example/
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/toy_example/
 python run_toy_example.py 9999 9999 1
 ```
 
@@ -548,8 +547,8 @@ python run_toy_example.py 9999 9999 1
 需要和webank沟通获取host端partyid，选定本端9999为guest方，在192.168.0.1上执行：
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/toy_example/
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/toy_example/
 python run_toy_example.py 9999 ${host_partyid} 1
 ```
 
@@ -565,8 +564,8 @@ python run_toy_example.py 9999 ${host_partyid} 1
 分别在192.168.0.1上执行：
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/scripts/
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/scripts/
 python upload_default_data.py -m 1
 ```
 
@@ -581,8 +580,8 @@ python upload_default_data.py -m 1
 选定本端9999为guest方，在192.168.0.1上执行：
 
 ```
-source /data/projects/fate/init_env.sh
-cd /data/projects/fate/python/examples/min_test_task/
+source /data/projects/fate/bin/init_env.sh
+cd /data/projects/fate/examples/min_test_task/
 python run_task.py -m 1 -gid 9999 -hid ${host_partyid} -aid ${host_partyid} -f fast
 ```
 
