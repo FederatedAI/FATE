@@ -14,8 +14,14 @@
 #  limitations under the License.
 #
 
+import sys
+import os
 import argparse
 from enum import Enum
+
+additional_path = os.path.realpath('../')
+if additional_path not in sys.path:
+    sys.path.append(additional_path)
 
 
 class HomoNNExample(Enum):
@@ -47,17 +53,17 @@ if __name__ == '__main__':
     example: HomoNNExample = args.example
 
     if example == HomoNNExample.SINGLE_LAYER:
-        from examples.pipeline.homo_nn.pipeline_homo_nn_single_layer import main
+        from homo_nn.pipeline_homo_nn_single_layer import main
 
         main(**kwargs)
 
     elif example == HomoNNExample.MULTI_LAYER:
-        from examples.pipeline.homo_nn.pipeline_homo_nn_multy_layer import main
+        from homo_nn.pipeline_homo_nn_multy_layer import main
 
         main(**kwargs)
 
     elif example == HomoNNExample.MULTI_LABEL:
-        from examples.pipeline.homo_nn.pipeline_homo_nn_multy_label import main
+        from homo_nn.pipeline_homo_nn_multy_label import main
 
         main(**kwargs)
 

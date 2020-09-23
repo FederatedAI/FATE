@@ -13,12 +13,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import os
+import sys
 
+from pipeline.component.homo_nn import HomoNN
 from tensorflow.keras import optimizers
 from tensorflow.keras.layers import Dense
 
-from examples.pipeline.homo_nn._common_component import run_homo_nn_pipeline, dataset
-from pipeline.component.homo_nn import HomoNN
+additional_path = os.path.realpath('../')
+if additional_path not in sys.path:
+    sys.path.append(additional_path)
+
+from homo_nn._common_component import run_homo_nn_pipeline, dataset
 
 
 def main(config="../../config.yaml", namespace=""):
