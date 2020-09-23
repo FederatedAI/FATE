@@ -193,7 +193,7 @@ Component List
 
 Below lists input and output elements of each component.
 
-.. list-table:: Algorithm
+.. list-table:: Component
    :widths: 10 10 40 10 10 10 10
    :header-rows: 1
 
