@@ -2,8 +2,8 @@ Components
 ==========
 
 Each ``Component`` wraps a `FederatedML <../../../federatedml>`__ ``Module``.
-``Module`` implement machine learning algorithms on federated learning,
-while ``Component`` provide convenient interface for easy model building.
+``Modules`` implement machine learning algorithms on federated learning,
+while ``Components`` provide convenient interface for easy model building.
 
 Interface
 ---------
@@ -192,9 +192,11 @@ important features.
                           data=Data(data=intersection_0.output.data),
                           isometric_model=Model(hetero_feature_binning_0.output.model))
 
-Please note that when using `stepwise` or `cross validation` method, components do
-not have ``model`` output. For information on valid data
-types of each components, check the `list <#component-list>`_ below.
+.. warning::
+
+   Please note that when using `stepwise` or `cross validation` method, components do
+   not have ``model`` output. For information on valid data
+   types of each components, check the `list <#component-list>`_ below.
 
 Parameter
 ~~~~~~~~~
