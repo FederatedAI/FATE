@@ -51,12 +51,12 @@ fi
 
 init() {
     cd ${fatepath}
-    cp -r  bin conf example fate.env python RELEASE.md   ${basepath}
+    cp -r  bin conf examples fate.env python RELEASE.md   ${basepath}
     cd ${basepath}
     sed -i "s#work_mode: 1#work_mode: 0#g" ${basepath}/conf/service_conf.yaml
     #sed -i.bak "s#^MarkupSafe==.*#MarkupSafe==1.1.1#g" ${basepath}/python/requirements.txt
-    tar -cf ./docker/python/fate.tar bin conf example fate.env python RELEASE.md
-    rm -rf bin conf example fate.env python RELEASE.md
+    tar -cf ./docker/python/fate.tar bin conf examples fate.env python RELEASE.md
+    rm -rf bin conf examples fate.env python RELEASE.md
 
     cd ${fatepath}/fateboard
     mvn clean package
