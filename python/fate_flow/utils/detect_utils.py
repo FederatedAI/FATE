@@ -30,4 +30,9 @@ def check_config(config: typing.Dict, required_arguments: typing.List):
         elif require_argument not in config:
             no_arguments.append(require_argument)
     if no_arguments or error_arguments:
-        raise Exception('the following arguments are required: {} {}'.format(','.join(no_arguments), ','.join(['{}={}'.format(a[0], a[1]) for a in error_arguments])))
+        error_string = ""
+        if no_arguments:
+            error_string += "required parameters are missing: {};".format(",".join(no_arguments))
+        if error_arguments:
+            error_string += "required parameter values: {}".format(",".join(["{}={}".format(a[0], a[1]) for a in error_arguments]))
+        raise Exception(error_string)

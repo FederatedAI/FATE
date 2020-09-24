@@ -4,7 +4,6 @@ import uuid
 
 from fate_arch.abc import CSessionABC, FederationABC, CTableABC
 from fate_arch.common import Backend, WorkMode
-from fate_arch.common.file_utils import load_json_conf
 from fate_arch.computing import ComputingEngine
 from fate_arch.federation import FederationEngine
 from fate_arch.session._parties import PartiesInfo

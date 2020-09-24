@@ -18,13 +18,27 @@
 
 PROJECT_BASE=$(cd "$(dirname "$0")";cd ../;cd ../;pwd)
 echo "PROJECT_BASE: "${PROJECT_BASE}
-source ${PROJECT_BASE}/bin/init_env.sh
-echo "PYTHONPATH: "${PYTHONPATH}
-echo "EGGROLL_HOME: "${EGGROLL_HOME}
-echo "SPARK_HOME: "${SPARK_HOME}
+
+# source init_env.sh
+INI_ENV_SCRIPT=${PROJECT_BASE}/bin/init_env.sh
+if test -f "${INI_ENV_SCRIPT}"; then
+  # source ${PROJECT_BASE}/bin/init_env.sh
+  echo "PYTHONPATH: "${PYTHONPATH}
+  echo "EGGROLL_HOME: "${EGGROLL_HOME}
+  echo "SPARK_HOME: "${SPARK_HOME}
+else
+  echo "file not found: ${INI_ENV_SCRIPT}"
+  exit
+fi
+
 log_dir=${PROJECT_BASE}/logs
 
 module=fate_flow_server.py
+
+
+parse_yaml_python() {
+  python -c "from ruamel import yaml; yaml.load()"h
+}
 
 parse_yaml() {
    local prefix=$2
@@ -44,10 +58,15 @@ parse_yaml() {
 
 getport() {
     service_conf_path=${PROJECT_BASE}/conf/service_conf.yaml
-    echo "service conf: ${service_conf_path}"
-    eval $(parse_yaml ${service_conf_path} "service_config_")
-    echo "fate flow http port: ${service_config_fateflow_http_port}, grpc port: ${service_config_fateflow_grpc_port}"
-    echo
+    if test -f "${service_conf_path}"; then
+      echo "found service conf: ${service_conf_path}"
+      eval $(parse_yaml ${service_conf_path} "service_config_")
+      echo "fate flow http port: ${service_config_fateflow_http_port}, grpc port: ${service_config_fateflow_grpc_port}"
+      echo
+    else
+      echo "service conf not found: ${service_conf_path}"
+      exit
+    fi
 }
 
 getport

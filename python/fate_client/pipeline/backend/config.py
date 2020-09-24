@@ -62,10 +62,12 @@ class FlowConfig(object):
     conf = get_default_config()
     IP = conf.get("ip", None)
     if IP is None:
-        raise ValueError(f"IP not configured. Please use command line tool pipeline config or modify config.yaml")
+        raise ValueError(f"IP not configured. "
+                         f"Please use command line tool pipeline config or modify setting file pipeline/config.yaml")
     PORT = conf.get("port", None)
     if PORT is None:
-        raise ValueError(f"PORT not configured. Please use command line tool pipeline config or modify config.yaml")
+        raise ValueError(f"PORT not configured. "
+                         f"Please use command line tool pipeline config or modify setting file pipeline/config.yaml")
 
 
 class LogPath(object):
@@ -73,7 +75,7 @@ class LogPath(object):
     def log_directory(cls):
         conf = get_default_config()
         # log_directory = os.environ.get("FATE_PIPELINE_LOG", "")
-        log_directory = conf.get("log_directory", "")
+        log_directory = conf.get("log_directory")
         if log_directory:
             log_directory = Path(log_directory).resolve()
         else:
@@ -82,6 +84,8 @@ class LogPath(object):
             log_directory.mkdir(parents=True, exist_ok=True)
         except Exception as e:
             raise RuntimeError(f"can't create log directory for pipeline: {log_directory}") from e
+        if not Path(log_directory).resolve().is_dir():
+            raise NotADirectoryError(f"provided log directory {log_directory} is not a directory.")
         return log_directory
 
     DEBUG = 'DEBUG.log'

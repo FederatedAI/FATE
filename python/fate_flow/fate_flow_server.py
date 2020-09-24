@@ -40,7 +40,7 @@ from fate_flow.scheduling_apps.party_app import manager as party_app_manager
 from fate_flow.scheduling_apps.tracker_app import manager as tracker_app_manager
 from fate_flow.db.db_models import init_database_tables as init_flow_db
 from fate_arch.storage.metastore.db_models import init_database_tables as init_arch_db
-from fate_flow.scheduler import AnomalyDetector
+from fate_flow.scheduler import Detector
 from fate_flow.scheduler import DAGScheduler
 from fate_flow.entity.runtime_config import RuntimeConfig
 from fate_flow.entity.types import ProcessRole
@@ -99,7 +99,7 @@ if __name__ == '__main__':
     PrivilegeAuth.init()
     ServiceUtils.register()
     ResourceManager.initialize()
-    AnomalyDetector(interval=5 * 1000).start()
+    Detector(interval=5 * 1000).start()
     DAGScheduler(interval=2 * 1000).start()
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),
                          options=[(cygrpc.ChannelArgKey.max_send_message_length, -1),

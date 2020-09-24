@@ -16,7 +16,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from arch.api.utils import log_utils
+from fate_arch.common import log
 from federatedml.model_base import ModelBase
 from federatedml.param.hetero_kmeans_param import KmeansParam
 from federatedml.protobuf.generated import hetero_kmeans_meta_pb2, hetero_kmeans_param_pb2
@@ -24,7 +24,7 @@ from federatedml.transfer_variable.transfer_class.hetero_kmeans_transfer_variabl
 from federatedml.util import abnormal_detection
 from federatedml.util import consts
 
-LOGGER = log_utils.getLogger()
+LOGGER = log.getLogger()
 
 
 class BaseKmeansModel(ModelBase):
@@ -35,6 +35,7 @@ class BaseKmeansModel(ModelBase):
         self.k = 0
         self.max_iter = 0
         self.tol = 0
+        self.random_stat = None
         self.iter = iter
         self.centroid_list = None
         self.cluster_result = None
@@ -54,6 +55,7 @@ class BaseKmeansModel(ModelBase):
         self.k = params.k
         self.max_iter = params.max_iter
         self.tol = params.tol
+        self.random_stat = params.random_stat
         # self.aggregator.register_aggregator(self.transfer_variable)
 
     def get_header(self, data_instances):

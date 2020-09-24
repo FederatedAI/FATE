@@ -25,7 +25,7 @@ from examples.test import submit
 
 
 def check_data_count(submitter, fate_home, table_name, namespace, expect_count):
-    fate_flow_path = os.path.join(fate_home, "../fate_flow/fate_flow_client.py")
+    fate_flow_path = os.path.join(fate_home, "../python/fate_flow/fate_flow_client.py")
     cmd = ["python", fate_flow_path, "-f", "table_info", "-t", table_name, "-n", namespace]
     stdout = submitter.run_cmd(cmd)
     try:
@@ -40,7 +40,7 @@ def check_data_count(submitter, fate_home, table_name, namespace, expect_count):
     print(f"[{time.strftime('%Y-%m-%d %X')}] check_data_out {stdout} \n")
 
 
-def data_upload(submitter, upload_config, check_interval, fate_home):
+def data_upload(submitter, upload_config, check_interval, fate_home, backend):
     # with open(file_name) as f:
     #     upload_config = json.loads(f.read())
 
@@ -52,6 +52,7 @@ def data_upload(submitter, upload_config, check_interval, fate_home):
                                   namespace=data["namespace"],
                                   name=data["table_name"],
                                   partition=data["partition"],
+                                  backend=backend,
                                   head=data["head"])
         print(f"[{time.strftime('%Y-%m-%d %X')}]upload done {format_msg}, job_id={job_id}\n")
         if job_id is None:
@@ -113,7 +114,7 @@ def main():
 
     upload_data = read_data(fate_home, config_file)
 
-    data_upload(submitter, upload_data, interval, fate_home)
+    data_upload(submitter, upload_data, interval, fate_home, backend=backend)
 
 
 if __name__ == "__main__":

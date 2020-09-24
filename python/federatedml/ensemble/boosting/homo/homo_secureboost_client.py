@@ -101,8 +101,8 @@ class HomoSecureBoostingTreeClient(HomoBoostingClient):
         return new_tree
 
     @staticmethod
-    def predict_helper(data, tree_list: List[HomoDecisionTreeClient], init_score, zero_as_missing, use_missing
-                       ,learning_rate, class_num=1):
+    def predict_helper(data, tree_list: List[HomoDecisionTreeClient], init_score, zero_as_missing, use_missing,
+                       learning_rate, class_num=1):
 
         weight_list = []
         for tree in tree_list:

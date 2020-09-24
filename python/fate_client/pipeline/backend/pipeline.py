@@ -95,6 +95,9 @@ class PipeLine(object):
     def get_predict_conf(self):
         return copy.deepcopy(self._predict_conf)
 
+    def get_upload_conf(self):
+        return copy.deepcopy(self._upload_conf)
+
     def _get_initiator_conf(self):
         if self._initiator is None:
             raise ValueError("Please set initiator of PipeLine")
@@ -421,7 +424,7 @@ class PipeLine(object):
         LOGGER.debug(f"in fit, _train_conf is: \n {json.dumps(self._train_conf)}")
         self._set_state("fit")
         training_conf = self._feed_job_parameters(self._train_conf, backend, work_mode)
-        # pprint.pprint(training_conf)
+        self._train_conf = training_conf
         LOGGER.debug(f"train_conf is: \n {json.dumps(training_conf, indent=4, ensure_ascii=False)}")
         self._train_job_id, detail_info = self._job_invoker.submit_job(self._train_dsl, training_conf)
         self._train_board_url = detail_info["board_url"]

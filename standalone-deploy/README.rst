@@ -88,7 +88,7 @@ possibility of encountering problems.
       success to calculate secure_sum, it is 2000.0
 
 There are a few algorithms under
-`examples <../examples/federatedml-1.x-examples>`__ folder, try them
+`examples <../examples/dsl/v2>`__ folder, try them
 out!
 
 You can also experience the fateboard access via a browser:
@@ -152,7 +152,7 @@ Http://hostip:8080.
         success to calculate secure_sum, it is 2000.0
 
 There are a few algorithms under
-`examples <../examples/federatedml-1.x-examples>`__ folder, try them out!
+`examples <../../examples/dsl/v2>`__ folder, try them out!
 
 You can also experience the fateboard access via a browser:
 Http://hostip:8080.

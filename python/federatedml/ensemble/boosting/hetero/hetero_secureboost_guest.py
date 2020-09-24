@@ -36,6 +36,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         self.predict_transfer_inst = HeteroSecureBoostTransferVariable()
 
     def _init_model(self, param: HeteroSecureBoostParam):
+
         super(HeteroSecureBoostingTreeGuest, self)._init_model(param)
         self.tree_param = param.tree_param
         self.use_missing = param.use_missing
@@ -209,9 +210,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         weights = np.array(weights)
         if multi_class_num > 2:
             weights = weights.reshape((-1, multi_class_num))
-            return np.sum(weights * learning_rate, axis=0) + init_score
-        else:
-            return float(np.sum(weights * learning_rate, axis=0) + init_score)
+        return np.sum(weights * learning_rate, axis=0) + init_score
 
     @staticmethod
     def get_predict_scores(leaf_pos, learning_rate, init_score, trees: List[HeteroDecisionTreeGuest]
@@ -327,7 +326,7 @@ class HeteroSecureBoostingTreeGuest(HeteroBoostingGuest):
         predict_rs = self.boosting_fast_predict(processed_data, trees=trees, predict_cache=predict_cache)
         self.predict_data_cache.add_data(cache_dataset_key, predict_rs)
 
-        return self.score_to_predict_result(data_inst, y_hat=predict_rs)
+        return self.score_to_predict_result(data_inst, predict_rs)
 
     def get_model_meta(self):
         model_meta = BoostingTreeModelMeta()

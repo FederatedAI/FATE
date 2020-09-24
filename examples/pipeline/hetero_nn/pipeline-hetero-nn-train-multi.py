@@ -17,23 +17,24 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.evaluation import Evaluation
-from pipeline.component.hetero_nn import HeteroNN
-from pipeline.component.intersection import Intersection
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
-from pipeline.interface.model import Model
+from pipeline.component import DataIO
+from pipeline.component import Evaluation
+from pipeline.component import HeteroNN
+from pipeline.component import Intersection
+from pipeline.component import Reader
+from pipeline.interface import Data
+from pipeline.interface import Model
 from tensorflow.keras import optimizers
+from tensorflow.keras import initializers
 from tensorflow.keras.layers import Dense
 
-from examples.util.config import Config
+from pipeline.utils.tools import load_job_config
 
 
 def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
-        config = Config.load(config)
+        config = load_job_config(config)
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
@@ -55,11 +56,14 @@ def main(config="../../config.yaml", namespace=""):
 
     intersection_0 = Intersection(name="intersection_0")
 
-    hetero_nn_0 = HeteroNN(name="hetero_nn_0", epochs=10)
-    hetero_nn_0.add_bottom_model(Dense(units=2, input_shape=(10,), activation="relu"))
-    hetero_nn_0.add_bottom_model(Dense(units=2, input_shape=(10,), activation="relu"))
-    hetero_nn_0.set_interactve_layer(Dense(units=2, input_shape=(2,)))
-    hetero_nn_0.add_top_model(Dense(units=4, input_shape=(2,), activation="softmax"))
+    hetero_nn_0 = HeteroNN(name="hetero_nn_0", epochs=100,
+                           interactive_layer_lr=0.15, batch_size=-1, early_stop="diff")
+    hetero_nn_0.add_bottom_model(Dense(units=3, input_shape=(10,), activation="relu",
+                                       kernel_initializer=initializers.Constant(value=1)))
+    hetero_nn_0.set_interactve_layer(Dense(units=2, input_shape=(2,),
+                                           kernel_initializer=initializers.Constant(value=1)))
+    hetero_nn_0.add_top_model(Dense(units=4, input_shape=(2,), activation="softmax",
+                                    kernel_initializer=initializers.Constant(value=1)))
     hetero_nn_0.compile(optimizer=optimizers.Adam(lr=0.15), metrics=["accuracy"], loss="categorical_crossentropy")
     hetero_nn_1 = HeteroNN(name="hetero_nn_1")
 
@@ -77,8 +81,8 @@ def main(config="../../config.yaml", namespace=""):
 
     pipeline.fit(backend=backend, work_mode=work_mode)
 
-    print (pipeline.get_component("hetero_nn_0").get_summary())
-    print (pipeline.get_component("evaluation_0").get_summary())
+    print(pipeline.get_component("hetero_nn_0").get_summary())
+    print(pipeline.get_component("evaluation_0").get_summary())
 
 
 if __name__ == "__main__":

@@ -17,19 +17,19 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.hetero_linr import HeteroLinR
-from pipeline.component.intersection import Intersection
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
+from pipeline.component import DataIO
+from pipeline.component import HeteroLinR
+from pipeline.component import Intersection
+from pipeline.component import Reader
+from pipeline.interface import Data
 
-from examples.util.config import Config
+from pipeline.utils.tools import load_job_config
 
 
 def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
-        config = Config.load(config)
+        config = load_job_config(config)
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
@@ -53,10 +53,13 @@ def main(config="../../config.yaml", namespace=""):
 
     intersection_0 = Intersection(name="intersection_0")
     hetero_linr_0 = HeteroLinR(name="hetero_linr_0", early_stop="diff", max_iter=3,
+                               penalty="None", optimizer="sgd", tol=0.001,
+                               alpha=0.01, batch_size=-1, learning_rate=0.15,
+                               decay=0.0, decay_sqrt=False,
                                init_param={"init_method": "zeros"},
                                encrypted_mode_calculator_param={"mode": "fast"},
                                stepwise_param={"score_name": "AIC", "direction": "backward",
-                                               "need_stepwise": True, "max_step": 2, "nvmin": 2
+                                               "need_stepwise": True, "max_step": 3, "nvmin": 2
                                                })
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
@@ -68,6 +71,7 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.fit(backend=backend, work_mode=work_mode)
 
     print (pipeline.get_component("hetero_linr_0").get_summary())
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("PIPELINE DEMO")

@@ -17,20 +17,20 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.evaluation import Evaluation
-from pipeline.component.hetero_linr import HeteroLinR
-from pipeline.component.intersection import Intersection
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
+from pipeline.component import DataIO
+from pipeline.component import Evaluation
+from pipeline.component import HeteroLinR
+from pipeline.component import Intersection
+from pipeline.component import Reader
+from pipeline.interface import Data
 
-from examples.util.config import Config
+from pipeline.utils.tools import load_job_config
 
 
 def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
-        config = Config.load(config)
+        config = load_job_config(config)
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
@@ -60,6 +60,7 @@ def main(config="../../config.yaml", namespace=""):
                                encrypted_mode_calculator_param={"mode": "fast"})
 
     evaluation_0 = Evaluation(name="evaluation_0", eval_type="regression", pos_label=1)
+    # evaluation_0.get_party_instance(role='host', party_id=host).algorithm_param(need_run=False)
 
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
@@ -72,7 +73,6 @@ def main(config="../../config.yaml", namespace=""):
     pipeline.fit(backend=backend, work_mode=work_mode)
 
     print (pipeline.get_component("hetero_linr_0").get_model_param())
-    print (pipeline.get_component("hetero_linr_0").get_summary())
     print (pipeline.get_component("evaluation_0").get_summary())
 
     # predict

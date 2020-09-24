@@ -18,7 +18,7 @@
 
 set -e
 source_dir=$(cd `dirname $0`; cd ../;pwd)
-support_modules=(python fateboard eggroll)
+support_modules=(python examples fateboard eggroll)
 packaging_modules=()
 echo ${source_dir}
 if [[ -n ${1} ]]; then
@@ -42,8 +42,14 @@ mkdir -p ${package_dir}
 function packaging_python(){
     echo "[INFO] Package fate start"
     cp fate.env RELEASE.md ${package_dir}/
-    cp -r bin conf examples python ${package_dir}/
+    cp -r bin conf python ${package_dir}/
     echo "[INFO] Package fate done"
+}
+
+function packaging_examples(){
+    echo "[INFO] Package example start"
+    cp -r examples ${package_dir}/
+    echo "[INFO] Package example done"
 }
 
 packaging_fateboard(){
@@ -135,7 +141,7 @@ compress(){
     do
         tar czf ${module}.tar.gz ./${module}
     done
-    rm -rf python fateboard eggroll
+    rm -rf python examples fateboard eggroll
     echo "[INFO] Compress done"
     echo "[INFO] A total of `ls ${package_dir} | wc -l | awk '{print $1}'` packages:"
     ls -lrt ${package_dir}

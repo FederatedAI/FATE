@@ -44,34 +44,37 @@ LICENSE = """\
 ##########################################################
 """
 
-IMPORTS = """\
+IMPORTS = """
 import typing
 from typing import Union
 
-from typing_extensions import Protocol
-
-from fate_arch.session import Party
+from fate_arch.common import Party
 from fate_arch.federation.transfer_variable import Variable
+from fate_arch.session import get_latest_opened
 """
 
 PROTOCOL = """\
-class _VariableProtocol(Protocol):
-    def roles_to_parties(self, roles: typing.List[str]) -> typing.List[Party]:
-        ...
+class _VariableProtocol(object):
 
     def remote_parties(self,
                        obj,
                        parties: Union[typing.List[Party], Party],
                        suffix: Union[typing.Any, typing.Tuple] = tuple()):
-        ...
+        raise NotImplementedError()
 
     def get_parties(self,
                     parties: Union[typing.List[Party], Party],
                     suffix: Union[typing.Any, typing.Tuple] = tuple()) -> typing.List:
-        ...
+        raise NotImplementedError()
+
+    @staticmethod
+    def roles_to_parties(roles):
+        party_info = get_latest_opened().parties
+        return party_info.roles_to_parties(roles)
 """
 
 ToFromTrait = """\
+# noinspection PyAbstractClass
 class _To{cap_name}(_VariableProtocol):
     def to_{lower_name}(self, obj, suffix):
         parties = self.roles_to_parties(["{lower_name}"])
@@ -83,6 +86,7 @@ class _To{cap_name}(_VariableProtocol):
         self.remote_parties(obj, parties[k], suffix)
 
 
+# noinspection PyAbstractClass
 class _From{cap_name}(_VariableProtocol):
     def from_{lower_name}(self, suffix) -> typing.List:
         parties = self.roles_to_parties(["{lower_name}"])
@@ -96,12 +100,14 @@ class _From{cap_name}(_VariableProtocol):
 """
 
 PAIR_TRAIT = """\
+# noinspection PyAbstractClass
 class _From{left}{right}(_From{left}, _From{right}):
     def from_guest_host(self, suffix) -> typing.List:
         parties = self.roles_to_parties(["{left_lower}", "{right_lower}"])
         return self.get_parties(parties, suffix)
 
 
+# noinspection PyAbstractClass
 class _To{left}{right}(_To{left}, _To{right}):
     def to_guest_host(self, obj, suffix):
         parties = self.roles_to_parties(["{left_lower}", "{right_lower}"])

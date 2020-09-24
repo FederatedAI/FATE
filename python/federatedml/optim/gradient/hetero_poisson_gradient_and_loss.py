@@ -35,7 +35,7 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
                                  transfer_variables.loss_intermediate)
 
     def compute_and_aggregate_forwards(self, data_instances, model_weights, encrypted_calculator,
-                                       batch_index, offset=None):
+                                       batch_index, current_suffix, offset=None):
         '''
         Compute gradients:
         gradient = (1/N) * \sum(exp(wx) - y) * x
@@ -50,6 +50,8 @@ class Guest(hetero_linear_model_gradient.Guest, loss_sync.Guest):
         mu = data_instances.join(offset, lambda d, m: np.exp(vec_dot(d.features, model_weights.coef_)
                                                              + model_weights.intercept_ + m))
         self.forwards = mu
+
+        self.host_forwards = self.get_host_forward(suffix=current_suffix)
 
         self.aggregated_forwards = self.forwards.join(self.host_forwards[0], lambda g, h: g * h)
         fore_gradient = self.aggregated_forwards.join(data_instances, lambda mu, d: mu - d.label)

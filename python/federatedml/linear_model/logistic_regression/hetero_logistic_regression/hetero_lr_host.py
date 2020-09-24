@@ -76,7 +76,7 @@ class HeteroLRHost(HeteroLRBase):
         data_instances: DTable of Instance, input data
         """
 
-        LOGGER.info("Enter hetero_lr host")
+        LOGGER.info("Enter hetero_logistic_regression host")
         self.header = self.get_header(data_instances)
 
         classes = self.one_vs_rest_obj.get_data_classes(data_instances)

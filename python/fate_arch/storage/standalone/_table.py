@@ -15,7 +15,7 @@
 #
 from typing import Iterable
 
-from fate_arch.standalone import Session
+from fate_arch._standalone import Session
 from fate_arch.storage import StorageEngine, StandaloneStorageType
 from fate_arch.storage import StorageTableBase
 

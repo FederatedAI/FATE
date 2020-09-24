@@ -16,7 +16,6 @@
 
 import click
 from pathlib import Path
-import os
 from ruamel import yaml
 
 default_config = Path(__file__).parent.joinpath("config.yaml").resolve()
@@ -29,33 +28,35 @@ def cli():
 
 @click.command(name="config")
 @click.option("-c", "--pipeline-conf-path", "config_path", type=click.Path(exists=True),
-              help="Absolute path to pipeline configuration file.")
-@click.option("-d", "--log-directory", type=click.Path(exists=True),
-              help="Absolute path to pipeline logs directory.")
+              help="Path to pipeline configuration file.")
+@click.option("-d", "--log-directory", type=click.Path(),
+              help="Path to pipeline logs directory.")
 @click.option("--ip", type=click.STRING, help="Fate flow server ip address.")
 @click.option("--port", type=click.INT, help="Fate flow server port.")
-def _config(config_path, ip, port, log_directory):
+def _config(**kwargs):
     """
         \b
         - DESCRIPTION:
-            Pipeline Config Command. User can choose to provide absolute path to conf file,
-            or provide ip address and http port of a valid fate flow server. In addition,
-            pipeline log directory can be optionally set to arbitrary location. Notice that,
-            if both conf file and specifications are provided, the conf would be loaded in priority.
-            In this case, other keywords would be ignored.
+            Pipeline Config Command. User can choose to provide path to conf file,
+            or provide ip address and http port of a valid fate flow server. Optionally,
+            pipeline log directory can be set to arbitrary location. Default log directory is
+            pipeline/logs. Notice that, if both conf file and specifications are provided,
+            settings in conf file are ignored.
 
         \b
         - USAGE:
-            pipeline config -c /data/projects/FATE/fate_client/pipeline/config.yaml
-            pipeline config --ip 10.1.2.3 --port 9380 --log-directory /data/projects/FATE/fate_client/pipeline/logs
+            pipeline config -c config.yaml
+            pipeline config --ip 10.1.2.3 --port 9380 --log-directory ./logs
     """
+    config_path = kwargs.get("config_path")
+    ip = kwargs.get("ip")
+    port = kwargs.get("port")
+    log_directory = kwargs.get("log_directory")
+
     if config_path is None and (ip is None or port is None):
         print(
-            {
-                "retcode": 100,
-                "retmsg": "Pipeline configuration failed. Please provides configuration file path "
-                          "or server http ip address & port information & log directory."
-            }
+               "\nPipeline configuration failed. \nPlease provides configuration file path "
+                "or server http ip address & port information."
         )
         return
 
@@ -65,22 +66,17 @@ def _config(config_path, ip, port, log_directory):
     with Path(config_path).open("r") as fin:
         config = yaml.safe_load(fin)
 
-    if ip is not None:
+    if ip:
         config["ip"] = ip
-    if port is not None:
+    if port:
         config["port"] = port
-    if log_directory is not None:
+    if log_directory:
         config["log_directory"] = Path(log_directory).resolve().__str__()
 
     with default_config.open("w") as fout:
         yaml.dump(config, fout, Dumper=yaml.RoundTripDumper)
 
-    print(
-        {
-            "retcode": 0,
-            "retmsg": "Pipeline configuration succeeded."
-        }
-    )
+    print("Pipeline configuration succeeded.")
 
 
 cli.add_command(_config)

@@ -58,6 +58,7 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
             self.binning_obj.cal_local_iv(data_instances, label_table=label_table)
             self.transform(data_instances)
             self.set_summary(self.binning_obj.bin_results.summary())
+            LOGGER.debug(f"Summary is: {self.summary()}")
             return self.data_output
 
         cipher = PaillierEncrypt()
@@ -160,6 +161,7 @@ class HeteroFeatureBinningGuest(BaseHeteroFeatureBinning):
 
     @staticmethod
     def load_data(data_instance):
+        data_instance = copy.deepcopy(data_instance)
         # Here suppose this is a binary question and the event label is 1
         if data_instance.label != 1:
             data_instance.label = 0

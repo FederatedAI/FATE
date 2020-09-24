@@ -29,11 +29,12 @@ def _write(cls, base: Path):
 
     obj = cls()
     variables = {}
+    module_and_class = f"{cls.__module__}.{cls.__name__}"
     for full_name, v in _find_all_variables(obj).items():
         if not isinstance(v, Variable):
             continue
 
-        name_without_module = full_name.split("$", 2)[-1]
+        name_without_module = full_name[len(module_and_class) + 1:]
         # noinspection PyProtectedMember
         variables[name_without_module] = {"src": list(v._src), "dst": list(v._dst)}
 
@@ -41,7 +42,7 @@ def _write(cls, base: Path):
     if len(variables) <= 0:
         return
 
-    auth_conf = {f"{cls.__module__}.{cls.__name__}": variables}
+    auth_conf = {module_and_class: variables}
 
     base.mkdir(exist_ok=True)
     name = _camel_to_snake_pattern.sub(r'_\1', cls.__name__).lower()

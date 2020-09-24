@@ -17,21 +17,21 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.evaluation import Evaluation
-from pipeline.component.hetero_lr import HeteroLR
-from pipeline.component.intersection import Intersection
-from pipeline.component.local_baseline import LocalBaseline
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
+from pipeline.component import DataIO
+from pipeline.component import Evaluation
+from pipeline.component import HeteroLR
+from pipeline.component import Intersection
+from pipeline.component import LocalBaseline
+from pipeline.component import Reader
+from pipeline.interface import Data
 
-from examples.util.config import Config
+from pipeline.utils.tools import load_job_config
 
 
 def main(config="../../config.yaml", namespace=""):
     # obtain config
     if isinstance(config, str):
-        config = Config.load(config)
+        config = load_job_config(config)
     parties = config.parties
     guest = parties.guest[0]
     host = parties.host[0]
@@ -70,23 +70,17 @@ def main(config="../../config.yaml", namespace=""):
     evaluation_0.get_party_instance(role='guest', party_id=guest).algorithm_param(need_run=True)
     evaluation_0.get_party_instance(role='host', party_id=host).algorithm_param(need_run=False)
 
-    evaluation_1 = Evaluation(name="evaluation_1", eval_type="multi", pos_label=1)
-    evaluation_1.get_party_instance(role='guest', party_id=guest).algorithm_param(need_run=True)
-    evaluation_1.get_party_instance(role='host', party_id=host).algorithm_param(need_run=False)
-
     pipeline.add_component(reader_0)
     pipeline.add_component(dataio_0, data=Data(data=reader_0.output.data))
     pipeline.add_component(intersection_0, data=Data(data=dataio_0.output.data))
     pipeline.add_component(hetero_lr_0, data=Data(train_data=intersection_0.output.data))
     pipeline.add_component(local_baseline_0, data=Data(train_data=intersection_0.output.data))
-    pipeline.add_component(evaluation_0, data=Data(data=hetero_lr_0.output.data))
-    pipeline.add_component(evaluation_1, data=Data(data=local_baseline_0.output.data))
+    pipeline.add_component(evaluation_0, data=Data(data=[hetero_lr_0.output.data, local_baseline_0.output.data]))
 
     pipeline.compile()
 
     pipeline.fit(backend=backend, work_mode=work_mode)
 
-    print(pipeline.get_component("intersection_0").get_output_data())
     print(pipeline.get_component("dataio_0").get_model_param())
     print(pipeline.get_component("hetero_lr_0").get_model_param())
     print()
