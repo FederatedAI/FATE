@@ -1,3 +1,9 @@
+# Release 1.4.4
+## Major Features and Improvements
+> FATE-Flow
+* Task Executor supports monkey patch
+* Add forward API
+
 # Release 1.4.3
 ## Major Features and Improvements
 > FederatedML
