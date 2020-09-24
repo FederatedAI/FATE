@@ -68,8 +68,8 @@ class TestBaseBinningFunctions(unittest.TestCase):
             self.assertDictEqual(h, label_hist)
 
     def tearDown(self):
-        for table in self.table_list:
-            table.destroy()
+        # for table in self.table_list:
+        #     table.destroy()
         session.stop()
 
 
