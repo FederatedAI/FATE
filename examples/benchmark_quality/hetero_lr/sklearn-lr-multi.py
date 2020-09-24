@@ -35,7 +35,7 @@ def main(param="./lr_config.yaml"):
     # prepare data
     df_guest = pandas.read_csv(data_guest, index_col=idx)
     df_host = pandas.read_csv(data_host, index_col=idx)
-    df = df_guest.join(df_host)
+    df = df_guest.join(df_host, rsuffix="host")
     y = df[label_name]
     X = df.drop(label_name, axis=1)
     lm = LogisticRegression(max_iter=20)
