@@ -1,0 +1,74 @@
+{
+    "data": [
+        {
+            "file": "examples/data/breast_homo_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_homo_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_homo_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "breast_homo_host",
+            "namespace": "experiment",
+            "role": "host_1"
+        },
+        {
+            "file": "examples/data/breast_homo_test.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "homo_breast_test",
+            "namespace": "experiment",
+            "role": "guest_0"
+        },
+        {
+            "file": "examples/data/breast_homo_test.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "homo_breast_test",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "examples/data/breast_homo_test.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "homo_breast_test",
+            "namespace": "experiment",
+            "role": "host_1"
+        }
+    ],
+    "tasks": {
+        "train": {
+            "conf": "homo_lr_train_conf.json",
+            "dsl": "homo_lr_train_dsl.json"
+        },
+        "train-eval": {
+            "conf": "homo_lr_train_eval_conf.json",
+            "dsl": "homo_lr_train_eval_dsl.json"
+        },
+        "cv": {
+            "conf": "homo_lr_cv_conf.json",
+            "dsl": "homo_lr_cv_dsl.json"
+        },
+        "eval": {
+            "conf": "homo_lr_eval_conf.json",
+            "dsl": "homo_lr_eval_dsl.json"
+        },
+        "multi-host": {
+            "conf": "homo_lr_multi_host_conf.json",
+            "dsl": "homo_lr_multi_host_dsl.json"
+        }
+    }
+}
