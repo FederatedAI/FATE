@@ -236,6 +236,9 @@ class DAGScheduler(Cron):
             return
         # apply resource on all party
         jobs = JobSaver.query_job(job_id=job_id, role=initiator_role, party_id=initiator_party_id)
+        if not jobs:
+            JobQueue.delete_event(job_id=job_id)
+            return
         job = jobs[0]
         status_code, federated_response = FederatedScheduler.resource_for_job(job=job, operation_type=ResourceOperation.APPLY)
         if status_code == FederatedSchedulingStatusCode.SUCCESS:
@@ -474,5 +477,5 @@ class DAGScheduler(Cron):
         schedule_logger(job_id=job.f_job_id).info("Job {} finished with {}, do something...".format(job.f_job_id, end_status))
         FederatedScheduler.stop_job(job=job, stop_status=end_status)
         FederatedScheduler.clean_job(job=job)
-        JobQueue.delete_event(job_id=job.f_job_id, initiator_role=job.f_initiator_role, initiator_party_id=job.f_initiator_party_id)
+        JobQueue.delete_event(job_id=job.f_job_id)
         schedule_logger(job_id=job.f_job_id).info("Job {} finished with {}, done".format(job.f_job_id, end_status))
