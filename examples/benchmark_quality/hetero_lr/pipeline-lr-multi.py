@@ -17,12 +17,12 @@
 import argparse
 
 from pipeline.backend.pipeline import PipeLine
-from pipeline.component.dataio import DataIO
-from pipeline.component.evaluation import Evaluation
-from pipeline.component.hetero_lr import HeteroLR
-from pipeline.component.intersection import Intersection
-from pipeline.component.reader import Reader
-from pipeline.interface.data import Data
+from pipeline.component import DataIO
+from pipeline.component import Evaluation
+from pipeline.component import HeteroLR
+from pipeline.component import Intersection
+from pipeline.component import Reader
+from pipeline.interface import Data
 
 from pipeline.utils.tools import load_job_config, JobConfig
 

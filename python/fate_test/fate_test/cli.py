@@ -145,14 +145,14 @@ def run_suite(replace, data_namespace_mangling, config, include, exclude, glob,
               help="exclude *benchmark.json under these paths")
 @click.option('-c', '--config', default=priority_config().__str__(), type=click.Path(exists=True),
               help=f"config path, defaults to {priority_config()}")
-@click.option("-g", '--glob', type=str,
+@click.option('-g', '--glob', type=str,
               help="glob string to filter sub-directory of path specified by <include>")
-@click.option('--tol', type=float,
+@click.option('-t', '--tol', type=float,
               help="tolerance (absolute error) for metrics to be considered almost equal. "
                    "Comparison is done by evaluating abs(a-b) <= max(relative_tol * max(abs(a), abs(b)), absolute_tol)")
-@click.option("--yes", is_flag=True,
+@click.option('--yes', is_flag=True,
               help="skip double check")
-@click.option("--skip-data", is_flag=True, default=False,
+@click.option('--skip-data', is_flag=True, default=False,
               help="skip uploading data specified in benchmark conf")
 def run_benchmark(data_namespace_mangling, config, include, exclude, glob, skip_data, tol, yes):
     """

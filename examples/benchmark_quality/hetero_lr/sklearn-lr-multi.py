@@ -47,8 +47,8 @@ def main(param="./lr_config.yaml"):
     except:
         print(f"no auc score available")
         return
-    recall = recall_score(y, y_pred, average=None)
-    pr = precision_score(y, y_pred, average=None)
+    recall = recall_score(y, y_pred, average="macro")
+    pr = precision_score(y, y_pred, average="macro")
     acc = accuracy_score(y, y_pred)
     result = {"auc": auc_score, "recall": recall, "precision": pr, "accuracy": acc}
     return result
