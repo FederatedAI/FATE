@@ -25,8 +25,8 @@
 # FeatureHistogram
 # =============================================================================
 import functools
-from arch.api.utils import log_utils
-from arch.api import session
+from federatedml.util import LOGGER
+from fate_arch.session import computing_session as session
 from federatedml.secureprotol.iterative_affine import DeterministicIterativeAffineCiphertext
 import numpy as np
 import scipy.sparse as sp
