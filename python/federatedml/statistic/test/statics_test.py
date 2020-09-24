@@ -94,7 +94,7 @@ class TestStatistics(unittest.TestCase):
 
         print("max value etc, total time: {}".format(time.time() - t0))
 
-    def _float_equal(self, x, y, error=consts.FLOAT_ZERO):
+    def _float_equal(self, x, y, error=1e-6):
         if math.fabs(x - y) < error:
             return True
         print(f"x: {x}, y: {y}")
@@ -177,14 +177,6 @@ class TestStatistics(unittest.TestCase):
 
     def tearDown(self):
         session.stop()
-        try:
-            session.cleanup("*", self.job_id, True)
-        except EnvironmentError:
-            pass
-        try:
-            session.cleanup("*", self.job_id, False)
-        except EnvironmentError:
-            pass
 
 
 if __name__ == '__main__':

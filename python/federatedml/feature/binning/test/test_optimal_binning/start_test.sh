@@ -23,5 +23,5 @@ jobid="feature_binning_example_standalone_"$curtime
 
 echo current_dir is $(dirname "$0")
 
-nohup python hetero_optimal_feature_binning_test.py -j ${jobid} -r guest > nohup.guest &
-nohup python hetero_optimal_feature_binning_test.py -j ${jobid} -r host > nohup.host &
+nohup python hetero_optimal_feature_binning_test.py -j ${jobid} -r guest > nohup.guest 2>&1 &
+nohup python hetero_optimal_feature_binning_test.py -j ${jobid} -r host > nohup.host 2>&1 &
