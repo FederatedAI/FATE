@@ -75,7 +75,8 @@ class Data(object):
         if not file_path.exists():
             kwargs['file'] = config['file']
             # raise ValueError(f"loading from data config: {config} in {path} failed, file: {file_path} not exists")
-        kwargs['file'] = file_path
+        else:
+            kwargs['file'] = file_path
         role_str = config.get("role") if config.get("role") != "guest" else "guest_0"
         return Data(config=kwargs, role_str=role_str)
 
