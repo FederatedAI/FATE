@@ -30,9 +30,6 @@ from fate_arch.session import computing_session as session
 from federatedml.secureprotol.iterative_affine import DeterministicIterativeAffineCiphertext
 import numpy as np
 import scipy.sparse as sp
-import uuid
-
-LOGGER = log_utils.getLogger()
 
 
 class FastFeatureHistogram(object):
