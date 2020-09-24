@@ -17,8 +17,6 @@ from recommonmark.parser import CommonMarkParser
 
 sys.path.insert(0, os.path.abspath('_build_temp/python'))
 
-print("sage sage sage")
-
 # -- Project information -----------------------------------------------------
 
 project = 'FATE'
