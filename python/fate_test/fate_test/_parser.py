@@ -246,6 +246,7 @@ class BenchmarkJob(object):
 class BenchmarkPair(object):
     pair_name: str
     jobs: typing.List[BenchmarkJob]
+    compare_setting: dict
 
 
 @dataclass
@@ -269,13 +270,18 @@ class BenchmarkSuite(object):
                 continue
             jobs = []
             for job_name, job_configs in pair_configs.items():
+                if job_name == "compare_setting":
+                    continue
                 script_path = path.parent.joinpath(job_configs["script"]).resolve()
                 if job_configs.get("conf"):
                     conf_path = path.parent.joinpath(job_configs["conf"]).resolve()
                 else:
                     conf_path = ""
                 jobs.append(BenchmarkJob(job_name=job_name, script_path=script_path, conf_path=conf_path))
-            pairs.append(BenchmarkPair(pair_name=pair_name, jobs=jobs))
+            compare_setting = pair_configs.get("compare_setting")
+            if compare_setting and not isinstance(compare_setting, dict):
+                raise ValueError(f"expected 'compare_setting' type is dict, received {type(compare_setting)} instead.")
+            pairs.append(BenchmarkPair(pair_name=pair_name, jobs=jobs, compare_setting=compare_setting))
         suite = BenchmarkSuite(dataset=dataset, pairs=pairs, path=path)
         return suite
 

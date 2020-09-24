@@ -11,9 +11,9 @@ Interface
 Input
 ~~~~~
 
-``Input`` encapsulates all upper stream input into a component in a FATE job.
+``Input`` encapsulates all upper stream input to a component in a job workflow.
 There are two classes of ``input``: ``data`` and ``model``. Not all components have
-both classes of input, and a component may accept only some types of a input class.
+both classes of input, and a component may accept only some types of the class.
 For information on each components' input, check the `list <#component-list>`_ below.
 
 Here is an example to access a component's input:
