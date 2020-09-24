@@ -55,6 +55,7 @@
             "dsl": "./test_homo_dnn_multi_label_dsl.json"
         },
         "predict": {
+            "deps": "multi_layer",
             "conf": "./test_homo_dnn_multi_layer_predict_conf.json",
             "dsl": "./test_homo_dnn_multi_layer_predict_dsl.json"
         }
