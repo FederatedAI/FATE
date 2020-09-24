@@ -1,14 +1,14 @@
 from federatedml.nn.hetero_nn.util.random_number_generator import RandomNumberGenerator
 from federatedml.nn.hetero_nn.backend.paillier_tensor import PaillierTensor
 import numpy as np
-from fate_arch.session import Session
+from fate_arch.session import computing_session as session
 import random
 import unittest
 
 
 class TestRandomNumberGenerator(unittest.TestCase):
     def setUp(self):
-        Session.create(0, 0).init_computing(str(random.randint(0, 10000000)))
+        session.init("test_random_number" + str(random.random()), 0)
         self.rng_gen = RandomNumberGenerator()
 
     def test_generate_random_number(self):
@@ -23,6 +23,9 @@ class TestRandomNumberGenerator(unittest.TestCase):
         random_data = self.rng_gen.fast_generate_random_number(data.shape)
         self.assertTrue(isinstance(random_data, PaillierTensor))
         self.assertTrue(tuple(random_data.shape) == tuple(data.shape))
+
+    def tearDown(self):
+        session.stop()
 
 
 if __name__ == '__main__':
