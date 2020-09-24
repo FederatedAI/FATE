@@ -1,4 +1,5 @@
 import numpy as np
+import random
 import time
 import unittest
 
@@ -8,6 +9,7 @@ from federatedml.feature.imputer import Imputer
 
 class TestMinMaxScaler(unittest.TestCase):
     def setUp(self):
+        session.init("test_min_max_scaler_" + str(random.random()))
         str_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
 
         self.test_data = [
@@ -34,15 +36,14 @@ class TestMinMaxScaler(unittest.TestCase):
         self.test_instance = []
         for td in self.test_data:
             self.test_instance.append(td)
-        self.table_instance = self.data_to_eggroll_table(self.test_instance, str_time)
+        self.table_instance = self.data_to_table(self.test_instance)
         self.table_instance.schema['header'] = ["fid" + str(i) for i in range(len(self.test_data[0]))]
 
     def print_table(self, table):
         for v in (list(table.collect())):
             print(v[1].features)
 
-    def data_to_eggroll_table(self, data, jobid, partition=10, work_mode=0):
-        session.init(jobid, mode=work_mode)
+    def data_to_table(self, data, partition=10):
         data_table = session.parallelize(data, include_key=False, partition=partition)
         return data_table
 
@@ -176,6 +177,9 @@ class TestMinMaxScaler(unittest.TestCase):
         _ = imputer.transform(self.table_instance, cols_transform_value_ground_true)
         cols_transform_impute_rate = imputer.get_impute_rate(mode="fit")
         self.assertListEqual(cols_transform_impute_rate, cols_impute_rate_ground_true)
+
+    def tearDown(self):
+        session.stop()
 
 
 if __name__ == "__main__":
