@@ -21,6 +21,7 @@
 #
 ################################################################################
 
+import copy
 import functools
 
 import numpy as np
@@ -239,17 +240,17 @@ class DenseFeatureReader(object):
             elif self.label_type in ["float", "float64"]:
                 label = float(label)
 
-            features = DenseFeatureReader.gen_output_format(features, self.data_type, self.exclusive_data_type_fid_map,
-                                                            self.output_format,
-                                                            missing_impute=self.missing_impute)
+            format_features = DenseFeatureReader.gen_output_format(features, self.data_type, self.exclusive_data_type_fid_map,
+                                                                   self.output_format,
+                                                                   missing_impute=self.missing_impute)
 
         else:
-            features = DenseFeatureReader.gen_output_format(features, self.data_type, self.exclusive_data_type_fid_map,
-                                                            self.output_format,
-                                                            missing_impute=self.missing_impute)
+            format_features = DenseFeatureReader.gen_output_format(features, self.data_type, self.exclusive_data_type_fid_map,
+                                                                   self.output_format,
+                                                                   missing_impute=self.missing_impute)
 
         return Instance(inst_id=None,
-                        features=features,
+                        features=format_features,
                         label=label)
 
     @staticmethod
@@ -260,11 +261,12 @@ class DenseFeatureReader(object):
             raise ValueError("output format {} is not define".format(output_format))
 
         if output_format == "dense":
+            format_features = copy.deepcopy(features)
             if data_type in ["int", "int64", "long", "float", "float64", "double"]:
                 for i in range(len(features)):
                     if (missing_impute is not None and features[i] in missing_impute) or \
                             (missing_impute is None and features[i] in ['', 'NULL', 'null', "NA"]):
-                        features[i] = np.nan
+                        format_features[i] = np.nan
 
             if exclusive_data_type_fid_map:
                 for fid in range(len(features)):
@@ -273,11 +275,11 @@ class DenseFeatureReader(object):
                     else:
                         dtype = data_type
 
-                    features[fid] = getattr(np, dtype)(features[fid])
+                    format_features[fid] = getattr(np, dtype)(features[fid])
 
-                return np.asarray(features, dtype=object)
+                return np.asarray(format_features, dtype=object)
             else:
-                return np.asarray(features, dtype=data_type)
+                return np.asarray(format_features, dtype=data_type)
 
         indices = []
         data = []

@@ -38,8 +38,11 @@ def internal_server_error(e):
 @manager.route('/<job_id>/<role>/<party_id>/create', methods=['POST'])
 @request_authority_certification
 def create_job(job_id, role, party_id):
-    JobController.create_job(job_id=job_id, role=role, party_id=int(party_id), job_info=request.json)
-    return get_json_result(retcode=0, retmsg='success')
+    try:
+        JobController.create_job(job_id=job_id, role=role, party_id=int(party_id), job_info=request.json)
+        return get_json_result(retcode=0, retmsg='success')
+    except RuntimeError as e:
+        return get_json_result(retcode=RetCode.OPERATING_ERROR, retmsg=str(e))
 
 
 @manager.route('/<job_id>/<role>/<party_id>/resource/apply', methods=['POST'])

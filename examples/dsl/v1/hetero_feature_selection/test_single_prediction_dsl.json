@@ -1,0 +1,208 @@
+{
+    "components": {
+        "dataio_0": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.train_data"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "train"
+                ],
+                "model": [
+                    "dataio"
+                ]
+            }
+        },
+        "intersection_0": {
+            "module": "Intersection",
+            "input": {
+                "data": {
+                    "data": [
+                        "dataio_0.train"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "train"
+                ]
+            },
+            "need_run": false
+        },
+        "dataio_1": {
+            "module": "DataIO",
+            "input": {
+                "data": {
+                    "data": [
+                        "args.eval_data"
+                    ]
+                },
+                "model": [
+                    "dataio_0.dataio"
+                ]
+            },
+            "output": {
+                "data": [
+                    "train"
+                ]
+            }
+        },
+        "intersection_1": {
+            "module": "Intersection",
+            "input": {
+                "data": {
+                    "data": [
+                        "dataio_1.train"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "train"
+                ]
+            },
+            "need_run": false
+        },
+        "sample_0": {
+            "module": "FederatedSample",
+            "input": {
+                "data": {
+                    "data": [
+                        "intersection_0.train"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "train"
+                ]
+            }
+        },
+        "hetero_feature_binning_0": {
+            "module": "HeteroFeatureBinning",
+            "input": {
+                "data": {
+                    "data": [
+                        "sample_0.train"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "transform_data"
+                ],
+                "model": [
+                    "binning_model"
+                ]
+            },
+            "need_run": false
+        },
+        "hetero_feature_selection_0": {
+            "module": "HeteroFeatureSelection",
+            "input": {
+                "data": {
+                    "data": [
+                        "sample_0.train"
+                    ]
+                },
+                "isometric_model": [
+                    "hetero_feature_binning_0.binning_model"
+                ]
+            },
+            "output": {
+                "data": [
+                    "train"
+                ],
+                "model": [
+                    "selected"
+                ]
+            }
+        },
+        "feature_scale_0": {
+            "module": "FeatureScale",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_feature_selection_0.train"
+                    ]
+                }
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        },
+        "hetero_feature_binning_1": {
+            "module": "HeteroFeatureBinning",
+            "input": {
+                "data": {
+                    "data": [
+                        "intersection_1.train"
+                    ]
+                },
+                "model": ["hetero_feature_binning_0.binning_model"]
+            },
+            "output": {
+                "data": [
+                    "transform_data"
+                ],
+                "model": [
+                    "binning_model"
+                ]
+            },
+            "need_run": false
+        },
+
+        "hetero_feature_selection_1": {
+            "module": "HeteroFeatureSelection",
+            "input": {
+                "data": {
+                    "data": [
+                        "intersection_1.train"
+                    ]
+                },
+                "model": [
+                    "hetero_feature_selection_0.selected"
+                ]
+            },
+            "output": {
+                "data": [
+                    "train"
+                ],
+                "model": [
+                    "selected"
+                ]
+            }
+        },
+        "feature_scale_1": {
+            "module": "FeatureScale",
+            "input": {
+                "data": {
+                    "data": [
+                        "hetero_feature_selection_1.train"
+                    ]
+                },
+                "model": [
+                    "feature_scale_0.model"
+                ]
+            },
+            "output": {
+                "data": [
+                    "data"
+                ],
+                "model": [
+                    "model"
+                ]
+            }
+        }
+    }
+}

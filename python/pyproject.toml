@@ -1,0 +1,54 @@
+[tool.poetry]
+name = "fate"
+version = "1.5.0"
+description = "FATE (Federated AI Technology Enabler) is an open-source project initiated by Webank's AI Department to provide a secure computing framework to support the federated AI ecosystem. It implements secure computation protocols based on homomorphic encryption and multi-party computation (MPC). It supports federated learning architectures and secure computation of various machine learning algorithms, including logistic regression, tree-based algorithms, deep learning and transfer learning."
+authors = ["FederatedAI <contact@FedAI.org>"]
+license = "Apache-2.0"
+readme = "../README.md"
+
+homepage = "https://fate.fedai.org/"
+repository = "https://github.com/FederatedAI/FATE"
+documentation = "https://fate.readthedocs.io/en/latest/?badge=latest"
+
+
+packages = [
+    { include = "fate_arch" },
+    { include = "arch" },
+    { include = "fate_flow" },
+    { include = "federatedml" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+apsw = "==3.9.2.post1"
+beautifultable = "==1.0.0"
+cachetools = "==3.0.0"
+cloudpickle = "==1.6.0"
+cos-python-sdk-v5 = "==1.8.0"
+flask = "==1.0.2"
+gmpy2 = "==2.0.8"
+kazoo = "==2.6.1"
+lmdb = "==0.94"
+numpy = "==1.18.4"
+pandas = "==0.23.4"
+peewee = "==3.9.3"
+psutil = "==5.6.6"
+pycryptodomex = "==3.6.6"
+python-dotenv = "==0.13.0"
+redis = "==3.0.1"
+requests = "==2.23.0"
+requests-toolbelt = "==0.9.1"
+ruamel-yaml = "==0.16.10"
+scikit-learn = "==0.19.2"
+scipy = "==1.1.0"
+tensorflow = "==1.15.2"
+torch = "==1.4.0"
+torchvision = "==0.5.0"
+werkzeug = "==0.15.3"
+
+
+[tool.poetry.scripts]
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

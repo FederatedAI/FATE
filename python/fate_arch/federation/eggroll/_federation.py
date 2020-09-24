@@ -35,6 +35,7 @@ class Federation(FederationABC):
     def __init__(self, rp_ctx, rs_session_id, party, proxy_endpoint):
         LOGGER.debug(f"init eggroll federation: rp_session_id={rp_ctx.session_id}, rs_session_id={rs_session_id},"
                      f"party={party}, proxy_endpoint={proxy_endpoint}")
+
         options = {
             'self_role': party.role,
             'self_party_id': party.party_id,

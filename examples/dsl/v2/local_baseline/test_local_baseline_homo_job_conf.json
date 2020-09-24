@@ -1,0 +1,92 @@
+{
+    "initiator": {
+        "role": "guest",
+        "party_id": 9999
+    },
+    "role": {
+        "arbiter": [
+            10000
+        ],
+        "host": [
+            10000
+        ],
+        "guest": [
+            9999
+        ]
+    },
+    "job_parameters": {
+        "work_mode": 0,
+        "backend": 0,
+        "dsl_version": 2
+    },
+    "role_parameters": {
+        "host": {
+            "0": {
+                "reader_0": {
+                    "table": {
+                        "name": "breast_homo_host",
+                        "namespace": "experiment"
+                    }
+                },
+                "evaluation_0": {
+                    "need_run": false
+                },
+                "local_baseline_0": {
+                    "need_run": false
+                }
+            }
+        },
+        "guest": {
+            "0": {
+                "reader_0": {
+                    "table": {
+                        "name": "breast_homo_guest",
+                        "namespace": "experiment"
+                    }
+                },
+                "evaluation_0": {
+                    "need_run": true
+                },
+                "local_baseline_0": {
+                    "need_run": true
+                }
+            }
+        }
+    },
+    "algorithm_parameters": {
+        "dataio_0": {
+            "with_label": true,
+            "label_name": "y",
+            "label_type": "int",
+            "output_format": "dense"
+        },
+        "homo_lr_0": {
+            "penalty": "L2",
+            "tol": 0.0001,
+            "alpha": 0.01,
+            "optimizer": "sgd",
+            "batch_size": -1,
+            "learning_rate": 0.15,
+            "init_param": {
+                "init_method": "zeros"
+            },
+            "max_iter": 30,
+            "early_stop": "weight_diff"
+        },
+        "local_baseline_0": {
+            "model_name": "LogisticRegression",
+            "model_opts": {
+                "penalty": "l2",
+                "tol": 0.0001,
+                "C": 1.0,
+                "fit_intercept": true,
+                "solver": "saga",
+                "max_iter": 2
+            }
+        },
+        "evaluation_0": {
+            "eval_type": "binary",
+            "pos_label": 1
+        }
+    }
+}

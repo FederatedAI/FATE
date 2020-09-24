@@ -14,13 +14,11 @@
 #  limitations under the License.
 #
 import hashlib
-import time
 import typing
 from typing import Union
 
 from fate_arch.common import Party, profile
 from fate_arch.common.log import getLogger
-from fate_arch.common.profile import is_profile_remote_enable, profile_remote_tag, profile_logger
 from fate_arch.federation.transfer_variable._auth import _check_variable_auth_conf
 from fate_arch.federation.transfer_variable._cleaner import IterationGC
 from fate_arch.federation.transfer_variable._namespace import FederationTagNamespace
@@ -118,7 +116,7 @@ class Variable(object):
 
         name = self._short_name if self._use_short_name else self._name
 
-        timer = profile.federation_remote_timer(self._name, tag, local, parties)
+        timer = profile.federation_remote_timer(name, self._name, tag, local, parties)
         session.federation.remote(v=obj, name=name, tag=tag, parties=parties, gc=self._remote_gc)
         timer.done(session.federation)
 
@@ -142,7 +140,7 @@ class Variable(object):
             raise RuntimeError(f"not allowed to get object to {local} using {self._name}")
 
         name = self._short_name if self._use_short_name else self._name
-        timer = profile.federation_get_timer(self._name, tag, local, parties)
+        timer = profile.federation_get_timer(name, self._name, tag, local, parties)
         rtn = session.federation.get(name=name, tag=tag, parties=parties, gc=self._get_gc)
         timer.done(session.federation)
 
