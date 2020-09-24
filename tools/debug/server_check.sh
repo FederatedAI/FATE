@@ -20,13 +20,8 @@ touch result_server.log
 fi
 
 nodes=$1
-party=$2
 LogLevel=$EGGROLL_LOG_LEVEL
 export EGGROLL_LOG_LEVEL=INFO
-if [ -n "$party" ];then
-    python server_check.py -p $nodes -d $party >> result_server.log
-else
-    python server_check.py -p $nodes >> result_server.log
-fi
+python server_check.py -p $nodes >> result_server.log
 export EGGROLL_LOG_LEVEL=$LogLevel
 echo "Check the result in the current directory, Please execute command: cat result_server.log"
