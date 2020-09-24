@@ -111,7 +111,6 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
     # fit model
     pipeline.fit(backend=backend, work_mode=work_mode)
     # query component summary
-    print(pipeline.get_component("evaluation_0").get_summary())
     return pipeline.get_component("evaluation_0").get_summary()
 
 

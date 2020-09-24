@@ -50,7 +50,6 @@ def main(param="./lr_config.yaml"):
     result = {"mean_squared_error": mse, "r2_score": r2,
               "explained_variance": explained_var,
               "root_mean_squared_error": rmse}
-    print(f"sklearn linr output metircs: {result}")
     return result
 
 
