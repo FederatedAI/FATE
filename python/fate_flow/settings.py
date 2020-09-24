@@ -32,7 +32,7 @@ MODEL_STORE_ADDRESS = get_base_config("model_store_address", {})
 # storage engine is used for component output data
 SUPPORT_ENGINES = {
     EngineType.COMPUTING: [ComputingEngine.EGGROLL, ComputingEngine.SPARK],
-    EngineType.FEDERATION: [FederationEngine.EGGROLL, FederationEngine.RABBITMQ],
+    EngineType.FEDERATION: [FederationEngine.EGGROLL, FederationEngine.RABBITMQ, FederationEngine.PROXY],
     EngineType.STORAGE: [StorageEngine.EGGROLL, StorageEngine.HDFS]
 }
 
@@ -57,7 +57,7 @@ FATE_SERVICES_REGISTERED_PATH = {
 DEFAULT_TASK_PARALLELISM = 1
 DEFAULT_TASK_CORES_PER_NODE = 5
 DEFAULT_TASK_MEMORY_PER_NODE = 0  # mb
-MAX_CORES_PERCENT_PER_JOB = 20  # 0 means not limited
+MAX_CORES_PERCENT_PER_JOB = 0.5  # 1 means total
 STANDALONE_BACKEND_VIRTUAL_CORES_PER_NODE = 20
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
@@ -102,7 +102,6 @@ HTTP_PORT = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("http_port")
 GRPC_PORT = get_base_config(FATEFLOW_SERVICE_NAME, {}).get("grpc_port")
 
 # switch
-ALIGN_TASK_INPUT_DATA_PARTITION_SWITCH = True
 DEFAULT_FEDERATED_STATUS_COLLECT_TYPE = "PUSH"
 
 # init

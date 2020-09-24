@@ -7,7 +7,7 @@
         "work_mode": 1,
         "task_parallelism": 2,
         "task_nodes": 1,
-        "task_cores_per_node": 1,
+        "task_cores_per_node": 3,
         "dsl_version": "2"
     },
     "role": {

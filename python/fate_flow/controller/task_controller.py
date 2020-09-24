@@ -67,6 +67,13 @@ class TaskController(object):
             'try to start job {} task {} {} on {} {} executor subprocess'.format(job_id, task_id, task_version, role, party_id))
         task_executor_process_start_status = False
         run_parameters = RunParameters(**task_parameters)
+        task_info = {
+            "job_id": job_id,
+            "task_id": task_id,
+            "task_version": task_version,
+            "role": role,
+            "party_id": party_id,
+        }
         try:
             task_dir = os.path.join(job_utils.get_job_directory(job_id=job_id), role, party_id, component_name, task_id, task_version)
             os.makedirs(task_dir, exist_ok=True)
@@ -138,23 +145,20 @@ class TaskController(object):
                 'job {} task {} {} on {} {} executor subprocess is ready'.format(job_id, task_id, task_version, role, party_id))
             p = job_utils.run_subprocess(job_id=job_id, config_dir=task_dir, process_cmd=process_cmd, log_dir=task_log_dir)
             if p:
+                task_info["party_status"] = TaskStatus.RUNNING
+                task_info["run_pid"] = p.pid
                 task_executor_process_start_status = True
-                task_info = {
-                    "job_id": job_id,
-                    "task_id": task_id,
-                    "task_version": task_version,
-                    "role": role,
-                    "party_id": party_id,
-                    "status": TaskStatus.RUNNING,
-                    "party_status": TaskStatus.RUNNING,
-                    "run_pid": p.pid,
-                }
-                cls.update_task(task_info=task_info)
-                cls.update_task_status(task_info=task_info)
+            else:
+                task_info["party_status"] = TaskStatus.FAILED
         except Exception as e:
             schedule_logger(job_id).exception(e)
-            raise e
+            task_info["party_status"] = TaskStatus.FAILED
         finally:
+            try:
+                cls.update_task(task_info=task_info)
+                cls.update_task_status(task_info=task_info)
+            except Exception as e:
+                schedule_logger(job_id).exception(e)
             schedule_logger(job_id).info(
                 'job {} task {} {} on {} {} executor subprocess start {}'.format(job_id, task_id, task_version, role, party_id, "success" if task_executor_process_start_status else "failed"))
 

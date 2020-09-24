@@ -20,11 +20,11 @@ from flask import jsonify
 from flask import Response
 
 from fate_arch.common.log import audit_logger
-from fate_arch.common import WorkMode, FederatedMode
+from fate_arch.common import FederatedMode
 from fate_arch.common import conf_utils
 from fate_flow.settings import DEFAULT_GRPC_OVERALL_TIMEOUT, CHECK_NODES_IDENTITY,\
     FATE_MANAGER_GET_NODE_INFO_ENDPOINT, HEADERS, API_VERSION
-from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_command_federation_channel
+from fate_flow.utils.grpc_utils import wrap_grpc_packet, get_command_federation_channel, get_routing_metadata
 from fate_flow.utils.service_utils import ServiceUtils
 from fate_flow.entity.runtime_config import RuntimeConfig
 
@@ -33,7 +33,7 @@ def get_json_result(retcode=0, retmsg='success', data=None, job_id=None, meta=No
     result_dict = {"retcode": retcode, "retmsg": retmsg, "data": data, "jobId": job_id, "meta": meta}
     response = {}
     for key, value in result_dict.items():
-        if not value and key != "retcode":
+        if value is None and key != "retcode":
             continue
         else:
             response[key] = value
@@ -65,11 +65,13 @@ def remote_api(job_id, method, endpoint, src_party_id, dest_party_id, src_role, 
         get_node_identity(json_body, src_party_id)
     _packet = wrap_grpc_packet(json_body, method, endpoint, src_party_id, dest_party_id, job_id,
                                overall_timeout=overall_timeout)
+    _routing_metadata = get_routing_metadata(src_party_id=src_party_id, dest_party_id=dest_party_id)
     exception = None
     for t in range(try_times):
         try:
             engine, channel, stub = get_command_federation_channel()
-            _return = stub.unaryCall(_packet)
+            # _return = stub.unaryCall(_packet)
+            _return, _call = stub.unaryCall.with_call(_packet, metadata=_routing_metadata)
             audit_logger(job_id).info("grpc api response: {}".format(_return))
             channel.close()
             response = json.loads(_return.body.value)

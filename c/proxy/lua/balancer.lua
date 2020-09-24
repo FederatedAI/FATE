@@ -13,6 +13,10 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 --
+local _M = {
+    _VERSION = '0.1'
+}
+
 local ngx = ngx
 local ngx_balancer = require "ngx.balancer"
 

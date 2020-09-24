@@ -1,5 +1,6 @@
 work_mode: 1
 use_registry: false
+use_proxy: false
 fateflow:
   host: 0.0.0.0
   http_port: 9380
@@ -41,6 +42,10 @@ RABBITMQ:
     10000:
       host: 192.168.1.2
       port: 5672
+PROXY:
+  address:
+    host: 127.0.0.1
+    port: 9373
 model_store_address:
   storage: mysql
   name: model

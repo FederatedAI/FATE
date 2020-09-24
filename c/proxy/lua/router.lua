@@ -13,30 +13,37 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 --
+local _M = {
+    _VERSION = '0.1'
+}
+
 local ngx = ngx
-function get_upstream_server(request_headers)
-    -- TODO: Gets the destination address from the routing table based on the header information
-    local server = "127.0.0.1:9360"
+local route_table = require "route_table"
+
+local function get_upstream_server(dest_party_id, dest_service)
+    ngx.log(ngx.INFO, string.format("try to get %s %s upstream", dest_party_id, dest_service))
+
+    local route = route_table.get_route()
+    local party_services = route:get(dest_party_id)
+    if party_services ~= nil then
+        local server = party_services[dest_service]
+        ngx.log(ngx.INFO, server)
+        return server
+    else
+        local default_party_services = route:get("default")
+    end
     return server
 end
 
-function get_request_dest()
+local function get_request_dest()
     local headers = ngx.req.get_headers()
-    for k, v in pairs(headers) do
-        ngx.log(ngx.INFO, k)
-        ngx.log(ngx.INFO, v)
-    end
     return headers
 end
 
 function routing()
     local request_headers = get_request_dest()
-    local forward_server = get_upstream_server(request_headers)
+    local forward_server = get_upstream_server(request_headers["dest-party-id"], request_headers["service"])
     ngx.ctx.fate_cluster_server = forward_server
-    -- local ok, err = ngx_balancer.set_current_peer(forward_server)
-    -- if not ok then
-    --     utils.exit_abnormally('failed to set current peer: ' .. err, ngx.HTTP_SERVICE_UNAVAILABLE)
-    -- end
 end
 
 routing()

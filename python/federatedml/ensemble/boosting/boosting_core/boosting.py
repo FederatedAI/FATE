@@ -149,6 +149,7 @@ class Boosting(ModelBase, ABC):
                 new_sparse_vec = new_row.features.get_sparse_vector()
                 for key in replace_key:
                     new_sparse_vec[key] = NoneType()
+                return new_row
 
     def init_validation_strategy(self, train_data=None, validate_data=None):
         validation_strategy = ValidationStrategy(self.role, self.mode, self.validation_freqs,
