@@ -16,7 +16,6 @@
 from fate_arch.common import WorkMode, Backend
 from enum import IntEnum
 
-from fate_flow.settings import JOB_DEFAULT_TIMEOUT
 
 
 class RunParameters(object):
@@ -41,8 +40,7 @@ class RunParameters(object):
         self.model_version = None
         self.dsl_version = None
         self.input_data_aligned_partitions = None
-        self.timeout = JOB_DEFAULT_TIMEOUT
-
+        self.timeout = None
         for k, v in kwargs.items():
             if hasattr(self, k):
                 setattr(self, k, v)
