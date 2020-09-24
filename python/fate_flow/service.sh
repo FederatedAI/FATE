@@ -35,11 +35,6 @@ log_dir=${PROJECT_BASE}/logs
 
 module=fate_flow_server.py
 
-
-parse_yaml_python() {
-  python -c "from ruamel import yaml; yaml.load()"h
-}
-
 parse_yaml() {
    local prefix=$2
    local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')

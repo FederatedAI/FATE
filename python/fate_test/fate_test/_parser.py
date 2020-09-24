@@ -70,7 +70,12 @@ class Data(object):
         kwargs = {}
         for field_name in ['head', 'partition', 'table_name', 'namespace']:
             kwargs[field_name] = config[field_name]
-        kwargs['file'] = path.parent.joinpath(config['file']).resolve()
+
+        file_path = path.parent.joinpath(config['file']).resolve()
+        if not file_path.exists():
+            kwargs['file'] = config['file']
+            # raise ValueError(f"loading from data config: {config} in {path} failed, file: {file_path} not exists")
+        kwargs['file'] = file_path
         role_str = config.get("role") if config.get("role") != "guest" else "guest_0"
         return Data(config=kwargs, role_str=role_str)
 
