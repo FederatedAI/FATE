@@ -136,7 +136,6 @@ class BaseKmeansModel(ModelBase):
 
     def reset_union(self):
         def my_union(previews_data, name_list):
-            LOGGER.debug("mgq-debug, previews_data is {}, name_list is {}".format(previews_data, name_list))
             if len(previews_data) == 0:
                 return None
 
