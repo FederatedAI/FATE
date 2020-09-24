@@ -411,20 +411,19 @@ class Tracker(object):
             for role, party_ids in roles.items():
                 for party_id in party_ids:
                     # clean up temporary tables
-                    namespace_clean = job_utils.generate_session_id(task_id=self.task_id,
-                                                                    task_version=self.task_version,
-                                                                    role=role,
-                                                                    party_id=party_id,
-                                                                    suffix="computing")
+                    computing_temp_namespace = job_utils.generate_session_id(task_id=self.task_id,
+                                                                             task_version=self.task_version,
+                                                                             role=role,
+                                                                             party_id=party_id)
                     computing_session = session.get_latest_opened().computing
-                    computing_session.cleanup(namespace=namespace_clean, name="*")
-                    schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
+                    computing_session.cleanup(namespace=computing_temp_namespace, name="*")
+                    schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(computing_temp_namespace,
                                                                                                          self.role,
                                                                                                          self.party_id))
                     # clean up the last tables of the federation
-                    namespace_clean = job_utils.generate_federated_id(self.task_id, self.task_version)
-                    computing_session.cleanup(namespace=namespace_clean, name="*")
-                    schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(namespace_clean,
+                    federation_temp_namespace = job_utils.generate_federated_id(self.task_id, self.task_version)
+                    computing_session.cleanup(namespace=federation_temp_namespace, name="*")
+                    schedule_logger(self.job_id).info('clean table by namespace {} on {} {} done'.format(federation_temp_namespace,
                                                                                                          self.role,
                                                                                                          self.party_id))
 
