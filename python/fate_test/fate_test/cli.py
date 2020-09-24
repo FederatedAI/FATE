@@ -162,7 +162,7 @@ def run_benchmark(data_namespace_mangling, config, include, exclude, glob, skip_
     # prepare output dir and json hooks
     _prepare(data_namespace_mangling, namespace, replace={})
 
-    echo.welcome()
+    echo.welcome("benchmark")
     config_inst = _parse_config(config)
     echo.echo(f"testsuite namespace: {namespace}", fg='red')
     echo.echo("loading testsuites:")
