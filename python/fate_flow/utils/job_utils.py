@@ -237,7 +237,7 @@ def check_job_is_timeout(job):
                                                                           role=job.f_initiator_role,
                                                                           party_id=job.f_initiator_party_id)
     job_parameters = job_runtime_conf.get('job_parameters', {})
-    timeout = get_timeout(job.f_job_id, job_parameters.get("timeout", None), job_runtime_conf, job_dsl)
+    timeout = job_parameters.get("timeout", JOB_DEFAULT_TIMEOUT)
     now_time = current_timestamp()
     running_time = (now_time - job.f_start_time)/1000
     if running_time > timeout:
