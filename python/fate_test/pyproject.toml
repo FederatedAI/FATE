@@ -32,7 +32,7 @@ click = "^7.1.2"
 loguru = "^0.5.1"
 prettytable = "^0.7.2"
 sshtunnel = "^0.1.5"
-fate_pipeline = "^0.1.0"
+fate_test = "^0.1.0"
 dataclasses = { version = "^0.7", python = "3.6", optional = true }
 
 [tool.poetry.dev-dependencies]
