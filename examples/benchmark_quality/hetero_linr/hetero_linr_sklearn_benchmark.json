@@ -1,0 +1,33 @@
+{
+    "data": [
+        {
+            "file": "../../data/motor_hetero_host.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "motor_hetero_host",
+            "namespace": "experiment",
+            "role": "host_0"
+        },
+        {
+            "file": "../../data/motor_hetero_guest.csv",
+            "head": 1,
+            "partition": 16,
+            "table_name": "motor_hetero_guest",
+            "namespace": "experiment",
+            "role": "guest_0"
+        }
+    ],
+    "binary": {
+        "local": {
+            "script": "./sklearn-linr.py",
+            "conf": "./linr_config.yaml"
+        },
+        "pipeline": {
+            "script": "./pipeline-linr.py",
+            "conf": "./linr_config.yaml"
+        },
+        "compare_setting": {
+            "relative_tol": 1e-9
+        }
+    }
+}
