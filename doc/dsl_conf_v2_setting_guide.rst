@@ -85,46 +85,46 @@ Field Specification
 
       .. code-block:: json
 
-      "hetero_feature_binning_1": {
-          "module": "HeteroFeatureBinning",
-          "input": {
-              "data": {
-                  "data": [
-                      "dataio_1.validate_data"
+          "hetero_feature_binning_1": {
+              "module": "HeteroFeatureBinning",
+              "input": {
+                  "data": {
+                      "data": [
+                          "dataio_1.validate_data"
+                      ]
+                  },
+                  "model": [
+                      "hetero_feature_binning_0.fit_model"
                   ]
               },
-              "model": [
-                  "hetero_feature_binning_0.fit_model"
-              ]
-          },
-          "output": {
-              "data": ["validate_data"],
-            "model": ["eval_model"]
+              "output": {
+                  "data": ["validate_data"],
+                "model": ["eval_model"]
+              }
           }
-      }
 
       - isometric_model: This is used to specify the model input from upstream components.
         For example, feature selection will take feature binning as upstream model, since it will use information value as feature importance. Here's an example of feature selection component:
 
         .. code-block:: json
 
-        "hetero_feature_selection_0": {
-            "module": "HeteroFeatureSelection",
-            "input": {
-                "data": {
-                    "data": [
-                        "hetero_feature_binning_0.train"
+            "hetero_feature_selection_0": {
+                "module": "HeteroFeatureSelection",
+                "input": {
+                    "data": {
+                        "data": [
+                            "hetero_feature_binning_0.train"
+                        ]
+                    },
+                    "isometric_model": [
+                        "hetero_feature_binning_0.output_model"
                     ]
                 },
-                "isometric_model": [
-                    "hetero_feature_binning_0.output_model"
-                ]
-            },
-            "output": {
-                "data": ["train"],
-                "model": ["output_model"]
+                "output": {
+                    "data": ["train"],
+                    "model": ["output_model"]
+                }
             }
-        }
 
 :output: Same as input, two types of output may occur which are data and model.
     
