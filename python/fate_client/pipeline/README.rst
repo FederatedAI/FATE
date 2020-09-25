@@ -218,13 +218,13 @@ the original pipeline when running prediction.
 Save and Recovery of Pipeline
 ---------------------
 
-To save a pipeline, just use <b>dump</b> interface.
+To save a pipeline, just use **dump** interface.
 
 .. code:: python
 
    pipeline.dump("pipeline_saved.pkl")
 
-To save a pipeline, just use <b>load_model_from_file</b> interface.
+To save a pipeline, use **load_model_from_file** interface.
 
 .. code:: python
 
@@ -234,7 +234,7 @@ To save a pipeline, just use <b>load_model_from_file</b> interface.
 Summary info of pipeline
 ---------------------
 
-To get the detail of a pipeline, use <b>describe</b> interface, it will print the "create time"
+To get the detail of a pipeline, use **describe** interface, it will print the "create time"
 fit or predict state and the constructed dsl if exists.
 
 .. code:: python
