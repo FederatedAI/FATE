@@ -67,21 +67,20 @@ this component has "output" filed only, like the following:
 Field Specification
 ^^^^^^^^^^^^^^^^^^^
 
-:module: Specify which component to use.
-    This field should strictly match the file name in federatedml/conf/setting_conf except the .json suffix.
+:module: Specify which component to use. This field should strictly match the file name in federatedml/conf/setting_conf except the .json suffix.
 
 :input: There are two types of input, data and model.
 
-    1. Data: There are four possible data_input type:
+    - Data: There are four possible data_input type:
 
         1. data: typically used in data_io, feature_engineering modules and evaluation.
         2. train_data: uses in training components like HeteroLR、HeteroSBT and so on. If this field is provided, the task will be parse as a **fit** task
         3. validate_data: If train_data is provided, this field is optional. In this case, this data will be used as validation set.
         4. test_input: specify the data used to predict, if this field is set up, the **model** also needs.
 
-    2. Model: There are two possible model-input types:
+    - Model: There are two possible model-input types:
 
-        1. model: This is a model input by the same type of component. For example, hetero_binning_0 run as a fit component, and hetero_binning_1 takes model output of hetero_binning_0 as input so that can be used to transform or predict.
+        - model: This is a model input by the same type of component. For example, hetero_binning_0 run as a fit component, and hetero_binning_1 takes model output of hetero_binning_0 as input so that can be used to transform or predict.
         Here's an example showing this logic:
 
         .. code-block:: json
@@ -104,7 +103,7 @@ Field Specification
             }
         }
 
-        2. isometric_model: This is used to specify the model input from upstream components.
+        - isometric_model: This is used to specify the model input from upstream components.
         For example, feature selection will take feature binning as upstream model, since it will use information value as feature importance. Here's an example of feature selection component:
 
         .. code-block:: json
