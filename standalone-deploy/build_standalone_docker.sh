@@ -104,6 +104,7 @@ init() {
     docker restart fate_fateboard
     rm docker/python/fate.tar
     rm docker/fateboard/fateboard.tar
+    docker ps -a
 
 
 }
