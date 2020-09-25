@@ -70,7 +70,7 @@ def evaluate_almost_equal(metrics, results, abs_tol=None, rel_tol=None):
     return eval_summary
 
 
-def match_metrics(evaluate, tol, **results):
+def match_metrics(evaluate, abs_tol=None, rel_tol=None, **results):
     """
     Get metrics
     Parameters
@@ -95,7 +95,7 @@ def match_metrics(evaluate, tol, **results):
     print(table.get_string(title="Metrics Summary"))
 
     if evaluate:
-        eval_summary = evaluate_almost_equal(common_metrics, filtered_results, tol)
+        eval_summary = evaluate_almost_equal(common_metrics, filtered_results, abs_tol, rel_tol)
         eval_table = PrettyTable()
         eval_table.field_names = ["Metric", "All Match"]
         for metric, v in eval_summary.items():

@@ -24,6 +24,7 @@ tensorflow==1.15.2
 torch==1.4.0
 torchvision==0.5.0
 Werkzeug==0.15.3
+coverage==4.5.2
 
 # addtional requirements for eggroll
 grpcio>=1.22.0

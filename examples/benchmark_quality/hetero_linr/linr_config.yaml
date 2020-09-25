@@ -1,0 +1,13 @@
+data_guest: "/data/projects/fate/examples/data/motor_hetero_guest.csv"
+data_host: "/data/projects/fate/examples/data/motor_hetero_host.csv"
+idx: "idx"
+label_name: "motor_speed"
+penalty: "L2"
+max_iter: 5
+optimizer: "adagrad"
+batch_size: 100
+learning_rate: 0.15
+alpha: 0.01
+tol: 1e-4
+init_param:
+  init_method: "zeros"
