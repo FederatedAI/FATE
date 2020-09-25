@@ -183,6 +183,13 @@ class TaskController(object):
         update_status = JobSaver.update_task_status(task_info=task_info)
         if update_status and EndStatus.contains(task_info.get("status")):
             ResourceManager.return_task_resource(task_info=task_info)
+            cls.clean_task(job_id=task_info["job_id"],
+                           task_id=task_info["task_id"],
+                           task_version=task_info["task_version"],
+                           role=task_info["role"],
+                           party_id=task_info["party_id"],
+                           content_type="table"
+                           )
         cls.report_task_to_initiator(task_info=task_info)
         return update_status
 
@@ -222,12 +229,6 @@ class TaskController(object):
         }
         cls.update_task_status(task_info=task_info)
         cls.update_task(task_info=task_info)
-        jobs = JobSaver.query_job(job_id=task.f_job_id, role=task.f_role, party_id=task.f_party_id)
-        if jobs:
-            job = jobs[0]
-            job_parameters = RunParameters(**job.f_runtime_conf["job_parameters"])
-            tracker = Tracker(job_id=task.f_job_id, role=task.f_role, party_id=task.f_party_id, task_id=task.f_task_id, task_version=task.f_task_version, job_parameters=job_parameters)
-            tracker.clean_task()
 
     @classmethod
     def kill_task(cls, task: Task):
@@ -250,11 +251,18 @@ class TaskController(object):
                                                                        'success' if kill_status else 'failed'))
 
     @classmethod
-    def clean_task(cls, task, content_type):
+    def clean_task(cls, job_id, task_id, task_version, role, party_id, content_type):
         status = set()
         if content_type == "metrics":
-            tracker = Tracker(job_id=task.f_job_id, role=task.f_role, party_id=task.f_party_id, task_id=task.f_task_id, task_version=task.f_task_version)
+            tracker = Tracker(job_id=job_id, role=role, party_id=party_id, task_id=task_id, task_version=task_version)
             status.add(tracker.clean_metrics())
+        elif content_type == "table":
+            jobs = JobSaver.query_job(job_id=job_id, role=role, party_id=party_id)
+            if jobs:
+                job = jobs[0]
+                job_parameters = RunParameters(**job.f_runtime_conf["job_parameters"])
+                tracker = Tracker(job_id=job_id, role=role, party_id=party_id, task_id=task_id, task_version=task_version, job_parameters=job_parameters)
+                status.add(tracker.clean_task())
         if len(status) == 1 and True in status:
             return True
         else:
