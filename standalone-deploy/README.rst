@@ -49,11 +49,11 @@ possibility of encountering problems.
    ::
 
       #Get code
-      wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.5.0.tar.gz
-      tar -xzvf docker_standalone-fate-1.5.0.tar.gz
+      wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/docker_standalone-fate-1.5.0-preview.tar.gz
+      tar -xzvf docker_standalone-fate-1.5.0-preview.tar.gz
 
       #Execute the command
-      cd docker_standalone-fate-1.5.0
+      cd docker_standalone-fate-1.5.0-preview
       bash install_standalone_docker.sh
 
 
@@ -111,14 +111,14 @@ Http://hostip:8080.
 
    ::
 
-      wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.5.0.tar.gz
-      tar -xzvf  standalone-fate-master-1.5.0.tar.gz
+      wget https://webank-ai-1251170195.cos.ap-guangzhou.myqcloud.com/standalone-fate-master-1.5.0-preview.tar.gz
+      tar -xzvf  standalone-fate-master-1.5.0-preview.tar.gz
 
 3. Enter FATE directory and execute the init.sh.
 
    ::
 
-      cd standalone-fate-master-1.5.0
+      cd standalone-fate-master-1.5.0-preview
       sh init.sh init
 
 4. Test
@@ -127,7 +127,7 @@ Http://hostip:8080.
 
    ::
 
-      cd standalone-fate-master-1.5.0
+      cd standalone-fate-master-1.5.0-preview
       source bin/init_env.sh
       bash ./python/federatedml/test/run_test.sh
 
@@ -141,7 +141,7 @@ Http://hostip:8080.
 
    ::
 
-        cd standalone-fate-master-1.5.0
+        cd standalone-fate-master-1.5.0-preview
         source bin/init_env.sh
         python ./examples/toy_example/run_toy_example.py 10000 10000 0
 
