@@ -1,5 +1,5 @@
 {
-    "module_path":  "federatedml/unsupervise/kmeans/hetero_kmeans",
+    "module_path":  "federatedml/unsupervised_learning/kmeans/hetero_kmeans",
     "default_runtime_conf": "kmeans_param.json",
     "param_class" : "federatedml/param/hetero_kmeans_param/KmeansParam",
     "role":
