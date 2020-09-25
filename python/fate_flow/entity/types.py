@@ -17,7 +17,6 @@ from fate_arch.common import WorkMode, Backend
 from enum import IntEnum
 
 
-
 class RunParameters(object):
     def __init__(self, **kwargs):
         self.job_type = "train"
@@ -78,6 +77,7 @@ class FederatedSchedulingStatusCode(object):
     SUCCESS = 0
     PARTIAL = 1
     FAILED = 2
+    ERROR = 3
 
 
 class BaseStatus(object):
@@ -129,7 +129,7 @@ class JobStatus(BaseStatus):
     class StateTransitionRule(BaseStateTransitionRule):
         RULES = {
             StatusSet.WAITING: [StatusSet.READY, StatusSet.RUNNING, StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.COMPLETE],
-            StatusSet.READY: [StatusSet.WAITING, StatusSet.RUNNING],
+            StatusSet.READY: [StatusSet.WAITING, StatusSet.RUNNING, StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED],
             StatusSet.RUNNING: [StatusSet.CANCELED, StatusSet.TIMEOUT, StatusSet.FAILED, StatusSet.COMPLETE],
             StatusSet.CANCELED: [StatusSet.WAITING],
             StatusSet.TIMEOUT: [StatusSet.FAILED, StatusSet.COMPLETE, StatusSet.WAITING],

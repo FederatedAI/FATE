@@ -216,6 +216,7 @@ class TaskExecutor(object):
 
         print('Finish {} {} {} {} {} {} task {}'.format(job_id, component_name, task_id, task_version, role, party_id,
                                                         task_info["party_status"]))
+        return task_info
 
     @classmethod
     def get_task_run_args(cls, job_id, role, party_id, task_id, task_version, job_args, job_parameters: RunParameters, task_parameters: RunParameters,
@@ -319,4 +320,5 @@ class TaskExecutor(object):
 
 
 if __name__ == '__main__':
-    TaskExecutor.run_task()
+    task_info = TaskExecutor.run_task()
+    TaskExecutor.report_task_update_to_driver(task_info=task_info)
