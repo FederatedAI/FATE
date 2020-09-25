@@ -222,6 +222,12 @@ class TaskController(object):
         }
         cls.update_task_status(task_info=task_info)
         cls.update_task(task_info=task_info)
+        jobs = JobSaver.query_job(job_id=task.f_job_id, role=task.f_role, party_id=task.f_party_id)
+        if jobs:
+            job = jobs[0]
+            job_parameters = RunParameters(**job.f_runtime_conf["job_parameters"])
+            tracker = Tracker(job_id=task.f_job_id, role=task.f_role, party_id=task.f_party_id, task_id=task.f_task_id, task_version=task.f_task_version, job_parameters=job_parameters)
+            tracker.clean_task()
 
     @classmethod
     def kill_task(cls, task: Task):
