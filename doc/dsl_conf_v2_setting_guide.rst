@@ -21,7 +21,7 @@ DSL Configure File
 
 We use json file which is actually a dict as a dsl config file. The first level of the dict is always "components," which indicates content in the dict are components in your modeling task.
 
-::
+.. code-block:: json
   
   {
     "components" : {
@@ -32,7 +32,7 @@ We use json file which is actually a dict as a dsl config file. The first level 
 
 Then each component should be defined on the second level. Here is an example of setting a component:
 
-::
+.. code-block:: json
   
   "dataio_0": {
         "module": "DataIO",
@@ -55,7 +55,7 @@ As the example shows, user define the component name as key of this module.
 Please note that in DSL V2, all modeling task config should contain a **Reader** component to reader data from storage service,
 this component has "output" filed only, like the following:
 
-::
+.. code-block:: json
 
   "reader_0": {
         "module": "Reader",
@@ -85,7 +85,7 @@ Field Specification
 
         Here's an example showing this logic:
 
-        :: 
+        .. code-block:: json
         
           "hetero_feature_binning_1": {
             "module": "HeteroFeatureBinning",
