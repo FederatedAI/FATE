@@ -47,9 +47,10 @@ def main(param="./lr_config.yaml"):
     rmse = np.sqrt(mse)
     r2 = r2_score(y, y_pred)
     explained_var = explained_variance_score(y, y_pred)
-    result = {"mean_squared_error": mse, "r2_score": r2,
-              "explained_variance": explained_var,
-              "root_mean_squared_error": rmse}
+    result = {"r2_score": r2,
+              "mean_squared_error": mse,
+              "root_mean_squared_error": rmse,
+              "explained_variance": explained_var,}
     return result
 
 

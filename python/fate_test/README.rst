@@ -95,15 +95,35 @@ fate_test_config.yaml examples
           ssh_priv_key: "~/.ssh/id_rsa"
 
 
+command types
+-------------
+
+- suite: used for running testsuites, collection of FATE jobs
+
+  .. code-block:: bash
+
+     fate_test suite -i <path contains *testsuite.json>
+
+- `benchmark-quality <./README_BENCHMARK.rst>`_: used for comparing modeling quality between FATE
+and other machine learning systems
+
+  .. code-block:: bash
+
+      fate_test benchmark-quality -i <path contains *testsuite.json>
+
+
 command options
 ---------------
 
-1. suite: used for running testsuites, collection of FATE jobs.
+1. include:
 
-2. benchmark-quality: used for running modeling quality comparison between FATE
-and other machine learning systems.
+.. code-block:: bash
 
-1. exclude:
+      fate_test suite -i <path1 contains *testsuite.json>
+
+   will run testsuites in `path1`
+
+2. exclude:
 
    .. code-block:: bash
 
@@ -111,7 +131,7 @@ and other machine learning systems.
 
    will run testsuites in `path1` but not in `path2` and `path3`
 
-2. replace:
+3. replace:
 
    .. code-block:: bash
 
@@ -119,7 +139,7 @@ and other machine learning systems.
 
    will find all key-value pair with key "maxIter" in `data conf` or `conf` or `dsl` and replace the value with 5
 
-3. glob:
+4. glob:
 
    .. code-block:: bash
 

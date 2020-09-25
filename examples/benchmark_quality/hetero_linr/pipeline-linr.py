@@ -95,8 +95,10 @@ def main(config="../../config.yaml", param="./linr_config.yaml", namespace=""):
     hetero_linr_0 = HeteroLinR(name='hetero_linr_0', **param)
 
     evaluation_0 = Evaluation(name='evaluation_0', eval_type="regression",
-                              metrics=["mean_squared_error", "root_mean_squared_error",
-                                       "r2_score", "explained_variance"])
+                              metrics=["r2_score",
+                                       "mean_squared_error",
+                                       "root_mean_squared_error",
+                                       "explained_variance"])
 
     # add components to pipeline, in order of task execution
     pipeline.add_component(reader_0)

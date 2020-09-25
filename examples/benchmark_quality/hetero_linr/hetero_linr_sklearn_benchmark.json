@@ -27,7 +27,7 @@
             "conf": "./linr_config.yaml"
         },
         "compare_setting": {
-            "relative_tol": 1e-9
+            "relative_tol": 0.05
         }
     }
 }
