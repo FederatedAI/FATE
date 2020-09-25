@@ -18,10 +18,10 @@ mode may need to be modified depending on the deployment setting.
 For more pipeline demo, please refer to
 `examples <../../../examples/pipeline>`__.
 
-A FATE Job is A Sequence
+A FATE Job is A Directed Acyclic Graph
 ------------------------
 
-A FATE job includes a sequence of tasks. FATE pipeline provides
+A FATE job is a dag consists of algorithm component nodes. FATE pipeline provides
 easy-to-use tools to configure order and setting of the tasks.
 
 FATE is written in a modular style. Modules are designed to have input
@@ -214,6 +214,32 @@ Prediction can then be initiated on the new pipeline.
 
 In addition, since pipeline is modular, user may add new components to
 the original pipeline when running prediction.
+
+Save and Recovery of Pipeline
+---------------------
+
+To save a pipeline, just use <b>dump</b> interface.
+
+.. code:: python
+
+   pipeline.dump("pipeline_saved.pkl")
+
+To save a pipeline, just use <b>load_model_from_file</b> interface.
+
+.. code:: python
+
+   from pipeline.backend.pipeline import PineLine
+   PipeLine.load_model_from_file("pipeline_saved.pkl")
+
+Summary info of pipeline
+---------------------
+
+To get the detail of a pipeline, use <b>describe</b> interface, it will print the "create time"
+fit or predict state and the constructed dsl if exists.
+
+.. code:: python
+
+   pipeline.describe()
 
 Upload Data
 -----------
