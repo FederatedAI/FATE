@@ -1,13 +1,13 @@
 DSL & Task Submit Runtime Conf Setting
 ======================================
 
-To make the modeling task more flexible, currently, FATE use its own domain-specific language(DSL)
+To make the modeling task more flexible, currently, FATE uses its own domain-specific language(DSL)
 to describe modeling task. With usage of this DSL, modeling components such as data-io,
 feature-engineering and classification/regression module etc. can be combined as a Directed Acyclic Graph(DAG).
 Therefore, user can take and combine the algorithm components flexibly according to their needs.
 
-In addition, each component has their own parameters to be configured.
-Also, the configuration may differ from party to party.
+In addition, parameters of each component need to be configured.
+Also, the configuration may vary from party to party.
 For convenience, FATE configure all parameters for all parties and all components in one file.
 This guide will show you how to create such a configure file.
 
@@ -52,7 +52,7 @@ Then each component should be defined on the second level. Here is an example of
 
 As the example shows, user define the component name as key of this module.
 
-Please note that in DSL V2, all modeling task config should contains a **Reader** component to reader data from storage service,
+Please note that in DSL V2, all modeling task config should contain a **Reader** component to reader data from storage service,
 this component has "output" filed only, like the following:
 
 ::
@@ -81,7 +81,7 @@ Field Specification
 
   2. Model: There are two possible model-input types:
 
-        1. model: This is a model input by the same type of component. For example, hetero_binning_0 run as a fit component, and hetero_binning_1 take model output of hetero_binning_0 as input so that can be used to transform or predict.
+        1. model: This is a model input by the same type of component. For example, hetero_binning_0 run as a fit component, and hetero_binning_1 takes model output of hetero_binning_0 as input so that can be used to transform or predict.
 
         Here's an example showing this logic:
 
@@ -109,7 +109,8 @@ Field Specification
         2. isometric_model: This is used to specify the model input from upstream components.
 
           For example, feature selection will take feature binning as upstream model, since it will use information value as feature importance. Here's an example of feature selection component:
-          ::
+
+          .. code-block:: json
 
             "hetero_feature_selection_0": {
                 "module": "HeteroFeatureSelection",
@@ -129,8 +130,7 @@ Field Specification
                 }
             }
 
-
-  3. output: Same as input, two types of output may occur which are data and model.
+:output: Same as input, two types of output may occur which are data and model.
     
     1. Data: Specify the output data name
     2. Model: Specify the output model name
@@ -145,7 +145,8 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
 
 :initiator:
   To begin with, the initiator should be specified in this runtime conf. Here is an example of setting initiator:
-  ::
+
+  .. code-block:: json
 
     "initiator": {
         "role": "guest",
@@ -153,10 +154,11 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
     }
 
 
-:role: All the roles involved in this modeling task should be specified. Each element in the role should contain role name and their party ids. The reason for ids are with form of list is that there may exist multiple parties in one role.
-  ::
+:role: All the roles involved in this modeling task should be specified. Each role comes with role name and corresponding party id(s).
+Ids are always specified in the form of list since there may exist multiple parties of the same role.
 
-    
+  .. code-block:: json
+
     "role": {
         "guest": [
           10000
@@ -170,19 +172,20 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
     }
 
 
-:job_parameters: to enable DSL V2, **dsl_version** filed must be set to 2, other job parameters can be referred to fate_flow document.
-  ::
+:job_parameters: to enable DSL V2, **dsl_version** must be set to 2.
+For information on other job parameters, please refer to FATE Flow `document <../python/fate_flow/README.rst>`_.
 
+  .. code-block:: json
 
     "job_parameters": {
         "dsl_version": 2
     }
 
 
-:role_parameters: Those parameters that are differ from party to party, should be indicated here. Please note that each parameters should has the form of list.
-:role_parameters: Those parameters that are differ from party to party, should be indicated here. Please note that each parameters should has the form of list.
+:role_parameters: Parameters that differ from party to party should be indicated here. Please note that role parameters need to be wrapped into a list.
   Inside the role_parameters, party names are used as key and parameters of these parties are values. Take the following structure as an example:
-  ::
+
+  .. code-block:: json
     
     "guest": {
       "0": {
@@ -209,11 +212,12 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
       }
     }
 
-  The "0" indicates that it is the 0_th party of some role(0-based). User can config parameters for each components. The component names should match names defined in the dsl config file.
-  The content of each component parameters are defined in Param class located in python/federatedml/param.
-  Parties can be packed together to config, for examples:
+  The "0" indicates that it is the 0_th party of some role(0-based). User can config parameters for each component.
+  The component names should match those defined in the dsl config file.
+  The parameters of each component are defined in `Param <../python/federatedml/param>`_ class.
+  Parties can be packed together and share configuration, for examples:
 
-  ::
+  .. code-block:: json
 
     "host": {
       "0|2": {
@@ -230,8 +234,10 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
       }
     }
 
-:algorithm_parameters: If some parameters are the same among all parties, they can be set in algorithm_parameters. Here is an example showing how to do that.
-  ::
+:algorithm_parameters: If some parameters are the same among all parties, they can be set in algorithm_parameters.
+Here is an example showing how to do that.
+
+  .. code-block:: json
 
     "hetero_feature_binning_0": {
         ...
@@ -262,14 +268,17 @@ Besides the dsl conf, user also need to prepare a submit runtime conf to set the
 
   Same with the form in role parameters, each key of the parameters are names of components that are defined in dsl config file.
 
-After setting config files and submitting the task, fate-flow will combine the parameter list in role-parameters and algorithm parameters. If there are still some undefined fields, values in default runtime conf will be used. Then fate-flow will send these config files to their corresponding parties and start the federated modeling task.
+After setting config files and submitting the task, fate-flow will combine the parameter list in role-parameters and algorithm parameters.
+If there are still some undefined fields, default parameter values will be used.
+FATE Flow will send these config files to their corresponding parties and start federated task.
 
 
 Multi-host configuration
 ------------------------
 
 For multi-host modeling case, all the host's party ids should be list in the role field.
-::
+
+  .. code-block:: json
 
   "role": {
     "guest": [
@@ -284,7 +293,8 @@ For multi-host modeling case, all the host's party ids should be list in the rol
   }
 
 Each parameter set for host should also be list in a list. The number of elements should match the number of hosts.
-::
+
+  .. code-block:: json
   
   "host": {
       "0": {
@@ -318,6 +328,7 @@ Each parameter set for host should also be list in a list. The number of element
         }
       }
 
-The parameters set in algorithm parameters need not be copied into host role parameters. Algorithm parameters will be copied for every party.
+The parameters set in algorithm parameters need not be copied into host role parameters.
+Algorithm parameters will be copied for every party.
 
 

@@ -1,7 +1,7 @@
 {
     "data": [
         {
-            "file": "examples/data/motor_hetero_guest.csv",
+            "file": "../../data/motor_hetero_guest.csv",
             "head": 1,
             "partition": 16,
             "table_name": "motor_hetero_guest",
@@ -9,7 +9,7 @@
             "role": "guest_0"
         },
         {
-            "file": "examples/data/motor_hetero_host.csv",
+            "file": "../../data/motor_hetero_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "motor_hetero_host",
@@ -17,7 +17,7 @@
             "role": "host_0"
         },
         {
-            "file": "examples/data/motor_hetero_host.csv",
+            "file": "../../data/motor_hetero_host.csv",
             "head": 1,
             "partition": 16,
             "table_name": "motor_hetero_host",
@@ -26,11 +26,12 @@
         }
     ],
     "tasks": {
-        "linr": {
+        "linr-train": {
             "conf": "./test_hetero_linr_train_job_conf.json",
             "dsl": "./test_hetero_linr_train_job_dsl.json"
         },
         "linr-predict": {
+            "deps": "linr-train",
             "conf": "./test_hetero_linr_predict_job_conf.json",
             "dsl": "./test_hetero_linr_predict_job_dsl.json"
         },
@@ -47,6 +48,7 @@
             "dsl": "./test_hetero_linr_multi_host_train_job_dsl.json"
         },
         "linr-multi-host-predict": {
+            "deps": "linr-multi-host-train",
             "conf": "./test_hetero_linr_multi_host_predict_job_conf.json",
             "dsl": "./test_hetero_linr_multi_host_predict_job_dsl.json"
         },

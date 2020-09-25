@@ -1,7 +1,7 @@
-testsuite
-==============
+FATE Test
+=========
 
-A useful script to running FATE's test.
+A collection of useful tools to running FATE's test.
 
 quick start
 -----------
@@ -98,6 +98,11 @@ fate_test_config.yaml examples
 command options
 ---------------
 
+1. suite: used for running testsuites, collection of FATE jobs.
+
+2. benchmark-quality: used for running modeling quality comparison between FATE
+and other machine learning systems.
+
 1. exclude:
 
    .. code-block:: bash
@@ -121,3 +126,4 @@ command options
       fate_test suite -i <path1 contains *testsuite.json> -g "hetero*"
 
    will run testsuites in sub directory start with `hetero` of `path1`
+
